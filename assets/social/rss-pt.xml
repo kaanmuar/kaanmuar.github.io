@@ -261,23 +261,6 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Um h1 por página, dizendo do que se trata a página.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-pt.html</link>
-      <guid isPermaLink="false">tips-2026-10/12-one-h1-pt</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Dica</category>
-      <category>SEO</category>
-      <description>Logos e slogans costumam tomar o h1. Buscadores e leitores de tela usam isso para entender a página.
-
-Experimente hoje: Leia só o h1 das suas dez páginas principais. Um estranho saberia o que é cada página?
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
-
-#SEO #Accessibility #Content #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>nice.com: 56. A lacuna: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com-pt</guid>
@@ -432,6 +415,24 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>As fichas da OMS terminam com um ponto e vírgula perdido.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-pt.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-pt</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>A OMS acolhe crawlers de resposta de IA e suas páginas se leem bem sem JavaScript: GEO 91. Mas o JSON-LD das fichas informativas termina em &quot;};&quot;, e um parser rígido descarta o bloco inteiro.
+
+A lição para toda equipe: Passe cada bloco JSON-LD por um validador de JSON antes do release. Um caractere pode anular o bloco inteiro.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Sexta, 17h: a gente sobe em uma hora. Alguém conferiu o site?</title>
@@ -616,25 +617,6 @@ https://www.youtube.com/shorts/v2IyjNhD8q8</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11/feed/11-cities.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Clipes curtos, no seu idioma.</title>
-      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/11-clips-pt.html</link>
-      <guid isPermaLink="false">promo-social-hub-2026-10/11-clips-pt</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Produto</category>
-      <category>Social</category>
-      <description>Os clipes narrados tocam na própria página, sem aplicativo. Cada um fala em inglês, espanhol, português, alemão, francês ou italiano.
-
-Experimente: Toque em reproduzir em qualquer cartão com vídeo.
-
-Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-social-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=clips-pt
-
-#ShortVideo #SoftwareTesting #OpenSource #QA #WebDev #QAlab
-
-https://www.youtube.com/shorts/IPSo4-Us2zQ</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg" length="197016" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/11-clips-pt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Analisamos GOV.UK. Marca 92.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/01-govuk-pt.html</link>
       <guid isPermaLink="false">runs-2026-10/01-govuk-pt</guid>
@@ -669,23 +651,6 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
 #Accessibility #Zoom #GovTech #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" length="242376" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Deixe o mouse de lado. Você consegue chegar a tudo?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-pt.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-pt</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Dica</category>
-      <category>A11y</category>
-      <description>Menus, diálogos e banners de cookies são onde quem usa teclado trava. Tab, Shift+Tab, Enter e Escape devem bastar.
-
-Experimente hoje: Faça a tarefa principal no seu próprio site só com o teclado. Anote cada ponto em que você travou.
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Uma página, um canonical.</title>
@@ -887,6 +852,23 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
       <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/19-measure-action.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>A busca com IA lê seu HTML, não seu app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-pt.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-pt</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Dica</category>
+      <category>GEO</category>
+      <description>Muitos motores de resposta não executam JavaScript. Se seus fatos principais só aparecem depois que os scripts carregam, eles podem nunca ser lidos ou citados.
+
+Experimente hoje: Veja o código-fonte da sua página inicial. Dá para ver o que você vende e para quem, sem rodar scripts?
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>movichhotels.com: 68. A lacuna: medição.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-26/08-u-movichhotels-com-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-26/08-u-movichhotels-com-pt</guid>
@@ -983,6 +965,24 @@ Todas as publicações, em um só lugar: https://carlosandmunoz.com/qa-review-so
 #RSS #OpenSource #SoftwareTesting #QA #SocialMedia #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/23-follow-pt.jpg" length="161674" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/23-follow-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>ILO: segura e rápida, mas sem markup de entidade.</title>
+      <link>https://carlosandmunoz.com/social/runs-3/01-ilo-pt.html</link>
+      <guid isPermaLink="false">runs-3/01-ilo-pt</guid>
+      <pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>security.txt está publicado, o HSTS cobre subdomínios e o DMARC rejeita e-mails falsificados. Mas nenhuma página analisada traz JSON-LD, então os perfis de Facebook, LinkedIn e YouTube que ela linka nunca são associados à OIT.
+
+A lição para toda equipe: Adicione markup Organization com url, logo e sameAs para que as respostas de IA nomeiem você corretamente.
+
+Uma análise automatizada de páginas públicas em 21 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-3-2027-01&amp;utm_content=ilo
+
+#GEO #StructuredData #UnitedNations #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" length="252116" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/01-ilo.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
