@@ -261,23 +261,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Un h1 por página, que diga qué es la página.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/12-one-h1-es</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>SEO</category>
-      <description>Los logos y los eslóganes suelen quedarse con el h1. Tanto los buscadores como los lectores de pantalla lo usan para entender la página.
-
-Prueba esto hoy: Lee solo el h1 de tus diez páginas principales. ¿Sabría un desconocido qué es cada página?
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
-
-#SEO #Accessibility #Content #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>nice.com: 56. El punto débil: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com-es.html</link>
       <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com-es</guid>
@@ -432,6 +415,24 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Las notas descriptivas de la OMS acaban en un punto y coma suelto.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-es</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript: GEO 91. Pero el JSON-LD de sus fichas termina en &quot;};&quot;, y un parser estricto descarta el bloque entero.
+
+La lección para cualquier equipo: Pasa cada bloque JSON-LD por un validador JSON antes del lanzamiento. Un carácter puede invalidar el bloque entero.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>zizonline.com: 70. El punto débil: HSTS.</title>
@@ -808,23 +809,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Aparta el ratón. ¿Puedes llegar a todo?</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/10-keyboard-es</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>A11y</category>
-      <description>Menús, diálogos y banners de cookies son donde se atasca quien navega con teclado. Tab, Shift+Tab, Enter y Escape deberían bastar.
-
-Prueba esto hoy: Haz la tarea principal de tu sitio solo con el teclado. Apunta cada punto donde te atascaste.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
-
-#Accessibility #a11y #UX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>Una página, un canonical.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/21-canonical-es.html</link>
       <guid isPermaLink="false">tips-2026-10/21-canonical-es</guid>
@@ -924,6 +908,28 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/IzjeOPrTBeQ</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg" length="233804" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>sp.senai.br: 60. El punto débil: nombres de enlaces.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-03/03-u-sp-senai-br-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-03/03-u-sp-senai-br-es</guid>
+      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los enlaces deben tener texto discernible.
+
+La lección para cualquier equipo: Dale a cada enlace un texto que diga adónde lleva. Un icono solo necesita un aria-label.
+
+Un análisis automatizado de páginas públicas el 2 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-sp-senai-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-sp-senai-br
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #OpenSource #QA #A11y #QAlab
+
+https://www.youtube.com/shorts/YUGR0Xk-jjU</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg" length="228763" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
