@@ -227,6 +227,23 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/07-pre-release.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Suivez-le à votre façon.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/21-follow-fr.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/21-follow-fr</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produit</category>
+      <category>Social</category>
+      <description>Lisez le hub dans n'importe quel lecteur RSS, avec un flux par langue, ou suivez-nous sur YouTube, TikTok, LinkedIn, X et Facebook.
+
+Essayez: Ajoutez le flux RSS du hub à votre lecteur.
+
+Toutes les publications, au même endroit: https://carlosandmunoz.com/qa-review-social-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=follow-fr
+
+#RSS #OpenSource #SoftwareTesting #QA #SocialMedia #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg" length="189922" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/21-follow-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>TransMilenio laisse les moteurs écrire son pitch.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/06-transmilenio-fr.html</link>
       <guid isPermaLink="false">runs-2026-10/06-transmilenio-fr</guid>
@@ -396,7 +413,9 @@ Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-ciqa-edu-m
 
 Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 
-#WebSecurity #DevOps #SoftwareTesting #QA #HTTPS #QAlab</description>
+#WebSecurity #DevOps #SoftwareTesting #QA #HTTPS #QAlab
+
+https://www.youtube.com/shorts/ciyeTN8dzNY</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" length="231912" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -474,7 +493,9 @@ Vérifiez : Vérifiez ce que le cadenas ne couvre pas : en-têtes de réponse, a
 
 Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-https
 
-#WebSecurity #Phishing #CyberSecurity #QA #HTTPS #QAlab</description>
+#WebSecurity #Phishing #CyberSecurity #QA #HTTPS #QAlab
+
+https://www.youtube.com/shorts/-LTMX797hzU</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/05-myth-https.jpg" length="243878" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/05-myth-https.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -513,6 +534,23 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
 #GEO #AISearch #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" length="237315" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Un seul h1 par page, qui dit ce qu’est la page.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/12-one-h1-fr</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>SEO</category>
+      <description>Logos et slogans s’accaparent souvent le h1. Moteurs de recherche et lecteurs d’écran s’en servent pour comprendre la page.
+
+À essayer aujourd’hui : Lisez uniquement le h1 de vos dix pages principales. Un inconnu saurait-il ce qu’est chaque page ?
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
+
+#SEO #Accessibility #Content #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>nice.com: 56. Le point faible : HSTS.</title>
@@ -669,24 +707,6 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Les fiches de l’OMS finissent par un point-virgule égaré.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-fr.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-fr</guid>
-      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Worldwide</category>
-      <description>L’OMS accueille les crawlers de réponse IA et ses pages se lisent bien sans JavaScript : GEO 91. Mais le JSON-LD de ses fiches d’information se termine par « }; », et un parseur strict rejette tout le bloc.
-
-La leçon pour chaque équipe : Passez chaque bloc JSON-LD dans un validateur JSON avant la mise en production. Un seul caractère peut invalider tout le bloc.
-
-Une analyse automatisée des pages publiques, le 19 oct. 2026. Un point de départ, pas un verdict.
-Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>zizonline.com: 70. Le point faible : HSTS.</title>
@@ -909,6 +929,23 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-3/feed/03-valle.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Rangez la souris. Pouvez-vous tout atteindre ?</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/10-keyboard-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/10-keyboard-fr</guid>
+      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>A11y</category>
+      <description>Menus, boîtes de dialogue et bannières cookies : c’est là que les utilisateurs du clavier restent bloqués. Tab, Maj+Tab, Entrée et Échap devraient suffire.
+
+À essayer aujourd’hui : Faites votre tâche principale sur votre site au clavier uniquement. Notez chaque endroit où vous avez bloqué.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=keyboard
+
+#Accessibility #a11y #UX #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" length="236132" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/10-keyboard.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Une page, un canonical.</title>
       <link>https://carlosandmunoz.com/social/tips-2026-10/21-canonical-fr.html</link>
       <guid isPermaLink="false">tips-2026-10/21-canonical-fr</guid>
@@ -944,48 +981,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #Accessibility #Automation #DevOps #QA #Forms #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg" length="233269" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-26/feed/09-u-hotelestequendama-com-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>indrive.com: 64. Le point faible : TLS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/08-u-indrive-com-fr.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/08-u-indrive-com-fr</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais le certificat TLS expire dans 13 jours.
-
-La leçon pour chaque équipe : Renouvelez le certificat TLS automatiquement, et alertez bien avant son expiration.
-
-Une analyse automatisée des pages publiques, le 21 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-indrive-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-indrive-com
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #Automation #CyberSecurity #QA #TLS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/08-u-indrive-com.jpg" length="218608" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/08-u-indrive-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>eep.com.co: 33. Le point faible : HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-02/02-u-eep-com-co-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-02/02-u-eep-com-co-fr</guid>
-      <pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>12 les pages sont volontairement exclues de la recherche, et les robots d'exploration de réponses et de recherche IA peuvent lire la page de démarrage. Mais HSTS n’est pas envoyé.
-
-La leçon pour chaque équipe : Envoyez Strict-Transport-Security avec un max-age d’au moins un an, pour que les navigateurs ne retentent jamais le http simple.
-
-Une analyse automatisée des pages publiques, le 27 oct. 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-eep-com-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-eep-com-co
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #CyberSecurity #DevOps #QA #HSTS #QAlab
-
-https://www.youtube.com/shorts/bBHzkx0g98Q</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/02-u-eep-com-co.jpg" length="222022" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/02-u-eep-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

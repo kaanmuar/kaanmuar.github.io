@@ -23,6 +23,10 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantiene HSTS solo una semana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ páginas de Kubernetes comparten un mismo título.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ idiomas, sin sitemap.",
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Security.": {
+  "text": "⟦1⟧ líderes en SEO, Accesibilidad; ⟦2⟧ lidera en GEO, Análisis, Rendimiento; ⟦3⟧ lidera en Seguridad.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
   "text": "⟦1⟧ líderes en SEO, análisis, accesibilidad; ⟦2⟧ lidera en GEO, Seguridad, Rendimiento.",
   "machine": true
@@ -66,6 +70,10 @@
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics; ⟦3⟧ leads in Security, Accessibility, Performance.": {
   "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ lidera en GEO, Analytics; ⟦3⟧ lidera en Seguridad, Accesibilidad, Rendimiento.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security, Accessibility, Performance; ⟦3⟧ leads in Analytics.": {
+  "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ lidera en GEO, Seguridad, Accesibilidad, Rendimiento; ⟦3⟧ leads en Analytics.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ lidera en SEO; ⟦2⟧ lidera en GEO y Seguridad; ⟦3⟧ lidera en Analítica, Accesibilidad y Rendimiento.",
@@ -371,6 +379,10 @@
   "text": "Visibilidad de la IA vs.",
   "machine": true
  },
+ "AI-Driven Visual & Functional QA Agent powered by Gemini Multimodal Structured Outputs & Terminal CLI": {
+  "text": "Agente de control de calidad visual y funcional impulsado por IA impulsado por CLI de terminal y salidas estructuradas multimodales de Gemini",
+  "machine": true
+ },
  "AI-generated search summaries may answer the first question, but they do not necessarily settle the...": {
   "text": "Los resúmenes de búsqueda generados por IA pueden responder la primera pregunta, pero no necesariamente resuelven la...",
   "machine": true
@@ -469,6 +481,10 @@
  "Barcelona blocks ChatGPT search.": "Barcelona bloquea la búsqueda de ChatGPT.",
  "Bavaria's portal has no sitemap.": "El portal de Bavaria no tiene sitemap.",
  "Before (fail):": "Antes (fallo):",
+ "Before and after slider in React, accessible and draggable": {
+  "text": "Control deslizante antes y después en React, accesible y arrastrable",
+  "machine": true
+ },
  "Before your next automation sprint, write ten cases in plain language.": "Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano.",
  "Bello's JSON-LD names the page, not the city.": "El JSON-LD de Bello nombra la página, no la ciudad.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha que te cuesta es la que un competidor ya ha cerrado.",
@@ -528,6 +544,10 @@
  "Bucaramanga's home has no title tag.": "La portada de Bucaramanga no tiene etiqueta title.",
  "Buenos Aires still loads a retired UA tag.": "Buenos Aires aún carga una etiqueta UA retirada.",
  "Bug Fixes ⟦1⟧ [Bug]: _electron.launch intermittently loses a packaged app's first window since ⟦2⟧ ⟦3⟧ [Regression]:": "Correcciones de errores ⟦1⟧ [Bug]: _electron.launch pierde de forma intermitente la primera ventana de una app empaquetada desde ⟦2⟧ ⟦3⟧ [Regression]:",
+ "Build a React before after slider with pointer events, a clip-path reveal, arrow key support and the ARIA slider role.": {
+  "text": "Cree un control deslizante React antes y después con eventos de puntero, una revelación de ruta de clip, compatibilidad con teclas de flecha y la función del control deslizante ARIA.",
+  "machine": true
+ },
  "Build a Static Site with Interactive Components": "Crea un sitio estático con componentes interactivos",
  "Build sitemap URLs from the public https host, and recheck after any server move.": "Genera las URLs del sitemap desde el host https público y vuelve a revisarlas tras cualquier cambio de servidor.",
  "Build the sitemap from canonical URLs: https, the www host you serve.": "Genera el sitemap a partir de las URLs canónicas: https y el host www que sirves.",
@@ -870,6 +890,10 @@
  "CERN's pages have no description.": "Las páginas del CERN no tienen descripción.",
  "Check every error message, chart and link.": "Revisa cada mensaje de error, gráfico y enlace.",
  "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.": "Comprueba las versiones de tus librerías front-end contra una lista de fallos conocidos en cada versión, y actualiza las que salgan marcadas.",
+ "Check front-end library versions against a known-flaw list on every release, and upgrade the…": {
+  "text": "Verifique las versiones de la biblioteca de front-end con una lista de fallas conocidas en cada versión y actualice...",
+  "machine": true
+ },
  "Check front-end library versions against a known-flaw list on every release…": "Comprueba las versiones de tus librerías front-end contra una lista de fallos conocidos en cada versión…",
  "Check it today:": "Revísalo hoy:",
  "Check it:": "Compruébalo:",
@@ -1714,6 +1738,10 @@
  "Look at the server before the front end.": "Revisa el servidor antes que el front end.",
  "Low-vision visitors rely on zoom.": "Los visitantes con baja visión dependen del zoom.",
  "Lowercase, no spaces, one naming sheet.": "Minúsculas, sin espacios, una sola hoja de nombres.",
+ "LoyaltyobsidianOcean2704/ai-resocket-test-architect:": {
+  "text": "LoyaltyobsidianOcean2704/ai-resocket-test-architect:",
+  "machine": true
+ },
  "Made-up paths get a real ⟦1⟧, the page text is in the HTML, and the start page declares Spanish for Colombia.": "Las rutas inventadas reciben un ⟦1⟧ real, el texto de la página está en el HTML y la página de inicio declara español de Colombia.",
  "Madrid has ⟦1⟧, but no JSON-LD.": "Madrid tiene ⟦1⟧, pero no JSON-LD.",
  "Make a shared sheet with the allowed sources and mediums.": "Crea una hoja compartida con las fuentes y medios permitidos.",
@@ -1981,6 +2009,14 @@
  "PageSpeed Insights shows two things.": "PageSpeed Insights muestra dos cosas.",
  "PAHO has no Organization JSON-LD.": "La OPS no tiene JSON-LD de Organization.",
  "Pairs well with correct Content-Type headers.": "Combina bien con cabeceras Content-Type correctas.",
+ "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript": {
+  "text": "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript",
+  "machine": true
+ },
+ "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript Una...": {
+  "text": "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript Una...",
+  "machine": true
+ },
  "Palmira's home page has no description.": "La portada de Palmira no tiene descripción.",
  "Pass the --bun flag, because without it bunx playwright test runs on ⟦1⟧: bunx --bun playwright test Our CI runs the test runner tests under Bun ⟦2⟧ on Linux.": {
   "text": "Pase la bandera --bun, porque sin ella, la prueba de dramaturgo de bunx se ejecuta en ⟦1⟧: prueba de dramaturgo de bunx --bun Nuestro CI ejecuta las pruebas del ejecutor de prueba en Bun ⟦2⟧ en Linux.",
@@ -2220,6 +2256,10 @@
   "machine": true
  },
  "Scores hidden until tomorrow.": "Puntuaciones ocultas hasta mañana.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…": {
+  "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO ⟦19⟧, GEO…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Puntuaciones comparadas: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analítica ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analítica ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación…",
@@ -2907,6 +2947,10 @@
   "text": "Vía DEV, por Alina Shah, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by AppInitDev, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por AppInitDev, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Arun KT, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Arun KT, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -2946,6 +2990,10 @@
   "text": "Vía DEV, por Ling Chen, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by Marco Schulz, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, de Marco Schulz, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Matthias Ramahi, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Matthias Ramahi, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via DEV, by Simon Gerber, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, de Simon Gerber, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -2971,6 +3019,10 @@
  "Via GitHub, by iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by irraz, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por irraz, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via GitHub, by LoyaltyobsidianOcean2704, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por LoyaltyobsidianOcean2704, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via GitHub, by nautnhanahp-design, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por nautnhanahp-design, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -3168,6 +3220,10 @@
  "Works in any terminal that supports the kitty graphics protocol, fully cross-platform on macOS, Linux and Windows.": "Funciona en cualquier terminal compatible con el protocolo de gráficos de kitty, totalmente multiplataforma en macOS, Linux y Windows.",
  "Works in Claude Code, Codex and any agent that reads ⟦1⟧.": {
   "text": "Funciona en Claude Code, Codex y cualquier agente que lea ⟦1⟧.",
+  "machine": true
+ },
+ "Works with touch and a keyboard.": {
+  "text": "Funciona con tacto y teclado.",
   "machine": true
  },
  "Works…": {

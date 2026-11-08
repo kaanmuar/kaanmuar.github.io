@@ -1,5 +1,5 @@
 {
- "since": "2026-11-07T11:01:00.168Z",
+ "since": "2026-11-08T11:00:49.937Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -120,13 +120,17 @@
   "vs:okta.com": "2026-11-06",
   "servicesaustralia.gov.au": "2026-11-07",
   "erikafashion.sk": "2026-11-07",
-  "vs:saatvesaat.com.tr": "2026-11-07"
+  "vs:saatvesaat.com.tr": "2026-11-07",
+  "shortmake.com": "2026-11-08",
+  "choice-route.com": "2026-11-08",
+  "vs:aktia.fi": "2026-11-08",
+  "vs:beebom.com": "2026-11-08"
  },
  "recent": [
+  "sec-hsts",
+  "sec-libraries",
   "ax-button-name",
   "sec-http",
-  "seo-title-missing",
-  "seo-schema-props",
-  "sec-hsts"
+  "seo-title-missing"
  ]
 }

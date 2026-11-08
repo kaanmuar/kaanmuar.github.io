@@ -23,6 +23,10 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantiene HSTS per una sola settimana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ pagine Kubernetes condividono un solo titolo.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ lingue, nessuna sitemap.",
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Security.": {
+  "text": "⟦1⟧ lead in SEO, accessibilità; ⟦2⟧ lead in GEO, Analytics, Performance; ⟦3⟧ leader nella sicurezza.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
   "text": "⟦1⟧ lead in SEO, Analytics, Accessibilità; ⟦2⟧ leader in GEO, sicurezza, prestazioni.",
   "machine": true
@@ -66,6 +70,10 @@
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics; ⟦3⟧ leads in Security, Accessibility, Performance.": {
   "text": "⟦1⟧ lead nel SEO; ⟦2⟧ lead in GEO, Analytics; ⟦3⟧ leader in sicurezza, accessibilità, prestazioni.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security, Accessibility, Performance; ⟦3⟧ leads in Analytics.": {
+  "text": "⟦1⟧ lead nel SEO; ⟦2⟧ lead in GEO, sicurezza, accessibilità, prestazioni; ⟦3⟧ lead in Analytics.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ è in testa nella SEO; ⟦2⟧ in GEO e Sicurezza; ⟦3⟧ in Analytics, Accessibilità e Prestazioni.",
@@ -733,6 +741,10 @@
  "CERN's pages have no description.": "Le pagine del CERN non hanno description.",
  "Check every error message, chart and link.": "Controlla ogni messaggio di errore, grafico e link.",
  "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.": "Confronta a ogni release le versioni delle librerie front-end con un elenco di vulnerabilità note, e aggiorna quelle segnalate.",
+ "Check front-end library versions against a known-flaw list on every release, and upgrade the…": {
+  "text": "Controlla le versioni della libreria front-end rispetto a un elenco di difetti noti su ogni versione e aggiorna il...",
+  "machine": true
+ },
  "Check front-end library versions against a known-flaw list on every release…": "Confronta a ogni release le versioni delle librerie front-end con un elenco di vulnerabilità note…",
  "Check it today:": "Controllalo oggi:",
  "Check it:": "Verifica:",
@@ -1714,6 +1726,10 @@
   "machine": true
  },
  "Scores hidden until tomorrow.": "Punteggi nascosti fino a domani.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…": {
+  "text": "Punteggi affiancati: ⟦1⟧ Punteggio ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicurezza ⟦6⟧, A11y ⟦7⟧, Velocità ⟦8⟧; ⟦9⟧ Punteggio ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analisi ⟦13⟧, Sicurezza ⟦14⟧, A11y ⟦15⟧, Velocità ⟦16⟧; ⟦17⟧ Punteggio ⟦18⟧, SEO ⟦19⟧, GEO…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Punteggi a confronto: ⟦1⟧ Punteggio ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicurezza ⟦6⟧, A11y ⟦7⟧, Velocità ⟦8⟧; ⟦9⟧ Punteggio ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sicurezza ⟦14⟧, A11y ⟦15⟧, Velocità ⟦16⟧; ⟦17⟧ Punteggio ⟦18⟧, SEO…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
   "text": "Punteggi affiancati: ⟦1⟧ Punteggio ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicurezza ⟦6⟧, A11y ⟦7⟧, Velocità ⟦8⟧; ⟦9⟧ Punteggio ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analisi ⟦13⟧, Sicurezza ⟦14⟧, A11y ⟦15⟧, Velocità ⟦16⟧; ⟦17⟧ Punteggio...",

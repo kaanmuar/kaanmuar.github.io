@@ -1354,6 +1354,39 @@
    "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-redirects-seo-30.jpg",
    "youtube": "",
    "cat": "SEO"
+  },
+  {
+   "id": "pick/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex",
+   "date": "2026-11-07",
+   "lang": "en",
+   "title": "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript",
+   "text": "Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript Una...\n\nVia DEV, by AppInitDev, 2026-11-06.",
+   "url": "https://dev.to/appinitdev/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex-con-javascript-12ka",
+   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fe1cwpqwmomeb6ze8z7z0.png",
+   "youtube": "",
+   "cat": "Accessibility"
+  },
+  {
+   "id": "pick/before-and-after-slider-in-react-accessible-and-draggable",
+   "date": "2026-11-07",
+   "lang": "en",
+   "title": "Before and after slider in React, accessible and draggable",
+   "text": "Build a React before after slider with pointer events, a clip-path reveal, arrow key support and the ARIA slider role. Works with touch and a keyboard.\n\nVia DEV, by Marco Schulz, 2026-11-04.",
+   "url": "https://facadeui.com/blog/react-before-after-slider",
+   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F6dnquragjmdyjx8r6b8y.png",
+   "youtube": "",
+   "cat": "Accessibility"
+  },
+  {
+   "id": "pick/loyaltyobsidianocean2704-ai-resocket-test-architect-ai-drive",
+   "date": "2026-11-07",
+   "lang": "en",
+   "title": "LoyaltyobsidianOcean2704/ai-resocket-test-architect: AI-Driven Visual & Functional QA Agent powered by Gemini Multimodal Structured Outputs & Terminal CLI",
+   "text": "AI-Driven Visual & Functional QA Agent powered by Gemini Multimodal Structured Outputs & Terminal CLI\n\nVia GitHub, by LoyaltyobsidianOcean2704, 2026-11-05.",
+   "url": "https://github.com/LoyaltyobsidianOcean2704/ai-resocket-test-architect",
+   "image": "https://opengraph.githubassets.com/1/LoyaltyobsidianOcean2704/ai-resocket-test-architect",
+   "youtube": "",
+   "cat": "Testing"
   }
  ],
  "decisions": {
@@ -1397,6 +1430,7 @@
   "6514c2958df8": "approved",
   "675190976b59": "approved",
   "681d797a4e4f": "approved",
+  "6bcae7e44172": "approved",
   "6c7d5d54c0cd": "approved",
   "6d7806eb6bd9": "approved",
   "6fc3e3866da9": "approved",
@@ -1428,6 +1462,7 @@
   "b76d7959d61c": "approved",
   "b8d5062d0b1b": "approved",
   "b90100cccf44": "approved",
+  "bb3a6d4d737f": "approved",
   "c012bbc856a1": "approved",
   "c440091f455b": "approved",
   "c953335464d3": "approved",
@@ -1445,6 +1480,7 @@
   "db2c78ded939": "approved",
   "db54022ea56d": "approved",
   "dbb56d1e5580": "approved",
+  "dc9770661a49": "approved",
   "dff922dfd8a8": "approved",
   "e0b45eb832b1": "approved",
   "e2a0c4ca94df": "approved",
