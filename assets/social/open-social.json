@@ -873,6 +873,17 @@
     "checked": "2026-11-06T22:11:41.042Z"
    }
   ],
+  "promo-social-hub-2026-10/21-follow-fr": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzsstqfzz42c",
+    "at": "2026-11-08T16:18:36.853Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzsstqfzz42c",
+    "checked": "2026-11-08T16:18:51.592Z"
+   }
+  ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
    {
     "channel": "bluesky",
