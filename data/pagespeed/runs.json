@@ -1,6 +1,386 @@
 {
  "runs": [
   {
+   "at": "2026-11-08T15:53:29.074Z",
+   "run": {
+    "id": 42480054840,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/42480054840"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1451,
+   "scored": 1451,
+   "failed": 0,
+   "below": 755,
+   "avg": {
+    "mobile": 88,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-08",
+    "files": [
+     "assets/frameworks/behave.png",
+     "assets/profile-280.jpg",
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-lab.html",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "qa-review.html",
+     "simulador.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/it/a11y.html",
+     "social/launch-2026-10/it/exports.html",
+     "social/launch-2026-10/it/first-read.html",
+     "social/launch-2026-10/it/frameworks.html",
+     "social/launch-2026-10/it/inherited.html"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-lab.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-fr.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-de.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-es.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "assets/profile-280.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/profile-280.jpg from 21 KB to 11 KB."
+     },
+     {
+      "page": "assets/frameworks/behave.png",
+      "kind": "image",
+      "detail": "Compressed assets/frameworks/behave.png from 9 KB to 7 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 60,
+       "after": 59,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 80,
+       "after": 80,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "qa-lab.html",
+      "mobile": {
+       "before": 65,
+       "after": 65,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-lab.html"
+     },
+     {
+      "file": "qa-review-fr.html",
+      "mobile": {
+       "before": 59,
+       "after": 58,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 80,
+       "after": 80,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-fr.html"
+     },
+     {
+      "file": "qa-review-de.html",
+      "mobile": {
+       "before": 59,
+       "after": 43,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 80,
+       "after": 80,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-de.html"
+     },
+     {
+      "file": "qa-review-es.html",
+      "mobile": {
+       "before": 59,
+       "after": 59,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 79,
+       "after": 79,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-es.html"
+     },
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 64,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 86,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on qa-review-de.html (mobile 59 → 43).",
+     "drops": 1,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-08",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/it/a11y.html",
+     "social/launch-2026-10/it/exports.html",
+     "social/launch-2026-10/it/first-read.html",
+     "social/launch-2026-10/it/frameworks.html",
+     "social/launch-2026-10/it/inherited.html",
+     "social/launch-2026-10/it/layers.html",
+     "social/launch-2026-10/it/performance.html",
+     "social/launch-2026-10/it/release.html",
+     "social/launch-2026-10/it/security.html",
+     "social/launch-2026-10/it/talking.html",
+     "social/launch-2026-10/pt/a11y.html",
+     "social/launch-2026-10/pt/exports.html",
+     "social/launch-2026-10/pt/first-read.html",
+     "social/launch-2026-10/pt/frameworks.html",
+     "social/launch-2026-10/pt/inherited.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "social/pick/nautnhanahp-design-payback-coupon-bot-payback-coupon-activat-pt.html",
+      "mobile": {
+       "before": 100,
+       "after": 78,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/nautnhanahp-design-payback-coupon-bot-payback-coupon-activat-pt.html"
+     },
+     {
+      "file": "social/compare-2026-11/05-banks.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/compare-2026-11/05-banks.html"
+     },
+     {
+      "file": "social/pick/how-to-choose-the-right-vpat-approach-for-your-organization-.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 82,
+       "after": 81,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/how-to-choose-the-right-vpat-approach-for-your-organization-.html"
+     },
+     {
+      "file": "social/pick/how-to-choose-the-right-vpat-approach-for-your-organization--es.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 89,
+       "after": 83,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/how-to-choose-the-right-vpat-approach-for-your-organization--es.html"
+     },
+     {
+      "file": "social/pick/businesses-treat-your-ai-agent-3-different-ways-via-sejourna.html",
+      "mobile": {
+       "before": 76,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/businesses-treat-your-ai-agent-3-different-ways-via-sejourna.html"
+     },
+     {
+      "file": "social/pick/businesses-treat-your-ai-agent-3-different-ways-via-sejourna-es.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 79,
+       "after": 88,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/businesses-treat-your-ai-agent-3-different-ways-via-sejourna-es.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on social/pick/nautnhanahp-design-payback-coupon-bot-payback-coupon-activat-pt.html (mobile 100 → 78), social/pick/how-to-choose-the-right-vpat-approach-for-your-organization--es.html (desktop 89 → 83).",
+     "drops": 2,
+     "rises": 1,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-07T15:18:19.966Z",
    "run": {
     "id": 42370712486,
