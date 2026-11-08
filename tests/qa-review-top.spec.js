@@ -224,15 +224,14 @@ test.describe('A first review from the hero (#2756)', () => {
   });
 
   test('each language page carries the hero field and its own steps line', async ({ page }) => {
-    for (const lang of ['es', 'pt', 'de', 'fr', 'it']) {
+    const lead = { es: 'Falta antes de Revisar', pt: 'Falta antes de Revisar', de: 'Noch offen vor „Prüfen“', fr: 'Reste à remplir avant Analyser', it: 'Manca prima di Analizza' };
+    for (const lang of Object.keys(lead)) {
       await prime(page);
       await backend(page);
       await page.goto('/qa-review-' + lang + '.html');
       await expect(page.locator('#stage-url')).toBeVisible();
-      const needs = await page.locator('#review-needs').getAttribute('data-text');
-      expect(needs).toContain('{steps}');
-      expect(needs).not.toBe('Still needed before Review: {steps}');
-      await expect(page.locator('#log-next')).toHaveAttribute('lang', lang);
+      await expect(page.locator('#review-needs')).toContainText(lead[lang]);
+      await expect(page.locator('#log-next li').first()).toHaveAttribute('lang', lang);
     }
   });
 });

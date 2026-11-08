@@ -345,13 +345,13 @@
     const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
     if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
-  // The steps still open before Review, each a button to its step; the template comes from the page in its language.
+  // The steps still open before Review, each a button to its step, labelled with the step's own title.
   function paintNeeds(groups) {
     const box = document.getElementById("review-needs");
-    if (!box) return;
+    if (!box || !window.QAReviewReportCopy) return;
     box.hidden = !groups.length;
     if (!groups.length) return;
-    const parts = box.dataset.text.split("{steps}");
+    const parts = QAReviewReportCopy.t("reviewNeeds").split("{steps}");
     box.textContent = parts[0];
     groups.forEach((group) => {
       const button = document.createElement("button");
