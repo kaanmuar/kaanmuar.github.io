@@ -1061,6 +1061,27 @@
         .stage-links .live-jump { margin-top: 0; }
         .stage-link { padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 650; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
         .stage-link:hover { color: var(--text); }
+        .stage-start { margin: 22px 0 0; max-width: 580px; }
+        .stage-start-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text); }
+        .stage-start-row { display: flex; gap: 8px; }
+        .stage-start .url-row { flex: 1; min-width: 0; background: rgba(255, 255, 255, .07); border-color: rgba(159, 214, 220, .4); }
+        .stage-start .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(126, 246, 251, .22); }
+        .stage-start .url-row input { color: #f4fafb; font-size: 16px; padding: 12px 12px 12px 2px; }
+        .stage-start .url-row input::placeholder { color: rgba(233, 243, 244, .45); }
+        .stage-start .btn-primary { flex: none; padding: 12px 20px; font-size: 14px; }
+        .stage-start-note { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+        .review-needs { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .review-needs button { margin: 0 2px; padding: 1px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+        .review-needs button:hover { border-color: var(--cyan); }
+        .log-card .log { order: 1; }
+        .log-next { margin: 4px 0 0; padding-left: 20px; color: #c5d0d8; font-size: 13px; line-height: 1.5; }
+        .log-next li { margin: 0 0 8px; }
+        .log:not(:empty) + .log-next { display: none; }
+        #share-open:disabled { display: none; }
+        @media (max-width: 520px) {
+            .stage-start-row { flex-direction: column; }
+            .stage-start .btn-primary { width: 100%; }
+        }
         #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
         #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
         #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
@@ -1350,6 +1371,14 @@
                 <span>or regulators do.</span>
             </h1>
             <p class="lede">Bring one public address. See what tracks visitors before consent, what fails WCAG 2.2 AA, which security headers are missing, and how search and AI answer engines read the page, with a fix for each and test cases for the 20 frameworks your team already uses.</p>
+            <form class="stage-start" id="stage-start" novalidate>
+                <label class="stage-start-label" for="stage-url">Start with the address of a public page</label>
+                <div class="stage-start-row">
+                    <div class="url-row notranslate"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div>
+                    <button class="btn btn-primary" type="submit">Review this page</button>
+                </div>
+                <p class="stage-start-note">Your first review is included: up to 20 pages, two links deep. Next you sign in on this device and pick a reason; the report opens here when the review ends.</p>
+            </form>
             <ul class="facts">
                 <li><b>21</b><span>kinds of cases</span></li>
                 <li><b>20</b><span>frameworks you already know</span></li>
@@ -1421,10 +1450,21 @@
     </details>
     <section id="intake" class="card">
         <h2 class="request-title">The request</h2>
-        <p class="lede">Who is asking, and which address should we open?</p>
+        <p class="lede">Which address should we open, and who is asking?</p>
         <form id="review-form">
-            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 0">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title">You</b><span class="tg-gist">Sign in, add your name, and choose whether this review is published.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title">The page</b><span class="tg-gist">The public https address to analyze.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+                <div class="rg-body">
+                    <label for="url">Public page</label>
+                    <div class="url-row notranslate" id="url-field">
+                        <span>https://</span>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    </div>
+                    <p class="field-error" id="url-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title">You</b><span class="tg-gist">Sign in, add your name, and choose whether this review is published.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
                 <div class="rg-body">
                     <div class="sign-in" id="sign-in">
                         <p class="sign-in-title"><strong>Sign in to run a review</strong></p>
@@ -1472,8 +1512,8 @@
                     <label class="check"><input id="no-publish" name="unlisted" type="checkbox" disabled> Don't publish this review as a Live Report or on social media.</label>
                 </div>
             </details>
-            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 1">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title">Why this review</b><span class="tg-gist">Pick the reason that fits. Some ask for one more detail.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
+            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 2">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title">Why this review</b><span class="tg-gist">Pick the reason that fits. Some ask for one more detail.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
                 <div class="rg-body">
                     <fieldset class="reasons" id="reasons">
                         <legend>Reasons for this review</legend>
@@ -1510,17 +1550,6 @@
                     </div>
                     <label for="reason">Other reason</label>
                     <textarea id="reason" name="reason" disabled placeholder="Choose Other to write a reason."></textarea>
-                </div>
-            </details>
-            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 2">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title">The page</b><span class="tg-gist">The public https address to analyze.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
-                <div class="rg-body">
-                    <label for="url">Public page</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
-                    </div>
-                    <p class="field-error" id="url-error"></p>
                 </div>
             </details>
             <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
@@ -1564,6 +1593,7 @@
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <p class="status" id="form-status" role="status"></p>
+            <p class="review-needs" id="review-needs" data-text="Still needed before Review: {steps}" hidden></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled>Review</button>
                 <button class="btn btn-stop" id="stop-btn" type="button" disabled>Stop</button>
@@ -1576,6 +1606,11 @@
         <p class="muted" id="report-once">Lines appear here while the pages are being analyzed. Stop keeps the pages already saved and writes that stop into the report.</p>
         <p class="compare-run" id="compare-run" hidden><span id="compare-run-text"></span><button class="btn btn-ghost" id="compare-back" type="button">Back to your report</button></p>
         <ol class="log" id="run-log"></ol>
+        <ol class="log-next" id="log-next">
+            <li>Enter the public address, then sign in on this device with email or an account you already have.</li>
+            <li>Pick a reason and press Review. Each step shows up here as it happens.</li>
+            <li>The report opens on this page when the review ends, and stays in Your reviews.</li>
+        </ol>
     </section>
     </div>
 </main>
@@ -1861,9 +1896,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128g" defer></script>
 <script src="js/qa-review-findings-copy.en.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128f" defer></script>
+<script src="js/qa-review.js?v=20261128g" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>

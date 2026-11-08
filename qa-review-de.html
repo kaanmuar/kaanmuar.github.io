@@ -1061,6 +1061,27 @@
         .stage-links .live-jump { margin-top: 0; }
         .stage-link { padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 650; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
         .stage-link:hover { color: var(--text); }
+        .stage-start { margin: 22px 0 0; max-width: 580px; }
+        .stage-start-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text); }
+        .stage-start-row { display: flex; gap: 8px; }
+        .stage-start .url-row { flex: 1; min-width: 0; background: rgba(255, 255, 255, .07); border-color: rgba(159, 214, 220, .4); }
+        .stage-start .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(126, 246, 251, .22); }
+        .stage-start .url-row input { color: #f4fafb; font-size: 16px; padding: 12px 12px 12px 2px; }
+        .stage-start .url-row input::placeholder { color: rgba(233, 243, 244, .45); }
+        .stage-start .btn-primary { flex: none; padding: 12px 20px; font-size: 14px; }
+        .stage-start-note { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+        .review-needs { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .review-needs button { margin: 0 2px; padding: 1px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+        .review-needs button:hover { border-color: var(--cyan); }
+        .log-card .log { order: 1; }
+        .log-next { margin: 4px 0 0; padding-left: 20px; color: #c5d0d8; font-size: 13px; line-height: 1.5; }
+        .log-next li { margin: 0 0 8px; }
+        .log:not(:empty) + .log-next { display: none; }
+        #share-open:disabled { display: none; }
+        @media (max-width: 520px) {
+            .stage-start-row { flex-direction: column; }
+            .stage-start .btn-primary { width: 100%; }
+        }
         #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
         #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
         #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
@@ -1350,6 +1371,14 @@
                 <span>oder Behörden es tun.</span>
             </h1>
             <p class="lede" lang="de" translate="no">Bringen Sie eine öffentliche Adresse mit. Sehen Sie, was Besucher vor der Einwilligung trackt, was WCAG 2.2 AA nicht erfüllt, welche Sicherheits-Header fehlen und wie Suchmaschinen und KI-Antwortdienste die Seite sehen, mit einer Korrektur für jeden Punkt und Testfällen für die 20 Frameworks, die Ihr Team schon nutzt.</p>
+            <form class="stage-start" id="stage-start" novalidate>
+                <label class="stage-start-label" for="stage-url" lang="de" translate="no">Beginnen Sie mit der Adresse einer öffentlichen Seite</label>
+                <div class="stage-start-row">
+                    <div class="url-row notranslate"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div>
+                    <button class="btn btn-primary" type="submit" lang="de" translate="no">Diese Seite prüfen</button>
+                </div>
+                <p class="stage-start-note" lang="de" translate="no">Ihre erste Prüfung ist inklusive: bis zu 20 Seiten, zwei Links tief. Danach melden Sie sich auf diesem Gerät an und wählen einen Grund; der Bericht öffnet sich hier, wenn die Prüfung endet.</p>
+            </form>
             <ul class="facts">
                 <li><b>21</b><span lang="de" translate="no">Arten von Testfällen</span></li>
                 <li><b>20</b><span lang="de" translate="no">Frameworks, die Sie schon kennen</span></li>
@@ -1421,10 +1450,21 @@
     </details>
     <section id="intake" class="card">
         <h2 class="request-title" lang="de" translate="no">Der Antrag</h2>
-        <p class="lede" lang="de" translate="no">Wer fragt an, und welche Adresse sollen wir öffnen?</p>
+        <p class="lede" lang="de" translate="no">Welche Adresse sollen wir öffnen, und wer fragt an?</p>
         <form id="review-form">
-            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 0">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Sie</b><span class="tg-gist" lang="de" translate="no">Melden Sie sich an, geben Sie Ihren Namen ein und wählen Sie, ob diese Prüfung veröffentlicht wird.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Die Seite</b><span class="tg-gist" lang="de" translate="no">Die öffentliche https-Adresse, die geprüft wird.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+                <div class="rg-body">
+                    <label for="url" lang="de" translate="no">Öffentliche Seite</label>
+                    <div class="url-row notranslate" id="url-field">
+                        <span>https://</span>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    </div>
+                    <p class="field-error" id="url-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Sie</b><span class="tg-gist" lang="de" translate="no">Melden Sie sich an, geben Sie Ihren Namen ein und wählen Sie, ob diese Prüfung veröffentlicht wird.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
                 <div class="rg-body">
                     <div class="sign-in" id="sign-in">
                         <p class="sign-in-title"><strong lang="de" translate="no">Melden Sie sich an, um eine Prüfung zu starten</strong></p>
@@ -1472,8 +1512,8 @@
                     <label class="check" lang="de" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> Diese Prüfung nicht als Live Report oder in sozialen Medien veröffentlichen.</label>
                 </div>
             </details>
-            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 1">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Warum diese Prüfung</b><span class="tg-gist" lang="de" translate="no">Wählen Sie den passenden Grund. Manche fragen nach einem weiteren Detail.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
+            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 2">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Warum diese Prüfung</b><span class="tg-gist" lang="de" translate="no">Wählen Sie den passenden Grund. Manche fragen nach einem weiteren Detail.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
                 <div class="rg-body">
                     <fieldset class="reasons" id="reasons">
                         <legend lang="de" translate="no">Gründe für diese Prüfung</legend>
@@ -1510,17 +1550,6 @@
                     </div>
                     <label for="reason" lang="de" translate="no">Anderer Grund</label>
                     <textarea id="reason" name="reason" disabled placeholder="Wählen Sie „Sonstiges“, um einen Grund zu schreiben."></textarea>
-                </div>
-            </details>
-            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 2">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Die Seite</b><span class="tg-gist" lang="de" translate="no">Die öffentliche https-Adresse, die geprüft wird.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
-                <div class="rg-body">
-                    <label for="url" lang="de" translate="no">Öffentliche Seite</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
-                    </div>
-                    <p class="field-error" id="url-error"></p>
                 </div>
             </details>
             <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
@@ -1564,6 +1593,7 @@
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <p class="status" id="form-status" role="status"></p>
+            <p class="review-needs" id="review-needs" data-text="Noch offen vor „Prüfen“: {steps}" lang="de" translate="no" hidden></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled lang="de" translate="no">Prüfen</button>
                 <button class="btn btn-stop" id="stop-btn" type="button" disabled lang="de" translate="no">Stoppen</button>
@@ -1576,6 +1606,11 @@
         <p class="muted" id="report-once" lang="de" translate="no">Hier erscheinen Zeilen, während die Seiten geprüft werden. Stoppen behält die bereits gespeicherten Seiten und vermerkt den Stopp im Bericht.</p>
         <p class="compare-run" id="compare-run" hidden><span id="compare-run-text"></span><button class="btn btn-ghost" id="compare-back" type="button" lang="de" translate="no">Zurück zu Ihrem Bericht</button></p>
         <ol class="log" id="run-log"></ol>
+        <ol class="log-next" id="log-next" lang="de" translate="no">
+            <li>Geben Sie die öffentliche Adresse ein und melden Sie sich auf diesem Gerät mit E-Mail oder einem vorhandenen Konto an.</li>
+            <li>Wählen Sie einen Grund und drücken Sie „Prüfen“. Jeder Schritt erscheint hier, sobald er passiert.</li>
+            <li>Der Bericht öffnet sich auf dieser Seite, wenn die Prüfung endet, und bleibt unter Ihre Prüfungen.</li>
+        </ol>
     </section>
     </div>
 </main>
@@ -1862,9 +1897,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128g" defer></script>
 <script src="js/qa-review-findings-copy.de.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128f" defer></script>
+<script src="js/qa-review.js?v=20261128g" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>

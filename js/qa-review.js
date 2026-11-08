@@ -123,9 +123,11 @@
     return !!(window.ReviewAuth && ReviewAuth.signedIn());
   }
 
+  // Review stays pressable while signed out: pressing it asks for the terms, then says to sign in.
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
-      if (!activeRun) reviewBtn.disabled = !on;
+      const name = document.getElementById("name");
+      if (on && name && !name.value.trim() && ReviewAuth.who().name) name.value = ReviewAuth.who().name;
     });
   }
 
@@ -140,7 +142,7 @@
     reasonBox.disabled = true;
     syncSection();
     stopBtn.disabled = true;
-    reviewBtn.disabled = !signedIn();
+    reviewBtn.disabled = false;
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
@@ -330,16 +332,56 @@
       cases: names.length > 0,
       scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
+    const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
       const ok = !!done[group.dataset.step];
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+      if (!ok) missing.push(group);
     });
+    paintNeeds(missing);
     const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
     const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
     if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
+  // The steps still open before Review, each a button to its step; the template comes from the page in its language.
+  function paintNeeds(groups) {
+    const box = document.getElementById("review-needs");
+    if (!box) return;
+    box.hidden = !groups.length;
+    if (!groups.length) return;
+    const parts = box.dataset.text.split("{steps}");
+    box.textContent = parts[0];
+    groups.forEach((group) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.step = group.dataset.step;
+      button.textContent = (Array.from(group.parentNode.querySelectorAll(".req-group")).indexOf(group) + 1) + " " + group.querySelector(".tg-title").textContent;
+      box.appendChild(button);
+    });
+    box.appendChild(document.createTextNode(parts[1] || ""));
+  }
+
+  function goToStep(step) {
+    const group = reviewForm.querySelector('.req-group[data-step="' + step + '"]');
+    if (!group) return;
+    group.open = true;
+    if (step === "you" && !signedIn() && window.ReviewAuth) {
+      ReviewAuth.focus();
+      return;
+    }
+    const target = [...group.querySelectorAll("input:not([type=hidden]), textarea")].find((el) => !el.disabled && !el.readOnly && el.offsetParent && !(el.type === "radio" && reviewForm.querySelector('input[name="' + el.name + '"]:checked')) && !(el.type !== "radio" && el.type !== "checkbox" && el.value.trim()));
+    group.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  const needsBox = document.getElementById("review-needs");
+  if (needsBox) needsBox.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-step]");
+    if (button) goToStep(button.dataset.step);
+  });
+
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
   reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
@@ -382,6 +424,28 @@
     urlInput.value = prefill;
     urlInput.dispatchEvent(new Event("input"));
   }
+
+  // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
+  const stageStart = document.getElementById("stage-start");
+  const stageUrl = document.getElementById("stage-url");
+  if (stageUrl && urlInput.value) stageUrl.value = urlInput.value;
+  if (stageStart) stageStart.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value) {
+      stageUrl.focus();
+      return;
+    }
+    urlInput.value = value;
+    urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
+    const next = reviewForm.querySelector('.req-group:not(.done):not([data-step="page"])');
+    if (next) goToStep(next.dataset.step);
+    else {
+      document.getElementById("intake").scrollIntoView({ block: "end", behavior: "smooth" });
+      reviewBtn.focus({ preventScroll: true });
+    }
+  });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
@@ -1691,7 +1755,7 @@
       activeRun = "";
       comparePool = null;
       hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
     endComparePool(compare, pool, confirmed);
@@ -2804,6 +2868,13 @@
     return donePayload;
   }
 
+  // Signed out, sign-in is the step to point at, before the browser's own required-field bubbles on the rest.
+  reviewBtn.addEventListener("click", (event) => {
+    if (activeRun || signedIn()) return;
+    event.preventDefault();
+    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  });
+
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (activeRun) return;
@@ -2813,7 +2884,7 @@
     }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
-      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      setStatus(rc.t("signInToRun"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
@@ -2932,7 +3003,7 @@
       runLog.classList.remove("is-live");
       activeRun = "";
       if (compare) hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
   });

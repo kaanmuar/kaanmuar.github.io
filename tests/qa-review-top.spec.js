@@ -169,3 +169,70 @@ test.describe('Terms on submit (#1090)', () => {
     await expect(page.locator('#gate')).toBeHidden();
   });
 });
+
+test.describe('A first review from the hero (#2756)', () => {
+  test('the hero takes the address and goes to sign-in, with the steps left named', async ({ page }) => {
+    await prime(page, { terms: false });
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#stage-url')).toBeInViewport();
+    await expect(page.locator('#share-open')).toBeHidden();
+    await page.locator('#stage-url').fill('https://example.com/docs');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#url')).toHaveValue('example.com/docs');
+    await expect(page.locator('#sign-in-email')).toBeFocused();
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#req-page')).toHaveClass(/done/);
+    await expect(page.locator('#review-needs button')).toHaveText(['2 You', '3 Why this review']);
+    await page.locator('#review-needs button[data-step="why"]').click();
+    await expect(page.locator('#reasons input[type="radio"]').first()).toBeFocused();
+  });
+
+  test('an empty hero field stays put', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#stage-url')).toBeFocused();
+  });
+
+  test('Review can be pressed signed out: the terms come first, then it asks to sign in', async ({ page }) => {
+    await prime(page, { terms: false });
+    const calls = await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#url').fill('example.com');
+    await expect(page.locator('#review-btn')).toBeEnabled();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#gate')).toBeVisible();
+    await page.locator('#terms-all').check();
+    await page.locator('#accept').click();
+    await expect(page.locator('#form-status')).toHaveText(/^Sign in above to run a review/);
+    await expect(page.locator('#sign-in-email')).toBeFocused();
+    expect(calls).not.toContain('/review');
+  });
+
+  test('every step reads done once signed in with a name and a reason, and the steps line goes away', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('example.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[type="radio"]').first().check();
+    await expect(page.locator('#review-needs')).toBeHidden();
+  });
+
+  test('each language page carries the hero field and its own steps line', async ({ page }) => {
+    for (const lang of ['es', 'pt', 'de', 'fr', 'it']) {
+      await prime(page);
+      await backend(page);
+      await page.goto('/qa-review-' + lang + '.html');
+      await expect(page.locator('#stage-url')).toBeVisible();
+      const needs = await page.locator('#review-needs').getAttribute('data-text');
+      expect(needs).toContain('{steps}');
+      expect(needs).not.toBe('Still needed before Review: {steps}');
+      await expect(page.locator('#log-next')).toHaveAttribute('lang', lang);
+    }
+  });
+});
