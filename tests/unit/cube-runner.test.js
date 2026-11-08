@@ -150,3 +150,72 @@ test("the push goes out once, when a run finishes, and names the failed cases", 
   assert.deepEqual(done.lines, ["MB-02 Tablet width"]);
   assert.equal(queue.doneMessage({ status: "failed", host: "h", reviewId: "r", error: "No run" }, "u").title, "Run failed: h");
 });
+
+function sampleDb(reviews) {
+  const docs = {};
+  const added = [];
+  return {
+    docs,
+    added,
+    collection(name) {
+      return {
+        add: async (row) => { added.push({ name, row }); return { id: "run" + added.length }; },
+        doc: (id) => {
+          const key = name + "/" + id;
+          return {
+            get: async () => name === "url_reviews"
+              ? { exists: !!reviews[id], data: () => ({ report: reviews[id] }) }
+              : { exists: key in docs, data: () => docs[key] },
+            create: async (row) => {
+              if (key in docs) throw Object.assign(new Error("6 ALREADY_EXISTS: Document already exists"), { code: 6 });
+              docs[key] = row;
+            },
+            update: async (patch) => { docs[key] = Object.assign({}, docs[key], patch); },
+            delete: async () => { delete docs[key]; }
+          };
+        }
+      };
+    }
+  };
+}
+
+test("the free sample runs once per site per UTC day, and a failed one gives the day back", async () => {
+  const db = sampleDb({ abc123: report });
+  const now = Date.UTC(2026, 10, 3, 21, 30);
+  assert.equal(queue.sampleKey("Shop.Example.com", now), "shop.example.com~2026-11-03");
+  assert.equal(queue.nextSampleAt(now), "2026-11-04T00:00:00.000Z");
+  const first = await queue.startSample(db, { reviewId: "abc123", host: "shop.example.com", email: "a@example.com" }, now);
+  assert.equal(first.id, "run1");
+  assert.equal(db.added[0].row.source, "sample");
+  assert.equal(db.added[0].row.limit, 5);
+  assert.equal(db.added[0].row.cases, 4);
+  assert.equal(db.docs["url_review_run_samples/shop.example.com~2026-11-03"].runId, "run1");
+  assert.deepEqual(await queue.startSample(db, { reviewId: "abc123", host: "shop.example.com", email: "b@example.com" }, now + 60000), { used: true, next: "2026-11-04T00:00:00.000Z" });
+  assert.equal(db.added.length, 1);
+  assert.deepEqual(await queue.sampleState(db, "shop.example.com", now), { used: true, next: "2026-11-04T00:00:00.000Z" });
+
+  const run = Object.assign({}, db.added[0].row, { status: "failed" });
+  assert.equal(await queue.releaseSample(db, Object.assign({}, run, { source: "checkout" }), "run1"), false);
+  assert.equal(await queue.releaseSample(db, run, "run9"), false);
+  assert.equal(await queue.releaseSample(db, run, "run1"), true);
+  assert.deepEqual(await queue.sampleState(db, "shop.example.com", now), { used: false, next: "2026-11-04T00:00:00.000Z" });
+});
+
+test("the report's owner sees the run without its push token, operator or execution", () => {
+  const view = queue.customerView("run1", {
+    reviewId: "abc123", host: "shop.example.com", status: "done", source: "sample", token: "secret", by: "a@example.com", execution: "operations/1",
+    at: "2026-11-03T21:30:00.000Z", startedAt: { toDate: () => new Date("2026-11-03T21:30:05.000Z") }, log: ["1 passed"], only: ["FN-02"],
+    summary: { total: 1, passed: 1 }, cases: [{ id: "FN-02", title: "The start page answers", status: "passed", ms: 900, layer: "Functional", review: "proposed", artifacts: [{ path: "x" }] }]
+  });
+  assert.equal(view.startedAt, "2026-11-03T21:30:05.000Z");
+  assert.deepEqual(view.results, [{ id: "FN-02", title: "The start page answers", status: "passed", ms: 900, layer: "Functional", review: "proposed", triage: "", error: "" }]);
+  ["token", "by", "execution", "reviewId"].forEach((key) => assert.equal(key in view, false));
+});
+
+test("the sample skips cases left to a person and load profiles", () => {
+  const picked = cube.sampleOf({ host: "shop.example.com", finalUrl: "https://shop.example.com/", pages: [{ path: "/" }], cases: [
+    { id: "FN-01", fw: ["Playwright"] }, { id: "LD-01", fw: ["Playwright"] }, { id: "UX-09", fw: ["Playwright"] },
+    { id: "FN-02", fw: ["Cypress"] }, { id: "CT-02", fw: ["Playwright"] }, { id: "SEC-02", fw: ["Playwright"] }, { id: "A11Y-01", fw: ["Playwright"] }, { id: "RS-01", fw: ["Playwright"] }
+  ] }, 5);
+  assert.deepEqual(picked.map((item) => item.id), ["FN-01", "CT-02", "SEC-02", "A11Y-01", "RS-01"]);
+});
