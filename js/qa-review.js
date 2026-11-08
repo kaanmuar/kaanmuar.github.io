@@ -159,7 +159,8 @@
     gate.hidden = false;
     gate.classList.remove("is-leaving");
     document.body.classList.add("gate-open");
-    gate.querySelector(".gate-card").focus();
+    gate.scrollTop = 0;
+    gate.querySelector(".gate-card").focus({ preventScroll: true });
   }
 
   function closeGate() {
@@ -297,6 +298,8 @@
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
     paintTermGroups();
+    // On a phone Accept sits below the cards; once everything is ticked it comes into view.
+    if (!accept.disabled) accept.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
   paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
@@ -3454,6 +3457,9 @@
     return showTotal(rc.t("totalCompareTitle"), lines.concat(sumLines(quote)));
   }
 
+  // The button that opened the sample: it is disabled while the sample loads, so focus has left it by then.
+  let dashOpener = null;
+
   function closeDashboard() {
     dash.classList.remove("open");
     document.body.style.overflow = "";
@@ -3471,6 +3477,7 @@
       const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
       const body = await res.json();
+      dashOpener = button || null;
       render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
     } catch (error) {
       if (button) button.textContent = "The sample could not be opened";
@@ -3491,6 +3498,31 @@
   document.getElementById("dash-close").addEventListener("click", closeDashboard);
   dash.addEventListener("click", (event) => {
     if (event.target === dash) closeDashboard();
+  });
+  // The report opens from several places; focus goes into it on open, unless a field or a control in the report already
+  // holds it (the sign-in box, the competitor's address), and back on close.
+  let dashReturn = null;
+  new MutationObserver(() => {
+    const open = dash.classList.contains("open");
+    if (open && !dashReturn) {
+      const before = document.activeElement;
+      dashReturn = dashOpener || before || document.body;
+      dashOpener = null;
+      setTimeout(() => {
+        const now = document.activeElement;
+        const loose = !now || now === document.body || (now === before && now.tagName === "BUTTON" && !dash.contains(now));
+        if (dash.classList.contains("open") && loose) dash.querySelector(".dash-modal").focus({ preventScroll: true });
+      }, 0);
+    } else if (!open && dashReturn) {
+      if (dashReturn.isConnected && dashReturn !== document.body) dashReturn.focus({ preventScroll: true });
+      dashReturn = null;
+    }
+  }).observe(dash, { attributes: true, attributeFilter: ["class"] });
+  dash.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || event.defaultPrevented || !dash.classList.contains("open")) return;
+    if (!event.target.closest(".dash-modal") || event.target.closest("#ask-panel")) return;
+    if (document.querySelector(".gate:not([hidden])")) return;
+    closeDashboard();
   });
   document.getElementById("pay-close").addEventListener("click", () => { payBox.hidden = true; });
   document.getElementById("run-pay-close").addEventListener("click", () => { runPay.hidden = true; });
@@ -3839,7 +3871,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
+    // No auto-start: on a first visit it scrolled away from the hero's address field and covered the consent buttons on phones.
   }
 
   bootLanguageAndTour();

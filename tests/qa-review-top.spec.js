@@ -223,6 +223,47 @@ test.describe('A first review from the hero (#2756)', () => {
     await expect(page.locator('#review-needs')).toBeHidden();
   });
 
+  test('a first visit stays on the hero: the tour waits for its button', async ({ page }) => {
+    await prime(page);
+    await page.addInitScript(() => localStorage.removeItem('hasSeenReviewTour'));
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.waitForTimeout(2500);
+    await expect(page.locator('#site-tour-tooltip')).toHaveCount(0);
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-tooltip')).toBeVisible();
+  });
+
+  test('the sample report takes focus, and Escape closes it back to its button', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('.dash-modal')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+    await expect(page.locator('#stage-sample-open')).toBeFocused();
+  });
+
+  test('on a phone the terms open at the top, Accept comes into view once all are ticked, and Close stays on screen in a report', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await prime(page, { terms: false });
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#url').fill('example.com');
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#gate-close')).toBeInViewport();
+    await page.locator('#terms-all').check();
+    await expect(page.locator('#accept')).toBeInViewport();
+    await page.keyboard.press('Escape');
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await page.locator('#dash-overlay').evaluate((el) => { el.scrollTop = 3000; });
+    await expect(page.locator('#dash-close')).toBeInViewport();
+  });
+
   test('each language page carries the hero field and its own steps line', async ({ page }) => {
     const lead = { es: 'Falta antes de Revisar', pt: 'Falta antes de Revisar', de: 'Noch offen vor „Prüfen“', fr: 'Reste à remplir avant Analyser', it: 'Manca prima di Analizza' };
     for (const lang of Object.keys(lead)) {

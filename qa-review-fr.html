@@ -1078,6 +1078,13 @@
         .log-next li { margin: 0 0 8px; }
         .log:not(:empty) + .log-next { display: none; }
         #share-open:disabled { display: none; }
+        .dash-modal:focus { outline: none; }
+        .dash-overlay .report-toolbar { position: sticky; top: 0; background: var(--bg); }
+        @media (max-width: 800px) {
+            .dash-overlay .report-toolbar { position: relative; top: auto; }
+            .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
+            .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
+        }
         @media (max-width: 520px) {
             .stage-start-row { flex-direction: column; }
             .stage-start .btn-primary { width: 100%; }
@@ -1615,7 +1622,7 @@
     </div>
 </main>
 <div id="dash-overlay" class="dash-overlay">
-    <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title">
+    <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title" tabindex="-1">
         <div class="sheet-mark" aria-hidden="true"></div>
         <p id="capture-note" class="capture-note" data-report-copy="captureNote" lang="fr" translate="no">Cette feuille n’inclut pas le rapport. La tentative est enregistrée avec l’analyse.</p>
         <div class="report-toolbar no-print">
