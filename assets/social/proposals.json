@@ -1,49 +1,67 @@
 {
  "version": 1,
- "built": "2026-11-07T18:06:58.074Z",
+ "built": "2026-11-08T18:25:06.640Z",
  "sources": {
-  "moz": 10,
   "search-engine-journal": 20,
   "w3c": 25,
+  "moz": 10,
   "w3c-wai": 10,
   "ahrefs": 10,
-  "google-search-central": 10,
-  "ipullrank": 5,
   "deque": 10,
+  "ipullrank": 5,
+  "google-search-central": 10,
   "a11y-project": 30,
-  "whatwg": 10,
   "chrome-developers": 10,
+  "whatwg": 10,
   "simo-ahava": 30,
-  "web-dev": 10,
-  "debugbear": 20,
   "martin-fowler": 30,
-  "playwright-releases": 10,
-  "devto": 40,
+  "debugbear": 20,
   "tpgi": 12,
+  "devto": 40,
   "cypress": 15,
+  "playwright-releases": 10,
   "webaim": 10,
-  "hn": 60,
+  "web-dev": 10,
   "perfplanet": 10,
+  "hn": 54,
   "github": 27
  },
  "proposals": [
   {
    "id": "c48a95c5d4f8",
-   "title": "Rank Data Problems, PageSpeed Scores & AI Training Opt-Out – SEO Pulse via @sejournal, @MattGSouthern",
+   "title": "Google Rank Data Issues, Lighthouse Update & AI Opt-Out – SEO Pulse via @sejournal, @MattGSouthern",
    "url": "https://www.searchenginejournal.com/seo-pulse-rank-data-problems-pagespeed-scores-ai-training-opt-out/596104/",
    "source": "Search Engine Journal",
    "author": "Matt G. Southern",
    "date": "2026-11-07",
-   "topic": "SEO",
+   "topic": "Performance",
    "lang": "en",
-   "summary": "Rank data may carry one-word results and redirect URLs. Other updates cover PageSpeed lab scores, a shared AI training opt-out, technical SEO and AI search. The post Rank Data Problems, PageSpeed Scores & AI Training Opt-Out – SEO Pulse appeared first on Search Engine Journal .",
+   "summary": "Rank data may carry one-word results and redirect URLs. Other updates cover PageSpeed lab scores, a shared AI training opt-out, technical SEO and AI search. The post Google Rank Data Issues, Lighthouse Update & AI Opt-Out – SEO Pulse appeared first on Search Engine Journal .",
    "image": "https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-06-1600x840-1.jpg",
-   "why": "SEO keywords in the title",
+   "why": "Performance keywords in the title",
    "weight": 0.9,
-   "relevance": 5,
+   "relevance": 6,
    "trend": 0,
    "firstSeen": "2026-11-07",
-   "score": 5.01
+   "score": 5.29
+  },
+  {
+   "id": "e970536043a7",
+   "title": "Building a reliable configuration pipeline for Python test automation",
+   "url": "https://dev.to/praman/building-a-reliable-configuration-pipeline-for-python-test-automation-1koa",
+   "source": "DEV",
+   "author": "Kabir Hossain",
+   "date": "2026-11-08",
+   "topic": "Testing",
+   "lang": "en",
+   "summary": "When you build a test automation framework, configuration is usually an afterthought. You write a...",
+   "image": "https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mb4gpxq4xx1xcelxvvh.jpg",
+   "why": "Testing keywords in the title",
+   "weight": 0.8,
+   "relevance": 2,
+   "trend": 0,
+   "firstSeen": "2026-11-08",
+   "score": 2.22
   },
   {
    "id": "b19c686b84f7",
@@ -61,7 +79,25 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-11-07",
-   "score": 2.23
+   "score": 2.01
+  },
+  {
+   "id": "b54661e00843",
+   "title": "Playwright fullPage screenshots return one viewport when the page scrolls inside a container",
+   "url": "https://dev.to/curlshot/playwright-fullpage-screenshots-return-one-viewport-when-the-page-scrolls-inside-a-container-2nm5",
+   "source": "DEV",
+   "author": "CurlShot",
+   "date": "2026-11-07",
+   "topic": "Testing",
+   "lang": "en",
+   "summary": "fullPage measures only the document. Two fixes for scrolling app shells, what each does to 100vh and windowed lists, and a 200,000 px page that held.",
+   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F50as02zc960eyijh1sg5.png",
+   "why": "Testing keywords in the title",
+   "weight": 0.8,
+   "relevance": 2,
+   "trend": 0,
+   "firstSeen": "2026-11-08",
+   "score": 2.01
   },
   {
    "id": "e7e812c5fe76",
@@ -79,43 +115,7 @@
    "relevance": 2,
    "trend": 0,
    "firstSeen": "2026-11-07",
-   "score": 2.23
-  },
-  {
-   "id": "6e0fed7b660c",
-   "title": "How to keep server-side validation errors and screen readers in sync",
-   "url": "https://chriseugenerodriguez.com/blog/server-side-validation-errors-screen-readers",
-   "source": "DEV",
-   "author": "Chris Rodriguez",
-   "date": "2026-11-06",
-   "topic": "Accessibility",
-   "lang": "en",
-   "summary": "Map server-returned field errors into inline messages, pair them with a page-level summary, and choose a focus policy that helps screen reader users recover without losing their place.",
-   "image": "https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fojofbckfasftdhrthabs.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fsite-media%2Fassets%2Fblog%2Farticles%2Fserver-side-validation-errors-screen-readers%2Fcover.webp",
-   "why": "Accessibility keywords in the title",
-   "weight": 0.8,
-   "relevance": 2,
-   "trend": 0,
-   "firstSeen": "2026-11-07",
-   "score": 2.02
-  },
-  {
-   "id": "daf34df0d8bc",
-   "title": "A 10-minute self-audit of your site's cookie banner and basic accessibility",
-   "url": "https://dev.to/survivor_agent_3b5adef718/a-10-minute-self-audit-of-your-sites-cookie-banner-and-basic-accessibility-32c",
-   "source": "DEV",
-   "author": "Survivor Agent",
-   "date": "2026-11-03",
-   "topic": "Accessibility",
-   "lang": "en",
-   "summary": "Most home pages fail automated WCAG checks, and cookie banners often load trackers before consent....",
-   "image": "https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fcwemuf3hf2uuvokmwslt.png",
-   "why": "Accessibility keywords in the title",
-   "weight": 0.8,
-   "relevance": 3,
-   "trend": 0,
-   "firstSeen": "2026-11-06",
-   "score": 2
+   "score": 2.01
   },
   {
    "id": "1572bd3e3a96",
@@ -128,12 +128,12 @@
    "lang": "en",
    "summary": "Accessible, themeable React lightbox and gallery with zoom, video, slideshow and deep links. Zero runtime dependencies.",
    "image": "https://opengraph.githubassets.com/1/esdrassantos06/liftbox",
-   "why": "40 stars on GitHub; Accessibility keywords in the title",
+   "why": "65 stars on GitHub; Accessibility keywords in the title",
    "weight": 0.9,
    "relevance": 2,
-   "trend": 0.34,
+   "trend": 0.52,
    "firstSeen": "2026-11-07",
-   "score": 1.87
+   "score": 1.86
   },
   {
    "id": "cc0e081616e8",
@@ -146,12 +146,12 @@
    "lang": "en",
    "summary": "Agent skills for SEO: plan, build, publish, and maintain a website with RankMySEO, Search Console, and GA4.",
    "image": "https://opengraph.githubassets.com/1/rankmyseo/skills",
-   "why": "26 stars on GitHub; SEO keywords in the title",
+   "why": "27 stars on GitHub; SEO keywords in the title",
    "weight": 0.9,
    "relevance": 6,
-   "trend": 0.23,
+   "trend": 0.24,
    "firstSeen": "2026-11-06",
-   "score": 1.41
+   "score": 1.28
   },
   {
    "id": "4bf96b0182de",
@@ -169,7 +169,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-11-06",
-   "score": 0.76
+   "score": 0.68
   },
   {
    "id": "ecb5320c72da",
@@ -187,7 +187,7 @@
    "relevance": 1,
    "trend": 0,
    "firstSeen": "2026-11-06",
-   "score": 0.76
+   "score": 0.68
   }
  ]
 }
