@@ -913,6 +913,17 @@
     "checked": "2026-11-03T02:16:11.549Z"
    }
   ],
+  "skits-friday-release/01-friday-release-en": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzrf73haif2m",
+    "at": "2026-11-08T02:41:51.685Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzrf73haif2m",
+    "checked": "2026-11-08T02:42:00.285Z"
+   }
+  ],
   "tips-2026-10/01-img-size": [
    {
     "channel": "bluesky",
