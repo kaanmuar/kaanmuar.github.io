@@ -561,23 +561,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/05-bbc.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>One h1 per page, saying what the page is.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/12-one-h1.html</link>
-      <guid isPermaLink="false">tips-2026-10/12-one-h1</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>SEO</category>
-      <description>Logos and slogans often grab the h1. Search engines and screen readers both use it to understand the page.
-
-Try this today: Read only the h1 of your top ten pages. Would a stranger know what each page is?
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=one-h1
-
-#SEO #Accessibility #Content #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" length="218575" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/12-one-h1.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>nice.com: 56. The gap: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-22/15-u-nice-com.html</link>
       <guid isPermaLink="false">auto-2026-10-22/15-u-nice-com</guid>
@@ -732,6 +715,24 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #Analytics #GA4 #SEO #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" length="229468" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/02-bogota.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>WHO's fact sheets end in a stray semicolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who</guid>
+      <pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
+
+The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>zizonline.com: 70. The gap: HSTS.</title>
