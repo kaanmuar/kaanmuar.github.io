@@ -483,6 +483,48 @@ https://www.youtube.com/shorts/-LTMX797hzU</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/05-myth-https.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Control deslizante antes y después en React, accesible y arrastrable</title>
+      <link>https://carlosandmunoz.com/social/pick/before-and-after-slider-in-react-accessible-and-draggable-es.html</link>
+      <guid isPermaLink="false">pick/before-and-after-slider-in-react-accessible-and-draggable-es</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Accessibility</category>
+      <description>Cree un control deslizante React antes y después con eventos de puntero, una revelación de ruta de clip, compatibilidad con teclas de flecha y la función del control deslizante ARIA. Funciona con tacto y teclado.
+
+Vía DEV, de Marco Schulz, 2026-11-04.
+
+https://facadeui.com/blog/react-before-after-slider</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F6dnquragjmdyjx8r6b8y.png" medium="image"/>
+    </item>
+    <item>
+      <title>LoyaltyobsidianOcean2704/ai-resocket-test-architect: Agente de control de calidad visual y funcional impulsado por IA impulsado por CLI de terminal y salidas estructuradas multimodales de Gemini</title>
+      <link>https://carlosandmunoz.com/social/pick/loyaltyobsidianocean2704-ai-resocket-test-architect-ai-drive-es.html</link>
+      <guid isPermaLink="false">pick/loyaltyobsidianocean2704-ai-resocket-test-architect-ai-drive-es</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>Agente de control de calidad visual y funcional impulsado por IA impulsado por CLI de terminal y salidas estructuradas multimodales de Gemini
+
+Vía GitHub, por LoyaltyobsidianOcean2704, 2026-11-05.
+
+https://github.com/LoyaltyobsidianOcean2704/ai-resocket-test-architect</description>
+      <media:content url="https://opengraph.githubassets.com/1/LoyaltyobsidianOcean2704/ai-resocket-test-architect" medium="image"/>
+    </item>
+    <item>
+      <title>Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript</title>
+      <link>https://carlosandmunoz.com/social/pick/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex-es.html</link>
+      <guid isPermaLink="false">pick/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex-es</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Accessibility</category>
+      <description>Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript Una...
+
+Vía DEV, por AppInitDev, 2026-11-06.
+
+https://dev.to/appinitdev/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex-con-javascript-12ka</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fe1cwpqwmomeb6ze8z7z0.png" medium="image"/>
+    </item>
+    <item>
       <title>GOV.CO está vacío hasta que se ejecuta JavaScript.</title>
       <link>https://carlosandmunoz.com/social/runs-2026-10/04-govco-es.html</link>
       <guid isPermaLink="false">runs-2026-10/04-govco-es</guid>
@@ -913,48 +955,6 @@ Vía Search Engine Journal, por Roger Montti, 2026-11-05.
 
 https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-redirects-seo-30.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Las consultas de búsqueda de Google alcanzaron un máximo de 5 año y los ingresos por búsqueda no alcanzaron el nivel @sejournal, @DuaneForrester</title>
-      <link>https://carlosandmunoz.com/social/pick/google-search-queries-hit-a-5-year-high-and-search-revenue-d-es.html</link>
-      <guid isPermaLink="false">pick/google-search-queries-hit-a-5-year-high-and-search-revenue-d-es</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>GEO</category>
-      <description>Los ingresos por búsquedas crecieron 12% mientras que las consultas alcanzaron su máximo en cinco años. La brecha es el modo AI y la solución de Google es más anuncios dentro de la respuesta. La publicación Las consultas de búsqueda de Google alcanzaron un máximo de 5 año y los ingresos por búsqueda no siguieron apareció por primera vez en Search Engine Journal.
-
-Vía Search Engine Journal, de Duane Forrester, 2026-11-05.
-
-https://www.searchenginejournal.com/google-search-queries-hit-a-5-year-high-and-search-revenue-didnt-follow/595485/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-google-search-752.png" medium="image"/>
-    </item>
-    <item>
-      <title>Cómo elegir el enfoque VPAT adecuado para su organización (¡y si debe utilizar IA para completar su ACR!)</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-choose-the-right-vpat-approach-for-your-organization--es.html</link>
-      <guid isPermaLink="false">pick/how-to-choose-the-right-vpat-approach-for-your-organization--es</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>En esta publicación, analizaré por qué la precisión es importante para la accesibilidad digital en una era de estándares globales en evolución y un mayor escrutinio regulatorio. Explicaré dónde y cómo encajan los VPAT y ACR en sus estrategias de accesibilidad y lo que necesita saber antes de tomar decisiones sobre el uso de la IA. La publicación Cómo elegir el enfoque VPAT adecuado para su organización (y si debería…
-
-Vía Deque, de Will Creedle, 2026-11-04.
-
-https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/</description>
-      <media:content url="https://www.deque.com/wp-content/uploads/2026/11/11.02.26-VPAT_Blog-images-opt2-scaled.png" medium="image"/>
-    </item>
-    <item>
-      <title>Cómo informar el rendimiento de SEO cuando los datos analíticos están incompletos</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-report-seo-performance-when-analytics-data-is-incompl-es.html</link>
-      <guid isPermaLink="false">pick/how-to-report-seo-performance-when-analytics-data-is-incompl-es</guid>
-      <pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Analytics</category>
-      <description>¿Tiene dificultades para realizar un seguimiento de los resultados de SEO a través de puntos ciegos de privacidad y consentimiento? Aprenda a utilizar los datos de GSC, GA4 y CRM para explicar el impacto del SEO cuando el recorrido completo del cliente no es visible.
-
-Vía Moz, de Dii Pooler, 2026-11-04.
-
-https://moz.com/blog/measure-seo-performance-incomplete-data</description>
-      <media:content url="https://moz.com/images/blog/Blog-OG-images/How-to-Report-SEO-Performance-When-Analytics-Data-is-Incomplete-OG-Image.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1793690217&amp;s=0bd1781acc14c561e8f4fce915127f66" medium="image"/>
     </item>
   </channel>
 </rss>
