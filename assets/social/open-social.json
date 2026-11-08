@@ -81,6 +81,26 @@
     "checked": "2026-11-07T20:13:28.256Z"
    }
   ],
+  "auto-2026-10-22/09-u-lenovo-com": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18081729215397088",
+    "at": "2026-11-08T20:51:07.023Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026121192834564255",
+    "checked": "2026-11-08T20:51:18.448Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18147844990577917",
+    "at": "2026-11-08T20:46:44.088Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Dffpel1E4ib/",
+    "checked": "2026-11-08T20:47:30.702Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -466,6 +486,84 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfdYdNWggDN",
     "checked": "2026-11-07T23:39:58.996Z"
+   }
+  ],
+  "auto-2026-11-05/01-u-houm-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mztbqmgylw2x",
+    "at": "2026-11-08T20:45:30.667Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mztbqmgylw2x",
+    "checked": "2026-11-08T20:45:32.860Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18110583182242155",
+    "at": "2026-11-08T20:50:55.192Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026121091760223222",
+    "checked": "2026-11-08T20:51:07.023Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18133853266758577",
+    "at": "2026-11-08T20:49:09.984Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Dffp0amgoXU/",
+    "checked": "2026-11-08T20:50:44.354Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18073352909787404",
+    "at": "2026-11-08T20:45:47.595Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DffpcNBicdJ",
+    "checked": "2026-11-08T20:46:43.156Z"
+   }
+  ],
+  "auto-2026-11-05/07-u-uacm-edu-mx": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18029554775866741",
+    "at": "2026-11-08T20:50:44.596Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026121002488654398",
+    "checked": "2026-11-08T20:50:55.192Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18168692236490965",
+    "at": "2026-11-08T20:47:30.702Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DffpkN8jr_O/",
+    "checked": "2026-11-08T20:48:25.117Z"
+   }
+  ],
+  "auto-2026-11-05/13-u-get-moment-com": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18576004234072459",
+    "at": "2026-11-08T20:51:18.448Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026121291904014741",
+    "checked": "2026-11-08T20:51:29.887Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18252242512311348",
+    "at": "2026-11-08T20:48:25.117Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DffpqzEnPSZ/",
+    "checked": "2026-11-08T20:49:09.984Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -1137,6 +1235,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzqin3dep52g",
     "checked": "2026-11-07T18:10:51.169Z"
+   }
+  ],
+  "tips-2026-10/13-consent-before": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mztbqz3e2d2w",
+    "at": "2026-11-08T20:45:32.860Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mztbqz3e2d2w",
+    "checked": "2026-11-08T20:45:46.802Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [

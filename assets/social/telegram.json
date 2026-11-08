@@ -89,6 +89,17 @@
     "checked": "2026-11-07T23:40:59.375Z"
    }
   ],
+  "auto-2026-11-05/01-u-houm-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "28",
+    "at": "2026-11-08T20:51:30.666Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/28",
+    "checked": "2026-11-08T20:51:33.281Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -257,6 +268,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/21",
     "checked": "2026-11-07T18:12:10.004Z"
+   }
+  ],
+  "tips-2026-10/13-consent-before": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "29",
+    "at": "2026-11-08T20:51:33.281Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/29",
+    "checked": "2026-11-08T20:51:35.648Z"
    }
   ]
  }
