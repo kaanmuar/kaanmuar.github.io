@@ -694,7 +694,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -2515,6 +2515,7 @@
     button.append(label, icon);
     heading.appendChild(button);
     heading.classList.add("fold-head");
+    if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
     folds.push({ button, panel });
@@ -2549,7 +2550,7 @@
     const visuals = document.getElementById("report-visuals");
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
-    glance.textContent = "At a glance";
+    glance.textContent = rc.t("glance");
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2582,6 +2583,89 @@
   }
 
   setupFolds();
+
+  const reportIndex = document.getElementById("report-index");
+  const reportTop = document.getElementById("report-top");
+
+  function scrollBehavior() {
+    return matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  }
+
+  // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
+  function measureBar() {
+    const bar = dash.querySelector(".report-toolbar");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + "px");
+  }
+
+  function afterScroll(done) {
+    let timer = 0;
+    const settle = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        dash.removeEventListener("scroll", settle);
+        done();
+      }, 160);
+    };
+    dash.addEventListener("scroll", settle, { passive: true });
+    settle();
+  }
+
+  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
+  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  function jumpTo(item) {
+    if (item.panel.hidden) setFold(item, true);
+    measureBar();
+    const heading = item.button.parentElement;
+    item.button.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    afterScroll(() => {
+      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
+    });
+  }
+
+  function paintTop() {
+    if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+  }
+
+  // Lists the sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  function paintIndex() {
+    if (!reportIndex) return;
+    const shown = folds.filter((item) => item.button.getClientRects().length > 0)
+      .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    document.getElementById("report-index-list").replaceChildren(...shown.map((item) => {
+      const link = document.createElement("a");
+      link.href = "#" + item.button.parentElement.id;
+      link.textContent = item.button.firstChild.textContent.trim();
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        jumpTo(item);
+      });
+      const row = document.createElement("li");
+      row.appendChild(link);
+      return row;
+    }));
+    reportIndex.hidden = !shown.length;
+    measureBar();
+    paintTop();
+  }
+
+  if (reportIndex && reportTop) {
+    let framed = false;
+    dash.addEventListener("scroll", () => {
+      if (framed) return;
+      framed = true;
+      requestAnimationFrame(() => {
+        framed = false;
+        paintTop();
+      });
+    }, { passive: true });
+    reportTop.addEventListener("click", () => {
+      const first = reportIndex.querySelector("a");
+      if (first) first.focus({ preventScroll: true });
+      dash.scrollTo({ top: 0, behavior: scrollBehavior() });
+    });
+  }
 
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
@@ -2822,6 +2906,7 @@
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
+    paintIndex();
   }
 
   function reviewBody(compare, url, runId) {
