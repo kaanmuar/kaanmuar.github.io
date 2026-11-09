@@ -288,6 +288,32 @@ test.describe('Review page language', () => {
     await expect(page.locator('.live-jump')).toHaveText('Voir les rapports en direct de vrais sites ↓');
   });
 
+  const REASON_LABELS = {
+    es: ['El sitio es mío y quiero un plan de pruebas', 'Otro', '20 páginas'],
+    pt: ['Este site é meu e quero um plano de testes', 'Outro', '20 páginas'],
+    de: ['Die Website gehört mir und ich möchte einen Testplan', 'Sonstiges', '20 Seiten'],
+    fr: ['Ce site m’appartient et je veux un plan de test', 'Autre', '20 pages, 2 de profondeur'],
+    it: ['Questo sito è mio e voglio un piano di test', 'Altro', '20 pagine']
+  };
+  const ENGLISH_REASONS = require('../functions/url-review-core').REASONS.filter((item) => item.id !== 'compare');
+  for (const [code, [own, other, scope]] of Object.entries(REASON_LABELS)) {
+    test(`the reason choices, the section note and the scope summary read in ${code} (#2802)`, async ({ page }) => {
+      await prime(page, code);
+      await page.goto(`/qa-review-${code}.html`);
+      const labels = page.locator('#reasons label');
+      await expect(labels).toHaveCount(ENGLISH_REASONS.length);
+      await expect(page.locator('#reasons label:has(input[value="own"])')).toHaveText(own);
+      await expect(page.locator('#reasons label:has(input[value="other"])')).toHaveText(other);
+      await expect(labels.first()).toHaveAttribute('lang', code);
+      await expect(labels.first()).toHaveAttribute('translate', 'no');
+      const texts = (await labels.allTextContents()).map((text) => text.trim());
+      for (const item of ENGLISH_REASONS) expect(texts, item.id).not.toContain(item.label);
+      await expect(page.locator('#section-note')).not.toContainText('Add a path');
+      await expect(page.locator('#req-scope .rg-meta')).toContainText(scope, { useInnerText: false });
+      await expect(page.locator('#req-scope .rg-meta')).not.toContainText(/deep|site language/, { useInnerText: false });
+    });
+  }
+
   for (const [code, own] of [['es', /\b(el|la|los|las|que|para|con|una|del)\b/g], ['de', /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g]]) {
     test(`the ${code} page body is written in its language before any script runs`, async ({ browser }) => {
       const context = await browser.newContext({ javaScriptEnabled: false });

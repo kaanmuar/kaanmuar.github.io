@@ -6243,9 +6243,15 @@ function jarvisGithubCtx(now) {
   };
 }
 
-const JARVIS_GH_FIX = { "gh-merge-pr": "mergePr", "gh-close-issue": "closeIssue" };
+const JARVIS_GH_FIX = { "gh-merge-pr": "mergePr", "gh-close-issue": "closeIssue", "gh-quarantine": "quarantine", "gh-security-ticket": "securityTicket", "gh-dismiss-alert": "dismissAlert" };
 const jarvisGithubTargets = async () => jarvisCore.githubTargets((await jarvisExternal(["github-work"], 1))["github-work"] || {});
 const ghNumber = (v) => Number(String(v || "").replace(/^#/, "")) || 0;
+
+// #2808: after an action changes GitHub, the next github-work read and the app's snapshot are built again.
+async function jarvisGithubFresh() {
+  const db = getFirestore();
+  await Promise.all([jarvisGithubFix.clearCache(db), jarvisSnap.drop(db, ["external"])]).catch(() => null);
+}
 
 /* Runs one gh-* action for a click, the hourly pass or the countdown -> { ok, message, url?, count? }. Without a target
    it takes every item the github-work source lists for it (all drifted items, merged branches, PRs behind main). */
@@ -6305,6 +6311,13 @@ async function jarvisGithubDo(action, args, now) {
     }
     return { ok: count > 0, count, message: said.join(" ").slice(0, 600) };
   }
+  if (action === "gh-dismiss-low") {
+    if (!a.alerts) {
+      const sec = ((await jarvisExternal(["github-work"], 1))["github-work"] || {}).security || {};
+      a.alerts = ["dependabot", "codeScanning"].flatMap((kind) => ((sec[kind] || {}).items || []).filter((i) => i.severity === "low").map((i) => ({ kind, repo: i.repo, number: i.number })));
+    }
+    return jarvisGithubFix.dismissLow(ctx, a);
+  }
   if (JARVIS_GH_FIX[action]) return jarvisGithubFix[JARVIS_GH_FIX[action]](ctx, a);
   throw new Error("Unknown GitHub action.");
 }
@@ -6337,10 +6350,14 @@ async function jarvisGithubAgent(ctx, a) {
 async function jarvisGithubAct(body, by) {
   const action = String(body.action || "");
   // A run id re-runs that run's failed jobs on any branch; workflow names re-run their newest failed run on main.
-  if (action === "rerun-ci") return Object.assign({ ok: true }, await jarvisClickAction(Object.assign({}, body, { action }), by));
+  if (action === "rerun-ci") {
+    const out = Object.assign({ ok: true }, await jarvisClickAction(Object.assign({}, body, { action }), by));
+    await jarvisGithubFresh();
+    return out;
+  }
   if (!jarvisActions.GH_ACTIONS.includes(action)) throw new Error("Unknown GitHub action.");
   const now = Date.now();
-  const target = String(body.target || body.pr || body.number || body.sha || body.branch || body.path || body.run || body.key || "all").slice(0, 200);
+  const target = String(body.target || body.pr || body.number || body.sha || body.branch || body.path || body.run || body.workflow || body.key || "all").slice(0, 200);
   const note = (status, detail) => jarvisActions.log(getFirestore(), { action, mode: "click", status, target, detail, by, proposal: String(body.proposal || "").slice(0, 140) }, Date.now()).catch(() => null);
   try {
     const out = await jarvisGithubDo(action, body, now);
@@ -6349,6 +6366,8 @@ async function jarvisGithubAct(body, by) {
   } catch (error) {
     await note("failed", String(error.message || error));
     throw error;
+  } finally {
+    await jarvisGithubFresh();
   }
 }
 
@@ -6867,7 +6886,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = await jarvisProposals.mark(getFirestore(), body, operator, now);
       await jarvisSnap.drop(getFirestore(), ["proposals"]);
     }
-    else if (op === "action-run") out = await jarvisClickAction(body, operator);
+    else if (op === "action-run") {
+      out = await jarvisClickAction(body, operator);
+      if (body.action === "rerun-ci") await jarvisGithubFresh();
+    }
     else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
     else if (op === "actions") out = await jarvisActionsView(now);
     else if (op === "countdown") {
@@ -6953,12 +6975,20 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "engagement-report") out = await jarvisEngagement.sendReport(Object.assign(engagementDeps(), { now }), ["daily", "weekly", "monthly"].includes(body.period) ? body.period : "daily");
     else if (op === "github-diagnose") {
       const res = await jarvisGithubFix.diagnose(jarvisGithubCtx(now), { run: body.run, repo: body.repo });
-      await Promise.all([1, 7, 30, 90, 365].map((d) => getFirestore().collection("jarvis_cache").doc("github-work-" + d).delete().catch(() => null)));
+      await jarvisGithubFresh();
       out = res;
     }
-    else if (op === "github-agent") out = await jarvisGithubAgent(jarvisGithubCtx(now), body);
+    else if (op === "github-agent") {
+      out = await jarvisGithubAgent(jarvisGithubCtx(now), body);
+      await jarvisGithubFresh();
+    }
     else if (op === "github-act") out = await jarvisGithubAct(body, operator);
     else if (op === "log") out = await jarvisLog.read(getFirestore(), { since: body.since, sources: body.sources, level: body.level, q: body.q, limit: body.limit });
+    else if (op === "github-run") {
+      out = await jarvisGithubFix.runStatus(jarvisGithubCtx(now), { run: body.run, repo: body.repo });
+      if (out.done) await jarvisGithubFresh();
+    }
+    else if (op === "github-draft") out = await jarvisGithubFix.draftFlaky(jarvisGithubCtx(now), body);
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);
