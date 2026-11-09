@@ -36,13 +36,13 @@ function fakeDb(rows) {
   };
   const query = (name, filters, fields, order, cap) => ({
     where: (f, op, v) => query(name, filters.concat([[f, op, v]]), fields, order, cap),
-    orderBy: (f) => query(name, filters, fields, f, cap),
+    orderBy: (f, dir) => query(name, filters, fields, { f, desc: dir === "desc" }, cap),
     select: (...f) => query(name, filters, f, order, cap),
     limit: (n) => query(name, filters, fields, order, n),
     count: () => ({ get: async () => { stats.reads += 1; return { data: () => ({ count: (rows[name] || []).filter((r) => filters.every((f) => pass(r, f))).length }) }; } }),
     get: async () => {
       let list = (rows[name] || []).filter((r) => filters.every((f) => pass(r, f)));
-      if (order) list = list.slice().sort((x, y) => ms(x[order]) - ms(y[order]));
+      if (order) list = list.slice().sort((x, y) => (ms(x[order.f]) - ms(y[order.f])) * (order.desc ? -1 : 1));
       if (cap) list = list.slice(0, cap);
       stats.reads += Math.max(1, list.length);
       stats.queries.push(name);
@@ -200,4 +200,25 @@ test("the Firestore meter counts from midnight Pacific, across both DST switches
   assert.equal(start("2026-11-01T06:59:00Z"), "2026-10-31T07:00:00.000Z");
   assert.equal(start("2026-03-08T12:00:00Z"), "2026-03-08T08:00:00.000Z");
   assert.equal(start("2026-01-10T07:59:59Z"), "2026-01-09T08:00:00.000Z");
+});
+
+test("a snapshot rebuild serves the web Jarvis's feed, heat map and mailed reports without a raw read per row (#2102)", async () => {
+  days._memo.clear();
+  const data = seed();
+  data.url_review_reports = Array.from({ length: 20 }, (_, i) => ({ id: "rep" + i, emailedAt: new Date(NOW - i * DAY).toISOString(), period: "daily", label: "Day " + i, opens: i, reviews: 1, paidUsd: 0 }));
+  const db = fakeDb(data);
+  await jarvis.dailyProducts(db, { now: NOW, days: 7 });
+  days._memo.clear();
+  db.stats.reads = 0;
+  const out = await jarvis.dailyProducts(db, { now: NOW, days: 7 });
+  const raw = data.site_events.length + data.url_review_opens.length + data.url_reviews.length;
+  assert.ok(db.stats.reads < 60, "reads " + db.stats.reads + " vs " + raw + " raw rows");
+  assert.equal(out.feed.length, 18);
+  assert.ok(out.feed[0].at >= out.feed[17].at);
+  assert.equal(out.socialHeat.length, 7);
+  db.stats.reads = 0;
+  const reports = await jarvis.mailedReports(db);
+  assert.deepEqual(reports.map((r) => r.id).slice(0, 2), ["rep0", "rep1"]);
+  assert.equal(reports.length, 12);
+  assert.equal(db.stats.reads, 12);
 });

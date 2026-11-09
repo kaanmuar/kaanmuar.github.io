@@ -141,7 +141,8 @@ test("voice and command-bar phrases map to actions", () => {
   assert.deepEqual(core.parseCommand("Jarvis, show URL review"), { type: "go", product: "review" });
   assert.deepEqual(core.parseCommand("simulator"), { type: "go", product: "studio" });
   assert.deepEqual(core.parseCommand("last 7 days"), { type: "range", value: "7" });
-  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "all" });
+  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "365" });
+  assert.deepEqual(core.parseCommand("last year"), { type: "range", value: "365" });
   assert.deepEqual(core.parseCommand("export csv"), { type: "export", format: "csv" });
   assert.deepEqual(core.parseCommand("print everything"), { type: "print", all: true });
   assert.deepEqual(core.parseCommand("run sweepReviews"), { type: "run-job", job: "sweepReviews" });
@@ -1495,4 +1496,32 @@ test("the LinkedIn Send button copies the note line of the day's list (#2479)", 
   assert.equal(core.linkedinLine({}, "Note"), "");
   assert.equal(core.linkedinLine(null, "Note"), "");
   assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
+});
+
+test("the web Jarvis reads no Firestore: it loads from the snapshot op the app reads (#2102)", () => {
+  const src = ["admin-jarvis.js", "admin-jarvis-push.js"].map((f) => fs.readFileSync(path.join(__dirname, "../../js", f), "utf8")).join("\n");
+  assert.doesNotMatch(src, /firebase-firestore\.js|\bgetDocs?\(|\bonSnapshot\(|\bcollection\(db/);
+  assert.match(src, /call\('snapshot'\)/);
+  assert.doesNotMatch(src, /call\('rows'/);
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.doesNotMatch(index, /op === "rows"/);
+  const snapshot = index.slice(index.indexOf("async function jarvisSnapshot("), index.indexOf("async function jarvisBriefOpen("));
+  ["feed", "socialHeat", "reports", "outreachVisits"].forEach((key) => assert.match(snapshot, new RegExp("\\b" + key + "\\b"), key));
+});
+
+test("the live feed and the social heat map come from the range's rows, newest first (#2102)", () => {
+  const at = (h) => new Date(NOW.getTime() - h * 3600000);
+  const events = [
+    { site: "cv", kind: "visit", createdAt: at(1), query: "?utm_source=linkedin" },
+    { site: "cv", kind: "export", name: "pdf", createdAt: at(3) },
+    { site: "lab", kind: "visit", createdAt: at(5), query: "?utm_source=outreach&utm_campaign=w1" },
+    { site: "studio", kind: "visit", createdAt: at(6), referrerHost: "www.google.com" }
+  ];
+  const lines = core.feed({ events, opens: [{ createdAt: at(2) }], reviews: [{ createdAt: at(4).toISOString(), paid: true, requestedUrl: "https://shop.example/?a=1&b=2", status: "complete" }] });
+  assert.deepEqual(lines.map((l) => l.text.split(":")[0]), ["CV", "URL Review", "CV", "URL Review", "QA Lab", "QA Studio"]);
+  assert.equal(lines[3].text, "URL Review: paid review of shop.example/?a=1&b=2 (complete)");
+  assert.ok(lines.every((l) => typeof l.at === "string" && !Number.isNaN(Date.parse(l.at))));
+  assert.equal(core.feed({ events: Array.from({ length: 50 }, (_, i) => ({ site: "cv", kind: "visit", createdAt: at(i + 1) })) }).length, 18);
+  const grid = core.socialHeat(events);
+  assert.equal(grid.flat().reduce((a, b) => a + b, 0), 2, "the LinkedIn and outreach visits, not Google or the export");
 });

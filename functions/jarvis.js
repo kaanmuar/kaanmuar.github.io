@@ -105,7 +105,7 @@ async function health(db, { days, now }) {
       .sort((a, b) => String(b.endedAt).localeCompare(String(a.endedAt))),
     failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: causeLabel(row), message: String((row.error && row.error.message) || "").slice(0, 140) })) },
     reruns: { total: reruns.length, status: top(rerunStatus), held: reruns.filter((row) => row.status === "held").length },
-    alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "" })) },
+    alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 12).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "", priceUsd: row.priceUsd })) },
     notices: { total: notices.length, status: top(noticeStatus), failed: notices.filter((row) => row.status === "pending" && row.lastError && !row.unlistedAt).length },
     rivals: { total: rivals.length },
     coupons: { total: coupons.length, uses: couponUses },
@@ -694,7 +694,14 @@ async function dailyProducts(db, { now, days = 1 }) {
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
-  return { window, products, outreachVisits: core.outreachVisits(now1) };
+  const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
+  return { window, products, outreachVisits: core.outreachVisits(now1), feed: core.feed({ events: now1, opens: nowOpens, reviews: nowReviews }), socialHeat: core.socialHeat(now1) };
+}
+
+// The Mailed reports panel: the newest period reports sent to the owner.
+async function mailedReports(db) {
+  const snap = await db.collection("url_review_reports").orderBy("emailedAt", "desc").limit(12).get();
+  return snap.docs.map((doc) => { const d = doc.data() || {}; return { id: doc.id, period: d.period || "", label: d.label || "", opens: d.opens || 0, reviews: d.reviews || 0, paidUsd: d.paidUsd || 0 }; });
 }
 
 // The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.
@@ -848,4 +855,4 @@ async function unsentToday(db, items, { now }) {
 }
 
 module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
-  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
