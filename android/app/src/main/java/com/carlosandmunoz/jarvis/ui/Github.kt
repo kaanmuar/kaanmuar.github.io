@@ -388,6 +388,15 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     fun ghAct(action: String, key: String, target: JsonElement, ask: String, extra: Map<String, JsonElement> = emptyMap()) = ask(ask) {
         vm.market("gh:$action:$key", "github-act", mapOf("action" to JsonPrimitive(action), "target" to target) + extra) { out -> out.str("message") ?: ((ACTION_LABELS[action] ?: action) + ": done.") }
     }
+    // The cards on screen, as the web sends them: without them the server reads its own, possibly older, drift.
+    fun syncBoard() {
+        val items = gh.obj("board").objs("drift").mapNotNull { d ->
+            val n = d.num("number")?.toInt() ?: return@mapNotNull null
+            val should = d.str("should") ?: return@mapNotNull null
+            JsonObject(mapOf("number" to JsonPrimitive(n), "should" to JsonPrimitive(should)))
+        }
+        ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null), if (items.isEmpty()) emptyMap() else mapOf("items" to JsonArray(items)))
+    }
     val uri = LocalUriHandler.current
     fun open(url: String?) { url?.let { runCatching { uri.openUri(it) } } }
     fun busy(key: String) = s.ghRows[key]?.state.let { it == "running" || it == "queued" }
@@ -623,7 +632,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             Text("Drift · ${drift.size}", color = J.amber, fontSize = 13.sp)
             drift.take(8).forEach { d -> StatusRow("warn", "#${d.num("number")?.toInt()} ${d.str("title").orEmpty()}", "${d.str("column")} → ${d.str("should")} · ${d.str("why").orEmpty()}", d.str("url")) }
         }
-        ActionButton("Sync the board", running("gh-board-sync", "all")) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
+        ActionButton("Sync the board", running("gh-board-sync", "all")) { syncBoard() }
     }
 
     var issOpen by rememberSaveable { mutableStateOf<String?>(null) }
@@ -869,7 +878,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    Deck(s, vm, span, { agent = it }, ::ask) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
+    Deck(s, vm, span, { agent = it }, ::ask) { syncBoard() }
     Needs(raw)
     ConfirmAction(confirm) { confirm = null }
     AgentDialog(agent, vm) { agent = null }

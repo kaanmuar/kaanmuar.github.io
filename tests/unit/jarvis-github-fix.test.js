@@ -136,6 +136,14 @@ test("launchAgent without CURSOR_API_KEY says where to get it, and with it start
   assert.deepEqual([sent[0].body.prompt.text.slice(0, 7), sent[0].body.autoCreatePR], ["Fix the", true]);
   await fix.launchAgent(ctx, { prompt: "Resolve the conflicts in this PR, keep both sides.", pr: 44 });
   assert.deepEqual(sent[1].body.repos, [{ url: "https://github.com/kaanmuar/kaanmuar.github.io", prUrl: "https://github.com/kaanmuar/kaanmuar.github.io/pull/44" }]);
+  await fix.launchAgent(ctx, { prompt: "Fix the CodeQL alert this pull request run raised.", branch: "refs/pull/2822/head" });
+  assert.deepEqual(sent[2].body.repos, [{ url: "https://github.com/kaanmuar/kaanmuar.github.io", prUrl: "https://github.com/kaanmuar/kaanmuar.github.io/pull/2822" }]);
+});
+
+test("launchAgent says why Cursor refused the agent instead of [object Object]", async () => {
+  const refuse = async () => res({ error: { code: "validation_error", message: "startingRef is not a branch" } }, 400);
+  const ctx = ctxOf({ fetchImpl: refuse }, { env: { CURSOR_API_KEY: "key_1" } });
+  await assert.rejects(fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === "Cursor refused the agent (400): startingRef is not a branch");
 });
 
 test("localIngest keeps a clean copy of the Mac's report, one GraphQL point an hour, and marks the queued jobs it ran", async () => {

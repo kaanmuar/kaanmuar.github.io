@@ -38,7 +38,7 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
         if (out.second == 401 || out.second == 403) out = send(body, auth.token(force = true))
         val json = out.first
         if (out.second == 401 || out.second == 403) throw Auth.AuthError(json.str("error") ?: "Sign in with the owner account.")
-        if (json.bool("ok") == false) throw IllegalStateException(json.str("error") ?: "Jarvis could not answer (${out.second}).")
+        if (json.bool("ok") == false) throw IllegalStateException(json.str("error") ?: json.str("message") ?: "Jarvis could not answer (${out.second}).")
         return json
     }
 

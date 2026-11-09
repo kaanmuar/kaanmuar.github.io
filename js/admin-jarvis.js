@@ -2496,7 +2496,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (key) ghMark(key, 'running', ghCap(ACTION_LABELS[action] || action) + '…'); else toast('Asking Jarvis…', 30000);
         const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
-        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + out.error;
+        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + (out.error || out.message);
         if (key) ghMark(key, out.ok ? 'done' : 'failed', said, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
         toast(said, 7000);
         await ghFresh();
