@@ -49,6 +49,17 @@ test("cost bills at rounded-up list prices, thinking as output", () => {
   assert.deepEqual(script.usage({ models: { "gemini-pro-latest": { tokens: { prompt: 900, candidates: 50, thoughts: 25 } } } }), [{ model: "gemini-pro-latest", input: 900, output: 75 }]);
 });
 
+test("slug lowercases, turns runs of other characters into single hyphens, trims hyphens at both ends, keeps at most 40 characters, and returns \"task\" for an empty or symbol-only title", () => {
+  assert.equal(worker.slug("Fix Login Test"), "fix-login-test");
+  assert.equal(worker.slug("foo & bar / baz"), "foo-bar-baz");
+  assert.equal(worker.slug("---hello world---"), "hello-world");
+  assert.equal(worker.slug("a".repeat(50)), "a".repeat(40));
+  assert.equal(worker.slug(""), "task");
+  assert.equal(worker.slug("   "), "task");
+  assert.equal(worker.slug("!@#$%^&*()"), "task");
+  assert.equal(worker.slug(null), "task");
+});
+
 test("dispatch stores the task and starts jarvis-worker.yml on main with its inputs", async () => {
   const f = fakeFetch([["POST", "/actions/workflows/jarvis-worker.yml/dispatches", () => ({ _status: 204 })]]);
   const db = fakeDb();
