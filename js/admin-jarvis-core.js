@@ -666,6 +666,77 @@
     }
 
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
+    // Country dates (#2989): the settings Jarvis warns and reminds by, and the share of a campaign's leads that makes a holiday pause it.
+    const CALENDAR = { warnDays: 14, remindDays: 3, share: 50, horizon: 60 };
+    const dayDiff = (from, to) => Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / DAY);
+    const dayLabel = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+    const inDays = (n) => (n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`);
+    function calendarSettings(s) {
+        const d = s || {};
+        const warnDays = Math.min(CALENDAR.horizon, Math.max(1, Math.round(Number(d.warnDays)) || CALENDAR.warnDays));
+        const remind = Number.isFinite(Number(d.remindDays)) && d.remindDays !== null && d.remindDays !== '' ? Math.round(Number(d.remindDays)) : CALENDAR.remindDays;
+        return { autoPause: d.autoPause === true, warnDays, remindDays: Math.min(warnDays, Math.max(0, remind)) };
+    }
+    /** A country's sending campaigns with at least half their leads there (the geo row's camps, statuses from Marketing). */
+    function heldCampaigns(row, campaigns) {
+        const live = {};
+        (campaigns || []).forEach((c) => { if (c && c.id) live[c.id] = c.status; });
+        return ((row && row.camps) || []).filter((c) => Number(c.share) >= CALENDAR.share && /^(active|running subsequences)$/i.test(String(live[c.id] !== undefined ? live[c.id] : c.status || '')))
+            .map((c) => ({ id: c.id, name: c.name, share: Number(c.share) }));
+    }
+    /* The calendar's briefing lines: a holiday pause for each country whose campaigns would send into closed offices, the
+       pauses planned and running, and a themed campaign, routine or post ahead of a date, inside its warning window. */
+    function calendarLines(ext, now) {
+        const cal = ext.calendar;
+        if (!cal || cal.ok === false || !Array.isArray(cal.days)) return [];
+        const s = calendarSettings(cal.settings);
+        const today = zoneParts(toDate(now) || new Date()).day;
+        const rows = {};
+        ((ext.geo && ext.geo.ok !== false && ext.geo.countries) || []).forEach((r) => { rows[r.cc] = r; });
+        const mk = (ext.marketing && ext.marketing.campaigns && ext.marketing.campaigns.ok !== false && ext.marketing.campaigns.rows) || [];
+        const pauses = cal.pauses || [];
+        const taken = new Set(pauses.filter((p) => p.status === 'planned' || p.status === 'paused').map((p) => p.id));
+        const country = (cc) => (rows[cc] && rows[cc].name) || cc;
+        const lines = [];
+        let pausing = 0, themed = 0;
+        cal.days.forEach((d) => {
+            if (dayDiff(today, d.end || d.date) < 0) return;
+            const n = Math.max(0, dayDiff(today, d.date));
+            if (n > Math.min(CALENDAR.horizon, Math.max(s.warnDays, Number(d.lead) || 0))) return;
+            const level = n <= s.remindDays ? 'warn' : 'info';
+            if (d.kind === 'holiday') {
+                if (d.weekend) return;
+                (d.ccs || []).forEach((cc) => {
+                    const held = heldCampaigns(rows[cc], mk);
+                    if (!held.length || taken.has(cc + '-' + d.date) || pausing >= 6) return;
+                    pausing++;
+                    const name = (d.local && d.local[cc]) || d.name;
+                    const after = d.after && d.after[cc];
+                    lines.push({ level, product: 'geo', key: `calendar:pause:${cc}:${d.date}`, title: `Pause ${held.length === 1 ? held[0].name : held.length + ' campaigns'} in ${country(cc)} for ${name} (${dayLabel(d.date)})`,
+                        text: `${name} in ${country(cc)} on ${dayLabel(d.date)}, ${inDays(n)}: ${held.map((c) => `${c.name} (${c.share}% of its leads)`).join(', ')} would send into closed offices. Pause ${held.length === 1 ? 'it' : 'them'} that day${after ? ' and resume ' + dayLabel(after) : ''}.` });
+                });
+                return;
+            }
+            if (!d.do || themed >= 6) return;
+            themed++;
+            const where = d.all ? 'all target markets' : (d.ccs || []).slice(0, 3).map(country).join(', ') + ((d.ccs || []).length > 3 ? ` and ${d.ccs.length - 3} more` : '');
+            const span = d.end ? `${dayLabel(d.date)} to ${dayLabel(d.end)}` : dayLabel(d.date);
+            const prefix = d.do === 'post' ? 'calendar:post:' : d.do === 'routine' ? 'calendar:routine:' : 'calendar:campaign:';
+            lines.push({ level, product: 'geo', key: prefix + (d.ref || d.id) + ':' + d.date, title: `${d.name} ${inDays(n)}: ${String(d.action || '').replace(/\.$/, '')}`.slice(0, 140),
+                text: `${d.name} (${where}) ${d.ongoing ? 'is on until ' + dayLabel(d.end) : inDays(n) + ', ' + span}: ${d.action}` });
+        });
+        pauses.forEach((p) => {
+            const names = (p.campaigns || []).map((c) => c.name).join(', ');
+            if (p.status === 'planned') lines.push({ level: 'info', product: 'geo', key: `calendar:planned:${p.cc}:${p.date}`, text: `Planned: ${names} ${(p.campaigns || []).length === 1 ? 'pauses' : 'pause'} on ${dayLabel(p.date)} for ${p.name} in ${country(p.cc)} and ${(p.campaigns || []).length === 1 ? 'resumes' : 'resume'} ${dayLabel(p.resumeOn)}.` });
+            if (p.status === 'paused') {
+                const late = dayDiff(today, p.resumeOn) < 0;
+                lines.push({ level: late ? 'warn' : 'info', product: 'geo', key: `calendar:resume:${p.cc}:${p.date}`, title: `Resume ${names} after ${p.name} in ${country(p.cc)}`,
+                    text: late ? `${names} still paused after ${p.name} in ${country(p.cc)}; ${dayLabel(p.resumeOn)} was the day to resume.` : `${names} paused for ${p.name} in ${country(p.cc)}; resumes on its own ${dayLabel(p.resumeOn)}.` });
+            }
+        });
+        return lines;
+    }
+
     function briefing(state) {
         const out = [];
         const add = (level, product, text, key) => out.push({ level, product, text, key: key || product + ':' + text.slice(0, 40) });
@@ -927,6 +998,7 @@
         }
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
+        calendarLines(ext, state.now).forEach((line) => out.push(line));
         (state.goals || []).forEach((g) => {
             if (g.status === 'done') add('good', g.product, `Goal met: ${g.label}, ${g.value} of ${g.target}.`, 'goal:' + g.key);
             else if (g.status === 'far-behind' && g.elapsed >= 25) add('warn', g.product, `Goal behind: ${g.label} is at ${g.value} of ${g.target} with ${g.elapsed}% of the time gone (pace ${g.projected}).`, 'goal:' + g.key);
@@ -1012,11 +1084,17 @@
         { prefix: 'gh:repo-red:', impact: 2, group: true, title: 'Get CI green in the other repositories', tab: 'github' },
         { prefix: 'gh:score', impact: 2, levels: ['info'], title: 'Find why the GitHub score dropped', tab: 'github' },
         { prefix: 'gh:branch-merged', impact: 1, levels: ['info'], title: 'Delete the merged branches', click: 'gh-delete-branch', tab: 'github' },
-        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' }
+        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' },
+        // #2989: country dates. A pause today runs at once, a later one waits for the daily job; resume runs at once.
+        { prefix: 'calendar:pause:', impact: 3, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), click: 'calendar-pause', tab: 'geo' },
+        { prefix: 'calendar:resume:', impact: 3, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), click: 'calendar-resume', tab: 'geo' },
+        { prefix: 'calendar:campaign:', impact: 2, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'marketing' },
+        { prefix: 'calendar:routine:', impact: 2, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'marketing' },
+        { prefix: 'calendar:post:', impact: 1, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'hub' }
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
     // Actions a proposal offers as a button that only run on a click (#1977); gh-* (#2526) through action-run.
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent'];
+    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent', 'calendar-pause', 'calendar-resume'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -1050,7 +1128,8 @@
         'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
         'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
         'gh-board-sync': 'Sync the board', 'gh-orphan-ticket': 'File the tickets', 'gh-update-pr': 'Update with main', 'gh-merge-pr': 'Merge', 'gh-revert': 'Open a revert PR',
-        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent'
+        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent',
+        'calendar-pause': 'Pause over the holiday', 'calendar-resume': 'Resume now'
     };
 
     const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
@@ -1677,7 +1756,7 @@
             && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
     }
 
-    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

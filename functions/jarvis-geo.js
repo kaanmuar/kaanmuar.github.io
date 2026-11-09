@@ -214,6 +214,19 @@ function geoRows(input) {
   };
 }
 
+/** Each row's next special date from the calendar source (#2989): nextDate {date, name, kind} and daysToDate from today. */
+function joinDates(rows, calendar, now) {
+  const next = (calendar && calendar.byCountry) || {};
+  const { bogotaDay, diffDays } = require("./jarvis-calendar");
+  const today = bogotaDay(now || Date.now());
+  rows.forEach((r) => {
+    const d = (next[r.cc] || []).find((x) => (x.end || x.date) >= today);
+    r.nextDate = d ? { date: d.date, name: d.name, kind: d.kind } : null;
+    r.daysToDate = d ? Math.max(0, diffDays(today, d.date)) : null;
+  });
+  return rows;
+}
+
 async function readTargets(db) {
   const snap = await db.collection("jarvis_settings").doc("geo").get().catch(() => null);
   const list = snap && snap.exists ? snap.data().targets : null;
@@ -234,13 +247,13 @@ async function setTarget(db, body) {
 async function geo(ctx) {
   const needs = [];
   const peer = (op) => (ctx.peer ? ctx.peer(op).then((o) => (o && o.ok !== false ? o : null)).catch(() => null) : Promise.resolve(null));
-  const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4] = await Promise.all([
+  const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4, calendar] = await Promise.all([
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
     ctx.db.collection("url_review_sweep").doc("lane").get(),
     ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => null),
     readTargets(ctx.db),
-    peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4")
+    peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4"), peer("calendar")
   ]);
   const view = sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null);
   const q = queue.exists ? queue.data() : {};
@@ -252,7 +265,8 @@ async function geo(ctx) {
     queue: { hosts: q.hosts, sweptAt: view && view.outreachAt }, live, targets, marketing, sync, engagement, ga4,
     links: outreach && outreach.links
   });
+  joinDates(out.countries, calendar, ctx.now);
   return Object.assign({ ok: true, needs, days: ctx.days }, out);
 }
 
-module.exports = { geo, geoRows, setTarget, readTargets, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
+module.exports = { geo, geoRows, joinDates, setTarget, readTargets, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
