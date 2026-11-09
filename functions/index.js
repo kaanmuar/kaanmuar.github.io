@@ -5537,6 +5537,7 @@ const jarvisActions = require("./jarvis-actions");
 const jarvisCountdown = require("./jarvis-countdown");
 const jarvisSnap = require("./jarvis-snapshot");
 const jarvisSections = require("./jarvis-sections");
+const jarvisLive = require("./jarvis-live");
 const jarvisDigest = require("./jarvis-digest");
 const jarvisGithub = require("./jarvis-github");
 const jarvisGithubFix = require("./jarvis-github-fix");
@@ -5779,11 +5780,36 @@ async function jarvisSnapshotOp(days, body, now) {
   const [{ snap, marks, meta }, mailCodes, devices] = await Promise.all([
     jarvisLoadSnapshot(days),
     want.has("mail") ? mailCodeRows().catch(() => []) : null,
-    want.has("devices") ? jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) : null
+    want.has("devices") ? jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) : null,
+    body.push ? jarvisLive.markLive(getFirestore(), body.push, now).catch(() => false) : null
   ]);
   const full = Object.assign(await jarvisBriefOpen(snap, marks), want.has("mail") ? { mailCodes } : {}, want.has("devices") ? { devices } : {});
-  return jarvisSections.serve(full, meta, { since: body.since, only: body.only, days, now });
+  const out = jarvisSections.serve(full, meta, { since: body.since, only: body.only, days, now });
+  if (days === jarvisLive.DAYS) await jarvisLive.check(jarvisLiveDeps(), days, out.versions).catch((error) => console.error("Jarvis live push failed:", error));
+  return out;
 }
+
+// Live pushes (#2509, jarvis-live.js): only functions holding every snapshot source's secrets may load the snapshot
+// here (the jarvis function, jarvisWatch, jarvisCountdowns); elsewhere a missing key would be cached as a failed source.
+const jarvisLiveDeps = () => ({ db: getFirestore(), messaging: getMessaging(), webpush: require("web-push"), now: Date.now, sleep: (ms) => new Promise((done) => setTimeout(done, ms)) });
+
+// After a write drops a section, or on the hourly watch: load the one-day snapshot and push what moved.
+async function jarvisLivePush(where) {
+  try {
+    const days = jarvisLive.DAYS;
+    const { snap, marks, meta } = await jarvisLoadSnapshot(days);
+    const { versions } = jarvisSections.serve(await jarvisBriefOpen(snap, marks), meta, { since: {}, only: jarvisLive.NAMES, days });
+    return await jarvisLive.check(jarvisLiveDeps(), days, versions);
+  } catch (error) {
+    console.error("Jarvis live push after " + where + " failed:", error);
+    return { pushed: false, reason: String((error && error.message) || error).slice(0, 120) };
+  }
+}
+
+// The jarvis ops whose write drops a build section (jarvis-snapshot.js); each is followed by a live push.
+const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report"]);
+
+const jarvisLiveNote = (out) => "live push " + (out && out.pushed ? out.sections.join(",") : (out && out.reason) || "none");
 
 async function jarvisHeld() {
   const snap = await getFirestore().collection("url_review_reruns").where("status", "==", "held").limit(100).get();
@@ -6034,7 +6060,10 @@ async function jarvisCountdownRun() {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
-  return jarvisCountdown.summary(await jarvisCountdown.runDue({ db, now, ops: jarvisActionOps(settings, now) }));
+  const out = await jarvisCountdown.runDue({ db, now, ops: jarvisActionOps(settings, now) });
+  if (!(out.started || []).length && !(out.stuck || []).length) return jarvisCountdown.summary(out);
+  await jarvisSnap.drop(db, ["countdowns"]);
+  return jarvisCountdown.summary(out) + "; " + jarvisLiveNote(await jarvisLivePush("jarvisCountdowns"));
 }
 
 // Do it now or Cancel, from a push button, the web or the app; Carlos's own decision, so no cap and no daytime wait.
@@ -6511,7 +6540,9 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const resent = await mailRetry.retry({ db: getFirestore(), sgMail: prepareMail() ? sgMail : null, fetch, key: process.env.SENDGRID_API_KEY })
     .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
   const pagespeed = await pageSpeedDeps("jarvis").then((deps) => jarvisPageSpeed.tick(deps)).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
-  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up;
+  // With no app or page reading, this hourly load is what finds the sections that moved (#2509).
+  const live = jarvisLiveNote(await jarvisLivePush("jarvisWatch"));
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + live;
 });
 
 async function jarvisUptimeRun() {
@@ -6931,6 +6962,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = { sent: sent !== false };
     } else { res.status(400).json({ error: "Unknown op." }); return; }
     if (JARVIS_LOGGED[op]) await jarvisActions.log(getFirestore(), { action: op, mode: "click", status: "done", target: JARVIS_LOGGED[op](body), by: operator }, Date.now()).catch(() => null);
+    if (JARVIS_LIVE_OPS.has(op)) await jarvisLivePush(op);
     res.status(200).json(Object.assign({ ok: true, op }, out));
   } catch (error) {
     if (JARVIS_LOGGED[op]) await jarvisActions.log(getFirestore(), { action: op, mode: "click", status: "failed", target: JARVIS_LOGGED[op](body), detail: String((error && error.message) || error), by: operator }, Date.now()).catch(() => null);

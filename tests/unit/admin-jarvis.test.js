@@ -1575,7 +1575,7 @@ test("the LinkedIn Send button copies the note line of the day's list (#2479)", 
 test("the web Jarvis reads no Firestore: it loads from the snapshot op the app reads (#2102)", () => {
   const src = ["admin-jarvis.js", "admin-jarvis-push.js"].map((f) => fs.readFileSync(path.join(__dirname, "../../js", f), "utf8")).join("\n");
   assert.doesNotMatch(src, /firebase-firestore\.js|\bgetDocs?\(|\bonSnapshot\(|\bcollection\(db/);
-  assert.match(src, /call\('snapshot'\)/);
+  assert.match(src, /call\('snapshot'[,)]/);
   assert.doesNotMatch(src, /call\('rows'/);
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.doesNotMatch(index, /op === "rows"/);

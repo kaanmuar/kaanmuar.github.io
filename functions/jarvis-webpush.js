@@ -59,8 +59,14 @@ function payload(msg, signKey, now) {
 async function sendWeb(webpush, db, devices, msg, now) {
   if (!devices.length) return { sent: 0, failed: 0, removed: 0 };
   const k = await keys(db, webpush);
-  const body = payload(msg, k.signKey, now);
-  const options = { vapidDetails: { subject: SUBJECT, publicKey: k.publicKey, privateKey: k.privateKey }, TTL: TTL_S[msg.kind] || 12 * 3600, urgency: msg.quiet ? "low" : URGENCY[msg.kind] || "normal" };
+  return deliver(webpush, db, devices, payload(msg, k.signKey, now), { TTL: TTL_S[msg.kind] || 12 * 3600, urgency: msg.quiet ? "low" : URGENCY[msg.kind] || "normal" }, k);
+}
+
+/** Sends a ready body to each browser subscription (options: TTL, urgency, topic) and deletes the ones that are gone. */
+async function deliver(webpush, db, devices, body, extra, given) {
+  if (!devices.length) return { sent: 0, failed: 0, removed: 0 };
+  const k = given || await keys(db, webpush);
+  const options = Object.assign({ vapidDetails: { subject: SUBJECT, publicKey: k.publicKey, privateKey: k.privateKey } }, extra);
   let sent = 0, failed = 0, removed = 0;
   await Promise.all(devices.map(async (d) => {
     try {
@@ -87,4 +93,4 @@ function cleanSubscription(sub) {
   return { endpoint, keys: { p256dh, auth } };
 }
 
-module.exports = { SIGN_DAYS, MAX_ACTIONS, keys, sign, verify, payload, sendWeb, cleanSubscription };
+module.exports = { SIGN_DAYS, MAX_ACTIONS, keys, sign, verify, payload, sendWeb, deliver, cleanSubscription };
