@@ -4,6 +4,7 @@ run-name: "Jarvis worker: ${{ inputs.title }}"
 # dispatch) on a click, from the hourly pass or for a diagnosed failure; scripts/jarvis-worker.js edits with Gemini CLI, runs the
 # unit tests, pushes jarvis/<id>-<slug> (or the PR's branch) with LIVE_REPORTS_DEPLOY_KEY, and reports with the run's OIDC token
 # (audience jarvis-worker), which Jarvis checks before it opens the PR. Each task is its own run, so tasks run side by side.
+# A change to pages, styles or front-end scripts also sends before and after screenshots, for Carlos's Approve (#2959).
 # Variables: JARVIS_WORKER_MODEL_PRO, JARVIS_WORKER_MODEL_FLASH (default gemini-pro-latest, gemini-flash-latest).
 on:
   workflow_dispatch:
@@ -55,10 +56,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
-      - name: Test dependencies and Gemini CLI
+      - name: Test dependencies, Playwright and Gemini CLI
+        # Playwright without a browser: scripts/jarvis-worker.js installs Chromium only for a change it screenshots (#2959).
         run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
           read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
-          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
+          npm install -s --no-save --ignore-scripts --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}" playwright@"$(locked playwright)"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
           npm install -s -g @google/gemini-cli@0.67.0
       - name: Work on the task

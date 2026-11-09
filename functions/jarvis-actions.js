@@ -30,7 +30,9 @@
                    what Jarvis cannot fix (a mailbox to reconnect, DNS, a blocked Microsoft 365 user, a failed fix) is
                    pushed once per occurrence; jarvis_watch/addresses keeps which, so a problem that clears and comes
                    back pushes again
-   merge-pr        an open PR labelled jarvis-merge, green and mergeable, squash-merged after the countdown
+   merge-pr        an open PR labelled jarvis-merge, green, mergeable and past the worker's gate (#2959), squash-merged after
+                   the countdown; the worker labels its safe PRs, and Carlos's Approve labels a visible or destructive one
+   worker-drop     a worker PR fixing a diagnosis on main whose workflow is green again there is closed before it merges (#3071)
    launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
                    LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
                    campaign and start date, so one Carlos cancels stays a draft
@@ -81,7 +83,7 @@ const LABELS = {
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
-  "gh-agent": "Launch a fix agent", "gh-worker": "Start Jarvis's worker on a fix", "gh-diagnose": "Diagnose a failed run",
+  "gh-agent": "Launch a fix agent", "gh-worker": "Start Jarvis's worker on a fix", "gh-diagnose": "Diagnose a failed run", "worker-drop": "Drop a fix main no longer needs",
   "gh-quarantine": "File a flaky-workflow ticket", "gh-security-ticket": "File a ticket for a security alert", "gh-dismiss-alert": "Dismiss a security alert", "gh-dismiss-low": "Dismiss the low security alerts",
   "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging",
   "calendar-pause": "Pause campaigns over a country's holiday", "calendar-resume": "Resume campaigns after a holiday"
@@ -270,7 +272,8 @@ async function recent(db, limit) {
      addresses()       -> the addresses source;  addressState() / setAddressState(row) -> jarvis_watch/addresses
      enableWarmup(emails), restoreAlias(alias) -> the two fixes;  push(msg) -> a push to the alerts devices
      socialFailed()    -> failed social posts in range
-     mergeCandidates() -> [{ number, sha, title, url }] open PRs labelled jarvis-merge, green and mergeable
+     mergeCandidates() -> [{ number, sha, title, url, gate? }] open PRs labelled jarvis-merge, green, mergeable and past the
+                          worker's gate (gate: "safe" or "approved"), and [{ number, title, url, dropped }] worker PRs it closed
      launchReady()     -> [{ id, name, start, leads }] draft campaigns ready to send
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
      ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals
@@ -539,8 +542,18 @@ async function autoRun({ db, now, settings, ops }) {
       const detail = "GitHub: " + text(error.message || error, 200);
       if (!rows.some((r) => r.action === "merge-pr" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "merge-pr", mode: "auto", status: "failed", target: "jarvis-merge PRs", detail }, now));
     }
-    for (const pr of prs) {
-      await later({ action: "merge-pr", target: "#" + pr.number, part: pr.sha, payload: { number: pr.number, sha: pr.sha, url: pr.url }, why: text(pr.title, 200) + " (green, labelled jarvis-merge).",
+    // A worker PR whose diagnosis healed on main was closed on the way (#3071); its countdown goes with it.
+    for (const pr of prs.filter((p) => p.dropped)) {
+      const row = await log(db, { action: "worker-drop", mode: "auto", status: "done", target: "#" + pr.number, detail: text(pr.dropped, 300) }, now);
+      rows.push(row);
+      out.done.push(row);
+      for (const r of pending.filter((x) => x.action === "merge-pr" && isOpen(x) && Number((x.payload || {}).number) === pr.number)) {
+        await countdown.cancel(db, r.id, { now, by: "jarvis", why: "Jarvis dropped the PR: " + text(pr.dropped, 160) }).then(() => { r.status = "cancelled"; }).catch(() => null);
+      }
+    }
+    for (const pr of prs.filter((p) => !p.dropped)) {
+      const why = pr.gate === "safe" ? "green; Jarvis's worker touched only safe files" : pr.gate === "approved" ? "green; you approved it" : "green, labelled jarvis-merge";
+      await later({ action: "merge-pr", target: "#" + pr.number, part: pr.sha, payload: { number: pr.number, sha: pr.sha, url: pr.url }, why: text(pr.title, 200) + " (" + why + ").",
         onCancel: "remove the label or merge it yourself" });
     }
   }

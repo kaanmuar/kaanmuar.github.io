@@ -6075,28 +6075,28 @@ function jarvisAutoOps(settings, now, th) {
   return out;
 }
 
-// A PR Jarvis may merge after the countdown: labelled jarvis-merge, not a draft, not a PageSpeed branch (those merge
-// through pagespeed-merge.yml), mergeable and every check passed.
+// A PR Jarvis may merge after the countdown: not a PageSpeed branch (those merge through pagespeed-merge.yml), past mergeBlock
+// (open, the worker's gate, mergeable, every check passed) and labelled jarvis-merge. -> { pr, why, dropped?, gate? }
 async function jarvisGreenPr(number, token) {
   const pr = await githubGet("/repos/" + BUG_REPO + "/pulls/" + Number(number), token);
-  const why = pr.state !== "open" ? (pr.merged ? "already merged" : "closed")
-    : !(pr.labels || []).some((l) => l.name === jarvisCountdown.MERGE_LABEL) ? "no longer labelled " + jarvisCountdown.MERGE_LABEL
-    : jarvisPageSpeed.BRANCH.test((pr.head || {}).ref || "") ? "a PageSpeed PR"
-    : pr.draft ? "a draft" : pr.mergeable_state !== "clean" ? "not mergeable (" + pr.mergeable_state + ")" : "";
-  if (why) return { pr, why };
-  const checks = (await githubGet("/repos/" + BUG_REPO + "/commits/" + pr.head.sha + "/check-runs?per_page=100", token)).check_runs || [];
-  const red = checks.filter((c) => c.status !== "completed" || !["success", "skipped", "neutral"].includes(c.conclusion));
-  return { pr, why: !checks.length ? "without checks" : red.length ? red.length + " check" + (red.length === 1 ? "" : "s") + " not green (" + red[0].name + ")" : "" };
+  if (pr.state === "open" && jarvisPageSpeed.BRANCH.test((pr.head || {}).ref || "")) return { pr, why: "a PageSpeed PR" };
+  const state = await jarvisGithubFix.mergeState(jarvisGithubCtx(Date.now()), BUG_REPO, pr);
+  if (state.why) return Object.assign({ pr }, state);
+  if (!(pr.labels || []).some((l) => l.name === jarvisCountdown.MERGE_LABEL)) return { pr, why: "no longer labelled " + jarvisCountdown.MERGE_LABEL };
+  return { pr, why: "", gate: state.gate };
 }
 
+// Open PRs labelled jarvis-merge that may merge, and worker PRs waiting at the gate (jarvis-gate) that were dropped on the way.
 async function jarvisMergeCandidates() {
   const token = await githubApp.token();
   if (!token) return [];
-  const list = await githubGet("/repos/" + BUG_REPO + "/issues?state=open&labels=" + jarvisCountdown.MERGE_LABEL + "&per_page=20", token);
+  const lists = await Promise.all([jarvisCountdown.MERGE_LABEL, jarvisWorker.GATE_LABEL].map((label) => githubGet("/repos/" + BUG_REPO + "/issues?state=open&labels=" + label + "&per_page=20", token)));
+  const numbers = Array.from(new Set(lists.flat().filter((i) => i.pull_request).map((i) => i.number)));
   const out = [];
-  for (const issue of list.filter((i) => i.pull_request)) {
-    const { pr, why } = await jarvisGreenPr(issue.number, token);
-    if (!why) out.push({ number: pr.number, sha: pr.head.sha, title: pr.title, url: pr.html_url });
+  for (const n of numbers) {
+    const { pr, why, dropped, gate } = await jarvisGreenPr(n, token);
+    if (dropped) out.push({ number: pr.number, title: pr.title, url: pr.html_url, dropped });
+    else if (!why) out.push({ number: pr.number, sha: pr.head.sha, title: pr.title, url: pr.html_url, gate: gate || null });
   }
   return out;
 }
@@ -6349,9 +6349,17 @@ async function jarvisClickAction(body, by) {
 }
 
 // #2526: what jarvis-github-fix.js needs.
+// A file in storage behind a download token, so the app and GitHub show it without a sign-in: the worker's screenshots (#2959).
+async function jarvisStore(path, data, contentType) {
+  const token = crypto.randomUUID();
+  const file = getStorage().bucket(SHARE_BUCKET).file(path);
+  await file.save(data, { resumable: false, contentType, metadata: { cacheControl: "public, max-age=86400", metadata: { firebaseStorageDownloadTokens: token } } });
+  return "https://firebasestorage.googleapis.com/v0/b/" + SHARE_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
+}
+
 function jarvisGithubCtx(now) {
   return {
-    fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"),
+    fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"), store: jarvisStore,
     gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   };
 }
@@ -6972,10 +6980,9 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     try {
       const out = await jarvisWorker.report(jarvisGithubCtx(Date.now()), req.body, String(req.get("x-worker-oidc") || ""));
       if (out.state !== "running") await jarvisGithubFresh();
-      const budget = jarvisWorker.budgetMessage(out.crossed, out.monthUsd);
-      if (budget) {
+      for (const msg of [jarvisWorker.budgetMessage(out.crossed, out.monthUsd), jarvisWorker.gateMessage(out)].filter(Boolean)) {
         const db = getFirestore();
-        await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), budget).catch((error) => console.error("Jarvis budget push failed:", error));
+        await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), msg).catch((error) => console.error("Jarvis worker push failed:", error));
       }
       res.json(Object.assign({ op: "worker-report" }, out));
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "worker-report", error: String(error.message || error).slice(0, 300) }); }
@@ -7163,6 +7170,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "github-draft") out = await jarvisGithubFix.draftFlaky(jarvisGithubCtx(now), body);
     else if (op === "worker-run") out = await jarvisWorker.dispatch(jarvisGithubCtx(now), Object.assign({}, body, { by: "Carlos" }));
     else if (op === "worker") out = await jarvisWorker.view(getFirestore(), now);
+    else if (op === "worker-decide") {
+      out = await jarvisWorker.decide(jarvisGithubCtx(now), body, "Carlos");
+      await jarvisGithubFresh();
+    }
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);

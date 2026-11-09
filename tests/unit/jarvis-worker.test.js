@@ -117,7 +117,8 @@ test("a done report opens the PR with the jarvis label and adds the run's cost t
   assert.equal(pr.title, "Jarvis: Fix login test");
   assert.equal(pr.head, "jarvis/wabc-fix-login-test");
   assert.match(pr.body, /Waited for the form/);
-  assert.deepEqual(f.calls.find((c) => c.url.includes("/issues/3001/labels")).body, { labels: ["jarvis"] });
+  assert.deepEqual(f.calls.find((c) => c.url.includes("/issues/3001/labels")).body, { labels: ["jarvis", "jarvis-merge"] }, "a test-only change is safe, so it merges on green");
+  assert.equal(out.gate, "safe");
   const month = db.doc("jarvis_worker_spend", "2026-11");
   assert.equal(month.usd, 1.3);
   assert.equal(month.runs, 1);
@@ -335,4 +336,145 @@ test("agent waits out a quota error twice, then moves Pro's task to Flash", asyn
   calls.length = 0;
   const flash = await script.agent("p", script.MODELS.flash, [], runner([quota, quota, quota]), async () => {});
   assert.deepEqual([flash.ok, flash.quota, calls.length], [false, true, 3]);
+});
+
+test("gate: deletions, deploys and money, secrets or accounts in code are destructive; pages, styles and the app visible; tests and internals safe", () => {
+  const g = worker.gate([
+    { filename: "functions/jarvis-actions.js", status: "modified", patch: "+const a = 1;" },
+    { filename: "tests/unit/x.test.js", status: "added" },
+    { filename: "qa-review-pay.html", status: "modified" },
+    { filename: "css/site.css", status: "modified" },
+    { filename: "android/app/src/main/java/A.kt", status: "modified" },
+    { filename: "scripts/build-social-hub.js", status: "modified" },
+    { filename: "functions/stripe-webhook.js", status: "modified" },
+    { filename: ".github/workflows/ci.yml", status: "modified" },
+    { filename: "js/old.js", status: "removed" },
+    { filename: "functions/jarvis-log.js", status: "modified", patch: "@@\n-x\n+  await db.collection(\"a\").doc(id).delete();" }
+  ]);
+  assert.equal(g.level, "destructive");
+  assert.deepEqual(g.destructive.map((d) => d.file), ["functions/stripe-webhook.js", ".github/workflows/ci.yml", "js/old.js", "functions/jarvis-log.js"]);
+  assert.match(g.destructive[3].why, /^deletes data/);
+  assert.deepEqual(g.visible, ["qa-review-pay.html", "css/site.css", "android/app/src/main/java/A.kt", "scripts/build-social-hub.js"]);
+  assert.deepEqual(g.safe, ["functions/jarvis-actions.js", "tests/unit/x.test.js"]);
+  assert.equal(worker.gate(["functions/jarvis-actions.js", "tests/unit/x.test.js", "docs/notes.md"]).level, "safe");
+  assert.equal(worker.gate(["index.html"]).level, "visible");
+  assert.equal(worker.gate([{ filename: "functions/a.js", patch: "+handled.delete(key);" }]).level, "safe", "a Map or Set delete is not a data delete");
+});
+
+test("the run picks the pages to screenshot: changed pages, else home and review for shared styles; none for admin or the app", () => {
+  assert.deepEqual(script.pagesFor(["qa-review-de.html", "functions/x.js"]), ["qa-review-de.html"]);
+  assert.deepEqual(script.pagesFor(["css/site.css"]), ["index.html", "qa-review.html"]);
+  assert.deepEqual(script.pagesFor(["scripts/build-social-hub.js", "social/auto-2026-11-02/08-vs-unn-edu-ng.html"]), ["social/auto-2026-11-02/08-vs-unn-edu-ng.html", "index.html", "qa-review.html"]);
+  assert.deepEqual(script.pagesFor(["admin.html", "js/admin-jarvis.js", "android/app/A.kt", "tests/fixtures/a.html"]), []);
+});
+
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]).toString("base64");
+
+function gatedFetch(files, extra) {
+  return fakeFetch([
+    ["GET", /\/pulls\?state=open&head=/, () => []],
+    ["POST", /\/pulls$/, (body) => ({ number: 3100, html_url: "https://github.com/x/pull/3100", head: { sha: "sha1" }, body })],
+    ["GET", "/pulls/3100/files", () => files],
+    ["POST", "/issues/3100/labels", () => ({})],
+    ["DELETE", "/issues/3100/labels/", () => ({})],
+    ["POST", "/issues/3100/comments", () => ({})]
+  ].concat(extra || []));
+}
+
+test("a visible PR waits at the gate with the run's screenshots, and Jarvis pushes for an Approve", async () => {
+  const db = fakeDb();
+  await queued(db);
+  const stored = [];
+  const f = gatedFetch([{ filename: "css/site.css", status: "modified" }, { filename: "tests/a.test.js", status: "modified" }]);
+  const ctx = Object.assign(ctxOf(f, db), { store: async (path, buf, type) => { stored.push([path, buf.length, type]); return "https://storage/" + path; } });
+  const out = await worker.report(ctx, { id: "wabc", state: "done", branch: "jarvis/wabc-fix", files: ["css/site.css"], tests: "pass",
+    shots: [{ page: "index.html", before: JPEG, after: JPEG }, { page: "bad.html", after: Buffer.from("<svg/>").toString("base64") }] }, jwt());
+  assert.deepEqual([out.gate, out.shots, out.pr], ["visible", 1, 3100]);
+  assert.deepEqual(stored.map((s) => s[0]), ["jarvis-worker/wabc/0-before.jpg", "jarvis-worker/wabc/0-after.jpg"], "only JPEGs are stored");
+  assert.deepEqual(f.calls.find((c) => c.method === "POST" && c.url.endsWith("/issues/3100/labels")).body, { labels: ["jarvis", "jarvis-gate"] });
+  assert.ok(f.calls.some((c) => c.method === "DELETE" && c.url.endsWith("/labels/jarvis-merge")));
+  const comment = f.calls.find((c) => c.url.endsWith("/issues/3100/comments")).body.body;
+  assert.match(comment, /gate: visible/);
+  assert.match(comment, /!\[after\]\(https:\/\/storage\/jarvis-worker\/wabc\/0-after\.jpg\)/);
+  const row = db.doc("jarvis_worker", "wabc");
+  assert.deepEqual([row.gate.level, row.gate.sha, row.gate.decision, row.gate.safe], ["visible", "sha1", null, 1]);
+  const view = (await worker.view(db, NOW)).tasks[0];
+  assert.equal(view.gate.waiting, true);
+  assert.equal(view.gate.shots[0].page, "index.html");
+  const push = worker.gateMessage(out);
+  assert.equal(push.title, "Jarvis's PR #3100 waits for your Approve");
+  assert.match(push.body, /1 screenshot to compare/);
+  assert.equal(worker.gateMessage({ pr: 5, gate: "safe" }), null);
+});
+
+async function gatedRow(db, over) {
+  return queued(db, Object.assign({ state: "done", key: "gh:diag:900", branch: "jarvis/wabc-fix", prNumber: 3100, prUrl: "u",
+    gate: { level: "visible", visible: ["css/site.css"], destructive: [], safe: 0, shots: [], sha: "sha1", decision: null } }, over || {}));
+}
+const openPr = (sha) => ({ number: 3100, state: "open", head: { ref: "jarvis/wabc-fix", sha: sha || "sha1" }, labels: [] });
+
+test("mergeCheck holds a visible worker PR until Carlos approves its current commit", async () => {
+  const db = fakeDb();
+  await gatedRow(db, { key: null });
+  const f = fakeFetch([["GET", "/pulls/3100/files", () => [{ filename: "css/site.css", status: "modified" }]]]);
+  assert.match((await worker.mergeCheck(ctxOf(f, db), openPr())).why, /waiting for Carlos's Approve \(visible: css\/site\.css\)/);
+  await db.collection("jarvis_worker").doc("wabc").set({ gate: Object.assign({}, db.doc("jarvis_worker", "wabc").gate, { decision: "approved", approvedSha: "sha1" }) }, { merge: true });
+  assert.deepEqual(await worker.mergeCheck(ctxOf(f, db), openPr()), { why: "", gate: "approved" });
+  assert.equal((await worker.mergeCheck(ctxOf(f, db), openPr("sha2"))).why, "changed since Carlos approved it");
+  const safe = fakeFetch([["GET", "/pulls/3100/files", () => [{ filename: "functions/jarvis-log.js", status: "modified" }]]]);
+  assert.deepEqual(await worker.mergeCheck(ctxOf(safe, fakeDb()), openPr()), { why: "" }, "a PR with no worker task is left to the other rules");
+  assert.deepEqual(await worker.mergeCheck(ctxOf(f, db), { number: 7, head: { ref: "feat/x" } }), { why: "" });
+});
+
+test("a diagnosis PR whose workflow is green again on main is dropped before it merges (#3071)", async () => {
+  const db = fakeDb();
+  await gatedRow(db);
+  await db.collection("jarvis_github_diag").doc("900").set({ run: 900, workflow: "Pages", branch: "main", pr: null });
+  const runs = (rows) => ["GET", "/actions/runs?branch=main", () => ({ workflow_runs: rows })];
+  const red = fakeFetch([runs([{ id: 950, name: "Pages", conclusion: "failure" }, { id: 940, name: "Pages", conclusion: "success" }]), ["GET", "/pulls/3100/files", () => [{ filename: "css/site.css" }]]]);
+  assert.match((await worker.mergeCheck(ctxOf(red, db), openPr())).why, /^waiting/, "still red on main: the fix is needed");
+  const f = fakeFetch([runs([{ id: 960, name: "CI", conclusion: "failure" }, { id: 955, name: "Pages", conclusion: "success" }]),
+    ["POST", "/issues/3100/comments", () => ({})], ["PATCH", "/pulls/3100", () => ({})]]);
+  const out = await worker.mergeCheck(ctxOf(f, db), openPr());
+  assert.match(out.dropped, /^Pages is green again on main \(run 955\) without this PR/);
+  assert.deepEqual(f.calls.find((c) => c.method === "PATCH").body, { state: "closed" });
+  assert.equal(db.doc("jarvis_worker", "wabc").state, "dropped");
+  assert.equal(await worker.healed(ctxOf(f, db), { key: "gh:diag:900", pr: 42 }), "", "a task on another PR is never dropped");
+  assert.equal(await worker.healed(ctxOf(f, db), { key: "issue:12" }), "");
+});
+
+test("Approve labels the PR jarvis-merge at the screenshotted commit; new commits ask again; Reject closes it", async () => {
+  const db = fakeDb();
+  await gatedRow(db, { key: null });
+  const routes = (sha) => [["GET", /\/pulls\/3100$/, () => openPr(sha)], ["POST", "/issues/3100/labels", () => ({})], ["DELETE", "/labels/jarvis-gate", () => ({})],
+    ["POST", "/issues/3100/comments", () => ({})], ["PATCH", "/pulls/3100", () => ({})]];
+  const moved = await worker.decide(ctxOf(fakeFetch(routes("sha2")), db), { id: "wabc", decision: "approve" }, "Carlos");
+  assert.deepEqual([moved.ok, moved.stale], [false, true]);
+  assert.equal(db.doc("jarvis_worker", "wabc").gate.sha, "sha2");
+  const f = fakeFetch(routes("sha2"));
+  const ok = await worker.decide(ctxOf(f, db), { id: "wabc", decision: "approve" }, "Carlos");
+  assert.equal(ok.ok, true);
+  assert.deepEqual(f.calls.find((c) => c.method === "POST" && c.url.endsWith("/labels")).body, { labels: ["jarvis-merge"] });
+  assert.deepEqual([db.doc("jarvis_worker", "wabc").gate.decision, db.doc("jarvis_worker", "wabc").gate.approvedSha], ["approved", "sha2"]);
+  assert.equal((await worker.view(db, NOW)).tasks[0].gate.waiting, false);
+
+  const db2 = fakeDb();
+  await gatedRow(db2, { key: null });
+  const r = fakeFetch(routes("sha1"));
+  await worker.decide(ctxOf(r, db2), { id: "wabc", decision: "reject", why: "The header jumps." }, "Carlos");
+  assert.deepEqual(r.calls.find((c) => c.method === "PATCH").body, { state: "closed" });
+  assert.match(r.calls.find((c) => c.url.endsWith("/comments")).body.body, /Carlos rejected this in Jarvis: The header jumps\./);
+  assert.deepEqual([db2.doc("jarvis_worker", "wabc").state, db2.doc("jarvis_worker", "wabc").gate.decision], ["rejected", "rejected"]);
+  await assert.rejects(worker.decide(ctxOf(r, db2), { id: "wabc", decision: "maybe" }), /Approve or Reject/);
+});
+
+test("a worker push to its own PR gates it again and clears Carlos's decision", async () => {
+  const db = fakeDb();
+  await gatedRow(db, { gate: { level: "visible", decision: "approved", approvedSha: "sha1", sha: "sha1" } });
+  await queued(db, { id: "wnext", pr: 3100, branch: "jarvis/wabc-fix" });
+  const f = fakeFetch([["POST", "/issues/3100/comments", () => ({})], ["GET", /\/pulls\/3100$/, () => openPr("sha3")], ["GET", "/pulls/3100/files", () => [{ filename: "index.html" }]],
+    ["POST", "/issues/3100/labels", () => ({})], ["DELETE", "/issues/3100/labels/", () => ({})]]);
+  const out = await worker.report(ctxOf(f, db), { id: "wnext", state: "done", branch: "jarvis/wabc-fix", summary: "Fixed the test." }, jwt());
+  assert.equal(out.gate, "visible");
+  assert.deepEqual([db.doc("jarvis_worker", "wabc").gate.decision, db.doc("jarvis_worker", "wabc").gate.sha], [null, "sha3"]);
 });

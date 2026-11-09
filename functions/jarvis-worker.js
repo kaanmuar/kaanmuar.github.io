@@ -11,6 +11,11 @@
    spend       the month's spend against the cap;  candidates  what the hourly pass may hand the worker on its own
    active      tasks still queued or running: the hourly pass starts one task at a time (#3064)
    route       the model a task starts on (#2958);  view  the spend meter and the last tasks, for the worker op
+   gate        sorts a PR's files into destructive, visible and safe (#2959): safe PRs are labelled jarvis-merge and merge on
+               green after the countdown; visible and destructive ones wait for Carlos's Approve with the run's screenshots
+   mergeCheck  the gate again on the PR's current files before any merge (jarvis-github-fix.js mergeBlock), and drops a
+               diagnosis PR whose workflow is green again on main (#3071)
+   decide      Carlos's Approve or Reject from the web Jarvis or the app (op worker-decide)
 
    Prices are list prices per million tokens, rounded up so the meter overstates rather than understates; thinking
    tokens bill as output and cached input bills in full. The month warns once at WARN_USD and stops the worker at
@@ -39,6 +44,23 @@ const DIAG_DAYS = 2;
 // A run is cut off at 75 minutes (jarvis-worker.yml), so a queued or running row older than this never reported.
 const ACTIVE_MS = 2 * 3600000;
 const REASONS = ["quota"];
+const FINAL = ["done", "nochange", "failed", "dropped", "rejected"];
+const MERGE_LABEL = "jarvis-merge";
+const GATE_LABEL = "jarvis-gate";
+const GATES = ["destructive", "visible", "safe"];
+const SHOTS = 8;
+const SHOT_B64 = 600000;
+const SAFE = [/^tests\//, /\.(test|spec)\.[cm]?js$/, /\.md$/i, /^\.cursor\//];
+// What a bad merge cannot take back: deploys, data rules, dependencies, the domain.
+const DESTRUCTIVE_PATHS = [/^\.github\/workflows\//, /^(firebase\.json|\.firebaserc|firestore\.rules|firestore\.indexes\.json|storage\.rules|database\.rules\.json|CNAME)$/, /(^|\/)package(-lock)?\.json$/, /(^|\/)\.env/];
+// Money, secrets and accounts, in code only: pages such as qa-review-pay.html are visible, not destructive.
+const DESTRUCTIVE_CODE = /(^|[/._-])(secrets?|credentials?|stripe|billing|payments?|payouts?|invoices?|refunds?|accounts?|auth|purge|wipe)([/._-]|$)/i;
+// Added lines that delete stored data or rewrite history.
+const DESTRUCTIVE_LINES = /\.doc\([^)]*\)\.delete\(|\.recursiveDelete\(|\.deleteFiles?\(|\b(batch|tx)\.delete\(|method:\s*["']DELETE|-X\s*DELETE|\brm\s+-r|push\s+(-f\b|--force)|\bDROP\s+TABLE\b|deleteUsers?\(/i;
+const CODE = /\.(js|mjs|cjs|ts|py|sh|kt|rules)$/;
+// What a visitor, a recipient or Carlos sees: pages, styles, front-end scripts, images, translations, the app, and what writes them.
+const VISIBLE = [/\.(html?|css|svg|png|jpe?g|webp|gif|avif|ico|woff2?|ttf)$/i, /^(js|css|images|img|fonts|assets|social|locales|i18n|lang)\//, /^android\//,
+  /^scripts\/build-/, /^scripts\/[\w-]+-studio\//, /(^|\/)(templates?|emails?)\//i, /^functions\/[\w-]*(email|mail|notice|copy|i18n)[\w-]*\.js$/i];
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -121,6 +143,14 @@ function budgetMessage(level, usd) {
     : { kind: "alerts", title: "Jarvis's AI spend passed $" + WARN_USD, body: of + ". The worker stops at $" + CAP_USD + ".", tab: "products:github", tag: "jarvis-worker-budget" };
 }
 
+/* A task's gate for the web Jarvis and the app; waiting when its PR needs Carlos's Approve or Reject. */
+function gateView(d) {
+  const g = d.gate;
+  if (!g || !GATES.includes(g.level)) return null;
+  return { level: g.level, destructive: g.destructive || [], visible: g.visible || [], safe: Number(g.safe) || 0, shots: g.shots || [], note: g.note || "",
+    decision: g.decision || null, by: g.by || null, stale: !!g.stale, waiting: d.state === "done" && g.level !== "safe" && !g.decision };
+}
+
 /* The worker op: the month's spend and the last 20 tasks with what a row needs to hand a failed one to Cursor. */
 async function view(db, now) {
   const [budget, snap] = await Promise.all([spend(db, now), db.collection(COLLECTION).orderBy("at", "desc").limit(20).get()]);
@@ -128,8 +158,8 @@ async function view(db, now) {
     const d = doc.data();
     const stuck = (d.state === "failed" || d.state === "nochange") && !d.escalatedTo;
     return { id: d.id, title: d.title, state: d.state, by: d.by, tier: d.tier, at: d.at, updatedAt: d.updatedAt, usd: round(Number(d.usd) || 0), pr: d.prNumber || null,
-      url: d.prUrl || d.runUrl || null, runUrl: d.runUrl || null, error: d.error || "", reason: d.reason || null, escalatedFrom: d.escalatedFrom || null, escalatedTo: d.escalatedTo || null,
-      cursor: stuck ? { prompt: block(d.prompt, 4000), branch: d.pr ? undefined : d.branch || "main", pr: d.pr || undefined, name: "Jarvis fix: " + text(d.title, 60) } : null };
+      url: d.prUrl || d.runUrl || null, runUrl: d.runUrl || null, error: d.error || d.dropped || "", reason: d.reason || null, escalatedFrom: d.escalatedFrom || null, escalatedTo: d.escalatedTo || null,
+      gate: gateView(d), cursor: stuck ? { prompt: block(d.prompt, 4000), branch: d.pr ? undefined : d.branch || "main", pr: d.pr || undefined, name: "Jarvis fix: " + text(d.title, 60) } : null };
   });
   return { spend: budget, tasks };
 }
@@ -199,6 +229,178 @@ async function verifyOidc(fetchImpl, token, now) {
   return claims;
 }
 
+function destructiveWhy(file, f) {
+  if (f && f.status === "removed") return "deleted";
+  if (DESTRUCTIVE_PATHS.some((re) => re.test(file))) return "deploys, data rules or dependencies";
+  if (!CODE.test(file) || SAFE.some((re) => re.test(file))) return "";
+  if (DESTRUCTIVE_CODE.test(file)) return "money, secrets or accounts";
+  const hit = String((f && f.patch) || "").split("\n").find((l) => l.startsWith("+") && !l.startsWith("+++") && DESTRUCTIVE_LINES.test(l));
+  return hit ? "deletes data: " + text(hit.slice(1), 120) : "";
+}
+
+/** A PR's files ([{ filename, status, patch? }] from GitHub, or paths) -> { level, destructive: [{ file, why }], visible: [file], safe: [file] }.
+    The PR's level is its worst file: destructive never merges on its own, visible waits for Carlos's Approve, safe merges on green. */
+function gate(files) {
+  const out = { level: "safe", destructive: [], visible: [], safe: [] };
+  for (const f of (Array.isArray(files) ? files : []).slice(0, 300)) {
+    const file = text(typeof f === "string" ? f : f && f.filename, 200);
+    if (!file) continue;
+    const why = destructiveWhy(file, typeof f === "string" ? null : f);
+    if (why) out.destructive.push({ file, why });
+    else if (!SAFE.some((re) => re.test(file)) && VISIBLE.some((re) => re.test(file))) out.visible.push(file);
+    else out.safe.push(file);
+  }
+  out.level = out.destructive.length ? "destructive" : out.visible.length ? "visible" : "safe";
+  return out;
+}
+
+const prFiles = (ctx, n) => gh(ctx, "/repos/" + REPO + "/pulls/" + n + "/files?per_page=100");
+
+/* The run's JPEG screenshots ([{ page, before?, after? }] in base64) -> [{ page, before?, after? }] as download URLs in storage. */
+async function saveShots(ctx, id, shots) {
+  if (!ctx.store) return [];
+  const out = [];
+  for (const [i, s] of (Array.isArray(shots) ? shots : []).slice(0, SHOTS).entries()) {
+    const page = text(s && s.page, 120);
+    if (!page) continue;
+    const row = { page };
+    for (const side of ["before", "after"]) {
+      const b64 = typeof s[side] === "string" ? s[side] : "";
+      if (!b64 || b64.length > SHOT_B64) continue;
+      const buf = Buffer.from(b64, "base64");
+      if (buf[0] !== 0xff || buf[1] !== 0xd8) continue;
+      row[side] = await ctx.store("jarvis-worker/" + id + "/" + i + "-" + side + ".jpg", buf, "image/jpeg").catch(() => null);
+    }
+    if (row.before || row.after) out.push(row);
+  }
+  return out;
+}
+
+function gateComment(g, shots, note) {
+  const list = (files) => files.slice(0, 20).map((f) => "`" + f + "`").join(", ") + (files.length > 20 ? " and " + (files.length - 20) + " more" : "");
+  const head = g.level === "safe" ? "**Jarvis's gate: safe.** Tests, docs or internal code only, so Jarvis merges it once CI is green and the countdown ends (labelled " + MERGE_LABEL + ")."
+    : g.level === "visible" ? "**Jarvis's gate: visible.** It changes what people see, so it waits for Carlos's Approve in Jarvis before it merges."
+    : "**Jarvis's gate: destructive.** Jarvis never merges this on its own; it merges only after Carlos approves it in Jarvis.";
+  const table = shots.length ? "\n\n| Page | Before | After |\n| --- | --- | --- |\n" + shots.map((s) => "| `" + s.page + "` | " + (s.before ? "![before](" + s.before + ")" : "new") + " | " + (s.after ? "![after](" + s.after + ")" : "gone") + " |").join("\n") : "";
+  return [head + " (#2959)",
+    g.destructive.length ? "\n**Destructive**\n" + g.destructive.slice(0, 20).map((d) => "- `" + d.file + "`: " + d.why).join("\n") : "",
+    g.visible.length ? "\n**Visible:** " + list(g.visible) : "",
+    note ? "\n" + text(note, 300) : ""].filter(Boolean).join("\n") + table;
+}
+
+/* A done report on a jarvis/* PR: the gate from the PR's files on GitHub (the run's own list when GitHub does not answer),
+   the run's screenshots, the labels and a comment. A new push clears an earlier decision. */
+async function gatePr(ctx, id, n, sha, b) {
+  let g;
+  try { g = gate(await prFiles(ctx, n)); } catch (error) { g = gate(b.files); }
+  const shots = await saveShots(ctx, id, b.shots);
+  const add = g.level === "safe" ? MERGE_LABEL : GATE_LABEL;
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/labels", { method: "POST", body: { labels: [LABEL, add] } }).catch(() => null);
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/labels/" + (add === MERGE_LABEL ? GATE_LABEL : MERGE_LABEL), { method: "DELETE" }).catch(() => null);
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/comments", { method: "POST", body: { body: gateComment(g, shots, b.shotNote) } }).catch(() => null);
+  return { level: g.level, destructive: g.destructive.slice(0, 40), visible: g.visible.slice(0, 40), safe: g.safe.length, shots, note: text(b.shotNote, 300),
+    sha: text(sha, 40) || null, decision: null, at: new Date(ctx.now || Date.now()).toISOString() };
+}
+
+/** The push for a PR that waits for Carlos, or null. */
+function gateMessage(out) {
+  if (!out || !out.pr || !out.gate || out.gate === "safe") return null;
+  const shots = Number(out.shots) || 0;
+  return { kind: "alerts", title: "Jarvis's PR #" + out.pr + " waits for your Approve", tab: "products:github", tag: "jarvis-worker-gate-" + out.pr,
+    body: (out.gate === "destructive" ? "It touches destructive files" : "It changes what people see") + (shots ? "; " + shots + " screenshot" + (shots === 1 ? "" : "s") + " to compare" : "") + ". Approve or Reject in Jarvis > GitHub." };
+}
+
+/* A diagnosis task on main whose workflow has a newer completed run on main that passed -> why it is not needed any more, or "".
+   The PR is not merged, so that run passed without it (#3071). */
+async function healed(ctx, row) {
+  const run = Number((/^gh:diag:(\d+)$/.exec(String(row.key || "")) || [])[1]) || 0;
+  if (!run || row.pr) return "";
+  const snap = await ctx.db.collection("jarvis_github_diag").doc(String(run)).get().catch(() => null);
+  const d = snap && snap.exists ? snap.data() : null;
+  if (!d || !d.workflow || d.pr || (d.branch && d.branch !== "main")) return "";
+  const runs = (await gh(ctx, "/repos/" + REPO + "/actions/runs?branch=main&status=completed&exclude_pull_requests=true&per_page=50")).workflow_runs || [];
+  const newest = runs.find((r) => r.name === d.workflow && Number(r.id) > run);
+  return newest && newest.conclusion === "success" ? d.workflow + " is green again on main (run " + newest.id + ") without this PR" : "";
+}
+
+async function drop(ctx, row, n, why) {
+  const now = ctx.now || Date.now();
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/comments", { method: "POST", body: { body: "Jarvis dropped this PR: " + why + ". The failure it fixed no longer happens on main, so merging it would only add risk (#3071)." } });
+  await gh(ctx, "/repos/" + REPO + "/pulls/" + n, { method: "PATCH", body: { state: "closed" } });
+  await ctx.db.collection(COLLECTION).doc(row.id).set({ state: "dropped", dropped: text(why, 300), updatedAt: new Date(now).toISOString() }, { merge: true });
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "worker:" + row.id, url: "https://github.com/" + REPO + "/pull/" + n, text: "Jarvis dropped PR #" + n + " (" + row.title + "): " + why + "." });
+}
+
+// The task that opened PR n: a later task that pushed to it has the same prNumber and its own pr.
+async function taskOfPr(db, n) {
+  const snap = await db.collection(COLLECTION).where("prNumber", "==", Number(n)).limit(10).get().catch(() => ({ docs: [] }));
+  return snap.docs.map((doc) => doc.data()).find((d) => !d.pr) || null;
+}
+
+/** Before Jarvis merges an open PR (mergeBlock) -> { why, dropped?, gate? }. A jarvis/* PR from the worker is dropped when its
+    diagnosis is healed, and otherwise passes only when its current files are safe or Carlos approved its current commit. */
+async function mergeCheck(ctx, pr) {
+  if (!ctx.db || !/^jarvis\//.test(String((pr.head || {}).ref || ""))) return { why: "" };
+  const row = await taskOfPr(ctx.db, pr.number);
+  if (!row) return { why: "" };
+  const heal = await healed(ctx, row).catch(() => "");
+  if (heal) {
+    await drop(ctx, row, pr.number, heal);
+    return { why: "dropped: " + heal, dropped: heal };
+  }
+  const live = gate(await prFiles(ctx, pr.number));
+  if (live.level === "safe") return { why: "", gate: "safe" };
+  const g = row.gate || {};
+  if (g.decision === "approved" && g.approvedSha === pr.head.sha) return { why: "", gate: "approved" };
+  if (g.decision === "approved") return { why: "changed since Carlos approved it" };
+  const files = (live.level === "destructive" ? live.destructive.map((d) => d.file) : live.visible).slice(0, 3).join(", ");
+  return { why: "waiting for Carlos's Approve (" + live.level + ": " + files + ")" };
+}
+
+/* body: { id, decision: "approve" | "reject", why? } -> { ok, message, url }. Approve binds to the PR's current commit, the one
+   the screenshots show, and labels it jarvis-merge so it merges on green; Reject closes the PR. */
+async function decide(ctx, body, by) {
+  const b = body || {};
+  const now = ctx.now || Date.now();
+  const id = text(b.id, 40);
+  const decision = b.decision === "approve" ? "approve" : b.decision === "reject" ? "reject" : "";
+  if (!decision) throw new Error("Approve or Reject?");
+  const ref = ctx.db.collection(COLLECTION).doc(id);
+  const snap = id ? await ref.get() : null;
+  if (!snap || !snap.exists) throw new Error("No worker task " + id + ".");
+  const row = snap.data();
+  const n = Number(row.prNumber) || 0;
+  if (!n || row.pr) throw new Error("Task " + id + " has no PR of its own.");
+  const url = "https://github.com/" + REPO + "/pull/" + n;
+  const pr = await gh(ctx, "/repos/" + REPO + "/pulls/" + n);
+  if (pr.state !== "open") throw new Error("#" + n + " is " + (pr.merged ? "already merged" : "closed") + ".");
+  const who = text(by, 80) || "Carlos";
+  const g = row.gate || {};
+  if (decision === "reject") {
+    const why = text(b.why, 300);
+    await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/comments", { method: "POST", body: { body: who + " rejected this in Jarvis" + (why ? ": " + why : "") + ". Closed (#2959)." } });
+    await gh(ctx, "/repos/" + REPO + "/pulls/" + n, { method: "PATCH", body: { state: "closed" } });
+    await ref.set({ state: "rejected", gate: Object.assign({}, g, { decision: "rejected", by: who, decidedAt: new Date(now).toISOString(), why }), updatedAt: new Date(now).toISOString() }, { merge: true });
+    await jarvisLog.log(null, { source: "github", level: "info", ref: "worker:" + id, url, text: who + " rejected Jarvis's PR #" + n + " (" + row.title + ")" + (why ? ": " + why : "") + "." });
+    return { ok: true, message: "Closed #" + n + ".", url };
+  }
+  const heal = await healed(ctx, row).catch(() => "");
+  if (heal) {
+    await drop(ctx, row, n, heal);
+    return { ok: false, message: "Dropped #" + n + " instead: " + heal + ".", url };
+  }
+  if (g.sha && g.sha !== pr.head.sha) {
+    await ref.set({ gate: Object.assign({}, g, { sha: pr.head.sha, stale: true }), updatedAt: new Date(now).toISOString() }, { merge: true });
+    return { ok: false, stale: true, message: "#" + n + " got new commits since the screenshots. Look at the PR, then Approve again to approve " + pr.head.sha.slice(0, 7) + ".", url };
+  }
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/labels", { method: "POST", body: { labels: [MERGE_LABEL] } });
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/labels/" + GATE_LABEL, { method: "DELETE" }).catch(() => null);
+  await gh(ctx, "/repos/" + REPO + "/issues/" + n + "/comments", { method: "POST", body: { body: who + " approved this in Jarvis at " + pr.head.sha.slice(0, 7) + ". Jarvis merges it once CI is green and the countdown ends; a new commit needs a new Approve (#2959)." } });
+  await ref.set({ gate: Object.assign({}, g, { decision: "approved", approvedSha: pr.head.sha, stale: false, by: who, decidedAt: new Date(now).toISOString() }), updatedAt: new Date(now).toISOString() }, { merge: true });
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "worker:" + id, url, text: who + " approved Jarvis's PR #" + n + " (" + row.title + "); it merges on green." });
+  return { ok: true, message: "Approved #" + n + "; it merges once CI is green and the countdown ends.", url };
+}
+
 function prBody(row, r, c, runUrl) {
   const files = (Array.isArray(r.files) ? r.files : []).slice(0, 40).map((f) => "- `" + text(f, 160) + "`");
   return [
@@ -231,7 +433,7 @@ async function report(ctx, body, token) {
   const row = snap.data();
   const run = String(claims.run_id || "");
   if (row.run && row.run !== run) throw Object.assign(new Error("Task " + id + " belongs to another run."), { status: 403 });
-  if (["done", "nochange", "failed"].includes(row.state)) return { ok: true, state: row.state, pr: row.prNumber || null, url: row.prUrl || null, already: true };
+  if (FINAL.includes(row.state)) return { ok: true, state: row.state, pr: row.prNumber || null, url: row.prUrl || null, already: true };
   const state = STATES.includes(b.state) ? b.state : "failed";
   const runUrl = "https://github.com/" + REPO + "/actions/runs/" + run;
   const c = cost(b.models);
@@ -265,19 +467,29 @@ async function report(ctx, body, token) {
     if (row.pr) {
       await gh(ctx, "/repos/" + REPO + "/issues/" + row.pr + "/comments", { method: "POST", body: { body: "Jarvis's worker pushed to this PR ([run](" + runUrl + ")).\n\n" + block(b.summary, 4000) } });
       Object.assign(patch, { prNumber: row.pr, prUrl: "https://github.com/" + REPO + "/pull/" + row.pr });
+      // A push to a worker PR gates it again: new files and screenshots, and Carlos's earlier decision no longer holds.
+      const opener = /^jarvis\//.test(row.branch || branch) ? await taskOfPr(ctx.db, row.pr) : null;
+      if (opener && opener.state === "done") {
+        const p = await gh(ctx, "/repos/" + REPO + "/pulls/" + row.pr).catch(() => ({}));
+        const g = await gatePr(Object.assign({}, ctx, { now }), id, row.pr, (p.head || {}).sha, b);
+        await ctx.db.collection(COLLECTION).doc(opener.id).set({ gate: g, updatedAt: new Date(now).toISOString() }, { merge: true });
+        out = Object.assign(out, { gate: g.level, shots: g.shots.length });
+      }
     } else {
       if (!/^jarvis\/[\w.-]+$/.test(branch)) throw new Error("The worker pushes jarvis/* branches only.");
       const open = await gh(ctx, "/repos/" + REPO + "/pulls?state=open&head=" + REPO.split("/")[0] + ":" + encodeURIComponent(branch));
       const pr = (open || [])[0] || await gh(ctx, "/repos/" + REPO + "/pulls", { method: "POST", body: { title: "Jarvis: " + row.title, head: branch, base: "main", body: prBody(row, b, c, runUrl) } });
-      await gh(ctx, "/repos/" + REPO + "/issues/" + pr.number + "/labels", { method: "POST", body: { labels: [LABEL] } }).catch(() => null);
+      patch.gate = await gatePr(Object.assign({}, ctx, { now }), id, pr.number, (pr.head || {}).sha, b);
       Object.assign(patch, { branch, prNumber: pr.number, prUrl: pr.html_url });
+      out = Object.assign(out, { gate: patch.gate.level, shots: patch.gate.shots.length });
     }
     out = Object.assign(out, { pr: patch.prNumber, url: patch.prUrl });
   }
   await ref.set(patch, { merge: true });
   if (state !== "running") {
     const then = patch.escalatedTo ? "; trying again on Pro" : state === "failed" || state === "nochange" ? "; hand it to a Cursor agent from the GitHub tab" : "";
-    const said = state === "done" ? "opened " + (patch.prUrl ? "PR #" + patch.prNumber : "its PR") : state === "nochange" ? "found nothing to change"
+    const gated = patch.gate ? (patch.gate.level === "safe" ? ", safe, so it merges on green" : ", " + patch.gate.level + ", so it waits for your Approve") : "";
+    const said = state === "done" ? "opened " + (patch.prUrl ? "PR #" + patch.prNumber : "its PR") + gated : state === "nochange" ? "found nothing to change"
       : reason === "quota" ? "stopped on Gemini's request quota, not on the code" : "failed: " + (patch.error || "no reason given");
     await jarvisLog.log(null, { source: "github", level: state === "failed" ? "warn" : "info", ref: "worker:" + id, url: patch.prUrl || runUrl,
       text: "Jarvis's worker " + said + " (" + row.title + ", " + row.tier + ", $" + patch.usd.toFixed(2) + ")" + then + "." });
@@ -316,6 +528,6 @@ async function candidates(db, { now, confidence, github, failing }) {
   return out;
 }
 
-module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, priceOf, cost, slug, monthOf, spend, active, route, crossed, budgetMessage, view,
-  dispatch, verifyOidc, report, candidates,
+module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, MERGE_LABEL, GATE_LABEL, priceOf, cost, slug, monthOf, spend, active, route, crossed, budgetMessage, view,
+  dispatch, verifyOidc, report, candidates, gate, gateMessage, healed, mergeCheck, decide,
   _reset: () => { jwks = { at: 0, keys: [] }; } };

@@ -999,7 +999,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
-        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix',
+        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix', 'worker-drop': 'drop a fix main no longer needs',
         'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
         'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
@@ -2596,7 +2596,34 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
     const workerSpend = () => (S.worker && S.worker.spend) || null;
     const workerTone = (sp) => (sp.level === 'over' ? COLORS.pink : sp.level === 'warn' ? COLORS.amber : COLORS.green);
-    const WORKER_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', nochange: '', failed: 'c-slow' };
+    const WORKER_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', nochange: '', failed: 'c-slow', dropped: '', rejected: '' };
+    const GATE_CHIP = { destructive: ['c-slow', 'Destructive', 'Deletes files or data, or touches deploys, money, secrets or accounts: never merges on its own.'],
+        visible: ['c-average', 'Visible', 'Changes what people see: waits for your Approve.'], safe: ['c-fast', 'Safe', 'Tests, docs or internal code: merges on green after the countdown.'] };
+    const gateChip = (g) => {
+        if (!g) return '';
+        if (g.decision) return `<span class="jv-chip ${g.decision === 'approved' ? 'c-fast' : ''}">${g.decision === 'approved' ? 'Approved' : 'Rejected'}</span>`;
+        const [cls, label, title] = GATE_CHIP[g.level] || ['', g.level, ''];
+        return `<span class="jv-chip ${cls}" title="${esc(title)}">${label}</span>`;
+    };
+
+    // A worker PR at the gate (#2959): its risky files, the run's before and after screenshots, and Approve or Reject.
+    function workerGate(t) {
+        const g = t.gate;
+        const side = (s, k) => (s[k] ? `<a href="${esc(s[k])}" target="_blank" rel="noopener"><img src="${esc(s[k])}" alt="${esc(s.page)}, ${k}" loading="lazy" width="320" height="200"><span>${k === 'before' ? 'Before' : 'After'}</span></a>`
+            : `<span class="jv-shot-none">${k === 'before' ? 'New page' : 'Page removed'}</span>`);
+        const shots = g.shots.map((s) => `<figure class="jv-shot"><figcaption>${esc(s.page)}</figcaption><div class="jv-shot-pair">${side(s, 'before')}${side(s, 'after')}</div></figure>`).join('');
+        const more = (n) => (n > 8 ? ` and ${n - 8} more` : '');
+        return `<div class="jv-gate is-${esc(g.level)}">
+            <p class="jv-gate-head">${gateChip(g)} <strong>${esc(t.title)}</strong> ${t.pr ? ghLink(t.url, '#' + t.pr) : ''}</p>
+            <p class="jv-note">${esc(GATE_CHIP[g.level] ? GATE_CHIP[g.level][2] : '')}</p>
+            ${g.destructive.length ? `<ul class="jv-gate-files">${g.destructive.slice(0, 8).map((d) => `<li><code>${esc(d.file)}</code> ${esc(d.why)}</li>`).join('')}${g.destructive.length > 8 ? `<li>${more(g.destructive.length)}</li>` : ''}</ul>` : ''}
+            ${g.visible.length ? `<p class="jv-note">Visible: ${g.visible.slice(0, 8).map((f) => `<code>${esc(f)}</code>`).join(', ')}${more(g.visible.length)}</p>` : ''}
+            ${shots ? `<div class="jv-shots">${shots}</div>` : `<p class="jv-note">${esc(g.note || 'No screenshots for this change.')}</p>`}
+            ${shots && g.note ? `<p class="jv-note">${esc(g.note)}</p>` : ''}
+            ${g.stale ? '<p class="jv-note is-alert">New commits since the screenshots: look at the PR before you approve.</p>' : ''}
+            <div class="jv-gate-actions"><button type="button" class="jv-btn small is-primary" data-worker-decide="approve" data-worker-id="${esc(t.id)}">Approve</button>
+            <button type="button" class="jv-btn small" data-worker-decide="reject" data-worker-id="${esc(t.id)}">Reject</button></div>${ghResult('gate:' + t.id)}</div>`;
+    }
 
     function workerPanel() {
         const w = S.worker, sp = workerSpend();
@@ -2614,12 +2641,32 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ['Model', (t) => `<span class="jv-chip">${esc(t.tier === 'flash' ? 'Flash' : 'Pro')}</span>${t.escalatedFrom ? '<span class="jv-note"> after Flash</span>' : ''}`],
             ['State', (t) => (t.reason === 'quota' ? '<span class="jv-chip c-average" title="Gemini answered that its request quota is used; the code was not at fault.">Gemini quota</span>'
                 : `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>`) + (t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : '')],
+            ['Gate', (t) => gateChip(t.gate)],
             ['Cost', (t) => '$' + Number(t.usd || 0).toFixed(2)],
             ['When', (t) => esc(ghAgo(t.at))],
             ['', (t) => (t.cursor ? `<button type="button" class="jv-btn small" data-worker-cursor="${esc(t.id)}">Hand to Cursor</button>${ghResult('worker:' + t.id)}` : '')]
         ], w.tasks || [], 'No worker runs yet.');
-        return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + tasks,
-            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini\'s request quota waits twice, then moves to Flash. Prices are rounded up, so the meter overstates.' });
+        const waiting = (w.tasks || []).filter((t) => t.gate && t.gate.waiting);
+        const gates = waiting.length ? `<h4 class="jv-sub">At the gate · ${waiting.length}</h4>${waiting.map(workerGate).join('')}` : '';
+        return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + gates + tasks,
+            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini\'s request quota waits twice, then moves to Flash. Safe PRs merge on green after the countdown; visible and destructive ones wait for your Approve, and a fix main no longer needs is dropped. Prices are rounded up, so the meter overstates.' });
+    }
+
+    async function workerDecide(id, decision) {
+        const t = ((S.worker && S.worker.tasks) || []).find((x) => x.id === id);
+        if (!t || !t.gate) return;
+        let why = '';
+        if (decision === 'approve') {
+            const risky = t.gate.level === 'destructive' ? `It touches destructive files:\n${t.gate.destructive.map((d) => `- ${d.file}: ${d.why}`).join('\n')}\n\n` : '';
+            if (!window.confirm(`Jarvis: approve PR #${t.pr} "${t.title}"?\n\n${risky}It merges once CI is green and the countdown ends, and then goes to production.`)) return;
+        } else {
+            why = window.prompt(`Jarvis: reject PR #${t.pr} "${t.title}"? It closes the PR. Why (optional)?`, '');
+            if (why === null) return;
+        }
+        ghMark('gate:' + id, 'running', decision === 'approve' ? 'Approving…' : 'Closing the PR…');
+        const out = await call('worker-decide', { id, decision, why }).catch((error) => ({ ok: false, error: error.message }));
+        ghMark('gate:' + id, out.ok ? 'done' : 'failed', out.message || 'Not done: ' + out.error, out.url ? { url: out.url, link: 'Open the PR' } : null);
+        if (out.ok || out.stale) loadWorker();
     }
 
     async function workerCursor(id) {
@@ -4473,6 +4520,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
         if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
         if (t.dataset.workerCursor) { workerCursor(t.dataset.workerCursor); return; }
+        if (t.dataset.workerDecide) { workerDecide(t.dataset.workerId, t.dataset.workerDecide); return; }
         if (t.dataset.ghFix) { ghFix(t.dataset.ghFix); return; }
         if (t.dataset.ghFlakyAgent) { ghFlakyAgent(t.dataset.ghFlakyAgent); return; }
         if (t.dataset.ghSecAgent) { ghSecAgent(t.dataset.ghSecAgent); return; }

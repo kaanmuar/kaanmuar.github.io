@@ -4,7 +4,8 @@
 
    boardSync     moves drifted board items to the column they should be in (board token, Status field)
    updatePr      merges main into a PR branch that is behind (update-branch)
-   mergePr       squash-merges a PR that is mergeable, green and labelled jarvis-merge or approved
+   mergePr       squash-merges a PR that is mergeable, green and labelled jarvis-merge or approved, and past the worker's gate
+   mergeState    why a PR may not be merged (mergeBlock: just the why), for mergePr and the countdown's merge-pr
    revert        opens a revert PR for main's HEAD commit (jarvis/revert-<short>); any older commit needs a fix agent
    deleteBranch  deletes merged branches; never the default branch or one with an open PR
    closeIssue    comments and closes an issue
@@ -26,6 +27,7 @@
 
 const crypto = require("crypto");
 const jarvisLog = require("./jarvis-log");
+const jarvisWorker = require("./jarvis-worker");
 
 const API = "https://api.github.com";
 const REPO = "kaanmuar/kaanmuar.github.io";
@@ -155,21 +157,26 @@ async function updatePr(ctx, args) {
   return { ok: true, message: "Merging main into #" + n + ".", url: "https://github.com/" + repo + "/pull/" + n };
 }
 
-// Why a PR may not be merged, or "".
-async function mergeBlock(ctx, repo, pr) {
-  if (pr.state !== "open") return pr.merged ? "already merged" : "closed";
-  if (pr.draft) return "a draft";
-  if (pr.mergeable_state !== "clean") return "not mergeable (" + (pr.mergeable_state || "unknown") + ")";
+/* Why a PR may not be merged -> { why, dropped?, gate? }; why is "" when it may. A worker PR passes Jarvis's gate first (#2959):
+   a diagnosis PR whose workflow is green again on main is closed here, before any merge path reaches it (#3071). */
+async function mergeState(ctx, repo, pr) {
+  if (pr.state !== "open") return { why: pr.merged ? "already merged" : "closed" };
+  if (pr.draft) return { why: "a draft" };
+  const w = repo === jarvisWorker.REPO ? await jarvisWorker.mergeCheck(ctx, pr) : { why: "" };
+  if (w.why) return w;
+  if (pr.mergeable_state !== "clean") return { why: "not mergeable (" + (pr.mergeable_state || "unknown") + ")" };
   const labelled = (pr.labels || []).some((l) => l.name === MERGE_LABEL);
   if (!labelled) {
     const reviews = await call(ctx, "/repos/" + repo + "/pulls/" + pr.number + "/reviews?per_page=100").catch(() => []);
-    if (!(Array.isArray(reviews) ? reviews : []).some((r) => r.state === "APPROVED")) return "neither approved nor labelled " + MERGE_LABEL;
+    if (!(Array.isArray(reviews) ? reviews : []).some((r) => r.state === "APPROVED")) return { why: "neither approved nor labelled " + MERGE_LABEL };
   }
   const checks = (await call(ctx, "/repos/" + repo + "/commits/" + pr.head.sha + "/check-runs?per_page=100")).check_runs || [];
   const red = checks.filter((c) => c.status !== "completed" || !["success", "skipped", "neutral"].includes(c.conclusion));
-  if (!checks.length) return "without checks";
-  return red.length ? red.length + " check" + (red.length === 1 ? "" : "s") + " not green (" + red[0].name + ")" : "";
+  if (!checks.length) return { why: "without checks" };
+  return red.length ? { why: red.length + " check" + (red.length === 1 ? "" : "s") + " not green (" + red[0].name + ")" } : { why: "", gate: w.gate };
 }
+
+const mergeBlock = async (ctx, repo, pr) => (await mergeState(ctx, repo, pr)).why;
 
 async function mergePr(ctx, args) {
   const repo = repoOf(args);
@@ -695,7 +702,7 @@ function actArgs(action, body) {
 }
 
 module.exports = {
-  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
+  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergeState, mergeBlock, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
   quarantine, securityTicket, dismissAlert, dismissLow, runStatus, clearCache, draftFlaky,
   diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf, areaOfPath,
   _reset: () => { statusOptions = null; }

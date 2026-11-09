@@ -1087,6 +1087,53 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test("a worker PR at the gate shows its files and the run's screenshots, with Approve and Reject (#2959)", async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const STORE = 'https://firebasestorage.googleapis.com/v0/b/x/o/';
+    const shots = {};
+    for (const [name, url] of [['before', '/index.html'], ['after', '/qa-review.html']]) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(url);
+      shots[name] = await page.screenshot({ type: 'jpeg', quality: 60 });
+    }
+    await page.route(STORE + '**', (route) => route.fulfill({ contentType: 'image/jpeg', body: shots[route.request().url().includes('before') ? 'before' : 'after'] }));
+    const at = new Date(Date.now() - 1800000).toISOString();
+    const worker = { ok: true, spend: { month: '2026-11', usd: 6.2, runs: 12, input: 2100000, output: 98000, cap: 40, warn: 20, over: false, warned: false, level: 'ok', left: 33.8 },
+      tasks: [
+        { id: 'w5', title: 'Tighten the review hero spacing', state: 'done', tier: 'pro', at, usd: 0.64, pr: 3101, url: GH + '/pull/3101',
+          gate: { level: 'visible', destructive: [], visible: ['css/site.css', 'qa-review.html'], safe: 1, note: '', decision: null, stale: false, waiting: true,
+            shots: [{ page: 'qa-review.html', before: STORE + 'w5%2F0-before.jpg', after: STORE + 'w5%2F0-after.jpg' }] } },
+        { id: 'w4', title: 'Clean up old review exports', state: 'done', tier: 'pro', at, usd: 0.31, pr: 3100, url: GH + '/pull/3100',
+          gate: { level: 'destructive', destructive: [{ file: 'functions/review-export.js', why: 'deletes data: await db.collection("exports").doc(id).delete();' }], visible: [], safe: 2, shots: [],
+            note: '', decision: null, stale: false, waiting: true } },
+        { id: 'w3', title: 'Fix the flaky sitemap test', state: 'done', tier: 'flash', at, usd: 0.05, pr: 3099, url: GH + '/pull/3099',
+          gate: { level: 'safe', destructive: [], visible: [], safe: 1, shots: [], note: '', decision: null, stale: false, waiting: false } }
+      ] };
+    const calls = await openStats(page, '#stats/github/30', { 'github-work': actionsWork(), worker, 'worker-decide': { ok: true, message: 'Approved #3101; it merges once CI is green and the countdown ends.', url: GH + '/pull/3101' } });
+    const panel = page.locator('[data-view="github"] [data-panel-id="github-worker"]');
+    await expect(panel).toContainText('At the gate · 2');
+    const cards = panel.locator('.jv-gate');
+    await expect(cards).toHaveCount(2);
+    await expect(cards.nth(0)).toContainText('Visible');
+    await expect(cards.nth(0).locator('img')).toHaveCount(2);
+    await expect(cards.nth(1)).toContainText('functions/review-export.js');
+    await expect(cards.nth(1)).toContainText('never merges on its own');
+    await expect(panel.locator('tbody tr').nth(2)).toContainText('Safe');
+    await expect.poll(() => cards.nth(0).locator('img').evaluateAll((imgs) => imgs.every((i) => i.complete && i.naturalWidth > 0))).toBe(true);
+    await cards.nth(0).scrollIntoViewIfNeeded();
+    await panel.screenshot({ path: 'test-results/jarvis-worker-gate.png' });
+    page.once('dialog', (d) => d.accept());
+    await cards.nth(0).locator('[data-worker-decide="approve"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'worker-decide').map((c) => [c.body.id, c.body.decision])).toEqual([['w5', 'approve']]);
+    await expect(panel).toContainText('Approved #3101');
+    page.once('dialog', (d) => d.accept('It deletes exports customers still download.'));
+    await panel.locator('[data-worker-decide="reject"][data-worker-id="w4"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'worker-decide').map((c) => [c.body.id, c.body.decision, c.body.why])).toContainEqual(['w4', 'reject', 'It deletes exports customers still download.']);
+    expect(errors).toEqual([]);
+  });
+
   test('GitHub diagnoses get Fix and Fix with an agent, and a re-run shows its state at once, then the fresh numbers and the run result (#2808)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
