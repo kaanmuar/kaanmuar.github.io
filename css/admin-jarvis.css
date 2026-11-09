@@ -531,9 +531,9 @@
 .jv-gh-xp i { display: block; height: 100%; background: linear-gradient(90deg, var(--violet), var(--cyan)); box-shadow: 0 0 10px var(--cyan); }
 .jv-gh-needs { font-size: 0.92rem; }
 .jv-gh-sparks { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; }
-.jv-gh-sparks div { display: grid; border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.55rem 0.2rem; }
-.jv-gh-sparks span { font: 0.64rem ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.jv-gh-sparks b { font: 700 1.05rem ui-monospace, Menlo, monospace; }
+.jv-gh-sparks > div { display: grid; border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.55rem 0.2rem; }
+.jv-gh-sparks > div > span { font: 0.64rem ui-monospace, Menlo, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.jv-gh-sparks > div > b { font: 700 1.05rem ui-monospace, Menlo, monospace; }
 .jv-meter.is-low i { background: var(--pink); }
 .jv-gh-add, .jv-gh-del { font-family: ui-monospace, Menlo, monospace; }
 .jv-gh-add { color: var(--green); }
@@ -618,4 +618,59 @@
     .jv-view[data-view="github"] .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jv-view[data-view="github"] .jv-panel.is-wide { grid-column: auto; }
     .jv-view[data-view="github"] .jv-gh-head, .jv-view[data-view="github"] .jv-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: max(0.75rem, calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px))); justify-items: center; }
+}
+
+/* #2807: chart titles, axis titles and the hover/tap tooltip (any tab), and the GitHub tab's inline drill-downs. */
+.jv-chart { margin: 0; }
+.jv-chart-title { margin: 0 0 0.3rem; font: 600 0.7rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.jv-chart-title i, .jv-gh-sparks > div > span i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 0.35rem; vertical-align: baseline; }
+.jv-chart-plot { position: relative; }
+.jv-axis-title { fill: var(--muted); color: var(--muted); font: 0.66rem ui-monospace, Menlo, monospace; letter-spacing: 0.04em; }
+.jv-chart-frame { display: grid; grid-template-columns: 1.1rem auto minmax(0, 1fr); column-gap: 0.3rem; }
+.jv-chart.is-framed .jv-area { height: 11rem; }
+.jv-chart-y { position: relative; }
+.jv-chart-y .jv-axis-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); white-space: nowrap; }
+.jv-chart-yticks { position: relative; min-width: 1.6rem; }
+.jv-chart-yticks span, .jv-chart-xticks span { position: absolute; font: 0.66rem ui-monospace, Menlo, monospace; color: var(--dim); white-space: nowrap; }
+.jv-chart-yticks span { right: 0; transform: translateY(-50%); }
+.jv-chart-xticks { position: relative; height: 1.3rem; }
+.jv-chart-xticks span { top: 0.25rem; transform: translateX(-50%); }
+.jv-chart-xticks span:first-child { transform: none; }
+.jv-chart-xticks span:last-child:not(:first-child) { transform: translateX(-100%); }
+.jv-chart-x { text-align: center; }
+.jv-hit { fill: transparent; cursor: crosshair; }
+.jv-guide { stroke: var(--text); stroke-opacity: 0; stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; vector-effect: non-scaling-stroke; }
+.jv-guide.is-on { stroke-opacity: 0.6; }
+.jv-tip { position: absolute; top: 0; z-index: 3; width: max-content; max-width: 100%; box-sizing: border-box; padding: 0.3rem 0.5rem; border: 1px solid var(--line-hi); border-radius: 8px; background: var(--bg); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); font: 0.74rem ui-monospace, Menlo, monospace; color: var(--text); pointer-events: none; }
+.jv-spark-axis { display: flex; justify-content: space-between; gap: 0.3rem; font: 0.6rem ui-monospace, Menlo, monospace; color: var(--dim); }
+.jv-legend small { margin-left: 0.25rem; color: var(--dim); }
+.jv-bars-head { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem; font: 600 0.62rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.jv-bars li.is-drill { min-height: 44px; padding: 0 0.35rem; border-radius: 8px; cursor: pointer; }
+.jv-bars li.is-drill:hover, .jv-bars li.is-drill:focus-visible, .jv-bars li.is-open { background: rgba(56, 225, 255, 0.08); outline: none; box-shadow: inset 0 0 0 1px var(--line-hi); }
+.jv-bars li.is-drill .jv-bar-label::after, .jv-stat-btn span::after { content: " ▸"; color: var(--dim); }
+.jv-bars li.is-open .jv-bar-label::after, .jv-stat-btn.is-open span::after { content: " ▾"; color: var(--cyan); }
+.jv-stats .jv-stat-btn { flex: 1 1 70px; min-height: 44px; padding: 0.4rem 0.55rem; border: 1px solid var(--line); border-radius: 10px; background: rgba(56, 225, 255, 0.05); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.jv-stats .jv-stat-btn:hover, .jv-stats .jv-stat-btn:focus-visible, .jv-stats .jv-stat-btn.is-open { border-color: var(--cyan); background: rgba(56, 225, 255, 0.12); }
+.jv-pm-node[data-drill-open], .jv-pm-step[data-drill-open] { cursor: pointer; }
+.jv-pm-node[data-drill-open]:focus-visible { outline: none; }
+.jv-pm-node[data-drill-open]:hover rect, .jv-pm-node[data-drill-open]:focus-visible rect, .jv-pm-node.is-open rect { stroke: var(--cyan); stroke-width: 2.6; }
+.jv-pm-step[data-drill-open] { min-height: 44px; }
+.jv-pm-step.is-open, .jv-pm-step[data-drill-open]:focus-visible { border-color: var(--cyan); outline: none; box-shadow: 0 0 10px rgba(56, 225, 255, 0.35); }
+.jv-drill { margin: 0.2rem 0 0.7rem; padding: 0.35rem 0.65rem 0.6rem; border: 1px solid var(--line-hi); border-radius: 12px; background: rgba(56, 225, 255, 0.05); }
+.jv-drill[hidden] { display: none; }
+.jv-drill header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.85rem; }
+.jv-drill-close { min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+.jv-drill-list { list-style: none; margin: 0; padding: 0; }
+.jv-drill-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 0.6rem; min-height: 44px; border-bottom: 1px solid var(--line); font-size: 0.8rem; }
+.jv-drill-list li > a, .jv-drill-list small a { display: inline-flex; align-items: center; min-height: 44px; }
+.jv-drill-list span { overflow-wrap: anywhere; }
+.jv-drill-list small { color: var(--dim); white-space: nowrap; }
+.jv-drill-list code { display: inline-block; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.jv-drill-list em.jv-chip { font-style: normal; }
+.jv-drill-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.55rem 0 0; }
+.jv-drill-links .jv-btn { display: inline-flex; align-items: center; min-height: 44px; }
+@container jvgh (max-width: 479px) {
+    .jv-drill-list li { grid-template-columns: auto minmax(0, 1fr); padding: 0.2rem 0; }
+    .jv-drill-list small { grid-column: 2; white-space: normal; }
+    .jv-drill-list code { max-width: 9rem; }
 }

@@ -27,6 +27,8 @@ const QUIET = ["cancelled", "skipped", "neutral", "stale"];
 const CHECK_FAIL = ["failure", "timed_out", "startup_failure", "action_required"];
 const PR_STATES = ["clean", "dirty", "behind", "blocked", "unstable"];
 const HISTORY_DAYS = 90;
+// Cards and issues each drill-down lists (#2807).
+const ITEMS = 10;
 const LOCAL_STALE = 30 * MINUTE;
 const INSTALL = "https://github.com/settings/installations/175836846";
 const REPORTER = "Start the Mac GitHub reporter: node scripts/github-local-report.js --install";
@@ -343,7 +345,7 @@ async function prsPart(gh, open, closed, now, start, days, live) {
   };
 }
 
-const BOARD_QUERY = "query($id: ID!, $c: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $c) { pageInfo { hasNextPage endCursor } nodes { updatedAt fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt } } content { __typename ... on Issue { number title url state closedAt createdAt } ... on PullRequest { number title url state mergedAt closedAt createdAt } } } } } } }";
+const BOARD_QUERY = "query($id: ID!, $c: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $c) { pageInfo { hasNextPage endCursor } nodes { updatedAt fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt } } content { __typename ... on Issue { number title url state closedAt createdAt labels(first: 5) { nodes { name } } } ... on PullRequest { number title url state mergedAt closedAt createdAt labels(first: 5) { nodes { name } } } } } } } } }";
 
 async function boardItems(gh) {
   const items = [];
@@ -363,14 +365,15 @@ async function boardPart(gh, ctx, now, start, days) {
   const rows = (await boardItems(gh)).filter((n) => n && n.content && n.content.number).map((n) => {
     const status = n.fieldValueByName || {};
     const c = n.content;
-    return { column: status.name || "", since: ms(status.updatedAt || n.updatedAt) || now, type: c.__typename === "PullRequest" ? "pr" : "issue", number: c.number, title: String(c.title || "").slice(0, 160), url: c.url || "", state: c.state || "", closedAt: c.closedAt || "", mergedAt: c.mergedAt || "", createdAt: c.createdAt || "" };
+    return { column: status.name || "", since: ms(status.updatedAt || n.updatedAt) || now, type: c.__typename === "PullRequest" ? "pr" : "issue", number: c.number, title: String(c.title || "").slice(0, 160), url: c.url || "", state: c.state || "", closedAt: c.closedAt || "", mergedAt: c.mergedAt || "", createdAt: c.createdAt || "", labels: ((c.labels && c.labels.nodes) || []).map((l) => l && l.name).filter(Boolean) };
   });
   const age = (r) => round((now - r.since) / DAY);
-  const brief = (r) => ({ number: r.number, title: r.title, days: age(r), url: r.url });
+  const brief = (r) => ({ number: r.number, title: r.title, days: age(r), url: r.url, labels: r.labels });
   const names = COLUMNS.concat(Array.from(new Set(rows.map((r) => r.column).filter((c) => c && !COLUMNS.includes(c)))));
+  // Oldest first, except Done: its oldest cards are long finished, so it lists the newest.
   const columns = names.map((name) => {
     const list = rows.filter((r) => r.column === name).sort((a, b) => a.since - b.since);
-    return { name, count: list.length, ageMedD: round(median(list.map(age))), oldest: name === "Done" ? [] : list.slice(0, 3).map(brief) };
+    return { name, count: list.length, ageMedD: round(median(list.map(age))), items: (name === "Done" ? list.slice().reverse() : list).slice(0, ITEMS).map(brief) };
   });
   const finished = (r) => ms(r.closedAt || r.mergedAt) || r.since;
   const doneRows = rows.filter((r) => r.column === "Done");
@@ -412,13 +415,17 @@ async function issuesPart(gh, now, start, days, live) {
   const [list, open, bugs] = await Promise.all([
     gh.pages("repos/" + REPO + "/issues?state=all&since=" + encodeURIComponent(new Date(start).toISOString()) + "&per_page=100", null, 5),
     search("is:issue is:open", "&sort=created&order=asc"),
-    search("is:issue is:open label:bug,kind:bug")
+    search("is:issue is:open label:bug,kind:bug", "&sort=created&order=desc")
   ]);
   const issues = list.filter((i) => !i.pull_request);
   const opened = issues.filter((i) => ms(i.created_at) >= start);
   const closed = issues.filter((i) => i.closed_at && ms(i.closed_at) >= start);
+  const brief = (i, at) => ({ number: i.number, title: String(i.title || "").slice(0, 160), days: round((now - ms(at || i.created_at)) / DAY), url: i.html_url || "" });
+  const newest = (key) => (a, b) => ms(b[key]) - ms(a[key]);
+  const areaOf = (i) => { const area = labelsOf(i).find((l) => l.startsWith("area:")); return area ? area.slice(5) : "none"; };
   const areas = {};
-  (bugs.items || []).forEach((i) => { const area = labelsOf(i).find((l) => l.startsWith("area:")); tally(areas, area ? area.slice(5) : "none"); });
+  const areaItems = {};
+  (bugs.items || []).forEach((i) => { const area = areaOf(i); tally(areas, area); (areaItems[area] = areaItems[area] || []).push(i); });
   const kinds = {};
   (open.items || []).forEach((i) => { const kind = labelsOf(i).find((l) => l.startsWith("kind:")); tally(kinds, kind ? kind.slice(5) : isBug(i) ? "bug" : "none"); });
   const openedDay = {};
@@ -427,18 +434,30 @@ async function issuesPart(gh, now, start, days, live) {
   closed.forEach((i) => tally(closedDay, isoDay(ms(i.closed_at))));
   const all = new Map();
   issues.concat(open.items || []).forEach((i) => all.set(i.number, i));
-  const parents = Array.from(all.values()).map((i) => i.sub_issues_summary).filter((s) => s && s.total > 0);
+  const parentIssues = Array.from(all.values()).filter((i) => i.sub_issues_summary && i.sub_issues_summary.total > 0);
+  const parents = parentIssues.map((i) => i.sub_issues_summary);
   const today = isoDay(now);
   Object.assign(live, {
     openedBugs: opened.filter(isBug).length, closedBugs: closed.filter(isBug).length,
     closedBugsToday: closed.filter((i) => isBug(i) && isoDay(ms(i.closed_at)) === today).length
   });
+  const left = (i) => i.sub_issues_summary.total - i.sub_issues_summary.completed;
   return {
-    open: open.total_count || 0, openBugs: bugs.total_count || 0, bugsByArea: listOf(areas), byKind: listOf(kinds),
-    opened: opened.length, closed: closed.length,
+    open: open.total_count || 0, openBugs: bugs.total_count || 0, byKind: listOf(kinds),
+    bugsByArea: listOf(areas).map((a) => Object.assign(a, { items: (areaItems[a.label] || []).slice(0, ITEMS).map((i) => brief(i)) })),
+    opened: opened.length, closed: closed.length, since: isoDay(start),
     daily: dayKeys(now, days).map((day) => ({ day, opened: openedDay[day] || 0, closed: closedDay[day] || 0 })),
-    subIssues: { parents: parents.length, done: sum(parents, (s) => s.completed), total: sum(parents, (s) => s.total) },
-    oldest: (open.items || []).slice(0, 5).map((i) => ({ number: i.number, title: String(i.title || "").slice(0, 160), days: round((now - ms(i.created_at)) / DAY), url: i.html_url || "" }))
+    subIssues: {
+      parents: parents.length, done: sum(parents, (s) => s.completed), total: sum(parents, (s) => s.total),
+      items: parentIssues.sort((a, b) => left(b) - left(a)).slice(0, ITEMS).map((i) => Object.assign(brief(i), { done: i.sub_issues_summary.completed, total: i.sub_issues_summary.total }))
+    },
+    lists: {
+      open: Array.from(all.values()).filter((i) => !i.closed_at).sort(newest("created_at")).slice(0, ITEMS).map((i) => brief(i)),
+      openBugs: (bugs.items || []).slice(0, ITEMS).map((i) => brief(i)),
+      opened: opened.slice().sort(newest("created_at")).slice(0, ITEMS).map((i) => brief(i)),
+      closed: closed.slice().sort(newest("closed_at")).slice(0, ITEMS).map((i) => brief(i, i.closed_at))
+    },
+    oldest: (open.items || []).slice(0, ITEMS).map((i) => brief(i))
   };
 }
 
@@ -612,8 +631,11 @@ async function androidPart(gh, start) {
   };
 }
 
-async function reposPart(gh, installed, openMain, missing) {
-  return mapLimit((installed.repositories || []).slice(0, 30), 5, async (r) => {
+// Only the repos jarvis_settings/main github.repos names (core.GITHUB_REPOS when unset), in that order (#2807).
+async function reposPart(gh, installed, openMain, missing, shown) {
+  const byName = new Map((installed.repositories || []).map((r) => [r.full_name, r]));
+  shown.filter((name) => !byName.has(name)).forEach((repo) => missing.push({ repo, why: "In the GitHub repo settings, but the qa-lab-agents app cannot see it." }));
+  return mapLimit(shown.filter((name) => byName.has(name)).map((name) => byName.get(name)), 5, async (r) => {
     const branch = r.default_branch || "main";
     const note = (error) => { if (denied(error)) missing.push({ repo: r.full_name, why: clean(error) }); return null; };
     const [runs, pulls] = await Promise.all([
@@ -768,7 +790,8 @@ async function source(ctx) {
   const now = ctx.now || Date.now();
   const days = Math.max(1, Math.min(HISTORY_DAYS, Number(ctx.days) || 7));
   const start = now - days * DAY;
-  const out = { ok: true, at: new Date(now).toISOString(), days, needs: [], access: { repos: [], missing: [], wanted: [] } };
+  const shown = core.githubRepos(ctx.settings && ctx.settings.github && ctx.settings.github.repos);
+  const out = { ok: true, at: new Date(now).toISOString(), days, needs: [], access: { repos: [], missing: [], wanted: [], shown } };
   const wanted = new Set();
   const want = (permission) => { if (wanted.has(permission)) return; wanted.add(permission); out.needs.push(NEED[permission]); };
   const live = {};
@@ -813,7 +836,7 @@ async function source(ctx) {
     (async () => {
       try {
         const installed = await data.installed();
-        out.repos = await reposPart(gh, installed, await data.open().catch(() => null), out.access.missing);
+        out.repos = await reposPart(gh, installed, await data.open().catch(() => null), out.access.missing, shown);
         out.access.repos = (installed.repositories || []).map((r) => r.full_name);
         const total = installed.total_count ?? out.access.repos.length;
         if (total < 3) out.needs.push("The qa-lab-agents app only sees " + total + " repos; set the kaanmuar installation to All repositories at " + INSTALL + ".");

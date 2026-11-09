@@ -147,7 +147,7 @@ const EXTERNAL = {
   'notice-decide': { ok: true, status: 'sent', email: 'info@acme.co', emails: ['info@acme.co', 'ventas@acme.co'], failed: [] },
   'github-work': { ok: true, at: '2026-11-03T20:00:00Z', days: 30,
     needs: ['Give the qa-lab-agents app Dependabot alerts: read', 'Give the qa-lab-agents app Code scanning alerts: read'],
-    access: { repos: ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach'], missing: [{ repo: 'kaanmuar/jarvis-android', why: 'not in the installation' }], wanted: ['dependabot_alerts', 'security_events'] },
+    access: { repos: ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach'], missing: [{ repo: 'kaanmuar/jarvis-android', why: 'not in the installation' }], wanted: ['dependabot_alerts', 'security_events'], shown: ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota', 'kaanmuar/cursor-quota-releases'] },
     score: { overall: { value: 81, grade: 'B' }, areas: {
       ci: { value: 72, grade: 'C', why: '2 workflows red on main' }, prs: { value: 85, grade: 'B', why: '1 PR has conflicts' }, board: { value: 64, grade: 'D', why: 'WIP 18 over the limit of 15' },
       issues: { value: 88, grade: 'B', why: '9 open bugs' }, branches: { value: 70, grade: 'C', why: '6 merged branches not deleted' }, deploys: { value: 95, grade: 'A', why: '3 deploys a day' },
@@ -167,13 +167,16 @@ const EXTERNAL = {
         { number: 2505, title: 'Tidy the review footer', url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/2505', author: 'kaanmuar', branch: 'chore/footer', ageH: 80, updatedH: 76, state: 'behind', checks: 'pass', ticket: null, additions: 12, deletions: 12, labels: [] }],
       sizes: [{ label: 'XS', value: 10 }, { label: 'S', value: 20 }, { label: 'M', value: 9 }, { label: 'L', value: 3 }], daily: [{ day: '2026-11-02', opened: 5, merged: 6 }, { day: '2026-11-03', opened: 4, merged: 3 }] },
     board: { ok: true, wip: 18, wipLimit: 15, cycleMedD: 2.5,
-      columns: [{ name: 'Backlog', count: 40, ageMedD: 20, oldest: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200' }] }, { name: 'Next', count: 6, ageMedD: 4, oldest: [] }, { name: 'Design', count: 2, ageMedD: 3, oldest: [] },
-        { name: 'Dev', count: 9, ageMedD: 5, oldest: [] }, { name: 'QA', count: 5, ageMedD: 2, oldest: [] }, { name: 'Stg', count: 4, ageMedD: 1, oldest: [] }, { name: 'Prod', count: 3, ageMedD: 1, oldest: [] }, { name: 'Done', count: 400, ageMedD: 30, oldest: [] }],
+      columns: [{ name: 'Backlog', count: 40, ageMedD: 20, items: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200', labels: ['kind:request'] }] }, { name: 'Next', count: 6, ageMedD: 4, items: [] }, { name: 'Design', count: 2, ageMedD: 3, items: [] },
+        { name: 'Dev', count: 9, ageMedD: 5, items: [{ number: 2490, title: 'Merged but still in Dev', days: 11, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2490', labels: ['area:jarvis'] }, { number: 2510, title: 'BE: a null MX record read as no mail setup', days: 4, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2510', labels: ['bug', 'area:be'] }] },
+        { name: 'QA', count: 5, ageMedD: 2, items: [{ number: 2400, title: 'Stuck in QA', days: 12, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2400', labels: [] }] }, { name: 'Stg', count: 4, ageMedD: 1, items: [] }, { name: 'Prod', count: 3, ageMedD: 1, items: [] }, { name: 'Done', count: 400, ageMedD: 30, items: [] }],
       throughput: [{ week: '2026-W43', done: 30 }, { week: '2026-W44', done: 41 }],
       aging: [{ number: 2400, title: 'Stuck in QA', column: 'QA', days: 12, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2400' }],
       drift: [{ number: 2490, title: 'Merged but still in Dev', column: 'Dev', should: 'Done', why: 'PR #2491 merged 2 days ago', url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2490' }] },
-    issues: { ok: true, open: 61, openBugs: 9, bugsByArea: [{ label: 'area:be', value: 5 }, { label: 'area:jarvis', value: 4 }], byKind: [{ label: 'kind:bug', value: 9 }, { label: 'kind:request', value: 30 }], opened: 70, closed: 64,
-      daily: [{ day: '2026-11-02', opened: 3, closed: 4 }, { day: '2026-11-03', opened: 5, closed: 2 }], subIssues: { parents: 12, done: 30, total: 40 }, oldest: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200' }] },
+    issues: { ok: true, open: 61, openBugs: 9, bugsByArea: [{ label: 'be', value: 5, items: [{ number: 2510, title: 'BE: a null MX record read as no mail setup', days: 4, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2510' }] }, { label: 'jarvis', value: 4, items: [{ number: 2530, title: 'Jarvis: the trend chart has no legend', days: 2, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2530' }] }], since: '2026-10-04', byKind: [{ label: 'kind:bug', value: 9 }, { label: 'kind:request', value: 30 }], opened: 70, closed: 64,
+      daily: [{ day: '2026-11-02', opened: 3, closed: 4 }, { day: '2026-11-03', opened: 5, closed: 2 }], subIssues: { parents: 12, done: 30, total: 40, items: [{ number: 2546, title: 'Jarvis GitHub tab round 2', days: 3, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2546', done: 2, total: 8 }] },
+      lists: { open: [{ number: 2530, title: 'Jarvis: the trend chart has no legend', days: 2, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2530' }], openBugs: [{ number: 2510, title: 'BE: a null MX record read as no mail setup', days: 4, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2510' }],
+        opened: [{ number: 2530, title: 'Jarvis: the trend chart has no legend', days: 2, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2530' }], closed: [{ number: 2501, title: 'Done thing', days: 1, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2501' }] }, oldest: [{ number: 1200, title: 'Old idea', days: 80, url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/1200' }] },
     branches: { ok: true, total: 30, stale: 4, merged: [{ name: 'fix/2480-old', pr: 2481, days: 6 }, { name: 'feat/2470-thing', pr: 2471, days: 9 }], ahead: [{ name: 'fix/2510-null-mx', ahead: 3, behind: 12, days: 1, pr: 2511 }],
       worktrees: [{ path: '/Users/Apple/Documents/GitHub/kaanmuar.github.io/.worktrees/fix-2480-old', branch: 'fix/2480-old', ticket: 2480, chat: 'c1', alive: false, pr: 2481, prState: 'merged', dirty: false },
         { path: '/Users/Apple/Documents/GitHub/kaanmuar.github.io/.worktrees/feat-2526-jarvis-github', branch: 'feat/2526-jarvis-github', ticket: 2526, chat: 'c2', alive: true, pr: 2520, prState: 'open', dirty: true }] },
@@ -702,6 +705,83 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('GitHub drill-downs open inline one at a time per panel, and every chart has a title, axis titles, a legend and a tap value (#2807)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/github/30');
+    const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const gh = page.locator('[data-view="github"]');
+
+    const flow = gh.locator('[data-panel-id="github-flow"]');
+    const dev = flow.locator('[data-drill="github-flow|Dev"]');
+    await expect(dev).toBeHidden();
+    await flow.locator('.jv-pm-node[data-col="Dev"]').click();
+    await expect(dev).toBeVisible();
+    await expect(dev).toContainText('Dev · 9 cards');
+    await expect(dev.locator('.jv-drill-list li')).toHaveCount(2);
+    await expect(dev).toContainText('11 d in Dev');
+    await expect(dev.locator('a', { hasText: 'Open Dev on the board' })).toHaveAttribute('href', 'https://github.com/orgs/carlosandmunoz-hq/projects/1/views/1?filterQuery=status%3A%22Dev%22');
+    await expect(dev.locator('a', { hasText: 'All issues' })).toHaveAttribute('href', GH + '/issues');
+    await expect(flow.locator('.jv-pm-node[data-col="Dev"]')).toHaveAttribute('aria-expanded', 'true');
+    await flow.locator('.jv-pm-node[data-col="QA"]').click();
+    await expect(dev).toBeHidden();
+    const qa = flow.locator('[data-drill="github-flow|QA"]');
+    await expect(qa).toContainText('Stuck in QA');
+    await qa.locator('.jv-drill-close').click();
+    await expect(qa).toBeHidden();
+
+    const iss = gh.locator('[data-panel-id="github-issues"]');
+    await iss.locator('.jv-stat-btn', { hasText: 'Open bugs' }).click();
+    const bugs = iss.locator('[data-drill="github-issues|bugs"]');
+    await expect(bugs).toContainText('null MX record');
+    await expect(bugs.locator('a', { hasText: 'Open bugs on GitHub' })).toHaveAttribute('href', GH + '/issues?q=is%3Aissue+is%3Aopen+label%3Abug');
+    await iss.locator('.jv-stat-btn', { hasText: 'Sub-issues done' }).click();
+    await expect(bugs).toBeHidden();
+    await expect(iss.locator('[data-drill="github-issues|sub"]')).toContainText('2 of 8 sub-issues done');
+
+    const areas = gh.locator('[data-panel-id="github-bug-areas"]');
+    await areas.locator('.jv-bars [data-drill-open="github-bug-areas|be"]').click();
+    const be = areas.locator('[data-drill="github-bug-areas|be"]');
+    await expect(be).toContainText('area:be · 5 open bugs');
+    await expect(be.locator('.jv-drill-list li')).toHaveCount(1);
+    await expect(be.locator('a', { hasText: 'area:be bugs on GitHub' })).toHaveAttribute('href', GH + '/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%3Abe+label%3Abug');
+    await expect(iss.locator('[data-drill="github-issues|sub"]')).toBeVisible();
+
+    const br = gh.locator('[data-panel-id="github-branches"]');
+    await br.locator('.jv-stat-btn', { hasText: 'Ahead of main' }).click();
+    const ahead = br.locator('[data-drill="github-branches|ahead"]');
+    await expect(ahead.locator('a', { hasText: 'fix/2510-null-mx' })).toHaveAttribute('href', GH + '/tree/fix/2510-null-mx');
+    await expect(ahead.locator('a', { hasText: 'compare' })).toHaveAttribute('href', GH + '/compare/main...fix/2510-null-mx');
+
+    for (const id of ['github-ci-trend', 'github-pr-daily', 'github-issues', 'github-deploys', 'github-agents-daily']) {
+      const chart = gh.locator(`[data-panel-id="${id}"] .jv-chart`);
+      await expect(chart.locator('.jv-chart-title')).not.toHaveText('');
+      await expect(chart.locator('.jv-axis-title')).toHaveCount(2);
+      await expect(chart.locator('.jv-legend i')).toHaveCount(2);
+    }
+    const ci = gh.locator('[data-panel-id="github-ci-trend"]');
+    await expect(ci.locator('.jv-axis-title').first()).toHaveText('runs per day');
+    await expect(ci.locator('.jv-legend')).toContainText('4,880 runs in range');
+    await ci.locator('.jv-hit').last().click();
+    await expect(ci.locator('.jv-tip')).toHaveText('2026-11-03: Runs 2,480 runs · Failed 223 runs');
+    await expect(gh.locator('[data-panel-id="github-trend"] .jv-spark-axis').first()).toContainText('11-02');
+    await expect(gh.locator('[data-panel-id="github-board"] .jv-bars-head')).toContainText('cards');
+    await expect(gh.locator('[data-panel-id="github-board"] .jv-legend')).toContainText('Cards on the board');
+    await expect(gh.locator('[data-panel-id="github-agents"] .jv-legend')).toContainText('Agent hours');
+
+    const repos = gh.locator('[data-panel-id="github-repos"]');
+    await expect(repos).toContainText('kaanmuar/cursor-quota-releases');
+    await repos.locator('[data-settings-at="s-repos"]').click();
+    const field = page.locator('[name="s-repos"]');
+    await expect(field).toBeFocused();
+    await expect(field).toHaveValue('kaanmuar/kaanmuar.github.io\nkaanmuar/qa-lab-outreach\nkaanmuar/cursor-quota\nkaanmuar/cursor-quota-releases');
+    await field.fill('kaanmuar/qa-lab-outreach\nhttps://github.com/kaanmuar/cursor-quota\nnot a repo');
+    await page.locator('.jv-settings button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'settings-save').map((c) => c.body.settings.github)).toEqual([{ repos: ['kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota'] }]);
+    await expect.poll(() => calls.filter((c) => c.op === 'github-work').length).toBeGreaterThan(0);
+    expect(errors).toEqual([]);
+  });
+
   for (const [width, height, folded] of [[360, 780, true], [720, 860, false]]) {
     test(`GitHub fits a foldable ${folded ? 'folded' : 'unfolded'} at ${width}px: no sideways scroll, the map and the tables reflow (#2526)`, async ({ page }) => {
       await page.setViewportSize({ width, height });
@@ -734,6 +814,29 @@ test.describe('admin statistics (Jarvis)', () => {
       if (folded) expect(layout).toMatchObject({ columns: 1, kpisInFirstRow: 2, map: false, list: true });
       else expect(layout).toMatchObject({ columns: 2, map: true, list: false });
       await page.screenshot({ path: `/tmp/2526/web-fold-${width}.png`, fullPage: true });
+
+      const flow = gh.locator('[data-panel-id="github-flow"]');
+      await flow.locator(folded ? '.jv-pm-step[data-col="Dev"]' : '.jv-pm-node[data-col="Dev"]').click();
+      await expect(flow.locator('[data-drill="github-flow|Dev"]')).toBeVisible();
+      await gh.locator('[data-panel-id="github-bug-areas"] .jv-bars [data-drill-open="github-bug-areas|be"]').click();
+      await expect(gh.locator('[data-drill="github-bug-areas|be"]')).toBeVisible();
+      const drills = await page.evaluate(() => ({
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+        smallest: Math.min(...Array.from(document.querySelectorAll('[data-view="github"] .jv-drill:not([hidden]) a, [data-view="github"] .jv-drill:not([hidden]) button, [data-view="github"] .jv-stat-btn, [data-view="github"] .jv-bars li.is-drill')).map((el) => el.getBoundingClientRect().height))
+      }));
+      expect(drills.overflow).toBeLessThanOrEqual(1);
+      expect(drills.smallest).toBeGreaterThanOrEqual(44);
+      if (process.env.GH_SHOTS) {
+        await flow.screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-board-drill.png` });
+        await gh.locator('[data-panel-id="github-bug-areas"]').screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-bug-area.png` });
+        const ci = gh.locator('[data-panel-id="github-ci-trend"]');
+        await ci.locator('.jv-hit').last().click();
+        await ci.screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-ci-chart.png` });
+        const iss = gh.locator('[data-panel-id="github-issues"]');
+        await iss.locator('.jv-stat-btn', { hasText: 'Open bugs' }).click();
+        await iss.screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-issues.png` });
+        await gh.locator('[data-panel-id="github-trend"]').screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-trend.png` });
+      }
     });
   }
 

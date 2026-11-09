@@ -164,7 +164,7 @@ test("CI aggregates the pass rate, flaky runs and the failing list from the last
   assert.equal(out.branches.ahead[0].name, "feat/2526-x");
   assert.equal(out.branches.stale, 1);
   assert.equal(out.issues.openBugs, 3);
-  assert.deepEqual(out.issues.subIssues, { parents: 1, done: 1, total: 2 });
+  assert.deepEqual([out.issues.subIssues.parents, out.issues.subIssues.done, out.issues.subIssues.total], [1, 1, 2]);
 });
 
 test("a diagnosis in jarvis_github_diag is attached to its failing run", async () => {
@@ -187,6 +187,37 @@ test("board drift flags closed issues outside Done, open issues in Done, merged 
   const flow = out.flow.map((f) => f.from + ">" + f.to + ":" + f.count).sort();
   assert.deepEqual(flow, ["Design>Dev:1", "New>Backlog:1", "Prod>Done:1"]);
   assert.equal(board.flow, undefined);
+});
+
+test("each board column lists its cards for the drill-down: oldest first, Done newest first", async () => {
+  const out = await gh.source(ctx(fakeFetch()));
+  const items = (name) => out.board.columns.find((c) => c.name === name).items;
+  assert.deepEqual(items("Dev").map((i) => [i.number, i.days]), [[13, 10], [10, 1]]);
+  assert.deepEqual(items("Done").map((i) => i.number), [11, 14]);
+  assert.deepEqual(Object.keys(items("Dev")[0]).sort(), ["days", "labels", "number", "title", "url"]);
+  assert.deepEqual(items("QA"), []);
+});
+
+test("issues carry a list per indicator and bugs per area for the drill-downs", async () => {
+  const out = await gh.source(ctx(fakeFetch()));
+  const iss = out.issues;
+  assert.equal(iss.since, "2026-10-27");
+  assert.deepEqual(iss.bugsByArea.map((a) => [a.label, a.value, a.items.map((i) => i.number)]), [["jarvis", 1, [20]]]);
+  assert.deepEqual(iss.lists.openBugs.map((i) => i.number), [20]);
+  assert.deepEqual(iss.lists.opened.map((i) => i.number), [21]);
+  assert.deepEqual(iss.lists.closed.map((i) => [i.number, i.days]), [[21, 0.1]]);
+  assert.deepEqual(iss.lists.open.map((i) => i.number), [20]);
+  assert.deepEqual(iss.subIssues.items.map((i) => [i.number, i.done, i.total]), [[20, 1, 2]]);
+  assert.deepEqual(iss.oldest.map((i) => i.number), [20]);
+});
+
+test("repos show only the configured list, in its order, and flag configured repos the app cannot see", async () => {
+  const fallback = await gh.source(ctx(fakeFetch()));
+  assert.deepEqual(fallback.access.shown, ["kaanmuar/kaanmuar.github.io", "kaanmuar/qa-lab-outreach", "kaanmuar/cursor-quota", "kaanmuar/cursor-quota-releases"]);
+  const out = await gh.source(ctx(fakeFetch(), null, { settings: { github: { repos: ["kaanmuar/qa-lab-outreach", "https://github.com/kaanmuar/kaanmuar.github.io", "kaanmuar/gone", "not a repo"] } } }));
+  assert.deepEqual(out.repos.map((r) => r.name), ["kaanmuar/qa-lab-outreach", REPO]);
+  assert.deepEqual(out.access.shown, ["kaanmuar/qa-lab-outreach", REPO, "kaanmuar/gone"]);
+  assert.ok(out.access.missing.some((m) => m.repo === "kaanmuar/gone"));
 });
 
 test("with no tokens every GitHub part says so and the source still answers", async () => {
