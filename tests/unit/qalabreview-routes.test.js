@@ -139,9 +139,23 @@ test("each audience page has its own copy and every link out is tagged for Jarvi
     }
   }
   const es = (await route(at("/es/agencies"))).body;
-  assert.ok(es.includes("Gane el pitch. Controle el lanzamiento. Demuestre el resultado."));
+  assert.ok(es.includes("Gana el pitch. Controla el lanzamiento. Demuestra el resultado."));
   assert.ok(es.includes('href="https://carlosandmunoz.com/qa-review-es.html?utm_source=qalabreview&amp;utm_campaign=landing-agencies&amp;utm_medium=web"'));
   assert.doesNotMatch(es, /read-only|zero load|100% private/i);
+  assert.ok(es.includes("Carlos A. Muñoz, Medellín, Colombia"));
+});
+
+test("Spanish and Italian pages speak tú and tu, never usted or voi (#2909)", async () => {
+  const { route } = await load();
+  const { AUDIENCES } = await import("../../qalabreview/src/landing.js");
+  for (const audience of ["", ...AUDIENCES]) {
+    const es = (await route(at("/es" + (audience ? "/" + audience : "")))).body;
+    const it = (await route(at("/it" + (audience ? "/" + audience : "")))).body;
+    assert.doesNotMatch(es, /\b(usted|Haga|Agende|Pegue|Encuentre|Descubra|Revise|Tenga|Gane)\b/, "es/" + audience);
+    assert.doesNotMatch(it, /\b(vostr[oaie]|Avviate|Prenotate|Trovate|Scoprite|ricevete|Abbiate|vi leggono)\b/, "it/" + audience);
+  }
+  assert.ok((await route(at("/es"))).body.includes("Haz tu revisión gratis"));
+  assert.ok((await route(at("/it"))).body.includes("Avvia la revisione gratuita"));
 });
 
 test("audience words never shadow a domain or a channel path", async () => {
