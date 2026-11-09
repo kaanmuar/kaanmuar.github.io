@@ -489,11 +489,11 @@
         .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
         @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
-        #email[readonly] { opacity: .8; }
+        #email-error:empty { display: none; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
-        .verify-note a { color: var(--cyan); }
+        .verify-note a, .mail-note a { color: var(--cyan); }
         .report-toolbar { position: relative; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px -6px 16px; padding: 8px 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
         .report-toolbar .actions { margin-left: auto; }
         .menu-wrap { position: relative; }
@@ -1484,7 +1484,7 @@
                         <p class="mail-note muted" lang="it" translate="no">La revisione gira sul dispositivo da cui accedi. Un codice o un link aperto su un altro dispositivo o browser non avvia nulla.</p>
                         <div id="sign-in-start">
                             <div class="sign-in-providers" id="sign-in-providers"></div>
-                            <p class="mail-note muted" id="sign-in-google-note" hidden lang="it" translate="no">Google condivide nome, foto, indirizzi email, data di nascita, numeri di telefono, indirizzi, genere e dati di lavoro, e il tuo account li conserva per un futuro piano a pagamento; non vengono ancora usati. Per condividere solo il tuo indirizzo, usa l’email.</p>
+                            <p class="mail-note muted" id="sign-in-google-note" hidden lang="it" translate="no">Google condivide i dati del tuo profilo, che il tuo account conserva; l’elenco completo è nelle <a href="qa-review-legal.html#personal-data">avvertenze</a>. Per condividere solo il tuo indirizzo, usa l’email.</p>
                             <p class="sign-in-or muted" id="sign-in-or" hidden lang="it" translate="no">o con la tua email</p>
                             <label for="sign-in-email" lang="it" translate="no">Email</label>
                             <div class="sign-in-row">
@@ -1507,20 +1507,13 @@
                         </div>
                         <p class="status" id="sign-in-status" role="status"></p>
                     </div>
-                    <div class="grid-2">
-                        <div>
-                            <label for="name" lang="it" translate="no">Nome</label>
-                            <input id="name" name="name" type="text" autocomplete="name" required disabled>
-                            <p class="field-error" id="name-error"></p>
-                        </div>
-                        <div>
-                            <label for="email" lang="it" translate="no">Email</label>
-                            <input id="email" name="email" type="email" autocomplete="email" placeholder="Compilato quando accedi" readonly required disabled>
-                            <p class="field-error" id="email-error"></p>
-                            <p class="mail-note muted" id="own-note" hidden lang="it" translate="no">Usa un’email dello stesso dominio del sito. Questa pagina controlla che il dominio della casella corrisponda all’host. Non dimostra che tu sia il proprietario legale.</p>
-                        </div>
-                    </div>
-                            <p class="mail-note muted" lang="it" translate="no">Controlliamo rapidamente che questo indirizzo possa ricevere email, così tutto ciò che inviamo sulla tua revisione ti arriva davvero.</p>
+                    <input id="email" name="email" type="hidden" disabled>
+                    <p class="field-error" id="email-error"></p>
+                    <p class="mail-note muted" id="own-note" hidden lang="it" translate="no">Usa un’email dello stesso dominio del sito. Questa pagina controlla che il dominio della casella corrisponda all’host. Non dimostra che tu sia il proprietario legale.</p>
+                    <p class="mail-note muted" lang="it" translate="no">Controlliamo rapidamente che questo indirizzo possa ricevere email, così tutto ciò che inviamo sulla tua revisione ti arriva davvero.</p>
+                    <label for="name" lang="it" translate="no">Nome</label>
+                    <input id="name" name="name" type="text" autocomplete="name" required disabled>
+                    <p class="field-error" id="name-error"></p>
                     <label class="check" hidden lang="it" translate="no"><input id="follow-up" name="followUp" type="checkbox" disabled> Avvisami quando vale la pena rivedere questa pagina. Non più di tre brevi note a settimana, nella mia lingua, fino a 30 giorni dopo la mia ultima revisione. Il link di stop in ogni nota, o una risposta “stop”, le interrompe in qualsiasi momento.</label>
                     <label class="check" lang="it" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> Non pubblicare questa revisione come Live Report né sui social.</label>
                 </div>

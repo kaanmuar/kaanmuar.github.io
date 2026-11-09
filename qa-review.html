@@ -489,11 +489,11 @@
         .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
         @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
-        #email[readonly] { opacity: .8; }
+        #email-error:empty { display: none; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
-        .verify-note a { color: var(--cyan); }
+        .verify-note a, .mail-note a { color: var(--cyan); }
         .report-toolbar { position: relative; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px -6px 16px; padding: 8px 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
         .report-toolbar .actions { margin-left: auto; }
         .menu-wrap { position: relative; }
@@ -1484,7 +1484,7 @@
                         <p class="mail-note muted">The review runs on the device where you sign in. A code or link opened on another device or browser starts nothing.</p>
                         <div id="sign-in-start">
                             <div class="sign-in-providers" id="sign-in-providers"></div>
-                            <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.</p>
+                            <p class="mail-note muted" id="sign-in-google-note" hidden>Google shares your profile details, which your account keeps; the full list is in the <a href="qa-review-legal.html#personal-data">disclaimers</a>. To share only your address, use email.</p>
                             <p class="sign-in-or muted" id="sign-in-or" hidden>or with your email</p>
                             <label for="sign-in-email">Email</label>
                             <div class="sign-in-row">
@@ -1507,20 +1507,13 @@
                         </div>
                         <p class="status" id="sign-in-status" role="status"></p>
                     </div>
-                    <div class="grid-2">
-                        <div>
-                            <label for="name">Name</label>
-                            <input id="name" name="name" type="text" autocomplete="name" required disabled>
-                            <p class="field-error" id="name-error"></p>
-                        </div>
-                        <div>
-                            <label for="email">Email</label>
-                            <input id="email" name="email" type="email" autocomplete="email" placeholder="Filled in when you sign in" readonly required disabled>
-                            <p class="field-error" id="email-error"></p>
-                            <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
-                        </div>
-                    </div>
-                            <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
+                    <input id="email" name="email" type="hidden" disabled>
+                    <p class="field-error" id="email-error"></p>
+                    <p class="mail-note muted" id="own-note" hidden>Use an email at the same domain as the site. This page checks that the mailbox domain matches the host. It does not prove you are the legal owner.</p>
+                    <p class="mail-note muted">We quickly check that this address can receive email, so anything we send about your review actually reaches you.</p>
+                    <label for="name">Name</label>
+                    <input id="name" name="name" type="text" autocomplete="name" required disabled>
+                    <p class="field-error" id="name-error"></p>
                     <label class="check" hidden><input id="follow-up" name="followUp" type="checkbox" disabled> Remind me when it is worth reviewing this page again. No more than three short notes a week, in my language, until 30 days after my last review. The stop link in each note, or a reply of "stop", ends them anytime.</label>
                     <label class="check"><input id="no-publish" name="unlisted" type="checkbox" disabled> Don't publish this review as a Live Report or on social media.</label>
                 </div>

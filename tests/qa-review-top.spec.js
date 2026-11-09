@@ -83,7 +83,7 @@ async function signedIn(page) {
 }
 
 // Records each call to the local review service; /auth/session answers from `store` when there is one.
-async function backend(page, store) {
+async function backend(page, store, { providers = [] } = {}) {
   const calls = [];
   await page.route('http://127.0.0.1:8768/**', async (route) => {
     const req = route.request();
@@ -96,7 +96,7 @@ async function backend(page, store) {
       const checked = await auth.checkSession(store, Object.assign({}, JSON.parse(req.postData() || '{}'), { deviceKey: ANA }));
       return json(checked.ok ? 200 : checked.status, checked);
     }
-    if (path === '/auth/providers') return json(200, { providers: [] });
+    if (path === '/auth/providers') return json(200, { providers });
     return json(503, { error: 'not in this test' });
   });
   return calls;
@@ -274,5 +274,51 @@ test.describe('A first review from the hero (#2756)', () => {
       await expect(page.locator('#review-needs')).toContainText(lead[lang]);
       await expect(page.locator('#log-next li').first()).toHaveAttribute('lang', lang);
     }
+  });
+});
+
+test.describe('The You step (#2769)', () => {
+  test('one Email field shows, signed out and signed in', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#req-you input[type="email"]:visible')).toHaveCount(1);
+    await expect(page.locator('#sign-in-email')).toBeVisible();
+
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.reload();
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await expect(page.locator('#req-you input[type="email"]:visible')).toHaveCount(0);
+    await expect(page.locator('#sign-in-who')).toHaveText('ana@example.com');
+    await expect(page.locator('#email')).toHaveValue('ana@example.com');
+  });
+
+  test('a mailbox at another domain than the site, for a review of your own site, shows its error', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('carlosandmunoz.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[value="own"]').check();
+    await expect(page.locator('#own-note')).toBeVisible();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#email-error')).toBeVisible();
+    await expect(page.locator('#email-error')).toHaveText(/^Use an email at the same domain as the site\./);
+  });
+
+  test('the Google note is short and links to the full list in the disclaimers', async ({ page }) => {
+    await prime(page);
+    await backend(page, null, { providers: [{ id: 'email' }, { id: 'google.com', oauth: true }] });
+    await page.goto('/qa-review.html');
+    const note = page.locator('#sign-in-google-note');
+    await expect(note).toBeVisible();
+    await expect(note).toHaveText('Google shares your profile details, which your account keeps; the full list is in the disclaimers. To share only your address, use email.');
+    await note.getByRole('link', { name: 'disclaimers' }).click();
+    await expect(page).toHaveURL(/\/qa-review-legal\.html#personal-data$/);
+    await expect(page.locator('#personal-data')).toHaveText('Personal data of the person who asks');
+    await expect(page.locator('#personal-data')).toBeInViewport();
   });
 });
