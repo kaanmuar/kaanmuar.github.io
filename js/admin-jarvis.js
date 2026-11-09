@@ -2168,6 +2168,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
 
     function githubView() {
+        if (S.product === 'github' && !S.worker && !S.pending.worker) loadWorker();
         const g = S.external['github-work'];
         if (!g || g.ok === false) return `<div class="jv-grid">${briefPanel('github')}${panel('github-wait', 'GitHub', waiting('github-work', 'Reading GitHub: CI, PRs, the board, branches and agent work…'), { wide: true, keep: true })}</div>${needList(g)}`;
         const live = (x) => (x && x.ok !== false ? x : null);
@@ -2423,6 +2424,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const daily = (x) => (x ? x.labels.map((d, i) => Object.assign({ day: d }, ...x.series.map((s) => ({ [s.name]: s.values[i] })))) : null);
 
         return head + `<div class="jv-grid">${needsPanel}${briefPanel('github')}${proposalsPanel('github')}
+            ${workerPanel()}
             ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Tap a column to list its cards. Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
             ${panel('github-dora', 'DORA', doraBody, { data: doraRows.map(([label, x]) => Object.assign({ metric: label }, x || {})), note: 'Elite: a deploy a day or more, changes live within a day, 5% or fewer fail, restored within an hour.' })}
             ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
@@ -2584,16 +2586,65 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             `Read the run log, find the root cause, fix it on ${c.branch}${c.pr ? ` (PR #${c.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
     }
 
-    // An agent costs money and writes code: it asks every time, showing the drafted prompt. Jarvis's own worker (#2957) first;
-    // other repos, or Cancel and then OK, go to a Cursor cloud agent.
+    // Jarvis's worker (#2958): the month's AI spend against its cap and the last tasks, from the worker op.
+    async function loadWorker() {
+        if (S.pending.worker) return;
+        S.pending.worker = true;
+        S.worker = await call('worker').catch((error) => ({ ok: false, error: error.message }));
+        S.pending.worker = false;
+        render();
+    }
+    const workerSpend = () => (S.worker && S.worker.spend) || null;
+    const workerTone = (sp) => (sp.level === 'over' ? COLORS.pink : sp.level === 'warn' ? COLORS.amber : COLORS.green);
+    const WORKER_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', nochange: '', failed: 'c-slow' };
+
+    function workerPanel() {
+        const w = S.worker, sp = workerSpend();
+        if (!w) return panel('github-worker', "Jarvis's worker", waiting('worker', "Reading the worker's spend…"), { wide: true, keep: true });
+        if (!sp) return panel('github-worker', "Jarvis's worker", `<p class="jv-note">${esc(w.error || 'The worker op sent no spend.')}</p>`, { wide: true, keep: true });
+        const pct = Math.min(100, (sp.usd / sp.cap) * 100);
+        const meter = `<div class="jv-worker-meter" role="meter" aria-valuemin="0" aria-valuemax="${sp.cap}" aria-valuenow="${sp.usd}" aria-label="AI spend this month" style="--c:${workerTone(sp)}">
+            <div class="jv-bar-track"><span class="jv-bar-fill" style="width:${pct.toFixed(1)}%"></span><i class="jv-worker-tick" style="left:${((sp.warn / sp.cap) * 100).toFixed(1)}%" title="Warning at $${sp.warn}"></i></div>
+            <div class="jv-worker-scale"><span>$0</span><span>warn $${sp.warn}</span><span>cap $${sp.cap}</span></div></div>`;
+        const said = sp.level === 'over' ? `The worker is stopped until next month. Fixes go to a Cursor agent on tap.`
+            : sp.level === 'warn' ? `Past the $${sp.warn} warning; the worker stops at $${sp.cap}.` : `$${sp.left.toFixed(2)} left before the worker stops at $${sp.cap}.`;
+        const kpis = stats([{ label: 'Spent · ' + sp.month, value: '$' + sp.usd.toFixed(2), alert: sp.level === 'over' }, { label: 'Runs', value: fmt(sp.runs) }, { label: 'Tokens in · out', value: `${fmt(sp.input)} · ${fmt(sp.output)}` }]);
+        const tasks = table([
+            ['Task', (t) => `${esc(t.title)}${t.pr ? ` ${ghLink(t.url, '#' + t.pr)}` : t.runUrl ? ` ${ghLink(t.runUrl, 'run')}` : ''}${t.error ? `<br><span class="jv-note">${esc(t.error)}</span>` : ''}`],
+            ['Model', (t) => `<span class="jv-chip">${esc(t.tier === 'flash' ? 'Flash' : 'Pro')}</span>${t.escalatedFrom ? '<span class="jv-note"> after Flash</span>' : ''}`],
+            ['State', (t) => `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>${t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : ''}`],
+            ['Cost', (t) => '$' + Number(t.usd || 0).toFixed(2)],
+            ['When', (t) => esc(ghAgo(t.at))],
+            ['', (t) => (t.cursor ? `<button type="button" class="jv-btn small" data-worker-cursor="${esc(t.id)}">Hand to Cursor</button>${ghResult('worker:' + t.id)}` : '')]
+        ], w.tasks || [], 'No worker runs yet.');
+        return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + tasks,
+            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Prices are rounded up, so the meter overstates.' });
+    }
+
+    async function workerCursor(id) {
+        const t = ((S.worker && S.worker.tasks) || []).find((x) => x.id === id);
+        if (!t || !t.cursor) return;
+        const c = t.cursor;
+        if (!window.confirm(`Jarvis: hand "${t.title}" to a Cursor cloud agent? It uses Cursor credit and opens a PR when it is done.\n\n${c.prompt.length > 600 ? c.prompt.slice(0, 600) + '…' : c.prompt}`)) return;
+        ghMark('worker:' + id, 'running', 'Launching the Cursor agent…');
+        const out = await call('github-agent', Object.assign({}, c, { engine: 'cursor' })).catch((error) => ({ ok: false, error: error.message }));
+        ghMark('worker:' + id, out.ok ? 'launched' : 'failed', out.ok ? 'Cursor agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
+    }
+
+    // An agent costs money and writes code: it asks every time, showing the drafted prompt. Jarvis's own worker (#2957) first,
+    // unless its month's budget is used; other repos, or Cancel and then OK, go to a Cursor cloud agent.
     async function ghLaunch(key, body) {
         const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
         const where = `${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}`;
+        const sp = workerSpend();
+        const thisMonth = sp ? ` This month: $${sp.usd.toFixed(2)} of $${sp.cap}.` : '';
         let engine = 'worker';
         if (body.repo && body.repo !== 'kaanmuar/kaanmuar.github.io') engine = 'cursor';
-        else if (!window.confirm(`Jarvis: start its own worker on ${where}? It opens a PR when the tests pass. Cancel to choose a Cursor agent instead.\n\n${shown}`)) engine = '';
+        else if (sp && sp.level === 'over') engine = '';
+        else if (!window.confirm(`Jarvis: start its own worker on ${where}? It opens a PR when the tests pass.${thisMonth} Cancel to choose a Cursor agent instead.\n\n${shown}`)) engine = '';
         if (engine === 'cursor' || !engine) {
-            if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${where}? It uses Cursor credit and opens a PR when it is done.${engine ? '\n\n' + shown : ''}`)) return false;
+            const capped = sp && sp.level === 'over' && engine !== 'cursor' ? `Jarvis's worker is stopped: its AI budget for ${sp.month} is used.${thisMonth}\n\n` : '';
+            if (!window.confirm(`${capped}Jarvis: launch a Cursor cloud agent on ${where}? It uses Cursor credit and opens a PR when it is done.${engine || capped ? '\n\n' + shown : ''}`)) return false;
             engine = 'cursor';
         }
         ghMark(key, 'running', 'Launching the agent…');
@@ -2601,6 +2652,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: engine === 'worker' ? 'Open the worker runs' : 'Open the agent' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
         if (out.ok) ghFresh();
+        if (engine === 'worker') loadWorker();
         return true;
     }
 
@@ -2652,6 +2704,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         compute();
         render();
         loadExternal(['github', 'actions']);
+        loadWorker();
     }
 
     // The GitHub numbers Gemini sees when Carlos asks (#2526), trimmed to what answers "why is CI red" and the like.
@@ -4418,6 +4471,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.ghAct) { ghAct(t); return; }
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
         if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
+        if (t.dataset.workerCursor) { workerCursor(t.dataset.workerCursor); return; }
         if (t.dataset.ghFix) { ghFix(t.dataset.ghFix); return; }
         if (t.dataset.ghFlakyAgent) { ghFlakyAgent(t.dataset.ghFlakyAgent); return; }
         if (t.dataset.ghSecAgent) { ghSecAgent(t.dataset.ghSecAgent); return; }
