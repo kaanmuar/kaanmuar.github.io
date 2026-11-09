@@ -8,7 +8,14 @@
    events    site_events               opens     url_review_opens (no ip or user agent)
    reviews   url_reviews (summary)     alerts    url_review_alerts
    notices   url_review_owner_notices  rivals    url_review_rivals
-   captures  url_review_captures       failures  url_review_failures (kept 90 days) */
+   captures  url_review_captures       failures  url_review_failures (kept 90 days)
+
+   A caller that keeps state (health, #2101) holds the day parts and open-day rows it has read, in memory and in
+   jarvis_cache/state-<name>: a part still current is not read again, and the open day of a source whose rows never
+   change once written (no settle, no live) is read only from its newest held row, then in full once an hour.
+   Without a state (the snapshot's products, #2099), such a source keeps its open day in the day's document with the
+   time it was read through, so a refresh reads only the rows written since, and the day is topped up when it closes.
+   Reviews and notices change in place and are read whole for the open day. */
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -20,6 +27,10 @@ const REFRESH_MS = 6 * HOUR;
 const MEMO_MS = 2 * 60 * 1000;
 const MAX_BYTES = 900000;
 const COLLECTION = "jarvis_days";
+// A row committed a little after its own timestamp still lands inside the overlap of the next incremental read.
+const OVERLAP_MS = 10 * 60 * 1000;
+const FULL_MS = HOUR;
+const STATE_DAYS = 400;
 
 // A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
 const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
@@ -72,6 +83,62 @@ async function openRows(db, kind, from) {
   return rows;
 }
 
+const writeOnce = (kind) => !KINDS[kind].settle && !KINDS[kind].live;
+
+// The open day kept in its document for a write-once kind, read through `through`.
+const tail = (part) => (part && part.v === VERSION && part.open && !part.over && Number.isFinite(part.through) ? part : null);
+
+function union(kept, added, field, before) {
+  const byId = new Map();
+  kept.concat(added).forEach((row) => { if (before === undefined || toMs(row[field]) < before) byId.set(row.id, row); });
+  return Array.from(byId.values());
+}
+
+// The open day without a state: a write-once kind adds the rows since its kept read to the kept ones and keeps the
+// result in the day's document for the next refresh; the others are read whole.
+async function openDay(db, kinds, edge, now, out) {
+  const remember = (kind, rows) => { memo.set(kind + "|" + edge, { db, at: Date.now(), rows }); out[kind].push(...rows); };
+  const groups = {};
+  await Promise.all(kinds.map(async (kind) => {
+    const hit = memo.get(kind + "|" + edge);
+    if (hit && hit.db === db && Date.now() - hit.at < MEMO_MS) out[kind].push(...hit.rows);
+    else if (writeOnce(kind)) (groups[KINDS[kind].keep] = groups[KINDS[kind].keep] || []).push(kind);
+    else out[kind].push(...(await openRows(db, kind, edge)));
+  }));
+  await Promise.all(Object.keys(groups).map(async (keep) => {
+    const ref = db.collection(COLLECTION).doc(dayKey(edge) + "_" + keep);
+    const snap = await ref.get().catch(() => null);
+    const parts = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
+    const fresh = {};
+    await Promise.all(groups[keep].map(async (kind) => {
+      const kept = tail(parts[kind]);
+      const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(edge, kept.through - OVERLAP_MS)), KINDS[kind].field) : await raw(db, kind, edge);
+      fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), open: true, through: now, final: false, over: false, rows };
+      remember(kind, rows);
+    }));
+    await save(ref, edge, Number(keep), parts, fresh);
+  }));
+}
+
+const newest = (rows, field, floor) => rows.reduce((max, row) => Math.max(max, toMs(row[field]) || 0), floor);
+
+// The open day's rows from a state: write-once sources read only what is newer than the rows held.
+async function openHeld(db, kind, edge, now, state) {
+  const k = KINDS[kind];
+  if (!state || k.settle || k.live) return openRows(db, kind, edge);
+  const held = state.open[kind];
+  if (!held || held.edge !== edge || !(now - held.full < FULL_MS)) {
+    const rows = await raw(db, kind, edge);
+    state.open[kind] = { edge, full: now, rows };
+    return rows;
+  }
+  const fresh = await raw(db, kind, Math.max(edge, newest(held.rows, k.field, edge) - OVERLAP_MS));
+  const byId = new Map(held.rows.map((row) => [row.id, row]));
+  fresh.forEach((row) => byId.set(row.id, row));
+  held.rows = Array.from(byId.values());
+  return held.rows;
+}
+
 // The first day each source holds a row, so a long range does not read a document for every empty day before it.
 async function floors(db, kinds) {
   const ref = db.collection(COLLECTION).doc("meta");
@@ -91,7 +158,7 @@ async function floors(db, kinds) {
 }
 
 function current(part, day, now) {
-  if (!part || part.v !== VERSION || part.over) return false;
+  if (!part || part.v !== VERSION || part.over || part.open) return false;
   return part.final === true || now - Date.parse(part.at) < Math.max(REFRESH_MS, (now - day - DAY) / 4);
 }
 
@@ -108,28 +175,37 @@ async function save(ref, day, keep, parts, fresh) {
   await ref.set({ day: dayKey(day), expireAt: new Date(day + DAY + keep * DAY), parts: out }, { merge: true }).catch(() => null);
 }
 
-async function storedDays(db, kinds, days, floor, now, out) {
+async function storedDays(db, kinds, days, floor, now, out, state) {
   const groups = {};
   kinds.forEach((kind) => { (groups[KINDS[kind].keep] = groups[KINDS[kind].keep] || []).push(kind); });
   await Promise.all(Object.keys(groups).map(async (keepKey) => {
     const keep = Number(keepKey);
     const list = groups[keepKey];
     const has = (kind, day) => !!floor[kind] && dayKey(day) >= floor[kind];
+    const id = (day) => dayKey(day) + "_" + keep;
+    const hold = (day, kind, part) => { if (state) state.days[id(day)] = Object.assign(state.days[id(day)] || {}, { [kind]: part }); };
+    const held = (day) => state && state.days[id(day)];
+    const covered = (day) => !!held(day) && list.filter((kind) => has(kind, day)).every((kind) => current(held(day)[kind], day, now));
     const wanted = days.filter((day) => day + DAY > now - keep * DAY && list.some((kind) => has(kind, day)));
-    if (!wanted.length) return;
-    const refs = wanted.map((day) => db.collection(COLLECTION).doc(dayKey(day) + "_" + keep));
+    wanted.filter(covered).forEach((day) => list.filter((kind) => has(kind, day)).forEach((kind) => out[kind].push(...(held(day)[kind].rows || []))));
+    const toRead = wanted.filter((day) => !covered(day));
+    if (!toRead.length) return;
+    const refs = toRead.map((day) => db.collection(COLLECTION).doc(id(day)));
     const snaps = await getAll(db, refs);
     await Promise.all(snaps.map(async (snap, i) => {
-      const day = wanted[i];
+      const day = toRead[i];
       const parts = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
       const fresh = {};
       await Promise.all(list.filter((kind) => has(kind, day)).map(async (kind) => {
         const part = parts[kind];
-        if (current(part, day, now)) { out[kind].push(...(part.rows || [])); return; }
-        const rows = await raw(db, kind, day, day + DAY);
+        if (current(part, day, now)) { out[kind].push(...(part.rows || [])); hold(day, kind, part); return; }
+        // A day kept while open only needs the rows written after it was last read.
+        const kept = tail(part);
+        const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(day, kept.through - OVERLAP_MS), day + DAY), KINDS[kind].field, day + DAY) : await raw(db, kind, day, day + DAY);
         out[kind].push(...rows);
         const final = now >= day + DAY + (KINDS[kind].settle || CLOSE_MS);
-        if (!(part && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, rows };
+        if (!(part && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, open: false, through: null, rows };
+        if (fresh[kind]) hold(day, kind, fresh[kind]);
       }));
       if (Object.keys(fresh).length) await save(refs[i], day, keep, parts, fresh);
     }));
@@ -137,18 +213,23 @@ async function storedDays(db, kinds, days, floor, now, out) {
 }
 
 // Rows of each kind whose time field falls in [from, now], newest first: stored days, then the open day raw.
-async function rows(db, kinds, { from, now }) {
+async function rows(db, kinds, { from, now, state }) {
   const out = {};
   kinds.forEach((kind) => { if (!KINDS[kind]) throw new Error("No such day rows: " + kind); out[kind] = []; });
   const edge = dayStart(now - CLOSE_MS);
   const days = [];
   for (let day = dayStart(from); day < edge; day += DAY) days.push(day);
-  if (days.length) await storedDays(db, kinds, days, await floors(db, kinds), now, out);
+  if (days.length) {
+    const floor = state && kinds.every((kind) => state.floor[kind]) ? state.floor : await floors(db, kinds);
+    if (state) Object.assign(state.floor, floor);
+    await storedDays(db, kinds, days, floor, now, out, state);
+  }
+  if (state) Object.keys(state.days).forEach((id) => { if (Date.parse(id.slice(0, 10)) < now - STATE_DAYS * DAY) delete state.days[id]; });
   const live = {};
-  await Promise.all(kinds.map(async (kind) => {
-    out[kind].push(...(await openRows(db, kind, edge)));
+  const open = state ? Promise.all(kinds.map(async (kind) => { out[kind].push(...(await openHeld(db, kind, edge, now, state))); })) : openDay(db, kinds, edge, now, out);
+  await Promise.all([open].concat(kinds.map(async (kind) => {
     live[kind] = days.length ? await liveRows(db, kind) : [];
-  }));
+  })));
   kinds.forEach((kind) => {
     const field = KINDS[kind].field;
     const patch = new Map(live[kind].map((row) => [row.id, row]));
@@ -179,4 +260,30 @@ function plain(row) {
   return out;
 }
 
-module.exports = { KINDS, REVIEW_FIELDS, VERSION, rows, plain, toMs, dayKey, _memo: memo };
+// A caller's state: this instance's copy, else the one the last instance saved, else empty.
+async function loadState(db, name) {
+  const hit = memo.get("state|" + name);
+  if (hit && hit.db === db) return hit.state;
+  const snap = await db.collection("jarvis_cache").doc("state-" + name).get().catch(() => null);
+  let state = null;
+  try { state = snap && snap.exists ? JSON.parse((snap.data() || {}).json) : null; } catch (error) { state = null; }
+  if (!state || state.v !== VERSION) state = { v: VERSION, floor: {}, days: {}, open: {}, extra: {} };
+  memo.set("state|" + name, { db, state });
+  return state;
+}
+
+// Oldest days drop out until the state fits one document; one that still does not fit stays in memory only.
+async function saveState(db, name, state) {
+  memo.set("state|" + name, { db, state });
+  const copy = Object.assign({}, state, { days: Object.assign({}, state.days) });
+  const ids = Object.keys(copy.days).sort();
+  let json = JSON.stringify(copy);
+  while (json.length > MAX_BYTES && ids.length) {
+    delete copy.days[ids.shift()];
+    json = JSON.stringify(copy);
+  }
+  if (json.length > MAX_BYTES) return;
+  await db.collection("jarvis_cache").doc("state-" + name).set({ at: new Date().toISOString(), json }).catch(() => null);
+}
+
+module.exports = { KINDS, REVIEW_FIELDS, VERSION, OVERLAP_MS, FULL_MS, rows, plain, toMs, dayKey, loadState, saveState, _memo: memo };

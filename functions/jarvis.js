@@ -25,7 +25,7 @@ const PAGES = [
 ];
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
-const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE, snapshot: 5 * MINUTE };
+const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE, cloudflare: 15 * MINUTE, speed: 6 * 60 * MINUTE, uptime: 5 * MINUTE };
 const SCHEDULER = "https://cloudscheduler.googleapis.com/v1/projects/" + PROJECT + "/locations/us-central1/jobs";
 const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
@@ -75,23 +75,46 @@ function causeLabel(row) {
 
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
+const docRows = (snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+
+// ops_runs/<job> is written only by track(): startedAt when a run starts, endedAt when it ends. A held copy reads
+// just the jobs that started or ended since its newest stamp, and every job again once an hour.
+async function opsRuns(db, state, now) {
+  const held = state.extra.opsRuns;
+  if (!held || !(now - held.full < dayRows.FULL_MS)) {
+    const rows = docRows(await db.collection("ops_runs").get());
+    state.extra.opsRuns = { full: now, rows };
+    return rows;
+  }
+  const stamp = (row) => Math.max(Date.parse(row.startedAt) || 0, Date.parse(row.endedAt) || 0);
+  const since = new Date(held.rows.reduce((max, row) => Math.max(max, stamp(row)), 0) - dayRows.OVERLAP_MS).toISOString();
+  const [started, ended] = await Promise.all(["startedAt", "endedAt"].map((field) => db.collection("ops_runs").where(field, ">=", since).get().then(docRows)));
+  const byId = new Map(held.rows.map((row) => [row.id, row]));
+  started.concat(ended).forEach((row) => byId.set(row.id, row));
+  held.rows = Array.from(byId.values());
+  return held.rows;
+}
+
+// Failures, alerts, notices, rivals and captures come from the day rollups through a held state (#2101); re-runs
+// and coupons change state and are read live.
 async function health(db, { days, now }) {
   const from = now - rangeDays(days) * DAY;
   const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
-      const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
-      return snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+      return docRows(await db.collection(name).where(field, ">=", since).limit(2000).get());
     } catch (error) {
       return [];
     }
   };
+  const state = await dayRows.loadState(db, "health");
   const [runs, logged, reruns, coupons] = await Promise.all([
-    db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
+    opsRuns(db, state, now).catch(() => []),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now, state }).catch(() => ({})),
     read("url_review_reruns", "at"),
     read("url_review_coupons", "createdAt")
   ]);
+  await dayRows.saveState(db, "health", state);
   const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
@@ -105,7 +128,7 @@ async function health(db, { days, now }) {
       .sort((a, b) => String(b.endedAt).localeCompare(String(a.endedAt))),
     failures: { total: failures.length, causes: top(causes), hosts: top(failedHosts, 8), latest: failures.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, host: row.host, cause: causeLabel(row), message: String((row.error && row.error.message) || "").slice(0, 140) })) },
     reruns: { total: reruns.length, status: top(rerunStatus), held: reruns.filter((row) => row.status === "held").length },
-    alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "" })) },
+    alerts: { total: alerts.length, kinds: top(alertKinds), latest: alerts.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 12).map((row) => ({ at: row.at, kind: row.kind, title: String(row.title || "").slice(0, 120), url: row.url || "", priceUsd: row.priceUsd })) },
     notices: { total: notices.length, status: top(noticeStatus), failed: notices.filter((row) => row.status === "pending" && row.lastError && !row.unlistedAt).length },
     rivals: { total: rivals.length },
     coupons: { total: coupons.length, uses: couponUses },
@@ -178,17 +201,27 @@ async function github(fetchImpl, token, { now }) {
     signal: AbortSignal.timeout(15000)
   }), "GitHub");
   const week = isoDay(now - 7 * DAY);
-  const [runs, bugs, merged, recent] = await Promise.all([
+  const [runs, bugs, merged, recent, prRuns, pulls] = await Promise.all([
     get("repos/" + REPO + "/actions/runs?branch=main&per_page=30"),
     get("search/issues?q=" + encodeURIComponent("repo:" + REPO + " is:issue is:open label:bug") + "&per_page=100"),
     get("search/issues?q=" + encodeURIComponent("repo:" + REPO + " is:pr is:merged merged:>=" + week) + "&per_page=50"),
-    get("repos/" + REPO + "/issues?state=all&sort=created&direction=desc&per_page=12")
+    get("repos/" + REPO + "/issues?state=all&sort=created&direction=desc&per_page=12"),
+    get("repos/" + REPO + "/actions/runs?event=pull_request&per_page=100").catch(() => null),
+    get("repos/" + REPO + "/pulls?state=open&per_page=100").catch(() => null)
   ]);
   const byWorkflow = {};
-  (await mainRuns(get, runs, week)).forEach((run) => {
+  const ciRuns = await mainRuns(get, runs, week);
+  ciRuns.forEach((run) => {
     if (byWorkflow[run.name] || run.status !== "completed" || run.conclusion === "cancelled") return;
     byWorkflow[run.name] = { name: run.name, conclusion: run.conclusion, at: run.updated_at, url: run.html_url, sha: String(run.head_sha || "").slice(0, 7) };
   });
+  const workflowName = new Map(ciRuns.map((r) => [r.workflow_id, r.name]));
+  const prList = (prRuns && prRuns.workflow_runs) || [];
+  const failingIds = Array.from(new Set(prList.filter((r) => FAILED_RUN.includes(r.conclusion)).map((r) => r.workflow_id))).slice(0, 4);
+  const prsStale = pulls ? (await Promise.all(failingIds.map(async (id) => {
+    const main = await mainRun(githubApi(fetchImpl, token), id).catch(() => null);
+    return main && main.conclusion === "success" ? { workflow: workflowName.get(id) || main.name, prs: stalePrs(pulls, prList, id, main.created_at) } : null;
+  }))).filter((w) => w && w.prs.length) : [];
   const areas = {};
   (bugs.items || []).forEach((issue) => {
     const area = (issue.labels || []).map((label) => label.name).find((name) => /^area:/.test(name));
@@ -197,6 +230,7 @@ async function github(fetchImpl, token, { now }) {
   return {
     ok: true,
     ci: Object.values(byWorkflow),
+    prsStale,
     openBugs: bugs.total_count || 0,
     bugAreas: top(areas),
     needsAgent: (bugs.items || []).filter((issue) => (issue.labels || []).some((label) => label.name === "needs-agent")).map((issue) => ({ number: issue.number, title: issue.title, url: issue.html_url })),
@@ -205,33 +239,146 @@ async function github(fetchImpl, token, { now }) {
   };
 }
 
-// The newest failed run of a workflow on main gets its failed jobs re-run; the token needs Actions: write.
-async function rerunCi(fetchImpl, token, workflow) {
+const FAILED_RUN = ["failure", "timed_out", "startup_failure"];
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function githubApi(fetchImpl, token) {
+  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
+  const call = (method, path, body) => fetchImpl("https://api.github.com/repos/" + REPO + "/" + path, {
+    method, headers: body ? Object.assign({ "Content-Type": "application/json" }, headers) : headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(15000)
+  });
+  return { call, get: async (path) => readJson(await call("GET", path), "GitHub") };
+}
+
+// A workflow's newest finished, not cancelled run on main. Busy main cancels most queued runs, so a list of every
+// workflow's runs often holds none of a given workflow's finished ones.
+async function mainRun(api, workflowId) {
+  const runs = await api.get("actions/workflows/" + workflowId + "/runs?branch=main&status=completed&per_page=30");
+  return (runs.workflow_runs || []).find((r) => r.conclusion !== "cancelled") || null;
+}
+
+/* #2245: a pull_request run tests refs/pull/<n>/merge as GitHub built it when the run started, so re-running its
+   failed jobs after main is fixed tests the old main again. These are the open, non-draft PRs whose newest run of the
+   workflow at their current head failed and started before since (main's newest green run of it). runs newest first.
+   workflow is the workflow's id, or its name: a run's name is its run-name ("PR #12" is CodeQL, "Studio pull_request"
+   is Studio render), so only a workflow without a run-name matches by name. */
+function stalePrs(pulls, runs, workflow, since) {
+  const ofWorkflow = (r) => (typeof workflow === "number" ? r.workflow_id === workflow : r.name === workflow);
+  return (pulls || []).filter((pr) => !pr.draft && pr.head).map((pr) => {
+    const run = (runs || []).find((r) => ofWorkflow(r) && r.head_sha === pr.head.sha && r.conclusion !== "cancelled");
+    const stale = run && run.status === "completed" && FAILED_RUN.includes(run.conclusion) && since && String(run.created_at) < String(since);
+    return stale ? { number: pr.number, title: String(pr.title || "").slice(0, 160), url: pr.html_url, run: run.id } : null;
+  }).filter(Boolean);
+}
+
+/* Closes and reopens a PR, so GitHub builds a fresh merge with today's main and runs its checks again (#2245). A PR
+   that conflicts with main gets no merge and no run, so it is skipped; so is one whose mergeability GitHub has not
+   worked out after a second look. Returns { number, refreshed } or { number, skipped }. */
+async function refreshPr(fetchImpl, token, number, { sleep = pause } = {}) {
+  if (!token) throw new Error("No GitHub token is set.");
+  const api = githubApi(fetchImpl, token);
+  const n = Number(number);
+  let pr = await api.get("pulls/" + n);
+  if (pr.state !== "open") return { number: n, skipped: "not open" };
+  if (pr.mergeable === null) {
+    await sleep(2000);
+    pr = await api.get("pulls/" + n);
+  }
+  if (pr.mergeable === false) return { number: n, skipped: "conflicts" };
+  if (pr.mergeable !== true) return { number: n, skipped: "mergeability unknown" };
+  const set = async (state) => {
+    const res = await api.call("PATCH", "pulls/" + n, { state });
+    if (res.status === 403 || res.status === 404) throw new Error("GitHub refused to " + (state === "open" ? "reopen" : "close") + " #" + n + " (" + res.status + "); the GitHub app needs Pull requests: write.");
+    if (!res.ok) throw new Error("GitHub " + res.status + " on " + (state === "open" ? "reopening" : "closing") + " #" + n + ".");
+  };
+  await set("closed");
+  await sleep(1000);
+  try { await set("open"); } catch (error) {
+    await sleep(3000);
+    await set("open").catch(() => { throw new Error("#" + n + " is closed and did not reopen: " + error.message); });
+  }
+  return { number: n, refreshed: true };
+}
+
+/* Refreshes the PRs stalePrs finds for a workflow, one at a time with gap ms between PRs (GitHub asks for spaced
+   writes). budget = { left, until, seen } is shared across the workflows of one click: at most left PRs, none started
+   after until, and a PR refreshed for one workflow is not refreshed again. */
+async function refreshPrs(fetchImpl, token, { workflow, workflowId, since, budget, gap = 3000, sleep = pause }) {
+  const api = githubApi(fetchImpl, token);
+  // Every event, not only pull_request: CodeQL's PR runs are "dynamic". A PR's head sha keeps main's runs out.
+  const [runs, pulls] = await Promise.all([api.get("actions/workflows/" + workflowId + "/runs?per_page=100"), api.get("pulls?state=open&per_page=100")]);
+  const out = { refreshed: [], conflicts: [], skipped: [], failed: [], left: [] };
+  const b = budget || { left: 20, until: Date.now() + 120000, seen: new Set() };
+  for (const pr of stalePrs(pulls, runs.workflow_runs, Number(workflowId), since)) {
+    if (b.seen.has(pr.number)) continue;
+    if (b.left <= 0 || Date.now() > b.until) { out.left.push(pr.number); continue; }
+    if (b.started) await sleep(gap);
+    b.started = true;
+    b.left -= 1;
+    b.seen.add(pr.number);
+    try {
+      const res = await refreshPr(fetchImpl, token, pr.number, { sleep });
+      if (res.refreshed) out.refreshed.push(pr.number);
+      else if (res.skipped === "conflicts") out.conflicts.push(pr.number);
+      else out.skipped.push(pr.number + " (" + res.skipped + ")");
+    } catch (error) {
+      out.failed.push(pr.number + ": " + (error.message || String(error)));
+    }
+  }
+  return out;
+}
+
+function refreshNote(prs) {
+  const nums = (list) => list.map((n) => "#" + n).join(", ");
+  return [
+    prs.refreshed.length ? "Closed and reopened " + nums(prs.refreshed) + "." : "No PR needed a fresh merge.",
+    prs.conflicts.length ? "Skipped for conflicts with main: " + nums(prs.conflicts) + "." : "",
+    prs.skipped.length ? "Skipped: #" + prs.skipped.join(", #") + "." : "",
+    prs.failed.length ? "Failed: #" + prs.failed.join("; #") : "",
+    prs.left.length ? "Left for the next click: " + nums(prs.left) + "." : ""
+  ].filter(Boolean).join(" ");
+}
+
+/* rerun-ci: when a workflow's newest finished run on main failed, its failed jobs are re-run (a main push run tests its
+   own commit). When main is green, the PRs that failed it on the old main are closed and reopened instead (#2245),
+   unless prs is false (Jarvis's own runs leave other chats' PRs alone). rerunMain false throws instead of re-running main
+   (scripts/refresh-prs.sh). The token needs Actions and Pull requests: write. */
+async function rerunCi(fetchImpl, token, workflow, { prs = true, rerunMain = true, budget, gap, sleep } = {}) {
   if (!token) throw new Error("No GitHub token is set.");
   const name = String(workflow || "").slice(0, 120);
-  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
-  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?branch=main&status=completed&per_page=50", { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
-  const run = (runs.workflow_runs || []).find((r) => r.name === name && r.conclusion !== "cancelled");
+  const api = githubApi(fetchImpl, token);
+  const wf = ((await api.get("actions/workflows?per_page=100")).workflows || []).find((w) => w.name === name);
+  const run = wf ? await mainRun(api, wf.id) : null;
   if (!run) throw new Error("No finished run of " + name + " on main.");
-  if (["success", "skipped", "neutral"].includes(run.conclusion)) return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
-  const res = await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs/" + run.id + "/rerun-failed-jobs", { method: "POST", headers, signal: AbortSignal.timeout(15000) });
+  if (["success", "skipped", "neutral"].includes(run.conclusion)) {
+    if (!prs || run.conclusion !== "success") return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
+    const out = await refreshPrs(fetchImpl, token, { workflow: name, workflowId: wf.id, since: run.created_at, budget, gap, sleep });
+    return { workflow: name, run: run.id, url: run.html_url, prs: out, note: refreshNote(out) };
+  }
+  if (!rerunMain) throw new Error(name + " is " + run.conclusion + " on main (" + run.html_url + "); fix main before refreshing PRs.");
+  const res = await api.call("POST", "actions/runs/" + run.id + "/rerun-failed-jobs");
   if (res.status === 403 || res.status === 404) throw new Error("GitHub refused the re-run (" + res.status + "); the GitHub token needs Actions: write.");
   if (!res.ok) throw new Error("GitHub " + res.status + " on the re-run.");
   return { workflow: name, run: run.id, url: run.html_url };
 }
 
-// #1977: the newest finished run per workflow and branch in the last day, kept when it failed.
+/* #1977: the newest finished run per workflow and branch in the last day, kept when it failed. A pull_request run
+   names its PR and main's head (main), which jarvis-actions keys its one refresh on (#2245). */
 async function failedRuns(fetchImpl, token, { now }) {
   if (!token) return [];
-  const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
-  const runs = await readJson(await fetchImpl("https://api.github.com/repos/" + REPO + "/actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)), { headers, signal: AbortSignal.timeout(15000) }), "GitHub");
+  const api = githubApi(fetchImpl, token);
+  const runs = await api.get("actions/runs?status=completed&per_page=100&created=" + encodeURIComponent(">=" + isoDay(now - DAY)));
   const newest = new Map();
   (runs.workflow_runs || []).forEach((r) => {
     const key = r.name + " " + r.head_branch;
     if (r.conclusion !== "cancelled" && !newest.has(key)) newest.set(key, r);
   });
-  return Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion))
-    .map((r) => ({ id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url, sha: r.head_sha || "", event: r.event || "", path: r.path || "" }));
+  const failed = Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion));
+  const prOf = (r) => r.event === "pull_request" ? Number(((r.pull_requests || [])[0] || {}).number) || 0 : 0;
+  const main = failed.some(prOf) ? String(((await api.get("branches/main")).commit || {}).sha || "").slice(0, 7) : "";
+  return failed.map((r) => Object.assign(
+    { id: r.id, name: r.name, branch: r.head_branch, attempt: r.run_attempt || 1, url: r.html_url, sha: r.head_sha || "", event: r.event || "", path: r.path || "" },
+    prOf(r) ? { pr: prOf(r), main } : {}));
 }
 
 async function mainSha(fetchImpl, token) {
@@ -713,7 +860,14 @@ async function dailyProducts(db, { now, days = 1 }) {
     review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
-  return { window, products, outreachVisits: core.outreachVisits(now1) };
+  const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
+  return { window, products, outreachVisits: core.outreachVisits(now1), feed: core.feed({ events: now1, opens: nowOpens, reviews: nowReviews }), socialHeat: core.socialHeat(now1) };
+}
+
+// The Mailed reports panel: the newest period reports sent to the owner.
+async function mailedReports(db) {
+  const snap = await db.collection("url_review_reports").orderBy("emailedAt", "desc").limit(12).get();
+  return snap.docs.map((doc) => { const d = doc.data() || {}; return { id: doc.id, period: d.period || "", label: d.label || "", opens: d.opens || 0, reviews: d.reviews || 0, paidUsd: d.paidUsd || 0 }; });
 }
 
 // The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.
@@ -866,5 +1020,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
-  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

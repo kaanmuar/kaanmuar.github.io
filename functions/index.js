@@ -1217,6 +1217,7 @@ async function sendReviewPeriodReport(period) {
     });
     if (!sent) throw new Error("URL review report email was not sent.");
     await ref.set({ emailedAt: FieldValue.serverTimestamp(), sending: false }, { merge: true });
+    await jarvisSnap.drop(getFirestore(), ["reports"]);
   } catch (error) {
     await ref.set({ sending: false }, { merge: true });
     console.error(period + " URL review report failed:", error);
@@ -5289,7 +5290,6 @@ const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisIndex = require("./jarvis-index");
-const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const cube = require("./cube");
@@ -5535,6 +5535,7 @@ async function shareDrop(body) {
 const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 const jarvisCountdown = require("./jarvis-countdown");
+const jarvisSnap = require("./jarvis-snapshot");
 const jarvisDigest = require("./jarvis-digest");
 const jarvisGithub = require("./jarvis-github");
 const jarvisGithubFix = require("./jarvis-github-fix");
@@ -5609,16 +5610,6 @@ async function jarvisUsers() {
 
 // Sources whose answer does not depend on the range share one cache entry across ranges.
 const JARVIS_DAYLESS = new Set(["marketing-sync", "targets"]);
-
-// The web Jarvis's rows for its range and the one before (#2085), from the same day rollups as the app's snapshot.
-async function jarvisRows(body, now) {
-  const from = Math.max(Date.parse(body.from) || now - 30 * 864e5, now - 3 * 366 * 864e5);
-  const out = await jarvisDays.rows(getFirestore(), ["events", "opens", "reviews", "alerts"], { from, now });
-  return Object.keys(out).reduce((m, kind) => {
-    m[kind] = out[kind].map((row) => { const r = jarvisDays.plain(row); delete r.email; return r; });
-    return m;
-  }, { from: new Date(from).toISOString() });
-}
 
 async function jarvisSource(name, days) {
   const settings = await jarvis.readSettings(getFirestore());
@@ -5748,27 +5739,33 @@ async function jarvisWeekly({ force }) {
   return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
-// Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
-async function jarvisSnapshot(days) {
+const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"];
+
+// Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore
+// itself. One builder per section, each kept until its TTL or the write that changes it (jarvis-snapshot.js, #2099).
+function jarvisLoadSnapshot(days) {
   const db = getFirestore();
-  const settings = await jarvis.readSettings(db);
   const now = Date.now();
-  const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
-    jarvis.dailyProducts(db, { now, days }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"], days),
-    jarvis.goals(db, settings, { now, sum: jarvisSum })
-  ]);
-  const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
-  const briefing = jarvisCore.briefing(state).map((b) => Object.assign({ detail: jarvisCore.briefDetail(b, state) }, b));
-  const candidates = jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing).concat(await jarvisAiProposals(now));
-  const proposals = jarvisCore.openProposals(candidates, await jarvisProposals.saved(db)).slice(0, 5).map(jarvisProposals.withButtons);
-  const countdowns = await jarvisCountdown.view(db, now);
-  return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds), wide: jarvisCore.wide({ products, external, briefing, now: new Date(now) }) };
+  return jarvisSnap.load(db, days, {
+    settings: () => jarvis.readSettings(db),
+    products: () => jarvis.dailyProducts(db, { now, days }),
+    external: () => jarvisExternal(JARVIS_SNAPSHOT_OPS, days),
+    goals: (settings) => jarvis.goals(db, settings, { now, sum: jarvisSum }),
+    reports: () => jarvis.mailedReports(db).catch(() => []),
+    savedProposals: () => jarvisProposals.saved(db),
+    aiProposals: () => jarvisAiRows(now),
+    aiCandidates: jarvisAiCandidates,
+    briefMarks: () => jarvisProposals.savedBrief(db),
+    countdowns: () => jarvisCountdown.view(db, now)
+  }, now);
 }
 
-// The cached snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
-async function jarvisBriefOpen(snap) {
-  const marks = await jarvisProposals.savedBrief(getFirestore());
+async function jarvisSnapshot(days) {
+  return (await jarvisLoadSnapshot(days)).snap;
+}
+
+// The snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
+async function jarvisBriefOpen(snap, marks) {
   const { open, hidden } = jarvisCore.openBrief(snap.briefing, marks);
   const until = marks.reduce((m, r) => { m[r.key] = { status: r.status, until: r.until }; return m; }, {});
   return Object.assign({}, snap, { briefing: open, briefHidden: hidden.map((b) => Object.assign({}, b, until[b.key])) });
@@ -5840,9 +5837,10 @@ function jarvisAutoOps(settings, now, th) {
     overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^failed/.test(o.why)),
     failedCi: async () => jarvis.failedRuns(fetch, await gh(), { now }),
     rerunRun: async (id) => jarvis.rerunRun(fetch, await gh(), id),
+    rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),
+    refreshPr: async (number) => jarvis.refreshPr(fetch, await gh(), number),
     mainSha: async () => jarvis.mainSha(fetch, await gh()),
     dispatch: async (workflow) => jarvis.dispatchMain(fetch, await gh(), workflow),
-    rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow),
     reviewFix: async () => {
       const fix = reviewFailures.FIXES.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
       const run = await db.collection("ops_runs").doc("rerunReviewFailures").get().catch(() => null);
@@ -5893,7 +5891,7 @@ function jarvisAutoOps(settings, now, th) {
     saveProposals: (picks) => Promise.all(picks.map((p) => db.collection("jarvis_ai_proposals").doc(jarvisProposals.docId("fix:" + p.key)).set({
       key: "fix:" + p.key, alert: p.key, title: p.title || jarvisActions.LABELS[p.action] || p.action, why: p.why, action: p.action, args: p.args, confidence: p.confidence,
       reason: p.reason, at: new Date(now).toISOString(), until: new Date(now + 2 * 864e5).toISOString()
-    })))
+    }))).then((out) => jarvisSnap.drop(db, ["proposals"]).then(() => out))
   };
   if (process.env.GEMINI_API_KEY) out.ask = (prompt) => jarvis.gemini(fetch, process.env, prompt, 800);
   // What the countdown runs (#1977); each checks its rule again first.
@@ -5968,15 +5966,25 @@ async function jarvisMergePr(number, sha) {
 }
 
 // The AI's picks Jarvis did not run (#1977), as proposal candidates until they expire.
-async function jarvisAiProposals(now) {
+async function jarvisAiRows(now) {
   const snap = await getFirestore().collection("jarvis_ai_proposals").where("until", ">", new Date(now).toISOString()).limit(20).get().catch(() => null);
-  return snap ? snap.docs.map((doc) => doc.data()).map((p) => ({
+  return snap ? snap.docs.map((doc) => doc.data()) : [];
+}
+
+async function jarvisAiProposals(now) {
+  return jarvisAiCandidates(await jarvisAiRows(now), now);
+}
+
+// Rows kept in the snapshot are checked against their expiry again when it is read.
+function jarvisAiCandidates(rows, now) {
+  const at = new Date(now).toISOString();
+  return (rows || []).filter((p) => !p.until || p.until > at).map((p) => ({
     key: p.key, product: "systems", impact: 3, level: "warn", title: p.title, source: "gemini",
     evidence: [p.why, "Jarvis's AI, confidence " + p.confidence + "; not run: " + p.reason + "."].filter(Boolean),
     action: p.action === "publish-hub" ? "publish-hub" : null,
     jobs: p.action === "run-job" && p.args && p.args.job ? [p.args.job] : null,
     workflows: p.action === "rerun-ci" && p.args && p.args.workflow ? [p.args.workflow] : null, tab: "systems", link: null
-  })) : [];
+  }));
 }
 
 // Retry failed social posts: start each posting workflow that is not already running (Buffer in retry mode).
@@ -6087,13 +6095,16 @@ async function jarvisClickAction(body, by) {
     const workflows = list(body.workflows, body.workflow);
     if (!workflows.length) throw new Error("Which workflow?");
     const token = await githubApp.token();
+    const budget = { left: 20, until: Date.now() + 120000, seen: new Set() };
     const out = await each(workflows, async (workflow) => {
-      const res = await jarvis.rerunCi(fetch, token, workflow);
-      await note({ action, status: "done", target: workflow, detail: res.already ? "Already " + res.already + "." : "Re-running run " + res.run + "." });
+      const res = await jarvis.rerunCi(fetch, token, workflow, { budget });
+      await note({ action, status: "done", target: workflow, detail: res.note || (res.already ? "Already " + res.already + "." : "Re-running run " + res.run + ".") });
       return Object.assign({ workflow }, res);
     });
     const one = out.ran.length === 1 ? out.ran[0] : null;
-    return { action, done: out.ran.filter((r) => !r.already).length, failed: out.failed, ran: out.ran.map((r) => r.workflow).join(", "), url: one ? one.url : null, already: one ? one.already || null : null };
+    const refreshed = out.ran.filter((r) => r.prs);
+    return { action, done: out.ran.reduce((n, r) => n + (r.prs ? r.prs.refreshed.length : r.already ? 0 : 1), 0), failed: out.failed, ran: out.ran.map((r) => r.workflow).join(", "),
+      url: one ? one.url : null, already: one ? one.already || null : null, note: refreshed.length ? refreshed.map((r) => (out.ran.length > 1 ? r.workflow + ": " : "") + r.note).join(" ") : null };
   }
   if (action === "rerun-held") {
     const held = await act.held();
@@ -6757,7 +6768,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
   const days = jarvis.rangeDays(body.days);
   const now = Date.now();
   const env = process.env;
-  const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisCached("snapshot", days, () => jarvisSnapshot(days)), days);
+  const appAskSnapshot = async () => jarvis.askSnapshot(await jarvisSnapshot(days), days);
   try {
     // #2068: the app and the page send their screen with every call; these ops keep its row in Settings › Devices.
     if (["snapshot", "ask", "device"].includes(op) && !body.gone) await jarvisDevice.seen(getFirestore(), body.device, operator, now).catch(() => null);
@@ -6778,7 +6789,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "settings-save") {
       out = await jarvis.saveSettings(getFirestore(), body.settings, operator);
       const cache = getFirestore().collection("jarvis_cache");
-      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["search-", "snapshot-"].map((op) => cache.doc(op + d).delete().catch(() => null))));
+      await Promise.all([1, 7, 30, 90, 365].map((d) => cache.doc("search-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(getFirestore(), ["settings", "external"])));
     }
     else if (op === "goals") out = { goals: await jarvis.goals(getFirestore(), await jarvis.readSettings(getFirestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
@@ -6787,16 +6798,20 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "proposals") {
       if (Array.isArray(body.candidates)) out = await jarvisRanked({ candidates: jarvisProposals.cleanCandidates(body.candidates), snapshot: body.snapshot || {}, useGemini: body.gemini !== false });
       else {
-        const snap = await jarvisCached("snapshot", days, () => jarvisSnapshot(days));
+        const snap = await jarvisSnapshot(days);
         out = await jarvisRanked({ candidates: jarvisCore.proposalRules({ products: snap.products, external: snap.external, thresholds: snap.thresholds, goals: snap.goals }, snap.briefing), snapshot: jarvis.askSnapshot(snap, days), useGemini: body.gemini !== false });
       }
     }
-    else if (op === "proposal-mark") out = await jarvisProposals.mark(getFirestore(), body, operator, now);
+    else if (op === "proposal-mark") {
+      out = await jarvisProposals.mark(getFirestore(), body, operator, now);
+      await jarvisSnap.drop(getFirestore(), ["proposals"]);
+    }
     else if (op === "action-run") out = await jarvisClickAction(body, operator);
     else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
     else if (op === "actions") out = await jarvisActionsView(now);
     else if (op === "countdown") {
       const res = await jarvisCountdownDecide(body, operator);
+      await jarvisSnap.drop(getFirestore(), ["countdowns"]);
       out = { message: res.message, countdown: res.countdown };
     }
     else if (op === "register-device") out = await jarvisPush.register(getFirestore(), body, operator, now);
@@ -6814,12 +6829,14 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
-    else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
+    else if (op === "snapshot") out = Object.assign(await jarvisLoadSnapshot(days).then(({ snap, marks }) => jarvisBriefOpen(snap, marks)), { mailCodes: await mailCodeRows().catch(() => []),
       devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
-    else if (op === "rows") out = await jarvisRows(body, now);
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
-    else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
+    else if (op === "brief-mark") {
+      out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
+      await jarvisSnap.drop(getFirestore(), ["marks"]);
+    }
     else if (op === "brief-marks") out = { marks: await jarvisProposals.savedBrief(getFirestore()) };
     else if (op === "brief-items") out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });
     else if (op === "rating-decide") out = await jarvis.decideRatings(getFirestore(), body);
@@ -6860,7 +6877,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "outreach-target") {
       const db = getFirestore();
       out = await jarvisTargets.act({ fetch, db, now }, body, operator);
-      await Promise.all(["targets-0"].concat([1, 7, 30, 90, 365].map((d) => "snapshot-" + d)).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+      await Promise.all([db.collection("jarvis_cache").doc("targets-0").delete().catch(() => null), jarvisSnap.drop(db, ["external"])]);
     }
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);

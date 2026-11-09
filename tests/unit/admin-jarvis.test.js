@@ -141,7 +141,8 @@ test("voice and command-bar phrases map to actions", () => {
   assert.deepEqual(core.parseCommand("Jarvis, show URL review"), { type: "go", product: "review" });
   assert.deepEqual(core.parseCommand("simulator"), { type: "go", product: "studio" });
   assert.deepEqual(core.parseCommand("last 7 days"), { type: "range", value: "7" });
-  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "all" });
+  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "365" });
+  assert.deepEqual(core.parseCommand("last year"), { type: "range", value: "365" });
   assert.deepEqual(core.parseCommand("export csv"), { type: "export", format: "csv" });
   assert.deepEqual(core.parseCommand("print everything"), { type: "print", all: true });
   assert.deepEqual(core.parseCommand("run sweepReviews"), { type: "run-job", job: "sweepReviews" });
@@ -192,6 +193,7 @@ test("server: CI on main reads a workflow by id when busy main left none of its 
       { workflow_id: 4, name: "Studio mail render", status: "completed", conclusion: "failure", created_at: "2026-11-02T08:00:00Z" }
     ] });
     if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs\?event=pull_request/.test(url)) return json({ workflow_runs: [] });
     if (/actions\/runs/.test(url)) return json({ workflow_runs: [
       { workflow_id: 4, name: "Studio issue_comment  ", status: "completed", conclusion: "skipped", created_at: "2026-11-02T12:05:00Z" },
       { workflow_id: 1, name: "E2E and Visual Tests", status: "in_progress", created_at: "2026-11-02T12:04:00Z" },
@@ -554,7 +556,7 @@ test("jarvisExternal has a loader for every op the snapshot, briefing and watch 
   const start = index.indexOf("async function jarvisExternal");
   const loaders = index.slice(start, index.indexOf("const out = {}", start));
   const known = new Set([...loaders.matchAll(/^\s+"?([\w-]+)"?: \(\) =>/gm)].map((m) => m[1]).concat(Object.keys(sources.SOURCES)));
-  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_OPS = \[([^\]]+)\]/g)])
+  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_(?:SNAPSHOT_)?OPS = \[([^\]]+)\]/g)])
     .flatMap((m) => m[1].match(/"[\w-]+"/g).map((s) => s.slice(1, -1)));
   assert.ok(asked.includes("cloudflare"));
   assert.deepEqual(asked.filter((op) => !known.has(op)), []);
@@ -1389,17 +1391,127 @@ test("social: approving a proposal adds the hub item and the decision; dismissin
 
 test("rerunCi re-runs the failed jobs of the newest failed run on main, and says when the token cannot (#1695)", async () => {
   const calls = [];
-  const runs = { workflow_runs: [{ id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }, { id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] };
-  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : json(runs); };
+  const workflows = { workflows: [{ id: 1, name: "Buffer batch queue" }, { id: 2, name: "Deploy" }] };
+  const runs = {
+    1: { workflow_runs: [{ id: 10, name: "Buffer batch queue", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }] },
+    2: { workflow_runs: [{ id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] }
+  };
+  const route = (url) => (/actions\/workflows\?/.test(url) ? json(workflows) : json(runs[(/workflows\/(\d+)\/runs\?branch=main/.exec(url) || [])[1]] || {}));
+  const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : route(url); };
   const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
-  assert.equal(out.run, 9);
-  assert.match(calls[1][0], /actions\/runs\/9\/rerun-failed-jobs$/);
-  assert.equal(calls[1][1], "POST");
-  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy")).already, "success");
+  assert.equal(out.run, 9, "the newest run that was not cancelled");
+  assert.match(calls[1][0], /actions\/workflows\/1\/runs\?branch=main&status=completed/);
+  assert.match(calls[2][0], /actions\/runs\/9\/rerun-failed-jobs$/);
+  assert.equal(calls[2][1], "POST");
+  assert.equal((await jarvis.rerunCi(fetchOk, "t", "Deploy", { prs: false })).already, "success");
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "t", "Nope"), /No finished run/);
-  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : json(runs));
+  const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : route(url));
   await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
+});
+
+test("stalePrs keeps open, non-draft PRs whose newest run at their head failed before main went green (#2245)", () => {
+  const pr = (number, sha, draft) => ({ number, title: "PR " + number, html_url: "u/" + number, draft: !!draft, head: { sha } });
+  const run = (id, sha, conclusion, at, status) => ({ id, name: "Tests", head_sha: sha, conclusion, status: status || "completed", created_at: at });
+  const runs = [
+    run(9, "e", "failure", "2026-11-02T12:00:00Z"), run(8, "d", null, "2026-11-02T08:00:00Z", "in_progress"), run(7, "c", "success", "2026-11-02T07:00:00Z"),
+    run(6, "a", "cancelled", "2026-11-02T06:00:00Z"), run(5, "a", "failure", "2026-11-02T05:00:00Z"), run(4, "f", "failure", "2026-11-02T05:00:00Z"), run(3, "d", "failure", "2026-11-02T04:00:00Z")
+  ];
+  const pulls = [pr(1, "a"), pr(2, "c"), pr(3, "d"), pr(4, "e"), pr(5, "f", true), pr(6, "old")];
+  assert.deepEqual(jarvis.stalePrs(pulls, runs, "Tests", "2026-11-02T10:00:00Z"), [{ number: 1, title: "PR 1", url: "u/1", run: 5 }]);
+  assert.deepEqual(jarvis.stalePrs(pulls, runs, "Lint", "2026-11-02T10:00:00Z"), []);
+});
+
+test("rerunCi on a green main closes and reopens the stale PRs, spaced, skipping conflicts and keeping the cap (#2245)", async () => {
+  const calls = [], slept = [];
+  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
+  const prRuns = { workflow_runs: [1, 2, 3, 4].map((n) => ({ id: 100 + n, workflow_id: 11, name: "E2E", head_sha: "s" + n, status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" })) };
+  const pulls = [1, 2, 3, 4].map((n) => ({ number: n, title: "PR " + n, html_url: "u/" + n, draft: false, head: { sha: "s" + n } }));
+  const looks = {};
+  const mergeable = (n) => (n === 2 ? false : n === 3 && (looks[n] = (looks[n] || 0) + 1) === 1 ? null : true);
+  const fetchFake = async (url, opts) => {
+    const method = (opts || {}).method || "GET";
+    calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", "") + (opts && opts.body ? " " + opts.body : ""));
+    if (/actions\/workflows\?/.test(url)) return json({ workflows: [{ id: 11, name: "E2E" }] });
+    if (/actions\/workflows\/11\/runs\?branch=main/.test(url)) return json(mainRuns);
+    if (/actions\/workflows\/11\/runs\?per_page/.test(url)) return json(prRuns);
+    if (/pulls\?state=open/.test(url)) return json(pulls);
+    const n = Number((/pulls\/(\d+)$/.exec(url) || [])[1]);
+    if (method === "PATCH") return json({}, 200);
+    return json({ number: n, state: "open", mergeable: mergeable(n) });
+  };
+  const budget = { left: 3, until: Infinity, seen: new Set() };
+  const out = await jarvis.rerunCi(fetchFake, "t", "E2E", { budget, sleep: async (ms) => { slept.push(ms); } });
+  assert.deepEqual(out.prs.refreshed, [1, 3]);
+  assert.deepEqual(out.prs.conflicts, [2]);
+  assert.deepEqual(out.prs.left, [4]);
+  assert.equal(out.note, "Closed and reopened #1, #3. Skipped for conflicts with main: #2. Left for the next click: #4.");
+  assert.deepEqual(calls.filter((c) => c.startsWith("PATCH")), ['PATCH pulls/1 {"state":"closed"}', 'PATCH pulls/1 {"state":"open"}', 'PATCH pulls/3 {"state":"closed"}', 'PATCH pulls/3 {"state":"open"}']);
+  assert.deepEqual(slept, [1000, 3000, 3000, 2000, 1000], "1 s between close and reopen, 3 s between PRs, 2 s for a second mergeability look");
+  assert.ok(!calls.some((c) => /rerun-failed-jobs/.test(c)), "a PR's jobs are never re-run");
+
+  const noPrs = await jarvis.rerunCi(fetchFake, "t", "E2E", { prs: false });
+  assert.equal(noPrs.already, "success");
+  assert.equal(noPrs.prs, undefined);
+});
+
+test("refreshPr retries a failed reopen once and says loudly when a PR stays closed (#2245)", async () => {
+  let opens = 0;
+  const fetchFake = (fail) => async (url, opts) => {
+    if ((opts || {}).method !== "PATCH") return json({ state: "open", mergeable: true });
+    if (/"open"/.test(opts.body)) { opens += 1; return json({}, opens <= fail ? 502 : 200); }
+    return json({}, 200);
+  };
+  const sleep = async () => {};
+  assert.deepEqual(await jarvis.refreshPr(fetchFake(1), "t", 7, { sleep }), { number: 7, refreshed: true });
+  opens = 0;
+  await assert.rejects(() => jarvis.refreshPr(fetchFake(2), "t", 7, { sleep }), /#7 is closed and did not reopen/);
+  const refused = async (url, opts) => ((opts || {}).method === "PATCH" ? json({}, 403) : json({ state: "open", mergeable: true }));
+  await assert.rejects(() => jarvis.refreshPr(refused, "t", 7, { sleep }), /Pull requests: write/);
+});
+
+test("rerunCi with rerunMain false refuses while main is red (scripts/refresh-prs.sh, #2245)", async () => {
+  const runs = { workflow_runs: [{ id: 9, name: "E2E", conclusion: "failure", html_url: "https://github.com/r/9" }] };
+  const posts = [];
+  const fetchFake = async (url, opts) => { if ((opts || {}).method === "POST") posts.push(url); return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 3, name: "E2E" }] } : runs); };
+  await assert.rejects(() => jarvis.rerunCi(fetchFake, "t", "E2E", { rerunMain: false }), /E2E is failure on main .*fix main before refreshing PRs/);
+  assert.deepEqual(posts, []);
+});
+
+test("rerunCi finds CodeQL and Studio render by the workflow names the CI rows show, not their run-names (#2287)", async () => {
+  const workflows = { workflows: [{ id: 3, name: "CodeQL", state: "active" }, { id: 4, name: "Studio render", state: "active" }] };
+  const calls = [];
+  const fake = (mainConclusion) => async (url, opts) => {
+    const method = (opts || {}).method || "GET";
+    calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", ""));
+    if (/actions\/workflows\?/.test(url)) return json(workflows);
+    if (/actions\/workflows\/3\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z", html_url: "u/30" }] });
+    if (/actions\/workflows\/3\/runs\?per_page/.test(url)) return json({ workflow_runs: [
+      { id: 31, workflow_id: 3, name: "PR #1", event: "dynamic", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" },
+      { id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", head_sha: "m", status: "completed", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z" }
+    ] });
+    if (/pulls\?state=open/.test(url)) return json([{ number: 1, title: "PR 1", html_url: "u/1", draft: false, head: { sha: "s1" } }]);
+    if (method === "PATCH" || method === "POST") return json({}, 200);
+    return json({ number: 1, state: "open", mergeable: true });
+  };
+  await jarvis.rerunCi(fake("failure"), "t", "CodeQL", { sleep: async () => {} });
+  assert.ok(calls.includes("POST actions/runs/30/rerun-failed-jobs"), calls.join("\n"));
+  const green = await jarvis.rerunCi(fake("success"), "t", "CodeQL", { sleep: async () => {} });
+  assert.deepEqual(green.prs.refreshed, [1], "a PR whose CodeQL run is dynamic and named PR #1 is refreshed");
+
+  const fetch = async (url) => {
+    if (/actions\/workflows\?/.test(url)) return json(workflows);
+    if (/actions\/workflows\/4\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
+    if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs\?event=pull_request/.test(url)) return json({ workflow_runs: [{ id: 41, workflow_id: 4, name: "Studio pull_request", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" }] });
+    if (/actions\/runs/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", status: "completed", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
+    if (/pulls\?state=open/.test(url)) return json([{ number: 1, title: "PR 1", html_url: "u/1", draft: false, head: { sha: "s1" } }]);
+    if (/search/.test(url)) return json({ total_count: 0, items: [] });
+    return json([]);
+  };
+  const out = await jarvis.github(fetch, "token", { now: NOW.getTime() });
+  assert.deepEqual(out.ci.map((run) => run.name), ["Studio render"]);
+  assert.deepEqual(out.prsStale.map((w) => [w.workflow, w.prs.map((pr) => pr.number)]), [["Studio render", [1]]]);
 });
 
 test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {
@@ -1534,4 +1646,33 @@ test("the LinkedIn Send button copies the note line of the day's list (#2479)", 
   assert.equal(core.linkedinLine({}, "Note"), "");
   assert.equal(core.linkedinLine(null, "Note"), "");
   assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
+});
+
+test("the web Jarvis reads no Firestore: it loads from the snapshot op the app reads (#2102)", () => {
+  const src = ["admin-jarvis.js", "admin-jarvis-push.js"].map((f) => fs.readFileSync(path.join(__dirname, "../../js", f), "utf8")).join("\n");
+  assert.doesNotMatch(src, /firebase-firestore\.js|\bgetDocs?\(|\bonSnapshot\(|\bcollection\(db/);
+  assert.match(src, /call\('snapshot'\)/);
+  assert.doesNotMatch(src, /call\('rows'/);
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.doesNotMatch(index, /op === "rows"/);
+  const sections = fs.readFileSync(path.join(__dirname, "../../functions/jarvis-snapshot.js"), "utf8");
+  const snapshot = sections.slice(sections.indexOf("function compose("), sections.indexOf("async function load("));
+  ["feed", "socialHeat", "reports", "outreachVisits"].forEach((key) => assert.match(snapshot, new RegExp("\\b" + key + "\\b"), key));
+});
+
+test("the live feed and the social heat map come from the range's rows, newest first (#2102)", () => {
+  const at = (h) => new Date(NOW.getTime() - h * 3600000);
+  const events = [
+    { site: "cv", kind: "visit", createdAt: at(1), query: "?utm_source=linkedin" },
+    { site: "cv", kind: "export", name: "pdf", createdAt: at(3) },
+    { site: "lab", kind: "visit", createdAt: at(5), query: "?utm_source=outreach&utm_campaign=w1" },
+    { site: "studio", kind: "visit", createdAt: at(6), referrerHost: "www.google.com" }
+  ];
+  const lines = core.feed({ events, opens: [{ createdAt: at(2) }], reviews: [{ createdAt: at(4).toISOString(), paid: true, requestedUrl: "https://shop.example/?a=1&b=2", status: "complete" }] });
+  assert.deepEqual(lines.map((l) => l.text.split(":")[0]), ["CV", "URL Review", "CV", "URL Review", "QA Lab", "QA Studio"]);
+  assert.equal(lines[3].text, "URL Review: paid review of shop.example/?a=1&b=2 (complete)");
+  assert.ok(lines.every((l) => typeof l.at === "string" && !Number.isNaN(Date.parse(l.at))));
+  assert.equal(core.feed({ events: Array.from({ length: 50 }, (_, i) => ({ site: "cv", kind: "visit", createdAt: at(i + 1) })) }).length, 18);
+  const grid = core.socialHeat(events);
+  assert.equal(grid.flat().reduce((a, b) => a + b, 0), 2, "the LinkedIn and outreach visits, not Google or the export");
 });

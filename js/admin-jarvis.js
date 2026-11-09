@@ -1,18 +1,20 @@
 /* Jarvis: Admin > Statistics as one command center. admin.html mounts it in #stats-pane after sign-in.
 
-   The range's site_events, url_review_opens, url_reviews and url_review_alerts come from the jarvis function's day
-   rollups (op rows, functions/jarvis-days.js); live mode then reads only newer rows from Firestore (owner rules), as
-   it does url_review_reports and socialHubStats/latest. The jarvis function (functions/jarvis.js) adds what the browser cannot read: server-only
-   collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
-   The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
-import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+   Jarvis reads no Firestore (#2102). The products, the range's numbers and the external sources come from the jarvis
+   function's snapshot op, the same cached answer the Android app reads (jarvisSnapshot in functions/index.js); the
+   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
+   inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
 const LIVE_MS = 60 * 1000;
-const EXTERNAL_MS = 5 * 60 * 1000;
-const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['all', 'All time']];
+// The server keeps a snapshot this long (jarvis.TTL.snapshot); asking sooner returns the same one.
+const SNAPSHOT_MS = 5 * 60 * 1000;
+// The external sources the snapshot carries; the rest are asked one by one.
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
+const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
+const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
 const GA_GROUP = { cv: 'CV site', review: 'QA-lab URL Review' };
 const FAMILY = { marketing: ['marketing', 'outreach', 'hub', 'business'] };
@@ -250,12 +252,12 @@ function processMap(board, flow) {
 
 // --- the tool ------------------------------------------------------------------------------------------------
 
-export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
+export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
     const C = window.JarvisCore;
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', alerts: [], reports: [],
+        products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
@@ -274,7 +276,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         <div class="jv-controls">
           <label class="jv-field">Range<select id="jv-range" data-menu-ready="1">${RANGES.map(([v, l]) => `<option value="${v}"${v === S.range ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
           <div class="jv-seg" role="group" aria-label="Inbox emails"><button type="button" data-mail="real">Real</button><button type="button" data-mail="test">Tests</button><button type="button" data-mail="all">All</button></div>
-          <button type="button" class="jv-btn jv-live" data-act="live" aria-pressed="true" title="Live: new events every minute"><i></i><span id="jv-ago">live</span></button>
+          <button type="button" class="jv-btn jv-live" data-act="live" aria-pressed="true" title="Live: new numbers every 5 minutes"><i></i><span id="jv-ago">live</span></button>
           <button type="button" class="jv-btn" data-act="refresh" title="Refresh everything (R)">⟳</button>
           <button type="button" class="jv-btn" data-act="speak" title="Read the briefing aloud">🔊</button>
           <button type="button" class="jv-btn" data-act="listen" title="Talk to Jarvis" aria-pressed="false">🎙</button>
@@ -361,7 +363,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const m = /^#stats(?:\/([a-z]+))?(?:\/([a-z0-9]+))?/.exec(location.hash || '');
         if (!m) return;
         if (m[1] && C.PRODUCTS.some((p) => p.key === m[1])) S.product = m[1];
-        if (m[2] && RANGES.some(([v]) => v === m[2])) S.range = m[2];
+        const range = m[2] === 'all' ? '365' : m[2];
+        if (range && RANGES.some(([v]) => v === range)) S.range = range;
     }
 
     function writeHash() {
@@ -371,59 +374,44 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- data -------------------------------------------------------------------------------------------------
 
-    const rowsOf = (snap) => snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-    const newest = (rows, field) => rows.reduce((best, row) => { const d = C.toDate(row[field]); return d && (!best || d > best) ? d : best; }, null);
-
-    // The range's rows come from the jarvis function's day rollups (#2085), the store the app's snapshot reads too.
-    async function loadFirestore() {
-        const w = C.windowFor(S.range);
-        S.window = w;
-        const from = w.prior ? w.prior.start : w.start;
-        const safe = (p, fallback) => p.catch(() => fallback);
-        const [got, hub, reports] = await Promise.all([
-            call('rows', { from: from.toISOString() }),
-            safe(getDoc(doc(db, 'socialHubStats', 'latest')).then((s) => (s.exists() ? s.data() : null)), null),
-            safe(getDocs(query(collection(db, 'url_review_reports'), orderBy('emailedAt', 'desc'), limit(12))).then(rowsOf), [])
-        ]);
-        if (got.ok === false || !Array.isArray(got.events)) throw new Error(got.error || 'no rows');
-        const inRange = (field) => (row) => { const d = C.toDate(row[field]); return d && d >= w.start; };
-        const events = got.events.filter(inRange('createdAt'));
-        const opens = got.opens.filter(inRange('createdAt'));
-        const reviews = got.reviews.filter(inRange('createdAt'));
-        S.rows = { events, prior: w.prior ? got.events.filter((row) => !inRange('createdAt')(row)) : null, opens, reviews };
-        S.counts = { openTotal: opens.length, reviewTotal: reviews.length, priorOpens: w.prior ? got.opens.length - opens.length : null, priorReviews: w.prior ? got.reviews.length - reviews.length : null };
-        S.hub = hub;
-        S.alerts = got.alerts.filter(inRange('at'));
-        S.reports = reports;
-        S.updatedAt = Date.now();
+    // One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app shares.
+    async function loadSnapshot() {
+        SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
+        let snap;
+        try { snap = await call('snapshot'); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        const date = (v) => (v ? new Date(v) : null);
+        const w = snap.window || {};
+        S.window = { start: date(w.start), end: date(w.end), days: w.days, prior: w.prior ? { start: date(w.prior.start), end: date(w.prior.end) } : null };
+        S.products = snap.products;
+        S.outreach = snap.outreachVisits || null;
+        S.feed = snap.feed || [];
+        S.socialHeat = snap.socialHeat || null;
+        S.reports = snap.reports || [];
+        Object.assign(S.external, snap.external || {}, { 'mail-codes': { ok: true, codes: snap.mailCodes || [] } });
+        if (snap.settings) S.settings = Object.assign({ ok: true }, snap.settings);
+        if (Array.isArray(snap.goals)) S.goals = snap.goals;
+        if (Array.isArray(snap.devices)) {
+            S.devices = snap.devices;
+            const d = device();
+            if (d) deviceKey = d.kind + ':' + (d.posture || '');
+            paintDevices();
+        }
+        S.updatedAt = Date.parse(snap.cachedAt) || Date.now();
+        S.externalAt = Date.now();
     }
 
-    // Live: only rows newer than the newest one already held, so a refresh costs a handful of reads.
+    // Live: a newer snapshot once the server's has aged out; the pulse counts the feed lines it adds.
     async function loadNewer() {
-        const w = S.window;
-        if (!w) return;
-        const after = async (name, field, since, asString) => {
-            if (!since) return [];
-            try { return rowsOf(await getDocs(query(collection(db, name), where(field, '>', asString ? since.toISOString() : since), orderBy(field, 'desc'), limit(500)))); } catch (error) { return []; }
-        };
-        const [events, opens, reviews] = await Promise.all([
-            after('site_events', 'createdAt', newest(S.rows.events, 'createdAt') || w.start),
-            after('url_review_opens', 'createdAt', newest(S.rows.opens, 'createdAt') || w.start),
-            after('url_reviews', 'createdAt', newest(S.rows.reviews, 'createdAt') || w.start, true)
-        ]);
-        const known = (list) => new Set(list.map((row) => row.id));
-        const add = (list, fresh) => { const ids = known(list); return fresh.filter((row) => !ids.has(row.id)).concat(list); };
-        const before = S.rows.events.length + S.rows.opens.length + S.rows.reviews.length;
-        S.rows.events = add(S.rows.events, events);
-        const newOpens = opens.filter((row) => !known(S.rows.opens).has(row.id)).length;
-        const newReviews = reviews.filter((row) => !known(S.rows.reviews).has(row.id)).length;
-        S.rows.opens = add(S.rows.opens, opens);
-        S.rows.reviews = add(S.rows.reviews, reviews);
-        if (S.counts.openTotal !== null && S.counts.openTotal !== undefined) S.counts.openTotal += newOpens;
-        if (S.counts.reviewTotal !== null && S.counts.reviewTotal !== undefined) S.counts.reviewTotal += newReviews;
-        S.updatedAt = Date.now();
-        const added = S.rows.events.length + S.rows.opens.length + S.rows.reviews.length - before;
-        if (added > 0) { compute(); render(); pulse(added); }
+        if (S.loading) return;
+        const newest = (S.feed[0] || {}).at || '';
+        S.loading = true;
+        try { await loadSnapshot(); } catch (error) { S.loading = false; return; }
+        S.loading = false;
+        compute();
+        render();
+        const added = newest ? S.feed.filter((f) => f.at > newest).length : 0;
+        if (added > 0) pulse(added);
     }
 
     // --- this browser's screen (#2068): sent with every call, like the app's ----------------------------------
@@ -469,14 +457,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const user = auth.currentUser;
         if (!user) throw new Error('Sign in first.');
         const token = await user.getIdToken();
-        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range), device: device() }, extra || {})) });
+        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: Number(S.range) || 30, device: device() }, extra || {})) });
         const data = await res.json().catch(() => ({ ok: false, error: 'No answer (' + res.status + ')' }));
         if (!res.ok && data.ok !== false) data.ok = false;
         return data;
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'targets', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
+        const list = ops || OWN_OPS;
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -502,20 +490,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const inbox = getInbox ? getInbox() : { messages: [], ratings: [] };
         const sum = {};
         sum.inbox = C.summarizeInbox(inbox.messages || [], inbox.ratings || [], w, w.prior, keep);
-        ['cv', 'studio', 'lab'].forEach((key) => { sum[key] = C.summarizeSite(key, S.rows.events, S.rows.prior, w); });
-        sum.review = C.summarizeReview({
-            opens: S.rows.opens, reviews: S.rows.reviews, events: S.rows.events,
-            openTotal: S.counts.openTotal === null ? undefined : S.counts.openTotal,
-            reviewTotal: S.counts.reviewTotal === null ? undefined : S.counts.reviewTotal,
-            prior: S.counts.priorOpens === null || S.counts.priorOpens === undefined ? null : { opens: S.counts.priorOpens, reviews: S.counts.priorReviews }
-        }, w);
-        sum.hub = C.summarizeHub(S.hub, S.rows.events, w, S.rows.prior);
+        const p = S.products || {};
+        ['cv', 'studio', 'lab'].forEach((key) => { sum[key] = p[key] || C.summarizeSite(key, [], [], w); });
+        sum.review = p.review || C.summarizeReview({ opens: [], reviews: [], events: [], prior: null }, w);
+        sum.hub = p.hub || C.summarizeHub(null, [], w, []);
         S.summaries = sum;
         S.briefState = { products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals };
         const split = C.openBrief(C.briefing(S.briefState), S.marks);
         S.brief = split.open;
         S.briefHidden = split.hidden;
     }
+
+    const outreachSeen = () => S.outreach || { total: 0, campaigns: [] };
+    const reviewAlerts = () => (S.external.health && S.external.health.alerts && S.external.health.alerts.latest) || [];
 
     function snapshot() {
         const p = {};
@@ -549,7 +536,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
-                    visits: C.outreachVisits(S.rows.events).total,
+                    visits: outreachSeen().total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
                 targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
@@ -808,7 +795,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     const STATE_CHIP = { live: 'c-fast', partial: 'c-average', down: 'c-slow', loading: '', off: '' };
     const LEVEL_CHIP = { good: 'c-fast', info: '', warn: 'c-average', alert: 'c-slow' };
-    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit|telegram|\bt\.me\b/i;
+    const SOCIAL = C.SOCIAL;
 
     function waiting(key, text) {
         const x = S.external[key];
@@ -1283,7 +1270,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const camps = mk && mk.ok && mk.campaigns && mk.campaigns.ok ? mk.campaigns : null;
         const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
         const th = C.thresholds((S.settings || {}).thresholds);
-        const visits = C.outreachVisits(S.rows.events);
+        const visits = outreachSeen();
         const weekly = (plan && plan.weekly) || {};
         const warm = mail && mail.accounts.length ? Math.min(...mail.accounts.map((a) => (a.score === null ? 0 : a.score))) : null;
         const was = mail && mail.prior ? mail.prior : null;
@@ -1409,7 +1396,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const mo = e.money && e.money.ok ? e.money : null;
         const ga = e.ga4 && e.ga4.ok ? e.ga4 : null;
         const hub = S.summaries.hub || { totals: {}, lists: {} };
-        const outVisits = C.outreachVisits(S.rows.events);
+        const outVisits = outreachSeen();
         const social = socialVisits();
         const socialTotal = social.reduce((n, r) => n + r.value, 0);
         const weekly = (plan && plan.weekly) || {};
@@ -1489,8 +1476,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
         const soResults = so ? [{ label: 'sent', value: so.sent }, { label: 'failed', value: so.failed }].concat(so.scheduled && so.scheduled.count ? [{ label: 'scheduled', value: so.scheduled.count }] : []) : [];
         const yt = so && so.youtube ? (so.youtube.videos || []).filter((v) => v.views !== undefined).map((v) => ({ label: String(v.title || v.id).slice(0, 48), value: v.views })).sort((a, b) => b.value - a.value) : [];
-        const heatRows = S.rows.events.filter((r) => r.kind === 'visit' && (SOCIAL.test(C.openSource(r)) || /utm_source=outreach/i.test(String(r.query || ''))));
-        const grid = C.heatmap(heatRows);
+        const grid = S.socialHeat || C.socialHeat([]);
         const queries = gsc ? (gsc.queries || []).map((q) => ({ label: q.query, value: q.clicks })).filter((q) => q.value > 0) : [];
         const ranks = brave ? brave.queries.map((q) => `<span class="jv-chip ${q.position && q.position <= 3 ? 'c-fast' : q.position && q.position <= 10 ? 'c-average' : 'c-slow'}" title="${esc(q.leader || '')}">${esc(q.query)} · ${q.position ? '#' + q.position : 'not in top ' + (brave.depth || 20)}</span>`).join(' ') : '';
         const notices = e.notices && e.notices.notices ? e.notices.notices.length : 0;
@@ -2454,17 +2440,13 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             else if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
-            if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
+            if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + outreachSeen().total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
             if (p.key === 'github' && e['github-work'] && e['github-work'].ok !== false) { const g = e['github-work']; const pass = g.ci && g.ci.ok !== false ? g.ci.passRate : null; main = { label: 'Grade · CI pass rate', value: `${(g.score && g.score.overall && g.score.overall.grade) || '—'} · ${pass === null || pass === undefined ? '—' : pass + '%'}` }; series = (g.history || []).map((x) => x.passRate || 0); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
             return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
         }).join('');
-        const feed = [].concat(
-            S.rows.events.slice(0, 40).map((r) => ({ at: r.createdAt, text: `${(C.PRODUCTS.find((p) => p.key === r.site) || { name: r.site }).name}: ${r.kind === 'visit' ? 'visit from ' + C.openSource(r) : C.actionTitle(r)}` })),
-            S.rows.opens.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: open from ${C.openSource(r)}` })),
-            S.rows.reviews.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: ${r.paid ? 'paid ' : ''}review of ${esc(String(r.requestedUrl || r.url || '').replace(/^https?:\/\//, '').slice(0, 50))} (${r.status || '…'})` }))
-        ).filter((x) => C.toDate(x.at)).sort((a, b) => C.toDate(b.at) - C.toDate(a.at)).slice(0, 18);
+        const feed = S.feed;
         const W = C.wide({ products: s, external: e, briefing: S.brief });
         S.wide = W;
         const take = () => { const list = S.empties; S.empties = []; return noData(list); };
@@ -2500,7 +2482,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
             ${panel('review-failures', 'Failed runs', h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : 'Not loaded.'}</p>`, { data: h && h.failures ? h.failures.latest : null })}
-            ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], S.alerts.slice(0, 12), 'No alerts in range.'), { wide: true, data: S.alerts.map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
+            ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], reviewAlerts(), 'No alerts in range.'), { wide: true, data: reviewAlerts().map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
             ${panel('review-reports', 'Mailed reports', table([['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))], ['Opens', (x) => fmt(x.opens || 0)], ['Reviews', (x) => fmt(x.reviews || 0)], ['Paid', (x) => fmt(x.paidUsd || 0) + ' USD']], S.reports, 'No mailed reports yet.'), { data: S.reports.map((x) => ({ period: x.period, label: x.label, opens: x.opens, reviews: x.reviews, paidUsd: x.paidUsd })) })}
             ${panel('review-actions', 'Actions', `<div class="jv-actions">
                 <a class="jv-btn" href="${DESK}" target="_blank" rel="noopener">Review desk</a><a class="jv-btn" href="${DESK}/failures" target="_blank" rel="noopener">Failed runs</a>
@@ -2643,15 +2625,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (S.loading) return;
         S.loading = true;
         setStatus('Refreshing…');
+        const own = all !== false ? loadExternal() : null;
+        let failed = false;
         try {
-            await loadFirestore();
+            await loadSnapshot();
             compute();
             render();
         } catch (error) {
-            setStatus('The rows did not load: ' + error.message);
+            failed = true;
+            setStatus('The snapshot did not load: ' + error.message);
         }
         S.loading = false;
-        if (all !== false) loadExternal().then(() => loadProposals());
+        const rest = failed ? loadExternal(['settings', 'goals'].concat(SNAPSHOT_OPS)) : null;
+        if (own) Promise.all([own, rest]).then(() => loadProposals());
         if (!S.marksAt) { S.marksAt = Date.now(); loadMarks(); }
         reportDevice();
     }
@@ -2744,7 +2730,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     const SHEET_ASK = {
-        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main`,
+        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)`,
         'run-job': (b) => `run ${b.dataset.job} again`,
         'pagespeed-merge': (b) => `merge PageSpeed fixes #${b.dataset.pr} into main now (it goes to production)`,
         'pagespeed-close': (b) => `close PageSpeed fixes #${b.dataset.pr} without merging`,
@@ -2791,7 +2777,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const out = await call('action-run', { action, job: b.dataset.job, workflow: b.dataset.workflow, pr: b.dataset.pr ? Number(b.dataset.pr) : undefined, proposal: sh.key });
             b.disabled = false;
             if (/^pagespeed-/.test(action)) { toast(out.ok ? out.note : 'Not run: ' + out.error, 6000); if (out.ok) loadExternal(['pagespeed', 'actions']); return; }
-            toast(out.ok ? (out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
+            toast(out.ok ? (out.note ? out.note : out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
             if (out.ok) loadExternal(['actions', 'health', 'jobs', 'github']);
             return;
         }
@@ -2950,7 +2936,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (!confirmRun(ask)) return;
         toast('Running…', 30000);
         const out = await call('action-run', { action: run.action, jobs: run.jobs, workflows: run.workflows, proposal: key });
-        toast(out.ok ? `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
+        toast(out.ok ? out.note ? `${run.label}: ${out.note}` : `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
         loadExternal(['actions', 'health', 'jobs', 'github']);
     }
 
@@ -3625,8 +3611,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }, 1000));
     S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;
-        loadNewer();
-        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['goals', 'health', 'jobs', 'github', 'github-work', 'uptime']);
+        if (Date.now() - S.updatedAt >= SNAPSHOT_MS) loadNewer();
     }, LIVE_MS));
 
     return {
