@@ -320,3 +320,141 @@ test("the tablet's product list carries a GitHub row from github-work", () => {
   assert.deepEqual(row.kpis.map((k) => [k.label, k.value]), [["Score", "82 B"], ["CI pass rate", "91%"], ["Open PRs", 4], ["Open bugs", 2]]);
   assert.deepEqual(row.series, { labels: ["2026-11-01", "2026-11-03"], values: [80, 82] });
 });
+
+test("dismissAlert PATCHes a Dependabot or code scanning alert with its reason and comment, and refuses secrets, wrong reasons and a missing grant (#2808)", async () => {
+  const f = fakeFetch([
+    ["PATCH", R + "/dependabot/alerts/4", () => ({ html_url: "https://github.com/dep/4" })],
+    ["PATCH", "/repos/kaanmuar/cursor-quota/code-scanning/alerts/9", () => ({ html_url: "https://github.com/cs/9" })],
+    ["PATCH", R + "/dependabot/alerts/5", () => status({ message: "Resource not accessible by integration" }, 403)]
+  ]);
+  const ctx = ctxOf(f);
+  const dep = await fix.dismissAlert(ctx, { kind: "dependabot", number: 4, reason: "tolerable_risk", comment: "Dev-only tool." });
+  assert.deepEqual([dep.ok, dep.url], [true, "https://github.com/dep/4"]);
+  assert.match(dep.message, /Dismissed Dependabot alert #4 \(tolerable risk\)/);
+  const cs = await fix.dismissAlert(ctx, { kind: "codeScanning", repo: "kaanmuar/cursor-quota", number: "#9", reason: "used in tests" });
+  assert.match(cs.message, /code scanning alert #9 in kaanmuar\/cursor-quota/);
+  assert.deepEqual(f.calls.filter((c) => c.method === "PATCH").map((c) => [c.url.replace("https://api.github.com", ""), c.body]), [
+    [R + "/dependabot/alerts/4", { state: "dismissed", dismissed_reason: "tolerable_risk", dismissed_comment: "Dev-only tool." }],
+    ["/repos/kaanmuar/cursor-quota/code-scanning/alerts/9", { state: "dismissed", dismissed_reason: "used in tests" }]
+  ]);
+  await assert.rejects(fix.dismissAlert(ctx, { kind: "secrets", number: 1, reason: "revoked" }), /revoke and rotate/);
+  await assert.rejects(fix.dismissAlert(ctx, { kind: "dependabot", number: 4, reason: "won't fix" }), /Pick a reason: fix_started, inaccurate/);
+  await assert.rejects(fix.dismissAlert(ctx, { kind: "codeScanning", number: 4, reason: "tolerable_risk" }), /false positive, won't fix, used in tests/);
+  await assert.rejects(fix.dismissAlert(ctx, { kind: "dependabot", number: 5, reason: "not_used" }), (e) => e.need === "Dependabot alerts: write");
+  assert.equal(f.calls.filter((c) => c.method === "PATCH").length, 3);
+});
+
+test("a dismissal and a finished re-run each leave a line in the Console, an unfinished poll none (#2808, #2810)", async () => {
+  const jarvisLog = require("../../functions/jarvis-log");
+  const db = fakeDb();
+  jarvisLog.use(() => db);
+  try {
+    const f = fakeFetch([
+      ["PATCH", R + "/dependabot/alerts/4", () => ({ html_url: "https://github.com/dep/4" })],
+      ["GET", R + "/actions/runs/901", () => ({ status: "in_progress", run_attempt: 2, html_url: "https://github.com/run/901", name: "E2E" })],
+      ["GET", R + "/actions/runs/902", () => ({ status: "completed", conclusion: "failure", run_attempt: 2, html_url: "https://github.com/run/902", name: "E2E" })]
+    ]);
+    await fix.dismissAlert(ctxOf(f), { kind: "dependabot", number: 4, reason: "not_used", comment: "Dev only." });
+    await fix.runStatus(ctxOf(f), { run: 901 });
+    await fix.runStatus(ctxOf(f), { run: 902 });
+  } finally { jarvisLog.use(null); }
+  assert.deepEqual(db.added.filter((r) => r._c === "jarvis_log").map((r) => [r.source, r.level, r.ref, r.text]), [
+    ["github", "info", "dependabot:kaanmuar/kaanmuar.github.io#4", "Dismissed Dependabot alert #4 in kaanmuar.github.io (not used): Dev only."],
+    ["github", "warn", "run:902", "Re-run of kaanmuar.github.io run 902 (E2E) finished, attempt 2: failure"]
+  ]);
+});
+
+test("dismissLow dismisses Dependabot lows as tolerable_risk and code scanning lows as won't fix, with one comment (#2808)", async () => {
+  const f = fakeFetch([["PATCH", /\/alerts\/\d+$/, () => ({})]]);
+  const out = await fix.dismissLow(ctxOf(f), { alerts: [{ kind: "dependabot", number: 1 }, { kind: "codeScanning", repo: "kaanmuar/cursor-quota", number: 2 }, { kind: "secrets", number: 3 }] });
+  assert.deepEqual([out.ok, out.count], [true, 2]);
+  assert.deepEqual(f.calls.map((c) => [c.url.replace("https://api.github.com", ""), c.body.dismissed_reason, c.body.dismissed_comment]), [
+    [R + "/dependabot/alerts/1", "tolerable_risk", "Low severity, a tolerable risk (bulk dismissal from Jarvis, #2808)."],
+    ["/repos/kaanmuar/cursor-quota/code-scanning/alerts/2", "won't fix", "Low severity, a tolerable risk (bulk dismissal from Jarvis, #2808)."]
+  ]);
+  assert.equal((await fix.dismissLow(ctxOf(fakeFetch([])), { alerts: [] })).ok, false);
+});
+
+test("runStatus answers a run's status, conclusion, attempt and link for the re-run poll (#2808)", async () => {
+  const f = fakeFetch([["GET", R + "/actions/runs/901", () => ({ status: "in_progress", conclusion: null, run_attempt: 3, html_url: "https://github.com/run/901", name: "E2E" })]]);
+  assert.deepEqual(await fix.runStatus(ctxOf(f), { run: "901" }), { ok: true, run: 901, status: "in_progress", conclusion: "", done: false, attempt: 3, url: "https://github.com/run/901", name: "E2E" });
+  const g = fakeFetch([["GET", R + "/actions/runs/902", () => ({ status: "completed", conclusion: "success", run_attempt: 2, html_url: "u" })]]);
+  assert.deepEqual(await fix.runStatus(ctxOf(g), { run: 902 }).then((o) => [o.done, o.conclusion, o.attempt]), [true, "success", 2]);
+  await assert.rejects(fix.runStatus(ctxOf(g), { run: "x" }), /Which run/);
+});
+
+test("quarantine files 'CI: <workflow> is flaky' as a Backlog bug in area:ci with the run links, once while it is open (#2808)", async () => {
+  fix._reset();
+  const filed = [];
+  const routes = (open) => [
+    ["GET", R + "/issues?state=open&labels=area%3Aci&per_page=100", () => open],
+    ["POST", R + "/issues", (url, body) => { filed.push(body); return { number: 2900, html_url: "https://github.com/i/2900" }; }],
+    ["GET", R + "/issues/2900", () => ({ node_id: "I_2900" })],
+    ["POST", "/graphql", (url, body) => (/options/.test(body.query) ? { data: { node: { options: [{ id: "opt-backlog", name: "Backlog" }] } } }
+      : /addProjectV2ItemById/.test(body.query) ? { data: { addProjectV2ItemById: { item: { id: "PVTI_2900" } } } } : { data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: body.variables.i } } } })]
+  ];
+  const f = fakeFetch(routes([]));
+  const out = await fix.quarantine(ctxOf(f), { workflow: "E2E and Visual Tests", pct: 9, runs: 140, path: ".github/workflows/e2e.yml", links: ["https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/901", "javascript:alert(1)"] });
+  assert.deepEqual([out.ok, out.number, out.url], [true, 2900, "https://github.com/i/2900"]);
+  assert.equal(filed[0].title, "CI: E2E and Visual Tests is flaky (9% of 140 runs)");
+  assert.deepEqual(filed[0].labels, ["bug", "area:ci"]);
+  assert.match(filed[0].body, /in 9% of 140 runs/);
+  assert.match(filed[0].body, /- https:\/\/github\.com\/kaanmuar\/kaanmuar\.github\.io\/actions\/runs\/901/);
+  assert.doesNotMatch(filed[0].body, /javascript:/);
+  assert.equal(f.calls.find((c) => c.body && /updateProjectV2ItemFieldValue/.test(c.body.query)).body.variables.o, "opt-backlog");
+  const again = await fix.quarantine(ctxOf(fakeFetch(routes([{ number: 2900, title: "CI: E2E and Visual Tests is flaky (9% of 140 runs)", html_url: "https://github.com/i/2900" }]))), { workflow: "E2E and Visual Tests", pct: 12, runs: 150 });
+  assert.deepEqual([again.ok, again.number], [false, 2900]);
+  assert.equal(filed.length, 1);
+  await assert.rejects(fix.quarantine(ctxOf(f), {}), /Which workflow/);
+});
+
+test("securityTicket files a Backlog bug whose area comes from the manifest path, with the fix spelled out (#2808)", async () => {
+  fix._reset();
+  const filed = [];
+  const f = fakeFetch([
+    ["GET", /\/issues\?state=open&labels=bug/, () => []],
+    ["POST", R + "/issues", (url, body) => { filed.push(body); return { number: 2901, html_url: "https://github.com/i/2901" }; }],
+    ["GET", R + "/issues/2901", () => ({ node_id: "I_2901" })],
+    ["POST", "/graphql", () => ({ data: { addProjectV2ItemById: { item: { id: "PVTI_x" } } } })]
+  ]);
+  const out = await fix.securityTicket(ctxOf(f), { kind: "dependabot", number: 4, severity: "high", package: "okhttp", manifest: "android/app/build.gradle", patched: "4.12.0", url: "https://github.com/dep/4" });
+  assert.match(out.message, /Filed #2901 \(area:android\)/);
+  assert.equal(filed[0].title, "Security: okhttp (android/app/build.gradle) (high)");
+  assert.deepEqual(filed[0].labels, ["bug", "area:android"]);
+  assert.match(filed[0].body, /Upgrade okhttp to 4\.12\.0 or later in android\/app\/build\.gradle/);
+  await fix.securityTicket(ctxOf(f), { kind: "secrets", repo: "kaanmuar/cursor-quota", number: 2, type: "Google API Key", url: "u" });
+  assert.deepEqual(filed[1].labels, ["bug", "area:devops"]);
+  assert.match(filed[1].body, /Revoke the secret/);
+  assert.deepEqual(["functions/package.json", ".github/workflows/e2e.yml", "package.json", "js/admin.js"].map((p) => fix.areaOfPath(p)), ["area:be", "area:ci", "area:tooling", "area:fe"]);
+});
+
+test("clearCache drops github-work in every range, and draftFlaky builds its prompt from the run's diagnosis (#2808)", async () => {
+  const db = fakeDb();
+  await fix.clearCache(db);
+  assert.deepEqual(db.deleted, [1, 7, 30, 90, 365].map((d) => "jarvis_cache/github-work-" + d));
+  await db.collection("jarvis_github_diag").doc("901").set({ cause: "A race in the admin fixture.", fix: "Wait for the panel.", job: "e2e" });
+  const out = await fix.draftFlaky(ctxOf(fakeFetch([]), { db }), { run: 901, workflow: "E2E", pct: 9, runs: 140 });
+  assert.equal(out.ok, true);
+  assert.match(out.prompt, /"E2E" in kaanmuar\/kaanmuar\.github\.io is flaky: .* in 9% of 140 runs/);
+  assert.match(out.prompt, /A race in the admin fixture\. Fix: Wait for the panel\./);
+  let asked = "";
+  const drafted = await fix.draftFlaky(ctxOf(fakeFetch([]), { db, gemini: async (p) => { asked = p; return "Make the e2e admin fixture wait for the GitHub panel before the screenshot, then run it ten times."; } }), { run: 901, workflow: "E2E" });
+  assert.match(asked, /A race in the admin fixture/);
+  assert.match(drafted.prompt, /run it ten times/);
+});
+
+test("dismissals and agents are click-only: never a Gemini pick, and every new GitHub action has a label (#2808)", () => {
+  const catalog = { jobs: [], workflows: [], github: {} };
+  ["gh-dismiss-alert", "gh-dismiss-low", "gh-agent"].forEach((action) => {
+    assert.equal(actions.pickOk({ action, args: {} }, catalog), false, action);
+    assert.ok(actions.GH_CLICK_ONLY.includes(action));
+    assert.equal(actions.AI_CATALOG[action], undefined);
+  });
+  ["gh-quarantine", "gh-security-ticket", "gh-dismiss-alert", "gh-dismiss-low"].forEach((action) => {
+    assert.ok(actions.GH_ACTIONS.includes(action), action);
+    assert.ok(actions.LABELS[action], action);
+  });
+  assert.equal(fix.actArgs("gh-quarantine", { target: "E2E" }).workflow, "E2E");
+  assert.deepEqual(fix.actArgs("gh-dismiss-low", { alerts: [{ kind: "dependabot", number: "#3" }, { kind: "x" }] }).alerts, [{ kind: "dependabot", repo: undefined, number: 3 }]);
+  assert.equal(fix.actArgs("gh-dismiss-low", { target: "all" }).alerts, null);
+});

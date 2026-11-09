@@ -197,6 +197,31 @@ const EXTERNAL = {
   'github-act': { ok: true, message: 'Merged #2511.' }
 };
 
+// github-work with readable security alerts, a flaky workflow's newest failure and diagnoses that Fix can run (#2808).
+function actionsWork() {
+  const base = EXTERNAL['github-work'];
+  const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+  const failing = [base.ci.failing[0], Object.assign({}, base.ci.failing[1], { diag: { cause: 'The runner lost its network.', category: 'infra', fix: 'Re-run it.', confidence: 0.8, action: 'rerun-ci', prompt: '' } })];
+  const sev = (critical, high, medium, low) => ({ critical, high, medium, low });
+  return Object.assign({}, base, {
+    score: Object.assign({}, base.score, { areas: Object.assign({}, base.score.areas, { security: { value: 25, grade: 'F', why: '1 critical, 1 high, 2 medium or low', parts: [{ label: 'Dependabot critical', count: 1, each: 40, penalty: 40 }, { label: 'Dependabot high', count: 1, each: 20, penalty: 20 }, { label: 'Dependabot low', count: 1, each: 5, penalty: 5 }, { label: 'Code scanning medium', count: 1, each: 5, penalty: 5 }] } }) }),
+    ci: Object.assign({}, base.ci, { failing, flaky: { pct: 4, workflows: [{ name: 'Cypress', path: '.github/workflows/cypress.yml', pct: 9, runs: 140, failures: 13, url: GH + '/actions/workflows/cypress.yml?query=is%3Afailure', links: [GH + '/actions/runs/950'],
+      newest: { id: 950, url: GH + '/actions/runs/950', at: '2026-11-03T15:00:00Z', branch: 'main', pr: null, attempt: 1, failed: true, diag: null } }] } }),
+    ai: Object.assign({}, base.ai, { diagnoses: base.ai.diagnoses.concat([{ run: 903, workflow: 'Unit tests', repo: 'kaanmuar/kaanmuar.github.io', branch: 'chore/footer', pr: 2505, url: GH + '/actions/runs/903', cause: 'The branch is behind a fixed test on main.', category: 'code', fix: 'Merge main.', confidence: 0.9, action: 'gh-update-pr', prompt: '', at: '2026-11-03T19:30:00Z' }]) }),
+    security: {
+      dependabot: { ok: true, open: 3, critical: 1, high: 1, bySeverity: sev(1, 1, 0, 1), byRepo: [{ label: 'kaanmuar/kaanmuar.github.io', value: 3 }], oldestD: 20, medianD: 7.5, byEcosystem: [{ label: 'npm', value: 3 }], byPackage: [{ label: 'axios', value: 1 }, { label: 'lodash', value: 1 }, { label: 'left-pad', value: 1 }],
+        items: [{ repo: 'kaanmuar/kaanmuar.github.io', number: 1, severity: 'critical', package: 'axios', ecosystem: 'npm', manifest: 'package-lock.json', patched: '1.7.4', summary: 'SSRF in axios', url: GH + '/security/dependabot/1', created: '2026-10-14T00:00:00Z', pr: { number: 2520, url: GH + '/pull/2520', title: 'Bump axios' } },
+          { repo: 'kaanmuar/kaanmuar.github.io', number: 2, severity: 'high', package: 'lodash', ecosystem: 'npm', manifest: 'functions/package.json', patched: '4.17.21', summary: 'Prototype pollution', url: GH + '/security/dependabot/2', created: '2026-10-30T00:00:00Z' },
+          { repo: 'kaanmuar/kaanmuar.github.io', number: 3, severity: 'low', package: 'left-pad', ecosystem: 'npm', manifest: 'package.json', patched: '1.3.0', summary: 'Slow padding', url: GH + '/security/dependabot/3', created: '2026-11-01T00:00:00Z' }] },
+      codeScanning: { ok: true, open: 1, critical: 0, high: 0, bySeverity: sev(0, 0, 1, 0), byRepo: [{ label: 'kaanmuar/kaanmuar.github.io', value: 1 }], oldestD: 5, medianD: 5,
+        items: [{ repo: 'kaanmuar/kaanmuar.github.io', number: 7, severity: 'medium', rule: 'js/xss', tool: 'CodeQL', path: 'js/app.js', url: GH + '/security/code-scanning/7', created: '2026-10-29T00:00:00Z' }] },
+      secrets: { ok: true, open: 1, critical: 1, high: 0, bySeverity: sev(1, 0, 0, 0), byRepo: [{ label: 'kaanmuar/qa-lab-outreach', value: 1 }], oldestD: 2, medianD: 2,
+        items: [{ repo: 'kaanmuar/qa-lab-outreach', number: 4, severity: 'critical', type: 'Google API Key', url: 'https://github.com/kaanmuar/qa-lab-outreach/security/secret-scanning/4', created: '2026-11-01T00:00:00Z' }] },
+      weeks: [{ week: '2026-W43', opened: 1, fixed: 0, dismissed: 0 }, { week: '2026-W44', opened: 2, fixed: 1, dismissed: 1 }, { week: '2026-W45', opened: 2, fixed: 0, dismissed: 0 }]
+    }
+  });
+}
+
 // The external sources jarvisSnapshot (functions/index.js) carries.
 const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work'];
 // The collections the web Jarvis used to read itself (#2102); the snapshot op reads them on the server now.
@@ -277,8 +302,8 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(14);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub']);
+    await expect(tabs).toHaveCount(15);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub', 'Console']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
@@ -669,7 +694,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(prs.locator('tbody tr')).toHaveCount(3);
     await expect(prs.locator('.jv-chip.c-slow', { hasText: 'dirty' })).toHaveCount(1);
     await expect(gh.locator('[data-panel-id="github-worktrees"] [data-gh-act="gh-remove-worktree"]')).toHaveCount(1);
-    const agent = failing.locator('button', { hasText: 'Launch a Cursor fix agent' }).first();
+    const agent = failing.locator('button', { hasText: 'Fix with an agent' }).first();
     page.once('dialog', (dialog) => dialog.dismiss());
     await agent.click();
     expect(calls.some((c) => c.op === 'github-agent')).toBe(false);
@@ -697,7 +722,7 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(calls.filter((c) => c.op === 'github-act')[1].body.items).toEqual([{ number: 2490, should: 'Done' }]);
     page.once('dialog', (dialog) => dialog.accept());
     await failing.locator('[data-gh-rerun="901"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'action-run').map((c) => [c.body.action, c.body.workflows])).toEqual([['rerun-ci', ['E2E and Visual Tests']]]);
+    await expect.poll(() => calls.filter((c) => c.op === 'github-act').map((c) => [c.body.action, c.body.run])).toEqual([['gh-merge-pr', undefined], ['gh-board-sync', undefined], ['rerun-ci', 901]]);
 
     await gh.locator('[data-gh-ask="Why is CI red?"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'ask').map((c) => c.body.question)).toEqual(['Why is CI red?']);
@@ -782,10 +807,161 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('GitHub diagnoses get Fix and Fix with an agent, and a re-run shows its state at once, then the fresh numbers and the run result (#2808)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const work = actionsWork();
+    const after = Object.assign({}, work, { ci: Object.assign({}, work.ci, { failing: [work.ci.failing[0]] }) });
+    const calls = await openStats(page, '#stats/github/30', { 'github-work': work, 'github-act': { ok: true, message: 'Done on GitHub.', url: GH + '/pull/2505' },
+      'github-run': { ok: true, run: 902, status: 'completed', conclusion: 'success', done: true, attempt: 2, url: GH + '/actions/runs/902' } });
+    let release;
+    const held = new Promise((resolve) => { release = resolve; });
+    await page.route(/cloudfunctions\.net\/jarvis$/, async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      if (body.op === 'github-act' && body.action === 'rerun-ci') await held;
+      if (body.op === 'github-work' && body.fresh) {
+        calls.push({ op: body.op, body });
+        return route.fulfill({ json: Object.assign({ op: body.op }, after), headers: { 'Access-Control-Allow-Origin': '*' } });
+      }
+      return route.fallback();
+    });
+    const gh = page.locator('[data-view="github"]');
+    const failing = gh.locator('[data-panel-id="github-failing"]');
+    const ai = gh.locator('[data-panel-id="github-ai"]');
+
+    await expect(failing.locator('[data-gh-fix="901"]')).toHaveCount(0);
+    await expect(ai.locator('[data-gh-fix="901"]')).toHaveCount(0);
+    await expect(failing.locator('[data-gh-fix="902"]')).toHaveText('Fix: re-run');
+    await expect(ai.locator('[data-gh-fix="903"]')).toHaveText('Fix: update with main');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await failing.locator('[data-gh-fix="902"]').click();
+    const row = failing.locator('[data-gh-result="run:902"]');
+    await expect(row).toContainText('Re-running…');
+    await expect(row.locator('.jv-chip')).toHaveText('queued');
+    expect(calls.some((c) => c.op === 'github-work' && c.body.fresh)).toBe(false);
+    release();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-act').map((c) => [c.body.action, c.body.run, c.body.branch])).toEqual([['rerun-ci', 902, 'fix/2510-null-mx']]);
+    await expect.poll(() => calls.filter((c) => c.op === 'github-run').map((c) => c.body.run)).toEqual([902]);
+    await expect(row).toContainText('Passed on attempt 2.');
+    await expect(row.locator('a')).toHaveAttribute('href', GH + '/actions/runs/902');
+    expect(calls.filter((c) => c.op === 'github-work' && c.body.fresh).length).toBeGreaterThanOrEqual(1);
+    await expect(failing.locator('tbody tr')).toHaveCount(2);
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await ai.locator('[data-gh-fix="903"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-act').map((c) => [c.body.action, c.body.pr])).toEqual([['rerun-ci', undefined], ['gh-update-pr', 2505]]);
+    await expect(ai.locator('[data-gh-result="run:903"]')).toContainText('Done on GitHub.');
+
+    const agent = ai.locator('[data-gh-agent="901"]');
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await agent.click();
+    expect(calls.some((c) => c.op === 'github-agent')).toBe(false);
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await agent.click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.run, c.body.branch])).toEqual([[901, 'main']]);
+    expect(asked).toContain('Update the admin visual baseline on main');
+    const launched = ai.locator('[data-gh-result="run:901"]');
+    await expect(launched).toContainText('Agent launched');
+    await expect(launched.locator('a')).toHaveAttribute('href', 'https://cursor.com/agents/bc-123');
+    expect(errors).toEqual([]);
+  });
+
+  test('GitHub flaky rows re-run, diagnose, quarantine and draft an agent; security alerts chart by severity and dismiss only from the form (#2808)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const calls = await openStats(page, '#stats/github/30', { 'github-work': actionsWork(), 'github-act': { ok: true, message: 'Done on GitHub.' },
+      'github-run': { ok: true, run: 950, status: 'in_progress', conclusion: '', done: false, attempt: 2, url: GH + '/actions/runs/950' },
+      'github-diagnose': { ok: true, diag: { cause: 'A Cypress wait timed out on a slow runner.', category: 'flaky', confidence: 0.7, action: 'rerun-ci' } },
+      'github-draft': { ok: true, prompt: 'Make the Cypress login wait for the network instead of a fixed timeout, then run it 20 times.', branch: 'main', run: 950 } });
+    const gh = page.locator('[data-view="github"]');
+    const acts = () => calls.filter((c) => c.op === 'github-act').map((c) => c.body);
+
+    const flaky = gh.locator('[data-panel-id="github-flaky"]');
+    await expect(flaky).toContainText('.github/workflows/cypress.yml');
+    await expect(flaky.locator('a', { hasText: 'Open runs' })).toHaveAttribute('href', GH + '/actions/workflows/cypress.yml?query=is%3Afailure');
+    page.once('dialog', (dialog) => dialog.accept());
+    await flaky.locator('[data-gh-rerun="950"]').click();
+    await expect.poll(() => acts().map((b) => [b.action, b.run])).toEqual([['rerun-ci', 950]]);
+    await expect(flaky.locator('[data-gh-result="run:950"]')).toContainText('Attempt 2: in progress…');
+    await flaky.locator('[data-gh-diagnose="950"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-diagnose').map((c) => c.body.run)).toEqual([950]);
+    await expect(flaky.locator('[data-gh-result="run:950"]')).toContainText('A Cypress wait timed out on a slow runner.');
+    let asked = '';
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await flaky.locator('[data-gh-act="gh-quarantine"]').click();
+    await expect.poll(() => acts().map((b) => b.action)).toEqual(['rerun-ci', 'gh-quarantine']);
+    expect(asked).toContain('CI: Cypress is flaky (9% of 140 runs)');
+    expect(acts()[1]).toMatchObject({ workflow: 'Cypress', pct: 9, runs: 140, path: '.github/workflows/cypress.yml', links: [GH + '/actions/runs/950'] });
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await flaky.locator('[data-gh-flaky-agent="Cypress"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.branch, c.body.prompt])).toEqual([['main', 'Make the Cypress login wait for the network instead of a fixed timeout, then run it 20 times.']]);
+    expect(calls.find((c) => c.op === 'github-draft').body).toMatchObject({ run: 950, workflow: 'Cypress', pct: 9, runs: 140 });
+    expect(asked).toContain('Make the Cypress login wait for the network');
+    await expect(flaky.locator('[data-gh-result="flaky:Cypress"]')).toContainText('Agent launched');
+
+    const sec = gh.locator('[data-panel-id="github-security"]');
+    await expect(sec.locator('.jv-bar-stack')).toHaveCount(3);
+    await expect(sec.locator('.jv-bars li').first()).toHaveAttribute('title', 'Dependabot: Critical 1, High 1, Low 1');
+    await expect(sec.locator('.jv-legend').first()).toContainText('Critical');
+    await expect(sec).toContainText('Alerts opened, fixed and dismissed each week');
+    await expect(sec.locator('.jv-gh-parts li')).toHaveCount(4);
+    await expect(sec).toContainText('Security score 25 (F)');
+
+    const dbot = gh.locator('[data-panel-id="github-dependabot"]');
+    await expect(dbot).toContainText('Open alerts by ecosystem');
+    const form = dbot.locator('[data-drill="github-sec-dependabot|dependabot:kaanmuar/kaanmuar.github.io#2"]');
+    await expect(form).toBeHidden();
+    await dbot.locator('[data-drill-open="github-sec-dependabot|dependabot:kaanmuar/kaanmuar.github.io#2"]').first().click();
+    await expect(form).toBeVisible();
+    await expect(form.locator('select[name="reason"] option')).toHaveCount(5);
+    await form.locator('select[name="reason"]').selectOption('not_used');
+    await form.locator('input[name="comment"]').fill('Only a dev script uses it.');
+    await form.locator('button[type="submit"]').click();
+    await expect.poll(() => acts().filter((b) => b.action === 'gh-dismiss-alert').length).toBe(1);
+    expect(acts().find((b) => b.action === 'gh-dismiss-alert')).toMatchObject({ action: 'gh-dismiss-alert', kind: 'dependabot', repo: 'kaanmuar/kaanmuar.github.io', number: 2, reason: 'not_used', comment: 'Only a dev script uses it.', target: 'lodash #2' });
+    await expect(dbot.locator('[data-gh-result="dependabot:kaanmuar/kaanmuar.github.io#2"]')).toContainText('Done on GitHub.');
+
+    await expect(dbot.locator('a', { hasText: 'Dependabot PR #2520' })).toHaveAttribute('href', GH + '/pull/2520');
+    await expect(dbot.locator('[data-gh-act="gh-merge-pr"]')).toHaveCount(1);
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await dbot.locator('[data-gh-sec-agent="dependabot:kaanmuar/kaanmuar.github.io#3"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-agent').length).toBe(2);
+    expect(asked).toContain('Upgrade left-pad to 1.3.0 or later in package.json');
+    expect(calls.filter((c) => c.op === 'github-agent')[1].body).toMatchObject({ repo: 'kaanmuar/kaanmuar.github.io', branch: 'main' });
+
+    const cscan = gh.locator('[data-panel-id="github-code-scanning"]');
+    await cscan.locator('[data-drill-open="github-sec-codeScanning|codeScanning:kaanmuar/kaanmuar.github.io#7"]').first().click();
+    const cform = cscan.locator('form[data-gh-dismiss]');
+    await cform.locator('select[name="reason"]').selectOption("won't fix");
+    await cform.locator('button[type="submit"]').click();
+    await expect.poll(() => acts().filter((b) => b.action === 'gh-dismiss-alert').map((b) => [b.kind, b.number, b.reason, b.comment])).toEqual([['dependabot', 2, 'not_used', 'Only a dev script uses it.'], ['codeScanning', 7, "won't fix", '']]);
+
+    const secrets = gh.locator('[data-panel-id="github-secrets"]');
+    await expect(secrets.locator('[data-drill-open]')).toHaveCount(0);
+    await expect(secrets).toContainText('Revoke and rotate');
+    page.once('dialog', (dialog) => dialog.accept());
+    await secrets.locator('[data-gh-act="gh-security-ticket"]').click();
+    await expect.poll(() => acts().filter((b) => b.action === 'gh-security-ticket').map((b) => [b.kind, b.repo, b.number, b.type])).toEqual([['secrets', 'kaanmuar/qa-lab-outreach', 4, 'Google API Key']]);
+
+    const low = sec.locator('[data-gh-act="gh-dismiss-low"]');
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await low.click();
+    expect(acts().some((b) => b.action === 'gh-dismiss-low')).toBe(false);
+    page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
+    await low.click();
+    await expect.poll(() => acts().filter((b) => b.action === 'gh-dismiss-low').map((b) => b.alerts)).toEqual([[{ kind: 'dependabot', repo: 'kaanmuar/kaanmuar.github.io', number: 3 }]]);
+    expect(asked).toContain('dismiss 1 low security alert');
+    expect(errors).toEqual([]);
+  });
+
   for (const [width, height, folded] of [[360, 780, true], [720, 860, false]]) {
     test(`GitHub fits a foldable ${folded ? 'folded' : 'unfolded'} at ${width}px: no sideways scroll, the map and the tables reflow (#2526)`, async ({ page }) => {
       await page.setViewportSize({ width, height });
-      await openStats(page, '#stats/github/30');
+      await openStats(page, '#stats/github/30', { 'github-work': actionsWork() });
       const gh = page.locator('[data-view="github"]');
       await expect(gh.locator('.jv-grade')).toHaveCount(10);
       for (const id of ['github-needs', 'github-flow', 'github-failing', 'github-prs', 'github-worktrees']) await expect(gh.locator(`[data-panel-id="${id}"]`)).toBeVisible();
@@ -837,6 +1013,88 @@ test.describe('admin statistics (Jarvis)', () => {
         await iss.screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-issues.png` });
         await gh.locator('[data-panel-id="github-trend"]').screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-trend.png` });
       }
+    });
+  }
+
+  // #2810: the log op's lines, newest first; a second call with since adds one line.
+  const LOG_AT = Date.now() - 60000;
+  const logLine = (id, ms, source, level, text, url) => Object.assign({ id, at: new Date(LOG_AT + ms).toISOString(), addedAt: new Date(LOG_AT + ms).toISOString(), source, level, text }, url ? { url } : {});
+  const LOG = [
+    logLine('l4', 4000, 'actions', 'error', 'kaanmuar.github.io: E2E and Visual Tests #881 failure in 7m02s on main (push)', 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/881'),
+    logLine('l3', 3000, 'gemini', 'info', 'Gemini ok in 2140 ms, 812 chars: Write the briefing for these numbers'),
+    logLine('l2', 2000, 'board', 'info', 'kaanmuar.github.io: #2810 moved Next → Dev: Jarvis: live log console (qa-lab-agents)', 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2810'),
+    logLine('l1', 1000, 'function', 'warn', 'jarvisWatch: mail retry failed: SendGrid answered 429')
+  ];
+  const logOp = () => {
+    let n = 0;
+    return () => (++n > 1 ? { ok: true, entries: [logLine('l5', 5000, 'push', 'info', 'alerts push to 2 devices: Jarvis alert')], cursor: new Date(LOG_AT + 5000).toISOString() } : { ok: true, entries: LOG, cursor: LOG[0].addedAt });
+  };
+
+  for (const [width, height] of [[360, 780], [720, 860]]) {
+    test(`Console lists the back's log lines, filters, searches, pauses and fits ${width}px (#2810)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      const answer = logOp();
+      const calls = await openStats(page, '#stats/console/30', { get log() { return answer(); } });
+      const con = page.locator('[data-view="console"] .jv-con');
+      await expect(con).toBeVisible();
+      const lines = con.locator('.jv-con-lines li');
+      await expect(lines).toHaveCount(4);
+      await expect(lines.first()).toContainText('mail retry failed');
+      await expect(lines.last()).toContainText('E2E and Visual Tests #881 failure');
+      await expect(lines.last()).toHaveClass(/lv-error/);
+      await expect(lines.first().locator('time')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
+      expect(calls.filter((c) => c.op === 'log')[0].body).toMatchObject({ limit: 300 });
+      await expect(page.locator('.jv-con-fab')).toBeHidden();
+
+      await con.locator('[data-con-src="board"]').click();
+      await expect(lines).toHaveCount(1);
+      await expect(lines).toContainText('moved Next → Dev');
+      await con.locator('[data-con-src=""]').click();
+      await con.locator('[data-con-level]').selectOption('warn');
+      await expect(lines).toHaveCount(2);
+      await con.locator('[data-con-level]').selectOption('debug');
+      await con.locator('[data-con-q]').fill('gemini briefing');
+      await expect(lines).toHaveCount(1);
+      await con.locator('[data-con-q]').fill('');
+      await expect(lines).toHaveCount(4);
+
+      await con.locator('[data-con-pause]').click();
+      await expect.poll(() => calls.filter((c) => c.op === 'log').length, { timeout: 20000 }).toBeGreaterThan(1);
+      expect(calls.filter((c) => c.op === 'log')[1].body.since).toBe(LOG[0].addedAt);
+      await expect(con.locator('[data-con-foot]')).toContainText('paused, 1 new');
+      await expect(lines).toHaveCount(4);
+      await con.locator('[data-con-pause]').click();
+      await expect(lines).toHaveCount(5);
+      await expect(lines.last()).toContainText('alerts push to 2 devices');
+
+      const popup = page.waitForEvent('popup');
+      await lines.filter({ hasText: '#881' }).click();
+      expect((await popup).url()).toContain('/actions/runs/881');
+
+      const layout = await page.evaluate(() => {
+        const box = (el) => el.getBoundingClientRect();
+        const con = document.querySelector('[data-view="console"] .jv-con');
+        return { overflow: document.documentElement.scrollWidth - window.innerWidth, right: box(con).right - window.innerWidth, mono: /mono|Menlo|Consolas/i.test(getComputedStyle(con).fontFamily),
+          textBelow: (() => { const li = con.querySelector('.jv-con-lines li'); return box(li.querySelector('span')).top > box(li.querySelector('time')).top + 2; })() };
+      });
+      expect(layout.overflow).toBeLessThanOrEqual(1);
+      expect(layout.right).toBeLessThanOrEqual(1);
+      expect(layout.mono).toBe(true);
+      expect(layout.textBelow).toBe(width < 460);
+      await page.screenshot({ path: `/tmp/2546/2810-web-${width}.png` });
+
+      await page.locator('.jv-tabs [data-go="github"]').click();
+      const fab = page.locator('.jv-con-fab');
+      await expect(fab).toBeVisible();
+      await fab.click();
+      const dock = page.locator('.jv-con-dock');
+      await expect(dock.locator('.jv-con-lines li')).toHaveCount(5);
+      await page.screenshot({ path: `/tmp/2546/2810-web-${width}-dock.png` });
+      await page.keyboard.press('Escape');
+      await expect(dock).toBeHidden();
+      expect(errors).toEqual([]);
     });
   }
 

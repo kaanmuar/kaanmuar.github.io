@@ -6,18 +6,22 @@ import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.ui.Github
 import com.carlosandmunoz.jarvis.voice.Heard
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.update.Updater
 import com.carlosandmunoz.jarvis.voice.Voice
 import java.io.File
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -31,6 +35,9 @@ import kotlinx.serialization.json.JsonPrimitive
 enum class Tab(val label: String) { Overview("Overview"), Products("Products"), Business("Business"), Traffic("Traffic"), Systems("Systems") }
 
 data class Chat(val question: String, val answer: String?, val error: Boolean = false, val spoken: Boolean = false)
+
+/** What a GitHub row's action is doing (#2808): queued, running, done, launched or failed, with a link to the run, PR, issue or agent. */
+data class GhResult(val state: String, val text: String, val url: String? = null, val link: String? = null)
 
 data class UiState(
     val signedIn: Boolean = false,
@@ -65,6 +72,11 @@ data class UiState(
     val shares: List<JsonObject>? = null,
     val devices: List<JsonObject>? = null,
     val studio: JsonObject? = null,
+    /** Jarvis > Console (#2810): the log op's lines, newest first, its cursor and the last read's error. */
+    val log: List<JsonObject> = emptyList(),
+    val logCursor: String = "",
+    val logError: String? = null,
+    val ghRows: Map<String, GhResult> = emptyMap(),
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -294,6 +306,50 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun ghMark(key: String, r: GhResult) = _state.update { it.copy(ghRows = it.ghRows + (key to r)) }
+
+    /** A GitHub row's action (#2808): its state shows on the row at once, the answer replaces it, then the snapshot is read again. */
+    fun ghRow(key: String, op: String, extra: Map<String, JsonElement>, busy: String, done: (JsonObject) -> GhResult) {
+        ghMark(key, GhResult("running", busy))
+        keep("Running your action") {
+            runCatching { api.call(op, _state.value.days, extra) }
+                .onSuccess { out -> val r = done(out); ghMark(key, r); _state.update { it.copy(toast = r.text) }; refresh() }
+                .onFailure { e -> ghMark(key, GhResult("failed", e.message ?: "Failed.")); fail(e) { it.copy(toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** Re-runs a run's failed jobs, then reads github-run every 10 s until it completes, for at most 15 minutes. */
+    fun ghRerun(key: String, run: Long, extra: Map<String, JsonElement>) {
+        ghMark(key, GhResult("queued", "Re-running…"))
+        keep("Re-running the CI run") {
+            val out = runCatching { api.call("github-act", _state.value.days, extra) }
+            out.exceptionOrNull()?.let { e -> ghMark(key, GhResult("failed", "Not re-run: " + (e.message ?: "failed."))); fail(e) { it }; return@keep }
+            ghMark(key, GhResult("queued", "Re-run queued."))
+            refresh()
+            viewModelScope.launch {
+                repeat(Github.POLL_TRIES) {
+                    runCatching { api.call("github-run", _state.value.days, mapOf("run" to JsonPrimitive(run))) }.getOrNull()?.let { st ->
+                        ghMark(key, Github.runResult(st))
+                        if (st.bool("done") == true) { refresh(); return@launch }
+                    }
+                    delay(Github.POLL_MS)
+                }
+                ghMark(key, GhResult("failed", "Still not done after 15 minutes; open the run to follow it.", _state.value.ghRows[key]?.url, "Open the run"))
+            }
+        }
+    }
+
+    /** Gemini's fix prompt for a flaky workflow; [open] shows it in the agent dialog to edit and confirm. */
+    fun ghDraft(key: String, extra: Map<String, JsonElement>, open: (String) -> Unit) {
+        ghMark(key, GhResult("running", "Gemini is drafting a fix prompt…"))
+        viewModelScope.launch {
+            runCatching { api.call("github-draft", _state.value.days, extra) }
+                .onSuccess { out -> _state.update { it.copy(ghRows = it.ghRows - key) }; out.str("prompt")?.let(open) }
+                .onFailure { e -> ghMark(key, GhResult("failed", "No prompt: " + (e.message ?: "failed."))) }
+        }
+    }
+
     /** Connect YouTube or Mastodon for the engagement poster (#1990): the network's sign-in opens in the browser. */
     fun connectEngagement(network: String, open: (String) -> Unit) {
         if (fixture != null) { say("Connect is off with a fixture."); return }
@@ -328,6 +384,20 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         if (fixture != null || !auth.signedIn) return
         viewModelScope.launch {
             runCatching { api.call("device", _state.value.days) }.onSuccess { out -> _state.update { it.copy(devices = out.objs("devices")) } }
+        }
+    }
+
+    /** Console (#2810): the lines since the last read, every 5 s while the Console is on screen; a fixture's "log" stands in. */
+    fun pullLog() {
+        if ("log" in _state.value.running) return
+        if (fixture != null) { _state.update { it.copy(log = com.carlosandmunoz.jarvis.ui.Console.merge(it.log, _state.value.snapshot.obj("log").objs("entries"))) }; return }
+        if (!auth.signedIn) return
+        _state.update { it.copy(running = it.running + "log") }
+        viewModelScope.launch {
+            val since = _state.value.logCursor
+            runCatching { api.call("log", _state.value.days, mapOf("limit" to JsonPrimitive(300)) + (if (since.isNotEmpty()) mapOf("since" to JsonPrimitive(since)) else emptyMap())) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - "log", log = com.carlosandmunoz.jarvis.ui.Console.merge(it.log, out.objs("entries")), logCursor = out.str("cursor") ?: since, logError = null) } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "log", logError = e.message ?: "The log did not load.") } }
         }
     }
 

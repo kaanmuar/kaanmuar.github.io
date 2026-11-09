@@ -9,6 +9,16 @@
       ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
+      reason: {
+        own: "I own this site and want a test plan", client: "A client asked me to propose coverage before a release", redesign: "I am comparing this page with a redesign",
+        release: "I need a case list before a release", tech: "I want the public technologies named", a11y: "I am preparing an accessibility review",
+        security: "I am preparing a review of the public security headers", performance: "I need a performance and load case list",
+        teaching: "I am teaching or learning how a page could be tested", allowed: "I am checking a page I am allowed to review",
+        verify: "I want QA-lab to run a verification", credentials: "I have a username and password for this site", other: "Other"
+      },
+      reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.", clientUrlNeeded: "Enter the client's website.",
+      scopePages: "{n} pages", scopeDepth: "{n} deep", scopeSite: "site language", scopeSection: "this section",
+      sectionNone: "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.", sectionStay: "Later pages stay under {path}.", sectionLeave: "Later pages can follow links outside {path}.",
       tour: {
         back: "Back", close: "Close", next: "Next", finish: "Finish", step: "Step {n} of {m}.", progress: "Step progress", wait: "Available when this step finishes.",
         terms: ["The disclaimers", "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text."],
@@ -164,6 +174,16 @@
       ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "El sitio es mío y quiero un plan de pruebas", client: "Un cliente me pidió proponer la cobertura antes de un lanzamiento", redesign: "Estoy comparando esta página con un rediseño",
+        release: "Necesito una lista de casos antes de un lanzamiento", tech: "Quiero saber qué tecnologías públicas usa", a11y: "Estoy preparando una revisión de accesibilidad",
+        security: "Estoy preparando una revisión de los encabezados de seguridad públicos", performance: "Necesito una lista de casos de rendimiento y carga",
+        teaching: "Estoy enseñando o aprendiendo cómo se podría probar una página", allowed: "Estoy revisando una página que tengo permiso para revisar",
+        verify: "Quiero que QA-lab haga una verificación", credentials: "Tengo un usuario y una contraseña para este sitio", other: "Otro"
+      },
+      reasonPick: "Elige un motivo.", reasonWrite: "Escribe el motivo en una frase.", clientNameNeeded: "Escribe el nombre del cliente.", clientEmailNeeded: "Escribe el correo del cliente.", clientUrlNeeded: "Escribe el sitio web del cliente.",
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidad", scopeSite: "idioma del sitio", scopeSection: "esta sección",
+      sectionNone: "Agrega una ruta, como example.com/docs, para mantener las páginas siguientes en esa sección. Con solo el host se revisa todo el sitio.", sectionStay: "Las páginas siguientes se quedan dentro de {path}.", sectionLeave: "Las páginas siguientes pueden seguir enlaces fuera de {path}.",
       tour: {
         back: "Atrás", close: "Cerrar", next: "Siguiente", finish: "Terminar", step: "Paso {n} de {m}.", progress: "Progreso del paso", wait: "Disponible cuando termine este paso.",
         terms: ["Los avisos legales", "Ningún control se activa hasta que marques cada casilla. Los avisos legales nombran las normas locales, nacionales e internacionales. Una revisión completada, una detención y una sola muestra del informe forman parte de ese texto."],
@@ -321,6 +341,16 @@
       ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "Este site é meu e quero um plano de testes", client: "Um cliente me pediu para propor a cobertura antes de um lançamento", redesign: "Estou comparando esta página com um novo design",
+        release: "Preciso de uma lista de casos antes de um lançamento", tech: "Quero saber quais tecnologias públicas ele usa", a11y: "Estou preparando uma revisão de acessibilidade",
+        security: "Estou preparando uma revisão dos cabeçalhos de segurança públicos", performance: "Preciso de uma lista de casos de desempenho e carga",
+        teaching: "Estou ensinando ou aprendendo como uma página poderia ser testada", allowed: "Estou verificando uma página que tenho permissão para revisar",
+        verify: "Quero que o QA-lab faça uma verificação", credentials: "Tenho um usuário e uma senha para este site", other: "Outro"
+      },
+      reasonPick: "Escolha um motivo.", reasonWrite: "Escreva o motivo em uma frase.", clientNameNeeded: "Digite o nome do cliente.", clientEmailNeeded: "Digite o e-mail do cliente.", clientUrlNeeded: "Digite o site do cliente.",
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidade", scopeSite: "idioma do site", scopeSection: "esta seção",
+      sectionNone: "Adicione um caminho, como example.com/docs, para manter as páginas seguintes nessa seção. Só com o host, o site inteiro é revisado.", sectionStay: "As páginas seguintes ficam dentro de {path}.", sectionLeave: "As páginas seguintes podem seguir links fora de {path}.",
       tour: {
         back: "Voltar", close: "Fechar", next: "Próximo", finish: "Concluir", step: "Etapa {n} de {m}.", progress: "Progresso da etapa", wait: "Disponível quando esta etapa terminar.",
         terms: ["Os avisos", "Nenhum controle liga até você marcar cada caixa. Os avisos citam as regras locais, nacionais e internacionais. Uma revisão concluída, uma parada e uma única exibição do relatório fazem parte desse texto."],
@@ -479,6 +509,16 @@
       ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
+      reason: {
+        own: "Die Website gehört mir und ich möchte einen Testplan", client: "Ein Kunde hat mich gebeten, vor einem Release eine Testabdeckung vorzuschlagen", redesign: "Ich vergleiche diese Seite mit einem Redesign",
+        release: "Ich brauche vor einem Release eine Liste mit Fällen", tech: "Ich möchte die öffentlich erkennbaren Technologien kennen", a11y: "Ich bereite eine Prüfung der Barrierefreiheit vor",
+        security: "Ich bereite eine Prüfung der öffentlichen Sicherheits-Header vor", performance: "Ich brauche eine Liste mit Performance- und Lastfällen",
+        teaching: "Ich lehre oder lerne, wie man eine Seite testen könnte", allowed: "Ich prüfe eine Seite, die ich prüfen darf",
+        verify: "Ich möchte, dass QA-lab eine Verifizierung durchführt", credentials: "Ich habe einen Benutzernamen und ein Passwort für diese Website", other: "Sonstiges"
+      },
+      reasonPick: "Wählen Sie einen Grund.", reasonWrite: "Schreiben Sie den Grund in einem Satz.", clientNameNeeded: "Geben Sie den Namen des Kunden ein.", clientEmailNeeded: "Geben Sie die E-Mail-Adresse des Kunden ein.", clientUrlNeeded: "Geben Sie die Website des Kunden ein.",
+      scopePages: "{n} Seiten", scopeDepth: "{n} Links tief", scopeSite: "Sprache der Website", scopeSection: "nur dieser Bereich",
+      sectionNone: "Fügen Sie einen Pfad wie example.com/docs hinzu, damit weitere Seiten in diesem Bereich bleiben. Ein Host allein prüft die ganze Website.", sectionStay: "Weitere Seiten bleiben unter {path}.", sectionLeave: "Weitere Seiten können Links außerhalb von {path} folgen.",
       tour: {
         back: "Zurück", close: "Schließen", next: "Weiter", finish: "Fertig", step: "Schritt {n} von {m}.", progress: "Fortschritt des Schritts", wait: "Verfügbar, sobald dieser Schritt fertig ist.",
         terms: ["Die Hinweise", "Alle Bedienelemente bleiben aus, bis jedes Kästchen angehakt ist. Die Hinweise nennen die lokalen, nationalen und internationalen Regeln. Eine abgeschlossene Prüfung, ein Stopp und eine einmalige Anzeige des Berichts sind Teil dieses Textes."],
@@ -636,6 +676,16 @@
       ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
+      reason: {
+        own: "Ce site m’appartient et je veux un plan de test", client: "Un client m’a demandé de proposer une couverture avant une mise en production", redesign: "Je compare cette page avec une refonte",
+        release: "J’ai besoin d’une liste de cas avant une mise en production", tech: "Je veux connaître les technologies publiques utilisées", a11y: "Je prépare une analyse d’accessibilité",
+        security: "Je prépare une analyse des en-têtes de sécurité publics", performance: "J’ai besoin d’une liste de cas de performance et de charge",
+        teaching: "J’enseigne ou j’apprends comment une page pourrait être testée", allowed: "Je vérifie une page que j’ai le droit d’analyser",
+        verify: "Je veux que QA-lab effectue une vérification", credentials: "J’ai un identifiant et un mot de passe pour ce site", other: "Autre"
+      },
+      reasonPick: "Choisissez une raison.", reasonWrite: "Écrivez la raison en une phrase.", clientNameNeeded: "Saisissez le nom du client.", clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.",
+      scopePages: "{n} pages", scopeDepth: "{n} de profondeur", scopeSite: "langue du site", scopeSection: "cette section",
+      sectionNone: "Ajoutez un chemin, comme example.com/docs, pour garder les pages suivantes dans cette section. Avec l’hôte seul, tout le site est analysé.", sectionStay: "Les pages suivantes restent sous {path}.", sectionLeave: "Les pages suivantes peuvent suivre des liens hors de {path}.",
       tour: {
         back: "Retour", close: "Fermer", next: "Suivant", finish: "Terminer", step: "Étape {n} sur {m}.", progress: "Progression de l’étape", wait: "Disponible quand cette étape se termine.",
         terms: ["Les avertissements", "Aucune commande ne s’active tant que chaque case n’est pas cochée. Les avertissements citent les règles locales, nationales et internationales. Une analyse terminée, un arrêt et un seul affichage du rapport font partie de ce texte."],
@@ -792,6 +842,16 @@
       ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
+      reason: {
+        own: "Questo sito è mio e voglio un piano di test", client: "Un cliente mi ha chiesto di proporre una copertura prima di un rilascio", redesign: "Sto confrontando questa pagina con un restyling",
+        release: "Mi serve un elenco di casi prima di un rilascio", tech: "Voglio conoscere le tecnologie pubbliche usate", a11y: "Sto preparando una revisione dell’accessibilità",
+        security: "Sto preparando una revisione degli header di sicurezza pubblici", performance: "Mi serve un elenco di casi di prestazioni e carico",
+        teaching: "Sto insegnando o imparando come si potrebbe testare una pagina", allowed: "Sto controllando una pagina che ho il permesso di rivedere",
+        verify: "Voglio che QA-lab esegua una verifica", credentials: "Ho un nome utente e una password per questo sito", other: "Altro"
+      },
+      reasonPick: "Scegli un motivo.", reasonWrite: "Scrivi il motivo in una frase.", clientNameNeeded: "Scrivi il nome del cliente.", clientEmailNeeded: "Scrivi l’email del cliente.", clientUrlNeeded: "Scrivi il sito web del cliente.",
+      scopePages: "{n} pagine", scopeDepth: "{n} di profondità", scopeSite: "lingua del sito", scopeSection: "questa sezione",
+      sectionNone: "Aggiungi un percorso, come example.com/docs, per tenere le pagine successive in quella sezione. Con il solo host si rivede tutto il sito.", sectionStay: "Le pagine successive restano sotto {path}.", sectionLeave: "Le pagine successive possono seguire link fuori da {path}.",
       tour: {
         back: "Indietro", close: "Chiudi", next: "Avanti", finish: "Fine", step: "Passo {n} di {m}.", progress: "Avanzamento del passo", wait: "Disponibile quando questo passo finisce.",
         terms: ["Le avvertenze", "Ogni comando resta spento finché non spunti ogni casella. Le avvertenze nominano le regole locali, nazionali e internazionali. Una revisione completata, uno stop e una sola visualizzazione del report fanno parte di quel testo."],

@@ -186,12 +186,12 @@ function flakyGroups(runs) {
   const groups = new Map();
   runs.filter(done).forEach((run) => {
     const key = run.workflow_id + ":" + run.head_sha;
-    const g = groups.get(key) || { name: wfName(run), ok: false, bad: false, retried: false };
+    const g = groups.get(key) || { name: wfName(run), path: run.path || "", ok: false, bad: false, retried: false };
     if (green(run)) { g.ok = true; if ((run.run_attempt || 1) > 1) g.retried = true; }
     if (failed(run)) g.bad = true;
     groups.set(key, g);
   });
-  return Array.from(groups.values()).map((g) => ({ name: g.name, flaky: g.retried || (g.ok && g.bad) }));
+  return Array.from(groups.values()).map((g) => ({ name: g.name, path: g.path, flaky: g.retried || (g.ok && g.bad) }));
 }
 
 // MTTR samples in hours: a workflow's first red run on main to its next green one.
@@ -259,10 +259,33 @@ const diagOf = (d) => (d ? { cause: d.cause || "", category: d.category || "", f
 
 // --- parts --------------------------------------------------------------------------------------------------------
 
+// A pull_request run GitHub lists no pull_requests for (CodeQL's dynamic one) still names its PR in refs/pull/<n>/head.
+const prOf = (run) => (run.pull_requests && run.pull_requests[0] && run.pull_requests[0].number) || Number((/^refs\/pull\/(\d+)\//.exec(run.head_branch || "") || [])[1]) || null;
+
+// A workflow's failed runs on GitHub: its file's page when it has one, else the Actions search by name.
+function failuresUrl(name, path) {
+  const file = String(path || "").split("/").pop();
+  return /^\.github\/workflows\//.test(path || "") ? "https://github.com/" + REPO + "/actions/workflows/" + encodeURIComponent(file) + "?query=" + encodeURIComponent("is:failure")
+    : "https://github.com/" + REPO + "/actions?query=" + encodeURIComponent("workflow:\"" + name + "\" is:failure");
+}
+
 function ciPart(runs, history, diags, now, days, live) {
   const totals = runTotals(runs);
+  const diagByRun = {};
+  diags.forEach((d) => { if (d.run !== undefined) diagByRun[String(d.run)] = d; });
   const flaky = {};
-  flakyGroups(runs).forEach((f) => { const w = (flaky[f.name] = flaky[f.name] || { name: f.name, runs: 0, flaky: 0 }); w.runs++; if (f.flaky) w.flaky++; });
+  flakyGroups(runs).forEach((f) => { const w = (flaky[f.name] = flaky[f.name] || { name: f.name, path: f.path, runs: 0, flaky: 0 }); w.runs++; if (f.flaky) w.flaky++; });
+  // #2808: the newest failure each flaky row acts on (a retried run that ended green when none stayed red).
+  const flakyRow = (w) => {
+    const list = runs.filter((r) => wfName(r) === w.name).sort(byNewest);
+    const bad = list.filter(failed);
+    const r = bad[0] || list.find((x) => green(x) && (x.run_attempt || 1) > 1);
+    return {
+      name: w.name, path: w.path, pct: pct(w.flaky, w.runs), runs: w.runs, failures: bad.length, url: failuresUrl(w.name, w.path),
+      links: bad.slice(0, 5).map((x) => x.html_url).filter(Boolean),
+      newest: r ? { id: r.id, url: r.html_url || "", at: r.updated_at, branch: r.head_branch || "", pr: prOf(r), attempt: r.run_attempt || 1, failed: failed(r), diag: diagOf(diagByRun[String(r.id)]) } : null
+    };
+  };
   const groups = {};
   runs.forEach((r) => (groups[wfKey(r)] = groups[wfKey(r)] || []).push(r));
   const workflows = Object.keys(groups).map((key) => {
@@ -275,11 +298,9 @@ function ciPart(runs, history, diags, now, days, live) {
       last: { conclusion: conclusionOf(list[0]), at: list[0].updated_at || list[0].created_at, url: list[0].html_url || "" }
     };
   }).sort((a, b) => Number(b.mainRed) - Number(a.mainRed) || (a.passRate ?? 101) - (b.passRate ?? 101) || a.name.localeCompare(b.name));
-  const diagByRun = {};
-  diags.forEach((d) => { if (d.run !== undefined) diagByRun[String(d.run)] = d; });
   const failing = Object.values(latestBy(runs.filter(decided), (r) => wfKey(r) + "\n" + r.head_branch)).filter(failed).sort(byNewest).slice(0, 30).map((r) => ({
     id: r.id, name: wfName(r), branch: r.head_branch || "", url: r.html_url || "", at: r.updated_at, attempt: r.run_attempt || 1,
-    pr: (r.pull_requests && r.pull_requests[0] && r.pull_requests[0].number) || Number((/^refs\/pull\/(\d+)\//.exec(r.head_branch || "") || [])[1]) || null, sha: String(r.head_sha || "").slice(0, 7),
+    pr: prOf(r), sha: String(r.head_sha || "").slice(0, 7),
     event: r.event || "", diag: diagOf(diagByRun[String(r.id)])
   }));
   const today = isoDay(now);
@@ -291,7 +312,7 @@ function ciPart(runs, history, diags, now, days, live) {
   Object.assign(live, { mainGreen: totals.mainGreen, mttr: recoveries(runs), today: todayTotals, day: totals });
   return {
     passRate: totals.passRate, mainPassRate: totals.mainPassRate, runs: totals.runs, failed: totals.failed, minutes: totals.minutes, queueMedS: totals.queueMedS, durMedS: totals.durMedS,
-    flaky: { pct: totals.flaky, workflows: Object.values(flaky).filter((w) => w.flaky).map((w) => ({ name: w.name, pct: pct(w.flaky, w.runs), runs: w.runs })).sort((a, b) => b.pct - a.pct || b.runs - a.runs).slice(0, 10) },
+    flaky: { pct: totals.flaky, workflows: Object.values(flaky).filter((w) => w.flaky).map(flakyRow).sort((a, b) => b.pct - a.pct || b.runs - a.runs).slice(0, 10) },
     workflows, failing, daily, since: new Date(now - DAY).toISOString()
   };
 }
@@ -533,39 +554,95 @@ async function deploysPart(gh, runs, history, now, days, want) {
   };
 }
 
+const SEVERITIES = ["critical", "high", "medium", "low"];
+const SEVERITY_OF = { error: "high", warning: "medium", note: "low", moderate: "medium" };
+const severityOf = (s) => { const v = String(s || "").toLowerCase(); return SEVERITIES.includes(v) ? v : SEVERITY_OF[v] || "low"; };
+const SECURITY_WEEKS = 8;
+const SECURITY_ITEMS = 50;
+// closed: the queries that list fixed and dismissed alerts, newest change first, for the weekly trend (#2808).
 const SECURITY = {
-  dependabot: { path: "dependabot/alerts", need: "dependabot_alerts", item: (a) => ({ number: a.number, severity: (a.security_advisory && a.security_advisory.severity) || (a.security_vulnerability && a.security_vulnerability.severity) || "", package: (a.dependency && a.dependency.package && a.dependency.package.name) || "", url: a.html_url || "" }) },
-  codeScanning: { path: "code-scanning/alerts", need: "security_events", item: (a) => ({ number: a.number, severity: (a.rule && (a.rule.security_severity_level || a.rule.severity)) || "", rule: (a.rule && (a.rule.description || a.rule.id)) || "", url: a.html_url || "" }) },
-  secrets: { path: "secret-scanning/alerts", need: "secret_scanning_alerts", item: (a) => ({ number: a.number, severity: "critical", type: a.secret_type_display_name || a.secret_type || "", url: a.html_url || "" }) }
+  dependabot: { path: "dependabot/alerts", closed: ["state=fixed,dismissed,auto_dismissed"], need: "dependabot_alerts", item: (a) => {
+    const dep = a.dependency || {}, pkg = dep.package || {}, v = a.security_vulnerability || {}, adv = a.security_advisory || {};
+    return { number: a.number, severity: severityOf(adv.severity || v.severity), package: pkg.name || "", ecosystem: pkg.ecosystem || "", manifest: dep.manifest_path || "",
+      patched: (v.first_patched_version && v.first_patched_version.identifier) || "", vulnerable: v.vulnerable_version_range || "", summary: String(adv.summary || "").slice(0, 200), url: a.html_url || "", created: a.created_at || "" };
+  } },
+  codeScanning: { path: "code-scanning/alerts", closed: ["state=fixed", "state=dismissed"], need: "security_events", item: (a) => ({
+    number: a.number, severity: severityOf(a.rule && (a.rule.security_severity_level || a.rule.severity)), rule: (a.rule && (a.rule.description || a.rule.id)) || "",
+    tool: (a.tool && a.tool.name) || "", path: (a.most_recent_instance && a.most_recent_instance.location && a.most_recent_instance.location.path) || "", url: a.html_url || "", created: a.created_at || "" }) },
+  secrets: { path: "secret-scanning/alerts", closed: ["state=resolved"], need: "secret_scanning_alerts", item: (a) => ({ number: a.number, severity: "critical", type: a.secret_type_display_name || a.secret_type || "", url: a.html_url || "", created: a.created_at || "" }) }
 };
+const closedAt = (a) => a.fixed_at || a.dismissed_at || a.auto_dismissed_at || a.resolved_at || "";
+const wasDismissed = (a) => a.state === "dismissed" || a.state === "auto_dismissed" || (a.state === "resolved" && /false_positive|wont_fix|used_in_tests/.test(a.resolution || ""));
 
-async function securityPart(gh, repoNames, want) {
+// The open Dependabot PR that bumps a package, matched on its dependabot/ branch or its "Bump <package>" title.
+function bumpPr(openPrs, pkg) {
+  const name = String(pkg || "").toLowerCase().replace(/^@/, "");
+  if (!name) return null;
+  const pr = (openPrs || []).find((p) => { const ref = String((p.head && p.head.ref) || "").toLowerCase(); return ref.startsWith("dependabot/") && (ref.includes("/" + name + "-") || String(p.title || "").toLowerCase().includes(" " + name + " ")); });
+  return pr ? { number: pr.number, url: pr.html_url || "", title: String(pr.title || "").slice(0, 160) } : null;
+}
+
+async function securityPart(gh, repoNames, want, now, openPrs) {
   const out = {};
   const perRepo = {};
+  const weekKeys = [];
+  for (let i = SECURITY_WEEKS - 1; i >= 0; i--) weekKeys.push(isoWeek(now - i * 7 * DAY));
+  const weeks = {};
+  weekKeys.forEach((w) => (weeks[w] = { week: w, opened: 0, fixed: 0, dismissed: 0 }));
+  const count = (t, field) => { const w = t && weeks[isoWeek(t)]; if (w) w[field]++; };
   await Promise.all(Object.keys(SECURITY).map(async (kind) => {
     const spec = SECURITY[kind];
-    const read = async (repo) => {
-      try { return (await gh.get("repos/" + repo + "/" + spec.path + "?state=open&per_page=100")) || []; }
+    const read = async (repo, query) => {
+      try { return (await gh.get("repos/" + repo + "/" + spec.path + "?" + query + "&per_page=100")) || []; }
       catch (error) { if (error.status === 404 && /no analysis/i.test(error.message)) return []; throw error; }
     };
+    const closed = (repo) => Promise.all(spec.closed.map((q) => read(repo, q + "&sort=updated&direction=desc").catch(() => []))).then((lists) => lists.flat());
     try {
       if (!gh) throw new Error("No GitHub token is set.");
-      const main = await read(REPO);
-      const rest = await mapLimit(repoNames.filter((r) => r !== REPO), 5, (repo) => read(repo).catch(() => null));
+      const others = repoNames.filter((r) => r !== REPO);
+      const main = await read(REPO, "state=open");
+      const rest = await mapLimit(others, 5, (repo) => read(repo, "state=open").catch(() => null));
+      const shut = await mapLimit([REPO].concat(others), 5, closed);
       const items = [];
-      [[REPO, main]].concat(repoNames.filter((r) => r !== REPO).map((r, i) => [r, rest[i]])).forEach(([repo, alerts]) => {
+      [[REPO, main]].concat(others.map((r, i) => [r, rest[i]])).forEach(([repo, alerts]) => {
         if (!alerts) return;
         perRepo[repo] = (perRepo[repo] || 0) + alerts.length;
-        alerts.forEach((a) => items.push(Object.assign({ repo }, spec.item(a))));
+        alerts.forEach((a) => { items.push(Object.assign({ repo }, spec.item(a))); count(ms(a.created_at), "opened"); });
       });
-      out[kind] = { ok: true, open: items.length, items: items.slice(0, 50) };
-      if (kind === "dependabot") Object.assign(out[kind], { critical: items.filter((i) => i.severity === "critical").length, high: items.filter((i) => i.severity === "high").length });
+      shut.flat().forEach((a) => { count(ms(a.created_at), "opened"); count(ms(closedAt(a)), wasDismissed(a) ? "dismissed" : "fixed"); });
+      const rank = (i) => SEVERITIES.indexOf(i.severity);
+      items.sort((a, b) => rank(a) - rank(b) || ms(a.created) - ms(b.created));
+      if (kind === "dependabot") items.forEach((i) => { if (i.repo === REPO) i.pr = bumpPr(openPrs, i.package); });
+      const ages = items.map((i) => (now - ms(i.created)) / DAY).filter((d) => d >= 0 && d < 1e5);
+      const bySeverity = {};
+      SEVERITIES.forEach((s) => (bySeverity[s] = items.filter((i) => i.severity === s).length));
+      const byRepo = {};
+      items.forEach((i) => tally(byRepo, i.repo));
+      out[kind] = Object.assign({ ok: true, open: items.length, critical: bySeverity.critical, high: bySeverity.high, bySeverity, byRepo: listOf(byRepo),
+        oldestD: ages.length ? round(Math.max(...ages)) : null, medianD: round(median(ages)), items: items.slice(0, SECURITY_ITEMS) },
+      kind === "dependabot" ? { byEcosystem: listOf(items.reduce((m, i) => tally(m, i.ecosystem || "other"), {})), byPackage: listOf(items.reduce((m, i) => tally(m, i.package), {})).slice(0, 10) } : {});
     } catch (error) {
       out[kind] = { ok: false, error: clean(error) };
       if (denied(error)) { out[kind].need = spec.need; want(spec.need); }
     }
   }));
+  out.weeks = weekKeys.map((w) => weeks[w]);
   return { security: out, perRepo };
+}
+
+// The security score's penalties per kind and severity, capped at 100 in all (#2808): critical 40, high 20, medium and
+// low 5 for Dependabot and code scanning; 50 a leaked secret.
+const SECURITY_WEIGHTS = { critical: 40, high: 20, medium: 5, low: 5 };
+function securityParts(sec) {
+  const parts = [];
+  [["dependabot", "Dependabot"], ["codeScanning", "Code scanning"]].forEach(([kind, label]) => {
+    const s = sec[kind];
+    if (!s || !s.ok) return;
+    const by = s.bySeverity || { critical: s.critical || 0, high: s.high || 0, medium: 0, low: Math.max(0, (s.open || 0) - (s.critical || 0) - (s.high || 0)) };
+    SEVERITIES.forEach((sev) => { if (by[sev]) parts.push({ label: label + " " + sev, count: by[sev], each: SECURITY_WEIGHTS[sev], penalty: by[sev] * SECURITY_WEIGHTS[sev] }); });
+  });
+  if (sec.secrets && sec.secrets.ok && sec.secrets.open) parts.push({ label: "Leaked secrets", count: sec.secrets.open, each: 50, penalty: sec.secrets.open * 50 });
+  return parts;
 }
 
 function resetIso(value) {
@@ -762,13 +839,13 @@ function scoreOf(out, live) {
   if (ok("branches")) areas.branches = area(100 - 2 * out.branches.merged.length - 3 * out.branches.stale, out.branches.merged.length + " merged but not deleted, " + out.branches.stale + " stale");
   if (out.dora && out.dora.level) areas.deploys = area(DORA_SCORE[out.dora.level], "DORA " + out.dora.level + ": " + out.dora.deployFreq.perDay + " deploys a day, " + (out.dora.changeFail.pct ?? 0) + "% change fail");
   const sec = out.security || {};
-  if (Object.values(sec).some((s) => s && s.ok)) {
-    const d = sec.dependabot && sec.dependabot.ok ? sec.dependabot : { open: 0, critical: 0, high: 0 };
-    const code = sec.codeScanning && sec.codeScanning.ok ? sec.codeScanning.open : 0;
-    const secrets = sec.secrets && sec.secrets.ok ? sec.secrets.open : 0;
+  if (Object.keys(SECURITY).some((k) => sec[k] && sec[k].ok)) {
+    const parts = securityParts(sec);
+    const n = (re) => sum(parts.filter((p) => re.test(p.label)), (p) => p.count);
     const unread = Object.keys(SECURITY).filter((k) => !(sec[k] && sec[k].ok));
-    areas.security = area(100 - 40 * d.critical - 20 * d.high - 50 * secrets - 5 * (d.open - d.critical - d.high) - 5 * code,
-      d.critical + " critical, " + d.high + " high, " + secrets + " secrets, " + code + " code scanning" + (unread.length ? "; not readable: " + unread.join(", ") : ""));
+    areas.security = area(100 - sum(parts, (p) => p.penalty),
+      n(/critical/) + " critical, " + n(/high/) + " high, " + n(/medium|low/) + " medium or low, " + n(/secrets/) + " secrets" + (unread.length ? "; not readable: " + unread.join(", ") : ""));
+    if (areas.security) areas.security.parts = parts;
   }
   const budget = out.budget || {};
   const g = budget.kaanmuar && budget.kaanmuar.graphql;
@@ -835,7 +912,12 @@ async function source(ctx) {
     part("android", async () => androidPart(repo(), start)),
     part("budget", async () => budgetPart(gh, await data.local())),
     part("agents", async () => agentsPart(await data.local(), now, start)),
-    (async () => { const s = await securityPart(gh, await repoNames(), want); out.security = s.security; perRepoSecurity = s.perRepo; })(),
+    (async () => {
+      const project = (await repoNames()).filter((r) => r === REPO || shown.includes(r));
+      const s = await securityPart(gh, project, want, now, await data.open().catch(() => []));
+      out.security = s.security;
+      perRepoSecurity = s.perRepo;
+    })(),
     (async () => {
       try {
         const installed = await data.installed();
@@ -849,7 +931,7 @@ async function source(ctx) {
       const [diags, weekly] = await Promise.all([data.diag(), data.weekly()]);
       const w = weekly[0];
       out.ai = {
-        diagnoses: diags.map((d) => Object.assign({ run: d.run ?? null, workflow: d.workflow || "" }, diagOf(d), { at: iso(d.at) })),
+        diagnoses: diags.map((d) => Object.assign({ run: d.run ?? null, workflow: d.workflow || "", repo: d.repo || REPO, branch: d.branch || "", pr: d.pr ?? null, url: d.url || "" }, diagOf(d), { at: iso(d.at) })),
         retro: w ? { week: w.week || "", text: w.text || "", at: iso(w.at) } : null
       };
     })()
