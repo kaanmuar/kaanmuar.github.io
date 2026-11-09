@@ -1,5 +1,5 @@
 {
- "since": "2026-11-08T11:00:49.937Z",
+ "since": "2026-11-09T11:01:04.967Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -124,13 +124,17 @@
   "shortmake.com": "2026-11-08",
   "choice-route.com": "2026-11-08",
   "vs:aktia.fi": "2026-11-08",
-  "vs:beebom.com": "2026-11-08"
+  "vs:beebom.com": "2026-11-08",
+  "beatmastering.ir": "2026-11-09",
+  "careeronestop.org": "2026-11-09",
+  "vs:tide-forecast.com": "2026-11-09",
+  "vs:strandbags.co.nz": "2026-11-09"
  },
  "recent": [
+  "geo-crawlers",
+  "a11y-labels",
   "sec-hsts",
   "sec-libraries",
-  "ax-button-name",
-  "sec-http",
-  "seo-title-missing"
+  "ax-button-name"
  ]
 }

@@ -27,6 +27,10 @@
   "text": "⟦1⟧ lead in SEO, accessibilità; ⟦2⟧ lead in GEO, Analytics, Performance; ⟦3⟧ leader nella sicurezza.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO, Analytics, Security, Performance.": {
+  "text": "⟦1⟧ lead in SEO, accessibilità; ⟦2⟧ lead in GEO, analisi, sicurezza, prestazioni.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
   "text": "⟦1⟧ lead in SEO, Analytics, Accessibilità; ⟦2⟧ leader in GEO, sicurezza, prestazioni.",
   "machine": true
@@ -52,6 +56,10 @@
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ è in testa in SEO e GEO; ⟦2⟧ in Analytics, Sicurezza, Accessibilità e Prestazioni.",
+ "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security; ⟦3⟧ leads in Accessibility, Performance.": {
+  "text": "⟦1⟧ lead in SEO, GEO; ⟦2⟧ lead in Analisi, Sicurezza; ⟦3⟧ leader in Accessibilità, Prestazioni.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ lead in SEO, sicurezza; ⟦2⟧ lead in GEO, analisi, accessibilità, prestazioni.",
   "machine": true
@@ -1420,6 +1428,10 @@
  },
  "Natural competitors…": {
   "text": "Concorrenti naturali…",
+  "machine": true
+ },
+ "Natural…": {
+  "text": "Naturale…",
   "machine": true
  },
  "nautnhanahp-design/payback-coupon-bot:": "nautnhanahp-design/payback-coupon-bot:",
