@@ -25,7 +25,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
-import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.str
 
 /** Push alerts (#1416): channels, the FCM token handed to the jarvis function, and the notifications it sends. */
@@ -102,18 +101,11 @@ object Push {
         return NotificationCompat.Action.Builder(0, button.label, pi).build()
     }
 
-    /** A section push (#2509), data only: refresh, which redraws the widgets and syncs the watch, unless the saved
-        snapshot already holds those versions. Applying only the changed sections is #2510. */
+    /** A section push (#2509), data only: fetches just the sections the saved snapshots do not hold yet (#2510),
+        then redraws the widgets, the ongoing notification, the watch and the open app. */
     fun sections(context: Context, data: Map<String, String>) {
         val app = context.applicationContext as JarvisApp
-        val days = data["days"]?.toIntOrNull() ?: 1
-        if (sectionsStale(data["versions"], app.api.saved("snapshot", days)?.json)) Home.refreshSoon(context)
-    }
-
-    /** True when the push names a section version the saved snapshot does not hold. */
-    fun sectionsStale(versions: String?, saved: JsonObject?): Boolean {
-        val pushed = runCatching { JSON.parseToJsonElement(versions ?: "{}") as JsonObject }.getOrNull() ?: return true
-        return pushed.any { (name, v) -> saved.obj("versions").obj(name).str("v") != (v as? JsonPrimitive)?.content }
+        if (app.auth.signedIn && Home.pushStale(app, data)) Home.refreshSections(context, data)
     }
 
     private fun allowed(context: Context) =

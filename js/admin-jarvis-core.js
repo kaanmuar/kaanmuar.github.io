@@ -1262,13 +1262,58 @@
         return { type: 'ask', question: raw };
     }
 
-    // A section push (#2509): true when it names a version this page does not hold. It carries the one-day
-    // versions, so on any other range a push means a fetch.
-    function sectionsStale(msg, versions, range) {
+    // A section push (#2509): the sections to fetch. It carries the one-day versions, so on one day only those this
+    // page does not hold; on any other range the ones it names as moved.
+    function sectionsToFetch(msg, versions, range) {
+        const moved = String((msg && msg.sections) || '').split(',').filter(Boolean);
         let pushed;
-        try { pushed = JSON.parse((msg && msg.versions) || '{}') || {}; } catch (error) { return true; }
-        if (String((msg && msg.days) || '') !== String(range)) return true;
-        return Object.keys(pushed).some((name) => !versions || !versions[name] || versions[name].v !== pushed[name]);
+        try { pushed = JSON.parse((msg && msg.versions) || '{}') || {}; } catch (error) { return moved; }
+        if (String((msg && msg.days) || '') !== String(range)) return moved;
+        const stale = Object.keys(pushed).filter((name) => !versions || !versions[name] || versions[name].v !== pushed[name]);
+        return stale.concat(moved.filter((name) => !(name in pushed)));
+    }
+
+    // Jarvis 2.0 sections (#2510, contract on #2507). The versions a kept snapshot sends as `since`, or null when it
+    // has none (an answer from before #2508), which means a full fetch.
+    function sectionSince(versions) {
+        if (!versions || typeof versions !== 'object') return null;
+        const since = {};
+        Object.keys(versions).forEach((name) => { if (versions[name] && versions[name].v) since[name] = versions[name].v; });
+        return Object.keys(since).length ? since : null;
+    }
+
+    // A delta answer applied to the kept full snapshot: each field replaced (null drops it), `external` merged by
+    // source, each source's checked time taken from `checked` (its section is not resent when only that moved), and
+    // the window moved with the build time when products did not change. Null when it cannot be applied: fetch it all.
+    function applySections(kept, answer) {
+        if (!kept || typeof kept !== 'object' || !answer || answer.delta !== true) return null;
+        if (!answer.sections || typeof answer.sections !== 'object' || !answer.versions || typeof answer.versions !== 'object') return null;
+        const out = Object.assign({}, kept, { external: Object.assign({}, kept.external) });
+        const put = (into, key, value) => { if (value === null) delete into[key]; else into[key] = value; };
+        Object.keys(answer.sections).forEach((name) => {
+            const payload = answer.sections[name] || {};
+            Object.keys(payload).forEach((key) => {
+                if (key === 'external') Object.keys(payload.external || {}).forEach((source) => put(out.external, source, payload.external[source]));
+                else put(out, key, payload[key]);
+            });
+        });
+        const checked = answer.checked || {};
+        Object.keys(checked).forEach((source) => {
+            const x = out.external[source];
+            if (x && typeof x === 'object' && x.cachedAt !== checked[source]) out.external[source] = Object.assign({}, x, { cachedAt: checked[source] });
+        });
+        if (Array.isArray(out.connections) && Object.keys(checked).length) {
+            out.connections = out.connections.map((c) => (c && c.key in checked && out.external[c.key] && c.at !== checked[c.key] ? Object.assign({}, c, { at: checked[c.key] }) : c));
+        }
+        const shift = Date.parse(answer.cachedAt) - Date.parse(kept.cachedAt);
+        if (!answer.sections.products && out.window && shift) {
+            const move = (iso) => (iso && Number.isFinite(Date.parse(iso)) ? new Date(Date.parse(iso) + shift).toISOString() : iso);
+            const w = out.window;
+            out.window = Object.assign({}, w, { start: move(w.start), end: move(w.end) }, w.prior ? { prior: Object.assign({}, w.prior, { start: move(w.prior.start), end: move(w.prior.end) }) } : {});
+        }
+        if (answer.cachedAt !== undefined) out.cachedAt = answer.cachedAt;
+        out.versions = Object.assign({}, kept.versions, answer.versions);
+        return out;
     }
 
     function windowFor(range, now) {
@@ -1551,7 +1596,7 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsStale };
+    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

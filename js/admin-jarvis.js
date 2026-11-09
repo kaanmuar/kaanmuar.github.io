@@ -306,7 +306,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, kept: null,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
     };
     readHash();
@@ -422,13 +422,65 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     // --- data -------------------------------------------------------------------------------------------------
 
-    // One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app shares.
-    async function loadSnapshot() {
+    // The last snapshot per range, kept in this browser so the page opens at once (#2510). Sign-in codes are not
+    // kept, and neither is the mail version, so every fetch brings the mail section back.
+    const SNAP_KEY = 'jv-snapshot-';
+    function savedSnapshot(range) {
+        if (S.kept && S.kept.range === range) return S.kept.snap;
+        try {
+            const kept = JSON.parse(localStorage.getItem(SNAP_KEY + range) || 'null');
+            return kept && auth.currentUser && kept.uid === auth.currentUser.uid && kept.snap && kept.snap.products ? kept.snap : null;
+        } catch (error) { return null; }
+    }
+    function keepSnapshot(range, snap) {
+        S.kept = { range, snap };
+        const versions = Object.assign({}, snap.versions);
+        delete versions.mail;
+        const stored = Object.assign({}, snap, { versions });
+        delete stored.mailCodes;
+        try { localStorage.setItem(SNAP_KEY + range, JSON.stringify({ uid: auth.currentUser && auth.currentUser.uid, snap: stored })); } catch (error) {
+            try { localStorage.removeItem(SNAP_KEY + range); } catch (e) { /* private mode: this visit only */ }
+        }
+    }
+    function forgetSnapshots() {
+        S.kept = null;
+        try { Object.keys(localStorage).filter((k) => k.startsWith(SNAP_KEY)).forEach((k) => localStorage.removeItem(k)); } catch (error) { /* nothing kept */ }
+    }
+
+    // Opens on the snapshot this browser kept for the range, with its age, before the first fetch answers.
+    function openSaved() {
+        const snap = savedSnapshot(S.range);
+        if (!snap) return false;
+        useSnapshot(snap);
+        compute();
+        render();
+        return true;
+    }
+
+    /* One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app
+       shares. With a kept copy it sends its versions as `since` and applies only the sections that changed (#2510);
+       `only` limits them to the ones a push named. An answer that cannot be applied means a full fetch. */
+    async function loadSnapshot(only) {
         SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
-        let snap;
+        const range = S.range;
+        const kept = savedSnapshot(range);
+        const since = kept && C.sectionSince(kept.versions);
         // With this browser's push endpoint the server knows the page is open and sends it section pushes (#2509).
-        try { snap = await call('snapshot', S.pushEndpoint ? { push: S.pushEndpoint } : undefined); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        const push = S.pushEndpoint ? { push: S.pushEndpoint } : {};
+        let snap;
+        try {
+            const answer = await call('snapshot', Object.assign({}, push, since ? { since } : {}, since && only && only.length ? { only } : {}));
+            snap = answer && answer.delta ? C.applySections(kept, answer) : answer;
+            if (!snap && answer && answer.ok !== false) snap = await call('snapshot', push);
+            else if (!snap) snap = answer;
+        } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
         if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        if (S.range !== range) return;
+        keepSnapshot(range, snap);
+        useSnapshot(snap);
+    }
+
+    function useSnapshot(snap) {
         S.versions = snap.versions || null;
         const date = (v) => (v ? new Date(v) : null);
         const w = snap.window || {};
@@ -451,12 +503,12 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.externalAt = Date.now();
     }
 
-    // Live: a newer snapshot once the server's has aged out; the pulse counts the feed lines it adds.
-    async function loadNewer() {
+    // Live: a newer snapshot once the server's has aged out, or the sections a push named; the pulse counts the feed lines it adds.
+    async function loadNewer(only) {
         if (S.loading) return;
         const newest = (S.feed[0] || {}).at || '';
         S.loading = true;
-        try { await loadSnapshot(); } catch (error) { S.loading = false; return; }
+        try { await loadSnapshot(only); } catch (error) { S.loading = false; return; }
         S.loading = false;
         compute();
         render();
@@ -3470,9 +3522,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
-        // A section changed on the server (#2509): fetch again unless this page already holds those versions.
-        // Applying only the changed sections is #2510.
-        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden && C.sectionsStale(event.data.jarvisSections, S.versions, S.range)) loadNewer();
+        // A section changed on the server (#2509): fetch only the sections this page does not hold yet (#2510).
+        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden) {
+            const only = C.sectionsToFetch(event.data.jarvisSections, S.versions, S.range);
+            if (only.length) loadNewer(only);
+        }
     });
     if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
 
@@ -3800,12 +3854,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     return {
         show() {
             greet();
-            if (!S.mounted) { S.mounted = true; refresh(); } else { compute(); render(); }
+            if (!S.mounted) { S.mounted = true; openSaved(); refresh(); } else { compute(); render(); }
             writeHash();
             openLink(new URLSearchParams(window.location.search));
         },
         open(search) { openLink(new URLSearchParams(search)); },
         inboxChanged() { if (S.mounted) { compute(); render(); } },
+        forget: forgetSnapshots,
         state: S,
         run,
         destroy() {
