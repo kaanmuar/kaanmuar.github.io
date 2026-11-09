@@ -200,7 +200,8 @@ async function reply(res, label) {
   const json = await res.json().catch(() => ({}));
   const why = json.error && json.error.message ? json.error.message : json.message || json.error;
   if (!res.ok || (json.error && json.error.message)) {
-    throw Object.assign(new Error(label + " " + res.status + ": " + String(why || JSON.stringify(json)).slice(0, 300)), { status: res.status });
+    const graphError = json.error && typeof json.error === "object" ? json.error : {};
+    throw Object.assign(new Error(label + " " + res.status + ": " + String(why || JSON.stringify(json)).slice(0, 300)), { status: res.status, code: graphError.code, subcode: graphError.error_subcode });
   }
   return json;
 }
@@ -246,6 +247,21 @@ async function ready(status, id, tries = 20, wait = 3000) {
     if (s === "FINISHED") return;
     if (s === "ERROR" || s === "EXPIRED" || i === tries) throw new Error("media container " + id + " is " + s);
     await sleep(wait);
+  }
+}
+
+/* For a short while after FINISHED, Instagram can still answer media_publish with "Media ID is not available" (code 9007,
+   subcode 2207027; #3003). That publish did not happen and a container publishes once at most, so asking again cannot
+   post it twice; any other refusal fails as before. */
+async function publish(call, ig, creation, tries = 4, wait = 8000) {
+  for (let i = 1; ; i += 1) {
+    try {
+      return await call("POST", ig + "/media_publish", { creation_id: creation });
+    } catch (error) {
+      if (i === tries || !(error.subcode === 2207027 || /media id is not available/i.test(error.message))) throw error;
+      console.log("Instagram media " + creation + " is not available yet, publishing again in " + wait / 1000 + " s");
+      await sleep(wait);
+    }
   }
 }
 
@@ -559,7 +575,7 @@ function instagram(env = process.env, story = false) {
         }
         if (!creation) throw refused;
       }
-      const { id } = await call("POST", ig + "/media_publish", { creation_id: creation });
+      const { id } = await publish(call, ig, creation);
       const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
       return Object.assign({ id, url: permalink || "" }, story ? {} : { uses });
     }
@@ -766,4 +782,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, BRAND, LEDGERS, NO_LAUNCH, xSlots, allBatches, posts, due, caption, ownFace, redditTitle, redditPosts, facets, run, bluesky, mastodon, telegram };
+module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, BRAND, LEDGERS, NO_LAUNCH, xSlots, allBatches, posts, due, caption, ownFace, redditTitle, redditPosts, facets, run, bluesky, mastodon, telegram, graph, publish };
