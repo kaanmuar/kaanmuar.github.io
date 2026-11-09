@@ -63,10 +63,11 @@ function local(url, origin) {
 
 async function guard(context, origin, spec, blocked) {
   const allowed = ALLOW.filter(([, , specs]) => !specs || specs.includes(spec)).map(([pattern]) => pattern);
-  await context.route(/^https?:/, (route) => {
+  // Only outside addresses come through here, so the test server's own requests keep their timing.
+  await context.route((u) => /^https?:$/.test(u.protocol) && !local(u.href, origin), (route) => {
     const request = route.request();
     const url = request.url();
-    if (local(url, origin) || allowed.some((pattern) => pattern.test(url))) return route.fallback();
+    if (allowed.some((pattern) => pattern.test(url))) return route.fallback();
     const stub = STUBS.find(([pattern]) => pattern.test(url));
     if (stub) return route.fulfill(stub[1](url));
     // Images in the content under test (news cards, report screenshots) come from any host: they fail to load.
