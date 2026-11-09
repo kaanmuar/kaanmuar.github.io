@@ -277,8 +277,11 @@ async function report(ctx, body, token) {
 }
 
 /* What the hourly pass may hand the worker on its own -> [{ target, task }]: code, test or config diagnoses from the last
-   two days at or over the confidence bar, and URL review bugs the Cursor fix agent left waiting (needs-agent). */
-async function candidates(db, { now, confidence, github }) {
+   two days at or over the confidence bar, and URL review bugs the Cursor fix agent left waiting (needs-agent).
+   failing: the workflows whose newest run on main in the last day failed; a diagnosis on main of any other workflow is
+   already fixed or not run lately, so it is left out (#2958). Without the list, every diagnosis counts. */
+async function candidates(db, { now, confidence, github, failing }) {
+  const stillFailing = Array.isArray(failing) ? new Set(failing) : null;
   const out = [];
   const since = new Date(now - DIAG_DAYS * 864e5).toISOString();
   const diags = await db.collection("jarvis_github_diag").orderBy("at", "desc").limit(30).get().catch(() => ({ docs: [] }));
@@ -288,6 +291,7 @@ async function candidates(db, { now, confidence, github }) {
     // A chat may still be pushing to another PR's branch; on its own the worker only touches main and its own branches.
     const own = /^jarvis\//.test(String(d.branch || ""));
     if (d.pr ? !own : d.branch && d.branch !== "main") continue;
+    if (!d.pr && stillFailing && !stillFailing.has(d.workflow)) continue;
     out.push({ target: "run " + d.run, why: text(d.workflow, 80) + " failed: " + text(d.cause, 160),
       task: { prompt: d.prompt, title: "Fix " + text(d.workflow, 60) + " (run " + d.run + ")", branch: "main", pr: d.pr || undefined, category: d.category, key: "gh:diag:" + d.run, by: "jarvis (diagnosis)" } });
   }

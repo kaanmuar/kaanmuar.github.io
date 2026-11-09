@@ -5976,7 +5976,9 @@ function jarvisAutoOps(settings, now, th) {
     workerCandidates: async (confidence) => {
       const budget = await jarvisWorker.spend(db, now);
       const github = (await jarvisExternal(["github"], 1)).github || null;
-      return { over: budget.over, cap: budget.cap, tasks: await jarvisWorker.candidates(db, { now, confidence, github }) };
+      const failed = await out.failedCi().catch(() => null);
+      const failing = failed ? failed.filter((r) => r.branch === "main").map((r) => r.name) : null;
+      return { over: budget.over, cap: budget.cap, tasks: await jarvisWorker.candidates(db, { now, confidence, github, failing }) };
     },
     workerRun: async (task) => ({ detail: (await jarvisWorker.dispatch(jarvisGithubCtx(now), task)).message }),
     githubAct: async (action, args) => {

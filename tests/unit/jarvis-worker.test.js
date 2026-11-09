@@ -246,6 +246,19 @@ test("candidates: fresh code, test or config diagnoses on main or Jarvis's branc
   assert.equal(out.find((c) => c.target === "#2950").task.issue, 2950);
 });
 
+test("candidates leave out diagnoses on main of workflows that are no longer failing there", async () => {
+  const db = fakeDb();
+  const diag = (run, over) => db.collection("jarvis_github_diag").doc(String(run)).set(Object.assign({ run, repo: worker.REPO, workflow: "Pages", branch: "main", pr: null, category: "config",
+    confidence: 0.9, cause: "a step failed", prompt: "Fix the Pages deploy step.", at: new Date(NOW - 3600000).toISOString() }, over || {}));
+  await diag(1);
+  await diag(2, { workflow: "Merge PageSpeed PR" });
+  await diag(3, { workflow: "E2E", branch: "jarvis/wx-y", pr: 78 });
+  const out = await worker.candidates(db, { now: NOW, confidence: 0.8, github: {}, failing: ["Merge PageSpeed PR"] });
+  assert.deepEqual(out.map((c) => c.target).sort(), ["run 2", "run 3"]);
+  assert.equal(out.find((c) => c.target === "run 2").task.category, "config");
+  assert.equal((await worker.candidates(db, { now: NOW, confidence: 0.8, github: {} })).length, 3);
+});
+
 test("the hourly pass hands candidates to the worker once each, and waits while the budget is used", async () => {
   const MONDAY_10 = Date.parse("2026-10-26T15:00:00Z");
   const started = [];
