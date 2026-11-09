@@ -393,6 +393,39 @@ test("the Instagram client falls back from a refused reel and carousel to the ca
   }
 });
 
+const notAvailable = () => ok({ error: { message: "Media ID is not available", type: "OAuthException", code: 9007, error_subcode: 2207027 } }, 400);
+
+test("Instagram publishes again a container it says is not available yet, once it is (#3003)", async () => {
+  const answers = [notAvailable, () => ok({ id: "ig1" })];
+  const f = stubFetch([["/media_publish", () => answers.shift()()]]);
+  try {
+    const r = await q.publish(q.graph("https://graph.facebook.com/v23.0", "t", "Instagram"), "1", "c1", 4, 0);
+    assert.deepEqual(r, { id: "ig1" });
+    assert.equal(f.calls.filter((c) => c.url.endsWith("/1/media_publish")).length, 2);
+  } finally {
+    f.restore();
+  }
+});
+
+test("Instagram does not publish again after any other refusal, and stops asking after the last try (#3003)", async () => {
+  let published = 0;
+  const f = stubFetch([["/media_publish", () => { published += 1; return ok({ error: { message: "Invalid parameter", code: 100 } }, 400); }]]);
+  try {
+    await assert.rejects(q.publish(q.graph("https://graph.facebook.com/v23.0", "t", "Instagram"), "1", "c1", 4, 0), /Instagram media_publish 400: Invalid parameter/);
+    assert.equal(published, 1);
+  } finally {
+    f.restore();
+  }
+  published = 0;
+  const g = stubFetch([["/media_publish", () => { published += 1; return notAvailable(); }]]);
+  try {
+    await assert.rejects(q.publish(q.graph("https://graph.facebook.com/v23.0", "t", "Instagram"), "1", "c1", 4, 0), (e) => e.code === 9007 && e.subcode === 2207027);
+    assert.equal(published, 4);
+  } finally {
+    g.restore();
+  }
+});
+
 test("the launch set (one captions file per post) goes to every direct network but Mastodon, each post in its own language", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "launch-"));
   const dir = path.join(root, "media/social-posts/launch-x");
