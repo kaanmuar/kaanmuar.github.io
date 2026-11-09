@@ -1,0 +1,33 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "this-week": {
+   "lang": "es",
+   "strings": {
+    "counter": "Nov 13, 2026",
+    "title.0": "This week in",
+    "title.1": "*web quality.*",
+    "body": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.",
+    "visual.items.0.title": "Lighthouse 13.6 can lift your PSI score",
+    "visual.items.1.title": "Playwright 1.65 runs tests under Bun",
+    "visual.items.2.title": "Google on 301s, 302s and ranking signals",
+    "visual.items.3.title": "Reporting SEO when GA4 sees less",
+    "visual.items.4.title": "AI can check an ACR, not write it",
+    "action": "Lighthouse 13.6, Playwright 1.65, redirects, consent gaps in GA4 and AI-written ACRs. Sources on our social hub.",
+    "cat.label": "Field sweep",
+    "cap.youtube": "Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.\n\n1. Lighthouse 13.6 can lift your PSI score: https://www.searchenginejournal.com/pagespeed-insights-scores-lighthouse-update/595698/\n2. Playwright 1.65 runs tests under Bun: https://github.com/microsoft/playwright/releases/tag/v1.65.0\n3. Google on 301s, 302s and ranking signals: https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/\n4. Reporting SEO when GA4 sees less: https://moz.com/blog/measure-seo-performance-incomplete-data\n5. AI can check an ACR, not write it: https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/\n\nSummaries and sources: https://carlosandmunoz.com/social/digest-2026-11-13/01-this-week.html?utm_source=youtube&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-11-13\n\nThis week in web quality, Nov 13, 2026 · QA-lab URL Review\n\n#WebDev #DevOps #QA #Accessibility #SEO #WebDevelopment #Coding #WebDesign #UXDesign #ContentMarketing #SDET #QAlab"
+   }
+  }
+ }
+}
