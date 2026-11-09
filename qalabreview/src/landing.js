@@ -128,7 +128,7 @@ ${body}
 <footer>
 ${others}
 <p>${esc(L.honest)}</p>
-<p>${esc(L.contact)}: Carlos A. Muñoz · <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a></p>
+<p>${esc(L.contact)}: Carlos A. Muñoz, ${esc(L.city)} · <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a></p>
 </footer>
 </div>
 </body>

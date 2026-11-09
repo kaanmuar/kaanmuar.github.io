@@ -20,25 +20,27 @@ export const LABELS = {
     free: "First review free: 20 pages, 2 links deep",
     honest: "A snapshot with fixes and tests, not a certification.",
     contact: "Contact",
+    city: "Medellín, Colombia",
     prices: "Fix list 5 USD, full report 19 USD"
   },
   es: {
-    hero: ["Encuentre fugas,", "fallas y bloqueos", "antes que sus clientes o un regulador."],
-    cta: "Haga su revisión gratis",
-    call: "Agende una introducción de 15 minutos",
+    hero: ["Encuentra fugas,", "fallas y bloqueos", "antes que tus clientes o un regulador."],
+    cta: "Haz tu revisión gratis",
+    call: "Agenda una introducción de 15 minutos",
     who: "Para quién es",
     others: "Otros públicos",
     language: "Idioma",
-    reopen: "La revisión gratis muestra completo su caso de prueba principal. Durante 7 días, la cuenta que la ejecutó puede volver a abrir el informe sin costo.",
+    reopen: "La revisión gratis muestra completo el caso de prueba principal. Durante 7 días, la cuenta que la ejecutó puede volver a abrir el informe sin costo.",
     names: { universities: "Universidades", colleges: "Formación técnica", agencies: "Agencias", startups: "Startups" },
     areas: ["SEO", "Búsqueda con IA", "Analítica", "Seguridad", "Accesibilidad", "Rendimiento"],
-    steps: ["Pegue una dirección https pública", "Seis puntajes y cada hallazgo, en minutos", "Una corrección para cada uno, y pruebas para que no vuelva"],
-    labSteps: ["Abra el laboratorio de QA: sin instalar, sin cuenta", "Ejecute una prueba en 20 frameworks", "Recorra un sprint en el estudio SDLC"],
+    steps: ["Pega una dirección https pública", "Seis puntajes y cada hallazgo, en minutos", "Una corrección para cada uno, y pruebas para que no vuelva"],
+    labSteps: ["Abre el laboratorio de QA: sin instalar, sin cuenta", "Ejecuta una prueba en 20 frameworks", "Recorre un sprint en el estudio SDLC"],
     labFree: "Gratis en el navegador para cada clase",
-    labHonest: "Talleres y guía docente: escriba a qa@carlosandmunoz.com.",
+    labHonest: "Talleres y guía docente: escribe a qa@carlosandmunoz.com.",
     free: "Primera revisión gratis: 20 páginas, 2 niveles de enlaces",
     honest: "Una foto del momento con correcciones y pruebas, no una certificación.",
     contact: "Contacto",
+    city: "Medellín, Colombia",
     prices: "Lista de correcciones 5 USD, informe completo 19 USD"
   },
   pt: {
@@ -58,6 +60,7 @@ export const LABELS = {
     free: "Primeira revisão grátis: 20 páginas, 2 níveis de links",
     honest: "Um retrato do momento com correções e testes, não uma certificação.",
     contact: "Contato",
+    city: "Medellín, Colômbia",
     prices: "Lista de correções 5 USD, relatório completo 19 USD"
   },
   de: {
@@ -77,6 +80,7 @@ export const LABELS = {
     free: "Erste Prüfung kostenlos: 20 Seiten, 2 Linkebenen",
     honest: "Eine Momentaufnahme mit Korrekturen und Tests, keine Zertifizierung.",
     contact: "Kontakt",
+    city: "Medellín, Kolumbien",
     prices: "Korrekturliste 5 USD, voller Bericht 19 USD"
   },
   fr: {
@@ -96,12 +100,13 @@ export const LABELS = {
     free: "Première revue gratuite : 20 pages, 2 niveaux de liens",
     honest: "Un instantané avec corrections et tests, pas une certification.",
     contact: "Contact",
+    city: "Medellín, Colombie",
     prices: "Liste de correctifs 5 USD, rapport complet 19 USD"
   },
   it: {
-    hero: ["Trovate perdite,", "guasti e blocchi", "prima dei clienti o di un'autorità."],
-    cta: "Avviate la revisione gratuita",
-    call: "Prenotate un'introduzione di 15 minuti",
+    hero: ["Trova perdite,", "guasti e blocchi", "prima dei tuoi clienti o di un'autorità."],
+    cta: "Avvia la revisione gratuita",
+    call: "Prenota un'introduzione di 15 minuti",
     who: "Per chi è",
     others: "Altri pubblici",
     language: "Lingua",
@@ -115,6 +120,7 @@ export const LABELS = {
     free: "Prima revisione gratuita: 20 pagine, 2 livelli di link",
     honest: "Un'istantanea con correzioni e test, non una certificazione.",
     contact: "Contatti",
+    city: "Medellín, Colombia",
     prices: "Lista di correzioni 5 USD, report completo 19 USD"
   }
 };
@@ -134,14 +140,14 @@ export const SEGMENTS = {
     },
     es: {
       kicker: "Para universidades e instituciones de educación superior",
-      headline: "Su sitio web es su puerta de entrada. Descubra qué filtra, qué rompe y qué bloquea.",
-      sub: "Una revisión de 20 páginas, seis puntajes, una corrección por hallazgo y casos de prueba que sus desarrolladores pueden seguir ejecutando.",
+      headline: "Tu sitio web es tu puerta de entrada. Descubre qué filtra, qué rompe y qué bloquea.",
+      sub: "Una revisión de 20 páginas, seis puntajes, una corrección por hallazgo y casos de prueba que tus desarrolladores pueden seguir ejecutando.",
       cols: [
         ["Qué encontramos", ["Fallos WCAG 2.2 AA, con el elemento y la regla", "Medición antes del consentimiento y después de Rechazar", "Páginas que ChatGPT, Perplexity y la IA de Google no pueden leer"]],
-        ["Qué recibe", ["Un Live Report y una corrección por hallazgo, más un kit de correcciones", "Casos de prueba para 20 frameworks, TestRail, Jira, Azure Test Plans", "Su sitio lado a lado con universidades pares"]],
+        ["Qué recibes", ["Un Live Report y una corrección por hallazgo, más un kit de correcciones", "Casos de prueba para 20 frameworks, TestRail, Jira, Azure Test Plans", "Tu sitio lado a lado con universidades pares"]],
         ["Qué nunca hace", ["Iniciar sesión, enviar formularios ni hacer pruebas de carga", "Prometer certificación ni cumplimiento legal", "Revelar quién pidió la revisión"]]
       ],
-      extra: "Gratis para su facultad: clases invitadas sobre pruebas de software, el laboratorio de QA y el estudio SDLC para sus cursos."
+      extra: "Gratis para tu facultad: clases invitadas sobre pruebas de software, el laboratorio de QA y el estudio SDLC para tus cursos."
     },
     pt: {
       kicker: "Para universidades e faculdades",
@@ -178,14 +184,14 @@ export const SEGMENTS = {
     },
     it: {
       kicker: "Per università e istituti di istruzione superiore",
-      headline: "Il sito è la vostra porta d'ingresso. Scoprite cosa lascia trapelare, cosa si rompe e cosa blocca.",
-      sub: "Una revisione di 20 pagine, sei punteggi, una correzione per ogni rilievo e casi di test che i vostri sviluppatori possono rieseguire.",
+      headline: "Il sito è la tua porta d'ingresso. Scopri cosa lascia trapelare, cosa si rompe e cosa blocca.",
+      sub: "Una revisione di 20 pagine, sei punteggi, una correzione per ogni rilievo e casi di test che i tuoi sviluppatori possono rieseguire.",
       cols: [
         ["Cosa troviamo", ["Errori WCAG 2.2 AA, con l'elemento e la regola", "Tracciamento prima del consenso e dopo «Rifiuta»", "Pagine che ChatGPT, Perplexity e l'IA di Google non leggono"]],
-        ["Cosa ricevete", ["Un Live Report e una correzione per rilievo, più un kit di correzioni", "Casi di test per 20 framework, TestRail, Jira, Azure Test Plans", "Il vostro sito a confronto con atenei simili"]],
+        ["Cosa ricevi", ["Un Live Report e una correzione per rilievo, più un kit di correzioni", "Casi di test per 20 framework, TestRail, Jira, Azure Test Plans", "Il tuo sito a confronto con atenei simili"]],
         ["Cosa non fa mai", ["Accedere, inviare moduli o fare test di carico", "Promettere certificazioni o conformità legale", "Rivelare chi ha chiesto la revisione"]]
       ],
-      extra: "Gratis per i vostri docenti: lezioni come ospite sul testing del software, il laboratorio QA e lo studio SDLC per i corsi."
+      extra: "Gratis per i tuoi docenti: lezioni come ospite sul testing del software, il laboratorio QA e lo studio SDLC per i corsi."
     }
   },
   colleges: {
@@ -202,12 +208,12 @@ export const SEGMENTS = {
     },
     es: {
       kicker: "Para formación técnica, tecnológica y bootcamps",
-      headline: "Práctica real de QA para sus aprendices. Gratis.",
+      headline: "Práctica real de QA para tus aprendices. Gratis.",
       sub: "Un laboratorio de QA en el navegador con 20 frameworks, un simulador de sprint de la historia en Jira al release, y revisiones de sitios reales para aprender.",
       cols: [
         ["Para aprendices", ["Escribir casos Gherkin a partir de hallazgos reales", "Ejecutarlos en Playwright, Cypress, Selenium o Robot", "Recorrer un sprint completo, del ticket al release"]],
         ["Para docentes", ["Un plan de sesión de 90 minutos y una rúbrica", "Una guía docente; sin instalar nada, sin cuentas", "Un taller con un arquitecto sénior de QA"]],
-        ["Para su institución", ["Una revisión de su propio sitio web", "Un caso de estudio de su programa", "Visibilidad para las competencias de sus egresados"]]
+        ["Para tu institución", ["Una revisión de tu propio sitio web", "Un caso de estudio de tu programa", "Visibilidad para las competencias de tus egresados"]]
       ],
       extra: "Laboratorio de QA: carlosandmunoz.com/qa-lab.html · Estudio SDLC: carlosandmunoz.com/simulador.html"
     },
@@ -246,12 +252,12 @@ export const SEGMENTS = {
     },
     it: {
       kicker: "Per formazione tecnica, professionale e bootcamp",
-      headline: "Pratica reale di QA per i vostri studenti. Gratis.",
+      headline: "Pratica reale di QA per i tuoi studenti. Gratis.",
       sub: "Un laboratorio QA nel browser con 20 framework, un simulatore di sprint dal ticket Jira al rilascio e revisioni di siti reali da cui imparare.",
       cols: [
         ["Per gli studenti", ["Scrivere casi Gherkin da rilievi reali", "Eseguirli in Playwright, Cypress, Selenium o Robot", "Percorrere uno sprint completo, dal ticket al rilascio"]],
         ["Per i docenti", ["Un piano di lezione di 90 minuti con griglia di valutazione", "Una guida per il docente; niente installazioni, niente account", "Un workshop con un architetto QA senior"]],
-        ["Per l'istituto", ["Una revisione del vostro sito", "Un caso di studio del vostro programma", "Visibilità per le competenze dei vostri diplomati"]]
+        ["Per l'istituto", ["Una revisione del tuo sito", "Un caso di studio del tuo programma", "Visibilità per le competenze dei tuoi diplomati"]]
       ],
       extra: "Laboratorio QA: carlosandmunoz.com/qa-lab.html · Studio SDLC: carlosandmunoz.com/simulador.html"
     }
@@ -270,14 +276,14 @@ export const SEGMENTS = {
     },
     es: {
       kicker: "Para agencias de mercadeo, SEO y desarrollo web",
-      headline: "Gane el pitch. Controle el lanzamiento. Demuestre el resultado.",
-      sub: "Revise cualquier sitio público en minutos: SEO, visibilidad en buscadores con IA, analítica, seguridad, accesibilidad y rendimiento.",
+      headline: "Gana el pitch. Controla el lanzamiento. Demuestra el resultado.",
+      sub: "Revisa cualquier sitio público en minutos: SEO, visibilidad en buscadores con IA, analítica, seguridad, accesibilidad y rendimiento.",
       cols: [
-        ["Antes del pitch", ["Audite el sitio del prospecto en minutos", "Póngalo al lado de su principal competidor", "Llegue con hallazgos, no con opiniones"]],
-        ["Antes del lanzamiento", ["Exporte los hallazgos como pruebas automatizadas", "Un flujo de GitHub Actions y un kit de correcciones", "Detecte etiquetas que se disparan antes del consentimiento"]],
-        ["Cada mes", ["Vuelva a correrla y muestre la mejora", "Brechas de accesibilidad que ya exige la ley", "Lista de correcciones 5 USD, informe completo 19 USD"]]
+        ["Antes del pitch", ["Audita el sitio del prospecto en minutos", "Ponlo al lado de su principal competidor", "Llega con hallazgos, no con opiniones"]],
+        ["Antes del lanzamiento", ["Exporta los hallazgos como pruebas automatizadas", "Un flujo de GitHub Actions y un kit de correcciones", "Detecta etiquetas que se disparan antes del consentimiento"]],
+        ["Cada mes", ["Vuelve a correrla y muestra la mejora", "Brechas de accesibilidad que ya exige la ley", "Lista de correcciones 5 USD, informe completo 19 USD"]]
       ],
-      extra: "¿Vende posicionamiento en IA (GEO)? La revisión muestra si los motores de respuesta pueden leer cada página."
+      extra: "¿Vendes posicionamiento en IA (GEO)? La revisión muestra si los motores de respuesta pueden leer cada página."
     },
     pt: {
       kicker: "Para agências de marketing, SEO e web",
@@ -339,13 +345,13 @@ export const SEGMENTS = {
     es: {
       kicker: "Para startups",
       headline: "Listos para lanzar, desde una URL.",
-      sub: "Seis puntajes, una lista de correcciones y casos de prueba para su stack, antes de que miren clientes, inversionistas o reguladores.",
+      sub: "Seis puntajes, una lista de correcciones y casos de prueba para tu stack, antes de que miren clientes, inversionistas o reguladores.",
       cols: [
         ["Confianza", ["Cabeceras de seguridad y TLS que revisa la debida diligencia", "Consentimiento antes de medir", "Librerías front-end desactualizadas"]],
-        ["Crecimiento", ["SEO básico en cada página", "Visibilidad en IA: ¿los motores de respuesta lo leen?", "Velocidad, página por página"]],
+        ["Crecimiento", ["SEO básico en cada página", "Visibilidad en IA: ¿los motores de respuesta te leen?", "Velocidad, página por página"]],
         ["Que no se vuelva a romper", ["Casos de prueba para 20 frameworks", "Un flujo de GitHub Actions", "Comparación lado a lado con un competidor"]]
       ],
-      extra: "Los clientes empresariales y europeos preguntan por accesibilidad y privacidad. Tenga la respuesta lista."
+      extra: "Los clientes empresariales y europeos preguntan por accesibilidad y privacidad. Ten la respuesta lista."
     },
     pt: {
       kicker: "Para startups",
@@ -383,13 +389,13 @@ export const SEGMENTS = {
     it: {
       kicker: "Per startup",
       headline: "Pronti al lancio, da un solo URL.",
-      sub: "Sei punteggi, una lista di correzioni e casi di test per il vostro stack, prima che clienti, investitori o autorità guardino.",
+      sub: "Sei punteggi, una lista di correzioni e casi di test per il tuo stack, prima che clienti, investitori o autorità guardino.",
       cols: [
         ["Fiducia", ["Header di sicurezza e TLS che la due diligence controlla", "Consenso prima del tracciamento", "Librerie front-end obsolete"]],
-        ["Crescita", ["Le basi SEO su ogni pagina", "Visibilità IA: i motori di risposta vi leggono?", "Velocità, pagina per pagina"]],
+        ["Crescita", ["Le basi SEO su ogni pagina", "Visibilità IA: i motori di risposta ti leggono?", "Velocità, pagina per pagina"]],
         ["Che resti corretto", ["Casi di test per 20 framework", "Un workflow GitHub Actions", "Un confronto con un concorrente"]]
       ],
-      extra: "I clienti enterprise ed europei chiedono di accessibilità e privacy. Abbiate la risposta pronta."
+      extra: "I clienti enterprise ed europei chiedono di accessibilità e privacy. Tieni pronta la risposta."
     }
   }
 };
