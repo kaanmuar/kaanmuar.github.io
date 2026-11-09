@@ -28,7 +28,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.6.1";
+const VERSION = "1.7.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -89,6 +89,11 @@ async function api(op, body) {
   if (!res.ok || data.ok === false) throw new Error(op + ": " + (data.error || "Jarvis answered " + res.status));
   return data;
 }
+
+// The run's state in Jarvis's live Processes (#2548); a failed report never stops the run.
+const STARTED = new Date().toISOString();
+const report = (state, step, needsYou) => api("process-report", { row: { id: "engagement", kind: "mac-agent", name: "Engagement browser", state, step, needsYou: !!needsYou, startedAt: STARTED, url: "https://carlosandmunoz.com/admin.html#stats/engagement/1" } })
+  .catch((error) => log("Processes: " + error.message));
 
 async function shot(page, name) {
   const file = path.join(SHOTS, name + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".png");
@@ -238,8 +243,10 @@ async function run(opts) {
   };
   const { ctx, page } = await launch(true);
   const seen = { posts: [], reports: [], comments: [], groups: [], errors: {}, signedIn: {}, accounts: {} };
+  let done = 0;
   try {
     const nets = pickNets(opts.only).sort(() => Math.random() - 0.5);
+    await report("running", "Reading " + nets.length + " networks");
     for (const [i, k] of nets.entries()) {
       const net = NETWORKS[k];
       if (c.blocked[k]) { seen.errors[k] = "Held until " + c.blocked[k] + " after a check."; seen.signedIn[k] = true; continue; }
@@ -311,6 +318,7 @@ async function run(opts) {
     if (q.paused) log("Engagement is paused in Jarvis.");
     const tasks = q.tasks.filter((t) => t.action === "reply").concat(q.tasks.filter((t) => t.action !== "reply").sort(() => Math.random() - 0.5)).slice(0, MAX_ACTIONS);
     log("Queue: " + q.tasks.length + " tasks" + (q.live ? "" : " (dry run: only approved replies)") + (q.dry ? ", " + q.dry + " logged as dry" : "") + (q.missed ? ", " + q.missed + " missed" : ""));
+    if (tasks.length) await report("running", "Read " + took.read + " posts; acting on " + tasks.length + " tasks");
     for (const t of tasks) {
       if (c.blocked[t.network]) { await api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: "Held after a check." }); continue; }
       const card = cardFile(t);
@@ -320,6 +328,7 @@ async function run(opts) {
       if (img.file) fs.rmSync(img.file, { force: true });
       if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
       if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
+      if (r.ok) done += 1;
       await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "",
         target: r.target || null, none: !!r.none, mentions: r.mentions || [], extras: r.extras || null }).catch((error) => log(error.message));
       const linked = ((r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "")
@@ -327,6 +336,11 @@ async function run(opts) {
       log(NETWORKS[t.network].name + " " + t.action + " " + ((r.target || {}).url || t.url) + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + linked + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
       await pause(25000, 70000);
     }
+    const out = Object.keys(seen.signedIn).filter((k) => !seen.signedIn[k]).map((k) => NETWORKS[k].name);
+    await report(out.length ? "waiting" : "done", (out.length ? "Sign in to " + out.join(", ") + " in the agent's Chrome (agent.js login). " : "") + "Read " + took.read + " posts, did " + done + " tasks", out.length > 0);
+  } catch (error) {
+    await report("failed", String(error.message || error).slice(0, 150));
+    throw error;
   } finally {
     writeConfig(Object.assign(readConfig(), { blocked: c.blocked, inboxAt: c.inboxAt || {}, lastRun: new Date().toISOString() }));
     await ctx.close().catch(() => null);

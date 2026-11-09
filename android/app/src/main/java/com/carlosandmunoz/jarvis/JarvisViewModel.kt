@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.background.Keep
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.bool
@@ -101,7 +103,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { handsFree.on.collect { on -> _state.update { it.copy(handsFree = on) } } }
         viewModelScope.launch { handsFree.turns.collect { c -> _state.update { it.copy(chat = answered(it.chat, c)) } } }
         viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
+        // A processes push (#2548) lands on the screen in place, without a refresh.
+        viewModelScope.launch { Processes.pushed.collect { out -> out.obj("processes")?.let { p -> _state.update { s -> s.copy(snapshot = s.snapshot?.let { Processes.patch(it, p, out.obj("version")) }) } } } }
     }
+
+    /** While something runs and no push came, the Processes panel asks again (one read). */
+    fun refreshProcesses() { if (fixture == null && auth.signedIn) viewModelScope.launch { Push.processes(jarvis) } }
 
     fun signIn(email: String, password: String) = authStep {
         when (val step = auth.signIn(email.trim(), password)) {

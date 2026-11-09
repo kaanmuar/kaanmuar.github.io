@@ -27,6 +27,11 @@ import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.Watch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Push alerts (#1416): channels, the FCM token handed to the jarvis function, and the notifications it sends. */
 object Push {
@@ -107,7 +112,21 @@ object Push {
     fun sections(context: Context, data: Map<String, String>) {
         val app = context.applicationContext as JarvisApp
         val days = data["days"]?.toIntOrNull() ?: 1
+        if ("processes" in data["sections"].orEmpty().split(",") && app.auth.signedIn) runBlocking { withTimeoutOrNull(8_000) { processes(app) } }
         if (sectionsStale(data["versions"], app.api.saved("snapshot", days)?.json)) Home.refreshSoon(context)
+    }
+
+    /** A processes push (#2548): one read for the section, put into every kept snapshot and the screen on show, then the
+        status notification and the watch; the rest of the snapshot is left for its own push. */
+    suspend fun processes(app: JarvisApp): Boolean {
+        val out = runCatching { app.api.call("processes", 1) }.getOrNull() ?: return false
+        val p = out.obj("processes") ?: return false
+        listOf(1, 7, 30, 90, 365).forEach { d -> app.api.patchSaved("snapshot", d) { Processes.patch(it, p, out.obj("version")) } }
+        Processes.pushed.tryEmit(out)
+        val kept: suspend () -> JsonObject? = { app.api.saved("snapshot", 1)?.json }
+        runCatching { Ongoing.show(app, kept) }
+        runCatching { Watch.sync(app, kept) }
+        return true
     }
 
     /** True when the push names a section version the saved snapshot does not hold. */

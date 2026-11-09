@@ -96,6 +96,8 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         }
     }
 
+    ProcessesPanel(snap.obj("processes"), Modifier.layoutId(WIDE), compact = true, poll = vm::refreshProcesses)
+
     val trend = wide.obj("trend")
     val lines = trend.objs("series").map { (it.str("name") ?: "") to it["values"].doubles() }
     if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE)) {
@@ -699,6 +701,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     val empties = Empties()
     val wide = snap.obj("wide")
+    ProcessesPanel(snap.obj("processes"), Modifier.layoutId(WIDE), poll = vm::refreshProcesses)
     val tiles = wide.objs("matrix")
     if (tiles.isNotEmpty()) Panel("Status matrix", Modifier.layoutId(WIDE)) { TileMatrix(tiles) }
     val strip = wide.obj("uptime")
