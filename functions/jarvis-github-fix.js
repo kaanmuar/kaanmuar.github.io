@@ -333,15 +333,20 @@ async function launchAgent(ctx, args) {
   const prompt = block(String(a.prompt || "").trim(), 20000);
   if (prompt.length < 20) throw new Error("The agent needs a prompt.");
   const url = "https://github.com/" + repo;
-  const pr = Number(String(a.pr || "").replace(/^#/, ""));
-  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(a.branch, 200) || "main" }];
+  // A pull_request run (CodeQL's dynamic one) names refs/pull/<n>/head, which Cursor cannot start from.
+  const pullRef = /^refs\/pull\/(\d+)\/(?:head|merge)$/.exec(String(a.branch || ""));
+  const pr = Number(String(a.pr || "").replace(/^#/, "")) || (pullRef ? Number(pullRef[1]) : 0);
+  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(String(a.branch || "").replace(/^refs\/heads\//, ""), 200) || "main" }];
   const res = await ctx.fetch(CURSOR_AGENTS, {
     method: "POST",
     headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
     body: JSON.stringify({ name: text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : ""), prompt: { text: prompt }, repos, autoCreatePR: true })
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error("Cursor refused the agent (" + res.status + "): " + text(data.message || data.error || "", 200));
+  if (!res.ok) {
+    const e = data.error && typeof data.error === "object" ? data.error : { message: data.message || data.error, code: data.code };
+    throw new Error("Cursor refused the agent (" + res.status + "): " + text(e.message || e.code || "no detail", 200));
+  }
   const agent = data.agent || data;
   const id = String(agent.id || "");
   return { ok: true, id, message: "Started Cursor agent " + (id || "") + ".", url: agent.url || (agent.target && agent.target.url) || (id ? "https://cursor.com/agents?id=" + encodeURIComponent(id) : "https://cursor.com/agents") };

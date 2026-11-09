@@ -6305,7 +6305,7 @@ async function jarvisGithubDo(action, args, now) {
 
 // A Cursor agent from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>).
 async function jarvisGithubAgent(ctx, a) {
-  const key = String(a.key || "");
+  const key = String(a.key || a.proposal || "");
   let prompt = String(a.prompt || "").trim();
   let pr = ghNumber(a.pr);
   let branch = a.branch ? String(a.branch) : "";
@@ -6339,7 +6339,8 @@ async function jarvisGithubAct(body, by) {
   try {
     const out = await jarvisGithubDo(action, body, now);
     await note(out.ok === false ? "failed" : "done", out.message);
-    return Object.assign({ action }, out);
+    // The phone app and the web panel read a refusal from `error`; these answers carry it in `message`.
+    return Object.assign({ action }, out, out.ok === false && !out.error ? { error: out.message || "Not done." } : {});
   } catch (error) {
     await note("failed", String(error.message || error));
     throw error;

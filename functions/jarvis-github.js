@@ -119,8 +119,11 @@ function client(fetchImpl, token) {
   const pages = async (path, key, max, stop) => {
     const out = [];
     for (let page = 1; page <= max; page++) {
-      const data = await get(path + (path.includes("?") ? "&" : "?") + "page=" + page);
-      const rows = (key ? data[key] : data) || [];
+      const read = async () => { const data = await get(path + (path.includes("?") ? "&" : "?") + "page=" + page); return (key ? data[key] : data) || []; };
+      // An unreadable 200 body arrives as {} (call's json fallback): read the page once more.
+      let rows = await read();
+      if (!Array.isArray(rows)) rows = await read();
+      if (!Array.isArray(rows)) throw new Error("GitHub sent no list for " + path.split("?")[0] + " (page " + page + "); try again.");
       out.push(...rows);
       if (rows.length < 100 || (stop && stop(rows))) break;
     }
@@ -276,7 +279,7 @@ function ciPart(runs, history, diags, now, days, live) {
   diags.forEach((d) => { if (d.run !== undefined) diagByRun[String(d.run)] = d; });
   const failing = Object.values(latestBy(runs.filter(decided), (r) => wfKey(r) + "\n" + r.head_branch)).filter(failed).sort(byNewest).slice(0, 30).map((r) => ({
     id: r.id, name: wfName(r), branch: r.head_branch || "", url: r.html_url || "", at: r.updated_at, attempt: r.run_attempt || 1,
-    pr: (r.pull_requests && r.pull_requests[0] && r.pull_requests[0].number) || null, sha: String(r.head_sha || "").slice(0, 7),
+    pr: (r.pull_requests && r.pull_requests[0] && r.pull_requests[0].number) || Number((/^refs\/pull\/(\d+)\//.exec(r.head_branch || "") || [])[1]) || null, sha: String(r.head_sha || "").slice(0, 7),
     event: r.event || "", diag: diagOf(diagByRun[String(r.id)])
   }));
   const today = isoDay(now);

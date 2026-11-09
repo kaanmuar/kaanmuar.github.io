@@ -2026,7 +2026,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         toast('Asking Jarvis…', 30000);
         const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
-        toast(out.ok ? out.message || `${(ACTION_LABELS[action] || action).replace(/^./, (c) => c.toUpperCase())}: done.` : 'Not done: ' + out.error, 7000);
+        toast(out.ok ? out.message || `${(ACTION_LABELS[action] || action).replace(/^./, (c) => c.toUpperCase())}: done.` : 'Not done: ' + (out.error || out.message), 7000);
         loadExternal(['github-work', 'actions']);
     }
 
