@@ -201,37 +201,67 @@ def locale_block(code):
 ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
 
 
+TOKEN = re.compile(r'\s+|("(?:[^"\\]|\\.)*")|([\w$.-]+)|([{}\[\]:,])')
+
+
+def copy_strings(js, code, name="copy table"):
+    """Every string in one language's block (`    es: {` to its matching `}`) of a browser copy table, keyed by its
+    path: `title` for a top-level key, `fieldError.email` inside a group, `tour.terms.0` inside an array."""
+    pos = js.index(f"\n    {code}: {{\n") + len(f"\n    {code}: ")
+
+    def tokens():
+        nonlocal pos
+        while True:
+            m = TOKEN.match(js, pos)
+            if not m:
+                raise SystemExit(f"{name} {code} block: cannot read {js[pos:pos + 40]!r}")
+            pos = m.end()
+            if m.lastindex:
+                yield m.group(m.lastindex), m.lastindex
+
+    out, path, arrays, key = {}, [], [], None
+    stream = tokens()
+    for text, kind in stream:
+        here = key if not arrays or arrays[-1] is None else arrays[-1]
+        if text in ("{", "["):
+            path.append(here)
+            arrays.append(0 if text == "[" else None)
+            key = None
+        elif text in ("}", "]"):
+            arrays.pop()
+            path.pop()
+            if not arrays:
+                return out
+            key = None
+        elif text == ",":
+            if arrays[-1] is not None:
+                arrays[-1] += 1
+            key = None
+        elif arrays[-1] is None and key is None:
+            key = json.loads(text) if kind == 1 else text
+            if next(stream)[0] != ":":
+                raise SystemExit(f"{name} {code} block: {key!r} is not followed by a colon")
+        elif kind == 1:
+            out[".".join(str(p) for p in path[1:] + [here])] = json.loads(text)
+
+
 def js_strings(path, code, keys):
-    """String values from one language's block (`    es: {` up to its closing `    }`) of a browser copy table."""
-    js = (ROOT / path).read_text(encoding="utf-8")
-    start = js.index(f"\n    {code}: {{\n")
-    end = js.index("\n    }", start)
-    out = {}
-    for key in keys:
-        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start, end)
-        if not m:
-            raise SystemExit(f"{path} has no {code}.{key}")
-        out[key] = json.loads(m.group(1))
-    return out
+    """String values for the given keys (dotted for nested ones) from one language's block of a browser copy table."""
+    found = copy_strings((ROOT / path).read_text(encoding="utf-8"), code, path)
+    missing = [key for key in keys if key not in found]
+    if missing:
+        raise SystemExit(f"{path} has no {code}.{missing[0]}")
+    return {key: found[key] for key in keys}
 
 
 COPY_TABLES = ("js/qa-review-report-copy.js", "js/qa-review-multi.js", "js/qa-review-compare-copy.js", "js/qa-review-progress.js",
                "js/qa-review-verify.js", "js/qa-review-benchmark.js", "js/qa-review-live.js", "js/qa-review-ask.js", "js/qa-review-pay-copy.js")
-PAIR = re.compile(r'\b(\w+): ("(?:[^"\\]|\\.)*")')
-
-
 def js_index(code):
-    """English text to the page language's text, from every key the browser copy tables hold once, the first table winning."""
+    """English text to the page language's text, from every string in the browser copy tables, the first table winning."""
     out = {}
     for path in COPY_TABLES:
         js = (ROOT / path).read_text(encoding="utf-8")
-        blocks = []
-        for lang in ("en", code):
-            start = js.index(f"\n    {lang}: {{\n")
-            pairs = PAIR.findall(js, start, js.index("\n    }", start))
-            once = {key for key in {k for k, _ in pairs} if sum(k == key for k, _ in pairs) == 1}
-            blocks.append({k: json.loads(v) for k, v in pairs if k in once})
-        en, local = blocks
+        en, local = copy_strings(js, "en", path), copy_strings(js, code, path)
         for key, text in en.items():
             if key in local and "{" not in text and "<" not in text:
                 out.setdefault(squash(text), local[key])
