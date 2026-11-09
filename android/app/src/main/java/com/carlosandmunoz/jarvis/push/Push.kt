@@ -25,7 +25,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.Watch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Push alerts (#1416): channels, the FCM token handed to the jarvis function, and the notifications it sends. */
 object Push {
@@ -105,8 +111,26 @@ object Push {
         then redraws the widgets, the ongoing notification, the watch and the open app. */
     fun sections(context: Context, data: Map<String, String>) {
         val app = context.applicationContext as JarvisApp
-        if (app.auth.signedIn && Home.pushStale(app, data)) Home.refreshSections(context, data)
+        if (!app.auth.signedIn) return
+        val named = data["sections"].orEmpty().split(",")
+        val patched = "processes" in named && runBlocking { withTimeoutOrNull(8_000) { processes(app) } } == true
+        val rest = if (patched) data + ("sections" to named.filter { it != "processes" }.joinToString(",")) else data
+        if (Home.pushStale(app, rest)) Home.refreshSections(context, rest)
     }
+
+    /** A processes push (#2548): one read for the section, put into every kept snapshot and the screen on show, then the
+        status notification and the watch; the rest of the snapshot is left for its own push. */
+    suspend fun processes(app: JarvisApp): Boolean {
+        val out = runCatching { app.api.call("processes", 1) }.getOrNull() ?: return false
+        val p = out.obj("processes") ?: return false
+        listOf(1, 7, 30, 90, 365).forEach { d -> app.api.patchSaved("snapshot", d) { Processes.patch(it, p, out.obj("version")) } }
+        Processes.pushed.tryEmit(out)
+        val kept: suspend () -> JsonObject? = { app.api.saved("snapshot", 1)?.json }
+        runCatching { Ongoing.show(app, kept) }
+        runCatching { Watch.sync(app, kept) }
+        return true
+    }
+
 
     private fun allowed(context: Context) =
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED

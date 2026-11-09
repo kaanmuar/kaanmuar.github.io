@@ -44,6 +44,10 @@ const ownerLayout = require("./owner-mail");
 const ops = require("./ops-schedule");
 const systemReview = require("./system-review");
 const githubApp = require("./github-app");
+const jarvisProcesses = require("./jarvis-processes");
+
+// A process row for Jarvis's live Processes panel (#2548); a failed report never stops the work it describes.
+const jarvisProcess = (rows) => jarvisProcesses.report(jarvisLiveDeps(), rows).catch((error) => console.error("Jarvis process report failed:", error));
 const jarvisLog = require("./jarvis-log");
 const jarvisLogPoll = require("./jarvis-log-poll");
 jarvisLog.use(getFirestore);
@@ -55,15 +59,27 @@ async function track(job, run) {
   const startedAt = new Date().toISOString();
   // A run killed for memory or time never reaches the catch, so its start is what tells opsWatchdog it crashed.
   await ref.set({ job, startedAt }, { merge: true }).catch((write) => console.error("ops_runs/" + job + " start was not written:", write));
+  // A job that runs every few minutes shows in Processes only when it runs long, fails or did something.
+  const frequent = jarvisProcesses.frequent((ops.JOBS.find((row) => row.job === job) || {}).cron);
+  let shown = null;
+  const timer = setTimeout(() => { shown = jarvisProcess(jarvisProcesses.jobRow(job, "running", { startedAt })); }, frequent ? jarvisProcesses.SHOW_AFTER_MS : 0);
+  const finish = async (ok, step) => {
+    clearTimeout(timer);
+    if (frequent && !shown && ok && !step) return;
+    await shown;
+    await jarvisProcess(jarvisProcesses.jobRow(job, ok ? "done" : "failed", { startedAt, step }));
+  };
   const secs = () => Math.round((Date.now() - Date.parse(startedAt)) / 1000) + " s";
   try {
     const note = await run();
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" });
     if (job !== "jarvisLogPoll") await jarvisLog.log(null, { source: "function", level: "info", ref: "job:" + job, text: job + " ok in " + secs() + (typeof note === "string" && note ? ": " + note : "") });
+    await finish(true, typeof note === "string" ? note : "");
   } catch (error) {
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: false, note: "", error: String((error && error.message) || error).slice(0, 300) })
       .catch((write) => console.error("ops_runs/" + job + " was not written:", write));
     await jarvisLog.log(null, { source: "function", level: "error", ref: "job:" + job, text: job + " failed after " + secs() + ": " + String((error && error.message) || error) });
+    await finish(false, String((error && error.message) || error).slice(0, 160));
     throw error;
   }
   return null;
@@ -5007,6 +5023,8 @@ async function runReview(req, res, placeOf) {
   res.set("Content-Type", "application/x-ndjson; charset=utf-8");
   const runStarted = Date.now();
   const runLines = [];
+  // A customer's review in Jarvis's Processes (#2548); sandbox test runs stay out.
+  const reviewProcess = (state, extra) => testRun ? null : jarvisProcess(jarvisProcesses.reviewRow(runId || "t" + runStarted, state, Object.assign({ url: intake.value.url, startedAt: new Date(runStarted).toISOString() }, extra)));
   const writeLine = (payload) => {
     if (payload.type === "log" && runLines.length < 5000) runLines.push({ t: Date.now() - runStarted, text: payload.text });
     if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
@@ -5032,6 +5050,7 @@ async function runReview(req, res, placeOf) {
       depth: intake.value.depth,
       reason: intake.value.reason
     });
+    await reviewProcess("running", { step: "Up to " + intake.value.pages + " pages, depth " + intake.value.depth });
     if (decision.pass) writeLine({ type: "log", text: "This run uses your " + decision.pass.name + " pass: " + decision.pass.left + (decision.pass.left === 1 ? " run" : " runs") + " left after it." });
     const asked = (() => { try { return urlReview.registryDomain(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
     const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => []) : null;
@@ -5093,6 +5112,8 @@ async function runReview(req, res, placeOf) {
     await getFirestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
+    const score = report.insights && report.insights.score ? report.insights.score.overall : null;
+    await reviewProcess(record.status === "stopped" ? "cancelled" : "done", { step: record.status === "stopped" ? "Stopped" : score == null ? "Report saved" : "Score " + score + "/100", link: customerMail.pageUrl("en", { report: report.id }) });
     if (record.status === "stopped") await saveRunLog("stopped");
     await mailReviewedSites(ip, record);
     if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
@@ -5124,6 +5145,7 @@ async function runReview(req, res, placeOf) {
       creditId: decision.consumeId || ""
     };
     await rememberReview("failed", failed);
+    await reviewProcess("failed", { step: failed.reason });
     if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
     else if (usedCredit) {
       try {
@@ -5555,6 +5577,8 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
   const tokens = row.token ? [row.token] : row.quiet === true ? [] : await jarvisPush.targets(db, "alerts");
   const startedAt = Date.now();
   await snap.ref.update({ status: "running", startedAt: new Date(startedAt).toISOString() });
+  const desk = (state, extra) => jarvisProcess(jarvisProcesses.deskRow(snap.id, state, Object.assign({ url: row.url, startedAt: new Date(startedAt).toISOString() }, extra)));
+  await desk("running", { step: "Reading the site" });
   try {
     const value = jarvisReview.intake(row);
     const report = await urlReview.reviewTarget(value.url, {
@@ -5578,15 +5602,32 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.doneMessage(report, link));
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await snap.ref.update({ status: "done", reportId: record.id, score: score == null ? null : score, link, push, doneAt: new Date().toISOString() });
+    await desk("done", { step: score == null ? "Report ready" : "Score " + score + "/100", link });
   } catch (error) {
     const reason = String((error && error.message) || error).slice(0, 200);
     console.error("Jarvis review of " + row.url + " failed:", error);
     const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
+    await desk("failed", { step: reason });
   }
 });
 
+// Each status of a Cube run is a step in Jarvis's Processes (#2548).
+const cubeProcess = (id, run) => jarvisProcess(jarvisProcesses.cubeRow(id, run, run.reviewId ? customerMail.pageUrl("en", { report: run.reviewId }) : ""));
+
+// GitHub's workflow_run webhook on the repo (#2548): each start and finish of a push, schedule or dispatch run goes
+// to Jarvis's Processes. Signed with GITHUB_WEBHOOK_SECRET; pull request CI is left out (jarvis-processes.js).
+const GITHUB_JOB_FILES = ops.JOBS.filter((row) => row.host === "github").map((row) => row.job);
+exports.jarvisGithubHook = functions.runWith({ timeoutSeconds: 30, memory: "256MB", secrets: SECRETS.jarvisGithubHook }).https.onRequest(async (req, res) => {
+  if (req.method !== "POST") { res.status(405).json({ error: "POST only." }); return; }
+  if (!jarvisProcesses.signed(process.env.GITHUB_WEBHOOK_SECRET, req.rawBody, req.get("x-hub-signature-256"))) { res.status(401).json({ error: "Bad signature." }); return; }
+  const row = req.get("x-github-event") === "workflow_run" ? jarvisProcesses.workflowRow(req.body, { isDeploy: jarvisGithub.isDeploy, jobFiles: GITHUB_JOB_FILES }) : null;
+  const out = row ? await jarvisProcess(row) : null;
+  res.json({ ok: true, kept: !!row, changed: !!(out && out.changed) });
+});
+
 exports.cubeRunStart = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onCreate(async (snap) => {
+  await cubeProcess(snap.id, snap.data() || {});
   try {
     const { access_token: token } = await applicationDefault().getAccessToken();
     await snap.ref.update({ execution: await cube.startJob(fetch, token, snap.id) });
@@ -5598,6 +5639,7 @@ exports.cubeRunStart = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }
 
 exports.cubeRunDone = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onUpdate(async (change) => {
   const run = change.after.data() || {};
+  if ((change.before.data() || {}).status !== run.status) await cubeProcess(change.after.id, run);
   if (!cube.finished(change.before.data(), run)) return;
   const db = getFirestore();
   const tokens = run.token ? [run.token] : await jarvisPush.targets(db, "alerts");
@@ -5764,7 +5806,8 @@ function jarvisLoadSnapshot(days) {
     aiProposals: () => jarvisAiRows(now),
     aiCandidates: jarvisAiCandidates,
     briefMarks: () => jarvisProposals.savedBrief(db),
-    countdowns: () => jarvisCountdown.view(db, now)
+    countdowns: () => jarvisCountdown.view(db, now),
+    processes: () => jarvisProcesses.read(db)
   }, now);
 }
 
@@ -6343,7 +6386,10 @@ async function jarvisGithubAgent(ctx, a) {
     prompt = "PR #" + pr + " in " + (repo || jarvisGithubFix.REPO) + " has merge conflicts with main. Merge main into the PR branch, resolve every conflict keeping the intent of both sides, "
       + "run npm run test:review and node scripts/build-jarvis-core.js --check, and push the result to the PR branch. Say in a PR comment what each conflict was and how you resolved it.";
   }
-  return jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name: a.name || (run ? "Jarvis fix: run " + run : pr ? "Jarvis fix: PR #" + pr : "") });
+  const name = a.name || (run ? "Jarvis fix: run " + run : pr ? "Jarvis fix: PR #" + pr : "Jarvis fix");
+  const out = await jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name });
+  if (out.id) await jarvisProcess(jarvisProcesses.cloudAgentRow(out.id, "running", { name, url: out.url, step: "Cursor cloud agent" + (pr ? " on PR #" + pr : "") }));
+  return out;
 }
 
 // An owner click (github-act, action-run, a push's Run): runs at once, logged in jarvis_actions.
@@ -6571,9 +6617,10 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
   const resent = await mailRetry.retry({ db: getFirestore(), sgMail: prepareMail() ? sgMail : null, fetch, key: process.env.SENDGRID_API_KEY })
     .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
   const pagespeed = await pageSpeedDeps("jarvis").then((deps) => jarvisPageSpeed.tick(deps)).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
+  const agents = await jarvisProcesses.cloudAgents(jarvisLiveDeps(), { fetch, key: process.env.CURSOR_API_KEY }).catch((error) => "cloud agents failed: " + String(error.message || error).slice(0, 120));
   // With no app or page reading, this hourly load is what finds the sections that moved (#2509).
   const live = jarvisLiveNote(await jarvisLivePush("jarvisWatch"));
-  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + live;
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + agents + "; " + live;
 });
 
 async function jarvisUptimeRun() {
@@ -6836,6 +6883,17 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "github-local", error: String(error.message || error).slice(0, 300) }); }
     return;
   }
+  // The Mac's agents (#2548): the engagement browser and Cursor's hooks report their state with the paired token.
+  if ((req.body || {}).op === "process-report") {
+    try {
+      const db = getFirestore();
+      await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
+      const rows = jarvisProcesses.macRows(req.body);
+      if (!rows.length) throw new Error("No agent rows to report.");
+      res.json(Object.assign({ ok: true, op: "process-report" }, await jarvisProcesses.report(jarvisLiveDeps(), rows)));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: "process-report", error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
   const presented = String(req.get("authorization") || "");
   const bearer = presented.toLowerCase().startsWith("bearer ") ? presented.slice(7).trim() : "";
   let operator = null;
@@ -6913,6 +6971,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = await jarvisSnapshotOp(days, body, now);
+    // One read: what a processes push (#2548) fetches while Jarvis is on screen, in place of the whole snapshot.
+    else if (op === "processes") { const p = await jarvisProcesses.read(getFirestore()); out = { processes: p.value, version: { v: p.v, at: p.at } }; }
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") {

@@ -127,12 +127,12 @@ test("a changed source sends back only its section, with external holding just t
   const changed = Object.assign({}, EXTERNAL, { jobs: { ok: true, jobs: [{ name: "jarvisWatch", state: "RUNNING" }] } });
   const later = await full(db, NOW + 2 * MINUTE, { external: () => stamp(changed, NOW + 2 * MINUTE) });
   const answer = serve(later, { since: sinceOf(first) }, NOW + 2 * MINUTE);
-  assert.ok(answer.sections.processes, "processes changed");
-  const external = answer.sections.processes.external;
-  assert.deepEqual(Object.keys(external).filter((k) => external[k] !== null).sort(), ["github", "jobs"]);
+  assert.ok(answer.sections.systems, "systems changed");
+  const external = answer.sections.systems.external;
+  assert.deepEqual(Object.keys(external).filter((k) => external[k] !== null).sort(), ["github", "health", "jobs"]);
   assert.equal(external["github-work"], null, "a source the section names but does not have goes as null");
-  ["pagespeed", "marketing", "people", "money", "mail", "products", "settings", "goals", "reports", "devices"].forEach((name) => assert.ok(!answer.sections[name], name + " unchanged"));
-  assert.equal(answer.versions.processes.at, new Date(NOW + 2 * MINUTE).toISOString());
+  ["processes", "pagespeed", "marketing", "people", "money", "mail", "products", "settings", "goals", "reports", "devices"].forEach((name) => assert.ok(!answer.sections[name], name + " unchanged"));
+  assert.equal(answer.versions.systems.at, new Date(NOW + 2 * MINUTE).toISOString());
   const applied = sections.apply(first, answer);
   assert.equal(applied.external.jobs.jobs[0].state, "RUNNING");
   assert.equal(applied.external.money.usd, 120);
