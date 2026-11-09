@@ -84,9 +84,10 @@
   }
 
   // Cases the review backs with axe-core: an AXE-xx case names its rule; FN-05 and A11Y-04 assert one rule each.
+  // A translated case (the sample in each page language) keeps only the rule's Deque address.
   function axeRule(item) {
-    const named = /breaking ([a-z0-9-]+) \(|with only the ([a-z0-9-]+) rule/.exec(String(item.why || ""));
-    return named ? named[1] || named[2] : "";
+    const named = /breaking ([a-z0-9-]+) \(|with only the ([a-z0-9-]+) rule|\/rules\/axe\/[\d.]+\/([a-z0-9-]+)/.exec(String(item.why || ""));
+    return named ? named[1] || named[2] || named[3] : "";
   }
 
   function axeCheck(item, at, rules) {

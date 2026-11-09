@@ -12,6 +12,8 @@
  * writes the public sample that qa-review.html opens before the disclaimers. It
  * needs the browser pass (CHROME_PATH and functions/node_modules), and the page
  * copy names the sample's host in every language (scripts/review_langs_copy.py).
+ * The es, pt, de, fr and it samples are built from it: translate the new
+ * sentences in scripts/qa-review-sample-copy/ and run scripts/build-sample-langs.js.
  */
 const fs = require("fs");
 const path = require("path");
