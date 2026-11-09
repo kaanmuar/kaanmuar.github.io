@@ -489,11 +489,11 @@
         .sign-in-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
         @media (max-width: 560px) { .sign-in-actions { flex: 1 1 100%; } .sign-in-actions .btn { flex: 1; } }
         #sign-in-code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
-        #email[readonly] { opacity: .8; }
+        #email-error:empty { display: none; }
         .verify-note { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, var(--card)); }
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
-        .verify-note a { color: var(--cyan); }
+        .verify-note a, .mail-note a { color: var(--cyan); }
         .report-toolbar { position: relative; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px -6px 16px; padding: 8px 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
         .report-toolbar .actions { margin-left: auto; }
         .menu-wrap { position: relative; }
@@ -1484,7 +1484,7 @@
                         <p class="mail-note muted" lang="es" translate="no">La revisión se ejecuta en el dispositivo donde inicias sesión. Un código o enlace abierto en otro dispositivo o navegador no inicia nada.</p>
                         <div id="sign-in-start">
                             <div class="sign-in-providers" id="sign-in-providers"></div>
-                            <p class="mail-note muted" id="sign-in-google-note" hidden lang="es" translate="no">Google comparte tu nombre, foto, direcciones de correo, fecha de nacimiento, números de teléfono, direcciones, género y datos laborales, y tu cuenta los guarda para un futuro plan de pago; todavía no se usan. Para compartir solo tu dirección, usa el correo.</p>
+                            <p class="mail-note muted" id="sign-in-google-note" hidden lang="es" translate="no">Google comparte los datos de tu perfil, que tu cuenta guarda; la lista completa está en los <a href="qa-review-legal.html#personal-data">avisos</a>. Para compartir solo tu dirección, usa el correo.</p>
                             <p class="sign-in-or muted" id="sign-in-or" hidden lang="es" translate="no">o con tu correo</p>
                             <label for="sign-in-email" lang="es" translate="no">Correo</label>
                             <div class="sign-in-row">
@@ -1507,20 +1507,13 @@
                         </div>
                         <p class="status" id="sign-in-status" role="status"></p>
                     </div>
-                    <div class="grid-2">
-                        <div>
-                            <label for="name" lang="es" translate="no">Nombre</label>
-                            <input id="name" name="name" type="text" autocomplete="name" required disabled>
-                            <p class="field-error" id="name-error"></p>
-                        </div>
-                        <div>
-                            <label for="email" lang="es" translate="no">Correo</label>
-                            <input id="email" name="email" type="email" autocomplete="email" placeholder="Se completa al iniciar sesión" readonly required disabled>
-                            <p class="field-error" id="email-error"></p>
-                            <p class="mail-note muted" id="own-note" hidden lang="es" translate="no">Usa un correo del mismo dominio que el sitio. Esta página comprueba que el dominio del buzón coincida con el host. No prueba que seas el propietario legal.</p>
-                        </div>
-                    </div>
-                            <p class="mail-note muted" lang="es" translate="no">Comprobamos rápidamente que esta dirección pueda recibir correo, para que todo lo que enviemos sobre tu revisión te llegue de verdad.</p>
+                    <input id="email" name="email" type="hidden" disabled>
+                    <p class="field-error" id="email-error"></p>
+                    <p class="mail-note muted" id="own-note" hidden lang="es" translate="no">Usa un correo del mismo dominio que el sitio. Esta página comprueba que el dominio del buzón coincida con el host. No prueba que seas el propietario legal.</p>
+                    <p class="mail-note muted" lang="es" translate="no">Comprobamos rápidamente que esta dirección pueda recibir correo, para que todo lo que enviemos sobre tu revisión te llegue de verdad.</p>
+                    <label for="name" lang="es" translate="no">Nombre</label>
+                    <input id="name" name="name" type="text" autocomplete="name" required disabled>
+                    <p class="field-error" id="name-error"></p>
                     <label class="check" hidden lang="es" translate="no"><input id="follow-up" name="followUp" type="checkbox" disabled> Avísame cuando valga la pena revisar esta página de nuevo. No más de tres notas cortas por semana, en mi idioma, hasta 30 días después de mi última revisión. El enlace para cancelarlas en cada nota, o una respuesta con “stop”, las detiene cuando quiera.</label>
                     <label class="check" lang="es" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> No publicar esta revisión como Live Report ni en redes sociales.</label>
                 </div>
@@ -1902,17 +1895,17 @@
 <script>try{localStorage.setItem("cv-preferred-lang","es")}catch(e){}</script>
 <script src="js/site-i18n.js?v=20261104a" defer></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
-<script src="js/site-tour.js?v=20261104a" defer></script>
+<script src="js/site-tour.js?v=20261108a" defer></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261102a" defer></script>
-<script src="js/qa-review-auth.js?v=20261022j" defer></script>
+<script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128p" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128q" defer></script>
 <script src="js/qa-review-findings-copy.es.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128p" defer></script>
+<script src="js/qa-review.js?v=20261128q" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

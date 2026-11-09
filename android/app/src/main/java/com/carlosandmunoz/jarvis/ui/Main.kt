@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.StopCircle
 import androidx.core.content.ContextCompat
 import android.text.format.DateUtils
@@ -222,6 +223,7 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
     LaunchedEffect(openTab) {
         openTab?.let { target ->
             val (name, chip) = target.split(':', limit = 2).let { it[0] to it.getOrNull(1) }
+            if (name == "ask") page = "ask"
             Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }
             chip?.takeIf { c -> CHIPS.any { it.first == c } }?.let { product = it }
             tabOpened()
@@ -417,12 +419,15 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
         else mic.launch(Manifest.permission.RECORD_AUDIO)
     }
+    val handsFree = handsFreeSwitch(vm)
     Row(modifier.imePadding()) {
         if (orb) Column(Modifier.width(168.dp).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { if (s.heard.listening) vm.stopListening() else { vm.heardShown(); listen() } },
             verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             VoiceOrb(s.heard.level, s.heard.listening || s.speaking != null, 120.dp)
             Spacer(Modifier.height(6.dp))
-            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else if (s.handsFree) "HANDS-FREE" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+            Spacer(Modifier.height(10.dp))
+            GlassChip("Hands-free", s.handsFree) { handsFree(!s.handsFree) }
         }
         Column(Modifier.weight(1f).fillMaxHeight()) {
             LazyColumn(Modifier.weight(1f), state = list) {
@@ -447,7 +452,8 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
                 }
             }
             HorizontalDivider(color = J.line)
-            s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            if (s.handsFree) Text("Hands-free: Jarvis listens, also with the screen off. Say \"stop\" to end.", color = J.cyan, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            else s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
             AnimatedContent(s.heard.listening, label = "input") { listening ->
                 if (listening) Row(Modifier.padding(8.dp).fillMaxWidth().glass(radius = 14.dp, brackets = false).padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
@@ -457,11 +463,25 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
                     TextButton(onClick = vm::stopListening) { Text("Stop", color = J.cyan) }
                 } else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(q, { q = it }, placeholder = { Text("Ask about the ${RANGES.toMap()[s.days]} numbers") }, modifier = Modifier.weight(1f), maxLines = 4)
+                    if (q.isBlank()) IconButton(onClick = { handsFree(!s.handsFree) }) {
+                        Icon(Icons.Filled.RecordVoiceOver, if (s.handsFree) "Stop hands-free" else "Hands-free", tint = if (s.handsFree) J.cyan else J.muted)
+                    }
                     if (q.isBlank()) IconButton(onClick = { vm.heardShown(); listen() }) { Icon(Icons.Filled.Mic, "Ask by voice", tint = J.cyan) }
                     else IconButton(onClick = { vm.ask(q); q = "" }) { Icon(Icons.AutoMirrored.Filled.Send, "Ask") }
                 }
             }
         }
+    }
+}
+
+/** Turns hands-free on or off, asking for the microphone first. */
+@Composable
+private fun handsFreeSwitch(vm: JarvisViewModel): (Boolean) -> Unit {
+    val context = LocalContext.current
+    val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.setHandsFree(true) }
+    return { on ->
+        if (!on || ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.setHandsFree(on)
+        else mic.launch(Manifest.permission.RECORD_AUDIO)
     }
 }
 
@@ -567,6 +587,11 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud.") }
                     Switch(s.speak, vm::setSpeak)
+                }
+                val handsFree = handsFreeSwitch(vm)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Hands-free"); Muted("Jarvis keeps listening and answers aloud, also with the screen off, until you say \"stop\" or tap Stop in the notification.") }
+                    Switch(s.handsFree, handsFree)
                 }
                 val phone = java.util.Locale.getDefault().getDisplayLanguage(java.util.Locale.ENGLISH)
                 Text("Language")
