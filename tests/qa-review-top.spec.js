@@ -460,20 +460,33 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report-index')).toBeVisible();
   }
 
-  const shownSections = (page) => page.evaluate(() => [...document.querySelectorAll('#report .fold-toggle')]
-    .filter((button) => button.getClientRects().length).map((button) => button.textContent.trim()));
+  // The groups of the sections on show, in reading order, each with the heading its entry jumps to.
+  const shownGroups = (page) => page.evaluate(() => {
+    const groups = [];
+    [...document.querySelectorAll('#report .fold-toggle')].filter((button) => button.getClientRects().length).forEach((button) => {
+      const heading = button.parentElement;
+      const key = heading.dataset.indexGroup || heading.id;
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.names.push(button.textContent.trim());
+      else groups.push({ key, href: '#' + heading.id, names: [button.textContent.trim()] });
+    });
+    return groups;
+  });
+  const indexEntries = (page) => page.locator('#report-index a').evaluateAll((links) => links.map((a) => ({ key: a.dataset.indexGroup, href: a.getAttribute('href'), names: a.title.split(' · ') })));
 
-  test('the sample report lists only the sections it shows, and an entry takes focus to its heading below the toolbar', async ({ page }) => {
+  test('the sample report groups the sections it shows into a short index, and an entry takes focus to the first heading of its group below the toolbar', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openSample(page);
-    const entries = await page.locator('#report-index a').allTextContents();
-    expect(entries).toEqual(await shownSections(page));
-    expect(entries).toContain('Security and email');
-    expect(entries).not.toContain('Tools that apply');
-    expect(entries).not.toContain('A login you are allowed to use');
+    const groups = await shownGroups(page);
+    expect(await indexEntries(page)).toEqual(groups);
+    expect(groups.map((group) => group.key)).toEqual(['summary', 'browser', 'checks', 'glance', 'exposure', 'evidence', 'cases']);
+    expect(await page.locator('#report-index a').allTextContents()).toEqual(['Summary', 'Browser and search', 'Checks and fixes', 'At a glance', 'Exposure', 'Evidence', 'Cases to run']);
+    expect(groups.flatMap((group) => group.names)).not.toContain('Tools that apply');
+    expect(groups.flatMap((group) => group.names)).not.toContain('A login you are allowed to use');
+    expect(new Set(await page.locator('#report-index-list > li').evaluateAll((rows) => rows.map((li) => li.offsetTop))).size).toBe(1);
     await expect(page.locator('#report-top')).toBeHidden();
 
-    await page.locator('#report-index a', { hasText: 'Security and email' }).click();
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
     const heading = page.locator('#report h2', { hasText: 'Security and email' });
     await expect(heading.locator('.fold-toggle')).toBeFocused();
     await expect(heading).toBeInViewport();
@@ -489,12 +502,15 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report-index')).toBeHidden();
   });
 
-  test('a collapsed section opens when its entry is chosen', async ({ page }) => {
+  test('collapsed sections open when their group is chosen', async ({ page }) => {
     await openSample(page);
     await page.locator('#fold-all').click();
-    await page.locator('#report-index a', { hasText: 'Fix kit' }).click();
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
     await expect(page.locator('#fixkit')).toBeVisible();
-    await expect(page.locator('#report h2', { hasText: 'Fix kit' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'true');
+    for (const name of ['Security and email', 'Every check, with its verdict', 'Fix kit']) {
+      await expect(page.locator('#report h2', { hasText: name }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'true');
+    }
+    await expect(page.locator('#report h2', { hasText: 'Health score' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
@@ -506,29 +522,53 @@ test.describe('Report section index (#2770)', () => {
       .filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect().height));
     expect(Math.min(...heights)).toBeGreaterThanOrEqual(32);
 
-    await page.locator('#report-index a', { hasText: 'Every check, with its verdict' }).click();
-    await expect(page.locator('#report h2', { hasText: 'Every check, with its verdict' }).locator('.fold-toggle')).toBeFocused();
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await expect(page.locator('#report h2', { hasText: 'Security and email' }).locator('.fold-toggle')).toBeFocused();
     await expect.poll(() => page.evaluate(() => {
-      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Every check, with its verdict').getBoundingClientRect().top;
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
       return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
     })).toBe(true);
     await expect(page.locator('#report-top')).toBeInViewport();
   });
 
-  test('each language page labels the index and its entries in its language', async ({ page }) => {
+  test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
+    for (const dark of [false, true]) {
+      await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+      const sheet = await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
+        const style = getComputedStyle(el);
+        const probe = document.createElement('i');
+        probe.style.color = style.backgroundColor;
+        document.body.appendChild(probe);
+        const alpha = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number)[3];
+        probe.remove();
+        return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
+      });
+      expect(sheet).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+    }
+    const close = await page.locator('#dash-close').boundingBox();
+    expect(close.y).toBeLessThan(30);
+    expect(close.x + close.width).toBeLessThanOrEqual(390);
+    await page.emulateMedia({ media: 'print' });
+    expect(await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
+  });
+
+  test('each language page labels the index and its groups in its language', async ({ page }) => {
     const copy = {
-      es: ['En este informe', 'Resumen en una página', 'De un vistazo'],
-      pt: ['Neste relatório', 'Resumo em uma página', 'Visão geral'],
-      de: ['In diesem Bericht', 'Zusammenfassung auf einer Seite', 'Auf einen Blick'],
-      fr: ['Dans ce rapport', 'Résumé sur une page', 'En un coup d’œil'],
-      it: ['In questo report', 'Riepilogo in una pagina', 'In breve']
+      es: ['En este informe', 'Resumen', 'De un vistazo'],
+      pt: ['Neste relatório', 'Resumo', 'Visão geral'],
+      de: ['In diesem Bericht', 'Zusammenfassung', 'Auf einen Blick'],
+      fr: ['Dans ce rapport', 'Synthèse', 'En un coup d’œil'],
+      it: ['In questo report', 'Riepilogo', 'In breve']
     };
     for (const [lang, [label, first, glance]] of Object.entries(copy)) {
       await openSample(page, '/qa-review-' + lang + '.html');
       await expect(page.locator('#report-index-label')).toHaveText(label);
       await expect(page.locator('#report-index a').first()).toHaveText(first);
       await expect(page.locator('#report-index a', { hasText: glance })).toHaveCount(1);
-      expect(await page.locator('#report-index a').allTextContents()).toEqual(await shownSections(page));
+      expect(await indexEntries(page)).toEqual(await shownGroups(page));
     }
   });
 });

@@ -2532,7 +2532,7 @@
     if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
-    folds.push({ button, panel });
+    folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
   }
 
   function setFold(item, open) {
@@ -2565,6 +2565,7 @@
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
     glance.textContent = rc.t("glance");
+    glance.dataset.indexGroup = "glance";
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2608,7 +2609,7 @@
   // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
   function measureBar() {
     const bar = dash.querySelector(".report-toolbar");
-    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + "px");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
   }
 
   function afterScroll(done) {
@@ -2642,18 +2643,28 @@
     if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
   }
 
-  // Lists the sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  const sectionName = (item) => item.button.firstChild.textContent.trim();
+
+  // Lists the groups of sections this report shows; it reads layout, so it runs once render() has opened the overlay.
   function paintIndex() {
     if (!reportIndex) return;
     const shown = folds.filter((item) => item.button.getClientRects().length > 0)
       .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
-    document.getElementById("report-index-list").replaceChildren(...shown.map((item) => {
+    const groups = new Map();
+    shown.forEach((item) => {
+      if (!groups.has(item.group)) groups.set(item.group, []);
+      groups.get(item.group).push(item);
+    });
+    document.getElementById("report-index-list").replaceChildren(...[...groups].map(([key, items]) => {
       const link = document.createElement("a");
-      link.href = "#" + item.button.parentElement.id;
-      link.textContent = item.button.firstChild.textContent.trim();
+      link.href = "#" + items[0].button.parentElement.id;
+      link.textContent = rc.word("indexGroups", key, sectionName(items[0]));
+      link.title = items.map(sectionName).join(" · ");
+      link.dataset.indexGroup = key;
       link.addEventListener("click", (event) => {
         event.preventDefault();
-        jumpTo(item);
+        items.forEach((item) => { if (item.panel.hidden) setFold(item, true); });
+        jumpTo(items[0]);
       });
       const row = document.createElement("li");
       row.appendChild(link);
