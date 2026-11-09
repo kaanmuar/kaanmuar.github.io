@@ -884,7 +884,9 @@ function askSnapshot(snap, days) {
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
       github: githubAsk(e["github-work"]),
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
-    }
+    },
+    // Live processes (#2548): what runs now, waits on Carlos or ended in the last day.
+    processes: ((s.processes || {}).rows || []).slice(0, 20).map((r) => r.kind + " " + r.name + ": " + r.state + (r.needsYou ? " (needs you)" : "") + (r.step ? " · " + r.step : "") + " · since " + (r.startedAt || ""))
   };
 }
 

@@ -42,6 +42,8 @@ const BY_FUNCTION = {
   jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
   // jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
   jarvisGithub: list(MAIL, GITHUB, GEMINI),
+  // jarvisGithubHook (#2548): the secret GitHub signs the repo's workflow_run webhook with.
+  jarvisGithubHook: list(["GITHUB_WEBHOOK_SECRET"]),
   // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.
   jarvisIndex: list(["BRAVE_SEARCH_KEY"], BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).

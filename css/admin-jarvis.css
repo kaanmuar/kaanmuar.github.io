@@ -674,3 +674,26 @@
     .jv-drill-list small { grid-column: 2; white-space: normal; }
     .jv-drill-list code { max-width: 9rem; }
 }
+
+/* Live Processes panel (#2548): js/admin-jarvis-processes.js. */
+.jv-proc-sum { margin: 0 0 0.5rem; font: 600 0.82rem ui-monospace, Menlo, monospace; color: var(--cyan); }
+.jv-proc-sum.is-needs { color: var(--amber); }
+.jv-proc-head { margin: 0.8rem 0 0.3rem; font: 600 0.68rem ui-monospace, Menlo, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.jv-procs { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.jv-proc { display: grid; grid-template-columns: 0.6rem 1fr auto; gap: 0.6rem; align-items: start; padding: 0.45rem 0.55rem; border: 1px solid transparent; border-radius: 8px; }
+.jv-proc-dot { width: 0.55rem; height: 0.55rem; margin-top: 0.35rem; border-radius: 50%; background: var(--dim); }
+.jv-proc.is-running .jv-proc-dot { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: jv-breathe 1.6s ease-in-out infinite; }
+.jv-proc.is-queued .jv-proc-dot, .jv-proc.is-waiting .jv-proc-dot { background: var(--muted); }
+.jv-proc.is-done .jv-proc-dot { background: var(--green); }
+.jv-proc.is-failed .jv-proc-dot { background: var(--pink); }
+.jv-proc.is-needs { background: rgba(255, 181, 71, 0.1); border-color: rgba(255, 181, 71, 0.5); }
+.jv-proc.is-needs .jv-proc-dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: jv-breathe 1.6s ease-in-out infinite; }
+.jv-proc-main { min-width: 0; display: grid; gap: 0.15rem; }
+.jv-proc-main b { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jv-proc-main small { color: var(--muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.jv-proc.is-needs .jv-proc-main small { color: var(--amber); }
+.jv-proc-bar { display: block; height: 3px; border-radius: 2px; background: rgba(56, 225, 255, 0.15); overflow: hidden; margin-top: 0.2rem; }
+.jv-proc-bar i { display: block; height: 100%; background: var(--cyan); }
+.jv-proc-open { justify-self: start; margin-top: 0.3rem; border-color: var(--amber); color: var(--amber); }
+.jv-proc time { font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.jv-proc.is-running time { color: var(--cyan); }

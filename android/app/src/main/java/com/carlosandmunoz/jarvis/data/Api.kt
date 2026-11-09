@@ -45,6 +45,14 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
         return Saved(json, System.currentTimeMillis())
     }
 
+    /** Changes a kept answer in place (a processes push, #2548), keeping its time so it does not look freshly fetched. */
+    fun patchSaved(op: String, days: Int, edit: (JsonObject) -> JsonObject) {
+        val f = file(op, days)
+        if (!f.exists()) return
+        val at = f.lastModified()
+        runCatching { f.writeText(edit(JSON.parseToJsonElement(f.readText()) as JsonObject).toString()); f.setLastModified(at) }
+    }
+
     fun saved(op: String, days: Int): Saved? {
         val f = file(op, days)
         if (!f.exists()) return null

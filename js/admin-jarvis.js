@@ -5,12 +5,14 @@
    few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
+import * as Proc from "./admin-jarvis-processes.js?v=2548";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
 const LIVE_MS = 60 * 1000;
 // The server keeps a snapshot this long (jarvis.TTL.snapshot); asking sooner returns the same one.
 const SNAPSHOT_MS = 5 * 60 * 1000;
+const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
 const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
@@ -438,6 +440,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.feed = snap.feed || [];
         S.socialHeat = snap.socialHeat || null;
         S.reports = snap.reports || [];
+        if (snap.processes) { S.processes = snap.processes; S.processesAt = Date.now(); }
         Object.assign(S.external, snap.external || {}, { 'mail-codes': { ok: true, codes: snap.mailCodes || [] } });
         if (snap.settings) S.settings = Object.assign({ ok: true }, snap.settings);
         if (Array.isArray(snap.goals)) S.goals = snap.goals;
@@ -449,6 +452,29 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         }
         S.updatedAt = Date.parse(snap.cachedAt) || Date.now();
         S.externalAt = Date.now();
+    }
+
+    // Live processes (#2548): a processes push fetches the one-read processes op and redraws only that panel.
+    async function loadProcesses() {
+        const out = await call('processes').catch(() => null);
+        if (!out || out.ok === false || !out.processes) return;
+        const before = Proc.active(S.processes).length;
+        S.processes = out.processes;
+        S.processesAt = Date.now();
+        if (S.versions && out.version) S.versions = Object.assign({}, S.versions, { processes: out.version });
+        if (!before !== !Proc.active(S.processes).length) render();
+        else paintProcesses();
+    }
+
+    function paintProcesses() {
+        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact' }); });
+    }
+
+    function processesPanel(compact) {
+        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact });
+        if (compact && !body) return '';
+        return panel(compact ? 'overview-processes' : 'systems-processes', 'Processes', `<div data-processes="${compact ? 'compact' : 'full'}">${body}</div>`,
+            { wide: true, keep: true, data: (S.processes && S.processes.rows) || [] });
     }
 
     // Live: a newer snapshot once the server's has aged out; the pulse counts the feed lines it adds.
@@ -2607,7 +2633,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.wide = W;
         const take = () => { const list = S.empties; S.empties = []; return noData(list); };
         S.empties = [];
-        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
+        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${processesPanel(true)}${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
@@ -2694,7 +2720,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const up = e.uptime;
         const sp = e.speed;
         const tiles90 = C.statusMatrix(e, S.pending);
-        out.systems = `<div class="jv-grid">${briefPanel('systems')}
+        out.systems = `<div class="jv-grid">${processesPanel(false)}${briefPanel('systems')}
             ${panel('systems-matrix', 'Status matrix', matrix(tiles90), { wide: true, keep: true, data: tiles90 })}
             ${panel('systems-uptime90', 'Uptime, last 90 days', strip(W.uptime), { wide: true, keep: true, data: W.uptime.days })}
             ${actionsPanel()}${codesPanel()}${mailboxPanel()}${addressesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
@@ -3472,9 +3498,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
         // A section changed on the server (#2509): fetch again unless this page already holds those versions.
         // Applying only the changed sections is #2510.
-        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden && C.sectionsStale(event.data.jarvisSections, S.versions, S.range)) loadNewer();
+        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden) onSections(event.data.jarvisSections);
     });
     if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
+
+    async function onSections(msg) {
+        if (String(msg.sections || '').split(',').includes('processes')) await loadProcesses();
+        if (C.sectionsStale(msg, S.versions, S.range)) loadNewer();
+    }
 
     function readSettings() {
         const form = $('.jv-settings-box');
@@ -3791,6 +3822,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     S.timers.push(setInterval(() => {
         const node = $('#jv-ago');
         if (node && S.updatedAt) node.textContent = S.live ? 'live · ' + ago(Date.now() - S.updatedAt) : 'paused';
+        Proc.tick(root, Date.now());
+        // While something runs and no push came (this browser not subscribed), ask again each minute: one read.
+        if (S.live && S.mounted && !document.hidden && Proc.active(S.processes).length && Date.now() - (S.processesAt || 0) > PROCESSES_MS) { S.processesAt = Date.now(); loadProcesses(); }
     }, 1000));
     S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;

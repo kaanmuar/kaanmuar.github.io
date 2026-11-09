@@ -940,4 +940,4 @@ async function backfill(ctx) {
   return { ok: true, days, left };
 }
 
-module.exports = { source, daily, backfill, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState };
+module.exports = { source, daily, backfill, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy };
