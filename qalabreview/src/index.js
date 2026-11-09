@@ -22,6 +22,8 @@ export default {
       callUrl: env.CALL_URL || ""
     });
     if (out.location) return new Response(null, { status: out.status, headers: { Location: out.location, "Cache-Control": "no-store" } });
-    return new Response(out.body, { status: out.status, headers: { "Content-Type": out.type + "; charset=utf-8" } });
+    const headers = { "Content-Type": out.type + "; charset=utf-8" };
+    if (out.cache) headers["Cache-Control"] = out.cache;
+    return new Response(out.body, { status: out.status, headers });
   }
 };
