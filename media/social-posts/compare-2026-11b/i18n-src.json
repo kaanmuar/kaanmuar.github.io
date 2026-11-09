@@ -1,0 +1,102 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "quiz-medellin-universities": {
+   "lang": "es",
+   "strings": {
+    "title.0": "EAFIT or UdeA:",
+    "title.1": "*which university site scored higher?*",
+    "body": "Two Medellín universities, EAFIT and the Universidad de Antioquia, 20 public pages each, analyzed by the same review on the same day in October 2026.",
+    "counter": "Quiz · which scored higher?",
+    "visual.or": "or",
+    "visual.sides.0.label": "EAFIT",
+    "visual.sides.1.label": "UdeA",
+    "visual.note": "Overall score out of 100 · 20 pages each",
+    "actionLabel": "Your guess",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
+    "footRight": "Same review, same day",
+    "more": "Both universities score in the 80s for analytics, so that area will not decide it.",
+    "cat.label": "Real runs compared · local",
+    "cap.youtube": "Two Medellín universities, EAFIT and the Universidad de Antioquia, 20 public pages each, analyzed by the same review on the same day in October 2026.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11b&utm_content=quiz-medellin-universities\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #AI #DevOps #QA #Quiz #WebDevelopment #Coding #Testing #QAEngineer #SDET #SoftwareTesting #QAlab"
+   }
+  },
+  "medellin-universities": {
+   "lang": "pt",
+   "strings": {
+    "counter": "The answer",
+    "title.0": "EAFIT 75, UdeA 53.",
+    "title.1": "*Security is the widest gap.*",
+    "body": "EAFIT leads security, 77 to 16, SEO, 72 to 34, and GEO, 86 to 56. UdeA answers with speed, 68 to 58, and accessibility, 78 to 76. Analytics is close, 85 to 82.",
+    "visual.cols.0": "Overall",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "EAFIT",
+    "visual.rows.1.0": "UdeA",
+    "visual.note": "eafit.edu.co and udea.edu.co · 20 pages each",
+    "actionLabel": "Lesson",
+    "action": "A wide gap often starts in one weak area. Find your lowest area score and fix that first.",
+    "footRight": "Analyzed on 19 Oct 2026",
+    "more": "UdeA's 16 for security is the lowest area score in either comparison batch.",
+    "cat.label": "Real runs compared · local",
+    "cap.youtube": "EAFIT leads security, 77 to 16, SEO, 72 to 34, and GEO, 86 to 56. UdeA answers with speed, 68 to 58, and accessibility, 78 to 76. Analytics is close, 85 to 82.\n\nLesson: A wide gap often starts in one weak area. Find your lowest area score and fix that first.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11b&utm_content=medellin-universities\n\nThe answer · QA-lab URL Review\n\n#WebQuality #DevOps #SoftwareTesting #QA #HigherEd #WebSecurity #Programming #LearnOnYouTube #DevSecOps #SDET #CyberSecurity #QAlab"
+   }
+  },
+  "quiz-newspapers": {
+   "lang": "de",
+   "strings": {
+    "title.0": "El País or Le Monde:",
+    "title.1": "*which newspaper site scored higher?*",
+    "body": "Two daily newspapers, from Spain and France, 20 public pages each, analyzed by the same review on the same day in October 2026. Two points separate them.",
+    "counter": "Quiz · which scored higher?",
+    "visual.or": "or",
+    "visual.sides.0.label": "El País",
+    "visual.sides.1.label": "Le Monde",
+    "visual.note": "Overall score out of 100 · 20 pages each",
+    "actionLabel": "Your guess",
+    "action": "Make your guess. The answer, with all six area scores, comes out tomorrow.",
+    "footRight": "Same review, same day",
+    "more": "Both newspapers score within two points of each other for GEO, 59 and 61.",
+    "cat.label": "Real runs compared · worldwide",
+    "cap.youtube": "Two daily newspapers, from Spain and France, 20 public pages each, analyzed by the same review on the same day in October 2026. Two points separate them.\n\nYour guess: Make your guess. The answer, with all six area scores, comes out tomorrow.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11b&utm_content=quiz-newspapers\n\nQuiz · which scored higher? · QA-lab URL Review\n\n#WebQuality #Automation #AI #QA #Quiz #LearnOnYouTube #TechTips #QAEngineer #SDET #SoftwareTesting #QualityAssurance #QAlab"
+   }
+  },
+  "newspapers": {
+   "lang": "fr",
+   "strings": {
+    "counter": "The answer",
+    "title.0": "El País 74, Le Monde 72.",
+    "title.1": "*Each wins three areas.*",
+    "body": "El País leads SEO, 73 to 54, accessibility, 94 to 79, and speed, 92 to 83. Le Monde answers with analytics, 97 to 85, security, 62 to 46, and GEO, 61 to 59.",
+    "visual.cols.0": "Overall",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "El País",
+    "visual.rows.1.0": "Le Monde",
+    "visual.note": "elpais.com and lemonde.fr · 20 pages each",
+    "actionLabel": "Lesson",
+    "action": "Two close totals can hide opposite strengths. Compare area by area before you copy a competitor.",
+    "footRight": "Analyzed on 19 Oct 2026",
+    "more": "Le Monde's 97 for analytics is its highest area score. El País's is accessibility, at 94.",
+    "cat.label": "Real runs compared · worldwide",
+    "cap.youtube": "El País leads SEO, 73 to 54, accessibility, 94 to 79, and speed, 92 to 83. Le Monde answers with analytics, 97 to 85, security, 62 to 46, and GEO, 61 to 59.\n\nLesson: Two close totals can hide opposite strengths. Compare area by area before you copy a competitor.\n\nGuide: https://carlosandmunoz.com/qa-review-guide.html?utm_source=youtube&utm_medium=social&utm_campaign=compare-2026-11b&utm_content=newspapers\n\nThe answer · QA-lab URL Review\n\n#WebQuality #DevOps #SoftwareTesting #QA #SEO #Media #WebDevelopment #Coding #GoogleSearch #TestAutomation #SearchConsole #QAlab"
+   }
+  }
+ }
+}

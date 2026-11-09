@@ -176,6 +176,7 @@
  "A ⟦1⟧ for researchers, a sitemap named in ⟦2⟧, and HSTS.": "Un ⟦1⟧ para investigadores, un sitemap indicado en ⟦2⟧ y HSTS.",
  "A ⟦1⟧ from http to https, a canonical on the home page, and GA4.": "Un ⟦1⟧ de http a https, un canonical en la home y GA4.",
  "A ⟦1⟧ from http to https, a canonical, ⟦2⟧ that lists its sitemaps, and an open door for GPTBot.": "Un ⟦1⟧ de http a https, un canonical, ⟦2⟧ que lista sus sitemaps y la puerta abierta a GPTBot.",
+ "A ⟦1⟧ or ⟦2⟧ does the same jobs but keeps form data on a POST.": "Un ⟦1⟧ o un ⟦2⟧ hacen lo mismo, pero conservan los datos del formulario en un POST.",
  "A ⟦1⟧ PageSpeed score failed Core Web Vitals.": "Una puntuación de PageSpeed de ⟦1⟧ no superó las Core Web Vitals.",
  "A ⟦1⟧ passed.": "Una de ⟦1⟧ las superó.",
  "A ⟦1⟧ there means crawlers lose your map.": "Un ⟦1⟧ ahí significa que los rastreadores pierden tu mapa.",
@@ -239,6 +240,7 @@
  "A meta description on every page analyzed, publication dates, framing limited to its origin, and nosniff.": "Una meta description en cada página analizada, fechas de publicación, framing limitado a su origen y nosniff.",
  "A meta description, a share image, a declared language, and a start page that arrives fast.": "Una meta description, una imagen para compartir, un idioma declarado y una página de inicio que llega rápido.",
  "A missing page that answers ⟦1⟧ OK is a soft ⟦2⟧.": "Una página inexistente que responde ⟦1⟧ OK es un soft ⟦2⟧.",
+ "A new failures reporter and an onlyFailures option keep reports to what went wrong.": "Un nuevo reporter failures y la opción onlyFailures dejan en los informes solo lo que falló.",
  "A one-point lead can hide a ⟦1⟧-point gap.": "Una ventaja de un punto puede esconder una brecha de ⟦1⟧.",
  "A one-year HSTS, real ⟦1⟧s for unknown paths, dates on its pages, and pages that read well without JavaScript.": "HSTS de un año, ⟦1⟧ reales para rutas desconocidas, fechas en sus páginas y páginas que se leen bien sin JavaScript.",
  "A permanent https redirect, real ⟦1⟧s for unknown paths, and pages that read well without JavaScript.": "Una redirección https permanente, ⟦1⟧ reales para rutas desconocidas y páginas que se leen bien sin JavaScript.",
@@ -292,6 +294,7 @@
  },
  "A valid sitemap, structured data that parses, real ⟦1⟧s, and every internal link opened answered.": "Un sitemap válido, datos estructurados que se procesan bien, ⟦1⟧ reales y todos los enlaces internos abiertos respondieron.",
  "A visitor ID should never travel over plain http.": "Un ID de visitante nunca debería viajar por http sin cifrar.",
+ "A wide gap often starts in one weak area.": "Una gran diferencia suele empezar en un área débil.",
  "A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSON-LD.": "Un año de HSTS, framing limitado a su propio origen y NewsMediaOrganization en JSON-LD.",
  "About a minute each, on the live site, before you announce anything.": "Más o menos un minuto cada una, en el sitio en vivo, antes de anunciar nada.",
  "Accessibility ⟦1⟧, a strict content security policy, and real visitors see the main content in ⟦2⟧ s.": "Accesibilidad ⟦1⟧, una política de seguridad de contenido estricta y los visitantes reales ven el contenido principal en ⟦2⟧ s.",
@@ -348,6 +351,7 @@
  "Add url, plus a search action if you have one, to each language's WebSite block.": "Añade url, y una acción de búsqueda si la tienes, al bloque WebSite de cada idioma.",
  "Add WebSite and Organization blocks with sameAs links to GitHub and social profiles.": "Añade bloques WebSite y Organization con enlaces sameAs a GitHub y a tus perfiles sociales.",
  "African Union titles run to ⟦1⟧ characters.": "Los títulos de la Unión Africana llegan a ⟦1⟧ caracteres.",
+ "After a stricter consent policy, GA4 organic sessions fell ⟦1⟧ in four weeks while Search Console clicks rose ⟦2⟧.": "Tras una política de consentimiento más estricta, las sesiones orgánicas en GA4 cayeron un ⟦1⟧ en cuatro semanas, mientras los clics en Search Console subieron un ⟦2⟧.",
  "After reviewing DMARC reports, move to p=quarantine and then p=reject, so forged mail is blocked.": "Tras revisar los informes DMARC, pasa a p=quarantine y luego a p=reject, para bloquear el correo falsificado.",
  "After the score, try one real task with a screen reader:": "Después de la puntuación, haz una tarea real con un lector de pantalla:",
  "Agent skills for bespoke websites and app UI: product-derived direction, no generic AI templates, and a Playwright screenshot review loop.": {
@@ -368,6 +372,7 @@
  "AI answers use it to name the site.": "Las respuestas con IA lo usan para nombrar el sitio.",
  "AI answers use it to name you.": "Las respuestas con IA lo usan para nombrarte.",
  "AI answers use them to say who runs the site.": "Las respuestas con IA los usan para decir quién gestiona el sitio.",
+ "AI can check an ACR, not write it": "La IA puede revisar un ACR, no escribirlo",
  "AI crawler access.": "Acceso de rastreadores de IA.",
  "AI crawlers and slow phones read HTML first.": "Los rastreadores de IA y los móviles lentos leen primero el HTML.",
  "AI crawlers each have their own user agent.": "Cada rastreador de IA tiene su propio user agent.",
@@ -422,6 +427,7 @@
  },
  "Ambiente Bogotá publishes no sitemap.": "Ambiente Bogotá no publica sitemap.",
  "Amnesty's ⟦1⟧ turns Bingbot away.": "El ⟦1⟧ de Amnesty rechaza a Bingbot.",
+ "Among the breaking changes, actions now wait for an inert element to stop being inert, and ⟦1⟧ ⟦2⟧ is no longer tested.": "Entre los cambios incompatibles, las acciones ahora esperan a que un elemento inert deje de serlo, y ya no se prueba con ⟦1⟧ ⟦2⟧.",
  "An ⟦1⟧ for AI tools, ⟦2⟧, preloaded HSTS, and two sitemaps.": "Un ⟦1⟧ para herramientas de IA, ⟦2⟧, HSTS con preload y dos sitemaps.",
  "An ⟦1⟧ for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors.": "Un ⟦1⟧ para herramientas de IA, HSTS de dos años y Core Web Vitals que aprueban con visitantes reales.",
  "An ⟦1⟧ with ⟦2⟧ sections, language versions that link back, and consent defaults set to denied for the EU and other listed regions.": "Un ⟦1⟧ con ⟦2⟧ secciones, versiones de idioma que se enlazan entre sí y consentimiento denegado por defecto para la UE y otras regiones listadas.",
@@ -440,6 +446,7 @@
  "An ofrenda for the links that died.": "Una ofrenda para los enlaces que murieron.",
  "An old link hops from http to https, then to www, then to a trailing slash.": "Un enlace antiguo salta de http a https, luego a www y luego a la barra final.",
  "Analytics card.": "Tarjeta de analítica.",
+ "Analytics is close, ⟦1⟧ to ⟦2⟧.": "La analítica está pareja, ⟦1⟧ a ⟦2⟧.",
  "And from project to project I keep seeing...": {
   "text": "Y de proyecto en proyecto sigo viendo...",
   "machine": true
@@ -505,6 +512,7 @@
   "text": "Control deslizante antes y después en React, accesible y arrastrable",
   "machine": true
  },
+ "Before crediting a better score to your own work, check that both reports name the same Lighthouse version and compare the field data.": "Antes de atribuir una mejor puntuación a tu propio trabajo, comprueba que los dos informes indiquen la misma versión de Lighthouse y compara los datos de campo.",
  "Before your next automation sprint, write ten cases in plain language.": "Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano.",
  "Bello's JSON-LD names the page, not the city.": "El JSON-LD de Bello nombra la página, no la ciudad.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha que te cuesta es la que un competidor ya ha cerrado.",
@@ -882,15 +890,23 @@
  "By Craig Morten, DEV: ⟦1⟧": "Por Craig Morten, DEV: ⟦1⟧",
  "By Craig Morten, DEV.": "Por Craig Morten, DEV.",
  "By default, it matches only native elements, so your tests catch a swapped for a .": "De forma predeterminada, solo coincide con elementos nativos, así que tus pruebas detectan un cambiado por un .",
+ "By dgozman, Playwright releases: ⟦1⟧": "Por dgozman, Playwright releases: ⟦1⟧",
+ "By dgozman, Playwright releases.": "Por dgozman, Playwright releases.",
+ "By Dii Pooler, Moz: ⟦1⟧": "Por Dii Pooler, Moz: ⟦1⟧",
+ "By Dii Pooler, Moz.": "Por Dii Pooler, Moz.",
  "By Matt G.": "Por Matt G.",
  "By Philippe Le Hegaret, W3C: ⟦1⟧": "Por Philippe Le Hegaret, W3C: ⟦1⟧",
  "By Philippe Le Hegaret, W3C.": "Por Philippe Le Hegaret, W3C.",
+ "By Roger Montti, Search Engine Journal: ⟦1⟧": "Por Roger Montti, Search Engine Journal: ⟦1⟧",
+ "By Roger Montti, Search Engine Journal.": "Por Roger Montti, Search Engine Journal.",
  "By taking this approach, we can close the gap between presumed and actual accessibility.": {
   "text": "Al adoptar este enfoque, podemos cerrar la brecha entre la accesibilidad presunta y la real.",
   "machine": true
  },
  "By Wilco Fiers, Deque: ⟦1⟧": "Por Wilco Fiers, Deque: ⟦1⟧",
  "By Wilco Fiers, Deque.": "Por Wilco Fiers, Deque.",
+ "By Will Creedle, Deque: ⟦1⟧": "Por Will Creedle, Deque: ⟦1⟧",
+ "By Will Creedle, Deque.": "Por Will Creedle, Deque.",
  "CABEI's missing pages answer ⟦1⟧, not ⟦2⟧.": "Las páginas inexistentes de CABEI responden ⟦1⟧, no ⟦2⟧.",
  "Cache the home page HTML at a CDN or in the server.": "Cachea el HTML de la portada en una CDN o en el servidor.",
  "Cache the home page HTML at the edge.": "Cachea el HTML de la portada en el edge.",
@@ -953,6 +969,7 @@
   "machine": true
  },
  "Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.": "Chrome DevTools puede simular visión borrosa, contraste reducido y cuatro tipos de deficiencia de la visión del color, directamente en tu página.",
+ "Chrome's Barry Pollard says scores usually come out higher, most often on JavaScript-heavy sites, even when the page did not change.": "Barry Pollard, de Chrome, dice que las puntuaciones suelen salir más altas, sobre todo en sitios con mucho JavaScript, aunque la página no haya cambiado.",
  "Chromium ⟦1⟧+ aborts a preflighted cross-origin redirect whenever any route is registered (net::ERR_ABORTED)": "Chromium ⟦1⟧+ aborta una redirección cross-origin con preflight siempre que hay alguna ruta registrada (net::ERR_ABORTED)",
  "Claro's home redirect drops to plain http.": "La redirección de la portada de Claro cae a http sin cifrar.",
  "Claude Code plugin to see, review and iterate on your agent's work without leaving the terminal: show images, play videos, and run visual QA with Playwright recordings and before/after comparisons inside the Claude Code terminal.": "Plugin de Claude Code para ver, revisar e iterar sobre el trabajo de tu agente sin salir de la terminal: muestra imágenes, reproduce videos y ejecuta QA visual con grabaciones de Playwright y comparaciones de antes/después dentro de la terminal de Claude Code.",
@@ -987,6 +1004,7 @@
   "machine": true
  },
  "Community-Driven Windows Playwright Automation for Coupons": "Automatización comunitaria con Playwright en Windows para cupones",
+ "Compare area by area before you copy a competitor.": "Compara área por área antes de copiar a un competidor.",
  "Comparing AI and Google searches among the same group of users over a month to examine how their behavior differs between platforms.": "Comparación de las búsquedas con IA y en Google de un mismo grupo de usuarios durante un mes para analizar cómo difiere su comportamiento entre plataformas.",
  "Comparison card.": "Tarjeta comparativa.",
  "Compensar lets any Azure site frame it.": "Compensar deja que cualquier sitio de Azure lo enmarque.",
@@ -1092,6 +1110,7 @@
  "Descriptions and share cards on every page analyzed, Consent Mode that starts in denied, and every link opened answered.": "Descripciones y tarjetas para compartir en cada página analizada, Consent Mode que empieza en denied y todos los enlaces abiertos respondieron.",
  "Día de Muertos card:": "Tarjeta de Día de Muertos:",
  "DIAN's home page says it's in English.": "La portada de la DIAN dice que está en inglés.",
+ "Dii Pooler shows how to audit where tracking stops, compare GA4 with backend records, and report search visibility, tracked behavior and verified outcomes separately, with the measurement limits stated first.": "Dii Pooler muestra cómo auditar dónde se corta el seguimiento, comparar GA4 con los registros del backend e informar por separado de la visibilidad en búsqueda, el comportamiento medido y los resultados verificados, con los límites de la medición por delante.",
  "DMARC quarantines spoofed mail, framing is limited, and the start page reads well without JavaScript.": "DMARC pone en cuarentena el correo suplantado, el framing está limitado y la página de inicio se lee bien sin JavaScript.",
  "DMARC quarantines spoofed mail, http redirects permanently to https, and every internal link opened answered.": "DMARC pone en cuarentena el correo suplantado, http redirige de forma permanente a https y todos los enlaces internos abiertos respondieron.",
  "DMARC reject, preloaded HSTS, and Core Web Vitals that pass for real visitors.": "DMARC en reject, HSTS con preload y Core Web Vitals que aprueban con visitantes reales.",
@@ -1122,6 +1141,10 @@
  "Each page left out is listed with its…": "Cada página excluida aparece con su…",
  "Each page's canonical should be its own URL.": "El canonical de cada página debería ser su propia URL.",
  "Each post in this series pulls back the curtain on the testers and builders driving the Cypress community forward, sharing how they got here, what keeps them going, and the lessons they've picked up along the way.": "Cada publicación de esta serie muestra lo que hay detrás de los testers y creadores que impulsan a la comunidad de Cypress: cómo llegaron hasta aquí, qué los motiva a seguir y las lecciones que aprendieron en el camino.",
+ "Each wins three areas.": "Cada uno gana en tres áreas.",
+ "EAFIT ⟦1⟧, UdeA ⟦2⟧.": "EAFIT ⟦1⟧, UdeA ⟦2⟧.",
+ "EAFIT leads security, ⟦1⟧ to ⟦2⟧, SEO, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "EAFIT lidera en seguridad, ⟦1⟧ a ⟦2⟧, en SEO, ⟦3⟧ a ⟦4⟧, y en GEO, ⟦5⟧ a ⟦6⟧.",
+ "EAFIT or UdeA: which university site scored higher?": "EAFIT o UdeA: ¿qué sitio universitario obtuvo más puntos?",
  "EAFIT's pages have no main landmark.": "Las páginas de EAFIT no tienen landmark main.",
  "Ecopetrol still configures a UA ID.": "Ecopetrol aún configura un ID de UA.",
  "Educación Bogotá has no ⟦1⟧.": "Educación Bogotá no tiene ⟦1⟧.",
@@ -1130,6 +1153,9 @@
   "machine": true
  },
  "El Espectador has no main landmark.": "El Espectador no tiene landmark main.",
+ "El País ⟦1⟧, Le Monde ⟦2⟧.": "El País ⟦1⟧, Le Monde ⟦2⟧.",
+ "El País leads SEO, ⟦1⟧ to ⟦2⟧, accessibility, ⟦3⟧ to ⟦4⟧, and speed, ⟦5⟧ to ⟦6⟧.": "El País lidera en SEO, ⟦1⟧ a ⟦2⟧, en accesibilidad, ⟦3⟧ a ⟦4⟧, y en velocidad, ⟦5⟧ a ⟦6⟧.",
+ "El País or Le Monde: which newspaper site scored higher?": "El País o Le Monde: ¿qué sitio de periódico obtuvo más puntos?",
  "El País sends no security headers.": "El País no envía cabeceras de seguridad.",
  "El Tiempo still loads a retired UA tag.": "El Tiempo aún carga una etiqueta UA retirada.",
  "Emit exactly one canonical per page.": "Emite exactamente un canonical por página.",
@@ -1217,6 +1243,7 @@
  "Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.": "Encuentra el elemento Largest Contentful Paint de tu portada y sírvelo primero: precarga, tamaño, compresión.",
  "Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.": "Encuentra el toque más lento de tu página, a menudo un menú o un filtro, y divide la tarea larga que hay detrás.",
  "Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.": "Encuentra tu elemento Largest Contentful Paint, cárgalo pronto, dale tamaño y nunca le pongas lazy-load.",
+ "Find your lowest area score and fix that first.": "Busca tu puntuación más baja por área y corrígela primero.",
  "Fire it on success, not on click.": "Dispáralo al completarse, no al hacer clic.",
  "First Draft Notes:": "Notas del primer borrador:",
  "First Public Working Draft:": {
@@ -1351,6 +1378,7 @@
  "Google ignores it for ranking.": "Google la ignora para el ranking.",
  "Google ignores links that are not returned.": "Google ignora los enlaces que no son recíprocos.",
  "Google ignores links…": "Google ignora los enlaces…",
+ "Google on ⟦1⟧s, ⟦2⟧s and ranking signals": "Google sobre los ⟦1⟧, los ⟦2⟧ y las señales de ranking",
  "Google Rank Data Issues, Lighthouse Update & AI Opt-Out – SEO Pulse via ⟦1⟧, ⟦2⟧": {
   "text": "Problemas con los datos de clasificación de Google, actualización de Lighthouse y exclusión voluntaria de IA: SEO Pulse a través de ⟦1⟧, ⟦2⟧",
   "machine": true
@@ -1390,6 +1418,7 @@
  "Google Updates Spam Guide For Shared Pages, Generated Content & Apps via ⟦1⟧, ⟦2⟧": "Google actualiza su guía de spam para páginas compartidas, contenido generado y apps vía ⟦1⟧, ⟦2⟧",
  "Google…": "Google…",
  "Google's docs say a URL blocked in ⟦1⟧ can be indexed.": "La documentación de Google dice que una URL bloqueada en ⟦1⟧ puede indexarse.",
+ "Google's Gary Illyes and Cherry Prommawin explained that a ⟦1⟧ hands the old URL's ranking signals to the new one, while a ⟦2⟧ keeps the old URL in results because Google expects it back.": "Gary Illyes y Cherry Prommawin, de Google, explicaron que un ⟦1⟧ pasa las señales de ranking de la URL antigua a la nueva, mientras que un ⟦2⟧ mantiene la URL antigua en los resultados porque Google espera que vuelva.",
  "Google's John Mueller cautioned against relying on short-term AI SEO tactics and explained why traditional technical SEO remains relevant.": {
   "text": "John Mueller, de Google, advirtió contra la confianza en tácticas de SEO de IA a corto plazo y explicó por qué el SEO técnico tradicional sigue siendo relevante.",
   "machine": true
@@ -1740,6 +1769,7 @@
  "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering.": "Largest Contentful Paint marca cuándo termina de renderizarse la imagen o el bloque de texto más grande del viewport.",
  "LCP isn't.": "El LCP no lo es.",
  "LCP: when the main thing shows up.": "LCP: cuándo aparece lo principal.",
+ "Le Monde answers with analytics, ⟦1⟧ to ⟦2⟧, security, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "Le Monde responde con analítica, ⟦1⟧ a ⟦2⟧, seguridad, ⟦3⟧ a ⟦4⟧, y GEO, ⟦5⟧ a ⟦6⟧.",
  "Le Monde has a CSP that allows any https.": "Le Monde tiene una CSP que permite cualquier https.",
  "Lead each title with the page topic, then the institution, so results stand apart.": "Empieza cada título con el tema de la página y luego la institución, para que los resultados se distingan.",
  "Learn an easy ⟦1⟧-step workflow to track AI visibility and optimize your content using Moz Pro’s AI Research toolkit.": {
@@ -1765,6 +1795,9 @@
  "Let readers zoom.": "Deja que los lectores hagan zoom.",
  "LibreOffice links share without a preview.": "Los enlaces de LibreOffice se comparten sin vista previa.",
  "Light grey on white rarely makes it.": "El gris claro sobre blanco casi nunca llega.",
+ "Lighthouse ⟦1⟧ can lift your PSI score": "Lighthouse ⟦1⟧ puede subir tu puntuación en PSI",
+ "Lighthouse ⟦1⟧ can lift your PSI score; Playwright ⟦2⟧ runs tests under Bun; Google on ⟦3⟧s, ⟦4⟧s and ranking signals; Reporting SEO when GA4 sees less; AI can check an ACR, not write it.": "Lighthouse ⟦1⟧ puede subir tu puntuación en PSI; Playwright ⟦2⟧ ejecuta pruebas con Bun; Google sobre los ⟦3⟧, los ⟦4⟧ y las señales de ranking; Informar de SEO cuando GA4 ve menos; La IA puede revisar un ACR, no escribirlo.",
+ "Lighthouse ⟦1⟧, Playwright ⟦2⟧, redirects, consent gaps in GA4 and AI-written ACRs.": "Lighthouse ⟦1⟧, Playwright ⟦2⟧, redirecciones, huecos de consentimiento en GA4 y ACR escritos por IA.",
  "Lighthouse checks what software can detect, such as names, contrast and ARIA.": "Lighthouse revisa lo que un programa puede detectar, como nombres, contraste y ARIA.",
  "Lighthouse says so itself: automatic detection can only detect a subset of issues, so manual testing is also encouraged.": "Lo dice el propio Lighthouse: la detección automática solo encuentra una parte de los problemas, así que también recomienda pruebas manuales.",
  "Link in bio.": "Enlace en la bio.",
@@ -2062,6 +2095,7 @@
  "Pages declare their regional language, like es-CO, and carry rich JSON-LD.": "Las páginas declaran su idioma regional, como es-CO, y llevan JSON-LD completo.",
  "Pages name their language, Arabic included with right-to-left set, and a sitemap answers.": "Las páginas declaran su idioma, el árabe incluido con dirección de derecha a izquierda, y un sitemap responde.",
  "Pages show publish dates, some headings are phrased as questions, and the text reads without JavaScript.": "Las páginas muestran fechas de publicación, algunos encabezados están formulados como preguntas y el texto se lee sin JavaScript.",
+ "PageSpeed Insights now runs Lighthouse ⟦1⟧, which changes how it simulates FCP and LCP.": "PageSpeed Insights ya usa Lighthouse ⟦1⟧, que cambia cómo simula el FCP y el LCP.",
  "PageSpeed Insights Scores May Rise After Lighthouse Update via ⟦1⟧, ⟦2⟧": {
   "text": "Las puntuaciones de PageSpeed ​​Insights pueden aumentar después de la actualización de Lighthouse a través de ⟦1⟧, ⟦2⟧",
   "machine": true
@@ -2111,6 +2145,8 @@
  "Placeholders vanish while typing and aren't reliably announced.": "Los placeholders desaparecen al escribir y no siempre se anuncian.",
  "Plain-language local SEO guide and approval-first workflow for local businesses and the agencies that serve them.": "Guía de SEO local en lenguaje sencillo y flujo de trabajo con aprobación previa para negocios locales y las agencias que los atienden.",
  "Planeación Bogotá still answers on http.": "Planeación Bogotá aún responde por http.",
+ "Playwright ⟦1⟧ runs its test runner under Bun with bunx --bun playwright test, without watch mode.": "Playwright ⟦1⟧ ejecuta su test runner con Bun mediante bunx --bun playwright test, sin modo watch.",
+ "Playwright ⟦1⟧ runs tests under Bun": "Playwright ⟦1⟧ ejecuta pruebas con Bun",
  "Playwright drives a real browser, and axe-core is the open-source rule engine behind most automated...": {
   "text": "Playwright maneja un navegador real y axe-core es el motor de reglas de código abierto detrás de la mayoría de las automatizaciones...",
   "machine": true
@@ -2272,6 +2308,7 @@
  "Renew the TLS certificate automatically, and alert well before it expires.": "Renueva el certificado TLS automáticamente y avisa mucho antes de que caduque.",
  "Replace ALLOW-FROM with Content-Security-Policy: frame-ancestors 'self' plus the one partner you allow.": "Sustituye ALLOW-FROM por Content-Security-Policy: frame-ancestors 'self' más el único socio que permitas.",
  "Report-Only shows what would be blocked, so you can enforce with confidence a week later.": "Report-Only muestra lo que se bloquearía, así que una semana después puedes aplicarla con confianza.",
+ "Reporting SEO when GA4 sees less": "Informar de SEO cuando GA4 ve menos",
  "Request your error page and every PDF you link to.": "Pide tu página de error y cada PDF que enlazas.",
  "Research is how you answer these questions, and how you keep up with what’s changing in AI search.": {
   "text": "La investigación es la forma de responder estas preguntas y de mantenerse al día con los cambios en la búsqueda con IA.",
@@ -2414,6 +2451,7 @@
  "Security ⟦1⟧.": "Seguridad ⟦1⟧.",
  "Security card.": "Tarjeta de seguridad.",
  "Security headers are where it trails.": "Las cabeceras de seguridad son donde se queda atrás.",
+ "Security is the widest gap.": "La seguridad es la mayor diferencia.",
  "Security made the difference.": "La seguridad marcó la diferencia.",
  "Security:": "Seguridad:",
  "See your page the way Googlebot does.": "Mira tu página como la ve Googlebot.",
@@ -2910,6 +2948,8 @@
  "They are fixed there.": "Se corrigen ahí.",
  "They are the two shortcuts screen readers lean on most.": "Son los dos atajos en los que más se apoyan los lectores de pantalla.",
  "They bring readers to your pages.": "Llevan lectores a tus páginas.",
+ "They do help catch errors, such as a wrong EN ⟦1⟧ ⟦2⟧ clause or not evaluated in place of not applicable, and make the wording clearer.": "Sí ayudan a detectar errores, como una cláusula equivocada de la EN ⟦1⟧ ⟦2⟧ o not evaluated en lugar de not applicable, y a aclarar la redacción.",
+ "They recommend server-side redirects over JavaScript or meta refresh.": "Recomiendan redirecciones en el servidor antes que JavaScript o meta refresh.",
  "This Astro tutorial shows how to build an interactive blog using file-based routing, build-time and live content collections, and the islands architecture.": "Este tutorial de Astro muestra cómo crear un blog interactivo con enrutamiento basado en archivos, colecciones de contenido en tiempo de compilación y en vivo, y la arquitectura de islas.",
  "This Axe-core release also speeds up scans, makes fix instructions clearer, and begins support for EN ⟦1⟧ ⟦2⟧ v4.⟦3⟧, the pending update to the European Union’s (EU) harmonized standard for accessibility requirements.": {
   "text": "Esta versión de Axe-core también acelera los escaneos, aclara las instrucciones de reparación y comienza a admitir EN ⟦1⟧ ⟦2⟧ v4.⟦3⟧, la actualización pendiente del estándar armonizado de la Unión Europea (UE) para requisitos de accesibilidad.",
@@ -2920,7 +2960,9 @@
   "text": "Este documento del W3C del Equipo de Estrategia tiene como objetivo fomentar el debate en la comunidad técnica en TPAC, el evento comunitario del W3C más importante del año, sobre cómo la agenda técnica del W3C para la web debe evolucionar en función del aumento de los agentes de IA.",
   "machine": true
  },
+ "This week in web quality card, Nov ⟦1⟧, ⟦2⟧, five picks:": "Tarjeta de Esta semana en calidad web, ⟦1⟧ de noviembre de ⟦2⟧, cinco destacados:",
  "This week in web quality card, Oct ⟦1⟧, ⟦2⟧, five picks:": "Tarjeta de Esta semana en calidad web, ⟦1⟧ de octubre de ⟦2⟧, cinco destacados:",
+ "This week in web quality, Nov ⟦1⟧, ⟦2⟧": "Esta semana en calidad web, ⟦1⟧ de noviembre de ⟦2⟧",
  "This week in web quality, Oct ⟦1⟧, ⟦2⟧": "Esta semana en calidad web, ⟦1⟧ de octubre de ⟦2⟧",
  "This week in web quality:": "Esta semana en calidad web:",
  "This week in web quality.": "Esta semana en calidad web.",
@@ -2965,13 +3007,17 @@
  "Tunja's home page says \"Territoriales\".": "La portada de Tunja dice \"Territoriales\".",
  "Turn off version tokens (server_tokens off in nginx).": "Desactiva los tokens de versión (server_tokens off en nginx).",
  "Two capital city portals, ⟦1⟧ pages each, analyzed by the same public-page review in October ⟦2⟧.": "Dos portales de capitales, ⟦1⟧ páginas cada uno, analizados con la misma revisión de páginas públicas en octubre de ⟦2⟧.",
+ "Two close totals can hide opposite strengths.": "Dos totales parecidos pueden esconder fortalezas opuestas.",
+ "Two daily newspapers, from Spain and France, ⟦1⟧ public pages each, analyzed by the same review on the same day in October ⟦2⟧.": "Dos periódicos diarios, de España y Francia, ⟦1⟧ páginas públicas cada uno, analizados con la misma revisión el mismo día de octubre de ⟦2⟧.",
  "Two fixes for scrolling app shells, what each does to ⟦1⟧vh and windowed lists, and a ⟦2⟧ px page that held.": {
   "text": "Dos correcciones para el desplazamiento de los shells de las aplicaciones, lo que cada una hace con ⟦1⟧vh y las listas con ventanas, y una página de ⟦2⟧ px que se mantuvo.",
   "machine": true
  },
  "Two lines of text point every crawler to your map.": "Dos líneas de texto llevan a cualquier rastreador hasta tu mapa.",
+ "Two Medellín universities, EAFIT and the Universidad de Antioquia, ⟦1⟧ public pages each, analyzed by the same review on the same day in October ⟦2⟧.": "Dos universidades de Medellín, EAFIT y la Universidad de Antioquia, ⟦1⟧ páginas públicas cada una, analizadas con la misma revisión el mismo día de octubre de ⟦2⟧.",
  "Two national government portals, each built on a public design system, ⟦1⟧ pages each, analyzed in October ⟦2⟧.": "Dos portales nacionales de gobierno, ambos construidos sobre un sistema de diseño público, ⟦1⟧ páginas cada uno, analizados en octubre de ⟦2⟧.",
  "Two of Colombia's biggest banks, ⟦1⟧ public pages each, analyzed on the same day in October ⟦2⟧.": "Dos de los bancos más grandes de Colombia, ⟦1⟧ páginas públicas cada uno, analizados el mismo día de octubre de ⟦2⟧.",
+ "Two points separate them.": "Los separan dos puntos.",
  "Two sites linked to an error page that was itself missing.": "Dos sitios enlazaban a una página de error que tampoco existía.",
  "Two-year HSTS marked for preload, a CSP from default-src 'self', nosniff, and a clear description.": "HSTS de dos años marcado para preload, una CSP desde default-src 'self', nosniff y una descripción clara.",
  "Two-year HSTS marked for preload, nosniff, framing limited to its origin, and a canonical.": "HSTS de dos años marcado para preload, nosniff, framing limitado a su origen y un canonical.",
@@ -2981,6 +3027,7 @@
  "TypeScript: a sitemap no one is told about.": "TypeScript: un sitemap del que nadie sabe.",
  "UAESP's home title tops ⟦1⟧ characters.": "El título de la portada de la UAESP supera los ⟦1⟧ caracteres.",
  "Ubuntu speaks Markdown and names its nginx.": "Ubuntu habla Markdown y revela su nginx.",
+ "UdeA answers with speed, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "La UdeA responde con velocidad, ⟦1⟧ a ⟦2⟧, y accesibilidad, ⟦3⟧ a ⟦4⟧.",
  "UdeA's pages skip security headers.": "Las páginas de la UdeA omiten cabeceras de seguridad.",
  "UN Women: complete, but heavy pages.": "ONU Mujeres: completa, pero con páginas pesadas.",
  "UNESCO has ⟦1⟧, but no HSTS.": "La UNESCO tiene ⟦1⟧, pero no HSTS.",
@@ -3341,6 +3388,7 @@
  "Width and height let the browser reserve the space.": "El ancho y el alto permiten al navegador reservar el espacio.",
  "Wikimedia's home page has no h1.": "La portada de Wikimedia no tiene h1.",
  "Wikipedia leaves the snippet to search.": "Wikipedia deja el fragmento al buscador.",
+ "Will Creedle argues that general AI tools cannot test, fix or assess WCAG conformance on their own, so they should not produce a VPAT-based Accessibility Conformance Report alone.": "Will Creedle sostiene que las herramientas de IA generales no pueden probar, corregir ni evaluar la conformidad con WCAG por sí solas, así que no deberían producir solas un Accessibility Conformance Report basado en un VPAT.",
  "WIPO grants analytics before anyone agrees.": "La OMPI activa la analítica antes de que nadie acepte.",
  "With a recent update, the Google Tag Manager and Google Tag technologies are finally merging.": "Con una actualización reciente, las tecnologías de Google Tag Manager y Google Tag por fin se fusionan.",
  "With CSP (pass): content-security-policy:,   default-src 'self';,   object-src 'none'.": "Con CSP (aprobado): content-security-policy:,   default-src 'self';,   object-src 'none'.",
