@@ -2109,9 +2109,9 @@
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">' + esc(rc.t("oneLab")) + "</h3>" : "") + gauges +
       (shots.desktop || shots.mobile ? '<div class="shots' + (shotCount === 3 ? " shots-3" : "") + '">' +
-        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
-        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
-        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
+        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" width="640" height="400" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
+        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" width="384" height="512" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
+        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" width="390" height="844" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
       '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + ' <span data-note>' + esc(rc.t("pingsNote")) + "</span></p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
       '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("textNote")) + "</p>" +
@@ -2608,31 +2608,59 @@
     if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
   }
 
-  function afterScroll(done) {
-    let timer = 0;
-    const settle = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        dash.removeEventListener("scroll", settle);
-        done();
-      }, 160);
-    };
-    dash.addEventListener("scroll", settle, { passive: true });
-    settle();
+  // On phones Close is pinned over the toolbar (#2796), so the brand keeps clear of it; its width depends on the language (#2940).
+  const dashClose = document.getElementById("dash-close");
+  const dashBar = dash.querySelector(".report-toolbar");
+  if (dashClose && dashBar && window.ResizeObserver) {
+    const roomForClose = new ResizeObserver(() => {
+      const pinned = getComputedStyle(dashClose).position === "fixed";
+      const room = pinned ? Math.ceil(dashBar.getBoundingClientRect().right - dashClose.getBoundingClientRect().left) : 0;
+      dash.style.setProperty("--close-room", Math.max(0, room) + "px");
+    });
+    roomForClose.observe(dashClose);
+    roomForClose.observe(dashBar);
   }
 
-  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
-  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  const TAKEOVER = ["wheel", "touchstart", "keydown", "pointerdown"];
+
+  // Content above a section can still change size during a smooth scroll and push its heading away, so once the scroll
+  // ends the heading is put back in place (at most twice) unless the reader has taken over the scroll. A busy main thread
+  // holds scroll events back for longer than any quiet spell, so where scrollend exists only it marks the end (#2938).
+  function keepInPlace(heading) {
+    const ends = "onscrollend" in window;
+    const start = dash.scrollTop;
+    let timer = 0;
+    let tries = 2;
+    const off = () => heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+    const stop = () => {
+      clearTimeout(timer);
+      TAKEOVER.forEach((type) => dash.removeEventListener(type, stop));
+      dash.removeEventListener("scroll", onScroll);
+      dash.removeEventListener("scrollend", settle);
+    };
+    const settle = () => {
+      clearTimeout(timer);
+      if (Math.abs(off()) <= 2 || !tries--) return stop();
+      heading.scrollIntoView({ block: "start" });
+      timer = setTimeout(stop, 500);
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      if (!ends) timer = setTimeout(settle, 160);
+    };
+    TAKEOVER.forEach((type) => dash.addEventListener(type, stop, { passive: true }));
+    dash.addEventListener("scroll", onScroll, { passive: true });
+    if (ends) dash.addEventListener("scrollend", settle);
+    timer = setTimeout(() => { if (!ends || dash.scrollTop === start) settle(); }, 160);
+  }
+
   function jumpTo(item) {
     if (item.panel.hidden) setFold(item, true);
     measureBar();
     const heading = item.button.parentElement;
     item.button.focus({ preventScroll: true });
     heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
-    afterScroll(() => {
-      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
-      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
-    });
+    keepInPlace(heading);
   }
 
   function paintTop() {
