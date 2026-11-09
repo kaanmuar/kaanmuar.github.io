@@ -38,6 +38,7 @@ const JOBS = [
   { job: "engagementDailyReport", cron: "30 20 * * *", gap: 26, what: "Social engagement daily report: posts read, actions planned, the reply funnel, topics and top posts, by mail and push" },
   { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before, and the report replies' results ticket on the board (#2471)" },
   { job: "engagementMonthlyReport", cron: "10 8 1 * *", gap: 31 * 24 + 2, what: "Social engagement monthly report for the month before, against the one before it" },
+  { job: "ownerTags", cron: "15 10 * * *", gap: 26, what: "Owner tags (#2633): read reviewed sites' profile links and Gemini's suggestions of the accounts around them (pushed for approval), then tag report owners and approved accounts in comments under our report posts, and reply under owners' latest posts (Bluesky, Mastodon and YouTube here; X, Instagram, Threads, Facebook, LinkedIn and TikTok through the Mac's agent)" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },
@@ -50,9 +51,10 @@ const JOBS = [
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
   // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 08:23, 04:00, 05:00 and 01:00 Bogotá). GitHub
   // starts them hours late, so nothing that must happen at a set time hangs on them.
-  { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts (backup slots)" },
+  { job: "auto-live-reports.yml", host: "github", cron: "41 11 * * *", gap: 26, what: "Publish yesterday's reviews as Live Reports and social posts, and post the batch to the Telegram channel @qalab_live (backup slots)" },
   { job: "pagespeed-daily.yml", host: "github", cron: "0 6 * * *", gap: 30, what: "PageSpeed on every sitemap page, mobile and desktop; safe fixes and Gemini's fixes for pages under 90 go to PRs (Jarvis merges the safe ones that score up on a 2 h countdown, the rest wait in Proposals) (#1978)" },
   { job: "open-social.yml", host: "github", cron: "13,43 * * * *", gap: 6, what: "Post the slots that have come to Bluesky and Mastodon" },
+  { job: "reddit-live.yml", host: "github", cron: "50 15 * * *", gap: 26, what: "Upload the Reddit app with the day's Live Reports (after each batch; this slot is the backup); the app posts and pins the batch in r/QALabLiveReports at 16:20 UTC" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "field-sweep.yml", host: "github", cron: "23 13 * * *", gap: 50, what: "Propose standout items from the field for the social hub (the owner approves them in admin)" },
   { job: "sweep-roundup.yml", host: "github", cron: "29 14 * * 1", gap: 8 * 24, what: "Draft the weekly neutral sweep round-up post (the owner approves it in Jarvis or admin)" },

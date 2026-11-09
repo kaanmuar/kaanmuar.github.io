@@ -1,0 +1,37 @@
+Text,Image URL,Tags,Posting Time
+"Scored 68 of 100. The gap: the https redirect.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
+
+The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
+
+One automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-servicesaustralia-gov-au&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-servicesaustralia-gov-au
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #DevOps #QA #HTTPS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/01-u-servicesaustralia-gov-au.jpg","","2026-11-08 07:30"
+"erikafashion.sk: 63. The gap: button names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 7 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-erikafashion-sk&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-erikafashion-sk
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #Programming #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/02-u-erikafashion-sk.jpg","","2026-11-09 08:10"
+"3 natural competitors. konyalisaat.com.tr leads: 73.
+
+saatvesaat.com.tr leads in SEO, Security; multiples.vc leads in GEO, Analytics, Performance; konyalisaat.com.tr leads in Accessibility.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 7 Nov 2026 of saatvesaat.com.tr, konyalisaat.com.tr, multiples.vc, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-saatvesaat-com-tr&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-saatvesaat-com-tr
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #WebPerf #WebDevelopment #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/03-vs-saatvesaat-com-tr.jpg","","2026-11-10 08:00"

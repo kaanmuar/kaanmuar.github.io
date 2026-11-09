@@ -1,0 +1,184 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-usehelios-ai": {
+   "lang": "de",
+   "strings": {
+    "title.0": "usehelios.ai: 75.",
+    "title.1": "*The gap: the sitemap host.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 31 sitemap URLs point at another host or scheme.",
+    "action": "Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 5 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "usehelios.ai · 20 pages analyzed · 5 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 31 sitemap URLs point at another host or scheme.\n\nLesson: Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.\n\nOne automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-usehelios-ai&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usehelios-ai\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#SEO #SRE #Automation #QA #Sitemap #RobotsTxt #Coding #Programming #GoogleSearch #SDET #SearchConsole #QAlab"
+   }
+  },
+  "u-ruvo-com": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "ruvo.com: 79.",
+    "title.1": "*The gap: the CSP.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.",
+    "action": "Tighten the content security policy one directive at a time, starting from default-src 'self'.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 5 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "ruvo.com · 20 pages analyzed · 5 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.\n\nLesson: Tighten the content security policy one directive at a time, starting from default-src 'self'.\n\nOne automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ruvo-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #Vulnerability #DevOps #QA #CSP #HTTPHeaders #Coding #Programming #DevSecOps #SDET #CyberSecurity #QAlab"
+   }
+  },
+  "u-mono-la": {
+   "lang": "it",
+   "strings": {
+    "title.0": "mono.la: 81.",
+    "title.1": "*The gap: framing.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.",
+    "action": "Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 5 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "mono.la · 14 pages analyzed · 5 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.\n\nLesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.\n\nOne automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-mono-la&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mono-la\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #CyberSecurity #Vulnerability #QA #Clickjacking #HTTPHeaders #TechTips #WebDevelopment #SoftwareTesting #QualityAssurance #InfoSec #QAlab"
+   }
+  },
+  "u-conservatoriodeltolima-edu-co": {
+   "lang": "en",
+   "strings": {
+    "title.0": "Scored 42 of 100.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "conservatoriodeltolima.edu.co · 20 pages analyzed · 6 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 6 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-conservatoriodeltolima-edu-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-conservatoriodeltolima-edu-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #CyberSecurity #Vulnerability #QA #HSTS #HTTPS #WebDevelopment #Coding #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "u-footlocker-com": {
+   "lang": "es",
+   "strings": {
+    "title.0": "footlocker.com: 80.",
+    "title.1": "*The gap: schema fields.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 structured data items miss a property Google expects.",
+    "action": "Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "footlocker.com · 20 pages analyzed · 6 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 structured data items miss a property Google expects.\n\nLesson: Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.\n\nOne automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-footlocker-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-footlocker-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#StructuredData #SoftwareTesting #DevOps #QA #SEO #GEO #WebDevelopment #Coding #ContentMarketing #AnswerEngineOptimization #SDET #QAlab"
+   }
+  },
+  "u-kra-co-kr": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "kra.co.kr: 41.",
+    "title.1": "*The gap: page titles.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 1 page has no title.",
+    "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "kra.co.kr · 20 pages analyzed · 6 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 1 page has no title.\n\nLesson: Give every page a unique title of about 60 characters: the page first, the site second.\n\nOne automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-kra-co-kr&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kra-co-kr\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#SEO #DevOps #SRE #QA #Titles #SERP #TechTips #WebDevelopment #ContentMarketing #QAEngineer #SDET #QAlab"
+   }
+  },
+  "vs-td-com": {
+   "lang": "de",
+   "strings": {
+    "live": "u-td-com",
+    "title.0": "td.com vs desjardins.com.",
+    "title.1": "*desjardins.com leads: 81.*",
+    "body": "td.com leads in SEO, Analytics; desjardins.com leads in GEO, Security, Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "td.com",
+    "visual.rows.1.0": "desjardins.com",
+    "visual.note": "Natural competitors found on the open web · 6 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "td.com leads in SEO, Analytics; desjardins.com leads in GEO, Security, Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 6 Nov 2026 of td.com, desjardins.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-td-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-td-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SRE #QA #WebPerf #WebDevelopment #Coding #DigitalMarketing #SiteSpeed #SDET #GoogleSearch #QAlab"
+   }
+  },
+  "vs-okta-com": {
+   "lang": "fr",
+   "strings": {
+    "live": "u-okta-com",
+    "title.0": "okta.com vs rippling.com.",
+    "title.1": "*rippling.com leads: 66.*",
+    "body": "rippling.com leads in SEO, Analytics, Accessibility; okta.com leads in GEO, Security, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "okta.com",
+    "visual.rows.1.0": "rippling.com",
+    "visual.note": "Natural competitors found on the open web · 6 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "rippling.com leads in SEO, Analytics, Accessibility; okta.com leads in GEO, Security, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 6 Nov 2026 of okta.com, rippling.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-okta-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-okta-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #DevOps #QA #WebPerf #WebDevelopment #Coding #ContentMarketing #Lighthouse #QAEngineer #SiteSpeed #QAlab"
+   }
+  }
+ }
+}

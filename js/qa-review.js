@@ -4,7 +4,7 @@
   const SHOWN_KEY = "qa-review-shown";
   const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-11-02";
+  const TERMS_VERSION = "2026-11-04b";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -123,9 +123,11 @@
     return !!(window.ReviewAuth && ReviewAuth.signedIn());
   }
 
+  // Review stays pressable while signed out: pressing it asks for the terms, then says to sign in.
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
-      if (!activeRun) reviewBtn.disabled = !on;
+      const name = document.getElementById("name");
+      if (on && name && !name.value.trim() && ReviewAuth.who().name) name.value = ReviewAuth.who().name;
     });
   }
 
@@ -140,7 +142,7 @@
     reasonBox.disabled = true;
     syncSection();
     stopBtn.disabled = true;
-    reviewBtn.disabled = !signedIn();
+    reviewBtn.disabled = false;
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
@@ -157,7 +159,8 @@
     gate.hidden = false;
     gate.classList.remove("is-leaving");
     document.body.classList.add("gate-open");
-    gate.querySelector(".gate-card").focus();
+    gate.scrollTop = 0;
+    gate.querySelector(".gate-card").focus({ preventScroll: true });
   }
 
   function closeGate() {
@@ -295,6 +298,8 @@
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
     paintTermGroups();
+    // On a phone Accept sits below the cards; once everything is ticked it comes into view.
+    if (!accept.disabled) accept.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
   paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
@@ -330,16 +335,56 @@
       cases: names.length > 0,
       scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
+    const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
       const ok = !!done[group.dataset.step];
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+      if (!ok) missing.push(group);
     });
+    paintNeeds(missing);
     const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
     const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
     if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
+  // The steps still open before Review, each a button to its step, labelled with the step's own title.
+  function paintNeeds(groups) {
+    const box = document.getElementById("review-needs");
+    if (!box || !window.QAReviewReportCopy) return;
+    box.hidden = !groups.length;
+    if (!groups.length) return;
+    const parts = QAReviewReportCopy.t("reviewNeeds").split("{steps}");
+    box.textContent = parts[0];
+    groups.forEach((group) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.step = group.dataset.step;
+      button.textContent = (Array.from(group.parentNode.querySelectorAll(".req-group")).indexOf(group) + 1) + " " + group.querySelector(".tg-title").textContent;
+      box.appendChild(button);
+    });
+    box.appendChild(document.createTextNode(parts[1] || ""));
+  }
+
+  function goToStep(step) {
+    const group = reviewForm.querySelector('.req-group[data-step="' + step + '"]');
+    if (!group) return;
+    group.open = true;
+    if (step === "you" && !signedIn() && window.ReviewAuth) {
+      ReviewAuth.focus();
+      return;
+    }
+    const target = [...group.querySelectorAll("input:not([type=hidden]), textarea")].find((el) => !el.disabled && !el.readOnly && el.offsetParent && !(el.type === "radio" && reviewForm.querySelector('input[name="' + el.name + '"]:checked')) && !(el.type !== "radio" && el.type !== "checkbox" && el.value.trim()));
+    group.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  const needsBox = document.getElementById("review-needs");
+  if (needsBox) needsBox.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-step]");
+    if (button) goToStep(button.dataset.step);
+  });
+
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
   reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
@@ -382,6 +427,44 @@
     urlInput.value = prefill;
     urlInput.dispatchEvent(new Event("input"));
   }
+
+  // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
+  // It takes the same address as the request's field, and the two stay in step.
+  const stageStart = document.getElementById("stage-start");
+  const stageUrl = document.getElementById("stage-url");
+  const stageError = document.getElementById("stage-url-error");
+  function stageInvalid(message) {
+    stageError.textContent = message;
+    document.getElementById("stage-url-field").classList.toggle("invalid", !!message);
+  }
+  if (stageUrl && urlInput.value) stageUrl.value = urlInput.value;
+  if (stageUrl) {
+    stageUrl.addEventListener("input", () => {
+      const next = stageUrl.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== stageUrl.value) stageUrl.value = next;
+      stageInvalid("");
+    });
+    urlInput.addEventListener("input", () => { if (stageUrl.value !== urlInput.value) stageUrl.value = urlInput.value; });
+  }
+  if (stageStart) stageStart.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value || /\s/.test(value)) {
+      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.t("urlNeeded") : "Enter a public page after https://.");
+      stageUrl.focus();
+      return;
+    }
+    stageInvalid("");
+    urlInput.value = value;
+    urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
+    const next = reviewForm.querySelector('.req-group:not(.done):not([data-step="page"])');
+    if (next) goToStep(next.dataset.step);
+    else {
+      document.getElementById("intake").scrollIntoView({ block: "end", behavior: "smooth" });
+      reviewBtn.focus({ preventScroll: true });
+    }
+  });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
@@ -1691,7 +1774,7 @@
       activeRun = "";
       comparePool = null;
       hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
     endComparePool(compare, pool, confirmed);
@@ -2804,6 +2887,13 @@
     return donePayload;
   }
 
+  // Signed out, sign-in is the step to point at, before the browser's own required-field bubbles on the rest.
+  reviewBtn.addEventListener("click", (event) => {
+    if (activeRun || signedIn()) return;
+    event.preventDefault();
+    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  });
+
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (activeRun) return;
@@ -2813,7 +2903,7 @@
     }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
-      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      setStatus(rc.t("signInToRun"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
@@ -2932,7 +3022,7 @@
       runLog.classList.remove("is-live");
       activeRun = "";
       if (compare) hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
   });
@@ -3383,6 +3473,9 @@
     return showTotal(rc.t("totalCompareTitle"), lines.concat(sumLines(quote)));
   }
 
+  // The button that opened the sample: it is disabled while the sample loads, so focus has left it by then.
+  let dashOpener = null;
+
   function closeDashboard() {
     dash.classList.remove("open");
     document.body.style.overflow = "";
@@ -3400,6 +3493,7 @@
       const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
       const body = await res.json();
+      dashOpener = button || null;
       render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
     } catch (error) {
       if (button) button.textContent = "The sample could not be opened";
@@ -3420,6 +3514,31 @@
   document.getElementById("dash-close").addEventListener("click", closeDashboard);
   dash.addEventListener("click", (event) => {
     if (event.target === dash) closeDashboard();
+  });
+  // The report opens from several places; focus goes into it on open, unless a field or a control in the report already
+  // holds it (the sign-in box, the competitor's address), and back on close.
+  let dashReturn = null;
+  new MutationObserver(() => {
+    const open = dash.classList.contains("open");
+    if (open && !dashReturn) {
+      const before = document.activeElement;
+      dashReturn = dashOpener || before || document.body;
+      dashOpener = null;
+      setTimeout(() => {
+        const now = document.activeElement;
+        const loose = !now || now === document.body || (now === before && now.tagName === "BUTTON" && !dash.contains(now));
+        if (dash.classList.contains("open") && loose) dash.querySelector(".dash-modal").focus({ preventScroll: true });
+      }, 0);
+    } else if (!open && dashReturn) {
+      if (dashReturn.isConnected && dashReturn !== document.body) dashReturn.focus({ preventScroll: true });
+      dashReturn = null;
+    }
+  }).observe(dash, { attributes: true, attributeFilter: ["class"] });
+  dash.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || event.defaultPrevented || !dash.classList.contains("open")) return;
+    if (!event.target.closest(".dash-modal") || event.target.closest("#ask-panel")) return;
+    if (document.querySelector(".gate:not([hidden])")) return;
+    closeDashboard();
   });
   document.getElementById("pay-close").addEventListener("click", () => { payBox.hidden = true; });
   document.getElementById("run-pay-close").addEventListener("click", () => { runPay.hidden = true; });
@@ -3768,7 +3887,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
+    // No auto-start: on a first visit it scrolled away from the hero's address field and covered the consent buttons on phones.
   }
 
   bootLanguageAndTour();

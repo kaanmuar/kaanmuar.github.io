@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
@@ -64,10 +65,14 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
-    val queue = s.snapshot.obj("external").obj("social").objs("queue")
+    val social = s.snapshot.obj("external").obj("social")
+    val queue = social.objs("queue")
+    val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
     Panel("Queue by channel") {
-        if (queue.isEmpty()) Muted("Pull down to read the Buffer and Facebook ledgers.")
-        queue.forEach { c -> Channel(c) }
+        if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
+        queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
+        if (queue.isNotEmpty()) Muted("Numbers add up the posts sent in the range, as the morning run read them. On Telegram likes are reactions, on Reddit the post score. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live channel: the post of each Live Reports batch and the campaign posts (tips, series, skits, launch) in their own language; its members are read each morning. Reddit is r/QALabLiveReports: the app's daily batch post and the campaign posts, as links to their hub pages; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
+        counts.values.forEach { m -> m.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) } }
     }
 
     var confirm by remember { mutableStateOf(false) }
@@ -88,7 +93,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(
@@ -111,8 +116,29 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
 }
 
+/** A live channel's members from the social snapshot (Telegram #2570, Reddit #2571), as the web hub's channel rows show them. */
+object ChannelMembers {
+    data class Members(val text: String, val change: Int?)
+
+    fun members(t: JsonObject?): Members? {
+        val now = t.num("members") ?: return null
+        val change = t.num("change")?.toInt()
+        val since = t.obj("from").str("date")
+        val text = fmt(now) + " members" + if (change != null && since != null) " · " + (if (change > 0) "+" else "") + change + " since " + since else ""
+        return Members(text, change)
+    }
+}
+
+/** A channel's summed post numbers (#2602), as the web hub's Numbers column shows them. */
+object ChannelNumbers {
+    private val labels = listOf("impressions", "views", "likes", "comments")
+
+    fun text(n: JsonObject?): String? =
+        labels.mapNotNull { k -> n.num(k)?.takeIf { it > 0 }?.let { fmt(it) + " " + k } }.joinToString(" · ").ifEmpty { null }
+}
+
 @Composable
-private fun Channel(c: JsonObject) {
+private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
     val next = c.objs("next")
     val failed = c.num("failed")?.toInt() ?: 0
     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
@@ -128,6 +154,8 @@ private fun Channel(c: JsonObject) {
             val sent = c.num("sent")?.toInt() ?: 0
             Text("$sent sent" + (if (failed > 0) " · $failed failed" else "") + (c.obj("last")?.str("at")?.let { " · last " + (ago(it) ?: "").lowercase() } ?: ""),
                 color = if (failed > 0) J.amber else J.muted, fontSize = 11.sp)
+            ChannelNumbers.text(c.obj("numbers"))?.let { Text(it, color = J.cyan, fontSize = 11.sp) }
+            members?.let { m -> Text(m.text, color = when { (m.change ?: 0) > 0 -> J.green; (m.change ?: 0) < 0 -> J.pink; else -> J.muted }, fontSize = 11.sp) }
         }
     }
 }

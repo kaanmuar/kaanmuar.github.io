@@ -260,3 +260,113 @@ test("a paused engagement hands the Mac nothing", async () => {
   assert.equal(q.paused, true);
   assert.equal(q.tasks.length, 0);
 });
+
+test("the Mac's result for an owner-tags comment is taken, so a posted comment is never queued again", async () => {
+  const T = require("../../functions/owner-tags.js");
+  const db = fakeDb();
+  const key = T.docKey("tags", "runs-100/82-metrobogota", "instagram", 0);
+  const doc = T.engagementDoc({ network: "instagram", id: "https://www.instagram.com/p/ABC/", url: "https://www.instagram.com/p/ABC/" }, "@metrodebogota ya salió", "es", { kind: "tags", post: "runs-100/82-metrobogota", part: 0, mentions: [] }, NOW);
+  await db.collection("engagement_posts").doc(key).set(Object.assign({ key }, doc));
+  const out = await M.result(deps(db), { key, action: "reply", ok: true, url: "https://www.instagram.com/p/ABC/c/1/" });
+  assert.equal(out.status, "posted");
+  assert.equal((await db.collection("engagement_posts").doc(key).get()).data().actions.reply.status, "posted");
+});
+
+test("owner tags on the Mac: menu mentions go with the comment, an owner reply finds the latest post on the profile, and the result keeps what came of both", async () => {
+  const T = require("../../functions/owner-tags.js");
+  const db = fakeDb();
+  const save = async (key, doc) => { await db.collection("engagement_posts").doc(key).set(Object.assign({ key }, doc)); return key; };
+  await db.collection("owner_tag_accounts").doc("facebook:upbcolombia").set({ network: "facebook", handle: "UPBColombia", name: "", kind: "owner", status: "approved", scopes: ["report:upb"] });
+  await db.collection("owner_tag_accounts").doc("facebook:cognizant").set({ network: "facebook", handle: "Cognizant", name: "Cognizant", kind: "related", status: "approved", scopes: ["report:upb"] });
+  const menu = [{ token: "@UPBColombia", handle: "UPBColombia", name: "" }, { token: "@Cognizant", handle: "Cognizant", name: "Cognizant" }];
+  const post = "https://www.facebook.com/qalaburlreview/posts/pfbid01";
+  const tagKey = await save(T.docKey("tags", "runs-1/upb", "facebook", 0), T.engagementDoc({ network: "facebook", id: post, url: post }, "@UPBColombia ya salió la revisión: https://l.ink cc @Cognizant", "es",
+    { kind: "tags", post: "runs-1/upb", part: 0, mentions: ["facebook:upbcolombia", "facebook:cognizant"], menu }, NOW));
+  const replyKey = await save(T.docKey("reply", "upb", "x", "upb"), T.engagementDoc({ network: "x", id: "", url: "https://x.com/UPB", author: { handle: "UPB" } }, "Publicamos una revisión QA pública de upb.edu.co, gratis: https://l.ink", "es",
+    { kind: "reply", report: "upb", account: "x:upb", latest: true }, NOW));
+  const staleKey = await save(T.docKey("reply", "upb", "instagram", "upb"), T.engagementDoc({ network: "instagram", id: "", url: "https://www.instagram.com/upb/", author: { handle: "upb" } }, "Publicamos", "es",
+    { kind: "reply", report: "upb", account: "instagram:upb", latest: true }, NOW));
+
+  const q = await M.queue(deps(db), { networks: ["facebook", "x", "instagram"] });
+  const tag = q.tasks.find((t) => t.key === tagKey);
+  assert.equal(tag.more, true);
+  assert.deepEqual(tag.mentions, menu);
+  assert.equal(tag.latest, undefined);
+  const rep = q.tasks.find((t) => t.key === replyKey);
+  assert.equal(rep.latest, true);
+  assert.equal(rep.url, "https://x.com/UPB");
+  assert.equal(rep.id, "");
+  assert.equal(rep.author.handle, "UPB");
+  assert.equal(rep.since, new Date(NOW - 30 * 24 * HOUR).toISOString());
+  assert.equal(rep.more, undefined, "an owner reply checks that we have not answered the post already");
+  assert.equal(rep.mentions, undefined);
+
+  await M.result(deps(db), { key: tagKey, action: "reply", ok: true, url: post, mentions: [
+    { token: "@UPBColombia", handle: "UPBColombia", name: "Universidad Pontificia Bolivariana", linked: true }, { token: "@Cognizant", handle: "Cognizant", name: "Cognizant", linked: false }
+  ] });
+  const tagged = db.data.get("engagement_posts/" + tagKey);
+  assert.equal(tagged.actions.reply.status, "posted");
+  assert.deepEqual(tagged.ownerTags.linked, ["@UPBColombia"]);
+  assert.deepEqual(tagged.ownerTags.plain, ["@Cognizant"]);
+  assert.equal(db.data.get("owner_tag_accounts/facebook:upbcolombia").name, "Universidad Pontificia Bolivariana", "the name the agent read is kept for the next menu");
+
+  const status = "https://x.com/UPB/status/1985";
+  await M.result(deps(db), { key: replyKey, action: "reply", ok: true, url: status, target: { id: "1985", url: status } });
+  const answered = db.data.get("engagement_posts/" + replyKey);
+  assert.equal(answered.actions.reply.status, "posted");
+  assert.equal(answered.id, "1985");
+  assert.equal(answered.url, status);
+  assert.equal(answered.ownerTags.profile, "https://x.com/UPB");
+
+  await M.result(deps(db), { key: staleKey, action: "reply", ok: false, none: true, error: "No post of theirs since 2026-10-03 on their profile." });
+  const stale = db.data.get("engagement_posts/" + staleKey);
+  assert.equal(stale.actions.reply.status, "failed", "at once: owner-tags queues it again after a week");
+  assert.equal(stale.ownerTags.none, new Date(NOW).toISOString());
+  assert.equal(stale.url, "https://www.instagram.com/upb/");
+});
+
+test("the agent's owner-tag helpers: a draft cut at its mention tokens, the menu entry that is the account, and an owner's newest own post", () => {
+  const N = require("../../scripts/engagement-browser/networks.js");
+  const metro = { token: "@metro", handle: "metro", name: "Metro" };
+  const bogota = { token: "@metrodebogota", handle: "company/metrodebogota", name: "Metro de Bogotá" };
+  assert.deepEqual(N.splitDraft("@metrodebogota ya salió: https://l.ink cc @metro.", [metro, bogota]), [
+    { mention: bogota }, { text: " ya salió: https://l.ink cc " }, { mention: metro }, { text: "." }
+  ], "@metro is not the start of @metrodebogota");
+  assert.deepEqual(N.splitDraft("no tokens", [metro]), [{ text: "no tokens" }]);
+
+  const options = [
+    { text: "Metro Ciudad\nPage · Transit", href: "" },
+    { text: "METRO DE BOGOTÁ S.A.\nCompany", href: "https://www.linkedin.com/company/metro-bogota-sa/" },
+    { text: "Metro de Bogotá\nGovernment agency", href: "" },
+    { text: "Metrovía\n@metrodebogota_oficial", href: "" }
+  ];
+  assert.equal(N.pickOption(options, bogota), 2, "the name, accents and case aside");
+  assert.equal(N.pickOption(options, { handle: "metro-bogota-sa", name: "" }), 1, "the vanity in the entry's link");
+  assert.equal(N.pickOption([{ text: "Metro TikTok\nmetro_tt", href: "" }, { text: "Other\n@metrodebogota", href: "" }], { handle: "metrodebogota", name: "" }), 1, "TikTok shows the handle");
+  assert.equal(N.pickOption(options, { handle: "nobody", name: "Nadie" }), -1);
+
+  const since = Date.parse("2026-10-06T00:00:00Z");
+  const posts = [
+    { url: "pinned", at: "2026-11-04T00:00:00Z", pinned: true },
+    { url: "repost", at: "2026-11-03T00:00:00Z", repost: true },
+    { url: "older", at: "2026-10-20T00:00:00Z" },
+    { url: "newest", at: "2026-11-01T00:00:00Z" },
+    { url: "stale", at: "2026-09-01T00:00:00Z" },
+    { url: "undated", at: "" }
+  ];
+  assert.equal(N.newest(posts, since).url, "newest");
+  assert.equal(N.newest(posts.filter((p) => p.url === "stale"), since), null, "nothing within the days is nothing to answer");
+
+  assert.equal(N.liAt("urn:li:activity:7523410117875273728"), new Date(Number(7523410117875273728n >> 22n)).toISOString());
+  assert.equal(N.liAt("urn:li:activity:abc"), "");
+  const fb = { data: { node: { timeline: [
+    { story: { creation_time: 1762300000, url: "https://www.facebook.com/UPBColombia/posts/pfbid0abc?__cft__=x" } },
+    { story: { creation_time: 1762400000, url: "https://www.facebook.com/OtherPage/posts/pfbid0def" } },
+    { story: { creation_time: 1762200000, url: "https://www.facebook.com/permalink.php?story_fbid=55&id=99&ref=x" } },
+    { story: { creation_time: 1762300000, url: "https://www.facebook.com/UPBColombia/photos/a.1/2" } }
+  ] } } };
+  assert.deepEqual(N.fbStories(fb, "upbcolombia").map((s) => [s.url, s.repost]), [
+    ["https://www.facebook.com/UPBColombia/posts/pfbid0abc", false], ["https://www.facebook.com/OtherPage/posts/pfbid0def", true], ["https://www.facebook.com/permalink.php?story_fbid=55&id=99", false]
+  ]);
+  assert.equal(N.igMedia({ a: [{ code: "C1", taken_at: 1, user: { username: "upb" } }] }, new Map()).get("C1").user.username, "upb");
+});

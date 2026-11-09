@@ -19,6 +19,9 @@ test("a caption that already links its hub post, or has no text, is left as it i
   assert.equal(gate.withHubLink(linked, Object.assign({ network: "x" }, at)), linked);
   assert.equal(gate.withHubLink("Also at carlosandmunoz.com/social/auto-2026-10-23/01-u-grupoexito-com-co.html", Object.assign({ network: "x" }, at)),
     "Also at carlosandmunoz.com/social/auto-2026-10-23/01-u-grupoexito-com-co.html");
+  const short = "Picks: carlosandmunoz.com/social/auto-2026-10-23/01-u-grupoexito-com-co?utm_source=x";
+  assert.equal(gate.withHubLink(short, Object.assign({ network: "x" }, at)), short);
+  assert.notEqual(gate.withHubLink("carlosandmunoz.com/social/auto-2026-10-23/01-u-grupoexito-com-co-2", Object.assign({ network: "x" }, at)), "carlosandmunoz.com/social/auto-2026-10-23/01-u-grupoexito-com-co-2");
   assert.equal(gate.withHubLink("", Object.assign({ network: "x" }, at)), "");
   assert.equal(gate.withHubLink(undefined, Object.assign({ network: "x" }, at)), undefined);
 });
@@ -47,8 +50,8 @@ test("buffer-queue tags each channel's caption with its own network and leaves t
   const text = (service) => inputsFor({ id: "c", service }, at.slug, cap, "https://site/media", "https://clips", {}, at.batch).map(({ slot, input }) => [slot, input.text]);
   const source = (t) => (t.match(/utm_source=([a-z]+)&utm_medium=social&utm_campaign=auto-2026-10-23$/) || [])[1];
   assert.equal(source(text("twitter")[0][1]), "x");
-  ["threads", "linkedin", "facebook", "tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
-  ["bluesky", "mastodon"].forEach((service) => assert.deepEqual(text(service), [], service + " is posted by open-social-queue.js"));
+  ["linkedin", "facebook", "tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
+  ["threads", "bluesky", "mastodon"].forEach((service) => assert.deepEqual(text(service), [], service + " is posted by open-social-queue.js"));
   const ig = text("instagram");
   assert.equal(source(ig[0][1]), "instagram");
   assert.deepEqual(ig[1], ["instagram-story", "Story"]);

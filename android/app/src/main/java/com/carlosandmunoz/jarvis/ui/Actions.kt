@@ -55,11 +55,11 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
     "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
     "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
-    "gh-agent" to "Launch a Cursor fix agent")
+    "gh-agent" to "Launch a Cursor fix agent", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
 private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign",
-    "gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-delete-branch", "gh-remove-worktree")
+    "gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-delete-branch", "gh-remove-worktree", "owner-tags-approve-verified", "owner-tags-block")
 
 /** The countdown (#1977): risky actions Jarvis queued, which run when their time ends unless cancelled. */
 object Countdowns {

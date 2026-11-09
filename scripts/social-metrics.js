@@ -8,9 +8,15 @@
    A network without its key, or one that fails, keeps the numbers of the last run, so a bad morning blanks nothing.
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
+   Telegram's channel members come from the Bot API (getChatMemberCount, TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL, #2570),
+   one point a day, so Jarvis shows the count and its change over the selected range. Telegram posts' views and reactions
+   come from each post's public embed, and Reddit posts' score and comments from reddit.json numbers (#2602).
+
    { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, comments } } },
-     pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } } }
-   pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460). */
+     pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } },
+     channels: { telegram: { chat: "@qalab_live", members, at: "<ISO>", history: [{ date: "YYYY-MM-DD", members }], skipped?, error? } } }
+   pages is this run's word from each Facebook Page; Jarvis reads it to say why a Page has no numbers (#2460).
+   A skipped or failed Telegram run keeps the last count and history and says why in skipped or error. */
 
 const fs = require("fs");
 const path = require("path");
@@ -20,6 +26,8 @@ const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const OUT = "assets/social/metrics.json";
+const TELEGRAM_LEDGER = "assets/social/telegram.json";
+const REDDIT_LEDGER = "assets/social/reddit.json";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const METRICS = ["impressions", "views", "likes", "comments"];
 const CHUNK = 20;
@@ -32,7 +40,9 @@ function read(file = OUT) {
   const full = path.join(ROOT, file);
   if (!fs.existsSync(full)) return empty();
   const data = JSON.parse(fs.readFileSync(full, "utf8"));
-  return { version: 1, updatedAt: String(data.updatedAt || ""), posts: data.posts && typeof data.posts === "object" ? data.posts : {} };
+  const out = { version: 1, updatedAt: String(data.updatedAt || ""), posts: data.posts && typeof data.posts === "object" ? data.posts : {} };
+  if (data.channels && typeof data.channels === "object") out.channels = data.channels;
+  return out;
 }
 
 // Counts above zero only; a network that reports nothing for a post leaves it out.
@@ -136,8 +146,89 @@ async function facebookNumbers(entries, token, request, report = {}) {
   return found;
 }
 
-// Fresh numbers replace a network's old ones; networks not asked this run keep theirs.
-function merge(previous, found, updatedAt, pages) {
+const TELEGRAM_API = "https://api.telegram.org/bot";
+const HISTORY_DAYS = 400;
+
+async function telegramMembers(token, chat, request) {
+  const res = await request(TELEGRAM_API + token + "/getChatMemberCount?chat_id=" + encodeURIComponent(chat));
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.ok) throw new Error("Telegram " + res.status + ": " + String(json.description || "no answer").slice(0, 200));
+  const members = Math.round(Number(json.result));
+  if (!Number.isFinite(members) || members < 0) throw new Error("Telegram answered no member count");
+  return members;
+}
+
+// One point per UTC day: a second run the same day replaces that day's count. Without a fresh count (read.members
+// missing) the last count and history stay and read.skipped or read.error says why.
+function telegramEntry(previous, read, at) {
+  const old = previous && typeof previous === "object" ? previous : {};
+  const history = (Array.isArray(old.history) ? old.history : []).filter((p) => p && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && Number.isFinite(Number(p.members)));
+  const entry = { chat: read.chat || old.chat || "" };
+  if (Number.isFinite(read.members)) {
+    const date = at.slice(0, 10);
+    const kept = history.filter((p) => p.date !== date).concat({ date, members: read.members }).sort((a, b) => a.date.localeCompare(b.date));
+    return Object.assign(entry, { members: read.members, at, history: kept.slice(-HISTORY_DAYS) });
+  }
+  if (Number.isFinite(Number(old.members))) Object.assign(entry, { members: Number(old.members), at: old.at || "" });
+  entry.history = history.slice(-HISTORY_DAYS);
+  if (read.skipped) entry.skipped = read.skipped;
+  if (read.error) entry.error = read.error;
+  return entry;
+}
+
+// The Bot API has no read of a channel post's views, so they come from the post's public embed (t.me/<chat>/<id>?embed=1),
+// which also shows its reactions; likes is their sum (#2602). Posts older than RECENT_DAYS keep their last numbers.
+const RECENT_DAYS = 60;
+const TELEGRAM_POST = /^https:\/\/t\.me\/\w+\/\d+$/;
+
+function shortCount(text) {
+  const m = String(text || "").trim().match(/^([\d.,]+)\s*([KM])?$/i);
+  if (!m) return 0;
+  const n = Number(m[1].replace(/,/g, ""));
+  return Math.round(n * ({ k: 1e3, m: 1e6 }[String(m[2] || "").toLowerCase()] || 1));
+}
+
+function telegramEmbed(html) {
+  const views = String(html).match(/class="tgme_widget_message_views"[^>]*>([^<]*)</);
+  if (!views) return null;
+  const likes = [...String(html).matchAll(/class="tgme_reaction[^"]*"[\s\S]*?<\/i>\s*([\d.,]+[KM]?)/gi)].reduce((sum, m) => sum + shortCount(m[1]), 0);
+  return counts({ views: shortCount(views[1]), likes });
+}
+
+function recentEntries(book, channel, now) {
+  const list = [];
+  Object.entries(book.posts || {}).forEach(([post, entries]) => (entries || []).forEach((e) => {
+    if (e.channel === channel && e.result === "sent" && e.id && Date.parse(e.at || "") >= now - RECENT_DAYS * 24 * 3600000) list.push({ post, channel, id: e.id, url: e.url || "" });
+  }));
+  return list;
+}
+
+async function telegramNumbers(book, request, now, report = {}) {
+  const entries = recentEntries(book, "telegram", now).filter((e) => TELEGRAM_POST.test(e.url));
+  const found = [];
+  Object.assign(report, { asked: entries.length, answered: 0 });
+  for (const entry of entries) {
+    try {
+      const res = await request(entry.url + "?embed=1&mode=tme");
+      const numbers = res.ok ? telegramEmbed(await res.text()) : null;
+      if (!numbers) { if (!report.error) report.error = entry.url + " answered " + res.status + " without a view count"; continue; }
+      report.answered += 1;
+      found.push(Object.assign({}, entry, { numbers }));
+    } catch (error) {
+      if (!report.error) report.error = error.message;
+    }
+  }
+  return found;
+}
+
+// The Reddit app logs each batch post's score and comments, which scripts/reddit-ledger.js keeps in reddit.json numbers.
+function redditNumbers(book) {
+  const by = book.numbers || {};
+  return sentEntries(book, ["reddit"]).filter((e) => by[e.id]).map((e) => Object.assign({}, e, { numbers: counts({ likes: by[e.id].likes, comments: by[e.id].comments }) }));
+}
+
+// Fresh numbers replace a network's old ones; networks not asked this run keep theirs, and so do channels.
+function merge(previous, found, updatedAt, pages, channels) {
   const posts = JSON.parse(JSON.stringify(previous.posts || {}));
   found.forEach(({ post, channel, numbers }) => {
     posts[post] = posts[post] || {};
@@ -146,7 +237,8 @@ function merge(previous, found, updatedAt, pages) {
     if (!Object.keys(posts[post]).length) delete posts[post];
   });
   const sorted = Object.fromEntries(Object.keys(posts).sort().map((key) => [key, posts[key]]));
-  return Object.assign({ version: 1, updatedAt, posts: sorted }, pages ? { pages } : {});
+  const keep = channels || previous.channels;
+  return Object.assign({ version: 1, updatedAt, posts: sorted }, pages ? { pages } : {}, keep ? { channels: keep } : {});
 }
 
 // A face's Facebook entries, read with its own Page token (#2327); entries from before the faces have no profile of
@@ -183,7 +275,23 @@ async function main() {
     found.push(...await facebookNumbers(entries, token, fetch, pages[profile]));
     notes.push(profile + ": " + pages[profile].answered + " of " + entries.length + " sent posts answered, " + pages[profile].insights + " with insights" + (pages[profile].error ? "; first refusal: " + pages[profile].error : ""));
   }
-  const next = merge(read(), found, new Date().toISOString(), pages);
+  const tgPosts = {};
+  found.push(...await telegramNumbers(queues.read(TELEGRAM_LEDGER), fetch, Date.now(), tgPosts));
+  notes.push("Telegram posts: " + tgPosts.answered + " of " + tgPosts.asked + " from the last " + RECENT_DAYS + " days answered" + (tgPosts.error ? "; first refusal: " + tgPosts.error : ""));
+  const reddit = redditNumbers(queues.read(REDDIT_LEDGER));
+  found.push(...reddit);
+  notes.push("Reddit: " + reddit.length + " posts with numbers in " + REDDIT_LEDGER);
+  const previous = read();
+  const at = new Date().toISOString();
+  const chat = process.env.TELEGRAM_CHANNEL || "";
+  const tg = { chat };
+  if (!process.env.TELEGRAM_BOT_TOKEN || !chat) tg.skipped = "no " + [!process.env.TELEGRAM_BOT_TOKEN && "TELEGRAM_BOT_TOKEN secret", !chat && "TELEGRAM_CHANNEL variable"].filter(Boolean).join(" or ");
+  else {
+    try { tg.members = await telegramMembers(process.env.TELEGRAM_BOT_TOKEN, chat, fetch); } catch (error) { tg.error = error.message; }
+  }
+  const telegram = telegramEntry((previous.channels || {}).telegram, tg, at);
+  notes.push("Telegram " + (chat || "channel") + ": " + (tg.skipped ? "skipped, " + tg.skipped : tg.error ? "kept the last count, " + tg.error : tg.members + " members"));
+  const next = merge(previous, found, at, pages, Object.assign({}, previous.channels, { telegram }));
   fs.mkdirSync(path.dirname(path.join(ROOT, OUT)), { recursive: true });
   fs.writeFileSync(path.join(ROOT, OUT), JSON.stringify(next, null, 1) + "\n");
   console.log(notes.join("\n") + "\n" + Object.keys(next.posts).length + " posts with numbers in " + OUT);
@@ -191,4 +299,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, merge };
+module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, shortCount, telegramEmbed, telegramNumbers, redditNumbers, telegramMembers, telegramEntry, merge };

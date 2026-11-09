@@ -169,3 +169,51 @@ test.describe('Report competitor box predictions', () => {
     await expect(box).toHaveValue('www.google.com');
   });
 });
+
+test.describe('The hero address box (#2785)', () => {
+  test('predicts hosts, checks the host, and fills the request without opening its list', async ({ page }) => {
+    await open(page);
+    const hero = page.locator('#stage-url');
+    await hero.pressSequentially('https://goo');
+    await expect(hero).toHaveValue('goo');
+    await expect(page.locator('#stage-url-suggest li').first()).toHaveText('www.google.com');
+    await hero.press('ArrowDown');
+    await hero.press('Enter');
+    await expect(hero).toHaveValue('www.google.com');
+    await expect(page.locator('#stage-url-hint')).toContainText('is online and is one of the most visited sites');
+    await expect(page.locator('#url')).toHaveValue('');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#url')).toHaveValue('www.google.com');
+    await expect(page.locator('#url-hint')).toContainText('is online');
+    await expect(page.locator('#url-suggest')).toBeHidden();
+  });
+
+  test('offers the popular host for a misspelling, and lists sitemap pages after a slash', async ({ page }) => {
+    await open(page);
+    const hero = page.locator('#stage-url');
+    await hero.fill('gogle.com');
+    await expect(page.locator('#stage-url-hint')).toContainText('does not exist');
+    await page.locator('#stage-url-hint .url-fix').click();
+    await expect(hero).toHaveValue('www.google.com');
+    await hero.fill('');
+    await hero.pressSequentially('carlosandmunoz.com/qa');
+    await expect(page.locator('#stage-url-suggest li')).toHaveText(['/qa-lab', '/qa-review']);
+  });
+
+  test('an empty or spaced address says what to enter, in the page language', async ({ page }) => {
+    await open(page, 'es');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#stage-url-error')).toHaveText('Escribe una página pública después de https://.');
+    await expect(page.locator('#stage-url-field')).toHaveClass(/invalid/);
+    await page.locator('#stage-url').fill('example.com/a b');
+    await expect(page.locator('#stage-url-error')).toHaveText('');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#stage-url-error')).not.toHaveText('');
+  });
+
+  test('stays in step with the request box', async ({ page }) => {
+    const box = await open(page);
+    await box.fill('example.com/docs');
+    await expect(page.locator('#stage-url')).toHaveValue('example.com/docs');
+  });
+});

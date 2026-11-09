@@ -1,0 +1,81 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-servicesaustralia-gov-au": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "Scored 68 of 100.",
+    "title.1": "*The gap: the https redirect.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.",
+    "action": "Redirect every http request to https with one permanent 301, then add HSTS.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 6 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "servicesaustralia.gov.au · 20 pages analyzed · 6 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.\n\nLesson: Redirect every http request to https with one permanent 301, then add HSTS.\n\nOne automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-servicesaustralia-gov-au&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-servicesaustralia-gov-au\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #CyberSecurity #SoftwareTesting #QA #HTTPS #Redirects #TechTips #WebDevelopment #SEOTips #DigitalMarketing #QualityAssurance #QAlab"
+   }
+  },
+  "u-erikafashion-sk": {
+   "lang": "it",
+   "strings": {
+    "title.0": "erikafashion.sk: 63.",
+    "title.1": "*The gap: button names.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.",
+    "action": "Give every button text or an aria-label, so a screen reader can announce it.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 7 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "erikafashion.sk · 20 pages analyzed · 7 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.\n\nLesson: Give every button text or an aria-label, so a screen reader can announce it.\n\nOne automated analysis of public pages on 7 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-erikafashion-sk&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-erikafashion-sk\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #SoftwareTesting #WebDev #QA #A11y #LearnOnYouTube #TechTips #QualityAssurance #WCAG #Frontend #TestAutomation #QAlab"
+   }
+  },
+  "vs-saatvesaat-com-tr": {
+   "lang": "en",
+   "strings": {
+    "live": "u-saatvesaat-com-tr",
+    "title.0": "3 natural competitors.",
+    "title.1": "*konyalisaat.com.tr leads: 73.*",
+    "body": "saatvesaat.com.tr leads in SEO, Security; multiples.vc leads in GEO, Analytics, Performance; konyalisaat.com.tr leads in Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 7 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "saatvesaat.com.tr",
+    "visual.rows.1.0": "konyalisaat.com.tr",
+    "visual.rows.2.0": "multiples.vc",
+    "visual.note": "Natural competitors found on the open web · 7 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "saatvesaat.com.tr leads in SEO, Security; multiples.vc leads in GEO, Analytics, Performance; konyalisaat.com.tr leads in Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 7 Nov 2026 of saatvesaat.com.tr, konyalisaat.com.tr, multiples.vc, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-saatvesaat-com-tr&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-saatvesaat-com-tr\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #QA #WebPerf #Coding #Programming #SearchConsole #Lighthouse #QAEngineer #ContentMarketing #SiteSpeed #QAlab"
+   }
+  }
+ }
+}

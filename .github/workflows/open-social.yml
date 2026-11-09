@@ -1,13 +1,13 @@
-# Posts each rendered social batch to Bluesky, Mastodon, Threads and Instagram as its slots come
+# Posts each rendered social batch to Bluesky, Mastodon, Threads, Instagram and the Telegram channel as its slots come
 # (scripts/open-social-queue.js, #1621, #526). None of them can schedule a post, so this runs every 30 minutes and
 # posts what is due. A network whose secrets are missing is skipped: BLUESKY_HANDLE and BLUESKY_APP_PASSWORD,
-# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN. es/pt posts go to the
+# MASTODON_URL and MASTODON_TOKEN, THREADS_TOKEN, INSTAGRAM_USER_ID and FACEBOOK_PAGE_TOKEN, TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL. es/pt posts go to the
 # @qaurlreview face once its secrets, the same names ending in _ES, are set (scripts/face-route.js, #2310).
 # The repo variable MASTODON_PAUSED=true blanks both Mastodon tokens, so a suspended account is skipped instead of
 # failing every run (#2322); delete the variable once the account is back.
-# The run updates the ledger, assets/social/open-social.json, and pushes it to main with the LIVE_REPORTS_DEPLOY_KEY
+# The run updates the ledgers, assets/social/open-social.json and telegram.json, and pushes them to main with the LIVE_REPORTS_DEPLOY_KEY
 # write deploy key, like the Facebook Page queue.
-name: Bluesky, Mastodon, Threads and Instagram
+name: Bluesky, Mastodon, Threads, Instagram and Telegram
 
 on:
   schedule:
@@ -17,7 +17,7 @@ on:
       network:
         description: 'Network'
         type: choice
-        options: ['all', 'bluesky', 'mastodon', 'threads', 'instagram', 'instagram-story']
+        options: ['all', 'bluesky', 'mastodon', 'threads', 'instagram', 'instagram-story', 'telegram']
         default: 'all'
       dry_run:
         description: 'List what is due, post nothing'
@@ -35,7 +35,7 @@ permissions:
 jobs:
   post:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
       BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
@@ -44,6 +44,8 @@ jobs:
       THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
       INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
       FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
       BLUESKY_HANDLE_ES: ${{ secrets.BLUESKY_HANDLE_ES }}
       BLUESKY_APP_PASSWORD_ES: ${{ secrets.BLUESKY_APP_PASSWORD_ES }}
       MASTODON_URL_ES: ${{ secrets.MASTODON_URL_ES }}
@@ -56,7 +58,7 @@ jobs:
       - name: Check a network is connected
         id: ready
         run: |
-          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID$BLUESKY_APP_PASSWORD_ES$MASTODON_TOKEN_ES$THREADS_TOKEN_ES$INSTAGRAM_USER_ID_ES" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ -n "$BLUESKY_APP_PASSWORD$MASTODON_TOKEN$THREADS_TOKEN$INSTAGRAM_USER_ID$BLUESKY_APP_PASSWORD_ES$MASTODON_TOKEN_ES$THREADS_TOKEN_ES$INSTAGRAM_USER_ID_ES$TELEGRAM_BOT_TOKEN" ] || [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::No network secrets yet, so nothing is posted (see scripts/open-social-queue.js)."
@@ -95,8 +97,8 @@ jobs:
       - name: Commit the ledger
         if: ${{ !cancelled() && !inputs.dry_run && steps.post.outcome != 'skipped' }}
         run: |
-          if git status --porcelain assets/social/open-social.json | grep -q .; then
-            scripts/commit-social-ledgers.sh "Bluesky, Mastodon, Threads and Instagram"
+          if git status --porcelain assets/social/open-social.json assets/social/telegram.json | grep -q .; then
+            scripts/commit-social-ledgers.sh "Bluesky, Mastodon, Threads, Instagram and Telegram"
           else
             echo "Nothing went out."
           fi

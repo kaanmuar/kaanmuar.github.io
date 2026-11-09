@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
+const core = require('../js/admin-jarvis-core.js');
 
-// Firestore is an in-memory stub seeded from window.__data (collection name → rows), and the
-// owner-only /jarvis function is answered by page.route (its rows op from the same seed), so the whole Statistics tab runs offline.
+// Firestore is an in-memory stub seeded from window.__data (collection name → rows) that logs every read in window.__reads, and the
+// owner-only /jarvis function is answered by page.route (its snapshot op built from the same seed), so the whole Statistics tab runs offline.
 const FIREBASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
 const STUBS = {
   'firebase-app.js': 'export function initializeApp() { return {}; }',
@@ -25,9 +26,10 @@ const STUBS = {
     export function orderBy() { return {}; }
     export function limit() { return {}; }
     export function onSnapshot(ref, callback) { setTimeout(() => callback(snap([])), 0); return () => {}; }
-    export async function getDocs(ref) { return snap(data[ref.name] || []); }
+    const read = (name) => { window.__reads = (window.__reads || []).concat([name]); };
+    export async function getDocs(ref) { read(ref.name); return snap(data[ref.name] || []); }
     export async function getCountFromServer(ref) { return { data: () => ({ count: (data[ref.name] || []).length }) }; }
-    export async function getDoc(ref) { const row = data[ref.path]; return { id: ref.id, exists: () => !!row, data: () => row }; }
+    export async function getDoc(ref) { read(ref.path); const row = data[ref.path]; return { id: ref.id, exists: () => !!row, data: () => row }; }
     export async function setDoc() {}
     export async function updateDoc() {}
     export async function deleteDoc() {}
@@ -75,6 +77,9 @@ const EXTERNAL = {
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
+  targets: { ok: true, start: '2026-10-20', end: '2027-01-17', day: 6, length: 90, needs: [], targets: [{ key: 'unlocks', label: 'Paid unlocks', target: 30, actual: 3, status: 'on-pace', expected: 2, perWeek: 2.3, auto: true,
+    how: 'Paid, non-refunded purchases since the plan started.', lastAt: '2026-10-21T10:00:00Z', done: null, fix: null, next: [{ label: 'Copy one-pager link', copy: 'https://qalabreview.com/pdf' }],
+    items: [{ at: '2026-10-21T10:00:00Z', text: 'Report unlock · acme.io · 9 USD', url: '', id: '', source: 'auto', n: 1 }] }] },
   outreach: { ok: true, needs: ['Instantly: put the API key in Secret Manager as INSTANTLY_API_KEY.'],
     pipeline: { ok: true, queued: 40, swept: 12, left: 28, bySegment: [{ label: 'tvet', value: 10 }, { label: 'university', value: 10 }], reviews: 12, thisWeek: 12, results: [{ label: 'reviewed', value: 11 }], segments: [], avgScore: 64, withLiveReport: 6, reviewedWithLiveReport: 5, daily: [{ date: '2026-10-24', reviews: 12 }] },
     instantly: { ok: false, error: 'INSTANTLY_API_KEY is not set.' },
@@ -105,6 +110,9 @@ const EXTERNAL = {
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
+  'owner-tags-run': { ok: true, note: 'owner tags: 6 posts, 4 comments, 1 owner replies; 2 sites read, 5 owner accounts, 1 suggestion runs, 1 pushed', posts: 6, comments: 4 },
+  'owner-tags-settings': { ok: true, message: 'Owner tags are paused.' },
+  'owner-tags-account': { ok: true, message: '@metrodebogota on X is approved.' },
   local: { ok: true, since: '2026-11-02', more: 0,
     totals: { reviews: 9, local: 2, profiles: 1, noProfile: 1, withIssues: 2, failing: 0, outreach: 1, calls: 4, errors: 1, callsToday: 2 },
     issues: [{ key: 'local-hours', count: 1, fail: 0 }, { key: 'local-profile', count: 1, fail: 0 }],
@@ -186,6 +194,33 @@ const EXTERNAL = {
   'github-act': { ok: true, message: 'Merged #2511.' }
 };
 
+// The external sources jarvisSnapshot (functions/index.js) carries.
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work'];
+// The collections the web Jarvis used to read itself (#2102); the snapshot op reads them on the server now.
+const JARVIS_ROWS = ['site_events', 'url_review_opens', 'url_reviews', 'url_review_alerts', 'url_review_reports', 'socialHubStats/latest'];
+
+// What jarvisSnapshot answers for the seed: the same core summaries over the range and the one before it.
+function snapshotOf(data, days, extra) {
+  const answer = (op) => (extra || {})[op] || EXTERNAL[op];
+  const w = core.windowFor(String(days || 30), new Date());
+  const when = (row) => core.toDate(row.createdAt);
+  const inside = (row) => when(row) >= w.start;
+  const before = (row) => when(row) < w.start && when(row) >= w.prior.start;
+  const events = data.site_events.filter(inside), was = data.site_events.filter(before);
+  const opens = data.url_review_opens.filter(inside), reviews = data.url_reviews.filter(inside);
+  return {
+    ok: true, op: 'snapshot', cachedAt: new Date().toISOString(), window: w,
+    products: {
+      cv: core.summarizeSite('cv', events, was, w), studio: core.summarizeSite('studio', events, was, w), lab: core.summarizeSite('lab', events, was, w),
+      review: core.summarizeReview({ opens, reviews, events, prior: { opens: data.url_review_opens.filter(before).length, reviews: data.url_reviews.filter(before).length } }, w),
+      hub: core.summarizeHub(data['socialHubStats/latest'], events, w, was)
+    },
+    external: Object.fromEntries(SNAPSHOT_OPS.map((op) => [op, Object.assign({ ok: true }, answer(op) || {})])),
+    outreachVisits: core.outreachVisits(events), feed: core.feed({ events, opens, reviews }), socialHeat: core.socialHeat(events), reports: data.url_review_reports,
+    settings: answer('settings'), goals: answer('goals').goals, mailCodes: (answer('mail-codes') || {}).codes || [], devices: []
+  };
+}
+
 function seed() {
   const now = Date.now();
   const at = (hoursAgo) => ({ seconds: Math.floor((now - hoursAgo * 3600000) / 1000), nanoseconds: 0 });
@@ -222,7 +257,7 @@ async function openStats(page, hash, extra) {
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
-    if (body.op === 'rows') return route.fulfill({ json: { op: body.op, ok: true, from: body.from, events: data.site_events, opens: data.url_review_opens, reviews: data.url_reviews, alerts: data.url_review_alerts }, headers: { 'Access-Control-Allow-Origin': '*' } });
+    if (body.op === 'snapshot') return route.fulfill({ json: snapshotOf(data, body.days, extra), headers: { 'Access-Control-Allow-Origin': '*' } });
     const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
@@ -246,7 +281,10 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['rows', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'settings', 'goals', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'proposals', 'brief-marks', 'calls', 'device']));
+    // #2102: one snapshot, the app's cached answer, instead of the range's raw rows and a call per source.
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['snapshot', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'proposals', 'brief-marks']));
+    expect(calls.filter((c) => c.op === 'snapshot')).toHaveLength(1);
+    expect((await page.evaluate(() => window.__reads || [])).filter((name) => JARVIS_ROWS.includes(name))).toEqual([]);
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
     expect(calls.every((c) => c.body.device?.kind === 'desktop' && c.body.device.app === 'web')).toBe(true);
 
@@ -274,6 +312,11 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(outreach).toContainText('First wave out');
     await expect(outreach).toContainText('Instantly trial ends');
     await expect(outreach).toContainText('Paid unlocks');
+    await expect(outreach.locator('.jv-targets')).toContainText('On pace');
+    await expect(outreach.locator('.jv-targets')).toContainText('3 / 30');
+    page.once('dialog', (dialog) => dialog.accept('Acme agency'));
+    await outreach.locator('[data-tg-act="log"][data-key="unlocks"]').click();
+    await expect.poll(() => (calls.find((c) => c.op === 'outreach-target') || {}).body).toMatchObject({ action: 'log', key: 'unlocks', note: 'Acme agency' });
     await expect(outreach).toContainText('INSTANTLY_API_KEY');
     await expect(outreach).toContainText('p=none');
     await expect(outreach.locator('.jv-briefing')).toContainText('Instantly trial ends in 6 days');
@@ -452,6 +495,13 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
+    const joins = eg.locator('[data-panel-id="engagement-joins"]');
+    await expect(joins).toContainText('r/QualityAssurance');
+    await expect(joins).toContainText('would join (dry run)');
+    await expect(joins).toContainText('ru');
+    await expect(joins).toContainText('Reddit: 1 of 1 today, 11 found to join');
+    await expect(eg.locator('[name="cap-join"]')).toHaveValue('2');
+    if (process.env.JOINS_SHOT) await joins.screenshot({ path: process.env.JOINS_SHOT });
     await expect(eg).toContainText('paste an app password');
     const accounts = eg.locator('[data-panel-id="engagement-accounts"]');
     await expect(accounts).toContainText('connected as qalaburlreview');
@@ -484,6 +534,43 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await eg.locator('[data-eg-live="on"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'engagement-settings').map((c) => c.body.settings)).toEqual([{ paused: true }, { live: true }]);
+    expect(errors).toEqual([]);
+  });
+
+  test('Owner tags show their state, accounts by status and recent comments; Approve, Block, Add account, Pause and Run now go through the function (#2660)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/engagement/7');
+    const ot = page.locator('[data-view="engagement"] [data-panel-id="engagement-owner-tags"]');
+    await expect(ot).toContainText('Owner tags · live');
+    await expect(ot).toContainText('Suggestions waiting');
+    await expect(ot).toContainText('Posted in the last 7 days: Bluesky 1');
+    await expect(ot.locator('details[open] summary')).toHaveText('Suggested · 3');
+    await expect(ot.locator('details[open]')).toContainText('city transit agency');
+    await expect(ot.locator('details[open] a', { hasText: '@movilidad.bsky.social' })).toHaveAttribute('href', 'https://bsky.app/profile/movilidad.bsky.social');
+    await expect(ot).toContainText('422 rate limited');
+    await expect(ot.locator('a', { hasText: 'Our comment' })).toHaveAttribute('href', /bsky\.app\/profile\/qalaburlreview\.bsky\.social\/post\/3xyz/);
+    if (process.env.OWNER_TAGS_SHOT) await ot.screenshot({ path: process.env.OWNER_TAGS_SHOT });
+
+    await ot.locator('[data-ot-acct="approved"][data-handle="metrodebogota"][data-network="x"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-account').map((c) => [c.body.network, c.body.handle, c.body.status])).toEqual([['x', 'metrodebogota', 'approved']]);
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await ot.locator('[data-ot-acct="blocked"][data-handle="BogotaET"]').click();
+    expect(calls.filter((c) => c.op === 'owner-tags-account').length).toBe(1);
+
+    await ot.locator('[data-ot-add] [name="who"]').fill('@Movilidad_Bog');
+    await ot.locator('[data-ot-add] [name="network"]').selectOption('x');
+    await ot.locator('[data-ot-add] [name="scopeKind"]').selectOption('city');
+    await ot.locator('[data-ot-add] [name="scopeValue"]').fill('Bogotá');
+    await ot.locator('[data-ot-add] button[type="submit"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-account').map((c) => c.body).pop()).toMatchObject({ network: 'x', handle: 'Movilidad_Bog', scope: 'city:bogota', kind: 'related', status: 'approved' });
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await ot.locator('[data-ot-pause="on"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'owner-tags-settings').map((c) => c.body.settings)).toEqual([{ paused: true }]);
+    page.once('dialog', (dialog) => dialog.accept());
+    await ot.locator('[data-ot-run]').click();
+    await expect(page.locator('.jv-toast')).toContainText('Owner tags ran: owner tags: 6 posts');
     expect(errors).toEqual([]);
   });
 
@@ -759,9 +846,9 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(save.body.settings.goals).toEqual([{ product: 'cv', metric: 'visits', period: 'week', target: 300 }, { product: 'review', metric: 'paid', period: 'month', target: 12 }]);
     expect(save.body.settings.thresholds.pendingRatings).toBe(25);
     expect(save.body.settings.mail).toMatchObject({ daily: true, gemini: false, watch: true, weekly: true, messages: true, ratings: false, ownerReplies: false });
-    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5 }, confidence: 0.8, countdownHours: 2 });
+    expect(save.body.settings.actions).toEqual({ auto: true, caps: { 'rerun-held': 4, 'resend-notices': 10, 'publish-hub': 2, 'rerun-job': 3, 'rerun-ci': 5, 'refresh-stale': 6, 'rerun-reviews': 2, 'ai-fix': 5, 'retry-social': 3, 'resume-outreach': 1, 'merge-pr': 3, 'enable-warmup': 2, 'restore-alias': 2, 'launch-campaign': 10, 'gh-board-sync': 10, 'gh-orphan-ticket': 5, 'gh-update-pr': 5, 'gh-merge-pr': 3, 'gh-revert': 1, 'gh-delete-branch': 2, 'gh-close-issue': 5, 'gh-remove-worktree': 5, 'owner-tags-approve-verified': 20, 'owner-tags-block': 10 }, confidence: 0.8, countdownHours: 2 });
     expect(save.body.settings.searchQueries).toEqual(['qa review', 'qa review', 'carlos qa']);
-    await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(1);
+    await expect.poll(() => calls.filter((c) => c.op === 'goals').length).toBeGreaterThan(0);
 
     await page.keyboard.press('g');
     await expect(page.locator('.jv-settings')).toBeVisible();
@@ -970,5 +1057,19 @@ test.describe('admin statistics (Jarvis)', () => {
     await more.locator('[data-brief-hidden]').click();
     await expect(line).toHaveClass(/is-hidden/);
     expect(errors).toEqual([]);
+  });
+
+  test('live mode asks for a newer snapshot once the server has one, and still reads no rows (#2102)', async ({ page }) => {
+    await page.clock.install();
+    const calls = await openStats(page);
+    const snapshots = () => calls.filter((c) => c.op === 'snapshot').length;
+    await expect.poll(snapshots).toBe(1);
+    await expect(page.locator('[data-view="overview"] [data-panel-id="overview-feed"]')).toContainText('URL Review: paid review of shop.example/ (complete)');
+    await page.clock.fastForward('03:00');
+    expect(snapshots()).toBe(1);
+    await page.clock.fastForward('03:00');
+    await expect.poll(snapshots).toBe(2);
+    expect(calls.some((c) => c.op === 'rows' || c.op === 'health')).toBe(false);
+    expect((await page.evaluate(() => window.__reads || [])).filter((name) => JARVIS_ROWS.includes(name))).toEqual([]);
   });
 });

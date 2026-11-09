@@ -17,6 +17,10 @@ const E = require("./engagement");
 const Sources = require("./engagement-sources");
 const Act = require("./engagement-act");
 const R = require("./engagement-reports");
+const P = require("./engagement-profiles");
+const Joins = require("./engagement-joins");
+const Offer = require("./url-review-domain-offer");
+const OwnerTags = require("./owner-tags");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -79,7 +83,7 @@ async function repliedThreads(db) {
 /** Today's planned actions per network, for the caps. */
 function usedToday(daily) {
   const used = {};
-  Object.entries((daily && daily.n) || {}).forEach(([net, n]) => { used[net] = { like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0, reply: n.drafted || 0 }; });
+  Object.entries((daily && daily.n) || {}).forEach(([net, n]) => { used[net] = { like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0, reply: n.drafted || 0, join: (n.join_done || 0) + (n.join_dry || 0) }; });
   return used;
 }
 
@@ -229,9 +233,9 @@ async function repliedSites(db, hosts, now) {
   return new Set((await R.answeredHosts(db, hosts, now, R.ANSWERED.concat("replied"))).keys());
 }
 
-/** Hosts whose owner had our mail in the gap: owner notices, and leads uploaded to the cold-email campaigns. */
-async function contactedSites(db, hosts, now) {
-  const since = new Date(now - R.SITE_GAP).toISOString();
+/** Hosts whose owner had our mail in the gap (R.SITE_GAP unless gap): owner notices, cold-email uploads, and do-not-contact at any time. */
+async function contactedSites(db, hosts, now, gap) {
+  const since = new Date(now - (gap || R.SITE_GAP)).toISOString();
   const want = new Set(hosts);
   const out = new Map();
   for (let i = 0; i < hosts.length; i += 30) {
@@ -412,6 +416,128 @@ async function rerunPass(deps, conf) {
   return out;
 }
 
+/** A profile's recent posts as engagement-sources maps them: Bluesky and Mastodon through their public APIs, [] elsewhere. */
+async function profilePosts(f, p) {
+  const get = async (url) => {
+    const res = await f(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(url.split("/")[2] + " answered " + res.status);
+    return res.json();
+  };
+  if (p.network === "bluesky") {
+    const got = await get("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?filter=posts_no_replies&limit=10&actor=" + encodeURIComponent(p.handle));
+    return (got.feed || []).filter((x) => x && x.post && !x.reason).map((x) => Sources.blueskyPost(x.post));
+  }
+  if (p.network === "mastodon") {
+    const [user, host] = p.handle.split("@");
+    const acct = await get("https://" + host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(user));
+    const list = await get("https://" + host + "/api/v1/accounts/" + encodeURIComponent(acct.id) + "/statuses?exclude_replies=true&exclude_reblogs=true&limit=10");
+    return (Array.isArray(list) ? list : []).map(Sources.mastodonPost);
+  }
+  return [];
+}
+
+/** The site's homepage HTML, or "" when it does not answer with a page. */
+async function homepage(f, host) {
+  const res = await f("https://" + host + "/", { headers: { accept: "text/html", "user-agent": "Mozilla/5.0 (compatible; QA-lab URL Review; +https://carlosandmunoz.com/qa-review.html)" }, redirect: "follow", signal: AbortSignal.timeout(12000) }).catch(() => null);
+  if (!res || !res.ok || !/html/i.test(res.headers.get("content-type") || "")) return "";
+  return String(await res.text()).slice(0, 800000);
+}
+
+/** Addresses that paid a review; a company whose domain is among them is done with the campaign. */
+async function paidEmails(db) {
+  const snap = await db.collection("url_reviews").where("paid", "==", true).select("email").limit(3000).get().catch(() => ({ docs: [] }));
+  return snap.docs.map((d) => String(d.data().email || "")).filter(Boolean);
+}
+
+/** Whether the offer code was redeemed. */
+async function offerUsed(db, code) {
+  const snap = await db.collection("url_review_coupons").doc(code).get().catch(() => null);
+  return !!(snap && snap.exists && Number(snap.data().uses || 0) > 0);
+}
+
+const NO_PROFILES_DAYS = 30;
+
+/**
+ * Profile campaign (#2615, functions/engagement-profiles.js): this slot's Live Reports whose company is due a touch
+ * get one message per profile found on their homepage, in the touch's tone, with the card or link and their domain
+ * offer, waiting for Carlos. Stored with campaign "report-reply" and match "profile", counted under
+ * engagement_daily report.profiles, and pushed.
+ */
+async function profilePass(deps, conf) {
+  const { db, now, env, inc } = deps;
+  const at = new Date(now).toISOString();
+  const out = { checked: 0, sites: 0, profiles: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
+  if (conf.paused || conf.profiles === false) return out;
+  const ahead = R.pick(await liveTargets(deps), Math.floor(now / Sources.SLOT), null, P.PER_RUN * 4);
+  if (!ahead.length) return out;
+  const hosts = ahead.map((t) => t.host);
+  const [snaps, answered, contacted, paid] = await Promise.all([
+    db.getAll(...hosts.map((h) => db.collection(P.COLLECTION).doc(h))), R.answeredHosts(db, hosts, now), contactedSites(db, hosts, now, P.WEEK), paidEmails(db)
+  ]);
+  const ledgers = Object.fromEntries(snaps.map((s, i) => [hosts[i], s.exists ? s.data() : null]));
+  const batch = db.batch();
+  const picked = [];
+  for (const t of ahead) {
+    if (picked.length >= P.PER_RUN) break;
+    out.checked += 1;
+    const led = ledgers[t.host];
+    if (led && led.noProfilesAt && now - Date.parse(led.noProfilesAt) < NO_PROFILES_DAYS * DAY) continue;
+    const why = contacted.get(t.host);
+    const hasPaid = paid.some((e) => P.sameDomain(e, t.host)) || (!!(led && led.code) && await offerUsed(db, led.code));
+    if (hasPaid && led && !led.stopped) batch.set(db.collection(P.COLLECTION).doc(t.host), { stopped: "paid", updatedAt: at }, { merge: true });
+    const d = P.due(led, now, { paid: hasPaid, stop: why === "do not contact", lastContact: why ? now : Date.parse(answered.get(t.host) || "") || 0 });
+    if (d.ok) picked.push({ t, led, touch: d.touch });
+  }
+
+  const items = [];
+  const minted = {};
+  for (const { t, led, touch } of picked) {
+    const profiles = P.profilesOf(await homepage(deps.fetch, t.host), "https://" + t.host + "/");
+    if (!profiles.length) { batch.set(db.collection(P.COLLECTION).doc(t.host), { host: t.host, profiles: [], noProfilesAt: at, updatedAt: at }, { merge: true }); continue; }
+    out.sites += 1;
+    out.profiles += profiles.length;
+    let code = led && led.code;
+    if (!code) { const m = Offer.mint(t.host, now); code = m.code; minted[t.host] = m; }
+    for (const pr of profiles) {
+      let post = null;
+      if (P.API_NETS.includes(pr.network)) {
+        const calm = Object.assign({}, conf, { maxAgeHours: P.FRESH_DAYS * 24 });
+        try { post = P.latestOf(await profilePosts(deps.fetch, pr), now, (p) => !E.guard(p, calm, now)); } catch (error) { out.errors[pr.network] = String(error.message || error).slice(0, 160); }
+      }
+      const lang = post && E.LANGS.includes(String(post.lang || "").slice(0, 2)) ? String(post.lang).slice(0, 2) : t.lang;
+      items.push({
+        key: E.keyOf(pr.network, "profile:" + t.host + ":" + touch + ":" + (post ? post.id : pr.url)), network: pr.network, mode: post ? "reply" : "copy", post, profile: pr,
+        target: t, touch, tone: P.toneOf(touch), lang, offer: { code, percent: Offer.PERCENT, days: Offer.WINDOW_DAYS }, profiles
+      });
+    }
+  }
+  const known = items.length ? await db.getAll(...items.map((i) => db.collection("engagement_posts").doc(i.key))) : [];
+  const fresh = items.filter((i, n) => !known[n].exists);
+  let texts = {};
+  if (fresh.length && env.GEMINI_API_KEY) {
+    try { texts = P.parse(await geminiJson(deps.fetch, env, P.prompt(fresh)), fresh); } catch (error) { out.aiError = String(error.message || error).slice(0, 200); }
+  }
+  const docs = [];
+  for (const i of fresh.filter((x) => texts[x.key])) {
+    const link = await shortLink(deps.fetch, P.linkFor(i.target, i.network, i.lang, i.key, i.offer.code));
+    docs.push(Object.assign({ key: i.key }, P.doc(i, texts[i.key], link, now)));
+  }
+  docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
+  const touched = new Map();
+  docs.forEach((d) => touched.set(d.report.host, (touched.get(d.report.host) || []).concat(d.key)));
+  for (const { t, led, touch } of picked.filter((p) => touched.has(p.t.host))) {
+    const m = minted[t.host];
+    if (m) batch.set(db.collection("url_review_coupons").doc(m.code), m.coupon);
+    const profiles = (fresh.find((i) => i.target.host === t.host) || {}).profiles || [];
+    batch.set(db.collection(P.COLLECTION).doc(t.host), P.ledgerPatch(led, t.host, profiles, m ? m.code : led.code, touch, touched.get(t.host), now), { merge: true });
+  }
+  await batch.commit();
+  out.drafted = docs.length;
+  if (docs.length) await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ report: { profiles: docs.length, drafted: docs.length } }, inc), { merge: true });
+  if (deps.push) for (const d of docs.slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+  return out;
+}
+
 /** One scout run. Returns the run document. */
 async function scout(deps) {
   const { db, now, env } = deps;
@@ -425,6 +551,8 @@ async function scout(deps) {
   try { reruns = await rerunPass(deps, conf); } catch (error) { reruns = { changed: 0, drafted: 0, pushed: 0, again: [], error: String(error.message || error).slice(0, 200) }; }
   let reports;
   try { reports = await reportPass(deps, conf, creds, reruns.again); } catch (error) { reports = { searched: 0, matched: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
+  let profiles;
+  try { profiles = await profilePass(deps, conf); } catch (error) { profiles = { checked: 0, sites: 0, profiles: 0, drafted: 0, pushed: 0, aiError: "", errors: {}, error: String(error.message || error).slice(0, 200) }; }
 
   let acted = {};
   let actError = "";
@@ -439,6 +567,7 @@ async function scout(deps) {
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
     done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
     reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
+    profiles: { checked: profiles.checked, sites: profiles.sites, profiles: profiles.profiles, drafted: profiles.drafted, pushed: profiles.pushed, aiError: profiles.aiError, errors: profiles.errors, error: profiles.error || "" },
     reruns: { changed: reruns.changed, drafted: reruns.drafted, pushed: reruns.pushed, again: reruns.again.map((t) => t.host), error: reruns.error || "" },
     chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
   };
@@ -570,15 +699,20 @@ async function decide(deps, body, by) {
     if (!snap.exists) throw new Error("That post is gone.");
     const doc = snap.data();
     const d = E.decideReply(doc, String(body.decision || ""), body.text, String(by || ""), now);
+    const copy = !!(doc.report && doc.report.manual) && d.reply.status === "approved";
+    if (copy) d.reply.status = "copy";
     tx.update(ref, { "actions.reply": d.reply, updatedAt: new Date(now).toISOString() });
-    return { network: doc.network, invite: doc.campaign === R.CAMPAIGN, d };
+    return { network: doc.network, via: doc.via || "", invite: doc.campaign === R.CAMPAIGN, d, copy, profile: (doc.report || {}).profile || doc.url || "" };
   });
   await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments(Object.assign({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, out.invite ? { report: { [out.d.counter]: 1 } } : {}), inc), { merge: true });
   const net = E.NETWORKS[out.network] || {};
   const name = net.name || out.network;
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
   const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
-  if (!net.api) { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
+  if (out.copy) { await clearCache(db); return { key, status: "copy", url: out.profile, text: out.d.reply.draft, message: said + "; paste it on " + name + " at " + out.profile + "." }; }
+  const carrier = E.carrier(Object.assign({ network: out.network }, out.via ? { via: out.via } : {}));
+  if (carrier === "devvit") { await clearCache(db); return { key, status: "approved", message: said + "; the Reddit app posts it with its next hourly upload, usually within two hours." }; }
+  if (carrier === "mac") { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
   if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
@@ -588,12 +722,13 @@ async function decide(deps, body, by) {
   return { key, status: "approved", message: said + "; " + name + " did not take it yet (" + (sent.error || "not sent") + "), so the next scout run tries again." };
 }
 
-/** Jarvis > Engagement > Accounts: save Bluesky's app password, start Connect YouTube or Mastodon, or disconnect. */
+/** Jarvis > Engagement > Accounts: save Bluesky's app password or Telegram's bot token, start Connect YouTube or Mastodon, or disconnect. */
 async function connect(deps, body, redirect) {
   const network = String((body && body.network) || "");
   let out;
   if (body && body.disconnect) out = await Act.disconnect(deps.db, network);
   else if (network === "bluesky") out = await Act.saveBluesky(deps, body);
+  else if (network === "telegram") out = await Act.saveTelegram(deps, body);
   else out = Object.assign({ network }, await Act.connectUrl(deps, network, redirect, deps.keys || {}));
   await clearCache(deps.db);
   return out;
@@ -611,12 +746,19 @@ async function saveSettings(db, body, by, now) {
 }
 
 const WORDS = { like: "likes", repost: "reposts", follow: "follows", reply: "replies" };
+// Telegram and Reddit act in two places (#2614): our own posts through the bot and the Reddit app, the field through the Mac.
+const FIELD = { telegram: "reactions, forwards to @qalab_live, replies and joins in the field", reddit: "upvotes, crossposts, follows, comments and joins in the field" };
 const joinAnd = (list) => list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list.join("");
 const STAGE = Object.assign(
   Object.fromEntries(Object.entries(E.NETWORKS).filter(([, n]) => n.browser).map(([k, n]) => [k, joinAnd((n.only || Object.keys(WORDS)).map((a) => WORDS[a]))])),
-  { bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments", hn: "trends only", devto: "trends only", lobsters: "trends only" }
+  {
+    bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
+    telegram: "reactions and replies under our channel's posts", reddit: "replies under our subreddit's posts", hn: "trends only", devto: "trends only", lobsters: "trends only"
+  }
 );
 const MAC_STALE = 2 * 3600000;
+// reddit-engagement.yml syncs every hour (functions/engagement-reddit.js).
+const REDDIT_STALE = 3 * 3600000;
 const AGENT = "node scripts/engagement-browser/agent.js";
 
 const brief = (d) => ({
@@ -631,7 +773,7 @@ async function source(ctx) {
   const now = ctx.now;
   const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
   const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap] = await Promise.all([
+  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap, redditSnap] = await Promise.all([
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
@@ -642,9 +784,13 @@ async function source(ctx) {
     db.collection("engagement_reports").orderBy("at", "desc").limit(9).get(),
     Act.connections(db),
     Act.readCreds(db),
-    db.collection("engagement_private").doc("mac").get()
+    db.collection("engagement_private").doc("mac").get(),
+    db.collection("engagement_private").doc("reddit").get()
   ]);
   const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
+  const ownerTags = await OwnerTags.status(db, now).catch(() => null);
+  const reddit = redditSnap.exists && redditSnap.data().at ? redditSnap.data() : null;
+  const redditLate = !reddit || now - Date.parse(reddit.at) > REDDIT_STALE;
   const signed = (k) => !!(mac && (mac.signedIn || {})[k]);
   const macReads = (k) => (!mac ? "Mac browser, not set up" : !signed(k) ? "Mac browser, not signed in" : "Mac browser" + ((mac.accounts || {})[k] ? " as " + mac.accounts[k] : ""));
   const runs = runsSnap.docs.map((d) => d.data());
@@ -653,20 +799,28 @@ async function source(ctx) {
   const report = E.report("range", cur, prev, top, now);
   const env = withAccounts(ctx.env || {}, creds);
   const readers = Object.fromEntries(Sources.readable(env).map((r) => [r.network, r]));
-  const acting = (k) => {
-    if ((E.NETWORKS[k] || {}).browser) {
-      if (!signed(k)) return STAGE[k] + " through the Mac's browser once it is signed in there";
-      const until = (mac.blocked || {})[k];
-      return "Mac browser: " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (until ? "; held until " + until + " after a check" : "");
-    }
+  const viaMac = (k) => {
+    const what = FIELD[k] || STAGE[k];
+    if (!signed(k)) return what + " through the Mac's browser once it is signed in there";
+    const until = (mac.blocked || {})[k];
+    return "Mac browser: " + what + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (until ? "; held until " + until + " after a check" : "");
+  };
+  const ownPosts = (k) => {
+    if ((E.NETWORKS[k] || {}).devvit) return "Reddit app: " + STAGE[k] + (reddit ? "; last sync " + Math.round((now - Date.parse(reddit.at)) / 60000) + " minutes ago" + (reddit.error ? " (" + reddit.error + ")" : "") : "; waiting for the first sync");
     const a = accounts.find((x) => x.network === k);
     if (!a) return STAGE[k] || "";
     if (!a.connected) return "API, not connected: connect it under Accounts";
     return "API as " + a.account + ": " + STAGE[k] + (conf.live ? "" : " (dry run: replies post, the rest is only logged)") + (a.error ? "; last error: " + a.error : "");
   };
+  const acting = (k) => {
+    const n = E.NETWORKS[k] || {};
+    if (n.browser && (n.api || n.devvit)) return ownPosts(k) + "; " + viaMac(k);
+    return n.browser ? viaMac(k) : ownPosts(k);
+  };
+  const ownReads = (n) => (n.devvit ? "Reddit app, our posts' comments" : n.api ? "bot, our posts' comments" : "");
   const networks = Object.entries(E.NETWORKS).map(([k, n]) => ({
-    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? macReads(k) : "",
-    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) : last && last.read ? last.read[k] || 0 : 0,
+    network: k, name: n.name, reads: readers[k] ? (readers[k].ok ? "API" : k === "bluesky" ? "needs the account" : "needs a key") : n.browser ? [macReads(k), ownReads(n)].filter(Boolean).join("; ") : ownReads(n),
+    lastRead: n.browser ? (mac && mac.read ? mac.read[k] || 0 : 0) + (n.devvit ? (reddit && reddit.read) || 0 : 0) : n.devvit ? (reddit && reddit.read) || 0 : last && last.read ? last.read[k] || 0 : 0,
     error: n.browser ? (mac && mac.errors ? mac.errors[k] || "" : "") : last && last.errors ? last.errors[k] || "" : "", acts: acting(k),
     row: report.networks.find((r) => r.network === k) || null
   }));
@@ -684,16 +838,20 @@ async function source(ctx) {
     browser.filter((k) => !signed(k)).forEach((k) => needs.push("Engagement: sign in to " + E.NETWORKS[k].name + " in the agent's Chrome: " + AGENT + " login " + k + "."));
     browser.filter((k) => (mac.blocked || {})[k]).forEach((k) => needs.push("Engagement: " + E.NETWORKS[k].name + " asked for a check (a captcha or unusual activity), so the agent leaves it alone until " + mac.blocked[k] + ". Clear it with " + AGENT + " login " + k + "."));
   }
+  if (redditLate) needs.push("Engagement: " + (reddit ? "the Reddit sync last ran " + Math.round((now - Date.parse(reddit.at)) / 3600000) + " hours ago" : "the Reddit sync has not run yet") + ", so comments under r/QALabLiveReports posts wait; check reddit-engagement.yml (DEVVIT_TOKEN and REDDIT_ENGAGEMENT_TOKEN).");
+  else if (reddit.error) needs.push("Engagement: the Reddit sync failed (" + reddit.error + ").");
   if (last && last.aiError) needs.push("Engagement: Gemini failed on the last run (" + last.aiError + "), so no reply was drafted.");
   if (conf.paused) needs.push("Engagement is paused: nothing is planned or pushed until you resume it.");
   const byScore = (a, b) => b.score - a.score;
+  const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
+  const joins = await Joins.summary(db, conf, mac, used, now);
   return {
-    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts,
+    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts, ownerTags,
     waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
     approved: approvedSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt))).slice(0, 30),
     posts: top.map(brief), report, networks,
     reports: reportsSnap.docs.map((d) => { const x = d.data(); let r = {}; try { r = JSON.parse(x.json); } catch (error) { r = {}; } return { id: d.id, period: x.period, from: x.from, to: x.to, at: x.at, totals: r.totals || {}, approvalRate: r.approvalRate === undefined ? null : r.approvalRate }; }),
-    caps: conf.caps, used: usedToday(cur.find((d) => d.day === E.bogotaDay(now))),
+    caps: conf.caps, used, joins,
     daily: range.map((day) => {
       const t = E.report("day", cur.filter((d) => d.day === day), [], [], now).totals;
       return { day, read: t.read, candidates: t.candidates, like: t.like, repost: t.repost, follow: t.follow, drafted: t.drafted, approved: t.approved + t.edited, posted: t.posted, done: t.like_done + t.repost_done + t.follow_done, dry: t.like_dry + t.repost_dry + t.follow_dry };
@@ -702,4 +860,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportSites, reportPass, rerunPass, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

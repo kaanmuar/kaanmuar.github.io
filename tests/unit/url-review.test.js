@@ -1885,6 +1885,22 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(run.live.reason, "unlisted");
   });
 
+  test("the desk reads trimmed reviews and shows the same runs as from the full ones", () => {
+    const desk = require("../../functions/url-review-desk");
+    const names = ["wordpress", "excalidraw", "carlosandmunoz"];
+    const full = names.map((name, i) => {
+      const report = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "review-" + name + ".json"), "utf8"));
+      report.browser = { trace: "x".repeat(100000) };
+      return { id: "r" + i, status: "complete", email: "a@b.de", followUp: true, createdAt: "2026-11-0" + (i + 1) + "T10:00:00.000Z", log: Array.from({ length: 50 }, (_, n) => "line " + n), report };
+    });
+    full.push({ id: "p1", status: "paid-report", reportId: "r0", email: "a@b.de", paid: true, priceUsd: 9 });
+    const slim = full.map(desk.deskRecord);
+    assert.ok(JSON.stringify(slim).length < JSON.stringify(full).length / 4);
+    assert.deepEqual(slim[3], full[3]);
+    const view = (rows) => Object.assign(desk.snapshot(rows, desk.alertsFromHistory(rows), [], [], ["excalidraw.com"]), { at: "" });
+    assert.deepEqual(view(slim), view(full));
+  });
+
   test("an asker's opt-out, a test run, and a host Safe Browsing flags are held", () => {
     assert.equal(publish.heldReason(record("acme.de", { unlisted: true }), []), "asker-opted-out");
     assert.equal(publish.heldReason(record("acme.de", { unlisted: false }), []), "");
@@ -1975,7 +1991,7 @@ test("the intake takes the current terms and the ones just before, and records w
   const now = core.validateIntake(body(core.TERMS_VERSION));
   assert.deepEqual(now.errors, []);
   assert.equal(now.value.termsVersion, core.TERMS_VERSION);
-  assert.equal(core.validateIntake(body("2026-11-01")).value.termsVersion, "2026-11-01");
+  assert.equal(core.validateIntake(body("2026-11-04")).value.termsVersion, "2026-11-04");
   assert.ok(core.validateIntake(body("2026-10-26")).errors.some((e) => e.field === "terms"));
   assert.ok(core.validateIntake(body("2026-09-01")).errors.some((e) => e.field === "terms"));
 });

@@ -1,0 +1,49 @@
+Text,Image URL,Tags,Posting Time
+"shortmake.com: 72. The gap: outdated libraries.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But next.js 16.1.6 has known flaws.
+
+Lesson: Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.
+
+One automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #Dependencies #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/01-u-shortmake-com.jpg","","2026-11-09 15:45"
+"choice-route.com: 74. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/02-u-choice-route-com.jpg","","2026-11-10 12:45"
+"4 natural competitors. nordea.fi leads: 80.
+
+nordea.fi leads in SEO, Accessibility; aktia.fi leads in GEO, Analytics, Performance; s-pankki.fi leads in Security.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 8 Nov 2026 of aktia.fi, s-pankki.fi, nordea.fi, op.fi, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/03-vs-aktia-fi.jpg","","2026-11-11 14:35"
+"3 natural competitors. beebom.com leads: 87.
+
+xda-developers.com leads in SEO; beebom.com leads in GEO, Security, Accessibility, Performance; destructoid.com leads in Analytics.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 8 Nov 2026 of beebom.com, destructoid.com, xda-developers.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg","","2026-11-12 12:05"

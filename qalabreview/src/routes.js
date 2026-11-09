@@ -17,6 +17,7 @@ export const SOCIAL = {
   bsky: "bluesky", mast: "mastodon", yt: "youtube", x: "x", li: "linkedin", fb: "facebook", ig: "instagram", th: "threads", tt: "tiktok"
 };
 
+const OFFER = /^hi-[a-z0-9]{8}$/;
 const HOST = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 
 export function page(lang) {
@@ -63,11 +64,12 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
 
   // A reply under a social post that names a site we reviewed (#2465); the post ref tells Jarvis which reply it was.
   // The ref goes before the host, whose length varies, so the 120 characters a visit keeps hold it (#2471).
-  if (first === "r" && (rest.length === 2 || rest.length === 3) && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2]))) {
+  // A profile campaign message (#2615) adds the site's domain offer code: /<lang>/r/<code>/<host>/<post ref>/<offer>.
+  if (first === "r" && rest.length >= 2 && rest.length <= 4 && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2])) && (rest.length < 4 || OFFER.test(rest[3]))) {
     const site = bare(rest[1]);
-    const tags = Object.assign({ utm_campaign: "social-reply-" + SOCIAL[rest[0]] }, rest[2] ? { utm_term: rest[2] } : {}, { utm_content: site, utm_medium: "social" });
+    const tags = Object.assign({ utm_campaign: (rest[3] ? "social-profile-" : "social-reply-") + SOCIAL[rest[0]] }, rest[2] ? { utm_term: rest[2] } : {}, { utm_content: site, utm_medium: "social" });
     const card = await findReport(site).catch(() => null);
-    return { status: 302, location: landing(lang, tags, card && card.id ? { live: card.id } : { url: site }) };
+    return { status: 302, location: landing(lang, tags, Object.assign(card && card.id ? { live: card.id } : { url: site }, rest[3] ? { coupon: rest[3].toUpperCase() } : {})) };
   }
 
   const host = bare(first);

@@ -169,3 +169,110 @@ test.describe('Terms on submit (#1090)', () => {
     await expect(page.locator('#gate')).toBeHidden();
   });
 });
+
+test.describe('A first review from the hero (#2756)', () => {
+  test('the hero takes the address and goes to sign-in, with the steps left named', async ({ page }) => {
+    await prime(page, { terms: false });
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#stage-url')).toBeInViewport();
+    await expect(page.locator('#share-open')).toBeHidden();
+    await page.locator('#stage-url').fill('https://example.com/docs');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#url')).toHaveValue('example.com/docs');
+    await expect(page.locator('#sign-in-email')).toBeFocused();
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#req-page')).toHaveClass(/done/);
+    await expect(page.locator('#review-needs button')).toHaveText(['2 You', '3 Why this review']);
+    await page.locator('#review-needs button[data-step="why"]').click();
+    await expect(page.locator('#reasons input[type="radio"]').first()).toBeFocused();
+  });
+
+  test('an empty hero field stays put', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#stage-start button[type="submit"]').click();
+    await expect(page.locator('#stage-url')).toBeFocused();
+  });
+
+  test('Review can be pressed signed out: the terms come first, then it asks to sign in', async ({ page }) => {
+    await prime(page, { terms: false });
+    const calls = await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#url').fill('example.com');
+    await expect(page.locator('#review-btn')).toBeEnabled();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#gate')).toBeVisible();
+    await page.locator('#terms-all').check();
+    await page.locator('#accept').click();
+    await expect(page.locator('#form-status')).toHaveText(/^Sign in above to run a review/);
+    await expect(page.locator('#sign-in-email')).toBeFocused();
+    expect(calls).not.toContain('/review');
+  });
+
+  test('every step reads done once signed in with a name and a reason, and the steps line goes away', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('example.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[type="radio"]').first().check();
+    await expect(page.locator('#review-needs')).toBeHidden();
+  });
+
+  test('a first visit stays on the hero: the tour waits for its button', async ({ page }) => {
+    await prime(page);
+    await page.addInitScript(() => localStorage.removeItem('hasSeenReviewTour'));
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.waitForTimeout(2500);
+    await expect(page.locator('#site-tour-tooltip')).toHaveCount(0);
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-tooltip')).toBeVisible();
+  });
+
+  test('the sample report takes focus, and Escape closes it back to its button', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await expect(page.locator('.dash-modal')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+    await expect(page.locator('#stage-sample-open')).toBeFocused();
+  });
+
+  test('on a phone the terms open at the top, Accept comes into view once all are ticked, and Close stays on screen in a report', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await prime(page, { terms: false });
+    await backend(page);
+    await page.goto('/qa-review.html');
+    await page.locator('#url').fill('example.com');
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#gate-close')).toBeInViewport();
+    await page.locator('#terms-all').check();
+    await expect(page.locator('#accept')).toBeInViewport();
+    await page.keyboard.press('Escape');
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+    await page.locator('#dash-overlay').evaluate((el) => { el.scrollTop = 3000; });
+    await expect(page.locator('#dash-close')).toBeInViewport();
+  });
+
+  test('each language page carries the hero field and its own steps line', async ({ page }) => {
+    const lead = { es: 'Falta antes de Revisar', pt: 'Falta antes de Revisar', de: 'Noch offen vor „Prüfen“', fr: 'Reste à remplir avant Analyser', it: 'Manca prima di Analizza' };
+    for (const lang of Object.keys(lead)) {
+      await prime(page);
+      await backend(page);
+      await page.goto('/qa-review-' + lang + '.html');
+      await expect(page.locator('#stage-url')).toBeVisible();
+      await expect(page.locator('#review-needs')).toContainText(lead[lang]);
+      await expect(page.locator('#log-next li').first()).toHaveAttribute('lang', lang);
+    }
+  });
+});

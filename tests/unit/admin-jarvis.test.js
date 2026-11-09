@@ -141,7 +141,8 @@ test("voice and command-bar phrases map to actions", () => {
   assert.deepEqual(core.parseCommand("Jarvis, show URL review"), { type: "go", product: "review" });
   assert.deepEqual(core.parseCommand("simulator"), { type: "go", product: "studio" });
   assert.deepEqual(core.parseCommand("last 7 days"), { type: "range", value: "7" });
-  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "all" });
+  assert.deepEqual(core.parseCommand("all time"), { type: "range", value: "365" });
+  assert.deepEqual(core.parseCommand("last year"), { type: "range", value: "365" });
   assert.deepEqual(core.parseCommand("export csv"), { type: "export", format: "csv" });
   assert.deepEqual(core.parseCommand("print everything"), { type: "print", all: true });
   assert.deepEqual(core.parseCommand("run sweepReviews"), { type: "run-job", job: "sweepReviews" });
@@ -829,6 +830,7 @@ test("outreach: the week starts Monday in Bogota and the pipeline counts only ou
   assert.deepEqual(p.results, [{ label: "failed", value: 1 }, { label: "reviewed", value: 1 }]);
   assert.equal(p.avgScore, 70);
   assert.equal(p.withLiveReport, 1);
+  assert.equal(p.reviewedHosts, 3);
   assert.equal(p.reviewedWithLiveReport, 1);
   assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
   assert.equal(p.priorReviews, 1);
@@ -866,6 +868,8 @@ test("outreach: Instantly numbers become rates, campaign states and mailbox warm
   assert.equal(x.prior, null);
   const y = outreachSrc.instantlyRows([], { emails_sent_count: 200 }, [], [], { emails_sent_count: 100, contacted_count: 50, reply_count_unique: 2 });
   assert.deepEqual([y.sent, y.prior.sent, y.prior.rates.reply], [200, 100, 4]);
+  assert.equal(x.openTracking, false);
+  assert.equal(outreachSrc.instantlyRows([{ status: 1, open_tracking: false }, { status: 1, open_tracking: true }], {}, [], []).openTracking, true);
 });
 
 test("outreach: the plan knows the day, phase, next milestone and sorted deadlines", () => {
@@ -1256,16 +1260,73 @@ test("social: each channel shows what is next, what went out last and what faile
     "b/two": [{ channel: "linkedin", at: "2026-10-25T18:00:00Z", result: "queued" }, { channel: "x", at: "2026-10-23T15:00:00Z", result: "failed" }, { channel: "nope", at: "2026-10-26T15:00:00Z" }]
   } };
   const open = { posts: { "b/one": [{ channel: "bluesky", at: "2026-10-24T15:01:00Z", result: "sent", url: "https://bsky.app/profile/q/post/1" }, { channel: "mastodon", at: "2026-10-24T15:02:00Z", result: "failed" }] } };
-  const rows = social.byChannel([buffer, null, open], now, now - 7 * 86400000);
-  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok"]);
+  const telegram = { posts: { "live/2026-10-24": [{ channel: "telegram", at: "2026-10-24T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/3" }] } };
+  const reddit = { posts: { "live/2026-10-24": [{ channel: "reddit", at: "2026-10-24T16:20:05Z", result: "sent", url: "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/" }], "live/2026-10-23": [{ channel: "reddit", at: "2026-10-23T16:20:05Z", result: "failed", error: "Removed on Reddit (moderator)" }] } };
+  const rows = social.byChannel([buffer, null, open, telegram, reddit], now, now - 7 * 86400000);
+  assert.deepEqual(rows.map((r) => r.channel), ["linkedin", "x", "bluesky", "mastodon", "threads", "instagram", "instagram-story", "facebook", "youtube", "tiktok", "telegram", "reddit"]);
+  assert.deepEqual([rows[11].name, rows[11].sent, rows[11].failed, rows[11].last.url], ["Reddit", 1, 1, "https://www.reddit.com/r/QALabLiveReports/comments/abc/x/"]);
   assert.deepEqual(rows[0].next.map((n) => n.post), ["b/two", "b/one"]);
   assert.equal(rows[0].scheduled, 2);
   assert.deepEqual([rows[1].sent, rows[1].failed, rows[1].last.url], [1, 1, "https://x.com/1"]);
   assert.deepEqual([rows[2].sent, rows[2].last.url, rows[3].failed], [1, "https://bsky.app/profile/q/post/1", 1]);
+  assert.deepEqual([rows[10].name, rows[10].sent, rows[10].last.post], ["Telegram", 1, "live/2026-10-24"]);
+  assert.deepEqual(rows[10].numbers, {});
 });
 
-test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones", () => {
-  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
+test("social: each channel adds up the numbers of the posts it sent in the range", () => {
+  const now = Date.parse("2026-11-05T15:00:00Z");
+  const telegram = { posts: {
+    "live/2026-11-04": [{ channel: "telegram", at: "2026-11-04T18:38:14Z", result: "sent" }],
+    "live/2026-11-03": [{ channel: "telegram", at: "2026-11-03T18:38:14Z", result: "sent" }],
+    "live/2026-10-01": [{ channel: "telegram", at: "2026-10-01T18:38:14Z", result: "sent" }]
+  } };
+  const reddit = { posts: { "live/2026-11-04": [{ channel: "reddit", at: "2026-11-04T16:20:05Z", result: "sent" }] } };
+  const metricsBook = { posts: {
+    "live/2026-11-04": { telegram: { views: 12, likes: 2 }, reddit: { likes: 7, comments: 3 } },
+    "live/2026-11-03": { telegram: { views: 30 } },
+    "live/2026-10-01": { telegram: { views: 500 } }
+  } };
+  const rows = social.byChannel([telegram, reddit], now, now - 7 * 86400000, metricsBook);
+  const by = Object.fromEntries(rows.map((r) => [r.channel, r.numbers]));
+  assert.deepEqual(by.telegram, { views: 42, likes: 2 }, "the post before the range is left out");
+  assert.deepEqual(by.reddit, { likes: 7, comments: 3 });
+  assert.deepEqual(by.linkedin, {});
+});
+
+test("social: Telegram members show the count now and the change since the range began, or a need line", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const history = [{ date: "2026-10-20", members: 10 }, { date: "2026-10-27", members: 14 }, { date: "2026-10-30", members: 18 }, { date: "2026-11-04", members: 25 }];
+  const tg = social.telegramMembers({ channels: { telegram: { chat: "@qalab_live", members: 25, at: "2026-11-04T15:00:00Z", history } } }, since);
+  assert.deepEqual([tg.members, tg.change, tg.from, tg.need], [25, 11, { date: "2026-10-27", members: 14 }, ""]);
+  assert.deepEqual(tg.history.map((p) => p.date), ["2026-10-30", "2026-11-04"]);
+  const young = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(2) } } }, since);
+  assert.deepEqual([young.change, young.from.date], [7, "2026-10-30"]);
+  const first = social.telegramMembers({ channels: { telegram: { members: 25, history: history.slice(3) } } }, since);
+  assert.deepEqual([first.change, first.from], [null, null]);
+  assert.match(social.telegramMembers({ posts: {} }, since).need, /^Telegram members: .*no member count.*TELEGRAM_BOT_TOKEN repo secret and the TELEGRAM_CHANNEL repo variable/);
+  assert.match(social.telegramMembers(null, since).need, /no member count/);
+  assert.match(social.telegramMembers({ channels: { telegram: { skipped: "no TELEGRAM_BOT_TOKEN secret", history: [] } } }, since).need, /skipped it \(no TELEGRAM_BOT_TOKEN secret\)/);
+  const failed = social.telegramMembers({ channels: { telegram: { members: 25, at: "2026-11-03T15:00:00Z", error: "Telegram 403: bot is not a member", history } } }, since);
+  assert.equal(failed.members, 25);
+  assert.match(failed.need, /showing the count from 2026-11-03 because the last run failed \(Telegram 403: bot is not a member\)/);
+});
+
+test("social: subreddit members come from the Reddit ledger like Telegram's, with a need line when missing or old", () => {
+  const since = Date.parse("2026-10-28T12:00:00Z");
+  const now = Date.parse("2026-11-04T18:00:00Z");
+  const history = [{ date: "2026-10-27", members: 9 }, { date: "2026-11-04", members: 12 }];
+  const rd = social.redditMembers({ posts: {}, members: { chat: "r/QALabLiveReports", members: 12, at: "2026-11-04T16:20:04.000Z", history } }, since, now);
+  assert.deepEqual([rd.channel, rd.members, rd.change, rd.from, rd.need], ["r/QALabLiveReports", 12, 3, { date: "2026-10-27", members: 9 }, ""]);
+  assert.match(social.redditMembers({ posts: {} }, since, now).need, /^Reddit members: the Reddit ledger has no member count yet\. .*reddit-live\.yml/);
+  assert.equal(social.redditMembers(null, since, now).members, null);
+  const old = social.redditMembers({ posts: {}, members: { members: 12, at: "2026-11-01T16:20:04.000Z", history } }, since, now);
+  assert.equal(old.members, 12);
+  assert.match(old.need, /showing the count from 2026-11-01, more than two days old/);
+});
+
+test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer and Page ones, and watches the Reddit app", () => {
+  assert.deepEqual(social.WORKFLOWS.map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml", "reddit-live.yml"]);
+  assert.deepEqual(social.WORKFLOWS.filter((w) => !w.watch).map((w) => w.file), ["buffer-batch.yml", "facebook-page.yml", "open-social.yml"]);
   social.WORKFLOWS.forEach((w) => assert.ok(fs.existsSync(path.join(__dirname, "../../.github/workflows", w.file)), w.file));
 });
 
@@ -1435,4 +1496,32 @@ test("the LinkedIn Send button copies the note line of the day's list (#2479)", 
   assert.equal(core.linkedinLine({}, "Note"), "");
   assert.equal(core.linkedinLine(null, "Note"), "");
   assert.equal(core.linkedinLine({ lines: ["Check first: confirm the role.", "Note: Hi"] }, "Check first"), "confirm the role.");
+});
+
+test("the web Jarvis reads no Firestore: it loads from the snapshot op the app reads (#2102)", () => {
+  const src = ["admin-jarvis.js", "admin-jarvis-push.js"].map((f) => fs.readFileSync(path.join(__dirname, "../../js", f), "utf8")).join("\n");
+  assert.doesNotMatch(src, /firebase-firestore\.js|\bgetDocs?\(|\bonSnapshot\(|\bcollection\(db/);
+  assert.match(src, /call\('snapshot'\)/);
+  assert.doesNotMatch(src, /call\('rows'/);
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  assert.doesNotMatch(index, /op === "rows"/);
+  const snapshot = index.slice(index.indexOf("async function jarvisSnapshot("), index.indexOf("async function jarvisBriefOpen("));
+  ["feed", "socialHeat", "reports", "outreachVisits"].forEach((key) => assert.match(snapshot, new RegExp("\\b" + key + "\\b"), key));
+});
+
+test("the live feed and the social heat map come from the range's rows, newest first (#2102)", () => {
+  const at = (h) => new Date(NOW.getTime() - h * 3600000);
+  const events = [
+    { site: "cv", kind: "visit", createdAt: at(1), query: "?utm_source=linkedin" },
+    { site: "cv", kind: "export", name: "pdf", createdAt: at(3) },
+    { site: "lab", kind: "visit", createdAt: at(5), query: "?utm_source=outreach&utm_campaign=w1" },
+    { site: "studio", kind: "visit", createdAt: at(6), referrerHost: "www.google.com" }
+  ];
+  const lines = core.feed({ events, opens: [{ createdAt: at(2) }], reviews: [{ createdAt: at(4).toISOString(), paid: true, requestedUrl: "https://shop.example/?a=1&b=2", status: "complete" }] });
+  assert.deepEqual(lines.map((l) => l.text.split(":")[0]), ["CV", "URL Review", "CV", "URL Review", "QA Lab", "QA Studio"]);
+  assert.equal(lines[3].text, "URL Review: paid review of shop.example/?a=1&b=2 (complete)");
+  assert.ok(lines.every((l) => typeof l.at === "string" && !Number.isNaN(Date.parse(l.at))));
+  assert.equal(core.feed({ events: Array.from({ length: 50 }, (_, i) => ({ site: "cv", kind: "visit", createdAt: at(i + 1) })) }).length, 18);
+  const grid = core.socialHeat(events);
+  assert.equal(grid.flat().reduce((a, b) => a + b, 0), 2, "the LinkedIn and outreach visits, not Google or the export");
 });

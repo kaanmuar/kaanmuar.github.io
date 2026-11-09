@@ -15,14 +15,14 @@ function hubUrl(batch, slug) {
 }
 
 // Caption limits; X and Mastodon count any link, with or without https://, as 23 characters.
-const LIMITS = { x: [280, 23], mastodon: [500, 23], threads: [500], bluesky: [300], linkedin: [3000], instagram: [2200], tiktok: [2200], youtube: [5000], facebook: [63206] };
+const LIMITS = { x: [280, 23], mastodon: [500, 23], threads: [500], bluesky: [300], linkedin: [3000], instagram: [2200], tiktok: [2200], youtube: [5000], facebook: [63206], telegram: [1024] };
 const LINK = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/\S*)?/gi;
 
 // Every caption ends with its hub post, tagged for the network it goes to (#539). A caption that would run past
 // the network's limit loses whole words from its end, never part of a link.
 function withHubLink(text, { batch, slug, network }) {
   const body = String(text || "").trim();
-  if (!body || body.includes("/social/" + batch + "/" + slug + ".html")) return text;
+  if (!body || new RegExp("/social/" + batch + "/" + slug + "(?:\\.html)?(?![\\w.-])").test(body)) return text;
   const tail = "\n\n" + hubUrl(batch, slug) + "?utm_source=" + network + "&utm_medium=social&utm_campaign=" + batch;
   const [max, linkSize] = LIMITS[network] || [Infinity];
   const size = (s) => [...(linkSize ? s.replace(LINK, "x".repeat(linkSize)) : s)].length;
@@ -77,4 +77,4 @@ function createGate({ fetchImpl = fetch, root = ROOT } = {}) {
   };
 }
 
-module.exports = { SITE, LIMITS, hubUrl, withHubLink, bogotaDay, hubDates, reason, createGate };
+module.exports = { SITE, LIMITS, LINK, hubUrl, withHubLink, bogotaDay, hubDates, reason, createGate };

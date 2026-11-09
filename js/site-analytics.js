@@ -229,7 +229,7 @@
 
     const SOCIAL_HOSTS = {
         'youtube.com': 'YouTube', 'x.com': 'X', 'twitter.com': 'X', 'linkedin.com': 'LinkedIn',
-        'tiktok.com': 'TikTok', 'dev.to': 'DEV', 'reddit.com': 'Reddit', 'github.com': 'GitHub'
+        'tiktok.com': 'TikTok', 'dev.to': 'DEV', 'reddit.com': 'Reddit', 't.me': 'Telegram', 'github.com': 'GitHub'
     };
 
     // Share buttons and links with their own data-analytics-event / data-track already report.

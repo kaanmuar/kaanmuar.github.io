@@ -36,6 +36,7 @@
    tip.pin (the calendar keeps it on its date), studio.WINDOWS, studio.hostFor(tip), studio.BATCH and studio.LANG_OFFSET.
    A source names its social hub kind with studio.KIND or tip.kind (trick, news, advice, compare, myth, quiz, term,
    skit, series); a quiz sets tip.answer to the id of the tip that reveals it, tip.steps and tip.term are optional.
+   tip.place ("Armenia, Colombia") names the one city a Local run is about, for its Threads location tag (#2716).
    --rotate writes voiced/<slug>.mp4 and voiced/<slug>.json (language, speech, TikTok and YouTube copy)
    for clips already queued, and leaves the stills, calendar, and Buffer CSVs alone.
    With STRICT_TRANSLATE set, a translator that refuses stops the build with exit 75 before anything is drawn, so no
@@ -219,11 +220,12 @@ function hubFields(tip, slugOf) {
   const steps = tip.steps || (["trick", "advice"].includes(kind) && tip.action ? [tip.action] : null);
   if (steps) out.steps = steps;
   if (tip.term) out.term = tip.term;
+  if (tip.place) out.place = tip.place;
   return out;
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition"]);
+const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "place", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
@@ -248,7 +250,7 @@ async function extrasFor(tip, browser) {
   if (EXTRAS.has(tip.id)) return EXTRAS.get(tip.id);
   const v = tip.visual || {};
   const host = tip.host || (v.type === "scores" && v.note ? v.note.split(" · ")[0].trim() : "");
-  const x = { nets: brands.networks(), handle: brands.HANDLE };
+  const x = { nets: brands.networks() };
   if (v.type === "matrix") {
     x.logos = {};
     for (const row of v.rows) x.logos[row[0]] = await assets.siteKind(row[0]) ? "" : await assets.siteLogo(row[0]);
