@@ -6924,6 +6924,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "speak") out = await jarvis.speak(fetch, body.text, body.lang, { voice: body.voice, rate: body.rate });
     else if (op === "run-job") out = await jarvis.runJob(fetch, body.job);
     else if (op === "settings") out = await jarvis.readSettings(getFirestore());
+    else if (op === "settings-save" && body.layout && !body.settings) {
+      out = await jarvis.saveLayout(getFirestore(), body.layout, operator);
+      await jarvisSnap.drop(getFirestore(), ["settings"]);
+    }
     else if (op === "settings-save") {
       out = await jarvis.saveSettings(getFirestore(), body.settings, operator);
       const cache = getFirestore().collection("jarvis_cache");
