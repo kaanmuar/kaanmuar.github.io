@@ -1,0 +1,97 @@
+Text,Image URL,Tags,Posting Time
+"usehelios.ai: 75. The gap: the sitemap host.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 31 sitemap URLs point at another host or scheme.
+
+The lesson for every team: Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-usehelios-ai&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usehelios-ai
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #SoftwareTesting #QA #Sitemap #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg","","2026-11-07 07:30"
+"ruvo.com: 79. The gap: the CSP.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.
+
+The lesson for every team: Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ruvo-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #SRE #QA #CSP #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg","","2026-11-08 08:10"
+"mono.la: 81. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-mono-la&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mono-la
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Vulnerability #DevOps #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/03-u-mono-la.jpg","","2026-11-09 08:00"
+"Scored 42 of 100. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 6 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-conservatoriodeltolima-edu-co&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-conservatoriodeltolima-edu-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Vulnerability #DevOps #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/04-u-conservatoriodeltolima-edu-co.jpg","","2026-11-10 09:50"
+"footlocker.com: 80. The gap: schema fields.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 structured data items miss a property Google expects.
+
+The lesson for every team: Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.
+
+One automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-footlocker-com&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-footlocker-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#StructuredData #DevOps #SRE #QA #SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/05-u-footlocker-com.jpg","","2026-11-11 07:40"
+"kra.co.kr: 41. The gap: page titles.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 1 page has no title.
+
+The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-kra-co-kr&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kra-co-kr
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SRE #Automation #QA #Titles #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg","","2026-11-12 09:55"
+"td.com vs desjardins.com. desjardins.com leads: 81.
+
+td.com leads in SEO, Analytics; desjardins.com leads in GEO, Security, Accessibility, Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 6 Nov 2026 of td.com, desjardins.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-td-com&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-td-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SRE #Automation #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg","","2026-11-13 07:45"
+"okta.com vs rippling.com. rippling.com leads: 66.
+
+rippling.com leads in SEO, Analytics, Accessibility; okta.com leads in GEO, Security, Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 6 Nov 2026 of okta.com, rippling.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-okta-com&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-okta-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #SRE #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/08-vs-okta-com.jpg","","2026-11-14 09:20"

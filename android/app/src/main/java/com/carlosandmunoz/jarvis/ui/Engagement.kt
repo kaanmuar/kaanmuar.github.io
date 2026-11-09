@@ -1,5 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -43,8 +47,10 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /** Jarvis > Engagement (#1988): the scout's posts in our field, its plan, and the replies waiting for Carlos. */
 object Engagement {
-    val LIMIT = mapOf("bluesky" to 300, "mastodon" to 500, "youtube" to 500, "x" to 280, "linkedin" to 1200, "facebook" to 1000, "instagram" to 1000, "threads" to 500, "tiktok" to 150)
+    val LIMIT = mapOf("bluesky" to 300, "mastodon" to 500, "youtube" to 500, "x" to 280, "linkedin" to 1200, "facebook" to 1000, "instagram" to 1000, "threads" to 500, "tiktok" to 150, "telegram" to 1000, "reddit" to 1500)
     val ACTIONS = listOf("like", "repost", "follow", "reply")
+    /** The daily caps in Settings: the four actions, and joins on Telegram and Reddit (#2614). */
+    val CAPS = ACTIONS + "join"
 
     fun limit(network: String?) = LIMIT[network] ?: 300
 
@@ -64,7 +70,15 @@ object Engagement {
 
     /** Today's use against the cap per action on one network, as "like 3/60 · reply 1/15". */
     fun usage(g: JsonObject?, network: String): String =
-        ACTIONS.joinToString(" · ") { a -> "$a ${fmt(g.obj("used").obj(network).num(a) ?: 0.0)}/${fmt(g.obj("caps").num(a))}" }
+        ACTIONS.joinToString(" · ") { a -> "$a ${fmt(g.obj("used").obj(network).num(a) ?: 0.0)}/${fmt(g.obj("caps").num(a))}" } +
+            (g.obj("joins").obj("caps").num(network)?.let { " · join ${fmt(g.obj("used").obj(network).num("join") ?: 0.0)}/${fmt(it)}" } ?: "")
+
+    /** One join from the log (#2614): "would join (dry run) · subreddit · en · 90,000 members · Testing". */
+    fun joinLine(j: JsonObject): String = listOfNotNull(
+        when (j.str("status")) { "dry" -> "would join (dry run)"; "member" -> "already in it"; else -> j.str("status") },
+        j.str("kind")?.ifEmpty { null }, j.str("lang")?.ifEmpty { null }, "${fmt(j.num("members") ?: 0.0)} members",
+        j.str("topic")?.ifEmpty { null }, j.str("error")?.ifEmpty { null }
+    ).joinToString(" · ")
 
     fun metrics(post: JsonObject): String {
         val m = post.obj("metrics")
@@ -89,6 +103,8 @@ object Engagement {
     ).joinToString(" · ")
 
     val APP_PASSWORD = Regex("^[a-z0-9]{4}(-[a-z0-9]{4}){3}$", RegexOption.IGNORE_CASE)
+    /** A Telegram bot token from BotFather (#2614). */
+    val BOT_TOKEN = Regex("^\\d{5,}:[A-Za-z0-9_-]{30,}$")
     const val SHOWN = 5
 
     /** Report replies (#2465, #2471): invites under posts that name a site we reviewed. */
@@ -108,7 +124,14 @@ object Engagement {
             "scores ${fmt(r.num("score"))}" + if (r.bool("shown") == true) "" else " (not named in the reply)",
             "found by ${r.str("match") ?: "?"}",
             r.str("format") ?: "link"
-        ).joinToString(" · ")
+        ).joinToString(" · ") + profileLine(r)
+    }
+
+    /** The profile campaign's part (#2615): " · touch 2 of 4 (curious) · offer HI-… · approve copies it to paste by hand", or "". */
+    fun profileLine(r: JsonObject): String {
+        if (r.str("match") != "profile") return ""
+        return " · touch ${fmt(r.num("touch"))} of 4 (${r.str("tone").orEmpty()}) · offer ${r.str("offer").orEmpty()} · " +
+            if (r.bool("manual") == true) "approve copies it to paste by hand" else "posts on approval"
     }
 }
 
@@ -211,6 +234,20 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
+    g.obj("joins")?.let { joins ->
+        Panel("Joins") {
+            joins.obj("caps")?.keys?.forEach { net ->
+                KeyRow(net.replaceFirstChar { it.uppercase() }, "${fmt(g.obj("used").obj(net).num("join") ?: 0.0)} of ${fmt(joins.obj("caps").num(net))} today · ${fmt(joins.obj("found").num(net) ?: 0.0)} found to join")
+            }
+            val log = joins.objs("log")
+            if (log.isEmpty()) Muted("No join yet. The Mac finds groups with its topic searches and joins the best ones once live.")
+            log.take(15).forEach { j ->
+                StatusRow(when (j.str("status")) { "joined" -> "good"; "failed" -> "alert"; else -> "info" }, j.str("name").orEmpty(), Engagement.joinLine(j), j.str("url"))
+            }
+            Muted("One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.")
+        }
+    }
+
     val daily = g.objs("daily")
     if (daily.isNotEmpty()) Panel("Per day") {
         Muted("Posts in our field")
@@ -222,6 +259,8 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     }
 
     ReportReplies(r, names, waiting.count { Engagement.isReport(it) }, only) { only = it }
+
+    OwnerTagsPanel(g, s, vm, names, ::ask)
 
     Panel("Top posts in our field") {
         val allPosts = g.objs("posts")
@@ -304,6 +343,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
     var text by rememberSaveable(key) { mutableStateOf(draft) }
     var open by rememberSaveable("open:$key") { mutableStateOf(false) }
     val uri = LocalUriHandler.current
+    val context = LocalContext.current
     val busy = "eg:$key" in s.running
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -315,6 +355,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         p.str("about")?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 13.sp) }
         Engagement.reportLine(p)?.let { Text(it, color = J.violet, fontSize = 12.sp) }
         p.obj("report").str("link")?.takeIf { it.startsWith("https://") }?.let { link -> TextButton({ uri.openUri(link) }) { Text("Open the report link", color = J.cyan, fontSize = 12.sp) } }
+        p.obj("report").str("profile")?.takeIf { it.startsWith("https://") }?.let { link -> TextButton({ uri.openUri(link) }) { Text("Open their profile", color = J.cyan, fontSize = 12.sp) } }
         val chain = p.obj("chain")
         val ours = chain.str("ours")
         if (chain != null) Text("${Engagement.author(p)} commented on our ${if (chain.str("on") == "post") "post" else "reply"}" + (ours?.takeIf { it.isNotEmpty() }?.let { ": “$it”" } ?: ""), color = J.muted, fontSize = 12.sp)
@@ -325,7 +366,11 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ActionButton("Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)
-                vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out -> out.str("message") ?: "Approved." }
+                vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out ->
+                    val pasted = out.str("status") == "copy" && !out.str("text").isNullOrEmpty()
+                    if (pasted) (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("reply", out.str("text")))
+                    (out.str("message") ?: "Approved.") + if (pasted) " The text is on your clipboard." else ""
+                }
             }
             TextButton({ ask("dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {
                 Text("Dismiss", color = J.muted, fontSize = 13.sp)
@@ -378,6 +423,16 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                     vm.market("eg:connect:bluesky", "engagement-connect", mapOf("network" to json("bluesky"), "handle" to json(handle), "password" to json(sent))) { out -> out.str("message") ?: "Bluesky is connected." }
                 }
                 Muted("bsky.app > Settings > Privacy and security > App passwords. Never the account password.")
+            } else if (net == "telegram") {
+                var token by remember { mutableStateOf("") }
+                OutlinedTextField(token, { token = it.trim() }, label = { Text("Bot token (123456789:AAE…)") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                ActionButton(if (connected) "Replace" else "Connect Telegram", "eg:connect:telegram" in s.running || !Engagement.BOT_TOKEN.matches(token)) {
+                    val sent = token
+                    token = ""
+                    vm.market("eg:connect:telegram", "engagement-connect", mapOf("network" to json("telegram"), "token" to json(sent))) { out -> out.str("message") ?: "Telegram is connected." }
+                }
+                Muted("BotFather > /mybots > the bot > API Token. The bot answers in @qalab_live's discussion group, as its admin.")
             } else {
                 ActionButton(if (connected) "Reconnect $name" else "Connect $name", "eg:connect:$net" in s.running) {
                     vm.connectEngagement(net) { url -> runCatching { uri.openUri(url) } }
@@ -387,14 +442,14 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 Text("Disconnect", color = J.muted, fontSize = 13.sp)
             }
         }
-        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects.")
+        Muted("X, LinkedIn, Facebook, Instagram, Threads and TikTok act through the Mac's browser agent (#1991). Mastodon is marked as a bot when it connects. Reddit answers under our r/QALabLiveReports posts through the Reddit app, synced every hour (#2614). In the field, Telegram and Reddit act as your own accounts through the same agent.")
     }
 }
 
 @Composable
 private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
     val c = g.obj("settings")
-    val caps = remember(c) { Engagement.ACTIONS.associateWith { a -> mutableStateOf(fmt(c.obj("caps").num(a))) } }
+    val caps = remember(c) { Engagement.CAPS.associateWith { a -> mutableStateOf(fmt(c.obj("caps").num(a) ?: 0.0)) } }
     var competitors by rememberSaveable(c.toString()) { mutableStateOf((c?.get("competitors") as? JsonArray)?.joinToString("\n") { (it as? JsonPrimitive)?.content.orEmpty() }.orEmpty()) }
     Panel("Settings") {
         Muted("Daily caps per network")
@@ -403,6 +458,9 @@ private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 val v = caps.getValue(a)
                 OutlinedTextField(v.value, { v.value = it.filter(Char::isDigit).take(3) }, label = { Text(a, fontSize = 11.sp) }, singleLine = true, modifier = Modifier.weight(1f))
             }
+        }
+        caps.getValue("join").let { v ->
+            OutlinedTextField(v.value, { v.value = it.filter(Char::isDigit).take(2) }, label = { Text("Joins a day on Telegram and Reddit (warmed up)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
         OutlinedTextField(competitors, { competitors = it }, label = { Text("Competitors, never answered under") }, minLines = 3, modifier = Modifier.fillMaxWidth())
         ActionButton("Save settings", "eg:settings" in s.running) {

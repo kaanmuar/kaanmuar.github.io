@@ -23,8 +23,20 @@
  "⟦1⟧ keeps HSTS for only a week.": "⟦1⟧ mantém o HSTS por apenas uma semana.",
  "⟦1⟧ Kubernetes pages share one title.": "⟦1⟧ páginas do Kubernetes compartilham um só título.",
  "⟦1⟧ languages, no sitemap.": "⟦1⟧ idiomas, nenhum sitemap.",
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Security.": {
+  "text": "⟦1⟧ lidera em SEO, Acessibilidade; ⟦2⟧ leads em GEO, Analytics, Performance; ⟦3⟧ lidera em Segurança.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
+  "text": "⟦1⟧ lidera em SEO, Analytics, Acessibilidade; ⟦2⟧ lidera em GEO, Segurança, Desempenho.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Performance; ⟦2⟧ leads in GEO, Security, Accessibility.": {
   "text": "⟦1⟧ lidera em SEO, Analytics, Performance; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
+  "text": "⟦1⟧ leads em SEO, Analytics; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade, Desempenho.",
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO, Analytics, Security; ⟦2⟧ leads in Accessibility, Performance.": {
@@ -35,9 +47,17 @@
   "text": "⟦1⟧ leads em SEO, GEO, Analytics; ⟦2⟧ liderança em Segurança, Desempenho; ⟦3⟧ lidera em Acessibilidade.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Security, Accessibility; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Performance.": {
+  "text": "⟦1⟧ lidera em SEO, GEO, Segurança, Acessibilidade; ⟦2⟧ leads em Analytics; ⟦3⟧ lidera em Desempenho.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ lidera em SEO e GEO; ⟦2⟧ lidera em Analytics, Segurança, Acessibilidade e Performance.",
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Accessibility, Performance.": {
   "text": "⟦1⟧ lidera em SEO, Segurança; ⟦2⟧ lidera em GEO, Analytics, Acessibilidade, Desempenho.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO, Analytics, Performance; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ lidera em SEO, Segurança; ⟦2⟧ leads em GEO, Analytics, Performance; ⟦3⟧ lidera em Acessibilidade.",
   "machine": true
  },
  "⟦1⟧ leads in SEO, Security; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Accessibility, Performance.": {
@@ -50,6 +70,10 @@
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics; ⟦3⟧ leads in Security, Accessibility, Performance.": {
   "text": "⟦1⟧ lidera em SEO; ⟦2⟧ leads em GEO, Analytics; ⟦3⟧ lidera em Segurança, Acessibilidade, Desempenho.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security, Accessibility, Performance; ⟦3⟧ leads in Analytics.": {
+  "text": "⟦1⟧ lidera em SEO; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade, Desempenho; ⟦3⟧ leads em Analytics.",
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ lidera em SEO; ⟦2⟧ lidera em GEO e Segurança; ⟦3⟧ lidera em Analytics, Acessibilidade e Performance.",
@@ -339,12 +363,24 @@
  "Bello's JSON-LD names the page, not the city.": "O JSON-LD de Bello nomeia a página, não a cidade.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença…",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the…": {
+  "text": "Compare os sites com os quais seus visitantes o comparam, não com uma pontuação perfeita: o…",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not against a perfect score…": {
   "text": "Compare com os sites com os quais seus visitantes o comparam, não com uma pontuação perfeita…",
   "machine": true
  },
  "Benchmark against the sites your visitors compare you with, not against a perfect…": {
   "text": "Faça comparações com os sites com os quais seus visitantes o comparam, não com um site perfeito…",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against a…": {
+  "text": "Compare os sites com os quais seus visitantes o comparam, não com um…",
+  "machine": true
+ },
+ "Benchmark against the sites your visitors compare you with, not against…": {
+  "text": "Faça comparações com os sites com os quais seus visitantes o comparam, e não com…",
   "machine": true
  },
  "Benchmark against the sites your visitors compare you with, not…": "Compare-se com os sites com que seus visitantes comparam você, não…",
@@ -433,6 +469,10 @@
   "machine": true
  },
  "But ⟦1⟧ pages have no title.": "Mas ⟦1⟧ páginas não têm título.",
+ "But ⟦1⟧ pages name another URL as canonical.": {
+  "text": "Mas as páginas ⟦1⟧ nomeiam outro URL como canônico.",
+  "machine": true
+ },
  "But ⟦1⟧ points crawlers to ⟦2⟧ and that address returns ⟦3⟧.": "Mas ⟦1⟧ aponta os crawlers para ⟦2⟧ e esse endereço retorna ⟦3⟧.",
  "But ⟦1⟧ points crawlers to ⟦2⟧ which timed out, and plain http answers ⟦3⟧.": "Mas ⟦1⟧ aponta os crawlers para ⟦2⟧, que deu timeout, e o http simples responde ⟦3⟧.",
  "But ⟦1⟧ redirects to ⟦2⟧ which then bounces back to https.": "Mas ⟦1⟧ redireciona para ⟦2⟧, que depois volta para https.",
@@ -547,6 +587,10 @@
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content to appear.": "Mas visitantes reais do Chrome esperam ⟦1⟧ s no percentil ⟦2⟧ para o maior conteúdo aparecer.",
  "But real Chrome visitors wait ⟦1⟧ s at the ⟦2⟧th percentile for the largest content, and the HTML alone took ⟦3⟧ s.": "Mas visitantes reais do Chrome esperam ⟦1⟧ s no percentil ⟦2⟧ pelo maior conteúdo, e só o HTML levou ⟦3⟧ s.",
  "But real Chrome visitors wait ⟦1⟧ s for the largest content.": "Mas visitantes reais do Chrome esperam ⟦1⟧ s pelo maior conteúdo.",
+ "But redirects strip campaign parameters.": {
+  "text": "Mas os redirecionamentos retiram os parâmetros da campanha.",
+  "machine": true
+ },
  "But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.": "Mas Referrer-Policy: unsafe-url envia a URL completa, query incluída, a todo site linkado.",
  "But several links on the home page return ⟦1⟧, among them the giro directo page, the national contact point, and emergencies.": "Mas vários links da home retornam ⟦1⟧, entre eles a página de giro directo, o ponto de contato nacional e emergências.",
  "But Strict-Transport-Security sets max-age to ⟦1⟧ days, and http:// reaches https through a temporary ⟦2⟧.": "Mas o Strict-Transport-Security define max-age de ⟦1⟧ dias, e http:// chega ao https por um ⟦2⟧ temporário.",
@@ -697,6 +741,10 @@
  "CERN's pages have no description.": "As páginas do CERN não têm descrição.",
  "Check every error message, chart and link.": "Confira cada mensagem de erro, gráfico e link.",
  "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.": "Compare as versões das bibliotecas de front-end com uma lista de falhas conhecidas a cada release e atualize as que forem sinalizadas.",
+ "Check front-end library versions against a known-flaw list on every release, and upgrade the…": {
+  "text": "Verifique as versões da biblioteca front-end em relação a uma lista de falhas conhecidas em cada versão e atualize o…",
+  "machine": true
+ },
  "Check front-end library versions against a known-flaw list on every release…": "Compare as versões das bibliotecas de front-end com uma lista de falhas conhecidas a cada release…",
  "Check it today:": "Confira hoje:",
  "Check it:": "Confira:",
@@ -793,6 +841,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by, and block…": "Decida por bot no ⟦1⟧: libere os motores de resposta pelos quais você quer ser citado e bloqueie…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want to be cited by…": {
+  "text": "Decida por bot em ⟦1⟧: permita os mecanismos de resposta pelos quais você deseja que sejam citados…",
+  "machine": true
+ },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decida por bot no ⟦1⟧: libere os motores de resposta pelos quais você quer ser…",
  "Default both to denied where consent is required, and grant them on acceptance.": "Deixe os dois como denied por padrão onde o consentimento é exigido, e conceda-os no aceite.",
  "Default to camera=(), microphone=(), geolocation=().": "Use por padrão camera=(), microphone=(), geolocation=().",
@@ -1224,6 +1276,10 @@
   "machine": true
  },
  "Keep port ⟦1⟧ alive just to send a ⟦2⟧ to https.": "Mantenha a porta ⟦1⟧ ativa só para enviar um ⟦2⟧ para https.",
+ "Keep the query string on every redirect, so campaign tags reach the landing page.": {
+  "text": "Mantenha a string de consulta em cada redirecionamento, para que as tags da campanha cheguem à página de destino.",
+  "machine": true
+ },
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Mantenha os títulos perto de ⟦1⟧ caracteres e leve a missão para a descrição.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Mantenha os títulos perto de ⟦1⟧ caracteres: palavras-chave primeiro, nome do site por último, e encurte nomes longos no CMS.",
  "Kevin Korenhof": "Kevin Korenhof",
@@ -1358,6 +1414,10 @@
  "Nariño's home page is ⟦1⟧ KB of HTML.": "A página inicial de Nariño tem ⟦1⟧ KB de HTML.",
  "NASA is wide open to AI search.": "A NASA está totalmente aberta à busca com IA.",
  "NatGeo sets cookies without Secure.": "A NatGeo define cookies sem Secure.",
+ "Natural competitors found…": {
+  "text": "Concorrentes naturais encontrados…",
+  "machine": true
+ },
  "Natural competitors…": {
   "text": "Concorrentes naturais…",
   "machine": true
@@ -1507,6 +1567,10 @@
  "Playwright request fixture.": "Fixture request do Playwright.",
  "Playwright v1.⟦1⟧": "Playwright v1.⟦1⟧",
  "Point each canonical at the exact https URL you serve, with the www if you use it.": "Aponte cada canonical para a URL https exata que você serve, com www se você usar.",
+ "Point each page's canonical at itself, unless it really is a copy of another page.": {
+  "text": "Aponte o canônico de cada página para si mesma, a menos que seja realmente uma cópia de outra página.",
+  "machine": true
+ },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Aponte todo canonical para a URL https final, a mesma que você lista no sitemap.",
  "Pointing it home asks search to drop the page from results.": "Apontá-lo para a home pede à busca que tire a página dos resultados.",
  "Policía Nacional's search has no label.": "A busca da Policía Nacional não tem rótulo.",
@@ -1594,6 +1658,10 @@
  "Redirect every http request to https with a ⟦1⟧, then add Strict-Transport-Security.": "Redirecione toda requisição http para https com um ⟦1⟧ e depois adicione Strict-Transport-Security.",
  "Redirect every http request to https with a ⟦1⟧.": "Redirecione toda requisição http para https com um ⟦1⟧.",
  "Redirect every http request to https with one permanent ⟦1⟧, then add HSTS.": "Redirecione toda requisição http para https com um único ⟦1⟧ permanente e depois adicione HSTS.",
+ "Redirect every http request to https with one permanent ⟦1⟧, then add…": {
+  "text": "Redirecione todas as solicitações http para https com um ⟦1⟧ permanente e adicione…",
+  "machine": true
+ },
  "Redirecting entries waste crawl.": "Entradas que redirecionam desperdiçam rastreamento.",
  "Release day: is the page still right?": "Dia de release: a página continua certa?",
  "Relevance ⟦1⟧ (formerly SEO Week), the premier AI Search conference, takes place April ⟦2⟧–⟦3⟧, ⟦4⟧, at Halo […] The post Press Release:": "Relevance ⟦1⟧ (antiga SEO Week), a principal conferência de busca com IA, acontece de ⟦2⟧ a ⟦3⟧ de abril de ⟦4⟧, no Halo […] O post Comunicado à imprensa:",
@@ -1658,6 +1726,10 @@
   "machine": true
  },
  "Scores hidden until tomorrow.": "Notas ocultas até amanhã.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…": {
+  "text": "Pontuações lado a lado: ⟦1⟧ Pontuação ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Segurança ⟦6⟧, A11y ⟦7⟧, Velocidade ⟦8⟧; ⟦9⟧ Pontuação ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Segurança ⟦14⟧, A11y ⟦15⟧, Velocidade ⟦16⟧; ⟦17⟧ Pontuação ⟦18⟧, SEO ⟦19⟧, GEO…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Notas lado a lado: ⟦1⟧ Nota ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Segurança ⟦6⟧, A11y ⟦7⟧, Velocidade ⟦8⟧; ⟦9⟧ Nota ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Segurança ⟦14⟧, A11y ⟦15⟧, Velocidade ⟦16⟧; ⟦17⟧ Nota ⟦18⟧, SEO…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
   "text": "Pontuações lado a lado: ⟦1⟧ Pontuação ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Segurança ⟦6⟧, A11y ⟦7⟧, Velocidade ⟦8⟧; ⟦9⟧ Pontuação ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Segurança ⟦14⟧, A11y ⟦15⟧, Velocidade ⟦16⟧; ⟦17⟧ Pontuação…",
@@ -1884,6 +1956,14 @@
  "The gap: alt text.": "A lacuna: texto alt.",
  "The gap: broken links.": "A lacuna: links quebrados.",
  "The gap: button names.": "A lacuna: nomes de botões.",
+ "The gap: campaign tags.": {
+  "text": "A lacuna: tags de campanha.",
+  "machine": true
+ },
+ "The gap: canonicals.": {
+  "text": "A lacuna: canônicos.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "A lacuna: sinalizadores de cookies.",
   "machine": true

@@ -25,10 +25,13 @@ const DAY = 24 * HOUR;
 const REPLY_TTL = 6 * HOUR;
 // Someone answering us waits longer than a stranger's post: a day for Carlos to approve the answer.
 const CHAIN_TTL = DAY;
-// Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes.
-const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook"];
+// Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes. A like on
+// Telegram is a reaction from the bot (#2614); the Reddit app cannot vote.
+const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook", "telegram"];
 const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const ACTIONS = ["like", "repost", "follow", "reply"];
+// A join is planned per group, not per post (functions/engagement-joins.js), but has its daily cap with the rest.
+const CAPS = ACTIONS.concat("join");
 
 // acts: the network takes likes, reposts, follows and replies (through its API, or the Mac's browser when browser).
 // only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there).
@@ -36,6 +39,11 @@ const ACTIONS = ["like", "repost", "follow", "reply"];
 // caps: a browser network's own daily ceiling under the settings' caps, the most an account takes from a real
 // browser without the network flagging it as automated (#1991); LinkedIn and Facebook flag soonest. There the agent
 // acts as our company page, which follows no one and does not repost, so they take likes and replies only.
+// Telegram and Reddit (#2614) act two ways. Under our own posts the bot reacts and answers in @qalab_live's discussion
+// group, and the Reddit app (devvit, reddit/live-reports) answers under its r/QALabLiveReports posts as the app account.
+// In the field the Mac's browser acts as Carlos's accounts (via "mac" on the post, see carrier): reactions, forwards to
+// @qalab_live and replies on Telegram; upvotes, crossposts to r/QALabLiveReports, follows and comments on Reddit; and
+// joins (caps.join), the most a young account takes before both networks ban it for volume, warmed up by joinCap.
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
   mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
@@ -46,6 +54,8 @@ const NETWORKS = {
   instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
   threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
   tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
+  telegram: { name: "Telegram", acts: true, api: true, browser: true, only: ["like", "repost", "reply"], limit: 1000, scale: 10, weight: 0.8, caps: { like: 20, repost: 2, reply: 3, join: 3 } },
+  reddit: { name: "Reddit", acts: true, devvit: true, browser: true, limit: 1500, scale: 20, weight: 1, caps: { like: 20, repost: 2, follow: 5, reply: 3, join: 3 } },
   hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
   devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
   lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 }
@@ -62,7 +72,70 @@ const TOPICS = {
   Security: ["security headers", "content security policy", "csp", "hsts", "owasp", "xss", "tls certificates?", "web security", "websecurity"],
   Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"]
 };
-const TOPIC_RES = Object.fromEntries(Object.entries(TOPICS).map(([t, words]) => [t, words.map((w) => [w, new RegExp("(^|[^\\p{L}\\p{N}])#?" + w + "($|[^\\p{L}\\p{N}])", "iu")])]));
+// The same topics in other languages (#2614), so a post or group in any of them is in our field and the Mac's browser
+// searches in them too (DISCOVERY: each language's first phrase per topic). Lowercase; regex like TOPICS.
+const INTL = {
+  Testing: {
+    es: ["pruebas de software", "automatización de pruebas", "pruebas automatizadas", "aseguramiento de la calidad"], pt: ["testes de software", "automação de testes", "testes automatizados", "garantia de qualidade"],
+    de: ["softwaretests?", "testautomatisierung", "automatisierte tests", "qualitätssicherung"], fr: ["tests logiciels", "automatisation des tests", "tests automatisés", "assurance qualité"],
+    it: ["test del software", "automazione dei test", "test automatizzati"], nl: ["softwaretesten", "testautomatisering", "geautomatiseerd testen"],
+    pl: ["testowanie oprogramowania", "automatyzacja testów", "testy automatyczne"], tr: ["yazılım testi", "test otomasyonu"],
+    ru: ["тестирование программного обеспечения", "автоматизация тестирования", "автотест\\p{L}*", "тестировщик\\p{L}*"], uk: ["тестування програмного забезпечення", "автоматизація тестування", "тестувальник\\p{L}*"],
+    id: ["pengujian perangkat lunak", "otomasi pengujian"], vi: ["kiểm thử phần mềm", "kiểm thử tự động"], ja: ["ソフトウェアテスト", "テスト自動化", "自動テスト"],
+    ko: ["소프트웨어 테스트", "테스트 자동화"], zh: ["软件测试", "自动化测试"], ar: ["اختبار البرمجيات", "أتمتة الاختبارات"], hi: ["सॉफ्टवेयर टेस्टिंग", "टेस्ट ऑटोमेशन"]
+  },
+  SEO: {
+    es: ["posicionamiento web", "posicionamiento en buscadores", "seo técnico"], pt: ["otimização para mecanismos de busca", "seo técnico"], de: ["suchmaschinenoptimierung", "technisches seo"],
+    fr: ["référencement naturel", "seo technique"], it: ["posizionamento sui motori di ricerca", "seo tecnico"], nl: ["zoekmachineoptimalisatie"], pl: ["pozycjonowanie stron", "optymalizacja pod wyszukiwarki"],
+    tr: ["arama motoru optimizasyonu", "teknik seo"], ru: ["поисковая оптимизация", "продвижение сайтов?"], uk: ["пошукова оптимізація", "просування сайтів?"], id: ["optimasi mesin pencari"],
+    vi: ["tối ưu hóa công cụ tìm kiếm"], ja: ["検索エンジン最適化", "seo対策"], ko: ["검색엔진 최적화", "검색 엔진 최적화"], zh: ["搜索引擎优化"], ar: ["تحسين محركات البحث"], hi: ["सर्च इंजन ऑप्टिमाइजेशन"]
+  },
+  GEO: {
+    es: ["optimización para motores generativos", "búsqueda con ia"], pt: ["otimização para motores generativos", "busca com ia"], de: ["ki-suche"], fr: ["recherche par ia"], it: ["ricerca con ia"],
+    ru: ["генеративный поиск"], ja: ["ai検索"], ko: ["ai 검색"], zh: ["生成式引擎优化", "ai搜索"]
+  },
+  Accessibility: {
+    es: ["accesibilidad web", "accesibilidad digital"], pt: ["acessibilidade web", "acessibilidade digital"], de: ["digitale barrierefreiheit", "barrierefreiheit", "barrierefreie websites?"],
+    fr: ["accessibilité numérique", "accessibilité web", "rgaa"], it: ["accessibilità web", "accessibilità digitale"], nl: ["digitale toegankelijkheid", "webtoegankelijkheid"],
+    pl: ["dostępność cyfrowa", "dostępność stron"], tr: ["web erişilebilirliği", "dijital erişilebilirlik"], ru: ["цифровая доступность", "доступность сайтов?", "веб-доступность"],
+    uk: ["цифрова доступність", "вебдоступність"], id: ["aksesibilitas web"], vi: ["khả năng truy cập web"], ja: ["ウェブアクセシビリティ", "アクセシビリティ"], ko: ["웹 접근성"],
+    zh: ["网页无障碍", "无障碍", "可访问性"], ar: ["إمكانية الوصول"], hi: ["वेब एक्सेसिबिलिटी"]
+  },
+  Performance: {
+    es: ["rendimiento web", "velocidad de carga"], pt: ["desempenho web", "velocidade de carregamento"], de: ["webperformance", "ladezeit", "seitengeschwindigkeit"], fr: ["performance web", "temps de chargement"],
+    it: ["prestazioni web", "velocità di caricamento"], nl: ["websitesnelheid", "laadtijd"], pl: ["wydajność stron", "szybkość ładowania"], tr: ["web performansı", "sayfa hızı"],
+    ru: ["скорость загрузки", "производительность сайтов?"], uk: ["швидкість завантаження"], id: ["kecepatan website"], vi: ["tốc độ tải trang"], ja: ["ウェブパフォーマンス", "表示速度"],
+    ko: ["웹 성능", "페이지 속도"], zh: ["网页性能", "页面加载速度"], ar: ["سرعة تحميل"], hi: ["वेबसाइट स्पीड"]
+  },
+  Analytics: {
+    es: ["analítica web"], pt: ["análise web"], de: ["webanalyse"], fr: ["analytique web"], it: ["analisi web"], nl: ["webanalyse"], pl: ["analityka internetowa"], tr: ["web analitiği"],
+    ru: ["веб-аналитика"], uk: ["вебаналітика"], ja: ["アクセス解析"], ko: ["웹 분석"], zh: ["网站分析"], ar: ["تحليلات الويب"]
+  },
+  Security: {
+    es: ["seguridad web"], pt: ["segurança web"], de: ["websicherheit"], fr: ["sécurité web"], it: ["sicurezza web"], nl: ["webbeveiliging"], pl: ["bezpieczeństwo aplikacji webowych"],
+    tr: ["web güvenliği"], ru: ["веб-безопасность", "безопасность веб-приложений"], uk: ["безпека вебзастосунків"], id: ["keamanan web"], vi: ["bảo mật web"],
+    ja: ["ウェブセキュリティ", "脆弱性診断"], ko: ["웹 보안"], zh: ["网站安全"], ar: ["أمن الويب"], hi: ["वेब सुरक्षा"]
+  },
+  Privacy: {
+    es: ["protección de datos", "banner de cookies"], pt: ["proteção de dados"], de: ["datenschutz", "cookie-banner"], fr: ["protection des données", "bandeau cookies"], it: ["protezione dei dati"],
+    nl: ["gegevensbescherming"], pl: ["rodo", "ochrona danych"], tr: ["kvkk"], ru: ["защита персональных данных"], uk: ["захист персональних даних"], ja: ["個人情報保護"], ko: ["개인정보 보호"],
+    zh: ["个人信息保护"], ar: ["حماية البيانات"], hi: ["डेटा संरक्षण"]
+  }
+};
+// Chinese, Japanese and Korean run words together, so their keywords match anywhere in the text.
+const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+const wordRe = (w) => (UNSPACED.test(w) ? new RegExp(w, "iu") : new RegExp("(^|[^\\p{L}\\p{N}])#?" + w + "($|[^\\p{L}\\p{N}])", "iu"));
+const TOPIC_RES = Object.fromEntries(Object.entries(TOPICS).map(([t, words]) => [t, words.concat(...Object.values(INTL[t] || {})).map((w) => [w, wordRe(w)])]));
+const phrase = (w) => w.replace(/\\p\{L\}\*|\?|\\/g, "").replace(/\s+/g, " ").trim();
+// Topic searches in other languages for the Mac's browser: [{ q, lang, topic }], languages interleaved.
+const DISCOVERY = (() => {
+  const by = {};
+  Object.entries(INTL).forEach(([topic, langs]) => Object.entries(langs).forEach(([lang, words]) => { (by[lang] = by[lang] || []).push({ q: phrase(words[0]), lang, topic }); }));
+  const lists = Object.values(by);
+  const out = [];
+  for (let i = 0; lists.some((l) => l[i]); i += 1) lists.forEach((l) => { if (l[i]) out.push(l[i]); });
+  return out;
+})();
 
 // As scripts/trending-tags.js: no post rides on news about deaths, wars, elections or layoffs. Words our field also
 // uses ("dead links", "killed the process", "fired an event") are left to Gemini's political and tone flags.
@@ -77,7 +150,7 @@ const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming fro
 const DEFAULTS = {
   paused: false,
   live: false,
-  caps: { reply: 15, like: 60, repost: 15, follow: 15 },
+  caps: { reply: 15, like: 60, repost: 15, follow: 15, join: 2 },
   thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
   worth: 0.6,
   maxAgeHours: 48,
@@ -101,7 +174,7 @@ function settings(doc) {
     paused: d.paused === true,
     live: d.live === true,
     liveAt: clip(d.liveAt, 30),
-    caps: Object.fromEntries(ACTIONS.map((a) => [a, Math.round(between(capsIn[a], 0, 500, DEFAULTS.caps[a]))])),
+    caps: Object.fromEntries(CAPS.map((a) => [a, Math.round(between(capsIn[a], 0, a === "join" ? 20 : 500, DEFAULTS.caps[a]))])),
     thresholds: Object.fromEntries(ACTIONS.map((a) => [a, between(thIn[a], 0, 1000, DEFAULTS.thresholds[a])])),
     worth: between(d.worth, 0, 1, DEFAULTS.worth),
     maxAgeHours: between(d.maxAgeHours, 1, 24 * 14, DEFAULTS.maxAgeHours),
@@ -131,6 +204,30 @@ function settingsPatch(current, body) {
   return settings(next);
 }
 
+/**
+ * Who carries out a stored post's actions: "mac" (the Mac's browser), "api" (the network's API or bot) or "devvit"
+ * (the Reddit app). Telegram and Reddit posts the Mac read are its own; comments under our posts there stay with the
+ * bot and the app (#2614).
+ */
+function carrier(doc) {
+  const n = NETWORKS[(doc || {}).network] || {};
+  if (n.browser && (doc.via === "mac" || (!n.api && !n.devvit))) return "mac";
+  return n.api ? "api" : n.devvit ? "devvit" : "";
+}
+
+// Joins warm up like the outreach mailboxes (#2614): one a day for the first two weeks after the first live join, two in
+// the third, then the settings' cap, never over the network's own.
+const JOIN_WARMUP = [1, 1, 2];
+const WEEK = 7 * DAY;
+
+/** Today's join cap on a network, since: when its first live join went out ("" before any). */
+function joinCap(conf, network, since, now) {
+  const own = ((NETWORKS[network] || {}).caps || {}).join || 0;
+  const at = Date.parse(since);
+  const week = Number.isFinite(at) ? Math.floor(Math.max(0, now - at) / WEEK) : 0;
+  return Math.min(conf.caps.join, own, week < JOIN_WARMUP.length ? JOIN_WARMUP[week] : Infinity);
+}
+
 const keyOf = (network, id) => network + "_" + crypto.createHash("sha1").update(String(id)).digest("hex").slice(0, 20);
 /** The conversation a post belongs to, as "network:root id"; posts stored before #2421 have no thread and stand alone. */
 const threadKey = (p) => p.network + ":" + String(p.thread || p.id || "");
@@ -141,7 +238,7 @@ function relevance(text) {
   const byTopic = {};
   const words = [];
   Object.entries(TOPIC_RES).forEach(([topic, res]) => {
-    res.forEach(([w, re]) => { if (re.test(t)) { byTopic[topic] = (byTopic[topic] || 0) + 1; words.push(w.replace(/\\\./g, ".").replace(/\[(.)[^\]]*\]/g, "$1").replace(/ ?\?|\\/g, (m) => (m === " ?" ? " " : ""))); } });
+    res.forEach(([w, re]) => { if (re.test(t)) { byTopic[topic] = (byTopic[topic] || 0) + 1; words.push(w.replace(/\\p\{L\}\*/g, "").replace(/\\\./g, ".").replace(/\[(.)[^\]]*\]/g, "$1").replace(/ ?\?|\\/g, (m) => (m === " ?" ? " " : ""))); } });
   });
   const ranked = Object.entries(byTopic).sort((a, b) => b[1] - a[1]);
   return { hits: Math.min(6, words.length), topic: ranked.length ? ranked[0][0] : "", topics: ranked.map(([k]) => k), words: words.slice(0, 12) };
@@ -358,7 +455,7 @@ function forAi(posts, conf, now) {
 /** The Firestore document for a new post (Firestore adds seenAt as a timestamp-free ISO string so ranges sort). */
 function postDoc(post, ai, decision, now) {
   const a = ai || {};
-  return {
+  return Object.assign(post.via === "mac" ? { via: "mac" } : {}, {
     network: post.network, id: clip(post.id, 300), thread: clip(post.thread || post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
     author: { handle: clip((post.author || {}).handle, 120), name: clip((post.author || {}).name, 120), id: clip((post.author || {}).id, 200), followers: num((post.author || {}).followers) },
     title: clip(post.title, 300), text: clip(post.text, 1200), lang: a.lang || lang2(post.lang), createdAt: clip(post.createdAt, 30), isReply: post.isReply === true,
@@ -368,7 +465,7 @@ function postDoc(post, ai, decision, now) {
     about: a.about || "", sentiment: a.sentiment || "", worth: a.worth === undefined ? null : a.worth, why: a.why || "", asksForTool: a.asksForTool === true,
     verdict: decision.verdict, skip: decision.skip, actions: decision.actions,
     seenAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString(), day: bogotaDay(now)
-  };
+  });
 }
 
 /**
@@ -578,6 +675,16 @@ function replyPush(doc) {
   };
 }
 
+// A GIF goes with a reply only when Carlos's edit asks for one: "[gif: applause]" anywhere in it (#2710). The marker
+// never goes out; only GIF_NETS keep the ask.
+const GIF_NETS = ["threads"];
+const GIF_ASK = /\s*\[gif:\s*([^\]\n]{1,40}?)\s*\]\s*/i;
+function gifAsk(text) {
+  const t = String(text || "");
+  const m = GIF_ASK.exec(t);
+  return { text: (m ? t.replace(GIF_ASK, " ") : t).trim(), gif: m ? m[1] : "" };
+}
+
 /** A decision on a waiting reply: the reply's next state and the daily counters it moves. Throws when it cannot. */
 function decideReply(doc, decision, text, by, now) {
   const r = ((doc || {}).actions || {}).reply;
@@ -589,17 +696,19 @@ function decideReply(doc, decision, text, by, now) {
   const waited = Math.max(0, now - Date.parse((doc || {}).seenAt || at));
   if (decision === "dismiss") return { reply: Object.assign({}, r, { status: "dismissed", decidedAt: at, by }), counter: "dismissed", waited };
   let draft = r.draft;
+  let gif = "";
   if (decision === "edit") {
-    draft = String(text || "").trim();
+    ({ text: draft, gif } = gifAsk(text));
     const limit = (NETWORKS[doc.network] || {}).limit || 300;
     if (draft.length < 5) throw new Error("Write the reply first.");
     if (draft.length > limit) throw new Error((NETWORKS[doc.network] || {}).name + " takes at most " + limit + " characters; this is " + draft.length + ".");
   }
-  return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by }), counter: decision === "edit" ? "edited" : "approved", waited };
+  return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by },
+    gif && GIF_NETS.includes(doc.network) ? { gif } : {}), counter: decision === "edit" ? "edited" : "approved", waited };
 }
 
 module.exports = {
-  NETWORKS, TOPICS, LANGS, ACTIONS, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
-  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay
+  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };

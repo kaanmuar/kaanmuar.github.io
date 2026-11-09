@@ -1,12 +1,14 @@
 "use strict";
 /*
- * The engagement poster (#1990): carries the scout's plan out on Bluesky, Mastodon and YouTube through their APIs,
- * as the accounts connected in Jarvis > Engagement > Accounts.
+ * The engagement poster (#1990): carries the scout's plan out on Bluesky, Mastodon, YouTube and Telegram through their
+ * APIs, as the accounts connected in Jarvis > Engagement > Accounts.
  *
  *   engagement_private/bluesky       { handle, did, password }         an app password saved from Jarvis
  *   engagement_private/mastodon      { base, token, acct, bot }        Connect Mastodon (OAuth; marks the account a bot)
  *   engagement_private/mastodon_app  { base, clientId, clientSecret }  the OAuth app, registered on first connect
  *   engagement_private/youtube       { refresh, channelId, channel }   Connect YouTube (Google OAuth, the brand channel)
+ *   engagement_private/telegram      { token, handle, channel, group,  the bot's token saved from Jarvis (#2614), the
+ *                                      groupTitle, admin, offset }     channel's discussion group, the update offset
  *   engagement_private/state         { state, network, at }            the OAuth round trip in flight
  *
  * After each scout run, planned likes, reposts and follows from the last ACT_WINDOW go out, at most PER_RUN per
@@ -46,6 +48,9 @@ const YT = "https://www.googleapis.com/youtube/v3/";
 const YT_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl";
 const MASTODON_SCOPES = "read write:favourites write:statuses write:follows write:accounts";
 const APP_PASSWORD = /^[a-z0-9]{4}(-[a-z0-9]{4}){3}$/i;
+const TG = "https://api.telegram.org/bot";
+const TG_TOKEN = /^\d{5,}:[A-Za-z0-9_-]{30,}$/;
+const TG_CHANNEL = "@qalab_live";
 
 /** fatal: the account or the network refused us (sign-in, permission, rate limit), so the rest of the run waits. */
 class ActError extends Error {
@@ -68,9 +73,12 @@ async function call(fetchImpl, url, opts) {
   try { data = text ? JSON.parse(text) : {}; } catch (error) { data = {}; }
   if (!res.ok) {
     const err = data.error;
-    const why = (err && typeof err === "object" ? err.message || (err.errors && err.errors[0] && err.errors[0].reason) : err) || data.message || data.error_description || "";
-    const where = url.replace(/[?#].*$/, "").replace(/^https:\/\//, "");
-    throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), res.status === 401 || res.status === 403 || res.status === 429);
+    const why = (err && typeof err === "object" ? err.message || (err.errors && err.errors[0] && err.errors[0].reason) : err) || data.message || data.error_description || data.description || "";
+    // A Telegram bot's token is part of its URL path.
+    const where = url.replace(/[?#].*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
+    // A post with comments turned off answers 403 too, but only that post is refused.
+    const postOnly = res.status === 403 && /commentsDisabled|disabled comments/i.test(JSON.stringify(err || "") + " " + why);
+    throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), !postOnly && (res.status === 401 || res.status === 403 || res.status === 429));
   }
   return data;
 }
@@ -86,7 +94,19 @@ function linkFacets(text) {
   return out.length ? out : undefined;
 }
 
-// --- The three clients: like, repost, follow and reply on one post document ------------------------------------
+/** Bluesky notifies a handle only through a mention facet with its DID; dids maps each handle (lower case) to one. */
+function mentionFacets(text, dids) {
+  const out = [];
+  for (const m of String(text).matchAll(/(^|[\s(])(@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+))/gi)) {
+    const did = (dids || {})[m[3].toLowerCase()];
+    if (!did) continue;
+    const start = Buffer.byteLength(text.slice(0, m.index + m[1].length));
+    out.push({ index: { byteStart: start, byteEnd: start + Buffer.byteLength(m[2]) }, features: [{ $type: "app.bsky.richtext.facet#mention", did }] });
+  }
+  return out;
+}
+
+// --- The clients: like, repost, follow and reply on one post document -------------------------------------------
 // reply(d, text, lang, card) attaches card ({ png, type, alt, width, height }, report-card.js) when the network takes
 // it; an upload that fails leaves the reply as text and says why in cardError.
 
@@ -152,7 +172,14 @@ async function blueskyClient(cred, f, now) {
           embed = { $type: "app.bsky.embed.images", images: [{ alt: card.alt, image: up.blob, aspectRatio: { width: card.width, height: card.height } }] };
         } catch (error) { cardError = error.message; }
       }
-      const out = await create("app.bsky.feed.post", { text, facets: linkFacets(text), langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
+      const dids = {};
+      for (const m of String(text).matchAll(/(?:^|[\s(])@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+)/gi)) {
+        const h = m[1].toLowerCase();
+        if (h in dids) continue;
+        dids[h] = ((await call(f, service + "/xrpc/com.atproto.identity.resolveHandle?handle=" + encodeURIComponent(h), { headers: auth }).catch(() => ({}))).did) || "";
+      }
+      const facets = (linkFacets(text) || []).concat(mentionFacets(text, dids));
+      const out = await create("app.bsky.feed.post", { text, facets: facets.length ? facets : undefined, langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
       return { id: out.uri, uri: out.uri, url: link(out.uri), card: embed ? "attached" : "", cardError };
     }
   };
@@ -306,7 +333,84 @@ async function youtubeClient(cred, f, now, keys) {
   };
 }
 
-const CLIENTS = { bluesky: blueskyClient, mastodon: mastodonClient, youtube: youtubeClient };
+/*
+ * Telegram (#2614): the bot reads the comments left in @qalab_live's discussion group, reacts to them and answers
+ * there. A bot cannot search or read a chat's history, so the inbox is getUpdates: comments on the channel's posts and
+ * replies to the bot's own messages. Telegram keeps an update for 24 hours until it is confirmed; seen(open) confirms
+ * everything before the first comment not stored yet, so one Gemini has not read comes back on the next run.
+ */
+const TG_THANKS = /🙏|❤|♥|\b(thanks?|thank you|thx|gracias|obrigad[oa]|danke|merci|grazie)\b/iu;
+
+/** A Telegram comment's chat and message from its id, "<chat>:<message>". */
+function tgIds(d) {
+  const m = String((d && d.id) || "").match(/^(-?\d+):(\d+)$/);
+  if (!m) throw new ActError("That is not a Telegram comment.");
+  return { chat_id: Number(m[1]), message_id: Number(m[2]) };
+}
+
+/** A message in the group: by the group's @username when it is public, else the t.me/c link its members open. */
+const tgLink = (group, username, id) => (username ? "https://t.me/" + username + "/" + id : "https://t.me/c/" + String(group).replace(/^-100/, "") + "/" + id);
+
+/** A group message as a comment in the scout's shape, or null unless someone left it on our post or under the bot's answer. */
+function telegramComment(m, cred, botId) {
+  if (!m || String((m.chat || {}).id) !== String(cred.group) || !m.from || m.from.is_bot || m.sender_chat) return null;
+  const text = String(m.text || m.caption || "").trim();
+  const to = m.reply_to_message;
+  if (!text || !to) return null;
+  const onPost = to.is_automatic_forward === true || String((to.sender_chat || {}).id) === String(cred.channelId);
+  if (!onPost && String((to.from || {}).id) !== String(botId)) return null;
+  const name = [m.from.first_name, m.from.last_name].filter(Boolean).join(" ");
+  return {
+    network: "telegram", id: m.chat.id + ":" + m.message_id, thread: m.chat.id + ":" + (m.message_thread_id || to.message_id), url: tgLink(cred.group, cred.groupUser, m.message_id),
+    author: { handle: m.from.username || "", name: name || m.from.username || "", id: String(m.from.id), followers: 0 },
+    text: text.slice(0, 1200), lang: String(m.from.language_code || "").slice(0, 2), createdAt: new Date(m.date * 1000).toISOString(), isReply: true,
+    metrics: { likes: 0, replies: 0, reposts: 0, views: 0 }, tags: [], liked: false, on: m.chat.id + ":" + to.message_id, ours: String(to.text || to.caption || "").slice(0, 500)
+  };
+}
+
+async function telegramClient(saved, f) {
+  const cred = Object.assign({}, saved);
+  const tg = async (method, params) => (await call(f, TG + cred.token + "/" + method, { json: params || {} })).result;
+  const me = await tg("getMe");
+  let last = 0;
+  // A group linked after the token was saved is found here and kept, with the error that it was missing cleared.
+  let linked = null;
+  return {
+    account: "@" + me.username,
+    // The bot reads no history, so it cannot look for an earlier answer; the stored posts keep one per comment.
+    replied: async () => null,
+    // Replies to the bot's answers reach it as updates, so the inbox brings them.
+    under: async () => [],
+    inbox: async (since) => {
+      if (!cred.group) {
+        const chat = await tg("getChat", { chat_id: cred.channel || TG_CHANNEL });
+        if (!chat.linked_chat_id) throw new ActError((cred.channel || TG_CHANNEL) + " has no discussion group, so there are no comments to read: link one in the channel's settings (Discussion) and make @" + me.username + " an admin there.");
+        const group = await tg("getChat", { chat_id: chat.linked_chat_id }).catch(() => ({ id: chat.linked_chat_id }));
+        linked = { group: group.id, groupTitle: clip(group.title, 120), groupUser: clip(group.username, 64), channelId: chat.id, error: "" };
+        Object.assign(cred, linked);
+      }
+      const updates = await tg("getUpdates", { offset: cred.offset || undefined, limit: 100, timeout: 0, allowed_updates: ["message"] });
+      last = updates.reduce((n, u) => Math.max(n, u.update_id), 0);
+      return updates.map((u) => {
+        const c = telegramComment(u.message, cred, me.id);
+        return c && Object.assign(c, { update: u.update_id });
+      }).filter((c) => c && c.createdAt >= since);
+    },
+    seen: (open) => Object.assign({}, linked, open.length ? { offset: Math.min(...open.map((c) => c.update)) } : last ? { offset: last + 1 } : {}),
+    detail: async (c) => ({ answered: false, ours: c.ours || "", ourId: c.on || "" }),
+    like: async (d) => {
+      await tg("setMessageReaction", Object.assign(tgIds(d), { reaction: [{ type: "emoji", emoji: TG_THANKS.test(d.text || "") ? "🙏" : "👍" }] }));
+      return { url: d.url || "" };
+    },
+    reply: async (d, text) => {
+      const ids = tgIds(d);
+      const m = await tg("sendMessage", { chat_id: ids.chat_id, text, reply_parameters: { message_id: ids.message_id, allow_sending_without_reply: true }, link_preview_options: { is_disabled: true } });
+      return { id: ids.chat_id + ":" + m.message_id, url: tgLink(ids.chat_id, cred.groupUser, m.message_id) };
+    }
+  };
+}
+
+const CLIENTS = { bluesky: blueskyClient, mastodon: mastodonClient, youtube: youtubeClient, telegram: telegramClient };
 
 // --- Connections ----------------------------------------------------------------------------------------------
 
@@ -320,7 +424,8 @@ async function readCreds(db) {
 const HELP = {
   bluesky: "Bluesky: paste an app password in Engagement > Accounts (bsky.app > Settings > Privacy and security > App passwords).",
   mastodon: "Mastodon: Connect Mastodon in Engagement > Accounts while signed in to the brand account.",
-  youtube: "YouTube: Connect YouTube in Engagement > Accounts and pick the QA-lab URL Review channel."
+  youtube: "YouTube: Connect YouTube in Engagement > Accounts and pick the QA-lab URL Review channel.",
+  telegram: "Telegram: paste the bot's token in Engagement > Accounts (BotFather > /mybots > API Token) to react to and answer comments under @qalab_live's posts."
 };
 
 /** What Jarvis shows per API network: connected, as whom, the last error. Never a secret. */
@@ -346,6 +451,56 @@ async function saveBluesky(deps, body) {
     .catch((error) => { throw new Error("Bluesky refused the sign-in: " + error.message); });
   await privateRef(deps.db, "bluesky").set({ handle: s.handle || handle, did: s.did || "", password, connectedAt: new Date(deps.now).toISOString(), error: "" });
   return { network: "bluesky", account: s.handle || handle, message: "Bluesky is connected as @" + (s.handle || handle) + "." };
+}
+
+/**
+ * Telegram: the bot's token, checked before it is kept: the bot must see the channel, and the channel's discussion
+ * group is where comments are read and answered. The bot sees every comment as an admin of the group (or with its
+ * privacy mode off); otherwise only replies to its own messages. What is still missing is saved as the error.
+ */
+async function saveTelegram(deps, body) {
+  const token = String(body.token || "").trim();
+  if (!TG_TOKEN.test(token)) throw new Error("Paste the bot token from BotFather (/mybots > the bot > API Token), like 123456789:AAE….");
+  const channel = clip(body.channel || (deps.env || {}).TELEGRAM_CHANNEL || TG_CHANNEL, 64);
+  const tg = async (method, params) => (await call(deps.fetch, TG + token + "/" + method, { json: params || {} })).result;
+  const me = await tg("getMe").catch((error) => { throw new Error("Telegram refused the token: " + error.message); });
+  const chat = await tg("getChat", { chat_id: channel }).catch((error) => { throw new Error("@" + me.username + " cannot see " + channel + " (" + error.message + "). Add it to the channel as an admin first."); });
+  const hook = await tg("getWebhookInfo").catch(() => ({}));
+  let group = null;
+  let status = "";
+  if (chat.linked_chat_id) {
+    group = await tg("getChat", { chat_id: chat.linked_chat_id }).catch(() => ({ id: chat.linked_chat_id, title: "" }));
+    status = ((await tg("getChatMember", { chat_id: group.id, user_id: me.id }).catch(() => null)) || {}).status || "";
+  }
+  const admin = ["administrator", "creator"].includes(status);
+  const inGroup = admin || ["member", "restricted"].includes(status);
+  const where = group && group.title ? "“" + group.title + "”" : "the discussion group";
+  const missing = hook.url ? "The bot has a webhook (" + clip(hook.url, 80) + "), so it cannot read updates; remove it with deleteWebhook."
+    : !group ? channel + " has no discussion group: in the channel, Edit > Discussion > add a group and make @" + me.username + " an admin of it; the bot finds it on its next run."
+      : !inGroup ? "Add @" + me.username + " to " + where + " as an admin, then save the token again."
+        : !admin && !me.can_read_all_group_messages ? "Make @" + me.username + " an admin of " + where + " so it sees every comment; until then it sees only replies to its own messages." : "";
+  await privateRef(deps.db, "telegram").set({
+    token, handle: "@" + me.username, botId: me.id, channel, channelId: chat.id, group: group ? group.id : null, groupTitle: clip(group && group.title, 120),
+    groupUser: clip(group && group.username, 64), admin, connectedAt: new Date(deps.now).toISOString(), error: missing
+  });
+  return {
+    network: "telegram", account: "@" + me.username,
+    message: "Telegram is connected as @" + me.username + ". " + (missing || "It reacts to and answers comments under " + channel + "'s posts in " + where + ".")
+  };
+}
+
+/**
+ * The same save from telegram-connect.yml, which holds the repo's TELEGRAM_BOT_TOKEN, without the owner's sign-in. A
+ * bot token is its own proof: only one Telegram says belongs to our bot (TELEGRAM_BOT, default qalab_live_bot) is
+ * kept, and the channel is never the caller's to choose.
+ */
+async function connectTelegramCi(deps, body) {
+  const want = String((deps.env || {}).TELEGRAM_BOT || "qalab_live_bot").replace(/^@/, "").toLowerCase();
+  const token = String((body || {}).token || "").trim();
+  if (!TG_TOKEN.test(token)) throw new Error("That is not a bot token.");
+  const me = (await call(deps.fetch, TG + token + "/getMe", { json: {} }).catch(() => { throw new Error("Telegram refused the token."); })).result || {};
+  if (String(me.username || "").toLowerCase() !== want) throw new Error("That token is not @" + want + "'s.");
+  return saveTelegram(deps, { token });
 }
 
 async function mastodonApp(deps, base, redirect) {
@@ -377,7 +532,7 @@ async function connectUrl(deps, network, redirect, keys) {
     Object.entries({ client_id: app.clientId, redirect_uri: redirect, response_type: "code", scope: MASTODON_SCOPES, state, force_login: "false" }).forEach(([k, v]) => url.searchParams.set(k, v));
     return { url: url.toString() };
   }
-  throw new Error("Connect works for YouTube and Mastodon; Bluesky takes an app password.");
+  throw new Error("Connect works for YouTube and Mastodon; Bluesky takes an app password and Telegram the bot's token.");
 }
 
 /** The OAuth return. null when the state is not ours (the calendar's connect uses the same callback). */
@@ -414,7 +569,7 @@ async function connectCallback(deps, query, redirect, keys) {
 }
 
 async function disconnect(db, network) {
-  if (!API.includes(network)) throw new Error("Only Bluesky, Mastodon and YouTube connect here.");
+  if (!API.includes(network)) throw new Error("Only " + API.map((k) => E.NETWORKS[k].name).join(", ") + " connect here.");
   await privateRef(db, network).delete();
   return { network, message: E.NETWORKS[network].name + " is disconnected; nothing goes out there until you connect it again." };
 }
@@ -456,7 +611,7 @@ async function sendReply(deps, c, task) {
   const at = new Date(deps.now).toISOString();
   const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const had = await c.replied(d);
+    const had = (task.doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
     if (had) {
       await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
       await count(deps, task.doc.network, "already");
@@ -509,7 +664,7 @@ async function carryOut(deps, conf) {
   const sleep = deps.sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
   const out = Object.fromEntries(API.map((k) => [k, { done: 0, dry: 0, missed: 0, failed: 0, posted: 0, already: 0, error: "" }]));
   if (conf.paused) return out;
-  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => API.includes(t.doc.network));
+  const docs = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => E.carrier(t.doc) === "api");
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((s) => docs(s).map((t) => Object.assign(t, { action: a }))))))
     .flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = docs(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get());
@@ -556,7 +711,7 @@ async function replyNow(deps, key) {
   const ref = deps.db.collection("engagement_posts").doc(key);
   const snap = await ref.get();
   const doc = snap.exists ? snap.data() : null;
-  if (!doc || !E.NETWORKS[doc.network] || !E.NETWORKS[doc.network].api) return { status: "approved" };
+  if (!doc || E.carrier(doc) !== "api") return { status: "approved" };
   if (((doc.actions || {}).reply || {}).status !== "approved") return { status: ((doc.actions || {}).reply || {}).status || "" };
   const cred = (await readCreds(deps.db))[doc.network];
   if (!cred) return { status: "approved", error: E.NETWORKS[doc.network].name + " is not connected" };
@@ -603,9 +758,10 @@ async function pendingChains(deps) {
 
 /**
  * Comments on our own posts and clips (#2447): each network's notifications (Bluesky replies, mentions and quotes,
- * Mastodon mentions, YouTube comment threads on our channel), read at most once per CHAIN_EVERY. handled(keys)
- * answers the keys already stored, which are not looked at again. Same { found, checked, errors } as pendingChains;
- * each found parent is our post ({ own: true }), with what we wrote as the reply's draft.
+ * Mastodon mentions, YouTube comment threads on our channel, Telegram comments in the discussion group), read at most
+ * once per CHAIN_EVERY. handled(keys) answers the keys already stored, which are not looked at again; a client with
+ * seen(open) gets the ones still open, and what it returns is merged into its engagement_private document. Same
+ * { found, checked, errors } as pendingChains; each found parent is our post ({ own: true }), with what we wrote as the reply's draft.
  */
 async function pendingInbox(deps, handled) {
   const { db, now } = deps;
@@ -624,7 +780,9 @@ async function pendingInbox(deps, handled) {
     try {
       const items = (await got.c.inbox(since)).filter((c) => c && c.id);
       const skip = await handled(items.map((c) => E.keyOf(network, c.id)));
-      for (const c of items.filter((x) => !skip.has(E.keyOf(network, x.id))).slice(0, CHAIN_PER_RUN)) {
+      const open = items.filter((x) => !skip.has(E.keyOf(network, x.id)));
+      if (got.c.seen) await privateRef(db, network).set(got.c.seen(open), { merge: true });
+      for (const c of open.slice(0, CHAIN_PER_RUN)) {
         const d = await got.c.detail(c);
         out.checked += 1;
         if (c.liked && d.answered) continue;
@@ -642,6 +800,6 @@ async function pendingInbox(deps, handled) {
 
 module.exports = {
   ACT_WINDOW, PER_RUN, MAX_TRIES, MASTODON_SCOPES, YT_SCOPE, API, ActError, CHAIN_DAYS, CHAIN_PER_RUN,
-  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
-  linkFacets, drawCard, cardFields
+  carryOut, replyNow, pendingChains, pendingInbox, connections, saveBluesky, saveTelegram, connectTelegramCi, connectUrl, connectCallback, disconnect, readCreds, CLIENTS, call,
+  linkFacets, mentionFacets, drawCard, cardFields, telegramComment
 };

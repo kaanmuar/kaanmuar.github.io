@@ -71,7 +71,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     Panel("Queue by channel") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
-        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app's daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
+        if (queue.isNotEmpty()) Muted("Numbers add up the posts sent in the range, as the morning run read them. On Telegram likes are reactions, on Reddit the post score. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live channel: the post of each Live Reports batch and the campaign posts (tips, series, skits, launch) in their own language; its members are read each morning. Reddit is r/QALabLiveReports: the app's daily batch post and the campaign posts, as links to their hub pages; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
         counts.values.forEach { m -> m.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) } }
     }
 
@@ -129,6 +129,14 @@ object ChannelMembers {
     }
 }
 
+/** A channel's summed post numbers (#2602), as the web hub's Numbers column shows them. */
+object ChannelNumbers {
+    private val labels = listOf("impressions", "views", "likes", "comments")
+
+    fun text(n: JsonObject?): String? =
+        labels.mapNotNull { k -> n.num(k)?.takeIf { it > 0 }?.let { fmt(it) + " " + k } }.joinToString(" · ").ifEmpty { null }
+}
+
 @Composable
 private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
     val next = c.objs("next")
@@ -146,6 +154,7 @@ private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
             val sent = c.num("sent")?.toInt() ?: 0
             Text("$sent sent" + (if (failed > 0) " · $failed failed" else "") + (c.obj("last")?.str("at")?.let { " · last " + (ago(it) ?: "").lowercase() } ?: ""),
                 color = if (failed > 0) J.amber else J.muted, fontSize = 11.sp)
+            ChannelNumbers.text(c.obj("numbers"))?.let { Text(it, color = J.cyan, fontSize = 11.sp) }
             members?.let { m -> Text(m.text, color = when { (m.change ?: 0) > 0 -> J.green; (m.change ?: 0) < 0 -> J.pink; else -> J.muted }, fontSize = 11.sp) }
         }
     }

@@ -843,10 +843,11 @@ function askSnapshot(snap, days) {
       mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
       addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
-      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null } : null,
+      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null, postNumbers: (e.social.queue || []).filter((c) => c.numbers && Object.keys(c.numbers).length).map((c) => Object.assign({ channel: c.name, sent: c.sent }, c.numbers)) } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
+      targets: targetsAsk(e.targets),
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
@@ -885,8 +886,27 @@ function engagementAsk(g) {
     paused: g.paused, live: g.live, accounts: (g.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })),
     totals: g.report.totals, approvalRate: g.report.approvalRate, topics: g.report.topics, tags: (g.report.tags || []).slice(0, 10), networks: g.report.networks,
     waiting: (g.waiting || []).length, topPosts: (g.posts || []).slice(0, 5).map((d) => d.network + ": " + (d.title || String(d.text || "").slice(0, 100)) + " (score " + d.score + ")"),
-    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites)
+    reportReplies: Object.assign({ waiting: (g.waiting || []).filter((d) => d.campaign === "report-reply").length }, g.report.invites),
+    ownerTags: ownerTagsAsk(g.ownerTags)
   };
+}
+
+// Owner tags (#2633, #2660) for Ask: the state, the last run, accounts by status, suggestions waiting for Carlos, and posts per network in the last 7 days.
+function ownerTagsAsk(o) {
+  if (!o) return null;
+  const comments = o.comments || [];
+  const failed = comments.filter((c) => c.status === "failed");
+  return {
+    state: o.settings ? (o.settings.paused ? "paused" : o.settings.live ? "live" : "dry run") : null, last: o.last && Object.assign({}, o.last, { sample: undefined }), accounts: o.accounts,
+    waiting: (o.accounts || {}).suggested || 0, postedLast7Days: o.week || {}, queued: comments.filter((c) => c.status === "approved").length,
+    failed: failed.length, lastError: failed.length ? failed[0].network + ": " + String(failed[0].error || "").slice(0, 160) : null
+  };
+}
+
+// Same shape as the page's snapshot().external.targets: the 90-day targets as Jarvis judged them.
+function targetsAsk(tg) {
+  if (!tg || !tg.ok) return null;
+  return { day: tg.day, length: tg.length, targets: (tg.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) };
 }
 
 // Same shape as the page's snapshot().external.outreach.
@@ -945,5 +965,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

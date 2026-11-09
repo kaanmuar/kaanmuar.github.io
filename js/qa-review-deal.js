@@ -125,7 +125,7 @@
     const list = Number(deal && deal.listUsd);
     const usd = Number(deal && (deal.usd != null ? deal.usd : deal.priceUsd));
     if (!percent || !(list > usd)) {
-      host.hidden = true;
+      host.hidden = !(deal && deal.offer && window.ReviewOffer && window.ReviewOffer.note(host, deal.offer));
       return false;
     }
     addStyle();
@@ -161,4 +161,11 @@
   }
 
   window.ReviewDeal = { code, render, money };
+
+  if (!document.querySelector("script[src*='qa-review-offer.js']")) {
+    const offer = document.createElement("script");
+    offer.src = "js/qa-review-offer.js?v=20261105a";
+    offer.defer = true;
+    document.head.appendChild(offer);
+  }
 })();

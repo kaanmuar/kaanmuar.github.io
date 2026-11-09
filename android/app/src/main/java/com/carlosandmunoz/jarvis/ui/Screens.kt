@@ -402,28 +402,21 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
 
     Panel("Weekly funnel against the plan") {
         fun ratio(a: Double?, b: Double?) = if (a == null || b == null || b == 0.0) null else Math.round(a / b * 100).toDouble()
+        val openOff = contacted > 0 && mail?.bool("openTracking") == false
         listOf(
             Triple("Prospects reviewed this week", pipe.num("thisWeek"), weekly.num("prospects") to ""),
-            Triple("Reviewed prospects with a Live Report", if (pipe != null) ratio(pipe.num("reviewedWithLiveReport"), maxOf(1.0, pipe.num("swept") ?: 0.0)) else null, weekly.num("liveReportPct") to "%"),
-            Triple("Open rate", if (contacted > 0) rates.num("open") else null, weekly.num("openPct") to "%"),
+            Triple("Reviewed prospects with a Live Report", if (pipe != null) ratio(pipe.num("reviewedWithLiveReport"), maxOf(1.0, pipe.num("reviewedHosts") ?: pipe.num("swept") ?: 0.0)) else null, weekly.num("liveReportPct") to "%"),
+            Triple("Open rate", if (contacted > 0 && !openOff) rates.num("open") else null, weekly.num("openPct") to "%"),
             Triple("Reply rate", if (contacted > 0) rates.num("reply") else null, weekly.num("replyPct") to "%"),
             Triple("Positive replies", if (contacted > 0) rates.num("positive") else null, weekly.num("positivePct") to "%")
         ).forEach { (metric, now, target) ->
             val (goal, unit) = target
-            KeyRow(metric, (now?.let { fmt(it) + unit } ?: "—") + " / " + (goal?.let { fmt(it) + unit } ?: "—"),
+            KeyRow(metric, (if (metric == "Open rate" && openOff) "Not tracked" else now?.let { fmt(it) + unit } ?: "—") + " / " + (goal?.let { fmt(it) + unit } ?: "—"),
                 if (now == null) J.muted else if (goal == null || now >= goal) J.green else J.pink)
         }
     }
 
-    if (plan != null && plan.objs("targets").isNotEmpty()) Panel("90-day targets") {
-        plan.objs("targets").forEach { t ->
-            val actual = t.num("actual")
-            val target = t.num("target") ?: 0.0
-            Row { Text(t.str("label") ?: "", fontSize = 13.sp, modifier = Modifier.weight(1f)); Text("${fmt(actual)} / ${fmt(target)}", fontFamily = Mono, fontSize = 12.sp) }
-            if (actual != null) GlowBar((actual / maxOf(1.0, target)).toFloat())
-        }
-        Muted("Counts come from the weekly KPI tracker; upload it with scripts/jarvis-outreach-plan.js.")
-    }
+    TargetsPanel(s, vm)
 
     Panel("Prospect pipeline (nightly sweep)") {
         if (pipe == null) { Muted(ou.obj("pipeline").str("error") ?: "Not loaded."); return@Panel }

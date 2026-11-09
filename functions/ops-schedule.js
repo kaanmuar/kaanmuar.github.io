@@ -38,6 +38,7 @@ const JOBS = [
   { job: "engagementDailyReport", cron: "30 20 * * *", gap: 26, what: "Social engagement daily report: posts read, actions planned, the reply funnel, topics and top posts, by mail and push" },
   { job: "engagementWeeklyReport", cron: "40 20 * * 0", gap: 7 * 24 + 2, what: "Social engagement weekly report, against the week before, and the report replies' results ticket on the board (#2471)" },
   { job: "engagementMonthlyReport", cron: "10 8 1 * *", gap: 31 * 24 + 2, what: "Social engagement monthly report for the month before, against the one before it" },
+  { job: "ownerTags", cron: "15 10 * * *", gap: 26, what: "Owner tags (#2633): read reviewed sites' profile links and Gemini's suggestions of the accounts around them (pushed for approval), then tag report owners and approved accounts in comments under our report posts, and reply under owners' latest posts (Bluesky, Mastodon and YouTube here; X, Instagram, Threads, Facebook, LinkedIn and TikTok through the Mac's agent)" },
   { job: "emailMonthlySiteReport", cron: "45 7 1 * *", gap: 31 * 24 + 2, what: "Monthly site report" },
   { job: "emailMonthlyReviewReport", cron: "50 7 1 * *", gap: 31 * 24 + 2, what: "Monthly URL review report" },
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },

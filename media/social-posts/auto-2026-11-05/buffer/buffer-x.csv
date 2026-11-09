@@ -1,0 +1,86 @@
+Text,Image URL,Tags,Posting Time
+"houm.com: 68. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+https://carlosandmunoz.com/qa-review.html?live=u-houm-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-houm-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg","","2026-11-06 08:35"
+"skydropx.com: 56. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-skydropx-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-skydropx-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg","","2026-11-07 13:25"
+"beau.to: 70. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+https://carlosandmunoz.com/qa-review.html?live=u-beau-to&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-beau-to
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg","","2026-11-08 11:35"
+"lexter.ai: 63. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+https://carlosandmunoz.com/qa-review.html?live=u-lexter-ai&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lexter-ai
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/04-u-lexter-ai.jpg","","2026-11-09 09:50"
+"okteto.com: 64. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-okteto-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-okteto-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/05-u-okteto-com.jpg","","2026-11-10 16:55"
+"usbmed.edu.co: 49. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and…
+
+carlosandmunoz.com/qa-review?live=u-usbmed-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usbmed-edu-co","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/06-u-usbmed-edu-co.jpg","","2026-11-11 16:05"
+"uacm.edu.mx: 56. The gap: the sitemap host.
+
+Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
+
+carlosandmunoz.com/qa-review?live=u-uacm-edu-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uacm-edu-mx
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg","","2026-11-12 15:30"
+"cetys.mx: 70. The gap: campaign tags.
+
+Keep the query string on every redirect, so campaign tags reach the landing page.
+
+carlosandmunoz.com/qa-review?live=u-cetys-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cetys-mx
+#Analytics #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg","","2026-11-13 11:15"
+"ufrj.br: 74. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+https://carlosandmunoz.com/qa-review.html?live=u-ufrj-br&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ufrj-br
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg","","2026-11-14 14:10"
+"usal.es: 51. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-usal-es&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usal-es
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/10-u-usal-es.jpg","","2026-11-15 14:25"
+"uah.edu: 57. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-uah-edu&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uah-edu
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg","","2026-11-16 16:10"
+"newsandstar.co.uk: 58. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by…
+
+carlosandmunoz.com/qa-review?live=u-newsandstar-co-uk&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-newsandstar-co-uk","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/12-u-newsandstar-co-uk.jpg","","2026-11-17 13:00"
+"get-moment.com: 73. The gap: canonicals.
+
+Point each page's canonical at itself, unless it really is a copy of another page.
+
+carlosandmunoz.com/qa-review?live=u-get-moment-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-get-moment-com
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg","","2026-11-18 16:00"
+"ugto.mx: 42. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+carlosandmunoz.com/qa-review?live=u-ugto-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ugto-mx","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/14-u-ugto-mx.jpg","","2026-11-19 08:05"
+"4 natural competitors. myarubaguide.com leads: 76.
+
+Benchmark against the sites your visitors compare you with, not against a…
+
+carlosandmunoz.com/qa-review?live=u-myarubaguide-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-myarubaguide-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg","","2026-11-20 13:50"

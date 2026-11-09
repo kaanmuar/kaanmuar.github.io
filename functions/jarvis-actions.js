@@ -36,6 +36,11 @@
                    campaign and start date, so one Carlos cancels stays a draft
    index-submit    logged by the Monday jarvisIndexPush job (#2480): the sitemap pages missing from Brave's index sent to
                    IndexNow and Brave's Submit URL form (jarvis-index.js)
+   #2660, owner tags (owner-tags.js):
+   owner-tags-approve-verified  suggested accounts whose handle resolves, or that share an approved owner's handle on
+                   another network, are approved, within the cap; the rest wait for Carlos
+   owner-tags-block  the author of a comment under our owner-tags comment that asks us to stop ("stop tagging", "no me
+                   etiqueten", "spam") is blocked and its queued tags dismissed, once per account
    ai-ask, ai-fix  open alerts no rule handles go to Gemini once per alert set and day, AI_CALLS a day; it may only pick
                    from AI_CATALOG, and a pick runs alone at confidence >= settings.confidence (the risky ones after the
                    countdown); the rest become proposals
@@ -60,7 +65,8 @@ const addresses = require("./jarvis-addresses");
 
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
-  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5 };
+  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
+  "owner-tags-approve-verified": 20, "owner-tags-block": 10 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
@@ -69,7 +75,8 @@ const LABELS = {
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
-  "gh-agent": "Launch a Cursor fix agent", "gh-diagnose": "Diagnose a failed run"
+  "gh-agent": "Launch a Cursor fix agent", "gh-diagnose": "Diagnose a failed run",
+  "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging"
 };
 const GH_ACTIONS = ["gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent"];
 const GH_RISKY = ["gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree"];
@@ -82,7 +89,7 @@ const CONFIDENCE = 0.8;
 const COUNTDOWN_HOURS = 2;
 const AI_CALLS = 24;
 const RESUME_PASSES = 2;
-const RISKY_JOBS = ["sendOwnerNotices", "sendReviewNotes", "dispatchFacebookQueue", "ensureLiveReportsBatch", "jarvisWatch"];
+const RISKY_JOBS = ["sendOwnerNotices", "sendReviewNotes", "dispatchFacebookQueue", "ensureLiveReportsBatch", "jarvisWatch", "ownerTags"];
 const RISKY_CI = /live reports|buffer batch|facebook|bluesky|mastodon|social inbox|^pages$|jarvis android/i;
 const JARVIS_BRANCH = /^(jarvis|pagespeed)\//;
 const AI_CATALOG = {
@@ -95,7 +102,8 @@ const AI_CATALOG = {
   "gh-merge-pr": "squash-merge a green, mergeable PR; args { \"pr\": one of github.green }",
   "gh-revert": "open a revert PR for the main commit that turned CI red; args { \"sha\": one of github.mainBroken }",
   "gh-delete-branch": "delete a merged branch; args { \"branch\": one of github.merged }",
-  "gh-remove-worktree": "remove a merged local worktree through the Mac uploader; args { \"path\": one of github.worktrees }"
+  "gh-remove-worktree": "remove a merged local worktree through the Mac uploader; args { \"path\": one of github.worktrees }",
+  "owner-tags-approve-verified": "approve suggested owner-tag accounts whose handle resolves or matches an owner's handle on another network; args {}"
 };
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -128,6 +136,9 @@ function mailboxProblem(m, o) {
   if (m.score !== null && m.score !== undefined && m.score < o.warmupMin) return "warm-up score " + m.score + " under " + o.warmupMin;
   return "";
 }
+
+// Why Jarvis pauses a mailbox on its own, or keeps it paused. Pausing in Instantly stops warm-up too, so a low score alone would keep it paused for good.
+const pauseProblem = (m, o) => mailboxProblem(m, Object.assign({}, o, { warmupMin: 0 }));
 
 /* What a Pause outreach click pauses (#1977): the active mailboxes Jarvis has not paused that have a problem; when
    none has one (bounces), every active mailbox on the sending domain. [{ email, why }] */
@@ -249,7 +260,9 @@ async function recent(db, limit) {
      launchReady()     -> [{ id, name, start, leads }] draft campaigns ready to send
      alerts()          -> [{ key, level, text }] open briefing and watch lines;  catalog() -> { jobs, workflows }
      ask(prompt)       -> Gemini's text;  saveProposals([pick]) -> keep the picks Jarvis did not run as proposals
-     githubWork()      -> the github-work source (#2526);  githubAct(action, args) -> { detail, count? }, throws when it did nothing }
+     githubWork()      -> the github-work source (#2526);  githubAct(action, args) -> { detail, count? }, throws when it did nothing
+     ownerTagsApprovable() -> [{ id, handle, why }];  ownerTagsApprove(ids) -> { detail, count }   (#2660)
+     ownerTagsStops()  -> [{ id, handle, text }] authors asking us to stop;  ownerTagsBlock(stop) -> { detail } }
    Returns { done: [rows], queued: [countdowns], waiting: [{ action, count, reason }] }; every action and every wait
    is logged. */
 async function autoRun({ db, now, settings, ops }) {
@@ -420,7 +433,7 @@ async function autoRun({ db, now, settings, ops }) {
       o.mailboxes = (o.mailboxes || []).map((m) => (healed.has(String(m.email).toLowerCase()) ? Object.assign({}, m, { warmup: "on" }) : m));
       const pauses = new Map((o.pauses || []).map((p) => [p.email, p]));
       for (const m of o.mailboxes || []) {
-        const why = mailboxProblem(m, o);
+        const why = pauseProblem(m, o);
         if (!why || m.status !== "active" || pauses.has(m.email)) continue;
         try {
           await ops.pauseMailbox(m.email);
@@ -436,7 +449,7 @@ async function autoRun({ db, now, settings, ops }) {
       for (const p of pauses.values()) {
         const m = (o.mailboxes || []).find((x) => x.email === p.email);
         if (!m || m.status === "active") { await ops.setPause(p.email, null); continue; }
-        const passes = mailboxProblem(m, o) ? 0 : (Number(p.passes) || 0) + 1;
+        const passes = pauseProblem(m, o) ? 0 : (Number(p.passes) || 0) + 1;
         // since: when the current healthy streak began, so a streak gets one countdown and a cancelled one stays cancelled.
         const row = Object.assign({}, p, { passes }, passes === 0 && p.passes ? { since: new Date(now).toISOString() } : {});
         if (passes !== p.passes) await ops.setPause(p.email, row);
@@ -476,6 +489,30 @@ async function autoRun({ db, now, settings, ops }) {
     for (const c of drafts.filter((d) => !inLaunch.has(d.id))) {
       await later({ action: "launch-campaign", target: c.name, part: c.id + "@" + c.start, payload: { items: [{ id: c.id, name: c.name }] },
         why: "A draft with " + plural(c.leads, "lead") + " that starts " + c.start + "; nothing sends until it is active.", onCancel: "activate it in Jarvis > Marketing" });
+    }
+  }
+
+  if (ops.ownerTagsApprovable && ops.ownerTagsApprove) {
+    const approvable = await ops.ownerTagsApprovable().catch(() => []);
+    const take = approvable.slice(0, left("owner-tags-approve-verified"));
+    if (take.length) {
+      const target = names(take.map((a) => "@" + a.handle));
+      try {
+        const res = await ops.ownerTagsApprove(take.map((a) => a.id));
+        if (res.count) {
+          const row = await log(db, { action: "owner-tags-approve-verified", mode: "auto", status: "done", count: res.count, target, detail: take.map((a) => "@" + a.handle + ": " + a.why).join("; ") }, now);
+          rows.push(row);
+          out.done.push(row);
+        }
+      } catch (error) {
+        rows.push(await log(db, { action: "owner-tags-approve-verified", mode: "auto", status: "failed", target, detail: error.message || String(error) }, now));
+      }
+    }
+    await wait("owner-tags-approve-verified", approvable.length - take.length, "Over today's cap of " + cfg.caps["owner-tags-approve-verified"] + ".");
+  }
+  if (ops.ownerTagsStops && ops.ownerTagsBlock) {
+    for (const s of await ops.ownerTagsStops().catch(() => [])) {
+      await once("owner-tags-block", s.id, "@" + s.handle + " asked us to stop: \"" + text(s.text, 160) + "\"", () => ops.ownerTagsBlock(s));
     }
   }
 
@@ -542,6 +579,10 @@ async function autoRun({ db, now, settings, ops }) {
           rows.push(await log(db, { action: "ai-ask", mode: "auto", status: "failed", target, detail: error.message || String(error) }, now));
         }
         const keep = [];
+        const approveVerified = async () => {
+          if (!ops.ownerTagsApprovable || !ops.ownerTagsApprove) throw new Error("Owner tags are not wired here.");
+          return ops.ownerTagsApprove((await ops.ownerTagsApprovable()).slice(0, left("owner-tags-approve-verified")).map((a) => a.id));
+        };
         for (const p of picks || []) {
           const runnable = pickOk(p, catalog);
           if (runnable && p.confidence >= cfg.confidence && left("ai-fix") > 0) {
@@ -553,7 +594,8 @@ async function autoRun({ db, now, settings, ops }) {
             }
             await attempt("ai-fix", what, "For " + p.key + ": " + p.why + " (confidence " + p.confidence + ").", () =>
               p.action === "run-job" ? ops.runJob(p.args.job) : p.action === "rerun-ci" ? ops.rerunCi(p.args.workflow)
-                : GH_PICKS[p.action] ? ops.githubAct(p.action, { target: arg }) : ops.publishHub());
+                : GH_PICKS[p.action] ? ops.githubAct(p.action, { target: arg })
+                : p.action === "owner-tags-approve-verified" ? approveVerified() : ops.publishHub());
           } else if (p.title || runnable) {
             keep.push(Object.assign({}, p, { runnable, reason: !runnable ? "not in the catalog" : p.confidence < cfg.confidence ? "confidence " + p.confidence + " under " + cfg.confidence : "over today's cap" }));
           }
@@ -604,4 +646,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };

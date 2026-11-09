@@ -1,0 +1,26 @@
+# Connects the engagement routine's Telegram bot (#2614) from the TELEGRAM_BOT_TOKEN repo secret, the same save as
+# pasting the token in Jarvis > Engagement > Accounts: Jarvis checks the bot, @qalab_live and its discussion group,
+# and says what is still missing. Run it again after the token changes.
+name: Connect Telegram
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - name: Save the bot in Jarvis
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then echo "::error::Add the TELEGRAM_BOT_TOKEN secret."; exit 1; fi
+          node -e 'process.stdout.write(JSON.stringify({ op: "engagement-telegram-connect", token: process.env.TELEGRAM_BOT_TOKEN }))' > "$RUNNER_TEMP/body.json"
+          curl -sS -X POST -H 'Content-Type: application/json' --data-binary "@$RUNNER_TEMP/body.json" \
+            https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis > "$RUNNER_TEMP/out.json" || true
+          rm -f "$RUNNER_TEMP/body.json"
+          node -e 'const o = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8") || "{}"); console.log(o.message || o.error || "No answer"); if (!o.ok) process.exit(1)' "$RUNNER_TEMP/out.json" | tee -a "$GITHUB_STEP_SUMMARY"

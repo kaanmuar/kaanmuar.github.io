@@ -49,6 +49,7 @@ data class UiState(
     val running: Set<String> = emptySet(),
     val push: Map<String, Boolean> = emptyMap(),
     val ongoing: Boolean = true,
+    val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.DEFAULT,
     val heard: Heard = Heard(),
     val speaking: String? = null,
     val speak: Boolean = true,
@@ -68,7 +69,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), speak = Voice.speakOn(app),
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), speak = Voice.speakOn(app),
         voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
@@ -101,7 +102,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCode() = _state.update { it.copy(pendingCode = null, authError = null) }
 
     fun signOut() {
-        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing)
+        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing, ongoingParts = _state.value.ongoingParts)
         viewModelScope.launch {
             runCatching { Push.forget(jarvis) }
             runCatching { api.call("device", 1, mapOf("gone" to JsonPrimitive(true))) }
@@ -117,6 +118,13 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         jarvis.vault.setFlag(Ongoing.FLAG, on)
         _state.update { it.copy(ongoing = on) }
         viewModelScope.launch { Home.redraw(jarvis) }
+    }
+
+    fun setOngoingPart(part: Ongoing.Part, on: Boolean) {
+        val parts = if (on) _state.value.ongoingParts + part else _state.value.ongoingParts - part
+        Ongoing.setParts(jarvis, parts)
+        _state.update { it.copy(ongoingParts = parts) }
+        viewModelScope.launch { Ongoing.show(jarvis, Home.today(jarvis)) }
     }
 
     fun setPush(kind: String, on: Boolean) {

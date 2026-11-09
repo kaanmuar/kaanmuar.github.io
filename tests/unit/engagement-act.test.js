@@ -212,7 +212,7 @@ test("Connect Mastodon registers the app, signs in, marks the account a bot; Con
   assert.match(ok.message, /QA-lab URL Review/);
   assert.equal(db.data.get("engagement_private/youtube").refresh, "1//r");
   const all = await A.connections(db);
-  assert.deepEqual(all.map((c) => c.connected), [false, true, true]);
+  assert.deepEqual(all.map((c) => c.connected), [false, true, true, false]);
   assert.equal(all.find((c) => c.network === "mastodon").bot, true);
   await A.disconnect(db, "youtube");
   assert.equal((await A.connections(db)).find((c) => c.network === "youtube").connected, false);
@@ -477,4 +477,12 @@ test("comments on our own posts and clips come from each network's notifications
   const yKey = E.keyOf("youtube", "UgyOwn");
   assert.equal((await J.decide(Object.assign({}, d, { now: NOW + 3 * HOUR }), { key: yKey, decision: "approve" }, "carlos")).status, "posted");
   assert.deepEqual(net.calls.find((c) => c.url.includes("youtube/v3/comments?part=snippet") && c.body).body.snippet, { parentId: "UgyOwn", textOriginal: "Yes, measure it in the field with CrUX." }, "the answer goes into the comment's thread on our video");
+});
+
+test("a video with comments turned off refuses only that reply; another 403 still stops the network", async () => {
+  const answer = (error) => async () => ({ ok: false, status: 403, text: async () => JSON.stringify({ error }) });
+  const off = await A.call(answer({ message: "The video identified by the videoId parameter has disabled comments.", errors: [{ reason: "commentsDisabled" }] }), "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", { json: {} }).catch((e) => e);
+  assert.equal(off.fatal, false);
+  const denied = await A.call(answer({ message: "Request had insufficient authentication scopes.", errors: [{ reason: "insufficientPermissions" }] }), "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", { json: {} }).catch((e) => e);
+  assert.equal(denied.fatal, true);
 });

@@ -33,7 +33,8 @@ function fakeOps(over) {
 }
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
-  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5 };
+  "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
+  "owner-tags-approve-verified": 20, "owner-tags-block": 10 };
 
 test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, caps stay within 0-100 and confidence within 0.5-1", () => {
   assert.deepEqual(actions.cleanSettings(), { auto: true, caps: DEFAULT_CAPS, confidence: 0.8, countdownHours: 2 });
@@ -311,6 +312,20 @@ test("outreach: only the failing domain's active mailboxes pause; resuming goes 
   assert.deepEqual(calls.paused, ["a@qalabreview.com"]);
 });
 
+test("outreach: a low warm-up score does not pause a mailbox, and one paused for it heads to the resume countdown (#2641)", async () => {
+  const db = fakeDb();
+  const boxes = [{ email: "new@getqalabreview.com", status: "active", warmup: "on", score: 0 }, { email: "old@tryqalabreview.com", status: "paused", warmup: "on", score: 0 }];
+  const pauses = { "old@tryqalabreview.com": { email: "old@tryqalabreview.com", reason: "warm-up score 0 under 80", passes: 0 } };
+  const { ops, calls } = autoOps({ outreach: async () => ({ domain: "qalabreview.com", failing: [], warmupMin: 80, mailboxes: boxes, pauses: Object.values(Object.assign(pauses, calls.pauses)) }) });
+  await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  const second = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.deepEqual(calls.paused, []);
+  assert.equal(calls.pauses["old@tryqalabreview.com"].passes, 2);
+  assert.deepEqual(second.queued.map((r) => [r.action, r.payload.emails]), [["resume-outreach", ["old@tryqalabreview.com"]]]);
+  assert.equal(actions.pauseProblem(boxes[0], { warmupMin: 80 }), "");
+  assert.match(actions.mailboxProblem(boxes[0], { warmupMin: 80 }), /score 0 under 80/);
+});
+
 test("failed social posts go on the countdown as a public post", async () => {
   const { ops } = autoOps({ socialFailed: async () => 2 });
   const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops });
@@ -362,4 +377,56 @@ test("an AI pick under the confidence setting is kept as a proposal", async () =
   await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: { actions: { confidence: 0.9 } }, ops });
   assert.deepEqual(calls.jobs, []);
   assert.match(calls.saved[0].reason, /confidence 0.85 under 0.9/);
+});
+
+test("owner tags (#2660): verified suggestions are approved within the day's cap, the rest wait; the ownerTags job stays on the countdown", async () => {
+  const db = fakeDb();
+  const list = Array.from({ length: 4 }, (_, i) => ({ id: "x:a" + i, network: "x", handle: "a" + i, why: "its handle resolves" }));
+  const approved = [];
+  const { ops } = autoOps({ ownerTagsApprovable: async () => list.filter((a) => !approved.includes(a.id)), ownerTagsApprove: async (ids) => { approved.push(...ids); return { detail: ids.length + " approved", count: ids.length }; } });
+  const settings = { actions: { caps: { "owner-tags-approve-verified": 3 } } };
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings, ops });
+  assert.deepEqual(approved, ["x:a0", "x:a1", "x:a2"]);
+  const row = out.done.find((r) => r.action === "owner-tags-approve-verified");
+  assert.equal(row.count, 3);
+  assert.match(row.detail, /@a0: its handle resolves/);
+  assert.deepEqual(out.waiting, [{ action: "owner-tags-approve-verified", count: 1, reason: "Over today's cap of 3." }]);
+  await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings, ops });
+  assert.equal(approved.length, 3, "the cap counts the whole day");
+  assert.equal(actions.risky("run-job", "ownerTags"), true);
+  assert.equal(actions.risky("refresh-stale", "ownerTags"), true);
+  assert.ok(actions.AI_CATALOG["owner-tags-approve-verified"] && actions.LABELS["owner-tags-approve-verified"] && actions.LABELS["owner-tags-block"]);
+});
+
+test("owner tags (#2660): someone who asks us to stop is blocked once, and a failed block is logged", async () => {
+  const db = fakeDb();
+  const blocked = [];
+  const stops = [{ id: "bluesky:ana.bsky.social", network: "bluesky", handle: "ana.bsky.social", text: "please stop tagging me" }, { id: "x:bob", network: "x", handle: "bob", text: "spam" }];
+  const { ops } = autoOps({ ownerTagsStops: async () => stops, ownerTagsBlock: async (s) => { if (s.handle === "bob") throw new Error("Firestore down"); blocked.push(s.id); return { detail: "@" + s.handle + " is blocked." }; } });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(blocked, ["bluesky:ana.bsky.social"]);
+  assert.deepEqual(out.done.map((r) => [r.action, r.target, r.detail]), [["owner-tags-block", "bluesky:ana.bsky.social", "@ana.bsky.social is blocked."]]);
+  assert.ok(db.added.some((r) => r.action === "owner-tags-block" && r.status === "failed" && r.target === "x:bob"));
+  await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.deepEqual(blocked, ["bluesky:ana.bsky.social"], "once per account");
+});
+
+test("owner tags (#2660): a confident AI pick approves the verified suggestions", async () => {
+  const approved = [];
+  const { ops } = autoOps({
+    alerts: async () => [{ key: "engagement:owner-tags", level: "warn", text: "12 owner-tag suggestions wait" }],
+    catalog: async () => ({ jobs: [], workflows: [] }),
+    ask: async () => JSON.stringify([{ key: "engagement:owner-tags", action: "owner-tags-approve-verified", args: {}, confidence: 0.9, title: "Approve", why: "They resolve." }]),
+    ownerTagsApprovable: async () => [],
+    ownerTagsApprove: async (ids) => { approved.push(ids); return { detail: ids.length + " approved", count: ids.length }; }
+  });
+  const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops });
+  assert.ok(out.done.some((r) => r.action === "ai-fix" && r.target === "owner-tags-approve-verified"));
+  assert.deepEqual(approved, [[]]);
+});
+
+test("index.js wires the owner-tags actions into the hourly pass, and Run now answers with the run's note (#2660)", () => {
+  const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  ["ownerTagsApprovable: () => ownerTags.autoApprovable(db)", "ownerTags.approveMany(", "ownerTagsStops: () => ownerTags.stopRequests(db)", "ownerTags.block(", "note: ownerTags.runNote(ran)", "ownerTags.status(getFirestore(), now)"]
+    .forEach((s) => assert.ok(index.includes(s), s));
 });

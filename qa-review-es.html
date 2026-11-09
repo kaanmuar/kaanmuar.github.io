@@ -1061,6 +1061,34 @@
         .stage-links .live-jump { margin-top: 0; }
         .stage-link { padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 650; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
         .stage-link:hover { color: var(--text); }
+        .stage-start { margin: 22px 0 0; max-width: 580px; }
+        .stage-start-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text); }
+        .stage-start-row { display: flex; gap: 8px; }
+        .stage-start .url-row { flex: 1; min-width: 0; background: rgba(255, 255, 255, .07); border-color: rgba(159, 214, 220, .4); }
+        .stage-start .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(126, 246, 251, .22); }
+        .stage-start .url-row input { color: #f4fafb; font-size: 16px; padding: 12px 12px 12px 2px; }
+        .stage-start .url-row input::placeholder { color: rgba(233, 243, 244, .45); }
+        .stage-start .btn-primary { flex: none; padding: 12px 20px; font-size: 14px; }
+        .stage-start-note { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+        .review-needs { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+        .review-needs button { margin: 0 2px; padding: 1px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+        .review-needs button:hover { border-color: var(--cyan); }
+        .log-card .log { order: 1; }
+        .log-next { margin: 4px 0 0; padding-left: 20px; color: #c5d0d8; font-size: 13px; line-height: 1.5; }
+        .log-next li { margin: 0 0 8px; }
+        .log:not(:empty) + .log-next { display: none; }
+        #share-open:disabled { display: none; }
+        .dash-modal:focus { outline: none; }
+        .dash-overlay .report-toolbar { position: sticky; top: 0; background: var(--bg); }
+        @media (max-width: 800px) {
+            .dash-overlay .report-toolbar { position: relative; top: auto; }
+            .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
+            .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
+        }
+        @media (max-width: 520px) {
+            .stage-start-row { flex-direction: column; }
+            .stage-start .btn-primary { width: 100%; }
+        }
         #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
         #gate .sample-line { font-size: 12.5px; margin-bottom: 8px; }
         #gate .sample-line .btn { padding: 6px 12px; border-radius: 999px; font-size: 12.5px; }
@@ -1350,6 +1378,14 @@
                 <span>o un regulador.</span>
             </h1>
             <p class="lede" lang="es" translate="no">Trae una dirección pública. Mira qué rastrea a los visitantes antes del consentimiento, qué no cumple WCAG 2.2 AA, qué encabezados de seguridad faltan y cómo ven la página los buscadores y los motores de respuesta con IA, con un arreglo para cada caso y casos de prueba para los 20 frameworks que tu equipo ya usa.</p>
+            <form class="stage-start" id="stage-start" novalidate>
+                <label class="stage-start-label" for="stage-url" lang="es" translate="no">Empieza con la dirección de una página pública</label>
+                <div class="stage-start-row">
+                    <div class="url-row notranslate"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div>
+                    <button class="btn btn-primary" type="submit" lang="es" translate="no">Revisar esta página</button>
+                </div>
+                <p class="stage-start-note" lang="es" translate="no">Tu primera revisión está incluida: hasta 20 páginas, a dos enlaces de profundidad. Después inicias sesión en este dispositivo y eliges un motivo; el informe se abre aquí cuando termina la revisión.</p>
+            </form>
             <ul class="facts">
                 <li><b>21</b><span lang="es" translate="no">tipos de casos</span></li>
                 <li><b>20</b><span lang="es" translate="no">frameworks que ya conoces</span></li>
@@ -1373,13 +1409,13 @@
                 <div>
                     <p class="eyebrow" data-live-eyebrow lang="es" translate="no">Informes en vivo</p>
                     <h2 id="live-title" class="live-title" data-live-title lang="es" translate="no">Sitios reales. Análisis reales. <em>Abre el informe que quieras.</em></h2>
-                    <p class="live-lede" data-live-lede lang="es" translate="no"><b>1266 sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.</p>
+                    <p class="live-lede" data-live-lede lang="es" translate="no"><b>2207 sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.</p>
                     <p class="live-follow" data-live-follow lang="es" translate="no">Nuevos informes cada día en <a href="https://t.me/qalab_live" rel="noopener" target="_blank">Telegram</a> y <a href="https://www.reddit.com/r/QALabLiveReports/" rel="noopener" target="_blank">Reddit</a>.</p>
                 </div>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="es" translate="no">Los Live Reports necesitan JavaScript para abrirse. Al 4 de noviembre de 2026, la serie reúne 1266 sitios públicos en 27 sectores, analizados desde el 19 de octubre de 2026 con la misma revisión que cualquiera puede ejecutar; las nuevas revisiones se suman en un lote diario. La puntuación general promedio es 66 sobre 100: SEO 66, GEO 85, analítica 68, seguridad 52, accesibilidad 58 y rendimiento 67. Las puntuaciones generales más altas son MDN Web Docs 95, CA.gov 92, GOV.UK 92 y bdebooks.com 92. La serie incluye portales de gobierno como GOV.UK, GOV.CO y la Alcaldía de Bogotá; gobiernos regionales como CA.gov, la Generalitat de Catalunya y la Gobernación del Valle del Cauca; medios como BBC, The Guardian y El País; bancos como Bancolombia y Davivienda; universidades como MIT, Stanford y la Universidad de los Andes; proyectos de código abierto como Python.org, Node.js y Kubernetes; y sistemas de transporte como TransMilenio y el Metro de Medellín. Cada informe es un análisis automatizado de páginas públicas, un punto de partida y no un veredicto.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="es" translate="no">Los Live Reports necesitan JavaScript para abrirse. Al 8 de noviembre de 2026, la serie reúne 2207 sitios públicos en 27 sectores, analizados desde el 19 de octubre de 2026 con la misma revisión que cualquiera puede ejecutar; las nuevas revisiones se suman en un lote diario. La puntuación general promedio es 66 sobre 100: SEO 68, GEO 85, analítica 69, seguridad 50, accesibilidad 60 y rendimiento 69. Las puntuaciones generales más altas son sevielectro.com 96, MDN Web Docs 95, CA.gov 92 y GOV.UK 92. La serie incluye portales de gobierno como GOV.UK, GOV.CO y la Alcaldía de Bogotá; gobiernos regionales como CA.gov, la Generalitat de Catalunya y la Gobernación del Valle del Cauca; medios como BBC, The Guardian y El País; bancos como Bancolombia y Davivienda; universidades como MIT, Stanford y la Universidad de los Andes; proyectos de código abierto como Python.org, Node.js y Kubernetes; y sistemas de transporte como TransMilenio y el Metro de Medellín. Cada informe es un análisis automatizado de páginas públicas, un punto de partida y no un veredicto.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1421,10 +1457,21 @@
     </details>
     <section id="intake" class="card">
         <h2 class="request-title" lang="es" translate="no">La solicitud</h2>
-        <p class="lede" lang="es" translate="no">¿Quién lo pide y qué dirección abrimos?</p>
+        <p class="lede" lang="es" translate="no">¿Qué dirección abrimos y quién lo pide?</p>
         <form id="review-form">
-            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 0">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">Tú</b><span class="tg-gist" lang="es" translate="no">Inicia sesión, agrega tu nombre y elige si esta revisión se publica.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">La página</b><span class="tg-gist" lang="es" translate="no">La dirección https pública que se analizará.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
+                <div class="rg-body">
+                    <label for="url" lang="es" translate="no">Página pública</label>
+                    <div class="url-row notranslate" id="url-field">
+                        <span>https://</span>
+                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    </div>
+                    <p class="field-error" id="url-error"></p>
+                </div>
+            </details>
+            <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">Tú</b><span class="tg-gist" lang="es" translate="no">Inicia sesión, agrega tu nombre y elige si esta revisión se publica.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
                 <div class="rg-body">
                     <div class="sign-in" id="sign-in">
                         <p class="sign-in-title"><strong lang="es" translate="no">Inicia sesión para ejecutar una revisión</strong></p>
@@ -1472,8 +1519,8 @@
                     <label class="check" lang="es" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> No publicar esta revisión como Live Report ni en redes sociales.</label>
                 </div>
             </details>
-            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 1">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">Por qué esta revisión</b><span class="tg-gist" lang="es" translate="no">Elige el motivo que corresponda. Algunos piden un dato más.</span></span><span class="tg-count" aria-hidden="true">2</span></summary>
+            <details class="term-group req-group" id="req-why" data-step="why" open style="--i: 2">
+                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">Por qué esta revisión</b><span class="tg-gist" lang="es" translate="no">Elige el motivo que corresponda. Algunos piden un dato más.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
                 <div class="rg-body">
                     <fieldset class="reasons" id="reasons">
                         <legend lang="es" translate="no">Motivos de esta revisión</legend>
@@ -1510,17 +1557,6 @@
                     </div>
                     <label for="reason" lang="es" translate="no">Otro motivo</label>
                     <textarea id="reason" name="reason" disabled placeholder="Elige Otro para escribir un motivo."></textarea>
-                </div>
-            </details>
-            <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 2">
-                <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="es" translate="no">La página</b><span class="tg-gist" lang="es" translate="no">La dirección https pública que se analizará.</span></span><span class="tg-count" aria-hidden="true">3</span></summary>
-                <div class="rg-body">
-                    <label for="url" lang="es" translate="no">Página pública</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
-                    </div>
-                    <p class="field-error" id="url-error"></p>
                 </div>
             </details>
             <details class="term-group req-group" id="req-cases" data-step="cases" style="--i: 3">
@@ -1564,6 +1600,7 @@
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <p class="status" id="form-status" role="status"></p>
+            <p class="review-needs" id="review-needs" hidden></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled lang="es" translate="no">Revisar</button>
                 <button class="btn btn-stop" id="stop-btn" type="button" disabled lang="es" translate="no">Detener</button>
@@ -1576,11 +1613,16 @@
         <p class="muted" id="report-once" lang="es" translate="no">Aquí aparecen líneas mientras se analizan las páginas. Detener conserva las páginas ya guardadas y anota esa detención en el informe.</p>
         <p class="compare-run" id="compare-run" hidden><span id="compare-run-text"></span><button class="btn btn-ghost" id="compare-back" type="button" lang="es" translate="no">Volver a tu informe</button></p>
         <ol class="log" id="run-log"></ol>
+        <ol class="log-next" id="log-next">
+            <li lang="es" translate="no">Escribe la dirección pública e inicia sesión en este dispositivo con tu correo o una cuenta que ya tengas.</li>
+            <li lang="es" translate="no">Elige un motivo y pulsa Revisar. Cada paso aparece aquí mientras ocurre.</li>
+            <li lang="es" translate="no">El informe se abre en esta página cuando termina la revisión y queda en Tus revisiones.</li>
+        </ol>
     </section>
     </div>
 </main>
 <div id="dash-overlay" class="dash-overlay">
-    <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title">
+    <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-title" tabindex="-1">
         <div class="sheet-mark" aria-hidden="true"></div>
         <p id="capture-note" class="capture-note" data-report-copy="captureNote" lang="es" translate="no">Esta hoja no incluye el informe. El intento queda registrado con la revisión.</p>
         <div class="report-toolbar no-print">
@@ -1862,9 +1904,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128e" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128g" defer></script>
 <script src="js/qa-review-findings-copy.es.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128f" defer></script>
+<script src="js/qa-review.js?v=20261128g" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109a" defer></script>
