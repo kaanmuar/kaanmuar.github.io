@@ -4,7 +4,7 @@
    function's snapshot op, the same cached answer the Android app reads (jarvisSnapshot in functions/index.js); the
    few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
-import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
+import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -426,8 +426,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     async function loadSnapshot() {
         SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
         let snap;
-        try { snap = await call('snapshot'); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        // With this browser's push endpoint the server knows the page is open and sends it section pushes (#2509).
+        try { snap = await call('snapshot', S.pushEndpoint ? { push: S.pushEndpoint } : undefined); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
         if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        S.versions = snap.versions || null;
         const date = (v) => (v ? new Date(v) : null);
         const w = snap.window || {};
         S.window = { start: date(w.start), end: date(w.end), days: w.days, prior: w.prior ? { start: date(w.prior.start), end: date(w.prior.end) } : null };
@@ -3466,7 +3468,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         history.replaceState({}, '', url.pathname + url.search + url.hash);
     }
 
-    if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => { if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush); });
+    if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
+        // A section changed on the server (#2509): fetch again unless this page already holds those versions.
+        // Applying only the changed sections is #2510.
+        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden && C.sectionsStale(event.data.jarvisSections, S.versions, S.range)) loadNewer();
+    });
+    if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
 
     function readSettings() {
         const form = $('.jv-settings-box');
