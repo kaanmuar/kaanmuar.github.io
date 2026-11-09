@@ -749,7 +749,26 @@ test.describe('admin statistics (Jarvis)', () => {
     const geo = page.locator('[data-view="geo"]');
     await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
     expect(await geo.locator('.jv-geo-map path').count()).toBeGreaterThan(150);
-    if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-activity.png` });
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Light');
+    await expect(geo.locator('.jv-geo-lights')).toContainText('Blazing · 6');
+    await expect(geo.locator('.jv-geo-lights')).toContainText('Spark · 4');
+    for (const name of ['USA', 'Brazil', 'Mexico', 'India', 'Chile']) await expect(geo.locator('.jv-geo-l', { hasText: name })).toBeVisible();
+    await expect(geo.locator('[data-geo-label="AO"]')).toHaveCount(0);
+    await expect(geo.locator('path[data-geo-cc="MX"]')).toHaveAttribute('filter', 'url(#jv-geo-glow5)');
+    const boxes = await geo.locator('.jv-geo-l').evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((b) => [b.left, b.top, b.right, b.bottom]));
+    const clash = boxes.some((a, i) => boxes.some((b, j) => j > i && a[0] < b[2] - 1 && b[0] < a[2] - 1 && a[1] < b[3] - 1 && b[1] < a[3] - 1));
+    expect(clash).toBe(false);
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/2988-map-light.png` });
+    await geo.locator('path[data-geo-cc="BR"]').hover();
+    const card = geo.locator('.jv-geo-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('🇧🇷 Brazil');
+    await expect(card).toContainText('Bright');
+    await expect(card).toContainText('Sent180');
+    await expect(card).toContainText('Bouncing');
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/2988-hover.png` });
+    await page.mouse.move(0, 0);
+    await expect(card).toBeHidden();
     await expect(geo.locator('.jv-kpi').first()).toContainText('Countries we act in');
     await expect(geo.locator('[data-panel-id="geo-gaps"]')).toContainText('Out of prospects');
     await expect(geo.locator('path[data-geo-cc="CO"]')).not.toHaveAttribute('fill', '#14222c');
@@ -794,6 +813,12 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.find((c) => c.op === 'geo-target')).toBeTruthy();
     expect(calls.find((c) => c.op === 'geo-target').body).toMatchObject({ cc: 'BR', on: false });
     await testInfo.attach('map', { body: await geo.screenshot(), contentType: 'image/png' });
+    if (process.env.GEO_SHOTS) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await geo.locator('[data-geo-channel="all"]').click();
+      await geo.locator('[data-geo-metric]').selectOption('light');
+      await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/2988-map-phone.png` });
+    }
     expect(errors).toEqual([]);
   });
 

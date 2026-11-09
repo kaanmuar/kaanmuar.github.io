@@ -71,6 +71,17 @@ test.describe('CV desktop', () => {
     await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  test('sections reveal without moving, so an early click lands on what it aimed at', async ({ page }) => {
+    const hiddenTransforms = await page.evaluate(() => [...document.querySelectorAll('.animate-on-scroll')].map((el) => {
+      el.classList.remove('is-visible');
+      const transform = getComputedStyle(el).transform;
+      el.classList.add('is-visible');
+      return transform;
+    }));
+    expect(hiddenTransforms.length).toBeGreaterThan(0);
+    expect([...new Set(hiddenTransforms)]).toEqual(['none']);
+  });
+
   test('tour includes competencies after glance', async ({ page }) => {
     const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
     expect(keys.indexOf('tour_title_competencies')).toBe(keys.indexOf('tour_title_glance') + 1);

@@ -1,0 +1,62 @@
+{
+ "ui": {
+  "es": {
+   "tryThis": "Pruébalo",
+   "tip": "Consejo",
+   "guided": "Visita guiada",
+   "never": "Nunca ejecuta tus pruebas",
+   "end": "Deja que tu página hable por ti.",
+   "endNote": "Cómo funciona la revisión de una página pública, paso a paso.",
+   "why": "Por qué importa",
+   "more": "¿Lo sabías?",
+   "strongest": "Área más fuerte",
+   "weakest": "Área más débil"
+  }
+ },
+ "clips": {
+  "this-week": {
+   "counter": "13 nov 2026",
+   "title.0": "Esta semana en",
+   "title.1": "*calidad web.*",
+   "body": "Cinco destacados de nuestro repaso diario del sector, cada uno resumido con nuestras palabras y con el crédito a su fuente.",
+   "visual.items.0.title": "Lighthouse 13.6 puede subir tu puntuación en PSI",
+   "visual.items.1.title": "Playwright 1.65 ejecuta pruebas con Bun",
+   "visual.items.2.title": "Google sobre 301, 302 y señales de ranking",
+   "visual.items.3.title": "Informar de SEO cuando GA4 ve menos",
+   "visual.items.4.title": "La IA puede revisar un ACR, no escribirlo",
+   "action": "Lighthouse 13.6, Playwright 1.65, redirecciones, huecos de consentimiento en GA4 y ACR escritos por IA. Las fuentes, en nuestro hub social.",
+   "cat.label": "Repaso del sector",
+   "cap.youtube": "Cinco destacados de nuestro repaso diario del sector, cada uno resumido con nuestras palabras y con el crédito a su fuente.\n\n1. Lighthouse 13.6 puede subir tu puntuación en PSI: https://www.searchenginejournal.com/pagespeed-insights-scores-lighthouse-update/595698/\n2. Playwright 1.65 ejecuta pruebas con Bun: https://github.com/microsoft/playwright/releases/tag/v1.65.0\n3. Google sobre 301, 302 y señales de ranking: https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/\n4. Informar de SEO cuando GA4 ve menos: https://moz.com/blog/measure-seo-performance-incomplete-data\n5. La IA puede revisar un ACR, no escribirlo: https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/\n\nResúmenes y fuentes: https://carlosandmunoz.com/social/digest-2026-11-13/01-this-week.html?utm_source=youtube&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-11-13\n\nEsta semana en calidad web, 13 nov 2026 · QA-lab URL Review\n\n#WebDev #DevOps #QA #Accessibility #SEO #WebDevelopment #Coding #WebDesign #UXDesign #ContentMarketing #SDET #QAlab"
+  }
+ },
+ "cache": {
+  "es\u0000Try this": "Pruébalo",
+  "es\u0000Tip": "Consejo",
+  "es\u0000Guided tour": "Visita guiada",
+  "es\u0000Never runs your tests": "Nunca ejecuta tus pruebas",
+  "es\u0000Let your page do the talking.": "Deja que tu página hable por ti.",
+  "es\u0000How a public-page review works, step by step.": "Cómo funciona la revisión de una página pública, paso a paso.",
+  "es\u0000Why it matters": "Por qué importa",
+  "es\u0000Did you know?": "¿Lo sabías?",
+  "es\u0000Strongest area": "Área más fuerte",
+  "es\u0000Weakest area": "Área más débil",
+  "es\u0000Nov 13, 2026": "13 nov 2026",
+  "es\u0000This week in": "Esta semana en",
+  "es\u0000web quality.": "calidad web.",
+  "es\u0000Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.": "Cinco destacados de nuestro repaso diario del sector, cada uno resumido con nuestras palabras y con el crédito a su fuente.",
+  "es\u0000Lighthouse 13.6 can lift your PSI score": "Lighthouse 13.6 puede subir tu puntuación en PSI",
+  "es\u0000Playwright 1.65 runs tests under Bun": "Playwright 1.65 ejecuta pruebas con Bun",
+  "es\u0000Google on 301s, 302s and ranking signals": "Google sobre 301, 302 y señales de ranking",
+  "es\u0000Reporting SEO when GA4 sees less": "Informar de SEO cuando GA4 ve menos",
+  "es\u0000AI can check an ACR, not write it": "La IA puede revisar un ACR, no escribirlo",
+  "es\u0000Lighthouse 13.6, Playwright 1.65, redirects, consent gaps in GA4 and AI-written ACRs. Sources on our social hub.": "Lighthouse 13.6, Playwright 1.65, redirecciones, huecos de consentimiento en GA4 y ACR escritos por IA. Las fuentes, en nuestro hub social.",
+  "es\u0000Field sweep": "Repaso del sector",
+  "es\u00001. Lighthouse 13.6 can lift your PSI score:": "1. Lighthouse 13.6 puede subir tu puntuación en PSI:",
+  "es\u00002. Playwright 1.65 runs tests under Bun:": "2. Playwright 1.65 ejecuta pruebas con Bun:",
+  "es\u00003. Google on 301s, 302s and ranking signals:": "3. Google sobre 301, 302 y señales de ranking:",
+  "es\u00004. Reporting SEO when GA4 sees less:": "4. Informar de SEO cuando GA4 ve menos:",
+  "es\u00005. AI can check an ACR, not write it:": "5. La IA puede revisar un ACR, no escribirlo:",
+  "es\u0000Summaries and sources:": "Resúmenes y fuentes:",
+  "es\u0000This week in web quality, Nov 13, 2026": "Esta semana en calidad web, 13 nov 2026"
+ }
+}

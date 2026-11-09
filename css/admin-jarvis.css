@@ -812,3 +812,27 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-date-kind { font-size: 0.68rem; padding: 0 0.4rem; }
 .jv-dates-country .jv-btn { margin-left: 0.3rem; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c { transition: none; } }
+/* Labels, light levels and the hover card (#2988) */
+.jv-geo-wrap { position: relative; }
+.jv-geo-c.is-l3, .jv-geo-c.is-l4 { stroke: rgba(255, 255, 255, 0.35); stroke-width: 0.6; }
+.jv-geo-c.is-l5 { stroke: #fff3c4; stroke-width: 0.8; animation: jv-geo-breathe 4s steps(16) infinite alternate; }
+@keyframes jv-geo-breathe { to { opacity: 0.8; } }
+.jv-geo-c.is-on { stroke: var(--amber); stroke-width: 2; }
+.jv-geo-names { pointer-events: none; }
+.jv-geo-l { fill: #fff; font-weight: 600; letter-spacing: 0.01em; paint-order: stroke; stroke: rgba(4, 10, 14, 0.88); stroke-linejoin: round; font-family: inherit; dominant-baseline: central; }
+.jv-geo-lead { stroke: rgba(255, 255, 255, 0.7); }
+.jv-geo-l.is-on { fill: #ffe7a8; }
+.jv-geo-pin { fill: #fff; stroke: rgba(4, 10, 14, 0.88); stroke-width: 0.5; }
+.jv-geo-lights li { color: var(--text, #e6f1f5); }
+.jv-geo-lights li.is-l0 { color: var(--dim); }
+.jv-geo-lights li.is-l3 i { box-shadow: 0 0 4px #2fb0d4; }
+.jv-geo-lights li.is-l4 i { box-shadow: 0 0 6px #86ecff; }
+.jv-geo-lights li.is-l5 i { box-shadow: 0 0 8px #ffd76e; }
+.jv-geo-card { position: absolute; z-index: 2; min-width: 11rem; max-width: 15rem; padding: 0.5rem 0.65rem; border-radius: 8px; background: rgba(8, 18, 24, 0.94); border: 1px solid #2d5366; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); font-size: 0.75rem; color: var(--dim); pointer-events: none; }
+.jv-geo-card b { display: block; color: #fff; font-size: 0.85rem; margin-bottom: 0.15rem; }
+.jv-geo-lv { display: block; margin-bottom: 0.3rem; }
+.jv-geo-lv i { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-geo-card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.6rem; margin: 0; }
+.jv-geo-card dt { color: var(--dim); }
+.jv-geo-card dd { margin: 0; color: #fff; text-align: right; }
+@media (prefers-reduced-motion: reduce) { .jv-geo-c.is-l5 { animation: none; } }

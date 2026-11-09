@@ -624,20 +624,20 @@
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "id": "18221620681354800",
-    "at": "2026-11-09T18:47:57.056Z",
+    "id": "18345113467250132",
+    "at": "2026-11-09T21:02:19.275Z",
     "result": "sent",
-    "url": "https://www.instagram.com/stories/qaurlreview/4026783976745025606",
-    "checked": "2026-11-09T18:48:05.992Z"
+    "url": "https://www.instagram.com/stories/qaurlreview/4026851604888491240",
+    "checked": "2026-11-09T21:02:28.044Z"
    },
    {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
     "id": "18116423093138888",
-    "at": "2026-11-09T18:46:32.961Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://www.instagram.com/reel/DfiAjXKivbG/",
-    "checked": "2026-11-09T18:47:51.692Z"
+    "checked": "2026-11-09T21:01:15.815Z"
    }
   ],
   "auto-2026-11-08/04-vs-beebom-com": [
@@ -645,36 +645,37 @@
     "channel": "bluesky",
     "profile": "qalaburlreview.bsky.social",
     "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzvlerrss62z",
-    "at": "2026-11-09T18:43:10.158Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzvlerrss62z",
-    "checked": "2026-11-09T18:43:12.828Z"
+    "checked": "2026-11-09T21:01:13.693Z"
    },
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-09T18:47:51.935Z",
-    "result": "failed",
-    "error": "Instagram media_publish 400: Media ID is not available",
-    "checked": "2026-11-09T18:47:57.056Z"
+    "id": "18036886385666554",
+    "at": "2026-11-09T21:02:08.716Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026851520952124158",
+    "checked": "2026-11-09T21:02:19.275Z"
    },
    {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
     "id": "18149210566578010",
-    "at": "2026-11-09T18:45:29.591Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://www.instagram.com/reel/DfiAcg_DiP6/",
-    "checked": "2026-11-09T18:46:32.961Z"
+    "checked": "2026-11-09T21:01:15.815Z"
    },
    {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "17981273267914872",
-    "at": "2026-11-09T18:43:44.890Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfiAQsrjUOO",
-    "checked": "2026-11-09T18:44:35.500Z"
+    "checked": "2026-11-09T21:01:15.078Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -1000,10 +1001,10 @@
     "channel": "bluesky",
     "profile": "qalaburlreview.bsky.social",
     "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzvlfci3cm2c",
-    "at": "2026-11-09T18:43:12.828Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzvlfci3cm2c",
-    "checked": "2026-11-09T18:43:31.612Z"
+    "checked": "2026-11-09T21:01:13.693Z"
    }
   ],
   "promo-social-hub-2026-10/01-one-page-en": [
@@ -1171,19 +1172,37 @@
     "channel": "bluesky",
     "profile": "qalaburlreview.bsky.social",
     "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzvlfptjef2j",
-    "at": "2026-11-09T18:43:31.613Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzvlfptjef2j",
-    "checked": "2026-11-09T18:43:44.350Z"
+    "checked": "2026-11-09T21:01:13.693Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18120878069277658",
+    "at": "2026-11-09T21:02:28.044Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4026851675403159332",
+    "checked": "2026-11-09T21:02:36.328Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18132513988879506",
+    "at": "2026-11-09T21:01:15.815Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DfiP9jYlo13/",
+    "checked": "2026-11-09T21:02:08.473Z"
    },
    {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18114455171148454",
-    "at": "2026-11-09T18:44:35.500Z",
+    "at": "2026-11-09T21:01:12.735Z",
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfiAXOHAVW2",
-    "checked": "2026-11-09T18:45:28.305Z"
+    "checked": "2026-11-09T21:01:15.078Z"
    }
   ],
   "tips-2026-10/01-img-size": [
