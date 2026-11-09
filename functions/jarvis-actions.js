@@ -56,7 +56,8 @@
    gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow or a security alert, on a click only (#2808)
    gh-dismiss-alert, gh-dismiss-low  dismiss security alerts; only on Carlos's click, never a Gemini pick (GH_CLICK_ONLY)
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
-   after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once.
+   after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once. Pages on main's newest commit
+   runs at once: it publishes only what is merged already.
 
    jarvis_settings/main.actions = { auto, caps: { action: per day }, confidence, countdownHours }. A click is not capped
    by Jarvis's own caps; a countdown counts against its cap from the moment it is queued. */
@@ -98,6 +99,7 @@ const AI_CALLS = 24;
 const RESUME_PASSES = 2;
 const RISKY_JOBS = ["sendOwnerNotices", "sendReviewNotes", "dispatchFacebookQueue", "ensureLiveReportsBatch", "jarvisWatch", "ownerTags"];
 const RISKY_CI = /live reports|buffer batch|facebook|bluesky|mastodon|social inbox|^pages$|jarvis android/i;
+const PAGES_CI = /^pages$/i;
 const JARVIS_BRANCH = /^(jarvis|pagespeed)\//;
 const AI_CATALOG = {
   "run-job": "start a scheduled job again; args { \"job\": one of jobs }",
@@ -394,11 +396,13 @@ async function autoRun({ db, now, settings, ops }) {
         await onceOrLater("rerun-ci", "#" + run.pr + " " + run.name + " @ main " + run.main, "#" + run.pr + " failed " + run.name + "; closing and reopening it for a fresh merge with main " + run.main + ".", risky("rerun-ci", run.name), { pr: run.pr, name: run.name }, refresh);
         continue;
       }
+      // Pages on main's newest commit publishes only what is merged already, so it skips the countdown (Carlos, #2893).
+      const mainDeploy = Boolean(head) && run.branch === "main" && PAGES_CI.test(run.name);
       if (head && run.branch === "main" && run.sha && run.sha !== head && run.path && ["push", "workflow_dispatch"].includes(run.event)) {
-        await onceOrLater("rerun-ci", run.name + " #" + run.id, "Main has moved past the commit that failed, so it starts again on main's newest commit.", risky("rerun-ci", run.name), { run: run.id, name: run.name, workflow: run.path }, () => ops.dispatch(run.path));
+        await onceOrLater("rerun-ci", run.name + " #" + run.id, "Main has moved past the commit that failed, so it starts again on main's newest commit.", risky("rerun-ci", run.name) && !mainDeploy, { run: run.id, name: run.name, workflow: run.path }, () => ops.dispatch(run.path));
         continue;
       }
-      await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name),
+      await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name) && !(mainDeploy && run.sha === head),
         Object.assign({ run: run.id, name: run.name }, run.branch === "main" && run.sha && run.path && ["push", "workflow_dispatch"].includes(run.event) ? { sha: run.sha, path: run.path } : {}), () => ops.rerunRun(run.id));
     }
   }
