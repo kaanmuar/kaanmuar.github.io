@@ -3089,8 +3089,11 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
-    if (!(oversized || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : error.message === UNREACHABLE ? "unreachable" : true;
+    // arti-elec.com accepts TLS, then hangs up the review user agent (socket hang up, ECONNRESET).
+    // Headless Chrome with the review tag is cut (net::ERR_HTTP2_PROTOCOL_ERROR) and plain Chrome reads the page.
+    const reset = !!error && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message || ""));
+    if (!(oversized || reset || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : reset ? "reset" : error.message === UNREACHABLE ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -3122,6 +3125,8 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : slowFirst === "headers"
       ? HEADERS_TOO_LARGE + ". Waiting for headless Chrome to open the page."
+      : slowFirst === "reset"
+      ? "The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."
       : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
@@ -3138,10 +3143,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
       const status = (view && view.docStatus) || first.status;
       const guarded = (code) => [401, 403, 429].includes(code);
+      const hung = slowFirst === "headers" ? HEADERS_TOO_LARGE
+        : slowFirst === "unreachable" ? "The site accepted no connection to the plain request"
+        : slowFirst === "reset" ? "The connection to the site failed (socket hang up)"
+        : "The page took too long in the plain request";
       const where = slowFirst === "headers" ? "in headless Chrome, after " + HEADERS_TOO_LARGE.replace(/^The/, "the")
+        : slowFirst === "reset" ? "in headless Chrome, after the connection to the site failed"
         : slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? (slowFirst === "headers" ? HEADERS_TOO_LARGE : slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? hung + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -3164,7 +3174,7 @@ async function reviewTarget(rawUrl, hooks) {
     };
     firstChallenge = "";
     readInBrowser = browsed;
-    note(slowFirst && slowFirst !== "headers" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
+    note(slowFirst === true || slowFirst === "unreachable" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
   } else if (first.status >= 400) {
     const error = new Error(firstChallenge
       ? "The site answered with " + insights.botCheck(firstChallenge) + " (status " + first.status + ") instead of the page."
@@ -3254,7 +3264,7 @@ async function reviewTarget(rawUrl, hooks) {
     depth: 0,
     from: "",
     challenge: firstChallenge,
-    readInBrowser: readInBrowser ? (slowFirst && slowFirst !== "headers" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
+    readInBrowser: readInBrowser ? (slowFirst === true || slowFirst === "unreachable" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
     cut: !!first.truncated,
     slow: !!first.slow,
     renderedLinks: 0,
