@@ -1283,7 +1283,8 @@ const rdPosts = (listing) => (((listing || {}).data || {}).children || []).map((
 const reddit = {
   name: "Reddit", home: RD + "/", queries: GENERAL, places: RD_SUBS.map((s) => "r/" + s), sample: "test automation",
   async signedIn(page) {
-    const me = await rdJson(page, "/api/me.json");
+    // Signed out, old.reddit.com sends every page to /login and its API answers 403 or 404.
+    const me = /\/login\b/.test(new URL(page.url()).pathname) ? {} : await rdJson(page, "/api/me.json").catch(() => ({}));
     this.me = String((me.data || {}).name || "");
     return this.me ? "u/" + this.me : "";
   },
