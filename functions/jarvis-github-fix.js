@@ -20,6 +20,7 @@
    answer with the permission to grant. */
 
 const crypto = require("crypto");
+const jarvisLog = require("./jarvis-log");
 
 const API = "https://api.github.com";
 const REPO = "kaanmuar/kaanmuar.github.io";
@@ -129,6 +130,8 @@ async function boardSync(ctx, args) {
       moved.push("#" + d.number + " to " + col);
     } catch (error) { left.push("#" + d.number + ": " + text(error.message, 120)); }
   }
+  await jarvisLog.logMany(null, moved.map((m) => ({ source: "board", level: "info", url: BOARD.url, text: "Jarvis moved " + m + " on the board" }))
+    .concat(left.map((l) => ({ source: "board", level: "warn", url: BOARD.url, text: "Jarvis could not move " + l }))));
   if (!moved.length) throw new Error("Nothing moved: " + left.join("; "));
   return { ok: true, message: "Moved " + moved.join(", ") + (left.length ? "; left " + left.join("; ") : "") + ".", moved, left, url: BOARD.url };
 }
@@ -322,6 +325,7 @@ async function diagnose(ctx, args) {
   const row = Object.assign({ run: id, repo, workflow: text(run.name, 120), branch: text(run.head_branch, 200), sha: text(run.head_sha, 40), url: text(run.html_url, 300),
     job: text(job.name, 120), jobUrl: text(job.html_url, 300) }, diag, { at: new Date(ctx.now || Date.now()).toISOString() });
   await ctx.db.collection("jarvis_github_diag").doc(String(id)).set(row);
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "run:" + id, url: row.url, text: "Diagnosed " + repo.split("/").pop() + " run " + id + " (" + row.workflow + "): " + (row.category ? row.category + ", " : "") + row.cause });
   return { ok: true, message: row.workflow + ": " + row.cause, diag: row, url: row.url };
 }
 
@@ -344,6 +348,7 @@ async function launchAgent(ctx, args) {
   if (!res.ok) throw new Error("Cursor refused the agent (" + res.status + "): " + text(data.message || data.error || "", 200));
   const agent = data.agent || data;
   const id = String(agent.id || "");
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "agent:" + id, text: "Started Cursor agent " + id + " on " + repo.split("/").pop() + (pr > 0 ? " PR #" + pr : " " + (text(a.branch, 80) || "main")) + ": " + text(prompt, 160) });
   return { ok: true, id, message: "Started Cursor agent " + (id || "") + ".", url: agent.url || (agent.target && agent.target.url) || (id ? "https://cursor.com/agents?id=" + encodeURIComponent(id) : "https://cursor.com/agents") };
 }
 
@@ -394,8 +399,11 @@ async function markResults(db, results, now) {
     const id = String((r && r.id) || "").replace(/[^a-f0-9]/g, "").slice(0, 24);
     if (!id) continue;
     try {
-      await db.collection("jarvis_github_local_queue").doc(id).update({ status: r.status === "done" ? "done" : "failed", result: text(r.result, 300), doneAt: new Date(now).toISOString() });
+      const ref = db.collection("jarvis_github_local_queue").doc(id);
+      await ref.update({ status: r.status === "done" ? "done" : "failed", result: text(r.result, 300), doneAt: new Date(now).toISOString() });
       marked += 1;
+      const q = await ref.get().then((d) => (d.exists ? d.data() : {})).catch(() => ({}));
+      await jarvisLog.log(null, { source: "mac", level: r.status === "done" ? "info" : "error", ref: "mac:" + id, text: "The Mac " + (r.status === "done" ? "did " : "failed ") + (q.action || "a queued job") + " " + (q.target || "") + (r.result ? ": " + text(r.result, 200) : "") });
     } catch (error) { /* gone or never queued */ }
   }
   return marked;
@@ -427,6 +435,10 @@ async function localIngest(db, body, now) {
     rate, rateHistory
   };
   await ref.set(row);
+  const alive = row.worktrees.filter((w) => w.alive).length;
+  await jarvisLog.log(null, { source: "mac", level: row.errors.length ? "warn" : "debug", ref: "mac:" + row.host,
+    text: "Mac report from " + (row.host || "the Mac") + ": " + row.worktrees.length + " worktrees (" + alive + " with a live chat), " + row.usage.length + " usage rows"
+      + (rate.graphql && rate.graphql.used !== null ? ", GraphQL " + rate.graphql.used + "/" + rate.graphql.limit : "") + (row.errors.length ? "; errors: " + row.errors.join("; ") : "") });
   return Object.assign({ ok: true, marked: await markResults(db, b.results, now) }, await localReply(db));
 }
 
@@ -444,6 +456,7 @@ async function queueLocal(db, action, target, now) {
   const ref = db.collection("jarvis_github_local_queue").doc(id);
   try {
     await ref.create({ id, action, target: t, status: "queued", result: "", at: new Date(now).toISOString(), doneAt: "" });
+    await jarvisLog.log(null, { source: "mac", level: "info", ref: "mac:" + id, text: "Queued for the Mac: " + action + " " + t });
     return { ok: true, id, message: "Queued for the Mac: " + action + " " + t + "." };
   } catch (error) {
     const snap = await ref.get().catch(() => null);
