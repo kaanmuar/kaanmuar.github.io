@@ -133,6 +133,17 @@
     "checked": "2026-11-09T00:52:19.073Z"
    }
   ],
+  "auto-2026-11-08/04-vs-beebom-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "35",
+    "at": "2026-11-09T18:48:06.628Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/35",
+    "checked": "2026-11-09T18:48:10.591Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -175,6 +186,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/33",
     "checked": "2026-11-09T00:52:21.758Z"
+   }
+  ],
+  "evergreen-2026-11/10-myth-overlay": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "36",
+    "at": "2026-11-09T18:48:10.591Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/36",
+    "checked": "2026-11-09T18:48:13.621Z"
    }
   ],
   "live/2026-11-04": [
@@ -291,6 +313,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/25",
     "checked": "2026-11-08T02:42:04.972Z"
+   }
+  ],
+  "skits-friday-release/02-friday-release-es": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "37",
+    "at": "2026-11-09T18:48:13.621Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/37",
+    "checked": "2026-11-09T18:48:15.805Z"
    }
   ],
   "tips-2026-10/10-keyboard": [

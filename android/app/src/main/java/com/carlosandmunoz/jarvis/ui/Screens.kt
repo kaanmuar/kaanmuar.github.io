@@ -64,9 +64,9 @@ import kotlinx.serialization.json.JsonPrimitive
 
 val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio", "lab" to "QA Lab", "review" to "URL Review", "hub" to "Social hub")
 
-/** Products-tab chips: the site products plus Outreach, Marketing, Engagement and GitHub (#2526), which the snapshot keeps under external,
+/** Products-tab chips: the site products plus Outreach, Marketing, Map (#2976), Engagement and GitHub (#2526), which the snapshot keeps under external,
     and the Console (#2810), which reads the log op. */
-val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement") + ("github" to "GitHub") + ("console" to "Console")
+val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("geo" to "Map") + ("engagement" to "Engagement") + ("github" to "GitHub") + ("console" to "Console")
 
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
 private fun kebab(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1-$2").lowercase()
@@ -247,6 +247,7 @@ private fun ProductList(rows: List<JsonObject>, product: String, pick: (String) 
 private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "outreach") { OutreachScreen(s, vm); return }
     if (product == "marketing") { MarketingScreen(s, vm); return }
+    if (product == "geo") { GeoScreen(s, vm); return }
     if (product == "engagement") { EngagementScreen(s, vm); return }
     if (product == "github") { GithubScreen(s, vm); return }
     if (product == "console") { ConsoleScreen(s, vm); return }
