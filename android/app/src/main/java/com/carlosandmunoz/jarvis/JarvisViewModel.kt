@@ -104,6 +104,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { handsFree.on.collect { on -> _state.update { it.copy(handsFree = on) } } }
         viewModelScope.launch { handsFree.turns.collect { c -> _state.update { it.copy(chat = answered(it.chat, c)) } } }
         viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
+        viewModelScope.launch { api.snapshots.collect { (days, saved) -> if (fixture == null && _state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at) } } }
         // A processes push (#2548) lands on the screen in place, without a refresh.
         viewModelScope.launch { Processes.pushed.collect { out -> out.obj("processes")?.let { p -> _state.update { s -> s.copy(snapshot = s.snapshot?.let { Processes.patch(it, p, out.obj("version")) }) } } } }
     }
@@ -196,7 +197,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val days = _state.value.days
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            runCatching { api.fetch("snapshot", days) }
+            runCatching { api.snapshot(days) }
                 .onSuccess { saved ->
                     if (_state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at, loading = false) }
                     Home.redraw(jarvis)

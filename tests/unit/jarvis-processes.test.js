@@ -231,7 +231,7 @@ test("web panel: running first with a ticking clock, needs-you rows get an Open 
   assert.doesNotMatch(P.processesHtml(p, now, esc, { compact: true }), /Last 24 hours/);
 
   const src = fs.readFileSync(path.join(__dirname, "../../js/admin-jarvis.js"), "utf8");
-  assert.ok(src.includes("split(',').includes('processes')) await loadProcesses()"), "a processes push fetches only processes");
+  assert.ok(src.includes("split(',').includes('processes') && await loadProcesses()"), "a processes push fetches only processes");
   assert.ok(src.includes("call('processes')"));
   assert.ok(src.includes("Proc.tick(root, Date.now())"), "the clocks tick every second");
   assert.ok(src.includes("${processesPanel(false)}${briefPanel('systems')}"), "Systems leads with Processes");

@@ -292,7 +292,8 @@ async function openStats(page, hash, extra) {
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
     if (body.op === 'snapshot') {
       const snap = snapshotOf(data, body.days, extra);
-      return route.fulfill({ json: Object.assign(snap, { settings: Object.assign({}, snap.settings, { layout }) }), headers: { 'Access-Control-Allow-Origin': '*' } });
+      const full = Object.assign(snap, { settings: Object.assign({}, snap.settings, { layout }) });
+      return route.fulfill({ json: extra && extra.snapshotAnswer ? await extra.snapshotAnswer(body, full) : full, headers: { 'Access-Control-Allow-Origin': '*' } });
     }
     const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
@@ -1548,5 +1549,40 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(snapshots).toBe(2);
     expect(calls.some((c) => c.op === 'rows' || c.op === 'health')).toBe(false);
     expect((await page.evaluate(() => window.__reads || [])).filter((name) => JARVIS_ROWS.includes(name))).toEqual([]);
+  });
+
+  test('opens on the kept snapshot, sends its versions as since and applies only the sections that changed (#2510)', async ({ page }) => {
+    await page.clock.install();
+    const at = new Date().toISOString();
+    const versions = { products: { v: 'p1', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } };
+    let answer = (body, full) => Object.assign(full, { versions });
+    const calls = await openStats(page, undefined, { snapshotAnswer: (body, full) => answer(body, full) });
+    const feed = page.locator('[data-view="overview"] [data-panel-id="overview-feed"]');
+    await expect(feed).toContainText('URL Review: paid review of shop.example/ (complete)');
+    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('jv-snapshot-30')).snap);
+    expect(kept.products).toBeTruthy();
+    expect(kept.mailCodes).toBeUndefined();
+    expect(Object.keys(kept.versions).sort()).toEqual(['processes', 'products']);
+
+    answer = (body, full) => ({ ok: true, op: 'snapshot', delta: true, days: body.days, cachedAt: new Date().toISOString(), checked: {},
+      versions: { products: { v: 'p2', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } },
+      sections: { products: { window: full.window, products: full.products, outreachVisits: full.outreachVisits, socialHeat: full.socialHeat, feed: [{ at: new Date().toISOString(), text: 'QA Studio: a new run' }].concat(full.feed) } } });
+    await page.clock.fastForward('06:00');
+    const snapshots = () => calls.filter((c) => c.op === 'snapshot');
+    await expect.poll(() => snapshots().length).toBe(2);
+    expect(snapshots()[1].body.since).toEqual({ products: 'p1', processes: 'j1', mail: 'm1' });
+    await expect(feed).toContainText('QA Studio: a new run');
+    await expect(feed).toContainText('URL Review: paid review of shop.example/ (complete)');
+
+    let release;
+    const held = new Promise((done) => { release = done; });
+    answer = async (body) => { await held; return { ok: true, op: 'snapshot', delta: true, days: body.days, cachedAt: new Date().toISOString(), versions: { products: { v: 'p2', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } }, sections: {} }; };
+    await page.reload();
+    await expect(page.locator('#stats-pane .jv')).toBeVisible();
+    await expect(feed).toContainText('QA Studio: a new run');
+    await expect.poll(() => snapshots().length).toBe(3);
+    expect(snapshots()[2].body.since).toEqual({ products: 'p2', processes: 'j1' });
+    release();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('jv-snapshot-30')).snap.versions.products.v)).toBe('p2');
   });
 });
