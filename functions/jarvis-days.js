@@ -12,7 +12,10 @@
 
    A caller that keeps state (health, #2101) holds the day parts and open-day rows it has read, in memory and in
    jarvis_cache/state-<name>: a part still current is not read again, and the open day of a source whose rows never
-   change once written (no settle, no live) is read only from its newest held row, then in full once an hour. */
+   change once written (no settle, no live) is read only from its newest held row, then in full once an hour.
+   Without a state (the snapshot's products, #2099), such a source keeps its open day in the day's document with the
+   time it was read through, so a refresh reads only the rows written since, and the day is topped up when it closes.
+   Reviews and notices change in place and are read whole for the open day. */
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -80,6 +83,43 @@ async function openRows(db, kind, from) {
   return rows;
 }
 
+const writeOnce = (kind) => !KINDS[kind].settle && !KINDS[kind].live;
+
+// The open day kept in its document for a write-once kind, read through `through`.
+const tail = (part) => (part && part.v === VERSION && part.open && !part.over && Number.isFinite(part.through) ? part : null);
+
+function union(kept, added, field, before) {
+  const byId = new Map();
+  kept.concat(added).forEach((row) => { if (before === undefined || toMs(row[field]) < before) byId.set(row.id, row); });
+  return Array.from(byId.values());
+}
+
+// The open day without a state: a write-once kind adds the rows since its kept read to the kept ones and keeps the
+// result in the day's document for the next refresh; the others are read whole.
+async function openDay(db, kinds, edge, now, out) {
+  const remember = (kind, rows) => { memo.set(kind + "|" + edge, { db, at: Date.now(), rows }); out[kind].push(...rows); };
+  const groups = {};
+  await Promise.all(kinds.map(async (kind) => {
+    const hit = memo.get(kind + "|" + edge);
+    if (hit && hit.db === db && Date.now() - hit.at < MEMO_MS) out[kind].push(...hit.rows);
+    else if (writeOnce(kind)) (groups[KINDS[kind].keep] = groups[KINDS[kind].keep] || []).push(kind);
+    else out[kind].push(...(await openRows(db, kind, edge)));
+  }));
+  await Promise.all(Object.keys(groups).map(async (keep) => {
+    const ref = db.collection(COLLECTION).doc(dayKey(edge) + "_" + keep);
+    const snap = await ref.get().catch(() => null);
+    const parts = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
+    const fresh = {};
+    await Promise.all(groups[keep].map(async (kind) => {
+      const kept = tail(parts[kind]);
+      const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(edge, kept.through - OVERLAP_MS)), KINDS[kind].field) : await raw(db, kind, edge);
+      fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), open: true, through: now, final: false, over: false, rows };
+      remember(kind, rows);
+    }));
+    await save(ref, edge, Number(keep), parts, fresh);
+  }));
+}
+
 const newest = (rows, field, floor) => rows.reduce((max, row) => Math.max(max, toMs(row[field]) || 0), floor);
 
 // The open day's rows from a state: write-once sources read only what is newer than the rows held.
@@ -118,7 +158,7 @@ async function floors(db, kinds) {
 }
 
 function current(part, day, now) {
-  if (!part || part.v !== VERSION || part.over) return false;
+  if (!part || part.v !== VERSION || part.over || part.open) return false;
   return part.final === true || now - Date.parse(part.at) < Math.max(REFRESH_MS, (now - day - DAY) / 4);
 }
 
@@ -159,10 +199,12 @@ async function storedDays(db, kinds, days, floor, now, out, state) {
       await Promise.all(list.filter((kind) => has(kind, day)).map(async (kind) => {
         const part = parts[kind];
         if (current(part, day, now)) { out[kind].push(...(part.rows || [])); hold(day, kind, part); return; }
-        const rows = await raw(db, kind, day, day + DAY);
+        // A day kept while open only needs the rows written after it was last read.
+        const kept = tail(part);
+        const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(day, kept.through - OVERLAP_MS), day + DAY), KINDS[kind].field, day + DAY) : await raw(db, kind, day, day + DAY);
         out[kind].push(...rows);
         const final = now >= day + DAY + (KINDS[kind].settle || CLOSE_MS);
-        if (!(part && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, rows };
+        if (!(part && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, open: false, through: null, rows };
         if (fresh[kind]) hold(day, kind, fresh[kind]);
       }));
       if (Object.keys(fresh).length) await save(refs[i], day, keep, parts, fresh);
@@ -184,10 +226,10 @@ async function rows(db, kinds, { from, now, state }) {
   }
   if (state) Object.keys(state.days).forEach((id) => { if (Date.parse(id.slice(0, 10)) < now - STATE_DAYS * DAY) delete state.days[id]; });
   const live = {};
-  await Promise.all(kinds.map(async (kind) => {
-    out[kind].push(...(await openHeld(db, kind, edge, now, state)));
+  const open = state ? Promise.all(kinds.map(async (kind) => { out[kind].push(...(await openHeld(db, kind, edge, now, state))); })) : openDay(db, kinds, edge, now, out);
+  await Promise.all([open].concat(kinds.map(async (kind) => {
     live[kind] = days.length ? await liveRows(db, kind) : [];
-  }));
+  })));
   kinds.forEach((kind) => {
     const field = KINDS[kind].field;
     const patch = new Map(live[kind].map((row) => [row.id, row]));
