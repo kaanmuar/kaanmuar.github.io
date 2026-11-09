@@ -5,8 +5,13 @@
 
   const COPY = {
     en: {
-      urlNeeded: "Enter a public page after https://.",
-      ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
+      fieldError: {
+        nameNeeded: "Enter your name.", emailNeeded: "Enter a valid email.", ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
+        mailDead: "That email domain does not accept mail.", reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.",
+        clientUrlNeeded: "Enter the client's website.", clientMailDead: "The client email domain does not accept mail.", urlNeeded: "Enter a public page after https://.", urlEmpty: "Enter a URL.", urlInvalid: "Enter a valid https URL.",
+        urlHttps: "Only https URLs can be reviewed.", urlLogin: "Remove the username and password from the URL.", urlPort: "Only the standard https port can be reviewed.", urlPrivate: "That address is not a public website.",
+        frameworksNeeded: "Choose at least one framework for the proposed cases.", scopeInvalid: "Choose 20, 40, 60, 80, or 100 pages, and 2, 3, 4, or 5 links deep.", termsNeeded: "Accept the terms first.", compareFrom: "Start a comparison from one of your reports."
+      },
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
       reason: {
@@ -16,7 +21,6 @@
         teaching: "I am teaching or learning how a page could be tested", allowed: "I am checking a page I am allowed to review",
         verify: "I want QA-lab to run a verification", credentials: "I have a username and password for this site", other: "Other"
       },
-      reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.", clientUrlNeeded: "Enter the client's website.",
       scopePages: "{n} pages", scopeDepth: "{n} deep", scopeSite: "site language", scopeSection: "this section",
       sectionNone: "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.", sectionStay: "Later pages stay under {path}.", sectionLeave: "Later pages can follow links outside {path}.",
       tour: {
@@ -171,8 +175,14 @@
       }
     },
     es: {
-      urlNeeded: "Escribe una página pública después de https://.",
-      ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
+      fieldError: {
+        nameNeeded: "Escribe tu nombre.", emailNeeded: "Escribe un correo válido.", ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
+        mailDead: "Ese dominio de correo no recibe mensajes.", reasonPick: "Elige un motivo.", reasonWrite: "Escribe el motivo en una frase.", clientNameNeeded: "Escribe el nombre del cliente.", clientEmailNeeded: "Escribe el correo del cliente.",
+        clientUrlNeeded: "Escribe el sitio web del cliente.", clientMailDead: "El dominio del correo del cliente no recibe mensajes.", urlNeeded: "Escribe una página pública después de https://.", urlEmpty: "Escribe una URL.",
+        urlInvalid: "Escribe una URL https válida.", urlHttps: "Solo se pueden revisar URL https.", urlLogin: "Quita el usuario y la contraseña de la URL.", urlPort: "Solo se puede revisar el puerto https estándar.",
+        urlPrivate: "Esa dirección no es un sitio web público.", frameworksNeeded: "Elige al menos un framework para los casos propuestos.", scopeInvalid: "Elige 20, 40, 60, 80 o 100 páginas, y 2, 3, 4 o 5 enlaces de profundidad.",
+        termsNeeded: "Primero acepta los términos.", compareFrom: "Empieza una comparación desde uno de tus informes."
+      },
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       reason: {
@@ -182,7 +192,6 @@
         teaching: "Estoy enseñando o aprendiendo cómo se podría probar una página", allowed: "Estoy revisando una página que tengo permiso para revisar",
         verify: "Quiero que QA-lab haga una verificación", credentials: "Tengo un usuario y una contraseña para este sitio", other: "Otro"
       },
-      reasonPick: "Elige un motivo.", reasonWrite: "Escribe el motivo en una frase.", clientNameNeeded: "Escribe el nombre del cliente.", clientEmailNeeded: "Escribe el correo del cliente.", clientUrlNeeded: "Escribe el sitio web del cliente.",
       scopePages: "{n} páginas", scopeDepth: "{n} de profundidad", scopeSite: "idioma del sitio", scopeSection: "esta sección",
       sectionNone: "Agrega una ruta, como example.com/docs, para mantener las páginas siguientes en esa sección. Con solo el host se revisa todo el sitio.", sectionStay: "Las páginas siguientes se quedan dentro de {path}.", sectionLeave: "Las páginas siguientes pueden seguir enlaces fuera de {path}.",
       tour: {
@@ -339,8 +348,14 @@
       }
     },
     pt: {
-      urlNeeded: "Digite uma página pública depois de https://.",
-      ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
+      fieldError: {
+        nameNeeded: "Digite seu nome.", emailNeeded: "Digite um e-mail válido.", ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
+        mailDead: "Esse domínio de e-mail não recebe mensagens.", reasonPick: "Escolha um motivo.", reasonWrite: "Escreva o motivo em uma frase.", clientNameNeeded: "Digite o nome do cliente.", clientEmailNeeded: "Digite o e-mail do cliente.",
+        clientUrlNeeded: "Digite o site do cliente.", clientMailDead: "O domínio do e-mail do cliente não recebe mensagens.", urlNeeded: "Digite uma página pública depois de https://.", urlEmpty: "Digite uma URL.",
+        urlInvalid: "Digite uma URL https válida.", urlHttps: "Só é possível revisar URLs https.", urlLogin: "Tire o usuário e a senha da URL.", urlPort: "Só é possível revisar a porta https padrão.",
+        urlPrivate: "Esse endereço não é um site público.", frameworksNeeded: "Escolha pelo menos um framework para os casos propostos.", scopeInvalid: "Escolha 20, 40, 60, 80 ou 100 páginas, e 2, 3, 4 ou 5 links de profundidade.",
+        termsNeeded: "Aceite os termos primeiro.", compareFrom: "Comece uma comparação a partir de um dos seus relatórios."
+      },
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       reason: {
@@ -350,7 +365,6 @@
         teaching: "Estou ensinando ou aprendendo como uma página poderia ser testada", allowed: "Estou verificando uma página que tenho permissão para revisar",
         verify: "Quero que o QA-lab faça uma verificação", credentials: "Tenho um usuário e uma senha para este site", other: "Outro"
       },
-      reasonPick: "Escolha um motivo.", reasonWrite: "Escreva o motivo em uma frase.", clientNameNeeded: "Digite o nome do cliente.", clientEmailNeeded: "Digite o e-mail do cliente.", clientUrlNeeded: "Digite o site do cliente.",
       scopePages: "{n} páginas", scopeDepth: "{n} de profundidade", scopeSite: "idioma do site", scopeSection: "esta seção",
       sectionNone: "Adicione um caminho, como example.com/docs, para manter as páginas seguintes nessa seção. Só com o host, o site inteiro é revisado.", sectionStay: "As páginas seguintes ficam dentro de {path}.", sectionLeave: "As páginas seguintes podem seguir links fora de {path}.",
       tour: {
@@ -508,8 +522,15 @@
       }
     },
     de: {
-      urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.",
-      ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
+      fieldError: {
+        nameNeeded: "Geben Sie Ihren Namen ein.", emailNeeded: "Geben Sie eine gültige E-Mail-Adresse ein.", ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
+        mailDead: "Diese E-Mail-Domain nimmt keine E-Mails an.", reasonPick: "Wählen Sie einen Grund.", reasonWrite: "Schreiben Sie den Grund in einem Satz.", clientNameNeeded: "Geben Sie den Namen des Kunden ein.",
+        clientEmailNeeded: "Geben Sie die E-Mail-Adresse des Kunden ein.", clientUrlNeeded: "Geben Sie die Website des Kunden ein.", clientMailDead: "Die E-Mail-Domain des Kunden nimmt keine E-Mails an.",
+        urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.", urlEmpty: "Geben Sie eine URL ein.", urlInvalid: "Geben Sie eine gültige https-URL ein.", urlHttps: "Nur https-URLs können geprüft werden.",
+        urlLogin: "Entfernen Sie Benutzername und Passwort aus der URL.", urlPort: "Nur der Standard-Port für https kann geprüft werden.", urlPrivate: "Diese Adresse ist keine öffentliche Website.",
+        frameworksNeeded: "Wählen Sie mindestens ein Framework für die vorgeschlagenen Fälle.", scopeInvalid: "Wählen Sie 20, 40, 60, 80 oder 100 Seiten und 2, 3, 4 oder 5 Links Tiefe.", termsNeeded: "Akzeptieren Sie zuerst die Bedingungen.",
+        compareFrom: "Starten Sie einen Vergleich aus einem Ihrer Berichte."
+      },
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
       reason: {
@@ -519,7 +540,6 @@
         teaching: "Ich lehre oder lerne, wie man eine Seite testen könnte", allowed: "Ich prüfe eine Seite, die ich prüfen darf",
         verify: "Ich möchte, dass QA-lab eine Verifizierung durchführt", credentials: "Ich habe einen Benutzernamen und ein Passwort für diese Website", other: "Sonstiges"
       },
-      reasonPick: "Wählen Sie einen Grund.", reasonWrite: "Schreiben Sie den Grund in einem Satz.", clientNameNeeded: "Geben Sie den Namen des Kunden ein.", clientEmailNeeded: "Geben Sie die E-Mail-Adresse des Kunden ein.", clientUrlNeeded: "Geben Sie die Website des Kunden ein.",
       scopePages: "{n} Seiten", scopeDepth: "{n} Links tief", scopeSite: "Sprache der Website", scopeSection: "nur dieser Bereich",
       sectionNone: "Fügen Sie einen Pfad wie example.com/docs hinzu, damit weitere Seiten in diesem Bereich bleiben. Ein Host allein prüft die ganze Website.", sectionStay: "Weitere Seiten bleiben unter {path}.", sectionLeave: "Weitere Seiten können Links außerhalb von {path} folgen.",
       tour: {
@@ -676,8 +696,14 @@
       }
     },
     fr: {
-      urlNeeded: "Saisissez une page publique après https://.",
-      ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
+      fieldError: {
+        nameNeeded: "Saisissez votre nom.", emailNeeded: "Saisissez un e-mail valide.", ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
+        mailDead: "Ce domaine de messagerie ne reçoit pas de courrier.", reasonPick: "Choisissez une raison.", reasonWrite: "Écrivez la raison en une phrase.", clientNameNeeded: "Saisissez le nom du client.",
+        clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.", clientMailDead: "Le domaine de l’e-mail du client ne reçoit pas de courrier.", urlNeeded: "Saisissez une page publique après https://.",
+        urlEmpty: "Saisissez une URL.", urlInvalid: "Saisissez une URL https valide.", urlHttps: "Seules les URL https peuvent être analysées.", urlLogin: "Retirez le nom d’utilisateur et le mot de passe de l’URL.",
+        urlPort: "Seul le port https standard peut être analysé.", urlPrivate: "Cette adresse n’est pas un site web public.", frameworksNeeded: "Choisissez au moins un framework pour les cas proposés.",
+        scopeInvalid: "Choisissez 20, 40, 60, 80 ou 100 pages, et 2, 3, 4 ou 5 liens de profondeur.", termsNeeded: "Acceptez d’abord les conditions.", compareFrom: "Lancez une comparaison depuis l’un de vos rapports."
+      },
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
       reason: {
@@ -687,7 +713,6 @@
         teaching: "J’enseigne ou j’apprends comment une page pourrait être testée", allowed: "Je vérifie une page que j’ai le droit d’analyser",
         verify: "Je veux que QA-lab effectue une vérification", credentials: "J’ai un identifiant et un mot de passe pour ce site", other: "Autre"
       },
-      reasonPick: "Choisissez une raison.", reasonWrite: "Écrivez la raison en une phrase.", clientNameNeeded: "Saisissez le nom du client.", clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.",
       scopePages: "{n} pages", scopeDepth: "{n} de profondeur", scopeSite: "langue du site", scopeSection: "cette section",
       sectionNone: "Ajoutez un chemin, comme example.com/docs, pour garder les pages suivantes dans cette section. Avec l’hôte seul, tout le site est analysé.", sectionStay: "Les pages suivantes restent sous {path}.", sectionLeave: "Les pages suivantes peuvent suivre des liens hors de {path}.",
       tour: {
@@ -843,8 +868,14 @@
       }
     },
     it: {
-      urlNeeded: "Scrivi una pagina pubblica dopo https://.",
-      ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
+      fieldError: {
+        nameNeeded: "Scrivi il tuo nome.", emailNeeded: "Scrivi un’email valida.", ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
+        mailDead: "Quel dominio email non riceve posta.", reasonPick: "Scegli un motivo.", reasonWrite: "Scrivi il motivo in una frase.", clientNameNeeded: "Scrivi il nome del cliente.", clientEmailNeeded: "Scrivi l’email del cliente.",
+        clientUrlNeeded: "Scrivi il sito web del cliente.", clientMailDead: "Il dominio dell’email del cliente non riceve posta.", urlNeeded: "Scrivi una pagina pubblica dopo https://.", urlEmpty: "Scrivi un URL.",
+        urlInvalid: "Scrivi un URL https valido.", urlHttps: "Si possono revisionare solo URL https.", urlLogin: "Togli nome utente e password dall’URL.", urlPort: "Si può revisionare solo la porta https standard.",
+        urlPrivate: "Quell’indirizzo non è un sito web pubblico.", frameworksNeeded: "Scegli almeno un framework per i casi proposti.", scopeInvalid: "Scegli 20, 40, 60, 80 o 100 pagine, e 2, 3, 4 o 5 link di profondità.",
+        termsNeeded: "Accetta prima i termini.", compareFrom: "Avvia un confronto da uno dei tuoi report."
+      },
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
       reason: {
@@ -854,7 +885,6 @@
         teaching: "Sto insegnando o imparando come si potrebbe testare una pagina", allowed: "Sto controllando una pagina che ho il permesso di rivedere",
         verify: "Voglio che QA-lab esegua una verifica", credentials: "Ho un nome utente e una password per questo sito", other: "Altro"
       },
-      reasonPick: "Scegli un motivo.", reasonWrite: "Scrivi il motivo in una frase.", clientNameNeeded: "Scrivi il nome del cliente.", clientEmailNeeded: "Scrivi l’email del cliente.", clientUrlNeeded: "Scrivi il sito web del cliente.",
       scopePages: "{n} pagine", scopeDepth: "{n} di profondità", scopeSite: "lingua del sito", scopeSection: "questa sezione",
       sectionNone: "Aggiungi un percorso, come example.com/docs, per tenere le pagine successive in quella sezione. Con il solo host si rivede tutto il sito.", sectionStay: "Le pagine successive restano sotto {path}.", sectionLeave: "Le pagine successive possono seguire link fuori da {path}.",
       tour: {
@@ -1043,6 +1073,12 @@
     return (body && body.error) || fallback || "";
   }
 
+  // The server sends field errors in English, so they are read by their exact wording until #2830 sends codes; an unknown one stays as sent.
+  function field(message) {
+    const known = Object.keys(COPY.en.fieldError).find((key) => COPY.en.fieldError[key] === message);
+    return known ? word("fieldError", known) : message;
+  }
+
   if (!english) {
     document.querySelectorAll("[data-report-copy]").forEach((node) => {
       const text = book[node.getAttribute("data-report-copy")];
@@ -1053,5 +1089,5 @@
     });
   }
 
-  window.QAReviewReportCopy = { lang: code, english: english, t: t, word: word, error: error };
+  window.QAReviewReportCopy = { lang: code, english: english, t: t, word: word, error: error, field: field };
 })();

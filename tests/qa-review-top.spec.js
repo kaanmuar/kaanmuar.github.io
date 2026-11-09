@@ -572,3 +572,48 @@ test.describe('Report section index (#2770)', () => {
     }
   });
 });
+
+function reportCopy(lang) {
+  const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+  require('vm').runInNewContext(require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review-report-copy.js'), 'utf8'), sandbox);
+  return sandbox.window.QAReviewReportCopy;
+}
+
+test.describe('Form errors in the page language (#2837)', () => {
+  const EN = reportCopy('en');
+  for (const lang of ['es', 'pt', 'de', 'fr', 'it']) {
+    test(`the name, page and framework errors, and the server's field errors, read in ${lang}`, async ({ page }) => {
+      const rc = reportCopy(lang);
+      const say = (id) => rc.word('fieldError', id);
+      await prime(page);
+      const store = await signedIn(page);
+      await backend(page, store);
+      const sent = { error: EN.word('fieldError', 'mailDead'), fields: [{ field: 'email', message: EN.word('fieldError', 'mailDead') }, { field: 'url', message: EN.word('fieldError', 'urlPrivate') }] };
+      await page.route('http://127.0.0.1:8768/review', (route) => {
+        const cors = { 'access-control-allow-origin': route.request().headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'POST' }, cors) });
+        return route.fulfill({ status: 400, contentType: 'application/json', headers: cors, body: JSON.stringify(sent) });
+      });
+      await page.goto(`/qa-review-${lang}.html`);
+      await expect(page.locator('#sign-in-done')).toBeVisible();
+      await page.locator('#name').fill('1');
+      await page.locator('#url').fill('exa mple.com');
+      await page.evaluate(() => document.querySelectorAll('input[name="fw"]:checked').forEach((box) => { box.checked = false; box.dispatchEvent(new Event('change', { bubbles: true })); }));
+      await page.locator('#review-btn').click();
+      for (const [field, id] of [['name', 'nameNeeded'], ['url', 'urlNeeded'], ['frameworks', 'frameworksNeeded'], ['reason', 'reasonPick']]) {
+        await expect(page.locator('#' + field + '-error')).toHaveText(say(id));
+        await expect(page.locator('#' + field + '-error')).not.toHaveText(EN.word('fieldError', id));
+      }
+      await expect(page.locator('#form-status')).toHaveText(say('nameNeeded'));
+
+      await page.locator('#name').fill('Ana');
+      await page.locator('#url').fill('example.com');
+      await page.locator('#reasons input[value="release"]').check();
+      await page.evaluate(() => { const box = document.querySelector('input[name="fw"]'); box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true })); });
+      await page.locator('#review-btn').click();
+      await expect(page.locator('#email-error')).toHaveText(say('mailDead'));
+      await expect(page.locator('#url-error')).toHaveText(say('urlPrivate'));
+      await expect(page.locator('#form-status')).toHaveText(say('mailDead'));
+    });
+  }
+});
