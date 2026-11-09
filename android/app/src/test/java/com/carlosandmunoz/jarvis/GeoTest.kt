@@ -41,6 +41,17 @@ class GeoTest {
         assertEquals(listOf("CO"), Geo.ranked(listOf(ao, co), "sent").map { it["cc"].toString().trim('"') })
     }
 
+    @Test fun confirmQueueReadsLikeTheWebPanel() {
+        assertEquals("CO", Geo.confirmCode(" co "))
+        assertEquals("WW", Geo.confirmCode("ww"))
+        assertNull(Geo.confirmCode("C"))
+        assertNull(Geo.confirmCode("COL"))
+        assertNull(Geo.confirmCode("1A"))
+        assertEquals("United States · US · 62% sure", Geo.guess(json("""{"host":"a.com","cc":"US","name":"United States","confidence":0.62}""")))
+        assertEquals("Worldwide · 58% sure", Geo.guess(json("""{"host":"b.io","cc":"WW","name":"Worldwide","confidence":0.58}""")))
+        assertEquals("no guess", Geo.guess(json("""{"host":"c.net","cc":"","name":"","confidence":0}""")))
+    }
+
     @Test fun lightsMatchTheServer() {
         assertEquals(listOf("Dark", "Spark", "Ember", "Lit", "Bright", "Blazing"), Geo.LIGHTS.map { it.name })
         assertEquals(0, Geo.lightOf(json("{}")))

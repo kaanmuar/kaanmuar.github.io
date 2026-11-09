@@ -104,9 +104,12 @@ jobs:
 
       # Signals only (no Gemini key here): sure countries go into data/live-report-countries.json and onto the
       # cards; the unsure ones wait for a full run of the script, which queues them for Carlos in Jarvis (#2980).
+      # --decisions reads the countries he confirmed on the Jarvis Map tab and places every card of those sites (#3009).
       - name: Place the new cards in their country
         continue-on-error: true
-        run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini
+        env:
+          PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
+        run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions
 
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'

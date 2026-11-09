@@ -4,7 +4,7 @@
      node scripts/live-report-countries.js                   # dry run: gather, score, print the counts
      node scripts/live-report-countries.js --apply --queue   # write the sure ones, queue the rest for Carlos
      node scripts/live-report-countries.js --hosts a.com,b.ie --refresh
-     node scripts/live-report-countries.js --recent 2 --apply --no-gemini          # the daily job: cards read in the last 2 days
+     node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions   # the daily job: cards read in the last 2 days, and Carlos's answers
 
    Cards with an empty country in assets/live-reports/index.json are read per host. The address says the most
    (ccTLD, .com.br, .gov.co; never a bare .io .co .ai .me .tv ...); then the homepage and one contact or legal page:
@@ -18,8 +18,10 @@
    A decision with confidence AUTO or more goes into data/live-report-countries.json, { hosts: { host: { country,
    scope, confidence, by, evidence } } }, and onto the published cards (country, flag, region, place tags). The
    builders read that file too (build-live-reports.js build(), auto-live-reports.js), so a rebuild keeps it. The rest
-   goes to Firestore jarvis_settings/live_report_countries { items, decisions } for Carlos; a host he decided there
-   (decisions) is written to the file with by "carlos" and never changed by a later run. Curated cards that leave the
+   goes to Firestore jarvis_settings/live_report_countries { items, decisions, skipped } for Carlos (the Jarvis Map tab,
+   #3009); a host he decided there (decisions) is written to the file with by "carlos" and never changed by a later run,
+   and a host he skipped is not queued again. --decisions reads them through reviewUrl with PUBLISH_KEY instead of
+   gcloud, as the daily job does. Curated cards that leave the
    country empty on purpose (a distributed project) are recorded as worldwide.
 
    Fetched facts are cached in previews/live-report-countries/ (gitignored), so a re-run only scores; --refresh fetches
@@ -40,6 +42,7 @@ const SWEEP = path.join(ROOT, "assets/sweep");
 const CACHE = path.join(ROOT, "previews/live-report-countries");
 const PROJECT = process.env.GCLOUD_PROJECT || "carlosm-interactive-cv";
 const QUEUE_DOC = "jarvis_settings/live_report_countries";
+const DECISIONS_URL = process.env.DECISIONS_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/country-decisions";
 const AUTO = 0.85;
 const CONCURRENCY = 6;
 const TIMEOUT_MS = 15000;
@@ -645,6 +648,22 @@ async function firestore(method, fields, mask) {
   return Object.fromEntries(Object.entries(doc.fields || {}).map(([k, v]) => [k, fromValue(v)]));
 }
 
+// Carlos's answers from the Jarvis Map tab (#3009): from Firestore with --queue (gcloud), else with --decisions
+// through reviewUrl/country-decisions and PUBLISH_KEY, as the daily job runs it.
+async function choices(opts) {
+  let doc = null;
+  if (opts.queue) doc = await firestore("GET").catch((error) => { console.warn(error.message); return null; });
+  else if (opts.decisions && !process.env.PUBLISH_KEY) console.warn("No PUBLISH_KEY: Carlos's country decisions were not read.");
+  else if (opts.decisions) {
+    doc = await fetch(DECISIONS_URL, { headers: { "x-publish-key": process.env.PUBLISH_KEY }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Country decisions: status " + res.status))))
+      .catch((error) => { console.warn(error.message); return null; });
+  }
+  const decisions = (doc && doc.decisions) || {};
+  if (Object.keys(decisions).length) console.log(Object.keys(decisions).length + " countries chosen by Carlos");
+  return { decisions, skipped: (doc && doc.skipped) || {} };
+}
+
 // ---- Main ----
 
 function args() {
@@ -681,10 +700,9 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
   fs.mkdirSync(path.join(CACHE, "facts"), { recursive: true });
 
-  let decisions = {};
-  if (opts.queue) decisions = (await firestore("GET").catch((error) => { console.warn(error.message); return {}; })).decisions || {};
-  Object.entries(decisions || {}).forEach(([host, d]) => {
-    if (!d || !(d.scope === "worldwide" || REGIONS[d.country])) return;
+  const { decisions, skipped } = await choices(opts);
+  Object.entries(decisions).forEach(([host, d]) => {
+    if (!d || !(d.scope === "worldwide" || REGIONS[d.country])) { console.warn("Skipped Carlos's decision for " + host + ": " + JSON.stringify(d)); return; }
     file.hosts[bare(host)] = { country: d.scope === "worldwide" ? "" : d.country, scope: d.scope === "worldwide" ? "worldwide" : "country", confidence: 1, by: "carlos", evidence: ["Confirmed by Carlos in Jarvis"], at: String(d.at || today).slice(0, 10) };
   });
 
@@ -783,7 +801,7 @@ async function main() {
   }
 
   if (opts.queue) {
-    const items = queue.filter((r) => !(file.hosts[r.host] || {}).by || file.hosts[r.host].by !== "carlos").slice(0, 1500).map((r) => ({
+    const items = queue.filter((r) => !skipped[r.host] && (file.hosts[r.host] || {}).by !== "carlos").slice(0, 1500).map((r) => ({
       host: r.host, country: r.country || "", scope: r.scope, confidence: r.confidence, by: r.decidedBy, reports: r.reports, evidence: r.evidence.slice(0, 4).map((e) => cut(e, 140))
     }));
     await firestore("PATCH", { items: toValue(items), updatedAt: { timestampValue: new Date().toISOString() }, counts: toValue(tally), threshold: toValue(AUTO) }, ["items", "updatedAt", "counts", "threshold"]);

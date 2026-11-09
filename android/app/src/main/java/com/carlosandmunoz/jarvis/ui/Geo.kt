@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -211,6 +212,16 @@ object Geo {
     /** Dates ahead (#2989) is higher the sooner a country's next date, over the calendar's 60 days. */
     const val DATES_SPAN = 60
     fun inDays(d: Int) = when { d <= 0 -> "today"; d == 1 -> "tomorrow"; else -> "in $d days" }
+
+    /** A typed country for the confirm queue (#3009): two letters, or WW for worldwide; the function checks it is a country. */
+    fun confirmCode(typed: String): String? = typed.trim().uppercase().takeIf { Regex("[A-Z]{2}").matches(it) }
+
+    /** The finder's guess for a queued site, as the web panel shows it. */
+    fun guess(r: JsonObject): String {
+        val cc = r.str("cc").orEmpty()
+        if (cc.isEmpty()) return "no guess"
+        return (r.str("name") ?: cc) + (if (cc == "WW") "" else " · $cc") + " · ${Math.round((r.num("confidence") ?: 0.0) * 100)}% sure"
+    }
 
     fun ranked(rows: List<JsonObject>, key: String) = rows.filter { (value(it, key) ?: 0.0) > 0 }
         .sortedWith(compareByDescending<JsonObject> { value(it, key) ?: 0.0 }.thenByDescending { if (key == "light") value(it, "activity") ?: 0.0 else 0.0 }.thenBy { it.str("cc") })
@@ -485,7 +496,51 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         onRow = { name -> picked = byName[name] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
+    GeoConfirm(g, s, vm) { text, run -> confirm = PendingAction(text, run) }
     ConfirmAction(confirm) { confirm = null }
+}
+
+/** Live Reports the country finder was unsure of (#3009): Confirm its guess, Change it, Worldwide or Skip. */
+@Composable
+private fun GeoConfirm(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
+    val rows = g.objs("confirm")
+    val t = g.obj("totals")
+    val total = t?.num("confirm") ?: rows.size.toDouble()
+    val confirmed = t?.num("confirmed") ?: 0.0
+    val uri = LocalUriHandler.current
+    Panel("Live Report countries to confirm · ${fmt(total)}" + (if (confirmed > 0) " · ${fmt(confirmed)} confirmed" else ""), key = "geo-confirm", id = "geo-confirm") {
+        if (rows.isEmpty()) Muted("No Live Report is waiting for a country.")
+        rows.forEach { r ->
+            val host = r.str("host").orEmpty()
+            val cc = r.str("cc").orEmpty()
+            val url = r.str("url")?.takeIf { it.isNotEmpty() }
+            val key = "geo:confirm:$host"
+            val idle = key !in s.running
+            var typed by rememberSaveable(host) { mutableStateOf("") }
+            val send = { code: String ->
+                vm.market(key, "geo-country-confirm", mapOf("host" to JsonPrimitive(host), "cc" to JsonPrimitive(code))) { out -> "$host: ${out.str("name") ?: code}. The next daily Live Reports run updates its pages." }
+            }
+            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                Text(host, color = if (url != null) J.cyan else J.text, fontSize = 14.sp, fontWeight = FontWeight.Medium,
+                    modifier = url?.let { u -> Modifier.clickable { runCatching { uri.openUri(u) } } } ?: Modifier)
+                Muted("${fmt(r.num("reports"))} report${if (r.num("reports") == 1.0) "" else "s"} · guess: ${Geo.guess(r)}")
+                val evidence = (r["evidence"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }.orEmpty()
+                if (evidence.isNotEmpty()) Muted(evidence.joinToString(" · "), maxLines = 3)
+                Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                    if (cc.isNotEmpty()) TextButton({ send(cc) }, enabled = idle) { Text("Confirm", color = J.cyan, fontSize = 13.sp) }
+                    OutlinedTextField(typed, { typed = it.filter(Char::isLetter).take(2).uppercase() }, Modifier.width(76.dp), singleLine = true, placeholder = { Text("CC") })
+                    TextButton({ Geo.confirmCode(typed)?.let(send) }, enabled = idle && Geo.confirmCode(typed) != null) { Text("Change", color = J.cyan, fontSize = 13.sp) }
+                    if (cc != "WW") TextButton({ send("WW") }, enabled = idle) { Text("Worldwide", color = J.cyan, fontSize = 13.sp) }
+                    TextButton({
+                        ask("skip $host: it stays without a country and leaves this list") {
+                            vm.market(key, "geo-country-confirm", mapOf("host" to JsonPrimitive(host), "skip" to JsonPrimitive(true))) { "$host skipped." }
+                        }
+                    }, enabled = idle) { Text("Skip", color = J.muted, fontSize = 13.sp) }
+                }
+            }
+        }
+        if (rows.size < total) Muted("The ${rows.size} with the most reports. Change takes a two-letter code, or WW for worldwide.")
+    }
 }
 
 /** The tapped country: its numbers, funnel, segments, campaigns with Pause or Activate, a queue form and the target toggle. */
