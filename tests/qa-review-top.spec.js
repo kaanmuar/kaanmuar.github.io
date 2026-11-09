@@ -502,6 +502,24 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report-index')).toBeHidden();
   });
 
+  test('Back to top right after a jump is not pulled back to the heading on a busy page (#2888)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openSample(page);
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await page.waitForFunction(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.querySelector('#dash-overlay .report-toolbar').getBoundingClientRect().bottom && top < 200;
+    }, null, { polling: 'raf' });
+    await page.evaluate(() => {
+      document.getElementById('dash-overlay').addEventListener('scroll', () => {
+        const end = performance.now() + 200;
+        while (performance.now() < end) { /* a long task between scroll frames, as on a loaded CI worker */ }
+      }, { once: true });
+      document.getElementById('report-top').click();
+    });
+    await expect.poll(() => page.locator('#dash-overlay').evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
   test('collapsed sections open when their group is chosen', async ({ page }) => {
     await openSample(page);
     await page.locator('#fold-all').click();

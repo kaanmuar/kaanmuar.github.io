@@ -2622,11 +2622,14 @@
   }
 
   const TAKEOVER = ["wheel", "touchstart", "keydown", "pointerdown"];
+  let stopKeeping = () => {};
 
   // Content above a section can still change size during a smooth scroll and push its heading away, so once the scroll
   // ends the heading is put back in place (at most twice) unless the reader has taken over the scroll. A busy main thread
   // holds scroll events back for longer than any quiet spell, so where scrollend exists only it marks the end (#2938).
+  // Back to top and the next jump also end it: a screen reader's click comes with no pointer or key event (#2888).
   function keepInPlace(heading) {
+    stopKeeping();
     const ends = "onscrollend" in window;
     const start = dash.scrollTop;
     let timer = 0;
@@ -2637,7 +2640,9 @@
       TAKEOVER.forEach((type) => dash.removeEventListener(type, stop));
       dash.removeEventListener("scroll", onScroll);
       dash.removeEventListener("scrollend", settle);
+      if (stopKeeping === stop) stopKeeping = () => {};
     };
+    stopKeeping = stop;
     const settle = () => {
       clearTimeout(timer);
       if (Math.abs(off()) <= 2 || !tries--) return stop();
@@ -2710,6 +2715,7 @@
       });
     }, { passive: true });
     reportTop.addEventListener("click", () => {
+      stopKeeping();
       const first = reportIndex.querySelector("a");
       if (first) first.focus({ preventScroll: true });
       dash.scrollTo({ top: 0, behavior: scrollBehavior() });
