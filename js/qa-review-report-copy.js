@@ -6,6 +6,7 @@
   const COPY = {
     en: {
       urlNeeded: "Enter a public page after https://.",
+      ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
       tour: {
@@ -160,6 +161,7 @@
     },
     es: {
       urlNeeded: "Escribe una página pública después de https://.",
+      ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       tour: {
@@ -316,6 +318,7 @@
     },
     pt: {
       urlNeeded: "Digite uma página pública depois de https://.",
+      ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       tour: {
@@ -473,6 +476,7 @@
     },
     de: {
       urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.",
+      ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
       tour: {
@@ -629,6 +633,7 @@
     },
     fr: {
       urlNeeded: "Saisissez une page publique après https://.",
+      ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
       tour: {
@@ -784,6 +789,7 @@
     },
     it: {
       urlNeeded: "Scrivi una pagina pubblica dopo https://.",
+      ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
       tour: {
