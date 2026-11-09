@@ -365,6 +365,68 @@ test("the Telegram client sends a quiz poll, falls back to the card when it is r
   }
 });
 
+// A release clip of size bytes, and a sendVideo that refuses the URL as Telegram did in run 42676357559.
+function telegramClipRoutes(size, sent) {
+  return [
+    ["/releases/download/", () => ({ ok: true, status: 200, headers: { get: (h) => (h === "content-length" ? String(size) : null) }, body: null, arrayBuffer: async () => new ArrayBuffer(size) })],
+    ["/sendVideo", (u, o) => {
+      if (!(o.body instanceof FormData)) {
+        sent.push(["sendVideo", JSON.parse(o.body)]);
+        return ok({ ok: false, error_code: 400, description: "Bad Request: failed to get HTTP URL content" }, 400);
+      }
+      sent.push(["upload", o.body]);
+      return ok({ ok: true, result: { message_id: 11 } });
+    }],
+    ["/sendPhoto", (u, o) => { sent.push(["sendPhoto", JSON.parse(o.body)]); return ok({ ok: true, result: { message_id: 12 } }); }]
+  ];
+}
+
+test("the Telegram client uploads a clip it cannot fetch by URL, with the plan's caption, cover and reply (#3004)", async () => {
+  const sent = [];
+  const f = stubFetch(telegramClipRoutes(8, sent));
+  const log = console.log;
+  console.log = () => {};
+  try {
+    const client = q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t", TELEGRAM_CHANNEL: "@qalab_live" });
+    const args = { text: "Berlin 86, Vienna 85.\n\nMore", url: "https://carlosandmunoz.com/a.jpg", lang: "en", quote: "41", clip: clipOf("a", "en") };
+    const r = await client.post(args);
+    assert.deepEqual(r.uses, ["video", "reply", "spoiler"]);
+    assert.deepEqual(sent.map((s) => s[0]), ["sendVideo", "upload"]);
+    assert.equal(sent[0][1].video, args.clip.url);
+    const form = sent[1][1];
+    assert.equal(form.get("chat_id"), "@qalab_live");
+    assert.equal(form.get("caption"), args.text);
+    assert.equal(form.get("cover"), args.url);
+    assert.equal(form.get("supports_streaming"), "true");
+    assert.deepEqual(JSON.parse(form.get("reply_parameters")), { message_id: 41, allow_sending_without_reply: true });
+    assert.deepEqual(JSON.parse(form.get("caption_entities")), [{ type: "spoiler", offset: 0, length: "Berlin 86, Vienna 85.".length }]);
+    const video = form.get("video");
+    assert.deepEqual([video.name, video.type, video.size], ["a.mp4", "video/mp4", 8]);
+    assert.ok(f.calls.some((c) => c.url === args.clip.url && c.method === "GET"));
+  } finally {
+    console.log = log;
+    f.restore();
+  }
+});
+
+test("the Telegram client posts the card when the clip it cannot fetch is over the 50 MB upload limit (#3004)", async () => {
+  const sent = [];
+  const f = stubFetch(telegramClipRoutes(50 * 1024 * 1024 + 1, sent));
+  const log = console.log;
+  const lines = [];
+  console.log = (line) => lines.push(line);
+  try {
+    const client = q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t", TELEGRAM_CHANNEL: "@qalab_live" });
+    const r = await client.post({ text: "Caption", url: "https://carlosandmunoz.com/a.jpg", lang: "en", clip: clipOf("a", "en") });
+    assert.deepEqual(r.uses, ["image"]);
+    assert.deepEqual(sent.map((s) => s[0]), ["sendVideo", "sendPhoto"]);
+    assert.match(lines.join("\n"), /Telegram refused video - .*failed to get HTTP URL content; no clip under 50 MB to upload/);
+  } finally {
+    console.log = log;
+    f.restore();
+  }
+});
+
 test("the Instagram client falls back from a refused reel and carousel to the card and publishes once; stories stay one image (#2702)", async () => {
   const made = [];
   let published = 0;
