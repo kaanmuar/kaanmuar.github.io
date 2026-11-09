@@ -10,6 +10,7 @@
    `other` until it is given one (a unit test fails while any does). */
 
 const crypto = require("crypto");
+const core = require("./jarvis-core");
 
 const SECTIONS = {
   settings: { fields: ["settings", "thresholds"], from: ["settings"] },
@@ -45,10 +46,19 @@ NAMES.forEach((name) => {
 
 const withoutCachedAt = (key, value) => (key === "cachedAt" ? undefined : value);
 
-// The caller's own device row is stamped seen on every call; leaving its stamp out keeps `devices` still between calls.
+/* Stamps that move with the clock alone are left out (#2819), so a version moves only when content does: the
+   caller's own device row is stamped seen on every call, the products window ends at the build time, and each
+   connection row carries its source's cachedAt. Clients move the window with cachedAt and take checked times from
+   the delta answer's `checked` (applySections in jarvis-core.js). */
 function hashed(name, payload) {
-  if (name !== "devices" || !Array.isArray(payload.devices)) return payload;
-  return { devices: payload.devices.map((row) => (row && row.mine ? Object.assign({}, row, { seenAt: undefined }) : row)) };
+  if (name === "devices" && Array.isArray(payload.devices)) {
+    return { devices: payload.devices.map((row) => (row && row.mine ? Object.assign({}, row, { seenAt: undefined }) : row)) };
+  }
+  if (name === "products" && payload.window) return Object.assign({}, payload, { window: undefined });
+  if (name === "briefing" && Array.isArray(payload.connections)) {
+    return Object.assign({}, payload, { connections: payload.connections.map((row) => (row && typeof row === "object" ? Object.assign({}, row, { at: undefined }) : row)) });
+  }
+  return payload;
 }
 
 function version(name, payload) {
@@ -88,8 +98,25 @@ function wanted(only) {
 
 const isSince = (since) => !!since && typeof since === "object" && !Array.isArray(since);
 
+// A section as sent in a delta: a field or source it names but no longer has goes as null, so a client drops it.
+function sent(name, payload) {
+  const s = SECTIONS[name];
+  const out = Object.assign({}, payload);
+  (s.fields || []).forEach((field) => { if (!(field in out)) out[field] = null; });
+  if (s.external) out.external = Object.assign(s.external.reduce((m, source) => { m[source] = null; return m; }, {}), out.external);
+  return out;
+}
+
+// Each source's cachedAt, for the sections asked: the clients' checked times (#2818), which the versions leave out.
+function checkedAt(parts, names) {
+  const out = {};
+  names.forEach((name) => Object.entries(parts[name].external || {}).forEach(([source, x]) => { if (x && x.cachedAt) out[source] = x.cachedAt; }));
+  return out;
+}
+
 /* The snapshot op's answer. Without `since`: the full snapshot as every installed build reads it, plus `versions`.
-   With `since` ({ section: v }): only the sections whose version differs, and the versions of every section asked. */
+   With `since` ({ section: v }): only the sections whose version differs, the versions of every section asked, and
+   `checked`, each source's cachedAt. */
 function serve(full, meta, { since, only, days, now = Date.now() } = {}) {
   const parts = split(full);
   const delta = isSince(since);
@@ -98,20 +125,13 @@ function serve(full, meta, { since, only, days, now = Date.now() } = {}) {
   names.forEach((name) => { versions[name] = { v: version(name, parts[name]), at: builtAt(name, meta, now) }; });
   if (!delta) return Object.assign({}, full, { versions });
   const sections = {};
-  names.forEach((name) => { if (since[name] !== versions[name].v) sections[name] = parts[name]; });
-  return { delta: true, days, cachedAt: full.cachedAt, versions, sections };
+  names.forEach((name) => { if (since[name] !== versions[name].v) sections[name] = sent(name, parts[name]); });
+  return { delta: true, days, cachedAt: full.cachedAt, versions, sections, checked: checkedAt(parts, names) };
 }
 
-// Applies a delta answer to a kept full snapshot, the way the clients do (#2510): fields replaced, sources merged.
+// Applies a delta answer to a kept full snapshot exactly as the app, watch and web do (#2510).
 function apply(kept, answer) {
-  const out = Object.assign({}, kept, { external: Object.assign({}, (kept || {}).external) });
-  Object.values((answer && answer.sections) || {}).forEach((payload) => {
-    Object.keys(payload).forEach((key) => {
-      if (key === "external") Object.assign(out.external, payload.external);
-      else out[key] = payload[key];
-    });
-  });
-  return Object.assign(out, { cachedAt: answer.cachedAt, versions: answer.versions });
+  return core.applySections(kept, answer);
 }
 
 // The sections whose version moved between two version maps; a push (#2509) names these.
