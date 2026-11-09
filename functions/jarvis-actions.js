@@ -83,7 +83,8 @@ const LABELS = {
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
   "gh-agent": "Launch a fix agent", "gh-worker": "Start Jarvis's worker on a fix", "gh-diagnose": "Diagnose a failed run",
   "gh-quarantine": "File a flaky-workflow ticket", "gh-security-ticket": "File a ticket for a security alert", "gh-dismiss-alert": "Dismiss a security alert", "gh-dismiss-low": "Dismiss the low security alerts",
-  "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging"
+  "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging",
+  "calendar-pause": "Pause campaigns over a country's holiday", "calendar-resume": "Resume campaigns after a holiday"
 };
 const GH_ACTIONS = ["gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent",
   "gh-quarantine", "gh-security-ticket", "gh-dismiss-alert", "gh-dismiss-low"];
