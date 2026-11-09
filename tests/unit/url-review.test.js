@@ -412,6 +412,12 @@ function fakeNetwork(routes) {
         // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
+        if (route.reset) {
+          const error = new Error("socket hang up");
+          error.code = "ECONNRESET";
+          req.emit("error", error);
+          return;
+        }
         if (route.timeout && !route.body) return req.emit("timeout");
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
@@ -1032,6 +1038,51 @@ test.describe("start page reads", () => {
     const refused = await review({ [BANK]: { timeout: true } }, async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: "<html><body>Access denied</body></html>" } })).catch((error) => error);
     assert.equal(refused.message, "The site's bot protection refused the review (status 403), in headless Chrome, after the plain request took too long.");
     assert.equal(failures.causeOf(refused.message).id, "bot-protection");
+  });
+
+  test("a plain read the site hangs up is read in headless Chrome, and in plain Chrome when the review tag is cut (#1967)", async () => {
+    // sweep-E2YINjaQ2NbQqYygkRJL on arti-elec.com: the plain read fails with "socket hang up" (ECONNRESET)
+    // after TCP 443 opens. Tagged headless Chrome is cut with net::ERR_HTTP2_PROTOCOL_ERROR. Plain Chrome
+    // loads status 200, title "Arti-élec: Urgence & Dépannage électrique 7/7, 24/24".
+    const failures = require("../../functions/url-review-failures");
+    const site = "https://arti-elec.com/";
+    const title = "Arti-élec: Urgence & Dépannage électrique 7/7, 24/24";
+    const html = HTML.replace(/shop\.example\.com/g, "arti-elec.com").replace("Example shop for garden tools", title);
+    const read = async (browse) => {
+      const restore = fakeNetwork({ [site]: { reset: true } });
+      const lines = [];
+      try {
+        return await core.reviewTarget(site, { log: (text) => lines.push(text), browse }).then((report) => ({ report, lines }));
+      } catch (error) {
+        error.lines = lines;
+        throw error;
+      } finally {
+        restore();
+      }
+    };
+    const jobs = [];
+    const { report, lines } = await read(async (job) => {
+      jobs.push(job);
+      return { ok: true, untagged: true, timing: { load: 3200 }, start: { status: 200, docStatus: 200, finalUrl: site, headers: STRONG_HEADERS, html, htmlCut: false } };
+    });
+    assert.deepEqual([jobs.length, jobs[0].html, jobs[0].url], [1, true, site]);
+    assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, title]);
+    assert.equal(report.browser.untagged, true);
+    assert.ok(lines.includes("The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."));
+    assert.ok(lines.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(!report.insights.warnings.includes(insights.SLOW_READ_NOTE));
+
+    const hung = await read(async () => ({ ok: false, error: "net::ERR_HTTP2_PROTOCOL_ERROR at https://arti-elec.com/" })).catch((error) => error);
+    assert.equal(hung.message, "The connection to the site failed (socket hang up), and headless Chrome could not open it either (net::ERR_HTTP2_PROTOCOL_ERROR at https://arti-elec.com/).");
+    assert.equal(failures.causeOf(hung.message).id, "connection");
+    assert.ok(hung.lines.includes("The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."));
+
+    const refused = await read(async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: site, headers: { "content-type": "text/html" }, html: "<html><body>Access denied</body></html>" } })).catch((error) => error);
+    assert.equal(refused.message, "The site's bot protection refused the review (status 403), in headless Chrome, after the connection to the site failed.");
+    assert.equal(failures.causeOf(refused.message).id, "bot-protection");
+
+    await assert.rejects(read(undefined), (error) => error.message === "socket hang up" && error.code === "ECONNRESET");
   });
 
   test("a server that leaves out its intermediate certificate is read after fetching it from the AIA address", async () => {
