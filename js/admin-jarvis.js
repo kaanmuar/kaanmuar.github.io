@@ -15,7 +15,7 @@ const LIVE_MS = 60 * 1000;
 const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'mail-codes'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
@@ -2959,6 +2959,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         <div class="jv-grid">
             ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
+            ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
             ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
             ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
@@ -3011,9 +3012,69 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
             ${r.sent || r.prospects ? funnel(steps) : ''}
             ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
+            ${geoCountryDates(r, camps)}
             ${camps.length ? table([['Campaign', (c) => `${esc(c.name)}${c.share < 100 ? ` <span class="jv-note">${c.share}% of it here</span>` : ''}`], ['Status', (c) => campStatusChip(c.status)], ['', (c) => campaignButton(c)]], camps) : '<p class="jv-note">No campaign reaches this country yet.</p>'}
             <form class="jv-mk-form" data-mk-queue><textarea name="hosts" rows="2" placeholder="Prospect sites for ${esc(r.name)}, one per line: host, segment" aria-label="Prospects to queue for ${esc(r.name)}"></textarea>
                 <div class="jv-inline"><input type="hidden" name="cc" value="${r.cc.toLowerCase()}"><select name="sector" aria-label="Default segment" data-menu-ready="1">${MK_SEGMENTS.map((s) => `<option value="${s}">${s}</option>`).join('')}</select><button type="submit" class="jv-btn">Queue for the sweep</button></div></form>`;
+    }
+
+    // Country dates (#2989): the calendar source's next 60 days for the target markets, with days counted from today.
+    function calendarDays() {
+        const cal = S.external.calendar;
+        if (!cal || cal.ok === false || !Array.isArray(cal.days)) return null;
+        const today = C.zoneParts(new Date()).day;
+        return { cal, today, days: cal.days.map((d) => Object.assign({}, d, { daysAway: C.dayDiff(today, d.date) })).filter((d) => C.dayDiff(today, d.end || d.date) >= 0) };
+    }
+
+    const dateChip = (kind) => `<span class="jv-chip jv-date-kind" style="border-color:${(Geo.DATE_KINDS[kind] || [, ''])[1]}">${esc((Geo.DATE_KINDS[kind] || [kind])[0])}</span>`;
+    const dateWhen = (d) => `${esc(C.dayLabel(d.date))}${d.end ? ' to ' + esc(C.dayLabel(d.end)) : ''} · ${d.daysAway <= 0 ? (d.end ? 'on now' : 'today') : d.daysAway === 1 ? 'tomorrow' : 'in ' + d.daysAway + ' days'}`;
+
+    // A holiday's Pause button for a country whose running campaigns have at least half their leads there, and Resume for a pause.
+    function calendarButtons(cc, d, camps) {
+        const cal = S.external.calendar || {};
+        const open = (cal.pauses || []).find((p) => p.cc === cc && p.date === d.date && (p.status === 'planned' || p.status === 'paused'));
+        if (open) return `<button type="button" class="jv-btn small" data-cal-act="${open.status === 'paused' ? 'resume' : 'cancel'}" data-cc="${cc}" data-date="${d.date}" data-name="${esc(d.name)}">${open.status === 'paused' ? 'Resume now' : 'Paused on the day · cancel'}</button>`;
+        if (d.kind !== 'holiday' || d.weekend) return '';
+        const held = C.heldCampaigns({ camps }, camps);
+        return held.length ? `<button type="button" class="jv-btn small" data-cal-act="pause" data-cc="${cc}" data-date="${d.date}" data-name="${esc(d.name)}" title="${esc(held.map((c) => c.name).join(', '))}">Pause ${held.length === 1 ? esc(held[0].name) : held.length + ' campaigns'} that day</button>` : '';
+    }
+
+    function geoDatesPanel(rows) {
+        const c = calendarDays();
+        const e = S.external.calendar;
+        if (!c) return panel('geo-dates', 'Upcoming dates', `<p class="jv-empty">${esc(S.pending.calendar && !e ? 'Reading the calendar…' : (e && e.error) || 'Not loaded.')}</p>`, { keep: true });
+        const names = {};
+        rows.forEach((r) => { names[r.cc] = r.name; });
+        const where = (d) => (d.all ? 'All target markets' : (d.ccs || []).map((cc) => `<button type="button" class="jv-link" data-geo-cc="${cc}">${esc((d.local && d.local[cc]) && d.local[cc] !== d.name ? `${names[cc] || cc} (${d.local[cc]})` : names[cc] || cc)}</button>`).join(', '));
+        const groups = [];
+        c.days.forEach((d) => { const last = groups[groups.length - 1]; if (last && last.date === d.date) last.items.push(d); else groups.push({ date: d.date, items: [d] }); });
+        const body = groups.length ? `<ol class="jv-dates">${groups.map((g) => `<li><h4>${dateWhen(g.items[0]).replace(/ to .*? ·/, ' ·')}</h4><ul>${g.items.map((d) => `<li>${dateChip(d.kind)} <b>${esc(d.name)}</b>${d.end ? ` <span class="jv-note">to ${esc(C.dayLabel(d.end))}</span>` : ''}${d.weekend ? ' <span class="jv-note">weekend</span>' : ''} · ${where(d)}
+                <div class="jv-note">${esc(d.why || '')}${d.action ? ' ' + esc(d.action) : ''}${d.source ? ` <a href="${esc(d.source)}" target="_blank" rel="noopener">Source</a>` : ''}</div></li>`).join('')}</ul></li>`).join('')}</ol>` : '<p class="jv-empty">No dates in the next 60 days.</p>';
+        const kinds = Object.keys(Geo.DATE_KINDS).map((k) => [k, c.days.filter((d) => d.kind === k).length]).filter((x) => x[1]);
+        const s = C.calendarSettings(c.cal.settings);
+        const note = `Public holidays from Nager.Date; seasons, academic terms, fiscal years, rules and events from Jarvis's list. Jarvis warns ${s.warnDays} days ahead and reminds ${s.remindDays} days ahead; auto-pause over holidays is ${s.autoPause ? 'on' : 'off'} (Settings).`;
+        return panel('geo-dates', `Upcoming dates · ${fmt(c.days.length)}`, `${(c.cal.notes || []).length ? `<ul class="jv-needs">${c.cal.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+            <p class="jv-note">${kinds.map(([k, n]) => `${dateChip(k)} ${n}`).join(' ')}</p>${body}`, { keep: true, note, data: c.days.map((d) => ({ date: d.date, end: d.end || '', kind: d.kind, name: d.name, countries: d.all ? 'ALL' : (d.ccs || []).join(' '), action: d.action || '' })) });
+    }
+
+    function geoCountryDates(r, camps) {
+        const c = calendarDays();
+        if (!c) return '';
+        const list = c.days.filter((d) => (d.ccs || []).includes(r.cc)).slice(0, 8);
+        return `<h4 class="jv-sub">Upcoming dates</h4>${list.length ? `<ul class="jv-dates-country">${list.map((d) => `<li>${dateChip(d.kind)} <b>${esc((d.local && d.local[r.cc]) || d.name)}</b> <span class="jv-note">${dateWhen(d)}${d.after && d.after[r.cc] ? ' · resume ' + esc(C.dayLabel(d.after[r.cc])) : ''}</span> ${calendarButtons(r.cc, d, camps)}
+            <div class="jv-note">${esc(d.action || d.why || '')}</div></li>`).join('')}</ul>` : `<p class="jv-note">No dates for ${esc(r.name)} in the next 60 days.</p>`}`;
+    }
+
+    // Pause a country's campaigns over a holiday (today at once, a later day by the daily job), resume them, or cancel a planned pause.
+    async function calendarAct(t) {
+        const { calAct: act, cc, date, name } = t.dataset;
+        const ask = act === 'pause' ? `pause the campaigns that mostly reach ${cc} on ${C.dayLabel(date)} for ${name}, and resume them the next business day`
+            : act === 'resume' ? `resume the campaigns paused in ${cc} for ${name} now` : `cancel the planned pause in ${cc} for ${name}`;
+        if (!confirmRun(ask)) return;
+        t.disabled = true;
+        const out = await call('action-run', { action: act === 'pause' ? 'calendar-pause' : 'calendar-resume', proposal: `calendar:${act === 'pause' ? 'pause' : 'resume'}:${cc}:${date}` }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? out.note || 'Done.' : 'Not done: ' + out.error, 8000);
+        loadExternal(['calendar', 'marketing', 'geo', 'actions']);
     }
 
     async function geoTarget(t) {
@@ -4001,7 +4062,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     function draftSettings() {
         const s = S.settings || {};
         return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(), github: { repos: C.githubRepos(s.github && s.github.repos) },
-            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS } };
+            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS },
+            calendar: C.calendarSettings(s.calendar) };
     }
 
     function goalEditor(g, i) {
@@ -4035,6 +4097,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label><label class="jv-field">Countdown before a risky action, hours (0.25-24)<input type="number" name="a-countdown" min="0.25" max="24" step="0.25" value="${esc(d.actions.countdownHours)}"></label></div>
               <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails; warm-up that is off is turned back on first, and a missing canary, postmaster or abuse alias is restored. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
+            <section><h4>Country dates</h4>
+              <label class="jv-check"><input type="checkbox" name="c-auto"${d.calendar.autoPause ? ' checked' : ''}> Pause a country's campaigns over its public holidays on their own, and resume them the next business day</label>
+              <div class="jv-th-grid"><label class="jv-field">Warn this many days ahead<input type="number" name="c-warn" min="1" max="60" step="1" value="${esc(d.calendar.warnDays)}"></label><label class="jv-field">Remind this many days ahead<input type="number" name="c-remind" min="0" max="60" step="1" value="${esc(d.calendar.remindDays)}"></label></div>
+              <p class="jv-note">Only campaigns sending with at least ${C.CALENDAR.share}% of their leads in that country pause. The daily job at 07:40 (Bogotá) pauses and resumes them, logs it under Actions and pushes you. Off, Jarvis proposes the pause and you tap it. Holidays come from Nager.Date; the rest from Jarvis's list of country dates.</p></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
@@ -4167,7 +4233,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const github = { repos: C.githubRepos(String(val('s-repos').value || '').split('\n')) };
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
             Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github,
-            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) } };
+            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) },
+            calendar: C.calendarSettings({ autoPause: !!val('c-auto').checked, warnDays: Number(val('c-warn').value), remindDays: Number(val('c-remind').value) }) };
     }
 
     function openSettings() {
@@ -4194,7 +4261,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         toast('Saved. Jarvis is recounting the goals.');
         compute();
         render();
-        loadExternal(reposChanged ? ['goals', 'github-work'] : ['goals']);
+        loadExternal(reposChanged ? ['goals', 'github-work', 'calendar'] : ['goals', 'calendar']);
     }
 
     async function dailyNow() {
@@ -4294,6 +4361,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
         if (t.dataset.geoTarget) { geoTarget(t); return; }
+        if (t.dataset.calAct) { calendarAct(t); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.liSend) { liSend(t); return; }

@@ -105,6 +105,15 @@ test("every reason on the form has a label in each page language, and the form c
     const english = body(name).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"|"[A-Z][^"\n]*\."/g);
     assert.equal(english, null, name + " writes English: " + english);
   }
+  // The compare handlers outside those functions: the paid comparison's return and Stop (#3008).
+  for (const marker of ['restorePaid("compareRun"', 'getElementById("compare-stop").addEventListener']) {
+    const start = source.indexOf(marker);
+    assert.ok(start > 0, "no " + marker);
+    const english = source.slice(start, source.indexOf("\n  });", start)).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"|"[A-Z][^"\n]*\."/g);
+    assert.equal(english, null, marker + " writes English: " + english);
+  }
+  const boxes = source.match(/getElementById\("compare-[\w-]+"\)\.textContent = "[^"]+"/g);
+  assert.equal(boxes, null, "a compare element is written in English: " + boxes);
   const errors = body("clientErrors");
   assert.equal(errors.match(/message: (?!say\()/g), null, "a form error does not read from the copy");
   for (const [, id] of errors.matchAll(/say\("(\w+)"\)/g)) assert.ok(copy.en.fieldError[id], "clientErrors reads fieldError." + id + ", which the copy lacks");
@@ -114,14 +123,22 @@ test("every field error the server sends reads in each page language (#2837)", (
   const copy = copyOf("qa-review-report-copy");
   const core = fs.readFileSync(path.join(__dirname, "../../functions/url-review-core.js"), "utf8");
   const sent = new Set();
-  for (const name of ["validateIntake", "screenIntake", "preformatUrl", "normalizeUrl"]) {
-    const start = core.search(new RegExp("function " + name + "\\("));
-    const text = core.slice(start, core.indexOf("\n}\n", start));
-    for (const [, message] of text.matchAll(/(?:fieldError\(errors, "\w+", (?:[\w.]+ \|\| )?|message: |new Error\()"([^"]+)"/g)) sent.add(message);
+  // The compare box shows these verbatim when a competitor is refused or cannot be reached (#3008).
+  const compare = fs.readFileSync(path.join(__dirname, "../../functions/url-review-compare.js"), "utf8");
+  const sources = [[core, ["validateIntake", "screenIntake", "humanCheck", "preformatUrl", "normalizeUrl", "assertPublic", "fetchPublic", "requestDirect", "reviewTarget"]], [compare, ["baseProblem"]]];
+  for (const [file, names] of sources) {
+    for (const name of names) {
+      const start = file.search(new RegExp("function " + name + "\\("));
+      assert.ok(start >= 0, "no function " + name);
+      const text = file.slice(start, file.indexOf("\n}\n", start));
+      for (const [, message] of text.matchAll(/(?:fieldError\(errors, "\w+", (?:[\w.]+ \|\| )?|message: |new Error\(|return )"([A-Z][^"]+)"/g)) sent.add(message);
+    }
   }
-  assert.ok(sent.size >= 20, "found only " + sent.size + " server field errors");
+  assert.ok(sent.size >= 31, "found only " + sent.size + " server field errors");
+  assert.ok(core.includes('"The URL returned status " + first.status + "."'), "the status error changed; update fieldError.urlStatus");
+  sent.add("The URL returned status 403.");
   const english = Object.values(copy.en.fieldError);
-  for (const message of sent) assert.ok(english.includes(message), "the server's field error has no copy: " + message);
+  for (const message of sent) assert.ok(english.includes(message) || /status 403/.test(message), "the server's field error has no copy: " + message);
   const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-report-copy.js"), "utf8");
   for (const lang of LANGS) {
     for (const [id, text] of Object.entries(copy.en.fieldError)) {
@@ -131,6 +148,7 @@ test("every field error the server sends reads in each page language (#2837)", (
     vm.runInNewContext(source, sandbox);
     const rc = sandbox.window.QAReviewReportCopy;
     for (const message of sent) assert.notEqual(rc.field(message), message, lang + " shows the server's English: " + message);
+    assert.match(rc.field("The URL returned status 403."), /403/, lang + " drops the status");
     assert.equal(rc.field("A sentence the copy does not know."), "A sentence the copy does not know.");
   }
 });

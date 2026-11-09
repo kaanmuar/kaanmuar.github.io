@@ -1,5 +1,22 @@
 const { test, expect } = require('@playwright/test');
 const core = require('../js/admin-jarvis-core.js');
+const calendarSource = require('../functions/jarvis-calendar.js');
+
+// Country dates (#2989) counted from today, so the panel always has days ahead: a weekday holiday in Brazil and Mexico.
+const GEO = require('./fixtures/jarvis-geo.json');
+const CALENDAR = (() => {
+  const today = core.zoneParts(new Date()).day;
+  const plus = (n) => new Date(Date.parse(today + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+  let n = 5;
+  while ([0, 6].includes(new Date(plus(n) + 'T12:00:00Z').getUTCDay())) n++;
+  const holidays = { BR: [{ date: plus(n), name: 'Republic Day', local: 'Proclamação da República' }], MX: [{ date: plus(n), name: 'Revolution Day', local: 'Día de la Revolución' }] };
+  const targets = GEO.countries.filter((r) => r.target).map((r) => r.cc);
+  return Object.assign({ ok: true, needs: [], notes: ['Nager.Date has no public holidays for 1 target markets: BF.'] }, calendarSource.build({ today, targets, holidays, missing: ['BF'] }));
+})();
+const GEO_DATED = Object.assign({}, GEO, { countries: GEO.countries.map((r) => {
+  const next = (CALENDAR.byCountry[r.cc] || [])[0];
+  return Object.assign({}, r, next ? { nextDate: { date: next.date, name: next.name, kind: next.kind }, daysToDate: next.daysAway } : { nextDate: null, daysToDate: null });
+}) });
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows) that logs every read in window.__reads, and the
 // owner-only /jarvis function is answered by page.route (its snapshot op built from the same seed), so the whole Statistics tab runs offline.
@@ -109,7 +126,8 @@ const EXTERNAL = {
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
-  geo: require('./fixtures/jarvis-geo.json'),
+  geo: GEO_DATED,
+  calendar: CALENDAR,
   'geo-target': { ok: true, cc: 'PT', on: false, targets: 74 },
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
   'owner-tags-run': { ok: true, note: 'owner tags: 6 posts, 4 comments, 1 owner replies; 2 sites read, 5 owner accounts, 1 suggestion runs, 1 pushed', posts: 6, comments: 4 },
@@ -225,7 +243,7 @@ function actionsWork() {
 }
 
 // The external sources jarvisSnapshot (functions/index.js) carries.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar'];
 // The collections the web Jarvis used to read itself (#2102); the snapshot op reads them on the server now.
 const JARVIS_ROWS = ['site_events', 'url_review_opens', 'url_reviews', 'url_review_alerts', 'url_review_reports', 'socialHubStats/latest'];
 
@@ -724,9 +742,10 @@ test.describe('admin statistics (Jarvis)', () => {
   });
 
   test('Map shows the world shaded by the chosen metric, the missing zones and a country sheet whose buttons go through the function (#2976)', async ({ page }, testInfo) => {
+    test.setTimeout(90000);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    const calls = await openStats(page, '#stats/geo/30');
+    const calls = await openStats(page, '#stats/geo/30', { 'action-run': { ok: true, done: 1, action: 'calendar-pause', note: 'W1 E-pt Brazil will pause on the holiday.' } });
     const geo = page.locator('[data-view="geo"]');
     await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
     expect(await geo.locator('.jv-geo-map path').count()).toBeGreaterThan(150);
@@ -759,12 +778,36 @@ test.describe('admin statistics (Jarvis)', () => {
     await geo.locator('[data-geo-metric]').selectOption('gaps');
     await expect(geo.locator('.jv-geo-legend')).toContainText('Low replies');
     if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-gaps.png` });
+    // #2989: the Dates ahead metric, the Upcoming dates panel, and the holiday pause in the country sheet.
+    const holiday = CALENDAR.days.find((d) => d.kind === 'holiday' && d.ccs.includes('BR'));
+    await geo.locator('[data-geo-channel="all"]').click();
+    await geo.locator('[data-geo-metric]').selectOption('dates');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Dates ahead');
+    await expect(geo.locator('.jv-geo-scale')).toContainText('today');
+    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
+    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('aria-label', /Proclamação da República in \d+ days/);
+    await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*in \d+ days/);
+    const dates = geo.locator('[data-panel-id="geo-dates"]');
+    await expect(dates).toContainText('Upcoming dates');
+    await expect(dates).toContainText('Republic Day');
+    await expect(dates).toContainText('Mexico (Día de la Revolución)');
+    await expect(dates).toContainText('Nager.Date has no public holidays for 1 target markets: BF.');
+    if (process.env.GEO_SHOTS) {
+      await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/2989-map-dates.png` });
+      await dates.screenshot({ path: `${process.env.GEO_SHOTS}/2989-dates-panel.png` });
+    }
     await geo.locator('path[data-geo-cc="BR"]').click();
     const sheet = geo.locator('[data-panel-id="geo-country"]');
     await expect(sheet).toContainText('Brazil');
     await expect(sheet).toContainText('W1 E-pt Brazil');
     await expect(sheet.locator('.jv-funnel')).toBeVisible();
+    await expect(sheet).toContainText('Proclamação da República');
     if (process.env.GEO_SHOTS) await sheet.screenshot({ path: `${process.env.GEO_SHOTS}/2976-country.png` });
+    if (process.env.GEO_SHOTS) await sheet.locator('.jv-dates-country').screenshot({ path: `${process.env.GEO_SHOTS}/2989-country-dates.png` });
+    page.once('dialog', (d) => d.accept());
+    await sheet.locator('[data-cal-act="pause"]').click();
+    await expect.poll(() => calls.find((c) => c.op === 'action-run')).toBeTruthy();
+    expect(calls.find((c) => c.op === 'action-run').body).toMatchObject({ action: 'calendar-pause', proposal: `calendar:pause:BR:${holiday.date}` });
     page.once('dialog', (d) => d.accept());
     await sheet.locator('[data-geo-target]').click();
     await expect.poll(() => calls.find((c) => c.op === 'geo-target')).toBeTruthy();

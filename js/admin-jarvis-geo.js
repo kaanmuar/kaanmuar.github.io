@@ -9,7 +9,7 @@ export const CHANNELS = [
 ];
 // [key, label, channel, unit]; a rate is a percent, everything else a count.
 export const METRICS = [
-    ['light', 'Light', 'all', ''], ['activity', 'Activity', 'all', ''], ['gaps', 'Missing zones', 'all', ''],
+    ['light', 'Light', 'all', ''], ['activity', 'Activity', 'all', ''], ['gaps', 'Missing zones', 'all', ''], ['dates', 'Dates ahead', 'all', ''],
     ['sent', 'Emails sent', 'email', ''], ['replies', 'Replies', 'email', ''], ['replyRate', 'Reply rate', 'email', '%'],
     ['positive', 'Positive replies', 'email', ''], ['openRate', 'Open rate', 'email', '%'], ['bounceRate', 'Bounce rate', 'email', '%'], ['campaigns', 'Campaigns', 'email', ''],
     ['prospects', 'Prospects queued', 'sweep', ''], ['left', 'Prospects left', 'sweep', ''], ['saturation', 'Saturation', 'sweep', '%'],
@@ -26,9 +26,15 @@ export const LIGHTS = [
     ['Dark', '#14222c', 'nothing yet'], ['Spark', '#1f4c5c', 'prospects or reviewed sites'], ['Ember', '#24728b', 'contacted'],
     ['Lit', '#2fb0d4', 'opens, visits or social replies'], ['Bright', '#86ecff', 'email replies'], ['Blazing', '#ffd76e', 'positive replies or money']
 ];
+// The calendar's kinds of date (#2989): [label, colour] for the Upcoming dates chips.
+export const DATE_KINDS = {
+    holiday: ['Holiday', '#ff8f5a'], commerce: ['Commerce', '#38e1ff'], academic: ['Academic', '#a98bff'], fiscal: ['Fiscal year', '#ffb547'],
+    regulation: ['Regulation', '#ff4d8d'], awareness: ['Awareness', '#4ade80'], religious: ['Religious', '#f0d77a'], event: ['Event', '#7aa2ff']
+};
 const BASE = '#14222c';
 const TARGET = '#1d3340';
 const HOT = [56, 225, 255];
+const DATES_SPAN = 60;
 
 const metricOf = (key) => METRICS.find((m) => m[0] === key) || METRICS[0];
 export const metricsFor = (channel) => METRICS.filter((m) => channel === 'all' || m[2] === channel || m[0] === 'gaps');
@@ -52,6 +58,7 @@ export function value(r, key) {
         case 'light': return lightIn(r);
         case 'activity': return r.sent + r.prospects + r.social + r.visits + r.visitors + r.reviewed;
         case 'gaps': return r.gaps.length;
+        case 'dates': return r.daysToDate === null || r.daysToDate === undefined ? null : Math.max(1, DATES_SPAN + 1 - r.daysToDate);
         case 'bounceRate': return r.sent ? Math.round((r.bounced / r.sent) * 1000) / 10 : null;
         case 'saturation': return r.prospects ? Math.round((r.swept / r.prospects) * 100) : null;
         case 'replyRate': case 'openRate': case 'score': return r[key];
@@ -61,7 +68,11 @@ export function value(r, key) {
 
 export const unitOf = (key) => metricOf(key)[3];
 export const labelOf = (key) => metricOf(key)[1];
-export const show = (v, key) => (v === null || v === undefined ? '—' : key === 'light' ? (LIGHTS[v] || LIGHTS[0])[0] : (key === 'usd' ? '$' : '') + Number(v).toLocaleString('en-US') + unitOf(key));
+/** Days to a date from the Dates ahead score, which is higher the sooner the date (#2989). */
+export const daysOf = (v) => DATES_SPAN + 1 - v;
+const inDays = (d) => (d <= 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`);
+export const show = (v, key) => (v === null || v === undefined ? '—' : key === 'light' ? (LIGHTS[v] || LIGHTS[0])[0] : key === 'dates' ? inDays(daysOf(v))
+    : (key === 'usd' ? '$' : '') + Number(v).toLocaleString('en-US') + unitOf(key));
 
 // Map labels for the names too long to sit on a country.
 const SHORT = {
@@ -194,6 +205,7 @@ export function mapSvg(world, rows, key, opts, esc) {
         const r = by[cc];
         const name = (r && r.name) || (o.names && o.names[cc]) || cc;
         if (!r) return name;
+        if (key === 'dates') return `${name}: ${r.nextDate ? `${r.nextDate.name} ${show(value(r, key), key)}` : 'no date in the next 60 days'}${r.target ? ' · target market' : ''}`;
         return `${name}: ${labelOf(key)} ${key === 'gaps' ? (r.gaps.map((g) => (GAPS[g] || [g])[0]).join(', ') || 'none') : show(value(r, key), key)}${r.target ? ' · target market' : ''}`;
     };
     const attrs = (cc) => {
@@ -219,6 +231,7 @@ export function mapSvg(world, rows, key, opts, esc) {
 /** The legend under the map: the six levels on Light, gap colours on Missing zones, else the scale from 0 to the max. */
 export function legend(rows, key, esc) {
     if (key === 'light') return `<ul class="jv-geo-legend jv-geo-lights">${LIGHTS.map(([name, color, what], n) => `<li class="is-l${n}" title="${esc(what)}"><i style="background:${color}"></i>${esc(name)} · ${rows.filter((r) => lightIn(r) === n).length}</li>`).join('')}</ul>`;
+    if (key === 'dates') return `<div class="jv-geo-scale"><span>in ${DATES_SPAN} days</span><i></i><span>today</span><em><b class="is-target"></b>target market, no date in the next ${DATES_SPAN} days · ${rows.filter((r) => value(r, key)).length} with one</em></div>`;
     if (key === 'gaps') return `<ul class="jv-geo-legend">${Object.keys(GAPS).map((k) => `<li><i style="background:${GAPS[k][1]}"></i>${esc(GAPS[k][0])} · ${rows.filter((r) => r.gaps[0] === k).length}</li>`).join('')}</ul>`;
     const max = Math.max(0, ...rows.map((r) => value(r, key) || 0));
     return `<div class="jv-geo-scale"><span>0</span><i></i><span>${esc(show(max, key))}</span><em><b class="is-target"></b>target market, no ${esc(labelOf(key).toLowerCase())}</em></div>`;
