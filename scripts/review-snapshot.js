@@ -62,6 +62,9 @@ async function main() {
       console.error("The sample needs the browser pass (" + ((report.browser && report.browser.error) || "set CHROME_PATH") + "). Nothing was written.");
       process.exit(1);
     }
+    // The sample page and every test that opens it load nothing from the reviewed site (#2955).
+    const google = report.insights && report.insights.previews && report.insights.previews.google;
+    if (google && google.icon) google.icon = await core.iconData(google.icon);
     fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
     console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
     return;
