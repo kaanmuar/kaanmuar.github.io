@@ -753,8 +753,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122104487439532027",
     "at": "2026-11-08T22:19:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-08T20:22:56.014Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122104487439532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-09T11:52:31.016Z"
    }
   ],
   "auto-2026-11-05/13-u-get-moment-com": [
@@ -763,8 +764,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122104487505532027",
     "at": "2026-11-08T23:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-08T20:22:56.015Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122104487505532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-09T11:52:31.016Z"
    }
   ],
   "auto-2026-11-06/01-u-usehelios-ai": [
@@ -795,6 +797,26 @@
     "at": "2026-11-14T20:44:00.000Z",
     "result": "queued",
     "checked": "2026-11-08T20:22:56.015Z"
+   }
+  ],
+  "auto-2026-11-09/01-u-beatmastering-ir": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1021319237652778",
+    "at": "2026-11-16T23:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T11:52:42.860Z"
+   }
+  ],
+  "auto-2026-11-09/03-vs-tide-forecast-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122107902327532027",
+    "at": "2026-11-10T17:15:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T11:52:54.059Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -968,8 +990,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094925041532027",
     "at": "2026-11-08T20:55:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-08T20:22:56.436Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094925041532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-09T11:52:31.016Z"
    }
   ],
   "evergreen-2026-11/05-myth-https": [
@@ -999,8 +1022,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094970779532027",
     "at": "2026-11-08T23:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-08T20:22:56.436Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094970779532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-09T11:52:31.016Z"
    }
   ],
   "evergreen-2026-11/08-googlebot": [
@@ -1636,8 +1660,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122093300565532027",
     "at": "2026-11-08T21:30:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-08T20:22:59.905Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122093300565532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-09T11:52:31.016Z"
    }
   ],
   "runs-2026-10/08-bancolombia": [

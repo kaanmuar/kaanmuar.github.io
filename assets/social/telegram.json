@@ -185,8 +185,8 @@
     "at": "2026-11-04T18:38:14.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/3",
-    "checked": "2026-11-05T11:50:17.353Z",
-    "hash": "ecbd45cf536b"
+    "checked": "2026-11-09T11:52:54.894Z",
+    "hash": "aabdce35069a"
    }
   ],
   "live/2026-11-05": [
@@ -197,8 +197,8 @@
     "at": "2026-11-05T11:50:17.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/5",
-    "checked": "2026-11-06T13:38:54.291Z",
-    "hash": "f21576e24d22"
+    "checked": "2026-11-09T11:52:54.894Z",
+    "hash": "93cfbf8d268b"
    }
   ],
   "live/2026-11-06": [
@@ -209,8 +209,8 @@
     "at": "2026-11-06T13:38:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/14",
-    "checked": "2026-11-07T11:26:12.744Z",
-    "hash": "7598d163baf0"
+    "checked": "2026-11-09T11:52:54.894Z",
+    "hash": "f434ec3f21e4"
    }
   ],
   "live/2026-11-07": [
@@ -221,8 +221,8 @@
     "at": "2026-11-07T11:26:12.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/20",
-    "checked": "2026-11-08T13:27:30.647Z",
-    "hash": "a7b338a6ec9d"
+    "checked": "2026-11-09T11:52:54.894Z",
+    "hash": "beaccb70088c"
    }
   ],
   "live/2026-11-08": [
@@ -233,8 +233,20 @@
     "at": "2026-11-08T13:27:30.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/26",
-    "checked": "2026-11-08T13:27:30.585Z",
-    "hash": "1d48ee8218f4"
+    "checked": "2026-11-09T11:52:54.894Z",
+    "hash": "ac99603c2d83"
+   }
+  ],
+  "live/2026-11-09": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "34",
+    "at": "2026-11-09T11:52:54.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/34",
+    "checked": "2026-11-09T11:52:54.828Z",
+    "hash": "997357e50155"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [
