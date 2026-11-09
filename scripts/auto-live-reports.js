@@ -19,6 +19,7 @@ const fs = require("fs");
 const path = require("path");
 const live = require("./build-live-reports");
 const { siteKind } = require("./tips-studio/site-assets");
+const { tldCountry } = require("./live-report-countries");
 
 const ROOT = path.resolve(__dirname, "..");
 const STATE = path.join(__dirname, "auto-live-reports.state.json");
@@ -129,9 +130,6 @@ const AREA_ACTIONS = {
   Performance: "Measure the start page on a phone after every release, and fix the largest cost first."
 };
 const AREA_TAGS = { SEO: ["SEO"], GEO: ["GEO", "AISearch"], Analytics: ["Analytics"], Security: ["WebSecurity"], Accessibility: ["Accessibility"], Performance: ["WebPerformance"] };
-const CC = { uk: "GB" };
-const SECOND_LEVEL = /^(gov|gob|com|edu|org|net|mil|ac|co)$/;
-
 function args() {
   const out = {};
   const argv = process.argv.slice(2);
@@ -145,16 +143,6 @@ function args() {
 }
 
 function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }
-
-// A country only when the address says so: .de, .gov.co, .com.mx. A bare .co or .io says nothing.
-function countryOf(host) {
-  const labels = bare(host).split(".");
-  const tld = labels[labels.length - 1];
-  const code = CC[tld] || tld.toUpperCase();
-  if (!live.REGIONS[code]) return "";
-  if (tld === "co" && !(labels.length >= 3 && SECOND_LEVEL.test(labels[labels.length - 2]))) return "";
-  return code;
-}
 
 function sentence(text) {
   const t = live.scrub(text, 160).replace(/[.…]+$/, "");
@@ -268,7 +256,8 @@ async function main() {
     const swept = source === "sweep" || source === "rivals" || source === "outreach";
     const scope = swept ? "National" : "Requested";
     const copy = copyFor(report, state.recent || []);
-    const country = countryOf(host);
+    // The address when it is sure (.de, .gov.co, .com.mx; never a bare .co or .io), else data/live-report-countries.json in build().
+    const country = tldCountry(host);
     const run = { id: "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60), data: report, scope,
       title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, meta: [host, "", "", "", country] };
     let built;
