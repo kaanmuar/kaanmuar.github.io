@@ -4447,7 +4447,7 @@
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
     const left = saved ? (saved.queue || []).length : 0;
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
+    if (saved) setStatus(left ? cc.t("runPaidMore", { url: saved.url, n: left }) : cc.t("runPaid", { url: saved.url }), false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
   document.getElementById("compare-add").addEventListener("click", () => {
@@ -4467,7 +4467,7 @@
   document.getElementById("compare-stop").addEventListener("click", (event) => {
     if (!activeRun || stopBtn.disabled) return;
     event.currentTarget.disabled = true;
-    document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
+    document.getElementById("compare-running-text").textContent = cc.t("runStopping");
     stopBtn.click();
   });
   compareInputs().forEach((compareInput) => {
