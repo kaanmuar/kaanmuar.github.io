@@ -176,6 +176,25 @@ async function runJob(fetchImpl, name) {
 
 // --- github ---------------------------------------------------------------------------------------------------
 
+/* #2287: CI on main is each active workflow's newest finished run on main that was not cancelled or skipped. Busy main
+   cancels most queued runs, so runs (the newest runs of every workflow) can hold none of a workflow's finished ones;
+   those workflows are read by id, from since on: one that has not run on main since is not CI on main any more. A run is
+   named by its workflow, not its run-name ("Push on main" is CodeQL). */
+async function mainRuns(get, runs, since) {
+  const usable = (r) => r.status === "completed" && !["cancelled", "skipped"].includes(r.conclusion);
+  const list = await get("repos/" + REPO + "/actions/workflows?per_page=100").catch(() => null);
+  const workflows = ((list && list.workflows) || []).filter((w) => w.state === "active");
+  const names = new Map(workflows.map((w) => [w.id, w.name]));
+  const newest = new Map();
+  (runs.workflow_runs || []).filter(usable).forEach((r) => { const key = r.workflow_id || r.name; if (!newest.has(key)) newest.set(key, r); });
+  const more = await Promise.all(workflows.filter((w) => !newest.has(w.id)).map((w) =>
+    get("repos/" + REPO + "/actions/workflows/" + w.id + "/runs?branch=main&status=completed&exclude_pull_requests=true&per_page=30&created=" + encodeURIComponent(">=" + since))
+      .then((res) => (res.workflow_runs || []).find(usable), () => null)));
+  return Array.from(newest.values()).concat(more.filter(Boolean))
+    .map((r) => names.has(r.workflow_id) ? Object.assign({}, r, { name: names.get(r.workflow_id) }) : r)
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+}
+
 async function github(fetchImpl, token, { now }) {
   if (!token) return { ok: false, error: "No GitHub token is set." };
   const get = async (path) => readJson(await fetchImpl("https://api.github.com/" + path, {
@@ -192,15 +211,17 @@ async function github(fetchImpl, token, { now }) {
     get("repos/" + REPO + "/pulls?state=open&per_page=100").catch(() => null)
   ]);
   const byWorkflow = {};
-  (runs.workflow_runs || []).forEach((run) => {
+  const ciRuns = await mainRuns(get, runs, week);
+  ciRuns.forEach((run) => {
     if (byWorkflow[run.name] || run.status !== "completed" || run.conclusion === "cancelled") return;
     byWorkflow[run.name] = { name: run.name, conclusion: run.conclusion, at: run.updated_at, url: run.html_url, sha: String(run.head_sha || "").slice(0, 7) };
   });
+  const workflowName = new Map(ciRuns.map((r) => [r.workflow_id, r.name]));
   const prList = (prRuns && prRuns.workflow_runs) || [];
   const failingIds = Array.from(new Set(prList.filter((r) => FAILED_RUN.includes(r.conclusion)).map((r) => r.workflow_id))).slice(0, 4);
   const prsStale = pulls ? (await Promise.all(failingIds.map(async (id) => {
     const main = await mainRun(githubApi(fetchImpl, token), id).catch(() => null);
-    return main && main.conclusion === "success" ? { workflow: main.name, prs: stalePrs(pulls, prList, main.name, main.created_at) } : null;
+    return main && main.conclusion === "success" ? { workflow: workflowName.get(id) || main.name, prs: stalePrs(pulls, prList, id, main.created_at) } : null;
   }))).filter((w) => w && w.prs.length) : [];
   const areas = {};
   (bugs.items || []).forEach((issue) => {
@@ -239,10 +260,13 @@ async function mainRun(api, workflowId) {
 
 /* #2245: a pull_request run tests refs/pull/<n>/merge as GitHub built it when the run started, so re-running its
    failed jobs after main is fixed tests the old main again. These are the open, non-draft PRs whose newest run of the
-   workflow at their current head failed and started before since (main's newest green run of it). runs newest first. */
+   workflow at their current head failed and started before since (main's newest green run of it). runs newest first.
+   workflow is the workflow's id, or its name: a run's name is its run-name ("PR #12" is CodeQL, "Studio pull_request"
+   is Studio render), so only a workflow without a run-name matches by name. */
 function stalePrs(pulls, runs, workflow, since) {
+  const ofWorkflow = (r) => (typeof workflow === "number" ? r.workflow_id === workflow : r.name === workflow);
   return (pulls || []).filter((pr) => !pr.draft && pr.head).map((pr) => {
-    const run = (runs || []).find((r) => r.name === workflow && r.head_sha === pr.head.sha && r.conclusion !== "cancelled");
+    const run = (runs || []).find((r) => ofWorkflow(r) && r.head_sha === pr.head.sha && r.conclusion !== "cancelled");
     const stale = run && run.status === "completed" && FAILED_RUN.includes(run.conclusion) && since && String(run.created_at) < String(since);
     return stale ? { number: pr.number, title: String(pr.title || "").slice(0, 160), url: pr.html_url, run: run.id } : null;
   }).filter(Boolean);
@@ -282,10 +306,11 @@ async function refreshPr(fetchImpl, token, number, { sleep = pause } = {}) {
    after until, and a PR refreshed for one workflow is not refreshed again. */
 async function refreshPrs(fetchImpl, token, { workflow, workflowId, since, budget, gap = 3000, sleep = pause }) {
   const api = githubApi(fetchImpl, token);
-  const [runs, pulls] = await Promise.all([api.get("actions/workflows/" + workflowId + "/runs?event=pull_request&per_page=100"), api.get("pulls?state=open&per_page=100")]);
+  // Every event, not only pull_request: CodeQL's PR runs are "dynamic". A PR's head sha keeps main's runs out.
+  const [runs, pulls] = await Promise.all([api.get("actions/workflows/" + workflowId + "/runs?per_page=100"), api.get("pulls?state=open&per_page=100")]);
   const out = { refreshed: [], conflicts: [], skipped: [], failed: [], left: [] };
   const b = budget || { left: 20, until: Date.now() + 120000, seen: new Set() };
-  for (const pr of stalePrs(pulls, runs.workflow_runs, workflow, since)) {
+  for (const pr of stalePrs(pulls, runs.workflow_runs, Number(workflowId), since)) {
     if (b.seen.has(pr.number)) continue;
     if (b.left <= 0 || Date.now() > b.until) { out.left.push(pr.number); continue; }
     if (b.started) await sleep(gap);
