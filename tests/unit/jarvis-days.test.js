@@ -4,58 +4,10 @@ const days = require("../../functions/jarvis-days");
 const jarvis = require("../../functions/jarvis");
 const sources = require("../../functions/jarvis-sources");
 const core = require("../../functions/jarvis-core");
+const { fakeDb } = require("./fake-firestore");
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
-
-// Firestore as Jarvis uses it, counting reads the way Firestore bills them: one per document returned, one for an empty query.
-function fakeDb(rows) {
-  const docs = {};
-  const stats = { reads: 0, queries: [] };
-  const ms = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : v instanceof Date ? v.getTime() : typeof v === "string" ? Date.parse(v) : v);
-  const pass = (row, [field, op, value]) => {
-    if (row[field] === undefined) return false;
-    const a = typeof value === "boolean" || typeof value === "string" && !/^\d{4}-/.test(value) ? row[field] : ms(row[field]);
-    const b = typeof value === "boolean" || typeof value === "string" && !/^\d{4}-/.test(value) ? value : ms(value);
-    return op === ">=" ? a >= b : op === "<" ? a < b : op === "==" ? a === b : false;
-  };
-  const pick = (row, fields) => {
-    if (!fields) return Object.assign({}, row);
-    const out = {};
-    fields.forEach((f) => {
-      const [head, sub] = f.split(".");
-      if (!(head in row)) return;
-      if (!sub) out[head] = row[head];
-      else if (row[head] && sub in row[head]) out[head] = Object.assign(out[head] || {}, { [sub]: row[head][sub] });
-    });
-    return out;
-  };
-  const merge = (a, b) => {
-    const out = Object.assign({}, a);
-    Object.keys(b).forEach((k) => { out[k] = b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && !(b[k] instanceof Date) && a[k] ? merge(a[k], b[k]) : b[k]; });
-    return out;
-  };
-  const query = (name, filters, fields, order, cap) => ({
-    where: (f, op, v) => query(name, filters.concat([[f, op, v]]), fields, order, cap),
-    orderBy: (f, dir) => query(name, filters, fields, { f, desc: dir === "desc" }, cap),
-    select: (...f) => query(name, filters, f, order, cap),
-    limit: (n) => query(name, filters, fields, order, n),
-    count: () => ({ get: async () => { stats.reads += 1; return { data: () => ({ count: (rows[name] || []).filter((r) => filters.every((f) => pass(r, f))).length }) }; } }),
-    get: async () => {
-      let list = (rows[name] || []).filter((r) => filters.every((f) => pass(r, f)));
-      if (order) list = list.slice().sort((x, y) => (ms(x[order.f]) - ms(y[order.f])) * (order.desc ? -1 : 1));
-      if (cap) list = list.slice(0, cap);
-      stats.reads += Math.max(1, list.length);
-      stats.queries.push(name);
-      return { docs: list.map((r) => ({ id: r.id, data: () => pick(r, fields), get: (f) => r[f] })) };
-    },
-    doc: (id) => ({
-      get: async () => { stats.reads += 1; const d = docs[name + "/" + id]; return { exists: !!d, data: () => d }; },
-      set: async (value, opts) => { docs[name + "/" + id] = opts && opts.merge ? merge(docs[name + "/" + id] || {}, value) : value; }
-    })
-  });
-  return { collection: (name) => query(name, []), docs, stats };
-}
 
 const NOW = Date.parse("2026-11-01T15:00:00Z");
 const ts = (ms) => ({ toDate: () => new Date(ms), toMillis: () => ms });
@@ -84,9 +36,54 @@ test("a range reads one document per closed day after the first build, and the s
   assert.deepEqual(again.events.map((r) => r.id), first.events.map((r) => r.id));
   assert.deepEqual(again.reviews.map((r) => r.id), first.reviews.map((r) => r.id));
   const openDayRows = (rows) => rows.filter((r) => days.toMs(r.createdAt) >= Date.parse("2026-11-01T00:00:00Z")).length;
-  // meta + 14 day documents (Oct 18 to 31) + the open day's rows of each kind + the refunded-review probe
-  assert.equal(db.stats.reads, 1 + 14 + openDayRows(first.events) + openDayRows(first.opens) + Math.max(1, openDayRows(first.reviews)) + 1);
+  // meta + 14 day documents (Oct 18 to 31) + the open day's document + an empty read past its kept events and opens
+  // + the open day's reviews (updated in place, so read whole) + the refunded-review probe
+  assert.equal(db.stats.reads, 1 + 14 + 1 + 1 + 1 + Math.max(1, openDayRows(first.reviews)) + 1);
   assert.ok(db.stats.reads < 60, "reads " + db.stats.reads + " vs " + (first.events.length + first.opens.length + first.reviews.length) + " raw");
+});
+
+test("a refresh reads only the open day's events and opens written since the last one, late commits included", async () => {
+  days._memo.clear();
+  const data = seed();
+  const db = fakeDb(data);
+  const kinds = ["events", "opens"];
+  const first = await days.rows(db, kinds, { from: NOW - DAY, now: NOW });
+  const kept = db.docs["jarvis_days/2026-11-01_365"].parts.events;
+  assert.equal(kept.open, true);
+  assert.equal(kept.through, NOW);
+  const later = NOW + 30 * 60000;
+  data.site_events.push({ id: "late", site: "cv", kind: "visit", createdAt: ts(NOW - 4 * 60000) });
+  for (let m = 5; m < 30; m += 5) data.site_events.push({ id: "n" + m, site: "lab", kind: "visit", createdAt: ts(NOW + m * 60000) });
+  days._memo.clear();
+  db.stats.reads = 0;
+  const again = await days.rows(db, kinds, { from: later - DAY, now: later });
+  const raw = data.site_events.filter((r) => r.createdAt.toMillis() >= later - DAY).map((r) => r.id).sort();
+  assert.deepEqual(again.events.map((r) => r.id).sort(), raw);
+  assert.ok(again.events.some((r) => r.id === "late"), "a row committed inside the margin is not lost");
+  assert.equal(again.opens.length, first.opens.filter((r) => days.toMs(r.createdAt) >= later - DAY).length);
+  // meta + yesterday's document + the open day's document + 6 new events + an empty read for opens
+  assert.equal(db.stats.reads, 1 + 1 + 1 + 6 + 1);
+});
+
+test("a day kept while open is topped up when it closes, and matches a raw read of the day", async () => {
+  days._memo.clear();
+  const data = seed();
+  const db = fakeDb(data);
+  const evening = Date.parse("2026-11-01T22:00:00Z");
+  await days.rows(db, ["events"], { from: evening - DAY, now: evening });
+  data.site_events.push({ id: "eve", site: "cv", kind: "visit", createdAt: ts(Date.parse("2026-11-01T23:30:00Z")) });
+  data.site_events.push({ id: "next", site: "cv", kind: "visit", createdAt: ts(Date.parse("2026-11-02T00:30:00Z")) });
+  const morning = Date.parse("2026-11-02T03:00:00Z");
+  days._memo.clear();
+  db.stats.queries = [];
+  const out = await days.rows(db, ["events"], { from: morning - 2 * DAY, now: morning });
+  const part = db.docs["jarvis_days/2026-11-01_365"].parts.events;
+  assert.equal(part.open, false);
+  assert.equal(part.final, true);
+  const dayIds = data.site_events.filter((r) => r.createdAt.toMillis() >= Date.parse("2026-11-01T00:00:00Z") && r.createdAt.toMillis() < Date.parse("2026-11-02T00:00:00Z")).map((r) => r.id).sort();
+  assert.deepEqual(part.rows.map((r) => r.id).sort(), dayIds);
+  assert.ok(out.events.some((r) => r.id === "next") && out.events.some((r) => r.id === "eve"));
+  assert.equal(new Set(out.events.map((r) => r.id)).size, out.events.length);
 });
 
 test("stored days keep only the fields Jarvis reads: no ip, user agent or review report", async () => {
@@ -139,7 +136,8 @@ test("days before a source's first row and past its retention are not read", asy
   assert.deepEqual(out.failures.map((r) => r.id), ["f1"]);
   const stored = Object.keys(db.docs).filter((k) => k.startsWith("jarvis_days/2"));
   assert.ok(stored.every((k) => k.endsWith("_90")), stored.join());
-  assert.equal(stored.length, 5);
+  // five closed days since the first row, and the open day kept for the next read
+  assert.equal(stored.length, 5 + 1);
 });
 
 test("a day too large for one document keeps its rows out and is read raw", async () => {
