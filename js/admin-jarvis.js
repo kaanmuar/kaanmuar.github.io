@@ -36,37 +36,79 @@ const when = (value) => { const d = window.JarvisCore.toDate(value); return d ? 
 
 // --- charts (SVG and HTML, HUD colors) -------------------------------------------------------------------------
 
-function spark(values, color) {
-    const v = values && values.length ? values : [0];
-    const w = 120, h = 32, max = Math.max(1, ...v);
-    const pts = v.map((n, i) => `${(v.length === 1 ? w / 2 : (i / (v.length - 1)) * w).toFixed(1)},${(h - 2 - (n / max) * (h - 6)).toFixed(1)}`);
-    return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
+// #2807: charts answer a hover or a tap with the exact values of that point. Each point gets a transparent column
+// (.jv-hit, its text in data-tip); chartTip() in mountJarvis shows it in the chart's .jv-tip.
+const withUnit = (n, unit) => fmt(n) + (unit ? ' ' + unit : '');
+function hits(xs, top, bottom, tips, edges) {
+    return xs.map((cx, i) => {
+        const a = i ? (xs[i - 1] + cx) / 2 : edges[0], b = i < xs.length - 1 ? (cx + xs[i + 1]) / 2 : edges[1];
+        return `<rect class="jv-hit" x="${a.toFixed(1)}" y="${top}" width="${Math.max(1, b - a).toFixed(1)}" height="${bottom - top}" data-x="${cx.toFixed(1)}" data-tip="${esc(tips[i])}"><title>${esc(tips[i])}</title></rect>`;
+    }).join('') + `<line class="jv-guide" x1="0" x2="0" y1="${top}" y2="${bottom}"></line>`;
 }
 
+// opts (#2807, all optional): title, unit (after each value), labels (one date per value: first and last show under
+// the line and the tooltip names them). Without opts it is the bare line it always was.
+function spark(values, color, opts) {
+    const v = values && values.length ? values : [0];
+    const w = 120, h = 32, max = Math.max(1, ...v);
+    const xs = v.map((n, i) => (v.length === 1 ? w / 2 : (i / (v.length - 1)) * w));
+    const pts = v.map((n, i) => `${xs[i].toFixed(1)},${(h - 2 - (n / max) * (h - 6)).toFixed(1)}`);
+    const lines = `<polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+    if (!opts) return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>`;
+    const labels = opts.labels || [];
+    const tips = v.map((n, i) => `${labels[i] || ''}${labels[i] ? ': ' : ''}${withUnit(n, opts.unit)}`);
+    return `<figure class="jv-chart jv-chart-spark">${opts.title ? `<figcaption class="jv-chart-title"><i style="background:${color}"></i>${esc(opts.title)}</figcaption>` : ''}<div class="jv-chart-plot"><svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${esc((opts.title || '') + ' per day, peak ' + withUnit(Math.max(...v), opts.unit))}">${lines}${hits(xs, 0, h, tips, [0, w])}</svg><div class="jv-tip" role="status" hidden></div></div>
+        <div class="jv-spark-axis"><span>${esc(labels.length ? String(labels[0]).slice(5) : '')}</span><span>0–${esc(withUnit(max, opts.unit))}</span><span>${esc(labels.length ? String(labels[labels.length - 1]).slice(5) : '')}</span></div></figure>`;
+}
+
+// opts: fill (false: lines only); #2807, all optional: title, yLabel (the y axis, with its unit), unit (after each
+// value in the legend and tooltip; a series' own unit wins), xLabel (under the dates), legend (false hides it).
+// With any of title, yLabel, xLabel or unit the axes are HTML around a stretched plot, so their text keeps its size
+// on a phone-wide panel; without them it is the all-SVG chart it always was.
 function area(labels, series, opts) {
     if (!labels || !labels.length) return '<p class="jv-empty">No days in this range.</p>';
-    const fill = !(opts && opts.fill === false);
-    const w = 760, h = 220, pad = 30;
+    const o = opts || {};
+    const fill = o.fill !== false;
+    const framed = !!(o.title || o.yLabel || o.xLabel || o.unit);
+    const w = 760, h = framed ? 200 : 220, pad = 30, left = framed ? 6 : pad, right = framed ? 6 : pad, top = framed ? 8 : pad, bottom = framed ? 4 : pad;
     const peakValue = Math.max(1, ...series.flatMap((s) => s.values));
     const raw = peakValue / 4;
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
     const unit = Math.max(1, [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw));
     const max = Math.ceil(peakValue / unit) * unit;
-    const x = (i) => pad + (labels.length === 1 ? (w - pad * 2) / 2 : (i / (labels.length - 1)) * (w - pad * 2));
-    const y = (n) => h - pad - (n / max) * (h - pad * 2);
-    const grid = Array.from({ length: max / unit + 1 }, (_, k) => k * unit).map((n) => `<line x1="${pad}" x2="${w - pad}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"></line><text x="${pad - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`).join('');
+    const x = (i) => left + (labels.length === 1 ? (w - left - right) / 2 : (i / (labels.length - 1)) * (w - left - right));
+    const y = (n) => h - bottom - (n / max) * (h - bottom - top);
+    const levels = Array.from({ length: max / unit + 1 }, (_, k) => k * unit);
     const step = Math.max(1, Math.ceil(labels.length / 8));
-    const ticks = labels.map((label, i) => (i % step === 0 || i === labels.length - 1) ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(label.slice(5))}</text>` : '').join('');
+    const shown = labels.map((label, i) => i).filter((i) => i % step === 0 || i === labels.length - 1);
+    const stroke = framed ? ' vector-effect="non-scaling-stroke"' : '';
+    const grid = levels.map((n) => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"${stroke}></line>${framed ? '' : `<text x="${left - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`}`).join('');
+    const ticks = framed ? '' : shown.map((i) => `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(labels[i].slice(5))}</text>`).join('');
+    const dot = (cx, cy, color) => (framed ? `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="${color}" stroke-width="8" stroke-linecap="round"${stroke}></line>` : `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}"></circle>`);
     const paths = series.map((s, k) => {
         const line = s.values.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ');
         return (fill ? `<defs><linearGradient id="jvg${k}${s.color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity="0.35"></stop><stop offset="1" stop-color="${s.color}" stop-opacity="0"></stop></linearGradient></defs>
-            <polygon points="${x(0)},${h - pad} ${line} ${x(s.values.length - 1)},${h - pad}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>` : '') + `
-            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"></polyline>${labels.length < 3 ? s.values.map((n, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(n).toFixed(1)}" r="4" fill="${s.color}"></circle>`).join('') : ''}`;
+            <polygon points="${x(0)},${h - bottom} ${line} ${x(s.values.length - 1)},${h - bottom}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>` : '') + `
+            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"${stroke}></polyline>${labels.length < 3 ? s.values.map((n, i) => dot(x(i).toFixed(1), y(n).toFixed(1), s.color)).join('') : ''}`;
     }).join('');
-    const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${fmt(s.values.reduce((a, b) => a + b, 0))}</span>`).join('');
-    return `<svg class="jv-area" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(series.map((s) => s.name).join(' and '))} per day">${grid}${paths}${ticks}</svg><div class="jv-legend">${legend}</div>`;
+    const tips = labels.map((label, i) => `${label}: ${series.map((s) => s.name + ' ' + withUnit(s.values[i] || 0, s.unit || o.unit)).join(' · ')}`);
+    const total = (s) => Math.round(s.values.reduce((a, b) => a + b, 0) * 10) / 10;
+    const legend = o.legend === false ? '' : `<div class="jv-legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${s.unit || o.unit ? `<small>${esc(withUnit(total(s), s.unit || o.unit))} in range</small>` : fmt(total(s))}</span>`).join('')}</div>`;
+    const svg = `<svg class="jv-area" viewBox="0 0 ${w} ${h}"${framed ? ' preserveAspectRatio="none"' : ''} role="img" aria-label="${esc(o.title || series.map((s) => s.name).join(' and ') + ' per day')}">${grid}${paths}${ticks}${hits(labels.map((_, i) => x(i)), top, h - bottom, tips, [left, w - right])}</svg>`;
+    const plot = `<div class="jv-chart-plot">${svg}<div class="jv-tip" role="status" hidden></div></div>`;
+    if (!framed) return `<figure class="jv-chart">${plot}${legend}</figure>`;
+    const pct = (v, of) => ((v / of) * 100).toFixed(2) + '%';
+    return `<figure class="jv-chart is-framed">${o.title ? `<figcaption class="jv-chart-title">${esc(o.title)}</figcaption>` : ''}<div class="jv-chart-frame">
+        <span class="jv-chart-y">${o.yLabel ? `<span class="jv-axis-title">${esc(o.yLabel)}</span>` : ''}</span>
+        <div class="jv-chart-yticks">${levels.map((n) => `<span style="top:${pct(y(n), h)}">${fmt(n)}</span>`).join('')}</div>
+        ${plot}<span></span><span></span>
+        <div class="jv-chart-xticks">${shown.map((i) => `<span style="left:${pct(x(i), w)}">${esc(labels[i].slice(5))}</span>`).join('')}</div>
+        ${o.xLabel ? `<span></span><span></span><span class="jv-axis-title jv-chart-x">${esc(o.xLabel)}</span>` : ''}</div>${legend}</figure>`;
 }
 
+// opts: color, limit, empty; #2807, all optional: title, yLabel (what the rows are), unit (what the values count),
+// legend (the series name, in its colour), drill (a panel id: each row opens its drill-down, see drillBodies) and
+// open (the row whose drill-down is open).
 function bars(list, opts) {
     const o = opts || {};
     const rows = (list || []).slice(0, o.limit || 12);
@@ -74,7 +116,10 @@ function bars(list, opts) {
     const max = Math.max(1, ...rows.map((r) => r.value));
     const total = (list || []).reduce((s, r) => s + r.value, 0);
     const more = (list || []).length - rows.length;
-    return `<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${fmt(r.value)}"><span class="jv-bar-label">${esc(r.label)}</span><span class="jv-bar-track"><span class="jv-bar-fill" style="width:${Math.max(2, (r.value / max) * 100).toFixed(1)}%;--c:${o.color || COLORS.cyan}"></span></span><span class="jv-bar-value">${fmt(r.value)}<small>${total ? Math.round((r.value / total) * 100) + '%' : ''}</small></span></li>`).join('')}</ol>${more > 0 ? `<p class="jv-more">+${more} more in the export</p>` : ''}`;
+    const color = o.color || COLORS.cyan;
+    const drill = (r) => (o.drill ? ` class="is-drill${o.open === r.label ? ' is-open' : ''}" data-drill-open="${esc(o.drill + '|' + r.label)}" role="button" tabindex="0" aria-expanded="${o.open === r.label}"` : '');
+    const head = o.yLabel || o.unit ? `<div class="jv-bars-head"><span>${esc(o.yLabel || '')}</span><span>${esc(o.unit || '')}</span></div>` : '';
+    return `${o.title ? `<h4 class="jv-chart-title">${esc(o.title)}</h4>` : ''}${head}<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${esc(withUnit(r.value, o.unit))}"${drill(r)}><span class="jv-bar-label">${esc(r.label)}</span><span class="jv-bar-track"><span class="jv-bar-fill" style="width:${Math.max(2, (r.value / max) * 100).toFixed(1)}%;--c:${color}"></span></span><span class="jv-bar-value">${fmt(r.value)}<small>${total ? Math.round((r.value / total) * 100) + '%' : ''}</small></span></li>`).join('')}</ol>${more > 0 ? `<p class="jv-more">+${more} more in the export</p>` : ''}${o.legend ? `<div class="jv-legend"><span><i style="background:${color}"></i>${esc(o.legend)} <small>${esc(withUnit(total, o.unit))} in all</small></span></div>` : ''}`;
 }
 
 function ring(pct, label, color, size) {
@@ -215,7 +260,10 @@ const WIP_COLS = ['Dev', 'QA', 'Stg'];
 
 // #2526: the Scrum board as a flow. One node per column (cards, median age); arrows weighted by the moves in range,
 // skips arc above, moves backwards arc below in amber; the WIP columns light up when WIP is over its limit.
-function processMap(board, flow) {
+// opts.drill (#2807): a panel id; each column then opens its card list (drillBodies), opts.open the open one.
+function processMap(board, flow, opts) {
+    const o = opts || {};
+    const drill = (name) => (o.drill ? ` data-drill-open="${esc(o.drill + '|' + name)}" role="button" tabindex="0" aria-expanded="${o.open === name}" aria-label="${esc(name)}: show its cards"` : '');
     const cols = BOARD_COLS.map((name) => Object.assign({ name, count: 0, ageMedD: null }, (board.columns || []).find((c) => c.name === name) || {}));
     const over = !!(board.wipLimit && board.wip > board.wipLimit);
     const w = 960, h = 292, nw = 92, nh = 78, y0 = 106, gap = (w - nw * BOARD_COLS.length) / (BOARD_COLS.length - 1);
@@ -240,13 +288,13 @@ function processMap(board, flow) {
     const marker = (id, color) => `<marker id="jvpm-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${color}"></path></marker>`;
     const nodes = cols.map((c, i) => {
         const age = c.ageMedD === null || c.ageMedD === undefined ? null : c.ageMedD;
-        return `<g class="jv-pm-node${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><title>${esc(c.name)}: ${fmt(c.count)}${age === null ? '' : ', median age ' + fmt(age) + ' d'}</title><rect x="${x(i).toFixed(1)}" y="${y0}" width="${nw}" height="${nh}" rx="12"></rect>
+        return `<g class="jv-pm-node${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}${o.open === c.name ? ' is-open' : ''}" data-col="${esc(c.name)}"${drill(c.name)}><title>${esc(c.name)}: ${fmt(c.count)}${age === null ? '' : ', median age ' + fmt(age) + ' d'}</title><rect x="${x(i).toFixed(1)}" y="${y0}" width="${nw}" height="${nh}" rx="12"></rect>
             <text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 20}" text-anchor="middle" class="jv-pm-name">${esc(c.name)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 49}" text-anchor="middle" class="jv-pm-n">${fmt(c.count)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 67}" text-anchor="middle" class="jv-pm-age">${age === null ? '—' : 'med ' + fmt(age) + ' d'}</text></g>`;
     }).join('');
     const label = cols.map((c) => `${c.name} ${c.count}`).join(', ');
     // The same flow stacked top to bottom, shown instead of the map when its panel is phone-narrow.
     const outs = (i) => moves.filter((f) => at(f.from) === i).sort((p, q) => at(p.to) - at(q.to)).map((f) => `<span${at(f.to) < i ? ' class="is-back"' : ''}>${at(f.to) < i ? '↩' : '→'} ${esc(f.to)} ${fmt(f.count)}</span>`).join('');
-    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
+    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}${o.open === c.name ? ' is-open' : ''}" data-col="${esc(c.name)}"${drill(c.name)}><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
     return `<div class="jv-pm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Board flow: ${esc(label)}${over ? `. WIP ${fmt(board.wip)} is over its limit of ${fmt(board.wipLimit)}` : ''}"><defs>${marker('fwd', COLORS.cyan)}${marker('back', COLORS.amber)}${marker('idle', COLORS.dim)}</defs>${idle}${arrows}${nodes}</svg><ol class="jv-pm-list" aria-label="Board flow">${steps}</ol></div>`;
 }
 
@@ -1663,6 +1711,63 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const ghWork = () => S.external['github-work'] || {};
     const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id));
     const ghPr = (n) => ((ghWork().prs || {}).items || []).find((p) => String(p.number) === String(n));
+    const GH_BOARD = 'https://github.com/orgs/carlosandmunoz-hq/projects/1';
+    const ghBoardColumn = (name) => `${GH_BOARD}/views/1?filterQuery=${encodeURIComponent(`status:"${name}"`)}`;
+    const ghSearch = (q) => `${GH_REPO}/issues?q=${encodeURIComponent(q).replace(/%20/g, '+')}`;
+    const ghTree = (name) => String(name).split('/').map(encodeURIComponent).join('/');
+
+    // #2807: inline drill-downs, one open per panel. A trigger (data-drill-open="panel|key": a stat, a bar row, a
+    // board column) shows the body with the same data-drill under it; openDrills keeps the open one across renders.
+    const openDrills = new Map();
+    const drillKey = (panel, key) => panel + '|' + key;
+    function drillBodies(panel, list) {
+        const open = openDrills.get(panel);
+        return list.map((d) => `<div class="jv-drill" data-drill="${esc(drillKey(panel, d.key))}"${open === d.key ? '' : ' hidden'}><header><strong>${esc(d.title)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, d.key))}" aria-label="Close ${esc(d.title)}">×</button></header>
+            ${d.rows.length ? `<ol class="jv-drill-list">${d.rows.join('')}</ol>` : `<p class="jv-empty">${esc(d.empty || 'Nothing here.')}</p>`}${d.more ? `<p class="jv-more">${esc(d.more)}</p>` : ''}
+            <p class="jv-drill-links">${d.links.map(([label, url]) => `<a class="jv-btn small" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`).join('')}</p></div>`).join('');
+    }
+    function drillStats(panel, list) {
+        const open = openDrills.get(panel);
+        return `<div class="jv-stats">${list.map((k) => (k.drill ? `<button type="button" class="jv-stat-btn${k.alert ? ' is-alert' : ''}${open === k.drill ? ' is-open' : ''}" data-drill-open="${esc(drillKey(panel, k.drill))}" aria-expanded="${open === k.drill}"><b>${fmt(k.value)}</b><span>${esc(k.label)}</span></button>`
+            : `<div${k.alert ? ' class="is-alert"' : ''}><b>${fmt(k.value)}</b><span>${esc(k.label)}</span></div>`)).join('')}</div>`;
+    }
+    function drillToggle(t) {
+        const at = t.dataset.drillOpen.indexOf('|');
+        const panel = t.dataset.drillOpen.slice(0, at), key = t.dataset.drillOpen.slice(at + 1);
+        const open = openDrills.get(panel) !== key;
+        if (open) openDrills.set(panel, key); else openDrills.delete(panel);
+        const on = drillKey(panel, key);
+        root.querySelectorAll('[data-drill]').forEach((d) => { if (d.dataset.drill.startsWith(panel + '|')) d.hidden = !(open && d.dataset.drill === on); });
+        root.querySelectorAll('[data-drill-open]:not(.jv-drill-close)').forEach((b) => {
+            if (!b.dataset.drillOpen.startsWith(panel + '|')) return;
+            const is = open && b.dataset.drillOpen === on;
+            b.setAttribute('aria-expanded', String(is));
+            b.classList.toggle('is-open', is);
+        });
+        const body = open && Array.from(root.querySelectorAll('[data-drill]')).find((d) => d.dataset.drill === on);
+        if (body) body.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    const drillIssue = (i, meta) => `<li><a href="${esc(i.url || GH_REPO + '/issues/' + i.number)}" target="_blank" rel="noopener">#${esc(i.number)}</a><span>${esc(i.title)}${(i.labels || []).slice(0, 3).map((l) => ` <em class="jv-chip">${esc(l)}</em>`).join('')}</span><small>${esc(meta)}</small></li>`;
+    const drillBranch = (b, meta) => `<li><a href="${GH_REPO}/tree/${ghTree(b.name)}" target="_blank" rel="noopener" title="${esc(b.name)}"><code>${esc(b.name)}</code></a><span>${esc(meta)}</span><small><a href="${GH_REPO}/compare/main...${ghTree(b.name)}" target="_blank" rel="noopener">compare</a></small></li>`;
+    const ghDays = (n) => (n === null || n === undefined ? '—' : fmt(n) + ' d');
+
+    // #2807: a hover or a tap on a chart shows the exact values of that point.
+    function chartTip(hit) {
+        const fig = hit.closest('.jv-chart');
+        const tip = fig && fig.querySelector('.jv-tip');
+        if (!tip) return;
+        tip.textContent = hit.dataset.tip;
+        tip.hidden = false;
+        const box = fig.querySelector('.jv-chart-plot').getBoundingClientRect(), r = hit.getBoundingClientRect();
+        tip.style.left = Math.max(0, Math.min(box.width - tip.offsetWidth, r.left + r.width / 2 - box.left - tip.offsetWidth / 2)) + 'px';
+        const guide = fig.querySelector('.jv-guide');
+        if (guide) { guide.setAttribute('x1', hit.dataset.x); guide.setAttribute('x2', hit.dataset.x); guide.classList.add('is-on'); }
+    }
+    function chartTipOff(fig) {
+        const tip = fig.querySelector('.jv-tip'), guide = fig.querySelector('.jv-guide');
+        if (tip) tip.hidden = true;
+        if (guide) guide.classList.remove('is-on');
+    }
 
     function githubView() {
         const g = S.external['github-work'];
@@ -1693,7 +1798,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             + (missing.length ? `<p class="jv-note">Repos the qa-lab-agents app cannot read: ${missing.map((m) => esc(m.repo) + (m.why ? ' (' + esc(m.why) + ')' : '')).join(', ')}.</p>` : ''),
         { wide: true, keep: true, data: needs.map((n) => ({ need: n })), note: 'Steps only you can take. The parts they block show under No data yet at the bottom.' }) : '';
 
-        const flowBody = board ? processMap(board, g.flow) + stats([{ label: 'WIP', value: board.wip, alert: overWip }, { label: 'WIP limit', value: board.wipLimit }, { label: 'Cycle time (median)', value: board.cycleMedD === null || board.cycleMedD === undefined ? '—' : board.cycleMedD + ' d' }, { label: 'Moves in range', value: (g.flow || []).reduce((n, f) => n + (f.count || 0), 0) }, { label: 'Drifted cards', value: (board.drift || []).length, alert: (board.drift || []).length > 0 }]) : off(g.board);
+        const colDrills = board ? BOARD_COLS.map((name) => {
+            const c = (board.columns || []).find((x) => x.name === name) || { count: 0, items: [] };
+            const items = (c.items || []).slice(0, 8);
+            return { key: name, title: `${name} · ${plural(c.count || 0, 'card', 'cards')}`, empty: `No cards in ${name}.`,
+                rows: items.map((i) => drillIssue(i, `${ghDays(i.days)} in ${name}`)), more: c.count > items.length ? `${name === 'Done' ? 'Newest' : 'Oldest'} ${items.length} of ${fmt(c.count)}.` : '',
+                links: [[`Open ${name} on the board`, ghBoardColumn(name)], ['All issues', GH_REPO + '/issues']] };
+        }) : [];
+        const flowBody = board ? processMap(board, g.flow, { drill: 'github-flow', open: openDrills.get('github-flow') }) + drillBodies('github-flow', colDrills) + stats([{ label: 'WIP', value: board.wip, alert: overWip }, { label: 'WIP limit', value: board.wipLimit }, { label: 'Cycle time (median)', value: board.cycleMedD === null || board.cycleMedD === undefined ? '—' : board.cycleMedD + ' d' }, { label: 'Moves in range', value: (g.flow || []).reduce((n, f) => n + (f.count || 0), 0) }, { label: 'Drifted cards', value: (board.drift || []).length, alert: (board.drift || []).length > 0 }]) : off(g.board);
 
         const doraChip = (lv) => (lv ? `<span class="jv-chip lv-${esc(lv)}">${esc(lv)}</span>` : '<span class="jv-chip">—</span>');
         const doraRows = dora ? [
@@ -1715,8 +1827,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         (ci ? ci.daily || [] : []).forEach((r) => { ciDays[r.day] = { date: r.day, runs: r.runs || 0, failed: r.failed || 0 }; });
         const ciRows = Object.values(ciDays);
         const ciTrend = align([{ name: 'Runs', color: COLORS.cyan, rows: ciRows, key: 'runs' }, { name: 'Failed', color: COLORS.pink, rows: ciRows, key: 'failed' }]);
-        const sparkRow = (label, key, shown, color) => { const v = hist.map((r) => Number(r[key]) || 0); const last = hist.length ? hist[hist.length - 1][key] : null; return `<div><span>${esc(label)}</span><b>${last === null || last === undefined ? '—' : esc(shown ? shown(last) : fmt(last))}</b>${spark(v, color)}</div>`; };
-        const trendBody = hist.length ? `<div class="jv-gh-sparks">${sparkRow('CI pass rate', 'passRate', ghPct, COLORS.green)}${sparkRow('Health score', 'score', null, COLORS.cyan)}${sparkRow('Open PRs', 'openPrs', null, COLORS.violet)}${sparkRow('Open bugs', 'openBugs', null, COLORS.pink)}${sparkRow('WIP', 'wip', null, COLORS.amber)}${sparkRow('Merged', 'merged', null, COLORS.green)}</div>` : off(null, 'No daily history yet: the hourly job backfills 90 days, ten a run.');
+        const histDays = hist.map((r) => r.day);
+        const sparkRow = (label, key, shown, color, unit) => { const v = hist.map((r) => Number(r[key]) || 0); const last = hist.length ? hist[hist.length - 1][key] : null; return `<div><span><i style="background:${color}"></i>${esc(label)}</span><b>${last === null || last === undefined ? '—' : esc(shown ? shown(last) : fmt(last))}</b>${spark(v, color, { unit, labels: histDays })}</div>`; };
+        const trendBody = hist.length ? `<div class="jv-gh-sparks">${sparkRow('CI pass rate', 'passRate', ghPct, COLORS.green, '%')}${sparkRow('Health score', 'score', null, COLORS.cyan, 'of 100')}${sparkRow('Open PRs', 'openPrs', null, COLORS.violet, 'PRs')}${sparkRow('Open bugs', 'openBugs', null, COLORS.pink, 'bugs')}${sparkRow('WIP', 'wip', null, COLORS.amber, 'cards')}${sparkRow('Merged', 'merged', null, COLORS.green, 'PRs')}</div><p class="jv-note">One point per day (UTC); tap or hover a line for that day's value. Under each line: first day, value range, last day.</p>` : off(null, 'No daily history yet: the hourly job backfills 90 days, ten a run.');
 
         const ciBody = ci ? stats([{ label: 'Runs', value: ci.runs }, { label: 'Failed', value: ci.failed, alert: ci.failed > 0 }, { label: 'Pass rate', value: ghPct(ci.passRate), alert: ci.passRate < 90 }, { label: 'Minutes', value: ci.minutes }, { label: 'Median queue', value: ghSecs(ci.queueMedS) }, { label: 'Median run', value: ghSecs(ci.durMedS) }, { label: 'Flaky', value: ghPct((ci.flaky || {}).pct), alert: ((ci.flaky || {}).pct || 0) > 5 }])
             + table([['Workflow', (w) => `<strong>${esc(w.name)}</strong>${w.path ? `<br><span class="jv-note">${esc(w.path)}</span>` : ''}`], ['Runs', (w) => fmt(w.runs)],
@@ -1749,7 +1862,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const prDaily = prs ? align([{ name: 'Opened', color: COLORS.violet, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Merged', color: COLORS.green, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.merged })), key: 'n' }]) : null;
 
         const columns = board ? (board.columns || []).map((c) => ({ label: c.name, value: c.count || 0 })) : [];
-        const boardBody = board ? bars(columns, { color: COLORS.cyan, limit: 8, empty: 'The board is empty.' }) + table([['Column', (c) => esc(c.name)], ['Median age', (c) => (c.ageMedD === null || c.ageMedD === undefined ? '—' : fmt(c.ageMedD) + ' d')], ['Oldest', (c) => (c.oldest || []).slice(0, 3).map((o) => `${ghLink(o.url, '#' + o.number)} <span class="jv-note">${fmt(o.days)} d</span>`).join(' · ') || '—']], (board.columns || []).filter((c) => c.count)) : off(g.board);
+        const boardBody = board ? bars(columns, { color: COLORS.cyan, limit: 8, empty: 'The board is empty.', yLabel: 'Column', unit: 'cards', legend: 'Cards on the board' }) + table([['Column', (c) => esc(c.name)], ['Median age', (c) => (c.ageMedD === null || c.ageMedD === undefined ? '—' : fmt(c.ageMedD) + ' d')], ['Oldest', (c) => (c.name === 'Done' ? [] : c.items || []).slice(0, 3).map((o) => `${ghLink(o.url, '#' + o.number)} <span class="jv-note">${fmt(o.days)} d</span>`).join(' · ') || '—']], (board.columns || []).filter((c) => c.count)) : off(g.board);
         const drift = board ? board.drift || [] : [];
         const driftBody = board ? table([['Card', (d) => `${ghLink(d.url, '#' + d.number)} ${esc(d.title)}`], ['On the board', (d) => `<span class="jv-chip">${esc(d.column)}</span>`], ['Should be', (d) => `<span class="jv-chip c-average">${esc(d.should)}</span>`], ['Why', (d) => `<span class="jv-note">${esc(d.why)}</span>`]], drift, 'Every card sits where its PR and issue say.')
             + (drift.length ? `<div class="jv-actions">${ghBtn('Sync the board', 'gh-board-sync', plural(drift.length, 'drifted card', 'drifted cards'), { items: drift.map((d) => ({ number: d.number, should: d.should })) }, { cls: ' is-primary' })}</div>` : '') : off(g.board);
@@ -1757,10 +1870,40 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
         const issDaily = iss ? align([{ name: 'Opened', color: COLORS.pink, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Closed', color: COLORS.green, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.closed })), key: 'n' }]) : null;
         const sub = iss && iss.subIssues ? iss.subIssues : null;
+        const lists = (iss && iss.lists) || {};
+        const oldest = iss ? iss.oldest || [] : [];
+        const newestOf = (shown, of) => (of > shown ? `Newest ${shown} of ${fmt(of)}.` : '');
+        const age = (i) => ghDays(i.days) + ' open';
+        const issDrills = iss ? [
+            { key: 'open', title: `Open issues · ${fmt(iss.open)}`, rows: (lists.open || []).map((i) => drillIssue(i, age(i))), more: newestOf((lists.open || []).length, iss.open), links: [['All open issues', ghSearch('is:issue is:open')]], empty: 'No open issue changed in this range.' },
+            { key: 'bugs', title: `Open bugs · ${fmt(iss.openBugs)}`, rows: (lists.openBugs || []).map((i) => drillIssue(i, age(i))), more: newestOf((lists.openBugs || []).length, iss.openBugs), links: [['Open bugs on GitHub', ghSearch('is:issue is:open label:bug')]], empty: 'No open bugs.' },
+            { key: 'opened', title: `Opened since ${iss.since || 'the range start'} · ${fmt(iss.opened)}`, rows: (lists.opened || []).map((i) => drillIssue(i, `opened ${ghDays(i.days)} ago`)), more: newestOf((lists.opened || []).length, iss.opened), links: [['Opened in range', ghSearch(`is:issue created:>=${iss.since || ''}`)]], empty: 'No issue opened in this range.' },
+            { key: 'closed', title: `Closed since ${iss.since || 'the range start'} · ${fmt(iss.closed)}`, rows: (lists.closed || []).map((i) => drillIssue(i, `closed ${ghDays(i.days)} ago`)), more: newestOf((lists.closed || []).length, iss.closed), links: [['Closed in range', ghSearch(`is:issue is:closed closed:>=${iss.since || ''}`)]], empty: 'No issue closed in this range.' },
+            { key: 'sub', title: `Parent tickets · ${fmt(sub ? sub.parents : 0)}`, rows: ((sub && sub.items) || []).map((i) => drillIssue(i, `${fmt(i.done)} of ${fmt(i.total)} sub-issues done`)), more: sub && sub.parents > (sub.items || []).length ? `Most left to do first: ${(sub.items || []).length} of ${fmt(sub.parents)}.` : '', links: [['All issues', GH_REPO + '/issues']], empty: 'No sub-issues yet.' },
+            { key: 'oldest', title: 'Oldest open issues', rows: oldest.map((i) => drillIssue(i, age(i))), links: [['Oldest first on GitHub', ghSearch('is:issue is:open sort:created-asc')]], empty: 'No open issues.' }
+        ] : [];
+        const issBody = iss ? drillStats('github-issues', [{ label: 'Open', value: iss.open, drill: 'open' }, { label: 'Open bugs', value: iss.openBugs, alert: iss.openBugs > 0, drill: 'bugs' }, { label: 'Opened', value: iss.opened, drill: 'opened' }, { label: 'Closed', value: iss.closed, drill: 'closed' },
+            { label: 'Sub-issues done', value: sub && sub.total ? `${fmt(sub.done)}/${fmt(sub.total)}` : '—', drill: 'sub' }, { label: 'Oldest open', value: oldest.length ? ghDays(oldest[0].days) : '—', drill: 'oldest' }])
+            + drillBodies('github-issues', issDrills)
+            + area(issDaily.labels, issDaily.series, { title: 'Issues opened and closed each day', yLabel: 'issues per day', unit: 'issues', xLabel: 'Day (UTC)' }) : off(g.issues);
+        const bugAreas = iss ? iss.bugsByArea || [] : [];
+        const areaQuery = (a) => (a === 'none' ? 'is:issue is:open label:bug' : `is:issue is:open label:area:${a} label:bug`);
+        const areaBody = iss ? bars(bugAreas, { color: COLORS.pink, empty: 'No open bugs.', yLabel: 'Area', unit: 'open bugs', legend: 'Open bugs', drill: 'github-bug-areas', open: openDrills.get('github-bug-areas') })
+            + drillBodies('github-bug-areas', bugAreas.map((a) => ({ key: a.label, title: `${a.label === 'none' ? 'No area label' : 'area:' + a.label} · ${plural(a.value, 'open bug', 'open bugs')}`, rows: (a.items || []).map((i) => drillIssue(i, age(i))),
+                more: newestOf((a.items || []).length, a.value), links: [[a.label === 'none' ? 'All open bugs' : `area:${a.label} bugs on GitHub`, ghSearch(areaQuery(a.label))]], empty: 'No bugs listed.' }))) : off(g.issues);
 
         const merged = br ? br.merged || [] : [];
         const trees = br ? br.worktrees || [] : [];
-        const branchBody = br ? stats([{ label: 'Branches', value: br.total }, { label: 'Stale', value: br.stale, alert: br.stale > 0 }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0 }, { label: 'Worktrees', value: trees.length }])
+        const ahead = br ? br.ahead || [] : [];
+        const brMeta = (b) => `last commit ${ghDays(b.days)} ago · ${fmt(b.ahead)} ahead, ${fmt(b.behind)} behind${b.pr ? ' · PR #' + b.pr : ''}`;
+        const brDrills = br ? [
+            { key: 'all', title: `Branches · ${fmt(br.total)}`, rows: ahead.slice().sort((a, b) => (a.days ?? 1e9) - (b.days ?? 1e9)).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), more: br.total > 10 ? `Newest 10 of ${fmt(br.total)} read; the rest are on GitHub.` : '', links: [['All branches', GH_REPO + '/branches/all']], empty: 'No branches besides main.' },
+            { key: 'stale', title: `Stale branches · ${fmt(br.stale)}`, rows: ahead.filter((b) => b.days !== null && b.days > 14).sort((a, b) => b.days - a.days).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), links: [['Stale branches', GH_REPO + '/branches/stale']], empty: 'No branch has gone two weeks without a commit.' },
+            { key: 'merged', title: `Merged, not deleted · ${fmt(merged.length)}`, rows: merged.slice(0, 10).map((b) => drillBranch(b, `PR #${b.pr} merged ${ghDays(b.days)} ago`)), more: merged.length > 10 ? `${fmt(merged.length - 10)} more in the export.` : '', links: [['All branches', GH_REPO + '/branches/all'], ['Merged PRs', `${GH_REPO}/pulls?q=is%3Apr+is%3Amerged`]], empty: 'No merged branches left behind.' },
+            { key: 'ahead', title: 'Ahead of and behind main', rows: ahead.slice().sort((a, b) => b.behind - a.behind).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), links: [['Active branches', GH_REPO + '/branches/active']], empty: 'No open branches ahead of main.' }
+        ] : [];
+        const branchBody = br ? drillStats('github-branches', [{ label: 'Branches', value: br.total, drill: 'all' }, { label: 'Stale', value: br.stale, alert: br.stale > 0, drill: 'stale' }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0, drill: 'merged' }, { label: 'Ahead of main', value: ahead.filter((b) => b.ahead > 0).length, drill: 'ahead' }, { label: 'Worktrees', value: trees.length }])
+            + drillBodies('github-branches', brDrills)
             + table([['Branch', (b) => ghRef(b.name)], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '—')], ['Merged', (b) => fmt(b.days) + ' d ago']], merged.slice(0, 20), 'No merged branches left behind.')
             + (merged.length > 20 ? `<p class="jv-more">+${merged.length - 20} more in the export</p>` : '')
             + (merged.length ? `<div class="jv-actions">${ghBtn('Delete merged branches', 'gh-delete-branch', plural(merged.length, 'merged branch', 'merged branches'), { branches: merged.map((b) => b.name) }, { cls: ' danger' })}</div>` : '') : off(g.branches);
@@ -1785,7 +1928,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const left = (x) => (x && x.limit ? Math.round(((x.limit - x.used) / x.limit) * 100) : null);
         const budgetBody = bud ? `<div class="jv-rings">${ring(left(gql), 'GraphQL left', null, 104)}${ring(left(core), 'REST left', null, 92)}${ring(left(appCore), 'app REST left', null, 92)}</div>`
             + stats([{ label: 'GraphQL used', value: gql ? `${fmt(gql.used)} / ${fmt(gql.limit)}` : '—', alert: left(gql) !== null && left(gql) < 20 }, { label: 'Resets', value: gql && gql.resetAt ? when(gql.resetAt) : '—' }, { label: 'App REST used', value: appCore ? `${fmt(appCore.used)} / ${fmt(appCore.limit)}` : '—' }])
-            + bars((bud.hourly || []).map((r) => ({ label: String(r.hour).slice(11, 16) || String(r.hour), value: r.graphql || 0 })), { color: COLORS.violet, limit: 24, empty: 'No hourly GraphQL readings yet.' })
+            + bars((bud.hourly || []).map((r) => ({ label: String(r.hour).slice(11, 16) || String(r.hour), value: r.graphql || 0 })), { color: COLORS.violet, limit: 24, empty: 'No hourly GraphQL readings yet.', title: 'GraphQL points used per hour', yLabel: 'Hour (UTC)', unit: 'points', legend: 'kaanmuar GraphQL points' })
             + (bud.kaanmuar ? '' : '<p class="jv-note">The Mac uploader has not sent kaanmuar\'s rate limit yet.</p>') : off(null, 'No API budget readings yet.');
 
         const agTickets = ag ? (ag.tickets || []).map((t) => ({ label: `#${t.ticket} ${t.title || ''}`.trim(), value: Math.round((t.hours || 0) * 10) / 10 })) : [];
@@ -1793,8 +1936,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const costPct = cost && cost.limitUsd ? Math.round((cost.onDemandUsd / cost.limitUsd) * 100) : null;
         const agBody = ag ? stats([{ label: 'Open chats', value: (ag.open || []).length }, { label: 'Hours in range', value: Math.round((ag.daily || []).reduce((n, d) => n + (d.hours || 0), 0) * 10) / 10 }, { label: 'Tickets worked', value: (ag.tickets || []).length }, { label: 'On-demand USD', value: cost ? `${fmt(cost.onDemandUsd)} / ${fmt(cost.limitUsd)}` : '—', alert: costPct !== null && costPct >= 80 }])
             + (cost ? `<div class="jv-vs"><span>On-demand spend since ${esc(cost.cycleStart || '—')}</span><span class="jv-meter${costPct >= 80 ? ' is-low' : ''}"><i style="width:${Math.min(100, costPct || 0)}%"></i></span><b>${esc(ghPct(costPct))}</b><small>of ${fmt(cost.limitUsd)} USD</small></div>` : '')
-            + bars(agTickets, { color: COLORS.amber, limit: 10, empty: 'No agent hours logged in range.' }) : off(null, 'No agent work logged yet.');
+            + bars(agTickets, { color: COLORS.amber, limit: 10, empty: 'No agent hours logged in range.', title: 'Hours per ticket in range', yLabel: 'Ticket', unit: 'h', legend: 'Agent hours' }) : off(null, 'No agent work logged yet.');
         const agDaily = ag ? align([{ name: 'Agent hours', color: COLORS.amber, rows: (ag.daily || []).map((r) => ({ date: r.day, n: Math.round((r.hours || 0) * 10) / 10 })), key: 'n' }, { name: 'Tickets', color: COLORS.cyan, rows: (ag.daily || []).map((r) => ({ date: r.day, n: r.tickets || 0 })), key: 'n' }]) : null;
+        if (agDaily) { agDaily.series[0].unit = 'h'; agDaily.series[1].unit = 'tickets'; }
         const openBody = ag ? table([['Ticket', (o) => ghIssue(o.ticket)], ['Title', (o) => esc(o.title)], ['Since', (o) => esc(ghAgo(o.since))]], ag.open || [], 'No chat is working right now.') : off(null, 'No agent work logged yet.');
 
         const anBody = an ? stats([{ label: 'Builds', value: an.builds }, { label: 'Failed', value: an.failed, alert: an.failed > 0 }, { label: 'Last build', value: an.last ? an.last.conclusion || 'running' : '—', alert: !!an.last && ghConclusion(an.last.conclusion) === 'c-slow' }])
@@ -1804,6 +1948,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const repoBody = repos.length ? `<div class="jv-gh-repos">${repos.map((r) => `<div class="jv-gh-repo"><strong>${ghLink('https://github.com/' + r.name, r.name)}</strong>
             <span>${r.private ? '<span class="jv-chip">private</span>' : '<span class="jv-chip">public</span>'}${r.language ? `<span class="jv-chip">${esc(r.language)}</span>` : ''}${r.ci ? `<a class="jv-chip ${ghConclusion(r.ci.conclusion)}" href="${esc(r.ci.url)}" target="_blank" rel="noopener">CI ${esc(r.ci.conclusion || 'running')}</a>` : '<span class="jv-chip">no CI</span>'}${r.security && r.security.open ? `<span class="jv-chip c-slow">${fmt(r.security.open)} security</span>` : ''}</span>
             <small>pushed ${esc(ghAgo(r.pushedAt))} · ${fmt(r.openIssues || 0)} issues · ${fmt(r.openPrs || 0)} PRs · ${esc(r.defaultBranch || 'main')}</small></div>`).join('')}</div>` : off(null, 'No repos read yet.');
+        const shownRepos = (g.access && g.access.shown) || C.GITHUB_REPOS;
+        const repoTools = `<p class="jv-note">Showing ${shownRepos.map(esc).join(', ')}. <button type="button" class="jv-link" data-act="settings" data-settings-at="s-repos">Edit the list</button></p>`;
 
         const ai = g.ai || {};
         const aiBody = `<div class="jv-chips">${GH_ASKS.map((q) => `<button type="button" class="jv-btn small" data-gh-ask="${esc(q)}">${esc(q)}</button>`).join('')}</div>
@@ -1821,30 +1967,30 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const daily = (x) => (x ? x.labels.map((d, i) => Object.assign({ day: d }, ...x.series.map((s) => ({ [s.name]: s.values[i] })))) : null);
 
         return head + `<div class="jv-grid">${needsPanel}${briefPanel('github')}${proposalsPanel('github')}
-            ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
+            ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Tap a column to list its cards. Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
             ${panel('github-dora', 'DORA', doraBody, { data: doraRows.map(([label, x]) => Object.assign({ metric: label }, x || {})), note: 'Elite: a deploy a day or more, changes live within a day, 5% or fewer fail, restored within an hour.' })}
             ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
             ${panel('github-trend', 'Daily trend', trendBody, { data: hist })}
-            ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series), { wide: true, data: daily(ciTrend) })}
+            ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series, { title: 'Workflow runs each day, and how many failed', yLabel: 'runs per day', unit: 'runs', xLabel: 'Day (UTC)' }), { wide: true, data: daily(ciTrend) })}
             ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Re-run and Diagnose act at once; a fix agent always asks first and opens a PR when it is done.' })}
             ${panel('github-ci', 'CI workflows', ciBody, { wide: true, data: ci && ci.workflows })}
             ${panel('github-flaky', 'Flaky workflows', flakyBody, { data: flaky, note: 'Flaky: failed, then passed on a re-run of the same commit.' })}
             ${panel('github-prs', `Open PRs${prs ? ' · ' + fmt(prs.open) : ''}`, prBody, { wide: true, keep: !!prs, data: prs && prs.items, note: `Update with main and Merge run as soon as you confirm. Jarvis's own updates wait ${ghCountdown()} on the countdown (Systems > Jarvis actions).` })}
-            ${prDaily ? panel('github-pr-daily', 'PRs opened and merged per day', area(prDaily.labels, prDaily.series), { wide: true, data: daily(prDaily) }) : ''}
-            ${listPanel('github', 'pr-sizes', 'PR sizes', prs ? prs.sizes || [] : [], { color: COLORS.violet, empty: 'No PRs in range.' })}
+            ${prDaily ? panel('github-pr-daily', 'PRs opened and merged per day', area(prDaily.labels, prDaily.series, { title: 'Pull requests opened and merged each day', yLabel: 'PRs per day', unit: 'PRs', xLabel: 'Day (UTC)' }), { wide: true, data: daily(prDaily) }) : ''}
+            ${listPanel('github', 'pr-sizes', 'PR sizes', prs ? prs.sizes || [] : [], { color: COLORS.violet, empty: 'No PRs in range.', yLabel: 'Size (lines changed: XS <10, S <50, M <250, L <1000)', unit: 'open PRs', legend: 'Open PRs' })}
             ${panel('github-board', 'Board columns', boardBody, { data: board && board.columns })}
             ${panel('github-drift', `Board drift${drift.length ? ' · ' + drift.length : ''}`, driftBody, { wide: true, data: drift, note: 'Cards whose Status disagrees with their PR or issue. Jarvis syncs them on its own every hour.' })}
             ${panel('github-aging', 'Aging cards', agingBody, { data: board && board.aging })}
-            ${listPanel('github', 'throughput', `Throughput per week${board && board.cycleMedD !== null && board.cycleMedD !== undefined ? ' · cycle ' + board.cycleMedD + ' d' : ''}`, board ? (board.throughput || []).map((t) => ({ label: t.week, value: t.done })) : [], { color: COLORS.green, empty: 'Nothing reached Done in range.' })}
-            ${panel('github-issues', 'Issues opened and closed per day', iss ? stats([{ label: 'Open', value: iss.open }, { label: 'Open bugs', value: iss.openBugs, alert: iss.openBugs > 0 }, { label: 'Opened', value: iss.opened }, { label: 'Closed', value: iss.closed }]) + area(issDaily.labels, issDaily.series) : off(g.issues), { wide: true, data: daily(issDaily) })}
-            ${panel('github-bug-areas', 'Open bugs by area', iss ? pie(iss.bugsByArea, { unit: 'bugs', empty: 'No open bugs.' }) : off(g.issues), { data: iss && iss.bugsByArea })}
-            ${listPanel('github', 'kinds', 'Issues by kind', iss ? iss.byKind || [] : [], { color: COLORS.violet, empty: 'No issues in range.' })}
+            ${listPanel('github', 'throughput', `Throughput per week${board && board.cycleMedD !== null && board.cycleMedD !== undefined ? ' · cycle ' + board.cycleMedD + ' d' : ''}`, board ? (board.throughput || []).map((t) => ({ label: t.week, value: t.done })) : [], { color: COLORS.green, empty: 'Nothing reached Done in range.', yLabel: 'ISO week', unit: 'cards done', legend: 'Cards that reached Done' })}
+            ${panel('github-issues', 'Issues opened and closed per day', issBody, { wide: true, data: daily(issDaily), note: 'Tap a number to list its issues.' })}
+            ${panel('github-bug-areas', 'Open bugs by area', areaBody, { data: bugAreas.map((a) => ({ label: a.label, value: a.value })), note: 'Tap an area to list its bugs.' })}
+            ${listPanel('github', 'kinds', 'Issues by kind', iss ? iss.byKind || [] : [], { color: COLORS.violet, empty: 'No issues in range.', yLabel: 'Kind', unit: 'open issues', legend: 'Open issues' })}
             ${panel('github-subissues', 'Sub-issues done', sub && sub.total ? `<div class="jv-rings">${ring(Math.round((sub.done / sub.total) * 100), `${sub.done} of ${sub.total}`, null, 110)}</div><p class="jv-note">Across ${fmt(sub.parents)} parent tickets.</p>` : off(g.issues, 'No sub-issues yet.'), { data: sub ? [sub] : null })}
             ${panel('github-oldest', 'Oldest open issues', iss ? table([['Issue', (o) => `${ghLink(o.url, '#' + o.number)} ${esc(o.title)}`], ['Days', (o) => fmt(o.days)]], iss.oldest || [], 'No open issues.') : off(g.issues), { data: iss && iss.oldest })}
-            ${panel('github-branches', 'Branches', branchBody, { data: merged })}
+            ${panel('github-branches', 'Branches', branchBody, { data: merged, note: 'Tap a number to list its branches, each with its compare against main.' })}
             ${panel('github-ahead', 'Ahead of and behind main', aheadBody, { data: br && br.ahead })}
             ${panel('github-worktrees', `Worktrees${trees.length ? ' · ' + trees.length : ''}`, treeBody, { wide: true, data: trees, note: 'Remove queues git worktree remove for the Mac uploader, which runs it within 5 minutes; it never forces, so uncommitted files stay.' })}
-            ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series), { wide: true, data: daily(depDaily) }) : ''}
+            ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series, { title: 'Deploy runs on main each day', yLabel: 'deploys per day', unit: 'deploys', xLabel: 'Day (UTC)' }), { wide: true, data: daily(depDaily) }) : ''}
             ${panel('github-deploy-last', 'Latest deploys', depBody, { data: dep && dep.last })}
             ${panel('github-envs', 'Environments', envBody, { data: dep && dep.environments })}
             ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbot ? stats([{ label: 'Open', value: dbot.open, alert: dbot.open > 0 }, { label: 'Critical', value: dbot.critical, alert: dbot.critical > 0 }, { label: 'High', value: dbot.high, alert: dbot.high > 0 }]) + secItems(dbot) : off(sec.dependabot, 'Not read yet.'), { data: dbot && dbot.items })}
@@ -1852,10 +1998,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }]) + secItems(secrets) : off(sec.secrets, 'Not read yet.'), { data: secrets && secrets.items })}
             ${panel('github-budget', 'GitHub API budget', budgetBody, { data: bud && bud.hourly, note: "All chats share kaanmuar's 5,000 GraphQL points an hour; the app's REST budget is its own." })}
             ${panel('github-agents', 'Agent work', agBody, { data: ag && ag.tickets })}
-            ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series), { wide: true, data: daily(agDaily) }) : ''}
+            ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series, { title: 'Agent hours and tickets worked each day', yLabel: 'hours or tickets', xLabel: 'Day (UTC)' }), { wide: true, data: daily(agDaily) }) : ''}
             ${panel('github-agents-open', 'Open chats', openBody, { data: ag && ag.open })}
             ${panel('github-android', 'Android builds and releases', anBody, { data: an && an.releases })}
-            ${panel('github-repos', `Repos${repos.length ? ' · ' + repos.length : ''}`, repoBody, { wide: true, data: repos.map((r) => ({ name: r.name, private: r.private, ci: r.ci && r.ci.conclusion, pushedAt: r.pushedAt, openIssues: r.openIssues, openPrs: r.openPrs, security: r.security && r.security.open, language: r.language })) })}
+            ${panel('github-repos', `Repos${repos.length ? ' · ' + repos.length : ''}`, repoBody + repoTools, { wide: true, data: repos.map((r) => ({ name: r.name, private: r.private, ci: r.ci && r.ci.conclusion, pushedAt: r.pushedAt, openIssues: r.openIssues, openPrs: r.openPrs, security: r.security && r.security.open, language: r.language })) })}
             ${panel('github-ai', 'Jarvis on GitHub', aiBody, { wide: true, keep: true, data: ai.diagnoses })}
             ${panel('github-deck', 'Command deck', deck, { wide: true, note: `Every button asks first, then runs. When Jarvis fixes on its own, merges, reverts, branch deletes and worktree removals wait ${ghCountdown()} on the countdown.` })}
         </div>`;
@@ -3181,7 +3327,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     function draftSettings() {
         const s = S.settings || {};
-        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(),
+        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(), github: { repos: C.githubRepos(s.github && s.github.repos) },
             actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS } };
     }
 
@@ -3223,6 +3369,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <div class="jv-actions"><button type="button" class="jv-btn small" data-th-reset>Back to the defaults</button></div></section>
             <section><h4>Search rankings</h4><label class="jv-field">Searches to rank on Brave, one per line (up to 8)<textarea name="s-queries" rows="5" placeholder="${esc(C.SEARCH_QUERIES.join('\n'))}">${esc((d.searchQueries || []).join('\n'))}</textarea></label>
               <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave's top 20 is asked once a day, places 21–100 once a week.</p></section>
+            <section><h4>GitHub repos</h4><label class="jv-field">Repos the GitHub tab shows, owner/name, one per line (up to 20)<textarea name="s-repos" rows="4" placeholder="${esc(C.GITHUB_REPOS.join('\n'))}">${esc(((d.github && d.github.repos) || []).join('\n'))}</textarea></label>
+              <p class="jv-note">Left empty, the tab shows the four shown. The app shows the same list; a repo the qa-lab-agents app cannot see is listed under Needs you.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
     }
@@ -3338,8 +3486,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
+        const github = { repos: C.githubRepos(String(val('s-repos').value || '').split('\n')) };
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
-            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries,
+            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github,
             actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) } };
     }
 
@@ -3360,12 +3509,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         toast('Saving…');
         const out = await call('settings-save', { settings });
         if (!out.ok) { toast('Not saved: ' + (out.error || 'no answer'), 5000); return; }
+        const repos = (s) => JSON.stringify(C.githubRepos(s && s.github && s.github.repos));
+        const reposChanged = repos(S.settings) !== repos(out);
         S.settings = out;
         closeSettings();
         toast('Saved. Jarvis is recounting the goals.');
         compute();
         render();
-        loadExternal(['goals']);
+        loadExternal(reposChanged ? ['goals', 'github-work'] : ['goals']);
     }
 
     async function dailyNow() {
@@ -3398,6 +3549,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     // --- events ---------------------------------------------------------------------------------------------
 
+    root.addEventListener('pointerover', (event) => { const hit = event.target.closest && event.target.closest('.jv-hit'); if (hit && event.pointerType === 'mouse') chartTip(hit); });
+    root.addEventListener('pointerout', (event) => {
+        const fig = event.pointerType === 'mouse' && event.target.closest && event.target.closest('.jv-chart');
+        if (fig && !fig.contains(event.relatedTarget)) chartTipOff(fig);
+    });
     root.addEventListener('toggle', (event) => {
         const d = event.target;
         if (d.dataset && d.dataset.person) { if (d.open) openPeople.add(d.dataset.person); else openPeople.delete(d.dataset.person); }
@@ -3410,6 +3566,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }, true);
     root.addEventListener('click', (event) => {
         if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }
+        const hit = event.target.closest('.jv-hit');
+        if (hit) { chartTip(hit); return; }
+        const opener = event.target.closest('[data-drill-open]');
+        if (opener && root.contains(opener)) { drillToggle(opener); return; }
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
         if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
@@ -3500,7 +3660,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'targets', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
+            settings: () => { openSettings(); const at = t.dataset.settingsAt && $(`[name="${t.dataset.settingsAt}"]`); if (at) { at.focus(); at.scrollIntoView({ block: 'center' }); } }, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'targets', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
         };
         if (acts[act]) acts[act]();
     });
@@ -3616,6 +3776,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); palette($('.jv-palette').hidden); return; }
         if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); return; }
         if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.closest && event.target.closest('li[data-brief]')) { event.preventDefault(); openSheet(event.target.closest('li[data-brief]').dataset.brief); return; }
+        if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('[data-drill-open]:not(button)')) { event.preventDefault(); drillToggle(event.target); return; }
         if (S.sheet) return;
         if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
         if (/^[1-9]$/.test(event.key) && C.PRODUCTS[Number(event.key) - 1]) go(C.PRODUCTS[Number(event.key) - 1].key);
