@@ -155,6 +155,8 @@ class GithubTest {
         assertEquals("no change", Github.workerState(json("""{"state":"nochange"}""")))
         assertEquals("alert", Github.workerLevel("failed"))
         assertEquals("good", Github.workerLevel("done"))
+        assertEquals("Gemini quota", Github.workerState(json("""{"state":"failed","reason":"quota"}""")))
+        assertEquals("warn", Github.workerLevel("failed", "quota"))
     }
 
     private fun JsonObject.str() = (this["key"] as kotlinx.serialization.json.JsonPrimitive).content
