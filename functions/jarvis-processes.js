@@ -31,7 +31,11 @@ const HOUR = 3600000;
 const KEEP_MS = 24 * HOUR;
 // An active row with no word for this long has died without saying so; agents may sit idle longer.
 const QUIET_MS = { job: 0.75 * HOUR, "review-run": HOUR, desk: HOUR, cube: 2 * HOUR, workflow: 6 * HOUR, deploy: 6 * HOUR, agent: 12 * HOUR, "mac-agent": HOUR };
-const MAX_ROWS = 40;
+// The day is kept whole (#2890): a busy day is about 250 finished rows, some 50 KB. Past this budget the oldest finished
+// rows go first, so the doc stays far below Firestore's 1 MiB and the processes op small.
+const MAX_BYTES = 256 * 1024;
+// A finished row keeps a short outcome; its progress, needs-you flag and last update no longer show.
+const DONE_STEP = 100;
 // A job that runs more than once an hour is shown only once it has run this long (or fails, or did something).
 const SHOW_AFTER_MS = 20000;
 // The kinds the Mac may report through process-report.
@@ -74,15 +78,27 @@ function clean(input, now) {
 
 const SAME = ["kind", "name", "state", "step", "progress", "url", "needsYou"];
 
-// The rows with `row` put in; null when it changes nothing shown.
-function merge(rows, row) {
+/** A finished row as kept: what the panel shows of it (name, outcome, start, end, link). */
+function compact(row) {
+  const out = Object.assign({}, row);
+  delete out.progress;
+  delete out.needsYou;
+  if (out.endedAt) delete out.updatedAt;
+  if (out.step) out.step = clip(out.step, DONE_STEP).trim();
+  return out;
+}
+
+// The rows with `row` put in; null when it changes nothing shown. A new start is a new run, even with the same outcome.
+function merge(rows, input) {
   const list = rows || [];
+  const row = ACTIVE.has(input.state) ? input : compact(input);
   const was = list.find((r) => r.id === row.id);
-  if (was && SAME.every((k) => was[k] === row[k])) return null;
+  if (was && SAME.every((k) => was[k] === row[k]) && (!row.startedAt || row.startedAt === was.startedAt)) return null;
   // GitHub may deliver a run's in_progress after its completed; a new run or Cursor turn comes with a new start.
   if (was && !ACTIVE.has(was.state) && ACTIVE.has(row.state) && row.startedAt && row.startedAt === was.startedAt) return null;
   const next = Object.assign({}, row, { startedAt: row.startedAt || (was && was.startedAt) || row.updatedAt });
-  if (!ACTIVE.has(next.state)) next.endedAt = (was && !ACTIVE.has(was.state) && was.endedAt) || row.updatedAt;
+  const sameRun = was && !ACTIVE.has(was.state) && next.startedAt === was.startedAt;
+  if (!ACTIVE.has(next.state)) next.endedAt = (sameRun && was.endedAt) || row.updatedAt;
   return list.filter((r) => r.id !== row.id).concat(next);
 }
 
@@ -90,7 +106,19 @@ const rank = (r) => (r.needsYou ? 0 : r.state === "running" ? 1 : r.state === "w
 const newest = (a, b) => String(b.startedAt || "").localeCompare(String(a.startedAt || ""));
 const latest = (a, b) => String(b.endedAt || b.updatedAt || "").localeCompare(String(a.endedAt || a.updatedAt || ""));
 
-/** Old and silent rows out, one finished row per group, active ones first; at most MAX_ROWS. */
+/** The longest head of the rows (active first, then the newest finished) whose JSON fits in MAX_BYTES. */
+function fit(rows) {
+  let bytes = 2;
+  const out = [];
+  for (const r of rows) {
+    bytes += JSON.stringify(r).length + 1;
+    if (bytes > MAX_BYTES) break;
+    out.push(r);
+  }
+  return out;
+}
+
+/** Old and silent rows out, one finished row per group, active ones first, finished ones compact; within MAX_BYTES. */
 function prune(rows, now) {
   const fresh = (rows || []).filter((r) => ACTIVE.has(r.state)
     ? now - Date.parse(r.updatedAt) < KEEP_MS
@@ -109,8 +137,8 @@ function prune(rows, now) {
     if (seen.has(r.group)) return false;
     seen.add(r.group);
     return true;
-  });
-  return active.concat(ended).slice(0, MAX_ROWS);
+  }).map(compact);
+  return fit(active.concat(ended));
 }
 
 /** The processes field of the snapshot: the rows and their counts. */
@@ -191,7 +219,8 @@ const FAILED = new Set(["failure", "timed_out", "startup_failure"]);
 function workflowRow(body, { isDeploy, jobFiles } = {}) {
   const run = (body && body.workflow_run) || null;
   if (!run || !run.id || body.action === "requested") return null;
-  if (SKIP_EVENTS.has(run.event) || SKIP_NAMES.test(run.name || "")) return null;
+  // GitHub's code scanning runs as a dynamic workflow named after the PR ("PR #2906") or the push ("Push on main").
+  if (SKIP_EVENTS.has(run.event) || SKIP_NAMES.test(run.name || "") || SKIP_NAMES.test(run.path || "")) return null;
   const file = String(run.path || "").split("/").pop();
   const deploy = isDeploy ? isDeploy(run) : false;
   const kind = deploy ? "deploy" : run.event === "schedule" || (jobFiles || []).includes(file) ? "job" : "workflow";
@@ -284,4 +313,4 @@ function macRows(body) {
   return list.slice(0, 10).filter((r) => r && MAC_KINDS.has(r.kind)).map((r) => Object.assign({}, r, { id: (r.kind === "agent" ? "agent:" : "mac:") + clip(String(r.id || "").replace(/^(agent|mac):/, ""), 100) }));
 }
 
-module.exports = { KINDS, STATES, ACTIVE, KEEP_MS, QUIET_MS, MAX_ROWS, SHOW_AFTER_MS, EMPTY, clean, merge, prune, view, versionOf, parse, read, report, frequent, jobRow, workflowRow, settleRuns, signed, cubeRow, deskRow, reviewRow, cloudAgentRow, cloudAgents, macRows, hostOf, JOB_NAMES };
+module.exports = { KINDS, STATES, ACTIVE, KEEP_MS, QUIET_MS, MAX_BYTES, SHOW_AFTER_MS, EMPTY, clean, compact, merge, prune, view, versionOf, parse, read, report, frequent, jobRow, workflowRow, settleRuns, signed, cubeRow, deskRow, reviewRow, cloudAgentRow, cloudAgents, macRows, hostOf, JOB_NAMES };

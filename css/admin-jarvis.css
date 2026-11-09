@@ -727,6 +727,7 @@
 .jv-proc.is-needs .jv-proc-main small { color: var(--amber); }
 .jv-proc-bar { display: block; height: 3px; border-radius: 2px; background: rgba(56, 225, 255, 0.15); overflow: hidden; margin-top: 0.2rem; }
 .jv-proc-bar i { display: block; height: 100%; background: var(--cyan); }
+.jv-proc-all { margin-top: 0.4rem; }
 .jv-proc-open { justify-self: start; margin-top: 0.3rem; border-color: var(--amber); color: var(--amber); }
 .jv-proc time { font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .jv-proc.is-running time { color: var(--cyan); }
