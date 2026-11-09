@@ -10,7 +10,8 @@
         mailDead: "That email domain does not accept mail.", reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.",
         clientUrlNeeded: "Enter the client's website.", clientMailDead: "The client email domain does not accept mail.", urlNeeded: "Enter a public page after https://.", urlEmpty: "Enter a URL.", urlInvalid: "Enter a valid https URL.",
         urlHttps: "Only https URLs can be reviewed.", urlLogin: "Remove the username and password from the URL.", urlPort: "Only the standard https port can be reviewed.", urlPrivate: "That address is not a public website.",
-        frameworksNeeded: "Choose at least one framework for the proposed cases.", scopeInvalid: "Choose 20, 40, 60, 80, or 100 pages, and 2, 3, 4, or 5 links deep.", termsNeeded: "Accept the terms first.", compareFrom: "Start a comparison from one of your reports."
+        frameworksNeeded: "Choose at least one framework for the proposed cases.", scopeInvalid: "Choose 20, 40, 60, 80, or 100 pages, and 2, 3, 4, or 5 links deep.", termsNeeded: "Accept the terms first.", compareFrom: "Start a comparison from one of your reports.",
+        reviewFailed: "The review failed.", noReport: "The review ended without a report."
       },
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
@@ -185,7 +186,8 @@
         clientUrlNeeded: "Escribe el sitio web del cliente.", clientMailDead: "El dominio del correo del cliente no recibe mensajes.", urlNeeded: "Escribe una página pública después de https://.", urlEmpty: "Escribe una URL.",
         urlInvalid: "Escribe una URL https válida.", urlHttps: "Solo se pueden revisar URL https.", urlLogin: "Quita el usuario y la contraseña de la URL.", urlPort: "Solo se puede revisar el puerto https estándar.",
         urlPrivate: "Esa dirección no es un sitio web público.", frameworksNeeded: "Elige al menos un framework para los casos propuestos.", scopeInvalid: "Elige 20, 40, 60, 80 o 100 páginas, y 2, 3, 4 o 5 enlaces de profundidad.",
-        termsNeeded: "Primero acepta los términos.", compareFrom: "Empieza una comparación desde uno de tus informes."
+        termsNeeded: "Primero acepta los términos.", compareFrom: "Empieza una comparación desde uno de tus informes.",
+        reviewFailed: "La revisión falló.", noReport: "La revisión terminó sin un informe."
       },
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
@@ -362,7 +364,8 @@
         clientUrlNeeded: "Digite o site do cliente.", clientMailDead: "O domínio do e-mail do cliente não recebe mensagens.", urlNeeded: "Digite uma página pública depois de https://.", urlEmpty: "Digite uma URL.",
         urlInvalid: "Digite uma URL https válida.", urlHttps: "Só é possível revisar URLs https.", urlLogin: "Tire o usuário e a senha da URL.", urlPort: "Só é possível revisar a porta https padrão.",
         urlPrivate: "Esse endereço não é um site público.", frameworksNeeded: "Escolha pelo menos um framework para os casos propostos.", scopeInvalid: "Escolha 20, 40, 60, 80 ou 100 páginas, e 2, 3, 4 ou 5 links de profundidade.",
-        termsNeeded: "Aceite os termos primeiro.", compareFrom: "Comece uma comparação a partir de um dos seus relatórios."
+        termsNeeded: "Aceite os termos primeiro.", compareFrom: "Comece uma comparação a partir de um dos seus relatórios.",
+        reviewFailed: "A revisão falhou.", noReport: "A revisão terminou sem um relatório."
       },
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
@@ -541,7 +544,8 @@
         urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.", urlEmpty: "Geben Sie eine URL ein.", urlInvalid: "Geben Sie eine gültige https-URL ein.", urlHttps: "Nur https-URLs können geprüft werden.",
         urlLogin: "Entfernen Sie Benutzername und Passwort aus der URL.", urlPort: "Nur der Standard-Port für https kann geprüft werden.", urlPrivate: "Diese Adresse ist keine öffentliche Website.",
         frameworksNeeded: "Wählen Sie mindestens ein Framework für die vorgeschlagenen Fälle.", scopeInvalid: "Wählen Sie 20, 40, 60, 80 oder 100 Seiten und 2, 3, 4 oder 5 Links Tiefe.", termsNeeded: "Akzeptieren Sie zuerst die Bedingungen.",
-        compareFrom: "Starten Sie einen Vergleich aus einem Ihrer Berichte."
+        compareFrom: "Starten Sie einen Vergleich aus einem Ihrer Berichte.",
+        reviewFailed: "Die Prüfung ist fehlgeschlagen.", noReport: "Die Prüfung endete ohne Bericht."
       },
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
@@ -718,7 +722,8 @@
         clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.", clientMailDead: "Le domaine de l’e-mail du client ne reçoit pas de courrier.", urlNeeded: "Saisissez une page publique après https://.",
         urlEmpty: "Saisissez une URL.", urlInvalid: "Saisissez une URL https valide.", urlHttps: "Seules les URL https peuvent être analysées.", urlLogin: "Retirez le nom d’utilisateur et le mot de passe de l’URL.",
         urlPort: "Seul le port https standard peut être analysé.", urlPrivate: "Cette adresse n’est pas un site web public.", frameworksNeeded: "Choisissez au moins un framework pour les cas proposés.",
-        scopeInvalid: "Choisissez 20, 40, 60, 80 ou 100 pages, et 2, 3, 4 ou 5 liens de profondeur.", termsNeeded: "Acceptez d’abord les conditions.", compareFrom: "Lancez une comparaison depuis l’un de vos rapports."
+        scopeInvalid: "Choisissez 20, 40, 60, 80 ou 100 pages, et 2, 3, 4 ou 5 liens de profondeur.", termsNeeded: "Acceptez d’abord les conditions.", compareFrom: "Lancez une comparaison depuis l’un de vos rapports.",
+        reviewFailed: "L’analyse a échoué.", noReport: "L’analyse s’est terminée sans rapport."
       },
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
@@ -894,7 +899,8 @@
         clientUrlNeeded: "Scrivi il sito web del cliente.", clientMailDead: "Il dominio dell’email del cliente non riceve posta.", urlNeeded: "Scrivi una pagina pubblica dopo https://.", urlEmpty: "Scrivi un URL.",
         urlInvalid: "Scrivi un URL https valido.", urlHttps: "Si possono revisionare solo URL https.", urlLogin: "Togli nome utente e password dall’URL.", urlPort: "Si può revisionare solo la porta https standard.",
         urlPrivate: "Quell’indirizzo non è un sito web pubblico.", frameworksNeeded: "Scegli almeno un framework per i casi proposti.", scopeInvalid: "Scegli 20, 40, 60, 80 o 100 pagine, e 2, 3, 4 o 5 link di profondità.",
-        termsNeeded: "Accetta prima i termini.", compareFrom: "Avvia un confronto da uno dei tuoi report."
+        termsNeeded: "Accetta prima i termini.", compareFrom: "Avvia un confronto da uno dei tuoi report.",
+        reviewFailed: "La revisione non è riuscita.", noReport: "La revisione è finita senza un report."
       },
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
