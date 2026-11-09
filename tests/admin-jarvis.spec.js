@@ -280,8 +280,8 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(14);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub']);
+    await expect(tabs).toHaveCount(15);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub', 'Console']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
@@ -840,6 +840,88 @@ test.describe('admin statistics (Jarvis)', () => {
         await iss.screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-issues.png` });
         await gh.locator('[data-panel-id="github-trend"]').screenshot({ path: `${process.env.GH_SHOTS}/2807-web-${width}-trend.png` });
       }
+    });
+  }
+
+  // #2810: the log op's lines, newest first; a second call with since adds one line.
+  const LOG_AT = Date.now() - 60000;
+  const logLine = (id, ms, source, level, text, url) => Object.assign({ id, at: new Date(LOG_AT + ms).toISOString(), addedAt: new Date(LOG_AT + ms).toISOString(), source, level, text }, url ? { url } : {});
+  const LOG = [
+    logLine('l4', 4000, 'actions', 'error', 'kaanmuar.github.io: E2E and Visual Tests #881 failure in 7m02s on main (push)', 'https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/881'),
+    logLine('l3', 3000, 'gemini', 'info', 'Gemini ok in 2140 ms, 812 chars: Write the briefing for these numbers'),
+    logLine('l2', 2000, 'board', 'info', 'kaanmuar.github.io: #2810 moved Next → Dev: Jarvis: live log console (qa-lab-agents)', 'https://github.com/kaanmuar/kaanmuar.github.io/issues/2810'),
+    logLine('l1', 1000, 'function', 'warn', 'jarvisWatch: mail retry failed: SendGrid answered 429')
+  ];
+  const logOp = () => {
+    let n = 0;
+    return () => (++n > 1 ? { ok: true, entries: [logLine('l5', 5000, 'push', 'info', 'alerts push to 2 devices: Jarvis alert')], cursor: new Date(LOG_AT + 5000).toISOString() } : { ok: true, entries: LOG, cursor: LOG[0].addedAt });
+  };
+
+  for (const [width, height] of [[360, 780], [720, 860]]) {
+    test(`Console lists the back's log lines, filters, searches, pauses and fits ${width}px (#2810)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      const answer = logOp();
+      const calls = await openStats(page, '#stats/console/30', { get log() { return answer(); } });
+      const con = page.locator('[data-view="console"] .jv-con');
+      await expect(con).toBeVisible();
+      const lines = con.locator('.jv-con-lines li');
+      await expect(lines).toHaveCount(4);
+      await expect(lines.first()).toContainText('mail retry failed');
+      await expect(lines.last()).toContainText('E2E and Visual Tests #881 failure');
+      await expect(lines.last()).toHaveClass(/lv-error/);
+      await expect(lines.first().locator('time')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
+      expect(calls.filter((c) => c.op === 'log')[0].body).toMatchObject({ limit: 300 });
+      await expect(page.locator('.jv-con-fab')).toBeHidden();
+
+      await con.locator('[data-con-src="board"]').click();
+      await expect(lines).toHaveCount(1);
+      await expect(lines).toContainText('moved Next → Dev');
+      await con.locator('[data-con-src=""]').click();
+      await con.locator('[data-con-level]').selectOption('warn');
+      await expect(lines).toHaveCount(2);
+      await con.locator('[data-con-level]').selectOption('debug');
+      await con.locator('[data-con-q]').fill('gemini briefing');
+      await expect(lines).toHaveCount(1);
+      await con.locator('[data-con-q]').fill('');
+      await expect(lines).toHaveCount(4);
+
+      await con.locator('[data-con-pause]').click();
+      await expect.poll(() => calls.filter((c) => c.op === 'log').length, { timeout: 20000 }).toBeGreaterThan(1);
+      expect(calls.filter((c) => c.op === 'log')[1].body.since).toBe(LOG[0].addedAt);
+      await expect(con.locator('[data-con-foot]')).toContainText('paused, 1 new');
+      await expect(lines).toHaveCount(4);
+      await con.locator('[data-con-pause]').click();
+      await expect(lines).toHaveCount(5);
+      await expect(lines.last()).toContainText('alerts push to 2 devices');
+
+      const popup = page.waitForEvent('popup');
+      await lines.filter({ hasText: '#881' }).click();
+      expect((await popup).url()).toContain('/actions/runs/881');
+
+      const layout = await page.evaluate(() => {
+        const box = (el) => el.getBoundingClientRect();
+        const con = document.querySelector('[data-view="console"] .jv-con');
+        return { overflow: document.documentElement.scrollWidth - window.innerWidth, right: box(con).right - window.innerWidth, mono: /mono|Menlo|Consolas/i.test(getComputedStyle(con).fontFamily),
+          textBelow: (() => { const li = con.querySelector('.jv-con-lines li'); return box(li.querySelector('span')).top > box(li.querySelector('time')).top + 2; })() };
+      });
+      expect(layout.overflow).toBeLessThanOrEqual(1);
+      expect(layout.right).toBeLessThanOrEqual(1);
+      expect(layout.mono).toBe(true);
+      expect(layout.textBelow).toBe(width < 460);
+      await page.screenshot({ path: `/tmp/2546/2810-web-${width}.png` });
+
+      await page.locator('.jv-tabs [data-go="github"]').click();
+      const fab = page.locator('.jv-con-fab');
+      await expect(fab).toBeVisible();
+      await fab.click();
+      const dock = page.locator('.jv-con-dock');
+      await expect(dock.locator('.jv-con-lines li')).toHaveCount(5);
+      await page.screenshot({ path: `/tmp/2546/2810-web-${width}-dock.png` });
+      await page.keyboard.press('Escape');
+      await expect(dock).toBeHidden();
+      expect(errors).toEqual([]);
     });
   }
 

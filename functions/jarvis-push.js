@@ -8,6 +8,7 @@
 const crypto = require("crypto");
 const webPush = require("./jarvis-webpush");
 const core = require("./jarvis-core");
+const jarvisLog = require("./jarvis-log");
 
 // Kinds that only make sense on the phone: app updates and reviews started from a shared link.
 const PHONE_ONLY = new Set(["update", "review"]);
@@ -116,6 +117,8 @@ async function send(messaging, db, tokens, msg, browsers) {
 
 // Every push except tests lands in jarvis_pushes for the evening digest, delivered or not.
 async function logged(db, msg, out) {
+  await jarvisLog.log(null, { source: "push", level: out.sent ? "info" : "warn", ref: msg.ref || msg.tag || "", url: msg.url,
+    text: msg.kind + " push to " + out.sent + " device" + (out.sent === 1 ? "" : "s") + (out.failed ? " (" + out.failed + " failed)" : "") + ": " + String(msg.title || "") + (msg.body ? " · " + msg.body : "") });
   if (!db || msg.kind === "test") return out;
   const now = Date.now();
   try {
