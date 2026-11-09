@@ -115,15 +115,17 @@ fun FoldAllButton() {
 }
 
 @Composable
-fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, content: @Composable ColumnScope.() -> Unit) {
+fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, id: String = Layouts.slug(title), content: @Composable ColumnScope.() -> Unit) {
     val context = LocalContext.current
     remember { Folds.load(context) }
     Folds.seen(key)
     val folded = Folds.isShut(key)
     val turn by animateFloatAsState(if (folded) -90f else 0f, tween(200), label = "fold")
     val dense = LocalDense.current
+    val tab = LocalLayoutTab.current
+    if (tab != null) Arrange.titles["$tab/$id"] = title
     Column(
-        modifier
+        Modifier.then(PanelIdElement(id)).then(modifier)
             .fillMaxWidth()
             .padding(horizontal = if (dense) 7.dp else 14.dp, vertical = if (dense) 5.dp else 8.dp)
             .reveal()
@@ -146,6 +148,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
             trailing?.let { Spacer(Modifier.width(8.dp)); it() }
         }
+        if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
         if (!folded) content()
     }
 }
