@@ -1286,6 +1286,7 @@ test("outreach notices push what is new, at most once an hour", () => {
   assert.equal(notify.noticesDue(pending, "", now).length, 2);
   assert.deepEqual(notify.noticesDue(pending, "2026-10-25T13:00:00Z", now).map((n) => n.host), ["a.com"]);
   assert.deepEqual(notify.noticesDue(pending, "2026-10-25T14:10:00Z", now), []);
+  assert.deepEqual(notify.noticesDue(pending.map((n) => Object.assign({ domain: n.host }, n)), "2026-10-25T13:00:00Z", now, ["b.com"]).map((n) => n.host), ["a.com", "b.com"], "one held back for its Live Reports card comes again");
   const msg = notify.noticesMessage([pending[0]], 2);
   assert.equal(msg.title, "2 outreach notices waiting for you");
   assert.equal(msg.body, "1 new: a.com. 1 critical security finding. Send or drop each one.");

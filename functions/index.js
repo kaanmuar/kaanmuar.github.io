@@ -6573,14 +6573,19 @@ async function jarvisNoticesRun() {
   const [state, snap] = await Promise.all([ref.get(), db.collection("url_review_owner_notices").where("status", "==", "pending").get()]);
   const pending = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
   const now = Date.now();
-  const fresh = jarvisNotify.noticesDue(pending, state.exists ? state.data().lastAt : "", now);
-  if (!fresh.length) return pending.length + " pending, none new";
+  const last = state.exists ? state.data() : {};
+  const due = jarvisNotify.noticesDue(pending, last.lastAt || "", now, last.waiting);
+  if (!due.length) return pending.length + " pending, none new";
+  // Send is refused until the site's card is on Live Reports, so those notices wait for a later hour (#2893).
+  const index = await liveReportIndex().catch(() => null);
+  const fresh = due.filter((n) => index && ownerNotice.liveCard(index, n.host));
+  const waiting = due.filter((n) => !fresh.includes(n)).map((n) => n.domain);
   // One notification per notice with Send and Skip (#1670); past 6, the rest share one.
   let sent = 0;
   for (const n of fresh.slice(0, 6)) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisMailPush.noticeMessage(n))).sent;
   if (fresh.length > 6) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisNotify.noticesMessage(fresh.slice(6), pending.length))).sent;
-  await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length });
-  return fresh.length + " new notices, " + sent + " pushes";
+  await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length, waiting });
+  return fresh.length + " new notices, " + sent + " pushes" + (waiting.length ? ", " + waiting.length + " wait for Live Reports" : "");
 }
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
@@ -6635,7 +6640,8 @@ exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, me
 
 // Every minute (#2810): Actions runs, issues, PRs, board moves and the Cloud Functions log into Jarvis > Console.
 exports.jarvisLogPoll = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.jarvisLogPoll }), "jarvisLogPoll",
-  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform") }));
+  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform"),
+    onRuns: (repo, runs) => (repo === BUG_REPO ? jarvisProcesses.settleRuns(jarvisLiveDeps(), runs, { isDeploy: jarvisGithub.isDeploy, jobFiles: GITHUB_JOB_FILES }) : Promise.resolve()) }));
 
 // Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
 exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);

@@ -91,12 +91,37 @@ test("every reason on the form has a label in each page language, and the form c
     const start = source.indexOf("function " + name + "(");
     return source.slice(start, source.indexOf("\n  }\n", start));
   };
-  for (const name of ["paintReasons", "syncSection", "scopeSummary"]) {
-    const english = body(name).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"/g);
+  for (const name of ["paintReasons", "syncSection", "scopeSummary", "clientErrors"]) {
+    const english = body(name).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"|"[A-Z][^"\n]*\."/g);
     assert.equal(english, null, name + " writes English: " + english);
   }
-  for (const line of body("clientErrors").split("\n").filter((row) => /field: "(reason|client\w*)"/.test(row))) {
-    assert.ok(!/message: "/.test(line), "a reason error is English: " + line.trim());
+  const errors = body("clientErrors");
+  assert.equal(errors.match(/message: (?!say\()/g), null, "a form error does not read from the copy");
+  for (const [, id] of errors.matchAll(/say\("(\w+)"\)/g)) assert.ok(copy.en.fieldError[id], "clientErrors reads fieldError." + id + ", which the copy lacks");
+});
+
+test("every field error the server sends reads in each page language (#2837)", () => {
+  const copy = copyOf("qa-review-report-copy");
+  const core = fs.readFileSync(path.join(__dirname, "../../functions/url-review-core.js"), "utf8");
+  const sent = new Set();
+  for (const name of ["validateIntake", "screenIntake", "preformatUrl", "normalizeUrl"]) {
+    const start = core.search(new RegExp("function " + name + "\\("));
+    const text = core.slice(start, core.indexOf("\n}\n", start));
+    for (const [, message] of text.matchAll(/(?:fieldError\(errors, "\w+", (?:[\w.]+ \|\| )?|message: |new Error\()"([^"]+)"/g)) sent.add(message);
+  }
+  assert.ok(sent.size >= 20, "found only " + sent.size + " server field errors");
+  const english = Object.values(copy.en.fieldError);
+  for (const message of sent) assert.ok(english.includes(message), "the server's field error has no copy: " + message);
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-report-copy.js"), "utf8");
+  for (const lang of LANGS) {
+    for (const [id, text] of Object.entries(copy.en.fieldError)) {
+      assert.ok(copy[lang].fieldError[id] && copy[lang].fieldError[id] !== text, lang + ".fieldError." + id + " is missing or still English");
+    }
+    const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+    vm.runInNewContext(source, sandbox);
+    const rc = sandbox.window.QAReviewReportCopy;
+    for (const message of sent) assert.notEqual(rc.field(message), message, lang + " shows the server's English: " + message);
+    assert.equal(rc.field("A sentence the copy does not know."), "A sentence the copy does not know.");
   }
 });
 

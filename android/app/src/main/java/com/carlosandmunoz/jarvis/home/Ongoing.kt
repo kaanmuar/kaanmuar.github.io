@@ -106,7 +106,9 @@ object Ongoing {
         val urgent = alerts && w.alerts > 0
         val color = when { urgent -> PINK; waiting -> AMBER; else -> CYAN }
         val rings = if (Part.READINESS in show) listOfNotNull(ready?.let { StatusCard.Ring(it, "Readiness", color) }, uptime(snap)) else emptyList()
-        val card = StatusCard.Card(rings, if (Part.BAR in show) bars(snap) else emptyList(), lines)
+        val processes = snap.obj("processes")
+        val note = Processes.summary(processes)?.takeIf { Part.PROCESSES in show && Processes.needsYou(processes) > 0 }
+        val card = StatusCard.Card(rings, if (Part.BAR in show) bars(snap) else emptyList(), lines, note)
         return Content(ready, title, lines.firstOrNull().orEmpty(), lines, urgent, at, chip,
             waiting = waiting, ring = Part.READINESS in show, bar = Part.BAR in show, live = Part.CHIP in show, counts = counts, card = card)
     }

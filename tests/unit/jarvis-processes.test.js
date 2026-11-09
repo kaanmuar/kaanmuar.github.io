@@ -112,6 +112,88 @@ test("finished rows leave after a day, a silent job is settled as crashed, and o
   assert.match(out[0].step, /likely crashed/);
 });
 
+// What report() does to the rows, without the store: each event merged in at its time, then pruned.
+function play(events) {
+  let rows = [];
+  events.sort((a, b) => a.t - b.t).forEach((e) => { rows = proc.prune(proc.merge(rows, proc.clean(e.row, e.t)) || rows, e.t); });
+  return rows;
+}
+
+test("a realistic day stays whole: 30 chats, 200 workflow runs, 150 job runs and the reviews, in about 50 KB (#2890)", () => {
+  const start = T0;
+  const end = T0 + 24 * HOUR - MIN;
+  const at = (i, n) => start + 10 * MIN + Math.floor(i * (end - start - 40 * MIN) / n);
+  const events = [];
+  const pair = (t, running, done, took) => events.push({ t, row: running }, { t: t + took, row: done });
+  for (let i = 0; i < 30; i++) {
+    const t = at(i, 30);
+    pair(t, { id: "agent:chat-" + i, kind: "agent", name: "Fix the processes panel so it shows a day " + i, state: "running", startedAt: new Date(t).toISOString(), step: "Editing functions/jarvis-processes.js" },
+      { id: "agent:chat-" + i, kind: "agent", name: "Fix the processes panel so it shows a day " + i, state: "done", step: "Turn finished" }, 12 * MIN);
+  }
+  const workflows = ["Pages", "Jarvis Android", "Lint Code Base", "E2E and Visual Tests", "Rebuild stale generated files", "Pre-flight index", "Deploy functions", "Unit tests", "Jarvis parity", "Apple catalog", "Live reports", "Social hub"];
+  for (let i = 0; i < 200; i++) {
+    const t = at(i, 200);
+    const branch = i % 10 === 0 ? "fix/" + (2800 + i) + "-a-long-branch-name" : "main";
+    const run = { id: 1000 + i, name: workflows[i % workflows.length], path: ".github/workflows/w" + (i % workflows.length) + ".yml", event: "push", head_branch: branch, workflow_id: i % workflows.length,
+      display_title: "The collapsed Live status notification says when a process needs you (#2891) (#2894)", html_url: "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/" + (1000 + i), run_started_at: new Date(t).toISOString(), run_attempt: 1 };
+    const opts = { isDeploy: github.isDeploy };
+    pair(t, proc.workflowRow({ action: "in_progress", workflow_run: Object.assign({}, run, { status: "in_progress" }) }, opts),
+      proc.workflowRow({ action: "completed", workflow_run: Object.assign({}, run, { status: "completed", conclusion: i % 17 ? "success" : "failure" }) }, opts), 6 * MIN);
+  }
+  const jobs = Object.keys(proc.JOB_NAMES).concat(["emailDailyReviewReport", "mailCanary", "remindOwnerReplies", "mailboxGraduate", "jarvisIndexPush", "jarvisLogPoll", "ownerReplies", "tiktokBusinessWatch", "diagnoseReviewFailures", "fileReviewFailureBugs", "ensureLiveReportsBatch", "sendReviewNotes", "sendOwnerNotices", "exportFirestoreWeekly", "engagementDailyReport", "jarvisIndexCheck", "dropReviewAuthUser", "jarvisWeeklyStrategy", "noteCvVisit"]);
+  for (let i = 0; i < 150; i++) {
+    const t = at(i, 150);
+    const job = jobs[i % jobs.length];
+    pair(t, proc.jobRow(job, "running", { startedAt: new Date(t).toISOString() }), proc.jobRow(job, "done", { startedAt: new Date(t).toISOString(), step: "www.electrofrioni.com (ni) complete, 20 pages read, 3 failures filed, 1 mail sent to the owner" }), 2 * MIN);
+  }
+  for (let i = 0; i < 25; i++) {
+    const t = at(i, 25);
+    pair(t, proc.reviewRow("run-" + i, "running", { url: "https://www.example-" + i + ".com/", startedAt: new Date(t).toISOString(), link: "https://carlosandmunoz.com/qa-review.html?report=run-" + i }),
+      proc.reviewRow("run-" + i, "done", { url: "https://www.example-" + i + ".com/", step: "41 pages, 7 findings", link: "https://carlosandmunoz.com/qa-review.html?report=run-" + i }), 9 * MIN);
+  }
+  const rows = play(events);
+  const ids = new Set(rows.map((r) => r.id));
+  for (let i = 0; i < 30; i++) assert.ok(ids.has("agent:chat-" + i), "chat " + i + " is kept");
+  for (let i = 0; i < 25; i++) assert.ok(ids.has("review:run-" + i), "review " + i + " is kept");
+  jobs.forEach((job) => assert.ok(ids.has("job:" + job), job + " is kept"));
+  const groups = new Set(rows.filter((r) => r.group && r.group.startsWith("gh:")).map((r) => r.group));
+  assert.equal(groups.size, workflows.length + 20, "one finished row per workflow on main and per branch");
+  const oldest = Math.min(...rows.map((r) => Date.parse(r.endedAt)));
+  assert.ok(end - oldest > 23 * HOUR, "the oldest finished row is from the start of the day: " + new Date(oldest).toISOString());
+  const bytes = JSON.stringify(proc.view(rows, end)).length;
+  assert.ok(bytes < 60 * 1024 && bytes < proc.MAX_BYTES / 4, "a day is " + bytes + " bytes");
+  assert.ok(rows.every((r) => r.updatedAt === undefined && r.progress === undefined && (!r.step || r.step.length <= 100)), "finished rows are compact");
+});
+
+test("past the byte budget the oldest finished rows go and every active row stays", () => {
+  const now = T0 + 23 * HOUR;
+  const big = (i, state) => ({ id: "agent:" + i, kind: "agent", name: "A".repeat(100), state, step: "S".repeat(160), url: "https://example.com/" + "u".repeat(400), startedAt: new Date(now - HOUR).toISOString(), updatedAt: new Date(now - (i % 60) * MIN).toISOString(), endedAt: state === "done" ? new Date(T0 + i * 20000).toISOString() : undefined });
+  const rows = [];
+  for (let i = 0; i < 3000; i++) rows.push(big(i, i < 20 ? "running" : "done"));
+  const out = proc.prune(rows, now);
+  assert.ok(JSON.stringify(out).length <= proc.MAX_BYTES);
+  assert.equal(out.filter((r) => r.state === "running").length, 20);
+  const kept = out.filter((r) => r.state === "done");
+  assert.ok(kept.length > 100 && kept.length < 2980);
+  assert.equal(kept[0].id, "agent:2999", "the newest finished row first");
+  assert.equal(kept[kept.length - 1].id, "agent:" + (3000 - kept.length), "the oldest ones went");
+});
+
+test("a job that ends again with the same outcome moves its end time; the same report twice still writes nothing", async () => {
+  const db = fakeDb();
+  const d = deps(db);
+  const run = (t) => [proc.jobRow("jarvisCountdowns", "done", { startedAt: new Date(t).toISOString(), step: "0 started (0 done), 0 waiting for daytime" })];
+  await proc.report(d, run(T0));
+  d.clock.t += 10 * MIN;
+  assert.equal((await proc.report(d, run(T0))).changed, false);
+  assert.equal((await proc.report(d, run(d.clock.t))).changed, true);
+  const row = (await proc.read(db)).value.rows[0];
+  assert.equal(row.endedAt, new Date(d.clock.t).toISOString());
+  const long = { id: "job:x", kind: "job", name: "x", state: "done", step: "w ".repeat(120), startedAt: new Date(T0).toISOString() };
+  await proc.report(d, long);
+  assert.equal((await proc.report(d, long)).changed, false, "a long outcome is clipped the same way both times");
+});
+
 test("rows are cleaned: unknown kinds and states refused, URLs only https, progress kept between 0 and 1", () => {
   assert.throws(() => proc.clean({ id: "x", kind: "nope", state: "running" }, T0), /kind/);
   assert.throws(() => proc.clean({ id: "x", kind: "job", state: "maybe" }, T0), /state/);
@@ -145,8 +227,41 @@ test("workflow runs: deploys, scheduled jobs and the rest; pull request CI and r
   assert.equal(ci.name, "CI · feat/x");
   assert.equal(proc.workflowRow({ action: "in_progress", workflow_run: Object.assign({}, RUN, { event: "pull_request" }) }, opts), null);
   assert.equal(proc.workflowRow({ action: "requested", workflow_run: RUN }, opts), null);
+  const scan = Object.assign({}, RUN, { name: "PR #2906", event: "dynamic", path: "dynamic/github-code-scanning/codeql", head_branch: "refs/pull/2906/head" });
+  assert.equal(proc.workflowRow({ action: "completed", workflow_run: scan }, opts), null, "code scanning of a PR is PR CI");
+  assert.equal(proc.workflowRow({ action: "completed", workflow_run: Object.assign({}, scan, { name: "Push on main", head_branch: "main" }) }, opts), null);
   const gate = proc.workflowRow({ action: "in_progress", workflow_run: Object.assign({}, RUN, { status: "waiting" }) }, opts);
   assert.deepEqual([gate.state, gate.needsYou], ["waiting", true]);
+});
+
+test("a run's late in_progress does not reopen it; a re-run and a new Cursor turn do", async () => {
+  const db = fakeDb();
+  const d = deps(db);
+  const opts = { isDeploy: github.isDeploy };
+  const done = Object.assign({}, RUN, { status: "completed", conclusion: "success" });
+  await proc.report(d, proc.workflowRow({ action: "completed", workflow_run: done }, opts));
+  d.clock.t += MIN;
+  assert.equal((await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: RUN }, opts))).changed, false);
+  const rerun = Object.assign({}, RUN, { run_attempt: 2, run_started_at: "2026-11-09T05:10:00Z" });
+  await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: rerun }, opts));
+  assert.equal((await proc.read(db)).value.rows[0].state, "running");
+  await proc.report(d, { id: "agent:c", kind: "agent", name: "Chat", state: "done" });
+  d.clock.t += MIN;
+  await proc.report(d, { id: "agent:c", kind: "agent", name: "Chat", state: "running", startedAt: new Date(d.clock.t).toISOString() });
+  assert.equal((await proc.read(db)).value.rows.find((r) => r.id === "agent:c").state, "running");
+});
+
+test("runs that finished without their webhook are settled from the Actions list", async () => {
+  const db = fakeDb();
+  const d = deps(db);
+  const opts = { isDeploy: github.isDeploy };
+  await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: RUN }, opts));
+  assert.equal(await proc.settleRuns(d, [RUN], opts), "runs: none finished");
+  d.clock.t += 5 * MIN;
+  const note = await proc.settleRuns(d, [Object.assign({}, RUN, { status: "completed", conclusion: "failure" }), Object.assign({}, RUN, { id: 5, status: "completed", conclusion: "success" })], opts);
+  assert.equal(note, "runs: 1 settled");
+  const { value } = await proc.read(db);
+  assert.deepEqual(value.rows.map((r) => [r.id, r.state]), [["gh:99", "failed"]]);
 });
 
 test("the webhook signature is GitHub's sha256 HMAC over the raw body", () => {
@@ -207,6 +322,24 @@ test("the Cursor hook: a prompt runs, an answer ending in a question waits on Ca
   assert.equal(hook.nameOf({ workspace_roots: ["/tmp/x"] }, "## Fix the **tile**\nmore"), "Fix the tile");
 });
 
+test("the Cursor hook installs as a user hook beside the others, once, and uninstalls cleanly", () => {
+  const hook = require("../../.cursor/hooks/jarvis-process.js");
+  const dir = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "cursor-hooks-"));
+  fs.writeFileSync(path.join(dir, "hooks.json"), JSON.stringify({ version: 1, hooks: { stop: [{ command: "./hooks/cursor-quota.sh", timeout: 5 }] } }));
+  hook.install(dir);
+  hook.install(dir);
+  const config = JSON.parse(fs.readFileSync(path.join(dir, "hooks.json"), "utf8"));
+  assert.deepEqual(config.hooks.stop.map((h) => h.command), ["./hooks/cursor-quota.sh", "node ./hooks/jarvis-process.js stop"]);
+  assert.deepEqual(config.hooks.beforeSubmitPrompt.map((h) => h.command), ["node ./hooks/jarvis-process.js beforeSubmitPrompt"]);
+  assert.ok(fs.existsSync(path.join(dir, "hooks", "jarvis-process.js")));
+  hook.install(dir, true);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, "hooks.json"), "utf8")).hooks, { stop: [{ command: "./hooks/cursor-quota.sh", timeout: 5 }] });
+  assert.equal(fs.existsSync(path.join(dir, "hooks", "jarvis-process.js")), false);
+  const project = JSON.parse(fs.readFileSync(path.join(__dirname, "../../.cursor/hooks.json"), "utf8"));
+  assert.doesNotMatch(JSON.stringify(project), /jarvis-process/, "a chat opened on a worktree does not send twice");
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 test("web panel: running first with a ticking clock, needs-you rows get an Open link, the push redraws only this panel", async () => {
   const P = await import("../../js/admin-jarvis-processes.js");
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -229,6 +362,14 @@ test("web panel: running first with a ticking clock, needs-you rows get an Open 
   assert.match(html, /width:40%/);
   assert.equal(P.processesHtml({ rows: [p.rows[2]] }, now, esc, { compact: true }), "", "Overview hides the panel when nothing runs");
   assert.doesNotMatch(P.processesHtml(p, now, esc, { compact: true }), /Last 24 hours/);
+  assert.doesNotMatch(html, /data-proc-all/, "no All button for a few finished rows");
+  const day = { rows: Array.from({ length: 20 }, (_, i) => ({ id: "job:" + i, kind: "job", name: "Job " + i, state: "done", endedAt: new Date(now - i * HOUR).toISOString() })) };
+  const few = P.processesHtml(day, now, esc);
+  assert.equal((few.match(/class="jv-proc /g) || []).length, P.RECENT, "eight finished rows, as in the app");
+  assert.match(few, /data-proc-all>All 20</);
+  const all = P.processesHtml(day, now, esc, { all: true });
+  assert.equal((all.match(/class="jv-proc /g) || []).length, 20);
+  assert.match(all, /data-proc-all>Fewer</);
 
   const src = fs.readFileSync(path.join(__dirname, "../../js/admin-jarvis.js"), "utf8");
   assert.ok(src.includes("split(',').includes('processes') && await loadProcesses()"), "a processes push fetches only processes");

@@ -167,6 +167,7 @@ async function repoPass(ctx, token, repo, st, state) {
   ]);
   const lines = [];
   if (runs) { const r = runLines(repo, runs.workflow_runs, st.runs); st.runs = r.seen; if (!first) lines.push(...r.lines); }
+  if (runs && ctx.onRuns) await ctx.onRuns(repo, runs.workflow_runs || []).catch((error) => console.error("Runs hand-off failed:", error));
   if (issues) { const r = issueLines(repo, issues, st.issue); st.issue = r.last; if (!first) lines.push(...r.lines); }
   if (events) {
     const pre = eventLines(repo, events, st.event, {});
@@ -195,7 +196,8 @@ async function logsPass(ctx, state) {
   return out.lines;
 }
 
-/* One pass. ctx = { fetch, db, now, token(scope) -> GitHub app token, googleToken() -> bearer, repos? }. -> note. */
+/* One pass. ctx = { fetch, db, now, token(scope) -> GitHub app token, googleToken() -> bearer, repos?,
+   onRuns(repo, runs)? when a repo's runs list changed }. -> note. */
 async function poll(ctx) {
   const ref = ctx.db.collection("jarvis_log_state").doc("main");
   const snap = await ref.get();

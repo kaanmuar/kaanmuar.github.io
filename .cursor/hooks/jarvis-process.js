@@ -5,7 +5,12 @@
    (scripts/engagement-browser/agent.js pair); without it, or with JARVIS_PROCESSES=0, it does nothing.
 
    node .cursor/hooks/jarvis-process.js <beforeSubmitPrompt|afterAgentResponse|stop>   (hook input on stdin)
-   The send runs in a detached child, so a slow network never holds a turn. */
+   The send runs in a detached child, so a slow network never holds a turn.
+
+   It runs as a user hook (#2882): chats open the main checkout, whose project hooks are not kept current.
+   node .cursor/hooks/jarvis-process.js install     from a checkout of origin/main: copies this file to ~/.cursor/hooks
+                                                    and adds its events to ~/.cursor/hooks.json; run again after a change
+   node .cursor/hooks/jarvis-process.js uninstall   takes both out again */
 
 const fs = require("fs");
 const os = require("os");
@@ -72,9 +77,35 @@ async function send(body) {
   }).catch(() => null);
 }
 
+const EVENTS = ["beforeSubmitPrompt", "afterAgentResponse", "stop"];
+
+/** Puts this hook in (or, with remove, takes it out of) the user hooks in `dir` (~/.cursor), which run in every chat. */
+function install(dir, remove) {
+  const file = path.join(dir, "hooks.json");
+  const config = readJson(file) || { version: 1, hooks: {} };
+  config.hooks = config.hooks || {};
+  EVENTS.forEach((event) => {
+    const others = (config.hooks[event] || []).filter((h) => !/jarvis-process\.js/.test(String(h.command || "")));
+    config.hooks[event] = remove ? others : others.concat({ command: "node ./hooks/jarvis-process.js " + event, timeout: 3 });
+    if (!config.hooks[event].length) delete config.hooks[event];
+  });
+  const target = path.join(dir, "hooks", "jarvis-process.js");
+  if (remove) fs.rmSync(target, { force: true });
+  else {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(__filename, target);
+  }
+  fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+  return file;
+}
+
 function main() {
   const event = process.argv[2];
   if (event === "--send") return send(JSON.parse(process.argv[3] || "{}"));
+  if (event === "install" || event === "uninstall") {
+    const file = install(path.join(os.homedir(), ".cursor"), event === "uninstall");
+    return console.log((event === "install" ? "Installed in " : "Removed from ") + file);
+  }
   let raw = "";
   process.stdin.on("data", (d) => { raw += d; });
   process.stdin.on("end", () => {
@@ -99,4 +130,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { nameOf, step };
+module.exports = { nameOf, step, install };
