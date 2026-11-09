@@ -103,7 +103,7 @@ test("the Threads client falls back to the plain card when a richer container is
   try {
     const client = q.NETWORKS.threads({ THREADS_TOKEN: "t" });
     const r = await client.post({ text: "Caption", url: "https://carlosandmunoz.com/a.jpg", alt: "Card", lang: "es", topic: "GEO", clip: { url: "https://github.com/o/r/releases/download/b/a.mp4", lang: "es" } });
-    assert.deepEqual(r, { id: "p1", url: "https://www.threads.com/@qaurlreview/post/p1", uses: ["image"] });
+    assert.deepEqual(r, { id: "p1", url: "https://www.threads.com/@qaurlreview/post/p1", uses: ["image"], refused: [{ uses: ["image", "topic"], error: "Threads threads 400: topic refused" }] });
     assert.deepEqual(made.map((b) => b.media_type + (b.topic_tag ? "+topic" : "")), ["IMAGE+topic", "IMAGE"]);
     assert.equal(published, 1);
   } finally {
@@ -279,7 +279,7 @@ test("the Bluesky client quotes the quiz with the card when the video service re
     const client = q.NETWORKS.bluesky({ BLUESKY_HANDLE: "h", BLUESKY_APP_PASSWORD: "p" });
     await client.login();
     const r = await client.post({ text: "Berlin 86, Vienna 85.", image: __filename, alt: "Card", lang: "es", key: "b/02-a", quote: "at://did:plc:me/app.bsky.feed.post/quiz", clip: clipOf("02-a", "es") });
-    assert.deepEqual(r, { id: "at://did:plc:me/app.bsky.feed.post/abc", url: "https://bsky.app/profile/qalab.bsky.social/post/abc", uses: ["image", "quote"] });
+    assert.deepEqual(r, { id: "at://did:plc:me/app.bsky.feed.post/abc", url: "https://bsky.app/profile/qalab.bsky.social/post/abc", uses: ["image", "quote"], refused: [{ uses: ["video", "quote"], error: "Bluesky video Unauthorized" }] });
     assert.equal(records.length, 1);
     assert.equal(records[0].embed.$type, "app.bsky.embed.recordWithMedia");
     assert.deepEqual(records[0].embed.record, { $type: "app.bsky.embed.record", record: { uri: "at://did:plc:me/app.bsky.feed.post/quiz", cid: "bafyquiz" } });
@@ -427,6 +427,45 @@ test("the Telegram client posts the card when the clip it cannot fetch is over t
   }
 });
 
+test("a post that falls back from its clip to the card counts as posted, and the run's line and an Actions warning name it (#3006)", async () => {
+  const sent = [];
+  const f = stubFetch([["/getChat", () => ok({ ok: true, result: { username: "qalab_live" } })]].concat(telegramClipRoutes(50 * 1024 * 1024 + 1, sent)));
+  const log = console.log;
+  const lines = [];
+  console.log = (...a) => lines.push(a.join(" "));
+  try {
+    const client = q.NETWORKS.telegram({ TELEGRAM_BOT_TOKEN: "t", TELEGRAM_CHANNEL: "@qalab_live" });
+    const list = [Object.assign(post("v", NOW - 60e3, { lang: "en" }), { clip: clipOf("v", "en") }), post("i", NOW - 30e3, { lang: "en" })];
+    const book = ledger.empty();
+    const counts = await q.run("telegram", client, list, book, { live: true, now: NOW, gate: gate([]) });
+    assert.deepEqual([counts.posted, counts.failed], [2, 0]);
+    assert.deepEqual(counts.plainer, [{ name: "auto-2026-10-25/v", uses: ["image"], refused: [{ uses: ["video"], error: "Telegram sendVideo 400: Bad Request: failed to get HTTP URL content; no clip under 50 MB to upload" }] }]);
+    assert.ok(lines.includes("plainer telegram auto-2026-10-25/v - went out as image; refused video (Telegram sendVideo 400: Bad Request: failed to get HTTP URL content; no clip under 50 MB to upload)"));
+    assert.equal(ledger.find(book, "auto-2026-10-25/v", "telegram", "Telegram @qalab_live").result, "sent");
+    const out = q.report("telegram", counts, { brand: true, env: { GITHUB_ACTIONS: "true" } });
+    assert.deepEqual(out, [
+      "telegram: 2 posted (1 as a plainer post), 0 held, 0 failed, 0 due for a later run",
+      "::warning title=telegram%3A 1 of 2 posted as a plainer post::auto-2026-10-25/v went out as image after video was refused: Telegram sendVideo 400: Bad Request: failed to get HTTP URL content; no clip under 50 MB to upload"
+    ]);
+    assert.deepEqual(q.report("telegram", counts, { brand: true, env: {} }), [out[0]], "no warning outside GitHub Actions");
+  } finally {
+    console.log = log;
+    f.restore();
+  }
+});
+
+test("a run where every post goes out on its first plan prints its usual line and no warning (#3006)", async () => {
+  const log = console.log;
+  console.log = () => {};
+  try {
+    const counts = await q.run("bluesky", fakeClient(), [post("p1", NOW - 60e3)], ledger.empty(), { live: true, now: NOW, gate: gate([]) });
+    assert.deepEqual(counts.plainer, []);
+    assert.deepEqual(q.report("bluesky @qalaburlreview", counts, { env: { GITHUB_ACTIONS: "true" } }), ["bluesky @qalaburlreview: 1 posted, 0 already on the account, 0 held, 0 failed, 0 due for a later run"]);
+  } finally {
+    console.log = log;
+  }
+});
+
 test("the Instagram client falls back from a refused reel and carousel to the card and publishes once; stories stay one image (#2702)", async () => {
   const made = [];
   let published = 0;
@@ -443,7 +482,7 @@ test("the Instagram client falls back from a refused reel and carousel to the ca
   try {
     const env = { INSTAGRAM_USER_ID: "1", FACEBOOK_PAGE_TOKEN: "t" };
     const r = await q.NETWORKS.instagram(env).post({ text: "Caption", url: "https://carlosandmunoz.com/a.jpg", alt: "Card", lang: "es", clip: clipOf("a", "es") });
-    assert.deepEqual(r, { id: "ig1", url: "https://www.instagram.com/p/ig1/", uses: ["image"] });
+    assert.deepEqual(r, { id: "ig1", url: "https://www.instagram.com/p/ig1/", uses: ["image"], refused: [{ uses: ["reel"], error: "Instagram media 400: refused" }, { uses: ["carousel", "video"], error: "Instagram media 400: refused" }] });
     assert.deepEqual(made.map((b) => (b.media_type || "IMAGE") + (b.is_carousel_item ? " item" : "")), ["REELS", "IMAGE item", "VIDEO item", "CAROUSEL", "IMAGE"]);
     assert.equal(made[3].children, "c2,c3");
     assert.equal(made[4].alt_text, "Card");
