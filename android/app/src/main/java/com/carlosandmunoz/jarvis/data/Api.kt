@@ -2,7 +2,11 @@ package com.carlosandmunoz.jarvis.data
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -40,9 +44,37 @@ class Api(context: Context, private val http: OkHttpClient, private val auth: Au
 
     /** Calls an op and keeps its answer, so the app still shows the last numbers without a network. */
     suspend fun fetch(op: String, days: Int): Saved {
-        val json = call(op, days)
+        if (op == "snapshot") return snapshot(days)
+        return keep(op, days, call(op, days))
+    }
+
+    /** Each snapshot kept, as it is written: the open app shows what a push or the background refresh fetched. */
+    val snapshots = MutableSharedFlow<Pair<Int, Saved>>(extraBufferCapacity = 4)
+    private val merging = Mutex()
+
+    /** The snapshot in sections (#2510, contract on #2507): the saved copy's versions go as `since` and only the
+        sections that changed come back and are merged in; [only] limits them to the ones a push named. With no saved
+        versions, or an answer that cannot be applied, it fetches the whole snapshot. */
+    suspend fun snapshot(days: Int, only: Collection<String> = emptyList()): Saved = merging.withLock {
+        val kept = saved("snapshot", days)?.json
+        val since = Sections.since(kept)
+        val answer = if (since == null) call("snapshot", days)
+            else call("snapshot", days, mapOf("since" to since) + if (only.isEmpty()) emptyMap() else mapOf("only" to JsonArray(only.map(::JsonPrimitive))))
+        val json = if (answer.bool("delta") != true) answer else Sections.apply(kept, answer) ?: call("snapshot", days)
+        keep("snapshot", days, json).also { snapshots.tryEmit(days to it) }
+    }
+
+    private suspend fun keep(op: String, days: Int, json: JsonObject): Saved {
         withContext(Dispatchers.IO) { file(op, days).writeText(json.toString()) }
         return Saved(json, System.currentTimeMillis())
+    }
+
+    /** Changes a kept answer in place (a processes push, #2548), keeping its time so it does not look freshly fetched. */
+    fun patchSaved(op: String, days: Int, edit: (JsonObject) -> JsonObject) {
+        val f = file(op, days)
+        if (!f.exists()) return
+        val at = f.lastModified()
+        runCatching { f.writeText(edit(JSON.parseToJsonElement(f.readText()) as JsonObject).toString()); f.setLastModified(at) }
     }
 
     fun saved(op: String, days: Int): Saved? {

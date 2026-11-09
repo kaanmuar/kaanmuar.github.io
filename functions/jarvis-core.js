@@ -20,8 +20,12 @@
         { key: 'engagement', name: 'Engagement', short: 'ENG' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' },
-        { key: 'github', name: 'GitHub', short: 'GH' }
+        { key: 'github', name: 'GitHub', short: 'GH' },
+        { key: 'console', name: 'Console', short: 'LOG' }
     ];
+    // Jarvis > Console (#2810): the jarvis_log line sources and levels, lowest level first.
+    const LOG_SOURCES = ['jarvis', 'function', 'actions', 'mac', 'board', 'github', 'gemini', 'push', 'countdown'];
+    const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
     const ACTION_LABELS = {
         share_cv: 'Share', open_simulator: 'Open studio', open_qa_lab: 'Open lab', open_contact_widget: 'Contact',
         submit_message: 'Message', submit_rating: 'Rating', sim_run_sprint: 'Sprint start', sim_sprint_complete: 'Sprint finish',
@@ -410,6 +414,78 @@
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
     const SEARCH_QUERIES = ['carlos andres munoz qa', 'carlosandmunoz', 'qa-lab url review', 'free website qa review', 'website qa audit online'];
 
+    // The repos the GitHub tab shows when Settings lists none (#2807): jarvis_settings/main github.repos, owner/name each.
+    const GITHUB_REPOS = ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota', 'kaanmuar/cursor-quota-releases'];
+    function githubRepos(list) {
+        const clean = Array.from(new Set((Array.isArray(list) ? list : []).map((r) => String(r || '').trim().replace(/^https:\/\/github\.com\//, '').replace(/\/+$/, '')).filter((r) => /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(r)))).slice(0, 20);
+        return clean.length ? clean : GITHUB_REPOS.slice();
+    }
+
+    // Section layout per tab (#2809): jarvis_settings/main layout[tab] = { order, hidden } of panel ids, saved by the web and the app.
+    // The app names a panel panelSlug(title); ids one side does not show keep their place when the other side saves.
+    const LAYOUT_TABS = PRODUCTS.map((p) => p.key);
+    const LAYOUT_ID = /^[a-z0-9][a-z0-9_.:-]{0,79}$/i;
+    const LAYOUT_MAX = 200;
+    function panelSlug(title) {
+        const slug = String(title || '').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '');
+        return slug || 'panel';
+    }
+    const layoutIds = (list) => Array.from(new Set((Array.isArray(list) ? list : []).filter((id) => typeof id === 'string' && LAYOUT_ID.test(id)))).slice(0, LAYOUT_MAX);
+    function cleanLayout(input) {
+        const out = {};
+        if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
+        LAYOUT_TABS.forEach((tab) => {
+            const t = input[tab];
+            if (!t || typeof t !== 'object' || Array.isArray(t)) return;
+            const order = layoutIds(t.order);
+            const hidden = layoutIds(t.hidden);
+            if (order.length || hidden.length) out[tab] = { order, hidden };
+        });
+        return out;
+    }
+    // base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is).
+    function layoutWeave(base, ref) {
+        const out = base.slice();
+        const placed = new Set(out);
+        ref.forEach((id, i) => {
+            if (placed.has(id)) return;
+            let at = 0;
+            for (let k = i - 1; k >= 0; k--) { const j = out.indexOf(ref[k]); if (j >= 0) { at = j + 1; break; } }
+            out.splice(at, 0, id);
+            placed.add(id);
+        });
+        return out;
+    }
+    // The panels a tab shows, in the saved order: new panels at their default place, saved ids no panel has any more ignored.
+    function applyLayout(defaultIds, layout) {
+        const ids = Array.from(new Set(Array.isArray(defaultIds) ? defaultIds : []));
+        const present = new Set(ids);
+        const l = layout || {};
+        const all = layoutWeave(layoutIds(l.order).filter((id) => present.has(id)), ids);
+        const hide = new Set(layoutIds(l.hidden));
+        return { all, order: all.filter((id) => !hide.has(id)), hidden: all.filter((id) => hide.has(id)) };
+    }
+    // One step up (-1) or down (1) past the next shown panel; hidden panels keep their place.
+    function layoutMove(all, hidden, id, step) {
+        const hide = new Set(hidden || []);
+        const seen = all.filter((x) => x === id || !hide.has(x));
+        const k = seen.indexOf(id) + step;
+        if (seen.indexOf(id) < 0 || k < 0 || k >= seen.length) return all.slice();
+        const out = all.filter((x) => x !== id);
+        const j = out.indexOf(seen[k]);
+        out.splice(step < 0 ? j : j + 1, 0, id);
+        return out;
+    }
+    // What to save after an edit: this side's order and hidden panels, with the ids it did not show (the other side's, or empty panels) kept.
+    function keepLayout(prev, all, hidden, shown) {
+        const p = prev || {};
+        const mine = new Set(shown || all);
+        return {
+            order: layoutWeave(layoutIds(all), layoutIds(p.order)).slice(0, LAYOUT_MAX),
+            hidden: layoutIds(layoutIds(p.hidden).filter((id) => !mine.has(id)).concat(layoutIds(hidden)))
+        };
+    }
+
     // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
     const CONNECTIONS = [
         { key: 'health', name: 'Firestore (server collections)' }, { key: 'jobs', name: 'Cloud Scheduler' }, { key: 'github', name: 'GitHub' },
@@ -447,6 +523,25 @@
             by[c] = (by[c] || 0) + 1;
         });
         return { total, campaigns: Object.keys(by).map((label) => ({ label, value: by[label] })).sort((a, b) => b.value - a.value) };
+    }
+
+    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit|telegram|\bt\.me\b/i;
+
+    /** Marketing's "when they come" grid: visits from a social network or an outreach link, by weekday and hour. */
+    function socialHeat(events) {
+        return heatmap((events || []).filter((r) => r.kind === 'visit' && (SOCIAL.test(openSource(r)) || /utm_source=outreach/i.test(String(r.query || '')))));
+    }
+
+    /** The overview's live feed (#2102): the newest events, opens and reviews of the range, newest first, as plain lines. */
+    function feed(rows, max) {
+        const r = rows || {};
+        const iso = (v) => { const d = toDate(v); return d ? d.toISOString() : ''; };
+        const product = (key) => (PRODUCTS.find((p) => p.key === key) || { name: key }).name;
+        return [].concat(
+            (r.events || []).slice(0, 40).map((x) => ({ at: iso(x.createdAt), text: `${product(x.site)}: ${x.kind === 'visit' ? 'visit from ' + openSource(x) : actionTitle(x)}` })),
+            (r.opens || []).slice(0, 20).map((x) => ({ at: iso(x.createdAt), text: `URL Review: open from ${openSource(x)}` })),
+            (r.reviews || []).slice(0, 20).map((x) => ({ at: iso(x.createdAt), text: `URL Review: ${x.paid ? 'paid ' : ''}review of ${String(x.requestedUrl || x.url || '').replace(/^https?:\/\//, '').slice(0, 50)} (${x.status || '…'})` }))
+        ).filter((x) => x.at).sort((a, b) => b.at.localeCompare(a.at)).slice(0, max || 18);
     }
 
     function thresholds(saved) {
@@ -622,6 +717,7 @@
         const gh = ext.github;
         if (gh && gh.ok) {
             (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            (gh.prsStale || []).forEach((w) => add('warn', 'systems', `${plural(w.prs.length, 'open PR', 'open PRs')} failed "${w.workflow}" before main went green again; a re-run would test the old main.`, 'ci-prs:' + w.workflow));
             const waiting = gh.needsAgent || [];
             if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
@@ -865,6 +961,7 @@
         { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
         { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
+        { prefix: 'ci-prs:', impact: 3, group: true, title: 'Close and reopen the PRs that failed on the old main', link: 'https://github.com/kaanmuar/kaanmuar.github.io/pulls' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
         { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
@@ -932,7 +1029,7 @@
             const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
-            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
+            if (/^ci(-prs)?:/.test(item.key)) (row.workflows = row.workflows || []).push(item.key.slice(item.key.indexOf(':') + 1));
             if (item.key.startsWith('gh:flaky:')) (row.workflows = row.workflows || []).push(item.key.slice(9));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
@@ -975,6 +1072,7 @@
             return { action, label: RUN_LABELS[action] };
         }
         if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length && p.key === 'ci-prs') return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: 'Close and reopen the PRs' };
         if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
         return null;
     }
@@ -1036,6 +1134,12 @@
             fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
             link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
             act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k.startsWith('ci-prs:')) {
+            const prs = (((ext.github || {}).prsStale || []).find((w) => w.workflow === tail) || {}).prs || [];
+            fact('Workflow', tail); fact('PRs that failed on the old main', prs.length);
+            fact('What the button does', 'Closes and reopens each PR, 3 seconds apart, so GitHub builds a fresh merge with today\'s main. At most 20 a click; PRs that conflict with main are skipped and listed.');
+            prs.slice(0, 8).forEach((pr) => link('#' + pr.number + ' ' + pr.title, pr.url));
+            act('rerun-ci', 'Close and reopen them', { workflow: tail });
         } else if (k === 'github:needs-agent') {
             const waiting = (ext.github || {}).needsAgent || [];
             fact('Waiting for an agent', waiting.length);
@@ -1201,7 +1305,7 @@
         const t = raw.toLowerCase().replace(/^(hey |ok |okay )?jarvis[,.!]?\s*/, '').trim();
         if (!t) return { type: 'none' };
         const range = t.match(/\b(?:last|past)?\s*(24 hours|today|7|14|30|90)\s*(?:days?)?\b|\ball time\b/);
-        if (/\ball time\b/.test(t)) return { type: 'range', value: 'all' };
+        if (/\b(all time|(?:last|past|a|1|one) year)\b/.test(t)) return { type: 'range', value: '365' };
         if (range && /\b(day|days|hours|today|range|last|past)\b/.test(t)) return { type: 'range', value: /24 hours|today/.test(range[1]) ? '1' : range[1] };
         if (/\b(print|pdf)\b/.test(t)) return { type: 'print', all: /\b(all|everything)\b/.test(t) };
         if (/\b(export|download)\b/.test(t)) return { type: 'export', format: /\bcsv\b/.test(t) ? 'csv' : /\b(png|image|picture)\b/.test(t) ? 'png' : 'json' };
@@ -1225,6 +1329,60 @@
             if (hit) return { type: 'go', product: hit[0] };
         }
         return { type: 'ask', question: raw };
+    }
+
+    // A section push (#2509): the sections to fetch. It carries the one-day versions, so on one day only those this
+    // page does not hold; on any other range the ones it names as moved.
+    function sectionsToFetch(msg, versions, range) {
+        const moved = String((msg && msg.sections) || '').split(',').filter(Boolean);
+        let pushed;
+        try { pushed = JSON.parse((msg && msg.versions) || '{}') || {}; } catch (error) { return moved; }
+        if (String((msg && msg.days) || '') !== String(range)) return moved;
+        const stale = Object.keys(pushed).filter((name) => !versions || !versions[name] || versions[name].v !== pushed[name]);
+        return stale.concat(moved.filter((name) => !(name in pushed)));
+    }
+
+    // Jarvis 2.0 sections (#2510, contract on #2507). The versions a kept snapshot sends as `since`, or null when it
+    // has none (an answer from before #2508), which means a full fetch.
+    function sectionSince(versions) {
+        if (!versions || typeof versions !== 'object') return null;
+        const since = {};
+        Object.keys(versions).forEach((name) => { if (versions[name] && versions[name].v) since[name] = versions[name].v; });
+        return Object.keys(since).length ? since : null;
+    }
+
+    // A delta answer applied to the kept full snapshot: each field replaced (null drops it), `external` merged by
+    // source, each source's checked time taken from `checked` (its section is not resent when only that moved), and
+    // the window moved with the build time when products did not change. Null when it cannot be applied: fetch it all.
+    function applySections(kept, answer) {
+        if (!kept || typeof kept !== 'object' || !answer || answer.delta !== true) return null;
+        if (!answer.sections || typeof answer.sections !== 'object' || !answer.versions || typeof answer.versions !== 'object') return null;
+        const out = Object.assign({}, kept, { external: Object.assign({}, kept.external) });
+        const put = (into, key, value) => { if (value === null) delete into[key]; else into[key] = value; };
+        Object.keys(answer.sections).forEach((name) => {
+            const payload = answer.sections[name] || {};
+            Object.keys(payload).forEach((key) => {
+                if (key === 'external') Object.keys(payload.external || {}).forEach((source) => put(out.external, source, payload.external[source]));
+                else put(out, key, payload[key]);
+            });
+        });
+        const checked = answer.checked || {};
+        Object.keys(checked).forEach((source) => {
+            const x = out.external[source];
+            if (x && typeof x === 'object' && x.cachedAt !== checked[source]) out.external[source] = Object.assign({}, x, { cachedAt: checked[source] });
+        });
+        if (Array.isArray(out.connections) && Object.keys(checked).length) {
+            out.connections = out.connections.map((c) => (c && c.key in checked && out.external[c.key] && c.at !== checked[c.key] ? Object.assign({}, c, { at: checked[c.key] }) : c));
+        }
+        const shift = Date.parse(answer.cachedAt) - Date.parse(kept.cachedAt);
+        if (!answer.sections.products && out.window && shift) {
+            const move = (iso) => (iso && Number.isFinite(Date.parse(iso)) ? new Date(Date.parse(iso) + shift).toISOString() : iso);
+            const w = out.window;
+            out.window = Object.assign({}, w, { start: move(w.start), end: move(w.end) }, w.prior ? { prior: Object.assign({}, w.prior, { start: move(w.prior.start), end: move(w.prior.end) }) } : {});
+        }
+        if (answer.cachedAt !== undefined) out.cachedAt = answer.cachedAt;
+        out.versions = Object.assign({}, kept.versions, answer.versions);
+        return out;
     }
 
     function windowFor(range, now) {
@@ -1507,7 +1665,18 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
+    /* The console's filter, on the server (the log op) and in the page: sources = a list or "a,b" (empty is all),
+       level = the lowest level shown, q = words that must all appear in the line's text, source or ref. */
+    function logFilter(rows, f) {
+        const o = f || {};
+        const sources = (Array.isArray(o.sources) ? o.sources : String(o.sources || '').split(',')).map((s) => String(s).trim()).filter(Boolean);
+        const min = Math.max(0, LOG_LEVELS.indexOf(o.level));
+        const words = String(o.q || '').toLowerCase().split(/\s+/).filter(Boolean);
+        return (rows || []).filter((r) => r && (!sources.length || sources.includes(r.source)) && Math.max(0, LOG_LEVELS.indexOf(r.level)) >= min
+            && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
+    }
+
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

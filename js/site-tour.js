@@ -83,6 +83,8 @@
     #site-tour-close, #site-tour-back { background: transparent; color: #c5d0d8; border: 1px solid #2a3440; }
     #site-tour-back[hidden] { display: none; }
   `;
+  // A tour may pass its own labels; {n} and {m} in step are the step number and the step count.
+  const LABELS = { back: 'Back', close: 'Close', next: 'Next', finish: 'Finish', step: 'Step {n} of {m}.', progress: 'Step progress', wait: 'Available when this step finishes.' };
 
   let cfg = null;
   let index = 0;
@@ -246,9 +248,14 @@
       clip.innerHTML = '';
     }
     $('site-tour-body').textContent = step.body;
+    const words = Object.assign({}, LABELS, cfg.labels);
     $('site-tour-counter').textContent = (index + 1) + ' / ' + cfg.steps.length;
-    $('site-tour-step-label').textContent = 'Step ' + (index + 1) + ' of ' + cfg.steps.length + '.';
-    $('site-tour-next').textContent = last ? 'Finish' : 'Next';
+    $('site-tour-step-label').textContent = words.step.replace('{n}', index + 1).replace('{m}', cfg.steps.length);
+    $('site-tour-next').textContent = last ? words.finish : words.next;
+    $('site-tour-back').textContent = words.back;
+    $('site-tour-close').textContent = words.close;
+    $('site-tour-next-wait').textContent = words.wait;
+    $('site-tour-progress').setAttribute('aria-label', words.progress);
     $('site-tour-next').disabled = true;
     $('site-tour-next').setAttribute('aria-describedby', 'site-tour-next-wait');
     const bar = $('site-tour-progress');

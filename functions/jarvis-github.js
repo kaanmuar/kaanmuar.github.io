@@ -27,6 +27,8 @@ const QUIET = ["cancelled", "skipped", "neutral", "stale"];
 const CHECK_FAIL = ["failure", "timed_out", "startup_failure", "action_required"];
 const PR_STATES = ["clean", "dirty", "behind", "blocked", "unstable"];
 const HISTORY_DAYS = 90;
+// Cards and issues each drill-down lists (#2807).
+const ITEMS = 10;
 const LOCAL_STALE = 30 * MINUTE;
 const INSTALL = "https://github.com/settings/installations/175836846";
 const REPORTER = "Start the Mac GitHub reporter: node scripts/github-local-report.js --install";
@@ -181,12 +183,12 @@ function flakyGroups(runs) {
   const groups = new Map();
   runs.filter(done).forEach((run) => {
     const key = run.workflow_id + ":" + run.head_sha;
-    const g = groups.get(key) || { name: wfName(run), ok: false, bad: false, retried: false };
+    const g = groups.get(key) || { name: wfName(run), path: run.path || "", ok: false, bad: false, retried: false };
     if (green(run)) { g.ok = true; if ((run.run_attempt || 1) > 1) g.retried = true; }
     if (failed(run)) g.bad = true;
     groups.set(key, g);
   });
-  return Array.from(groups.values()).map((g) => ({ name: g.name, flaky: g.retried || (g.ok && g.bad) }));
+  return Array.from(groups.values()).map((g) => ({ name: g.name, path: g.path, flaky: g.retried || (g.ok && g.bad) }));
 }
 
 // MTTR samples in hours: a workflow's first red run on main to its next green one.
@@ -254,10 +256,32 @@ const diagOf = (d) => (d ? { cause: d.cause || "", category: d.category || "", f
 
 // --- parts --------------------------------------------------------------------------------------------------------
 
+const prOf = (run) => (run.pull_requests && run.pull_requests[0] && run.pull_requests[0].number) || null;
+
+// A workflow's failed runs on GitHub: its file's page when it has one, else the Actions search by name.
+function failuresUrl(name, path) {
+  const file = String(path || "").split("/").pop();
+  return /^\.github\/workflows\//.test(path || "") ? "https://github.com/" + REPO + "/actions/workflows/" + encodeURIComponent(file) + "?query=" + encodeURIComponent("is:failure")
+    : "https://github.com/" + REPO + "/actions?query=" + encodeURIComponent("workflow:\"" + name + "\" is:failure");
+}
+
 function ciPart(runs, history, diags, now, days, live) {
   const totals = runTotals(runs);
+  const diagByRun = {};
+  diags.forEach((d) => { if (d.run !== undefined) diagByRun[String(d.run)] = d; });
   const flaky = {};
-  flakyGroups(runs).forEach((f) => { const w = (flaky[f.name] = flaky[f.name] || { name: f.name, runs: 0, flaky: 0 }); w.runs++; if (f.flaky) w.flaky++; });
+  flakyGroups(runs).forEach((f) => { const w = (flaky[f.name] = flaky[f.name] || { name: f.name, path: f.path, runs: 0, flaky: 0 }); w.runs++; if (f.flaky) w.flaky++; });
+  // #2808: the newest failure each flaky row acts on (a retried run that ended green when none stayed red).
+  const flakyRow = (w) => {
+    const list = runs.filter((r) => wfName(r) === w.name).sort(byNewest);
+    const bad = list.filter(failed);
+    const r = bad[0] || list.find((x) => green(x) && (x.run_attempt || 1) > 1);
+    return {
+      name: w.name, path: w.path, pct: pct(w.flaky, w.runs), runs: w.runs, failures: bad.length, url: failuresUrl(w.name, w.path),
+      links: bad.slice(0, 5).map((x) => x.html_url).filter(Boolean),
+      newest: r ? { id: r.id, url: r.html_url || "", at: r.updated_at, branch: r.head_branch || "", pr: prOf(r), attempt: r.run_attempt || 1, failed: failed(r), diag: diagOf(diagByRun[String(r.id)]) } : null
+    };
+  };
   const groups = {};
   runs.forEach((r) => (groups[wfKey(r)] = groups[wfKey(r)] || []).push(r));
   const workflows = Object.keys(groups).map((key) => {
@@ -270,11 +294,9 @@ function ciPart(runs, history, diags, now, days, live) {
       last: { conclusion: conclusionOf(list[0]), at: list[0].updated_at || list[0].created_at, url: list[0].html_url || "" }
     };
   }).sort((a, b) => Number(b.mainRed) - Number(a.mainRed) || (a.passRate ?? 101) - (b.passRate ?? 101) || a.name.localeCompare(b.name));
-  const diagByRun = {};
-  diags.forEach((d) => { if (d.run !== undefined) diagByRun[String(d.run)] = d; });
   const failing = Object.values(latestBy(runs.filter(decided), (r) => wfKey(r) + "\n" + r.head_branch)).filter(failed).sort(byNewest).slice(0, 30).map((r) => ({
     id: r.id, name: wfName(r), branch: r.head_branch || "", url: r.html_url || "", at: r.updated_at, attempt: r.run_attempt || 1,
-    pr: (r.pull_requests && r.pull_requests[0] && r.pull_requests[0].number) || null, sha: String(r.head_sha || "").slice(0, 7),
+    pr: prOf(r), sha: String(r.head_sha || "").slice(0, 7),
     event: r.event || "", diag: diagOf(diagByRun[String(r.id)])
   }));
   const today = isoDay(now);
@@ -286,7 +308,7 @@ function ciPart(runs, history, diags, now, days, live) {
   Object.assign(live, { mainGreen: totals.mainGreen, mttr: recoveries(runs), today: todayTotals, day: totals });
   return {
     passRate: totals.passRate, mainPassRate: totals.mainPassRate, runs: totals.runs, failed: totals.failed, minutes: totals.minutes, queueMedS: totals.queueMedS, durMedS: totals.durMedS,
-    flaky: { pct: totals.flaky, workflows: Object.values(flaky).filter((w) => w.flaky).map((w) => ({ name: w.name, pct: pct(w.flaky, w.runs), runs: w.runs })).sort((a, b) => b.pct - a.pct || b.runs - a.runs).slice(0, 10) },
+    flaky: { pct: totals.flaky, workflows: Object.values(flaky).filter((w) => w.flaky).map(flakyRow).sort((a, b) => b.pct - a.pct || b.runs - a.runs).slice(0, 10) },
     workflows, failing, daily, since: new Date(now - DAY).toISOString()
   };
 }
@@ -343,7 +365,7 @@ async function prsPart(gh, open, closed, now, start, days, live) {
   };
 }
 
-const BOARD_QUERY = "query($id: ID!, $c: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $c) { pageInfo { hasNextPage endCursor } nodes { updatedAt fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt } } content { __typename ... on Issue { number title url state closedAt createdAt } ... on PullRequest { number title url state mergedAt closedAt createdAt } } } } } } }";
+const BOARD_QUERY = "query($id: ID!, $c: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $c) { pageInfo { hasNextPage endCursor } nodes { updatedAt fieldValueByName(name: \"Status\") { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt } } content { __typename ... on Issue { number title url state closedAt createdAt labels(first: 5) { nodes { name } } } ... on PullRequest { number title url state mergedAt closedAt createdAt labels(first: 5) { nodes { name } } } } } } } } }";
 
 async function boardItems(gh) {
   const items = [];
@@ -363,14 +385,15 @@ async function boardPart(gh, ctx, now, start, days) {
   const rows = (await boardItems(gh)).filter((n) => n && n.content && n.content.number).map((n) => {
     const status = n.fieldValueByName || {};
     const c = n.content;
-    return { column: status.name || "", since: ms(status.updatedAt || n.updatedAt) || now, type: c.__typename === "PullRequest" ? "pr" : "issue", number: c.number, title: String(c.title || "").slice(0, 160), url: c.url || "", state: c.state || "", closedAt: c.closedAt || "", mergedAt: c.mergedAt || "", createdAt: c.createdAt || "" };
+    return { column: status.name || "", since: ms(status.updatedAt || n.updatedAt) || now, type: c.__typename === "PullRequest" ? "pr" : "issue", number: c.number, title: String(c.title || "").slice(0, 160), url: c.url || "", state: c.state || "", closedAt: c.closedAt || "", mergedAt: c.mergedAt || "", createdAt: c.createdAt || "", labels: ((c.labels && c.labels.nodes) || []).map((l) => l && l.name).filter(Boolean) };
   });
   const age = (r) => round((now - r.since) / DAY);
-  const brief = (r) => ({ number: r.number, title: r.title, days: age(r), url: r.url });
+  const brief = (r) => ({ number: r.number, title: r.title, days: age(r), url: r.url, labels: r.labels });
   const names = COLUMNS.concat(Array.from(new Set(rows.map((r) => r.column).filter((c) => c && !COLUMNS.includes(c)))));
+  // Oldest first, except Done: its oldest cards are long finished, so it lists the newest.
   const columns = names.map((name) => {
     const list = rows.filter((r) => r.column === name).sort((a, b) => a.since - b.since);
-    return { name, count: list.length, ageMedD: round(median(list.map(age))), oldest: name === "Done" ? [] : list.slice(0, 3).map(brief) };
+    return { name, count: list.length, ageMedD: round(median(list.map(age))), items: (name === "Done" ? list.slice().reverse() : list).slice(0, ITEMS).map(brief) };
   });
   const finished = (r) => ms(r.closedAt || r.mergedAt) || r.since;
   const doneRows = rows.filter((r) => r.column === "Done");
@@ -412,13 +435,17 @@ async function issuesPart(gh, now, start, days, live) {
   const [list, open, bugs] = await Promise.all([
     gh.pages("repos/" + REPO + "/issues?state=all&since=" + encodeURIComponent(new Date(start).toISOString()) + "&per_page=100", null, 5),
     search("is:issue is:open", "&sort=created&order=asc"),
-    search("is:issue is:open label:bug,kind:bug")
+    search("is:issue is:open label:bug,kind:bug", "&sort=created&order=desc")
   ]);
   const issues = list.filter((i) => !i.pull_request);
   const opened = issues.filter((i) => ms(i.created_at) >= start);
   const closed = issues.filter((i) => i.closed_at && ms(i.closed_at) >= start);
+  const brief = (i, at) => ({ number: i.number, title: String(i.title || "").slice(0, 160), days: round((now - ms(at || i.created_at)) / DAY), url: i.html_url || "" });
+  const newest = (key) => (a, b) => ms(b[key]) - ms(a[key]);
+  const areaOf = (i) => { const area = labelsOf(i).find((l) => l.startsWith("area:")); return area ? area.slice(5) : "none"; };
   const areas = {};
-  (bugs.items || []).forEach((i) => { const area = labelsOf(i).find((l) => l.startsWith("area:")); tally(areas, area ? area.slice(5) : "none"); });
+  const areaItems = {};
+  (bugs.items || []).forEach((i) => { const area = areaOf(i); tally(areas, area); (areaItems[area] = areaItems[area] || []).push(i); });
   const kinds = {};
   (open.items || []).forEach((i) => { const kind = labelsOf(i).find((l) => l.startsWith("kind:")); tally(kinds, kind ? kind.slice(5) : isBug(i) ? "bug" : "none"); });
   const openedDay = {};
@@ -427,18 +454,30 @@ async function issuesPart(gh, now, start, days, live) {
   closed.forEach((i) => tally(closedDay, isoDay(ms(i.closed_at))));
   const all = new Map();
   issues.concat(open.items || []).forEach((i) => all.set(i.number, i));
-  const parents = Array.from(all.values()).map((i) => i.sub_issues_summary).filter((s) => s && s.total > 0);
+  const parentIssues = Array.from(all.values()).filter((i) => i.sub_issues_summary && i.sub_issues_summary.total > 0);
+  const parents = parentIssues.map((i) => i.sub_issues_summary);
   const today = isoDay(now);
   Object.assign(live, {
     openedBugs: opened.filter(isBug).length, closedBugs: closed.filter(isBug).length,
     closedBugsToday: closed.filter((i) => isBug(i) && isoDay(ms(i.closed_at)) === today).length
   });
+  const left = (i) => i.sub_issues_summary.total - i.sub_issues_summary.completed;
   return {
-    open: open.total_count || 0, openBugs: bugs.total_count || 0, bugsByArea: listOf(areas), byKind: listOf(kinds),
-    opened: opened.length, closed: closed.length,
+    open: open.total_count || 0, openBugs: bugs.total_count || 0, byKind: listOf(kinds),
+    bugsByArea: listOf(areas).map((a) => Object.assign(a, { items: (areaItems[a.label] || []).slice(0, ITEMS).map((i) => brief(i)) })),
+    opened: opened.length, closed: closed.length, since: isoDay(start),
     daily: dayKeys(now, days).map((day) => ({ day, opened: openedDay[day] || 0, closed: closedDay[day] || 0 })),
-    subIssues: { parents: parents.length, done: sum(parents, (s) => s.completed), total: sum(parents, (s) => s.total) },
-    oldest: (open.items || []).slice(0, 5).map((i) => ({ number: i.number, title: String(i.title || "").slice(0, 160), days: round((now - ms(i.created_at)) / DAY), url: i.html_url || "" }))
+    subIssues: {
+      parents: parents.length, done: sum(parents, (s) => s.completed), total: sum(parents, (s) => s.total),
+      items: parentIssues.sort((a, b) => left(b) - left(a)).slice(0, ITEMS).map((i) => Object.assign(brief(i), { done: i.sub_issues_summary.completed, total: i.sub_issues_summary.total }))
+    },
+    lists: {
+      open: Array.from(all.values()).filter((i) => !i.closed_at).sort(newest("created_at")).slice(0, ITEMS).map((i) => brief(i)),
+      openBugs: (bugs.items || []).slice(0, ITEMS).map((i) => brief(i)),
+      opened: opened.slice().sort(newest("created_at")).slice(0, ITEMS).map((i) => brief(i)),
+      closed: closed.slice().sort(newest("closed_at")).slice(0, ITEMS).map((i) => brief(i, i.closed_at))
+    },
+    oldest: (open.items || []).slice(0, ITEMS).map((i) => brief(i))
   };
 }
 
@@ -511,39 +550,95 @@ async function deploysPart(gh, runs, history, now, days, want) {
   };
 }
 
+const SEVERITIES = ["critical", "high", "medium", "low"];
+const SEVERITY_OF = { error: "high", warning: "medium", note: "low", moderate: "medium" };
+const severityOf = (s) => { const v = String(s || "").toLowerCase(); return SEVERITIES.includes(v) ? v : SEVERITY_OF[v] || "low"; };
+const SECURITY_WEEKS = 8;
+const SECURITY_ITEMS = 50;
+// closed: the queries that list fixed and dismissed alerts, newest change first, for the weekly trend (#2808).
 const SECURITY = {
-  dependabot: { path: "dependabot/alerts", need: "dependabot_alerts", item: (a) => ({ number: a.number, severity: (a.security_advisory && a.security_advisory.severity) || (a.security_vulnerability && a.security_vulnerability.severity) || "", package: (a.dependency && a.dependency.package && a.dependency.package.name) || "", url: a.html_url || "" }) },
-  codeScanning: { path: "code-scanning/alerts", need: "security_events", item: (a) => ({ number: a.number, severity: (a.rule && (a.rule.security_severity_level || a.rule.severity)) || "", rule: (a.rule && (a.rule.description || a.rule.id)) || "", url: a.html_url || "" }) },
-  secrets: { path: "secret-scanning/alerts", need: "secret_scanning_alerts", item: (a) => ({ number: a.number, severity: "critical", type: a.secret_type_display_name || a.secret_type || "", url: a.html_url || "" }) }
+  dependabot: { path: "dependabot/alerts", closed: ["state=fixed,dismissed,auto_dismissed"], need: "dependabot_alerts", item: (a) => {
+    const dep = a.dependency || {}, pkg = dep.package || {}, v = a.security_vulnerability || {}, adv = a.security_advisory || {};
+    return { number: a.number, severity: severityOf(adv.severity || v.severity), package: pkg.name || "", ecosystem: pkg.ecosystem || "", manifest: dep.manifest_path || "",
+      patched: (v.first_patched_version && v.first_patched_version.identifier) || "", vulnerable: v.vulnerable_version_range || "", summary: String(adv.summary || "").slice(0, 200), url: a.html_url || "", created: a.created_at || "" };
+  } },
+  codeScanning: { path: "code-scanning/alerts", closed: ["state=fixed", "state=dismissed"], need: "security_events", item: (a) => ({
+    number: a.number, severity: severityOf(a.rule && (a.rule.security_severity_level || a.rule.severity)), rule: (a.rule && (a.rule.description || a.rule.id)) || "",
+    tool: (a.tool && a.tool.name) || "", path: (a.most_recent_instance && a.most_recent_instance.location && a.most_recent_instance.location.path) || "", url: a.html_url || "", created: a.created_at || "" }) },
+  secrets: { path: "secret-scanning/alerts", closed: ["state=resolved"], need: "secret_scanning_alerts", item: (a) => ({ number: a.number, severity: "critical", type: a.secret_type_display_name || a.secret_type || "", url: a.html_url || "", created: a.created_at || "" }) }
 };
+const closedAt = (a) => a.fixed_at || a.dismissed_at || a.auto_dismissed_at || a.resolved_at || "";
+const wasDismissed = (a) => a.state === "dismissed" || a.state === "auto_dismissed" || (a.state === "resolved" && /false_positive|wont_fix|used_in_tests/.test(a.resolution || ""));
 
-async function securityPart(gh, repoNames, want) {
+// The open Dependabot PR that bumps a package, matched on its dependabot/ branch or its "Bump <package>" title.
+function bumpPr(openPrs, pkg) {
+  const name = String(pkg || "").toLowerCase().replace(/^@/, "");
+  if (!name) return null;
+  const pr = (openPrs || []).find((p) => { const ref = String((p.head && p.head.ref) || "").toLowerCase(); return ref.startsWith("dependabot/") && (ref.includes("/" + name + "-") || String(p.title || "").toLowerCase().includes(" " + name + " ")); });
+  return pr ? { number: pr.number, url: pr.html_url || "", title: String(pr.title || "").slice(0, 160) } : null;
+}
+
+async function securityPart(gh, repoNames, want, now, openPrs) {
   const out = {};
   const perRepo = {};
+  const weekKeys = [];
+  for (let i = SECURITY_WEEKS - 1; i >= 0; i--) weekKeys.push(isoWeek(now - i * 7 * DAY));
+  const weeks = {};
+  weekKeys.forEach((w) => (weeks[w] = { week: w, opened: 0, fixed: 0, dismissed: 0 }));
+  const count = (t, field) => { const w = t && weeks[isoWeek(t)]; if (w) w[field]++; };
   await Promise.all(Object.keys(SECURITY).map(async (kind) => {
     const spec = SECURITY[kind];
-    const read = async (repo) => {
-      try { return (await gh.get("repos/" + repo + "/" + spec.path + "?state=open&per_page=100")) || []; }
+    const read = async (repo, query) => {
+      try { return (await gh.get("repos/" + repo + "/" + spec.path + "?" + query + "&per_page=100")) || []; }
       catch (error) { if (error.status === 404 && /no analysis/i.test(error.message)) return []; throw error; }
     };
+    const closed = (repo) => Promise.all(spec.closed.map((q) => read(repo, q + "&sort=updated&direction=desc").catch(() => []))).then((lists) => lists.flat());
     try {
       if (!gh) throw new Error("No GitHub token is set.");
-      const main = await read(REPO);
-      const rest = await mapLimit(repoNames.filter((r) => r !== REPO), 5, (repo) => read(repo).catch(() => null));
+      const others = repoNames.filter((r) => r !== REPO);
+      const main = await read(REPO, "state=open");
+      const rest = await mapLimit(others, 5, (repo) => read(repo, "state=open").catch(() => null));
+      const shut = await mapLimit([REPO].concat(others), 5, closed);
       const items = [];
-      [[REPO, main]].concat(repoNames.filter((r) => r !== REPO).map((r, i) => [r, rest[i]])).forEach(([repo, alerts]) => {
+      [[REPO, main]].concat(others.map((r, i) => [r, rest[i]])).forEach(([repo, alerts]) => {
         if (!alerts) return;
         perRepo[repo] = (perRepo[repo] || 0) + alerts.length;
-        alerts.forEach((a) => items.push(Object.assign({ repo }, spec.item(a))));
+        alerts.forEach((a) => { items.push(Object.assign({ repo }, spec.item(a))); count(ms(a.created_at), "opened"); });
       });
-      out[kind] = { ok: true, open: items.length, items: items.slice(0, 50) };
-      if (kind === "dependabot") Object.assign(out[kind], { critical: items.filter((i) => i.severity === "critical").length, high: items.filter((i) => i.severity === "high").length });
+      shut.flat().forEach((a) => { count(ms(a.created_at), "opened"); count(ms(closedAt(a)), wasDismissed(a) ? "dismissed" : "fixed"); });
+      const rank = (i) => SEVERITIES.indexOf(i.severity);
+      items.sort((a, b) => rank(a) - rank(b) || ms(a.created) - ms(b.created));
+      if (kind === "dependabot") items.forEach((i) => { if (i.repo === REPO) i.pr = bumpPr(openPrs, i.package); });
+      const ages = items.map((i) => (now - ms(i.created)) / DAY).filter((d) => d >= 0 && d < 1e5);
+      const bySeverity = {};
+      SEVERITIES.forEach((s) => (bySeverity[s] = items.filter((i) => i.severity === s).length));
+      const byRepo = {};
+      items.forEach((i) => tally(byRepo, i.repo));
+      out[kind] = Object.assign({ ok: true, open: items.length, critical: bySeverity.critical, high: bySeverity.high, bySeverity, byRepo: listOf(byRepo),
+        oldestD: ages.length ? round(Math.max(...ages)) : null, medianD: round(median(ages)), items: items.slice(0, SECURITY_ITEMS) },
+      kind === "dependabot" ? { byEcosystem: listOf(items.reduce((m, i) => tally(m, i.ecosystem || "other"), {})), byPackage: listOf(items.reduce((m, i) => tally(m, i.package), {})).slice(0, 10) } : {});
     } catch (error) {
       out[kind] = { ok: false, error: clean(error) };
       if (denied(error)) { out[kind].need = spec.need; want(spec.need); }
     }
   }));
+  out.weeks = weekKeys.map((w) => weeks[w]);
   return { security: out, perRepo };
+}
+
+// The security score's penalties per kind and severity, capped at 100 in all (#2808): critical 40, high 20, medium and
+// low 5 for Dependabot and code scanning; 50 a leaked secret.
+const SECURITY_WEIGHTS = { critical: 40, high: 20, medium: 5, low: 5 };
+function securityParts(sec) {
+  const parts = [];
+  [["dependabot", "Dependabot"], ["codeScanning", "Code scanning"]].forEach(([kind, label]) => {
+    const s = sec[kind];
+    if (!s || !s.ok) return;
+    const by = s.bySeverity || { critical: s.critical || 0, high: s.high || 0, medium: 0, low: Math.max(0, (s.open || 0) - (s.critical || 0) - (s.high || 0)) };
+    SEVERITIES.forEach((sev) => { if (by[sev]) parts.push({ label: label + " " + sev, count: by[sev], each: SECURITY_WEIGHTS[sev], penalty: by[sev] * SECURITY_WEIGHTS[sev] }); });
+  });
+  if (sec.secrets && sec.secrets.ok && sec.secrets.open) parts.push({ label: "Leaked secrets", count: sec.secrets.open, each: 50, penalty: sec.secrets.open * 50 });
+  return parts;
 }
 
 function resetIso(value) {
@@ -612,8 +707,11 @@ async function androidPart(gh, start) {
   };
 }
 
-async function reposPart(gh, installed, openMain, missing) {
-  return mapLimit((installed.repositories || []).slice(0, 30), 5, async (r) => {
+// Only the repos jarvis_settings/main github.repos names (core.GITHUB_REPOS when unset), in that order (#2807).
+async function reposPart(gh, installed, openMain, missing, shown) {
+  const byName = new Map((installed.repositories || []).map((r) => [r.full_name, r]));
+  shown.filter((name) => !byName.has(name)).forEach((repo) => missing.push({ repo, why: "In the GitHub repo settings, but the qa-lab-agents app cannot see it." }));
+  return mapLimit(shown.filter((name) => byName.has(name)).map((name) => byName.get(name)), 5, async (r) => {
     const branch = r.default_branch || "main";
     const note = (error) => { if (denied(error)) missing.push({ repo: r.full_name, why: clean(error) }); return null; };
     const [runs, pulls] = await Promise.all([
@@ -737,13 +835,13 @@ function scoreOf(out, live) {
   if (ok("branches")) areas.branches = area(100 - 2 * out.branches.merged.length - 3 * out.branches.stale, out.branches.merged.length + " merged but not deleted, " + out.branches.stale + " stale");
   if (out.dora && out.dora.level) areas.deploys = area(DORA_SCORE[out.dora.level], "DORA " + out.dora.level + ": " + out.dora.deployFreq.perDay + " deploys a day, " + (out.dora.changeFail.pct ?? 0) + "% change fail");
   const sec = out.security || {};
-  if (Object.values(sec).some((s) => s && s.ok)) {
-    const d = sec.dependabot && sec.dependabot.ok ? sec.dependabot : { open: 0, critical: 0, high: 0 };
-    const code = sec.codeScanning && sec.codeScanning.ok ? sec.codeScanning.open : 0;
-    const secrets = sec.secrets && sec.secrets.ok ? sec.secrets.open : 0;
+  if (Object.keys(SECURITY).some((k) => sec[k] && sec[k].ok)) {
+    const parts = securityParts(sec);
+    const n = (re) => sum(parts.filter((p) => re.test(p.label)), (p) => p.count);
     const unread = Object.keys(SECURITY).filter((k) => !(sec[k] && sec[k].ok));
-    areas.security = area(100 - 40 * d.critical - 20 * d.high - 50 * secrets - 5 * (d.open - d.critical - d.high) - 5 * code,
-      d.critical + " critical, " + d.high + " high, " + secrets + " secrets, " + code + " code scanning" + (unread.length ? "; not readable: " + unread.join(", ") : ""));
+    areas.security = area(100 - sum(parts, (p) => p.penalty),
+      n(/critical/) + " critical, " + n(/high/) + " high, " + n(/medium|low/) + " medium or low, " + n(/secrets/) + " secrets" + (unread.length ? "; not readable: " + unread.join(", ") : ""));
+    if (areas.security) areas.security.parts = parts;
   }
   const budget = out.budget || {};
   const g = budget.kaanmuar && budget.kaanmuar.graphql;
@@ -768,7 +866,8 @@ async function source(ctx) {
   const now = ctx.now || Date.now();
   const days = Math.max(1, Math.min(HISTORY_DAYS, Number(ctx.days) || 7));
   const start = now - days * DAY;
-  const out = { ok: true, at: new Date(now).toISOString(), days, needs: [], access: { repos: [], missing: [], wanted: [] } };
+  const shown = core.githubRepos(ctx.settings && ctx.settings.github && ctx.settings.github.repos);
+  const out = { ok: true, at: new Date(now).toISOString(), days, needs: [], access: { repos: [], missing: [], wanted: [], shown } };
   const wanted = new Set();
   const want = (permission) => { if (wanted.has(permission)) return; wanted.add(permission); out.needs.push(NEED[permission]); };
   const live = {};
@@ -809,11 +908,16 @@ async function source(ctx) {
     part("android", async () => androidPart(repo(), start)),
     part("budget", async () => budgetPart(gh, await data.local())),
     part("agents", async () => agentsPart(await data.local(), now, start)),
-    (async () => { const s = await securityPart(gh, await repoNames(), want); out.security = s.security; perRepoSecurity = s.perRepo; })(),
+    (async () => {
+      const project = (await repoNames()).filter((r) => r === REPO || shown.includes(r));
+      const s = await securityPart(gh, project, want, now, await data.open().catch(() => []));
+      out.security = s.security;
+      perRepoSecurity = s.perRepo;
+    })(),
     (async () => {
       try {
         const installed = await data.installed();
-        out.repos = await reposPart(gh, installed, await data.open().catch(() => null), out.access.missing);
+        out.repos = await reposPart(gh, installed, await data.open().catch(() => null), out.access.missing, shown);
         out.access.repos = (installed.repositories || []).map((r) => r.full_name);
         const total = installed.total_count ?? out.access.repos.length;
         if (total < 3) out.needs.push("The qa-lab-agents app only sees " + total + " repos; set the kaanmuar installation to All repositories at " + INSTALL + ".");
@@ -823,7 +927,7 @@ async function source(ctx) {
       const [diags, weekly] = await Promise.all([data.diag(), data.weekly()]);
       const w = weekly[0];
       out.ai = {
-        diagnoses: diags.map((d) => Object.assign({ run: d.run ?? null, workflow: d.workflow || "" }, diagOf(d), { at: iso(d.at) })),
+        diagnoses: diags.map((d) => Object.assign({ run: d.run ?? null, workflow: d.workflow || "", repo: d.repo || REPO, branch: d.branch || "", pr: d.pr ?? null, url: d.url || "" }, diagOf(d), { at: iso(d.at) })),
         retro: w ? { week: w.week || "", text: w.text || "", at: iso(w.at) } : null
       };
     })()
@@ -917,4 +1021,4 @@ async function backfill(ctx) {
   return { ok: true, days, left };
 }
 
-module.exports = { source, daily, backfill, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState };
+module.exports = { source, daily, backfill, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy };

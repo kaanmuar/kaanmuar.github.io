@@ -1,18 +1,22 @@
 /* Jarvis: Admin > Statistics as one command center. admin.html mounts it in #stats-pane after sign-in.
 
-   The range's site_events, url_review_opens, url_reviews and url_review_alerts come from the jarvis function's day
-   rollups (op rows, functions/jarvis-days.js); live mode then reads only newer rows from Firestore (owner rules), as
-   it does url_review_reports and socialHubStats/latest. The jarvis function (functions/jarvis.js) adds what the browser cannot read: server-only
-   collections, Cloud Scheduler, GitHub, GA4, Cloudflare, PageSpeed/CrUX, uptime, Gemini, and the owner actions.
-   The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
-import { collection, query, where, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2068";
+   Jarvis reads no Firestore (#2102). The products, the range's numbers and the external sources come from the jarvis
+   function's snapshot op, the same cached answer the Android app reads (jarvisSnapshot in functions/index.js); the
+   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
+   inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
+import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
+import * as Proc from "./admin-jarvis-processes.js?v=2548";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
 const LIVE_MS = 60 * 1000;
-const EXTERNAL_MS = 5 * 60 * 1000;
-const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['all', 'All time']];
+// The server keeps a snapshot this long (jarvis.TTL.snapshot); asking sooner returns the same one.
+const SNAPSHOT_MS = 5 * 60 * 1000;
+const PROCESSES_MS = 60 * 1000;
+// The external sources the snapshot carries; the rest are asked one by one.
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
+const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
+const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
 const GA_GROUP = { cv: 'CV site', review: 'QA-lab URL Review' };
 const FAMILY = { marketing: ['marketing', 'outreach', 'hub', 'business'] };
@@ -34,37 +38,79 @@ const when = (value) => { const d = window.JarvisCore.toDate(value); return d ? 
 
 // --- charts (SVG and HTML, HUD colors) -------------------------------------------------------------------------
 
-function spark(values, color) {
-    const v = values && values.length ? values : [0];
-    const w = 120, h = 32, max = Math.max(1, ...v);
-    const pts = v.map((n, i) => `${(v.length === 1 ? w / 2 : (i / (v.length - 1)) * w).toFixed(1)},${(h - 2 - (n / max) * (h - 6)).toFixed(1)}`);
-    return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
+// #2807: charts answer a hover or a tap with the exact values of that point. Each point gets a transparent column
+// (.jv-hit, its text in data-tip); chartTip() in mountJarvis shows it in the chart's .jv-tip.
+const withUnit = (n, unit) => fmt(n) + (unit ? ' ' + unit : '');
+function hits(xs, top, bottom, tips, edges) {
+    return xs.map((cx, i) => {
+        const a = i ? (xs[i - 1] + cx) / 2 : edges[0], b = i < xs.length - 1 ? (cx + xs[i + 1]) / 2 : edges[1];
+        return `<rect class="jv-hit" x="${a.toFixed(1)}" y="${top}" width="${Math.max(1, b - a).toFixed(1)}" height="${bottom - top}" data-x="${cx.toFixed(1)}" data-tip="${esc(tips[i])}"><title>${esc(tips[i])}</title></rect>`;
+    }).join('') + `<line class="jv-guide" x1="0" x2="0" y1="${top}" y2="${bottom}"></line>`;
 }
 
+// opts (#2807, all optional): title, unit (after each value), labels (one date per value: first and last show under
+// the line and the tooltip names them). Without opts it is the bare line it always was.
+function spark(values, color, opts) {
+    const v = values && values.length ? values : [0];
+    const w = 120, h = 32, max = Math.max(1, ...v);
+    const xs = v.map((n, i) => (v.length === 1 ? w / 2 : (i / (v.length - 1)) * w));
+    const pts = v.map((n, i) => `${xs[i].toFixed(1)},${(h - 2 - (n / max) * (h - 6)).toFixed(1)}`);
+    const lines = `<polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+    if (!opts) return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>`;
+    const labels = opts.labels || [];
+    const tips = v.map((n, i) => `${labels[i] || ''}${labels[i] ? ': ' : ''}${withUnit(n, opts.unit)}`);
+    return `<figure class="jv-chart jv-chart-spark">${opts.title ? `<figcaption class="jv-chart-title"><i style="background:${color}"></i>${esc(opts.title)}</figcaption>` : ''}<div class="jv-chart-plot"><svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${esc((opts.title || '') + ' per day, peak ' + withUnit(Math.max(...v), opts.unit))}">${lines}${hits(xs, 0, h, tips, [0, w])}</svg><div class="jv-tip" role="status" hidden></div></div>
+        <div class="jv-spark-axis"><span>${esc(labels.length ? String(labels[0]).slice(5) : '')}</span><span>0–${esc(withUnit(max, opts.unit))}</span><span>${esc(labels.length ? String(labels[labels.length - 1]).slice(5) : '')}</span></div></figure>`;
+}
+
+// opts: fill (false: lines only); #2807, all optional: title, yLabel (the y axis, with its unit), unit (after each
+// value in the legend and tooltip; a series' own unit wins), xLabel (under the dates), legend (false hides it).
+// With any of title, yLabel, xLabel or unit the axes are HTML around a stretched plot, so their text keeps its size
+// on a phone-wide panel; without them it is the all-SVG chart it always was.
 function area(labels, series, opts) {
     if (!labels || !labels.length) return '<p class="jv-empty">No days in this range.</p>';
-    const fill = !(opts && opts.fill === false);
-    const w = 760, h = 220, pad = 30;
+    const o = opts || {};
+    const fill = o.fill !== false;
+    const framed = !!(o.title || o.yLabel || o.xLabel || o.unit);
+    const w = 760, h = framed ? 200 : 220, pad = 30, left = framed ? 6 : pad, right = framed ? 6 : pad, top = framed ? 8 : pad, bottom = framed ? 4 : pad;
     const peakValue = Math.max(1, ...series.flatMap((s) => s.values));
     const raw = peakValue / 4;
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
     const unit = Math.max(1, [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw));
     const max = Math.ceil(peakValue / unit) * unit;
-    const x = (i) => pad + (labels.length === 1 ? (w - pad * 2) / 2 : (i / (labels.length - 1)) * (w - pad * 2));
-    const y = (n) => h - pad - (n / max) * (h - pad * 2);
-    const grid = Array.from({ length: max / unit + 1 }, (_, k) => k * unit).map((n) => `<line x1="${pad}" x2="${w - pad}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"></line><text x="${pad - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`).join('');
+    const x = (i) => left + (labels.length === 1 ? (w - left - right) / 2 : (i / (labels.length - 1)) * (w - left - right));
+    const y = (n) => h - bottom - (n / max) * (h - bottom - top);
+    const levels = Array.from({ length: max / unit + 1 }, (_, k) => k * unit);
     const step = Math.max(1, Math.ceil(labels.length / 8));
-    const ticks = labels.map((label, i) => (i % step === 0 || i === labels.length - 1) ? `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(label.slice(5))}</text>` : '').join('');
+    const shown = labels.map((label, i) => i).filter((i) => i % step === 0 || i === labels.length - 1);
+    const stroke = framed ? ' vector-effect="non-scaling-stroke"' : '';
+    const grid = levels.map((n) => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"${stroke}></line>${framed ? '' : `<text x="${left - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`}`).join('');
+    const ticks = framed ? '' : shown.map((i) => `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(labels[i].slice(5))}</text>`).join('');
+    const dot = (cx, cy, color) => (framed ? `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="${color}" stroke-width="8" stroke-linecap="round"${stroke}></line>` : `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}"></circle>`);
     const paths = series.map((s, k) => {
         const line = s.values.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ');
         return (fill ? `<defs><linearGradient id="jvg${k}${s.color.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity="0.35"></stop><stop offset="1" stop-color="${s.color}" stop-opacity="0"></stop></linearGradient></defs>
-            <polygon points="${x(0)},${h - pad} ${line} ${x(s.values.length - 1)},${h - pad}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>` : '') + `
-            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"></polyline>${labels.length < 3 ? s.values.map((n, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(n).toFixed(1)}" r="4" fill="${s.color}"></circle>`).join('') : ''}`;
+            <polygon points="${x(0)},${h - bottom} ${line} ${x(s.values.length - 1)},${h - bottom}" fill="url(#jvg${k}${s.color.slice(1)})"></polygon>` : '') + `
+            <polyline points="${line}" fill="none" stroke="${s.color}" stroke-width="2.2" class="jv-glow"${stroke}></polyline>${labels.length < 3 ? s.values.map((n, i) => dot(x(i).toFixed(1), y(n).toFixed(1), s.color)).join('') : ''}`;
     }).join('');
-    const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${fmt(s.values.reduce((a, b) => a + b, 0))}</span>`).join('');
-    return `<svg class="jv-area" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(series.map((s) => s.name).join(' and '))} per day">${grid}${paths}${ticks}</svg><div class="jv-legend">${legend}</div>`;
+    const tips = labels.map((label, i) => `${label}: ${series.map((s) => s.name + ' ' + withUnit(s.values[i] || 0, s.unit || o.unit)).join(' · ')}`);
+    const total = (s) => Math.round(s.values.reduce((a, b) => a + b, 0) * 10) / 10;
+    const legend = o.legend === false ? '' : `<div class="jv-legend">${series.map((s) => `<span><i style="background:${s.color}"></i>${esc(s.name)} ${s.unit || o.unit ? `<small>${esc(withUnit(total(s), s.unit || o.unit))} in range</small>` : fmt(total(s))}</span>`).join('')}</div>`;
+    const svg = `<svg class="jv-area" viewBox="0 0 ${w} ${h}"${framed ? ' preserveAspectRatio="none"' : ''} role="img" aria-label="${esc(o.title || series.map((s) => s.name).join(' and ') + ' per day')}">${grid}${paths}${ticks}${hits(labels.map((_, i) => x(i)), top, h - bottom, tips, [left, w - right])}</svg>`;
+    const plot = `<div class="jv-chart-plot">${svg}<div class="jv-tip" role="status" hidden></div></div>`;
+    if (!framed) return `<figure class="jv-chart">${plot}${legend}</figure>`;
+    const pct = (v, of) => ((v / of) * 100).toFixed(2) + '%';
+    return `<figure class="jv-chart is-framed">${o.title ? `<figcaption class="jv-chart-title">${esc(o.title)}</figcaption>` : ''}<div class="jv-chart-frame">
+        <span class="jv-chart-y">${o.yLabel ? `<span class="jv-axis-title">${esc(o.yLabel)}</span>` : ''}</span>
+        <div class="jv-chart-yticks">${levels.map((n) => `<span style="top:${pct(y(n), h)}">${fmt(n)}</span>`).join('')}</div>
+        ${plot}<span></span><span></span>
+        <div class="jv-chart-xticks">${shown.map((i) => `<span style="left:${pct(x(i), w)}">${esc(labels[i].slice(5))}</span>`).join('')}</div>
+        ${o.xLabel ? `<span></span><span></span><span class="jv-axis-title jv-chart-x">${esc(o.xLabel)}</span>` : ''}</div>${legend}</figure>`;
 }
 
+// opts: color, limit, empty; #2807, all optional: title, yLabel (what the rows are), unit (what the values count),
+// legend (the series name, in its colour), drill (a panel id: each row opens its drill-down, see drillBodies) and
+// open (the row whose drill-down is open).
 function bars(list, opts) {
     const o = opts || {};
     const rows = (list || []).slice(0, o.limit || 12);
@@ -72,7 +118,22 @@ function bars(list, opts) {
     const max = Math.max(1, ...rows.map((r) => r.value));
     const total = (list || []).reduce((s, r) => s + r.value, 0);
     const more = (list || []).length - rows.length;
-    return `<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${fmt(r.value)}"><span class="jv-bar-label">${esc(r.label)}</span><span class="jv-bar-track"><span class="jv-bar-fill" style="width:${Math.max(2, (r.value / max) * 100).toFixed(1)}%;--c:${o.color || COLORS.cyan}"></span></span><span class="jv-bar-value">${fmt(r.value)}<small>${total ? Math.round((r.value / total) * 100) + '%' : ''}</small></span></li>`).join('')}</ol>${more > 0 ? `<p class="jv-more">+${more} more in the export</p>` : ''}`;
+    const color = o.color || COLORS.cyan;
+    const drill = (r) => (o.drill ? ` class="is-drill${o.open === r.label ? ' is-open' : ''}" data-drill-open="${esc(o.drill + '|' + r.label)}" role="button" tabindex="0" aria-expanded="${o.open === r.label}"` : '');
+    const head = o.yLabel || o.unit ? `<div class="jv-bars-head"><span>${esc(o.yLabel || '')}</span><span>${esc(o.unit || '')}</span></div>` : '';
+    return `${o.title ? `<h4 class="jv-chart-title">${esc(o.title)}</h4>` : ''}${head}<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${esc(withUnit(r.value, o.unit))}"${drill(r)}><span class="jv-bar-label">${esc(r.label)}</span><span class="jv-bar-track"><span class="jv-bar-fill" style="width:${Math.max(2, (r.value / max) * 100).toFixed(1)}%;--c:${color}"></span></span><span class="jv-bar-value">${fmt(r.value)}<small>${total ? Math.round((r.value / total) * 100) + '%' : ''}</small></span></li>`).join('')}</ol>${more > 0 ? `<p class="jv-more">+${more} more in the export</p>` : ''}${o.legend ? `<div class="jv-legend"><span><i style="background:${color}"></i>${esc(o.legend)} <small>${esc(withUnit(total, o.unit))} in all</small></span></div>` : ''}`;
+}
+
+// One bar per row split into parts ([key, label, colour]); rows carry values: { key: n }. opts as bars(): title, yLabel, unit, empty.
+function stackBars(list, parts, opts) {
+    const o = opts || {};
+    const sum = (r) => parts.reduce((n, [k]) => n + (r.values[k] || 0), 0);
+    const rows = (list || []).filter((r) => sum(r) > 0);
+    if (!rows.length) return `<p class="jv-empty">${esc(o.empty || 'Nothing in this range.')}</p>`;
+    const max = Math.max(1, ...rows.map(sum));
+    const head = o.yLabel || o.unit ? `<div class="jv-bars-head"><span>${esc(o.yLabel || '')}</span><span>${esc(o.unit || '')}</span></div>` : '';
+    const tip = (r) => parts.filter(([k]) => r.values[k]).map(([k, label]) => `${label} ${fmt(r.values[k])}`).join(', ');
+    return `${o.title ? `<h4 class="jv-chart-title">${esc(o.title)}</h4>` : ''}${head}<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${esc(tip(r))}"><span class="jv-bar-label">${esc(r.label)}<small class="jv-bar-sub">${esc(tip(r))}</small></span><span class="jv-bar-track jv-bar-stack">${parts.map(([k, , c]) => (r.values[k] ? `<span class="jv-bar-fill" style="width:${((r.values[k] / max) * 100).toFixed(1)}%;--c:${c}"></span>` : '')).join('')}</span><span class="jv-bar-value">${fmt(sum(r))}</span></li>`).join('')}</ol><div class="jv-legend">${parts.map(([k, label, c]) => `<span><i style="background:${c}"></i>${esc(label)} <small>${fmt(rows.reduce((n, r) => n + (r.values[k] || 0), 0))}</small></span>`).join('')}</div>`;
 }
 
 function ring(pct, label, color, size) {
@@ -213,7 +274,10 @@ const WIP_COLS = ['Dev', 'QA', 'Stg'];
 
 // #2526: the Scrum board as a flow. One node per column (cards, median age); arrows weighted by the moves in range,
 // skips arc above, moves backwards arc below in amber; the WIP columns light up when WIP is over its limit.
-function processMap(board, flow) {
+// opts.drill (#2807): a panel id; each column then opens its card list (drillBodies), opts.open the open one.
+function processMap(board, flow, opts) {
+    const o = opts || {};
+    const drill = (name) => (o.drill ? ` data-drill-open="${esc(o.drill + '|' + name)}" role="button" tabindex="0" aria-expanded="${o.open === name}" aria-label="${esc(name)}: show its cards"` : '');
     const cols = BOARD_COLS.map((name) => Object.assign({ name, count: 0, ageMedD: null }, (board.columns || []).find((c) => c.name === name) || {}));
     const over = !!(board.wipLimit && board.wip > board.wipLimit);
     const w = 960, h = 292, nw = 92, nh = 78, y0 = 106, gap = (w - nw * BOARD_COLS.length) / (BOARD_COLS.length - 1);
@@ -238,26 +302,142 @@ function processMap(board, flow) {
     const marker = (id, color) => `<marker id="jvpm-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${color}"></path></marker>`;
     const nodes = cols.map((c, i) => {
         const age = c.ageMedD === null || c.ageMedD === undefined ? null : c.ageMedD;
-        return `<g class="jv-pm-node${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><title>${esc(c.name)}: ${fmt(c.count)}${age === null ? '' : ', median age ' + fmt(age) + ' d'}</title><rect x="${x(i).toFixed(1)}" y="${y0}" width="${nw}" height="${nh}" rx="12"></rect>
+        return `<g class="jv-pm-node${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}${o.open === c.name ? ' is-open' : ''}" data-col="${esc(c.name)}"${drill(c.name)}><title>${esc(c.name)}: ${fmt(c.count)}${age === null ? '' : ', median age ' + fmt(age) + ' d'}</title><rect x="${x(i).toFixed(1)}" y="${y0}" width="${nw}" height="${nh}" rx="12"></rect>
             <text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 20}" text-anchor="middle" class="jv-pm-name">${esc(c.name)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 49}" text-anchor="middle" class="jv-pm-n">${fmt(c.count)}</text><text x="${(x(i) + nw / 2).toFixed(1)}" y="${y0 + 67}" text-anchor="middle" class="jv-pm-age">${age === null ? '—' : 'med ' + fmt(age) + ' d'}</text></g>`;
     }).join('');
     const label = cols.map((c) => `${c.name} ${c.count}`).join(', ');
     // The same flow stacked top to bottom, shown instead of the map when its panel is phone-narrow.
     const outs = (i) => moves.filter((f) => at(f.from) === i).sort((p, q) => at(p.to) - at(q.to)).map((f) => `<span${at(f.to) < i ? ' class="is-back"' : ''}>${at(f.to) < i ? '↩' : '→'} ${esc(f.to)} ${fmt(f.count)}</span>`).join('');
-    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}" data-col="${esc(c.name)}"><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
+    const steps = cols.map((c, i) => `<li class="jv-pm-step${over && WIP_COLS.includes(c.name) ? ' is-over' : ''}${c.count ? '' : ' is-empty'}${o.open === c.name ? ' is-open' : ''}" data-col="${esc(c.name)}"${drill(c.name)}><b>${esc(c.name)}</b><small>${c.ageMedD === null || c.ageMedD === undefined ? '—' : 'med ' + fmt(c.ageMedD) + ' d'}</small><strong>${fmt(c.count)}</strong>${outs(i) ? `<span class="jv-pm-moves">${outs(i)}</span>` : ''}</li>`).join('');
     return `<div class="jv-pm"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Board flow: ${esc(label)}${over ? `. WIP ${fmt(board.wip)} is over its limit of ${fmt(board.wipLimit)}` : ''}"><defs>${marker('fwd', COLORS.cyan)}${marker('back', COLORS.amber)}${marker('idle', COLORS.dim)}</defs>${idle}${arrows}${nodes}</svg><ol class="jv-pm-list" aria-label="Board flow">${steps}</ol></div>`;
 }
 
 // --- the tool ------------------------------------------------------------------------------------------------
 
-export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
+// --- Console (#2810): the jarvis_log lines, oldest at the top, from the log op every 5 s while it is on screen ----
+
+const CONSOLE_MS = 5000;
+const CONSOLE_KEEP = 2000;
+const conTime = (iso) => {
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return '';
+    const day = (t) => t.toLocaleDateString('en-US', { timeZone: 'America/Bogota', month: 'short', day: 'numeric' });
+    const time = d.toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour12: false });
+    return day(d) === day(new Date()) ? time : day(d) + ' ' + time;
+};
+
+function logConsole({ C, call }) {
+    const S = { rows: [], ids: new Set(), cursor: '', sources: new Set(), level: 'debug', q: '', paused: false, waiting: 0, busy: false, error: '', loaded: false };
+    const node = document.createElement('section');
+    node.className = 'jv-con';
+    node.dataset.con = '';
+    node.innerHTML = `
+      <div class="jv-con-bar">
+        <div class="jv-con-srcs" role="group" aria-label="Sources"><button type="button" data-con-src="" aria-pressed="true">all</button>${C.LOG_SOURCES.map((s) => `<button type="button" class="src-${s}" data-con-src="${s}" aria-pressed="false">${s}</button>`).join('')}</div>
+        <div class="jv-con-tools">
+          <select data-con-level aria-label="Lowest level" data-menu-ready="1">${C.LOG_LEVELS.map((l, i) => `<option value="${l}">${l}${i < C.LOG_LEVELS.length - 1 ? '+' : ''}</option>`).join('')}</select>
+          <input type="search" data-con-q placeholder="Search" aria-label="Search the log" autocomplete="off">
+          <button type="button" class="jv-btn small" data-con-pause aria-pressed="false" title="Pause the scrolling; new lines wait">Pause</button>
+        </div>
+      </div>
+      <ol class="jv-con-lines" data-con-lines role="log" aria-live="off" tabindex="0"></ol>
+      <p class="jv-con-foot" data-con-foot>Connecting…</p>`;
+    const list = node.querySelector('[data-con-lines]');
+    const foot = node.querySelector('[data-con-foot]');
+    const atBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+    const line = (r) => `<li class="lv-${esc(r.level)}"${r.url ? ` data-con-url="${esc(r.url)}" tabindex="0" role="link"` : ''} title="${esc(new Date(r.at).toLocaleString('en-US', { timeZone: 'America/Bogota' }))} Bogotá${r.ref ? ' · ' + esc(r.ref) : ''}"><time>${esc(conTime(r.at))}</time><b class="src-${esc(r.source)}">${esc(r.source)}</b><i>${esc(String(r.level).toUpperCase())}</i><span>${esc(r.text)}</span></li>`;
+
+    let shownCount = 0;
+    function paintFoot() {
+        foot.textContent = (S.error ? 'Last read failed: ' + S.error + ' · ' : '') + `${shownCount} of ${S.rows.length} lines`
+            + (S.paused ? ` · paused${S.waiting ? ', ' + S.waiting + ' new' : ''}` : ' · live, every 5 s') + ' · Bogotá time · 7 days kept';
+    }
+
+    function paint() {
+        const shown = C.logFilter(S.rows, { sources: Array.from(S.sources), level: S.level, q: S.q }).slice(0, 600).reverse();
+        const stick = atBottom() || !list.children.length;
+        list.innerHTML = shown.length ? shown.map(line).join('') : `<li class="jv-con-empty">${S.loaded ? (S.rows.length ? 'No line matches these filters.' : 'Nothing logged in the last 7 days yet.') : 'Reading the log…'}</li>`;
+        if (stick) list.scrollTop = list.scrollHeight;
+        shownCount = shown.length;
+        paintFoot();
+    }
+
+    async function pull() {
+        if (S.busy) return;
+        S.busy = true;
+        try {
+            const out = await call('log', Object.assign({ limit: 300 }, S.cursor ? { since: S.cursor } : {}));
+            if (!out || out.ok === false) throw new Error((out && out.error) || 'no answer');
+            const fresh = (out.entries || []).filter((r) => r && r.id && !S.ids.has(r.id));
+            fresh.forEach((r) => S.ids.add(r.id));
+            S.cursor = out.cursor || S.cursor;
+            S.error = '';
+            if (fresh.length) {
+                S.rows = fresh.concat(S.rows).sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, CONSOLE_KEEP);
+                if (S.rows.length === CONSOLE_KEEP) S.ids = new Set(S.rows.map((r) => r.id));
+            }
+            const first = !S.loaded;
+            S.loaded = true;
+            if (S.paused && !first) { S.waiting += fresh.length; paintFoot(); } else if (fresh.length || first) paint(); else paintFoot();
+        } catch (error) {
+            S.error = String(error.message || error).slice(0, 120);
+            S.loaded = true;
+            paint();
+        }
+        S.busy = false;
+    }
+
+    node.addEventListener('click', (event) => {
+        const src = event.target.closest('[data-con-src]');
+        if (src) {
+            const s = src.dataset.conSrc;
+            if (!s) S.sources.clear(); else if (S.sources.has(s)) S.sources.delete(s); else S.sources.add(s);
+            node.querySelectorAll('[data-con-src]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.conSrc ? S.sources.has(b.dataset.conSrc) : !S.sources.size)));
+            list.scrollTop = list.scrollHeight;
+            paint();
+            return;
+        }
+        if (event.target.closest('[data-con-pause]')) {
+            S.paused = !S.paused;
+            S.waiting = 0;
+            const b = node.querySelector('[data-con-pause]');
+            b.setAttribute('aria-pressed', String(S.paused));
+            b.textContent = S.paused ? 'Resume' : 'Pause';
+            if (!S.paused) list.scrollTop = list.scrollHeight;
+            paint();
+            return;
+        }
+        const li = event.target.closest('[data-con-url]');
+        if (li) window.open(li.dataset.conUrl, '_blank', 'noopener');
+    });
+    node.addEventListener('keydown', (event) => {
+        const li = event.target.closest && event.target.closest('[data-con-url]');
+        if (li && event.key === 'Enter') window.open(li.dataset.conUrl, '_blank', 'noopener');
+    });
+    node.querySelector('[data-con-level]').addEventListener('change', (event) => { S.level = event.target.value; paint(); });
+    let typed = 0;
+    node.querySelector('[data-con-q]').addEventListener('input', (event) => { clearTimeout(typed); typed = setTimeout(() => { S.q = event.target.value; paint(); }, 150); });
+
+    return {
+        node,
+        state: S,
+        pull,
+        // Moves the one console into a tab's view or the dock; its lines, filters and scroll stay.
+        place(target) {
+            if (node.parentNode !== target) { target.textContent = ''; target.append(node); list.scrollTop = list.scrollHeight; }
+            if (!S.loaded) pull();
+        }
+    };
+}
+
+export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
     const C = window.JarvisCore;
     const api = endpoint || ENDPOINT;
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
-        rows: { events: [], prior: [], opens: [], reviews: [] }, counts: {}, hub: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', alerts: [], reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
-        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
+        products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, kept: null,
+        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set(), layoutEdit: null
     };
     readHash();
 
@@ -274,7 +454,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         <div class="jv-controls">
           <label class="jv-field">Range<select id="jv-range" data-menu-ready="1">${RANGES.map(([v, l]) => `<option value="${v}"${v === S.range ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
           <div class="jv-seg" role="group" aria-label="Inbox emails"><button type="button" data-mail="real">Real</button><button type="button" data-mail="test">Tests</button><button type="button" data-mail="all">All</button></div>
-          <button type="button" class="jv-btn jv-live" data-act="live" aria-pressed="true" title="Live: new events every minute"><i></i><span id="jv-ago">live</span></button>
+          <button type="button" class="jv-btn jv-live" data-act="live" aria-pressed="true" title="Live: new numbers every 5 minutes"><i></i><span id="jv-ago">live</span></button>
           <button type="button" class="jv-btn" data-act="refresh" title="Refresh everything (R)">⟳</button>
           <button type="button" class="jv-btn" data-act="speak" title="Read the briefing aloud">🔊</button>
           <button type="button" class="jv-btn" data-act="listen" title="Talk to Jarvis" aria-pressed="false">🎙</button>
@@ -299,10 +479,20 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
       <div class="jv-reply" hidden><form class="jv-reply-box" data-reply role="dialog" aria-label="Reply"></form></div>
       <div class="jv-pushes" aria-live="polite"></div>
       <div class="jv-toast" role="status" hidden></div>
+      <button type="button" class="jv-con-fab" data-con-dock aria-expanded="false" title="Console: everything happening in the back">&gt;_<span>Console</span></button>
+      <div class="jv-con-dock" data-con-dock-root hidden><section class="jv-con-dock-box" role="dialog" aria-label="Console"><header><h3>Console</h3><button type="button" class="jv-btn small" data-con-full>Full tab</button><button type="button" class="jv-btn small" data-con-close aria-label="Close the console">✕</button></header><div class="jv-con-slot" data-con-dock-slot></div></section></div>
     </div>`;
     const root = host.querySelector('.jv');
     const $ = (sel) => root.querySelector(sel);
     const $$ = (sel) => Array.from(root.querySelectorAll(sel));
+    const con = logConsole({ C, call });
+    let docked = false;
+    function dock(open) {
+        docked = !!open && S.product !== 'console';
+        $('[data-con-dock-root]').hidden = !docked;
+        $('[data-con-dock]').setAttribute('aria-expanded', String(docked));
+        if (docked) con.place($('[data-con-dock-slot]'));
+    }
 
     function toast(text, ms) {
         const node = $('.jv-toast');
@@ -361,7 +551,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const m = /^#stats(?:\/([a-z]+))?(?:\/([a-z0-9]+))?/.exec(location.hash || '');
         if (!m) return;
         if (m[1] && C.PRODUCTS.some((p) => p.key === m[1])) S.product = m[1];
-        if (m[2] && RANGES.some(([v]) => v === m[2])) S.range = m[2];
+        const range = m[2] === 'all' ? '365' : m[2];
+        if (range && RANGES.some(([v]) => v === range)) S.range = range;
     }
 
     function writeHash() {
@@ -371,59 +562,124 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- data -------------------------------------------------------------------------------------------------
 
-    const rowsOf = (snap) => snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-    const newest = (rows, field) => rows.reduce((best, row) => { const d = C.toDate(row[field]); return d && (!best || d > best) ? d : best; }, null);
-
-    // The range's rows come from the jarvis function's day rollups (#2085), the store the app's snapshot reads too.
-    async function loadFirestore() {
-        const w = C.windowFor(S.range);
-        S.window = w;
-        const from = w.prior ? w.prior.start : w.start;
-        const safe = (p, fallback) => p.catch(() => fallback);
-        const [got, hub, reports] = await Promise.all([
-            call('rows', { from: from.toISOString() }),
-            safe(getDoc(doc(db, 'socialHubStats', 'latest')).then((s) => (s.exists() ? s.data() : null)), null),
-            safe(getDocs(query(collection(db, 'url_review_reports'), orderBy('emailedAt', 'desc'), limit(12))).then(rowsOf), [])
-        ]);
-        if (got.ok === false || !Array.isArray(got.events)) throw new Error(got.error || 'no rows');
-        const inRange = (field) => (row) => { const d = C.toDate(row[field]); return d && d >= w.start; };
-        const events = got.events.filter(inRange('createdAt'));
-        const opens = got.opens.filter(inRange('createdAt'));
-        const reviews = got.reviews.filter(inRange('createdAt'));
-        S.rows = { events, prior: w.prior ? got.events.filter((row) => !inRange('createdAt')(row)) : null, opens, reviews };
-        S.counts = { openTotal: opens.length, reviewTotal: reviews.length, priorOpens: w.prior ? got.opens.length - opens.length : null, priorReviews: w.prior ? got.reviews.length - reviews.length : null };
-        S.hub = hub;
-        S.alerts = got.alerts.filter(inRange('at'));
-        S.reports = reports;
-        S.updatedAt = Date.now();
+    // The last snapshot per range, kept in this browser so the page opens at once (#2510). Sign-in codes are not
+    // kept, and neither is the mail version, so every fetch brings the mail section back.
+    const SNAP_KEY = 'jv-snapshot-';
+    function savedSnapshot(range) {
+        if (S.kept && S.kept.range === range) return S.kept.snap;
+        try {
+            const kept = JSON.parse(localStorage.getItem(SNAP_KEY + range) || 'null');
+            return kept && auth.currentUser && kept.uid === auth.currentUser.uid && kept.snap && kept.snap.products ? kept.snap : null;
+        } catch (error) { return null; }
+    }
+    function keepSnapshot(range, snap) {
+        S.kept = { range, snap };
+        const versions = Object.assign({}, snap.versions);
+        delete versions.mail;
+        const stored = Object.assign({}, snap, { versions });
+        delete stored.mailCodes;
+        try { localStorage.setItem(SNAP_KEY + range, JSON.stringify({ uid: auth.currentUser && auth.currentUser.uid, snap: stored })); } catch (error) {
+            try { localStorage.removeItem(SNAP_KEY + range); } catch (e) { /* private mode: this visit only */ }
+        }
+    }
+    function forgetSnapshots() {
+        S.kept = null;
+        try { Object.keys(localStorage).filter((k) => k.startsWith(SNAP_KEY)).forEach((k) => localStorage.removeItem(k)); } catch (error) { /* nothing kept */ }
     }
 
-    // Live: only rows newer than the newest one already held, so a refresh costs a handful of reads.
-    async function loadNewer() {
-        const w = S.window;
-        if (!w) return;
-        const after = async (name, field, since, asString) => {
-            if (!since) return [];
-            try { return rowsOf(await getDocs(query(collection(db, name), where(field, '>', asString ? since.toISOString() : since), orderBy(field, 'desc'), limit(500)))); } catch (error) { return []; }
-        };
-        const [events, opens, reviews] = await Promise.all([
-            after('site_events', 'createdAt', newest(S.rows.events, 'createdAt') || w.start),
-            after('url_review_opens', 'createdAt', newest(S.rows.opens, 'createdAt') || w.start),
-            after('url_reviews', 'createdAt', newest(S.rows.reviews, 'createdAt') || w.start, true)
-        ]);
-        const known = (list) => new Set(list.map((row) => row.id));
-        const add = (list, fresh) => { const ids = known(list); return fresh.filter((row) => !ids.has(row.id)).concat(list); };
-        const before = S.rows.events.length + S.rows.opens.length + S.rows.reviews.length;
-        S.rows.events = add(S.rows.events, events);
-        const newOpens = opens.filter((row) => !known(S.rows.opens).has(row.id)).length;
-        const newReviews = reviews.filter((row) => !known(S.rows.reviews).has(row.id)).length;
-        S.rows.opens = add(S.rows.opens, opens);
-        S.rows.reviews = add(S.rows.reviews, reviews);
-        if (S.counts.openTotal !== null && S.counts.openTotal !== undefined) S.counts.openTotal += newOpens;
-        if (S.counts.reviewTotal !== null && S.counts.reviewTotal !== undefined) S.counts.reviewTotal += newReviews;
-        S.updatedAt = Date.now();
-        const added = S.rows.events.length + S.rows.opens.length + S.rows.reviews.length - before;
-        if (added > 0) { compute(); render(); pulse(added); }
+    // Opens on the snapshot this browser kept for the range, with its age, before the first fetch answers.
+    function openSaved() {
+        const snap = savedSnapshot(S.range);
+        if (!snap) return false;
+        useSnapshot(snap);
+        compute();
+        render();
+        return true;
+    }
+
+    /* One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app
+       shares. With a kept copy it sends its versions as `since` and applies only the sections that changed (#2510);
+       `only` limits them to the ones a push named. An answer that cannot be applied means a full fetch. */
+    async function loadSnapshot(only) {
+        SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
+        const range = S.range;
+        const kept = savedSnapshot(range);
+        const since = kept && C.sectionSince(kept.versions);
+        // With this browser's push endpoint the server knows the page is open and sends it section pushes (#2509).
+        const push = S.pushEndpoint ? { push: S.pushEndpoint } : {};
+        let snap;
+        try {
+            const answer = await call('snapshot', Object.assign({}, push, since ? { since } : {}, since && only && only.length ? { only } : {}));
+            snap = answer && answer.delta ? C.applySections(kept, answer) : answer;
+            if (!snap && answer && answer.ok !== false) snap = await call('snapshot', push);
+            else if (!snap) snap = answer;
+        } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        if (S.range !== range) return;
+        keepSnapshot(range, snap);
+        useSnapshot(snap);
+    }
+
+    function useSnapshot(snap) {
+        S.versions = snap.versions || null;
+        const date = (v) => (v ? new Date(v) : null);
+        const w = snap.window || {};
+        S.window = { start: date(w.start), end: date(w.end), days: w.days, prior: w.prior ? { start: date(w.prior.start), end: date(w.prior.end) } : null };
+        S.products = snap.products;
+        S.outreach = snap.outreachVisits || null;
+        S.feed = snap.feed || [];
+        S.socialHeat = snap.socialHeat || null;
+        S.reports = snap.reports || [];
+        if (snap.processes) { S.processes = snap.processes; S.processesAt = Date.now(); }
+        Object.assign(S.external, snap.external || {}, { 'mail-codes': { ok: true, codes: snap.mailCodes || [] } });
+        if (snap.settings) S.settings = Object.assign({ ok: true }, snap.settings);
+        if (Array.isArray(snap.goals)) S.goals = snap.goals;
+        if (Array.isArray(snap.devices)) {
+            S.devices = snap.devices;
+            const d = device();
+            if (d) deviceKey = d.kind + ':' + (d.posture || '');
+            paintDevices();
+        }
+        S.updatedAt = Date.parse(snap.cachedAt) || Date.now();
+        S.externalAt = Date.now();
+    }
+
+    // Live processes (#2548): a processes push fetches the one-read processes op and redraws only that panel.
+    async function loadProcesses() {
+        const out = await call('processes').catch(() => null);
+        if (!out || out.ok === false || !out.processes) return false;
+        const before = Proc.active(S.processes).length;
+        S.processes = out.processes;
+        S.processesAt = Date.now();
+        if (S.versions && out.version) S.versions = Object.assign({}, S.versions, { processes: out.version });
+        if (S.kept) keepSnapshot(S.kept.range, Object.assign({}, S.kept.snap, { processes: out.processes }, out.version ? { versions: Object.assign({}, S.kept.snap.versions, { processes: out.version }) } : {}));
+        if (!before !== !Proc.active(S.processes).length) render();
+        else paintProcesses();
+        return true;
+    }
+
+    function paintProcesses() {
+        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact' }); });
+    }
+
+    function processesPanel(compact) {
+        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact });
+        if (compact && !body) return '';
+        return panel(compact ? 'overview-processes' : 'systems-processes', 'Processes', `<div data-processes="${compact ? 'compact' : 'full'}">${body}</div>`,
+            { wide: true, keep: true, data: (S.processes && S.processes.rows) || [] });
+    }
+
+    // Live: a newer snapshot once the server's has aged out, or the sections a push named; the pulse counts the feed lines it adds.
+    async function loadNewer(only) {
+        if (S.loading) return;
+        const newest = (S.feed[0] || {}).at || '';
+        S.loading = true;
+        try { await loadSnapshot(only); } catch (error) { S.loading = false; return; }
+        S.loading = false;
+        compute();
+        render();
+        const added = newest ? S.feed.filter((f) => f.at > newest).length : 0;
+        if (added > 0) pulse(added);
     }
 
     // --- this browser's screen (#2068): sent with every call, like the app's ----------------------------------
@@ -469,14 +725,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const user = auth.currentUser;
         if (!user) throw new Error('Sign in first.');
         const token = await user.getIdToken();
-        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: S.range === 'all' ? 365 : Number(S.range), device: device() }, extra || {})) });
+        const res = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(Object.assign({ op, days: Number(S.range) || 30, device: device() }, extra || {})) });
         const data = await res.json().catch(() => ({ ok: false, error: 'No answer (' + res.status + ')' }));
         if (!res.ok && data.ok !== false) data.ok = false;
         return data;
     }
 
     async function loadExternal(ops) {
-        const list = ops || ['settings', 'goals', 'health', 'jobs', 'github', 'github-work', 'uptime', 'ga4', 'cloudflare', 'speed', 'pagespeed', 'local', 'money', 'email', 'search', 'social', 'safety', 'platform', 'outreach', 'targets', 'marketing', 'marketing-sync', 'engagement', 'people', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'mail-codes', 'mailbox', 'addresses', 'calls'];
+        const list = ops || OWN_OPS;
         await Promise.all(list.map(async (op) => {
             S.pending[op] = true;
             try {
@@ -502,20 +758,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const inbox = getInbox ? getInbox() : { messages: [], ratings: [] };
         const sum = {};
         sum.inbox = C.summarizeInbox(inbox.messages || [], inbox.ratings || [], w, w.prior, keep);
-        ['cv', 'studio', 'lab'].forEach((key) => { sum[key] = C.summarizeSite(key, S.rows.events, S.rows.prior, w); });
-        sum.review = C.summarizeReview({
-            opens: S.rows.opens, reviews: S.rows.reviews, events: S.rows.events,
-            openTotal: S.counts.openTotal === null ? undefined : S.counts.openTotal,
-            reviewTotal: S.counts.reviewTotal === null ? undefined : S.counts.reviewTotal,
-            prior: S.counts.priorOpens === null || S.counts.priorOpens === undefined ? null : { opens: S.counts.priorOpens, reviews: S.counts.priorReviews }
-        }, w);
-        sum.hub = C.summarizeHub(S.hub, S.rows.events, w, S.rows.prior);
+        const p = S.products || {};
+        ['cv', 'studio', 'lab'].forEach((key) => { sum[key] = p[key] || C.summarizeSite(key, [], [], w); });
+        sum.review = p.review || C.summarizeReview({ opens: [], reviews: [], events: [], prior: null }, w);
+        sum.hub = p.hub || C.summarizeHub(null, [], w, []);
         S.summaries = sum;
         S.briefState = { products: sum, external: S.external, thresholds: (S.settings || {}).thresholds, goals: S.goals };
         const split = C.openBrief(C.briefing(S.briefState), S.marks);
         S.brief = split.open;
         S.briefHidden = split.hidden;
     }
+
+    const outreachSeen = () => S.outreach || { total: 0, campaigns: [] };
+    const reviewAlerts = () => (S.external.health && S.external.health.alerts && S.external.health.alerts.latest) || [];
 
     function snapshot() {
         const p = {};
@@ -549,7 +804,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                     pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
-                    visits: C.outreachVisits(S.rows.events).total,
+                    visits: outreachSeen().total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
                 targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
@@ -590,6 +845,144 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         $$('.jv-panel[data-panel-id]').forEach((sec) => fold(sec.dataset.panelId, shut));
     }
 
+    // --- section layout per tab (#2809): order and hidden sections from jarvis_settings layout, shared with the app --------
+    const layoutOf = (tab) => ((S.settings || {}).layout || {})[tab] || null;
+    const topPanels = (view) => Array.from(view.querySelectorAll('.jv-panel[data-panel-id]')).filter((sec) => !sec.parentElement.closest('.jv-panel'));
+    // The ids in the order the view drew them, before any layout; a fresh render numbers its sections again.
+    function defaultIds(view) {
+        const secs = topPanels(view);
+        secs.forEach((sec, i) => { if (!sec.dataset.at) sec.dataset.at = String(i); });
+        return Array.from(new Set(secs.sort((a, b) => a.dataset.at - b.dataset.at).map((sec) => sec.dataset.panelId)));
+    }
+    const panelTitle = (sec) => (sec && (sec.querySelector('.jv-fold') || sec.querySelector('h3'))?.textContent.trim()) || (sec ? sec.dataset.panelId : '');
+
+    // Each grid keeps its own slots; the panels in it take them in the layout's order.
+    function arrange(view, tab) {
+        view.querySelectorAll('.jv-lay-bar, .jv-lay-tools').forEach((el) => el.remove());
+        const ids = defaultIds(view);
+        const secs = topPanels(view);
+        if (!secs.length) return;
+        const edit = S.layoutEdit && S.layoutEdit.tab === tab ? S.layoutEdit : null;
+        const L = C.applyLayout(ids, edit ? { order: edit.all, hidden: edit.hidden } : layoutOf(tab));
+        const rank = new Map(L.all.map((id, i) => [id, i]));
+        const groups = new Map();
+        secs.forEach((sec) => groups.set(sec.parentElement, (groups.get(sec.parentElement) || []).concat(sec)));
+        groups.forEach((list) => {
+            const slots = list.map((sec) => { const mark = document.createComment(''); sec.replaceWith(mark); return mark; });
+            list.slice().sort((a, b) => rank.get(a.dataset.panelId) - rank.get(b.dataset.panelId)).forEach((sec, i) => slots[i].replaceWith(sec));
+        });
+        const hide = new Set(L.hidden);
+        const shown = L.order;
+        secs.forEach((sec) => {
+            const id = sec.dataset.panelId;
+            sec.hidden = hide.has(id);
+            sec.classList.toggle('is-arranging', !!edit);
+            if (!edit || sec.hidden) return;
+            const name = esc(panelTitle(sec));
+            const at = shown.indexOf(id);
+            sec.querySelector(':scope > header').insertAdjacentHTML('beforeend', `<span class="jv-lay-tools"><button type="button" class="jv-lay-drag" data-lay="drag" data-id="${esc(id)}" aria-label="Move ${name}: drag it, or press the up and down arrow keys" title="Drag to move">⠿</button><button type="button" class="jv-btn small" data-lay="up" data-id="${esc(id)}" aria-label="Move ${name} up"${at <= 0 ? ' disabled' : ''}>↑</button><button type="button" class="jv-btn small" data-lay="down" data-id="${esc(id)}" aria-label="Move ${name} down"${at >= shown.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="jv-btn small" data-lay="hide" data-id="${esc(id)}" aria-label="Hide ${name}">Hide</button></span>`);
+        });
+        const bar = document.createElement('div');
+        bar.className = 'jv-lay-bar' + (edit ? ' is-on' : '');
+        const title = (id) => panelTitle(secs.find((sec) => sec.dataset.panelId === id));
+        bar.innerHTML = edit
+            ? `<p class="jv-lay-help">Editing this tab: drag ⠿ or use ↑ ↓ to move a section, Hide to put it away.</p><div class="jv-actions"><button type="button" class="jv-btn small" data-lay="reset">Reset to default</button><button type="button" class="jv-btn small is-primary" data-lay="done">Done</button></div>
+              <div class="jv-lay-tray"><h4>Hidden sections${L.hidden.length ? ` (${L.hidden.length})` : ''}</h4>${L.hidden.length ? `<ul>${L.hidden.map((id) => `<li><span>${esc(title(id))}</span><button type="button" class="jv-btn small" data-lay="show" data-id="${esc(id)}" aria-label="Add back ${esc(title(id))}">Add back</button></li>`).join('')}</ul>` : '<p class="jv-note">None. Hide a section to keep it here.</p>'}</div>`
+            : `<button type="button" class="jv-link" data-lay="edit">Edit layout</button>${L.hidden.length ? `<span class="jv-note">${L.hidden.length} hidden</span>` : ''}`;
+        view.prepend(bar);
+    }
+
+    function focusLay(act, id) {
+        const view = $(`[data-view="${S.product}"]`);
+        const pick = (a) => view.querySelector(`[data-lay="${a}"]${id ? `[data-id="${CSS.escape(id)}"]` : ''}:not([disabled])`);
+        const el = pick(act) || (id && pick('drag')) || view.querySelector('[data-lay="done"], [data-lay="edit"]');
+        if (el) el.focus();
+    }
+
+    function layAct(act, id) {
+        const tab = S.product;
+        const view = $(`[data-view="${tab}"]`);
+        const ids = defaultIds(view);
+        if (act === 'edit') {
+            const L = C.applyLayout(ids, layoutOf(tab));
+            S.layoutEdit = { tab, all: L.all, hidden: L.hidden, dirty: false, reset: false };
+            arrange(view, tab);
+            focusLay('done');
+            return;
+        }
+        const E = S.layoutEdit;
+        if (!E || E.tab !== tab) return;
+        if (act === 'done') { layDone(); return; }
+        E.all = C.applyLayout(ids, { order: E.all }).all;
+        if (act === 'reset') Object.assign(E, { all: ids, hidden: [], reset: true });
+        else if (act === 'up' || act === 'down') E.all = C.layoutMove(E.all, E.hidden, id, act === 'up' ? -1 : 1);
+        else if (act === 'hide') E.hidden = E.hidden.concat(id);
+        else if (act === 'show') E.hidden = E.hidden.filter((x) => x !== id);
+        else return;
+        E.dirty = true;
+        arrange(view, tab);
+        if (act === 'hide') focusLay('done');
+        else focusLay(act === 'show' ? 'drag' : act, act === 'reset' ? null : id);
+    }
+
+    // Done: shown at once, saved through settings-save for this tab only; a failed save puts the old layout back.
+    async function layDone() {
+        const E = S.layoutEdit;
+        if (!E) return;
+        S.layoutEdit = null;
+        const view = $(`[data-view="${E.tab}"]`);
+        const ids = defaultIds(view);
+        const prev = layoutOf(E.tab);
+        const put = (l) => { const all = Object.assign({}, (S.settings || {}).layout); if (l) all[E.tab] = l; else delete all[E.tab]; S.settings = Object.assign({}, S.settings, { layout: all }); };
+        const next = E.reset && !E.hidden.length && E.all.join() === ids.join() ? null : C.keepLayout(E.reset ? null : prev, E.all, E.hidden, ids);
+        if (E.dirty) put(next);
+        arrange(view, E.tab);
+        if (S.product === E.tab) focusLay('edit');
+        if (!E.dirty) return;
+        const out = await call('settings-save', { layout: { [E.tab]: next } }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok === false) {
+            put(prev);
+            arrange(view, E.tab);
+            toast('The layout did not save: ' + (out.error || 'failed') + '. It is back as it was.', 6000);
+            return;
+        }
+        if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+        toast('Layout saved. The app shows it too.');
+    }
+
+    // Drag by ⠿ with a mouse or a finger: the section follows the pointer through its grid, in reading order.
+    let dragging = null;
+    function dragMove(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        if (event.clientY < 56) window.scrollBy(0, -14); else if (event.clientY > window.innerHeight - 56) window.scrollBy(0, 14);
+        const over = Array.from(sec.parentElement.children).find((el) => {
+            if (el === sec || !el.matches('.jv-panel[data-panel-id]') || el.hidden) return false;
+            const r = el.getBoundingClientRect();
+            return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+        });
+        if (!over) return;
+        const r = over.getBoundingClientRect();
+        const before = (event.clientY - r.top) / r.height + (event.clientX - r.left) / r.width < 1;
+        sec.parentElement.insertBefore(sec, before ? over : over.nextSibling);
+        const handle = sec.querySelector('[data-lay="drag"]');
+        if (handle && !handle.hasPointerCapture(event.pointerId)) handle.setPointerCapture(event.pointerId);
+    }
+    function dragEnd(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        dragging = null;
+        sec.classList.remove('is-dragging');
+        const E = S.layoutEdit;
+        const view = sec.closest('.jv-view');
+        if (!E || !view) return;
+        const shown = topPanels(view).filter((el) => !el.hidden).map((el) => el.dataset.panelId);
+        E.all = C.layoutWeave(shown, E.all);
+        E.dirty = true;
+        arrange(view, E.tab);
+        focusLay('drag', sec.dataset.panelId);
+    }
+
     // A panel whose whole body is one "nothing here" line joins the view's No data yet chips instead (#2139).
     const EMPTY_BODY = /^\s*<p class="jv-empty">([^<]*)<\/p>\s*$/;
     // DOMParser reads the text without running or loading anything in it.
@@ -606,6 +999,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
         'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent',
+        'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
         'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
@@ -808,7 +1202,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     const STATE_CHIP = { live: 'c-fast', partial: 'c-average', down: 'c-slow', loading: '', off: '' };
     const LEVEL_CHIP = { good: 'c-fast', info: '', warn: 'c-average', alert: 'c-slow' };
-    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit|telegram|\bt\.me\b/i;
+    const SOCIAL = C.SOCIAL;
 
     function waiting(key, text) {
         const x = S.external[key];
@@ -1083,6 +1477,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.' });
     }
 
+    // A post proposal's card image (#2248), so the post is approved as it will look; a card that failed once stays a note.
+    const brokenCards = new Set();
+    function proposalCard(p) {
+        if (!/^https:\/\//.test(p.image || '')) return '';
+        if (brokenCards.has(p.image)) return '<p class="jv-prop-why jv-prop-nocard">The card image did not load.</p>';
+        return `<img class="jv-prop-card" data-card src="${esc(p.image)}" alt="${esc('Card image: ' + (p.title || ''))}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+    }
+
     function socialProposalsPanel() {
         const P = S.external['social-proposals'];
         if (!P) return panel('hub-proposals', 'Post proposals', waiting('social-proposals', 'Reading the field sweep proposals…'), { wide: true });
@@ -1090,7 +1492,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const list = P.proposals || [];
         const items = list.map((p) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(Number(p.score) || 0)))}</span><div class="jv-prop-body">
             <p class="jv-prop-title"><strong>${esc(p.title)}</strong>${p.topic ? ` <span class="jv-chip">${esc(p.topic)}</span>` : ''} <span class="jv-chip">${esc(p.lang)}</span></p>
-            <p class="jv-prop-why">${esc([p.source, p.author && 'by ' + p.author, p.date].filter(Boolean).join(' · '))}</p>${p.summary ? `<p class="jv-prop-why">${esc(p.summary)}</p>` : ''}
+            <p class="jv-prop-why">${esc([p.source, p.author && 'by ' + p.author, p.date].filter(Boolean).join(' · '))}</p>${proposalCard(p)}${p.summary ? `<p class="jv-prop-why">${esc(p.summary)}</p>` : ''}
             <div class="jv-prop-acts"><button type="button" data-social-decide="approved" data-key="${esc(p.id)}">Approve</button><button type="button" data-social-decide="dismissed" data-key="${esc(p.id)}">Dismiss</button>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">Read →</a>` : ''}</div></div></li>`).join('');
         return panel('hub-proposals', 'Post proposals' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">Approve adds it to the hub as a pick, as the hub editor does; the next daily build publishes it.${P.built ? ' Sweep ran ' + esc(when(P.built)) + '.' : ''}</p>` + (list.length ? `<ol class="jv-props">${items}</ol>` : '<p class="jv-empty">No proposals are waiting.</p>'), { wide: true });
     }
@@ -1283,7 +1685,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const camps = mk && mk.ok && mk.campaigns && mk.campaigns.ok ? mk.campaigns : null;
         const plan = ou.plan && ou.plan.ok !== false ? ou.plan : null;
         const th = C.thresholds((S.settings || {}).thresholds);
-        const visits = C.outreachVisits(S.rows.events);
+        const visits = outreachSeen();
         const weekly = (plan && plan.weekly) || {};
         const warm = mail && mail.accounts.length ? Math.min(...mail.accounts.map((a) => (a.score === null ? 0 : a.score))) : null;
         const was = mail && mail.prior ? mail.prior : null;
@@ -1409,7 +1811,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const mo = e.money && e.money.ok ? e.money : null;
         const ga = e.ga4 && e.ga4.ok ? e.ga4 : null;
         const hub = S.summaries.hub || { totals: {}, lists: {} };
-        const outVisits = C.outreachVisits(S.rows.events);
+        const outVisits = outreachSeen();
         const social = socialVisits();
         const socialTotal = social.reduce((n, r) => n + r.value, 0);
         const weekly = (plan && plan.weekly) || {};
@@ -1489,8 +1891,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
         const soResults = so ? [{ label: 'sent', value: so.sent }, { label: 'failed', value: so.failed }].concat(so.scheduled && so.scheduled.count ? [{ label: 'scheduled', value: so.scheduled.count }] : []) : [];
         const yt = so && so.youtube ? (so.youtube.videos || []).filter((v) => v.views !== undefined).map((v) => ({ label: String(v.title || v.id).slice(0, 48), value: v.views })).sort((a, b) => b.value - a.value) : [];
-        const heatRows = S.rows.events.filter((r) => r.kind === 'visit' && (SOCIAL.test(C.openSource(r)) || /utm_source=outreach/i.test(String(r.query || ''))));
-        const grid = C.heatmap(heatRows);
+        const grid = S.socialHeat || C.socialHeat([]);
         const queries = gsc ? (gsc.queries || []).map((q) => ({ label: q.query, value: q.clicks })).filter((q) => q.value > 0) : [];
         const ranks = brave ? brave.queries.map((q) => `<span class="jv-chip ${q.position && q.position <= 3 ? 'c-fast' : q.position && q.position <= 10 ? 'c-average' : 'c-slow'}" title="${esc(q.leader || '')}">${esc(q.query)} · ${q.position ? '#' + q.position : 'not in top ' + (brave.depth || 20)}</span>`).join(' ') : '';
         const notices = e.notices && e.notices.notices ? e.notices.notices.length : 0;
@@ -1663,10 +2064,107 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     const ghLink = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
     const ghRef = (name) => `<code class="jv-gh-ref" title="${esc(name)}">${esc(name)}</code>`;
     const ghCountdown = () => hoursText((((S.external.actions || {}).settings) || {}).countdownHours || COUNTDOWN_HOURS);
-    const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
+    const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.key ? ` data-gh-key="${esc(opts.key)}"` : ''}${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
     const ghWork = () => S.external['github-work'] || {};
-    const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id));
+    const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id)) || (S.ghRows['run:' + id] || {}).row;
+    // A run Jarvis can act on, from Failing runs, a flaky workflow's newest failure or Latest diagnoses.
+    function ghRunCtx(id) {
+        const g = ghWork(), r = ghRun(id);
+        if (r) return { run: r.id, workflow: r.name, branch: r.branch, pr: r.pr, url: r.url, diag: r.diag, row: r };
+        const f = (((g.ci || {}).flaky || {}).workflows || []).find((w) => w.newest && String(w.newest.id) === String(id));
+        if (f) return { run: f.newest.id, workflow: f.name, branch: f.newest.branch, pr: f.newest.pr, url: f.newest.url, diag: f.newest.diag, flaky: f };
+        const d = ((g.ai || {}).diagnoses || []).find((x) => String(x.run) === String(id));
+        return d ? { run: d.run, workflow: d.workflow, branch: d.branch, pr: d.pr, url: d.url, diag: d } : null;
+    }
+    const GH_ROW_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', launched: 'c-fast', failed: 'c-slow' };
+    const ghResult = (key) => {
+        const r = S.ghRows[key];
+        return r ? `<p class="jv-gh-result" data-gh-result="${esc(key)}"><span class="jv-chip ${GH_ROW_CHIP[r.state] || ''}">${esc(r.state)}</span> ${esc(r.text)}${r.url ? ` ${ghLink(r.url, (r.link || 'Open') + ' ↗')}` : ''}</p>` : '';
+    };
+    function ghMark(key, state, text, extra) {
+        S.ghRows[key] = Object.assign(S.ghRows[key] || {}, { state, text, url: '', link: '' }, extra || {});
+        render();
+    }
+    const GH_SEV = [['critical', 'Critical', COLORS.pink], ['high', 'High', '#ff8f5a'], ['medium', 'Medium', COLORS.amber], ['low', 'Low', COLORS.dim]];
+    // GitHub's own dismissal reasons per alert kind; secret scanning alerts cannot be dismissed from Jarvis.
+    const GH_DISMISS = {
+        dependabot: [['tolerable_risk', 'Tolerable risk'], ['fix_started', 'A fix has started'], ['inaccurate', 'Inaccurate'], ['no_bandwidth', 'No bandwidth to fix'], ['not_used', 'Code not used']],
+        codeScanning: [['false positive', 'False positive'], ["won't fix", "Won't fix"], ['used in tests', 'Used in tests']]
+    };
+    const ghAlertKey = (kind, i) => `${kind}:${i.repo}#${i.number}`;
+    const ghAlertName = (kind, i) => (kind === 'dependabot' ? i.package : kind === 'codeScanning' ? i.rule : i.type) || 'alert';
+    function ghAlert(key) {
+        const m = /^(\w+):(.+)#(\d+)$/.exec(key || '');
+        const x = m && (ghWork().security || {})[m[1]];
+        const i = x && (x.items || []).find((a) => a.repo === m[2] && String(a.number) === m[3]);
+        return i ? { kind: m[1], item: i } : null;
+    }
+    const ghSecPrompt = (i) => `Upgrade ${i.package} to ${i.patched || 'the first patched version'} or later in ${i.manifest || 'its manifest'} (Dependabot alert #${i.number} in ${i.repo}${i.summary ? ': ' + i.summary : ''}). Update the lockfile, run the affected tests, and open a PR against main.`;
+    const GH_FIX = { 'rerun-ci': 'Fix: re-run', 'gh-update-pr': 'Fix: update with main' };
+    // The Fix button runs the diagnosis's own action; 'gh-agent' and 'none' leave only the agent.
+    const ghFixBtns = (c) => {
+        const d = c.diag || {};
+        const fix = GH_FIX[d.action] && (d.action !== 'gh-update-pr' || c.pr) ? `<button type="button" class="jv-btn small is-primary" data-gh-fix="${esc(c.run)}">${esc(GH_FIX[d.action])}</button>` : '';
+        return fix + `<button type="button" class="jv-btn small${fix ? '' : ' is-primary'}" data-gh-agent="${esc(c.run)}">Fix with an agent</button>`;
+    };
     const ghPr = (n) => ((ghWork().prs || {}).items || []).find((p) => String(p.number) === String(n));
+    const GH_BOARD = 'https://github.com/orgs/carlosandmunoz-hq/projects/1';
+    const ghBoardColumn = (name) => `${GH_BOARD}/views/1?filterQuery=${encodeURIComponent(`status:"${name}"`)}`;
+    const ghSearch = (q) => `${GH_REPO}/issues?q=${encodeURIComponent(q).replace(/%20/g, '+')}`;
+    const ghTree = (name) => String(name).split('/').map(encodeURIComponent).join('/');
+
+    // #2807: inline drill-downs, one open per panel. A trigger (data-drill-open="panel|key": a stat, a bar row, a
+    // board column) shows the body with the same data-drill under it; openDrills keeps the open one across renders.
+    const openDrills = new Map();
+    const drillKey = (panel, key) => panel + '|' + key;
+    function drillBodies(panel, list) {
+        const open = openDrills.get(panel);
+        return list.map((d) => `<div class="jv-drill" data-drill="${esc(drillKey(panel, d.key))}"${open === d.key ? '' : ' hidden'}><header><strong>${esc(d.title)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, d.key))}" aria-label="Close ${esc(d.title)}">×</button></header>
+            ${d.rows.length ? `<ol class="jv-drill-list">${d.rows.join('')}</ol>` : `<p class="jv-empty">${esc(d.empty || 'Nothing here.')}</p>`}${d.more ? `<p class="jv-more">${esc(d.more)}</p>` : ''}
+            <p class="jv-drill-links">${d.links.map(([label, url]) => `<a class="jv-btn small" href="${esc(url)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`).join('')}</p></div>`).join('');
+    }
+    function drillStats(panel, list) {
+        const open = openDrills.get(panel);
+        return `<div class="jv-stats">${list.map((k) => (k.drill ? `<button type="button" class="jv-stat-btn${k.alert ? ' is-alert' : ''}${open === k.drill ? ' is-open' : ''}" data-drill-open="${esc(drillKey(panel, k.drill))}" aria-expanded="${open === k.drill}"><b>${fmt(k.value)}</b><span>${esc(k.label)}</span></button>`
+            : `<div${k.alert ? ' class="is-alert"' : ''}><b>${fmt(k.value)}</b><span>${esc(k.label)}</span></div>`)).join('')}</div>`;
+    }
+    function drillToggle(t) {
+        const at = t.dataset.drillOpen.indexOf('|');
+        const panel = t.dataset.drillOpen.slice(0, at), key = t.dataset.drillOpen.slice(at + 1);
+        const open = openDrills.get(panel) !== key;
+        if (open) openDrills.set(panel, key); else openDrills.delete(panel);
+        const on = drillKey(panel, key);
+        root.querySelectorAll('[data-drill]').forEach((d) => { if (d.dataset.drill.startsWith(panel + '|')) d.hidden = !(open && d.dataset.drill === on); });
+        root.querySelectorAll('[data-drill-open]:not(.jv-drill-close)').forEach((b) => {
+            if (!b.dataset.drillOpen.startsWith(panel + '|')) return;
+            const is = open && b.dataset.drillOpen === on;
+            b.setAttribute('aria-expanded', String(is));
+            b.classList.toggle('is-open', is);
+        });
+        const body = open && Array.from(root.querySelectorAll('[data-drill]')).find((d) => d.dataset.drill === on);
+        if (body) body.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    const drillIssue = (i, meta) => `<li><a href="${esc(i.url || GH_REPO + '/issues/' + i.number)}" target="_blank" rel="noopener">#${esc(i.number)}</a><span>${esc(i.title)}${(i.labels || []).slice(0, 3).map((l) => ` <em class="jv-chip">${esc(l)}</em>`).join('')}</span><small>${esc(meta)}</small></li>`;
+    const drillBranch = (b, meta) => `<li><a href="${GH_REPO}/tree/${ghTree(b.name)}" target="_blank" rel="noopener" title="${esc(b.name)}"><code>${esc(b.name)}</code></a><span>${esc(meta)}</span><small><a href="${GH_REPO}/compare/main...${ghTree(b.name)}" target="_blank" rel="noopener">compare</a></small></li>`;
+    const ghDays = (n) => (n === null || n === undefined ? '—' : fmt(n) + ' d');
+
+    // #2807: a hover or a tap on a chart shows the exact values of that point.
+    function chartTip(hit) {
+        const fig = hit.closest('.jv-chart');
+        const tip = fig && fig.querySelector('.jv-tip');
+        if (!tip) return;
+        tip.textContent = hit.dataset.tip;
+        tip.hidden = false;
+        const box = fig.querySelector('.jv-chart-plot').getBoundingClientRect(), r = hit.getBoundingClientRect();
+        tip.style.left = Math.max(0, Math.min(box.width - tip.offsetWidth, r.left + r.width / 2 - box.left - tip.offsetWidth / 2)) + 'px';
+        const guide = fig.querySelector('.jv-guide');
+        if (guide) { guide.setAttribute('x1', hit.dataset.x); guide.setAttribute('x2', hit.dataset.x); guide.classList.add('is-on'); }
+    }
+    function chartTipOff(fig) {
+        const tip = fig.querySelector('.jv-tip'), guide = fig.querySelector('.jv-guide');
+        if (tip) tip.hidden = true;
+        if (guide) guide.classList.remove('is-on');
+    }
 
     function githubView() {
         const g = S.external['github-work'];
@@ -1697,7 +2195,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             + (missing.length ? `<p class="jv-note">Repos the qa-lab-agents app cannot read: ${missing.map((m) => esc(m.repo) + (m.why ? ' (' + esc(m.why) + ')' : '')).join(', ')}.</p>` : ''),
         { wide: true, keep: true, data: needs.map((n) => ({ need: n })), note: 'Steps only you can take. The parts they block show under No data yet at the bottom.' }) : '';
 
-        const flowBody = board ? processMap(board, g.flow) + stats([{ label: 'WIP', value: board.wip, alert: overWip }, { label: 'WIP limit', value: board.wipLimit }, { label: 'Cycle time (median)', value: board.cycleMedD === null || board.cycleMedD === undefined ? '—' : board.cycleMedD + ' d' }, { label: 'Moves in range', value: (g.flow || []).reduce((n, f) => n + (f.count || 0), 0) }, { label: 'Drifted cards', value: (board.drift || []).length, alert: (board.drift || []).length > 0 }]) : off(g.board);
+        const colDrills = board ? BOARD_COLS.map((name) => {
+            const c = (board.columns || []).find((x) => x.name === name) || { count: 0, items: [] };
+            const items = (c.items || []).slice(0, 8);
+            return { key: name, title: `${name} · ${plural(c.count || 0, 'card', 'cards')}`, empty: `No cards in ${name}.`,
+                rows: items.map((i) => drillIssue(i, `${ghDays(i.days)} in ${name}`)), more: c.count > items.length ? `${name === 'Done' ? 'Newest' : 'Oldest'} ${items.length} of ${fmt(c.count)}.` : '',
+                links: [[`Open ${name} on the board`, ghBoardColumn(name)], ['All issues', GH_REPO + '/issues']] };
+        }) : [];
+        const flowBody = board ? processMap(board, g.flow, { drill: 'github-flow', open: openDrills.get('github-flow') }) + drillBodies('github-flow', colDrills) + stats([{ label: 'WIP', value: board.wip, alert: overWip }, { label: 'WIP limit', value: board.wipLimit }, { label: 'Cycle time (median)', value: board.cycleMedD === null || board.cycleMedD === undefined ? '—' : board.cycleMedD + ' d' }, { label: 'Moves in range', value: (g.flow || []).reduce((n, f) => n + (f.count || 0), 0) }, { label: 'Drifted cards', value: (board.drift || []).length, alert: (board.drift || []).length > 0 }]) : off(g.board);
 
         const doraChip = (lv) => (lv ? `<span class="jv-chip lv-${esc(lv)}">${esc(lv)}</span>` : '<span class="jv-chip">—</span>');
         const doraRows = dora ? [
@@ -1719,8 +2224,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         (ci ? ci.daily || [] : []).forEach((r) => { ciDays[r.day] = { date: r.day, runs: r.runs || 0, failed: r.failed || 0 }; });
         const ciRows = Object.values(ciDays);
         const ciTrend = align([{ name: 'Runs', color: COLORS.cyan, rows: ciRows, key: 'runs' }, { name: 'Failed', color: COLORS.pink, rows: ciRows, key: 'failed' }]);
-        const sparkRow = (label, key, shown, color) => { const v = hist.map((r) => Number(r[key]) || 0); const last = hist.length ? hist[hist.length - 1][key] : null; return `<div><span>${esc(label)}</span><b>${last === null || last === undefined ? '—' : esc(shown ? shown(last) : fmt(last))}</b>${spark(v, color)}</div>`; };
-        const trendBody = hist.length ? `<div class="jv-gh-sparks">${sparkRow('CI pass rate', 'passRate', ghPct, COLORS.green)}${sparkRow('Health score', 'score', null, COLORS.cyan)}${sparkRow('Open PRs', 'openPrs', null, COLORS.violet)}${sparkRow('Open bugs', 'openBugs', null, COLORS.pink)}${sparkRow('WIP', 'wip', null, COLORS.amber)}${sparkRow('Merged', 'merged', null, COLORS.green)}</div>` : off(null, 'No daily history yet: the hourly job backfills 90 days, ten a run.');
+        const histDays = hist.map((r) => r.day);
+        const sparkRow = (label, key, shown, color, unit) => { const v = hist.map((r) => Number(r[key]) || 0); const last = hist.length ? hist[hist.length - 1][key] : null; return `<div><span><i style="background:${color}"></i>${esc(label)}</span><b>${last === null || last === undefined ? '—' : esc(shown ? shown(last) : fmt(last))}</b>${spark(v, color, { unit, labels: histDays })}</div>`; };
+        const trendBody = hist.length ? `<div class="jv-gh-sparks">${sparkRow('CI pass rate', 'passRate', ghPct, COLORS.green, '%')}${sparkRow('Health score', 'score', null, COLORS.cyan, 'of 100')}${sparkRow('Open PRs', 'openPrs', null, COLORS.violet, 'PRs')}${sparkRow('Open bugs', 'openBugs', null, COLORS.pink, 'bugs')}${sparkRow('WIP', 'wip', null, COLORS.amber, 'cards')}${sparkRow('Merged', 'merged', null, COLORS.green, 'PRs')}</div><p class="jv-note">One point per day (UTC); tap or hover a line for that day's value. Under each line: first day, value range, last day.</p>` : off(null, 'No daily history yet: the hourly job backfills 90 days, ten a run.');
 
         const ciBody = ci ? stats([{ label: 'Runs', value: ci.runs }, { label: 'Failed', value: ci.failed, alert: ci.failed > 0 }, { label: 'Pass rate', value: ghPct(ci.passRate), alert: ci.passRate < 90 }, { label: 'Minutes', value: ci.minutes }, { label: 'Median queue', value: ghSecs(ci.queueMedS) }, { label: 'Median run', value: ghSecs(ci.durMedS) }, { label: 'Flaky', value: ghPct((ci.flaky || {}).pct), alert: ((ci.flaky || {}).pct || 0) > 5 }])
             + table([['Workflow', (w) => `<strong>${esc(w.name)}</strong>${w.path ? `<br><span class="jv-note">${esc(w.path)}</span>` : ''}`], ['Runs', (w) => fmt(w.runs)],
@@ -1728,14 +2234,24 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ['Main', (w) => `<span class="jv-chip ${w.mainRed ? 'c-slow' : 'c-fast'}">${w.mainRed ? 'red' : 'green'}</span>`],
                 ['Last', (w) => (w.last ? `<a class="jv-chip ${ghConclusion(w.last.conclusion)}" href="${esc(w.last.url)}" target="_blank" rel="noopener">${esc(w.last.conclusion || 'running')}</a> <span class="jv-note">${esc(ghAgo(w.last.at))}</span>` : '—')]], ci.workflows || [], 'No workflow runs in range.') : off(g.ci);
         const flaky = ci && ci.flaky ? ci.flaky.workflows || [] : [];
-        const flakyBody = ci ? table([['Workflow', (w) => esc(w.name)], ['Flaky', (w) => `<span class="jv-chip ${w.pct >= 10 ? 'c-slow' : 'c-average'}">${esc(ghPct(w.pct))}</span>`], ['Runs', (w) => fmt(w.runs)]], flaky, 'No flaky workflows: every failure stayed failed on a re-run.') : off(g.ci);
+        const flakyBtns = (w) => {
+            const n = w.newest, busy = n && S.pending['gh-diag:' + n.id];
+            return `<div class="jv-actions">${n && n.failed ? `<button type="button" class="jv-btn small" data-gh-rerun="${esc(n.id)}">Re-run failed jobs</button>` : ''}${n ? `<button type="button" class="jv-btn small" data-gh-diagnose="${esc(n.id)}"${busy ? ' disabled' : ''}>${busy ? 'Diagnosing…' : n.diag ? 'Diagnose again' : 'Diagnose'}</button>` : ''}`
+                + ghBtn('Quarantine', 'gh-quarantine', w.name, { workflow: w.name, pct: w.pct, runs: w.runs, path: w.path, links: w.links || [] }, { key: 'flaky:' + w.name })
+                + (w.url ? `<a class="jv-btn small" href="${esc(w.url)}" target="_blank" rel="noopener">Open runs</a>` : '')
+                + `<button type="button" class="jv-btn small is-primary" data-gh-flaky-agent="${esc(w.name)}">Fix with an agent</button></div>${n ? ghResult('run:' + n.id) : ''}${ghResult('flaky:' + w.name)}`;
+        };
+        const flakyBody = ci ? table([['Workflow', (w) => `<strong>${esc(w.name)}</strong>${w.path ? `<br><span class="jv-note">${esc(w.path)}</span>` : ''}`], ['Flaky', (w) => `<span class="jv-chip ${w.pct >= 10 ? 'c-slow' : 'c-average'}">${esc(ghPct(w.pct))}</span>`], ['Runs', (w) => fmt(w.runs)],
+            ['Newest failure', (w) => (w.newest ? `${ghLink(w.newest.url, '#' + w.newest.id)} <span class="jv-note">${esc(ghAgo(w.newest.at))}${w.newest.failed ? '' : ' · passed on a re-run'}</span>${w.newest.diag ? `<br><span class="jv-note">${esc(w.newest.diag.cause)}</span>` : ''}` : '—')],
+            ['', flakyBtns]], flaky, 'No flaky workflows: every failure stayed failed on a re-run.') : off(g.ci);
         const diagCell = (r) => (r.diag ? `<strong>${esc(r.diag.cause)}</strong><br>${r.diag.category ? `<span class="jv-chip c-average">${esc(r.diag.category)}</span>` : ''}${r.diag.confidence !== null && r.diag.confidence !== undefined ? `<span class="jv-chip">confidence ${esc(ghConf(r.diag.confidence))}</span>` : ''}${r.diag.fix ? `<br><span class="jv-note">Fix: ${esc(r.diag.fix)}</span>` : ''}` : '<span class="jv-note">Not diagnosed yet.</span>');
+        const pinned = Object.keys(S.ghRows).filter((k) => k.startsWith('run:') && S.ghRows[k].row && !failing.some((r) => 'run:' + r.id === k)).map((k) => S.ghRows[k].row);
         const failBody = ci ? table([
             ['Run', (r) => `${ghLink(r.url, r.name)}<br><span class="jv-note">#${esc(r.id)}${r.event ? ' · ' + esc(r.event) : ''}${r.sha ? ' · ' + esc(String(r.sha).slice(0, 7)) : ''}</span>`],
             ['Branch', (r) => `${ghRef(r.branch)}${r.pr ? `<br>PR ${ghLink(GH_REPO + '/pull/' + r.pr, '#' + r.pr)}` : ''}`],
             ['Attempt', (r) => fmt(r.attempt || 1)], ['Age', (r) => esc(ghAgo(r.at))], ['Diagnosis', diagCell],
-            ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button><button type="button" class="jv-btn small is-primary" data-gh-agent="${esc(r.id)}">Launch a Cursor fix agent</button></div>`]
-        ], failing, 'No failing runs. CI is green.') : off(g.ci);
+            ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button>${ghFixBtns({ run: r.id, pr: r.pr, diag: r.diag })}</div>${ghResult('run:' + r.id)}`]
+        ], failing.concat(pinned), 'No failing runs. CI is green.') : off(g.ci);
 
         const prBtns = (p) => [
             ['behind', 'blocked', 'unstable'].includes(p.state) ? ghBtn('Update with main', 'gh-update-pr', '#' + p.number, { pr: p.number }) : '',
@@ -1748,12 +2264,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 ['PR', (p) => `${ghLink(p.url, '#' + p.number)} <strong>${esc(p.title)}</strong><br><span class="jv-note">${esc(p.author || '')}${p.branch ? ' · ' + ghRef(p.branch) : ''}${(p.labels || []).length ? ' · ' + p.labels.map(esc).join(', ') : ''}</span>`],
                 ['State', (p) => `<span class="jv-chip ${GH_STATE[p.state] || ''}">${esc(p.state)}</span>`], ['Checks', (p) => `<span class="jv-chip ${GH_CHECKS[p.checks] || ''}">${esc(p.checks || '—')}</span>`],
                 ['Age', (p) => `${esc(ghHours(p.ageH))}${p.updatedH > 72 ? `<br><span class="jv-note">quiet ${esc(ghHours(p.updatedH))}</span>` : ''}`], ['Ticket', (p) => ghIssue(p.ticket)],
-                ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>`]
+                ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>${ghResult('pr:' + p.number)}`]
             ], prs.items || [], 'No open PRs.') : off(g.prs);
         const prDaily = prs ? align([{ name: 'Opened', color: COLORS.violet, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Merged', color: COLORS.green, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.merged })), key: 'n' }]) : null;
 
         const columns = board ? (board.columns || []).map((c) => ({ label: c.name, value: c.count || 0 })) : [];
-        const boardBody = board ? bars(columns, { color: COLORS.cyan, limit: 8, empty: 'The board is empty.' }) + table([['Column', (c) => esc(c.name)], ['Median age', (c) => (c.ageMedD === null || c.ageMedD === undefined ? '—' : fmt(c.ageMedD) + ' d')], ['Oldest', (c) => (c.oldest || []).slice(0, 3).map((o) => `${ghLink(o.url, '#' + o.number)} <span class="jv-note">${fmt(o.days)} d</span>`).join(' · ') || '—']], (board.columns || []).filter((c) => c.count)) : off(g.board);
+        const boardBody = board ? bars(columns, { color: COLORS.cyan, limit: 8, empty: 'The board is empty.', yLabel: 'Column', unit: 'cards', legend: 'Cards on the board' }) + table([['Column', (c) => esc(c.name)], ['Median age', (c) => (c.ageMedD === null || c.ageMedD === undefined ? '—' : fmt(c.ageMedD) + ' d')], ['Oldest', (c) => (c.name === 'Done' ? [] : c.items || []).slice(0, 3).map((o) => `${ghLink(o.url, '#' + o.number)} <span class="jv-note">${fmt(o.days)} d</span>`).join(' · ') || '—']], (board.columns || []).filter((c) => c.count)) : off(g.board);
         const drift = board ? board.drift || [] : [];
         const driftBody = board ? table([['Card', (d) => `${ghLink(d.url, '#' + d.number)} ${esc(d.title)}`], ['On the board', (d) => `<span class="jv-chip">${esc(d.column)}</span>`], ['Should be', (d) => `<span class="jv-chip c-average">${esc(d.should)}</span>`], ['Why', (d) => `<span class="jv-note">${esc(d.why)}</span>`]], drift, 'Every card sits where its PR and issue say.')
             + (drift.length ? `<div class="jv-actions">${ghBtn('Sync the board', 'gh-board-sync', plural(drift.length, 'drifted card', 'drifted cards'), { items: drift.map((d) => ({ number: d.number, should: d.should })) }, { cls: ' is-primary' })}</div>` : '') : off(g.board);
@@ -1761,10 +2277,40 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
         const issDaily = iss ? align([{ name: 'Opened', color: COLORS.pink, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Closed', color: COLORS.green, rows: (iss.daily || []).map((r) => ({ date: r.day, n: r.closed })), key: 'n' }]) : null;
         const sub = iss && iss.subIssues ? iss.subIssues : null;
+        const lists = (iss && iss.lists) || {};
+        const oldest = iss ? iss.oldest || [] : [];
+        const newestOf = (shown, of) => (of > shown ? `Newest ${shown} of ${fmt(of)}.` : '');
+        const age = (i) => ghDays(i.days) + ' open';
+        const issDrills = iss ? [
+            { key: 'open', title: `Open issues · ${fmt(iss.open)}`, rows: (lists.open || []).map((i) => drillIssue(i, age(i))), more: newestOf((lists.open || []).length, iss.open), links: [['All open issues', ghSearch('is:issue is:open')]], empty: 'No open issue changed in this range.' },
+            { key: 'bugs', title: `Open bugs · ${fmt(iss.openBugs)}`, rows: (lists.openBugs || []).map((i) => drillIssue(i, age(i))), more: newestOf((lists.openBugs || []).length, iss.openBugs), links: [['Open bugs on GitHub', ghSearch('is:issue is:open label:bug')]], empty: 'No open bugs.' },
+            { key: 'opened', title: `Opened since ${iss.since || 'the range start'} · ${fmt(iss.opened)}`, rows: (lists.opened || []).map((i) => drillIssue(i, `opened ${ghDays(i.days)} ago`)), more: newestOf((lists.opened || []).length, iss.opened), links: [['Opened in range', ghSearch(`is:issue created:>=${iss.since || ''}`)]], empty: 'No issue opened in this range.' },
+            { key: 'closed', title: `Closed since ${iss.since || 'the range start'} · ${fmt(iss.closed)}`, rows: (lists.closed || []).map((i) => drillIssue(i, `closed ${ghDays(i.days)} ago`)), more: newestOf((lists.closed || []).length, iss.closed), links: [['Closed in range', ghSearch(`is:issue is:closed closed:>=${iss.since || ''}`)]], empty: 'No issue closed in this range.' },
+            { key: 'sub', title: `Parent tickets · ${fmt(sub ? sub.parents : 0)}`, rows: ((sub && sub.items) || []).map((i) => drillIssue(i, `${fmt(i.done)} of ${fmt(i.total)} sub-issues done`)), more: sub && sub.parents > (sub.items || []).length ? `Most left to do first: ${(sub.items || []).length} of ${fmt(sub.parents)}.` : '', links: [['All issues', GH_REPO + '/issues']], empty: 'No sub-issues yet.' },
+            { key: 'oldest', title: 'Oldest open issues', rows: oldest.map((i) => drillIssue(i, age(i))), links: [['Oldest first on GitHub', ghSearch('is:issue is:open sort:created-asc')]], empty: 'No open issues.' }
+        ] : [];
+        const issBody = iss ? drillStats('github-issues', [{ label: 'Open', value: iss.open, drill: 'open' }, { label: 'Open bugs', value: iss.openBugs, alert: iss.openBugs > 0, drill: 'bugs' }, { label: 'Opened', value: iss.opened, drill: 'opened' }, { label: 'Closed', value: iss.closed, drill: 'closed' },
+            { label: 'Sub-issues done', value: sub && sub.total ? `${fmt(sub.done)}/${fmt(sub.total)}` : '—', drill: 'sub' }, { label: 'Oldest open', value: oldest.length ? ghDays(oldest[0].days) : '—', drill: 'oldest' }])
+            + drillBodies('github-issues', issDrills)
+            + area(issDaily.labels, issDaily.series, { title: 'Issues opened and closed each day', yLabel: 'issues per day', unit: 'issues', xLabel: 'Day (UTC)' }) : off(g.issues);
+        const bugAreas = iss ? iss.bugsByArea || [] : [];
+        const areaQuery = (a) => (a === 'none' ? 'is:issue is:open label:bug' : `is:issue is:open label:area:${a} label:bug`);
+        const areaBody = iss ? bars(bugAreas, { color: COLORS.pink, empty: 'No open bugs.', yLabel: 'Area', unit: 'open bugs', legend: 'Open bugs', drill: 'github-bug-areas', open: openDrills.get('github-bug-areas') })
+            + drillBodies('github-bug-areas', bugAreas.map((a) => ({ key: a.label, title: `${a.label === 'none' ? 'No area label' : 'area:' + a.label} · ${plural(a.value, 'open bug', 'open bugs')}`, rows: (a.items || []).map((i) => drillIssue(i, age(i))),
+                more: newestOf((a.items || []).length, a.value), links: [[a.label === 'none' ? 'All open bugs' : `area:${a.label} bugs on GitHub`, ghSearch(areaQuery(a.label))]], empty: 'No bugs listed.' }))) : off(g.issues);
 
         const merged = br ? br.merged || [] : [];
         const trees = br ? br.worktrees || [] : [];
-        const branchBody = br ? stats([{ label: 'Branches', value: br.total }, { label: 'Stale', value: br.stale, alert: br.stale > 0 }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0 }, { label: 'Worktrees', value: trees.length }])
+        const ahead = br ? br.ahead || [] : [];
+        const brMeta = (b) => `last commit ${ghDays(b.days)} ago · ${fmt(b.ahead)} ahead, ${fmt(b.behind)} behind${b.pr ? ' · PR #' + b.pr : ''}`;
+        const brDrills = br ? [
+            { key: 'all', title: `Branches · ${fmt(br.total)}`, rows: ahead.slice().sort((a, b) => (a.days ?? 1e9) - (b.days ?? 1e9)).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), more: br.total > 10 ? `Newest 10 of ${fmt(br.total)} read; the rest are on GitHub.` : '', links: [['All branches', GH_REPO + '/branches/all']], empty: 'No branches besides main.' },
+            { key: 'stale', title: `Stale branches · ${fmt(br.stale)}`, rows: ahead.filter((b) => b.days !== null && b.days > 14).sort((a, b) => b.days - a.days).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), links: [['Stale branches', GH_REPO + '/branches/stale']], empty: 'No branch has gone two weeks without a commit.' },
+            { key: 'merged', title: `Merged, not deleted · ${fmt(merged.length)}`, rows: merged.slice(0, 10).map((b) => drillBranch(b, `PR #${b.pr} merged ${ghDays(b.days)} ago`)), more: merged.length > 10 ? `${fmt(merged.length - 10)} more in the export.` : '', links: [['All branches', GH_REPO + '/branches/all'], ['Merged PRs', `${GH_REPO}/pulls?q=is%3Apr+is%3Amerged`]], empty: 'No merged branches left behind.' },
+            { key: 'ahead', title: 'Ahead of and behind main', rows: ahead.slice().sort((a, b) => b.behind - a.behind).slice(0, 10).map((b) => drillBranch(b, brMeta(b))), links: [['Active branches', GH_REPO + '/branches/active']], empty: 'No open branches ahead of main.' }
+        ] : [];
+        const branchBody = br ? drillStats('github-branches', [{ label: 'Branches', value: br.total, drill: 'all' }, { label: 'Stale', value: br.stale, alert: br.stale > 0, drill: 'stale' }, { label: 'Merged, not deleted', value: merged.length, alert: merged.length > 0, drill: 'merged' }, { label: 'Ahead of main', value: ahead.filter((b) => b.ahead > 0).length, drill: 'ahead' }, { label: 'Worktrees', value: trees.length }])
+            + drillBodies('github-branches', brDrills)
             + table([['Branch', (b) => ghRef(b.name)], ['PR', (b) => (b.pr ? ghLink(GH_REPO + '/pull/' + b.pr, '#' + b.pr) : '—')], ['Merged', (b) => fmt(b.days) + ' d ago']], merged.slice(0, 20), 'No merged branches left behind.')
             + (merged.length > 20 ? `<p class="jv-more">+${merged.length - 20} more in the export</p>` : '')
             + (merged.length ? `<div class="jv-actions">${ghBtn('Delete merged branches', 'gh-delete-branch', plural(merged.length, 'merged branch', 'merged branches'), { branches: merged.map((b) => b.name) }, { cls: ' danger' })}</div>` : '') : off(g.branches);
@@ -1780,8 +2326,55 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const depBody = dep ? `<ul class="jv-feed jv-gh-deploys">${(dep.last || []).map((d) => `<li><time>${esc(when(d.at))}</time><span><span class="jv-chip ${ghConclusion(d.conclusion)}">${esc(d.conclusion || 'running')}</span> ${ghLink(d.url, d.name)}${d.sha ? ` <code>${esc(String(d.sha).slice(0, 7))}</code>` : ''}</span></li>`).join('')}</ul>` : off(g.deploys);
         const envBody = dep ? table([['Environment', (x) => esc(x.name)], ['State', (x) => `<span class="jv-chip ${x.state === 'success' || x.state === 'active' ? 'c-fast' : x.state === 'failure' || x.state === 'error' ? 'c-slow' : ''}">${esc(x.state || '—')}</span>`], ['Last', (x) => esc(ghAgo(x.at))]], dep.environments || [], 'No environments.') : off(g.deploys);
 
-        const secItems = (x) => table([['Repo', (i) => esc(i.repo || '')], ['Alert', (i) => ghLink(i.url, (i.package || i.rule || i.secret || i.title || 'alert') + (i.number ? ' #' + i.number : ''))], ['Severity', (i) => `<span class="jv-chip ${/critical|high/i.test(i.severity || '') ? 'c-slow' : i.severity ? 'c-average' : ''}">${esc(i.severity || '—')}</span>`]], x.items || [], 'No open alerts.');
         const dbot = live(sec.dependabot), cscan = live(sec.codeScanning), secrets = live(sec.secrets);
+        const secKinds = [['dependabot', 'Dependabot', dbot], ['codeScanning', 'Code scanning', cscan], ['secrets', 'Secret scanning', secrets]].filter((k) => k[2]);
+        const sevOf = (x, s) => (x.bySeverity || {})[s] || 0;
+        const sevChip = (s) => `<span class="jv-chip ${s === 'critical' || s === 'high' ? 'c-slow' : s === 'medium' ? 'c-average' : ''}">${esc(s || '—')}</span>`;
+        const sevStats = (x) => [{ label: 'Open', value: x.open, alert: x.open > 0 }].concat(GH_SEV.map(([s, label]) => ({ label, value: sevOf(x, s), alert: (s === 'critical' || s === 'high') && sevOf(x, s) > 0 })), [{ label: 'Oldest', value: ghDays(x.oldestD) }, { label: 'Median age', value: ghDays(x.medianD) }]);
+        const dismissForm = (kind, i) => {
+            const panel = 'github-sec-' + kind, key = ghAlertKey(kind, i);
+            return `<div class="jv-drill" data-drill="${esc(drillKey(panel, key))}"${openDrills.get(panel) === key ? '' : ' hidden'}><header><strong>Dismiss ${esc(ghAlertName(kind, i))} #${esc(i.number)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, key))}" aria-label="Close">×</button></header>
+                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
+                <label>Comment, optional <input type="text" name="comment" maxlength="280" placeholder="Why, for the audit trail"></label>
+                <div class="jv-actions"><button type="submit" class="jv-btn small danger">Dismiss on GitHub</button></div><p class="jv-note">Closes the alert on GitHub; it can be reopened there.</p></form></div>`;
+        };
+        const secFix = (i) => {
+            if (!i.pr) return `<button type="button" class="jv-btn small is-primary" data-gh-sec-agent="${esc(ghAlertKey('dependabot', i))}">Fix with an agent</button>`;
+            const p = ghPr(i.pr.number);
+            return `<a class="jv-btn small" href="${esc(i.pr.url)}" target="_blank" rel="noopener">Dependabot PR #${esc(i.pr.number)}</a>`
+                + (p && p.state === 'clean' && p.checks === 'pass' ? ghBtn('Merge', 'gh-merge-pr', '#' + p.number, { pr: p.number }, { cls: ' is-primary', key: ghAlertKey('dependabot', i) }) : '');
+        };
+        const secBtns = (kind) => (i) => {
+            const key = ghAlertKey(kind, i), panel = 'github-sec-' + kind;
+            return `<div class="jv-actions">${i.url ? `<a class="jv-btn small" href="${esc(i.url)}" target="_blank" rel="noopener">Open on GitHub</a>` : ''}`
+                + (kind === 'secrets' ? '' : `<button type="button" class="jv-btn small" data-drill-open="${esc(drillKey(panel, key))}" aria-expanded="${openDrills.get(panel) === key}">Dismiss…</button>`)
+                + (kind === 'dependabot' ? secFix(i) : '')
+                + ghBtn('File a ticket', 'gh-security-ticket', `${ghAlertName(kind, i)} #${i.number}`, Object.assign({ kind }, i, { pr: undefined }), { key })
+                + `</div>${kind === 'secrets' ? '' : dismissForm(kind, i)}${ghResult(key)}`;
+        };
+        const alertCell = (kind) => (i) => `${ghLink(i.url, ghAlertName(kind, i) + ' #' + i.number)}<br><span class="jv-note">${esc(i.repo)}${i.manifest || i.path ? ' · ' + esc(i.manifest || i.path) : ''}</span>`;
+        const dbotBody = dbot ? stats(sevStats(dbot))
+            + (dbot.open ? bars(dbot.byEcosystem || [], { color: COLORS.violet, title: 'Open alerts by ecosystem', yLabel: 'Ecosystem', unit: 'alerts' }) + bars(dbot.byPackage || [], { color: COLORS.amber, limit: 10, title: 'Open alerts by package', yLabel: 'Package', unit: 'alerts' }) : '')
+            + table([['Alert', alertCell('dependabot')], ['Severity', (i) => sevChip(i.severity)], ['Patched in', (i) => esc(i.patched || 'no fix yet')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('dependabot')]], dbot.items || [], 'No open Dependabot alerts.') : off(sec.dependabot, 'Not read yet.');
+        const cscanBody = cscan ? stats(sevStats(cscan))
+            + table([['Alert', alertCell('codeScanning')], ['Severity', (i) => sevChip(i.severity)], ['Tool', (i) => esc(i.tool || '—')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('codeScanning')]], cscan.items || [], 'No open code scanning alerts.') : off(sec.codeScanning, 'Not read yet.');
+        const secretsBody = secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }, { label: 'Oldest', value: ghDays(secrets.oldestD) }])
+            + table([['Secret', alertCell('secrets')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('secrets')]], secrets.items || [], 'No leaked secrets.')
+            + (secrets.open ? '<p class="jv-note"><b>Revoke and rotate:</b> revoke the secret where it was issued, make a new one, store it in GitHub Actions or Firebase secrets, then close the alert on GitHub as revoked. Jarvis cannot close secret alerts.</p>' : '') : off(sec.secrets, 'Not read yet.');
+        const secOpen = secKinds.reduce((n, k) => n + (k[2].open || 0), 0);
+        const byRepoAll = {};
+        secKinds.forEach((k) => (k[2].byRepo || []).forEach((r) => { byRepoAll[r.label] = (byRepoAll[r.label] || 0) + r.value; }));
+        const secWeeks = sec.weeks || [];
+        const secScore = areas.security;
+        const lows = [['dependabot', dbot], ['codeScanning', cscan]].filter((k) => k[1]).flatMap(([kind, x]) => (x.items || []).filter((i) => i.severity === 'low').map((i) => ({ kind, repo: i.repo, number: i.number })));
+        const secBody = secKinds.length ? stats([{ label: 'Open alerts', value: secOpen, alert: secOpen > 0 }, { label: 'Critical', value: secKinds.reduce((n, k) => n + sevOf(k[2], 'critical'), 0), alert: secKinds.some((k) => sevOf(k[2], 'critical')) },
+            { label: 'High', value: secKinds.reduce((n, k) => n + sevOf(k[2], 'high'), 0) }, { label: 'Oldest', value: ghDays(Math.max(...secKinds.map((k) => k[2].oldestD || 0)) || null) }, { label: 'Security score', value: secScore ? secScore.value : '—', alert: !!secScore && secScore.value < 70 }])
+            + stackBars(secKinds.map(([, label, x]) => ({ label, values: x.bySeverity || {} })), GH_SEV, { title: 'Open alerts by severity', yLabel: 'Kind', unit: 'alerts', empty: 'No open security alerts.' })
+            + (secOpen ? bars(Object.entries(byRepoAll).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value), { color: COLORS.pink, title: 'Open alerts by repo', yLabel: 'Repo', unit: 'alerts', legend: 'Open alerts' }) : '')
+            + (secWeeks.length ? area(secWeeks.map((w) => w.week), [{ name: 'Opened', color: COLORS.pink, values: secWeeks.map((w) => w.opened) }, { name: 'Fixed', color: COLORS.green, values: secWeeks.map((w) => w.fixed) }, { name: 'Dismissed', color: COLORS.dim, values: secWeeks.map((w) => w.dismissed) }], { title: 'Alerts opened, fixed and dismissed each week', yLabel: 'alerts per week', unit: 'alerts', xLabel: 'ISO week' }) : '')
+            + (secScore ? `<h4 class="jv-chart-title">Security score ${fmt(secScore.value)}${secScore.grade ? ' (' + esc(secScore.grade) + ')' : ''}: 100 minus</h4>${(secScore.parts || []).length ? `<ul class="jv-gh-parts">${secScore.parts.map((p) => `<li><span>${esc(p.label)} <small>${fmt(p.count)} × ${fmt(p.each)}</small></span><b>−${fmt(p.penalty)}</b></li>`).join('')}</ul>` : '<p class="jv-note">Nothing open, nothing taken off.</p>'}` : '')
+            + `<div class="jv-actions">${ghBtn('Dismiss all low as tolerable risk', 'gh-dismiss-low', plural(lows.length, 'low alert', 'low alerts'), { alerts: lows }, { cls: ' danger', disabled: !lows.length, key: 'sec:low' })}</div>${ghResult('sec:low')}`
+            : off(sec.dependabot, 'Not read yet.');
 
         const gql = bud && bud.kaanmuar ? bud.kaanmuar.graphql : null;
         const core = bud && bud.kaanmuar ? bud.kaanmuar.core : null;
@@ -1789,7 +2382,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const left = (x) => (x && x.limit ? Math.round(((x.limit - x.used) / x.limit) * 100) : null);
         const budgetBody = bud ? `<div class="jv-rings">${ring(left(gql), 'GraphQL left', null, 104)}${ring(left(core), 'REST left', null, 92)}${ring(left(appCore), 'app REST left', null, 92)}</div>`
             + stats([{ label: 'GraphQL used', value: gql ? `${fmt(gql.used)} / ${fmt(gql.limit)}` : '—', alert: left(gql) !== null && left(gql) < 20 }, { label: 'Resets', value: gql && gql.resetAt ? when(gql.resetAt) : '—' }, { label: 'App REST used', value: appCore ? `${fmt(appCore.used)} / ${fmt(appCore.limit)}` : '—' }])
-            + bars((bud.hourly || []).map((r) => ({ label: String(r.hour).slice(11, 16) || String(r.hour), value: r.graphql || 0 })), { color: COLORS.violet, limit: 24, empty: 'No hourly GraphQL readings yet.' })
+            + bars((bud.hourly || []).map((r) => ({ label: String(r.hour).slice(11, 16) || String(r.hour), value: r.graphql || 0 })), { color: COLORS.violet, limit: 24, empty: 'No hourly GraphQL readings yet.', title: 'GraphQL points used per hour', yLabel: 'Hour (UTC)', unit: 'points', legend: 'kaanmuar GraphQL points' })
             + (bud.kaanmuar ? '' : '<p class="jv-note">The Mac uploader has not sent kaanmuar\'s rate limit yet.</p>') : off(null, 'No API budget readings yet.');
 
         const agTickets = ag ? (ag.tickets || []).map((t) => ({ label: `#${t.ticket} ${t.title || ''}`.trim(), value: Math.round((t.hours || 0) * 10) / 10 })) : [];
@@ -1797,8 +2390,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const costPct = cost && cost.limitUsd ? Math.round((cost.onDemandUsd / cost.limitUsd) * 100) : null;
         const agBody = ag ? stats([{ label: 'Open chats', value: (ag.open || []).length }, { label: 'Hours in range', value: Math.round((ag.daily || []).reduce((n, d) => n + (d.hours || 0), 0) * 10) / 10 }, { label: 'Tickets worked', value: (ag.tickets || []).length }, { label: 'On-demand USD', value: cost ? `${fmt(cost.onDemandUsd)} / ${fmt(cost.limitUsd)}` : '—', alert: costPct !== null && costPct >= 80 }])
             + (cost ? `<div class="jv-vs"><span>On-demand spend since ${esc(cost.cycleStart || '—')}</span><span class="jv-meter${costPct >= 80 ? ' is-low' : ''}"><i style="width:${Math.min(100, costPct || 0)}%"></i></span><b>${esc(ghPct(costPct))}</b><small>of ${fmt(cost.limitUsd)} USD</small></div>` : '')
-            + bars(agTickets, { color: COLORS.amber, limit: 10, empty: 'No agent hours logged in range.' }) : off(null, 'No agent work logged yet.');
+            + bars(agTickets, { color: COLORS.amber, limit: 10, empty: 'No agent hours logged in range.', title: 'Hours per ticket in range', yLabel: 'Ticket', unit: 'h', legend: 'Agent hours' }) : off(null, 'No agent work logged yet.');
         const agDaily = ag ? align([{ name: 'Agent hours', color: COLORS.amber, rows: (ag.daily || []).map((r) => ({ date: r.day, n: Math.round((r.hours || 0) * 10) / 10 })), key: 'n' }, { name: 'Tickets', color: COLORS.cyan, rows: (ag.daily || []).map((r) => ({ date: r.day, n: r.tickets || 0 })), key: 'n' }]) : null;
+        if (agDaily) { agDaily.series[0].unit = 'h'; agDaily.series[1].unit = 'tickets'; }
         const openBody = ag ? table([['Ticket', (o) => ghIssue(o.ticket)], ['Title', (o) => esc(o.title)], ['Since', (o) => esc(ghAgo(o.since))]], ag.open || [], 'No chat is working right now.') : off(null, 'No agent work logged yet.');
 
         const anBody = an ? stats([{ label: 'Builds', value: an.builds }, { label: 'Failed', value: an.failed, alert: an.failed > 0 }, { label: 'Last build', value: an.last ? an.last.conclusion || 'running' : '—', alert: !!an.last && ghConclusion(an.last.conclusion) === 'c-slow' }])
@@ -1808,12 +2402,15 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const repoBody = repos.length ? `<div class="jv-gh-repos">${repos.map((r) => `<div class="jv-gh-repo"><strong>${ghLink('https://github.com/' + r.name, r.name)}</strong>
             <span>${r.private ? '<span class="jv-chip">private</span>' : '<span class="jv-chip">public</span>'}${r.language ? `<span class="jv-chip">${esc(r.language)}</span>` : ''}${r.ci ? `<a class="jv-chip ${ghConclusion(r.ci.conclusion)}" href="${esc(r.ci.url)}" target="_blank" rel="noopener">CI ${esc(r.ci.conclusion || 'running')}</a>` : '<span class="jv-chip">no CI</span>'}${r.security && r.security.open ? `<span class="jv-chip c-slow">${fmt(r.security.open)} security</span>` : ''}</span>
             <small>pushed ${esc(ghAgo(r.pushedAt))} · ${fmt(r.openIssues || 0)} issues · ${fmt(r.openPrs || 0)} PRs · ${esc(r.defaultBranch || 'main')}</small></div>`).join('')}</div>` : off(null, 'No repos read yet.');
+        const shownRepos = (g.access && g.access.shown) || C.GITHUB_REPOS;
+        const repoTools = `<p class="jv-note">Showing ${shownRepos.map(esc).join(', ')}. <button type="button" class="jv-link" data-act="settings" data-settings-at="s-repos">Edit the list</button></p>`;
 
         const ai = g.ai || {};
         const aiBody = `<div class="jv-chips">${GH_ASKS.map((q) => `<button type="button" class="jv-btn small" data-gh-ask="${esc(q)}">${esc(q)}</button>`).join('')}</div>
             <form class="jv-inline" data-ask><input type="text" name="q" data-keep="gh-ask" placeholder="Ask Jarvis about GitHub: which workflow fails most? who is blocking QA?" aria-label="Ask Jarvis about GitHub"><button type="submit" class="jv-btn">Ask</button></form>
             ${S.ai ? `<div class="jv-ai"><span class="jv-eyebrow">Gemini · ${S.aiAt ? esc(when(S.aiAt)) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>` : ''}
-            <h4 class="jv-sub">Latest diagnoses</h4>${table([['Run', (d) => `${esc(d.workflow || '')} <span class="jv-note">#${esc(d.run)}</span>`], ['Cause', (d) => `${esc(d.cause)}${d.fix ? `<br><span class="jv-note">Fix: ${esc(d.fix)}</span>` : ''}`], ['Kind', (d) => `${d.category ? `<span class="jv-chip c-average">${esc(d.category)}</span>` : ''}${d.confidence !== null && d.confidence !== undefined ? `<span class="jv-chip">${esc(ghConf(d.confidence))}</span>` : ''}`], ['When', (d) => esc(when(d.at))]], (ai.diagnoses || []).slice(0, 10), 'No diagnoses yet: Jarvis diagnoses new failed runs every hour.')}
+            <h4 class="jv-sub">Latest diagnoses</h4>${table([['Run', (d) => `${esc(d.workflow || '')} <span class="jv-note">#${esc(d.run)}</span>`], ['Cause', (d) => `${esc(d.cause)}${d.fix ? `<br><span class="jv-note">Fix: ${esc(d.fix)}</span>` : ''}`], ['Kind', (d) => `${d.category ? `<span class="jv-chip c-average">${esc(d.category)}</span>` : ''}${d.confidence !== null && d.confidence !== undefined ? `<span class="jv-chip">${esc(ghConf(d.confidence))}</span>` : ''}`], ['When', (d) => esc(when(d.at))],
+                ['', (d) => `<div class="jv-actions">${ghFixBtns({ run: d.run, pr: d.pr, diag: d })}</div>${ghResult('run:' + d.run)}`]], (ai.diagnoses || []).slice(0, 10), 'No diagnoses yet: Jarvis diagnoses new failed runs every hour.')}
             ${ai.retro ? `<h4 class="jv-sub">Weekly retro · ${esc(ai.retro.week)}</h4><div class="jv-ai-text">${esc(ai.retro.text).replace(/\n/g, '<br>')}</div>` : ''}`;
 
         const newest = failing.slice().sort((a, b) => Date.parse(b.at || 0) - Date.parse(a.at || 0))[0];
@@ -1825,41 +2422,42 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const daily = (x) => (x ? x.labels.map((d, i) => Object.assign({ day: d }, ...x.series.map((s) => ({ [s.name]: s.values[i] })))) : null);
 
         return head + `<div class="jv-grid">${needsPanel}${briefPanel('github')}${proposalsPanel('github')}
-            ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
+            ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Tap a column to list its cards. Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
             ${panel('github-dora', 'DORA', doraBody, { data: doraRows.map(([label, x]) => Object.assign({ metric: label }, x || {})), note: 'Elite: a deploy a day or more, changes live within a day, 5% or fewer fail, restored within an hour.' })}
             ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
             ${panel('github-trend', 'Daily trend', trendBody, { data: hist })}
-            ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series), { wide: true, data: daily(ciTrend) })}
-            ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Re-run and Diagnose act at once; a fix agent always asks first and opens a PR when it is done.' })}
+            ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series, { title: 'Workflow runs each day, and how many failed', yLabel: 'runs per day', unit: 'runs', xLabel: 'Day (UTC)' }), { wide: true, data: daily(ciTrend) })}
+            ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Fix runs what the diagnosis suggests: a re-run or an update with main. A re-run shows its state here until it finishes; a fix agent always asks first and opens a PR when it is done.' })}
             ${panel('github-ci', 'CI workflows', ciBody, { wide: true, data: ci && ci.workflows })}
             ${panel('github-flaky', 'Flaky workflows', flakyBody, { data: flaky, note: 'Flaky: failed, then passed on a re-run of the same commit.' })}
             ${panel('github-prs', `Open PRs${prs ? ' · ' + fmt(prs.open) : ''}`, prBody, { wide: true, keep: !!prs, data: prs && prs.items, note: `Update with main and Merge run as soon as you confirm. Jarvis's own updates wait ${ghCountdown()} on the countdown (Systems > Jarvis actions).` })}
-            ${prDaily ? panel('github-pr-daily', 'PRs opened and merged per day', area(prDaily.labels, prDaily.series), { wide: true, data: daily(prDaily) }) : ''}
-            ${listPanel('github', 'pr-sizes', 'PR sizes', prs ? prs.sizes || [] : [], { color: COLORS.violet, empty: 'No PRs in range.' })}
+            ${prDaily ? panel('github-pr-daily', 'PRs opened and merged per day', area(prDaily.labels, prDaily.series, { title: 'Pull requests opened and merged each day', yLabel: 'PRs per day', unit: 'PRs', xLabel: 'Day (UTC)' }), { wide: true, data: daily(prDaily) }) : ''}
+            ${listPanel('github', 'pr-sizes', 'PR sizes', prs ? prs.sizes || [] : [], { color: COLORS.violet, empty: 'No PRs in range.', yLabel: 'Size (lines changed: XS <10, S <50, M <250, L <1000)', unit: 'open PRs', legend: 'Open PRs' })}
             ${panel('github-board', 'Board columns', boardBody, { data: board && board.columns })}
             ${panel('github-drift', `Board drift${drift.length ? ' · ' + drift.length : ''}`, driftBody, { wide: true, data: drift, note: 'Cards whose Status disagrees with their PR or issue. Jarvis syncs them on its own every hour.' })}
             ${panel('github-aging', 'Aging cards', agingBody, { data: board && board.aging })}
-            ${listPanel('github', 'throughput', `Throughput per week${board && board.cycleMedD !== null && board.cycleMedD !== undefined ? ' · cycle ' + board.cycleMedD + ' d' : ''}`, board ? (board.throughput || []).map((t) => ({ label: t.week, value: t.done })) : [], { color: COLORS.green, empty: 'Nothing reached Done in range.' })}
-            ${panel('github-issues', 'Issues opened and closed per day', iss ? stats([{ label: 'Open', value: iss.open }, { label: 'Open bugs', value: iss.openBugs, alert: iss.openBugs > 0 }, { label: 'Opened', value: iss.opened }, { label: 'Closed', value: iss.closed }]) + area(issDaily.labels, issDaily.series) : off(g.issues), { wide: true, data: daily(issDaily) })}
-            ${panel('github-bug-areas', 'Open bugs by area', iss ? pie(iss.bugsByArea, { unit: 'bugs', empty: 'No open bugs.' }) : off(g.issues), { data: iss && iss.bugsByArea })}
-            ${listPanel('github', 'kinds', 'Issues by kind', iss ? iss.byKind || [] : [], { color: COLORS.violet, empty: 'No issues in range.' })}
+            ${listPanel('github', 'throughput', `Throughput per week${board && board.cycleMedD !== null && board.cycleMedD !== undefined ? ' · cycle ' + board.cycleMedD + ' d' : ''}`, board ? (board.throughput || []).map((t) => ({ label: t.week, value: t.done })) : [], { color: COLORS.green, empty: 'Nothing reached Done in range.', yLabel: 'ISO week', unit: 'cards done', legend: 'Cards that reached Done' })}
+            ${panel('github-issues', 'Issues opened and closed per day', issBody, { wide: true, data: daily(issDaily), note: 'Tap a number to list its issues.' })}
+            ${panel('github-bug-areas', 'Open bugs by area', areaBody, { data: bugAreas.map((a) => ({ label: a.label, value: a.value })), note: 'Tap an area to list its bugs.' })}
+            ${listPanel('github', 'kinds', 'Issues by kind', iss ? iss.byKind || [] : [], { color: COLORS.violet, empty: 'No issues in range.', yLabel: 'Kind', unit: 'open issues', legend: 'Open issues' })}
             ${panel('github-subissues', 'Sub-issues done', sub && sub.total ? `<div class="jv-rings">${ring(Math.round((sub.done / sub.total) * 100), `${sub.done} of ${sub.total}`, null, 110)}</div><p class="jv-note">Across ${fmt(sub.parents)} parent tickets.</p>` : off(g.issues, 'No sub-issues yet.'), { data: sub ? [sub] : null })}
             ${panel('github-oldest', 'Oldest open issues', iss ? table([['Issue', (o) => `${ghLink(o.url, '#' + o.number)} ${esc(o.title)}`], ['Days', (o) => fmt(o.days)]], iss.oldest || [], 'No open issues.') : off(g.issues), { data: iss && iss.oldest })}
-            ${panel('github-branches', 'Branches', branchBody, { data: merged })}
+            ${panel('github-branches', 'Branches', branchBody, { data: merged, note: 'Tap a number to list its branches, each with its compare against main.' })}
             ${panel('github-ahead', 'Ahead of and behind main', aheadBody, { data: br && br.ahead })}
             ${panel('github-worktrees', `Worktrees${trees.length ? ' · ' + trees.length : ''}`, treeBody, { wide: true, data: trees, note: 'Remove queues git worktree remove for the Mac uploader, which runs it within 5 minutes; it never forces, so uncommitted files stay.' })}
-            ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series), { wide: true, data: daily(depDaily) }) : ''}
+            ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series, { title: 'Deploy runs on main each day', yLabel: 'deploys per day', unit: 'deploys', xLabel: 'Day (UTC)' }), { wide: true, data: daily(depDaily) }) : ''}
             ${panel('github-deploy-last', 'Latest deploys', depBody, { data: dep && dep.last })}
             ${panel('github-envs', 'Environments', envBody, { data: dep && dep.environments })}
-            ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbot ? stats([{ label: 'Open', value: dbot.open, alert: dbot.open > 0 }, { label: 'Critical', value: dbot.critical, alert: dbot.critical > 0 }, { label: 'High', value: dbot.high, alert: dbot.high > 0 }]) + secItems(dbot) : off(sec.dependabot, 'Not read yet.'), { data: dbot && dbot.items })}
-            ${panel('github-code-scanning', `Code scanning${cscan ? ' · ' + fmt(cscan.open) : ''}`, cscan ? stats([{ label: 'Open', value: cscan.open, alert: cscan.open > 0 }]) + secItems(cscan) : off(sec.codeScanning, 'Not read yet.'), { data: cscan && cscan.items })}
-            ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }]) + secItems(secrets) : off(sec.secrets, 'Not read yet.'), { data: secrets && secrets.items })}
+            ${panel('github-security', `Security${secKinds.length ? ' · ' + fmt(secOpen) + ' open' : ''}`, secBody, { wide: true, keep: secKinds.length > 0, data: secWeeks, note: 'Project repos only. Dismiss and the bulk dismissal run only when you click; Jarvis never dismisses on its own.' })}
+            ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbotBody, { wide: true, keep: !!dbot, data: dbot && dbot.items, note: 'Fix merges the Dependabot PR when it is green, or drafts an upgrade prompt for an agent.' })}
+            ${panel('github-code-scanning', `Code scanning${cscan ? ' · ' + fmt(cscan.open) : ''}`, cscanBody, { wide: true, keep: !!cscan, data: cscan && cscan.items })}
+            ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secretsBody, { data: secrets && secrets.items })}
             ${panel('github-budget', 'GitHub API budget', budgetBody, { data: bud && bud.hourly, note: "All chats share kaanmuar's 5,000 GraphQL points an hour; the app's REST budget is its own." })}
             ${panel('github-agents', 'Agent work', agBody, { data: ag && ag.tickets })}
-            ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series), { wide: true, data: daily(agDaily) }) : ''}
+            ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series, { title: 'Agent hours and tickets worked each day', yLabel: 'hours or tickets', xLabel: 'Day (UTC)' }), { wide: true, data: daily(agDaily) }) : ''}
             ${panel('github-agents-open', 'Open chats', openBody, { data: ag && ag.open })}
             ${panel('github-android', 'Android builds and releases', anBody, { data: an && an.releases })}
-            ${panel('github-repos', `Repos${repos.length ? ' · ' + repos.length : ''}`, repoBody, { wide: true, data: repos.map((r) => ({ name: r.name, private: r.private, ci: r.ci && r.ci.conclusion, pushedAt: r.pushedAt, openIssues: r.openIssues, openPrs: r.openPrs, security: r.security && r.security.open, language: r.language })) })}
+            ${panel('github-repos', `Repos${repos.length ? ' · ' + repos.length : ''}`, repoBody + repoTools, { wide: true, data: repos.map((r) => ({ name: r.name, private: r.private, ci: r.ci && r.ci.conclusion, pushedAt: r.pushedAt, openIssues: r.openIssues, openPrs: r.openPrs, security: r.security && r.security.open, language: r.language })) })}
             ${panel('github-ai', 'Jarvis on GitHub', aiBody, { wide: true, keep: true, data: ai.diagnoses })}
             ${panel('github-deck', 'Command deck', deck, { wide: true, note: `Every button asks first, then runs. When Jarvis fixes on its own, merges, reverts, branch deletes and worktree removals wait ${ghCountdown()} on the countdown.` })}
         </div>`;
@@ -1873,69 +2471,167 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         'gh-merge-pr': (a) => `merge PR #${a.pr} into main now (it then goes to production)`,
         'gh-delete-branch': (a) => `delete ${plural((a.branches || []).length, 'merged branch', 'merged branches')} now`,
         'gh-remove-worktree': (a) => `remove the merged worktree ${a.branch || a.path} on the Mac (the uploader runs it within 5 minutes, never with --force)`,
-        'gh-orphan-ticket': (a) => `file a ticket for PR #${a.pr} and link it in a comment on the PR`
+        'gh-orphan-ticket': (a) => `file a ticket for PR #${a.pr} and link it in a comment on the PR`,
+        'gh-quarantine': (a) => `file a Backlog bug "CI: ${a.workflow} is flaky (${a.pct}% of ${a.runs} runs)" in area:ci, with links to its runs`,
+        'gh-security-ticket': (a) => `file a Backlog bug for ${a.kind === 'dependabot' ? 'Dependabot' : a.kind === 'codeScanning' ? 'code scanning' : 'secret scanning'} alert #${a.number} in ${a.repo}`,
+        'gh-dismiss-low': (a) => `dismiss ${plural((a.alerts || []).length, 'low security alert', 'low security alerts')} on GitHub as a tolerable risk (code scanning ones as won't fix)`
     };
+    const GH_POLL_MS = 10000, GH_POLL_TRIES = 90;
+    const ghCap = (s) => String(s).replace(/^./, (c) => c.toUpperCase());
+
+    // After any action: GitHub numbers read again, past the 10-minute cache.
+    async function ghFresh() {
+        const out = await call('github-work', { fresh: true }).catch((error) => ({ ok: false, error: error.message }));
+        if (out && out.ok !== false) S.external['github-work'] = out;
+        compute();
+        render();
+    }
 
     async function ghAct(b, action = b.dataset.ghAct, target = b.dataset.target, given = null) {
         let args = given || {};
         if (!given) try { args = JSON.parse(b.dataset.ghArgs || '{}'); } catch (error) { args = {}; }
         if (!confirmRun((GH_ASK[action] || (() => ACTION_LABELS[action] || action))(args))) return;
+        const key = b.dataset.ghKey;
         b.disabled = true;
-        toast('Asking Jarvis…', 30000);
+        if (key) ghMark(key, 'running', ghCap(ACTION_LABELS[action] || action) + '…'); else toast('Asking Jarvis…', 30000);
         const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
-        toast(out.ok ? out.message || `${(ACTION_LABELS[action] || action).replace(/^./, (c) => c.toUpperCase())}: done.` : 'Not done: ' + out.error, 7000);
-        loadExternal(['github-work', 'actions']);
+        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + out.error;
+        if (key) ghMark(key, out.ok ? 'done' : 'failed', said, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
+        toast(said, 7000);
+        await ghFresh();
+        loadExternal(['actions']);
     }
 
-    // Main's failed runs go through the action-run re-run (it re-runs a workflow's newest failed run on main); other branches through github-act.
+    // The deck's button re-runs main's failed workflows through action-run; a row's button re-runs that run id.
     async function ghRerun(b) {
+        if (b.dataset.ghRerun !== 'main') return ghRerunRun(b.dataset.ghRerun);
         const failing = ((ghWork().ci || {}).failing || []);
-        const run = b.dataset.ghRerun === 'main' ? null : ghRun(b.dataset.ghRerun);
-        if (run && run.branch !== 'main') return ghAct(b, 'rerun-ci', `${run.name} #${run.id}`, { run: run.id, workflow: run.name, branch: run.branch });
-        const workflows = Array.from(new Set((run ? [run] : failing.filter((r) => r.branch === 'main')).map((r) => r.name)));
+        const workflows = Array.from(new Set(failing.filter((r) => r.branch === 'main').map((r) => r.name)));
         if (!workflows.length || !confirmRun(`re-run the failed jobs of ${workflows.join(', ')} on main`)) return;
         b.disabled = true;
         toast('Running…', 30000);
         const out = await call('action-run', { action: 'rerun-ci', workflows, proposal: 'gh:rerun' }).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
         toast(out.ok ? `${ACTION_LABELS['rerun-ci']}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}.` : 'Not run: ' + out.error, 6000);
-        loadExternal(['github-work', 'actions']);
+        await ghFresh();
+        loadExternal(['actions']);
+    }
+
+    async function ghRerunRun(id) {
+        const c = ghRunCtx(id);
+        if (!c || !confirmRun(GH_ASK['rerun-ci']({ run: c.run, workflow: c.workflow, branch: c.branch }))) return;
+        const key = 'run:' + c.run;
+        ghMark(key, 'queued', 'Re-running…', { row: c.row });
+        const out = await call('github-act', { action: 'rerun-ci', run: c.run, workflow: c.workflow, branch: c.branch, target: `${c.workflow} #${c.run}` }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { ghMark(key, 'failed', 'Not re-run: ' + out.error); return; }
+        ghMark(key, 'queued', 'Re-run queued.', { url: c.url, link: 'Watch the run' });
+        await ghFresh();
+        ghPoll(c.run);
+    }
+
+    // A re-run's status every 10 s until it completes, for at most 15 minutes.
+    async function ghPoll(id, tries = 0) {
+        const key = 'run:' + id;
+        if (!tries) { if (S.ghPolls.has(key)) return; S.ghPolls.add(key); }
+        const out = await call('github-run', { run: Number(id) }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok && out.done) {
+            S.ghPolls.delete(key);
+            const green = out.conclusion === 'success';
+            ghMark(key, green ? 'done' : 'failed', green ? `Passed on attempt ${out.attempt}.` : `Ended ${out.conclusion || 'without a result'} on attempt ${out.attempt}.`, { url: out.url, link: 'Open the run' });
+            return ghFresh();
+        }
+        if (out.ok) ghMark(key, out.status === 'in_progress' ? 'running' : 'queued', `Attempt ${out.attempt}: ${String(out.status || 'queued').replace(/_/g, ' ')}…`, { url: out.url, link: 'Watch the run' });
+        if (tries + 1 >= GH_POLL_TRIES) {
+            S.ghPolls.delete(key);
+            ghMark(key, 'failed', 'Still not done after 15 minutes; open the run to follow it.', { url: (S.ghRows[key] || {}).url || '', link: 'Open the run' });
+            return;
+        }
+        setTimeout(() => ghPoll(id, tries + 1), GH_POLL_MS);
     }
 
     async function ghDiagnose(id) {
         if (!id) return;
+        const key = 'run:' + id;
         S.pending['gh-diag:' + id] = true;
-        render();
-        toast('Gemini is reading the run log…', 30000);
+        ghMark(key, 'running', 'Diagnosing: Gemini is reading the run log…');
         const out = await call('github-diagnose', { run: Number(id) || id }).catch((error) => ({ ok: false, error: error.message }));
         S.pending['gh-diag:' + id] = false;
-        const run = ghRun(id);
-        if (out.ok && out.diag && run) run.diag = out.diag;
-        toast(out.ok ? 'Diagnosis: ' + ((out.diag && out.diag.cause) || 'done.') : 'Not diagnosed: ' + out.error, 7000);
-        render();
+        const c = ghRunCtx(id);
+        if (out.ok && out.diag && c && c.row) c.row.diag = out.diag;
+        if (out.ok && out.diag && c && c.flaky) c.flaky.newest.diag = out.diag;
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? 'Diagnosed: ' + ((out.diag && out.diag.cause) || 'done.') : 'Not diagnosed: ' + out.error);
+        ghFresh();
     }
 
-    function ghPrompt(run) {
-        const d = run.diag || {};
-        return d.prompt || [`The GitHub Actions run "${run.name}" #${run.id} failed on branch ${run.branch} (${run.url}).`, d.cause ? `Diagnosis: ${d.cause}` : '', d.fix ? `Suggested fix: ${d.fix}` : '',
-            `Read the run log, find the root cause, fix it on ${run.branch}${run.pr ? ` (PR #${run.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
+    // Fix runs the diagnosis's own action: a re-run, or an update of its PR with main.
+    async function ghFix(id) {
+        const c = ghRunCtx(id);
+        const action = c && c.diag && c.diag.action;
+        if (action === 'rerun-ci') return ghRerunRun(id);
+        if (action !== 'gh-update-pr' || !c.pr || !confirmRun(`${GH_ASK['gh-update-pr']({ pr: c.pr })} (Gemini: ${c.diag.cause})`)) return;
+        const key = 'run:' + c.run;
+        ghMark(key, 'running', `Updating PR #${c.pr} with main…`);
+        const out = await call('github-act', { action: 'gh-update-pr', pr: c.pr, target: '#' + c.pr }).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? out.message || `Updated PR #${c.pr}.` : 'Not updated: ' + out.error, out.ok ? { url: out.url, link: 'Open the PR' } : null);
+        ghFresh();
+    }
+
+    function ghPrompt(c) {
+        const d = c.diag || {};
+        return d.prompt || [`The GitHub Actions run "${c.workflow}" #${c.run} failed on branch ${c.branch} (${c.url}).`, d.cause ? `Diagnosis: ${d.cause}` : '', d.fix ? `Suggested fix: ${d.fix}` : '',
+            `Read the run log, find the root cause, fix it on ${c.branch}${c.pr ? ` (PR #${c.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
     }
 
     // A Cursor cloud agent costs money and writes code: it asks every time, showing the drafted prompt.
-    async function ghAgent(b) {
-        let body = null;
-        if (b.dataset.ghAgent) { const run = ghRun(b.dataset.ghAgent); if (run) body = { prompt: ghPrompt(run), branch: run.branch, pr: run.pr || undefined, run: run.id }; }
-        else { const p = ghPr(b.dataset.ghAgentPr); if (p) body = { prompt: `PR #${p.number} "${p.title}" (${p.url}) has merge conflicts with main. Merge main into ${p.branch}, resolve the conflicts keeping the intent of both sides, run the tests and push.`, branch: p.branch, pr: p.number }; }
-        if (!body) return;
+    async function ghLaunch(key, body) {
         const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
-        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return;
-        b.disabled = true;
-        toast('Launching the agent…', 30000);
+        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return false;
+        ghMark(key, 'running', 'Launching the agent…');
         const out = await call('github-agent', body).catch((error) => ({ ok: false, error: error.message }));
-        b.disabled = false;
+        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
-        if (out.ok) loadExternal(['github-work']);
+        if (out.ok) ghFresh();
+        return true;
+    }
+
+    function ghAgent(b) {
+        if (b.dataset.ghAgent) {
+            const c = ghRunCtx(b.dataset.ghAgent);
+            if (c) ghLaunch('run:' + c.run, { prompt: ghPrompt(c), branch: c.branch, pr: c.pr || undefined, run: c.run });
+            return;
+        }
+        const p = ghPr(b.dataset.ghAgentPr);
+        if (p) ghLaunch('pr:' + p.number, { prompt: `PR #${p.number} "${p.title}" (${p.url}) has merge conflicts with main. Merge main into ${p.branch}, resolve the conflicts keeping the intent of both sides, run the tests and push.`, branch: p.branch, pr: p.number });
+    }
+
+    // Gemini drafts the prompt from the newest failure's diagnosis or failing step log; Carlos still confirms it.
+    async function ghFlakyAgent(name) {
+        const w = (((ghWork().ci || {}).flaky || {}).workflows || []).find((x) => x.name === name);
+        if (!w) return;
+        const key = 'flaky:' + name;
+        ghMark(key, 'running', 'Gemini is drafting a fix prompt…');
+        const out = await call('github-draft', { run: w.newest ? w.newest.id : undefined, workflow: w.name, pct: w.pct, runs: w.runs }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { ghMark(key, 'failed', 'No prompt: ' + out.error); return; }
+        if (!(await ghLaunch(key, { prompt: out.prompt, branch: out.branch || 'main', name: 'Jarvis fix: flaky ' + w.name }))) { delete S.ghRows[key]; render(); }
+    }
+
+    function ghSecAgent(key) {
+        const a = ghAlert(key);
+        if (a) ghLaunch(key, { prompt: ghSecPrompt(a.item), branch: 'main', repo: a.item.repo, name: 'Jarvis fix: ' + a.item.package });
+    }
+
+    // Dismissing closes the alert on GitHub, so it runs only from this form, never on Jarvis's own.
+    async function ghDismiss(form) {
+        const key = form.dataset.ghDismiss, a = ghAlert(key);
+        if (!a) return;
+        const i = a.item;
+        openDrills.delete('github-sec-' + a.kind);
+        ghMark(key, 'running', 'Dismissing on GitHub…');
+        const out = await call('github-act', { action: 'gh-dismiss-alert', kind: a.kind, repo: i.repo, number: i.number, reason: form.reason.value, comment: form.comment.value.trim(), target: `${ghAlertName(a.kind, i)} #${i.number}` }).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? out.message : 'Not dismissed: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
+        toast(out.ok ? out.message : 'Not dismissed: ' + out.error, 7000);
+        ghFresh();
     }
 
     async function ghReload() {
@@ -2445,7 +3141,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const s = S.summaries;
         const e = S.external;
         const out = {};
-        const tiles = C.PRODUCTS.filter((p) => p.key !== 'overview').map((p) => {
+        const tiles = C.PRODUCTS.filter((p) => p.key !== 'overview' && p.key !== 'console').map((p) => {
             const sum = s[p.key];
             let main = null, series = [];
             if (sum && sum.kpis) { main = sum.kpis[0]; series = sum.series ? sum.series.values : []; }
@@ -2454,22 +3150,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             else if (p.key === 'traffic' && e.ga4 && e.ga4.ok) { const n = e.ga4.groups.reduce((a, g) => a + g.sessions, 0); const b = e.ga4.groups.reduce((a, g) => a + g.priorSessions, 0); const d = C.delta(n, b); main = { label: 'GA4 sessions', value: n, delta: d.text, dir: d.dir }; series = e.ga4.daily.map((x) => x.sessions); }
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
-            if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + C.outreachVisits(S.rows.events).total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
+            if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + outreachSeen().total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
             if (p.key === 'github' && e['github-work'] && e['github-work'].ok !== false) { const g = e['github-work']; const pass = g.ci && g.ci.ok !== false ? g.ci.passRate : null; main = { label: 'Grade · CI pass rate', value: `${(g.score && g.score.overall && g.score.overall.grade) || '—'} · ${pass === null || pass === undefined ? '—' : pass + '%'}` }; series = (g.history || []).map((x) => x.passRate || 0); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
             return `<button type="button" class="jv-tile${alerts ? ' has-alert' : ''}" data-go="${p.key}"><span class="jv-tile-name">${esc(p.name)}</span><strong>${main ? fmt(main.value) : '—'}</strong><small>${main ? esc(main.label) : ''} ${main && main.delta ? `<em class="${main.dir > 0 ? 'up' : main.dir < 0 ? 'down' : ''}">${esc(main.delta)}</em>` : ''}</small>${spark(series, alerts ? COLORS.amber : COLORS.cyan)}${tileGoal(p.key)}${alerts ? `<b class="jv-badge">${alerts}</b>` : ''}</button>`;
         }).join('');
-        const feed = [].concat(
-            S.rows.events.slice(0, 40).map((r) => ({ at: r.createdAt, text: `${(C.PRODUCTS.find((p) => p.key === r.site) || { name: r.site }).name}: ${r.kind === 'visit' ? 'visit from ' + C.openSource(r) : C.actionTitle(r)}` })),
-            S.rows.opens.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: open from ${C.openSource(r)}` })),
-            S.rows.reviews.slice(0, 20).map((r) => ({ at: r.createdAt, text: `URL Review: ${r.paid ? 'paid ' : ''}review of ${esc(String(r.requestedUrl || r.url || '').replace(/^https?:\/\//, '').slice(0, 50))} (${r.status || '…'})` }))
-        ).filter((x) => C.toDate(x.at)).sort((a, b) => C.toDate(b.at) - C.toDate(a.at)).slice(0, 18);
+        const feed = S.feed;
         const W = C.wide({ products: s, external: e, briefing: S.brief });
         S.wide = W;
         const take = () => { const list = S.empties; S.empties = []; return noData(list); };
         S.empties = [];
-        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
+        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${processesPanel(true)}${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
@@ -2500,9 +3192,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
             ${panel('review-failures', 'Failed runs', h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : 'Not loaded.'}</p>`, { data: h && h.failures ? h.failures.latest : null })}
-            ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], S.alerts.slice(0, 12), 'No alerts in range.'), { wide: true, data: S.alerts.map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
+            ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], reviewAlerts(), 'No alerts in range.'), { wide: true, data: reviewAlerts().map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
             ${panel('review-reports', 'Mailed reports', table([['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))], ['Opens', (x) => fmt(x.opens || 0)], ['Reviews', (x) => fmt(x.reviews || 0)], ['Paid', (x) => fmt(x.paidUsd || 0) + ' USD']], S.reports, 'No mailed reports yet.'), { data: S.reports.map((x) => ({ period: x.period, label: x.label, opens: x.opens, reviews: x.reviews, paidUsd: x.paidUsd })) })}
-            ${panel('review-actions', 'Actions', `<div class="jv-actions">
+            ${panel('review-ops', 'Actions', `<div class="jv-actions">
                 <a class="jv-btn" href="${DESK}" target="_blank" rel="noopener">Review desk</a><a class="jv-btn" href="${DESK}/failures" target="_blank" rel="noopener">Failed runs</a>
                 <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button>
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
@@ -2525,6 +3217,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         out.marketing = marketingView() + take();
         out.github = githubView() + take();
         out.engagement = engagementView() + take();
+        out.console = '';
 
         const ga = e.ga4;
         const cf = e.cloudflare;
@@ -2556,7 +3249,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const up = e.uptime;
         const sp = e.speed;
         const tiles90 = C.statusMatrix(e, S.pending);
-        out.systems = `<div class="jv-grid">${briefPanel('systems')}
+        out.systems = `<div class="jv-grid">${processesPanel(false)}${briefPanel('systems')}
             ${panel('systems-matrix', 'Status matrix', matrix(tiles90), { wide: true, keep: true, data: tiles90 })}
             ${panel('systems-uptime90', 'Uptime, last 90 days', strip(W.uptime), { wide: true, keep: true, data: W.uptime.days })}
             ${actionsPanel()}${codesPanel()}${mailboxPanel()}${addressesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
@@ -2586,6 +3279,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const view = $(`[data-view="${p.key}"]`);
             const active = p.key === S.product || root.classList.contains('jv-print-all');
             view.hidden = !active;
+            if (active && p.key === 'console') { con.place(view); return; }
             if (active) {
                 const keep = view.querySelector('.jv-ask input');
                 const typed = keep ? keep.value : '';
@@ -2601,9 +3295,12 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
                 typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && !el.value) el.value = v; });
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
+                arrange(view, p.key);
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
+        $('[data-con-dock]').hidden = S.product === 'console';
+        if (S.product === 'console' && docked) dock(false);
         C.PRODUCTS.forEach((p) => {
             const sum = S.summaries[p.key];
             const badge = $(`[data-badge="${p.key}"]`);
@@ -2643,15 +3340,19 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (S.loading) return;
         S.loading = true;
         setStatus('Refreshing…');
+        const own = all !== false ? loadExternal() : null;
+        let failed = false;
         try {
-            await loadFirestore();
+            await loadSnapshot();
             compute();
             render();
         } catch (error) {
-            setStatus('The rows did not load: ' + error.message);
+            failed = true;
+            setStatus('The snapshot did not load: ' + error.message);
         }
         S.loading = false;
-        if (all !== false) loadExternal().then(() => loadProposals());
+        const rest = failed ? loadExternal(['settings', 'goals'].concat(SNAPSHOT_OPS)) : null;
+        if (own) Promise.all([own, rest]).then(() => loadProposals());
         if (!S.marksAt) { S.marksAt = Date.now(); loadMarks(); }
         reportDevice();
     }
@@ -2744,7 +3445,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     }
 
     const SHEET_ASK = {
-        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main`,
+        'rerun-ci': (b) => `re-run the failed jobs of "${b.dataset.workflow}" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)`,
         'run-job': (b) => `run ${b.dataset.job} again`,
         'pagespeed-merge': (b) => `merge PageSpeed fixes #${b.dataset.pr} into main now (it goes to production)`,
         'pagespeed-close': (b) => `close PageSpeed fixes #${b.dataset.pr} without merging`,
@@ -2791,7 +3492,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             const out = await call('action-run', { action, job: b.dataset.job, workflow: b.dataset.workflow, pr: b.dataset.pr ? Number(b.dataset.pr) : undefined, proposal: sh.key });
             b.disabled = false;
             if (/^pagespeed-/.test(action)) { toast(out.ok ? out.note : 'Not run: ' + out.error, 6000); if (out.ok) loadExternal(['pagespeed', 'actions']); return; }
-            toast(out.ok ? (out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
+            toast(out.ok ? (out.note ? out.note : out.already ? `${out.ran} already ended with ${out.already}.` : `${ACTION_LABELS[action] || action}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.`) : 'Not run: ' + out.error, 6000);
             if (out.ok) loadExternal(['actions', 'health', 'jobs', 'github']);
             return;
         }
@@ -2950,7 +3651,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (!confirmRun(ask)) return;
         toast('Running…', 30000);
         const out = await call('action-run', { action: run.action, jobs: run.jobs, workflows: run.workflows, proposal: key });
-        toast(out.ok ? `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
+        toast(out.ok ? out.note ? `${run.label}: ${out.note}` : `${run.label}: ${out.ran ? String(out.ran).replace(/\.$/, '') : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}${out.left ? ', ' + out.left + ' left' : ''}.` : 'Not run: ' + out.error, 6000);
         loadExternal(['actions', 'health', 'jobs', 'github']);
     }
 
@@ -3082,6 +3783,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
     });
 
     function go(product) {
+        if (S.layoutEdit && S.layoutEdit.tab !== product) layDone();
         S.product = product;
         writeHash();
         render();
@@ -3185,7 +3887,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     function draftSettings() {
         const s = S.settings || {};
-        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(),
+        return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(), github: { repos: C.githubRepos(s.github && s.github.repos) },
             actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS } };
     }
 
@@ -3227,6 +3929,8 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
               <div class="jv-actions"><button type="button" class="jv-btn small" data-th-reset>Back to the defaults</button></div></section>
             <section><h4>Search rankings</h4><label class="jv-field">Searches to rank on Brave, one per line (up to 8)<textarea name="s-queries" rows="5" placeholder="${esc(C.SEARCH_QUERIES.join('\n'))}">${esc((d.searchQueries || []).join('\n'))}</textarea></label>
               <p class="jv-note">Left empty, Jarvis checks the default searches shown. Brave's top 20 is asked once a day, places 21–100 once a week.</p></section>
+            <section><h4>GitHub repos</h4><label class="jv-field">Repos the GitHub tab shows, owner/name, one per line (up to 20)<textarea name="s-repos" rows="4" placeholder="${esc(C.GITHUB_REPOS.join('\n'))}">${esc(((d.github && d.github.repos) || []).join('\n'))}</textarea></label>
+              <p class="jv-note">Left empty, the tab shows the four shown. The app shows the same list; a repo the qa-lab-agents app cannot see is listed under Needs you.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
     }
@@ -3324,7 +4028,18 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         history.replaceState({}, '', url.pathname + url.search + url.hash);
     }
 
-    if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => { if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush); });
+    if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
+        // A section changed on the server (#2509): fetch only the sections this page does not hold yet (#2510).
+        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden) onSections(event.data.jarvisSections);
+    });
+    if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
+
+    async function onSections(msg) {
+        const processes = String(msg.sections || '').split(',').includes('processes') && await loadProcesses();
+        const only = C.sectionsToFetch(msg, S.versions, S.range).filter((name) => !(processes && name === 'processes'));
+        if (only.length) loadNewer(only);
+    }
 
     function readSettings() {
         const form = $('.jv-settings-box');
@@ -3336,8 +4051,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         const thresholds = {};
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
+        const github = { repos: C.githubRepos(String(val('s-repos').value || '').split('\n')) };
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
-            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries,
+            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github,
             actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) } };
     }
 
@@ -3358,12 +4074,14 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         toast('Saving…');
         const out = await call('settings-save', { settings });
         if (!out.ok) { toast('Not saved: ' + (out.error || 'no answer'), 5000); return; }
-        S.settings = out;
+        const repos = (s) => JSON.stringify(C.githubRepos(s && s.github && s.github.repos));
+        const reposChanged = repos(S.settings) !== repos(out);
+        S.settings = Object.assign({ layout: (S.settings || {}).layout }, out);
         closeSettings();
         toast('Saved. Jarvis is recounting the goals.');
         compute();
         render();
-        loadExternal(['goals']);
+        loadExternal(reposChanged ? ['goals', 'github-work'] : ['goals']);
     }
 
     async function dailyNow() {
@@ -3396,14 +4114,34 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
 
     // --- events ---------------------------------------------------------------------------------------------
 
+    root.addEventListener('pointerover', (event) => { const hit = event.target.closest && event.target.closest('.jv-hit'); if (hit && event.pointerType === 'mouse') chartTip(hit); });
+    root.addEventListener('pointerout', (event) => {
+        const fig = event.pointerType === 'mouse' && event.target.closest && event.target.closest('.jv-chart');
+        if (fig && !fig.contains(event.relatedTarget)) chartTipOff(fig);
+    });
     root.addEventListener('toggle', (event) => {
         const d = event.target;
         if (d.dataset && d.dataset.person) { if (d.open) openPeople.add(d.dataset.person); else openPeople.delete(d.dataset.person); }
     }, true);
+    root.addEventListener('error', (event) => {
+        const img = event.target;
+        if (!img.matches || !img.matches('img[data-card]')) return;
+        brokenCards.add(img.getAttribute('src'));
+        img.outerHTML = proposalCard({ image: img.getAttribute('src') });
+    }, true);
     root.addEventListener('click', (event) => {
         if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }
+        const hit = event.target.closest('.jv-hit');
+        if (hit) { chartTip(hit); return; }
+        const opener = event.target.closest('[data-drill-open]');
+        if (opener && root.contains(opener)) { drillToggle(opener); return; }
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
+        if (t.dataset.conDock !== undefined) { dock(!docked); return; }
+        if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
+        if (t.dataset.conClose !== undefined) { dock(false); return; }
+        if (t.dataset.conFull !== undefined) { dock(false); go('console'); return; }
+        if (t.closest('[data-con]')) return;
         if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
         if (t.dataset.foldAll !== undefined) { foldAll(t.dataset.foldAll === '1'); return; }
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
@@ -3439,6 +4177,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (t.dataset.ghAct) { ghAct(t); return; }
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
         if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
+        if (t.dataset.ghFix) { ghFix(t.dataset.ghFix); return; }
+        if (t.dataset.ghFlakyAgent) { ghFlakyAgent(t.dataset.ghFlakyAgent); return; }
+        if (t.dataset.ghSecAgent) { ghSecAgent(t.dataset.ghSecAgent); return; }
         if (t.dataset.ghAsk) { ask(t.dataset.ghAsk); return; }
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
@@ -3492,7 +4233,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             'copy-link': () => copy(link(), 'Link copied.'), 'web-share': webShare, 'copy-brief': () => copy(markdown(), 'Briefing copied.'), email: emailBriefing,
             'export-json': exportAll, 'export-csv': () => run({ type: 'export', format: 'csv' }), 'export-png': () => run({ type: 'export', format: 'png' }),
             'export-md': () => download(`jarvis-briefing-${stamp()}.md`, 'text/markdown', markdown()), print: () => printView(false), 'print-all': () => printView(true), 'ai-brief': aiBrief,
-            settings: openSettings, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'targets', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
+            settings: () => { openSettings(); const at = t.dataset.settingsAt && $(`[name="${t.dataset.settingsAt}"]`); if (at) { at.focus(); at.scrollIntoView({ block: 'center' }); } }, 'daily-now': dailyNow, 'weekly-now': weeklyNow, 'digest-now': digestNow, proposals: loadProposals, 'social-post-now': postNow, 'mk-reload': () => loadExternal(['marketing', 'marketing-sync', 'outreach', 'targets', 'social', 'notices']), 'gh-reload': ghReload, 'share-draft': shareDraft, 'share-queue': shareQueue, 'share-drop': shareDrop, 'calendar-connect': calendarConnect
         };
         if (acts[act]) acts[act]();
     });
@@ -3526,6 +4267,7 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         event.preventDefault();
         if (form.dataset.settings !== undefined) { saveSettings(); return; }
         if (form.dataset.reply !== undefined) { sendReply(form); return; }
+        if (form.dataset.ghDismiss) { ghDismiss(form); return; }
         if (form.dataset.ask !== undefined) {
             const q = form.q.value.trim();
             if (q) run(C.parseCommand(q).type === 'ask' ? { type: 'ask', question: q } : C.parseCommand(q));
@@ -3606,8 +4348,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         if (!visible()) return;
         const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((event.target || {}).tagName || '') || (event.target && event.target.isContentEditable);
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); palette($('.jv-palette').hidden); return; }
-        if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); return; }
+        if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); dock(false); return; }
         if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.closest && event.target.closest('li[data-brief]')) { event.preventDefault(); openSheet(event.target.closest('li[data-brief]').dataset.brief); return; }
+        if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('[data-drill-open]:not(button)')) { event.preventDefault(); drillToggle(event.target); return; }
         if (S.sheet) return;
         if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
         if (/^[1-9]$/.test(event.key) && C.PRODUCTS[Number(event.key) - 1]) go(C.PRODUCTS[Number(event.key) - 1].key);
@@ -3617,27 +4360,53 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
         else if (event.key === '/') { const ask = $(`[data-view="${S.product}"] .jv-ask input`); if (ask) { event.preventDefault(); ask.focus(); } }
     }
     document.addEventListener('keydown', onKey);
+    root.addEventListener('keydown', (event) => {
+        const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
+        if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+        event.preventDefault();
+        layAct(event.key === 'ArrowUp' ? 'up' : 'down', handle.dataset.id);
+        focusLay('drag', handle.dataset.id);
+    });
+    root.addEventListener('pointerdown', (event) => {
+        const handle = event.target.closest('[data-lay="drag"]');
+        if (!handle || !S.layoutEdit || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        event.preventDefault();
+        const sec = handle.closest('.jv-panel');
+        handle.setPointerCapture(event.pointerId);
+        dragging = { sec, pointer: event.pointerId };
+        sec.classList.add('is-dragging');
+    });
+    document.addEventListener('pointermove', dragMove);
+    document.addEventListener('pointerup', dragEnd);
+    document.addEventListener('pointercancel', dragEnd);
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voices = {}; };
 
     S.timers.push(setInterval(() => {
         const node = $('#jv-ago');
         if (node && S.updatedAt) node.textContent = S.live ? 'live · ' + ago(Date.now() - S.updatedAt) : 'paused';
+        Proc.tick(root, Date.now());
+        // While something runs and no push came (this browser not subscribed), ask again each minute: one read.
+        if (S.live && S.mounted && !document.hidden && Proc.active(S.processes).length && Date.now() - (S.processesAt || 0) > PROCESSES_MS) { S.processesAt = Date.now(); loadProcesses(); }
     }, 1000));
     S.timers.push(setInterval(() => {
+        if (document.hidden || !visible() || !auth.currentUser) return;
+        if (S.product === 'console' || docked) con.pull();
+    }, CONSOLE_MS));
+    S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;
-        loadNewer();
-        if (Date.now() - S.externalAt > EXTERNAL_MS) loadExternal(['goals', 'health', 'jobs', 'github', 'github-work', 'uptime']);
+        if (Date.now() - S.updatedAt >= SNAPSHOT_MS) loadNewer();
     }, LIVE_MS));
 
     return {
         show() {
             greet();
-            if (!S.mounted) { S.mounted = true; refresh(); } else { compute(); render(); }
+            if (!S.mounted) { S.mounted = true; openSaved(); refresh(); } else { compute(); render(); }
             writeHash();
             openLink(new URLSearchParams(window.location.search));
         },
         open(search) { openLink(new URLSearchParams(search)); },
         inboxChanged() { if (S.mounted) { compute(); render(); } },
+        forget: forgetSnapshots,
         state: S,
         run,
         destroy() {
@@ -3647,6 +4416,9 @@ export function mountJarvis({ db, auth, host, getInbox, isTestEmail, endpoint, u
             holo.node = null;
             document.removeEventListener('visibilitychange', holoRun);
             document.removeEventListener('keydown', onKey);
+            document.removeEventListener('pointermove', dragMove);
+            document.removeEventListener('pointerup', dragEnd);
+            document.removeEventListener('pointercancel', dragEnd);
             const icon = document.querySelector('link[data-jv-icon]');
             if (icon) icon.remove();
             document.title = pageTitle;

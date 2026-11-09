@@ -36,10 +36,16 @@ const BY_FUNCTION = {
   reviewBrowser: list(BROWSER),
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
-  jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI),
-  jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // Both load the whole snapshot for the live push (#2509), so they hold every secret its sources read, like jarvis;
+  // a missing one would be cached as a failed source for every client.
+  jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
+  jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
   // jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
   jarvisGithub: list(MAIL, GITHUB, GEMINI),
+  // jarvisGithubHook (#2548): the secret GitHub signs the repo's workflow_run webhook with.
+  jarvisGithubHook: list(["GITHUB_WEBHOOK_SECRET"]),
+  // jarvisLogPoll (#2810): the app token for the runs, issues and board moves it puts in Jarvis > Console.
+  jarvisLogPoll: list(GITHUB),
   // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.
   jarvisIndex: list(["BRAVE_SEARCH_KEY"], BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).
