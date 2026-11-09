@@ -585,6 +585,32 @@ test.describe('Report section index (#2770)', () => {
       await expect(page.locator('#report-cover')).not.toContainText('None of them were executed');
     }
   });
+
+  test('on the Spanish and Italian pages the case list, signals and log of the sample read in that language (#2937)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const copy = {
+      es: [/^Se identificaron \d+ casos /, /^Las primeras palabras de cada señal /, 'Los botones de automationexercise.com tienen un nombre accesible', 'Abriendo la primera página.'],
+      it: [/^Sono stati individuati \d+ casi /, /^Le prime parole di ogni segnale /, 'I pulsanti di automationexercise.com hanno un nome accessibile', 'Apertura della prima pagina.']
+    };
+    for (const [lang, [note, alarm, firstCase, logLine]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#case-note')).toHaveText(note);
+      await expect(page.locator('#alarm-note')).toHaveText(alarm);
+      await expect(page.locator('#cases')).toContainText(firstCase);
+      await expect(page.locator('#report-log')).toContainText(logLine);
+      for (const english of ['cases were identified', 'A later run would', 'Buttons on automationexercise.com']) {
+        await expect(page.locator('#dash-overlay')).not.toContainText(english);
+      }
+    }
+  });
+
+  test('a page whose sample file is missing opens the English sample (#2937)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route('**/assets/qa-review-sample.it.json', (route) => route.fulfill({ status: 404, body: '' }));
+    await openSample(page, '/qa-review-it.html');
+    await expect(page.locator('#cases')).toContainText('Buttons on automationexercise.com have an accessible name');
+    await expect(page.locator('#case-note')).toHaveText(/^Sono stati individuati \d+ casi /);
+  });
 });
 
 function reportCopy(lang) {

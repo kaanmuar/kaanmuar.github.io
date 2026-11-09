@@ -60,6 +60,8 @@ jobs:
         run: node scripts/build-jarvis-core.js --check
       - name: Finding copy in functions and the per-language page files match the source
         run: node scripts/build-findings-copy.js --check
+      - name: Sample report languages match their dictionaries
+        run: node scripts/build-sample-langs.js --check
 
   playwright-shard:
     runs-on: ubuntu-latest
