@@ -122,6 +122,18 @@ function bars(list, opts) {
     return `${o.title ? `<h4 class="jv-chart-title">${esc(o.title)}</h4>` : ''}${head}<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${esc(withUnit(r.value, o.unit))}"${drill(r)}><span class="jv-bar-label">${esc(r.label)}</span><span class="jv-bar-track"><span class="jv-bar-fill" style="width:${Math.max(2, (r.value / max) * 100).toFixed(1)}%;--c:${color}"></span></span><span class="jv-bar-value">${fmt(r.value)}<small>${total ? Math.round((r.value / total) * 100) + '%' : ''}</small></span></li>`).join('')}</ol>${more > 0 ? `<p class="jv-more">+${more} more in the export</p>` : ''}${o.legend ? `<div class="jv-legend"><span><i style="background:${color}"></i>${esc(o.legend)} <small>${esc(withUnit(total, o.unit))} in all</small></span></div>` : ''}`;
 }
 
+// One bar per row split into parts ([key, label, colour]); rows carry values: { key: n }. opts as bars(): title, yLabel, unit, empty.
+function stackBars(list, parts, opts) {
+    const o = opts || {};
+    const sum = (r) => parts.reduce((n, [k]) => n + (r.values[k] || 0), 0);
+    const rows = (list || []).filter((r) => sum(r) > 0);
+    if (!rows.length) return `<p class="jv-empty">${esc(o.empty || 'Nothing in this range.')}</p>`;
+    const max = Math.max(1, ...rows.map(sum));
+    const head = o.yLabel || o.unit ? `<div class="jv-bars-head"><span>${esc(o.yLabel || '')}</span><span>${esc(o.unit || '')}</span></div>` : '';
+    const tip = (r) => parts.filter(([k]) => r.values[k]).map(([k, label]) => `${label} ${fmt(r.values[k])}`).join(', ');
+    return `${o.title ? `<h4 class="jv-chart-title">${esc(o.title)}</h4>` : ''}${head}<ol class="jv-bars">${rows.map((r) => `<li title="${esc(r.label)}: ${esc(tip(r))}"><span class="jv-bar-label">${esc(r.label)}<small class="jv-bar-sub">${esc(tip(r))}</small></span><span class="jv-bar-track jv-bar-stack">${parts.map(([k, , c]) => (r.values[k] ? `<span class="jv-bar-fill" style="width:${((r.values[k] / max) * 100).toFixed(1)}%;--c:${c}"></span>` : '')).join('')}</span><span class="jv-bar-value">${fmt(sum(r))}</span></li>`).join('')}</ol><div class="jv-legend">${parts.map(([k, label, c]) => `<span><i style="background:${c}"></i>${esc(label)} <small>${fmt(rows.reduce((n, r) => n + (r.values[k] || 0), 0))}</small></span>`).join('')}</div>`;
+}
+
 function ring(pct, label, color, size) {
     const r = 40, c = 2 * Math.PI * r, v = Math.max(0, Math.min(100, Number(pct) || 0));
     const tone = color || (v >= 90 ? COLORS.green : v >= 50 ? COLORS.amber : COLORS.pink);
@@ -423,7 +435,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
-        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review'
+        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set()
     };
     readHash();
 
@@ -769,6 +781,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
         'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent',
+        'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
         'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
     const MOVED_MAIL = {
@@ -1833,9 +1846,49 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const ghLink = (url, text) => (url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
     const ghRef = (name) => `<code class="jv-gh-ref" title="${esc(name)}">${esc(name)}</code>`;
     const ghCountdown = () => hoursText((((S.external.actions || {}).settings) || {}).countdownHours || COUNTDOWN_HOURS);
-    const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
+    const ghBtn = (label, action, target, args, opts) => `<button type="button" class="jv-btn small${(opts && opts.cls) || ''}" data-gh-act="${esc(action)}" data-target="${esc(target)}" data-gh-args="${esc(JSON.stringify(args || {}))}"${opts && opts.key ? ` data-gh-key="${esc(opts.key)}"` : ''}${opts && opts.disabled ? ' disabled' : ''}>${esc(label)}</button>`;
     const ghWork = () => S.external['github-work'] || {};
-    const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id));
+    const ghRun = (id) => ((ghWork().ci || {}).failing || []).find((r) => String(r.id) === String(id)) || (S.ghRows['run:' + id] || {}).row;
+    // A run Jarvis can act on, from Failing runs, a flaky workflow's newest failure or Latest diagnoses.
+    function ghRunCtx(id) {
+        const g = ghWork(), r = ghRun(id);
+        if (r) return { run: r.id, workflow: r.name, branch: r.branch, pr: r.pr, url: r.url, diag: r.diag, row: r };
+        const f = (((g.ci || {}).flaky || {}).workflows || []).find((w) => w.newest && String(w.newest.id) === String(id));
+        if (f) return { run: f.newest.id, workflow: f.name, branch: f.newest.branch, pr: f.newest.pr, url: f.newest.url, diag: f.newest.diag, flaky: f };
+        const d = ((g.ai || {}).diagnoses || []).find((x) => String(x.run) === String(id));
+        return d ? { run: d.run, workflow: d.workflow, branch: d.branch, pr: d.pr, url: d.url, diag: d } : null;
+    }
+    const GH_ROW_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', launched: 'c-fast', failed: 'c-slow' };
+    const ghResult = (key) => {
+        const r = S.ghRows[key];
+        return r ? `<p class="jv-gh-result" data-gh-result="${esc(key)}"><span class="jv-chip ${GH_ROW_CHIP[r.state] || ''}">${esc(r.state)}</span> ${esc(r.text)}${r.url ? ` ${ghLink(r.url, (r.link || 'Open') + ' ↗')}` : ''}</p>` : '';
+    };
+    function ghMark(key, state, text, extra) {
+        S.ghRows[key] = Object.assign(S.ghRows[key] || {}, { state, text, url: '', link: '' }, extra || {});
+        render();
+    }
+    const GH_SEV = [['critical', 'Critical', COLORS.pink], ['high', 'High', '#ff8f5a'], ['medium', 'Medium', COLORS.amber], ['low', 'Low', COLORS.dim]];
+    // GitHub's own dismissal reasons per alert kind; secret scanning alerts cannot be dismissed from Jarvis.
+    const GH_DISMISS = {
+        dependabot: [['tolerable_risk', 'Tolerable risk'], ['fix_started', 'A fix has started'], ['inaccurate', 'Inaccurate'], ['no_bandwidth', 'No bandwidth to fix'], ['not_used', 'Code not used']],
+        codeScanning: [['false positive', 'False positive'], ["won't fix", "Won't fix"], ['used in tests', 'Used in tests']]
+    };
+    const ghAlertKey = (kind, i) => `${kind}:${i.repo}#${i.number}`;
+    const ghAlertName = (kind, i) => (kind === 'dependabot' ? i.package : kind === 'codeScanning' ? i.rule : i.type) || 'alert';
+    function ghAlert(key) {
+        const m = /^(\w+):(.+)#(\d+)$/.exec(key || '');
+        const x = m && (ghWork().security || {})[m[1]];
+        const i = x && (x.items || []).find((a) => a.repo === m[2] && String(a.number) === m[3]);
+        return i ? { kind: m[1], item: i } : null;
+    }
+    const ghSecPrompt = (i) => `Upgrade ${i.package} to ${i.patched || 'the first patched version'} or later in ${i.manifest || 'its manifest'} (Dependabot alert #${i.number} in ${i.repo}${i.summary ? ': ' + i.summary : ''}). Update the lockfile, run the affected tests, and open a PR against main.`;
+    const GH_FIX = { 'rerun-ci': 'Fix: re-run', 'gh-update-pr': 'Fix: update with main' };
+    // The Fix button runs the diagnosis's own action; 'gh-agent' and 'none' leave only the agent.
+    const ghFixBtns = (c) => {
+        const d = c.diag || {};
+        const fix = GH_FIX[d.action] && (d.action !== 'gh-update-pr' || c.pr) ? `<button type="button" class="jv-btn small is-primary" data-gh-fix="${esc(c.run)}">${esc(GH_FIX[d.action])}</button>` : '';
+        return fix + `<button type="button" class="jv-btn small${fix ? '' : ' is-primary'}" data-gh-agent="${esc(c.run)}">Fix with an agent</button>`;
+    };
     const ghPr = (n) => ((ghWork().prs || {}).items || []).find((p) => String(p.number) === String(n));
     const GH_BOARD = 'https://github.com/orgs/carlosandmunoz-hq/projects/1';
     const ghBoardColumn = (name) => `${GH_BOARD}/views/1?filterQuery=${encodeURIComponent(`status:"${name}"`)}`;
@@ -1963,14 +2016,24 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 ['Main', (w) => `<span class="jv-chip ${w.mainRed ? 'c-slow' : 'c-fast'}">${w.mainRed ? 'red' : 'green'}</span>`],
                 ['Last', (w) => (w.last ? `<a class="jv-chip ${ghConclusion(w.last.conclusion)}" href="${esc(w.last.url)}" target="_blank" rel="noopener">${esc(w.last.conclusion || 'running')}</a> <span class="jv-note">${esc(ghAgo(w.last.at))}</span>` : '—')]], ci.workflows || [], 'No workflow runs in range.') : off(g.ci);
         const flaky = ci && ci.flaky ? ci.flaky.workflows || [] : [];
-        const flakyBody = ci ? table([['Workflow', (w) => esc(w.name)], ['Flaky', (w) => `<span class="jv-chip ${w.pct >= 10 ? 'c-slow' : 'c-average'}">${esc(ghPct(w.pct))}</span>`], ['Runs', (w) => fmt(w.runs)]], flaky, 'No flaky workflows: every failure stayed failed on a re-run.') : off(g.ci);
+        const flakyBtns = (w) => {
+            const n = w.newest, busy = n && S.pending['gh-diag:' + n.id];
+            return `<div class="jv-actions">${n && n.failed ? `<button type="button" class="jv-btn small" data-gh-rerun="${esc(n.id)}">Re-run failed jobs</button>` : ''}${n ? `<button type="button" class="jv-btn small" data-gh-diagnose="${esc(n.id)}"${busy ? ' disabled' : ''}>${busy ? 'Diagnosing…' : n.diag ? 'Diagnose again' : 'Diagnose'}</button>` : ''}`
+                + ghBtn('Quarantine', 'gh-quarantine', w.name, { workflow: w.name, pct: w.pct, runs: w.runs, path: w.path, links: w.links || [] }, { key: 'flaky:' + w.name })
+                + (w.url ? `<a class="jv-btn small" href="${esc(w.url)}" target="_blank" rel="noopener">Open runs</a>` : '')
+                + `<button type="button" class="jv-btn small is-primary" data-gh-flaky-agent="${esc(w.name)}">Fix with an agent</button></div>${n ? ghResult('run:' + n.id) : ''}${ghResult('flaky:' + w.name)}`;
+        };
+        const flakyBody = ci ? table([['Workflow', (w) => `<strong>${esc(w.name)}</strong>${w.path ? `<br><span class="jv-note">${esc(w.path)}</span>` : ''}`], ['Flaky', (w) => `<span class="jv-chip ${w.pct >= 10 ? 'c-slow' : 'c-average'}">${esc(ghPct(w.pct))}</span>`], ['Runs', (w) => fmt(w.runs)],
+            ['Newest failure', (w) => (w.newest ? `${ghLink(w.newest.url, '#' + w.newest.id)} <span class="jv-note">${esc(ghAgo(w.newest.at))}${w.newest.failed ? '' : ' · passed on a re-run'}</span>${w.newest.diag ? `<br><span class="jv-note">${esc(w.newest.diag.cause)}</span>` : ''}` : '—')],
+            ['', flakyBtns]], flaky, 'No flaky workflows: every failure stayed failed on a re-run.') : off(g.ci);
         const diagCell = (r) => (r.diag ? `<strong>${esc(r.diag.cause)}</strong><br>${r.diag.category ? `<span class="jv-chip c-average">${esc(r.diag.category)}</span>` : ''}${r.diag.confidence !== null && r.diag.confidence !== undefined ? `<span class="jv-chip">confidence ${esc(ghConf(r.diag.confidence))}</span>` : ''}${r.diag.fix ? `<br><span class="jv-note">Fix: ${esc(r.diag.fix)}</span>` : ''}` : '<span class="jv-note">Not diagnosed yet.</span>');
+        const pinned = Object.keys(S.ghRows).filter((k) => k.startsWith('run:') && S.ghRows[k].row && !failing.some((r) => 'run:' + r.id === k)).map((k) => S.ghRows[k].row);
         const failBody = ci ? table([
             ['Run', (r) => `${ghLink(r.url, r.name)}<br><span class="jv-note">#${esc(r.id)}${r.event ? ' · ' + esc(r.event) : ''}${r.sha ? ' · ' + esc(String(r.sha).slice(0, 7)) : ''}</span>`],
             ['Branch', (r) => `${ghRef(r.branch)}${r.pr ? `<br>PR ${ghLink(GH_REPO + '/pull/' + r.pr, '#' + r.pr)}` : ''}`],
             ['Attempt', (r) => fmt(r.attempt || 1)], ['Age', (r) => esc(ghAgo(r.at))], ['Diagnosis', diagCell],
-            ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button><button type="button" class="jv-btn small is-primary" data-gh-agent="${esc(r.id)}">Launch a Cursor fix agent</button></div>`]
-        ], failing, 'No failing runs. CI is green.') : off(g.ci);
+            ['', (r) => `<div class="jv-actions"><button type="button" class="jv-btn small" data-gh-rerun="${esc(r.id)}">Re-run</button><button type="button" class="jv-btn small" data-gh-diagnose="${esc(r.id)}"${S.pending['gh-diag:' + r.id] ? ' disabled' : ''}>${S.pending['gh-diag:' + r.id] ? 'Diagnosing…' : r.diag ? 'Diagnose again' : 'Diagnose'}</button>${ghFixBtns({ run: r.id, pr: r.pr, diag: r.diag })}</div>${ghResult('run:' + r.id)}`]
+        ], failing.concat(pinned), 'No failing runs. CI is green.') : off(g.ci);
 
         const prBtns = (p) => [
             ['behind', 'blocked', 'unstable'].includes(p.state) ? ghBtn('Update with main', 'gh-update-pr', '#' + p.number, { pr: p.number }) : '',
@@ -1983,7 +2046,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 ['PR', (p) => `${ghLink(p.url, '#' + p.number)} <strong>${esc(p.title)}</strong><br><span class="jv-note">${esc(p.author || '')}${p.branch ? ' · ' + ghRef(p.branch) : ''}${(p.labels || []).length ? ' · ' + p.labels.map(esc).join(', ') : ''}</span>`],
                 ['State', (p) => `<span class="jv-chip ${GH_STATE[p.state] || ''}">${esc(p.state)}</span>`], ['Checks', (p) => `<span class="jv-chip ${GH_CHECKS[p.checks] || ''}">${esc(p.checks || '—')}</span>`],
                 ['Age', (p) => `${esc(ghHours(p.ageH))}${p.updatedH > 72 ? `<br><span class="jv-note">quiet ${esc(ghHours(p.updatedH))}</span>` : ''}`], ['Ticket', (p) => ghIssue(p.ticket)],
-                ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>`]
+                ['Size', (p) => `<span class="jv-gh-add">+${fmt(p.additions || 0)}</span> <span class="jv-gh-del">−${fmt(p.deletions || 0)}</span>`], ['', (p) => `<div class="jv-actions">${prBtns(p)}</div>${ghResult('pr:' + p.number)}`]
             ], prs.items || [], 'No open PRs.') : off(g.prs);
         const prDaily = prs ? align([{ name: 'Opened', color: COLORS.violet, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.opened })), key: 'n' }, { name: 'Merged', color: COLORS.green, rows: (prs.daily || []).map((r) => ({ date: r.day, n: r.merged })), key: 'n' }]) : null;
 
@@ -2045,8 +2108,55 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const depBody = dep ? `<ul class="jv-feed jv-gh-deploys">${(dep.last || []).map((d) => `<li><time>${esc(when(d.at))}</time><span><span class="jv-chip ${ghConclusion(d.conclusion)}">${esc(d.conclusion || 'running')}</span> ${ghLink(d.url, d.name)}${d.sha ? ` <code>${esc(String(d.sha).slice(0, 7))}</code>` : ''}</span></li>`).join('')}</ul>` : off(g.deploys);
         const envBody = dep ? table([['Environment', (x) => esc(x.name)], ['State', (x) => `<span class="jv-chip ${x.state === 'success' || x.state === 'active' ? 'c-fast' : x.state === 'failure' || x.state === 'error' ? 'c-slow' : ''}">${esc(x.state || '—')}</span>`], ['Last', (x) => esc(ghAgo(x.at))]], dep.environments || [], 'No environments.') : off(g.deploys);
 
-        const secItems = (x) => table([['Repo', (i) => esc(i.repo || '')], ['Alert', (i) => ghLink(i.url, (i.package || i.rule || i.secret || i.title || 'alert') + (i.number ? ' #' + i.number : ''))], ['Severity', (i) => `<span class="jv-chip ${/critical|high/i.test(i.severity || '') ? 'c-slow' : i.severity ? 'c-average' : ''}">${esc(i.severity || '—')}</span>`]], x.items || [], 'No open alerts.');
         const dbot = live(sec.dependabot), cscan = live(sec.codeScanning), secrets = live(sec.secrets);
+        const secKinds = [['dependabot', 'Dependabot', dbot], ['codeScanning', 'Code scanning', cscan], ['secrets', 'Secret scanning', secrets]].filter((k) => k[2]);
+        const sevOf = (x, s) => (x.bySeverity || {})[s] || 0;
+        const sevChip = (s) => `<span class="jv-chip ${s === 'critical' || s === 'high' ? 'c-slow' : s === 'medium' ? 'c-average' : ''}">${esc(s || '—')}</span>`;
+        const sevStats = (x) => [{ label: 'Open', value: x.open, alert: x.open > 0 }].concat(GH_SEV.map(([s, label]) => ({ label, value: sevOf(x, s), alert: (s === 'critical' || s === 'high') && sevOf(x, s) > 0 })), [{ label: 'Oldest', value: ghDays(x.oldestD) }, { label: 'Median age', value: ghDays(x.medianD) }]);
+        const dismissForm = (kind, i) => {
+            const panel = 'github-sec-' + kind, key = ghAlertKey(kind, i);
+            return `<div class="jv-drill" data-drill="${esc(drillKey(panel, key))}"${openDrills.get(panel) === key ? '' : ' hidden'}><header><strong>Dismiss ${esc(ghAlertName(kind, i))} #${esc(i.number)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, key))}" aria-label="Close">×</button></header>
+                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
+                <label>Comment, optional <input type="text" name="comment" maxlength="280" placeholder="Why, for the audit trail"></label>
+                <div class="jv-actions"><button type="submit" class="jv-btn small danger">Dismiss on GitHub</button></div><p class="jv-note">Closes the alert on GitHub; it can be reopened there.</p></form></div>`;
+        };
+        const secFix = (i) => {
+            if (!i.pr) return `<button type="button" class="jv-btn small is-primary" data-gh-sec-agent="${esc(ghAlertKey('dependabot', i))}">Fix with an agent</button>`;
+            const p = ghPr(i.pr.number);
+            return `<a class="jv-btn small" href="${esc(i.pr.url)}" target="_blank" rel="noopener">Dependabot PR #${esc(i.pr.number)}</a>`
+                + (p && p.state === 'clean' && p.checks === 'pass' ? ghBtn('Merge', 'gh-merge-pr', '#' + p.number, { pr: p.number }, { cls: ' is-primary', key: ghAlertKey('dependabot', i) }) : '');
+        };
+        const secBtns = (kind) => (i) => {
+            const key = ghAlertKey(kind, i), panel = 'github-sec-' + kind;
+            return `<div class="jv-actions">${i.url ? `<a class="jv-btn small" href="${esc(i.url)}" target="_blank" rel="noopener">Open on GitHub</a>` : ''}`
+                + (kind === 'secrets' ? '' : `<button type="button" class="jv-btn small" data-drill-open="${esc(drillKey(panel, key))}" aria-expanded="${openDrills.get(panel) === key}">Dismiss…</button>`)
+                + (kind === 'dependabot' ? secFix(i) : '')
+                + ghBtn('File a ticket', 'gh-security-ticket', `${ghAlertName(kind, i)} #${i.number}`, Object.assign({ kind }, i, { pr: undefined }), { key })
+                + `</div>${kind === 'secrets' ? '' : dismissForm(kind, i)}${ghResult(key)}`;
+        };
+        const alertCell = (kind) => (i) => `${ghLink(i.url, ghAlertName(kind, i) + ' #' + i.number)}<br><span class="jv-note">${esc(i.repo)}${i.manifest || i.path ? ' · ' + esc(i.manifest || i.path) : ''}</span>`;
+        const dbotBody = dbot ? stats(sevStats(dbot))
+            + (dbot.open ? bars(dbot.byEcosystem || [], { color: COLORS.violet, title: 'Open alerts by ecosystem', yLabel: 'Ecosystem', unit: 'alerts' }) + bars(dbot.byPackage || [], { color: COLORS.amber, limit: 10, title: 'Open alerts by package', yLabel: 'Package', unit: 'alerts' }) : '')
+            + table([['Alert', alertCell('dependabot')], ['Severity', (i) => sevChip(i.severity)], ['Patched in', (i) => esc(i.patched || 'no fix yet')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('dependabot')]], dbot.items || [], 'No open Dependabot alerts.') : off(sec.dependabot, 'Not read yet.');
+        const cscanBody = cscan ? stats(sevStats(cscan))
+            + table([['Alert', alertCell('codeScanning')], ['Severity', (i) => sevChip(i.severity)], ['Tool', (i) => esc(i.tool || '—')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('codeScanning')]], cscan.items || [], 'No open code scanning alerts.') : off(sec.codeScanning, 'Not read yet.');
+        const secretsBody = secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }, { label: 'Oldest', value: ghDays(secrets.oldestD) }])
+            + table([['Secret', alertCell('secrets')], ['Age', (i) => esc(ghAgo(i.created))], ['', secBtns('secrets')]], secrets.items || [], 'No leaked secrets.')
+            + (secrets.open ? '<p class="jv-note"><b>Revoke and rotate:</b> revoke the secret where it was issued, make a new one, store it in GitHub Actions or Firebase secrets, then close the alert on GitHub as revoked. Jarvis cannot close secret alerts.</p>' : '') : off(sec.secrets, 'Not read yet.');
+        const secOpen = secKinds.reduce((n, k) => n + (k[2].open || 0), 0);
+        const byRepoAll = {};
+        secKinds.forEach((k) => (k[2].byRepo || []).forEach((r) => { byRepoAll[r.label] = (byRepoAll[r.label] || 0) + r.value; }));
+        const secWeeks = sec.weeks || [];
+        const secScore = areas.security;
+        const lows = [['dependabot', dbot], ['codeScanning', cscan]].filter((k) => k[1]).flatMap(([kind, x]) => (x.items || []).filter((i) => i.severity === 'low').map((i) => ({ kind, repo: i.repo, number: i.number })));
+        const secBody = secKinds.length ? stats([{ label: 'Open alerts', value: secOpen, alert: secOpen > 0 }, { label: 'Critical', value: secKinds.reduce((n, k) => n + sevOf(k[2], 'critical'), 0), alert: secKinds.some((k) => sevOf(k[2], 'critical')) },
+            { label: 'High', value: secKinds.reduce((n, k) => n + sevOf(k[2], 'high'), 0) }, { label: 'Oldest', value: ghDays(Math.max(...secKinds.map((k) => k[2].oldestD || 0)) || null) }, { label: 'Security score', value: secScore ? secScore.value : '—', alert: !!secScore && secScore.value < 70 }])
+            + stackBars(secKinds.map(([, label, x]) => ({ label, values: x.bySeverity || {} })), GH_SEV, { title: 'Open alerts by severity', yLabel: 'Kind', unit: 'alerts', empty: 'No open security alerts.' })
+            + (secOpen ? bars(Object.entries(byRepoAll).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value), { color: COLORS.pink, title: 'Open alerts by repo', yLabel: 'Repo', unit: 'alerts', legend: 'Open alerts' }) : '')
+            + (secWeeks.length ? area(secWeeks.map((w) => w.week), [{ name: 'Opened', color: COLORS.pink, values: secWeeks.map((w) => w.opened) }, { name: 'Fixed', color: COLORS.green, values: secWeeks.map((w) => w.fixed) }, { name: 'Dismissed', color: COLORS.dim, values: secWeeks.map((w) => w.dismissed) }], { title: 'Alerts opened, fixed and dismissed each week', yLabel: 'alerts per week', unit: 'alerts', xLabel: 'ISO week' }) : '')
+            + (secScore ? `<h4 class="jv-chart-title">Security score ${fmt(secScore.value)}${secScore.grade ? ' (' + esc(secScore.grade) + ')' : ''}: 100 minus</h4>${(secScore.parts || []).length ? `<ul class="jv-gh-parts">${secScore.parts.map((p) => `<li><span>${esc(p.label)} <small>${fmt(p.count)} × ${fmt(p.each)}</small></span><b>−${fmt(p.penalty)}</b></li>`).join('')}</ul>` : '<p class="jv-note">Nothing open, nothing taken off.</p>'}` : '')
+            + `<div class="jv-actions">${ghBtn('Dismiss all low as tolerable risk', 'gh-dismiss-low', plural(lows.length, 'low alert', 'low alerts'), { alerts: lows }, { cls: ' danger', disabled: !lows.length, key: 'sec:low' })}</div>${ghResult('sec:low')}`
+            : off(sec.dependabot, 'Not read yet.');
 
         const gql = bud && bud.kaanmuar ? bud.kaanmuar.graphql : null;
         const core = bud && bud.kaanmuar ? bud.kaanmuar.core : null;
@@ -2081,7 +2191,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const aiBody = `<div class="jv-chips">${GH_ASKS.map((q) => `<button type="button" class="jv-btn small" data-gh-ask="${esc(q)}">${esc(q)}</button>`).join('')}</div>
             <form class="jv-inline" data-ask><input type="text" name="q" data-keep="gh-ask" placeholder="Ask Jarvis about GitHub: which workflow fails most? who is blocking QA?" aria-label="Ask Jarvis about GitHub"><button type="submit" class="jv-btn">Ask</button></form>
             ${S.ai ? `<div class="jv-ai"><span class="jv-eyebrow">Gemini · ${S.aiAt ? esc(when(S.aiAt)) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>` : ''}
-            <h4 class="jv-sub">Latest diagnoses</h4>${table([['Run', (d) => `${esc(d.workflow || '')} <span class="jv-note">#${esc(d.run)}</span>`], ['Cause', (d) => `${esc(d.cause)}${d.fix ? `<br><span class="jv-note">Fix: ${esc(d.fix)}</span>` : ''}`], ['Kind', (d) => `${d.category ? `<span class="jv-chip c-average">${esc(d.category)}</span>` : ''}${d.confidence !== null && d.confidence !== undefined ? `<span class="jv-chip">${esc(ghConf(d.confidence))}</span>` : ''}`], ['When', (d) => esc(when(d.at))]], (ai.diagnoses || []).slice(0, 10), 'No diagnoses yet: Jarvis diagnoses new failed runs every hour.')}
+            <h4 class="jv-sub">Latest diagnoses</h4>${table([['Run', (d) => `${esc(d.workflow || '')} <span class="jv-note">#${esc(d.run)}</span>`], ['Cause', (d) => `${esc(d.cause)}${d.fix ? `<br><span class="jv-note">Fix: ${esc(d.fix)}</span>` : ''}`], ['Kind', (d) => `${d.category ? `<span class="jv-chip c-average">${esc(d.category)}</span>` : ''}${d.confidence !== null && d.confidence !== undefined ? `<span class="jv-chip">${esc(ghConf(d.confidence))}</span>` : ''}`], ['When', (d) => esc(when(d.at))],
+                ['', (d) => `<div class="jv-actions">${ghFixBtns({ run: d.run, pr: d.pr, diag: d })}</div>${ghResult('run:' + d.run)}`]], (ai.diagnoses || []).slice(0, 10), 'No diagnoses yet: Jarvis diagnoses new failed runs every hour.')}
             ${ai.retro ? `<h4 class="jv-sub">Weekly retro · ${esc(ai.retro.week)}</h4><div class="jv-ai-text">${esc(ai.retro.text).replace(/\n/g, '<br>')}</div>` : ''}`;
 
         const newest = failing.slice().sort((a, b) => Date.parse(b.at || 0) - Date.parse(a.at || 0))[0];
@@ -2098,7 +2209,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
             ${panel('github-trend', 'Daily trend', trendBody, { data: hist })}
             ${panel('github-ci-trend', 'CI runs and failures per day', area(ciTrend.labels, ciTrend.series, { title: 'Workflow runs each day, and how many failed', yLabel: 'runs per day', unit: 'runs', xLabel: 'Day (UTC)' }), { wide: true, data: daily(ciTrend) })}
-            ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Re-run and Diagnose act at once; a fix agent always asks first and opens a PR when it is done.' })}
+            ${panel('github-failing', `Failing runs${failing.length ? ' · ' + failing.length : ''}`, failBody, { wide: true, keep: !!ci, data: failing.map((r) => ({ id: r.id, workflow: r.name, branch: r.branch, attempt: r.attempt, at: r.at, pr: r.pr, cause: r.diag && r.diag.cause, category: r.diag && r.diag.category, confidence: r.diag && r.diag.confidence })), note: 'Fix runs what the diagnosis suggests: a re-run or an update with main. A re-run shows its state here until it finishes; a fix agent always asks first and opens a PR when it is done.' })}
             ${panel('github-ci', 'CI workflows', ciBody, { wide: true, data: ci && ci.workflows })}
             ${panel('github-flaky', 'Flaky workflows', flakyBody, { data: flaky, note: 'Flaky: failed, then passed on a re-run of the same commit.' })}
             ${panel('github-prs', `Open PRs${prs ? ' · ' + fmt(prs.open) : ''}`, prBody, { wide: true, keep: !!prs, data: prs && prs.items, note: `Update with main and Merge run as soon as you confirm. Jarvis's own updates wait ${ghCountdown()} on the countdown (Systems > Jarvis actions).` })}
@@ -2119,9 +2230,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series, { title: 'Deploy runs on main each day', yLabel: 'deploys per day', unit: 'deploys', xLabel: 'Day (UTC)' }), { wide: true, data: daily(depDaily) }) : ''}
             ${panel('github-deploy-last', 'Latest deploys', depBody, { data: dep && dep.last })}
             ${panel('github-envs', 'Environments', envBody, { data: dep && dep.environments })}
-            ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbot ? stats([{ label: 'Open', value: dbot.open, alert: dbot.open > 0 }, { label: 'Critical', value: dbot.critical, alert: dbot.critical > 0 }, { label: 'High', value: dbot.high, alert: dbot.high > 0 }]) + secItems(dbot) : off(sec.dependabot, 'Not read yet.'), { data: dbot && dbot.items })}
-            ${panel('github-code-scanning', `Code scanning${cscan ? ' · ' + fmt(cscan.open) : ''}`, cscan ? stats([{ label: 'Open', value: cscan.open, alert: cscan.open > 0 }]) + secItems(cscan) : off(sec.codeScanning, 'Not read yet.'), { data: cscan && cscan.items })}
-            ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secrets ? stats([{ label: 'Open', value: secrets.open, alert: secrets.open > 0 }]) + secItems(secrets) : off(sec.secrets, 'Not read yet.'), { data: secrets && secrets.items })}
+            ${panel('github-security', `Security${secKinds.length ? ' · ' + fmt(secOpen) + ' open' : ''}`, secBody, { wide: true, keep: secKinds.length > 0, data: secWeeks, note: 'Project repos only. Dismiss and the bulk dismissal run only when you click; Jarvis never dismisses on its own.' })}
+            ${panel('github-dependabot', `Dependabot${dbot ? ' · ' + fmt(dbot.open) : ''}`, dbotBody, { wide: true, keep: !!dbot, data: dbot && dbot.items, note: 'Fix merges the Dependabot PR when it is green, or drafts an upgrade prompt for an agent.' })}
+            ${panel('github-code-scanning', `Code scanning${cscan ? ' · ' + fmt(cscan.open) : ''}`, cscanBody, { wide: true, keep: !!cscan, data: cscan && cscan.items })}
+            ${panel('github-secrets', `Secret scanning${secrets ? ' · ' + fmt(secrets.open) : ''}`, secretsBody, { data: secrets && secrets.items })}
             ${panel('github-budget', 'GitHub API budget', budgetBody, { data: bud && bud.hourly, note: "All chats share kaanmuar's 5,000 GraphQL points an hour; the app's REST budget is its own." })}
             ${panel('github-agents', 'Agent work', agBody, { data: ag && ag.tickets })}
             ${agDaily ? panel('github-agents-daily', 'Agent hours per day', area(agDaily.labels, agDaily.series, { title: 'Agent hours and tickets worked each day', yLabel: 'hours or tickets', xLabel: 'Day (UTC)' }), { wide: true, data: daily(agDaily) }) : ''}
@@ -2141,69 +2253,167 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         'gh-merge-pr': (a) => `merge PR #${a.pr} into main now (it then goes to production)`,
         'gh-delete-branch': (a) => `delete ${plural((a.branches || []).length, 'merged branch', 'merged branches')} now`,
         'gh-remove-worktree': (a) => `remove the merged worktree ${a.branch || a.path} on the Mac (the uploader runs it within 5 minutes, never with --force)`,
-        'gh-orphan-ticket': (a) => `file a ticket for PR #${a.pr} and link it in a comment on the PR`
+        'gh-orphan-ticket': (a) => `file a ticket for PR #${a.pr} and link it in a comment on the PR`,
+        'gh-quarantine': (a) => `file a Backlog bug "CI: ${a.workflow} is flaky (${a.pct}% of ${a.runs} runs)" in area:ci, with links to its runs`,
+        'gh-security-ticket': (a) => `file a Backlog bug for ${a.kind === 'dependabot' ? 'Dependabot' : a.kind === 'codeScanning' ? 'code scanning' : 'secret scanning'} alert #${a.number} in ${a.repo}`,
+        'gh-dismiss-low': (a) => `dismiss ${plural((a.alerts || []).length, 'low security alert', 'low security alerts')} on GitHub as a tolerable risk (code scanning ones as won't fix)`
     };
+    const GH_POLL_MS = 10000, GH_POLL_TRIES = 90;
+    const ghCap = (s) => String(s).replace(/^./, (c) => c.toUpperCase());
+
+    // After any action: GitHub numbers read again, past the 10-minute cache.
+    async function ghFresh() {
+        const out = await call('github-work', { fresh: true }).catch((error) => ({ ok: false, error: error.message }));
+        if (out && out.ok !== false) S.external['github-work'] = out;
+        compute();
+        render();
+    }
 
     async function ghAct(b, action = b.dataset.ghAct, target = b.dataset.target, given = null) {
         let args = given || {};
         if (!given) try { args = JSON.parse(b.dataset.ghArgs || '{}'); } catch (error) { args = {}; }
         if (!confirmRun((GH_ASK[action] || (() => ACTION_LABELS[action] || action))(args))) return;
+        const key = b.dataset.ghKey;
         b.disabled = true;
-        toast('Asking Jarvis…', 30000);
+        if (key) ghMark(key, 'running', ghCap(ACTION_LABELS[action] || action) + '…'); else toast('Asking Jarvis…', 30000);
         const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
-        toast(out.ok ? out.message || `${(ACTION_LABELS[action] || action).replace(/^./, (c) => c.toUpperCase())}: done.` : 'Not done: ' + out.error, 7000);
-        loadExternal(['github-work', 'actions']);
+        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + out.error;
+        if (key) ghMark(key, out.ok ? 'done' : 'failed', said, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
+        toast(said, 7000);
+        await ghFresh();
+        loadExternal(['actions']);
     }
 
-    // Main's failed runs go through the action-run re-run (it re-runs a workflow's newest failed run on main); other branches through github-act.
+    // The deck's button re-runs main's failed workflows through action-run; a row's button re-runs that run id.
     async function ghRerun(b) {
+        if (b.dataset.ghRerun !== 'main') return ghRerunRun(b.dataset.ghRerun);
         const failing = ((ghWork().ci || {}).failing || []);
-        const run = b.dataset.ghRerun === 'main' ? null : ghRun(b.dataset.ghRerun);
-        if (run && run.branch !== 'main') return ghAct(b, 'rerun-ci', `${run.name} #${run.id}`, { run: run.id, workflow: run.name, branch: run.branch });
-        const workflows = Array.from(new Set((run ? [run] : failing.filter((r) => r.branch === 'main')).map((r) => r.name)));
+        const workflows = Array.from(new Set(failing.filter((r) => r.branch === 'main').map((r) => r.name)));
         if (!workflows.length || !confirmRun(`re-run the failed jobs of ${workflows.join(', ')} on main`)) return;
         b.disabled = true;
         toast('Running…', 30000);
         const out = await call('action-run', { action: 'rerun-ci', workflows, proposal: 'gh:rerun' }).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
         toast(out.ok ? `${ACTION_LABELS['rerun-ci']}: ${out.ran ? out.ran + ' started' : fmt(out.done) + ' done'}${out.failed ? ', ' + out.failed + ' failed' : ''}.` : 'Not run: ' + out.error, 6000);
-        loadExternal(['github-work', 'actions']);
+        await ghFresh();
+        loadExternal(['actions']);
+    }
+
+    async function ghRerunRun(id) {
+        const c = ghRunCtx(id);
+        if (!c || !confirmRun(GH_ASK['rerun-ci']({ run: c.run, workflow: c.workflow, branch: c.branch }))) return;
+        const key = 'run:' + c.run;
+        ghMark(key, 'queued', 'Re-running…', { row: c.row });
+        const out = await call('github-act', { action: 'rerun-ci', run: c.run, workflow: c.workflow, branch: c.branch, target: `${c.workflow} #${c.run}` }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { ghMark(key, 'failed', 'Not re-run: ' + out.error); return; }
+        ghMark(key, 'queued', 'Re-run queued.', { url: c.url, link: 'Watch the run' });
+        await ghFresh();
+        ghPoll(c.run);
+    }
+
+    // A re-run's status every 10 s until it completes, for at most 15 minutes.
+    async function ghPoll(id, tries = 0) {
+        const key = 'run:' + id;
+        if (!tries) { if (S.ghPolls.has(key)) return; S.ghPolls.add(key); }
+        const out = await call('github-run', { run: Number(id) }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok && out.done) {
+            S.ghPolls.delete(key);
+            const green = out.conclusion === 'success';
+            ghMark(key, green ? 'done' : 'failed', green ? `Passed on attempt ${out.attempt}.` : `Ended ${out.conclusion || 'without a result'} on attempt ${out.attempt}.`, { url: out.url, link: 'Open the run' });
+            return ghFresh();
+        }
+        if (out.ok) ghMark(key, out.status === 'in_progress' ? 'running' : 'queued', `Attempt ${out.attempt}: ${String(out.status || 'queued').replace(/_/g, ' ')}…`, { url: out.url, link: 'Watch the run' });
+        if (tries + 1 >= GH_POLL_TRIES) {
+            S.ghPolls.delete(key);
+            ghMark(key, 'failed', 'Still not done after 15 minutes; open the run to follow it.', { url: (S.ghRows[key] || {}).url || '', link: 'Open the run' });
+            return;
+        }
+        setTimeout(() => ghPoll(id, tries + 1), GH_POLL_MS);
     }
 
     async function ghDiagnose(id) {
         if (!id) return;
+        const key = 'run:' + id;
         S.pending['gh-diag:' + id] = true;
-        render();
-        toast('Gemini is reading the run log…', 30000);
+        ghMark(key, 'running', 'Diagnosing: Gemini is reading the run log…');
         const out = await call('github-diagnose', { run: Number(id) || id }).catch((error) => ({ ok: false, error: error.message }));
         S.pending['gh-diag:' + id] = false;
-        const run = ghRun(id);
-        if (out.ok && out.diag && run) run.diag = out.diag;
-        toast(out.ok ? 'Diagnosis: ' + ((out.diag && out.diag.cause) || 'done.') : 'Not diagnosed: ' + out.error, 7000);
-        render();
+        const c = ghRunCtx(id);
+        if (out.ok && out.diag && c && c.row) c.row.diag = out.diag;
+        if (out.ok && out.diag && c && c.flaky) c.flaky.newest.diag = out.diag;
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? 'Diagnosed: ' + ((out.diag && out.diag.cause) || 'done.') : 'Not diagnosed: ' + out.error);
+        ghFresh();
     }
 
-    function ghPrompt(run) {
-        const d = run.diag || {};
-        return d.prompt || [`The GitHub Actions run "${run.name}" #${run.id} failed on branch ${run.branch} (${run.url}).`, d.cause ? `Diagnosis: ${d.cause}` : '', d.fix ? `Suggested fix: ${d.fix}` : '',
-            `Read the run log, find the root cause, fix it on ${run.branch}${run.pr ? ` (PR #${run.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
+    // Fix runs the diagnosis's own action: a re-run, or an update of its PR with main.
+    async function ghFix(id) {
+        const c = ghRunCtx(id);
+        const action = c && c.diag && c.diag.action;
+        if (action === 'rerun-ci') return ghRerunRun(id);
+        if (action !== 'gh-update-pr' || !c.pr || !confirmRun(`${GH_ASK['gh-update-pr']({ pr: c.pr })} (Gemini: ${c.diag.cause})`)) return;
+        const key = 'run:' + c.run;
+        ghMark(key, 'running', `Updating PR #${c.pr} with main…`);
+        const out = await call('github-act', { action: 'gh-update-pr', pr: c.pr, target: '#' + c.pr }).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? out.message || `Updated PR #${c.pr}.` : 'Not updated: ' + out.error, out.ok ? { url: out.url, link: 'Open the PR' } : null);
+        ghFresh();
+    }
+
+    function ghPrompt(c) {
+        const d = c.diag || {};
+        return d.prompt || [`The GitHub Actions run "${c.workflow}" #${c.run} failed on branch ${c.branch} (${c.url}).`, d.cause ? `Diagnosis: ${d.cause}` : '', d.fix ? `Suggested fix: ${d.fix}` : '',
+            `Read the run log, find the root cause, fix it on ${c.branch}${c.pr ? ` (PR #${c.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
     }
 
     // A Cursor cloud agent costs money and writes code: it asks every time, showing the drafted prompt.
-    async function ghAgent(b) {
-        let body = null;
-        if (b.dataset.ghAgent) { const run = ghRun(b.dataset.ghAgent); if (run) body = { prompt: ghPrompt(run), branch: run.branch, pr: run.pr || undefined, run: run.id }; }
-        else { const p = ghPr(b.dataset.ghAgentPr); if (p) body = { prompt: `PR #${p.number} "${p.title}" (${p.url}) has merge conflicts with main. Merge main into ${p.branch}, resolve the conflicts keeping the intent of both sides, run the tests and push.`, branch: p.branch, pr: p.number }; }
-        if (!body) return;
+    async function ghLaunch(key, body) {
         const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
-        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return;
-        b.disabled = true;
-        toast('Launching the agent…', 30000);
+        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return false;
+        ghMark(key, 'running', 'Launching the agent…');
         const out = await call('github-agent', body).catch((error) => ({ ok: false, error: error.message }));
-        b.disabled = false;
+        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
-        if (out.ok) loadExternal(['github-work']);
+        if (out.ok) ghFresh();
+        return true;
+    }
+
+    function ghAgent(b) {
+        if (b.dataset.ghAgent) {
+            const c = ghRunCtx(b.dataset.ghAgent);
+            if (c) ghLaunch('run:' + c.run, { prompt: ghPrompt(c), branch: c.branch, pr: c.pr || undefined, run: c.run });
+            return;
+        }
+        const p = ghPr(b.dataset.ghAgentPr);
+        if (p) ghLaunch('pr:' + p.number, { prompt: `PR #${p.number} "${p.title}" (${p.url}) has merge conflicts with main. Merge main into ${p.branch}, resolve the conflicts keeping the intent of both sides, run the tests and push.`, branch: p.branch, pr: p.number });
+    }
+
+    // Gemini drafts the prompt from the newest failure's diagnosis or failing step log; Carlos still confirms it.
+    async function ghFlakyAgent(name) {
+        const w = (((ghWork().ci || {}).flaky || {}).workflows || []).find((x) => x.name === name);
+        if (!w) return;
+        const key = 'flaky:' + name;
+        ghMark(key, 'running', 'Gemini is drafting a fix prompt…');
+        const out = await call('github-draft', { run: w.newest ? w.newest.id : undefined, workflow: w.name, pct: w.pct, runs: w.runs }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { ghMark(key, 'failed', 'No prompt: ' + out.error); return; }
+        if (!(await ghLaunch(key, { prompt: out.prompt, branch: out.branch || 'main', name: 'Jarvis fix: flaky ' + w.name }))) { delete S.ghRows[key]; render(); }
+    }
+
+    function ghSecAgent(key) {
+        const a = ghAlert(key);
+        if (a) ghLaunch(key, { prompt: ghSecPrompt(a.item), branch: 'main', repo: a.item.repo, name: 'Jarvis fix: ' + a.item.package });
+    }
+
+    // Dismissing closes the alert on GitHub, so it runs only from this form, never on Jarvis's own.
+    async function ghDismiss(form) {
+        const key = form.dataset.ghDismiss, a = ghAlert(key);
+        if (!a) return;
+        const i = a.item;
+        openDrills.delete('github-sec-' + a.kind);
+        ghMark(key, 'running', 'Dismissing on GitHub…');
+        const out = await call('github-act', { action: 'gh-dismiss-alert', kind: a.kind, repo: i.repo, number: i.number, reason: form.reason.value, comment: form.comment.value.trim(), target: `${ghAlertName(a.kind, i)} #${i.number}` }).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'done' : 'failed', out.ok ? out.message : 'Not dismissed: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
+        toast(out.ok ? out.message : 'Not dismissed: ' + out.error, 7000);
+        ghFresh();
     }
 
     async function ghReload() {
@@ -3741,6 +3951,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.ghAct) { ghAct(t); return; }
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
         if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
+        if (t.dataset.ghFix) { ghFix(t.dataset.ghFix); return; }
+        if (t.dataset.ghFlakyAgent) { ghFlakyAgent(t.dataset.ghFlakyAgent); return; }
+        if (t.dataset.ghSecAgent) { ghSecAgent(t.dataset.ghSecAgent); return; }
         if (t.dataset.ghAsk) { ask(t.dataset.ghAsk); return; }
         if (t.dataset.mkRereview) { leadReview(t); return; }
         if (t.dataset.mkReply) { mkReply(t); return; }
@@ -3828,6 +4041,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         event.preventDefault();
         if (form.dataset.settings !== undefined) { saveSettings(); return; }
         if (form.dataset.reply !== undefined) { sendReply(form); return; }
+        if (form.dataset.ghDismiss) { ghDismiss(form); return; }
         if (form.dataset.ask !== undefined) {
             const q = form.q.value.trim();
             if (q) run(C.parseCommand(q).type === 'ask' ? { type: 'ask', question: q } : C.parseCommand(q));
