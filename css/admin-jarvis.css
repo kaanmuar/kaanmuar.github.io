@@ -666,6 +666,21 @@
 .jv-drill-list span { overflow-wrap: anywhere; }
 .jv-drill-list small { color: var(--dim); white-space: nowrap; }
 .jv-drill-list code { display: inline-block; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.jv-bar-stack { display: flex; }
+.jv-bar-stack .jv-bar-fill { flex: none; border-radius: 0; }
+.jv-bar-stack .jv-bar-fill:first-child { border-radius: 6px 0 0 6px; }
+.jv-bar-stack .jv-bar-fill:last-child { border-radius: 0 6px 6px 0; }
+.jv-bar-stack .jv-bar-fill:only-child { border-radius: 6px; }
+.jv-bar-sub { display: block; font-size: 0.68rem; color: var(--dim); }
+.jv-gh-result { margin: 0.35rem 0 0; font-size: 0.78rem; overflow-wrap: anywhere; }
+.jv-gh-result a { display: inline-flex; align-items: center; min-height: 44px; }
+.jv-gh-dismiss { display: grid; gap: 0.5rem; margin-top: 0.3rem; font-size: 0.8rem; }
+.jv-gh-dismiss label { display: grid; gap: 0.2rem; color: var(--muted); }
+.jv-gh-dismiss select, .jv-gh-dismiss input { min-height: 44px; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: rgba(2, 16, 24, 0.6); color: var(--text); font: inherit; }
+.jv-gh-parts { list-style: none; margin: 0 0 0.7rem; padding: 0; font-size: 0.8rem; }
+.jv-gh-parts li { display: flex; justify-content: space-between; gap: 0.6rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+.jv-gh-parts small { color: var(--dim); }
+.jv-gh-parts b { color: var(--pink); font-family: ui-monospace, Menlo, monospace; }
 .jv-drill-list em.jv-chip { font-style: normal; }
 .jv-drill-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.55rem 0 0; }
 .jv-drill-links .jv-btn { display: inline-flex; align-items: center; min-height: 44px; }

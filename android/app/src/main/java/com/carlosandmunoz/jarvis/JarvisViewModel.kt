@@ -8,6 +8,7 @@ import com.carlosandmunoz.jarvis.data.Processes
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
@@ -16,11 +17,13 @@ import com.carlosandmunoz.jarvis.data.strings
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.ui.Github
 import com.carlosandmunoz.jarvis.voice.Heard
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.update.Updater
 import com.carlosandmunoz.jarvis.voice.Voice
 import java.io.File
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -34,6 +37,9 @@ import kotlinx.serialization.json.JsonPrimitive
 enum class Tab(val label: String) { Overview("Overview"), Products("Products"), Business("Business"), Traffic("Traffic"), Systems("Systems") }
 
 data class Chat(val question: String, val answer: String?, val error: Boolean = false, val spoken: Boolean = false)
+
+/** What a GitHub row's action is doing (#2808): queued, running, done, launched or failed, with a link to the run, PR, issue or agent. */
+data class GhResult(val state: String, val text: String, val url: String? = null, val link: String? = null)
 
 data class UiState(
     val signedIn: Boolean = false,
@@ -72,6 +78,7 @@ data class UiState(
     val log: List<JsonObject> = emptyList(),
     val logCursor: String = "",
     val logError: String? = null,
+    val ghRows: Map<String, GhResult> = emptyMap(),
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -303,6 +310,50 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) }; refresh() }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
             told()
+        }
+    }
+
+    private fun ghMark(key: String, r: GhResult) = _state.update { it.copy(ghRows = it.ghRows + (key to r)) }
+
+    /** A GitHub row's action (#2808): its state shows on the row at once, the answer replaces it, then the snapshot is read again. */
+    fun ghRow(key: String, op: String, extra: Map<String, JsonElement>, busy: String, done: (JsonObject) -> GhResult) {
+        ghMark(key, GhResult("running", busy))
+        keep("Running your action") {
+            runCatching { api.call(op, _state.value.days, extra) }
+                .onSuccess { out -> val r = done(out); ghMark(key, r); _state.update { it.copy(toast = r.text) }; refresh() }
+                .onFailure { e -> ghMark(key, GhResult("failed", e.message ?: "Failed.")); fail(e) { it.copy(toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** Re-runs a run's failed jobs, then reads github-run every 10 s until it completes, for at most 15 minutes. */
+    fun ghRerun(key: String, run: Long, extra: Map<String, JsonElement>) {
+        ghMark(key, GhResult("queued", "Re-running…"))
+        keep("Re-running the CI run") {
+            val out = runCatching { api.call("github-act", _state.value.days, extra) }
+            out.exceptionOrNull()?.let { e -> ghMark(key, GhResult("failed", "Not re-run: " + (e.message ?: "failed."))); fail(e) { it }; return@keep }
+            ghMark(key, GhResult("queued", "Re-run queued."))
+            refresh()
+            viewModelScope.launch {
+                repeat(Github.POLL_TRIES) {
+                    runCatching { api.call("github-run", _state.value.days, mapOf("run" to JsonPrimitive(run))) }.getOrNull()?.let { st ->
+                        ghMark(key, Github.runResult(st))
+                        if (st.bool("done") == true) { refresh(); return@launch }
+                    }
+                    delay(Github.POLL_MS)
+                }
+                ghMark(key, GhResult("failed", "Still not done after 15 minutes; open the run to follow it.", _state.value.ghRows[key]?.url, "Open the run"))
+            }
+        }
+    }
+
+    /** Gemini's fix prompt for a flaky workflow; [open] shows it in the agent dialog to edit and confirm. */
+    fun ghDraft(key: String, extra: Map<String, JsonElement>, open: (String) -> Unit) {
+        ghMark(key, GhResult("running", "Gemini is drafting a fix prompt…"))
+        viewModelScope.launch {
+            runCatching { api.call("github-draft", _state.value.days, extra) }
+                .onSuccess { out -> _state.update { it.copy(ghRows = it.ghRows - key) }; out.str("prompt")?.let(open) }
+                .onFailure { e -> ghMark(key, GhResult("failed", "No prompt: " + (e.message ?: "failed."))) }
         }
     }
 
