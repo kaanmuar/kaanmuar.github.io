@@ -179,8 +179,9 @@ async function runJob(fetchImpl, name) {
    cancels most queued runs, so runs (the newest runs of every workflow) can hold none of a workflow's finished ones;
    those workflows are read by id, from since on: one that has not run on main since is not CI on main any more. A run is
    named by its workflow, not its run-name ("Push on main" is CodeQL). */
+const usable = (r) => r.status === "completed" && !["cancelled", "skipped"].includes(r.conclusion);
+
 async function mainRuns(get, runs, since) {
-  const usable = (r) => r.status === "completed" && !["cancelled", "skipped"].includes(r.conclusion);
   const list = await get("repos/" + REPO + "/actions/workflows?per_page=100").catch(() => null);
   const workflows = ((list && list.workflows) || []).filter((w) => w.state === "active");
   const names = new Map(workflows.map((w) => [w.id, w.name]));
@@ -250,11 +251,12 @@ function githubApi(fetchImpl, token) {
   return { call, get: async (path) => readJson(await call("GET", path), "GitHub") };
 }
 
-// A workflow's newest finished, not cancelled run on main. Busy main cancels most queued runs, so a list of every
-// workflow's runs often holds none of a given workflow's finished ones.
+// A workflow's newest finished run on main that was not cancelled or skipped, as mainRuns picks it for the briefing
+// (#2775). Busy main cancels most queued runs, so a list of every workflow's runs often holds none of a given
+// workflow's finished ones; Studio render skips most of its issue_comment runs, hence a full page.
 async function mainRun(api, workflowId) {
-  const runs = await api.get("actions/workflows/" + workflowId + "/runs?branch=main&status=completed&per_page=30");
-  return (runs.workflow_runs || []).find((r) => r.conclusion !== "cancelled") || null;
+  const runs = await api.get("actions/workflows/" + workflowId + "/runs?branch=main&status=completed&per_page=100");
+  return (runs.workflow_runs || []).find(usable) || null;
 }
 
 /* #2245: a pull_request run tests refs/pull/<n>/merge as GitHub built it when the run started, so re-running its
@@ -350,7 +352,7 @@ async function rerunCi(fetchImpl, token, workflow, { prs = true, rerunMain = tru
   const wf = ((await api.get("actions/workflows?per_page=100")).workflows || []).find((w) => w.name === name);
   const run = wf ? await mainRun(api, wf.id) : null;
   if (!run) throw new Error("No finished run of " + name + " on main.");
-  if (["success", "skipped", "neutral"].includes(run.conclusion)) {
+  if (["success", "neutral"].includes(run.conclusion)) {
     if (!prs || run.conclusion !== "success") return { workflow: name, run: run.id, url: run.html_url, already: run.conclusion };
     const out = await refreshPrs(fetchImpl, token, { workflow: name, workflowId: wf.id, since: run.created_at, budget, gap, sleep });
     return { workflow: name, run: run.id, url: run.html_url, prs: out, note: refreshNote(out) };
