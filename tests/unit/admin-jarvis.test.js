@@ -428,6 +428,42 @@ test("server: settings are cleaned on save and read back with defaults", async (
   assert.equal(db.writes[0].value.by, "kaanmuar@gmail.com");
 });
 
+test("section layout: saved order first, new panels at their default place, gone ids ignored, hidden apart (#2809)", () => {
+  assert.deepEqual(core.applyLayout(["a", "b", "c"], null), { all: ["a", "b", "c"], order: ["a", "b", "c"], hidden: [] });
+  assert.deepEqual(core.applyLayout(["a", "b", "c", "d"], { order: ["c", "gone", "a"], hidden: ["d", "gone"] }), { all: ["c", "d", "a", "b"], order: ["c", "a", "b"], hidden: ["d"] });
+  assert.deepEqual(core.applyLayout(["new", "a", "b"], { order: ["b", "a"] }).order, ["new", "b", "a"]);
+  assert.deepEqual(core.applyLayout(["a", "a", "b"], { order: ["b", 5, "bad id!"] }).all, ["a", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b", "c", "d"], ["b"], "c", -1), ["c", "a", "b", "d"]);
+  assert.deepEqual(core.layoutMove(["a", "b", "c", "d"], ["c"], "b", 1), ["a", "c", "d", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b"], [], "a", -1), ["a", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b"], [], "zz", 1), ["a", "b"]);
+  const kept = core.keepLayout({ order: ["x", "a", "y", "b"], hidden: ["y", "a"] }, ["b", "a"], ["b"], ["a", "b"]);
+  assert.deepEqual(kept, { order: ["x", "b", "a", "y"], hidden: ["y", "b"] });
+  assert.equal(core.panelSlug("Failing runs · 3"), "failing-runs");
+  assert.equal(core.panelSlug("Open bugs by area (12)"), "open-bugs-by-area");
+  assert.equal(core.panelSlug("Google Maps: local businesses"), "google-maps-local-businesses");
+  assert.equal(core.panelSlug("· ·"), "panel");
+});
+
+test("server: the layout is cleaned, saved one tab at a time, kept by a settings save and read back in the settings (#2809)", async () => {
+  assert.deepEqual(core.cleanLayout({ review: { order: ["review-funnel", "review-funnel", 7, "<b>", "x".repeat(81)], hidden: ["review-heat"] }, nope: { order: ["a"] }, cv: { order: [] }, hub: "x" }),
+    { review: { order: ["review-funnel"], hidden: ["review-heat"] } });
+  assert.equal(core.cleanLayout({ review: { order: Array.from({ length: 300 }, (_, i) => "p" + i) } }).review.order.length, 200);
+  assert.deepEqual(core.cleanLayout([]), {});
+  const db = fakeDb({ docs: { "jarvis_settings/main": { goals: [], mail: { daily: false }, updatedAt: "2026-11-01T00:00:00.000Z" } } });
+  const one = await jarvis.saveLayout(db, { review: { order: ["review-heat", "review-funnel"], hidden: ["review-alerts"] }, bogus: { order: ["a"] } }, "carlos");
+  assert.deepEqual(one.layout, { review: { order: ["review-heat", "review-funnel"], hidden: ["review-alerts"] } });
+  assert.equal(one.updatedAt, "2026-11-01T00:00:00.000Z");
+  await jarvis.saveLayout(db, { systems: { order: ["systems-ci"], hidden: [] } }, "carlos");
+  const both = await jarvis.saveLayout(db, { review: null }, "carlos");
+  assert.deepEqual(both.layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  await assert.rejects(jarvis.saveLayout(db, { nope: {} }, "carlos"), /No Jarvis tab/);
+  const saved = await jarvis.saveSettings(db, { mail: { daily: true } }, "carlos");
+  assert.deepEqual(saved.layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  assert.deepEqual((await jarvis.readSettings(db)).layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  assert.deepEqual((await jarvis.saveSettings(db, { layout: {} }, "carlos")).layout, {});
+});
+
 test("server: goal values come from count and sum aggregations with the right filters", async () => {
   const db = fakeDb({ usd: 34.2, counts: {
     'site_events["site==cv","kind==visit","createdAt>=date","createdAt<date"]': 120,

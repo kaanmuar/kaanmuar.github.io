@@ -437,7 +437,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
         external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
-        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set()
+        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set(), layoutEdit: null
     };
     readHash();
 
@@ -789,6 +789,144 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     function foldAll(shut) {
         $$('.jv-panel[data-panel-id]').forEach((sec) => fold(sec.dataset.panelId, shut));
+    }
+
+    // --- section layout per tab (#2809): order and hidden sections from jarvis_settings layout, shared with the app --------
+    const layoutOf = (tab) => ((S.settings || {}).layout || {})[tab] || null;
+    const topPanels = (view) => Array.from(view.querySelectorAll('.jv-panel[data-panel-id]')).filter((sec) => !sec.parentElement.closest('.jv-panel'));
+    // The ids in the order the view drew them, before any layout; a fresh render numbers its sections again.
+    function defaultIds(view) {
+        const secs = topPanels(view);
+        secs.forEach((sec, i) => { if (!sec.dataset.at) sec.dataset.at = String(i); });
+        return Array.from(new Set(secs.sort((a, b) => a.dataset.at - b.dataset.at).map((sec) => sec.dataset.panelId)));
+    }
+    const panelTitle = (sec) => (sec && (sec.querySelector('.jv-fold') || sec.querySelector('h3'))?.textContent.trim()) || (sec ? sec.dataset.panelId : '');
+
+    // Each grid keeps its own slots; the panels in it take them in the layout's order.
+    function arrange(view, tab) {
+        view.querySelectorAll('.jv-lay-bar, .jv-lay-tools').forEach((el) => el.remove());
+        const ids = defaultIds(view);
+        const secs = topPanels(view);
+        if (!secs.length) return;
+        const edit = S.layoutEdit && S.layoutEdit.tab === tab ? S.layoutEdit : null;
+        const L = C.applyLayout(ids, edit ? { order: edit.all, hidden: edit.hidden } : layoutOf(tab));
+        const rank = new Map(L.all.map((id, i) => [id, i]));
+        const groups = new Map();
+        secs.forEach((sec) => groups.set(sec.parentElement, (groups.get(sec.parentElement) || []).concat(sec)));
+        groups.forEach((list) => {
+            const slots = list.map((sec) => { const mark = document.createComment(''); sec.replaceWith(mark); return mark; });
+            list.slice().sort((a, b) => rank.get(a.dataset.panelId) - rank.get(b.dataset.panelId)).forEach((sec, i) => slots[i].replaceWith(sec));
+        });
+        const hide = new Set(L.hidden);
+        const shown = L.order;
+        secs.forEach((sec) => {
+            const id = sec.dataset.panelId;
+            sec.hidden = hide.has(id);
+            sec.classList.toggle('is-arranging', !!edit);
+            if (!edit || sec.hidden) return;
+            const name = esc(panelTitle(sec));
+            const at = shown.indexOf(id);
+            sec.querySelector(':scope > header').insertAdjacentHTML('beforeend', `<span class="jv-lay-tools"><button type="button" class="jv-lay-drag" data-lay="drag" data-id="${esc(id)}" aria-label="Move ${name}: drag it, or press the up and down arrow keys" title="Drag to move">⠿</button><button type="button" class="jv-btn small" data-lay="up" data-id="${esc(id)}" aria-label="Move ${name} up"${at <= 0 ? ' disabled' : ''}>↑</button><button type="button" class="jv-btn small" data-lay="down" data-id="${esc(id)}" aria-label="Move ${name} down"${at >= shown.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="jv-btn small" data-lay="hide" data-id="${esc(id)}" aria-label="Hide ${name}">Hide</button></span>`);
+        });
+        const bar = document.createElement('div');
+        bar.className = 'jv-lay-bar' + (edit ? ' is-on' : '');
+        const title = (id) => panelTitle(secs.find((sec) => sec.dataset.panelId === id));
+        bar.innerHTML = edit
+            ? `<p class="jv-lay-help">Editing this tab: drag ⠿ or use ↑ ↓ to move a section, Hide to put it away.</p><div class="jv-actions"><button type="button" class="jv-btn small" data-lay="reset">Reset to default</button><button type="button" class="jv-btn small is-primary" data-lay="done">Done</button></div>
+              <div class="jv-lay-tray"><h4>Hidden sections${L.hidden.length ? ` (${L.hidden.length})` : ''}</h4>${L.hidden.length ? `<ul>${L.hidden.map((id) => `<li><span>${esc(title(id))}</span><button type="button" class="jv-btn small" data-lay="show" data-id="${esc(id)}" aria-label="Add back ${esc(title(id))}">Add back</button></li>`).join('')}</ul>` : '<p class="jv-note">None. Hide a section to keep it here.</p>'}</div>`
+            : `<button type="button" class="jv-link" data-lay="edit">Edit layout</button>${L.hidden.length ? `<span class="jv-note">${L.hidden.length} hidden</span>` : ''}`;
+        view.prepend(bar);
+    }
+
+    function focusLay(act, id) {
+        const view = $(`[data-view="${S.product}"]`);
+        const pick = (a) => view.querySelector(`[data-lay="${a}"]${id ? `[data-id="${CSS.escape(id)}"]` : ''}:not([disabled])`);
+        const el = pick(act) || (id && pick('drag')) || view.querySelector('[data-lay="done"], [data-lay="edit"]');
+        if (el) el.focus();
+    }
+
+    function layAct(act, id) {
+        const tab = S.product;
+        const view = $(`[data-view="${tab}"]`);
+        const ids = defaultIds(view);
+        if (act === 'edit') {
+            const L = C.applyLayout(ids, layoutOf(tab));
+            S.layoutEdit = { tab, all: L.all, hidden: L.hidden, dirty: false, reset: false };
+            arrange(view, tab);
+            focusLay('done');
+            return;
+        }
+        const E = S.layoutEdit;
+        if (!E || E.tab !== tab) return;
+        if (act === 'done') { layDone(); return; }
+        E.all = C.applyLayout(ids, { order: E.all }).all;
+        if (act === 'reset') Object.assign(E, { all: ids, hidden: [], reset: true });
+        else if (act === 'up' || act === 'down') E.all = C.layoutMove(E.all, E.hidden, id, act === 'up' ? -1 : 1);
+        else if (act === 'hide') E.hidden = E.hidden.concat(id);
+        else if (act === 'show') E.hidden = E.hidden.filter((x) => x !== id);
+        else return;
+        E.dirty = true;
+        arrange(view, tab);
+        if (act === 'hide') focusLay('done');
+        else focusLay(act === 'show' ? 'drag' : act, act === 'reset' ? null : id);
+    }
+
+    // Done: shown at once, saved through settings-save for this tab only; a failed save puts the old layout back.
+    async function layDone() {
+        const E = S.layoutEdit;
+        if (!E) return;
+        S.layoutEdit = null;
+        const view = $(`[data-view="${E.tab}"]`);
+        const ids = defaultIds(view);
+        const prev = layoutOf(E.tab);
+        const put = (l) => { const all = Object.assign({}, (S.settings || {}).layout); if (l) all[E.tab] = l; else delete all[E.tab]; S.settings = Object.assign({}, S.settings, { layout: all }); };
+        const next = E.reset && !E.hidden.length && E.all.join() === ids.join() ? null : C.keepLayout(E.reset ? null : prev, E.all, E.hidden, ids);
+        if (E.dirty) put(next);
+        arrange(view, E.tab);
+        if (S.product === E.tab) focusLay('edit');
+        if (!E.dirty) return;
+        const out = await call('settings-save', { layout: { [E.tab]: next } }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok === false) {
+            put(prev);
+            arrange(view, E.tab);
+            toast('The layout did not save: ' + (out.error || 'failed') + '. It is back as it was.', 6000);
+            return;
+        }
+        if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+        toast('Layout saved. The app shows it too.');
+    }
+
+    // Drag by ⠿ with a mouse or a finger: the section follows the pointer through its grid, in reading order.
+    let dragging = null;
+    function dragMove(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        if (event.clientY < 56) window.scrollBy(0, -14); else if (event.clientY > window.innerHeight - 56) window.scrollBy(0, 14);
+        const over = Array.from(sec.parentElement.children).find((el) => {
+            if (el === sec || !el.matches('.jv-panel[data-panel-id]') || el.hidden) return false;
+            const r = el.getBoundingClientRect();
+            return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+        });
+        if (!over) return;
+        const r = over.getBoundingClientRect();
+        const before = (event.clientY - r.top) / r.height + (event.clientX - r.left) / r.width < 1;
+        sec.parentElement.insertBefore(sec, before ? over : over.nextSibling);
+        const handle = sec.querySelector('[data-lay="drag"]');
+        if (handle && !handle.hasPointerCapture(event.pointerId)) handle.setPointerCapture(event.pointerId);
+    }
+    function dragEnd(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        dragging = null;
+        sec.classList.remove('is-dragging');
+        const E = S.layoutEdit;
+        const view = sec.closest('.jv-view');
+        if (!E || !view) return;
+        const shown = topPanels(view).filter((el) => !el.hidden).map((el) => el.dataset.panelId);
+        E.all = C.layoutWeave(shown, E.all);
+        E.dirty = true;
+        arrange(view, E.tab);
+        focusLay('drag', sec.dataset.panelId);
     }
 
     // A panel whose whole body is one "nothing here" line joins the view's No data yet chips instead (#2139).
@@ -3103,6 +3241,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && !el.value) el.value = v; });
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
+                arrange(view, p.key);
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
@@ -3590,6 +3729,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     });
 
     function go(product) {
+        if (S.layoutEdit && S.layoutEdit.tab !== product) layDone();
         S.product = product;
         writeHash();
         render();
@@ -3882,7 +4022,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (!out.ok) { toast('Not saved: ' + (out.error || 'no answer'), 5000); return; }
         const repos = (s) => JSON.stringify(C.githubRepos(s && s.github && s.github.repos));
         const reposChanged = repos(S.settings) !== repos(out);
-        S.settings = out;
+        S.settings = Object.assign({ layout: (S.settings || {}).layout }, out);
         closeSettings();
         toast('Saved. Jarvis is recounting the goals.');
         compute();
@@ -3944,6 +4084,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
         if (t.dataset.conDock !== undefined) { dock(!docked); return; }
+        if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
         if (t.dataset.conClose !== undefined) { dock(false); return; }
         if (t.dataset.conFull !== undefined) { dock(false); go('console'); return; }
         if (t.closest('[data-con]')) return;
@@ -4165,6 +4306,25 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         else if (event.key === '/') { const ask = $(`[data-view="${S.product}"] .jv-ask input`); if (ask) { event.preventDefault(); ask.focus(); } }
     }
     document.addEventListener('keydown', onKey);
+    root.addEventListener('keydown', (event) => {
+        const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
+        if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+        event.preventDefault();
+        layAct(event.key === 'ArrowUp' ? 'up' : 'down', handle.dataset.id);
+        focusLay('drag', handle.dataset.id);
+    });
+    root.addEventListener('pointerdown', (event) => {
+        const handle = event.target.closest('[data-lay="drag"]');
+        if (!handle || !S.layoutEdit || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        event.preventDefault();
+        const sec = handle.closest('.jv-panel');
+        handle.setPointerCapture(event.pointerId);
+        dragging = { sec, pointer: event.pointerId };
+        sec.classList.add('is-dragging');
+    });
+    document.addEventListener('pointermove', dragMove);
+    document.addEventListener('pointerup', dragEnd);
+    document.addEventListener('pointercancel', dragEnd);
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voices = {}; };
 
     S.timers.push(setInterval(() => {
@@ -4201,6 +4361,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             holo.node = null;
             document.removeEventListener('visibilitychange', holoRun);
             document.removeEventListener('keydown', onKey);
+            document.removeEventListener('pointermove', dragMove);
+            document.removeEventListener('pointerup', dragEnd);
+            document.removeEventListener('pointercancel', dragEnd);
             const icon = document.querySelector('link[data-jv-icon]');
             if (icon) icon.remove();
             document.title = pageTitle;

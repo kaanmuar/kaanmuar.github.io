@@ -312,13 +312,20 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                     if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
                     }
-                    if (s.snapshot != null) Masonry(columns, Modifier.fillMaxWidth()) {
-                        when (shownTab) {
-                            Tab.Overview -> OverviewScreen(s, vm, open)
-                            Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
-                            Tab.Business -> BusinessScreen(s, vm)
-                            Tab.Traffic -> TrafficScreen(s)
-                            Tab.Systems -> SystemsScreen(s, vm)
+                    if (s.snapshot != null) {
+                        val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
+                        val saved = Layouts.read(s.snapshot, layoutTab)
+                        LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
+                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
+                            Masonry(columns, Modifier.fillMaxWidth()) {
+                                when (shownTab) {
+                                    Tab.Overview -> OverviewScreen(s, vm, open)
+                                    Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
+                                    Tab.Business -> BusinessScreen(s, vm)
+                                    Tab.Traffic -> TrafficScreen(s)
+                                    Tab.Systems -> SystemsScreen(s, vm)
+                                }
+                            }
                         }
                     }
                     Spacer(Modifier.height(24.dp))
@@ -686,7 +693,7 @@ private fun Devices(s: UiState) {
 
 // Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
 private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?): JsonObject =
-    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
+    JsonObject(settings - "layout" + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
         (actions?.let { mapOf("actions" to it) } ?: emptyMap()))
 
 private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
