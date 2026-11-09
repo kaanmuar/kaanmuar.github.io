@@ -125,12 +125,12 @@ BODY = [
         "fr": "L’analyse tourne sur l’appareil où vous vous connectez. Un code ou un lien ouvert sur un autre appareil ou navigateur ne lance rien.",
         "it": "La revisione gira sul dispositivo da cui accedi. Un codice o un link aperto su un altro dispositivo o browser non avvia nulla.",
     }),
-    ("Google shares your name, photo, email addresses, birthday, phone numbers, addresses, gender, and work details, and your account keeps them for a future paid plan; they are not used yet. To share only your address, use email.", {
-        "es": "Google comparte tu nombre, foto, direcciones de correo, fecha de nacimiento, números de teléfono, direcciones, género y datos laborales, y tu cuenta los guarda para un futuro plan de pago; todavía no se usan. Para compartir solo tu dirección, usa el correo.",
-        "pt": "O Google compartilha seu nome, foto, endereços de e-mail, data de nascimento, números de telefone, endereços, gênero e dados profissionais, e sua conta os guarda para um futuro plano pago; eles ainda não são usados. Para compartilhar só seu endereço, use o e-mail.",
-        "de": "Google teilt Ihren Namen, Ihr Foto, Ihre E-Mail-Adressen, Ihr Geburtsdatum, Ihre Telefonnummern, Adressen, Ihr Geschlecht und Angaben zur Arbeit, und Ihr Konto speichert sie für einen künftigen bezahlten Tarif; sie werden noch nicht genutzt. Um nur Ihre Adresse zu teilen, nutzen Sie die E-Mail.",
-        "fr": "Google partage votre nom, votre photo, vos adresses e-mail, votre date de naissance, vos numéros de téléphone, vos adresses, votre genre et vos informations professionnelles, et votre compte les conserve pour une future offre payante ; ils ne sont pas encore utilisés. Pour ne partager que votre adresse, utilisez l’e-mail.",
-        "it": "Google condivide nome, foto, indirizzi email, data di nascita, numeri di telefono, indirizzi, genere e dati di lavoro, e il tuo account li conserva per un futuro piano a pagamento; non vengono ancora usati. Per condividere solo il tuo indirizzo, usa l’email.",
+    ('Google shares your profile details, which your account keeps; the full list is in the <a href="qa-review-legal.html#personal-data">disclaimers</a>. To share only your address, use email.', {
+        "es": 'Google comparte los datos de tu perfil, que tu cuenta guarda; la lista completa está en los <a href="qa-review-legal.html#personal-data">avisos</a>. Para compartir solo tu dirección, usa el correo.',
+        "pt": 'O Google compartilha os dados do seu perfil, que sua conta guarda; a lista completa está nos <a href="qa-review-legal.html#personal-data">avisos</a>. Para compartilhar só seu endereço, use o e-mail.',
+        "de": 'Google teilt Ihre Profildaten, die Ihr Konto speichert; die vollständige Liste steht in den <a href="qa-review-legal.html#personal-data">Hinweisen</a>. Um nur Ihre Adresse zu teilen, nutzen Sie die E-Mail.',
+        "fr": 'Google partage les informations de votre profil, que votre compte conserve ; la liste complète figure dans les <a href="qa-review-legal.html#personal-data">avertissements</a>. Pour ne partager que votre adresse, utilisez l’e-mail.',
+        "it": 'Google condivide i dati del tuo profilo, che il tuo account conserva; l’elenco completo è nelle <a href="qa-review-legal.html#personal-data">avvertenze</a>. Per condividere solo il tuo indirizzo, usa l’email.',
     }),
     ("or with your email", {"es": "o con tu correo", "pt": "ou com seu e-mail", "de": "oder mit Ihrer E-Mail", "fr": "ou avec votre e-mail", "it": "o con la tua email"}),
     ("Email me a code", {"es": "Envíame un código", "pt": "Me envie um código", "de": "Code per E-Mail senden", "fr": "M’envoyer un code", "it": "Inviami un codice"}),
@@ -290,6 +290,5 @@ BODY = [
     ("Another review", {"es": "Otra revisión", "pt": "Outra revisão", "de": "Eine weitere Prüfung", "fr": "Une autre analyse", "it": "Un’altra revisione"}),
     ("The amount for this run is shown here.", {"es": "Aquí se muestra el monto de esta revisión.", "pt": "O valor desta revisão aparece aqui.", "de": "Hier wird der Betrag für diese Prüfung angezeigt.", "fr": "Le montant de cette analyse s’affiche ici.", "it": "Qui compare l’importo di questa revisione."}),
     ("News", {"es": "Noticias", "pt": "Notícias", "de": "Nachrichten", "fr": "Actualités", "it": "Notizie"}),
-    ("Filled in when you sign in", {"es": "Se completa al iniciar sesión", "pt": "Preenchido quando você entra", "de": "Wird bei der Anmeldung ausgefüllt", "fr": "Rempli à la connexion", "it": "Compilato quando accedi"}),
     ("Choose Other to write a reason.", {"es": "Elige Otro para escribir un motivo.", "pt": "Escolha Outro para escrever um motivo.", "de": "Wählen Sie „Sonstiges“, um einen Grund zu schreiben.", "fr": "Choisissez Autre pour écrire une raison.", "it": "Scegli Altro per scrivere un motivo."}),
 ]
