@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -424,12 +425,17 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     val byName = rows.associate { (it.str("name") ?: "") to (it.str("cc") ?: "") }
 
     Needs(g)
-    Panel("World map · ${Geo.metric(key).label}", id = "geo-map") {
-        KpiPairs(listOf(
+    // Wide screens: the map spans every column right under the product chips, its numbers three to a row above it.
+    val wide = LocalColumns.current >= 2
+    Panel("World map · ${Geo.metric(key).label}", if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map") {
+        val kpis = listOf(
             KpiData("Countries we act in", fmt(t?.num("countries"))), KpiData("Target markets reached", "${fmt(t?.num("targetsActive"))} of ${fmt(t?.num("targets"))}", t?.num("silent")?.takeIf { it > 0 }?.let { "${fmt(it)} silent" }),
             KpiData("Need attention", fmt(t?.num("missing")), alert = (t?.num("missing") ?: 0.0) > 0), KpiData("Average reply rate", t?.num("avgReply")?.let { "$it%" } ?: "—"),
             KpiData("Emails sent", fmt(t?.num("sent"))), KpiData("Prospects queued", fmt(t?.num("prospects")))
-        ))
+        )
+        if (wide) kpis.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { row.forEach { k -> Kpi(k.label, k.value, k.delta, k.dir, k.alert, Modifier.weight(1f)) } }
+        } else KpiPairs(kpis)
         Chips(Geo.CHANNELS, channel) { channel = it }
         Chips(metrics.map { it.key to it.label }, key) { metric = it }
         world?.let { w ->
