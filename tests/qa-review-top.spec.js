@@ -392,3 +392,85 @@ test.describe('The tour and the sign-in box in the page language (#2768)', () =>
     await expect(page.locator('#site-tour-step-label')).toHaveText(/^Step 1 of \d+\.$/);
   });
 });
+
+test.describe('Report section index (#2770)', () => {
+  async function openSample(page, path = '/qa-review.html') {
+    await prime(page);
+    await backend(page);
+    await page.goto(path);
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#report-index')).toBeVisible();
+  }
+
+  const shownSections = (page) => page.evaluate(() => [...document.querySelectorAll('#report .fold-toggle')]
+    .filter((button) => button.getClientRects().length).map((button) => button.textContent.trim()));
+
+  test('the sample report lists only the sections it shows, and an entry takes focus to its heading below the toolbar', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openSample(page);
+    const entries = await page.locator('#report-index a').allTextContents();
+    expect(entries).toEqual(await shownSections(page));
+    expect(entries).toContain('Security and email');
+    expect(entries).not.toContain('Tools that apply');
+    expect(entries).not.toContain('A login you are allowed to use');
+    await expect(page.locator('#report-top')).toBeHidden();
+
+    await page.locator('#report-index a', { hasText: 'Security and email' }).click();
+    const heading = page.locator('#report h2', { hasText: 'Security and email' });
+    await expect(heading.locator('.fold-toggle')).toBeFocused();
+    await expect(heading).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.querySelector('#dash-overlay .report-toolbar').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+
+    await page.locator('#report-top').click();
+    await expect.poll(() => page.locator('#dash-overlay').evaluate((el) => el.scrollTop)).toBe(0);
+    await expect(page.locator('#report-index a').first()).toBeFocused();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('#report-index')).toBeHidden();
+  });
+
+  test('a collapsed section opens when its entry is chosen', async ({ page }) => {
+    await openSample(page);
+    await page.locator('#fold-all').click();
+    await page.locator('#report-index a', { hasText: 'Fix kit' }).click();
+    await expect(page.locator('#fixkit')).toBeVisible();
+    await expect(page.locator('#report h2', { hasText: 'Fix kit' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    const list = await page.locator('#report-index-list').evaluate((el) => ({ rows: new Set([...el.children].map((li) => li.offsetTop)).size, scrolls: el.scrollWidth > el.clientWidth }));
+    expect(list).toEqual({ rows: 1, scrolls: true });
+    const heights = await page.evaluate(() => [...document.querySelectorAll('#report-index a, #report .filters button')]
+      .filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect().height));
+    expect(Math.min(...heights)).toBeGreaterThanOrEqual(32);
+
+    await page.locator('#report-index a', { hasText: 'Every check, with its verdict' }).click();
+    await expect(page.locator('#report h2', { hasText: 'Every check, with its verdict' }).locator('.fold-toggle')).toBeFocused();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Every check, with its verdict').getBoundingClientRect().top;
+      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+    await expect(page.locator('#report-top')).toBeInViewport();
+  });
+
+  test('each language page labels the index and its entries in its language', async ({ page }) => {
+    const copy = {
+      es: ['En este informe', 'Resumen en una página', 'De un vistazo'],
+      pt: ['Neste relatório', 'Resumo em uma página', 'Visão geral'],
+      de: ['In diesem Bericht', 'Zusammenfassung auf einer Seite', 'Auf einen Blick'],
+      fr: ['Dans ce rapport', 'Résumé sur une page', 'En un coup d’œil'],
+      it: ['In questo report', 'Riepilogo in una pagina', 'In breve']
+    };
+    for (const [lang, [label, first, glance]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#report-index-label')).toHaveText(label);
+      await expect(page.locator('#report-index a').first()).toHaveText(first);
+      await expect(page.locator('#report-index a', { hasText: glance })).toHaveCount(1);
+      expect(await page.locator('#report-index a').allTextContents()).toEqual(await shownSections(page));
+    }
+  });
+});
