@@ -141,10 +141,10 @@ test("the sample report's notice and the cover's cases line read in the page lan
     vm.runInNewContext(source, sandbox);
     return sandbox.window.QAReviewReportCopy;
   };
-  const vars = { host: "automationexercise.com", date: "2 nov 2026" };
+  const vars = { host: "HOST_SLOT", date: "DATE_SLOT" };
   const keys = ["sampleNote", "sampleNoteUndated", "coverStatement", "coverStatementStopped"];
   const en = load("en");
-  assert.match(en.t("sampleNote", vars), /^Sample report\. This is the review of automationexercise\.com from 2 nov 2026, /);
+  assert.match(en.t("sampleNote", vars), /^Sample report\. This is the review of HOST_SLOT from DATE_SLOT, /);
   assert.equal(en.t("coverStatement"), "These cases are proposed from a public analysis. None of them were executed.");
   for (const lang of LANGS) {
     const rc = load(lang);
@@ -154,7 +154,7 @@ test("the sample report's notice and the cover's cases line read in the page lan
       assert.ok(!/\b(Sample report|the review of|None of them|was stopped|blurred|disclaimers)\b/.test(text), lang + "." + key + " reads English: " + text);
       assert.ok(!/\{\w+\}/.test(text), lang + "." + key + " leaves a slot unfilled: " + text);
     }
-    assert.ok(rc.t("sampleNote", vars).includes("automationexercise.com") && rc.t("sampleNote", vars).includes("2 nov 2026"), lang + ".sampleNote drops the host or the date");
+    assert.match(rc.t("sampleNote", vars), /HOST_SLOT.*DATE_SLOT/, lang + ".sampleNote drops the host or the date");
   }
   assert.match(load("es").t("sampleNote", vars), /Ciérralo .* tu propia dirección\.$/, "es speaks to the reader as tú (#2909)");
   assert.match(load("it").t("sampleNote", vars), /Chiudilo .* del tuo indirizzo\.$/, "it speaks to the reader as tu (#2909)");
