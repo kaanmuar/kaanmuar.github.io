@@ -1,0 +1,77 @@
+name: Jarvis worker
+run-name: "Jarvis worker: ${{ inputs.title }}"
+# Jarvis's own coding worker (#2957, parent #2956): code changes without Cursor. Jarvis dispatches it (functions/jarvis-worker.js
+# dispatch) on a click, from the hourly pass or for a diagnosed failure; scripts/jarvis-worker.js edits with Gemini CLI, runs the
+# unit tests, pushes jarvis/<id>-<slug> (or the PR's branch) with LIVE_REPORTS_DEPLOY_KEY, and reports with the run's OIDC token
+# (audience jarvis-worker), which Jarvis checks before it opens the PR. Each task is its own run, so tasks run side by side.
+# Variables: JARVIS_WORKER_MODEL_PRO, JARVIS_WORKER_MODEL_FLASH (default gemini-pro-latest, gemini-flash-latest).
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: Jarvis's task id (jarvis_worker/<id>)
+        required: true
+      title:
+        description: What the task is, in a line
+        required: true
+      prompt:
+        description: The task for the coding agent
+        required: false
+        default: ""
+      tier:
+        description: pro or flash
+        type: choice
+        options: [pro, flash]
+        default: pro
+      branch:
+        description: Branch to start from
+        default: main
+      pr:
+        description: PR to work on instead (its branch, pushed in place)
+        default: ""
+      issue:
+        description: Issue whose title and body join the task
+        default: ""
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  id-token: write
+
+concurrency:
+  group: jarvis-worker-${{ inputs.id }}
+  cancel-in-progress: false
+
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Test dependencies and Gemini CLI
+        run: |
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
+          echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+          npm install -s -g @google/gemini-cli@0.67.0
+      - name: Work on the task
+        env:
+          TASK_ID: ${{ inputs.id }}
+          TASK_TITLE: ${{ inputs.title }}
+          TASK_PROMPT: ${{ inputs.prompt }}
+          TASK_TIER: ${{ inputs.tier }}
+          TASK_BRANCH: ${{ inputs.branch }}
+          TASK_PR: ${{ inputs.pr }}
+          TASK_ISSUE: ${{ inputs.issue }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODEL_PRO: ${{ vars.JARVIS_WORKER_MODEL_PRO }}
+          MODEL_FLASH: ${{ vars.JARVIS_WORKER_MODEL_FLASH }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/jarvis-worker.js

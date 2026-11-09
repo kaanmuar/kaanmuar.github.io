@@ -55,7 +55,7 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
     "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
     "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
-    "gh-agent" to "Launch a Cursor fix agent", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
+    "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
     "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
@@ -149,7 +149,7 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "gh-delete-branch" -> if (job != null) "delete the merged branch $job" else "delete the merged branches"
     "gh-close-issue" -> "close issue #$pr"
     "gh-remove-worktree" -> "remove the merged worktree ${job ?: ""} on the Mac (the uploader does it, never forced)".replace("  ", " ")
-    "gh-agent" -> "launch a Cursor cloud agent to fix it (it opens a PR)"
+    "gh-agent" -> "launch a fix agent, Jarvis's worker or Cursor (it opens a PR)"
     "gh-quarantine" -> "file a Backlog bug \"${job ?: ""}\" in area:ci, with links to its runs"
     "gh-security-ticket" -> "file a Backlog bug for ${job ?: "the alert"}"
     "gh-dismiss-low" -> "dismiss ${pr ?: 0} low security alert${if (pr == 1) "" else "s"} on GitHub as a tolerable risk (code scanning ones as won't fix)"

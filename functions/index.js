@@ -5569,6 +5569,7 @@ const jarvisLive = require("./jarvis-live");
 const jarvisDigest = require("./jarvis-digest");
 const jarvisGithub = require("./jarvis-github");
 const jarvisGithubFix = require("./jarvis-github-fix");
+const jarvisWorker = require("./jarvis-worker");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
@@ -5972,6 +5973,12 @@ function jarvisAutoOps(settings, now, th) {
       };
     },
     githubWork: async () => (await jarvisExternal(["github-work"], 1))["github-work"] || null,
+    workerCandidates: async (confidence) => {
+      const budget = await jarvisWorker.spend(db, now);
+      const github = (await jarvisExternal(["github"], 1)).github || null;
+      return { over: budget.over, cap: budget.cap, tasks: await jarvisWorker.candidates(db, { now, confidence, github }) };
+    },
+    workerRun: async (task) => ({ detail: (await jarvisWorker.dispatch(jarvisGithubCtx(now), task)).message }),
     githubAct: async (action, args) => {
       const res = await jarvisGithubDo(action, args, now);
       if (res.ok === false) throw new Error(res.message || "Nothing done.");
@@ -6365,7 +6372,17 @@ async function jarvisGithubDo(action, args, now) {
   throw new Error("Unknown GitHub action.");
 }
 
-// A Cursor agent from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>).
+// The worker's newest tasks, for the worker op.
+async function jarvisWorkerTasks() {
+  const snap = await getFirestore().collection(jarvisWorker.COLLECTION).orderBy("at", "desc").limit(20).get();
+  return snap.docs.map((doc) => {
+    const d = doc.data();
+    return { id: d.id, title: d.title, state: d.state, by: d.by, tier: d.tier, at: d.at, updatedAt: d.updatedAt, usd: d.usd || 0, pr: d.prNumber || null, url: d.prUrl || d.runUrl || null, error: d.error || "" };
+  });
+}
+
+/* A fix from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>): Jarvis's
+   own worker (#2957), or a Cursor cloud agent when the click asks for engine "cursor". */
 async function jarvisGithubAgent(ctx, a) {
   const key = String(a.key || a.proposal || "");
   let prompt = String(a.prompt || "").trim();
@@ -6387,6 +6404,9 @@ async function jarvisGithubAgent(ctx, a) {
       + "run npm run test:review and node scripts/build-jarvis-core.js --check, and push the result to the PR branch. Say in a PR comment what each conflict was and how you resolved it.";
   }
   const name = a.name || (run ? "Jarvis fix: run " + run : pr ? "Jarvis fix: PR #" + pr : "Jarvis fix");
+  if (a.engine !== "cursor" && (!repo || repo === jarvisWorker.REPO)) {
+    return jarvisWorker.dispatch(ctx, { prompt, pr: pr || undefined, branch, title: name.replace(/^Jarvis fix: ?/, "Fix ") || name, key: key || (run ? "gh:diag:" + run : ""), by: a.by || "Carlos" });
+  }
   const out = await jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name });
   if (out.id) await jarvisProcess(jarvisProcesses.cloudAgentRow(out.id, "running", { name, url: out.url, step: "Cursor cloud agent" + (pr ? " on PR #" + pr : "") }));
   return out;
@@ -6890,6 +6910,15 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "github-local", error: String(error.message || error).slice(0, 300) }); }
     return;
   }
+  // Jarvis's worker (jarvis-worker.yml, #2957) proves itself with its run's GitHub OIDC token.
+  if ((req.body || {}).op === "worker-report") {
+    try {
+      const out = await jarvisWorker.report(jarvisGithubCtx(Date.now()), req.body, String(req.get("x-worker-oidc") || ""));
+      if (out.state !== "running") await jarvisGithubFresh();
+      res.json(Object.assign({ op: "worker-report" }, out));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: "worker-report", error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
   // The Mac's agents (#2548): the engagement browser and Cursor's hooks report their state with the paired token.
   if ((req.body || {}).op === "process-report") {
     try {
@@ -7060,6 +7089,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       if (out.done) await jarvisGithubFresh();
     }
     else if (op === "github-draft") out = await jarvisGithubFix.draftFlaky(jarvisGithubCtx(now), body);
+    else if (op === "worker-run") out = await jarvisWorker.dispatch(jarvisGithubCtx(now), Object.assign({}, body, { by: "Carlos" }));
+    else if (op === "worker") out = { spend: await jarvisWorker.spend(getFirestore(), now), tasks: await jarvisWorkerTasks() };
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);
