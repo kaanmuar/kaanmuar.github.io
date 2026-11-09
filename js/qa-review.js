@@ -960,7 +960,7 @@
     slot("report-cover").innerHTML =
       '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
-      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(report.statement || "") + "</p></div>";
+      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
@@ -2857,7 +2857,9 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the top case is shown in full as a sample; the opening of every other line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = isNaN(when)
+        ? rc.t("sampleNoteUndated", { host: report.host })
+        : rc.t("sampleNote", { host: report.host, date: when.toLocaleDateString(rc.lang, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }) });
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
