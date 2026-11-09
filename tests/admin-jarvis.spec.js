@@ -754,6 +754,55 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map lists the Live Report countries the finder was unsure of, and Confirm, Change, Worldwide and Skip go through the function (#3009)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/geo/30', { 'geo-country-confirm': { ok: true, host: 'teaminternational.com', cc: 'US', name: 'United States', skipped: false, left: 617 } });
+    const box = page.locator('[data-view="geo"] [data-panel-id="geo-confirm"]');
+    await expect(box.locator('header')).toContainText('Live Report countries to confirm · 618 · 1 confirmed');
+    await expect(box.locator('[data-geo-confirm-row]')).toHaveCount(4);
+    const team = box.locator('[data-geo-confirm-row="teaminternational.com"]');
+    await expect(team.locator('a')).toHaveAttribute('href', 'https://carlosandmunoz.com/qa-review.html?report=u-teaminternational-com');
+    await expect(team).toContainText('United States');
+    await expect(team).toContainText('62% sure');
+    await expect(team).toContainText('RDAP registrant in US');
+    await expect(box.locator('[data-geo-confirm-row="globalhub.io"] [data-geo-confirm="ww"]')).toHaveCount(0);
+    await expect(box.locator('[data-geo-confirm-row="blank-site.net"] [data-geo-confirm="yes"]')).toHaveCount(0);
+    await expect(box).toContainText('The 4 with the most reports');
+    if (process.env.GEO_SHOTS) {
+      await box.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `${process.env.GEO_SHOTS}/3009-confirm-web.png` });
+    }
+    const sent = () => calls.filter((c) => c.op === 'geo-country-confirm').map((c) => (c.body.skip ? [c.body.host, 'skip'] : [c.body.host, c.body.cc]));
+
+    await team.locator('[data-geo-confirm="yes"]').click();
+    await expect.poll(sent).toEqual([['teaminternational.com', 'US']]);
+    await expect(team).toHaveCount(0);
+    await expect(box.locator('header')).toContainText('617 · 2 confirmed');
+
+    const shop = box.locator('[data-geo-confirm-row="tiendaverde.shop"]');
+    await shop.locator('input').fill('p');
+    await shop.locator('[data-geo-confirm="change"]').click();
+    await expect(page.locator('.jv-toast')).toContainText('two-letter country code');
+    await shop.locator('input').fill('pe');
+    await shop.locator('input').press('Enter');
+    await expect.poll(sent).toEqual([['teaminternational.com', 'US'], ['tiendaverde.shop', 'PE']]);
+
+    await box.locator('[data-geo-confirm-row="blank-site.net"] [data-geo-confirm="ww"]').click();
+    await expect.poll(() => sent().length).toBe(3);
+    expect(sent()[2]).toEqual(['blank-site.net', 'WW']);
+
+    page.once('dialog', (d) => d.dismiss());
+    await box.locator('[data-geo-confirm-row="globalhub.io"] [data-geo-confirm="skip"]').click();
+    expect(sent().length).toBe(3);
+    const reads = calls.filter((c) => c.op === 'geo').length;
+    page.once('dialog', (d) => d.accept());
+    await box.locator('[data-geo-confirm-row="globalhub.io"] [data-geo-confirm="skip"]').click();
+    await expect.poll(sent).toContainEqual(['globalhub.io', 'skip']);
+    await expect.poll(() => calls.filter((c) => c.op === 'geo').length, { message: 'the next sites are read once the shown ones are answered' }).toBeGreaterThan(reads);
+    expect(errors).toEqual([]);
+  });
+
   test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

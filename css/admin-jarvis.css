@@ -805,3 +805,9 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-geo-scale b.is-target { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px; background: #1d3340; border: 1px solid #2d5366; margin-right: 0.35rem; vertical-align: -1px; }
 .jv-geo-gaps { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; font-size: 0.8rem; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c { transition: none; } }
+.jv-geo-confirm { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; font-size: 0.82rem; }
+.jv-geo-confirm li { display: grid; gap: 0.2rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
+.jv-geo-confirm li:last-child { border-bottom: 0; padding-bottom: 0; }
+.jv-geo-confirm .jv-note { margin: 0; overflow-wrap: anywhere; }
+.jv-geo-confirm .jv-actions { align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.15rem; }
+.jv-geo-confirm input[type="text"] { width: 3.2rem; padding: 0.22rem 0.45rem; font-size: 0.75rem; border-radius: 8px; text-transform: uppercase; }

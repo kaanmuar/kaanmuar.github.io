@@ -96,3 +96,95 @@ test("defaults the target markets to every country speaking one of the six langu
   assert.equal(out.totals.countries, 0);
   assert.equal(out.countries.length, geo.DEFAULT_TARGETS.length);
 });
+
+// #3009: the Live Report countries the finder was unsure of, and Carlos's answers in jarvis_settings/live_report_countries.
+const queueDoc = () => ({
+  items: [
+    { host: "a.com", country: "us", scope: "country", confidence: 0.6, reports: 1, evidence: ["phone +1", "RDAP registrant in US", "hosted in US", "fourth"] },
+    { host: "b.com", country: "", scope: "worldwide", confidence: 0.7, reports: 4, evidence: [] },
+    { host: "c.com", country: "", scope: "unknown", confidence: 0, reports: 1 },
+    { host: "d.com", country: "CO", scope: "country", confidence: 0.8, reports: 1 },
+    { host: "e.com", country: "ES", scope: "country", confidence: 0.9, reports: 9 },
+    { host: "f.com", country: "XX", scope: "country", confidence: 0.5, reports: 1 }
+  ],
+  decisions: { "e.com": { country: "ES", scope: "country" } },
+  skipped: { "f.com": "2026-11-08T00:00:00Z" }
+});
+
+test("the confirm queue leaves out decided and skipped sites and puts the most reports, then the surest, first", () => {
+  const live = { reports: [{ id: "u-a-com", host: "www.a.com", country: "" }, { id: "u-d-com", host: "d.com", country: "CO" }] };
+  const q = geo.confirmQueue(queueDoc(), live);
+  assert.deepEqual(q.rows.map((r) => r.host), ["b.com", "d.com", "a.com", "c.com"]);
+  assert.equal(q.total, 4);
+  assert.equal(q.decided, 1);
+  const [b, d, a, c] = q.rows;
+  assert.deepEqual([b.cc, b.name], ["WW", "Worldwide"]);
+  assert.deepEqual([a.cc, a.name, a.confidence], ["US", "United States", 0.6]);
+  assert.equal(a.url, "https://carlosandmunoz.com/qa-review.html?report=u-a-com");
+  assert.equal(a.evidence.length, 3);
+  assert.equal(d.url, "", "a card that already has a country is not the one to fix");
+  assert.deepEqual([c.cc, c.name], ["", ""]);
+  assert.equal(geo.confirmQueue(queueDoc(), null, 2).rows.length, 2);
+  assert.deepEqual(geo.confirmQueue(null, null), { rows: [], total: 0, decided: 0 });
+});
+
+function fakeDb(data) {
+  const doc = { data: data ? JSON.parse(JSON.stringify(data)) : null, writes: [] };
+  const ref = { path: "jarvis_settings/live_report_countries" };
+  const merge = (to, from) => { Object.entries(from).forEach(([k, v]) => { to[k] = v && typeof v === "object" && !Array.isArray(v) ? merge(Object.assign({}, to[k]), v) : v; }); return to; };
+  return {
+    doc,
+    collection: (c) => ({ doc: (id) => { assert.equal(c + "/" + id, ref.path); return ref; } }),
+    runTransaction: async (fn) => fn({
+      get: async () => ({ exists: !!doc.data, data: () => doc.data }),
+      set: (r, patch, opts) => { assert.equal(r, ref); assert.deepEqual(opts, { merge: true }); doc.writes.push(patch); doc.data = merge(doc.data || {}, patch); }
+    })
+  };
+}
+
+test("confirming a country removes the site from the queue and records Carlos's decision for the daily job", async () => {
+  const db = fakeDb(queueDoc());
+  const out = await geo.confirmCountry(db, { host: "https://www.A.com/", cc: "mx" }, Date.parse("2026-11-09T12:00:00Z"));
+  assert.deepEqual(out, { ok: true, host: "a.com", cc: "MX", name: "Mexico", skipped: false, left: 5 });
+  assert.ok(!db.doc.data.items.some((x) => x.host === "a.com"));
+  assert.deepEqual(db.doc.data.decisions["a.com"], { country: "MX", scope: "country", at: "2026-11-09T12:00:00.000Z" });
+  assert.deepEqual(db.doc.data.decisions["e.com"], { country: "ES", scope: "country" }, "other decisions stay");
+
+  await geo.confirmCountry(db, { host: "b.com", cc: "ww" });
+  assert.deepEqual([db.doc.data.decisions["b.com"].country, db.doc.data.decisions["b.com"].scope], ["", "worldwide"]);
+
+  const skip = await geo.confirmCountry(db, { host: "c.com", skip: true, cc: "ZZ" });
+  assert.equal(skip.skipped, true);
+  assert.ok(db.doc.data.skipped["c.com"]);
+  assert.equal(db.doc.data.decisions["c.com"], undefined);
+
+  const again = await geo.confirmCountry(db, { host: "a.com", cc: "CO" });
+  assert.equal(again.cc, "CO", "a decided site can still be changed");
+  assert.equal(db.doc.data.decisions["a.com"].country, "CO");
+});
+
+test("the confirm op refuses a bad host, a country that is not one, and a site that is not waiting", async () => {
+  const db = fakeDb(queueDoc());
+  for (const body of [{ host: "", cc: "CO" }, { host: "not a host", cc: "CO" }, { host: "javascript:alert(1)", cc: "CO" }, { host: "localhost", cc: "CO" }]) {
+    await assert.rejects(geo.confirmCountry(db, body), /host/, JSON.stringify(body));
+  }
+  for (const cc of ["", "C", "COL", "XX", "UK", "EU", "XA", "AQ", "1A"]) {
+    await assert.rejects(geo.confirmCountry(db, { host: "d.com", cc }), /two-letter country/, cc);
+  }
+  await assert.rejects(geo.confirmCountry(db, { host: "zzz.com", cc: "CO" }), /not waiting/);
+  const decidedOnly = fakeDb({ items: [], decisions: { "g.com": { country: "CO", scope: "country" } } });
+  await assert.rejects(geo.confirmCountry(decidedOnly, { host: "g.com", skip: true }), /not waiting/, "a decided site is not skipped");
+  await assert.rejects(geo.confirmCountry(fakeDb(null), { host: "d.com", cc: "CO" }), /not waiting/);
+  assert.equal(db.doc.writes.length, 0);
+});
+
+test("the geo source carries the confirm queue and its counts", async () => {
+  const snap = (data) => ({ exists: !!data, data: () => data });
+  const docs = { "jarvis_settings/live_report_countries": queueDoc() };
+  const db = { collection: (c) => ({ doc: (id) => ({ get: async () => snap(docs[c + "/" + id] || null) }) }) };
+  const out = await geo.geo({ db, days: 7, fetch: async () => ({ json: async () => ({ reports: [] }) }) });
+  assert.equal(out.ok, true);
+  assert.deepEqual(out.confirm.map((r) => r.host), ["b.com", "d.com", "a.com", "c.com"]);
+  assert.equal(out.totals.confirm, 4);
+  assert.equal(out.totals.confirmed, 1);
+});
