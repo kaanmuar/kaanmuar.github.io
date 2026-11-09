@@ -1451,13 +1451,13 @@ test("rerunCi re-runs the failed jobs of the newest failed run on main, and says
   const calls = [];
   const workflows = { workflows: [{ id: 1, name: "Buffer batch queue" }, { id: 2, name: "Deploy" }] };
   const runs = {
-    1: { workflow_runs: [{ id: 10, name: "Buffer batch queue", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }] },
-    2: { workflow_runs: [{ id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] }
+    1: { workflow_runs: [{ id: 11, name: "Buffer batch queue", status: "completed", conclusion: "skipped" }, { id: 10, name: "Buffer batch queue", status: "completed", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", status: "completed", conclusion: "failure", html_url: "https://github.com/r/9" }] },
+    2: { workflow_runs: [{ id: 7, name: "Deploy", status: "completed", conclusion: "success", html_url: "https://github.com/r/7" }] }
   };
   const route = (url) => (/actions\/workflows\?/.test(url) ? json(workflows) : json(runs[(/workflows\/(\d+)\/runs\?branch=main/.exec(url) || [])[1]] || {}));
   const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : route(url); };
   const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
-  assert.equal(out.run, 9, "the newest run that was not cancelled");
+  assert.equal(out.run, 9, "the newest run that was not cancelled or skipped (#2775)");
   assert.match(calls[1][0], /actions\/workflows\/1\/runs\?branch=main&status=completed/);
   assert.match(calls[2][0], /actions\/runs\/9\/rerun-failed-jobs$/);
   assert.equal(calls[2][1], "POST");
@@ -1466,6 +1466,22 @@ test("rerunCi re-runs the failed jobs of the newest failed run on main, and says
   const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : route(url));
   await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
+});
+
+test("rerunCi re-runs the failed main run the briefing shows red, past newer skipped runs (#2775)", async () => {
+  const posts = [];
+  const runs = { workflow_runs: [
+    { id: 3, name: "Studio issue_comment", status: "completed", conclusion: "skipped" }, { id: 2, name: "Studio issue_comment", status: "completed", conclusion: "skipped" },
+    { id: 1, name: "Studio mail render", status: "completed", conclusion: "failure", html_url: "u/1" }
+  ] };
+  const fetchFake = async (url, opts) => {
+    if ((opts || {}).method === "POST") { posts.push(url); return json({}, 201); }
+    return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 4, name: "Studio render" }] } : runs);
+  };
+  const out = await jarvis.rerunCi(fetchFake, "t", "Studio render");
+  assert.equal(out.already, undefined);
+  assert.equal(out.run, 1);
+  assert.deepEqual(posts.map((url) => url.replace(/^.*actions\//, "")), ["runs/1/rerun-failed-jobs"]);
 });
 
 test("stalePrs keeps open, non-draft PRs whose newest run at their head failed before main went green (#2245)", () => {
@@ -1482,7 +1498,7 @@ test("stalePrs keeps open, non-draft PRs whose newest run at their head failed b
 
 test("rerunCi on a green main closes and reopens the stale PRs, spaced, skipping conflicts and keeping the cap (#2245)", async () => {
   const calls = [], slept = [];
-  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
+  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", status: "completed", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
   const prRuns = { workflow_runs: [1, 2, 3, 4].map((n) => ({ id: 100 + n, workflow_id: 11, name: "E2E", head_sha: "s" + n, status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" })) };
   const pulls = [1, 2, 3, 4].map((n) => ({ number: n, title: "PR " + n, html_url: "u/" + n, draft: false, head: { sha: "s" + n } }));
   const looks = {};
@@ -1529,7 +1545,7 @@ test("refreshPr retries a failed reopen once and says loudly when a PR stays clo
 });
 
 test("rerunCi with rerunMain false refuses while main is red (scripts/refresh-prs.sh, #2245)", async () => {
-  const runs = { workflow_runs: [{ id: 9, name: "E2E", conclusion: "failure", html_url: "https://github.com/r/9" }] };
+  const runs = { workflow_runs: [{ id: 9, name: "E2E", status: "completed", conclusion: "failure", html_url: "https://github.com/r/9" }] };
   const posts = [];
   const fetchFake = async (url, opts) => { if ((opts || {}).method === "POST") posts.push(url); return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 3, name: "E2E" }] } : runs); };
   await assert.rejects(() => jarvis.rerunCi(fetchFake, "t", "E2E", { rerunMain: false }), /E2E is failure on main .*fix main before refreshing PRs/);
@@ -1543,7 +1559,7 @@ test("rerunCi finds CodeQL and Studio render by the workflow names the CI rows s
     const method = (opts || {}).method || "GET";
     calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", ""));
     if (/actions\/workflows\?/.test(url)) return json(workflows);
-    if (/actions\/workflows\/3\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z", html_url: "u/30" }] });
+    if (/actions\/workflows\/3\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", status: "completed", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z", html_url: "u/30" }] });
     if (/actions\/workflows\/3\/runs\?per_page/.test(url)) return json({ workflow_runs: [
       { id: 31, workflow_id: 3, name: "PR #1", event: "dynamic", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" },
       { id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", head_sha: "m", status: "completed", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z" }
@@ -1559,7 +1575,7 @@ test("rerunCi finds CodeQL and Studio render by the workflow names the CI rows s
 
   const fetch = async (url) => {
     if (/actions\/workflows\?/.test(url)) return json(workflows);
-    if (/actions\/workflows\/4\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
+    if (/actions\/workflows\/4\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", status: "completed", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
     if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
     if (/actions\/runs\?event=pull_request/.test(url)) return json({ workflow_runs: [{ id: 41, workflow_id: 4, name: "Studio pull_request", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" }] });
     if (/actions\/runs/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", status: "completed", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
