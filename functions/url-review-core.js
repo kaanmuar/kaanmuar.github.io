@@ -1075,7 +1075,21 @@ async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguag
   }
 }
 
+// alkompis.se folds a Content-Security-Policy-Report-Only line with LF and a tab, not CRLF.
+// Node's strict parser then throws "Parse Error: Missing expected CR after header value" (HPE_CR_EXPECTED).
+// Curl and Chrome read that page. One retry uses Node's lenient parser, which joins the folded line.
+function foldedHeader(error) {
+  return !!error && (error.code === "HPE_CR_EXPECTED" || error.message === "Parse Error: Missing expected CR after header value");
+}
+
 function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
+  return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, false).catch((error) => {
+    if (!foldedHeader(error)) throw error;
+    return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, true);
+  });
+}
+
+function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, lenient) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1114,7 +1128,8 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
-      lookup: pinnedLookup(pinned)
+      lookup: pinnedLookup(pinned),
+      insecureHTTPParser: lenient === true
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -3587,7 +3602,48 @@ function stoppedReport(rawUrl, lines, host, scope) {
 
 // Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
 // 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
+// It also refuses a whole document over 1,048,576 bytes. The screenshot trim uses this same character budget, which stays
+// under that limit with room for Firestore's own counting. www.efarma.com was saved at 1,190,959 bytes and refused.
 const STORE_DEPTH = 20;
+const STORE_JSON = 850000;
+
+function longestString(value) {
+  let best = null;
+  const consider = (parent, key, child, where) => {
+    if (typeof child === "string") {
+      if (!best || child.length > best.length) best = { parent, key, length: child.length, path: where };
+    } else walk(child, where);
+  };
+  const walk = (item, path) => {
+    if (Array.isArray(item)) {
+      item.forEach((child, index) => consider(item, index, child, path + "." + index));
+      return;
+    }
+    if (!item || typeof item !== "object" || Object.getPrototypeOf(item) !== Object.prototype) return;
+    Object.keys(item).forEach((key) => consider(item, key, item[key], path + "." + key));
+  };
+  walk(value, "report");
+  return best;
+}
+
+function fitDocument(record, fixed) {
+  if (!record || !record.report) return record;
+  const sizeOf = () => JSON.stringify(record).length;
+  let size = sizeOf();
+  for (let guard = 0; size > STORE_JSON && guard < 8; guard += 1) {
+    const found = longestString(record.report);
+    if (!found || found.length < 2000) break;
+    let end = Math.max(0, found.length - (size - STORE_JSON) - 64);
+    const text = found.parent[found.key];
+    if (end > 0 && text.charCodeAt(end - 1) >= 0xD800 && text.charCodeAt(end - 1) <= 0xDBFF) end -= 1;
+    if (end >= found.length) break;
+    found.parent[found.key] = text.slice(0, end);
+    if (found.key === "html") found.parent.htmlCut = true;
+    fixed.push(found.path + " (kept " + end + " characters so the report fits in one Firestore document)");
+    size = sizeOf();
+  }
+  return record;
+}
 
 function storable(value, fixed, at, depth) {
   const level = depth || 1;
@@ -3635,8 +3691,7 @@ function intakeRecord(value, report, meta) {
   const now = Date.now();
   const fixed = [];
   const kept = storable(report, fixed);
-  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
-  return {
+  const record = {
     id: report.id,
     createdAt: new Date(now).toISOString(),
     retainUntil: new Date(now + RETAIN_MS).toISOString(),
@@ -3677,6 +3732,9 @@ function intakeRecord(value, report, meta) {
     local: localSummary(report),
     report: kept
   };
+  fitDocument(record, fixed);
+  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
+  return record;
 }
 
 function stripeForm(params) {
