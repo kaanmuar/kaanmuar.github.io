@@ -410,6 +410,13 @@
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
     const SEARCH_QUERIES = ['carlos andres munoz qa', 'carlosandmunoz', 'qa-lab url review', 'free website qa review', 'website qa audit online'];
 
+    // The repos the GitHub tab shows when Settings lists none (#2807): jarvis_settings/main github.repos, owner/name each.
+    const GITHUB_REPOS = ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota', 'kaanmuar/cursor-quota-releases'];
+    function githubRepos(list) {
+        const clean = Array.from(new Set((Array.isArray(list) ? list : []).map((r) => String(r || '').trim().replace(/^https:\/\/github\.com\//, '').replace(/\/+$/, '')).filter((r) => /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(r)))).slice(0, 20);
+        return clean.length ? clean : GITHUB_REPOS.slice();
+    }
+
     // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
     const CONNECTIONS = [
         { key: 'health', name: 'Firestore (server collections)' }, { key: 'jobs', name: 'Cloud Scheduler' }, { key: 'github', name: 'GitHub' },
@@ -1535,7 +1542,7 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
+    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

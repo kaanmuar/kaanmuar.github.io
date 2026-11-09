@@ -153,6 +153,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.strings
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -536,6 +537,14 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                             Text(Countdowns.hoursText(h), color = if (h == hours) J.cyan else J.muted, fontSize = 13.sp)
                         }
                     }
+                }
+            }
+            if (settings != null) Panel("GitHub repos") {
+                var repos by remember(settings) { mutableStateOf(Github.cleanRepos(settings.obj("github")?.get("repos").strings()).joinToString("\n")) }
+                OutlinedTextField(repos, { repos = it }, label = { Text("Repos the GitHub tab shows, owner/name, one per line") }, minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth())
+                Muted("Up to 20. Left empty, the tab shows ${Github.REPOS.joinToString(", ")}. The web tab shows the same list.")
+                ActionButton("Save repos", "settings" in s.running) {
+                    vm.market("settings", "settings-save", mapOf("settings" to JsonObject(edited(settings, mail, actions) + ("github" to Github.reposJson(Github.cleanRepos(repos.lines())))))) { "Saved. GitHub reads the new list." }
                 }
             }
             Panel("Push notifications") {
