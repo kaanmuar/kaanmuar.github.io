@@ -75,23 +75,46 @@ function causeLabel(row) {
 
 // --- health: server-only Firestore collections -------------------------------------------------------------
 
+const docRows = (snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+
+// ops_runs/<job> is written only by track(): startedAt when a run starts, endedAt when it ends. A held copy reads
+// just the jobs that started or ended since its newest stamp, and every job again once an hour.
+async function opsRuns(db, state, now) {
+  const held = state.extra.opsRuns;
+  if (!held || !(now - held.full < dayRows.FULL_MS)) {
+    const rows = docRows(await db.collection("ops_runs").get());
+    state.extra.opsRuns = { full: now, rows };
+    return rows;
+  }
+  const stamp = (row) => Math.max(Date.parse(row.startedAt) || 0, Date.parse(row.endedAt) || 0);
+  const since = new Date(held.rows.reduce((max, row) => Math.max(max, stamp(row)), 0) - dayRows.OVERLAP_MS).toISOString();
+  const [started, ended] = await Promise.all(["startedAt", "endedAt"].map((field) => db.collection("ops_runs").where(field, ">=", since).get().then(docRows)));
+  const byId = new Map(held.rows.map((row) => [row.id, row]));
+  started.concat(ended).forEach((row) => byId.set(row.id, row));
+  held.rows = Array.from(byId.values());
+  return held.rows;
+}
+
+// Failures, alerts, notices, rivals and captures come from the day rollups through a held state (#2101); re-runs
+// and coupons change state and are read live.
 async function health(db, { days, now }) {
   const from = now - rangeDays(days) * DAY;
   const since = new Date(from).toISOString();
   const read = async (name, field) => {
     try {
-      const snap = await db.collection(name).where(field, ">=", since).limit(2000).get();
-      return snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+      return docRows(await db.collection(name).where(field, ">=", since).limit(2000).get());
     } catch (error) {
       return [];
     }
   };
+  const state = await dayRows.loadState(db, "health");
   const [runs, logged, reruns, coupons] = await Promise.all([
-    db.collection("ops_runs").get().then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))).catch(() => []),
-    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now }).catch(() => ({})),
+    opsRuns(db, state, now).catch(() => []),
+    dayRows.rows(db, ["failures", "alerts", "notices", "rivals", "captures"], { from, now, state }).catch(() => ({})),
     read("url_review_reruns", "at"),
     read("url_review_coupons", "createdAt")
   ]);
+  await dayRows.saveState(db, "health", state);
   const { failures = [], alerts = [], notices = [], rivals = [], captures = [] } = logged;
   const causes = {}, failedHosts = {}, rerunStatus = {}, alertKinds = {}, noticeStatus = {}, captureKinds = {};
   failures.forEach((row) => { count(causes, causeLabel(row)); count(failedHosts, row.host); });
