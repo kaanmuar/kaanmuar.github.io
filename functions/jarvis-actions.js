@@ -13,8 +13,9 @@
    rerun-job       a scheduled job whose last run failed (ops_runs ok=false) is started again once per failed run
    rerun-ci        a failed GitHub Actions run on main or a Jarvis branch (JARVIS_BRANCH: jarvis/..., and #1978's
                    pagespeed/safe-<day> and pagespeed/ai-<day>) gets its failed jobs re-run once (attempt 1 only);
-                   other chats' branches are left alone. A push or manual run on main that main has since moved past
-                   starts again on main's newest commit instead (#2409)
+                   a failed PR run on one is closed and reopened instead, once per main commit, since a re-run tests
+                   the old merge (#2245). A push or manual run on main that main has since moved past starts again on
+                   main's newest commit instead (#2409). Other chats' branches and PRs are left alone.
    refresh-stale   a scheduled job overdue by its gap is started once a day
    rerun-reviews   rerunReviewFailures starts when a FIXES row is newer than its last run
    pause-outreach  an active mailbox is paused while its domain's DNS fails, its warm-up is off or its score is under
@@ -244,8 +245,9 @@ async function recent(db, limit) {
      runJob(job)       -> start a scheduled job
      failedJobs()      -> [{ job, endedAt, error }] scheduled jobs whose last run failed in the last day
      overdueJobs()     -> [{ job, why }] scheduled jobs past their gap that did not fail
-     failedCi()        -> [{ id, name, branch, attempt, url, sha, event, path }] the newest run per workflow and branch, failed
+     failedCi()        -> [{ id, name, branch, attempt, url, sha, event, path, pr?, main? }] the newest run per workflow and branch, failed
      rerunRun(id)      -> re-run a run's failed jobs
+     refreshPr(n)      -> { refreshed } or { skipped }: close and reopen a PR unless it conflicts with main
      mainSha()         -> main's newest commit;  dispatch(path) -> start a workflow on main
      rerunCi(workflow) -> re-run a workflow's newest failed run on main
      reviewFix()       -> { fixAt, ref, lastRun } the newest FIXES row and rerunReviewFailures' last start
@@ -373,6 +375,16 @@ async function autoRun({ db, now, settings, ops }) {
     for (const run of failed) {
       handled.add("ci:" + run.name);
       if (run.attempt > 1 || (run.branch !== "main" && !JARVIS_BRANCH.test(run.branch || ""))) continue;
+      if (run.pr) {
+        if (!ops.refreshPr) continue;
+        const refresh = async () => {
+          const res = await ops.refreshPr(run.pr);
+          if (!res.refreshed) throw new Error("#" + run.pr + " was not reopened: " + res.skipped + ".");
+          return { detail: "Closed and reopened #" + run.pr + " for a fresh merge with main " + run.main + "." };
+        };
+        await onceOrLater("rerun-ci", "#" + run.pr + " " + run.name + " @ main " + run.main, "#" + run.pr + " failed " + run.name + "; closing and reopening it for a fresh merge with main " + run.main + ".", risky("rerun-ci", run.name), { pr: run.pr, name: run.name }, refresh);
+        continue;
+      }
       if (head && run.branch === "main" && run.sha && run.sha !== head && run.path && ["push", "workflow_dispatch"].includes(run.event)) {
         await onceOrLater("rerun-ci", run.name + " #" + run.id, "Main has moved past the commit that failed, so it starts again on main's newest commit.", risky("rerun-ci", run.name), { run: run.id, name: run.name, workflow: run.path }, () => ops.dispatch(run.path));
         continue;

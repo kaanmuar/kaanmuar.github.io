@@ -238,6 +238,21 @@ test("the weekly strategy runs Sunday 19:00 Bogotá and the settings keep a week
   assert.equal(jarvis.normalizeSettings({ mail: { weekly: false } }).mail.weekly, false);
 });
 
+test("PRs that failed a workflow on the old main get a line whose button closes and reopens them (#2245)", () => {
+  const prs = [{ number: 2208, title: "Fix hub", url: "https://github.com/kaanmuar/kaanmuar.github.io/pull/2208", run: 5 }, { number: 2133, title: "Lang", url: "https://github.com/kaanmuar/kaanmuar.github.io/pull/2133", run: 6 }];
+  const state = { external: { github: { ok: true, ci: [{ name: "E2E and Visual Tests", conclusion: "success" }], prsStale: [{ workflow: "E2E and Visual Tests", prs }] } } };
+  const line = core.briefing(state).find((b) => b.key === "ci-prs:E2E and Visual Tests");
+  assert.equal(line.level, "warn");
+  assert.match(line.text, /^2 open PRs failed "E2E and Visual Tests" before main went green again/);
+  assert.ok(!core.briefing(state).some((b) => b.key.startsWith("ci:")), "main is green");
+  const detail = core.briefDetail(line, state);
+  assert.deepEqual(detail.actions, [{ id: "rerun-ci", label: "Close and reopen them", workflow: "E2E and Visual Tests" }]);
+  assert.deepEqual(detail.links.map((l) => l.label).slice(0, 2), ["#2208 Fix hub", "#2133 Lang"]);
+  const rule = core.proposalRules(state).find((p) => p.key === "ci-prs");
+  assert.deepEqual(rule.workflows, ["E2E and Visual Tests"]);
+  assert.deepEqual(core.proposalRun(rule), { action: "rerun-ci", workflows: ["E2E and Visual Tests"], label: "Close and reopen the PRs" });
+});
+
 test("each briefing line opens a detail: the rule's title and tab, the numbers behind it, links and actions (#1695)", () => {
   const state = {
     products: { inbox: { totals: { messages: 9, unanswered: 1, pending: 147, avg: 4.6 } } },

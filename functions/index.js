@@ -5837,9 +5837,10 @@ function jarvisAutoOps(settings, now, th) {
     overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^failed/.test(o.why)),
     failedCi: async () => jarvis.failedRuns(fetch, await gh(), { now }),
     rerunRun: async (id) => jarvis.rerunRun(fetch, await gh(), id),
+    rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),
+    refreshPr: async (number) => jarvis.refreshPr(fetch, await gh(), number),
     mainSha: async () => jarvis.mainSha(fetch, await gh()),
     dispatch: async (workflow) => jarvis.dispatchMain(fetch, await gh(), workflow),
-    rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow),
     reviewFix: async () => {
       const fix = reviewFailures.FIXES.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
       const run = await db.collection("ops_runs").doc("rerunReviewFailures").get().catch(() => null);
@@ -6094,13 +6095,16 @@ async function jarvisClickAction(body, by) {
     const workflows = list(body.workflows, body.workflow);
     if (!workflows.length) throw new Error("Which workflow?");
     const token = await githubApp.token();
+    const budget = { left: 20, until: Date.now() + 120000, seen: new Set() };
     const out = await each(workflows, async (workflow) => {
-      const res = await jarvis.rerunCi(fetch, token, workflow);
-      await note({ action, status: "done", target: workflow, detail: res.already ? "Already " + res.already + "." : "Re-running run " + res.run + "." });
+      const res = await jarvis.rerunCi(fetch, token, workflow, { budget });
+      await note({ action, status: "done", target: workflow, detail: res.note || (res.already ? "Already " + res.already + "." : "Re-running run " + res.run + ".") });
       return Object.assign({ workflow }, res);
     });
     const one = out.ran.length === 1 ? out.ran[0] : null;
-    return { action, done: out.ran.filter((r) => !r.already).length, failed: out.failed, ran: out.ran.map((r) => r.workflow).join(", "), url: one ? one.url : null, already: one ? one.already || null : null };
+    const refreshed = out.ran.filter((r) => r.prs);
+    return { action, done: out.ran.reduce((n, r) => n + (r.prs ? r.prs.refreshed.length : r.already ? 0 : 1), 0), failed: out.failed, ran: out.ran.map((r) => r.workflow).join(", "),
+      url: one ? one.url : null, already: one ? one.already || null : null, note: refreshed.length ? refreshed.map((r) => (out.ran.length > 1 ? r.workflow + ": " : "") + r.note).join(" ") : null };
   }
   if (action === "rerun-held") {
     const held = await act.held();

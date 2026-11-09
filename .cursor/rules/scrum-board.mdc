@@ -16,5 +16,6 @@ Use `scripts/ticket.sh` for every board chore; its header lists the commands (`n
 All chats share kaanmuar's 5,000 GraphQL points an hour (#892); `gh issue`, `gh pr`, `gh pr checks` and `gh project` spend it.
 - Issues, comments, labels, sub-issues: REST (`gh api repos/...`), as `scripts/ticket.sh` does.
 - CI: `scripts/ci-wait.sh <sha|pr>` (one blocking REST watch per run, prints only failed steps). Never `gh pr checks --watch`.
+- Main fixed, PRs still red: `scripts/refresh-prs.sh [workflow]` closes and reopens them for a fresh merge. Never re-run a PR's failed jobs (`gh run rerun`): that tests the old merge commit (#2245).
 - PRs: `gh api repos/kaanmuar/kaanmuar.github.io/pulls -f title=... -f head=<branch> -f base=main -f body=...`; merge with `gh api -X PUT .../pulls/<n>/merge -f merge_method=squash`.
 - Board moves only through `scripts/gh-budget.sh` (qa-lab-agents app first), which `scripts/ticket.sh` uses.
