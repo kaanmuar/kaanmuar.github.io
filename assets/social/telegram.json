@@ -23,6 +23,17 @@
     "checked": "2026-11-07T20:13:32.973Z"
    }
   ],
+  "auto-2026-10-22/09-u-lenovo-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "30",
+    "at": "2026-11-09T00:52:10.688Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/30",
+    "checked": "2026-11-09T00:52:13.080Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -100,6 +111,28 @@
     "checked": "2026-11-08T20:51:33.281Z"
    }
   ],
+  "auto-2026-11-05/07-u-uacm-edu-mx": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "31",
+    "at": "2026-11-09T00:52:13.080Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/31",
+    "checked": "2026-11-09T00:52:15.986Z"
+   }
+  ],
+  "auto-2026-11-05/13-u-get-moment-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "32",
+    "at": "2026-11-09T00:52:15.986Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/32",
+    "checked": "2026-11-09T00:52:19.073Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -131,6 +164,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/24",
     "checked": "2026-11-07T23:41:02.257Z"
+   }
+  ],
+  "evergreen-2026-11/07-pre-release": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "33",
+    "at": "2026-11-09T00:52:19.074Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/33",
+    "checked": "2026-11-09T00:52:21.758Z"
    }
   ],
   "live/2026-11-04": [
