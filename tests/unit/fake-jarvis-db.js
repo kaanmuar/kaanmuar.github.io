@@ -9,10 +9,13 @@ function fakeDb(rows) {
     create: async (row) => { if (store(name).has(id)) throw new Error("6 ALREADY_EXISTS"); store(name).set(id, Object.assign({}, row)); },
     get: async () => { const d = store(name).get(id); return { exists: !!d, data: () => d && Object.assign({}, d) }; },
     update: async (patch) => { if (!store(name).has(id)) throw new Error("5 NOT_FOUND"); store(name).set(id, Object.assign({}, store(name).get(id), patch)); },
-    set: async (row, opts) => { store(name).set(id, Object.assign({}, opts && opts.merge ? store(name).get(id) : {}, row)); }
+    set: async (row, opts) => { store(name).set(id, Object.assign({}, opts && opts.merge ? store(name).get(id) : {}, row)); },
+    delete: async () => { deleted.push(name + "/" + id); store(name).delete(id); }
   });
+  const deleted = [];
   return {
     added,
+    deleted,
     doc: (name, id) => store(name).get(id),
     docs: (name) => Array.from(store(name).values()),
     collection: (name) => ({

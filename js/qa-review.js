@@ -39,21 +39,8 @@
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
   const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
-  const REASONS = [
-    { id: "own", label: "I own this site and want a test plan" },
-    { id: "client", label: "A client asked me to propose coverage before a release" },
-    { id: "redesign", label: "I am comparing this page with a redesign" },
-    { id: "release", label: "I need a case list before a release" },
-    { id: "tech", label: "I want the public technologies named" },
-    { id: "a11y", label: "I am preparing an accessibility review" },
-    { id: "security", label: "I am preparing a review of the public security headers" },
-    { id: "performance", label: "I need a performance and load case list" },
-    { id: "teaching", label: "I am teaching or learning how a page could be tested" },
-    { id: "allowed", label: "I am checking a page I am allowed to review" },
-    { id: "verify", label: "I want QA-lab to run a verification" },
-    { id: "credentials", label: "I have a username and password for this site" },
-    { id: "other", label: "Other" }
-  ];
+  // Each id needs a reason.<id> label in every language of js/qa-review-report-copy.js.
+  const REASONS = ["own", "client", "redesign", "release", "tech", "a11y", "security", "performance", "teaching", "allowed", "verify", "credentials", "other"];
   const gate = document.getElementById("gate");
   const app = document.getElementById("review-app");
   const termsForm = document.getElementById("terms-form");
@@ -250,28 +237,38 @@
     else if (!sectionTouched) box.checked = true;
     box.disabled = !path;
     if (!path) box.checked = false;
-    if (note) note.textContent = !path
-      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
-      : box.checked
-        ? "Later pages stay under " + path + "."
-        : "Later pages can follow links outside " + path + ".";
+    const copy = window.QAReviewReportCopy;
+    if (note) note.textContent = copy.t(!path ? "sectionNone" : box.checked ? "sectionStay" : "sectionLeave", { path });
+  }
+
+  function pageLangName(lang) {
+    const copy = window.QAReviewReportCopy;
+    if (copy.english || typeof Intl.DisplayNames !== "function") return PAGE_LANG_LABEL[lang] || lang;
+    return new Intl.DisplayNames([copy.lang], { type: "language" }).of(lang) || lang;
   }
 
   function scopeSummary() {
+    const copy = window.QAReviewReportCopy;
     const lang = selectedPageLang();
-    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
-    if (document.getElementById("stay-section").checked) parts.push("this section");
+    const parts = [copy.t("scopePages", { n: selectedPages() }), copy.t("scopeDepth", { n: selectedDepth() }), lang ? pageLangName(lang) : copy.t("scopeSite")];
+    if (document.getElementById("stay-section").checked) parts.push(copy.t("scopeSection"));
     return parts.join(", ");
   }
 
   function paintReasons() {
+    const copy = window.QAReviewReportCopy;
     const box = document.getElementById("reasons");
     const legend = box.querySelector("legend");
     box.innerHTML = "";
     box.appendChild(legend);
-    REASONS.forEach((item) => {
+    REASONS.forEach((id) => {
       const label = document.createElement("label");
-      label.innerHTML = '<input type="radio" name="reasonCode" value="' + item.id + '" disabled> ' + item.label;
+      label.innerHTML = '<input type="radio" name="reasonCode" value="' + id + '" disabled> ';
+      label.appendChild(document.createTextNode(copy.word("reason", id)));
+      if (!copy.english) {
+        label.lang = copy.lang;
+        label.setAttribute("translate", "no");
+      }
       box.appendChild(label);
     });
   }
@@ -319,15 +316,22 @@
     reasonBox.required = other;
     if (!other) clearField("reason");
     document.getElementById("client-box").hidden = code !== "client";
-    document.getElementById("own-note").hidden = code !== "own";
     document.getElementById("verify-note").hidden = code !== "verify";
     document.getElementById("credential-note").hidden = code !== "credentials";
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function dropFixedErrors() {
+    const shown = [...reviewForm.querySelectorAll(".field-error[data-local]")];
+    if (!shown.length) return;
+    const still = new Set(clientErrors().map((item) => item.field));
+    shown.forEach((error) => { if (!still.has(error.dataset.field)) clearField(error.dataset.field); });
+  }
   function paintSteps() {
+    dropFixedErrors();
     const code = reasonCode();
     const names = selectedFrameworks();
+    document.getElementById("own-note").hidden = code !== "own" || !!document.getElementById("email-error").textContent;
     const done = {
       you: signedIn() && !!document.getElementById("name").value.trim(),
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
@@ -337,7 +341,8 @@
     };
     const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
-      const ok = !!done[group.dataset.step];
+      const flagged = [...group.querySelectorAll(".field-error")].some((error) => error.textContent.trim() && !error.closest("[hidden]"));
+      const ok = !!done[group.dataset.step] && !flagged;
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
       if (!ok) missing.push(group);
@@ -542,7 +547,10 @@
 
   function clearField(name) {
     const error = document.getElementById(name + "-error");
-    if (error) error.textContent = "";
+    if (error) {
+      error.textContent = "";
+      delete error.dataset.local;
+    }
     const input = fieldInput(name);
     if (input) input.classList.remove("invalid");
     if (name === "url") document.getElementById("url-field").classList.remove("invalid");
@@ -555,7 +563,11 @@
     ["name", "email", "reason", "url", "frameworks", "clientName", "clientEmail", "clientUrl"].forEach(clearField);
     (errors || []).forEach((item) => {
       const error = document.getElementById(item.field + "-error");
-      if (error && !error.textContent) error.textContent = item.message;
+      if (error && !error.textContent) {
+        error.textContent = item.message;
+        error.dataset.field = item.field;
+        if (item.local) error.dataset.local = "";
+      }
       const input = fieldInput(item.field);
       if (input) input.classList.add("invalid");
       if (item.field === "url") document.getElementById("url-field").classList.add("invalid");
@@ -564,6 +576,7 @@
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
       openStepOf(error);
     });
+    paintSteps();
   }
 
   function openStepOf(el) {
@@ -580,15 +593,16 @@
     const host = urlInput.value.trim();
     if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
     if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: "Choose a reason." });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: "Write the reason in a sentence." });
+    const copy = window.QAReviewReportCopy;
+    if (!REASONS.includes(code)) errors.push({ field: "reason", message: copy.t("reasonPick") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: copy.t("reasonWrite") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: "Enter the client's name." });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: "Enter the client's email." });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: "Enter the client's website." });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: copy.t("clientNameNeeded") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: copy.t("clientEmailNeeded") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: copy.t("clientUrlNeeded") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -596,12 +610,12 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: copy.t("ownMailDomain") });
       }
     }
     if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
     if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
-    return errors;
+    return errors.map((item) => Object.assign(item, { local: true }));
   }
 
   function fwLogo(name) {
@@ -694,7 +708,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -2515,9 +2529,10 @@
     button.append(label, icon);
     heading.appendChild(button);
     heading.classList.add("fold-head");
+    if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
-    folds.push({ button, panel });
+    folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
   }
 
   function setFold(item, open) {
@@ -2549,7 +2564,8 @@
     const visuals = document.getElementById("report-visuals");
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
-    glance.textContent = "At a glance";
+    glance.textContent = rc.t("glance");
+    glance.dataset.indexGroup = "glance";
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2582,6 +2598,99 @@
   }
 
   setupFolds();
+
+  const reportIndex = document.getElementById("report-index");
+  const reportTop = document.getElementById("report-top");
+
+  function scrollBehavior() {
+    return matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  }
+
+  // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
+  function measureBar() {
+    const bar = dash.querySelector(".report-toolbar");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
+  }
+
+  function afterScroll(done) {
+    let timer = 0;
+    const settle = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        dash.removeEventListener("scroll", settle);
+        done();
+      }, 160);
+    };
+    dash.addEventListener("scroll", settle, { passive: true });
+    settle();
+  }
+
+  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
+  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  function jumpTo(item) {
+    if (item.panel.hidden) setFold(item, true);
+    measureBar();
+    const heading = item.button.parentElement;
+    item.button.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    afterScroll(() => {
+      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
+    });
+  }
+
+  function paintTop() {
+    if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+  }
+
+  const sectionName = (item) => item.button.firstChild.textContent.trim();
+
+  // Lists the groups of sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  function paintIndex() {
+    if (!reportIndex) return;
+    const shown = folds.filter((item) => item.button.getClientRects().length > 0)
+      .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    const groups = new Map();
+    shown.forEach((item) => {
+      if (!groups.has(item.group)) groups.set(item.group, []);
+      groups.get(item.group).push(item);
+    });
+    document.getElementById("report-index-list").replaceChildren(...[...groups].map(([key, items]) => {
+      const link = document.createElement("a");
+      link.href = "#" + items[0].button.parentElement.id;
+      link.textContent = rc.word("indexGroups", key, sectionName(items[0]));
+      link.title = items.map(sectionName).join(" · ");
+      link.dataset.indexGroup = key;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        items.forEach((item) => { if (item.panel.hidden) setFold(item, true); });
+        jumpTo(items[0]);
+      });
+      const row = document.createElement("li");
+      row.appendChild(link);
+      return row;
+    }));
+    reportIndex.hidden = !shown.length;
+    measureBar();
+    paintTop();
+  }
+
+  if (reportIndex && reportTop) {
+    let framed = false;
+    dash.addEventListener("scroll", () => {
+      if (framed) return;
+      framed = true;
+      requestAnimationFrame(() => {
+        framed = false;
+        paintTop();
+      });
+    }, { passive: true });
+    reportTop.addEventListener("click", () => {
+      const first = reportIndex.querySelector("a");
+      if (first) first.focus({ preventScroll: true });
+      dash.scrollTo({ top: 0, behavior: scrollBehavior() });
+    });
+  }
 
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
@@ -2822,6 +2931,7 @@
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
+    paintIndex();
   }
 
   function reviewBody(compare, url, runId) {

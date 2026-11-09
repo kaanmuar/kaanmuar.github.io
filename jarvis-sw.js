@@ -16,7 +16,7 @@ function text(msg) {
 }
 
 function show(msg, body, actions) {
-    return self.registration.showNotification(msg.title || 'Jarvis', {
+    return self.registration.showNotification(msg.title || 'Jarvis', Object.assign({
         body,
         tag: msg.tag || msg.kind || 'jarvis',
         renotify: !msg.quiet && !!actions,
@@ -25,7 +25,7 @@ function show(msg, body, actions) {
         badge: ICON,
         data: msg,
         actions: (actions || []).map((a) => ({ action: a.act, title: a.label }))
-    });
+    }, /^https:\/\//.test(msg.image || '') ? { image: msg.image } : {}));
 }
 
 async function frontTab() {
@@ -33,9 +33,16 @@ async function frontTab() {
     return tabs.find((c) => c.focused && c.visibilityState === 'visible' && new URL(c.url).pathname === ADMIN) || null;
 }
 
+// A section push (#2509) only tells open admin tabs what changed; it never shows a notification.
+async function toTabs(msg) {
+    const tabs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    tabs.filter((c) => new URL(c.url).pathname === ADMIN).forEach((c) => c.postMessage({ jarvisSections: msg }));
+}
+
 self.addEventListener('push', (event) => {
     let msg = {};
     try { msg = event.data ? event.data.json() : {}; } catch (error) { msg = { title: 'Jarvis', body: event.data ? event.data.text() : '' }; }
+    if (msg.kind === 'sections') { event.waitUntil(toTabs(msg)); return; }
     event.waitUntil((async () => {
         const tab = await frontTab();
         if (tab) { tab.postMessage({ jarvisPush: msg }); return; }

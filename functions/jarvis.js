@@ -33,6 +33,7 @@ const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
+const jarvisLog = require("./jarvis-log");
 const dayRows = require("./jarvis-days");
 const ADMIN_URL = ORIGIN + "/admin.html#stats/overview/1";
 
@@ -632,6 +633,19 @@ const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosand
 
 async function gemini(fetchImpl, env, prompt, maxTokens) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+  const started = Date.now();
+  const what = String(prompt || "").replace(/\s+/g, " ").slice(0, 120);
+  try {
+    const text = await geminiCall(fetchImpl, env, prompt, maxTokens);
+    await jarvisLog.log(null, { source: "gemini", level: "info", text: "Gemini ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
+    return text;
+  } catch (error) {
+    await jarvisLog.log(null, { source: "gemini", level: "error", text: "Gemini failed in " + (Date.now() - started) + " ms: " + String(error.message || error).slice(0, 140) + " · " + what });
+    throw error;
+  }
+}
+
+async function geminiCall(fetchImpl, env, prompt, maxTokens) {
   const res = await fetchImpl(GEMINI + (env.GEMINI_MODEL || MODEL) + ":generateContent", {
     method: "POST",
     headers: { "x-goog-api-key": env.GEMINI_API_KEY, "Content-Type": "application/json" },
@@ -769,7 +783,8 @@ function normalizeSettings(data) {
   const kept = d.mailVersion === MAIL_VERSION ? Object.keys(MAIL_DEFAULTS) : Object.keys(MAIL_DEFAULTS).filter((key) => key !== "daily" && key !== "watch");
   kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
+  const github = { repos: core.githubRepos(d.github && d.github.repos) };
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -778,9 +793,27 @@ async function readSettings(db) {
 }
 
 async function saveSettings(db, input, by) {
-  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION }));
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const layout = input && input.layout !== undefined ? input.layout : (await readSettings(db)).layout;
+  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION, layout }));
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
+  return normalizeSettings(doc);
+}
+
+// One tab's section layout (#2809) from the web or the app: the other tabs and the rest of the settings stay. A tab set to null is back to the default.
+async function saveLayout(db, patch, by) {
+  const tabs = Object.keys(patch && typeof patch === "object" && !Array.isArray(patch) ? patch : {}).filter((tab) => core.LAYOUT_TABS.includes(tab));
+  if (!tabs.length) throw new Error("No Jarvis tab in the layout.");
+  const ref = db.collection("jarvis_settings").doc("main");
+  const snap = await ref.get();
+  const data = snap && snap.exists ? snap.data() : {};
+  const layout = core.cleanLayout(data.layout);
+  tabs.forEach((tab) => {
+    const one = core.cleanLayout({ [tab]: patch[tab] })[tab];
+    if (one) layout[tab] = one; else delete layout[tab];
+  });
+  const doc = Object.assign({}, data, { layout, layoutAt: new Date().toISOString(), layoutBy: String(by || "") });
+  await ref.set(doc);
   return normalizeSettings(doc);
 }
 
@@ -910,7 +943,9 @@ function askSnapshot(snap, days) {
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
       github: githubAsk(e["github-work"]),
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
-    }
+    },
+    // Live processes (#2548): what runs now, waits on Carlos or ended in the last day.
+    processes: ((s.processes || {}).rows || []).slice(0, 20).map((r) => r.kind + " " + r.name + ": " + r.state + (r.needsYou ? " (needs you)" : "") + (r.step ? " · " + r.step : "") + " · since " + (r.startedAt || ""))
   };
 }
 
@@ -1023,4 +1058,4 @@ async function unsentToday(db, items, { now }) {
 }
 
 module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
-  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

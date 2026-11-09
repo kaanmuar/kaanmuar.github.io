@@ -494,8 +494,13 @@
         .verify-note p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
         .verify-note p:last-child { margin: 0; }
         .verify-note a, .mail-note a { color: var(--cyan); }
-        .report-toolbar { position: relative; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px -6px 16px; padding: 8px 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-        .report-toolbar .actions { margin-left: auto; }
+        .report-toolbar { position: relative; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; margin: -4px -6px 14px; padding: 6px 6px 7px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+        .report-toolbar .actions { margin-left: auto; gap: 6px; }
+        .report-toolbar .actions .btn { padding: 6px 12px; line-height: 1.3; }
+        .report-toolbar .logo { width: 26px; height: 26px; }
+        .report-brand-text { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 10px; min-width: 0; }
+        .report-brand .eyebrow { margin: 0; }
+        .report-brand h2 { margin: 0; font-size: 1.1rem; line-height: 1.25; }
         .menu-wrap { position: relative; }
         .menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 180px; background: var(--frost); border: 1px solid var(--line); border-radius: 12px; padding: 6px; z-index: 9; display: flex; flex-direction: column; gap: 2px; -webkit-backdrop-filter: var(--frost-blur); backdrop-filter: var(--frost-blur); }
         .menu[hidden] { display: none; }
@@ -959,9 +964,9 @@
         .log-card .log li { border-bottom-color: rgba(255, 255, 255, .08); }
         .log time { color: var(--muted); margin-right: 8px; }
         .log-card .log time { color: #7d93a3; }
-        .dash-overlay { display: none; position: fixed; inset: 0; z-index: 80; background: rgba(12, 17, 24, .72); padding: 18px; overflow: auto; }
+        .dash-overlay { --dash-pad: 18px; display: none; position: fixed; inset: 0; z-index: 80; background: rgba(12, 17, 24, .72); padding: var(--dash-pad); overflow: auto; }
         .dash-overlay.open { display: block; }
-        .dash-modal { position: relative; width: min(1100px, calc(100vw - 36px)); max-width: 100%; box-sizing: border-box; margin: 3vh auto 24px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 22px; padding: 20px 22px 28px; box-shadow: 0 24px 70px rgba(8, 14, 18, .35); overflow: hidden; }
+        .dash-modal { position: relative; width: min(1100px, calc(100vw - 36px)); max-width: 100%; box-sizing: border-box; margin: 3vh auto 24px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 22px; padding: 20px 22px 28px; box-shadow: 0 24px 70px rgba(8, 14, 18, .35); overflow: hidden; overflow: clip; }
         .capture-note { display: none; }
         .sheet-mark { display: none; position: absolute; inset: 0; z-index: 4; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .2; }
         body.preview-copy .sheet-mark { display: block; }
@@ -1084,11 +1089,34 @@
         .log:not(:empty) + .log-next { display: none; }
         #share-open:disabled { display: none; }
         .dash-modal:focus { outline: none; }
-        .dash-overlay .report-toolbar { position: sticky; top: 0; background: var(--bg); }
+        .dash-overlay .report-toolbar { position: sticky; top: calc(-1 * var(--dash-pad)); background: var(--bg); }
+        .report-index { display: flex; align-items: baseline; gap: 8px 14px; margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+        .report-index[hidden] { display: none; }
+        .report-index-label { flex: none; margin: 0; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .report-index-list { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+        .report-index-list a { display: inline-flex; align-items: center; min-height: 28px; box-sizing: border-box; padding: 3px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--text); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .report-index-list a:hover { border-color: var(--cyan); color: var(--cyan); }
+        .report-index-list a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .dash-overlay .fold-head { scroll-margin-top: calc(var(--report-bar, 72px) + 14px); }
+        .report-top { position: sticky; bottom: 16px; z-index: 9; height: 0; pointer-events: none; }
+        .report-top .btn { position: absolute; right: 0; bottom: 0; pointer-events: auto; background: var(--bg); box-shadow: 0 8px 24px rgba(8, 14, 18, .25); }
         @media (max-width: 800px) {
             .dash-overlay .report-toolbar { position: relative; top: auto; }
+            .dash-overlay .fold-head { scroll-margin-top: 72px; }
+            .report-index { display: block; padding: 10px 0 10px 12px; }
+            .report-index-label { margin: 0 0 8px; }
+            .report-index-list { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 12px 2px 2px; }
+            .report-index-list a { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+            .report-top .btn { min-height: 44px; }
+            #report .filters button { min-height: 36px; padding: 6px 12px; }
+            #report .fold-toggle { min-height: 36px; }
+            #report .list-more { padding: 10px 6px; margin: 0 -6px; }
             .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
+            .report-toolbar .actions .btn { min-height: 40px; }
             .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
+        }
+        @media screen and (max-width: 800px) {
+            .dash-overlay.open .dash-modal { background: var(--bg); }
         }
         @media (max-width: 520px) {
             .stage-start-row { flex-direction: column; align-items: stretch; }
@@ -1244,7 +1272,7 @@
             .cookie-actions { justify-content: stretch; }
             .cookie-actions button { flex: 1; min-height: 40px; }
             .bar-row { grid-template-columns: 84px 1fr 24px; }
-            .dash-overlay { padding: 8px; }
+            .dash-overlay { --dash-pad: 8px; }
             .dash-modal { width: 100%; margin: 0 auto 16px; padding: 14px; border-radius: 16px; }
             .report-toolbar .actions { width: 100%; margin-left: 0; }
         }
@@ -1626,19 +1654,18 @@
         <p id="capture-note" class="capture-note" data-report-copy="captureNote" lang="pt" translate="no">Esta folha não inclui o relatório. A tentativa fica registrada com a revisão.</p>
         <div class="report-toolbar no-print">
             <div class="report-brand">
-                <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36">
-                <div>
+                <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="26" height="26">
+                <div class="report-brand-text">
                     <p class="eyebrow" data-report-copy="dashEyebrow" lang="pt" translate="no">Painel da revisão</p>
                     <h2 id="dash-title" data-report-copy="dashTitle" lang="pt" translate="no">Relatório</h2>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-ghost" id="copy-link" type="button" data-report-copy="copyLink" lang="pt" translate="no">Copiar link (abre para você)</button>
                 <button class="btn btn-ghost" id="ask-open" type="button" aria-expanded="false" aria-controls="ask-panel" lang="pt" translate="no" hidden>Perguntar ao relatório</button>
-                <button class="btn btn-ghost" id="case-export-open" type="button" data-report-copy="caseExport" lang="pt" translate="no">Exportar e imprimir casos de teste</button>
                 <div class="menu-wrap">
                     <button class="btn btn-ghost" id="export-toggle" type="button" aria-expanded="false" aria-controls="export-menu" data-report-copy="export" lang="pt" translate="no">Exportar</button>
                     <div class="menu" id="export-menu" hidden>
+                        <button id="case-export-open" type="button" data-report-copy="caseExport" lang="pt" translate="no">Exportar e imprimir casos de teste</button>
                         <button id="download-json" type="button">JSON</button>
                         <button id="download-text" type="button" data-report-copy="text" lang="pt" translate="no">Texto</button>
                         <button id="print-report" type="button" data-report-copy="printPdf" lang="pt" translate="no">Imprimir ou salvar como PDF</button>
@@ -1647,6 +1674,7 @@
                 <div class="menu-wrap" id="share-row">
                     <button class="btn btn-ghost" id="share-toggle" type="button" aria-expanded="false" aria-controls="share-menu" data-report-copy="share" lang="pt" translate="no">Compartilhar</button>
                     <div class="menu" id="share-menu" hidden>
+                        <button id="copy-link" type="button" data-report-copy="copyLink" lang="pt" translate="no">Copiar link (abre para você)</button>
                         <button type="button" data-net="email" data-report-copy="email" lang="pt" translate="no">Email</button>
                         <button type="button" data-net="linkedin">LinkedIn</button>
                         <button type="button" data-net="x">X</button>
@@ -1668,9 +1696,13 @@
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
         <div class="unlock-offer no-print" id="unlock-offer" hidden></div>
-        <h2 data-insight data-report-copy="execTitle" lang="pt" translate="no">Resumo em uma página</h2>
+        <nav class="report-index no-print" id="report-index" aria-labelledby="report-index-label" hidden>
+            <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel" lang="pt" translate="no">Neste relatório</p>
+            <ol class="report-index-list" id="report-index-list"></ol>
+        </nav>
+        <h2 data-insight data-index-group="summary" data-report-copy="execTitle" lang="pt" translate="no">Resumo em uma página</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight data-report-copy="compareTitle" lang="pt" translate="no">Ao lado de um concorrente</h2>
+        <h2 data-insight data-index-group="summary" data-report-copy="compareTitle" lang="pt" translate="no">Ao lado de um concorrente</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
@@ -1720,44 +1752,44 @@
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight data-report-copy="healthTitle" lang="pt" translate="no">Pontuação de saúde</h2>
+        <h2 data-insight data-index-group="summary" data-report-copy="healthTitle" lang="pt" translate="no">Pontuação de saúde</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight data-report-copy="fixTitle" lang="pt" translate="no">Corrigir primeiro</h2>
+        <h2 data-insight data-index-group="summary" data-report-copy="fixTitle" lang="pt" translate="no">Corrigir primeiro</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight data-report-copy="browserTitle" lang="pt" translate="no">Em um navegador real</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="browserTitle" lang="pt" translate="no">Em um navegador real</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight data-report-copy="snippetTitle" lang="pt" translate="no">Como aparece no Google e ao compartilhar</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="pt" translate="no">Como aparece no Google e ao compartilhar</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight data-report-copy="aiTitle" lang="pt" translate="no">O que a IA vê</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="aiTitle" lang="pt" translate="no">O que a IA vê</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight data-report-copy="analyticsTitle" lang="pt" translate="no">Analítica e consentimento</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="pt" translate="no">Analítica e consentimento</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight data-report-copy="searchTitle" lang="pt" translate="no">Visibilidade na pesquisa</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="searchTitle" lang="pt" translate="no">Visibilidade na pesquisa</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight data-report-copy="mapTitle" lang="pt" translate="no">Mapa das páginas analisadas</h2>
+        <h2 data-insight data-index-group="browser" data-report-copy="mapTitle" lang="pt" translate="no">Mapa das páginas analisadas</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight data-report-copy="securityTitle" lang="pt" translate="no">Segurança e email</h2>
+        <h2 data-insight data-index-group="checks" data-report-copy="securityTitle" lang="pt" translate="no">Segurança e email</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight data-report-copy="checksTitle" lang="pt" translate="no">Todas as verificações, com o seu veredicto</h2>
+        <h2 data-insight data-index-group="checks" data-report-copy="checksTitle" lang="pt" translate="no">Todas as verificações, com o seu veredicto</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight data-report-copy="fixKitTitle" lang="pt" translate="no">Kit de correções</h2>
+        <h2 data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="pt" translate="no">Kit de correções</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
-                <h2 lang="pt" translate="no">Casos propostos por camada</h2>
+                <h2 data-index-group="glance" lang="pt" translate="no">Casos propostos por camada</h2>
                 <div id="layers"></div>
             </article>
             <article class="card">
-                <h2 lang="pt" translate="no">Tecnologias encontradas</h2>
+                <h2 data-index-group="glance" lang="pt" translate="no">Tecnologias encontradas</h2>
                 <div class="pills" id="tech"></div>
             </article>
         </div>
         <section id="tool-block" hidden>
-            <h2 lang="pt" translate="no">Ferramentas que se aplicam</h2>
+            <h2 data-index-group="glance" lang="pt" translate="no">Ferramentas que se aplicam</h2>
             <p class="muted" id="tool-note" lang="pt" translate="no">Cada ferramenta marcada soma 5 USD ao relatório completo, como um framework extra. O axe-core já rodou no navegador headless da revisão. Marcá-lo adiciona as verificações dele aos seus scripts. As outras ferramentas não são executadas.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
@@ -1766,7 +1798,7 @@
                 <span class="alarm-lamp" aria-hidden="true"></span>
                 <div>
                     <p class="eyebrow" lang="pt" translate="no">Alarme</p>
-                    <h2 lang="pt" translate="no">O que a resposta pública deixou à vista</h2>
+                    <h2 data-index-group="exposure" lang="pt" translate="no">O que a resposta pública deixou à vista</h2>
                 </div>
                 <button class="btn btn-primary" id="alarm-open" type="button" lang="pt" translate="no">Abrir o resto</button>
             </div>
@@ -1775,7 +1807,7 @@
         </section>
         <section class="credential-run" id="credential-run" hidden>
             <p class="eyebrow" lang="pt" translate="no">Revisão com login</p>
-            <h2 lang="pt" translate="no">Um login que você tem permissão para usar</h2>
+            <h2 data-index-group="exposure" lang="pt" translate="no">Um login que você tem permissão para usar</h2>
             <p id="credential-run-copy">Esta página não pede a senha. A revisão com login espera até ser paga.</p>
             <button class="btn btn-primary" id="credential-open" type="button" lang="pt" translate="no">Combinar a revisão com login</button>
         </section>
@@ -1786,21 +1818,22 @@
             <a class="btn btn-primary" id="report-call-link" href="book.html?type=walkthrough" data-report-copy="callButton" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Report" lang="pt" translate="no">Agende um tour de 30 min</a>
         </section>
         <section class="mentions" id="mentions-block">
-            <h2 lang="pt" translate="no">Artigos públicos</h2>
+            <h2 data-index-group="exposure" lang="pt" translate="no">Artigos públicos</h2>
             <ol id="mentions"></ol>
         </section>
-        <h2 lang="pt" translate="no">O que a resposta mostrou</h2>
+        <h2 data-index-group="evidence" lang="pt" translate="no">O que a resposta mostrou</h2>
         <article class="card" id="observed"></article>
-        <h2 lang="pt" translate="no">Páginas analisadas</h2>
+        <h2 data-index-group="evidence" lang="pt" translate="no">Páginas analisadas</h2>
         <article class="card"><p class="muted" id="pages-found" hidden></p><table class="page-table"><thead><tr><th lang="pt" translate="no">Caminho</th><th lang="pt" translate="no">Status</th><th>ms</th><th lang="pt" translate="no">Título</th></tr></thead><tbody id="pages"></tbody></table></article>
-        <h2 lang="pt" translate="no">Registro da revisão</h2>
+        <h2 data-index-group="evidence" lang="pt" translate="no">Registro da revisão</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
-        <h2 lang="pt" translate="no">Casos que podem ser executados</h2>
+        <h2 data-index-group="cases" lang="pt" translate="no">Casos que podem ser executados</h2>
         <p class="muted case-note" id="case-note"></p>
         <p class="muted" id="specialist-tools" hidden></p>
         <div class="filters" id="layer-filters"></div>
         <article class="card" id="cases"></article>
         </section>
+        <div class="report-top no-print"><button class="btn btn-ghost" id="report-top" type="button" data-report-copy="backTop" hidden lang="pt" translate="no">Voltar ao topo</button></div>
     </div>
     <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" lang="pt" translate="no" hidden>
         <div class="ask-head">
@@ -1903,9 +1936,9 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128q" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261129d" defer></script>
 <script src="js/qa-review-findings-copy.pt.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128q" defer></script>
+<script src="js/qa-review.js?v=20261129d" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

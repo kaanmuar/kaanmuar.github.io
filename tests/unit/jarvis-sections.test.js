@@ -127,10 +127,12 @@ test("a changed source sends back only its section, with external holding just t
   const changed = Object.assign({}, EXTERNAL, { jobs: { ok: true, jobs: [{ name: "jarvisWatch", state: "RUNNING" }] } });
   const later = await full(db, NOW + 2 * MINUTE, { external: () => stamp(changed, NOW + 2 * MINUTE) });
   const answer = serve(later, { since: sinceOf(first) }, NOW + 2 * MINUTE);
-  assert.ok(answer.sections.processes, "processes changed");
-  assert.deepEqual(Object.keys(answer.sections.processes.external).sort(), ["github", "jobs"]);
-  ["pagespeed", "marketing", "people", "money", "mail", "products", "settings", "goals", "reports", "devices"].forEach((name) => assert.ok(!answer.sections[name], name + " unchanged"));
-  assert.equal(answer.versions.processes.at, new Date(NOW + 2 * MINUTE).toISOString());
+  assert.ok(answer.sections.systems, "systems changed");
+  const external = answer.sections.systems.external;
+  assert.deepEqual(Object.keys(external).filter((k) => external[k] !== null).sort(), ["github", "health", "jobs"]);
+  assert.equal(external["github-work"], null, "a source the section names but does not have goes as null");
+  ["processes", "pagespeed", "marketing", "people", "money", "mail", "products", "settings", "goals", "reports", "devices"].forEach((name) => assert.ok(!answer.sections[name], name + " unchanged"));
+  assert.equal(answer.versions.systems.at, new Date(NOW + 2 * MINUTE).toISOString());
   const applied = sections.apply(first, answer);
   assert.equal(applied.external.jobs.jobs[0].state, "RUNNING");
   assert.equal(applied.external.money.usd, 120);
@@ -145,6 +147,35 @@ test("a source fetched again with the same answer keeps its version", async () =
   const answer = serve(later, { since: sinceOf(first) }, NOW + 2 * MINUTE);
   assert.ok(!answer.sections.processes && !answer.sections.systems, Object.keys(answer.sections).join());
   assert.equal(answer.versions.processes.v, first.versions.processes.v);
+});
+
+test("a rebuild with the same data moves no version, and applying the delta still gives the full snapshot (#2819, #2818)", async () => {
+  const db = fresh();
+  const first = serve(await full(db, NOW), {}, NOW);
+  const at = NOW + 6 * MINUTE;
+  await snapshot.drop(db, ["products", "external"], NOW + MINUTE);
+  const later = await full(db, at, { devices: first.devices, external: () => stamp(EXTERNAL, at) });
+  assert.notEqual(later.snap.window.end, first.window.end);
+  assert.notEqual(later.snap.connections.find((c) => c.key === "jobs").at, first.connections.find((c) => c.key === "jobs").at);
+  const answer = serve(later, { since: sinceOf(first) }, at);
+  ["products", "briefing", "processes", "systems"].forEach((name) => assert.ok(!answer.sections[name], name + " kept its version"));
+  assert.equal(answer.checked.jobs, new Date(at).toISOString());
+  const applied = sections.apply(first, answer);
+  assert.equal(applied.external.jobs.cachedAt, new Date(at).toISOString(), "the checked time is the new fetch's");
+  assert.equal(applied.connections.find((c) => c.key === "jobs").at, new Date(at).toISOString());
+  assert.deepEqual(JSON.parse(JSON.stringify(applied)), JSON.parse(JSON.stringify(serve(later, {}, at))));
+});
+
+test("a field or source a section no longer has is dropped on apply; an answer that is not a delta is not applied", () => {
+  const kept = { cachedAt: "2026-11-01T15:00:00.000Z", briefHidden: [{ key: "a" }], briefing: [], external: { jobs: { ok: true }, money: { ok: true } }, versions: { briefing: { v: "1" } } };
+  const answer = { delta: true, days: 1, cachedAt: kept.cachedAt, versions: { briefing: { v: "2" }, processes: { v: "3" } }, sections: { briefing: { briefing: [{ key: "b" }], briefHidden: null }, processes: { external: { jobs: null } } } };
+  const applied = sections.apply(kept, answer);
+  assert.ok(!("briefHidden" in applied));
+  assert.deepEqual(applied.external, { money: { ok: true } });
+  assert.deepEqual(applied.versions, { briefing: { v: "2" }, processes: { v: "3" } });
+  assert.equal(sections.apply(kept, { ok: true, products: {} }), null);
+  assert.equal(sections.apply(null, answer), null);
+  assert.equal(sections.apply(kept, { delta: true, sections: {} }), null, "no versions");
 });
 
 test("only limits the sections returned and versioned; unknown names are ignored", async () => {

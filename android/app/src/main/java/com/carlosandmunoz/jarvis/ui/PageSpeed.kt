@@ -50,7 +50,7 @@ fun PageSpeedPanels(ps: JsonObject?, vm: JarvisViewModel) {
     var all by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<PendingAction?>(null) }
     ConfirmAction(confirm) { confirm = null }
-    Panel("Page health: every page", trailing = { Text(ps.obj("counts").num("pages")?.let { fmt(it) } ?: "", fontFamily = Mono, color = J.muted) }) {
+    Panel("Page health: every page", id = "systems-pages", trailing = { Text(ps.obj("counts").num("pages")?.let { fmt(it) } ?: "", fontFamily = Mono, color = J.muted) }) {
         if (ps == null) { Muted("The daily PageSpeed run is not in this snapshot."); return@Panel }
         if (ps.bool("ok") == false) { Muted(ps.str("error") ?: "Could not read the daily PageSpeed run."); return@Panel }
         if (ps.bool("empty") == true) { Muted(ps.str("note") ?: "No run yet."); return@Panel }
@@ -72,7 +72,7 @@ fun PageSpeedPanels(ps: JsonObject?, vm: JarvisViewModel) {
         Muted("Lighthouse through PageSpeed Insights, mobile and desktop, every page in sitemap.xml and sitemap-social.xml. Measured ${ago(ps.str("at")) ?: "—"}; worst first.")
     }
     if (ps == null || ps.bool("ok") == false || ps.bool("empty") == true) return
-    Panel("PageSpeed routine") {
+    Panel("PageSpeed routine", id = "systems-pagespeed") {
         val prs = ps.objs("prs")
         if (prs.isEmpty()) Muted("No PageSpeed PRs yet.")
         prs.forEach { pr ->

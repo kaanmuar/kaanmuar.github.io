@@ -6,8 +6,19 @@
   const COPY = {
     en: {
       urlNeeded: "Enter a public page after https://.",
+      ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
+      reason: {
+        own: "I own this site and want a test plan", client: "A client asked me to propose coverage before a release", redesign: "I am comparing this page with a redesign",
+        release: "I need a case list before a release", tech: "I want the public technologies named", a11y: "I am preparing an accessibility review",
+        security: "I am preparing a review of the public security headers", performance: "I need a performance and load case list",
+        teaching: "I am teaching or learning how a page could be tested", allowed: "I am checking a page I am allowed to review",
+        verify: "I want QA-lab to run a verification", credentials: "I have a username and password for this site", other: "Other"
+      },
+      reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.", clientUrlNeeded: "Enter the client's website.",
+      scopePages: "{n} pages", scopeDepth: "{n} deep", scopeSite: "site language", scopeSection: "this section",
+      sectionNone: "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.", sectionStay: "Later pages stay under {path}.", sectionLeave: "Later pages can follow links outside {path}.",
       tour: {
         back: "Back", close: "Close", next: "Next", finish: "Finish", step: "Step {n} of {m}.", progress: "Step progress", wait: "Available when this step finishes.",
         terms: ["The disclaimers", "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text."],
@@ -49,6 +60,8 @@
       read_one: "{n} page analyzed", read_other: "{n} pages analyzed", readOf_one: "{n} page analyzed of {found} found", readOf_other: "{n} pages analyzed of {found} found",
       headless: "checked in a headless browser", risks: "Biggest risks", quick: "Quick wins", solid: "Already solid", noneFound: "None found.",
       noSolid: "No area scores B or better yet.", printSummary: "Print this summary", expandAll: "Expand all", collapseAll: "Collapse all", caseMore: "More", caseLess: "Less",
+      indexLabel: "On this report", backTop: "Back to top", glance: "At a glance",
+      indexGroups: { summary: "Summary", browser: "Browser and search", checks: "Checks and fixes", glance: "At a glance", exposure: "Exposure", evidence: "Evidence", cases: "Cases to run" },
       offerTitle: "Read the rest", offerFix: "Fix list · {usd} USD", offerFixBody: "Scores, every finding, the top 10 fixes in plain language, and a PDF of the summary.", offerFull: "Full report · {usd} USD", offerFullBody: "19 USD, plus 5 USD for each extra framework or tool. Every case and layer, the signals, the exports, and the scripts.", offerCredit: "The 5 USD fix list is already taken off.", offerFixOpen: "Your fix list is open: scores and findings read in full. The cases stay blurred until the full report is paid.",
       priceSay: "adds {usd} US dollars", competitorSay: "this competitor adds {usd} US dollars", totalEyebrow: "Before it starts", totalTitle: "The total for this review", totalCompareTitle: "The total for this comparison", totalIncluded_one: "{n} framework, included in your first review", totalIncluded_other: "{n} frameworks, included in your first review", totalPages: "{n} pages", totalDepth: "{n} links deep", totalCompetitor: "Competitor: {host}", totalList: "Total", totalReturn: "Return discount {percent}%", totalCoupon: "Code {code} {percent}%", totalDue: "To pay", totalSaved: "Saved in Your reviews for 12 months.", totalPay: "Pay and run", totalCancel: "Cancel", totalPassRun_one: "Pass run, {n} left after this one", totalPassRun_other: "Pass run, {n} left after this one", passOffer: "Or {runs} runs for {usd} USD with the {plan} pass, for 30 days.", passOfferUp: "Your pass is used up or ended. Or {runs} runs for {usd} USD with the {plan} pass, for 30 days.", passOfferGo: "Get the {plan} pass", passSignIn: "Sign in first. A pass belongs to the address you sign in with.",
       lighthouse: "Lighthouse scored performance {score}/100 on a simulated mid-range phone over slow 4G.", psiNoField: "PageSpeed Insights: Chrome has too few visits to publish real-user numbers for this site.", realVisitors: "Real visitors",
@@ -159,8 +172,19 @@
     },
     es: {
       urlNeeded: "Escribe una página pública después de https://.",
+      ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "El sitio es mío y quiero un plan de pruebas", client: "Un cliente me pidió proponer la cobertura antes de un lanzamiento", redesign: "Estoy comparando esta página con un rediseño",
+        release: "Necesito una lista de casos antes de un lanzamiento", tech: "Quiero saber qué tecnologías públicas usa", a11y: "Estoy preparando una revisión de accesibilidad",
+        security: "Estoy preparando una revisión de los encabezados de seguridad públicos", performance: "Necesito una lista de casos de rendimiento y carga",
+        teaching: "Estoy enseñando o aprendiendo cómo se podría probar una página", allowed: "Estoy revisando una página que tengo permiso para revisar",
+        verify: "Quiero que QA-lab haga una verificación", credentials: "Tengo un usuario y una contraseña para este sitio", other: "Otro"
+      },
+      reasonPick: "Elige un motivo.", reasonWrite: "Escribe el motivo en una frase.", clientNameNeeded: "Escribe el nombre del cliente.", clientEmailNeeded: "Escribe el correo del cliente.", clientUrlNeeded: "Escribe el sitio web del cliente.",
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidad", scopeSite: "idioma del sitio", scopeSection: "esta sección",
+      sectionNone: "Agrega una ruta, como example.com/docs, para mantener las páginas siguientes en esa sección. Con solo el host se revisa todo el sitio.", sectionStay: "Las páginas siguientes se quedan dentro de {path}.", sectionLeave: "Las páginas siguientes pueden seguir enlaces fuera de {path}.",
       tour: {
         back: "Atrás", close: "Cerrar", next: "Siguiente", finish: "Terminar", step: "Paso {n} de {m}.", progress: "Progreso del paso", wait: "Disponible cuando termine este paso.",
         terms: ["Los avisos legales", "Ningún control se activa hasta que marques cada casilla. Los avisos legales nombran las normas locales, nacionales e internacionales. Una revisión completada, una detención y una sola muestra del informe forman parte de ese texto."],
@@ -202,6 +226,8 @@
       read_one: "{n} página analizada", read_other: "{n} páginas analizadas", readOf_one: "{n} página analizada de {found} encontradas", readOf_other: "{n} páginas analizadas de {found} encontradas",
       headless: "revisado en un navegador sin interfaz", risks: "Mayores riesgos", quick: "Mejoras rápidas", solid: "Ya sólido", noneFound: "No se encontró ninguno.",
       noSolid: "Ninguna área tiene todavía B o más.", printSummary: "Imprimir este resumen", expandAll: "Desplegar todo", collapseAll: "Plegar todo", caseMore: "Más", caseLess: "Menos",
+      indexLabel: "En este informe", backTop: "Volver arriba", glance: "De un vistazo",
+      indexGroups: { summary: "Resumen", browser: "Navegador y buscadores", checks: "Controles y arreglos", glance: "De un vistazo", exposure: "Exposición", evidence: "Evidencia", cases: "Casos para ejecutar" },
       offerTitle: "Leer el resto", offerFix: "Lista de arreglos · {usd} USD", offerFixBody: "Puntuaciones, todos los hallazgos, los 10 primeros arreglos en palabras claras y un PDF del resumen.", offerFull: "Informe completo · {usd} USD", offerFullBody: "19 USD y 5 USD por cada framework o herramienta extra. Todos los casos y capas, las señales, las exportaciones y los scripts.", offerCredit: "Los 5 USD de la lista de arreglos ya están descontados.", offerFixOpen: "Tu lista de arreglos está abierta: puntuaciones y hallazgos se leen completos. Los casos siguen borrosos hasta pagar el informe completo.",
       priceSay: "suma {usd} dólares estadounidenses", competitorSay: "este competidor suma {usd} dólares estadounidenses", totalEyebrow: "Antes de empezar", totalTitle: "El total de esta revisión", totalCompareTitle: "El total de esta comparación", totalIncluded_one: "{n} framework, incluido en tu primera revisión", totalIncluded_other: "{n} frameworks, incluidos en tu primera revisión", totalPages: "{n} páginas", totalDepth: "{n} niveles de enlaces", totalCompetitor: "Competidor: {host}", totalList: "Total", totalReturn: "Descuento por volver {percent} %", totalCoupon: "Código {code} {percent} %", totalDue: "A pagar", totalSaved: "Se guarda en Tus revisiones durante 12 meses.", totalPay: "Pagar y revisar", totalCancel: "Cancelar", totalPassRun_one: "Revisión del pase, queda {n} después de esta", totalPassRun_other: "Revisión del pase, quedan {n} después de esta", passOffer: "O {runs} revisiones por {usd} USD con el pase {plan}, durante 30 días.", passOfferUp: "Tu pase se agotó o terminó. O {runs} revisiones por {usd} USD con el pase {plan}, durante 30 días.", passOfferGo: "Comprar el pase {plan}", passSignIn: "Inicia sesión primero. Un pase pertenece a la dirección con la que inicias sesión.",
       lighthouse: "Lighthouse dio {score}/100 de rendimiento en un celular de gama media simulado con 4G lenta.", psiNoField: "PageSpeed Insights: Chrome tiene muy pocas visitas para publicar datos de usuarios reales de este sitio.",
@@ -314,8 +340,19 @@
     },
     pt: {
       urlNeeded: "Digite uma página pública depois de https://.",
+      ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "Este site é meu e quero um plano de testes", client: "Um cliente me pediu para propor a cobertura antes de um lançamento", redesign: "Estou comparando esta página com um novo design",
+        release: "Preciso de uma lista de casos antes de um lançamento", tech: "Quero saber quais tecnologias públicas ele usa", a11y: "Estou preparando uma revisão de acessibilidade",
+        security: "Estou preparando uma revisão dos cabeçalhos de segurança públicos", performance: "Preciso de uma lista de casos de desempenho e carga",
+        teaching: "Estou ensinando ou aprendendo como uma página poderia ser testada", allowed: "Estou verificando uma página que tenho permissão para revisar",
+        verify: "Quero que o QA-lab faça uma verificação", credentials: "Tenho um usuário e uma senha para este site", other: "Outro"
+      },
+      reasonPick: "Escolha um motivo.", reasonWrite: "Escreva o motivo em uma frase.", clientNameNeeded: "Digite o nome do cliente.", clientEmailNeeded: "Digite o e-mail do cliente.", clientUrlNeeded: "Digite o site do cliente.",
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidade", scopeSite: "idioma do site", scopeSection: "esta seção",
+      sectionNone: "Adicione um caminho, como example.com/docs, para manter as páginas seguintes nessa seção. Só com o host, o site inteiro é revisado.", sectionStay: "As páginas seguintes ficam dentro de {path}.", sectionLeave: "As páginas seguintes podem seguir links fora de {path}.",
       tour: {
         back: "Voltar", close: "Fechar", next: "Próximo", finish: "Concluir", step: "Etapa {n} de {m}.", progress: "Progresso da etapa", wait: "Disponível quando esta etapa terminar.",
         terms: ["Os avisos", "Nenhum controle liga até você marcar cada caixa. Os avisos citam as regras locais, nacionais e internacionais. Uma revisão concluída, uma parada e uma única exibição do relatório fazem parte desse texto."],
@@ -357,6 +394,8 @@
       read_one: "{n} página analisada", read_other: "{n} páginas analisadas", readOf_one: "{n} página analisada de {found} encontradas", readOf_other: "{n} páginas analisadas de {found} encontradas",
       headless: "verificado em um navegador sem interface", risks: "Maiores riscos", quick: "Ganhos rápidos", solid: "Já sólido", noneFound: "Nenhum encontrado.",
       noSolid: "Nenhuma área tem ainda B ou melhor.", printSummary: "Imprimir este resumo", expandAll: "Expandir tudo", collapseAll: "Recolher tudo", caseMore: "Mais", caseLess: "Menos",
+      indexLabel: "Neste relatório", backTop: "Voltar ao topo", glance: "Visão geral",
+      indexGroups: { summary: "Resumo", browser: "Navegador e pesquisa", checks: "Verificações e correções", glance: "Visão geral", exposure: "Exposição", evidence: "Evidências", cases: "Casos para executar" },
       offerTitle: "Ler o resto", offerFix: "Lista de correções · {usd} USD", offerFixBody: "Pontuações, todas as constatações, as 10 primeiras correções em palavras simples e um PDF do resumo.", offerFull: "Relatório completo · {usd} USD", offerFullBody: "19 USD e mais 5 USD por framework ou ferramenta extra. Todos os casos e camadas, os sinais, as exportações e os scripts.", offerCredit: "Os 5 USD da lista de correções já estão descontados.", offerFixOpen: "Sua lista de correções está aberta: pontuações e constatações aparecem completas. Os casos seguem borrados até o relatório completo ser pago.",
       priceSay: "soma {usd} dólares americanos", competitorSay: "este concorrente soma {usd} dólares americanos", totalEyebrow: "Antes de começar", totalTitle: "O total desta revisão", totalCompareTitle: "O total desta comparação", totalIncluded_one: "{n} framework, incluído na sua primeira revisão", totalIncluded_other: "{n} frameworks, incluídos na sua primeira revisão", totalPages: "{n} páginas", totalDepth: "{n} níveis de links", totalCompetitor: "Concorrente: {host}", totalList: "Total", totalReturn: "Desconto de retorno {percent}%", totalCoupon: "Código {code} {percent}%", totalDue: "A pagar", totalSaved: "Fica salva em Suas revisões por 12 meses.", totalPay: "Pagar e revisar", totalCancel: "Cancelar", totalPassRun_one: "Revisão do passe, resta {n} depois desta", totalPassRun_other: "Revisão do passe, restam {n} depois desta", passOffer: "Ou {runs} revisões por {usd} USD com o passe {plan}, por 30 dias.", passOfferUp: "Seu passe acabou ou terminou. Ou {runs} revisões por {usd} USD com o passe {plan}, por 30 dias.", passOfferGo: "Comprar o passe {plan}", passSignIn: "Entre primeiro. Um passe pertence ao endereço com que você entra.",
       lighthouse: "O Lighthouse deu {score}/100 de desempenho em um celular intermediário simulado com 4G lenta.", psiNoField: "PageSpeed Insights: o Chrome tem poucas visitas para publicar dados de usuários reais deste site.", realVisitors: "Visitantes reais",
@@ -470,8 +509,19 @@
     },
     de: {
       urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.",
+      ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
+      reason: {
+        own: "Die Website gehört mir und ich möchte einen Testplan", client: "Ein Kunde hat mich gebeten, vor einem Release eine Testabdeckung vorzuschlagen", redesign: "Ich vergleiche diese Seite mit einem Redesign",
+        release: "Ich brauche vor einem Release eine Liste mit Fällen", tech: "Ich möchte die öffentlich erkennbaren Technologien kennen", a11y: "Ich bereite eine Prüfung der Barrierefreiheit vor",
+        security: "Ich bereite eine Prüfung der öffentlichen Sicherheits-Header vor", performance: "Ich brauche eine Liste mit Performance- und Lastfällen",
+        teaching: "Ich lehre oder lerne, wie man eine Seite testen könnte", allowed: "Ich prüfe eine Seite, die ich prüfen darf",
+        verify: "Ich möchte, dass QA-lab eine Verifizierung durchführt", credentials: "Ich habe einen Benutzernamen und ein Passwort für diese Website", other: "Sonstiges"
+      },
+      reasonPick: "Wählen Sie einen Grund.", reasonWrite: "Schreiben Sie den Grund in einem Satz.", clientNameNeeded: "Geben Sie den Namen des Kunden ein.", clientEmailNeeded: "Geben Sie die E-Mail-Adresse des Kunden ein.", clientUrlNeeded: "Geben Sie die Website des Kunden ein.",
+      scopePages: "{n} Seiten", scopeDepth: "{n} Links tief", scopeSite: "Sprache der Website", scopeSection: "nur dieser Bereich",
+      sectionNone: "Fügen Sie einen Pfad wie example.com/docs hinzu, damit weitere Seiten in diesem Bereich bleiben. Ein Host allein prüft die ganze Website.", sectionStay: "Weitere Seiten bleiben unter {path}.", sectionLeave: "Weitere Seiten können Links außerhalb von {path} folgen.",
       tour: {
         back: "Zurück", close: "Schließen", next: "Weiter", finish: "Fertig", step: "Schritt {n} von {m}.", progress: "Fortschritt des Schritts", wait: "Verfügbar, sobald dieser Schritt fertig ist.",
         terms: ["Die Hinweise", "Alle Bedienelemente bleiben aus, bis jedes Kästchen angehakt ist. Die Hinweise nennen die lokalen, nationalen und internationalen Regeln. Eine abgeschlossene Prüfung, ein Stopp und eine einmalige Anzeige des Berichts sind Teil dieses Textes."],
@@ -513,6 +563,8 @@
       read_one: "{n} Seite analysiert", read_other: "{n} Seiten analysiert", readOf_one: "{n} Seite von {found} gefundenen analysiert", readOf_other: "{n} Seiten von {found} gefundenen analysiert",
       headless: "in einem Headless-Browser geprüft", risks: "Größte Risiken", quick: "Schnelle Erfolge", solid: "Bereits solide", noneFound: "Keine gefunden.",
       noSolid: "Noch kein Bereich erreicht B oder besser.", printSummary: "Diese Zusammenfassung drucken", expandAll: "Alle aufklappen", collapseAll: "Alle zuklappen", caseMore: "Mehr", caseLess: "Weniger",
+      indexLabel: "In diesem Bericht", backTop: "Nach oben", glance: "Auf einen Blick",
+      indexGroups: { summary: "Zusammenfassung", browser: "Browser und Suche", checks: "Prüfungen und Behebungen", glance: "Auf einen Blick", exposure: "Offen Sichtbares", evidence: "Belege", cases: "Ausführbare Fälle" },
       offerTitle: "Den Rest lesen", offerFix: "Fix-Liste · {usd} USD", offerFixBody: "Bewertungen, alle Befunde, die 10 wichtigsten Korrekturen in klaren Worten und ein PDF der Zusammenfassung.", offerFull: "Vollständiger Bericht · {usd} USD", offerFullBody: "19 USD und 5 USD für jedes weitere Framework oder Werkzeug. Alle Testfälle und Ebenen, die Signale, die Exporte und die Skripte.", offerCredit: "Die 5 USD der Fix-Liste sind bereits abgezogen.", offerFixOpen: "Ihre Fix-Liste ist offen: Bewertungen und Befunde sind vollständig lesbar. Die Testfälle bleiben unscharf, bis der vollständige Bericht bezahlt ist.",
       priceSay: "kostet {usd} US-Dollar mehr", competitorSay: "dieser Wettbewerber kostet {usd} US-Dollar", totalEyebrow: "Vor dem Start", totalTitle: "Die Summe dieser Prüfung", totalCompareTitle: "Die Summe dieses Vergleichs", totalIncluded_one: "{n} Framework, in Ihrer ersten Prüfung enthalten", totalIncluded_other: "{n} Frameworks, in Ihrer ersten Prüfung enthalten", totalPages: "{n} Seiten", totalDepth: "{n} Linkebenen tief", totalCompetitor: "Wettbewerber: {host}", totalList: "Summe", totalReturn: "Rückkehrrabatt {percent} %", totalCoupon: "Code {code} {percent} %", totalDue: "Zu zahlen", totalSaved: "Wird 12 Monate lang unter „Ihre Prüfungen“ gespeichert.", totalPay: "Bezahlen und starten", totalCancel: "Abbrechen", totalPassRun_one: "Pass-Prüfung, danach bleibt noch {n}", totalPassRun_other: "Pass-Prüfung, danach bleiben noch {n}", passOffer: "Oder {runs} Prüfungen für {usd} USD mit dem {plan}-Pass, 30 Tage lang.", passOfferUp: "Ihr Pass ist aufgebraucht oder abgelaufen. Oder {runs} Prüfungen für {usd} USD mit dem {plan}-Pass, 30 Tage lang.", passOfferGo: "{plan}-Pass kaufen", passSignIn: "Melden Sie sich zuerst an. Ein Pass gehört zu der Adresse, mit der Sie sich anmelden.",
       lighthouse: "Lighthouse bewertete die Leistung mit {score}/100 auf einem simulierten Mittelklasse-Smartphone über langsames 4G.", psiNoField: "PageSpeed Insights: Chrome hat zu wenige Besuche, um Daten echter Nutzer für diese Website zu veröffentlichen.",
@@ -625,8 +677,19 @@
     },
     fr: {
       urlNeeded: "Saisissez une page publique après https://.",
+      ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
+      reason: {
+        own: "Ce site m’appartient et je veux un plan de test", client: "Un client m’a demandé de proposer une couverture avant une mise en production", redesign: "Je compare cette page avec une refonte",
+        release: "J’ai besoin d’une liste de cas avant une mise en production", tech: "Je veux connaître les technologies publiques utilisées", a11y: "Je prépare une analyse d’accessibilité",
+        security: "Je prépare une analyse des en-têtes de sécurité publics", performance: "J’ai besoin d’une liste de cas de performance et de charge",
+        teaching: "J’enseigne ou j’apprends comment une page pourrait être testée", allowed: "Je vérifie une page que j’ai le droit d’analyser",
+        verify: "Je veux que QA-lab effectue une vérification", credentials: "J’ai un identifiant et un mot de passe pour ce site", other: "Autre"
+      },
+      reasonPick: "Choisissez une raison.", reasonWrite: "Écrivez la raison en une phrase.", clientNameNeeded: "Saisissez le nom du client.", clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.",
+      scopePages: "{n} pages", scopeDepth: "{n} de profondeur", scopeSite: "langue du site", scopeSection: "cette section",
+      sectionNone: "Ajoutez un chemin, comme example.com/docs, pour garder les pages suivantes dans cette section. Avec l’hôte seul, tout le site est analysé.", sectionStay: "Les pages suivantes restent sous {path}.", sectionLeave: "Les pages suivantes peuvent suivre des liens hors de {path}.",
       tour: {
         back: "Retour", close: "Fermer", next: "Suivant", finish: "Terminer", step: "Étape {n} sur {m}.", progress: "Progression de l’étape", wait: "Disponible quand cette étape se termine.",
         terms: ["Les avertissements", "Aucune commande ne s’active tant que chaque case n’est pas cochée. Les avertissements citent les règles locales, nationales et internationales. Une analyse terminée, un arrêt et un seul affichage du rapport font partie de ce texte."],
@@ -668,6 +731,8 @@
       read_one: "{n} page analysée", read_other: "{n} pages analysées", readOf_one: "{n} page analysée sur {found} trouvées", readOf_other: "{n} pages analysées sur {found} trouvées",
       headless: "contrôlé dans un navigateur sans interface", risks: "Plus grands risques", quick: "Gains rapides", solid: "Déjà solide", noneFound: "Aucun trouvé.",
       noSolid: "Aucun domaine n’obtient encore B ou mieux.", printSummary: "Imprimer ce résumé", expandAll: "Tout déplier", collapseAll: "Tout replier", caseMore: "Plus", caseLess: "Moins",
+      indexLabel: "Dans ce rapport", backTop: "Retour en haut", glance: "En un coup d’œil",
+      indexGroups: { summary: "Synthèse", browser: "Navigateur et recherche", checks: "Contrôles et corrections", glance: "En un coup d’œil", exposure: "Exposition", evidence: "Preuves", cases: "Cas à exécuter" },
       offerTitle: "Lire la suite", offerFix: "Liste de corrections · {usd} USD", offerFixBody: "Les scores, tous les constats, les 10 premières corrections en mots simples et un PDF du résumé.", offerFull: "Rapport complet · {usd} USD", offerFullBody: "19 USD, puis 5 USD par framework ou outil en plus. Tous les cas et toutes les couches, les signaux, les exports et les scripts.", offerCredit: "Les 5 USD de la liste de corrections sont déjà déduits.", offerFixOpen: "Votre liste de corrections est ouverte : les scores et les constats se lisent en entier. Les cas restent flous jusqu’au paiement du rapport complet.",
       priceSay: "ajoute {usd} dollars américains", competitorSay: "ce concurrent ajoute {usd} dollars américains", totalEyebrow: "Avant de commencer", totalTitle: "Le total de cette analyse", totalCompareTitle: "Le total de cette comparaison", totalIncluded_one: "{n} framework, inclus dans votre première analyse", totalIncluded_other: "{n} frameworks, inclus dans votre première analyse", totalPages: "{n} pages", totalDepth: "{n} niveaux de liens", totalCompetitor: "Concurrent : {host}", totalList: "Total", totalReturn: "Remise de retour {percent} %", totalCoupon: "Code {code} {percent} %", totalDue: "À payer", totalSaved: "Enregistrée dans Vos analyses pendant 12 mois.", totalPay: "Payer et lancer", totalCancel: "Annuler", totalPassRun_one: "Analyse du pass, il en reste {n} après celle-ci", totalPassRun_other: "Analyse du pass, il en reste {n} après celle-ci", passOffer: "Ou {runs} analyses pour {usd} USD avec le pass {plan}, pendant 30 jours.", passOfferUp: "Votre pass est épuisé ou terminé. Ou {runs} analyses pour {usd} USD avec le pass {plan}, pendant 30 jours.", passOfferGo: "Acheter le pass {plan}", passSignIn: "Connectez-vous d’abord. Un pass appartient à l’adresse avec laquelle vous vous connectez.",
       lighthouse: "Lighthouse a noté la performance {score}/100 sur un téléphone milieu de gamme simulé en 4G lente.", psiNoField: "PageSpeed Insights : Chrome a trop peu de visites pour publier des données d’utilisateurs réels pour ce site.",
@@ -779,8 +844,19 @@
     },
     it: {
       urlNeeded: "Scrivi una pagina pubblica dopo https://.",
+      ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
+      reason: {
+        own: "Questo sito è mio e voglio un piano di test", client: "Un cliente mi ha chiesto di proporre una copertura prima di un rilascio", redesign: "Sto confrontando questa pagina con un restyling",
+        release: "Mi serve un elenco di casi prima di un rilascio", tech: "Voglio conoscere le tecnologie pubbliche usate", a11y: "Sto preparando una revisione dell’accessibilità",
+        security: "Sto preparando una revisione degli header di sicurezza pubblici", performance: "Mi serve un elenco di casi di prestazioni e carico",
+        teaching: "Sto insegnando o imparando come si potrebbe testare una pagina", allowed: "Sto controllando una pagina che ho il permesso di rivedere",
+        verify: "Voglio che QA-lab esegua una verifica", credentials: "Ho un nome utente e una password per questo sito", other: "Altro"
+      },
+      reasonPick: "Scegli un motivo.", reasonWrite: "Scrivi il motivo in una frase.", clientNameNeeded: "Scrivi il nome del cliente.", clientEmailNeeded: "Scrivi l’email del cliente.", clientUrlNeeded: "Scrivi il sito web del cliente.",
+      scopePages: "{n} pagine", scopeDepth: "{n} di profondità", scopeSite: "lingua del sito", scopeSection: "questa sezione",
+      sectionNone: "Aggiungi un percorso, come example.com/docs, per tenere le pagine successive in quella sezione. Con il solo host si rivede tutto il sito.", sectionStay: "Le pagine successive restano sotto {path}.", sectionLeave: "Le pagine successive possono seguire link fuori da {path}.",
       tour: {
         back: "Indietro", close: "Chiudi", next: "Avanti", finish: "Fine", step: "Passo {n} di {m}.", progress: "Avanzamento del passo", wait: "Disponibile quando questo passo finisce.",
         terms: ["Le avvertenze", "Ogni comando resta spento finché non spunti ogni casella. Le avvertenze nominano le regole locali, nazionali e internazionali. Una revisione completata, uno stop e una sola visualizzazione del report fanno parte di quel testo."],
@@ -822,6 +898,8 @@
       read_one: "{n} pagina analizzata", read_other: "{n} pagine analizzate", readOf_one: "{n} pagina analizzata su {found} trovate", readOf_other: "{n} pagine analizzate su {found} trovate",
       headless: "controllato in un browser headless", risks: "Rischi maggiori", quick: "Interventi rapidi", solid: "Già solido", noneFound: "Nessuno trovato.",
       noSolid: "Nessuna area ha ancora B o più.", printSummary: "Stampa questo riepilogo", expandAll: "Espandi tutto", collapseAll: "Comprimi tutto", caseMore: "Altro", caseLess: "Meno",
+      indexLabel: "In questo report", backTop: "Torna su", glance: "In breve",
+      indexGroups: { summary: "Riepilogo", browser: "Browser e ricerca", checks: "Controlli e correzioni", glance: "In breve", exposure: "Esposizione", evidence: "Evidenze", cases: "Casi da eseguire" },
       offerTitle: "Leggi il resto", offerFix: "Lista delle correzioni · {usd} USD", offerFixBody: "Punteggi, tutti i rilievi, le prime 10 correzioni in parole semplici e un PDF del riepilogo.", offerFull: "Report completo · {usd} USD", offerFullBody: "19 USD più 5 USD per ogni framework o strumento in più. Tutti i casi e i livelli, i segnali, gli export e gli script.", offerCredit: "I 5 USD della lista delle correzioni sono già scalati.", offerFixOpen: "La tua lista delle correzioni è aperta: punteggi e rilievi si leggono per intero. I casi restano sfocati finché il report completo non è pagato.",
       priceSay: "aggiunge {usd} dollari statunitensi", competitorSay: "questo concorrente aggiunge {usd} dollari statunitensi", totalEyebrow: "Prima di iniziare", totalTitle: "Il totale di questa revisione", totalCompareTitle: "Il totale di questo confronto", totalIncluded_one: "{n} framework, incluso nella tua prima revisione", totalIncluded_other: "{n} framework, inclusi nella tua prima revisione", totalPages: "{n} pagine", totalDepth: "{n} livelli di link", totalCompetitor: "Concorrente: {host}", totalList: "Totale", totalReturn: "Sconto di ritorno {percent}%", totalCoupon: "Codice {code} {percent}%", totalDue: "Da pagare", totalSaved: "Salvata in Le tue revisioni per 12 mesi.", totalPay: "Paga e avvia", totalCancel: "Annulla", totalPassRun_one: "Revisione del pass, ne resta {n} dopo questa", totalPassRun_other: "Revisione del pass, ne restano {n} dopo questa", passOffer: "Oppure {runs} revisioni per {usd} USD con il pass {plan}, per 30 giorni.", passOfferUp: "Il tuo pass è esaurito o scaduto. Oppure {runs} revisioni per {usd} USD con il pass {plan}, per 30 giorni.", passOfferGo: "Compra il pass {plan}", passSignIn: "Accedi prima. Un pass appartiene all’indirizzo con cui accedi.",
       lighthouse: "Lighthouse ha dato {score}/100 alle prestazioni su uno smartphone di fascia media simulato con 4G lento.", psiNoField: "PageSpeed Insights: Chrome ha troppo poche visite per pubblicare dati di utenti reali per questo sito.",

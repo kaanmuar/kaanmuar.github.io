@@ -294,7 +294,7 @@ test.describe('The You step (#2769)', () => {
     await expect(page.locator('#email')).toHaveValue('ana@example.com');
   });
 
-  test('a mailbox at another domain than the site, for a review of your own site, shows its error', async ({ page }) => {
+  test('a mailbox at another domain than the site, for a review of your own site, shows one error and no done check (#2828, #2789)', async ({ page }) => {
     await prime(page);
     const store = await signedIn(page);
     await backend(page, store);
@@ -303,10 +303,68 @@ test.describe('The You step (#2769)', () => {
     await page.locator('#url').fill('carlosandmunoz.com');
     await page.locator('#name').fill('Ana');
     await page.locator('#reasons input[value="own"]').check();
+    const you = page.locator('#req-you');
     await expect(page.locator('#own-note')).toBeVisible();
+    await expect(you).toHaveClass(/\bdone\b/);
     await page.locator('#review-btn').click();
-    await expect(page.locator('#email-error')).toBeVisible();
-    await expect(page.locator('#email-error')).toHaveText(/^Use an email at the same domain as the site\./);
+    await expect(page.locator('#email-error')).toHaveText('Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.');
+    await expect(page.locator('#own-note')).toBeHidden();
+    await expect(you).not.toHaveClass(/\bdone\b/);
+    await expect(you.locator('.tg-count')).not.toHaveText('✓');
+    await expect(page.locator('#review-needs button[data-step="you"]')).toBeVisible();
+
+    await page.locator('#reasons input[value="redesign"]').check();
+    await expect(page.locator('#email-error')).toBeEmpty();
+    await expect(page.locator('#own-note')).toBeHidden();
+    await expect(you).toHaveClass(/\bdone\b/);
+    await expect(you.locator('.tg-count')).toHaveText('✓');
+  });
+
+  test('the same-domain error clears once the site matches the mailbox, and the note comes back while own is picked', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('carlosandmunoz.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[value="own"]').check();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#email-error')).not.toBeEmpty();
+    await page.locator('#url').fill('example.com');
+    await expect(page.locator('#email-error')).toBeEmpty();
+    await expect(page.locator('#own-note')).toBeVisible();
+    await expect(page.locator('#req-you')).toHaveClass(/\bdone\b/);
+  });
+
+  test('the same-domain error is in the page language', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('carlosandmunoz.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[value="own"]').check();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#email-error')).toHaveText('Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.');
+    await expect(page.locator('#own-note')).toBeHidden();
+  });
+
+  test('a name error hides the done check until the name is fixed (#2789)', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('example.com');
+    await page.locator('#name').fill('1');
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#name-error')).toHaveText('Enter your name.');
+    await expect(page.locator('#req-you')).not.toHaveClass(/\bdone\b/);
+    await page.locator('#name').fill('Ana');
+    await expect(page.locator('#name-error')).toBeEmpty();
+    await expect(page.locator('#req-you')).toHaveClass(/\bdone\b/);
   });
 
   test('the Google note is short and links to the full list in the disclaimers', async ({ page }) => {
@@ -390,5 +448,127 @@ test.describe('The tour and the sign-in box in the page language (#2768)', () =>
     await expect(page.locator('#site-tour-title')).toHaveText(/^(You are not the first|Sign in)$/);
     await expect(page.locator('#site-tour-close')).toHaveText('Close');
     await expect(page.locator('#site-tour-step-label')).toHaveText(/^Step 1 of \d+\.$/);
+  });
+});
+
+test.describe('Report section index (#2770)', () => {
+  async function openSample(page, path = '/qa-review.html') {
+    await prime(page);
+    await backend(page);
+    await page.goto(path);
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#report-index')).toBeVisible();
+  }
+
+  // The groups of the sections on show, in reading order, each with the heading its entry jumps to.
+  const shownGroups = (page) => page.evaluate(() => {
+    const groups = [];
+    [...document.querySelectorAll('#report .fold-toggle')].filter((button) => button.getClientRects().length).forEach((button) => {
+      const heading = button.parentElement;
+      const key = heading.dataset.indexGroup || heading.id;
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.names.push(button.textContent.trim());
+      else groups.push({ key, href: '#' + heading.id, names: [button.textContent.trim()] });
+    });
+    return groups;
+  });
+  const indexEntries = (page) => page.locator('#report-index a').evaluateAll((links) => links.map((a) => ({ key: a.dataset.indexGroup, href: a.getAttribute('href'), names: a.title.split(' · ') })));
+
+  test('the sample report groups the sections it shows into a short index, and an entry takes focus to the first heading of its group below the toolbar', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openSample(page);
+    const groups = await shownGroups(page);
+    expect(await indexEntries(page)).toEqual(groups);
+    expect(groups.map((group) => group.key)).toEqual(['summary', 'browser', 'checks', 'glance', 'exposure', 'evidence', 'cases']);
+    expect(await page.locator('#report-index a').allTextContents()).toEqual(['Summary', 'Browser and search', 'Checks and fixes', 'At a glance', 'Exposure', 'Evidence', 'Cases to run']);
+    expect(groups.flatMap((group) => group.names)).not.toContain('Tools that apply');
+    expect(groups.flatMap((group) => group.names)).not.toContain('A login you are allowed to use');
+    expect(new Set(await page.locator('#report-index-list > li').evaluateAll((rows) => rows.map((li) => li.offsetTop))).size).toBe(1);
+    await expect(page.locator('#report-top')).toBeHidden();
+
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    const heading = page.locator('#report h2', { hasText: 'Security and email' });
+    await expect(heading.locator('.fold-toggle')).toBeFocused();
+    await expect(heading).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.querySelector('#dash-overlay .report-toolbar').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+
+    await page.locator('#report-top').click();
+    await expect.poll(() => page.locator('#dash-overlay').evaluate((el) => el.scrollTop)).toBe(0);
+    await expect(page.locator('#report-index a').first()).toBeFocused();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('#report-index')).toBeHidden();
+  });
+
+  test('collapsed sections open when their group is chosen', async ({ page }) => {
+    await openSample(page);
+    await page.locator('#fold-all').click();
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await expect(page.locator('#fixkit')).toBeVisible();
+    for (const name of ['Security and email', 'Every check, with its verdict', 'Fix kit']) {
+      await expect(page.locator('#report h2', { hasText: name }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'true');
+    }
+    await expect(page.locator('#report h2', { hasText: 'Health score' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    const list = await page.locator('#report-index-list').evaluate((el) => ({ rows: new Set([...el.children].map((li) => li.offsetTop)).size, scrolls: el.scrollWidth > el.clientWidth }));
+    expect(list).toEqual({ rows: 1, scrolls: true });
+    const heights = await page.evaluate(() => [...document.querySelectorAll('#report-index a, #report .filters button')]
+      .filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect().height));
+    expect(Math.min(...heights)).toBeGreaterThanOrEqual(32);
+
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await expect(page.locator('#report h2', { hasText: 'Security and email' }).locator('.fold-toggle')).toBeFocused();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+    await expect(page.locator('#report-top')).toBeInViewport();
+  });
+
+  test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
+    for (const dark of [false, true]) {
+      await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+      const sheet = await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
+        const style = getComputedStyle(el);
+        const probe = document.createElement('i');
+        probe.style.color = style.backgroundColor;
+        document.body.appendChild(probe);
+        const alpha = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number)[3];
+        probe.remove();
+        return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
+      });
+      expect(sheet).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+    }
+    const close = await page.locator('#dash-close').boundingBox();
+    expect(close.y).toBeLessThan(30);
+    expect(close.x + close.width).toBeLessThanOrEqual(390);
+    await page.emulateMedia({ media: 'print' });
+    expect(await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
+  });
+
+  test('each language page labels the index and its groups in its language', async ({ page }) => {
+    const copy = {
+      es: ['En este informe', 'Resumen', 'De un vistazo'],
+      pt: ['Neste relatório', 'Resumo', 'Visão geral'],
+      de: ['In diesem Bericht', 'Zusammenfassung', 'Auf einen Blick'],
+      fr: ['Dans ce rapport', 'Synthèse', 'En un coup d’œil'],
+      it: ['In questo report', 'Riepilogo', 'In breve']
+    };
+    for (const [lang, [label, first, glance]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#report-index-label')).toHaveText(label);
+      await expect(page.locator('#report-index a').first()).toHaveText(first);
+      await expect(page.locator('#report-index a', { hasText: glance })).toHaveCount(1);
+      expect(await indexEntries(page)).toEqual(await shownGroups(page));
+    }
   });
 });

@@ -49,9 +49,9 @@ private fun copy(context: Context, text: String) {
 fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
     val links = ou.obj("links")
     val context = LocalContext.current
-    if (links == null || !links.isOk()) { Panel("qalabreview.com links") { Muted(links?.str("error") ?: "Not loaded.") }; return }
+    if (links == null || !links.isOk()) { Panel("qalabreview.com links", id = "outreach-links") { Muted(links?.str("error") ?: "Not loaded.") }; return }
     val live = links.bool("live") == true
-    Panel("qalabreview.com links") {
+    Panel("qalabreview.com links", id = "outreach-links") {
         StatusRow(if (live) "good" else "alert", if (live) "Worker live" else "Worker not live", if (live) "Short links forward to the Live Reports." else "robots.txt answered ${fmt(links.num("workerStatus"))}. Deploy the Worker in qalabreview/.", url = links.str("base"))
         val was = links.obj("prior")
         KpiPairs(listOf(
@@ -64,10 +64,10 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
         ))
     }
     val campaigns = links.pairs("byCampaign")
-    if (campaigns.isEmpty()) Panel("Visits by link") { Muted("No visits from qalabreview.com links in this range yet.") }
-    else TopList("Visits by link", campaigns)
+    if (campaigns.isEmpty()) Panel("Visits by link", id = "outreach-link-visits") { Muted("No visits from qalabreview.com links in this range yet.") }
+    else TopList("Visits by link", campaigns, id = "outreach-link-visits")
     ReportReplyLinks(links.obj("social"))
-    Panel("Prospects who opened their link") {
+    Panel("Prospects who opened their link", id = "outreach-link-opens") {
         val prospects = links.objs("prospects")
         if (prospects.isEmpty()) Muted("No prospect has opened a link yet.")
         prospects.take(20).forEach { p ->
@@ -77,7 +77,7 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
                 url = "https://qalabreview.com/$host")
         }
     }
-    Panel("Make a prospect link") {
+    Panel("Make a prospect link", id = "outreach-link-make") {
         var host by remember { mutableStateOf("") }
         var lang by remember { mutableStateOf("es") }
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -90,7 +90,7 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
             Button(onClick = { link?.let { copy(context, it); vm.say("Copied $it") } }, enabled = link != null) { Text("Copy") }
         }
     }
-    Panel("Channel links") {
+    Panel("Channel links", id = "outreach-link-channels") {
         links.objs("channels").forEach { c ->
             val url = c.str("url") ?: return@forEach
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -111,7 +111,7 @@ fun linkCounts(x: JsonObject?): String = "${count(x.num("visits"), "click")} · 
 @Composable
 private fun ReportReplyLinks(social: JsonObject?) {
     if (social == null) return
-    Panel("Report replies: clicks, runs and payments") {
+    Panel("Report replies: clicks, runs and payments", id = "outreach-report-replies") {
         KpiPairs(listOf(
             KpiData("Clicks", fmt(social.num("visits"))), KpiData("Free runs", fmt(social.num("reviews"))),
             KpiData("Paid unlocks", fmt(social.num("paid"))), KpiData("Revenue", fmt(social.num("usd")) + " USD")

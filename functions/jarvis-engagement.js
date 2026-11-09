@@ -22,6 +22,7 @@ const Joins = require("./engagement-joins");
 const Offer = require("./url-review-domain-offer");
 const OwnerTags = require("./owner-tags");
 const Snapshot = require("./jarvis-snapshot");
+const jarvisLog = require("./jarvis-log");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -47,6 +48,19 @@ function increments(map, inc) {
 }
 
 async function geminiJson(fetchImpl, env, prompt) {
+  const started = Date.now();
+  const what = String(prompt || "").replace(/\s+/g, " ").slice(0, 120);
+  try {
+    const text = await geminiJsonCall(fetchImpl, env, prompt);
+    await jarvisLog.log(null, { source: "gemini", level: "info", text: "Gemini (engagement) ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
+    return text;
+  } catch (error) {
+    await jarvisLog.log(null, { source: "gemini", level: "error", text: "Gemini (engagement) failed in " + (Date.now() - started) + " ms: " + String(error.message || error).slice(0, 140) + " · " + what });
+    throw error;
+  }
+}
+
+async function geminiJsonCall(fetchImpl, env, prompt) {
   const res = await fetchImpl(GEMINI + (env.GEMINI_MODEL || "gemini-flash-latest") + ":generateContent", {
     method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, signal: AbortSignal.timeout(90000),
     body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 8192, responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" } } })
