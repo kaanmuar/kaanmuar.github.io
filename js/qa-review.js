@@ -455,7 +455,7 @@
     event.preventDefault();
     const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
     if (!value || /\s/.test(value)) {
-      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.t("urlNeeded") : "Enter a public page after https://.");
+      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.word("fieldError", "urlNeeded") : "Enter a public page after https://.");
       stageUrl.focus();
       return;
     }
@@ -591,18 +591,18 @@
     const code = reasonCode();
     const reason = reasonBox.value.trim();
     const host = urlInput.value.trim();
-    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
-    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    const copy = window.QAReviewReportCopy;
-    if (!REASONS.includes(code)) errors.push({ field: "reason", message: copy.t("reasonPick") });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: copy.t("reasonWrite") });
+    const say = (id) => window.QAReviewReportCopy.word("fieldError", id);
+    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: say("nameNeeded") });
+    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: say("emailNeeded") });
+    if (!REASONS.includes(code)) errors.push({ field: "reason", message: say("reasonPick") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: say("reasonWrite") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: copy.t("clientNameNeeded") });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: copy.t("clientEmailNeeded") });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: copy.t("clientUrlNeeded") });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: say("clientNameNeeded") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: say("clientEmailNeeded") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: say("clientUrlNeeded") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -610,11 +610,11 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: copy.t("ownMailDomain") });
+        errors.push({ field: "email", message: say("ownMailDomain") });
       }
     }
-    if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
-    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
+    if (!host || /\s/.test(host)) errors.push({ field: "url", message: say("urlNeeded") });
+    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: say("frameworksNeeded") });
     return errors.map((item) => Object.assign(item, { local: true }));
   }
 
@@ -1828,7 +1828,7 @@
         const field = (error.fields || []).find((item) => item.field === "url");
         row.state = "failed";
         row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", row.note);
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || row.note);
       }
     }
     paintCompareRows(pool);
@@ -2970,8 +2970,8 @@
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
-      const error = new Error(body.error || "The review failed.");
-      error.fields = body.fields;
+      const error = new Error(rc.field(body.error) || "The review failed.");
+      error.fields = body.fields && body.fields.map((item) => Object.assign({}, item, { message: rc.field(item.message) }));
       error.paymentRequired = !!body.paymentRequired;
       error.body = body;
       throw error;
@@ -3116,7 +3116,7 @@
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
       } else {
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
         if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
