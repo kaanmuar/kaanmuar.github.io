@@ -62,6 +62,7 @@
 const crypto = require("crypto");
 const core = require("./jarvis-core");
 const addresses = require("./jarvis-addresses");
+const jarvisLog = require("./jarvis-log");
 
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
@@ -218,6 +219,8 @@ async function log(db, entry, now) {
     at: new Date(now).toISOString(), day: core.zoneParts(new Date(now)).day, expireAt: new Date(now + 180 * DAY)
   };
   await db.collection("jarvis_actions").add(row);
+  await jarvisLog.log(null, { source: entry.source === "countdown" ? "countdown" : "jarvis", level: jarvisLog.levelOfStatus(row.status), ref: row.proposal || entry.key || "",
+    text: row.action + " " + row.status + (row.mode === "auto" ? " (auto)" : "") + (row.target ? ": " + row.target : "") + (row.detail ? " · " + row.detail : "") + (row.by && row.mode !== "auto" ? " · by " + row.by : "") });
   return row;
 }
 

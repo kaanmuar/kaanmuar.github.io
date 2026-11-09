@@ -20,8 +20,12 @@
         { key: 'engagement', name: 'Engagement', short: 'ENG' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' },
-        { key: 'github', name: 'GitHub', short: 'GH' }
+        { key: 'github', name: 'GitHub', short: 'GH' },
+        { key: 'console', name: 'Console', short: 'LOG' }
     ];
+    // Jarvis > Console (#2810): the jarvis_log line sources and levels, lowest level first.
+    const LOG_SOURCES = ['jarvis', 'function', 'actions', 'mac', 'board', 'github', 'gemini', 'push', 'countdown'];
+    const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
     const ACTION_LABELS = {
         share_cv: 'Share', open_simulator: 'Open studio', open_qa_lab: 'Open lab', open_contact_widget: 'Contact',
         submit_message: 'Message', submit_rating: 'Rating', sim_run_sprint: 'Sprint start', sim_sprint_complete: 'Sprint finish',
@@ -1551,7 +1555,18 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsStale };
+    /* The console's filter, on the server (the log op) and in the page: sources = a list or "a,b" (empty is all),
+       level = the lowest level shown, q = words that must all appear in the line's text, source or ref. */
+    function logFilter(rows, f) {
+        const o = f || {};
+        const sources = (Array.isArray(o.sources) ? o.sources : String(o.sources || '').split(',')).map((s) => String(s).trim()).filter(Boolean);
+        const min = Math.max(0, LOG_LEVELS.indexOf(o.level));
+        const words = String(o.q || '').toLowerCase().split(/\s+/).filter(Boolean);
+        return (rows || []).filter((r) => r && (!sources.length || sources.includes(r.source)) && Math.max(0, LOG_LEVELS.indexOf(r.level)) >= min
+            && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
+    }
+
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsStale };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
