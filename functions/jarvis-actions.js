@@ -53,6 +53,8 @@
    gh-remove-worktree a merged, clean worktree no chat holds is queued for the Mac uploader, after the countdown
    gh-merge-pr, gh-close-issue  on a click or a Gemini pick only; PRs labelled jarvis-merge merge through merge-pr
    gh-agent           a Cursor cloud agent; never on its own, every launch is Carlos's click
+   gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow or a security alert, on a click only (#2808)
+   gh-dismiss-alert, gh-dismiss-low  dismiss security alerts; only on Carlos's click, never a Gemini pick (GH_CLICK_ONLY)
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
    after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once.
 
@@ -77,10 +79,14 @@ const LABELS = {
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
   "gh-agent": "Launch a Cursor fix agent", "gh-diagnose": "Diagnose a failed run",
+  "gh-quarantine": "File a flaky-workflow ticket", "gh-security-ticket": "File a ticket for a security alert", "gh-dismiss-alert": "Dismiss a security alert", "gh-dismiss-low": "Dismiss the low security alerts",
   "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging"
 };
-const GH_ACTIONS = ["gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent"];
+const GH_ACTIONS = ["gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent",
+  "gh-quarantine", "gh-security-ticket", "gh-dismiss-alert", "gh-dismiss-low"];
 const GH_RISKY = ["gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree"];
+// Never run by Jarvis itself or a Gemini pick, whatever the catalog says: only Carlos's click.
+const GH_CLICK_ONLY = ["gh-agent", "gh-dismiss-alert", "gh-dismiss-low"];
 // A Gemini pick's GitHub action: the catalog().github list its argument must be in, and the argument's name.
 const GH_PICKS = { "gh-board-sync": ["drift", "number"], "gh-orphan-ticket": ["orphans", "pr"], "gh-update-pr": ["behind", "pr"], "gh-merge-pr": ["green", "pr"],
   "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"] };
@@ -174,7 +180,7 @@ function parsePicks(raw, alerts) {
 
 // A pick runs only when its action is in the catalog and its argument names something that exists now.
 function pickOk(p, catalog) {
-  if (!AI_CATALOG[p.action]) return false;
+  if (!AI_CATALOG[p.action] || GH_CLICK_ONLY.includes(p.action)) return false;
   if (p.action === "run-job") return (catalog.jobs || []).includes(p.args.job);
   if (p.action === "rerun-ci") return (catalog.workflows || []).includes(p.args.workflow);
   if (GH_PICKS[p.action]) return ghArg(p) !== "" && (((catalog.github || {})[GH_PICKS[p.action][0]]) || []).map(String).includes(ghArg(p));
@@ -649,4 +655,4 @@ function briefLines(rows, now) {
   return lines;
 }
 
-module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };
+module.exports = { SAFE, CAPS, LABELS, GH_ACTIONS, GH_RISKY, GH_PICKS, GH_CLICK_ONLY, NOTICE_TRIES, NOTICE_HOURS, CONFIDENCE, COUNTDOWN_HOURS, AI_CALLS, AI_CATALOG, RESUME_PASSES, JARVIS_BRANCH, RISKY_JOBS, RISKY_CI, risky, cleanSettings, cleanRerun, noticeHours, mailboxProblem, pauseProblem, pauseTargets, aiPrompt, parsePicks, pickOk, usedToday, todayRows, log, seen, recent, autoRun, summary, pushMessage, briefLines };

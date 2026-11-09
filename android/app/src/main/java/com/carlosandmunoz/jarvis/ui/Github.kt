@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,10 +27,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,12 +40,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carlosandmunoz.jarvis.GhResult
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.ago
@@ -56,6 +63,7 @@ import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.net.URLEncoder
@@ -281,9 +289,75 @@ object Github {
         part.bool("ok") == false -> listOfNotNull(part.str("error"), part.str("need")?.let { "needs $it" }).joinToString(" · ").ifEmpty { "Not available." }
         else -> null
     }
+
+    const val POLL_MS = 10_000L
+    const val POLL_TRIES = 90
+
+    /** A re-run's github-run answer as its row's state (#2808). */
+    fun runResult(out: JsonObject): GhResult {
+        val attempt = out.num("attempt")?.toInt() ?: 1
+        val url = out.str("url")?.ifBlank { null }
+        return when {
+            out.bool("done") == true && out.str("conclusion") == "success" -> GhResult("done", "Passed on attempt $attempt.", url, "Open the run")
+            out.bool("done") == true -> GhResult("failed", "Ended ${out.str("conclusion")?.ifBlank { null } ?: "without a result"} on attempt $attempt.", url, "Open the run")
+            else -> GhResult(if (out.str("status") == "in_progress") "running" else "queued", "Attempt $attempt: ${(out.str("status") ?: "queued").replace('_', ' ')}…", url, "Watch the run")
+        }
+    }
+
+    /** The Fix button a diagnosis gets: its own action when Jarvis can run it; gh-agent and none leave only the agent. */
+    fun fixLabel(diag: JsonObject?, pr: Int?): String? = when (diag.str("action")) {
+        "rerun-ci" -> "Fix: re-run"
+        "gh-update-pr" -> if (pr != null) "Fix: update with main" else null
+        else -> null
+    }
+
+    /** A Jarvis diagnoses row in a failing run's shape, so [runPrompt] drafts its agent prompt. */
+    fun diagRun(d: JsonObject): JsonObject = JsonObject(listOf("id" to "run", "name" to "workflow", "branch" to "branch", "pr" to "pr", "url" to "url")
+        .mapNotNull { (to, from) -> d[from]?.takeIf { it !is JsonNull }?.let { to to it } }.toMap() + ("diag" to d))
+
+    fun quarantineTitle(w: JsonObject) = "CI: ${w.str("name").orEmpty()} is flaky (${fmt(w.num("pct"))}% of ${fmt(w.num("runs"))} runs)"
+
+    val SEVERITIES = listOf("critical", "high", "medium", "low")
+    val ALERT_KINDS = listOf("dependabot" to "Dependabot", "codeScanning" to "Code scanning", "secrets" to "Secret scanning")
+
+    /** GitHub's own dismissal reasons per alert kind; secret scanning alerts cannot be dismissed from Jarvis. */
+    val DISMISS_REASONS = mapOf(
+        "dependabot" to listOf("tolerable_risk" to "Tolerable risk", "fix_started" to "A fix has started", "inaccurate" to "Inaccurate", "no_bandwidth" to "No bandwidth to fix", "not_used" to "Code not used"),
+        "codeScanning" to listOf("false positive" to "False positive", "won't fix" to "Won't fix", "used in tests" to "Used in tests"))
+
+    fun alertName(kind: String, i: JsonObject): String = when (kind) { "dependabot" -> i.str("package"); "codeScanning" -> i.str("rule"); else -> i.str("type") } ?: "alert"
+    fun alertKey(kind: String, i: JsonObject) = "$kind:${i.str("repo").orEmpty()}#${i.num("number")?.toInt()}"
+
+    /** The github-act body of a dismissal, as the web's dismiss form sends it. */
+    fun dismissArgs(kind: String, i: JsonObject, reason: String, comment: String): Map<String, JsonElement> = mapOf(
+        "action" to JsonPrimitive("gh-dismiss-alert"), "kind" to JsonPrimitive(kind), "repo" to JsonPrimitive(i.str("repo").orEmpty()), "number" to JsonPrimitive(i.num("number")?.toInt() ?: 0),
+        "reason" to JsonPrimitive(reason), "comment" to JsonPrimitive(comment.trim().take(280)), "target" to JsonPrimitive("${alertName(kind, i)} #${i.num("number")?.toInt()}"))
+
+    /** A security alert's fields for gh-security-ticket, without its Dependabot PR. */
+    fun alertArgs(kind: String, i: JsonObject): Map<String, JsonElement> = i.filterKeys { it != "pr" } + ("kind" to JsonPrimitive(kind))
+
+    fun securityPrompt(i: JsonObject) = "Upgrade ${i.str("package")} to ${i.str("patched") ?: "the first patched version"} or later in ${i.str("manifest") ?: "its manifest"} " +
+        "(Dependabot alert #${i.num("number")?.toInt()} in ${i.str("repo")}" + (i.str("summary")?.let { ": $it" } ?: "") + "). Update the lockfile, run the affected tests, and open a PR against main."
+
+    /** Open alerts per readable kind, by severity (critical, high, medium, low), kinds with none left out. */
+    fun severityRows(sec: JsonObject?): List<Pair<String, List<Int>>> = ALERT_KINDS.mapNotNull { (k, label) ->
+        sec.obj(k)?.takeIf { it.bool("ok") == true }?.let { x -> label to SEVERITIES.map { s -> x.obj("bySeverity").num(s)?.toInt() ?: 0 } }
+    }.filter { it.second.sum() > 0 }
+
+    fun severityText(counts: List<Int>): String = SEVERITIES.zip(counts).filter { it.second > 0 }.joinToString(", ") { (s, n) -> s.replaceFirstChar { it.uppercase() } + " $n" }
+
+    /** Open alerts per repo across the kinds, most first. */
+    fun alertsByRepo(sec: JsonObject?): List<Pair<String, Double>> = ALERT_KINDS.flatMap { (k, _) -> sec.obj(k).pairs("byRepo") }
+        .groupBy { it.first }.map { (r, l) -> r to l.sumOf { it.second } }.sortedByDescending { it.second }
+
+    /** The low alerts the bulk dismissal sends: Dependabot and code scanning, never secrets. */
+    fun lowAlerts(sec: JsonObject?): List<JsonObject> = listOf("dependabot", "codeScanning").flatMap { k ->
+        sec.obj(k).objs("items").filter { it.str("severity") == "low" }
+            .map { JsonObject(mapOf("kind" to JsonPrimitive(k), "repo" to JsonPrimitive(it.str("repo").orEmpty()), "number" to JsonPrimitive(it.num("number")?.toInt() ?: 0))) }
+    }
 }
 
-private data class AgentDraft(val key: String, val title: String, val prompt: String, val branch: String? = null, val pr: Int? = null)
+private data class AgentDraft(val key: String, val title: String, val prompt: String, val branch: String? = null, val pr: Int? = null, val repo: String? = null, val name: String? = null)
 
 /** One block across the parent's columns that flows its own panels by the width it gets, so folding or unfolding just recomposes. */
 @Composable
@@ -314,8 +388,26 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     fun ghAct(action: String, key: String, target: JsonElement, ask: String, extra: Map<String, JsonElement> = emptyMap()) = ask(ask) {
         vm.market("gh:$action:$key", "github-act", mapOf("action" to JsonPrimitive(action), "target" to target) + extra) { out -> out.str("message") ?: ((ACTION_LABELS[action] ?: action) + ": done.") }
     }
-    fun diagnose(id: String) = vm.market("gh:diagnose:$id", "github-diagnose", mapOf("run" to JsonPrimitive(id.toLongOrNull() ?: 0L))) { out ->
-        out.obj("diag").str("cause")?.let { "Gemini: $it" } ?: "Diagnosed."
+    val uri = LocalUriHandler.current
+    fun open(url: String?) { url?.let { runCatching { uri.openUri(it) } } }
+    fun busy(key: String) = s.ghRows[key]?.state.let { it == "running" || it == "queued" }
+    fun diagnose(id: String) = vm.ghRow("run:$id", "github-diagnose", mapOf("run" to JsonPrimitive(id.toLongOrNull() ?: 0L)), "Diagnosing: Gemini is reading the run log…") { out ->
+        GhResult("done", "Diagnosed: " + (out.obj("diag").str("cause") ?: "done."))
+    }
+    fun actRow(key: String, action: String, target: String, question: String, extra: Map<String, JsonElement>, link: String = "Open on GitHub") = ask(question) {
+        val label = ACTION_LABELS[action] ?: action
+        vm.ghRow(key, "github-act", mapOf("action" to JsonPrimitive(action), "target" to JsonPrimitive(target)) + extra, "$label…") { out -> GhResult("done", out.str("message") ?: "$label: done.", out.str("url"), link) }
+    }
+    val pinned = remember { mutableStateMapOf<String, JsonObject>() }
+    fun rerun(id: String, name: String, branch: String?, row: JsonObject? = null) = ask("re-run the failed jobs of \"$name\" #$id on ${branch ?: "its branch"}") {
+        row?.let { pinned[id] = it }
+        val run = id.toLongOrNull() ?: 0L
+        vm.ghRerun("run:$id", run, mapOf("action" to JsonPrimitive("rerun-ci"), "run" to JsonPrimitive(run), "workflow" to JsonPrimitive(name), "branch" to JsonPrimitive(branch.orEmpty()), "target" to JsonPrimitive("$name #$id")))
+    }
+    fun fix(id: String, name: String, branch: String?, pr: Int?, diag: JsonObject?) = when (diag.str("action")) {
+        "rerun-ci" -> rerun(id, name, branch)
+        "gh-update-pr" -> if (pr != null) actRow("run:$id", "gh-update-pr", "#$pr", askFor("gh-update-pr", null, null, pr) + " (Gemini: ${diag.str("cause").orEmpty()})", mapOf("pr" to JsonPrimitive(pr)), "Open the PR") else Unit
+        else -> Unit
     }
 
     // Human steps first: permissions, installs, the uploader.
@@ -432,25 +524,58 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         if (daily.size >= 2) Sparkline(daily.map { it.num("failed") ?: 0.0 }, J.pink, title = "Failed runs per day", unit = "runs", labels = days, legend = "Failed")
     }
     TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10) { "%.0f%%".format(it) }
-    TopList("Flaky workflows", ci.obj("flaky").objs("workflows").map { it.str("name").orEmpty() to (Github.rate(it.num("pct")) ?: 0.0) }, 6) { "%.0f%%".format(it) }
+    val flaky = ci.obj("flaky").objs("workflows")
+    if (flaky.isNotEmpty()) Panel("Flaky workflows · ${flaky.size}") {
+        flaky.take(8).forEach { w ->
+            val name = w.str("name").orEmpty()
+            val n = w.obj("newest")
+            val nid = n.num("id")?.toLong()?.toString()
+            GhRow(if ((w.num("pct") ?: 0.0) >= 10) "alert" else "warn", "$name · ${fmt(w.num("pct"))}% flaky",
+                listOfNotNull("${fmt(w.num("runs"))} runs", nid?.let { "newest failure #$it " + (ago(n.str("at")) ?: "") }, if (n != null && n.bool("failed") != true) "passed on a re-run" else null).joinToString(" · "), n.str("url"), w.str("path"))
+            n.obj("diag").str("cause")?.let { Text("Gemini: $it", color = J.amber, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
+            Buttons {
+                if (nid != null && n.bool("failed") == true) TextButton({ rerun(nid, name, n.str("branch")) }, TAP, enabled = !busy("run:$nid")) { Text("Re-run failed jobs", color = J.cyan, fontSize = 13.sp) }
+                if (nid != null) TextButton({ diagnose(nid) }, TAP, enabled = !busy("run:$nid")) { Text(if (n.obj("diag") == null) "Diagnose" else "Diagnose again", color = J.cyan, fontSize = 13.sp) }
+                TextButton({
+                    actRow("flaky:$name", "gh-quarantine", name, askFor("gh-quarantine", Github.quarantineTitle(w), null), mapOf("workflow" to JsonPrimitive(name), "pct" to (w["pct"] ?: JsonPrimitive(0)),
+                        "runs" to (w["runs"] ?: JsonPrimitive(0)), "path" to JsonPrimitive(w.str("path").orEmpty()), "links" to (w["links"] ?: JsonArray(emptyList()))), "Open the ticket")
+                }, TAP, enabled = !busy("flaky:$name")) { Text("Quarantine", color = J.pink, fontSize = 13.sp) }
+                w.str("url")?.let { u -> TextButton({ open(u) }, TAP) { Text("Open runs", color = J.cyan, fontSize = 13.sp) } }
+                TextButton({
+                    vm.ghDraft("flaky:$name", buildMap {
+                        nid?.toLongOrNull()?.let { put("run", JsonPrimitive(it)) }
+                        put("workflow", JsonPrimitive(name)); w["pct"]?.let { put("pct", it) }; w["runs"]?.let { put("runs", it) }
+                    }) { p -> agent = AgentDraft("flaky:$name", "Fix the flaky $name workflow", p, "main", name = "Jarvis fix: flaky $name") }
+                }, TAP, enabled = !busy("flaky:$name")) { Text("Fix with an agent", color = J.amber, fontSize = 13.sp) }
+            }
+            nid?.let { RowResult(s.ghRows["run:$it"]) }
+            RowResult(s.ghRows["flaky:$name"])
+        }
+        Muted("Flaky: failed, then passed on a re-run of the same commit. Quarantine files a Backlog bug with the run links.")
+    }
 
     val failing = ci.objs("failing")
-    if (failing.isNotEmpty()) Panel("Failing runs · ${failing.size}") {
-        failing.take(12).forEach { r ->
-            val id = r.num("id")?.toLong()?.toString() ?: r.str("id").orEmpty()
+    val idOf = { r: JsonObject -> r.num("id")?.toLong()?.toString() ?: r.str("id").orEmpty() }
+    val failRows = failing + pinned.filterKeys { k -> failing.none { idOf(it) == k } }.values
+    if (failRows.isNotEmpty()) Panel("Failing runs · ${failing.size}") {
+        failRows.take(12).forEach { r ->
+            val id = idOf(r)
             val name = r.str("name").orEmpty()
             val diag = r.obj("diag")
-            GhRow("alert", name, listOfNotNull(ago(r.str("at")), r.num("attempt")?.takeIf { it > 1 }?.let { "attempt ${it.toInt()}" }, r.num("pr")?.let { "PR #${it.toInt()}" }, r.str("event")).joinToString(" · "), r.str("url"), r.str("branch") ?: "main")
+            val pr = r.num("pr")?.toInt()
+            GhRow("alert", name, listOfNotNull(ago(r.str("at")), r.num("attempt")?.takeIf { it > 1 }?.let { "attempt ${it.toInt()}" }, pr?.let { "PR #$it" }, r.str("event")).joinToString(" · "), r.str("url"), r.str("branch") ?: "main")
             diag?.let { d ->
                 Text("Gemini: " + d.str("cause").orEmpty() + (d.str("category")?.let { " ($it)" } ?: "") + (d.num("confidence")?.let { " · ${fmt(it, 2)}" } ?: ""), color = J.amber, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 d.str("fix")?.takeIf { it.isNotBlank() }?.let { Muted("Fix: $it", maxLines = 3) }
             }
             Buttons {
-                TextButton({ ask("re-run the failed jobs of \"$name\"") { runAction(vm, "rerun-ci", workflow = name) } }, TAP, enabled = actionKey("rerun-ci", name) !in s.running) { Text("Re-run", color = J.cyan, fontSize = 13.sp) }
-                TextButton({ diagnose(id) }, TAP, enabled = !running("diagnose", id)) { Text(if (diag == null) "Diagnose" else "Diagnose again", color = J.cyan, fontSize = 13.sp) }
-                TextButton({ agent = AgentDraft("run:$id", "Fix the failing $name run", Github.runPrompt(r), r.str("branch"), r.num("pr")?.toInt()) }, TAP, enabled = !running("agent", "run:$id")) { Text("Launch fix agent", color = J.amber, fontSize = 13.sp) }
+                TextButton({ rerun(id, name, r.str("branch"), r) }, TAP, enabled = !busy("run:$id")) { Text("Re-run", color = J.cyan, fontSize = 13.sp) }
+                TextButton({ diagnose(id) }, TAP, enabled = !busy("run:$id")) { Text(if (diag == null) "Diagnose" else "Diagnose again", color = J.cyan, fontSize = 13.sp) }
+                FixButtons(Github.fixLabel(diag, pr), busy("run:$id"), { fix(id, name, r.str("branch"), pr, diag) }) { agent = AgentDraft("run:$id", "Fix the failing $name run", Github.runPrompt(r), r.str("branch"), pr) }
             }
+            RowResult(s.ghRows["run:$id"])
         }
+        Muted("Fix runs what the diagnosis suggests: a re-run or an update with main. A re-run shows its state here until it finishes; an agent always asks first.")
     }
 
     Panel("Pull requests" + (prs.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
@@ -468,8 +593,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             if (Github.canUpdate(pr) || Github.canMerge(pr) || Github.hasConflicts(pr)) Buttons {
                 if (Github.canUpdate(pr)) TextButton({ ghAct("gh-update-pr", "$n", JsonPrimitive(n), askFor("gh-update-pr", null, null, n)) }, TAP, enabled = !running("gh-update-pr", "$n")) { Text("Update", color = J.cyan, fontSize = 13.sp) }
                 if (Github.canMerge(pr)) TextButton({ ghAct("gh-merge-pr", "$n", JsonPrimitive(n), askFor("gh-merge-pr", null, null, n)) }, TAP, enabled = !running("gh-merge-pr", "$n")) { Text("Merge", color = J.green, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
-                if (Github.hasConflicts(pr)) TextButton({ agent = AgentDraft("pr:$n", "Resolve the conflicts of #$n", Github.conflictPrompt(pr), pr.str("branch"), n) }, TAP, enabled = !running("agent", "pr:$n")) { Text("Fix conflicts (agent)", color = J.amber, fontSize = 13.sp) }
+                if (Github.hasConflicts(pr)) TextButton({ agent = AgentDraft("pr:$n", "Resolve the conflicts of #$n", Github.conflictPrompt(pr), pr.str("branch"), n) }, TAP, enabled = !busy("pr:$n")) { Text("Fix conflicts (agent)", color = J.amber, fontSize = 13.sp) }
             }
+            RowResult(s.ghRows["pr:$n"])
         }
         val daily = prs.objs("daily")
         if (daily.size >= 2) {
@@ -578,14 +704,88 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val sec = gh.obj("security")
-    Panel("Security") {
-        listOf("dependabot" to "Dependabot alerts", "codeScanning" to "Code scanning", "secrets" to "Secret scanning").forEach { (k, label) ->
-            val x = sec.obj(k)
-            val why = Github.down(x)
-            if (why != null) KeyRow(label, why, J.amber)
-            else KeyRow(label, fmt(x.num("open")) + (x.num("critical")?.let { " · ${fmt(it)} critical" } ?: "") + (x.num("high")?.let { " · ${fmt(it)} high" } ?: ""),
-                if ((x.num("open") ?: 0.0) > 0) J.pink else J.green)
-            x.objs("items").take(4).forEach { i -> StatusRow(if (i.str("severity") in setOf("critical", "high")) "alert" else "warn", listOfNotNull(i.str("package"), i.str("severity")).joinToString(" · "), i.str("repo"), i.str("url")) }
+    val secScore = areas.obj("security")
+    var dismiss by remember { mutableStateOf<Pair<String, JsonObject>?>(null) }
+    Panel("Security", span) {
+        val rows = Github.severityRows(sec)
+        val open = Github.ALERT_KINDS.sumOf { sec.obj(it.first)?.takeIf { x -> x.bool("ok") == true }.num("open") ?: 0.0 }
+        KpiPairs(listOf(KpiData("Open alerts", fmt(open), alert = open > 0), KpiData("Critical", "${rows.sumOf { it.second[0] }}", alert = rows.any { it.second[0] > 0 }), KpiData("High", "${rows.sumOf { it.second[1] }}"),
+            KpiData("Oldest", Github.days(Github.ALERT_KINDS.mapNotNull { sec.obj(it.first).num("oldestD") }.maxOrNull())),
+            KpiData("Security score", secScore.num("value")?.let { fmt(it) } ?: "—", secScore.str("grade"), alert = (secScore.num("value") ?: 100.0) < 70)))
+        Github.ALERT_KINDS.forEach { (k, label) -> Github.down(sec.obj(k))?.let { KeyRow(label, it, J.amber) } }
+        if (rows.isEmpty()) Muted("No open security alerts in the project repos.") else SeverityBars(rows)
+        val byRepo = Github.alertsByRepo(sec)
+        if (byRepo.isNotEmpty()) {
+            Caption("Open alerts by repo")
+            val top = byRepo.first().second.coerceAtLeast(1.0)
+            byRepo.forEach { (r, v) -> KeyRow(r, fmt(v)); GlowBar((v / top).toFloat(), J.pink) }
+        }
+        val weeks = sec.objs("weeks")
+        if (weeks.size >= 2) {
+            val labels = weeks.map { it.str("week").orEmpty() }
+            Sparkline(weeks.map { it.num("opened") ?: 0.0 }, J.pink, title = "Alerts opened per week", unit = "alerts", labels = labels, legend = "Opened")
+            Sparkline(weeks.map { it.num("fixed") ?: 0.0 }, J.green, title = "Alerts fixed per week", unit = "alerts", labels = labels, legend = "Fixed")
+            Sparkline(weeks.map { it.num("dismissed") ?: 0.0 }, J.dim, title = "Alerts dismissed per week", unit = "alerts", labels = labels, legend = "Dismissed")
+        }
+        secScore?.let { a ->
+            Caption("Security score ${fmt(a.num("value"))}" + (a.str("grade")?.let { " ($it)" } ?: "") + ": 100 minus")
+            val parts = a.objs("parts")
+            if (parts.isEmpty()) Muted("Nothing open, nothing taken off.")
+            parts.forEach { p -> KeyRow("${p.str("label").orEmpty()} · ${fmt(p.num("count"))} × ${fmt(p.num("each"))}", "−" + fmt(p.num("penalty")), J.pink) }
+        }
+        val lows = Github.lowAlerts(sec)
+        if (lows.isNotEmpty()) ActionButton("Dismiss all low as tolerable risk", busy("sec:low")) {
+            actRow("sec:low", "gh-dismiss-low", "${lows.size} low alerts", askFor("gh-dismiss-low", null, null, lows.size), mapOf("alerts" to JsonArray(lows)))
+        }
+        RowResult(s.ghRows["sec:low"])
+        Muted("Project repos only. Dismiss and the bulk dismissal run only when you tap them; Jarvis never dismisses on its own.")
+    }
+    Github.ALERT_KINDS.forEach { (kind, label) ->
+        val x = sec.obj(kind)?.takeIf { it.bool("ok") == true } ?: return@forEach
+        val items = x.objs("items")
+        Panel("$label · ${fmt(x.num("open"))}") {
+            KpiPairs(listOf(KpiData("Open", fmt(x.num("open")), alert = (x.num("open") ?: 0.0) > 0)) + Github.SEVERITIES.map { sv ->
+                val n = x.obj("bySeverity").num(sv) ?: 0.0
+                KpiData(sv.replaceFirstChar { it.uppercase() }, fmt(n), alert = sv in setOf("critical", "high") && n > 0)
+            } + listOf(KpiData("Oldest", Github.days(x.num("oldestD"))), KpiData("Median age", Github.days(x.num("medianD")))))
+            if (kind == "dependabot" && items.isNotEmpty()) listOf("byEcosystem" to "Open alerts by ecosystem", "byPackage" to "Open alerts by package").forEach { (k, title) ->
+                val list = x.pairs(k).take(10)
+                if (list.isNotEmpty()) {
+                    Caption(title)
+                    val top = list.maxOf { it.second }.coerceAtLeast(1.0)
+                    list.forEach { (l, v) -> KeyRow(l, fmt(v)); GlowBar((v / top).toFloat(), if (k == "byEcosystem") J.violet else J.amber) }
+                }
+            }
+            if (items.isEmpty()) Muted("No open alerts.")
+            items.take(10).forEach { i ->
+                val key = Github.alertKey(kind, i)
+                val n = i.num("number")?.toInt()
+                val name = Github.alertName(kind, i)
+                GhRow(when (i.str("severity")) { "critical", "high" -> "alert"; "medium" -> "warn"; else -> "info" }, "$name #$n",
+                    listOfNotNull(i.str("severity"), i.str("repo"), i.str("manifest") ?: i.str("path"), i.str("patched")?.let { "patched in $it" }, ago(i.str("created"))).joinToString(" · "), i.str("url"))
+                Buttons {
+                    i.str("url")?.let { u -> TextButton({ open(u) }, TAP) { Text("Open on GitHub", color = J.cyan, fontSize = 13.sp) } }
+                    if (kind != "secrets") TextButton({ dismiss = kind to i }, TAP, enabled = !busy(key)) { Text("Dismiss…", color = J.pink, fontSize = 13.sp) }
+                    if (kind == "dependabot") {
+                        val bump = i.obj("pr")
+                        val bn = bump.num("number")?.toInt()
+                        if (bn != null) {
+                            TextButton({ open(bump.str("url")) }, TAP) { Text("Dependabot PR #$bn", color = J.cyan, fontSize = 13.sp) }
+                            if (prs.objs("items").any { it.num("number")?.toInt() == bn && Github.canMerge(it) }) TextButton({
+                                actRow(key, "gh-merge-pr", "#$bn", askFor("gh-merge-pr", null, null, bn), mapOf("pr" to JsonPrimitive(bn)), "Open the PR")
+                            }, TAP, enabled = !busy(key)) { Text("Merge", color = J.green, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                        } else TextButton({ agent = AgentDraft(key, "Fix $name #$n", Github.securityPrompt(i), "main", repo = i.str("repo"), name = "Jarvis fix: $name") }, TAP, enabled = !busy(key)) {
+                            Text("Fix with an agent", color = J.amber, fontSize = 13.sp)
+                        }
+                    }
+                    TextButton({ actRow(key, "gh-security-ticket", "$name #$n", askFor("gh-security-ticket", "$label alert #$n in ${i.str("repo").orEmpty()}", null), Github.alertArgs(kind, i), "Open the ticket") }, TAP, enabled = !busy(key)) {
+                        Text("File a ticket", color = J.cyan, fontSize = 13.sp)
+                    }
+                }
+                RowResult(s.ghRows[key])
+            }
+            if (kind == "secrets" && items.isNotEmpty()) Muted("Revoke and rotate: revoke the secret where it was issued, make a new one, store it in GitHub Actions or Firebase secrets, then close the alert on GitHub as revoked. Jarvis cannot close secret alerts.")
+            if (kind == "dependabot") Muted("Fix merges the Dependabot PR when it is green, or drafts an upgrade prompt for an agent.")
         }
     }
 
@@ -655,7 +855,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val ai = gh.obj("ai")
     val diags = ai.objs("diagnoses")
     if (diags.isNotEmpty() || ai.obj("retro") != null) Panel("Jarvis diagnoses") {
-        diags.take(8).forEach { d -> StatusRow(Github.tone(if ((d.num("confidence") ?: 0.0) >= 0.8) "B" else "C"), "${d.str("workflow").orEmpty()} · ${d.str("category").orEmpty()}", listOfNotNull(d.str("cause"), d.str("fix")?.let { "Fix: $it" }, ago(d.str("at"))).joinToString(" · ")) }
+        diags.take(8).forEach { d ->
+            val id = d.num("run")?.toLong()?.toString() ?: return@forEach
+            val name = d.str("workflow").orEmpty()
+            val pr = d.num("pr")?.toInt()
+            StatusRow(Github.tone(if ((d.num("confidence") ?: 0.0) >= 0.8) "B" else "C"), "$name · ${d.str("category").orEmpty()}", listOfNotNull(d.str("cause"), d.str("fix")?.let { "Fix: $it" }, ago(d.str("at"))).joinToString(" · "), d.str("url"))
+            Buttons { FixButtons(Github.fixLabel(d, pr), busy("run:$id"), { fix(id, name, d.str("branch"), pr, d) }) { agent = AgentDraft("run:$id", "Fix the failing $name run", Github.runPrompt(Github.diagRun(d)), d.str("branch"), pr) } }
+            RowResult(s.ghRows["run:$id"])
+        }
         ai.obj("retro")?.let { r ->
             Text("Weekly retro · ${r.str("week").orEmpty()}", color = J.cyan, fontSize = 13.sp)
             Text(r.str("text").orEmpty(), fontSize = 13.sp)
@@ -666,6 +873,95 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     Needs(raw)
     ConfirmAction(confirm) { confirm = null }
     AgentDialog(agent, vm) { agent = null }
+    DismissDialog(dismiss, vm) { dismiss = null }
+}
+
+@Composable
+private fun FixButtons(label: String?, busy: Boolean, onFix: () -> Unit, onAgent: () -> Unit) {
+    label?.let { TextButton(onFix, TAP, enabled = !busy) { Text(it, color = J.green, fontSize = 13.sp, fontWeight = FontWeight.Bold) } }
+    TextButton(onAgent, TAP, enabled = !busy) { Text("Fix with an agent", color = J.amber, fontSize = 13.sp) }
+}
+
+/** A row's action state under its buttons; a tap opens the run, PR, issue or agent it links. */
+@Composable
+private fun RowResult(r: GhResult?) {
+    if (r == null) return
+    val uri = LocalUriHandler.current
+    val c = when (r.state) { "done", "launched" -> J.green; "failed" -> J.pink; else -> J.amber }
+    val link = r.url?.takeIf { it.isNotBlank() }
+    Row(Modifier.fillMaxWidth().let { m -> if (link != null) m.heightIn(min = 48.dp).clickable { runCatching { uri.openUri(link) } } else m }, verticalAlignment = Alignment.CenterVertically) {
+        Text(r.state.uppercase(), fontFamily = Mono, fontSize = 10.sp, color = c,
+            modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, c.copy(alpha = 0.7f), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(r.text + if (link != null) " · ${r.link ?: "Open"} ↗" else "", fontSize = 12.sp, color = if (link != null) J.cyan else J.text, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun Caption(text: String) = Text(text.uppercase(), fontFamily = Mono, fontSize = 10.sp, letterSpacing = 1.sp, color = J.muted, modifier = Modifier.padding(top = 6.dp))
+
+private val SEVERITY_COLORS = listOf(J.pink, Color(0xFFFF8F5A), J.amber, J.dim)
+
+/** Open alerts per kind as one bar split by severity, the longest kind full width, with a legend of totals. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SeverityBars(rows: List<Pair<String, List<Int>>>) {
+    val top = rows.maxOf { it.second.sum() }.coerceAtLeast(1)
+    Caption("Open alerts by severity")
+    rows.forEach { (label, counts) ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(0.45f)) {
+                Text(label, fontSize = 13.sp)
+                Text(Github.severityText(counts), fontSize = 11.sp, color = J.dim)
+            }
+            Row(Modifier.weight(0.45f).height(8.dp).clip(RoundedCornerShape(6.dp)).background(J.line)) {
+                counts.forEachIndexed { k, n -> if (n > 0) Box(Modifier.fillMaxHeight().weight(n.toFloat()).background(SEVERITY_COLORS[k])) }
+                (top - counts.sum()).takeIf { it > 0 }?.let { Spacer(Modifier.weight(it.toFloat())) }
+            }
+            Text("${counts.sum()}", fontFamily = Mono, fontSize = 13.sp, modifier = Modifier.weight(0.1f).padding(start = 6.dp))
+        }
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Github.SEVERITIES.forEachIndexed { k, sv ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(10.dp).clip(RoundedCornerShape(3.dp)).background(SEVERITY_COLORS[k]))
+                Text(" ${sv.replaceFirstChar { it.uppercase() }} ${rows.sumOf { it.second[k] }}", fontSize = 12.sp, color = J.muted)
+            }
+        }
+    }
+}
+
+/** Dismissing closes the alert on GitHub, so it runs only from this dialog: a reason GitHub accepts and an optional comment. */
+@Composable
+private fun DismissDialog(target: Pair<String, JsonObject>?, vm: JarvisViewModel, close: () -> Unit) {
+    val (kind, i) = target ?: return
+    val reasons = Github.DISMISS_REASONS[kind] ?: return
+    var reason by remember(target) { mutableStateOf(reasons.first().first) }
+    var comment by remember(target) { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = close,
+        title = { Text("Dismiss ${Github.alertName(kind, i)} #${i.num("number")?.toInt()}?") },
+        text = {
+            Column {
+                Muted(listOfNotNull(i.str("repo"), i.str("severity")).joinToString(" · "))
+                reasons.forEach { (v, label) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { reason = v }, verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(reason == v, { reason = v })
+                        Text(label, fontSize = 14.sp)
+                    }
+                }
+                OutlinedTextField(comment, { comment = it.take(280) }, label = { Text("Comment, optional") }, maxLines = 3, modifier = Modifier.fillMaxWidth())
+                Muted("Closes the alert on GitHub; it can be reopened there.")
+            }
+        },
+        confirmButton = {
+            TextButton({
+                vm.ghRow(Github.alertKey(kind, i), "github-act", Github.dismissArgs(kind, i, reason, comment), "Dismissing on GitHub…") { out -> GhResult("done", out.str("message") ?: "Dismissed.", out.str("url"), "Open on GitHub") }
+                close()
+            }) { Text("Dismiss on GitHub", color = J.pink) }
+        },
+        dismissButton = { TextButton(close) { Text("Cancel", color = J.muted) } }
+    )
 }
 
 @Composable
@@ -738,11 +1034,13 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
             TextButton({
                 val p = text.trim()
                 if (p.isNotEmpty()) {
-                    vm.market("gh:agent:${d.key}", "github-agent", buildMap {
+                    vm.ghRow(d.key, "github-agent", buildMap {
                         put("prompt", JsonPrimitive(p))
                         d.branch?.let { put("branch", JsonPrimitive(it)) }
                         d.pr?.let { put("pr", JsonPrimitive(it)) }
-                    }) { out -> "Cursor agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
+                        d.repo?.let { put("repo", JsonPrimitive(it)) }
+                        d.name?.let { put("name", JsonPrimitive(it)) }
+                    }, "Launching the agent…") { out -> GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
                     close()
                 }
             }) { Text("Launch", color = J.cyan) }
@@ -761,7 +1059,7 @@ private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (A
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(branch, { branch = it.trim() }, label = { Text("Branch (optional)") }, singleLine = true, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(8.dp))
-            ActionButton("Draft", "gh:agent:deck" in s.running) {
+            ActionButton("Draft", s.ghRows["deck"]?.state == "running") {
                 if (task.isNotBlank()) { launch(AgentDraft("deck", "From the deck", task.trim(), branch.ifBlank { null })); task = "" }
             }
         }
