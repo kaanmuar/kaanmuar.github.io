@@ -294,7 +294,7 @@ test.describe('The You step (#2769)', () => {
     await expect(page.locator('#email')).toHaveValue('ana@example.com');
   });
 
-  test('a mailbox at another domain than the site, for a review of your own site, shows its error', async ({ page }) => {
+  test('a mailbox at another domain than the site, for a review of your own site, shows one error and no done check (#2828, #2789)', async ({ page }) => {
     await prime(page);
     const store = await signedIn(page);
     await backend(page, store);
@@ -303,10 +303,68 @@ test.describe('The You step (#2769)', () => {
     await page.locator('#url').fill('carlosandmunoz.com');
     await page.locator('#name').fill('Ana');
     await page.locator('#reasons input[value="own"]').check();
+    const you = page.locator('#req-you');
     await expect(page.locator('#own-note')).toBeVisible();
+    await expect(you).toHaveClass(/\bdone\b/);
     await page.locator('#review-btn').click();
-    await expect(page.locator('#email-error')).toBeVisible();
-    await expect(page.locator('#email-error')).toHaveText(/^Use an email at the same domain as the site\./);
+    await expect(page.locator('#email-error')).toHaveText('Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.');
+    await expect(page.locator('#own-note')).toBeHidden();
+    await expect(you).not.toHaveClass(/\bdone\b/);
+    await expect(you.locator('.tg-count')).not.toHaveText('✓');
+    await expect(page.locator('#review-needs button[data-step="you"]')).toBeVisible();
+
+    await page.locator('#reasons input[value="redesign"]').check();
+    await expect(page.locator('#email-error')).toBeEmpty();
+    await expect(page.locator('#own-note')).toBeHidden();
+    await expect(you).toHaveClass(/\bdone\b/);
+    await expect(you.locator('.tg-count')).toHaveText('✓');
+  });
+
+  test('the same-domain error clears once the site matches the mailbox, and the note comes back while own is picked', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('carlosandmunoz.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[value="own"]').check();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#email-error')).not.toBeEmpty();
+    await page.locator('#url').fill('example.com');
+    await expect(page.locator('#email-error')).toBeEmpty();
+    await expect(page.locator('#own-note')).toBeVisible();
+    await expect(page.locator('#req-you')).toHaveClass(/\bdone\b/);
+  });
+
+  test('the same-domain error is in the page language', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('carlosandmunoz.com');
+    await page.locator('#name').fill('Ana');
+    await page.locator('#reasons input[value="own"]').check();
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#email-error')).toHaveText('Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.');
+    await expect(page.locator('#own-note')).toBeHidden();
+  });
+
+  test('a name error hides the done check until the name is fixed (#2789)', async ({ page }) => {
+    await prime(page);
+    const store = await signedIn(page);
+    await backend(page, store);
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-done')).toBeVisible();
+    await page.locator('#url').fill('example.com');
+    await page.locator('#name').fill('1');
+    await page.locator('#review-btn').click();
+    await expect(page.locator('#name-error')).toHaveText('Enter your name.');
+    await expect(page.locator('#req-you')).not.toHaveClass(/\bdone\b/);
+    await page.locator('#name').fill('Ana');
+    await expect(page.locator('#name-error')).toBeEmpty();
+    await expect(page.locator('#req-you')).toHaveClass(/\bdone\b/);
   });
 
   test('the Google note is short and links to the full list in the disclaimers', async ({ page }) => {
