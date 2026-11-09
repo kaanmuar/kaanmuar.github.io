@@ -9,6 +9,7 @@
    verifyOidc  checks a GitHub Actions OIDC token: signature (GitHub's JWKS), issuer, audience, expiry, and that it comes
                from jarvis-worker.yml on main of this repo
    spend       the month's spend against the cap;  candidates  what the hourly pass may hand the worker on its own
+   active      tasks still queued or running: the hourly pass starts one task at a time (#3064)
    route       the model a task starts on (#2958);  view  the spend meter and the last tasks, for the worker op
 
    Prices are list prices per million tokens, rounded up so the meter overstates rather than understates; thinking
@@ -35,6 +36,9 @@ const PRICES = [[/lite/i, { in: 0.1, out: 0.4 }], [/flash/i, { in: 0.5, out: 3 }
 const LABEL = "jarvis";
 const DIAG_CATEGORIES = ["code", "test", "config"];
 const DIAG_DAYS = 2;
+// A run is cut off at 75 minutes (jarvis-worker.yml), so a queued or running row older than this never reported.
+const ACTIVE_MS = 2 * 3600000;
+const REASONS = ["quota"];
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -87,6 +91,13 @@ async function spend(db, now) {
     level: usd >= CAP_USD ? "over" : usd >= WARN_USD ? "warn" : "ok", left: round(Math.max(0, CAP_USD - usd)) };
 }
 
+// Worker tasks still queued or running: the hourly pass starts none while one is (#3064).
+async function active(db, now) {
+  const since = new Date(now - ACTIVE_MS).toISOString();
+  const snap = await db.collection(COLLECTION).orderBy("at", "desc").limit(20).get();
+  return snap.docs.map((doc) => doc.data()).filter((d) => (d.state === "queued" || d.state === "running") && String(d.at || "") >= since).length;
+}
+
 /* The tier the task asks for; else Flash for test and config fixes, Pro for code. A failed Flash run is tried again once
    on Pro (report); a failed Pro run waits for a Cursor agent on tap. */
 function route(task) {
@@ -117,7 +128,7 @@ async function view(db, now) {
     const d = doc.data();
     const stuck = (d.state === "failed" || d.state === "nochange") && !d.escalatedTo;
     return { id: d.id, title: d.title, state: d.state, by: d.by, tier: d.tier, at: d.at, updatedAt: d.updatedAt, usd: round(Number(d.usd) || 0), pr: d.prNumber || null,
-      url: d.prUrl || d.runUrl || null, runUrl: d.runUrl || null, error: d.error || "", escalatedFrom: d.escalatedFrom || null, escalatedTo: d.escalatedTo || null,
+      url: d.prUrl || d.runUrl || null, runUrl: d.runUrl || null, error: d.error || "", reason: d.reason || null, escalatedFrom: d.escalatedFrom || null, escalatedTo: d.escalatedTo || null,
       cursor: stuck ? { prompt: block(d.prompt, 4000), branch: d.pr ? undefined : d.branch || "main", pr: d.pr || undefined, name: "Jarvis fix: " + text(d.title, 60) } : null };
   });
   return { spend: budget, tasks };
@@ -224,7 +235,8 @@ async function report(ctx, body, token) {
   const state = STATES.includes(b.state) ? b.state : "failed";
   const runUrl = "https://github.com/" + REPO + "/actions/runs/" + run;
   const c = cost(b.models);
-  const patch = { state, run, runUrl, updatedAt: new Date(now).toISOString(), summary: block(b.summary, 4000), tests: text(b.tests, 80), error: text(b.error, 600),
+  const reason = state === "failed" && REASONS.includes(b.reason) ? b.reason : null;
+  const patch = { state, run, runUrl, updatedAt: new Date(now).toISOString(), summary: block(b.summary, 4000), tests: text(b.tests, 80), error: text(b.error, 600), reason,
     files: (Array.isArray(b.files) ? b.files : []).slice(0, 100).map((f) => text(f, 200)), usd: round((Number(row.usd) || 0) + c.usd),
     input: (Number(row.input) || 0) + c.input, output: (Number(row.output) || 0) + c.output };
   let budget = null;
@@ -265,7 +277,8 @@ async function report(ctx, body, token) {
   await ref.set(patch, { merge: true });
   if (state !== "running") {
     const then = patch.escalatedTo ? "; trying again on Pro" : state === "failed" || state === "nochange" ? "; hand it to a Cursor agent from the GitHub tab" : "";
-    const said = state === "done" ? "opened " + (patch.prUrl ? "PR #" + patch.prNumber : "its PR") : state === "nochange" ? "found nothing to change" : "failed: " + (patch.error || "no reason given");
+    const said = state === "done" ? "opened " + (patch.prUrl ? "PR #" + patch.prNumber : "its PR") : state === "nochange" ? "found nothing to change"
+      : reason === "quota" ? "stopped on Gemini's request quota, not on the code" : "failed: " + (patch.error || "no reason given");
     await jarvisLog.log(null, { source: "github", level: state === "failed" ? "warn" : "info", ref: "worker:" + id, url: patch.prUrl || runUrl,
       text: "Jarvis's worker " + said + " (" + row.title + ", " + row.tier + ", $" + patch.usd.toFixed(2) + ")" + then + "." });
   }
@@ -303,6 +316,6 @@ async function candidates(db, { now, confidence, github, failing }) {
   return out;
 }
 
-module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, priceOf, cost, slug, monthOf, spend, route, crossed, budgetMessage, view,
+module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, priceOf, cost, slug, monthOf, spend, active, route, crossed, budgetMessage, view,
   dispatch, verifyOidc, report, candidates,
   _reset: () => { jwks = { at: 0, keys: [] }; } };

@@ -22,6 +22,8 @@ const JARVIS = env.JARVIS_URL || "https://us-central1-carlosm-interactive-cv.clo
 const AGENT_MS = 40 * 60000;
 const TEST_MS = 20 * 60000;
 const TAIL = 6000;
+const QUOTA = /quota|RESOURCE_EXHAUSTED|\b429\b|rate.?limit/i;
+const QUOTA_WAITS = [60000, 180000];
 
 const PREAMBLE = `You are Jarvis's worker, an autonomous coding agent in a checkout of ${REPO}: the QA-lab URL Review site, its Firebase
 functions (functions/), the admin assistant Jarvis (js/admin-jarvis*.js, functions/jarvis*.js) and its Android app (android/).
@@ -71,9 +73,28 @@ function gemini(prompt, model) {
   const used = usage(parsed && parsed.stats);
   if (res.error && res.error.code === "ETIMEDOUT") return { ok: false, used, text: "", error: "Gemini CLI ran past " + AGENT_MS / 60000 + " minutes." };
   if (!parsed || res.code !== 0 || parsed.error) {
-    return { ok: false, used, text: "", error: "Gemini CLI: " + ((parsed && parsed.error && parsed.error.message) || tail(res.out, 600) || "exit " + res.code) };
+    const error = "Gemini CLI: " + ((parsed && parsed.error && parsed.error.message) || tail(res.out, 600) || "exit " + res.code);
+    return { ok: false, used, text: "", error, quota: QUOTA.test(error) };
   }
   return { ok: true, used, text: String(parsed.response || "") };
+}
+
+/* Gemini, waiting out a request-quota error twice, then on Flash when Pro's quota stays used (#3064). Every attempt's
+   tokens go into used. */
+async function agent(prompt, model, used, run = gemini, sleep = (ms) => new Promise((r) => setTimeout(r, ms))) {
+  let res = run(prompt, model);
+  used.push(...res.used);
+  for (const ms of QUOTA_WAITS) {
+    if (res.ok || !res.quota) return res;
+    console.log("Gemini's request quota is used; trying " + model + " again in " + ms / 1000 + "s.");
+    await sleep(ms);
+    res = run(prompt, model);
+    used.push(...res.used);
+  }
+  if (res.ok || !res.quota || model === MODELS.flash) return res;
+  const flash = run(prompt, MODELS.flash);
+  used.push(...flash.used);
+  return flash.ok ? Object.assign(flash, { fellBack: true }) : flash;
 }
 
 async function oidc() {
@@ -159,17 +180,16 @@ async function main() {
   await tell({ state: "running" });
   const task = await prepare();
   if (task.prompt.length < 20) throw new Error("The task has no prompt.");
-  let run = gemini(PREAMBLE + task.prompt, MODELS[TIER]);
-  used.push(...run.used);
-  if (!run.ok) return tell({ state: "failed", error: run.error, models: used });
-  let summary = run.text;
+  let run = await agent(PREAMBLE + task.prompt, MODELS[TIER], used);
+  if (!run.ok) return tell({ state: "failed", error: run.error, reason: run.quota ? "quota" : undefined, models: used });
+  let summary = (run.fellBack ? "(Pro's request quota stayed used, so Flash made this change.)\n\n" : "") + run.text;
   if (!changed().length) return tell({ state: "nochange", summary, models: used });
   let t = tests();
   if (!t.ok) {
-    run = gemini(PREAMBLE + task.prompt + "\n\nYour change is in the working tree, but `npm run test:review` fails:\n\n" + t.out
-      + "\n\nFix the cause so the tests pass. Change a test only when the test itself is wrong, and say why.", MODELS.pro);
-    used.push(...run.used);
+    run = await agent(PREAMBLE + task.prompt + "\n\nYour change is in the working tree, but `npm run test:review` fails:\n\n" + t.out
+      + "\n\nFix the cause so the tests pass. Change a test only when the test itself is wrong, and say why.", MODELS.pro, used);
     if (run.ok) summary += "\n\nAfter the tests failed: " + run.text;
+    else if (run.quota) return tell({ state: "failed", error: run.error, reason: "quota", summary: summary + "\n\nTest output:\n" + t.out, tests: "fail", models: used });
     t = tests();
   }
   if (!t.ok) return tell({ state: "failed", error: "npm run test:review still fails after a repair round.", summary: summary + "\n\nTest output:\n" + t.out, tests: "fail", models: used });
@@ -189,4 +209,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { usage, slug, porcelain, PREAMBLE };
+module.exports = { usage, slug, porcelain, agent, MODELS, PREAMBLE };

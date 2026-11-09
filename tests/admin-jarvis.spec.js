@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const core = require('../js/admin-jarvis-core.js');
 const calendarSource = require('../functions/jarvis-calendar.js');
 

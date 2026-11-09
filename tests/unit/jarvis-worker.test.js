@@ -274,3 +274,65 @@ test("the hourly pass hands candidates to the worker once each, and waits while 
   assert.equal(started.length, 1);
   assert.match(out.waiting.find((w) => w.action === "gh-worker").reason, /budget of \$40/);
 });
+
+test("the hourly pass starts one worker task per pass, and none while one is still running (#3064)", async () => {
+  const MONDAY_10 = Date.parse("2026-10-26T15:00:00Z");
+  const started = [];
+  const tasks = [1, 2, 3].map((n) => ({ target: "run " + n, why: "E2E failed", task: { prompt: "Fix run " + n + "'s failing login test." } }));
+  const opsOf = (active) => ({ held: async () => [], hubStale: async () => false,
+    workerCandidates: async () => ({ over: false, cap: 40, active, tasks }), workerRun: async (t) => { started.push(t.prompt); return { detail: "started" }; } });
+  const db = fakeDb();
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: opsOf(0) });
+  assert.deepEqual(started, ["Fix run 1's failing login test."]);
+  assert.match(out.waiting.find((w) => w.action === "gh-worker").reason, /one task per hourly pass/);
+  const busy = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops: opsOf(1) });
+  assert.equal(started.length, 1);
+  assert.match(busy.waiting.find((w) => w.action === "gh-worker").reason, /still on 1 task/);
+  await actions.autoRun({ db, now: MONDAY_10 + 7200000, settings: {}, ops: opsOf(0) });
+  assert.deepEqual(started, ["Fix run 1's failing login test.", "Fix run 2's failing login test."]);
+});
+
+test("active counts queued and running tasks from the last two hours", async () => {
+  const db = fakeDb();
+  await queued(db, { id: "w1", at: new Date(NOW - 600000).toISOString(), state: "running" });
+  await queued(db, { id: "w2", at: new Date(NOW - 1200000).toISOString(), state: "queued" });
+  await queued(db, { id: "w3", at: new Date(NOW - 1800000).toISOString(), state: "failed" });
+  await queued(db, { id: "w4", at: new Date(NOW - 3 * 3600000).toISOString(), state: "running" });
+  assert.equal(await worker.active(db, NOW), 2);
+});
+
+test("a run that stops on Gemini's quota is stored and shown apart from a code failure", async () => {
+  const db = fakeDb();
+  await queued(db, { pr: 42, branch: "main" });
+  await worker.report(ctxOf(fakeFetch([]), db), { id: "wabc", state: "failed", reason: "quota", error: "Gemini CLI: quota exceeded" }, jwt());
+  const row = (await worker.view(db, NOW)).tasks[0];
+  assert.deepEqual([row.state, row.reason], ["failed", "quota"]);
+  assert.ok(row.cursor);
+  const db2 = fakeDb();
+  await queued(db2, {});
+  await worker.report(ctxOf(fakeFetch([]), db2), { id: "wabc", state: "failed", reason: "anything" }, jwt());
+  assert.equal((await worker.view(db2, NOW)).tasks[0].reason, null);
+});
+
+test("agent waits out a quota error twice, then moves Pro's task to Flash", async () => {
+  const quota = { ok: false, quota: true, error: "Gemini CLI: quota exceeded", used: [{ model: "pro", input: 1, output: 0 }] };
+  const calls = [], waits = [];
+  const runner = (answers) => (prompt, model) => { calls.push(model); return answers.shift(); };
+  const used = [];
+  const out = await script.agent("p", script.MODELS.pro, used, runner([quota, quota, quota, { ok: true, text: "done", used: [{ model: "flash", input: 2, output: 1 }] }]), async (ms) => { waits.push(ms); });
+  assert.deepEqual(calls, [script.MODELS.pro, script.MODELS.pro, script.MODELS.pro, script.MODELS.flash]);
+  assert.deepEqual(waits, [60000, 180000]);
+  assert.deepEqual([out.ok, out.fellBack, used.length], [true, true, 4]);
+
+  calls.length = 0;
+  const second = await script.agent("p", script.MODELS.pro, [], runner([quota, { ok: true, text: "done", used: [] }]), async () => {});
+  assert.deepEqual([second.ok, second.fellBack, calls.length], [true, undefined, 2]);
+
+  calls.length = 0;
+  const code = await script.agent("p", script.MODELS.pro, [], runner([{ ok: false, quota: false, error: "Gemini CLI: exit 1", used: [] }]), async () => { throw new Error("no wait"); });
+  assert.deepEqual([code.ok, calls.length], [false, 1]);
+
+  calls.length = 0;
+  const flash = await script.agent("p", script.MODELS.flash, [], runner([quota, quota, quota]), async () => {});
+  assert.deepEqual([flash.ok, flash.quota, calls.length], [false, true, 3]);
+});

@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 
 // live.html: the Live reports ring on its own, as a Telegram Mini App and in the Reddit app (#2549).
 // telegram.org is stubbed: the Mini App script only exists inside Telegram's web view.

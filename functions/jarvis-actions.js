@@ -580,7 +580,8 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
 
-  // #2957: Jarvis's own worker takes diagnosed code, test or config failures and the URL review bugs left for an agent.
+  /* #2957: Jarvis's own worker takes diagnosed code, test or config failures and the URL review bugs left for an agent.
+     One task per pass and none while one runs: parallel runs share Gemini's per-minute request quota (#3064). */
   if (ops.workerCandidates && ops.workerRun) {
     handled.add("github:needs-agent");
     let w = { tasks: [] };
@@ -588,7 +589,11 @@ async function autoRun({ db, now, settings, ops }) {
     const fresh = [];
     for (const c of w.tasks || []) if (!(await seen(db, "gh-worker", c.target))) fresh.push(c);
     if (w.over) await wait("gh-worker", fresh.length, "This month's AI budget of $" + w.cap + " is used.");
-    else for (const c of fresh) await once("gh-worker", c.target, c.why, () => ops.workerRun(c.task));
+    else if (w.active) await wait("gh-worker", fresh.length, "The worker is still on " + plural(w.active, "task") + "; it takes one at a time.");
+    else if (fresh.length) {
+      await once("gh-worker", fresh[0].target, fresh[0].why, () => ops.workerRun(fresh[0].task));
+      await wait("gh-worker", fresh.length - 1, "The worker takes one task per hourly pass.");
+    }
   }
 
   if (ops.alerts && ops.ask && ops.catalog) {

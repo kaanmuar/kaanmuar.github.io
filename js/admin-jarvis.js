@@ -2612,13 +2612,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const tasks = table([
             ['Task', (t) => `${esc(t.title)}${t.pr ? ` ${ghLink(t.url, '#' + t.pr)}` : t.runUrl ? ` ${ghLink(t.runUrl, 'run')}` : ''}${t.error ? `<br><span class="jv-note">${esc(t.error)}</span>` : ''}`],
             ['Model', (t) => `<span class="jv-chip">${esc(t.tier === 'flash' ? 'Flash' : 'Pro')}</span>${t.escalatedFrom ? '<span class="jv-note"> after Flash</span>' : ''}`],
-            ['State', (t) => `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>${t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : ''}`],
+            ['State', (t) => (t.reason === 'quota' ? '<span class="jv-chip c-average" title="Gemini answered that its request quota is used; the code was not at fault.">Gemini quota</span>'
+                : `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>`) + (t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : '')],
             ['Cost', (t) => '$' + Number(t.usd || 0).toFixed(2)],
             ['When', (t) => esc(ghAgo(t.at))],
             ['', (t) => (t.cursor ? `<button type="button" class="jv-btn small" data-worker-cursor="${esc(t.id)}">Hand to Cursor</button>${ghResult('worker:' + t.id)}` : '')]
         ], w.tasks || [], 'No worker runs yet.');
         return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + tasks,
-            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Prices are rounded up, so the meter overstates.' });
+            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini\'s request quota waits twice, then moves to Flash. Prices are rounded up, so the meter overstates.' });
     }
 
     async function workerCursor(id) {

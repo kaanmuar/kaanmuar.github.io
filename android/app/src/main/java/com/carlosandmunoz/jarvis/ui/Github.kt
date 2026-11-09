@@ -126,9 +126,14 @@ object Github {
     /** A task row's model: Flash or Pro, and whether Pro took over from a failed Flash run. */
     fun workerModel(t: JsonObject) = (if (t.str("tier") == "flash") "Flash" else "Pro") + (if (t.str("escalatedFrom") != null) " after Flash" else "")
 
-    fun workerState(t: JsonObject) = (if (t.str("state") == "nochange") "no change" else t.str("state") ?: "—") + (if (t.str("escalatedTo") != null) " → Pro" else "")
+    /** A task row's state; a run that stopped on Gemini's request quota reads apart from a code failure (#3064). */
+    fun workerState(t: JsonObject) = (if (t.str("reason") == "quota") "Gemini quota" else if (t.str("state") == "nochange") "no change" else t.str("state") ?: "—") +
+        (if (t.str("escalatedTo") != null) " → Pro" else "")
 
-    fun workerLevel(state: String?) = when (state) { "done" -> "good"; "failed" -> "alert"; "queued", "running" -> "warn"; else -> null }
+    fun workerLevel(state: String?, reason: String? = null) = when {
+        reason == "quota" -> "warn"
+        else -> when (state) { "done" -> "good"; "failed" -> "alert"; "queued", "running" -> "warn"; else -> null }
+    }
 
     fun grade(v: Double?): String = when { v == null -> "—"; v >= 90 -> "A"; v >= 80 -> "B"; v >= 70 -> "C"; v >= 60 -> "D"; else -> "F" }
 
@@ -1089,7 +1094,7 @@ private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask
         tasks.take(10).forEach { t ->
             val id = t.str("id").orEmpty()
             val pr = t.num("pr")?.toInt()
-            StatusRow(Github.workerLevel(t.str("state")), t.str("title").orEmpty() + (pr?.let { " · #$it" } ?: ""),
+            StatusRow(Github.workerLevel(t.str("state"), t.str("reason")), t.str("title").orEmpty() + (pr?.let { " · #$it" } ?: ""),
                 listOfNotNull(Github.workerModel(t), Github.workerState(t), Github.usd(t.num("usd") ?: 0.0), ago(t.str("at")), t.str("error")?.takeIf { it.isNotBlank() }).joinToString(" · "), t.str("url"))
             t.obj("cursor")?.let { c ->
                 Buttons {
