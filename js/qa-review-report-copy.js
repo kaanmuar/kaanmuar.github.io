@@ -5,6 +5,7 @@
 
   const COPY = {
     en: {
+      urlNeeded: "Enter a public page after https://.",
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
       callEyebrow: "Walkthrough", callTitle: "Go through this report with Carlos", callCopy: "A 30-minute video call on what the findings mean for your site and what to fix first.", callButton: "Book a 30-min walkthrough",
@@ -136,6 +137,7 @@
       }
     },
     es: {
+      urlNeeded: "Escribe una página pública después de https://.",
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       callEyebrow: "Recorrido", callTitle: "Revisa este informe con Carlos", callCopy: "Una videollamada de 30 minutos sobre qué significan los hallazgos para tu sitio y qué corregir primero.", callButton: "Agenda un recorrido de 30 min",
@@ -269,6 +271,7 @@
       }
     },
     pt: {
+      urlNeeded: "Digite uma página pública depois de https://.",
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
       callEyebrow: "Tour guiado", callTitle: "Veja este relatório com o Carlos", callCopy: "Uma videochamada de 30 minutos sobre o que os achados significam para o seu site e o que corrigir primeiro.", callButton: "Agende um tour de 30 min",
@@ -403,6 +406,7 @@
       }
     },
     de: {
+      urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.",
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
       callEyebrow: "Durchgang", callTitle: "Gehen Sie diesen Bericht mit Carlos durch", callCopy: "Ein 30-minütiger Videoanruf dazu, was die Befunde für Ihre Website bedeuten und was zuerst zu beheben ist.", callButton: "30-Minuten-Durchgang buchen",
@@ -536,6 +540,7 @@
       }
     },
     fr: {
+      urlNeeded: "Saisissez une page publique après https://.",
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
       callEyebrow: "Visite guidée", callTitle: "Parcourez ce rapport avec Carlos", callCopy: "Un appel vidéo de 30 minutes sur ce que les constats signifient pour votre site et ce qu’il faut corriger en premier.", callButton: "Réserver une visite de 30 min",
@@ -668,6 +673,7 @@
       }
     },
     it: {
+      urlNeeded: "Scrivi una pagina pubblica dopo https://.",
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
       callEyebrow: "Giro guidato", callTitle: "Guarda questo report con Carlos", callCopy: "Una videochiamata di 30 minuti su cosa significano i risultati per il tuo sito e cosa correggere per primo.", callButton: "Prenota un giro guidato di 30 minuti",
