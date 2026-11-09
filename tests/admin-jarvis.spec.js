@@ -399,6 +399,27 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(brief.body.snapshot.products.cv).toBeTruthy();
   });
 
+  test('a post proposal shows its card image, and a card that fails to load becomes a note (#2248)', async ({ page }, testInfo) => {
+    const card = require('fs').readFileSync(require('path').join(__dirname, '../assets/social/sweep-roundup/2026-11-02.jpg'));
+    await page.route('https://cards.test/**', (route) => (route.request().url().endsWith('/roundup.jpg') ? route.fulfill({ contentType: 'image/jpeg', body: card }) : route.fulfill({ status: 404, body: 'gone' })));
+    await openStats(page, '#stats/hub/30', { 'social-proposals': { ok: true, built: '2026-11-08T06:00:00Z', proposals: [
+      { id: '675190976b59', title: 'QA Lab field sweep: the week of November 2', source: 'QA Lab', lang: 'en', score: 9, summary: 'This week across the sweep.', url: 'https://carlosandmunoz.com/', image: 'https://cards.test/roundup.jpg' },
+      { id: 'c48a95c5d4f8', title: 'SEO Pulse: November', source: 'Search Engine Journal', lang: 'en', score: 7, url: 'https://www.searchenginejournal.com/', image: 'https://cards.test/gone.jpg' },
+      { id: 'b19c686b84f7', title: 'No card here', source: 'DEV', lang: 'en', score: 5, url: 'https://dev.to/', image: '' }
+    ] } });
+    const panel = page.locator('[data-view="hub"] [data-panel-id="hub-proposals"]');
+    const items = panel.locator('.jv-prop');
+    await expect(items).toHaveCount(3);
+    const shown = items.nth(0).locator('img.jv-prop-card');
+    await expect(shown).toHaveAttribute('alt', 'Card image: QA Lab field sweep: the week of November 2');
+    await expect.poll(() => shown.evaluate((img) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
+    await expect(items.nth(1).locator('img')).toHaveCount(0);
+    await expect(items.nth(1)).toContainText('The card image did not load.');
+    await expect(items.nth(2).locator('img, .jv-prop-nocard')).toHaveCount(0);
+    await shown.evaluate((img) => img.decode());
+    await panel.screenshot({ path: testInfo.outputPath('hub-proposals.png') });
+  });
+
   test('Social hub shows the queue per channel, the posting runs and the proposals, and Approve and Post now go through the function (#1420)', async ({ page }) => {
     const calls = await openStats(page, '#stats/hub/30');
     const hub = page.locator('[data-view="hub"]');

@@ -7,12 +7,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import com.carlosandmunoz.jarvis.SharePostActivity
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,19 +32,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.ago
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 
 /** Social hub (#1420): the queue per channel, the posting workflows with Post now, and field-sweep proposals. */
@@ -160,6 +175,28 @@ private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
     }
 }
 
+/** The post's card image (#2248), as the web panel shows it: a frame while it loads, a note when it did not load, nothing when there is none. */
+@Composable
+private fun ProposalCard(url: String?, title: String) {
+    val src = CardImages.usable(url) ?: return
+    var image by remember(src) { mutableStateOf(CardImages.cached(src)?.asImageBitmap()) }
+    var failed by remember(src) { mutableStateOf(false) }
+    LaunchedEffect(src) {
+        if (image != null) return@LaunchedEffect
+        val bitmap = withContext(Dispatchers.IO) { CardImages.load(src) }
+        if (bitmap == null) failed = true else image = bitmap.asImageBitmap()
+    }
+    val shape = RoundedCornerShape(8.dp)
+    val shown = image
+    val ratio = if (shown != null && shown.height > 0) shown.width.toFloat() / shown.height else 1200f / 630f
+    val frame = Modifier.padding(vertical = 3.dp).widthIn(max = 360.dp).heightIn(max = 420.dp).aspectRatio(ratio).clip(shape).border(1.dp, J.cyan.copy(alpha = 0.25f), shape)
+    when {
+        shown != null -> Image(shown, contentDescription = "Card image: $title", contentScale = ContentScale.Fit, modifier = frame)
+        failed -> Text("The card image did not load.", color = J.dim, fontSize = 11.sp, fontStyle = FontStyle.Italic)
+        else -> Box(frame.background(J.cyan.copy(alpha = 0.06f)))
+    }
+}
+
 @Composable
 private fun Proposal(p: JsonObject, busy: Boolean, vm: JarvisViewModel) {
     val uri = LocalUriHandler.current
@@ -167,6 +204,7 @@ private fun Proposal(p: JsonObject, busy: Boolean, vm: JarvisViewModel) {
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(p.str("title").orEmpty(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Text(listOfNotNull(p.str("source"), p.str("author")?.takeIf { it.isNotBlank() }?.let { "by $it" }, p.str("topic")?.takeIf { it.isNotBlank() }, p.str("lang")).joinToString(" · "), color = J.dim, fontSize = 11.sp)
+        ProposalCard(p.str("image"), p.str("title").orEmpty())
         p.str("summary")?.takeIf { it.isNotBlank() }?.let { Text(it, color = J.muted, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton({ vm.decideSocial(id, "approved") }, enabled = !busy) { Text("Approve", color = J.cyan, fontWeight = FontWeight.Bold) }

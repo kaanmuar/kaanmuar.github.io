@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -22,6 +23,7 @@ import kotlin.coroutines.suspendCoroutine
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.str
 
@@ -111,7 +113,7 @@ object Push {
         if (!allowed(context)) return
         val body = data["body"] ?: ""
         val lines = runCatching { (JSON.parseToJsonElement(data["lines"] ?: "[]") as JsonArray).map { (it as JsonPrimitive).content } }.getOrDefault(emptyList())
-        val n = builder(context, data, body, lines).setSilent(data["quiet"] == "1")
+        val n = builder(context, data, body, lines, CardImages.load(data["image"])).setSilent(data["quiet"] == "1")
         if (!data["ref"].isNullOrEmpty()) buttons(data).forEach { n.addAction(if (it.act == "open") openAction(context, data, it) else NotifyActions.action(context, data, it)) }
         data["code"]?.takeIf { kindOf(data) == CODES && it.isNotBlank() }?.let { n.addAction(CodeCopy.action(context, it, tagOf(data))).setTimeoutAfter(15 * 60 * 1000L) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
@@ -120,23 +122,29 @@ object Push {
     /** The same notification after a button: busy while it runs, then the outcome, with Retry when it failed. */
     fun result(context: Context, data: Map<String, String>, shown: String, retry: Button? = null, retryText: String? = null, busy: Boolean = false) {
         if (!allowed(context)) return
-        val n = builder(context, data, shown, emptyList()).setSilent(true).setOnlyAlertOnce(true)
+        val n = builder(context, data, shown, emptyList(), CardImages.cached(data["image"])).setSilent(true).setOnlyAlertOnce(true)
         if (busy) n.setProgress(0, 0, true).setOngoing(true).setAutoCancel(false)
         else if (retry == null) n.setTimeoutAfter(10 * 60 * 1000L)
         retry?.let { n.addAction(NotifyActions.action(context, data, it, retryText)) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
     }
 
-    private fun builder(context: Context, data: Map<String, String>, body: String, lines: List<String>): NotificationCompat.Builder {
+    /** picture is the push's card image (#2248): expanded it shows big, collapsed as the thumbnail; without one the text styles stand. */
+    private fun builder(context: Context, data: Map<String, String>, body: String, lines: List<String>, picture: Bitmap? = null): NotificationCompat.Builder {
         val kind = kindOf(data)
         val tag = tagOf(data)
         val open = openIntent(context, data["url"]?.takeIf { it.startsWith("https://") }, data["tab"])
-        val style = if (lines.size > 1) NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60)) else NotificationCompat.BigTextStyle().bigText(body)
+        val style = when {
+            picture != null -> NotificationCompat.BigPictureStyle().bigPicture(CardImages.forPush(picture)).bigLargeIcon(null as Bitmap?).setSummaryText(body)
+            lines.size > 1 -> NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60))
+            else -> NotificationCompat.BigTextStyle().bigText(body)
+        }
         return NotificationCompat.Builder(context, kind)
             .setSmallIcon(R.drawable.ic_stat_jarvis)
             .setColor(0xFF38E1FF.toInt())
             .setContentTitle(data["title"] ?: "Jarvis")
             .setContentText(body)
+            .setLargeIcon(picture)
             .setStyle(style)
             .setAutoCancel(true)
             .setCategory(if (kind == ALERTS) NotificationCompat.CATEGORY_ERROR else NotificationCompat.CATEGORY_STATUS)

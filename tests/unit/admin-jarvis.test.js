@@ -1330,6 +1330,28 @@ test("social: Jarvis can start the Bluesky and Mastodon poster with the Buffer a
   social.WORKFLOWS.forEach((w) => assert.ok(fs.existsSync(path.join(__dirname, "../../.github/workflows", w.file)), w.file));
 });
 
+test("social: each proposal carries its card image as https, the round-up's site path made absolute (#2248)", () => {
+  assert.equal(social.cardImage("assets/social/sweep-roundup/2026-11-02.jpg"), "https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-02.jpg");
+  assert.equal(social.cardImage("/assets/social/a.jpg"), "https://carlosandmunoz.com/assets/social/a.jpg");
+  assert.equal(social.cardImage("https://cdn.example/card.png"), "https://cdn.example/card.png");
+  ["", null, undefined, "http://cdn.example/card.png", "data:image/png;base64,AAAA", "javascript:alert(1)", "https://x.co/" + "a".repeat(1000)].forEach((v) => assert.equal(social.cardImage(v), "", String(v).slice(0, 40)));
+  const live = social.state({ json: JSON.stringify({ version: 1, edits: {}, items: [] }) });
+  const rows = social.pending([
+    { id: "675190976b59", title: "Sweep round-up", url: "https://carlosandmunoz.com/r", image: "assets/social/sweep-roundup/2026-11-02.jpg", score: 9 },
+    { id: "bbbbbb123456", title: "No card", url: "https://blog.example/x", score: 3 }
+  ], live);
+  assert.deepEqual(rows.map((r) => r.image), ["https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-02.jpg", ""]);
+});
+
+test("social: the web panel shows the card and swaps a failed one for a note (#2248)", () => {
+  const js = fs.readFileSync(path.join(__dirname, "../../js/admin-jarvis.js"), "utf8");
+  const panel = js.slice(js.indexOf("function socialProposalsPanel"), js.indexOf("async function decideSocial"));
+  assert.match(panel, /\$\{proposalCard\(p\)\}/);
+  assert.match(js, /root\.addEventListener\('error', [\s\S]{0,200}img\[data-card\][\s\S]{0,120}brokenCards\.add/);
+  const kt = fs.readFileSync(path.join(__dirname, "../../android/app/src/main/java/com/carlosandmunoz/jarvis/ui/Social.kt"), "utf8");
+  assert.match(kt, /ProposalCard\(p\.str\("image"\)/);
+});
+
 test("social: approving a proposal adds the hub item and the decision; dismissing only records it", () => {
   const p = { id: "abcdef123456", title: "Playwright 2.0 ships", url: "https://blog.example/pw2", source: "Example", author: "Ana", date: "2026-10-20", topic: "testing", lang: "en", summary: "Big release.", score: 9 };
   const other = { id: "bbbbbb123456", title: "Older", url: "https://blog.example/old", score: 3 };

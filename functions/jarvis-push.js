@@ -135,6 +135,7 @@ async function sendPhones(messaging, db, tokens, msg) {
   if (msg.url) data.url = msg.url;
   if (msg.ref) data.ref = msg.ref;
   if (msg.code) data.code = msg.code;
+  if (msg.image) data.image = msg.image;
   if (msg.quiet) data.quiet = "1";
   if (msg.actions && msg.actions.length) data.actions = JSON.stringify(msg.actions.slice(0, 3));
   const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: msg.quiet ? "normal" : "high", ttl: TTL[msg.kind] || TTL.test } });
