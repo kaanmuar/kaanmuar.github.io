@@ -2616,9 +2616,18 @@
       const pinned = getComputedStyle(dashClose).position === "fixed";
       const room = pinned ? Math.ceil(dashBar.getBoundingClientRect().right - dashClose.getBoundingClientRect().left) : 0;
       dash.style.setProperty("--close-room", Math.max(0, room) + "px");
+      paintCloseBar();
     });
     roomForClose.observe(dashClose);
     roomForClose.observe(dashBar);
+  }
+
+  // On phones the report below the toolbar scrolls under a solid bar behind the pinned Close; it shows once that content reaches it (#2968).
+  function paintCloseBar() {
+    if (!dashBar) return;
+    const bar = getComputedStyle(dash, "::before");
+    const next = dashBar.getBoundingClientRect().bottom + parseFloat(getComputedStyle(dashBar).marginBottom);
+    dash.classList.toggle("bar-on", bar.content !== "none" && next < parseFloat(bar.height));
   }
 
   const TAKEOVER = ["wheel", "touchstart", "keydown", "pointerdown"];
@@ -2669,7 +2678,7 @@
   }
 
   function paintTop() {
-    if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+    if (reportTop && reportIndex) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
   }
 
   const sectionName = (item) => item.button.firstChild.textContent.trim();
@@ -2702,18 +2711,22 @@
     reportIndex.hidden = !shown.length;
     measureBar();
     paintTop();
+    paintCloseBar();
   }
 
+  let framed = false;
+  dash.addEventListener("scroll", () => {
+    if (framed) return;
+    framed = true;
+    requestAnimationFrame(() => {
+      framed = false;
+      paintTop();
+      paintCloseBar();
+    });
+  }, { passive: true });
+
   if (reportIndex && reportTop) {
-    let framed = false;
-    dash.addEventListener("scroll", () => {
-      if (framed) return;
-      framed = true;
-      requestAnimationFrame(() => {
-        framed = false;
-        paintTop();
-      });
-    }, { passive: true });
+    reportTop.title = rc.t("backTop");
     reportTop.addEventListener("click", () => {
       stopKeeping();
       const first = reportIndex.querySelector("a");

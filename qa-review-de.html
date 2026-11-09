@@ -507,7 +507,8 @@
         .menu button { border: 0; background: transparent; color: var(--text); text-align: left; border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
         .menu button:hover { background: var(--panel-2); }
         .report-cover { display: grid; grid-template-columns: 1.4fr .8fr; gap: 16px; margin: 8px 0 16px; padding: 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
-        .report-cover h2 { margin: 0; font-size: 1.8rem; }
+        .report-cover h2 { margin: 0; font-size: 1.8rem; overflow-wrap: anywhere; }
+        .report-cover > * { min-width: 0; }
         #report-statement:empty { display: none; }
         .report-kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); font-weight: 700; }
         .visuals { display: grid; grid-template-columns: 1.15fr .85fr; gap: 12px; margin: 12px 0; }
@@ -1099,22 +1100,33 @@
         .report-index-list a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
         .dash-overlay .fold-head { scroll-margin-top: calc(var(--report-bar, 72px) + 14px); }
         .report-top { position: sticky; bottom: 16px; z-index: 9; height: 0; pointer-events: none; }
-        .report-top .btn { position: absolute; right: 0; bottom: 0; pointer-events: auto; background: var(--bg); box-shadow: 0 8px 24px rgba(8, 14, 18, .25); }
+        .report-top .btn { position: absolute; right: -30px; bottom: 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 0; line-height: 0; pointer-events: auto; background: var(--bg); box-shadow: 0 8px 24px rgba(8, 14, 18, .25); }
+        .report-top .btn[hidden] { display: none; }
+        .report-top .btn::before { content: ""; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--arrow-up) center / contain no-repeat; mask: var(--arrow-up) center / contain no-repeat; }
+        .dash-overlay { --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 19V5M5.5 11.5 12 5l6.5 6.5' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+        @media screen and (min-width: 801px) {
+            .dash-overlay .dash-modal { padding-left: 36px; padding-right: 36px; }
+        }
         @media (max-width: 800px) {
             .dash-overlay .report-toolbar { position: relative; top: auto; }
-            .dash-overlay .fold-head { scroll-margin-top: 72px; }
+            .dash-overlay .fold-head { scroll-margin-top: calc(var(--close-bar, 70px) + 12px); }
             .report-index { display: block; padding: 10px 0 10px 12px; }
             .report-index-label { margin: 0 0 8px; }
             .report-index-list { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 12px 2px 2px; }
             .report-index-list a { min-height: 36px; padding: 6px 14px; font-size: 13px; }
-            .report-top .btn { min-height: 44px; }
+            .report-top .btn { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 6px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); }
             #report .filters button { min-height: 36px; padding: 6px 12px; }
             #report .fold-toggle { min-height: 36px; }
             #report .list-more { padding: 10px 6px; margin: 0 -6px; }
             .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
             .report-toolbar .actions .btn { min-height: 40px; }
-            .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
+            .dash-overlay.open { --close-bar: calc(env(safe-area-inset-top, 0px) + 70px); padding-right: calc(var(--dash-pad) + 16px); }
+            .dash-overlay.open::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 7; height: var(--close-bar); background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px -10px rgba(8, 14, 18, .45); opacity: 0; pointer-events: none; }
+            .dash-overlay.open.bar-on::before { opacity: 1; }
+            .dash-overlay.open #dash-close { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); right: calc(env(safe-area-inset-right, 0px) + 14px); z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
+            .dash-overlay.open.bar-on #dash-close { box-shadow: none; }
             .dash-overlay.open .report-brand { min-width: 0; padding-right: var(--close-room, 0px); }
+            .dash-overlay.open .report-toolbar .actions { padding-right: var(--close-room, 0px); }
         }
         @media screen and (max-width: 800px) {
             .dash-overlay.open .dash-modal { background: var(--bg); }
@@ -1939,7 +1951,7 @@
 <script src="js/qa-review-compare-copy.js?v=20261129g" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261129g" defer></script>
 <script src="js/qa-review-findings-copy.de.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261129-2888" defer></script>
+<script src="js/qa-review.js?v=20261129-2968" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>
