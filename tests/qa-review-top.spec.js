@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const auth = require('../functions/url-review-auth');
+const sample = require('../assets/qa-review-sample.json');
 
 const ANA = 'a'.repeat(64);
 
@@ -451,13 +452,36 @@ test.describe('The tour and the sign-in box in the page language (#2768)', () =>
   });
 });
 
+// The site the sample reviewed, and every address the sample quotes: the page must not load any of them (#2955).
+const SAMPLE_HOST = sample.report.host.replace(/^www\./, '');
+const SAMPLE_URLS = new Set();
+(function quoted(value) {
+  if (typeof value === 'string') for (const [url] of value.matchAll(/https?:\/\/[^\s"'<>()]+/g)) SAMPLE_URLS.add(url);
+  else if (value && typeof value === 'object') Object.values(value).forEach(quoted);
+})(sample.report);
+const fromSample = (url) => url.hostname === SAMPLE_HOST || url.hostname.endsWith('.' + SAMPLE_HOST) || SAMPLE_URLS.has(url.href);
+
 test.describe('Report section index (#2770)', () => {
+  // Returns the requests the sample made to its own site or to an address it quotes, each one blocked.
   async function openSample(page, path = '/qa-review.html') {
+    const outside = [];
+    await page.route(fromSample, (route) => { outside.push(route.request().url()); return route.abort(); });
     await prime(page);
     await backend(page);
     await page.goto(path);
     await page.locator('#stage-sample-open').click();
     await expect(page.locator('#report-index')).toBeVisible();
+    return outside;
+  }
+
+  for (const lang of ['en', 'es', 'pt', 'de', 'fr', 'it']) {
+    test(`the ${lang} sample report loads nothing from the site it reviewed or from an address it quotes (#2955)`, async ({ page }) => {
+      const outside = await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      await page.evaluate(() => document.querySelectorAll('#dash-overlay img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('#dash-overlay img')].every((img) => img.complete));
+      expect(outside).toEqual([]);
+      await expect(page.locator('#report .serp img')).toHaveAttribute('src', /^data:image\//);
+    });
   }
 
   // The groups of the sections on show, in reading order, each with the heading its entry jumps to.
