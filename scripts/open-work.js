@@ -63,7 +63,11 @@ async function api(route, params = {}) {
   return res.json();
 }
 const once = (fn) => { let p; return () => (p ||= fn()); };
-const withDeadline = (promise, ms, fallback) => Promise.race([promise.catch(() => fallback), new Promise((r) => setTimeout(r, ms, fallback).unref())]);
+function withDeadline(promise, ms, fallback) {
+  let timer;
+  const late = new Promise((resolve) => { timer = setTimeout(resolve, ms, fallback); });
+  return Promise.race([promise.catch(() => fallback), late]).finally(() => clearTimeout(timer));
+}
 
 // Files a prompt or issue names, as tracked paths: a full path, or a bare name with at most three tracked matches.
 function resolveFiles(text, tracked, max = 12) {
