@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import com.carlosandmunoz.jarvis.device.Device
@@ -193,54 +192,12 @@ fun Goals(goals: List<JsonObject>) {
 
 @Composable
 fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (String) -> Unit) {
-    if (LocalColumns.current >= 2) {
-        ListDetail(
-            list = { ProductList(s.snapshot.obj("wide").objs("products"), product, pick) },
-            detail = {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    Masonry(Device.columns(maxWidth.value.toInt()), Modifier.fillMaxWidth()) { key(product) { ProductBody(s, vm, product) } }
-                }
-            }
-        )
-        return
-    }
     val chips = rememberScrollState()
     LaunchedEffect(product, chips.maxValue) { chips.animateScrollTo(chips.maxValue * CHIPS.indexOfFirst { it.first == product }.coerceAtLeast(0) / (CHIPS.size - 1)) }
     Row(Modifier.layoutId(WIDE).horizontalScroll(chips).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CHIPS.forEach { (key, name) -> GlassChip(name, key == product) { pick(key) } }
     }
     key(product) { ProductBody(s, vm, product) }
-}
-
-/** Every product with its lead number and trend; the picked one is lit. Falls back to the chip names before the snapshot has `wide`. */
-@Composable
-private fun ProductList(rows: List<JsonObject>, product: String, pick: (String) -> Unit) {
-    Panel("Products", id = "products-list") {
-        val list = rows + CHIPS.filter { (k, _) -> rows.none { it.str("key") == k } && (rows.isEmpty() || k == "console") }.map { (k, n) -> JsonObject(mapOf("key" to JsonPrimitive(k), "name" to JsonPrimitive(n))) }
-        list.forEach { r ->
-            val key = r.str("key") ?: return@forEach
-            val on = key == product
-            val k = r.objs("kpis").firstOrNull()
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                    .background(if (on) J.cyan.copy(alpha = 0.14f) else Color.Transparent)
-                    .border(1.dp, if (on) J.cyan.copy(alpha = 0.8f) else J.line.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
-                    .clickable(onClickLabel = "Show") { pick(key) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(r.str("name") ?: key, fontSize = 14.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, color = if (on) J.text else J.muted)
-                    Sparkline(r.obj("series")?.get("values").doubles(), if (on) J.cyan else J.dim, Modifier.height(18.dp))
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(k?.prim("value").text().ifBlank { "—" }, fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = J.text)
-                    Text(k?.str("label") ?: "no data yet", fontSize = 11.sp, color = J.dim, maxLines = 1)
-                }
-            }
-        }
-    }
 }
 
 @Composable

@@ -1712,6 +1712,9 @@
         const so = ok(e.social) && e.social.daily ? e.social : null;
         out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
             series: so ? { labels: so.daily.map((d) => d.date), values: so.daily.map((d) => num(d.posts)) } : { labels: [], values: [] } });
+        const geo = ok(e.geo) && e.geo.totals ? e.geo.totals : null;
+        out.push({ key: 'geo', name: 'Map', kpis: geo ? [kpi('Countries active', num(geo.countries)), kpi('Targets missing', num(geo.missing), undefined, { alert: num(geo.missing) > 0 }), kpi('Replies', num(geo.replies))] : [],
+            series: { labels: [], values: [] } });
         const eg = ok(e.engagement) && Array.isArray(e.engagement.daily) ? e.engagement : null;
         const t = (eg && eg.report && eg.report.totals) || {};
         out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
