@@ -1,5 +1,6 @@
 package com.carlosandmunoz.jarvis.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.GhResult
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.ago
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
@@ -68,6 +73,8 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.net.URLEncoder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 
 /** Jarvis > GitHub in the app (#2526): the web tab's grades, process map, CI, PRs, board, branches and fixes, from the github-work source. */
@@ -134,6 +141,28 @@ object Github {
         reason == "quota" -> "warn"
         else -> when (state) { "done" -> "good"; "failed" -> "alert"; "queued", "running" -> "warn"; else -> null }
     }
+
+    /** A worker PR's gate (#2959) as its chip: Carlos's decision once he made one, else the level. */
+    fun gateLabel(g: JsonObject?): String? = when (g?.str("decision")) {
+        "approved" -> "Approved"
+        "rejected" -> "Rejected"
+        else -> when (g?.str("level")) { "destructive" -> "Destructive"; "visible" -> "Visible"; "safe" -> "Safe"; else -> null }
+    }
+
+    fun gateTone(g: JsonObject?): String? = when (g?.str("decision")) {
+        "approved" -> "good"
+        "rejected" -> null
+        else -> when (g?.str("level")) { "destructive" -> "alert"; "visible" -> "warn"; "safe" -> "good"; else -> null }
+    }
+
+    fun gateHint(level: String?) = when (level) {
+        "destructive" -> "Deletes files or data, or touches deploys, money, secrets or accounts: never merges on its own."
+        "visible" -> "Changes what people see: waits for your Approve."
+        else -> "Tests, docs or internal code: merges on green after the countdown."
+    }
+
+    /** The PRs that wait for Carlos's Approve or Reject, newest first as the worker op sends them. */
+    fun gated(tasks: List<JsonObject>) = tasks.filter { it.obj("gate")?.bool("waiting") == true }
 
     fun grade(v: Double?): String = when { v == null -> "—"; v >= 90 -> "A"; v >= 80 -> "B"; v >= 70 -> "C"; v >= 60 -> "D"; else -> "F" }
 
@@ -1088,14 +1117,19 @@ private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask
         KeyRow("Spent · ${sp.month}", Github.usd(sp.usd), if (sp.level == "ok") J.text else tone)
         KeyRow("Runs", sp.runs.toString())
         KeyRow("Tokens in · out", "${fmt(sp.input.toDouble())} · ${fmt(sp.output.toDouble())}")
-        Caption("Last tasks")
         val tasks = w.objs("tasks")
+        val gated = Github.gated(tasks)
+        if (gated.isNotEmpty()) {
+            Caption("At the gate · ${gated.size}")
+            gated.forEach { GateCard(it, s, vm, ask, open) }
+        }
+        Caption("Last tasks")
         if (tasks.isEmpty()) Muted("No worker runs yet.")
         tasks.take(10).forEach { t ->
             val id = t.str("id").orEmpty()
             val pr = t.num("pr")?.toInt()
             StatusRow(Github.workerLevel(t.str("state"), t.str("reason")), t.str("title").orEmpty() + (pr?.let { " · #$it" } ?: ""),
-                listOfNotNull(Github.workerModel(t), Github.workerState(t), Github.usd(t.num("usd") ?: 0.0), ago(t.str("at")), t.str("error")?.takeIf { it.isNotBlank() }).joinToString(" · "), t.str("url"))
+                listOfNotNull(Github.workerModel(t), Github.workerState(t), Github.gateLabel(t.obj("gate")), Github.usd(t.num("usd") ?: 0.0), ago(t.str("at")), t.str("error")?.takeIf { it.isNotBlank() }).joinToString(" · "), t.str("url"))
             t.obj("cursor")?.let { c ->
                 Buttons {
                     ActionButton("Hand to Cursor", s.ghRows["worker:$id"]?.state == "running") {
@@ -1113,7 +1147,100 @@ private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask
                 RowResult(s.ghRows["worker:$id"])
             }
         }
-        Muted("Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Prices are rounded up, so the meter overstates.")
+        Muted("Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Safe PRs merge on green after the countdown; visible and destructive ones wait for your Approve, and a fix main no longer needs is dropped. Prices are rounded up, so the meter overstates.")
+    }
+}
+
+/** A worker PR at the gate (#2959): its risky files, the run's before and after screenshots, and Approve or Reject. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GateCard(t: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit, open: (String?) -> Unit) {
+    val g = t.obj("gate") ?: return
+    val id = t.str("id").orEmpty()
+    val pr = t.num("pr")?.toInt()
+    val title = t.str("title").orEmpty()
+    val key = "gate:$id"
+    val running = s.ghRows[key]?.state == "running"
+    var rejecting by remember(id) { mutableStateOf(false) }
+    val shape = RoundedCornerShape(8.dp)
+    val decide = { decision: String, why: String, busy: String ->
+        vm.ghRow(key, "worker-decide", mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision), "why" to JsonPrimitive(why)), busy) { out ->
+            vm.loadWorker()
+            GhResult("done", out.str("message") ?: "Done.", out.str("url"), "Open the PR")
+        }
+    }
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(shape).border(1.dp, J.level(Github.gateTone(g)).copy(alpha = 0.55f), shape).padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        StatusRow(Github.gateTone(g), title + (pr?.let { " · #$it" } ?: ""), Github.gateLabel(g), t.str("url"))
+        Muted(Github.gateHint(g.str("level")))
+        val destructive = g.objs("destructive")
+        destructive.take(8).forEach { d -> Text("${d.str("file").orEmpty()}: ${d.str("why").orEmpty()}", fontFamily = Mono, fontSize = 11.sp, color = J.pink) }
+        val visible = g["visible"].strings()
+        if (visible.isNotEmpty()) Muted("Visible: " + visible.take(8).joinToString(", ") + (if (visible.size > 8) " and ${visible.size - 8} more" else ""))
+        val shots = g.objs("shots")
+        val note = g.str("note")?.takeIf { it.isNotBlank() }
+        if (shots.isEmpty()) Muted(note ?: "No screenshots for this change.")
+        shots.forEach { sh ->
+            Caption(sh.str("page").orEmpty())
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ShotImage(sh.str("before"), "Before", "New page", Modifier.weight(1f), open)
+                ShotImage(sh.str("after"), "After", "Page removed", Modifier.weight(1f), open)
+            }
+        }
+        if (shots.isNotEmpty() && note != null) Muted(note)
+        if (g.bool("stale") == true) Text("New commits since the screenshots: look at the PR before you approve.", fontSize = 12.sp, color = J.amber)
+        Buttons {
+            ActionButton("Approve", running) {
+                val risky = destructive.joinToString("; ") { "${it.str("file")}: ${it.str("why")}" }
+                ask("approve PR #$pr \"$title\"" + (if (risky.isNotEmpty()) "; it touches destructive files ($risky)" else "") + ". It merges once CI is green and the countdown ends, then goes to production") {
+                    decide("approve", "", "Approving…")
+                }
+            }
+            ActionButton("Reject", running) { rejecting = true }
+        }
+        RowResult(s.ghRows[key])
+    }
+    if (rejecting) RejectDialog(title, pr, { rejecting = false }) { why -> decide("reject", why, "Closing the PR…") }
+}
+
+@Composable
+private fun RejectDialog(title: String, pr: Int?, close: () -> Unit, reject: (String) -> Unit) {
+    var why by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = close,
+        title = { Text("Reject PR #${pr ?: ""}?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Muted("\"$title\" closes on GitHub.")
+                OutlinedTextField(why, { why = it }, label = { Text("Why (optional)") }, minLines = 2, maxLines = 5, modifier = Modifier.fillMaxWidth())
+            }
+        },
+        confirmButton = { TextButton({ reject(why.trim()); close() }) { Text("Reject", color = J.pink) } },
+        dismissButton = { TextButton(close) { Text("Cancel", color = J.muted) } }
+    )
+}
+
+/** A worker screenshot (#2959), fetched like the post cards and opened full size on tap; a note when that side has none. */
+@Composable
+private fun ShotImage(url: String?, label: String, none: String, modifier: Modifier, open: (String?) -> Unit) {
+    val src = CardImages.usable(url)
+    var image by remember(src) { mutableStateOf(CardImages.cached(src)?.asImageBitmap()) }
+    var failed by remember(src) { mutableStateOf(false) }
+    LaunchedEffect(src) {
+        if (src == null || image != null) return@LaunchedEffect
+        val bitmap = withContext(Dispatchers.IO) { CardImages.load(src, 720) }
+        if (bitmap == null) failed = true else image = bitmap.asImageBitmap()
+    }
+    val shape = RoundedCornerShape(6.dp)
+    val frame = modifier.aspectRatio(8f / 5f).clip(shape).border(1.dp, J.dim.copy(alpha = 0.4f), shape)
+    Box(if (src != null) frame.clickable { open(src) } else frame, contentAlignment = Alignment.Center) {
+        val shown = image
+        when {
+            shown != null -> Image(shown, contentDescription = label, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.matchParentSize())
+            src == null -> Text(none, fontSize = 11.sp, color = J.dim)
+            failed -> Text("Did not load.", fontSize = 11.sp, color = J.dim)
+        }
+        Text(label.uppercase(), fontFamily = Mono, fontSize = 9.sp, color = J.text,
+            modifier = Modifier.align(Alignment.TopStart).padding(4.dp).background(Color(0xCC050C12), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
     }
 }
 

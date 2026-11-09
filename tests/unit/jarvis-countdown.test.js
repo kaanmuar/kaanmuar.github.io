@@ -289,6 +289,19 @@ test("a green PR labelled jarvis-merge is merged after the countdown, at the com
   assert.equal(db2.added.filter((r) => r.action === "merge-pr" && r.status === "failed").length, 1, "a GitHub error is logged once a day");
 });
 
+test("a safe worker PR says why it merges; a dropped one is logged and its merge countdown cancelled (#2959, #3071)", async () => {
+  const db = fakeDb();
+  let prs = [{ number: 3100, sha: "sha1", title: "Jarvis: Fix CI", url: "u", gate: "safe" }];
+  const { ops: o } = ops({ mergeCandidates: async () => prs });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops: o, items: null, external: null });
+  assert.match(out.queued[0].why, /Jarvis: Fix CI \(green; Jarvis's worker touched only safe files\)/);
+  prs = [{ number: 3100, title: "Jarvis: Fix CI", url: "u", dropped: "Pages is green again on main (run 955) without this PR" }];
+  const next = await actions.autoRun({ db, now: MONDAY_10 + H, settings: {}, ops: o, items: null, external: null });
+  assert.deepEqual(next.done.map((r) => [r.action, r.target]), [["worker-drop", "#3100"]]);
+  assert.equal(db.doc("jarvis_countdowns", out.queued[0].id).status, "cancelled");
+  assert.equal(next.queued.length, 0);
+});
+
 test("a draft campaign with leads is launched after the countdown, one per campaign; one Carlos cancelled stays a draft", async () => {
   const db = fakeDb();
   const launched = [];

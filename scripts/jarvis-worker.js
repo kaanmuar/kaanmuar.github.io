@@ -3,13 +3,17 @@
 /* One task of Jarvis's worker (#2957), run by .github/workflows/jarvis-worker.yml: Gemini CLI edits a fresh checkout, the unit
    tests must pass (one repair round on Pro when they do not), and the branch is pushed with the deploy key. Every step reports
    to Jarvis (op worker-report) with the run's OIDC token; Jarvis opens the PR (functions/jarvis-worker.js).
+   When the change touches pages, styles, front-end scripts or a page builder, the run screenshots the affected pages before
+   and after the commit, offline, and sends them with the report for Carlos's Approve (#2959).
 
    node scripts/jarvis-worker.js          in the workflow, from TASK_* env
    node scripts/jarvis-worker.js --dry    anywhere: edits and tests in the current checkout, reports and pushes nothing
    Env: TASK_ID, TASK_TITLE, TASK_PROMPT, TASK_TIER (pro|flash), TASK_BRANCH, TASK_PR, TASK_ISSUE, GEMINI_API_KEY,
         MODEL_PRO, MODEL_FLASH, GITHUB_TOKEN (reads the issue or PR), JARVIS_URL */
 
-const { spawnSync } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
+const os = require("os");
+const path = require("path");
 
 const REPO = "kaanmuar/kaanmuar.github.io";
 const DRY = process.argv.includes("--dry");
@@ -24,6 +28,10 @@ const TEST_MS = 20 * 60000;
 const TAIL = 6000;
 const QUOTA = /quota|RESOURCE_EXHAUSTED|\b429\b|rate.?limit/i;
 const QUOTA_WAITS = [60000, 180000];
+const SHOT_PAGES = 4;
+const SHOT_DEFAULT = ["index.html", "qa-review.html"];
+const SHOT_BYTES = 400000;
+const SHOT_INSTALL_MS = 8 * 60000;
 
 const PREAMBLE = `You are Jarvis's worker, an autonomous coding agent in a checkout of ${REPO}: the QA-lab URL Review site, its Firebase
 functions (functions/), the admin assistant Jarvis (js/admin-jarvis*.js, functions/jarvis*.js) and its Android app (android/).
@@ -175,6 +183,74 @@ function tests() {
   return { ok: res.code === 0, out: tail(res.out, TAIL) };
 }
 
+/* The pages to screenshot: changed site pages, then the home and review pages when shared styles, front-end scripts, images
+   or a page builder changed. Admin pages and the app need a sign-in, so they get a note instead. */
+function pagesFor(files) {
+  const list = Array.isArray(files) ? files : [];
+  const pages = list.filter((f) => /\.html$/i.test(f) && !/^(tests|android|functions|scripts|\.cursor|\.github)\//.test(f) && !/^admin/.test(f)).slice(0, SHOT_PAGES);
+  const shared = list.some((f) => (/^(css|js|images|img|fonts|assets|locales|i18n|lang)\//.test(f) && !/^(js|css)\/admin-/.test(f)) || /^scripts\/build-/.test(f));
+  if (shared) for (const p of SHOT_DEFAULT) if (pages.length < SHOT_PAGES && !pages.includes(p)) pages.push(p);
+  return pages;
+}
+
+const signedIn = (files) => (files || []).some((f) => /^admin\.html$|^(js|css)\/admin-|^android\//.test(f));
+
+async function serve(root, port) {
+  const proc = spawn("python3", [path.join(root, "scripts/static-server.py"), String(port)], { cwd: root, stdio: "ignore" });
+  const url = "http://127.0.0.1:" + port + "/";
+  for (let i = 0; i < 50; i += 1) {
+    try { if ((await fetch(url, { signal: AbortSignal.timeout(2000) })).status < 500) return { proc, url }; } catch (error) { /* not up yet */ }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  proc.kill();
+  throw new Error("The static server on port " + port + " did not start.");
+}
+
+// Only the local server answers: fonts, analytics and APIs are cut off, as in the Playwright suite (#2995).
+async function shot(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: "reduce" });
+  try {
+    await context.route("**/*", (r) => (/^http:\/\/127\.0\.0\.1:/.test(r.request().url()) ? r.continue() : r.abort()));
+    const page = await context.newPage();
+    const res = await page.goto(url, { waitUntil: "load", timeout: 20000 }).catch(() => null);
+    if (!res || res.status() >= 400) return null;
+    await page.waitForTimeout(600);
+    const buf = await page.screenshot({ type: "jpeg", quality: 60 });
+    return buf.length <= SHOT_BYTES ? buf.toString("base64") : null;
+  } finally { await context.close(); }
+}
+
+/* After the commit: each page from the commit before (a detached worktree) and from HEAD, each tree on its own static server.
+   -> { shots: [{ page, before, after }] in base64 JPEG, note }. A failure only costs the screenshots, never the task. */
+async function previews(files) {
+  const pages = pagesFor(files);
+  if (!pages.length) return { shots: [], note: signedIn(files) ? "No screenshots: admin and app screens need a sign-in." : "" };
+  const base = path.join(env.RUNNER_TEMP || os.tmpdir(), "jarvis-before-" + ID);
+  const servers = [];
+  try {
+    require("./playwright-sandbox");
+    const cli = path.join(path.dirname(require.resolve("playwright/package.json")), "cli.js");
+    const install = sh("node", [cli, "install", "--with-deps", "chromium"], { timeout: SHOT_INSTALL_MS });
+    if (install.code !== 0) throw new Error("Chromium did not install: " + tail(install.out, 200));
+    git("worktree", "add", "-q", "--detach", base, "HEAD~1");
+    const after = await serve(process.cwd(), 8791);
+    servers.push(after.proc);
+    const before = await serve(base, 8792);
+    servers.push(before.proc);
+    const browser = await require("playwright").chromium.launch();
+    try {
+      const shots = [];
+      for (const page of pages) shots.push({ page, before: await shot(browser, before.url + page), after: await shot(browser, after.url + page) });
+      return { shots: shots.filter((s) => s.before || s.after), note: signedIn(files) ? "Admin and app screens need a sign-in, so they have no screenshots." : "" };
+    } finally { await browser.close(); }
+  } catch (error) {
+    return { shots: [], note: "Screenshots failed: " + String(error.message || error).slice(0, 200) };
+  } finally {
+    servers.forEach((p) => p.kill());
+    sh("git", ["worktree", "remove", "--force", base]);
+  }
+}
+
 async function main() {
   const used = [];
   await tell({ state: "running" });
@@ -194,11 +270,12 @@ async function main() {
   }
   if (!t.ok) return tell({ state: "failed", error: "npm run test:review still fails after a repair round.", summary: summary + "\n\nTest output:\n" + t.out, tests: "fail", models: used });
   const files = changed();
-  if (DRY) return tell({ state: "done", branch: task.branch, summary, files, tests: "pass", models: used });
+  if (DRY) return tell({ state: "done", branch: task.branch, summary, files, tests: "pass", models: used, shotNote: "Would screenshot: " + (pagesFor(files).join(", ") || "nothing") });
   git("add", "-A", "--", ".", ":(exclude).gemini");
   git("-c", "user.name=Jarvis worker", "-c", "user.email=kaanmuar@users.noreply.github.com", "commit", "-q", "-m", TITLE + "\n\nJarvis worker task " + ID + " (#2957).");
+  const pics = await previews(files);
   git("push", "-q", ...(task.pr ? [] : ["-f"]), "origin", "HEAD:refs/heads/" + task.branch);
-  return tell({ state: "done", branch: task.branch, summary, files, tests: "pass", models: used });
+  return tell({ state: "done", branch: task.branch, summary, files, tests: "pass", models: used, shots: pics.shots, shotNote: pics.note });
 }
 
 if (require.main === module) {
@@ -209,4 +286,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { usage, slug, porcelain, agent, MODELS, PREAMBLE };
+module.exports = { usage, slug, porcelain, agent, pagesFor, MODELS, PREAMBLE };

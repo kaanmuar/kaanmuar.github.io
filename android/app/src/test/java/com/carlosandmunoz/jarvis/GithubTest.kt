@@ -159,5 +159,18 @@ class GithubTest {
         assertEquals("warn", Github.workerLevel("failed", "quota"))
     }
 
+    @Test fun gatedWorkerPrsWaitForApproveAndShowTheirLevel() {
+        assertEquals("Destructive", Github.gateLabel(json("""{"level":"destructive"}""")))
+        assertEquals("alert", Github.gateTone(json("""{"level":"destructive"}""")))
+        assertEquals("warn", Github.gateTone(json("""{"level":"visible"}""")))
+        assertEquals("Approved", Github.gateLabel(json("""{"level":"visible","decision":"approved"}""")))
+        assertEquals("good", Github.gateTone(json("""{"level":"visible","decision":"approved"}""")))
+        assertEquals("Rejected", Github.gateLabel(json("""{"level":"visible","decision":"rejected"}""")))
+        assertNull(Github.gateLabel(null))
+        assertTrue(Github.gateHint("destructive").contains("never merges on its own"))
+        val tasks = listOf(json("""{"id":"a","gate":{"level":"visible","waiting":true}}"""), json("""{"id":"b","gate":{"level":"safe","waiting":false}}"""), json("""{"id":"c"}"""))
+        assertEquals(listOf("a"), Github.gated(tasks).map { (it["id"] as kotlinx.serialization.json.JsonPrimitive).content })
+    }
+
     private fun JsonObject.str() = (this["key"] as kotlinx.serialization.json.JsonPrimitive).content
 }
