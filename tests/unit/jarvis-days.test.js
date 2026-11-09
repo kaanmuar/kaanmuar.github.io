@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const days = require("../../functions/jarvis-days");
 const jarvis = require("../../functions/jarvis");
 const sources = require("../../functions/jarvis-sources");
+const core = require("../../functions/jarvis-core");
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -175,6 +176,96 @@ test("health counts the logged collections through the day documents", async () 
   assert.equal(h.failures.latest[0].message, "bad cert");
   assert.deepEqual([h.notices.total, h.notices.failed], [2, 1]);
   assert.ok(!("email" in db.docs["jarvis_days/2026-10-29_365"].parts.notices.rows[0]));
+});
+
+// A month of what health counts: 39 tracked jobs and the logged collections at roughly their live rates.
+function healthSeed() {
+  const iso = (ms) => new Date(ms).toISOString();
+  const data = { ops_runs: [], url_review_failures: [], url_review_alerts: [], url_review_owner_notices: [], url_review_rivals: [], url_review_captures: [], url_review_reruns: [], url_review_coupons: [] };
+  for (let i = 0; i < 39; i += 1) data.ops_runs.push({ id: "job" + i, job: "job" + i, ok: true, startedAt: iso(NOW - (i + 2) * 20 * 60000), endedAt: iso(NOW - (i + 2) * 20 * 60000 + 30000), note: "", error: "" });
+  for (let m = 30; m < 31 * 24 * 60; m += 30) {
+    const at = iso(NOW - m * 60000);
+    if (m % 60 === 0) data.url_review_failures.push({ id: "f" + m, at, host: "h" + (m % 7) + ".com", cause: { label: m % 3 ? "Timeout" : "TLS failed" }, error: { message: "boom" } });
+    if (m % 360 === 0) data.url_review_alerts.push({ id: "a" + m, at, kind: "paid", title: "Paid review", url: "https://x.co" });
+    if (m % 480 === 0) data.url_review_owner_notices.push({ id: "n" + m, createdAt: at, status: m % 960 ? "sent" : "pending" });
+    if (m % 720 === 0) data.url_review_rivals.push({ id: "v" + m, createdAt: at });
+    data.url_review_captures.push({ id: "c" + m, at, kind: m % 4 ? "lead" : "email" });
+  }
+  return data;
+}
+
+test("health re-reads only what changed since its last check (#2101)", async (t) => {
+  days._memo.clear();
+  const data = healthSeed();
+  const db = fakeDb(data);
+  const at = (min) => NOW + min * 60000;
+  await jarvis.health(db, { days: 30, now: at(0) });
+
+  // Before #2101: every minute-cache miss read the meta and day documents, the whole open day and every ops_runs job.
+  days._memo.clear();
+  delete db.docs["jarvis_cache/state-health"];
+  db.stats.reads = 0;
+  await jarvis.health(db, { days: 30, now: at(2) });
+  const before = db.stats.reads - 1;
+
+  db.stats.reads = 0;
+  const warm = await jarvis.health(db, { days: 30, now: at(4) });
+  const warmReads = db.stats.reads;
+  days._memo.clear();
+  db.stats.reads = 0;
+  const cold = await jarvis.health(db, { days: 30, now: at(6) });
+  const coldReads = db.stats.reads;
+  t.diagnostic("30-day health reads per miss: " + before + " before, " + warmReads + " warm, " + coldReads + " cold");
+
+  // Every query left costs at least one read: four write-once sources since their newest row, two ops_runs stamps,
+  // re-runs and coupons; a cold instance adds the state document and the open day's notices.
+  assert.ok(warmReads <= 10, "warm reads " + warmReads);
+  assert.ok(coldReads <= warmReads + 2, "cold reads " + coldReads);
+  assert.ok(warmReads * 5 < before, warmReads + " vs " + before);
+  assert.deepEqual(warm, await jarvis.health(fakeDb(data), { days: 30, now: at(4) }));
+  assert.deepEqual(cold, await jarvis.health(fakeDb(data), { days: 30, now: at(6) }));
+});
+
+test("a failure, an alert, a notice change and a failed job written since the last check still alert on time", async () => {
+  days._memo.clear();
+  const data = healthSeed();
+  const db = fakeDb(data);
+  const at = (min) => NOW + min * 60000;
+  const first = await jarvis.health(db, { days: 1, now: at(0) });
+  const iso = (min) => new Date(at(min)).toISOString();
+  // A run committed a few minutes after its own timestamp, behind a newer one.
+  data.url_review_failures.push({ id: "late", at: iso(-4), host: "late.com", cause: { label: "Timeout" }, error: { message: "slow" } });
+  data.url_review_failures.push({ id: "new", at: iso(1), host: "new.com", cause: { label: "Timeout" }, error: { message: "boom" } });
+  data.url_review_alerts.push({ id: "a-new", at: iso(1), kind: "paid", title: "Paid review", url: "https://y.co" });
+  Object.assign(data.url_review_owner_notices[0], { status: "pending", lastError: "no MX" });
+  Object.assign(data.ops_runs.find((row) => row.id === "job30"), { ok: false, endedAt: iso(1), error: "quota" });
+  // The 2-minute open-day memo (wall clock) has run out; the held state stays.
+  Array.from(days._memo.keys()).filter((key) => !key.startsWith("state|")).forEach((key) => days._memo.delete(key));
+
+  const h = await jarvis.health(db, { days: 1, now: at(2) });
+  assert.deepEqual(h, await jarvis.health(fakeDb(data), { days: 1, now: at(2) }));
+  assert.deepEqual(h.failures.latest.slice(0, 2).map((row) => row.host), ["new.com", "late.com"]);
+  assert.equal(h.alerts.latest[0].url, "https://y.co");
+  assert.equal(h.notices.failed, first.notices.failed + 1);
+  assert.deepEqual(h.jobs.filter((job) => !job.ok).map((job) => job.job), ["job30"]);
+  const keys = jarvis.watchItems({ health: Object.assign({ ok: true }, h) }, core.thresholds({ failuresAlert: h.failures.total })).map((row) => row.key);
+  assert.ok(keys.includes("job:job30"), keys.join());
+  assert.ok(keys.includes("review:failures"), keys.join());
+});
+
+test("held health state matches a fresh read across the hourly full read and the day change", async () => {
+  days._memo.clear();
+  const data = healthSeed();
+  const db = fakeDb(data);
+  const at = (min) => NOW + min * 60000;
+  await jarvis.health(db, { days: 7, now: at(0) });
+  data.ops_runs.pop();
+  for (const min of [61, 11 * 60, 11 * 60 + 5]) {
+    data.url_review_captures.push({ id: "c-" + min, at: new Date(at(min - 1)).toISOString(), kind: "lead" });
+    const h = await jarvis.health(db, { days: 7, now: at(min) });
+    assert.deepEqual(h, await jarvis.health(fakeDb(data), { days: 7, now: at(min) }), "at +" + min + " min");
+  }
+  assert.equal((await jarvis.health(db, { days: 7, now: at(11 * 60 + 6) })).jobs.length, 38);
 });
 
 test("pending ratings outside the range cost one count read once their number is known", async () => {
