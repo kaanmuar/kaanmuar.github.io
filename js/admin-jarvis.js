@@ -5,7 +5,7 @@
    few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
-import * as Proc from "./admin-jarvis-processes.js?v=2548";
+import * as Proc from "./admin-jarvis-processes.js?v=2890";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -659,11 +659,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
 
     function paintProcesses() {
-        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact' }); });
+        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact', all: S.processesAll }); });
     }
 
     function processesPanel(compact) {
-        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact });
+        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact, all: S.processesAll });
         if (compact && !body) return '';
         return panel(compact ? 'overview-processes' : 'systems-processes', 'Processes', `<div data-processes="${compact ? 'compact' : 'full'}">${body}</div>`,
             { wide: true, keep: true, data: (S.processes && S.processes.rows) || [] });
@@ -4144,6 +4144,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.closest('[data-con]')) return;
         if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
         if (t.dataset.foldAll !== undefined) { foldAll(t.dataset.foldAll === '1'); return; }
+        if (t.dataset.procAll !== undefined) { S.processesAll = !S.processesAll; paintProcesses(); return; }
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
         if (t.dataset.brief !== undefined) { openSheet(t.dataset.brief); return; }
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
