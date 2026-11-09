@@ -1,29 +1,5 @@
 {
  "ui": {
-  "es": {
-   "tryThis": "Pruébalo",
-   "tip": "Consejo",
-   "guided": "Visita guiada",
-   "never": "Nunca ejecuta tus pruebas",
-   "end": "Deja que tu página hable por ti.",
-   "endNote": "Cómo funciona la revisión de una página pública, paso a paso.",
-   "why": "Por qué importa",
-   "more": "¿Lo sabías?",
-   "strongest": "Área más fuerte",
-   "weakest": "Área más débil"
-  },
-  "pt": {
-   "tryThis": "Experimente",
-   "tip": "Dica",
-   "guided": "Visita guiada",
-   "never": "Nunca executa seus testes",
-   "end": "Deixe sua página falar por você.",
-   "endNote": "Como funciona a revisão de uma página pública, passo a passo.",
-   "why": "Por que isso importa",
-   "more": "Você sabia?",
-   "strongest": "Área mais forte",
-   "weakest": "Área mais fraca"
-  },
   "de": {
    "tryThis": "Probieren Sie es aus",
    "tip": "Tipp",
@@ -36,6 +12,18 @@
    "strongest": "Stärkster Bereich",
    "weakest": "Schwächster Bereich"
   },
+  "es": {
+   "tryThis": "Pruébalo",
+   "tip": "Consejo",
+   "guided": "Visita guiada",
+   "never": "Nunca ejecuta tus pruebas",
+   "end": "Deja que tu página hable por ti.",
+   "endNote": "Cómo funciona la revisión de una página pública, paso a paso.",
+   "why": "Por qué importa",
+   "more": "¿Lo sabías?",
+   "strongest": "Área más fuerte",
+   "weakest": "Área más débil"
+  },
   "fr": {
    "tryThis": "Essayez",
    "tip": "Astuce",
@@ -44,9 +32,21 @@
    "end": "Laissez votre page parler pour vous.",
    "endNote": "Comment fonctionne l'analyse d'une page publique, étape par étape.",
    "why": "Pourquoi c'est important",
-   "more": "Le saviez-vous ?",
+   "more": "Le saviez-vous ?",
    "strongest": "Point le plus fort",
    "weakest": "Point le plus faible"
+  },
+  "pt": {
+   "tryThis": "Experimente",
+   "tip": "Dica",
+   "guided": "Visita guiada",
+   "never": "Nunca executa seus testes",
+   "end": "Deixe sua página falar por você.",
+   "endNote": "Como funciona a revisão de uma página pública, passo a passo.",
+   "why": "Por que isso importa",
+   "more": "Você sabia?",
+   "strongest": "Área mais forte",
+   "weakest": "Área mais fraca"
   }
  },
  "clips": {
@@ -163,7 +163,7 @@
   "fr\u0000Let your page do the talking.": "Laissez votre page parler pour vous.",
   "fr\u0000How a public-page review works, step by step.": "Comment fonctionne l'analyse d'une page publique, étape par étape.",
   "fr\u0000Why it matters": "Pourquoi c'est important",
-  "fr\u0000Did you know?": "Le saviez-vous ?",
+  "fr\u0000Did you know?": "Le saviez-vous ?",
   "fr\u0000Strongest area": "Point le plus fort",
   "fr\u0000Weakest area": "Point le plus faible",
   "es\u0000EAFIT or UdeA:": "EAFIT o UdeA:",
