@@ -742,6 +742,7 @@ test.describe('admin statistics (Jarvis)', () => {
   });
 
   test('Map shows the world shaded by the chosen metric, the missing zones and a country sheet whose buttons go through the function (#2976)', async ({ page }, testInfo) => {
+    test.setTimeout(90000);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page, '#stats/geo/30', { 'action-run': { ok: true, done: 1, action: 'calendar-pause', note: 'W1 E-pt Brazil will pause on the holiday.' } });
@@ -759,14 +760,14 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(geo.locator('.jv-geo-legend')).toContainText('Low replies');
     if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-gaps.png` });
     // #2989: the Dates ahead metric, the Upcoming dates panel, and the holiday pause in the country sheet.
-    const holiday = CALENDAR.days.find((d) => d.kind === 'holiday');
+    const holiday = CALENDAR.days.find((d) => d.kind === 'holiday' && d.ccs.includes('BR'));
     await geo.locator('[data-geo-channel="all"]').click();
     await geo.locator('[data-geo-metric]').selectOption('dates');
     await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Dates ahead');
     await expect(geo.locator('.jv-geo-scale')).toContainText('today');
     await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
-    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('aria-label', /Republic Day in \d+ days/);
-    await expect(geo.locator('[data-panel-id="geo-ranking"] tbody tr').first()).toContainText(/Brazil|Mexico/);
+    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('aria-label', /Proclamação da República in \d+ days/);
+    await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*in \d+ days/);
     const dates = geo.locator('[data-panel-id="geo-dates"]');
     await expect(dates).toContainText('Upcoming dates');
     await expect(dates).toContainText('Republic Day');

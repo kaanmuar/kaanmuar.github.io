@@ -129,13 +129,17 @@ function build(input) {
     if (!all && !ccs.length) return;
     occurrences(e, [ty - 1, ty, ty + 1]).forEach((o) => {
       if (o.end < today || o.start > last) return;
-      const keep = e.kind === "religious" ? ccs.filter((c) => !(sets[c] && sets[c].has(o.start))) : ccs;
+      // A listed public holiday only stands in for a country Nager.Date has none for.
+      const keep = e.kind === "religious" ? ccs.filter((c) => !(sets[c] && sets[c].has(o.start)))
+        : e.kind === "holiday" ? ccs.filter((c) => !(holidays[c] && holidays[c].length)) : ccs;
       if (!all && !keep.length) return;
-      items.push({
+      const row = {
         id: e.id + ":" + o.start, ref: e.id, date: o.start, end: o.end !== o.start ? o.end : null, kind: KINDS.includes(e.kind) ? e.kind : "event",
         name: e.name, cc: all ? "ALL" : keep[0], ccs: keep, all, daysAway: Math.max(0, diffDays(today, o.start)), ongoing: o.start < today,
         lead: e.lead || null, do: e.do || null, why: e.why || "", action: e.action || "", source: (data.sources && data.sources[e.source]) || null
-      });
+      };
+      if (e.kind === "holiday") Object.assign(row, { local: {}, weekend: weekend(o.start), after: Object.fromEntries(keep.map((c) => [c, nextBusinessDay(o.end, sets[c])])) });
+      items.push(row);
     });
   });
   const order = (k) => KINDS.indexOf(k);
@@ -211,7 +215,7 @@ async function source(ctx) {
   const [hol, pauses] = await Promise.all([holidays(ctx, [year, year + 1], targets), readPauses(ctx.db)]);
   const notes = [];
   if (hol.failed) notes.push(`Nager.Date did not answer for ${hol.failed} country-years; their public holidays are missing until the next refresh.`);
-  if (hol.missing.length) notes.push(`Nager.Date has no public holidays for ${hol.missing.length} target markets: ${hol.missing.join(", ")}.`);
+  if (hol.missing.length) notes.push(`Nager.Date has no public holidays for ${hol.missing.length} target markets: ${hol.missing.join(", ")}; only the national holidays in Jarvis's list show for them.`);
   const out = build({ today, targets, holidays: hol.byCc, settings: ctx.settings && ctx.settings.calendar, pauses, missing: hol.missing });
   return Object.assign({ ok: true, needs: [], notes }, out);
 }

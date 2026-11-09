@@ -80,6 +80,18 @@ test("build: 60 days for the target markets, holidays grouped across countries, 
   assert.equal(cal.build({ today: "2026-11-09", targets: [] }).settings.autoPause, false);
 });
 
+test("a listed national holiday stands in only for a country Nager.Date has none for", () => {
+  const missing = cal.build({ today: "2026-11-09", targets: ["TL"], holidays: {} });
+  const proc = missing.days.find((d) => d.ref === "proclamation-tl");
+  assert.equal(proc.kind, "holiday");
+  assert.deepEqual(proc.ccs, ["TL"]);
+  assert.equal(proc.after.TL, "2026-11-30");
+  assert.equal(proc.weekend, true);
+  const nager = cal.build({ today: "2026-11-09", targets: ["TL"], holidays: { TL: [{ date: "2026-11-28", name: "Proclamation of Independence Day", local: "" }] } });
+  assert.ok(!nager.days.some((d) => d.ref === "proclamation-tl"));
+  assert.equal(nager.days.filter((d) => d.kind === "holiday" && d.date === "2026-11-28").length, 1);
+});
+
 test("the geo rows get the next date and days to it", () => {
   const out = cal.build({ today: "2026-11-09", targets: ["MX"], holidays: MX_HOLIDAY });
   const rows = require("../../functions/jarvis-geo.js").joinDates([{ cc: "MX" }, { cc: "AO" }], out, Date.parse("2026-11-09T15:00:00Z"));

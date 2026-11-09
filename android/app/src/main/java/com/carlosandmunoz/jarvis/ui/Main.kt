@@ -504,7 +504,8 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
     val settings = s.snapshot.obj("settings")
     var mail by remember(settings) { mutableStateOf(MAIL_LABELS.keys.associateWith { settings.obj("mail").bool(it) ?: false }) }
     var actions by remember(settings) { mutableStateOf(settings.obj("actions")) }
-    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions))) { "Saved." }
+    var calendar by remember(settings) { mutableStateOf(CalendarSettings.clean(settings.obj("calendar"))) }
+    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions, calendar))) { "Saved." }
     Scaffold(containerColor = Color.Transparent, topBar = {
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
@@ -546,12 +547,38 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
             }
+            if (settings != null) Panel("Country dates") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Pause campaigns over holidays on their own")
+                        Muted("Campaigns sending with at least half their leads in a country pause on its public holiday and resume the next business day, at the 07:40 (Bogotá) daily job. Logged under Actions and pushed. Off, Jarvis proposes it and you tap.")
+                    }
+                    Switch(calendar.autoPause, { on -> calendar = calendar.copy(autoPause = on); save(settings) }, enabled = "settings" !in s.running)
+                }
+                Muted("Warn this many days ahead")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CalendarSettings.WARN_CHOICES.forEach { d ->
+                        TextButton(onClick = { calendar = calendar.copy(warnDays = d, remindDays = minOf(calendar.remindDays, d)); save(settings) }, enabled = "settings" !in s.running) {
+                            Text("$d d", color = if (d == calendar.warnDays) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+                Muted("Remind this many days ahead")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CalendarSettings.REMIND_CHOICES.forEach { d ->
+                        TextButton(onClick = { calendar = calendar.copy(remindDays = minOf(d, calendar.warnDays)); save(settings) }, enabled = "settings" !in s.running) {
+                            Text("$d d", color = if (d == calendar.remindDays) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+                Muted("The Map tab lists the dates ahead per country. The web settings set any number from 1 to 60.")
+            }
             if (settings != null) Panel("GitHub repos") {
                 var repos by remember(settings) { mutableStateOf(Github.cleanRepos(settings.obj("github")?.get("repos").strings()).joinToString("\n")) }
                 OutlinedTextField(repos, { repos = it }, label = { Text("Repos the GitHub tab shows, owner/name, one per line") }, minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth())
                 Muted("Up to 20. Left empty, the tab shows ${Github.REPOS.joinToString(", ")}. The web tab shows the same list.")
                 ActionButton("Save repos", "settings" in s.running) {
-                    vm.market("settings", "settings-save", mapOf("settings" to JsonObject(edited(settings, mail, actions) + ("github" to Github.reposJson(Github.cleanRepos(repos.lines())))))) { "Saved. GitHub reads the new list." }
+                    vm.market("settings", "settings-save", mapOf("settings" to JsonObject(edited(settings, mail, actions, calendar) + ("github" to Github.reposJson(Github.cleanRepos(repos.lines())))))) { "Saved. GitHub reads the new list." }
                 }
             }
             Panel("Push notifications") {
@@ -692,9 +719,24 @@ private fun Devices(s: UiState) {
 }
 
 // Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
-private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?): JsonObject =
+private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?, calendar: CalendarSettings): JsonObject =
     JsonObject(settings - "layout" + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
-        (actions?.let { mapOf("actions" to it) } ?: emptyMap()))
+        (actions?.let { mapOf("actions" to it) } ?: emptyMap()) + ("calendar" to calendar.json()))
+
+/** Country dates (#2989) in jarvis_settings/main, cleaned as calendarSettings in js/admin-jarvis-core.js. */
+data class CalendarSettings(val autoPause: Boolean = false, val warnDays: Int = 14, val remindDays: Int = 3) {
+    fun json() = JsonObject(mapOf("autoPause" to JsonPrimitive(autoPause), "warnDays" to JsonPrimitive(warnDays), "remindDays" to JsonPrimitive(remindDays)))
+
+    companion object {
+        val WARN_CHOICES = listOf(7, 14, 21, 30)
+        val REMIND_CHOICES = listOf(1, 3, 5, 7)
+        fun clean(o: JsonObject?): CalendarSettings {
+            val warn = (o.num("warnDays")?.takeIf { it >= 1 }?.let { Math.round(it).toInt() } ?: 14).coerceIn(1, 60)
+            val remind = (o.num("remindDays")?.let { Math.round(it).toInt() } ?: 3).coerceIn(0, warn)
+            return CalendarSettings(o.bool("autoPause") == true, warn, remind)
+        }
+    }
+}
 
 private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
 

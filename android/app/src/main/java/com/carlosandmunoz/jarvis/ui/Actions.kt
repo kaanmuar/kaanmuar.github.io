@@ -56,7 +56,8 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
     "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
     "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
-    "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging")
+    "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging",
+    "calendar-pause" to "Pause campaigns over a holiday", "calendar-resume" to "Resume campaigns after a holiday")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
 private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign",
@@ -114,7 +115,7 @@ fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal
     }
     vm.act(actionKey(action, job ?: workflow ?: pr?.toString()), "action-run", extra) { out ->
         if (action.startsWith("pagespeed-")) return@act out.str("note") ?: "Done."
-        if (action == "rerun-ci") out.str("note")?.let { return@act it }
+        if (action == "rerun-ci" || action.startsWith("calendar-")) out.str("note")?.let { return@act it }
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }
@@ -138,6 +139,8 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "publish-hub" -> "publish the Social hub (run refreshSocialHubStats)"
     "retry-social" -> "start the social posting workflows again (Buffer re-queues the failed posts)"
     "resume-outreach" -> "resume the outreach mailboxes Jarvis paused that have been healthy for two hourly checks"
+    "calendar-pause" -> "pause the campaigns that mostly reach that country on its holiday, and resume them the next business day"
+    "calendar-resume" -> "resume the campaigns paused for the holiday now (a pause still planned is cancelled)"
     "pagespeed-merge" -> "merge PageSpeed fixes #$pr into main now (it goes to production)"
     "pagespeed-close" -> "close PageSpeed fixes #$pr without merging"
     "pagespeed-run" -> "start the daily PageSpeed run now (about two hours)"
