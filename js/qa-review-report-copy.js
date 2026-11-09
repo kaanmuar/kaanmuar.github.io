@@ -11,7 +11,12 @@
         clientUrlNeeded: "Enter the client's website.", clientMailDead: "The client email domain does not accept mail.", urlNeeded: "Enter a public page after https://.", urlEmpty: "Enter a URL.", urlInvalid: "Enter a valid https URL.",
         urlHttps: "Only https URLs can be reviewed.", urlLogin: "Remove the username and password from the URL.", urlPort: "Only the standard https port can be reviewed.", urlPrivate: "That address is not a public website.",
         frameworksNeeded: "Choose at least one framework for the proposed cases.", scopeInvalid: "Choose 20, 40, 60, 80, or 100 pages, and 2, 3, 4, or 5 links deep.", termsNeeded: "Accept the terms first.", compareFrom: "Start a comparison from one of your reports.",
-        reviewFailed: "The review failed.", noReport: "The review ended without a report."
+        reviewFailed: "The review failed.", noReport: "The review ended without a report.",
+        hostUnresolved: "The host name did not resolve.", hostPrivate: "That host points at a private address.", tooManyRedirects: "The page redirected too many times.",
+        notHtml: "The URL did not return an HTML page.", tooLarge: "The page is larger than the review limit.", urlStatus: "The URL returned status {status}.",
+        humanOnly: "This review is for a person using a browser.", humanWait: "Wait a moment on the form, then start the review.",
+        compareNoScores: "That review is not saved with scores, so there is nothing to compare with.", compareNotYours: "Only the account that ran a review can compare it with a competitor.",
+        compareStopped: "That review stopped early. Compare a finished review.", compareSame: "That is the same site. Enter a competitor's address."
       },
       signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
       reviewNeeds: "Still needed before Review: {steps}",
@@ -208,7 +213,12 @@
         urlInvalid: "Escribe una URL https válida.", urlHttps: "Solo se pueden revisar URL https.", urlLogin: "Quita el usuario y la contraseña de la URL.", urlPort: "Solo se puede revisar el puerto https estándar.",
         urlPrivate: "Esa dirección no es un sitio web público.", frameworksNeeded: "Elige al menos un framework para los casos propuestos.", scopeInvalid: "Elige 20, 40, 60, 80 o 100 páginas, y 2, 3, 4 o 5 enlaces de profundidad.",
         termsNeeded: "Primero acepta los términos.", compareFrom: "Empieza una comparación desde uno de tus informes.",
-        reviewFailed: "La revisión falló.", noReport: "La revisión terminó sin un informe."
+        reviewFailed: "La revisión falló.", noReport: "La revisión terminó sin un informe.",
+        hostUnresolved: "El nombre del host no se pudo resolver.", hostPrivate: "Ese host apunta a una dirección privada.", tooManyRedirects: "La página redirigió demasiadas veces.",
+        notHtml: "La URL no devolvió una página HTML.", tooLarge: "La página supera el límite de la revisión.", urlStatus: "La URL respondió con el estado {status}.",
+        humanOnly: "Esta revisión es para una persona que usa un navegador.", humanWait: "Espera un momento en el formulario y luego inicia la revisión.",
+        compareNoScores: "Esa revisión no está guardada con puntuaciones, así que no hay nada con qué comparar.", compareNotYours: "Solo la cuenta que ejecutó una revisión puede compararla con un competidor.",
+        compareStopped: "Esa revisión se detuvo antes de tiempo. Compara una revisión terminada.", compareSame: "Es el mismo sitio. Escribe la dirección de un competidor."
       },
       signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
@@ -407,7 +417,12 @@
         urlInvalid: "Digite uma URL https válida.", urlHttps: "Só é possível revisar URLs https.", urlLogin: "Tire o usuário e a senha da URL.", urlPort: "Só é possível revisar a porta https padrão.",
         urlPrivate: "Esse endereço não é um site público.", frameworksNeeded: "Escolha pelo menos um framework para os casos propostos.", scopeInvalid: "Escolha 20, 40, 60, 80 ou 100 páginas, e 2, 3, 4 ou 5 links de profundidade.",
         termsNeeded: "Aceite os termos primeiro.", compareFrom: "Comece uma comparação a partir de um dos seus relatórios.",
-        reviewFailed: "A revisão falhou.", noReport: "A revisão terminou sem um relatório."
+        reviewFailed: "A revisão falhou.", noReport: "A revisão terminou sem um relatório.",
+        hostUnresolved: "O nome do host não foi resolvido.", hostPrivate: "Esse host aponta para um endereço privado.", tooManyRedirects: "A página redirecionou vezes demais.",
+        notHtml: "A URL não retornou uma página HTML.", tooLarge: "A página passa do limite da revisão.", urlStatus: "A URL respondeu com o status {status}.",
+        humanOnly: "Esta revisão é para uma pessoa usando um navegador.", humanWait: "Espere um momento no formulário e depois inicie a revisão.",
+        compareNoScores: "Essa revisão não está salva com pontuações, então não há com o que comparar.", compareNotYours: "Só a conta que executou uma revisão pode compará-la com um concorrente.",
+        compareStopped: "Essa revisão parou antes do fim. Compare uma revisão concluída.", compareSame: "É o mesmo site. Digite o endereço de um concorrente."
       },
       signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
       reviewNeeds: "Falta antes de Revisar: {steps}",
@@ -608,7 +623,12 @@
         urlLogin: "Entfernen Sie Benutzername und Passwort aus der URL.", urlPort: "Nur der Standard-Port für https kann geprüft werden.", urlPrivate: "Diese Adresse ist keine öffentliche Website.",
         frameworksNeeded: "Wählen Sie mindestens ein Framework für die vorgeschlagenen Fälle.", scopeInvalid: "Wählen Sie 20, 40, 60, 80 oder 100 Seiten und 2, 3, 4 oder 5 Links Tiefe.", termsNeeded: "Akzeptieren Sie zuerst die Bedingungen.",
         compareFrom: "Starten Sie einen Vergleich aus einem Ihrer Berichte.",
-        reviewFailed: "Die Prüfung ist fehlgeschlagen.", noReport: "Die Prüfung endete ohne Bericht."
+        reviewFailed: "Die Prüfung ist fehlgeschlagen.", noReport: "Die Prüfung endete ohne Bericht.",
+        hostUnresolved: "Der Hostname ließ sich nicht auflösen.", hostPrivate: "Dieser Host verweist auf eine private Adresse.", tooManyRedirects: "Die Seite hat zu oft weitergeleitet.",
+        notHtml: "Die URL hat keine HTML-Seite geliefert.", tooLarge: "Die Seite ist größer als das Limit der Prüfung.", urlStatus: "Die URL antwortete mit Status {status}.",
+        humanOnly: "Diese Prüfung ist für einen Menschen in einem Browser gedacht.", humanWait: "Warten Sie kurz im Formular und starten Sie dann die Prüfung.",
+        compareNoScores: "Diese Prüfung ist nicht mit Bewertungen gespeichert, daher gibt es nichts zu vergleichen.", compareNotYours: "Nur das Konto, das eine Prüfung ausgeführt hat, kann sie mit einem Mitbewerber vergleichen.",
+        compareStopped: "Diese Prüfung wurde vorzeitig gestoppt. Vergleichen Sie eine abgeschlossene Prüfung.", compareSame: "Das ist dieselbe Website. Geben Sie die Adresse eines Mitbewerbers ein."
       },
       signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
       reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
@@ -807,7 +827,12 @@
         urlEmpty: "Saisissez une URL.", urlInvalid: "Saisissez une URL https valide.", urlHttps: "Seules les URL https peuvent être analysées.", urlLogin: "Retirez le nom d’utilisateur et le mot de passe de l’URL.",
         urlPort: "Seul le port https standard peut être analysé.", urlPrivate: "Cette adresse n’est pas un site web public.", frameworksNeeded: "Choisissez au moins un framework pour les cas proposés.",
         scopeInvalid: "Choisissez 20, 40, 60, 80 ou 100 pages, et 2, 3, 4 ou 5 liens de profondeur.", termsNeeded: "Acceptez d’abord les conditions.", compareFrom: "Lancez une comparaison depuis l’un de vos rapports.",
-        reviewFailed: "L’analyse a échoué.", noReport: "L’analyse s’est terminée sans rapport."
+        reviewFailed: "L’analyse a échoué.", noReport: "L’analyse s’est terminée sans rapport.",
+        hostUnresolved: "Le nom d’hôte n’a pas pu être résolu.", hostPrivate: "Cet hôte pointe vers une adresse privée.", tooManyRedirects: "La page a redirigé trop de fois.",
+        notHtml: "L’URL n’a pas renvoyé de page HTML.", tooLarge: "La page dépasse la limite de l’analyse.", urlStatus: "L’URL a répondu avec le statut {status}.",
+        humanOnly: "Cette analyse s’adresse à une personne qui utilise un navigateur.", humanWait: "Patientez un instant sur le formulaire, puis lancez l’analyse.",
+        compareNoScores: "Cette analyse n’est pas enregistrée avec des scores, il n’y a donc rien à comparer.", compareNotYours: "Seul le compte qui a lancé une analyse peut la comparer à un concurrent.",
+        compareStopped: "Cette analyse s’est arrêtée avant la fin. Comparez une analyse terminée.", compareSame: "C’est le même site. Saisissez l’adresse d’un concurrent."
       },
       signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
       reviewNeeds: "Reste à remplir avant Analyser : {steps}",
@@ -1005,7 +1030,12 @@
         urlInvalid: "Scrivi un URL https valido.", urlHttps: "Si possono revisionare solo URL https.", urlLogin: "Togli nome utente e password dall’URL.", urlPort: "Si può revisionare solo la porta https standard.",
         urlPrivate: "Quell’indirizzo non è un sito web pubblico.", frameworksNeeded: "Scegli almeno un framework per i casi proposti.", scopeInvalid: "Scegli 20, 40, 60, 80 o 100 pagine, e 2, 3, 4 o 5 link di profondità.",
         termsNeeded: "Accetta prima i termini.", compareFrom: "Avvia un confronto da uno dei tuoi report.",
-        reviewFailed: "La revisione non è riuscita.", noReport: "La revisione è finita senza un report."
+        reviewFailed: "La revisione non è riuscita.", noReport: "La revisione è finita senza un report.",
+        hostUnresolved: "Il nome host non è stato risolto.", hostPrivate: "Quell’host punta a un indirizzo privato.", tooManyRedirects: "La pagina ha reindirizzato troppe volte.",
+        notHtml: "L’URL non ha restituito una pagina HTML.", tooLarge: "La pagina supera il limite della revisione.", urlStatus: "L’URL ha risposto con lo stato {status}.",
+        humanOnly: "Questa revisione è per una persona che usa un browser.", humanWait: "Attendi un momento sul modulo, poi avvia la revisione.",
+        compareNoScores: "Quella revisione non è salvata con i punteggi, quindi non c’è nulla da confrontare.", compareNotYours: "Solo l’account che ha eseguito una revisione può confrontarla con un concorrente.",
+        compareStopped: "Quella revisione si è fermata prima della fine. Confronta una revisione finita.", compareSame: "È lo stesso sito. Scrivi l’indirizzo di un concorrente."
       },
       signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
       reviewNeeds: "Manca prima di Analizza: {steps}",
@@ -1230,9 +1260,18 @@
   }
 
   // The server sends field errors in English, so they are read by their exact wording until #2830 sends codes; an unknown one stays as sent.
+  // A sentence with {slots}, such as "The URL returned status {status}.", is matched with any value in each slot.
   function field(message) {
-    const known = Object.keys(COPY.en.fieldError).find((key) => COPY.en.fieldError[key] === message);
-    return known ? word("fieldError", known) : message;
+    const en = COPY.en.fieldError;
+    const known = Object.keys(en).find((key) => en[key] === message);
+    if (known) return word("fieldError", known);
+    for (const key of Object.keys(en)) {
+      const names = [];
+      const pattern = en[key].replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{(\w+)\}/g, (match, name) => { names.push(name); return "(.+?)"; });
+      const found = names.length && String(message || "").match(new RegExp("^" + pattern + "$"));
+      if (found) return fill(word("fieldError", key), Object.fromEntries(names.map((name, i) => [name, found[i + 1]])));
+    }
+    return message;
   }
 
   if (!english) {

@@ -32,7 +32,8 @@
    failed post is tried again on the next run while its slot is within reach. Before posting, each run reads the
    account's latest posts and skips a post one of them already links to, so a ledger that never reached main does
    not post twice. Hub first (scripts/hub-gate.js), as for Buffer and the Facebook Page. Exits 1 when a network
-   refused a login or a post, after trying the rest.
+   refused a login or a post, after trying the rest. A post that went out on a plainer plan than its first (the card
+   for a refused clip or poll) counts as posted, and the run's line and a GitHub Actions warning name it (#3006).
 
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
@@ -208,6 +209,11 @@ async function reply(res, label) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* A post that went out on a plainer plan than the first one its composer offered carries the plans the network
+   refused before it, as refused: [{ uses, error }], so the run counts and warns about it (#3006). */
+const refusal = (plan, error) => ({ uses: plan.uses, error: String(error.message).split("\n")[0] });
+const sent = (result, refused) => (refused.length ? Object.assign(result, { refused }) : result);
+
 // Bluesky and Mastodon take the clip's bytes; the release download redirects to GitHub's storage.
 async function download(url) {
   const res = await fetch(url);
@@ -332,6 +338,7 @@ function bluesky(env = process.env) {
       };
       const links = facets(text);
       let refused = null;
+      const plainer = [];
       for (const plan of compose.bluesky(args)) {
         const record = { $type: "app.bsky.feed.post", text, createdAt: new Date().toISOString(), langs: [lang] };
         if (links.length) record.facets = links;
@@ -340,15 +347,17 @@ function bluesky(env = process.env) {
           record.embed = plan.quote ? { $type: "app.bsky.embed.recordWithMedia", record: { $type: "app.bsky.embed.record", record: await get("quote", quoted) }, media } : media;
         } catch (error) {
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Bluesky could not add " + plan.uses.join(", ") + " - " + error.message);
           continue;
         }
         try {
           const { uri } = await xrpc("com.atproto.repo.createRecord", { body: { repo: session.did, collection: "app.bsky.feed.post", record } });
-          return { id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop(), uses: plan.uses };
+          return sent({ id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop(), uses: plan.uses }, plainer);
         } catch (error) {
           if (error.status !== 400) throw error;
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Bluesky refused " + plan.uses.join(", ") + " - " + error.message);
         }
       }
@@ -414,21 +423,24 @@ function mastodon(env = process.env) {
         return media.id;
       })());
       let refused = null;
+      const plainer = [];
       for (const plan of compose.mastodon(args)) {
         let body;
         try {
           body = Object.assign({ visibility: "public", language: lang }, plan.status, plan.media ? { media_ids: [await upload(plan.media)] } : {});
         } catch (error) {
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Mastodon could not add " + plan.uses.join(", ") + " - " + error.message);
           continue;
         }
         try {
           const status = await call("POST", "/api/v1/statuses", body, { "Idempotency-Key": key });
-          return { id: status.id, url: status.url, uses: plan.uses };
+          return sent({ id: status.id, url: status.url, uses: plan.uses }, plainer);
         } catch (error) {
           if (error.status !== 422) throw error;
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Mastodon refused " + plan.uses.join(", ") + " - " + error.message);
         }
       }
@@ -482,6 +494,7 @@ function threads(env = process.env) {
       let uses = [];
       let reply = null;
       let refused = null;
+      const plainer = [];
       for (const plan of threadsCompose.plans(Object.assign({}, args, { clip, location }))) {
         try {
           const params = Object.assign({}, plan.params);
@@ -496,6 +509,7 @@ function threads(env = process.env) {
           break;
         } catch (error) {
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Threads refused " + plan.uses.join(", ") + " - " + error.message);
         }
       }
@@ -519,7 +533,7 @@ function threads(env = process.env) {
         }
         break;
       }
-      return { id, url: permalink || "", uses };
+      return sent({ id, url: permalink || "", uses }, plainer);
     }
   };
 }
@@ -553,6 +567,7 @@ function instagram(env = process.env, story = false) {
       };
       let creation = "";
       let uses = [];
+      const plainer = [];
       if (story) creation = await container({ image_url: url, media_type: "STORIES" });
       else {
         const clip = args.clip && args.clip.lang === args.lang ? await released(args.clip) : null;
@@ -570,6 +585,7 @@ function instagram(env = process.env, story = false) {
             break;
           } catch (error) {
             refused = error;
+            plainer.push(refusal(plan, error));
             console.log("Instagram refused " + plan.uses.join(", ") + " - " + error.message);
           }
         }
@@ -577,9 +593,33 @@ function instagram(env = process.env, story = false) {
       }
       const { id } = await publish(call, ig, creation);
       const { permalink } = await call("GET", id, { fields: "permalink" }).catch(() => ({}));
-      return Object.assign({ id, url: permalink || "" }, story ? {} : { uses });
+      return sent(Object.assign({ id, url: permalink || "" }, story ? {} : { uses }), plainer);
     }
   };
+}
+
+// A bot uploads files up to 50 MB; Telegram fetches one by URL only up to 20 MB.
+const TELEGRAM_UPLOAD_MAX = 50 * 1024 * 1024;
+
+/* Telegram cannot fetch a release clip by URL: the download redirects to a signed release-assets address that serves
+   it as an application/octet-stream attachment (#3004). The plan's fields as a form, with the clip's bytes as the
+   video; null when the release has no such clip or it is over the upload limit. */
+async function telegramUpload(chat, body) {
+  const res = await fetch(body.video).catch(() => null);
+  if (!res || !res.ok) return null;
+  if (Number(res.headers.get("content-length")) > TELEGRAM_UPLOAD_MAX) {
+    if (res.body) await res.body.cancel().catch(() => {});
+    return null;
+  }
+  const bytes = Buffer.from(await res.arrayBuffer());
+  if (bytes.length > TELEGRAM_UPLOAD_MAX) return null;
+  const form = new FormData();
+  form.append("chat_id", chat);
+  for (const [key, value] of Object.entries(body)) {
+    if (key === "video") form.append(key, new Blob([bytes], { type: "video/mp4" }), path.basename(new URL(value).pathname));
+    else form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+  }
+  return form;
 }
 
 // The @qalab_live channel (TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL), where scripts/telegram-live.js posts the Live Reports.
@@ -588,12 +628,26 @@ function telegram(env = process.env) {
   const chat = env.TELEGRAM_CHANNEL || "";
   let user = "";
   async function call(method, body) {
-    const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const form = body instanceof FormData;
+    const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method,
+      form ? { method: "POST", body } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) {
       throw Object.assign(new Error("Telegram " + method + " " + res.status + ": " + String(json.description || "no answer").slice(0, 200)), { status: json.error_code || res.status });
     }
     return json.result;
+  }
+  // A clip Telegram refuses to fetch by URL is uploaded instead.
+  async function send(plan) {
+    try {
+      return await call(plan.method, Object.assign({ chat_id: chat }, plan.body));
+    } catch (error) {
+      if (error.status !== 400 || !plan.body.video) throw error;
+      const form = await telegramUpload(chat, plan.body);
+      if (!form) throw Object.assign(new Error(error.message + "; no clip under 50 MB to upload"), { status: 400 });
+      console.log("Telegram could not fetch the clip, uploading it - " + error.message);
+      return call(plan.method, form);
+    }
   }
   return {
     ready: Boolean(env.TELEGRAM_BOT_TOKEN && chat),
@@ -604,17 +658,20 @@ function telegram(env = process.env) {
     },
     async recent() { return []; },
     /* Tries each plan of scripts/open-social-compose.js, richest first. A request Telegram refuses as bad (400: a
-       parameter, or a clip it cannot fetch) moves to the next plan; any other failure is not retried as a plainer post. */
+       parameter, or a clip it can neither fetch nor take as an upload; 413: an upload too large) moves to the next
+       plan; any other failure is not retried as a plainer post. */
     async post(args) {
       await served(args.url);
       let refused = null;
+      const plainer = [];
       for (const plan of compose.telegram(args)) {
         try {
-          const m = await call(plan.method, Object.assign({ chat_id: chat }, plan.body));
-          return { id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "", uses: plan.uses };
+          const m = await send(plan);
+          return sent({ id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "", uses: plan.uses }, plainer);
         } catch (error) {
-          if (error.status !== 400) throw error;
+          if (error.status !== 400 && error.status !== 413) throw error;
           refused = error;
+          plainer.push(refusal(plan, error));
           console.log("Telegram refused " + plan.uses.join(", ") + " - " + error.message);
         }
       }
@@ -656,7 +713,7 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
   const faceFor = typeof face === "function" ? face : () => face;
   const key = (ROUTES[network] || ROUTES.bluesky).caption || "x";
   const todo = due(list, now).filter((post) => !(book.posts[post.batch + "/" + post.slug] || []).some((e) => e.channel === network && e.result === "sent"));
-  const counts = { posted: 0, already: 0, held: 0, failed: 0, waiting: Math.max(0, todo.length - PER_RUN) };
+  const counts = { posted: 0, already: 0, held: 0, failed: 0, waiting: Math.max(0, todo.length - PER_RUN), plainer: [] };
   if (!live) {
     for (const post of todo.slice(0, PER_RUN)) {
       const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
@@ -696,6 +753,10 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
       const r = await client.post(Object.assign({ text: caption(post, network, f), image: post.image, url: post.url, alt: post.cap.alt || post.cap.title || "", lang: faceRoute.captionLang(post.cap, key, f), key: name }, more));
       counts.posted += 1;
       console.log("posted", network, name, r.url, r.uses ? "(" + r.uses.join(", ") + ")" : "");
+      if (r.refused) {
+        counts.plainer.push({ name, uses: r.uses, refused: r.refused });
+        console.log("plainer", network, name, "- went out as " + r.uses.join(", ") + "; refused " + r.refused.map((x) => x.uses.join(", ") + " (" + x.error + ")").join("; "));
+      }
       record(post, { id: r.id, url: r.url, at, result: "sent" });
     } catch (error) {
       counts.failed += 1;
@@ -704,6 +765,25 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
     }
   }
   return counts;
+}
+
+// GitHub Actions reads a workflow command from stdout: its message escapes %, CR and LF, a property also : and ,.
+const escapeData = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+const escapeProperty = (s) => escapeData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+
+/* The run's line for one account. Posts that went out on a plainer plan count as posted, so they never fail the run,
+   but the line names how many, and under GitHub Actions a warning lists each with the plans refused (#3006). */
+function report(label, c, { brand = false, env = process.env } = {}) {
+  const plainer = c.plainer || [];
+  const lines = [label + ": " + c.posted + " posted" + (plainer.length ? " (" + plainer.length + " as a plainer post)" : "") + (brand ? "" : ", " + c.already + " already on the account")
+    + ", " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run"];
+  if (plainer.length && env.GITHUB_ACTIONS) {
+    const title = label + ": " + plainer.length + " of " + c.posted + " posted as a plainer post";
+    const each = plainer.map((p) => p.name + " went out as " + p.uses.join(", ") + " after " + p.refused.map((x) => x.uses.join(", ") + " was refused: " + x.error.slice(0, 200)).join("; "));
+    lines.push("::warning title=" + escapeProperty(title) + "::" + escapeData(each.join("\n")));
+  }
+  lines.forEach((line) => console.log(line));
+  return lines;
 }
 
 async function main() {
@@ -731,7 +811,7 @@ async function main() {
       try {
         if (live) client.profile = await client.login();
         const c = await run(network, client, batches.flatMap((name) => posts(name, ROOT, network)), book, { live, now, gate, face: ownFace });
-        console.log(network + ": " + c.posted + " posted, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
+        report(network, c, { brand: true });
         if (c.failed) broken = true;
       } catch (error) {
         broken = true;
@@ -768,7 +848,7 @@ async function main() {
       if (!live && !list.length) continue;
       try {
         const c = await run(network, client, list, book, { live, now, gate, face });
-        console.log(label + ": " + c.posted + " posted, " + c.already + " already on the account, " + c.held + " held, " + c.failed + " failed, " + c.waiting + " due for a later run");
+        report(label, c);
         if (c.failed) broken = true;
       } catch (error) {
         broken = true;
@@ -782,4 +862,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, BRAND, LEDGERS, NO_LAUNCH, xSlots, allBatches, posts, due, caption, ownFace, redditTitle, redditPosts, facets, run, bluesky, mastodon, telegram, graph, publish };
+module.exports = { PER_RUN, MISSED_MS, ROUTES, NETWORKS, BRAND, LEDGERS, NO_LAUNCH, xSlots, allBatches, posts, due, caption, ownFace, redditTitle, redditPosts, facets, run, report, bluesky, mastodon, telegram, graph, publish };
