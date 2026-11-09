@@ -300,6 +300,122 @@ function processMap(board, flow, opts) {
 
 // --- the tool ------------------------------------------------------------------------------------------------
 
+// --- Console (#2810): the jarvis_log lines, oldest at the top, from the log op every 5 s while it is on screen ----
+
+const CONSOLE_MS = 5000;
+const CONSOLE_KEEP = 2000;
+const conTime = (iso) => {
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return '';
+    const day = (t) => t.toLocaleDateString('en-US', { timeZone: 'America/Bogota', month: 'short', day: 'numeric' });
+    const time = d.toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour12: false });
+    return day(d) === day(new Date()) ? time : day(d) + ' ' + time;
+};
+
+function logConsole({ C, call }) {
+    const S = { rows: [], ids: new Set(), cursor: '', sources: new Set(), level: 'debug', q: '', paused: false, waiting: 0, busy: false, error: '', loaded: false };
+    const node = document.createElement('section');
+    node.className = 'jv-con';
+    node.dataset.con = '';
+    node.innerHTML = `
+      <div class="jv-con-bar">
+        <div class="jv-con-srcs" role="group" aria-label="Sources"><button type="button" data-con-src="" aria-pressed="true">all</button>${C.LOG_SOURCES.map((s) => `<button type="button" class="src-${s}" data-con-src="${s}" aria-pressed="false">${s}</button>`).join('')}</div>
+        <div class="jv-con-tools">
+          <select data-con-level aria-label="Lowest level" data-menu-ready="1">${C.LOG_LEVELS.map((l, i) => `<option value="${l}">${l}${i < C.LOG_LEVELS.length - 1 ? '+' : ''}</option>`).join('')}</select>
+          <input type="search" data-con-q placeholder="Search" aria-label="Search the log" autocomplete="off">
+          <button type="button" class="jv-btn small" data-con-pause aria-pressed="false" title="Pause the scrolling; new lines wait">Pause</button>
+        </div>
+      </div>
+      <ol class="jv-con-lines" data-con-lines role="log" aria-live="off" tabindex="0"></ol>
+      <p class="jv-con-foot" data-con-foot>Connecting…</p>`;
+    const list = node.querySelector('[data-con-lines]');
+    const foot = node.querySelector('[data-con-foot]');
+    const atBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+    const line = (r) => `<li class="lv-${esc(r.level)}"${r.url ? ` data-con-url="${esc(r.url)}" tabindex="0" role="link"` : ''} title="${esc(new Date(r.at).toLocaleString('en-US', { timeZone: 'America/Bogota' }))} Bogotá${r.ref ? ' · ' + esc(r.ref) : ''}"><time>${esc(conTime(r.at))}</time><b class="src-${esc(r.source)}">${esc(r.source)}</b><i>${esc(String(r.level).toUpperCase())}</i><span>${esc(r.text)}</span></li>`;
+
+    let shownCount = 0;
+    function paintFoot() {
+        foot.textContent = (S.error ? 'Last read failed: ' + S.error + ' · ' : '') + `${shownCount} of ${S.rows.length} lines`
+            + (S.paused ? ` · paused${S.waiting ? ', ' + S.waiting + ' new' : ''}` : ' · live, every 5 s') + ' · Bogotá time · 7 days kept';
+    }
+
+    function paint() {
+        const shown = C.logFilter(S.rows, { sources: Array.from(S.sources), level: S.level, q: S.q }).slice(0, 600).reverse();
+        const stick = atBottom() || !list.children.length;
+        list.innerHTML = shown.length ? shown.map(line).join('') : `<li class="jv-con-empty">${S.loaded ? (S.rows.length ? 'No line matches these filters.' : 'Nothing logged in the last 7 days yet.') : 'Reading the log…'}</li>`;
+        if (stick) list.scrollTop = list.scrollHeight;
+        shownCount = shown.length;
+        paintFoot();
+    }
+
+    async function pull() {
+        if (S.busy) return;
+        S.busy = true;
+        try {
+            const out = await call('log', Object.assign({ limit: 300 }, S.cursor ? { since: S.cursor } : {}));
+            if (!out || out.ok === false) throw new Error((out && out.error) || 'no answer');
+            const fresh = (out.entries || []).filter((r) => r && r.id && !S.ids.has(r.id));
+            fresh.forEach((r) => S.ids.add(r.id));
+            S.cursor = out.cursor || S.cursor;
+            S.error = '';
+            if (fresh.length) {
+                S.rows = fresh.concat(S.rows).sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, CONSOLE_KEEP);
+                if (S.rows.length === CONSOLE_KEEP) S.ids = new Set(S.rows.map((r) => r.id));
+            }
+            const first = !S.loaded;
+            S.loaded = true;
+            if (S.paused && !first) { S.waiting += fresh.length; paintFoot(); } else if (fresh.length || first) paint(); else paintFoot();
+        } catch (error) {
+            S.error = String(error.message || error).slice(0, 120);
+            S.loaded = true;
+            paint();
+        }
+        S.busy = false;
+    }
+
+    node.addEventListener('click', (event) => {
+        const src = event.target.closest('[data-con-src]');
+        if (src) {
+            const s = src.dataset.conSrc;
+            if (!s) S.sources.clear(); else if (S.sources.has(s)) S.sources.delete(s); else S.sources.add(s);
+            node.querySelectorAll('[data-con-src]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.conSrc ? S.sources.has(b.dataset.conSrc) : !S.sources.size)));
+            list.scrollTop = list.scrollHeight;
+            paint();
+            return;
+        }
+        if (event.target.closest('[data-con-pause]')) {
+            S.paused = !S.paused;
+            S.waiting = 0;
+            const b = node.querySelector('[data-con-pause]');
+            b.setAttribute('aria-pressed', String(S.paused));
+            b.textContent = S.paused ? 'Resume' : 'Pause';
+            if (!S.paused) list.scrollTop = list.scrollHeight;
+            paint();
+            return;
+        }
+        const li = event.target.closest('[data-con-url]');
+        if (li) window.open(li.dataset.conUrl, '_blank', 'noopener');
+    });
+    node.addEventListener('keydown', (event) => {
+        const li = event.target.closest && event.target.closest('[data-con-url]');
+        if (li && event.key === 'Enter') window.open(li.dataset.conUrl, '_blank', 'noopener');
+    });
+    node.querySelector('[data-con-level]').addEventListener('change', (event) => { S.level = event.target.value; paint(); });
+    let typed = 0;
+    node.querySelector('[data-con-q]').addEventListener('input', (event) => { clearTimeout(typed); typed = setTimeout(() => { S.q = event.target.value; paint(); }, 150); });
+
+    return {
+        node,
+        state: S,
+        pull,
+        // Moves the one console into a tab's view or the dock; its lines, filters and scroll stay.
+        place(target) {
+            if (node.parentNode !== target) { target.textContent = ''; target.append(node); list.scrollTop = list.scrollHeight; }
+            if (!S.loaded) pull();
+        }
+    };
+}
+
 export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, upload = () => Promise.reject(new Error("Uploads need the admin page.")) }) {
     const C = window.JarvisCore;
     const api = endpoint || ENDPOINT;
@@ -349,10 +465,20 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
       <div class="jv-reply" hidden><form class="jv-reply-box" data-reply role="dialog" aria-label="Reply"></form></div>
       <div class="jv-pushes" aria-live="polite"></div>
       <div class="jv-toast" role="status" hidden></div>
+      <button type="button" class="jv-con-fab" data-con-dock aria-expanded="false" title="Console: everything happening in the back">&gt;_<span>Console</span></button>
+      <div class="jv-con-dock" data-con-dock-root hidden><section class="jv-con-dock-box" role="dialog" aria-label="Console"><header><h3>Console</h3><button type="button" class="jv-btn small" data-con-full>Full tab</button><button type="button" class="jv-btn small" data-con-close aria-label="Close the console">✕</button></header><div class="jv-con-slot" data-con-dock-slot></div></section></div>
     </div>`;
     const root = host.querySelector('.jv');
     const $ = (sel) => root.querySelector(sel);
     const $$ = (sel) => Array.from(root.querySelectorAll(sel));
+    const con = logConsole({ C, call });
+    let docked = false;
+    function dock(open) {
+        docked = !!open && S.product !== 'console';
+        $('[data-con-dock-root]').hidden = !docked;
+        $('[data-con-dock]').setAttribute('aria-expanded', String(docked));
+        if (docked) con.place($('[data-con-dock-slot]'));
+    }
 
     function toast(text, ms) {
         const node = $('.jv-toast');
@@ -2587,7 +2713,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const s = S.summaries;
         const e = S.external;
         const out = {};
-        const tiles = C.PRODUCTS.filter((p) => p.key !== 'overview').map((p) => {
+        const tiles = C.PRODUCTS.filter((p) => p.key !== 'overview' && p.key !== 'console').map((p) => {
             const sum = s[p.key];
             let main = null, series = [];
             if (sum && sum.kpis) { main = sum.kpis[0]; series = sum.series ? sum.series.values : []; }
@@ -2663,6 +2789,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.marketing = marketingView() + take();
         out.github = githubView() + take();
         out.engagement = engagementView() + take();
+        out.console = '';
 
         const ga = e.ga4;
         const cf = e.cloudflare;
@@ -2724,6 +2851,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             const view = $(`[data-view="${p.key}"]`);
             const active = p.key === S.product || root.classList.contains('jv-print-all');
             view.hidden = !active;
+            if (active && p.key === 'console') { con.place(view); return; }
             if (active) {
                 const keep = view.querySelector('.jv-ask input');
                 const typed = keep ? keep.value : '';
@@ -2742,6 +2870,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
+        $('[data-con-dock]').hidden = S.product === 'console';
+        if (S.product === 'console' && docked) dock(false);
         C.PRODUCTS.forEach((p) => {
             const sum = S.summaries[p.key];
             const badge = $(`[data-badge="${p.key}"]`);
@@ -3572,6 +3702,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (opener && root.contains(opener)) { drillToggle(opener); return; }
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
+        if (t.dataset.conDock !== undefined) { dock(!docked); return; }
+        if (t.dataset.conClose !== undefined) { dock(false); return; }
+        if (t.dataset.conFull !== undefined) { dock(false); go('console'); return; }
+        if (t.closest('[data-con]')) return;
         if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
         if (t.dataset.foldAll !== undefined) { foldAll(t.dataset.foldAll === '1'); return; }
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
@@ -3774,7 +3908,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (!visible()) return;
         const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((event.target || {}).tagName || '') || (event.target && event.target.isContentEditable);
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); palette($('.jv-palette').hidden); return; }
-        if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); return; }
+        if (event.key === 'Escape') { palette(false); closeSettings(); closeSheet(); dock(false); return; }
         if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.closest && event.target.closest('li[data-brief]')) { event.preventDefault(); openSheet(event.target.closest('li[data-brief]').dataset.brief); return; }
         if (!S.sheet && !typing && (event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('[data-drill-open]:not(button)')) { event.preventDefault(); drillToggle(event.target); return; }
         if (S.sheet) return;
@@ -3792,6 +3926,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const node = $('#jv-ago');
         if (node && S.updatedAt) node.textContent = S.live ? 'live · ' + ago(Date.now() - S.updatedAt) : 'paused';
     }, 1000));
+    S.timers.push(setInterval(() => {
+        if (document.hidden || !visible() || !auth.currentUser) return;
+        if (S.product === 'console' || docked) con.pull();
+    }, CONSOLE_MS));
     S.timers.push(setInterval(() => {
         if (!S.live || document.hidden || !visible() || !S.mounted) return;
         if (Date.now() - S.updatedAt >= SNAPSHOT_MS) loadNewer();

@@ -7,6 +7,7 @@ import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
@@ -65,6 +66,10 @@ data class UiState(
     val shares: List<JsonObject>? = null,
     val devices: List<JsonObject>? = null,
     val studio: JsonObject? = null,
+    /** Jarvis > Console (#2810): the log op's lines, newest first, its cursor and the last read's error. */
+    val log: List<JsonObject> = emptyList(),
+    val logCursor: String = "",
+    val logError: String? = null,
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -328,6 +333,20 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         if (fixture != null || !auth.signedIn) return
         viewModelScope.launch {
             runCatching { api.call("device", _state.value.days) }.onSuccess { out -> _state.update { it.copy(devices = out.objs("devices")) } }
+        }
+    }
+
+    /** Console (#2810): the lines since the last read, every 5 s while the Console is on screen; a fixture's "log" stands in. */
+    fun pullLog() {
+        if ("log" in _state.value.running) return
+        if (fixture != null) { _state.update { it.copy(log = com.carlosandmunoz.jarvis.ui.Console.merge(it.log, _state.value.snapshot.obj("log").objs("entries"))) }; return }
+        if (!auth.signedIn) return
+        _state.update { it.copy(running = it.running + "log") }
+        viewModelScope.launch {
+            val since = _state.value.logCursor
+            runCatching { api.call("log", _state.value.days, mapOf("limit" to JsonPrimitive(300)) + (if (since.isNotEmpty()) mapOf("since" to JsonPrimitive(since)) else emptyMap())) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - "log", log = com.carlosandmunoz.jarvis.ui.Console.merge(it.log, out.objs("entries")), logCursor = out.str("cursor") ?: since, logError = null) } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "log", logError = e.message ?: "The log did not load.") } }
         }
     }
 

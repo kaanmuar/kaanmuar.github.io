@@ -23,6 +23,7 @@
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
+const jarvisLog = require("./jarvis-log");
 
 const KINDS = { email: "third-party email", post: "public post", code: "code reaching production", outreach: "resuming outreach", repo: "GitHub housekeeping", money: "money" };
 const DAYTIME = { from: 8, to: 21 };
@@ -132,6 +133,7 @@ async function queue(db, entry, { now, hours }) {
   const ref = col(db).doc(id);
   try {
     await ref.create(row);
+    await jarvisLog.log(null, { source: "countdown", level: "info", ref: "countdown:" + id, text: "Queued " + lower(row.label) + ": " + row.target + ", runs at " + bogotaTime(runsAt(row)) + " Bogotá" + (row.why ? " · " + row.why : "") });
     return { row };
   } catch (error) {
     const snap = await ref.get().catch(() => null);
@@ -257,20 +259,21 @@ async function start(db, id, { ops, now, by }) {
   }
   let row = await claim(db, id, ["waiting"], { status: "running", startedAt: new Date(now).toISOString(), hold: "", decidedBy: forced ? text(by, 120) : "" });
   if (ops.push) await ops.push(startMessage(row)).catch(() => null);
+  await jarvisLog.log(null, { source: "countdown", level: "info", ref: "countdown:" + row.id, text: "Started " + lower(row.label) + ": " + row.target + (forced ? " (Do it now by " + by + ")" : " (countdown ended)") });
   let out;
   try { out = Object.assign({ status: "done" }, await execute(row, ops, now)); } catch (error) { out = { status: "failed", count: 0, detail: text(error.message || error, 300) }; }
   const patch = { status: out.status, result: text(out.detail, 300), endedAt: new Date().toISOString() };
   await col(db).doc(row.id).update(patch);
   row = Object.assign(row, patch);
   await A.log(db, { action: row.action, mode: "auto", status: out.status, count: out.count, target: row.target, key: row.key, detail: (forced ? "Do it now: " : "After the countdown: ") + out.detail,
-    by: forced ? "jarvis, Do it now by " + by : "jarvis (countdown)" }, now);
+    by: forced ? "jarvis, Do it now by " + by : "jarvis (countdown)", source: "countdown" }, now);
   if (ops.push) await ops.push(resultMessage(row)).catch(() => null);
   return row;
 }
 
 async function cancel(db, id, { now, by, why }) {
   const row = await claim(db, id, ["waiting"], { status: "cancelled", endedAt: new Date(now).toISOString(), decidedBy: text(by, 120), result: text(why, 300) || "Cancelled." });
-  await actions().log(db, { action: row.action, mode: by === "jarvis" ? "auto" : "click", status: "skipped", target: row.target, key: row.key, detail: "Countdown cancelled" + (why ? ": " + why : "."), by }, now);
+  await actions().log(db, { action: row.action, mode: by === "jarvis" ? "auto" : "click", status: "skipped", target: row.target, key: row.key, detail: "Countdown cancelled" + (why ? ": " + why : "."), by, source: "countdown" }, now);
   return row;
 }
 
