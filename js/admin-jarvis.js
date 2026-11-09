@@ -3017,6 +3017,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
             ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
             ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
+            ${geoConfirmPanel(g)}
         </div>`;
     }
 
@@ -3139,6 +3140,51 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const out = await call('geo-target', { cc, on }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? `${cc} is ${on ? 'now' : 'no longer'} a target market (${out.targets} in all).` : 'Not saved: ' + out.error, 6000);
         loadExternal(['geo']);
+    }
+
+    // Live Reports the country finder was unsure of (#3009). An answer reaches the pages with the next daily Live Reports run.
+    function geoConfirmPanel(g) {
+        const rows = g.confirm || [];
+        const t = g.totals || {};
+        const total = t.confirm || rows.length;
+        const item = (r) => {
+            const host = esc(r.host);
+            const guess = r.cc ? `<b>${esc(r.name || r.cc)}</b> <span class="jv-note">${r.cc === 'WW' ? '' : esc(r.cc) + ' · '}${Math.round((r.confidence || 0) * 100)}% sure</span>` : '<span class="jv-note">no guess</span>';
+            return `<li data-geo-confirm-row="${host}">
+                <div>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${host}</a>` : host} <span class="jv-note">${fmt(r.reports)} report${r.reports === 1 ? '' : 's'}</span></div>
+                <div>Guess: ${guess}</div>
+                ${(r.evidence || []).length ? `<p class="jv-note">${r.evidence.map(esc).join(' · ')}</p>` : ''}
+                <div class="jv-actions">${r.cc ? `<button type="button" class="jv-btn small" data-geo-confirm="yes" data-cc="${esc(r.cc)}">Confirm</button>` : ''}
+                    <input type="text" maxlength="2" placeholder="CC" aria-label="Another country for ${host}" autocomplete="off" spellcheck="false"><button type="button" class="jv-btn small" data-geo-confirm="change">Change</button>
+                    ${r.cc === 'WW' ? '' : '<button type="button" class="jv-btn small" data-geo-confirm="ww">Worldwide</button>'}<button type="button" class="jv-btn small" data-geo-confirm="skip">Skip</button></div></li>`;
+        };
+        const body = rows.length ? `<ol class="jv-geo-confirm">${rows.map(item).join('')}</ol>` : '<p class="jv-empty">No Live Report is waiting for a country.</p>';
+        return panel('geo-confirm', `Live Report countries to confirm · ${fmt(total)}${t.confirmed ? ` · ${fmt(t.confirmed)} confirmed` : ''}`, body, {
+            wide: true,
+            note: `${rows.length < total ? `The ${fmt(rows.length)} with the most reports. ` : ''}Change takes a two-letter code, or WW for worldwide. Skip leaves the site without a country and out of this list.`,
+            data: rows.map((r) => ({ host: r.host, guess: r.cc, country: r.name, confidence: r.confidence, reports: r.reports, report: r.url }))
+        });
+    }
+
+    async function geoConfirmAct(t) {
+        const row = t.closest('[data-geo-confirm-row]');
+        const host = row.dataset.geoConfirmRow;
+        const kind = t.dataset.geoConfirm;
+        const input = row.querySelector('input');
+        const cc = kind === 'yes' ? t.dataset.cc : kind === 'ww' ? 'WW' : kind === 'change' ? input.value.trim().toUpperCase() : '';
+        if (kind === 'change' && !/^[A-Z]{2}$/.test(cc)) { toast('Type a two-letter country code, like CO, or WW for worldwide.', 5000); input.focus(); return; }
+        if (kind === 'skip' && !confirmRun(`skip ${host}: it stays without a country and leaves this list`)) return;
+        const controls = row.querySelectorAll('button, input');
+        controls.forEach((c) => { c.disabled = true; });
+        const out = await call('geo-country-confirm', kind === 'skip' ? { host, skip: true } : { host, cc }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { controls.forEach((c) => { c.disabled = false; }); toast('Not saved: ' + out.error, 6000); return; }
+        const g = S.external.geo;
+        const totals = g.totals || {};
+        g.confirm = (g.confirm || []).filter((r) => r.host !== host);
+        g.totals = Object.assign({}, totals, { confirm: Math.max(0, (totals.confirm || 1) - 1), confirmed: (totals.confirmed || 0) + (out.skipped ? 0 : 1) });
+        toast(out.skipped ? `${host} skipped.` : `${host}: ${out.name}. The next daily Live Reports run updates its pages.`, 5000);
+        render();
+        if (!g.confirm.length && g.totals.confirm) loadExternal(['geo']);
     }
 
     async function campaignAct(t) {
@@ -4415,6 +4461,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
         if (t.dataset.geoTarget) { geoTarget(t); return; }
+        if (t.dataset.geoConfirm) { geoConfirmAct(t); return; }
         if (t.dataset.calAct) { calendarAct(t); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }
@@ -4612,6 +4659,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     document.addEventListener('keydown', onKey);
     root.addEventListener('keydown', (event) => {
         if ((event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('.jv-geo-c')) { event.preventDefault(); event.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
+        if (event.key === 'Enter' && event.target.matches && event.target.matches('[data-geo-confirm-row] input')) { event.preventDefault(); event.target.closest('[data-geo-confirm-row]').querySelector('[data-geo-confirm="change"]').click(); return; }
         const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
         if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
         event.preventDefault();

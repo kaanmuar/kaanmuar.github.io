@@ -15,6 +15,10 @@
                or social replies drafted), Lit (opens, link visits, visitors or approved social replies), Bright (email
                replies), Blazing (positive replies, interested, paid unlocks). Twins: lightOf in js/admin-jarvis-geo.js and Geo.kt.
 
+   confirm     Live Reports the country finder was unsure of (jarvis_settings/live_report_countries items, #3009), most
+               reports first. Carlos's answers go into the same doc's decisions (or skipped); the daily Live Reports job
+               reads them through reviewUrl/country-decisions and writes them to data/live-report-countries.json.
+
    Target markets are every country speaking one of our six languages unless jarvis_settings/geo lists others. */
 
 const sweep = require("./url-review-sweep");
@@ -35,7 +39,10 @@ const EUROPE = ["GB", "IE", "FR", "BE", "NL", "LU", "DE", "AT", "CH", "LI", "IT"
 const REGIONS = { americas: AMERICAS, latam: AMERICAS.filter((c) => c !== "US" && c !== "CA"), europe: EUROPE, eu: EUROPE };
 const ALIASES = { us: "US", usa: "US", uk: "GB", "great britain": "GB", england: "GB", turkey: "TR", "czech republic": "CZ", russia: "RU", "south korea": "KR" };
 // Retired or reserved codes Intl still names after a current country (DD → Germany, UK → United Kingdom).
-const RETIRED = new Set(["AN", "BU", "CS", "DD", "EU", "EZ", "FX", "NT", "QO", "SU", "TP", "UK", "UN", "YU", "ZR", "ZZ"]);
+const RETIRED = new Set(["AN", "BU", "CS", "DD", "EU", "EZ", "FX", "NT", "QO", "SU", "TP", "UK", "UN", "YU", "ZR", "ZZ",
+  "AC", "CP", "CQ", "DG", "DY", "EA", "HV", "IC", "NH", "RH", "TA", "VD", "XA", "XB", "YD"]);
+// Uninhabited territories: the Live Reports builder has no region for them (scripts/build-live-reports.js REGIONS).
+const NO_REPORTS = new Set(["AQ", "BV", "GS", "HM", "TF", "UM"]);
 const POSITIVE = /interest|positive|meeting|yes|book/i;
 const ACTIVE = /^(active|running subsequences)$/;
 const MIN_SENT = 50;
@@ -266,9 +273,61 @@ async function setTarget(db, body) {
   return { ok: true, cc, on: !!body.on, targets: list.size };
 }
 
+const COUNTRY_DOC = "live_report_countries";
+const CONFIRM_SHOWN = 50;
+const HOST = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{1,62}$/;
+
+/** The unsure hosts still waiting for Carlos: decided and skipped ones left out, most reports then highest confidence first. */
+function confirmQueue(doc, live, limit) {
+  const d = doc || {};
+  const done = Object.assign({}, d.decisions, d.skipped);
+  const cardOf = {};
+  ((live && live.reports) || []).forEach((c) => { const h = bare(c.host); if (h && !c.country && !cardOf[h]) cardOf[h] = c; });
+  const seen = new Set();
+  const rows = (Array.isArray(d.items) ? d.items : []).map((x) => {
+    const host = bare(x && x.host);
+    if (!host || done[host] || seen.has(host)) return null;
+    seen.add(host);
+    const cc = x.scope === "worldwide" ? "WW" : valid(up(x.country)) && NAMES.name[up(x.country)] ? up(x.country) : "";
+    const card = cardOf[host];
+    return {
+      host, cc, name: cc === "WW" ? "Worldwide" : cc ? nameOf(cc) : "", confidence: round(Number(x.confidence) || 0, 100), reports: Number(x.reports) || 0,
+      evidence: (Array.isArray(x.evidence) ? x.evidence : []).slice(0, 3).map((e) => String(e).slice(0, 140)),
+      id: card ? card.id : "", url: card ? ORIGIN + "/qa-review.html?report=" + encodeURIComponent(card.id) : ""
+    };
+  }).filter(Boolean).sort((a, b) => b.reports - a.reports || b.confidence - a.confidence || a.host.localeCompare(b.host));
+  return { rows: rows.slice(0, limit || CONFIRM_SHOWN), total: rows.length, decided: Object.keys(d.decisions || {}).length };
+}
+
+/** Carlos's answer for one queued host: a country, WW for worldwide, or skip (it stays without a country and leaves the list). */
+async function confirmCountry(db, body, now) {
+  const b = body || {};
+  const host = bare(b.host);
+  const skip = b.skip === true;
+  const cc = up(b.cc);
+  if (!HOST.test(host)) throw new Error("Give the site's host, like example.com.");
+  if (!skip && cc !== "WW" && !(valid(cc) && NAMES.name[cc] && !NO_REPORTS.has(cc))) throw new Error("Give a two-letter country, or WW for worldwide.");
+  const ref = db.collection("jarvis_settings").doc(COUNTRY_DOC);
+  const at = new Date(now || Date.now()).toISOString();
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const d = snap.exists ? snap.data() || {} : {};
+    const items = Array.isArray(d.items) ? d.items : [];
+    const left = items.filter((x) => bare(x && x.host) !== host);
+    const was = (d.decisions || {})[host];
+    if (left.length === items.length && (skip || !was)) throw new Error(host + " is not waiting for a country.");
+    const patch = { items: left, updatedAt: at };
+    if (skip) patch.skipped = { [host]: at };
+    else patch.decisions = { [host]: { country: cc === "WW" ? "" : cc, scope: cc === "WW" ? "worldwide" : "country", at } };
+    tx.set(ref, patch, { merge: true });
+    return { ok: true, host, cc: skip ? "" : cc, name: skip ? "" : cc === "WW" ? "Worldwide" : nameOf(cc), skipped: skip, left: left.length };
+  });
+}
+
 async function geo(ctx) {
   const needs = [];
   const peer = (op) => (ctx.peer ? ctx.peer(op).then((o) => (o && o.ok !== false ? o : null)).catch(() => null) : Promise.resolve(null));
+  const countryDoc = ctx.db.collection("jarvis_settings").doc(COUNTRY_DOC).get().then((s) => (s.exists ? s.data() : null)).catch(() => null);
   const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4, calendar] = await Promise.all([
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
@@ -288,7 +347,9 @@ async function geo(ctx) {
     links: outreach && outreach.links
   });
   joinDates(out.countries, calendar, ctx.now);
-  return Object.assign({ ok: true, needs, days: ctx.days }, out);
+  const confirm = confirmQueue(await countryDoc, live);
+  out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
+  return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
 }
 
-module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
+module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
