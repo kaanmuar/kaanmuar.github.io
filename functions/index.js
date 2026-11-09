@@ -6373,14 +6373,6 @@ async function jarvisGithubDo(action, args, now) {
 }
 
 // The worker's newest tasks, for the worker op.
-async function jarvisWorkerTasks() {
-  const snap = await getFirestore().collection(jarvisWorker.COLLECTION).orderBy("at", "desc").limit(20).get();
-  return snap.docs.map((doc) => {
-    const d = doc.data();
-    return { id: d.id, title: d.title, state: d.state, by: d.by, tier: d.tier, at: d.at, updatedAt: d.updatedAt, usd: d.usd || 0, pr: d.prNumber || null, url: d.prUrl || d.runUrl || null, error: d.error || "" };
-  });
-}
-
 /* A fix from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>): Jarvis's
    own worker (#2957), or a Cursor cloud agent when the click asks for engine "cursor". */
 async function jarvisGithubAgent(ctx, a) {
@@ -6915,6 +6907,11 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     try {
       const out = await jarvisWorker.report(jarvisGithubCtx(Date.now()), req.body, String(req.get("x-worker-oidc") || ""));
       if (out.state !== "running") await jarvisGithubFresh();
+      const budget = jarvisWorker.budgetMessage(out.crossed, out.monthUsd);
+      if (budget) {
+        const db = getFirestore();
+        await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), budget).catch((error) => console.error("Jarvis budget push failed:", error));
+      }
       res.json(Object.assign({ op: "worker-report" }, out));
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "worker-report", error: String(error.message || error).slice(0, 300) }); }
     return;
@@ -7090,7 +7087,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "github-draft") out = await jarvisGithubFix.draftFlaky(jarvisGithubCtx(now), body);
     else if (op === "worker-run") out = await jarvisWorker.dispatch(jarvisGithubCtx(now), Object.assign({}, body, { by: "Carlos" }));
-    else if (op === "worker") out = { spend: await jarvisWorker.spend(getFirestore(), now), tasks: await jarvisWorkerTasks() };
+    else if (op === "worker") out = await jarvisWorker.view(getFirestore(), now);
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);

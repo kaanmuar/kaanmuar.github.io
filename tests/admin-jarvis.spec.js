@@ -906,6 +906,37 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test("Jarvis's worker shows the month's spend against the $40 cap, warns past $20, and hands a stuck task to Cursor (#2958)", async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+    const worker = { ok: true, spend: { month: '2026-11', usd: 23.4, runs: 41, input: 9120000, output: 402000, cap: 40, warn: 20, over: false, warned: true, level: 'warn', left: 16.6 },
+      tasks: [
+        { id: 'w3', title: 'Fix E2E login selector', state: 'running', tier: 'pro', at: new Date(Date.now() - 600000).toISOString(), usd: 0, escalatedFrom: 'w2', url: GH + '/actions/runs/3' },
+        { id: 'w2', title: 'Fix E2E login selector', state: 'failed', tier: 'flash', at: new Date(Date.now() - 1200000).toISOString(), usd: 0.08, escalatedTo: 'w3', error: 'tests still fail', cursor: null },
+        { id: 'w1', title: 'Update the sitemap test', state: 'nochange', tier: 'pro', at: new Date(Date.now() - 7200000).toISOString(), usd: 0.41,
+          cursor: { prompt: 'Update the sitemap test for the new pages.', branch: 'main', name: 'Jarvis fix: Update the sitemap test' } },
+        { id: 'w0', title: "Test the worker's branch slug", state: 'done', tier: 'flash', at: new Date(Date.now() - 86400000).toISOString(), usd: 0.12, pr: 2977, url: GH + '/pull/2977' }
+      ] };
+    const calls = await openStats(page, '#stats/github/30', { 'github-work': actionsWork(), worker, 'github-agent': { ok: true, url: 'https://cursor.com/agents/abc' } });
+    page.on('dialog', (d) => d.accept());
+    const panel = page.locator('[data-view="github"] [data-panel-id="github-worker"]');
+    await expect(panel).toContainText("Jarvis's worker · $23.40 of $40");
+    await expect(panel.locator('[role="meter"]')).toHaveAttribute('aria-valuenow', '23.4');
+    await expect(panel).toContainText('Past the $20 warning; the worker stops at $40.');
+    await expect(panel.locator('tbody tr')).toHaveCount(4);
+    await expect(panel.locator('tbody tr').nth(0)).toContainText('after Flash');
+    await expect(panel.locator('tbody tr').nth(1)).toContainText('→ Pro');
+    await expect(panel.locator('[data-worker-cursor]')).toHaveCount(1);
+    await panel.scrollIntoViewIfNeeded();
+    await panel.screenshot({ path: 'test-results/jarvis-worker-panel.png' });
+    await panel.locator('[data-worker-cursor="w1"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.engine, c.body.prompt, c.body.branch])).toEqual([['cursor', 'Update the sitemap test for the new pages.', 'main']]);
+    await expect(panel).toContainText('Cursor agent launched');
+    expect(calls.filter((c) => c.op === 'worker').length).toBeGreaterThan(0);
+    expect(errors).toEqual([]);
+  });
+
   test('GitHub diagnoses get Fix and Fix with an agent, and a re-run shows its state at once, then the fresh numbers and the run result (#2808)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

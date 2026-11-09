@@ -131,6 +131,11 @@
 .jv-bar-fill { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 45%, transparent), var(--c)); box-shadow: 0 0 10px var(--c); }
 .jv-bar-value { font-size: 0.78rem; color: var(--text); text-align: right; white-space: nowrap; }
 .jv-bar-value small { margin-left: 0.35rem; color: var(--dim); }
+.jv-worker-meter { margin: 0.2rem 0 0.4rem; }
+.jv-worker-meter .jv-bar-track { position: relative; height: 12px; overflow: visible; }
+.jv-worker-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; }
+.jv-worker-scale { display: flex; justify-content: space-between; margin-top: 0.25rem; font: 600 0.62rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.jv-note.is-alert { color: var(--amber); }
 
 .jv-area { width: 100%; height: auto; display: block; }
 .jv-area .jv-gridline { stroke: rgba(56, 225, 255, 0.1); }

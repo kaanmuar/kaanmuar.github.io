@@ -134,8 +134,15 @@ async function prepare() {
   return { prompt, branch };
 }
 
+// Porcelain lines start with a two-letter status that may begin with a space, so this output is not trimmed.
+function porcelain(out) {
+  return String(out || "").split("\n").map((l) => l.slice(3).trim()).filter((f) => f && !f.startsWith(".gemini/"));
+}
+
 function changed() {
-  return git("status", "--porcelain", "--untracked-files=all").split("\n").map((l) => l.slice(3).trim()).filter((f) => f && !f.startsWith(".gemini/"));
+  const res = sh("git", ["status", "--porcelain", "--untracked-files=all"]);
+  if (res.code !== 0) throw new Error("git status failed: " + res.out.trim().slice(-400));
+  return porcelain(res.stdout);
 }
 
 // CI builds the social hub before the tests; pull requests leave its outputs to the bots (#2242), so main's copies go back after.
@@ -182,4 +189,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { usage, slug, PREAMBLE };
+module.exports = { usage, slug, porcelain, PREAMBLE };
