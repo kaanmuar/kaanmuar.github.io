@@ -61,15 +61,21 @@ jobs:
             c="com.carlosandmunoz.jarvis.home.${w}Widget"
             grep -qx "$c -> $c:" app/build/outputs/mapping/release/mapping.txt || { echo "::error::R8 renamed or merged $c; each widget would draw another's content"; exit 1; }
           done
-          mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-1.0.${JARVIS_VERSION_CODE}.apk"
-          mv wear/build/outputs/apk/release/wear-release.apk "$RUNNER_TEMP/jarvis-watch-1.0.${JARVIS_VERSION_CODE}.apk"
+          # The release name must match the versionName the app shows ("2.0.$build" gives 2.0.<run number>).
+          # shellcheck disable=SC2016 # $build is the literal text in build.gradle.kts
+          major=$(sed -n 's/.*versionName = "\([0-9.]*\)\.\$build".*/\1/p' app/build.gradle.kts)
+          [ -n "$major" ] || { echo "::error::versionName in app/build.gradle.kts is not \"<major>.<minor>.\$build\""; exit 1; }
+          v="$major.${JARVIS_VERSION_CODE}"
+          echo "JARVIS_VERSION=$v" >> "$GITHUB_ENV"
+          mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-$v.apk"
+          mv wear/build/outputs/apk/release/wear-release.apk "$RUNNER_TEMP/jarvis-watch-$v.apk"
 
       - name: Publish the release
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          v="1.0.${JARVIS_VERSION_CODE}"
+          v="$JARVIS_VERSION"
           new="$RUNNER_TEMP/whats-new/whats-new.txt"
           {
             if [ -s "$new" ]; then echo "What's new:"; sed 's/^/- /' "$new"; echo; fi

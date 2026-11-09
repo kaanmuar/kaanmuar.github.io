@@ -105,7 +105,7 @@ object Updater {
         return http.newCall(req).execute().use { r -> if (r.isSuccessful) newest(r.body!!.string()) else null }
     }
 
-    /** CI tags each build 1.0.<run number> and uses that run number as the versionCode. */
+    /** CI tags each build <versionName major.minor>.<run number> and uses that run number as the versionCode. */
     internal fun newest(body: String): Release? = json.parseToJsonElement(body).jsonArray.mapNotNull { el ->
         val o = el.jsonObject
         val tag = o["tag_name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
