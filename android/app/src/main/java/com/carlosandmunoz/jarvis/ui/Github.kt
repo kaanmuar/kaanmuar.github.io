@@ -58,6 +58,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.net.URLEncoder
 import kotlin.math.max
 
 /** Jarvis > GitHub in the app (#2526): the web tab's grades, process map, CI, PRs, board, branches and fixes, from the github-work source. */
@@ -175,6 +176,105 @@ object Github {
 
     fun proposals(snap: JsonObject?): List<JsonObject> = snap.objs("proposals").filter { it.str("product") == "github" || it.str("key")?.startsWith("gh:") == true }
 
+    const val REPO_URL = "https://github.com/kaanmuar/kaanmuar.github.io"
+    const val BOARD_URL = "https://github.com/orgs/carlosandmunoz-hq/projects/1"
+    const val COLUMN_ROWS = 8
+    const val DRILL_ROWS = 10
+
+    /** The repos the tab shows when jarvis_settings/main github.repos is empty, as jarvis-core GITHUB_REPOS (#2807). */
+    val REPOS = listOf("kaanmuar/kaanmuar.github.io", "kaanmuar/qa-lab-outreach", "kaanmuar/cursor-quota", "kaanmuar/cursor-quota-releases")
+    private val REPO_NAME = Regex("^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$")
+
+    /** The repo list as jarvis-core githubRepos() cleans it: owner/name each, a github.com link trimmed, at most 20, the defaults when none is left. */
+    fun cleanRepos(lines: List<String>): List<String> =
+        lines.map { it.trim().removePrefix("https://github.com/").trimEnd('/') }.filter { REPO_NAME.matches(it) }.distinct().take(20).ifEmpty { REPOS }
+
+    fun reposJson(repos: List<String>) = JsonObject(mapOf("repos" to JsonArray(repos.map(::JsonPrimitive))))
+
+    fun shownRepos(gh: JsonObject?): List<String> = gh.obj("access")?.get("shown").strings().ifEmpty { REPOS }
+
+    private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
+    private fun ref(name: String) = name.split('/').joinToString("/", transform = ::enc)
+
+    fun boardColumnUrl(name: String) = "$BOARD_URL/views/1?filterQuery=" + enc("status:\"$name\"")
+    fun issueSearch(q: String) = "$REPO_URL/issues?q=" + enc(q)
+    fun areaQuery(area: String) = if (area == "none") "is:issue is:open label:bug" else "is:issue is:open label:area:$area label:bug"
+    fun days(n: Double?) = n?.let { fmt(it) + " d" } ?: "—"
+    private fun plural(n: Int, one: String, many: String) = "$n ${if (n == 1) one else many}"
+    private fun newest(shown: Int, of: Double?) = of?.takeIf { it > shown }?.let { "Newest $shown of ${fmt(it)}." }
+
+    private fun issueRow(i: JsonObject, meta: String): DrillRow {
+        val n = i.num("number")?.toInt()
+        return DrillRow("#$n", i.str("title").orEmpty(), meta, i.str("url") ?: "$REPO_URL/issues/$n")
+    }
+
+    private fun branchRow(b: JsonObject, meta: String): DrillRow {
+        val name = b.str("name").orEmpty()
+        return DrillRow(name, "", meta, "$REPO_URL/tree/${ref(name)}", "compare" to "$REPO_URL/compare/main...${ref(name)}")
+    }
+
+    /** A board column's drill-down: its first cards (oldest first; Done newest first, as the source sends them) and the board filtered to it. */
+    fun columnDrill(board: JsonObject?, name: String): Drill {
+        val c = board.objs("columns").firstOrNull { it.str("name") == name }
+        val count = c.num("count")?.toInt() ?: 0
+        val items = c.objs("items").take(COLUMN_ROWS)
+        return Drill(name, "$name · ${plural(count, "card", "cards")}", items.map { issueRow(it, "${days(it.num("days"))} in $name") },
+            listOf("Open $name on the board" to boardColumnUrl(name), "All issues" to "$REPO_URL/issues"), "No cards in $name.",
+            if (count > items.size) "${if (name == "Done") "Newest" else "Oldest"} ${items.size} of $count." else null)
+    }
+
+    /** The Issues panel's drill-downs, one per number: open, open bugs, opened, closed, parent tickets, oldest. */
+    fun issueDrills(iss: JsonObject?): List<Drill> {
+        val lists = iss.obj("lists")
+        val since = iss.str("since") ?: ""
+        val sub = iss.obj("subIssues")
+        fun age(i: JsonObject) = days(i.num("days")) + " open"
+        val open = lists.objs("open")
+        val bugs = lists.objs("openBugs")
+        val opened = lists.objs("opened")
+        val closed = lists.objs("closed")
+        val parents = sub.objs("items")
+        return listOf(
+            Drill("open", "Open issues · ${fmt(iss.num("open"))}", open.map { issueRow(it, age(it)) }, listOf("All open issues" to issueSearch("is:issue is:open")), "No open issue changed in this range.", newest(open.size, iss.num("open"))),
+            Drill("bugs", "Open bugs · ${fmt(iss.num("openBugs"))}", bugs.map { issueRow(it, age(it)) }, listOf("Open bugs on GitHub" to issueSearch("is:issue is:open label:bug")), "No open bugs.", newest(bugs.size, iss.num("openBugs"))),
+            Drill("opened", "Opened since $since · ${fmt(iss.num("opened"))}", opened.map { issueRow(it, "opened ${days(it.num("days"))} ago") }, listOf("Opened in range" to issueSearch("is:issue created:>=$since")), "No issue opened in this range.", newest(opened.size, iss.num("opened"))),
+            Drill("closed", "Closed since $since · ${fmt(iss.num("closed"))}", closed.map { issueRow(it, "closed ${days(it.num("days"))} ago") }, listOf("Closed in range" to issueSearch("is:issue is:closed closed:>=$since")), "No issue closed in this range.", newest(closed.size, iss.num("closed"))),
+            Drill("sub", "Parent tickets · ${fmt(sub.num("parents") ?: 0.0)}", parents.map { issueRow(it, "${fmt(it.num("done"))} of ${fmt(it.num("total"))} sub-issues done") }, listOf("All issues" to "$REPO_URL/issues"), "No sub-issues yet.",
+                sub.num("parents")?.takeIf { it > parents.size }?.let { "Most left to do first: ${parents.size} of ${fmt(it)}." }),
+            Drill("oldest", "Oldest open issues", iss.objs("oldest").take(DRILL_ROWS).map { issueRow(it, age(it)) }, listOf("Oldest first on GitHub" to issueSearch("is:issue is:open sort:created-asc")), "No open issues.")
+        )
+    }
+
+    /** Open bugs by area: each area's bugs and its label:area:<x> label:bug search. */
+    fun areaDrills(iss: JsonObject?): List<Drill> = iss.objs("bugsByArea").map { a ->
+        val label = a.str("label").orEmpty()
+        val items = a.objs("items")
+        Drill(label, "${if (label == "none") "No area label" else "area:$label"} · ${plural(a.num("value")?.toInt() ?: 0, "open bug", "open bugs")}",
+            items.map { issueRow(it, days(it.num("days")) + " open") }, listOf((if (label == "none") "All open bugs" else "area:$label bugs on GitHub") to issueSearch(areaQuery(label))),
+            "No bugs listed.", newest(items.size, a.num("value")))
+    }
+
+    /** The Branches panel's drill-downs (all, stale, merged not deleted, ahead/behind), each branch with its tree and compare links. */
+    fun branchDrills(br: JsonObject?): List<Drill> {
+        val ahead = br.objs("ahead")
+        val merged = br.objs("merged")
+        val total = br.num("total")?.toInt() ?: 0
+        fun meta(b: JsonObject) = "last commit ${days(b.num("days"))} ago · ${fmt(b.num("ahead"))} ahead, ${fmt(b.num("behind"))} behind" + (b.num("pr")?.let { " · PR #${it.toInt()}" } ?: "")
+        return listOf(
+            Drill("all", "Branches · $total", ahead.sortedBy { it.num("days") ?: 1e9 }.take(DRILL_ROWS).map { branchRow(it, meta(it)) }, listOf("All branches" to "$REPO_URL/branches/all"), "No branches besides main.",
+                if (total > DRILL_ROWS) "Newest $DRILL_ROWS of $total read; the rest are on GitHub." else null),
+            Drill("stale", "Stale branches · ${fmt(br.num("stale"))}", ahead.filter { (it.num("days") ?: 0.0) > 14 }.sortedByDescending { it.num("days") }.take(DRILL_ROWS).map { branchRow(it, meta(it)) },
+                listOf("Stale branches" to "$REPO_URL/branches/stale"), "No branch has gone two weeks without a commit."),
+            Drill("merged", "Merged, not deleted · ${merged.size}", merged.take(DRILL_ROWS).map { branchRow(it, "PR #${it.num("pr")?.toInt()} merged ${days(it.num("days"))} ago") },
+                listOf("All branches" to "$REPO_URL/branches/all", "Merged PRs" to "$REPO_URL/pulls?q=is%3Apr+is%3Amerged"), "No merged branches left behind.",
+                if (merged.size > DRILL_ROWS) "${merged.size - DRILL_ROWS} more on GitHub." else null),
+            Drill("ahead", "Ahead of and behind main", ahead.sortedByDescending { it.num("behind") ?: 0.0 }.take(DRILL_ROWS).map { branchRow(it, meta(it)) }, listOf("Active branches" to "$REPO_URL/branches/active"), "No open branches ahead of main.")
+        )
+    }
+
+    /** One open drill-down per panel: a tap on the open one closes it, a tap on another switches. */
+    fun toggle(open: String?, key: String): String? = if (open == key) null else key
+
     /** A degraded part's reason: its error and the permission it needs. */
     fun down(part: JsonObject?): String? = when {
         part == null -> "No data yet."
@@ -265,17 +365,19 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         }
         areas?.entries?.mapNotNull { (k, v) -> (v as? JsonObject)?.takeIf { (it.str("grade") ?: Github.grade(it.num("value"))) !in setOf("A", "B") }?.let { k to it } }
             ?.forEach { (k, a) -> StatusRow(Github.tone(a.str("grade") ?: Github.grade(a.num("value"))), "$k · ${a.str("grade") ?: Github.grade(a.num("value"))}", a.str("why")) }
-        Muted("Repos: " + gh.obj("access")?.get("repos").strings().joinToString(", ").ifEmpty { "—" } + " · read " + (ago(gh.str("at")) ?: "—"))
+        Muted("Repos: " + Github.shownRepos(gh).joinToString(", ") + " · read " + (ago(gh.str("at")) ?: "—"))
     }
 
-    // Every column across when it fits; on a cover screen a row that scrolls and stops on a column.
+    // Every column across when it fits; on a cover screen a row that scrolls and stops on a column. A tap lists the column's cards.
     val stages = Github.stages(board, gh.objs("flow"))
+    var flowOpen by rememberSaveable { mutableStateOf<String?>(null) }
     if (stages.isNotEmpty()) Panel("Process map", span) {
+        val tap = { name: String -> flowOpen = Github.toggle(flowOpen, name) }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             if (Github.mapFits(maxWidth.value.toInt(), stages.size)) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 stages.forEachIndexed { i, st ->
                     if (i > 0) StageArrow(st, Modifier.width(Github.ARROW_DP.dp))
-                    StageChip(st, Modifier.weight(1f), tight = true)
+                    StageChip(st, Modifier.weight(1f), tight = true, open = flowOpen == st.name) { tap(st.name) }
                 }
             } else {
                 val row = rememberLazyListState()
@@ -283,13 +385,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
                     itemsIndexed(stages) { i, st ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (i > 0) StageArrow(st, Modifier.width(24.dp))
-                            StageChip(st)
+                            StageChip(st, open = flowOpen == st.name) { tap(st.name) }
                         }
                     }
                 }
             }
         }
-        Muted("Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
+        flowOpen?.let { DrillBody(Github.columnDrill(board, it)) { flowOpen = null } }
+        Muted("Tap a column to list its cards. Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
     }
 
     Panel("GitHub") {
@@ -324,8 +427,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             KpiData("Queue (median)", Github.dur(ci.num("queueMedS"))), KpiData("Duration (median)", Github.dur(ci.num("durMedS")))
         ))
         val daily = ci.objs("daily")
-        BarChart(daily.map { it.num("runs") ?: 0.0 }, daily.map { it.str("day").orEmpty() })
-        if (daily.size >= 2) { Muted("Failed per day"); Sparkline(daily.map { it.num("failed") ?: 0.0 }, J.pink) }
+        val days = daily.map { it.str("day").orEmpty() }
+        BarChart(daily.map { it.num("runs") ?: 0.0 }, days, title = "Workflow runs per day", yLabel = "runs per day", unit = "runs", legend = "Runs")
+        if (daily.size >= 2) Sparkline(daily.map { it.num("failed") ?: 0.0 }, J.pink, title = "Failed runs per day", unit = "runs", labels = days, legend = "Failed")
     }
     TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10) { "%.0f%%".format(it) }
     TopList("Flaky workflows", ci.obj("flaky").objs("workflows").map { it.str("name").orEmpty() to (Github.rate(it.num("pct")) ?: 0.0) }, 6) { "%.0f%%".format(it) }
@@ -368,9 +472,13 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             }
         }
         val daily = prs.objs("daily")
-        if (daily.size >= 2) { Muted("Merged per day"); Sparkline(daily.map { it.num("merged") ?: 0.0 }, J.green) }
+        if (daily.size >= 2) {
+            val days = daily.map { it.str("day").orEmpty() }
+            Sparkline(daily.map { it.num("opened") ?: 0.0 }, J.violet, title = "PRs opened per day", unit = "PRs", labels = days, legend = "Opened")
+            Sparkline(daily.map { it.num("merged") ?: 0.0 }, J.green, title = "PRs merged per day", unit = "PRs", labels = days, legend = "Merged")
+        }
     }
-    TopList("PR sizes", prs.pairs("sizes"))
+    TopList("PR sizes", prs.pairs("sizes"), yLabel = "Size (lines: XS <10, S <50, M <250, L <1000)", unit = "open PRs")
 
     Panel("Board" + (board.num("cycleMedD")?.let { " · cycle ${fmt(it)} d" } ?: "")) {
         Github.down(board)?.let { Muted(it); return@Panel }
@@ -382,7 +490,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             GlowBar(((c.num("count") ?: 0.0) / top).toFloat())
         }
         val tp = board.objs("throughput")
-        if (tp.isNotEmpty()) { Muted("Done per week"); BarChart(tp.map { it.num("done") ?: 0.0 }, tp.map { it.str("week").orEmpty() }, J.green, 80) }
+        if (tp.isNotEmpty()) BarChart(tp.map { it.num("done") ?: 0.0 }, tp.map { it.str("week").orEmpty() }, J.green, 80, title = "Cards done per week", yLabel = "cards per ISO week", unit = "cards", legend = "Reached Done")
         board.objs("aging").take(8).forEach { a -> StatusRow("warn", "#${a.num("number")?.toInt()} ${a.str("title").orEmpty()}", "${a.str("column")} · ${fmt(a.num("days"))} d", a.str("url")) }
         val drift = board.objs("drift")
         if (drift.isNotEmpty()) {
@@ -392,24 +500,39 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         ActionButton("Sync the board", running("gh-board-sync", "all")) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
     }
 
+    var issOpen by rememberSaveable { mutableStateOf<String?>(null) }
     Panel("Issues" + (issues.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
         Github.down(issues)?.let { Muted(it); return@Panel }
         val sub = issues.obj("subIssues")
-        KpiPairs(listOf(KpiData("Opened", fmt(issues.num("opened"))), KpiData("Closed", fmt(issues.num("closed"))),
-            KpiData("Open bugs", fmt(issues.num("openBugs")), alert = (issues.num("openBugs") ?: 0.0) > 0), KpiData("Sub-issues done", fmt(sub.num("done")) + " / " + fmt(sub.num("total")))))
+        val oldest = issues.objs("oldest")
+        KpiPairs(listOf(KpiData("Open", fmt(issues.num("open")), drill = "open"), KpiData("Open bugs", fmt(issues.num("openBugs")), alert = (issues.num("openBugs") ?: 0.0) > 0, drill = "bugs"),
+            KpiData("Opened", fmt(issues.num("opened")), drill = "opened"), KpiData("Closed", fmt(issues.num("closed")), drill = "closed"),
+            KpiData("Sub-issues done", fmt(sub.num("done")) + " / " + fmt(sub.num("total")), drill = "sub"), KpiData("Oldest open", oldest.firstOrNull()?.let { Github.days(it.num("days")) } ?: "—", drill = "oldest")),
+            issOpen) { issOpen = Github.toggle(issOpen, it) }
+        issOpen?.let { k -> DrillBody(Github.issueDrills(issues).firstOrNull { it.key == k }) { issOpen = null } }
         val daily = issues.objs("daily")
         if (daily.size >= 2) {
-            Muted("Opened per day"); Sparkline(daily.map { it.num("opened") ?: 0.0 }, J.amber)
-            Muted("Closed per day"); Sparkline(daily.map { it.num("closed") ?: 0.0 }, J.green)
+            val days = daily.map { it.str("day").orEmpty() }
+            Sparkline(daily.map { it.num("opened") ?: 0.0 }, J.amber, title = "Issues opened per day", unit = "issues", labels = days, legend = "Opened")
+            Sparkline(daily.map { it.num("closed") ?: 0.0 }, J.green, title = "Issues closed per day", unit = "issues", labels = days, legend = "Closed")
         }
-        issues.objs("oldest").take(5).forEach { KeyRow("#${it.num("number")?.toInt()} ${it.str("title").orEmpty()}", "${fmt(it.num("days"))} d", J.muted, it.str("url")) }
+        Muted("Tap a number to list its issues.")
     }
-    TopList("Open bugs by area", issues.pairs("bugsByArea"))
-    TopList("Issues by kind", issues.pairs("byKind"))
+    var areaOpen by rememberSaveable { mutableStateOf<String?>(null) }
+    TopList("Open bugs by area", issues.pairs("bugsByArea"), yLabel = "Area", unit = "open bugs", legend = "Open bugs", open = areaOpen, onRow = { areaOpen = Github.toggle(areaOpen, it) }, footer = {
+        areaOpen?.let { k -> DrillBody(Github.areaDrills(issues).firstOrNull { it.key == k }) { areaOpen = null } }
+        Muted("Tap an area to list its bugs.")
+    })
+    TopList("Issues by kind", issues.pairs("byKind"), yLabel = "Kind", unit = "open issues")
 
+    var brOpen by rememberSaveable { mutableStateOf<String?>(null) }
     Panel("Branches" + (branches.num("total")?.let { " · ${fmt(it)}" } ?: "")) {
         Github.down(branches)?.let { Muted(it); return@Panel }
-        KeyRow("Stale", fmt(branches.num("stale")), if ((branches.num("stale") ?: 0.0) > 0) J.amber else J.text)
+        val ahead = branches.objs("ahead")
+        KpiPairs(listOf(KpiData("Branches", fmt(branches.num("total")), drill = "all"), KpiData("Stale", fmt(branches.num("stale")), alert = (branches.num("stale") ?: 0.0) > 0, drill = "stale"),
+            KpiData("Merged, not deleted", fmt(branches.objs("merged").size.toDouble()), alert = branches.objs("merged").isNotEmpty(), drill = "merged"),
+            KpiData("Ahead of main", fmt(ahead.count { (it.num("ahead") ?: 0.0) > 0 }.toDouble()), drill = "ahead")), brOpen) { brOpen = Github.toggle(brOpen, it) }
+        brOpen?.let { k -> DrillBody(Github.branchDrills(branches).firstOrNull { it.key == k }) { brOpen = null } }
         val merged = branches.objs("merged")
         if (merged.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -449,7 +572,8 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Github.down(deploys)?.let { Muted(it); return@Panel }
         deploys.objs("last").take(6).forEach { d -> StatusRow(if (d.str("conclusion") == "success") "good" else "alert", d.str("name").orEmpty(), listOfNotNull(d.str("conclusion"), ago(d.str("at")), d.str("sha")?.take(7)).joinToString(" · "), d.str("url")) }
         val daily = deploys.objs("daily")
-        if (daily.isNotEmpty()) BarChart(daily.map { (it.num("ok") ?: 0.0) + (it.num("failed") ?: 0.0) }, daily.map { it.str("day").orEmpty() }, J.green, 80)
+        if (daily.isNotEmpty()) BarChart(daily.map { (it.num("ok") ?: 0.0) + (it.num("failed") ?: 0.0) }, daily.map { it.str("day").orEmpty() }, J.green, 80,
+            title = "Deploys per day", yLabel = "deploys per day", unit = "deploys", legend = "Deploy runs on main")
         deploys.objs("environments").forEach { e -> KeyRow(e.str("name").orEmpty(), listOfNotNull(e.str("state"), ago(e.str("at"))).joinToString(" · ")) }
     }
 
@@ -479,7 +603,8 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             }
         }
         val hourly = budget.objs("hourly")
-        if (hourly.isNotEmpty()) BarChart(hourly.map { it.num("graphql") ?: 0.0 }, hourly.map { it.str("hour").orEmpty() }, J.violet, 70)
+        if (hourly.isNotEmpty()) BarChart(hourly.map { it.num("graphql") ?: 0.0 }, hourly.map { it.str("hour").orEmpty() }, J.violet, 70,
+            title = "GraphQL points used per hour", yLabel = "points per hour (UTC)", unit = "points", legend = "kaanmuar GraphQL")
     }
 
     val agents = gh.obj("agents")
@@ -492,7 +617,11 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         }
         agents.objs("open").forEach { o -> StatusRow("info", "#${o.str("ticket") ?: fmt(o.num("ticket"))} ${o.str("title").orEmpty()}", "working since " + (ago(o.str("since")) ?: "—")) }
         val daily = agents.objs("daily")
-        if (daily.size >= 2) { Muted("Hours per day"); Sparkline(daily.map { it.num("hours") ?: 0.0 }, J.violet) }
+        if (daily.size >= 2) {
+            val days = daily.map { it.str("day").orEmpty() }
+            Sparkline(daily.map { it.num("hours") ?: 0.0 }, J.amber, title = "Agent hours per day", unit = "h", labels = days, legend = "Agent hours")
+            Sparkline(daily.map { it.num("tickets") ?: 0.0 }, J.cyan, title = "Tickets worked per day", unit = "tickets", labels = days, legend = "Tickets")
+        }
     }
 
     val android = gh.obj("android")
@@ -505,6 +634,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     val repos = gh.objs("repos")
     if (repos.isNotEmpty()) Panel("Repos · ${repos.size}") {
+        Muted("Showing " + Github.shownRepos(gh).joinToString(", ") + ". Edit the list in Settings › GitHub repos.")
         repos.forEach { r ->
             val red = r.obj("ci").str("conclusion").let { it != null && it != "success" }
             StatusRow(if (red) "alert" else "good", r.str("name").orEmpty() + if (r.bool("private") == true) " · private" else "",
@@ -514,9 +644,12 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     val history = gh.objs("history")
     if (history.size >= 2) Panel("Trend · ${history.size} days") {
-        Muted("Score"); Sparkline(history.map { it.num("score") ?: 0.0 }, J.cyan)
-        Muted("CI pass rate"); Sparkline(history.map { Github.rate(it.num("passRate")) ?: 0.0 }, J.green)
-        Muted("Open PRs"); Sparkline(history.map { it.num("openPrs") ?: 0.0 }, J.amber)
+        val days = history.map { it.str("day").orEmpty() }
+        Sparkline(history.map { it.num("score") ?: 0.0 }, J.cyan, title = "Health score", unit = "of 100", labels = days, legend = "Score")
+        Sparkline(history.map { Github.rate(it.num("passRate")) ?: 0.0 }, J.green, title = "CI pass rate", unit = "%", labels = days, legend = "Pass rate")
+        Sparkline(history.map { it.num("openPrs") ?: 0.0 }, J.violet, title = "Open PRs", unit = "PRs", labels = days, legend = "Open PRs")
+        Sparkline(history.map { it.num("openBugs") ?: 0.0 }, J.pink, title = "Open bugs", unit = "bugs", labels = days, legend = "Open bugs")
+        Muted("One point per day (UTC); tap a line for that day's value.")
     }
 
     val ai = gh.obj("ai")
@@ -536,11 +669,12 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 }
 
 @Composable
-private fun StageChip(st: Github.Stage, modifier: Modifier = Modifier, tight: Boolean = false) {
+private fun StageChip(st: Github.Stage, modifier: Modifier = Modifier, tight: Boolean = false, open: Boolean = false, onClick: () -> Unit) {
     val edge = when { st.over -> J.pink; st.count > 0 -> J.cyan; else -> J.line }
     Column(
-        modifier.clip(RoundedCornerShape(10.dp)).background(edge.copy(alpha = 0.10f))
-            .border(1.dp, edge.copy(alpha = if (st.over) 0.9f else 0.5f), RoundedCornerShape(10.dp))
+        modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(10.dp)).clickable(onClickLabel = if (open) "Hide ${st.name}'s cards" else "List ${st.name}'s cards", onClick = onClick)
+            .background(edge.copy(alpha = if (open) 0.22f else 0.10f))
+            .border(if (open) 2.dp else 1.dp, if (open) J.cyan else edge.copy(alpha = if (st.over) 0.9f else 0.5f), RoundedCornerShape(10.dp))
             .padding(horizontal = if (tight) 3.dp else 10.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
