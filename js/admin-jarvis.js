@@ -6,6 +6,7 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
+import * as Geo from "./admin-jarvis-geo.js?v=2976";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -14,7 +15,7 @@ const LIVE_MS = 60 * 1000;
 const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
@@ -2916,6 +2917,74 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         return out;
     }
 
+    function loadWorld() {
+        S.worldLoading = true;
+        fetch('assets/jarvis/world.json?v=2976').then((r) => (r.ok ? r.json() : null)).then((w) => { S.world = w; if (S.product === 'geo') render(); })
+            .catch(() => null).finally(() => { S.worldLoading = false; });
+    }
+
+    // The Map tab (#2976): campaigns, prospects, social replies and visitors per country, and where they are missing.
+    function geoView() {
+        const e = S.external;
+        const g = e.geo && e.geo.ok ? e.geo : null;
+        if (!S.world && !S.worldLoading) loadWorld();
+        if (!g) return panel('geo-map', 'World map', `<p class="jv-empty">${esc(S.pending.geo && !e.geo ? 'Reading the countries…' : (e.geo && e.geo.error) || 'Not loaded.')}</p>`, { wide: true });
+        const rows = g.countries || [];
+        const channel = S.geoChannel || 'all';
+        const metrics = Geo.metricsFor(channel);
+        const key = metrics.some((m) => m[0] === S.geoMetric) ? S.geoMetric : metrics[0][0];
+        const t = g.totals || {};
+        const sel = rows.find((r) => r.cc === S.geoCc);
+        const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
+            <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>`;
+        const map = S.world ? Geo.mapSvg(S.world, rows, key, { selected: S.geoCc }, esc) + Geo.legend(rows, key, esc) : '<p class="jv-note">Drawing the map…</p>';
+        const top = Geo.ranked(rows, key === 'gaps' ? 'activity' : key);
+        const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
+            [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
+            ['Sent · reply %', (r) => `${fmt(r.sent)}${r.replyRate === null ? '' : ' · ' + r.replyRate + '%'}${r.est ? ' <span class="jv-note" title="Split from campaigns that cover several countries">est.</span>' : ''}`],
+            ['Prospects left', (r) => fmt(r.left)], ['Gaps', (r) => r.gaps.map((k) => `<span class="jv-chip" style="border-color:${(Geo.GAPS[k] || [, ''])[1]}">${esc((Geo.GAPS[k] || [k])[0])}</span>`).join(' ')]], list, 'No country has this yet.');
+        const gapBody = (g.gaps || []).length ? `<ol class="jv-geo-gaps">${g.gaps.slice(0, 30).map((x) => `<li><i style="background:${(Geo.GAPS[x.kind] || [, '#5d7a8c'])[1]}"></i><button type="button" class="jv-link" data-geo-cc="${x.cc}">${esc(x.name)}</button> <span class="jv-note">${esc((Geo.GAPS[x.kind] || [x.kind])[0])}:</span> ${esc(x.text)}</li>`).join('')}</ol>` : '<p class="jv-empty">No country needs attention.</p>';
+        return `${(g.needs || []).length ? `<ul class="jv-needs">${g.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+        ${kpis([{ label: 'Countries we act in', value: t.countries || 0 }, { label: 'Target markets reached', value: `${fmt(t.targetsActive || 0)} of ${fmt(t.targets || 0)}`, delta: t.silent ? fmt(t.silent) + ' silent' : '' },
+            { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
+            { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
+        <div class="jv-grid">
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}`, controls + `<div class="jv-geo-wrap">${map}</div>`, { wide: true, keep: true, note: 'Tap a country for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
+            ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
+            ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
+            ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
+        </div>`;
+    }
+
+    // The country sheet under the map: its numbers, funnel, campaigns with Pause or Activate, and a queue form for it.
+    function geoCountry(r) {
+        const mk = S.external.marketing && S.external.marketing.ok && S.external.marketing.campaigns && S.external.marketing.campaigns.ok !== false ? S.external.marketing.campaigns.rows || [] : [];
+        const camps = r.camps.map((c) => Object.assign({}, c, mk.find((m) => m.id === c.id) || {}));
+        const steps = [{ label: 'Prospects', value: r.prospects }, { label: 'Leads', value: r.leads }, { label: 'Contacted', value: r.contacted || 0 }, { label: 'Replied', value: r.replies }, { label: 'Interested', value: r.interested }];
+        return `<div class="jv-actions"><button type="button" class="jv-btn small" data-geo-target="${r.target ? 'off' : 'on'}" data-cc="${r.cc}">${r.target ? 'Drop as target market' : 'Make a target market'}</button>
+            <button type="button" class="jv-btn small" data-go="marketing">Open Marketing</button><button type="button" class="jv-btn small" data-geo-cc="">Close</button></div>
+            <p class="jv-note">${r.target ? 'Target market' : 'Not a target market'}${r.langs.length ? ' · speaks ' + esc(r.langs.join(', ')) : ''}${r.gaps.length ? ' · ' + r.gaps.map((k) => esc((Geo.GAPS[k] || [k])[0])).join(', ') : ''}</p>
+            ${kpis([{ label: 'Emails sent · opened', value: `${fmt(r.sent)} · ${fmt(r.opened)}` }, { label: 'Reply rate', value: r.replyRate === null ? '—' : r.replyRate + '%' }, { label: 'Answered · positive', value: `${fmt(r.answered)} · ${fmt(r.positive)}` },
+                { label: 'Prospects · left', value: `${fmt(r.prospects)} · ${fmt(r.left)}` }, { label: 'Reviewed · score', value: `${fmt(r.reviewed)}${r.score === null ? '' : ' · ' + r.score}` },
+                { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
+            ${r.sent || r.prospects ? funnel(steps) : ''}
+            ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
+            ${camps.length ? table([['Campaign', (c) => `${esc(c.name)}${c.share < 100 ? ` <span class="jv-note">${c.share}% of it here</span>` : ''}`], ['Status', (c) => campStatusChip(c.status)], ['', (c) => campaignButton(c)]], camps) : '<p class="jv-note">No campaign reaches this country yet.</p>'}
+            <form class="jv-mk-form" data-mk-queue><textarea name="hosts" rows="2" placeholder="Prospect sites for ${esc(r.name)}, one per line: host, segment" aria-label="Prospects to queue for ${esc(r.name)}"></textarea>
+                <div class="jv-inline"><input type="hidden" name="cc" value="${r.cc.toLowerCase()}"><select name="sector" aria-label="Default segment" data-menu-ready="1">${MK_SEGMENTS.map((s) => `<option value="${s}">${s}</option>`).join('')}</select><button type="submit" class="jv-btn">Queue for the sweep</button></div></form>`;
+    }
+
+    async function geoTarget(t) {
+        const on = t.dataset.geoTarget === 'on';
+        const cc = t.dataset.cc;
+        if (!confirmRun(`${on ? 'make' : 'drop'} ${cc} ${on ? 'a' : 'as a'} target market`)) return;
+        t.disabled = true;
+        const out = await call('geo-target', { cc, on }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? `${cc} is ${on ? 'now' : 'no longer'} a target market (${out.targets} in all).` : 'Not saved: ' + out.error, 6000);
+        loadExternal(['geo']);
+    }
+
     async function campaignAct(t) {
         const { mkCampaign: action, id, name, leads, start } = t.dataset;
         const ask = action === 'pause' ? `pause ${name} now` : `activate ${name}${Number(leads) ? '' : ' (it has no leads yet, so nothing sends until leads are uploaded)'}${start ? ', sending from ' + start : ''}`;
@@ -2923,7 +2992,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         t.disabled = true;
         const out = await call('marketing-campaign', { id, action, name }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? `${out.name || name} is ${out.status}.` : 'Not done: ' + out.error, 6000);
-        loadExternal(['marketing', 'outreach']);
+        loadExternal(['marketing', 'outreach', 'geo']);
     }
 
     async function resendAct(t) {
@@ -3152,6 +3221,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + outreachSeen().total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
+            if (p.key === 'geo' && e.geo && e.geo.ok && e.geo.totals) main = { label: 'Countries we act in', value: e.geo.totals.countries, delta: e.geo.totals.missing + ' need attention' };
             if (p.key === 'github' && e['github-work'] && e['github-work'].ok !== false) { const g = e['github-work']; const pass = g.ci && g.ci.ok !== false ? g.ci.passRate : null; main = { label: 'Grade · CI pass rate', value: `${(g.score && g.score.overall && g.score.overall.grade) || '—'} · ${pass === null || pass === undefined ? '—' : pass + '%'}` }; series = (g.history || []).map((x) => x.passRate || 0); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
@@ -3216,6 +3286,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.business = businessView() + take();
         out.outreach = outreachView() + take();
         out.marketing = marketingView() + take();
+        out.geo = geoView() + take();
         out.github = githubView() + take();
         out.engagement = engagementView() + take();
         out.console = '';
@@ -4136,7 +4207,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (hit) { chartTip(hit); return; }
         const opener = event.target.closest('[data-drill-open]');
         if (opener && root.contains(opener)) { drillToggle(opener); return; }
-        const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
+        const t = event.target.closest('button, a, li[data-hit], li[data-brief], .jv-geo-c');
         if (!t || !root.contains(t)) return;
         if (t.dataset.conDock !== undefined) { dock(!docked); return; }
         if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
@@ -4170,6 +4241,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
+        if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+        if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
+        if (t.dataset.geoTarget) { geoTarget(t); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.liSend) { liSend(t); return; }
@@ -4252,6 +4326,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
         if (event.target.dataset.mkField) { S.mkForm[event.target.dataset.mkField] = event.target.value; return; }
+        if (event.target.dataset.geoMetric !== undefined) { S.geoMetric = event.target.value; render(); return; }
         if (event.target.dataset.bpKind) { bp.kindChanged(event.target.dataset.bpKind, event.target.checked); return; }
         if (event.target.dataset.noticePick !== undefined || event.target.dataset.noticeAll !== undefined) { pickNotice(event.target); return; }
         if (event.target.dataset.voiceLang !== undefined) { saveVoice({ lang: event.target.value || null }); return; }
@@ -4278,7 +4353,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (!lines || !confirmRun(`queue ${lines.split(/[\n;]+/).filter(Boolean).length} prospect site(s) for the nightly sweep`)) return;
             const out = await call('marketing-queue', { hosts: lines, cc: form.cc.value.trim(), sector: form.sector.value }).catch((error) => ({ ok: false, error: error.message }));
             toast(out.ok ? `Queued ${out.added}${out.already ? ', ' + out.already + ' already on the list' : ''}${out.skipped.length ? ', ' + out.skipped.length + ' left out (' + out.skipped.slice(0, 2).map((x) => x.line + ': ' + x.why).join('; ') + ')' : ''}.` : 'Not queued: ' + out.error, 7000);
-            if (out.ok) { S.mkForm.hosts = ''; form.hosts.value = ''; loadExternal(['marketing', 'outreach']); }
+            if (out.ok) { S.mkForm.hosts = ''; form.hosts.value = ''; loadExternal(['marketing', 'outreach', 'geo']); }
         } else if (form.dataset.mkReview !== undefined) {
             const url = form.url.value.trim();
             if (!url || !confirmRun(`review ${url} now`)) return;
@@ -4363,6 +4438,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
     document.addEventListener('keydown', onKey);
     root.addEventListener('keydown', (event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('.jv-geo-c')) { event.preventDefault(); event.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
         const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
         if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
         event.preventDefault();

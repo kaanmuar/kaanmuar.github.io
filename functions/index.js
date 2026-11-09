@@ -5342,6 +5342,7 @@ const socialHubAdmin = require("./social-hub-admin");
 const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisTargets = require("./jarvis-targets");
+const jarvisGeo = require("./jarvis-geo");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
@@ -5671,7 +5672,8 @@ async function jarvisSource(name, days) {
   } catch (error) { paypal = null; }
   return jarvisCached(name, JARVIS_DAYLESS.has(name) ? 0 : days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
-    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: (scope) => githubApp.token(scope || "repo")
+    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: (scope) => githubApp.token(scope || "repo"),
+    peer: (op) => { const ops = [op]; return op === name ? Promise.resolve(null) : jarvisExternal(ops, days).then((out) => out[op]); }
   }));
 }
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
@@ -5789,7 +5791,7 @@ async function jarvisWeekly({ force }) {
   return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
-const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"];
+const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work", "geo"];
 
 // Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore
 // itself. One builder per section, each kept until its TTL or the write that changes it (jarvis-snapshot.js, #2099).
@@ -5856,7 +5858,7 @@ async function jarvisLivePush(where) {
 }
 
 // The jarvis ops whose write drops a build section (jarvis-snapshot.js); each is followed by a live push.
-const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report"]);
+const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "send-report"]);
 
 const jarvisLiveNote = (out) => "live push " + (out && out.pushed ? out.sections.join(",") : (out && out.reason) || "none");
 
@@ -6497,7 +6499,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "geo-target": (b) => (b.on ? "target " : "drop ") + String(b.cc || "").slice(0, 2), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -7025,7 +7027,12 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       const ctx = { fetch, env, now, githubToken: () => githubApp.token() };
       out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body)
         : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : op === "marketing-resend" ? await jarvisMarketing.resend(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
-      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d, "geo-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+    }
+    else if (op === "geo-target") {
+      const db = getFirestore();
+      out = await jarvisGeo.setTarget(db, body);
+      await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
     }
     else if (op === "outreach-target") {
       const db = getFirestore();

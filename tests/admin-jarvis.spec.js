@@ -109,6 +109,8 @@ const EXTERNAL = {
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
+  geo: require('./fixtures/jarvis-geo.json'),
+  'geo-target': { ok: true, cc: 'PT', on: false, targets: 74 },
   'engagement-decide': { ok: true, message: 'Edited and approved.' },
   'owner-tags-run': { ok: true, note: 'owner tags: 6 posts, 4 comments, 1 owner replies; 2 sites read, 5 owner accounts, 1 suggestion runs, 1 pushed', posts: 6, comments: 4 },
   'owner-tags-settings': { ok: true, message: 'Owner tags are paused.' },
@@ -223,7 +225,7 @@ function actionsWork() {
 }
 
 // The external sources jarvisSnapshot (functions/index.js) carries.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo'];
 // The collections the web Jarvis used to read itself (#2102); the snapshot op reads them on the server now.
 const JARVIS_ROWS = ['site_events', 'url_review_opens', 'url_reviews', 'url_review_alerts', 'url_review_reports', 'socialHubStats/latest'];
 
@@ -311,8 +313,8 @@ test.describe('admin statistics (Jarvis)', () => {
     page.on('pageerror', (error) => errors.push(error.message));
     const calls = await openStats(page);
     const tabs = page.locator('.jv-tabs [role="tab"]');
-    await expect(tabs).toHaveCount(15);
-    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Engagement', 'Traffic', 'Systems', 'GitHub', 'Console']);
+    await expect(tabs).toHaveCount(16);
+    await expect(tabs).toContainText(['Overview', 'Inbox', 'CV', 'QA Studio', 'QA Lab', 'URL Review', 'Social hub', 'Business', 'Outreach', 'Marketing', 'Map', 'Engagement', 'Traffic', 'Systems', 'GitHub', 'Console']);
     await expect(page.locator('#jv-hello')).toContainText('Carlos');
     await expect(page.locator('[data-view="overview"] .jv-briefing')).toContainText('sweepReviews');
     await expect(page.locator('#jv-ready')).not.toHaveText('—');
@@ -718,6 +720,37 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => dialog.accept());
     await ot.locator('[data-ot-run]').click();
     await expect(page.locator('.jv-toast')).toContainText('Owner tags ran: owner tags: 6 posts');
+    expect(errors).toEqual([]);
+  });
+
+  test('Map shows the world shaded by the chosen metric, the missing zones and a country sheet whose buttons go through the function (#2976)', async ({ page }, testInfo) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const calls = await openStats(page, '#stats/geo/30');
+    const geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
+    expect(await geo.locator('.jv-geo-map path').count()).toBeGreaterThan(150);
+    if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-activity.png` });
+    await expect(geo.locator('.jv-kpi').first()).toContainText('Countries we act in');
+    await expect(geo.locator('[data-panel-id="geo-gaps"]')).toContainText('Out of prospects');
+    await expect(geo.locator('path[data-geo-cc="CO"]')).not.toHaveAttribute('fill', '#14222c');
+    await geo.locator('[data-geo-channel="email"]').click();
+    await geo.locator('[data-geo-metric]').selectOption('replyRate');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Reply rate');
+    await geo.locator('[data-geo-metric]').selectOption('gaps');
+    await expect(geo.locator('.jv-geo-legend')).toContainText('Low replies');
+    if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-gaps.png` });
+    await geo.locator('path[data-geo-cc="BR"]').click();
+    const sheet = geo.locator('[data-panel-id="geo-country"]');
+    await expect(sheet).toContainText('Brazil');
+    await expect(sheet).toContainText('W1 E-pt Brazil');
+    await expect(sheet.locator('.jv-funnel')).toBeVisible();
+    if (process.env.GEO_SHOTS) await sheet.screenshot({ path: `${process.env.GEO_SHOTS}/2976-country.png` });
+    page.once('dialog', (d) => d.accept());
+    await sheet.locator('[data-geo-target]').click();
+    await expect.poll(() => calls.find((c) => c.op === 'geo-target')).toBeTruthy();
+    expect(calls.find((c) => c.op === 'geo-target').body).toMatchObject({ cc: 'BR', on: false });
+    await testInfo.attach('map', { body: await geo.screenshot(), contentType: 'image/png' });
     expect(errors).toEqual([]);
   });
 
