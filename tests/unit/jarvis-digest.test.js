@@ -59,10 +59,12 @@ test("moved emails are off by default, and old saved settings lose daily and wat
 
 test("a save from the settings form keeps daily and watch as ticked", async () => {
   let written = null;
-  const db = { collection: () => ({ doc: () => ({ set: async (value) => { written = value; } }) }) };
+  const layout = { github: { order: ["gh-ci", "gh-health"], hidden: [] } };
+  const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: true, data: () => ({ layout }) }), set: async (value) => { written = value; } }) }) };
   const out = await jarvis.saveSettings(db, { mail: { daily: true, watch: true, digest: false } }, "kaanmuar@gmail.com");
   assert.deepEqual([out.mail.daily, out.mail.watch, out.mail.digest], [true, true, false]);
   assert.equal(jarvis.normalizeSettings(written).mail.daily, true);
+  assert.deepEqual(written.layout, layout);
 });
 
 test("the digest job is on the ops schedule at 20:00 Bogotá and in the functions", () => {
