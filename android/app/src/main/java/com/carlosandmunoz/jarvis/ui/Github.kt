@@ -31,6 +31,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +96,39 @@ object Github {
         val per = (count + rows - 1) / rows
         return per to ((contentDp - (per - 1) * RING_GAP_DP) / per).coerceIn(RING_MIN_DP, RING_MAX_DP)
     }
+
+    /** Jarvis's worker (#2958): the month's AI spend from the worker op, as the web meter shows it. */
+    data class Spend(val month: String, val usd: Double, val cap: Double, val warn: Double, val left: Double, val level: String, val runs: Int, val input: Long, val output: Long) {
+        val fraction: Float get() = if (cap > 0) (usd / cap).coerceIn(0.0, 1.0).toFloat() else 0f
+        val warnAt: Float get() = if (cap > 0) (warn / cap).coerceIn(0.0, 1.0).toFloat() else 0f
+    }
+
+    fun spend(worker: JsonObject?): Spend? {
+        val s = worker.obj("spend") ?: return null
+        val usd = s.num("usd") ?: return null
+        val cap = s.num("cap") ?: 40.0
+        val warn = s.num("warn") ?: 20.0
+        return Spend(s.str("month").orEmpty(), usd, cap, warn, s.num("left") ?: (cap - usd).coerceAtLeast(0.0),
+            s.str("level") ?: if (usd >= cap) "over" else if (usd >= warn) "warn" else "ok", s.num("runs")?.toInt() ?: 0, s.num("input")?.toLong() ?: 0, s.num("output")?.toLong() ?: 0)
+    }
+
+    fun usd(v: Double) = "$" + String.format(java.util.Locale.US, "%.2f", v)
+
+    /** The level J.level colours: green under the warning, amber past it, pink at the cap. */
+    fun spendTone(sp: Spend) = when (sp.level) { "over" -> "alert"; "warn" -> "warn"; else -> "good" }
+
+    fun spendLine(sp: Spend) = when (sp.level) {
+        "over" -> "The worker is stopped until next month. Fixes go to a Cursor agent on tap."
+        "warn" -> "Past the ${usd(sp.warn)} warning; the worker stops at ${usd(sp.cap)}."
+        else -> "${usd(sp.left)} left before the worker stops at ${usd(sp.cap)}."
+    }
+
+    /** A task row's model: Flash or Pro, and whether Pro took over from a failed Flash run. */
+    fun workerModel(t: JsonObject) = (if (t.str("tier") == "flash") "Flash" else "Pro") + (if (t.str("escalatedFrom") != null) " after Flash" else "")
+
+    fun workerState(t: JsonObject) = (if (t.str("state") == "nochange") "no change" else t.str("state") ?: "—") + (if (t.str("escalatedTo") != null) " → Pro" else "")
+
+    fun workerLevel(state: String?) = when (state) { "done" -> "good"; "failed" -> "alert"; "queued", "running" -> "warn"; else -> null }
 
     fun grade(v: Double?): String = when { v == null -> "—"; v >= 90 -> "A"; v >= 80 -> "B"; v >= 70 -> "C"; v >= 60 -> "D"; else -> "F" }
 
@@ -439,6 +473,8 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
+    LaunchedEffect(Unit) { if (s.worker == null) vm.loadWorker() }
+    WorkerPanel(s, vm, span, ::ask, ::open)
     if (gh == null) { ConfirmAction(confirm) { confirm = null }; return }
 
     val score = gh.obj("score")
@@ -881,7 +917,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     Deck(s, vm, span, { agent = it }, ::ask) { syncBoard() }
     Needs(raw)
     ConfirmAction(confirm) { confirm = null }
-    AgentDialog(agent, vm) { agent = null }
+    AgentDialog(agent, vm, Github.spend(s.worker)) { agent = null }
     DismissDialog(dismiss, vm) { dismiss = null }
 }
 
@@ -1025,11 +1061,63 @@ private fun DoraRow(label: String, value: String, level: String?) {
 }
 
 /** Every agent launch asks, with the drafted prompt shown and editable: Jarvis's own worker (#2957), or a Cursor agent. */
+/** Jarvis's worker (#2958): the month's AI spend against its cap with the warning tick, and the last tasks; a stuck one goes to Cursor on tap. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) {
+private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask: (String, () -> Unit) -> Unit, open: (String?) -> Unit) {
+    val w = s.worker
+    val sp = Github.spend(w)
+    Panel(if (sp == null) "Jarvis's worker" else "Jarvis's worker · ${Github.usd(sp.usd)} of ${Github.usd(sp.cap)}", modifier, id = "github-worker") {
+        if (sp == null) { Muted(if (w == null || "worker" in s.running) "Reading the worker's spend…" else w.str("error") ?: "The worker op sent no spend."); return@Panel }
+        val tone = J.level(Github.spendTone(sp))
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Box(Modifier.padding(top = 3.dp).fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(J.dim.copy(alpha = 0.22f))) {
+                Box(Modifier.fillMaxWidth(sp.fraction).fillMaxHeight().clip(RoundedCornerShape(6.dp)).background(tone))
+            }
+            Box(Modifier.padding(start = maxWidth * sp.warnAt - 1.dp).width(2.dp).height(18.dp).background(J.text))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("$0", "warn ${Github.usd(sp.warn)}", "cap ${Github.usd(sp.cap)}").forEach { Text(it.uppercase(), fontFamily = Mono, fontSize = 9.sp, letterSpacing = 1.sp, color = J.muted) }
+        }
+        Text(Github.spendLine(sp), fontSize = 13.sp, color = if (sp.level == "ok") J.muted else J.amber)
+        KeyRow("Spent · ${sp.month}", Github.usd(sp.usd), if (sp.level == "ok") J.text else tone)
+        KeyRow("Runs", sp.runs.toString())
+        KeyRow("Tokens in · out", "${fmt(sp.input.toDouble())} · ${fmt(sp.output.toDouble())}")
+        Caption("Last tasks")
+        val tasks = w.objs("tasks")
+        if (tasks.isEmpty()) Muted("No worker runs yet.")
+        tasks.take(10).forEach { t ->
+            val id = t.str("id").orEmpty()
+            val pr = t.num("pr")?.toInt()
+            StatusRow(Github.workerLevel(t.str("state")), t.str("title").orEmpty() + (pr?.let { " · #$it" } ?: ""),
+                listOfNotNull(Github.workerModel(t), Github.workerState(t), Github.usd(t.num("usd") ?: 0.0), ago(t.str("at")), t.str("error")?.takeIf { it.isNotBlank() }).joinToString(" · "), t.str("url"))
+            t.obj("cursor")?.let { c ->
+                Buttons {
+                    ActionButton("Hand to Cursor", s.ghRows["worker:$id"]?.state == "running") {
+                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it uses Cursor credit") {
+                            vm.ghRow("worker:$id", "github-agent", buildMap {
+                                put("engine", JsonPrimitive("cursor"))
+                                c.str("prompt")?.let { put("prompt", JsonPrimitive(it)) }
+                                c.str("branch")?.let { put("branch", JsonPrimitive(it)) }
+                                c.num("pr")?.let { put("pr", JsonPrimitive(it.toInt())) }
+                                c.str("name")?.let { put("name", JsonPrimitive(it)) }
+                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Cursor agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
+                        }
+                    }
+                }
+                RowResult(s.ghRows["worker:$id"])
+            }
+        }
+        Muted("Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Prices are rounded up, so the meter overstates.")
+    }
+}
+
+@Composable
+private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, close: () -> Unit) {
     if (d == null) return
     var text by remember(d) { mutableStateOf(d.prompt) }
     val ownRepo = d.repo == null || d.repo == "kaanmuar/kaanmuar.github.io"
+    val capped = sp?.level == "over"
     val launch = { engine: String ->
         val p = text.trim()
         if (p.isNotEmpty()) {
@@ -1041,6 +1129,7 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
                 d.repo?.let { put("repo", JsonPrimitive(it)) }
                 d.name?.let { put("name", JsonPrimitive(it)) }
             }, "Launching the agent…") { out ->
+                if (engine == "worker") vm.loadWorker()
                 GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the agent")
             }
             close()
@@ -1053,13 +1142,17 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Muted(listOfNotNull(d.title, d.branch?.let { "branch $it" }, d.pr?.let { "PR #$it" }).joinToString(" · "))
                 OutlinedTextField(text, { text = it }, label = { Text("Prompt") }, minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth())
-                Muted(if (ownRepo) "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass. Cursor uses Cursor credit." else "A Cursor agent works in the cloud and opens a PR.")
+                Muted(when {
+                    !ownRepo -> "A Cursor agent works in the cloud and opens a PR."
+                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor uses Cursor credit."
+                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor uses Cursor credit."
+                })
             }
         },
         confirmButton = {
             Row {
-                TextButton({ launch("cursor") }) { Text("Cursor", color = J.muted) }
-                if (ownRepo) TextButton({ launch("worker") }) { Text("Jarvis worker", color = J.cyan) }
+                TextButton({ launch("cursor") }) { Text("Cursor", color = if (capped) J.cyan else J.muted) }
+                if (ownRepo && !capped) TextButton({ launch("worker") }) { Text("Jarvis worker", color = J.cyan) }
             }
         },
         dismissButton = { TextButton(close) { Text("Cancel", color = J.muted) } }
