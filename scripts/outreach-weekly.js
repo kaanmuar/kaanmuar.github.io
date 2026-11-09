@@ -7,7 +7,9 @@
                          queue; the week's draft campaigns; on Fridays, seasonal first-email drafts for Carlos
    leads      weekdays   rebuilds every open week's leads and fills what `missing` asks that a model can answer
    replies    weekdays   fetches, sorts and drafts answers to replies; blocks opt-outs and bounces; drafts what is left
-                         from yesterday, or from every day since --since
+                         from yesterday, or from every day since --since; forwards a copy of each A, B, G reply to
+                         students@ and each E, P reply to partners@ through Instantly, once per reply (#2927);
+                         --forward-dry (or OUTREACH_FORWARD_DRY=1) runs everything else and only lists the forwards
    holidays   every run  pauses campaigns on their countries' public holidays
    sync                  runs Jarvis > Marketing's queued commands and uploads the folder (scripts/jarvis-marketing-sync.js)
    The model is Workers AI through the pre-flight Worker (PREFLIGHT_TOKEN, PREFLIGHT_URL). A field the model is unsure
@@ -43,9 +45,16 @@ const CONTACT_LINK = /contact|contacto|contato|nosotros|about|equipo|team|quiene
 const ANSWER = new Set(["interested", "question", "not_now", "wrong_person"]);
 const CATEGORIES = ["interested", "question", "not_now", "wrong_person", "opt_out", "out_of_office", "bounce", "auto_reply"];
 const FILLABLE = new Set(["top_finding (translate)", "peer_1", "peer_2", "title", "month", "one_line_from_lecture_kit", "course_or_programme"]);
+// A copy of each reply goes to the audience's shared mailbox (#2927); the reply itself stays in Instantly, which stops
+// the sequence and feeds Jarvis. Sequences not listed (C, D, F, Peers H) are not forwarded.
+const FORWARD_TO = { A: "students@qalabreview.com", B: "students@qalabreview.com", G: "students@qalabreview.com", E: "partners@qalabreview.com", P: "partners@qalabreview.com" };
+const NO_FORWARD = new Set(["opt_out", "out_of_office", "bounce", "auto_reply"]);
+const FORWARDED = "tracker/replies-forwarded.json";
+const INSTANTLY = "https://api.instantly.ai/api/v2";
 
 let DIR = "";
 let DRY = false;
+let FORWARD_DRY = false;
 let SINCE = "";
 let WEEK = "";
 const read = (rel, fallback = "") => { try { return fs.readFileSync(path.join(DIR, rel), "utf8"); } catch { return fallback; } };
@@ -127,6 +136,56 @@ function addDnc(value, reason) {
   saveCsv("prospects/do-not-contact.csv", c);
 }
 
+/** The sequence letter of a campaign name such as "W1 A-es Europe" or "Peers H-en US", or "". */
+const sequenceOf = (campaign) => (String(campaign || "").match(/\b([A-Z])-([a-z]{2})\b/) || [])[1] || "";
+const forwardTarget = (campaign) => FORWARD_TO[sequenceOf(campaign)] || "";
+
+/** Replies to copy to a shared mailbox: sorted, not an auto-reply, bounce or opt-out, not forwarded before. */
+function forwardQueue(items, drafts, forwarded) {
+  const category = new Map(drafts.map((d) => [d.id, d.category]));
+  return items.filter((r) => r && r.id && r.to && category.has(r.id) && !NO_FORWARD.has(category.get(r.id)) && !forwarded[r.id] && forwardTarget(r.campaign))
+    .map((r) => ({ id: r.id, eaccount: r.to, to: forwardTarget(r.campaign), campaign: r.campaign, from: r.from, subject: r.subject }));
+}
+
+function instantlyKey() {
+  return process.env.INSTANTLY_API_KEY
+    || execFileSync("security", ["find-generic-password", "-a", "qalab", "-s", "instantly-api-key", "-w"], { encoding: "utf8" }).trim();
+}
+
+async function forwardReplies(perDay, log) {
+  const forwarded = readJson(FORWARDED, {});
+  const counts = {};
+  let failed = 0;
+  for (const { items, drafts } of perDay) {
+    for (const f of forwardQueue(items, drafts, forwarded)) {
+      if (DRY || FORWARD_DRY) {
+        log(`would forward ${f.id} (${f.campaign}) to ${f.to}`);
+        counts[f.to] = (counts[f.to] || 0) + 1;
+        continue;
+      }
+      const res = await fetch(INSTANTLY + "/emails/forward", {
+        method: "POST", headers: { authorization: "Bearer " + instantlyKey(), "content-type": "application/json" },
+        body: JSON.stringify({
+          reply_to_uuid: f.id, eaccount: f.eaccount, to_address_email_list: f.to, subject: "Fwd: " + String(f.subject || f.campaign).slice(0, 200),
+          body: { text: `Reply from ${f.from} to the campaign ${f.campaign}. It is also in Instantly: answer from ${f.eaccount} there, so the thread stays in the sequence.` },
+          include_original_body: true
+        }), signal: AbortSignal.timeout(60000)
+      }).catch((error) => ({ ok: false, status: 0, text: async () => error.message }));
+      if (!res.ok) {
+        log(`could not forward ${f.id} to ${f.to}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+        failed += 1;
+        continue;
+      }
+      forwarded[f.id] = { to: f.to, campaign: f.campaign, at: new Date().toISOString() };
+      write(FORWARDED, JSON.stringify(forwarded, null, 1));
+      counts[f.to] = (counts[f.to] || 0) + 1;
+    }
+  }
+  const line = [...Object.entries(counts).map(([to, n]) => `${n} to ${to}`), ...(failed ? [`${failed} not forwarded (retried next run)`] : [])].join(", ");
+  if (line) log(`${DRY || FORWARD_DRY ? "Would forward" : "Forwarded"} ${line}.`);
+  return line;
+}
+
 async function replies(log) {
   if (!DRY) log(tool("replies").trim());
   const signatures = JSON.parse(tool("signatures"));
@@ -135,11 +194,13 @@ async function replies(log) {
   const counts = {};
   const named = [];
   const days = [];
+  const perDay = [];
   for (let d = SINCE || utcDay(-1); d <= utcDay(); d = new Date(Date.parse(d) + 86400000).toISOString().slice(0, 10)) days.push(d);
   for (const day of days) {
     const items = readJson(`tracker/replies/${day}.json`, []);
     const draftsRel = `tracker/replies/${day}.drafts.json`;
     const drafts = readJson(draftsRel, []);
+    perDay.push({ items, drafts });
     const done = new Set(drafts.map((d) => d.id));
     const fresh = items.filter((r) => r && r.id && !done.has(r.id));
     if (!fresh.length) continue;
@@ -148,7 +209,7 @@ async function replies(log) {
     for (const r of fresh) {
       const from = String(r.from || "").toLowerCase();
       const lead = leads[from] || {};
-      const seq = (String(r.campaign).match(/\b([A-E])-([a-z]{2})\b/) || [])[1] || lead.sequence || "A";
+      const seq = sequenceOf(r.campaign) || lead.sequence || "A";
       const sender = seq === "D" ? "brand" : "carlos";
       let out;
       try {
@@ -187,10 +248,11 @@ async function replies(log) {
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   log(total ? Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ") : "No replies.");
+  const sent = await forwardReplies(perDay, log);
   if (!named.length && !counts.opt_out) return "";
   const parts = ["interested", "question", "not_now", "wrong_person"].filter((k) => counts[k]).map((k) => `${counts[k]} ${k.replace("_", " ")}`);
   if (counts.opt_out) parts.push(`${counts.opt_out} opted out (blocked)`);
-  return `${parts.join(", ")}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(", ")})` : ""}. Drafts are in Jarvis > Marketing.`;
+  return `${parts.join(", ")}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(", ")})` : ""}. Drafts are in Jarvis > Marketing.${sent ? ` Copies: ${sent}.` : ""}`;
 }
 
 // --- Leads --------------------------------------------------------------------------------------------------------
@@ -500,6 +562,7 @@ async function main(argv) {
   const mode = argv[0];
   DIR = path.resolve(arg("--dir") || process.cwd());
   DRY = argv.includes("--dry");
+  FORWARD_DRY = argv.includes("--forward-dry") || process.env.OUTREACH_FORWARD_DRY === "1";
   SINCE = /^\d{4}-\d{2}-\d{2}$/.test(arg("--since")) ? arg("--since") : "";
   WEEK = /^W\d{1,2}$/.test(arg("--week")) ? arg("--week") : "";
   if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|holidays|sync> --dir <outreach folder> [--dry]");
@@ -528,4 +591,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai };
+module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai, sequenceOf, forwardTarget, forwardQueue };
