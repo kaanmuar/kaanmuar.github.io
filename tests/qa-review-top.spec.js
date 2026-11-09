@@ -322,3 +322,155 @@ test.describe('The You step (#2769)', () => {
     await expect(page.locator('#personal-data')).toBeInViewport();
   });
 });
+
+async function providers(page, list, answers = {}) {
+  await page.route(/127\.0\.0\.1:8768\/auth\/(providers|email)$/, (route) => {
+    const req = route.request();
+    const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-headers': 'content-type' };
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+    const path = new URL(req.url()).pathname;
+    const [status, body] = path === '/auth/providers' ? [200, { providers: list }] : answers[path] || [503, { error: 'not in this test' }];
+    return route.fulfill({ status, contentType: 'application/json', headers: cors, body: JSON.stringify(body) });
+  });
+}
+
+test.describe('The tour and the sign-in box in the page language (#2768)', () => {
+  const PROVIDERS = [{ id: 'email' }, { id: 'google.com' }, { id: 'microsoft.com', oauth: true }];
+
+  test('on the Spanish page the provider buttons, the sign-in messages and the tour read in Spanish', async ({ page }) => {
+    await prime(page);
+    await page.addInitScript(() => localStorage.removeItem('hasSeenReviewTour'));
+    await backend(page);
+    await providers(page, PROVIDERS, { '/auth/email': [400, { error: 'This address cannot receive email. Check it for typos.', field: 'email' }] });
+    await page.goto('/qa-review-es.html');
+    await expect(page.locator('#sign-in-providers button')).toHaveText(['Continuar con Google', 'Continuar con Microsoft']);
+
+    await page.locator('#sign-in-send').click();
+    await expect(page.locator('#sign-in-status')).toHaveText('Escribe tu correo.');
+    await page.locator('#sign-in-email').fill('ana@example.invalid');
+    await page.locator('#sign-in-send').click();
+    await expect(page.locator('#sign-in-status')).toHaveText('Esta dirección no puede recibir correos. Revisa que esté bien escrita.');
+
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-title')).toHaveText(/^(No eres el primero|Iniciar sesión)$/);
+    await expect(page.locator('#site-tour-close')).toHaveText('Cerrar');
+    await expect(page.locator('#site-tour-next')).toHaveText('Siguiente');
+    await expect(page.locator('#site-tour-step-label')).toHaveText(/^Paso 1 de \d+\.$/);
+    await expect(page.locator('#site-tour-progress')).toHaveAttribute('aria-label', 'Progreso del paso');
+    await page.locator('#site-tour-next').click({ timeout: 4000 });
+    await expect(page.locator('#site-tour-back')).toHaveText('Atrás');
+    await expect(page.locator('#site-tour-step-label')).toHaveText(/^Paso 2 de \d+\.$/);
+  });
+
+  test('each language page names its provider buttons and its tour buttons in its own language', async ({ page }) => {
+    test.setTimeout(120000);
+    const words = {
+      es: ['Continuar con Google', 'Cerrar', 'Siguiente'], pt: ['Continuar com Google', 'Fechar', 'Próximo'], de: ['Weiter mit Google', 'Schließen', 'Weiter'],
+      fr: ['Continuer avec Google', 'Fermer', 'Suivant'], it: ['Continua con Google', 'Chiudi', 'Avanti']
+    };
+    await prime(page);
+    await backend(page);
+    await providers(page, PROVIDERS.slice(0, 2));
+    for (const [lang, [button, close, next]] of Object.entries(words)) {
+      await page.goto('/qa-review-' + lang + '.html');
+      await expect(page.locator('#sign-in-providers button')).toHaveText([button]);
+      await page.locator('#tour-start-btn').click();
+      await expect(page.locator('#site-tour-close')).toHaveText(close);
+      await expect(page.locator('#site-tour-next')).toHaveText(next);
+    }
+  });
+
+  test('the English page keeps its English tour and buttons', async ({ page }) => {
+    await prime(page);
+    await backend(page);
+    await providers(page, PROVIDERS.slice(0, 2));
+    await page.goto('/qa-review.html');
+    await expect(page.locator('#sign-in-providers button')).toHaveText(['Continue with Google']);
+    await page.locator('#tour-start-btn').click();
+    await expect(page.locator('#site-tour-title')).toHaveText(/^(You are not the first|Sign in)$/);
+    await expect(page.locator('#site-tour-close')).toHaveText('Close');
+    await expect(page.locator('#site-tour-step-label')).toHaveText(/^Step 1 of \d+\.$/);
+  });
+});
+
+test.describe('Report section index (#2770)', () => {
+  async function openSample(page, path = '/qa-review.html') {
+    await prime(page);
+    await backend(page);
+    await page.goto(path);
+    await page.locator('#stage-sample-open').click();
+    await expect(page.locator('#report-index')).toBeVisible();
+  }
+
+  const shownSections = (page) => page.evaluate(() => [...document.querySelectorAll('#report .fold-toggle')]
+    .filter((button) => button.getClientRects().length).map((button) => button.textContent.trim()));
+
+  test('the sample report lists only the sections it shows, and an entry takes focus to its heading below the toolbar', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openSample(page);
+    const entries = await page.locator('#report-index a').allTextContents();
+    expect(entries).toEqual(await shownSections(page));
+    expect(entries).toContain('Security and email');
+    expect(entries).not.toContain('Tools that apply');
+    expect(entries).not.toContain('A login you are allowed to use');
+    await expect(page.locator('#report-top')).toBeHidden();
+
+    await page.locator('#report-index a', { hasText: 'Security and email' }).click();
+    const heading = page.locator('#report h2', { hasText: 'Security and email' });
+    await expect(heading.locator('.fold-toggle')).toBeFocused();
+    await expect(heading).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.querySelector('#dash-overlay .report-toolbar').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+
+    await page.locator('#report-top').click();
+    await expect.poll(() => page.locator('#dash-overlay').evaluate((el) => el.scrollTop)).toBe(0);
+    await expect(page.locator('#report-index a').first()).toBeFocused();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('#report-index')).toBeHidden();
+  });
+
+  test('a collapsed section opens when its entry is chosen', async ({ page }) => {
+    await openSample(page);
+    await page.locator('#fold-all').click();
+    await page.locator('#report-index a', { hasText: 'Fix kit' }).click();
+    await expect(page.locator('#fixkit')).toBeVisible();
+    await expect(page.locator('#report h2', { hasText: 'Fix kit' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    const list = await page.locator('#report-index-list').evaluate((el) => ({ rows: new Set([...el.children].map((li) => li.offsetTop)).size, scrolls: el.scrollWidth > el.clientWidth }));
+    expect(list).toEqual({ rows: 1, scrolls: true });
+    const heights = await page.evaluate(() => [...document.querySelectorAll('#report-index a, #report .filters button')]
+      .filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect().height));
+    expect(Math.min(...heights)).toBeGreaterThanOrEqual(32);
+
+    await page.locator('#report-index a', { hasText: 'Every check, with its verdict' }).click();
+    await expect(page.locator('#report h2', { hasText: 'Every check, with its verdict' }).locator('.fold-toggle')).toBeFocused();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Every check, with its verdict').getBoundingClientRect().top;
+      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+    await expect(page.locator('#report-top')).toBeInViewport();
+  });
+
+  test('each language page labels the index and its entries in its language', async ({ page }) => {
+    const copy = {
+      es: ['En este informe', 'Resumen en una página', 'De un vistazo'],
+      pt: ['Neste relatório', 'Resumo em uma página', 'Visão geral'],
+      de: ['In diesem Bericht', 'Zusammenfassung auf einer Seite', 'Auf einen Blick'],
+      fr: ['Dans ce rapport', 'Résumé sur une page', 'En un coup d’œil'],
+      it: ['In questo report', 'Riepilogo in una pagina', 'In breve']
+    };
+    for (const [lang, [label, first, glance]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#report-index-label')).toHaveText(label);
+      await expect(page.locator('#report-index a').first()).toHaveText(first);
+      await expect(page.locator('#report-index a', { hasText: glance })).toHaveCount(1);
+      expect(await page.locator('#report-index a').allTextContents()).toEqual(await shownSections(page));
+    }
+  });
+});

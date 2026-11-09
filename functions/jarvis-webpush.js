@@ -51,7 +51,8 @@ function payload(msg, signKey, now) {
     : { act: a.act, label: a.label, exp, sig: sign(signKey, msg.ref, a.act, exp) }));
   return JSON.stringify({
     kind: msg.kind, title: msg.title, body: msg.body, lines: msg.lines || [], tab: msg.tab || "overview",
-    tag: msg.tag || msg.kind, url: msg.url || "", ref: msg.ref || "", quiet: !!msg.quiet, actions
+    tag: msg.tag || msg.kind, url: msg.url || "", ref: msg.ref || "", quiet: !!msg.quiet, actions,
+    image: /^https:\/\//.test(msg.image || "") ? msg.image : ""
   });
 }
 

@@ -1072,6 +1072,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.' });
     }
 
+    // A post proposal's card image (#2248), so the post is approved as it will look; a card that failed once stays a note.
+    const brokenCards = new Set();
+    function proposalCard(p) {
+        if (!/^https:\/\//.test(p.image || '')) return '';
+        if (brokenCards.has(p.image)) return '<p class="jv-prop-why jv-prop-nocard">The card image did not load.</p>';
+        return `<img class="jv-prop-card" data-card src="${esc(p.image)}" alt="${esc('Card image: ' + (p.title || ''))}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+    }
+
     function socialProposalsPanel() {
         const P = S.external['social-proposals'];
         if (!P) return panel('hub-proposals', 'Post proposals', waiting('social-proposals', 'Reading the field sweep proposals…'), { wide: true });
@@ -1079,7 +1087,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const list = P.proposals || [];
         const items = list.map((p) => `<li class="jv-prop lv-info"><span class="jv-prop-rank">${esc(String(Math.round(Number(p.score) || 0)))}</span><div class="jv-prop-body">
             <p class="jv-prop-title"><strong>${esc(p.title)}</strong>${p.topic ? ` <span class="jv-chip">${esc(p.topic)}</span>` : ''} <span class="jv-chip">${esc(p.lang)}</span></p>
-            <p class="jv-prop-why">${esc([p.source, p.author && 'by ' + p.author, p.date].filter(Boolean).join(' · '))}</p>${p.summary ? `<p class="jv-prop-why">${esc(p.summary)}</p>` : ''}
+            <p class="jv-prop-why">${esc([p.source, p.author && 'by ' + p.author, p.date].filter(Boolean).join(' · '))}</p>${proposalCard(p)}${p.summary ? `<p class="jv-prop-why">${esc(p.summary)}</p>` : ''}
             <div class="jv-prop-acts"><button type="button" data-social-decide="approved" data-key="${esc(p.id)}">Approve</button><button type="button" data-social-decide="dismissed" data-key="${esc(p.id)}">Dismiss</button>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">Read →</a>` : ''}</div></div></li>`).join('');
         return panel('hub-proposals', 'Post proposals' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">Approve adds it to the hub as a pick, as the hub editor does; the next daily build publishes it.${P.built ? ' Sweep ran ' + esc(when(P.built)) + '.' : ''}</p>` + (list.length ? `<ol class="jv-props">${items}</ol>` : '<p class="jv-empty">No proposals are waiting.</p>'), { wide: true });
     }
@@ -3393,6 +3401,12 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     root.addEventListener('toggle', (event) => {
         const d = event.target;
         if (d.dataset && d.dataset.person) { if (d.open) openPeople.add(d.dataset.person); else openPeople.delete(d.dataset.person); }
+    }, true);
+    root.addEventListener('error', (event) => {
+        const img = event.target;
+        if (!img.matches || !img.matches('img[data-card]')) return;
+        brokenCards.add(img.getAttribute('src'));
+        img.outerHTML = proposalCard({ image: img.getAttribute('src') });
     }, true);
     root.addEventListener('click', (event) => {
         if (event.target.matches('[data-sheet-root]')) { closeSheet(); return; }

@@ -961,7 +961,7 @@
         .log-card .log time { color: #7d93a3; }
         .dash-overlay { display: none; position: fixed; inset: 0; z-index: 80; background: rgba(12, 17, 24, .72); padding: 18px; overflow: auto; }
         .dash-overlay.open { display: block; }
-        .dash-modal { position: relative; width: min(1100px, calc(100vw - 36px)); max-width: 100%; box-sizing: border-box; margin: 3vh auto 24px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 22px; padding: 20px 22px 28px; box-shadow: 0 24px 70px rgba(8, 14, 18, .35); overflow: hidden; }
+        .dash-modal { position: relative; width: min(1100px, calc(100vw - 36px)); max-width: 100%; box-sizing: border-box; margin: 3vh auto 24px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 22px; padding: 20px 22px 28px; box-shadow: 0 24px 70px rgba(8, 14, 18, .35); overflow: hidden; overflow: clip; }
         .capture-note { display: none; }
         .sheet-mark { display: none; position: absolute; inset: 0; z-index: 4; pointer-events: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='440' height='180'><text x='16' y='90' fill='%230d6e76' font-size='13' font-family='sans-serif' transform='rotate(-18 220 90)'>QA-lab URL Review · Carlos Muñoz · Preview copy · Not a certification</text></svg>"); background-repeat: repeat; opacity: .2; }
         body.preview-copy .sheet-mark { display: block; }
@@ -1085,8 +1085,27 @@
         #share-open:disabled { display: none; }
         .dash-modal:focus { outline: none; }
         .dash-overlay .report-toolbar { position: sticky; top: 0; background: var(--bg); }
+        .report-index { display: flex; align-items: baseline; gap: 8px 14px; margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+        .report-index[hidden] { display: none; }
+        .report-index-label { flex: none; margin: 0; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .report-index-list { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+        .report-index-list a { display: inline-flex; align-items: center; min-height: 28px; box-sizing: border-box; padding: 3px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--text); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .report-index-list a:hover { border-color: var(--cyan); color: var(--cyan); }
+        .report-index-list a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .dash-overlay .fold-head { scroll-margin-top: calc(var(--report-bar, 72px) + 14px); }
+        .report-top { position: sticky; bottom: 16px; z-index: 9; height: 0; pointer-events: none; }
+        .report-top .btn { position: absolute; right: 0; bottom: 0; pointer-events: auto; background: var(--bg); box-shadow: 0 8px 24px rgba(8, 14, 18, .25); }
         @media (max-width: 800px) {
             .dash-overlay .report-toolbar { position: relative; top: auto; }
+            .dash-overlay .fold-head { scroll-margin-top: 72px; }
+            .report-index { display: block; padding: 10px 0 10px 12px; }
+            .report-index-label { margin: 0 0 8px; }
+            .report-index-list { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 12px 2px 2px; }
+            .report-index-list a { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+            .report-top .btn { min-height: 44px; }
+            #report .filters button { min-height: 36px; padding: 6px 12px; }
+            #report .fold-toggle { min-height: 36px; }
+            #report .list-more { padding: 10px 6px; margin: 0 -6px; }
             .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
             .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
         }
@@ -1668,6 +1687,10 @@
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
         <div class="unlock-offer no-print" id="unlock-offer" hidden></div>
+        <nav class="report-index no-print" id="report-index" aria-labelledby="report-index-label" hidden>
+            <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel">On this report</p>
+            <ol class="report-index-list" id="report-index-list"></ol>
+        </nav>
         <h2 data-insight data-report-copy="execTitle">One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
         <h2 data-insight data-report-copy="compareTitle">Next to a competitor</h2>
@@ -1801,6 +1824,7 @@
         <div class="filters" id="layer-filters"></div>
         <article class="card" id="cases"></article>
         </section>
+        <div class="report-top no-print"><button class="btn btn-ghost" id="report-top" type="button" data-report-copy="backTop" hidden>Back to top</button></div>
     </div>
     <aside class="ask-panel no-print" id="ask-panel" aria-labelledby="ask-title" hidden>
         <div class="ask-head">
@@ -1894,17 +1918,17 @@
 </div>
 <script src="js/site-i18n.js?v=20261104a" defer></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
-<script src="js/site-tour.js?v=20261104a" defer></script>
+<script src="js/site-tour.js?v=20261108a" defer></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261102a" defer></script>
-<script src="js/qa-review-auth.js?v=20261022j" defer></script>
+<script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128p" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128r" defer></script>
 <script src="js/qa-review-findings-copy.en.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128p" defer></script>
+<script src="js/qa-review.js?v=20261128r" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

@@ -694,7 +694,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -2515,6 +2515,7 @@
     button.append(label, icon);
     heading.appendChild(button);
     heading.classList.add("fold-head");
+    if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
     folds.push({ button, panel });
@@ -2549,7 +2550,7 @@
     const visuals = document.getElementById("report-visuals");
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
-    glance.textContent = "At a glance";
+    glance.textContent = rc.t("glance");
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2582,6 +2583,89 @@
   }
 
   setupFolds();
+
+  const reportIndex = document.getElementById("report-index");
+  const reportTop = document.getElementById("report-top");
+
+  function scrollBehavior() {
+    return matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  }
+
+  // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
+  function measureBar() {
+    const bar = dash.querySelector(".report-toolbar");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + "px");
+  }
+
+  function afterScroll(done) {
+    let timer = 0;
+    const settle = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        dash.removeEventListener("scroll", settle);
+        done();
+      }, 160);
+    };
+    dash.addEventListener("scroll", settle, { passive: true });
+    settle();
+  }
+
+  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
+  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  function jumpTo(item) {
+    if (item.panel.hidden) setFold(item, true);
+    measureBar();
+    const heading = item.button.parentElement;
+    item.button.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    afterScroll(() => {
+      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
+    });
+  }
+
+  function paintTop() {
+    if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+  }
+
+  // Lists the sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  function paintIndex() {
+    if (!reportIndex) return;
+    const shown = folds.filter((item) => item.button.getClientRects().length > 0)
+      .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    document.getElementById("report-index-list").replaceChildren(...shown.map((item) => {
+      const link = document.createElement("a");
+      link.href = "#" + item.button.parentElement.id;
+      link.textContent = item.button.firstChild.textContent.trim();
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        jumpTo(item);
+      });
+      const row = document.createElement("li");
+      row.appendChild(link);
+      return row;
+    }));
+    reportIndex.hidden = !shown.length;
+    measureBar();
+    paintTop();
+  }
+
+  if (reportIndex && reportTop) {
+    let framed = false;
+    dash.addEventListener("scroll", () => {
+      if (framed) return;
+      framed = true;
+      requestAnimationFrame(() => {
+        framed = false;
+        paintTop();
+      });
+    }, { passive: true });
+    reportTop.addEventListener("click", () => {
+      const first = reportIndex.querySelector("a");
+      if (first) first.focus({ preventScroll: true });
+      dash.scrollTo({ top: 0, behavior: scrollBehavior() });
+    });
+  }
 
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
@@ -2822,6 +2906,7 @@
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
+    paintIndex();
   }
 
   function reviewBody(compare, url, runId) {
@@ -3852,33 +3937,33 @@
   }
 
   function reviewTour() {
+    const copy = (key) => window.QAReviewReportCopy.word("tour", key);
+    const step = (selector, key, demoMs) => ({ selector, title: copy(key)[0], body: copy(key)[1], demoMs });
     const steps = [];
-    if (!gate.hidden) {
-      steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
-    }
+    if (!gate.hidden) steps.push(step("#terms-form", "terms", 1800));
     const counts = document.getElementById("reviews-fact");
-    if (counts && !counts.hidden) {
-      steps.push({ selector: "ul.facts", title: "You are not the first", body: "These two numbers count up live: pages read and reviews run by everyone so far. Only a review that really read a page adds to them.", demoMs: 1500 });
-    }
+    if (counts && !counts.hidden) steps.push(step("ul.facts", "counts", 1500));
     steps.push(
-      { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
-      { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
-      { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
-      { selector: "#url-field", title: "The page", body: "Start typing and the box helps. It suggests well-known sites, says \"Did you mean…?\" when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page.", demoMs: 1800 },
-      { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#req-scope", title: "Pages to review", body: "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts.", demoMs: 1800 },
-      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a \"Still working\" note instead of silence.", demoMs: 1800 },
-      { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. Each competitor is 9 USD.", demoMs: 1800 },
-      { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
-      { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
-      { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
-      { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
+      step("#sign-in", "signIn", 1500),
+      step("#name", "name", 1500),
+      step("#reasons", "reasons", 1600),
+      step("#url-field", "url", 1800),
+      step("#fw-picker", "frameworks", 1600),
+      step("#req-scope", "scope", 1800),
+      step("#review-btn", "start", 1500),
+      step("#run-log", "log", 1800),
+      step("#stop-btn", "stop", 1600),
+      step("#report-once", "report", 1800),
+      step("#report-once", "ask", 1800),
+      step("#report-once", "compare", 1800),
+      step("#report-once", "chatbot", 1800),
+      step(".topbar a[href='qa-review-account.html']", "account", 1600),
+      step("#langWrap", "lang", 1500),
+      step("#tour-start-btn", "again", 1500)
     );
-    return { name: "URL review", key: "hasSeenReviewTour", steps: steps };
+    const labels = {};
+    ["back", "close", "next", "finish", "step", "progress", "wait"].forEach((key) => { labels[key] = copy(key); });
+    return { name: "URL review", key: "hasSeenReviewTour", labels: labels, steps: steps };
   }
 
   function bootLanguageAndTour() {
