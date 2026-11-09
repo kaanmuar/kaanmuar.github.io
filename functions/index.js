@@ -5536,6 +5536,7 @@ const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 const jarvisCountdown = require("./jarvis-countdown");
 const jarvisSnap = require("./jarvis-snapshot");
+const jarvisSections = require("./jarvis-sections");
 const jarvisDigest = require("./jarvis-digest");
 const jarvisGithub = require("./jarvis-github");
 const jarvisGithubFix = require("./jarvis-github-fix");
@@ -5769,6 +5770,19 @@ async function jarvisBriefOpen(snap, marks) {
   const { open, hidden } = jarvisCore.openBrief(snap.briefing, marks);
   const until = marks.reduce((m, r) => { m[r.key] = { status: r.status, until: r.until }; return m; }, {});
   return Object.assign({}, snap, { briefing: open, briefHidden: hidden.map((b) => Object.assign({}, b, until[b.key])) });
+}
+
+// The snapshot op (#2508): the full snapshot with section versions, or with `since` only the sections that changed.
+// A request with `only` that leaves out mail and devices skips their reads.
+async function jarvisSnapshotOp(days, body, now) {
+  const want = jarvisSections.isSince(body.since) ? jarvisSections.wanted(body.only) : new Set(jarvisSections.NAMES);
+  const [{ snap, marks, meta }, mailCodes, devices] = await Promise.all([
+    jarvisLoadSnapshot(days),
+    want.has("mail") ? mailCodeRows().catch(() => []) : null,
+    want.has("devices") ? jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) : null
+  ]);
+  const full = Object.assign(await jarvisBriefOpen(snap, marks), want.has("mail") ? { mailCodes } : {}, want.has("devices") ? { devices } : {});
+  return jarvisSections.serve(full, meta, { since: body.since, only: body.only, days, now });
 }
 
 async function jarvisHeld() {
@@ -6825,8 +6839,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "web-push-key") out = { publicKey: (await jarvisWebPush.keys(getFirestore(), require("web-push"))).publicKey };
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
-    else if (op === "snapshot") out = Object.assign(await jarvisLoadSnapshot(days).then(({ snap, marks }) => jarvisBriefOpen(snap, marks)), { mailCodes: await mailCodeRows().catch(() => []),
-      devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
+    else if (op === "snapshot") out = await jarvisSnapshotOp(days, body, now);
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") {
