@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const auth = require('../functions/url-review-auth');
 const core = require('../functions/url-review-core');
 const offers = require('../functions/url-review-offers');

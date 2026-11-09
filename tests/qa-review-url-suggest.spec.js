@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 
 const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com', 'www.nibo.com.br'];
 const SITEMAPS = {

@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const core = require('../js/admin-jarvis-core.js');
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows) that logs every read in window.__reads, and the

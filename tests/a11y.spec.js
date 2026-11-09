@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const { openCV, openAdmin, prepareCV, skipSiteTours, runAxe } = require('./helpers.js');
 
 test.describe('Accessibility', () => {
