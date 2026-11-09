@@ -175,6 +175,67 @@ test("a diagnosis in jarvis_github_diag is attached to its failing run", async (
   assert.equal(out.ai.retro, null);
 });
 
+test("each flaky workflow carries its newest failure, its failed run links and its failures page (#2808)", async () => {
+  const db = fakeDb([{ _c: "jarvis_github_diag", run: 4, workflow: "Tests", cause: "a race in the fixture", category: "flaky", action: "rerun-ci", at: at(1) }]);
+  const out = await gh.source(ctx(fakeFetch(), db));
+  const tests = out.ci.flaky.workflows.find((w) => w.name === "Tests");
+  assert.equal(tests.newest.id, 4);
+  assert.equal(tests.newest.failed, true);
+  assert.equal(tests.newest.pr, 7);
+  assert.equal(tests.newest.diag.cause, "a race in the fixture");
+  assert.equal(tests.failures, 1);
+  assert.deepEqual(tests.links, ["https://github.com/" + REPO + "/actions/runs/4"]);
+  assert.equal(tests.url, "https://github.com/" + REPO + "/actions/workflows/tests.yml?query=is%3Afailure");
+  const pages = out.ci.flaky.workflows.find((w) => w.name === "Deploy Pages");
+  assert.deepEqual([pages.newest.id, pages.newest.failed, pages.newest.attempt], [6, false, 2]);
+});
+
+test("security counts each kind by severity, repo and ecosystem, ages the open alerts, trends opened against fixed per week, links the Dependabot bump PR and breaks the score down (#2808)", async () => {
+  const base = fakeFetch();
+  const dep = (n, sev, pkg, eco, manifest, days, extra) => Object.assign({ number: n, state: "open", created_at: at(days * 24), html_url: "https://github.com/" + REPO + "/security/dependabot/" + n,
+    dependency: { package: { name: pkg, ecosystem: eco }, manifest_path: manifest }, security_advisory: { severity: sev, summary: pkg + " is vulnerable" },
+    security_vulnerability: { severity: sev, first_patched_version: { identifier: "2.0.0" }, vulnerable_version_range: "< 2.0.0" } }, extra);
+  const asked = [];
+  const fetch = async (url, init) => {
+    const u = new URL(url);
+    const state = u.searchParams.get("state");
+    if (/alerts$/.test(u.pathname)) asked.push(u.pathname.split("/").slice(2, 4).join("/") + " " + state);
+    if (u.pathname === "/repos/" + REPO + "/dependabot/alerts") return json(200, state === "open"
+      ? [dep(2, "low", "left-pad", "npm", "package.json", 20), dep(1, "critical", "axios", "npm", "functions/package.json", 3), dep(3, "medium", "okhttp", "maven", "android/app/build.gradle", 10)]
+      : [dep(9, "high", "lodash", "npm", "package.json", 12, { state: "fixed", fixed_at: at(24) }), dep(10, "low", "x", "npm", "package.json", 30, { state: "dismissed", dismissed_at: at(48) })]);
+    if (u.pathname === "/repos/kaanmuar/qa-lab-outreach/dependabot/alerts") return json(200, state === "open" ? [dep(4, "high", "requests", "pip", "requirements.txt", 5)] : []);
+    if (u.pathname === "/repos/" + REPO + "/code-scanning/alerts") return json(200, state === "open"
+      ? [{ number: 7, state: "open", created_at: at(48), html_url: "cs7", rule: { severity: "warning", description: "Unused variable" }, tool: { name: "CodeQL" }, most_recent_instance: { location: { path: "js/app.js" } } }] : []);
+    if (u.pathname.endsWith("/code-scanning/alerts")) return json(404, { message: "no analysis found" });
+    if (u.pathname === "/repos/" + REPO + "/pulls" && state === "open") return json(200, (await (await base(url, init)).json()).concat([{ number: 8, title: "Bump axios from 1.6.0 to 2.0.0 in /functions", html_url: "https://github.com/x/pull/8",
+      user: { login: "dependabot[bot]", type: "Bot" }, head: { ref: "dependabot/npm_and_yarn/functions/axios-2.0.0", sha: "s8", repo: { full_name: REPO } }, draft: false, body: "", created_at: at(5), updated_at: at(4), labels: [] }]));
+    return base(url, init);
+  };
+  const out = await gh.source(ctx(fetch));
+  const d = out.security.dependabot;
+  assert.equal(d.open, 4);
+  assert.deepEqual(d.bySeverity, { critical: 1, high: 1, medium: 1, low: 1 });
+  assert.deepEqual(d.byRepo, [{ label: REPO, value: 3 }, { label: "kaanmuar/qa-lab-outreach", value: 1 }]);
+  assert.deepEqual(d.byEcosystem, [{ label: "npm", value: 2 }, { label: "maven", value: 1 }, { label: "pip", value: 1 }]);
+  assert.deepEqual(d.items.map((i) => i.package), ["axios", "requests", "okhttp", "left-pad"]);
+  assert.deepEqual([d.items[0].patched, d.items[0].manifest, d.items[0].pr.number], ["2.0.0", "functions/package.json", 8]);
+  assert.equal(d.items[1].pr, undefined);
+  assert.deepEqual([d.oldestD, d.medianD], [20, 7.5]);
+  const cs = out.security.codeScanning;
+  assert.deepEqual([cs.open, cs.items[0].severity, cs.items[0].path, cs.items[0].tool], [1, "medium", "js/app.js", "CodeQL"]);
+  assert.ok(asked.includes("kaanmuar/kaanmuar.github.io fixed,dismissed,auto_dismissed"));
+  assert.ok(asked.includes("kaanmuar/kaanmuar.github.io dismissed"));
+  const weeks = out.security.weeks;
+  assert.equal(weeks.length, 8);
+  assert.equal(weeks[7].week, "2026-W45");
+  assert.deepEqual([weeks[7].fixed, weeks[6].dismissed], [1, 1]);
+  assert.equal(weeks.reduce((n, w) => n + w.opened, 0), 7);
+  const sec = out.score.areas.security;
+  assert.equal(sec.value, 25);
+  assert.deepEqual(sec.parts.map((p) => [p.label, p.count, p.penalty]), [["Dependabot critical", 1, 40], ["Dependabot high", 1, 20], ["Dependabot medium", 1, 5], ["Dependabot low", 1, 5], ["Code scanning medium", 1, 5]]);
+  assert.equal(out.repos.find((r) => r.name === REPO).security.open, 3 + 1);
+});
+
 test("board drift flags closed issues outside Done, open issues in Done, merged PRs in early columns and items with no Status", async () => {
   const out = await gh.source(ctx(fakeFetch()));
   const board = out.board;
