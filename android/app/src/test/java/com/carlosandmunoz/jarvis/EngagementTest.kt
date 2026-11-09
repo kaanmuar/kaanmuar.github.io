@@ -17,6 +17,13 @@ class EngagementTest {
         assertEquals("dismiss", Engagement.decision("We run axe.", "anything", false))
     }
 
+    @Test fun aDraftInAnotherLanguageShowsItsEnglish() {
+        val reply = json("""{"draft":"Probamos el foco con un lector de pantalla.","english":"We test focus with a screen reader."}""")
+        assertEquals("In English: We test focus with a screen reader.", Engagement.english(reply, "Probamos el foco con un lector de pantalla."))
+        assertEquals("In English (the original draft): We test focus with a screen reader.", Engagement.english(reply, "Probamos el foco con NVDA."))
+        assertEquals(null, Engagement.english(json("""{"draft":"We tab through it."}"""), "We tab through it."))
+    }
+
     @Test fun thePlanNamesEachActionOrWhyThePostWasLeftAlone() {
         assertEquals("like: planned · reply: waiting", Engagement.plan(json("""{"verdict":"engage","actions":{"like":{"status":"planned"},"reply":{"status":"waiting"}}}""")))
         assertEquals("left alone: competitor", Engagement.plan(json("""{"verdict":"skip","skip":"competitor","actions":{}}""")))

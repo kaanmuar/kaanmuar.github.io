@@ -123,6 +123,11 @@ const INTL = {
   }
 };
 // Chinese, Japanese and Korean run words together, so their keywords match anywhere in the text.
+// Replies are drafted in the post's language when it is one we search in (#2630); Jarvis shows an English
+// translation beside a draft in any other language. LANGS stays the clip and report languages.
+const REPLY_LANGS = ["en"].concat(Array.from(new Set([].concat(...Object.values(INTL).map(Object.keys)))));
+const ENGLISH_KEY = '"english": the reply translated to English when it is in another language, else ""';
+
 const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
 const wordRe = (w) => (UNSPACED.test(w) ? new RegExp(w, "iu") : new RegExp("(^|[^\\p{L}\\p{N}])#?" + w + "($|[^\\p{L}\\p{N}])", "iu"));
 const TOPIC_RES = Object.fromEntries(Object.entries(TOPICS).map(([t, words]) => [t, words.concat(...Object.values(INTL[t] || {})).map((w) => [w, wordRe(w)])]));
@@ -291,15 +296,15 @@ function aiPrompt(items) {
   return [
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
     "For each post below, return one JSON object in a JSON array, same order, with exactly these keys:",
-    '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument or promo}',
-    "Reply rules: write in the post's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
+    '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument or promo, ' + ENGLISH_KEY + '}',
+    "Reply rules: write in the post's language (" + REPLY_LANGS.join(", ") + "; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
     NEVER,
     "Posts:",
     JSON.stringify(list)
   ].join("\n");
 }
 
-const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French.";
+const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French; elsewhere use the register usual between strangers online.";
 const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags, more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
 
 /** The Gemini prompt for comments on our replies and posts: items carry parent, the stored post we replied on, or our own post ({ own: true }). */
@@ -316,8 +321,8 @@ function chainPrompt(items) {
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
     "Each item below is a comment someone left on one of our posts or replies (on says which): ours is what we wrote (it may be empty when we could not read it), post is what we were replying to (empty on our own posts), comment is theirs.",
     "For each comment, return one JSON object in a JSON array, same order, with exactly these keys:",
-    '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only) or it is political, angry, an argument or promo}',
-    "Reply rules: write in the comment's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
+    '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only) or it is political, angry, an argument or promo, ' + ENGLISH_KEY + '}',
+    "Reply rules: write in the comment's language (" + REPLY_LANGS.join(", ") + "; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
     NEVER,
     "Comments:",
     JSON.stringify(list)
@@ -337,15 +342,15 @@ function parseAi(text, items) {
     const p = r && byKey[r.id];
     if (!p) return;
     const ask = r.asksForTool === true;
-    let reply = String(r.reply || "").trim();
-    if (!ask) reply = reply.replace(URLS, "").replace(/\s{2,}/g, " ").trim();
-    reply = reply.replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").trim();
+    const tidy = (t) => (ask ? t : t.replace(URLS, "").replace(/\s{2,}/g, " ")).trim().replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").trim();
+    let reply = tidy(String(r.reply || ""));
+    const lang = lang2(r.lang) || lang2(p.lang);
     const limit = (NETWORKS[p.network] || {}).limit || 300;
     if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/\s+\S*$/, "") + "…";
     out[r.id] = {
-      about: clip(r.about, 200), lang: lang2(r.lang) || lang2(p.lang), sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
+      about: clip(r.about, 200), lang, sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
       political: r.political === true, argument: r.argument === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
-      reply: reply.length >= 12 ? reply : "", like: r.like !== false
+      reply: reply.length >= 12 ? reply : "", english: reply.length >= 12 && lang !== "en" ? clip(tidy(String(r.english || "")), 600) : "", like: r.like !== false
     };
   });
   return out;
@@ -388,10 +393,10 @@ function decide(post, ai, conf, used, now, followed, replied) {
   plan("repost", s >= conf.thresholds.repost && !post.isReply && (!a || a.sentiment !== "negative"));
   plan("follow", s >= conf.thresholds.follow && handle && !(followed && followed.has(post.network + ":" + handle)));
   const lang = (a && a.lang) || lang2(post.lang);
-  if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && LANGS.includes(lang)) {
+  if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && REPLY_LANGS.includes(lang)) {
     if (replied && replied.has(threadKey(post))) actions.reply = { status: "replied", error: "We already replied in this conversation." };
     else {
-      plan("reply", true, { draft: a.reply, lang, expiresAt: new Date(now + REPLY_TTL).toISOString() });
+      plan("reply", true, Object.assign({ draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + REPLY_TTL).toISOString() }));
       if (actions.reply && actions.reply.status === "planned") actions.reply.status = "waiting";
     }
   }
@@ -420,8 +425,8 @@ function chainDecide(comment, ai, conf, now) {
   const actions = {};
   if (!comment.liked && CHAIN_LIKES.includes(comment.network) && a.like !== false) actions.like = { status: status("planned") };
   const lang = a.lang || lang2(comment.lang);
-  if (!comment.answered && a.reply && a.worth >= conf.worth && LANGS.includes(lang)) {
-    actions.reply = { status: status("waiting"), draft: a.reply, lang, expiresAt: new Date(now + CHAIN_TTL).toISOString() };
+  if (!comment.answered && a.reply && a.worth >= conf.worth && REPLY_LANGS.includes(lang)) {
+    actions.reply = Object.assign({ status: status("waiting"), draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + CHAIN_TTL).toISOString() });
   }
   return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions };
 }
@@ -666,7 +671,8 @@ function replyPush(doc) {
         : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
     body: clip(r.draft, 220),
     lines: (doc.chain && doc.chain.ours ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([rep && rep.match === "rerun" ? "We said: " + clip(doc.text, 140) : who + ": " + clip(doc.title || doc.text, 140)],
-      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · " + matchLine(rep) + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")]),
+      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · " + matchLine(rep) + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")],
+      r.english ? ["In English: " + clip(r.english, 220)] : []),
     tab: "products:engagement",
     tag: "jarvis-engage-" + doc.key,
     url: /^https:\/\//.test(doc.url || "") ? doc.url : "",
@@ -703,12 +709,14 @@ function decideReply(doc, decision, text, by, now) {
     if (draft.length < 5) throw new Error("Write the reply first.");
     if (draft.length > limit) throw new Error((NETWORKS[doc.network] || {}).name + " takes at most " + limit + " characters; this is " + draft.length + ".");
   }
+  // An edit leaves Gemini's English translation behind; it described the draft, not Carlos's text.
   return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by },
+    decision === "edit" ? { english: "" } : {},
     gif && GIF_NETS.includes(doc.network) ? { gif } : {}), counter: decision === "edit" ? "edited" : "approved", waited };
 }
 
 module.exports = {
-  NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
   postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };
