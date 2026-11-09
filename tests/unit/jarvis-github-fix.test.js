@@ -146,6 +146,12 @@ test("launchAgent says why Cursor refused the agent instead of [object Object]",
   await assert.rejects(fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === "Cursor refused the agent (400): startingRef is not a branch");
 });
 
+test("launchAgent names the empty Cursor balance and its fix when Cursor refuses for credit (#2893)", async () => {
+  const broke = async () => res({ error: { code: "usage_limit_exceeded", message: "Your team's prepaid balance is used up. Buy credits for your team to keep going." } }, 400);
+  const ctx = ctxOf({ fetchImpl: broke }, { env: { CURSOR_API_KEY: "key_1" } });
+  await assert.rejects(fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === fix.NO_CURSOR_CREDIT && /Buy credits in the Cursor Dashboard > Billing/.test(e.message));
+});
+
 test("localIngest keeps a clean copy of the Mac's report, one GraphQL point an hour, and marks the queued jobs it ran", async () => {
   const db = fakeDb();
   const q = await fix.queueLocal(db, "remove-worktree", "/Users/Apple/repo/.worktrees/fix-1", NOW);

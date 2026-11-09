@@ -156,7 +156,13 @@ async function execute(row, ops, now) {
     return { count: 1, detail: "Closed and reopened #" + p.pr + " for a fresh merge with main." };
   }
   if (action === "rerun-ci" && p.workflow) { await ops.dispatch(p.workflow); return { count: 1, detail: "Started " + (p.name || p.workflow) + " on main's newest commit." }; }
-  if (action === "rerun-ci" && p.run) { await ops.rerunRun(p.run); return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." }; }
+  if (action === "rerun-ci" && p.run) {
+    // Main may have moved during the countdown: re-running the old commit then fails again on what main already fixed (#2893).
+    const head = p.sha && p.path && ops.mainSha && ops.dispatch ? await ops.mainSha().catch(() => "") : "";
+    if (head && head !== p.sha) { await ops.dispatch(p.path); return { count: 1, detail: "Main moved past the failed commit during the countdown, so " + (p.name || p.path) + " started on main's newest commit." }; }
+    await ops.rerunRun(p.run);
+    return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." };
+  }
   if (action === "rerun-ci") {
     const res = await ops.rerunCi(target);
     if (res.already === "re-run once") throw new Error("Run " + res.run + " failed again after one re-run; it is yours now.");
