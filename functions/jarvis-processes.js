@@ -10,7 +10,7 @@
      job         track() in index.js: every scheduled job; one that runs more than once an hour shows only when it
                  runs past SHOW_AFTER_MS, fails or says what it did
      workflow,   jarvisGithubHook: GitHub's workflow_run webhook (pushes, schedules, dispatches; pull request CI is
-     deploy        left out); scheduled workflows are jobs
+     deploy        left out); scheduled workflows are jobs; jarvisLogPoll closes runs whose completed event was lost
      cube        cubeRunStart and cubeRunDone on url_review_runs
      desk        jarvisReviewRun: a review Carlos asked for from Jarvis
      review-run  runReview: a customer's URL review
@@ -79,6 +79,8 @@ function merge(rows, row) {
   const list = rows || [];
   const was = list.find((r) => r.id === row.id);
   if (was && SAME.every((k) => was[k] === row[k])) return null;
+  // GitHub may deliver a run's in_progress after its completed; a new run or Cursor turn comes with a new start.
+  if (was && !ACTIVE.has(was.state) && ACTIVE.has(row.state) && row.startedAt && row.startedAt === was.startedAt) return null;
   const next = Object.assign({}, row, { startedAt: row.startedAt || (was && was.startedAt) || row.updatedAt });
   if (!ACTIVE.has(next.state)) next.endedAt = (was && !ACTIVE.has(was.state) && was.endedAt) || row.updatedAt;
   return list.filter((r) => r.id !== row.id).concat(next);
@@ -210,6 +212,19 @@ function workflowRow(body, { isDeploy, jobFiles } = {}) {
   };
 }
 
+/**
+ * Closes active gh: rows whose run has finished, from a list of Actions runs (jarvisLogPoll reads the latest 100 every
+ * minute): a completed event whose webhook timed out is otherwise lost. One read; a write only when a row moves.
+ */
+async function settleRuns(deps, runs, opts) {
+  const done = new Map((runs || []).filter((run) => run && run.status === "completed").map((run) => ["gh:" + run.id, run]));
+  if (!done.size) return "runs: none finished";
+  const active = ((await read(deps.db)).value.rows || []).filter((r) => r.id.startsWith("gh:") && ACTIVE.has(r.state) && done.has(r.id));
+  const rows = active.map((r) => workflowRow({ action: "completed", workflow_run: done.get(r.id) }, opts)).filter(Boolean);
+  if (rows.length) await report(deps, rows);
+  return "runs: " + rows.length + " settled";
+}
+
 /** GitHub's X-Hub-Signature-256 over the raw body. */
 function signed(secret, raw, header) {
   if (!secret || !raw || !header) return false;
@@ -269,4 +284,4 @@ function macRows(body) {
   return list.slice(0, 10).filter((r) => r && MAC_KINDS.has(r.kind)).map((r) => Object.assign({}, r, { id: (r.kind === "agent" ? "agent:" : "mac:") + clip(String(r.id || "").replace(/^(agent|mac):/, ""), 100) }));
 }
 
-module.exports = { KINDS, STATES, ACTIVE, KEEP_MS, QUIET_MS, MAX_ROWS, SHOW_AFTER_MS, EMPTY, clean, merge, prune, view, versionOf, parse, read, report, frequent, jobRow, workflowRow, signed, cubeRow, deskRow, reviewRow, cloudAgentRow, cloudAgents, macRows, hostOf, JOB_NAMES };
+module.exports = { KINDS, STATES, ACTIVE, KEEP_MS, QUIET_MS, MAX_ROWS, SHOW_AFTER_MS, EMPTY, clean, merge, prune, view, versionOf, parse, read, report, frequent, jobRow, workflowRow, settleRuns, signed, cubeRow, deskRow, reviewRow, cloudAgentRow, cloudAgents, macRows, hostOf, JOB_NAMES };

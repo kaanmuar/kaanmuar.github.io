@@ -149,6 +149,36 @@ test("workflow runs: deploys, scheduled jobs and the rest; pull request CI and r
   assert.deepEqual([gate.state, gate.needsYou], ["waiting", true]);
 });
 
+test("a run's late in_progress does not reopen it; a re-run and a new Cursor turn do", async () => {
+  const db = fakeDb();
+  const d = deps(db);
+  const opts = { isDeploy: github.isDeploy };
+  const done = Object.assign({}, RUN, { status: "completed", conclusion: "success" });
+  await proc.report(d, proc.workflowRow({ action: "completed", workflow_run: done }, opts));
+  d.clock.t += MIN;
+  assert.equal((await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: RUN }, opts))).changed, false);
+  const rerun = Object.assign({}, RUN, { run_attempt: 2, run_started_at: "2026-11-09T05:10:00Z" });
+  await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: rerun }, opts));
+  assert.equal((await proc.read(db)).value.rows[0].state, "running");
+  await proc.report(d, { id: "agent:c", kind: "agent", name: "Chat", state: "done" });
+  d.clock.t += MIN;
+  await proc.report(d, { id: "agent:c", kind: "agent", name: "Chat", state: "running", startedAt: new Date(d.clock.t).toISOString() });
+  assert.equal((await proc.read(db)).value.rows.find((r) => r.id === "agent:c").state, "running");
+});
+
+test("runs that finished without their webhook are settled from the Actions list", async () => {
+  const db = fakeDb();
+  const d = deps(db);
+  const opts = { isDeploy: github.isDeploy };
+  await proc.report(d, proc.workflowRow({ action: "in_progress", workflow_run: RUN }, opts));
+  assert.equal(await proc.settleRuns(d, [RUN], opts), "runs: none finished");
+  d.clock.t += 5 * MIN;
+  const note = await proc.settleRuns(d, [Object.assign({}, RUN, { status: "completed", conclusion: "failure" }), Object.assign({}, RUN, { id: 5, status: "completed", conclusion: "success" })], opts);
+  assert.equal(note, "runs: 1 settled");
+  const { value } = await proc.read(db);
+  assert.deepEqual(value.rows.map((r) => [r.id, r.state]), [["gh:99", "failed"]]);
+});
+
 test("the webhook signature is GitHub's sha256 HMAC over the raw body", () => {
   const raw = Buffer.from(JSON.stringify({ action: "completed" }));
   const sig = "sha256=" + crypto.createHmac("sha256", "s3cret").update(raw).digest("hex");
@@ -205,6 +235,24 @@ test("the Cursor hook: a prompt runs, an answer ending in a question waits on Ca
   assert.equal(d.row.state, "done");
   assert.equal(hook.step("stop", { status: "aborted" }, a.kept).row.state, "cancelled");
   assert.equal(hook.nameOf({ workspace_roots: ["/tmp/x"] }, "## Fix the **tile**\nmore"), "Fix the tile");
+});
+
+test("the Cursor hook installs as a user hook beside the others, once, and uninstalls cleanly", () => {
+  const hook = require("../../.cursor/hooks/jarvis-process.js");
+  const dir = fs.mkdtempSync(path.join(require("node:os").tmpdir(), "cursor-hooks-"));
+  fs.writeFileSync(path.join(dir, "hooks.json"), JSON.stringify({ version: 1, hooks: { stop: [{ command: "./hooks/cursor-quota.sh", timeout: 5 }] } }));
+  hook.install(dir);
+  hook.install(dir);
+  const config = JSON.parse(fs.readFileSync(path.join(dir, "hooks.json"), "utf8"));
+  assert.deepEqual(config.hooks.stop.map((h) => h.command), ["./hooks/cursor-quota.sh", "node ./hooks/jarvis-process.js stop"]);
+  assert.deepEqual(config.hooks.beforeSubmitPrompt.map((h) => h.command), ["node ./hooks/jarvis-process.js beforeSubmitPrompt"]);
+  assert.ok(fs.existsSync(path.join(dir, "hooks", "jarvis-process.js")));
+  hook.install(dir, true);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, "hooks.json"), "utf8")).hooks, { stop: [{ command: "./hooks/cursor-quota.sh", timeout: 5 }] });
+  assert.equal(fs.existsSync(path.join(dir, "hooks", "jarvis-process.js")), false);
+  const project = JSON.parse(fs.readFileSync(path.join(__dirname, "../../.cursor/hooks.json"), "utf8"));
+  assert.doesNotMatch(JSON.stringify(project), /jarvis-process/, "a chat opened on a worktree does not send twice");
+  fs.rmSync(dir, { recursive: true, force: true });
 });
 
 test("web panel: running first with a ticking clock, needs-you rows get an Open link, the push redraws only this panel", async () => {
