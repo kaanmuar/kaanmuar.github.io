@@ -1,7 +1,21 @@
 {
  "version": 1,
- "built": "2026-11-02T22:51:37.501Z",
+ "built": "2026-11-09T23:29:45.606Z",
  "proposals": [
+  {
+   "id": "9f3c72b46f4a",
+   "title": "Nightly sweep: 1604 sites in 122 countries, Nov 2 to Nov 8",
+   "url": "https://carlosandmunoz.com/qa-review.html?sample=1&week=2026-11-09",
+   "source": "URL Review nightly sweep",
+   "own": true,
+   "date": "2026-11-09",
+   "topic": "Field sweep",
+   "lang": "en",
+   "summary": "Our nightly sweep reviewed 1604 public websites in 122 countries last week (Nov 2 to Nov 8).\n\nWhat came up most often among each site's top issues:\n• Text with too little color contrast: 64% of sites\n• No HSTS header: 54% of sites\n• Form fields without a label: 47% of sites\n\nMost of these are small fixes. See one full case and its fix in our sample report:\nhttps://carlosandmunoz.com/qa-review.html?sample=1&week=2026-11-09\n\nRan a review already? Your report reopens free for 7 days.",
+   "why": "Weekly round-up of the nightly sweep. No site is named.",
+   "image": "assets/social/sweep-roundup/2026-11-09.jpg",
+   "score": 100
+  },
   {
    "id": "675190976b59",
    "title": "Nightly sweep: 386 sites in 21 countries, Oct 26 to Nov 1",
