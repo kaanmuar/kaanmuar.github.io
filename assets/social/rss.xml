@@ -367,23 +367,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Your share card is a first impression.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>SEO</category>
-      <description>Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.
-
-Try this today: Paste your link into a private chat with yourself. What people see there is your real first impression.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>3 natural competitors. halloweencostumes.com leads: 75.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz.html</link>
       <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz</guid>
@@ -932,6 +915,20 @@ Via GitHub, by LoyaltyobsidianOcean2704, 2026-11-05.
 
 https://github.com/LoyaltyobsidianOcean2704/ai-resocket-test-architect</description>
       <media:content url="https://opengraph.githubassets.com/1/LoyaltyobsidianOcean2704/ai-resocket-test-architect" medium="image"/>
+    </item>
+    <item>
+      <title>Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript</title>
+      <link>https://carlosandmunoz.com/social/pick/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex.html</link>
+      <guid isPermaLink="false">pick/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>Paletas accesibles: calcular contraste WCAG desde colores HEX con JavaScript Una...
+
+Via DEV, by AppInitDev, 2026-11-06.
+
+https://dev.to/appinitdev/paletas-accesibles-calcular-contraste-wcag-desde-colores-hex-con-javascript-12ka</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fe1cwpqwmomeb6ze8z7z0.png" medium="image"/>
     </item>
   </channel>
 </rss>

@@ -4179,6 +4179,142 @@
     "checked": "2026-11-07T11:26:02.897Z"
    }
   ],
+  "auto-2026-11-08/01-u-shortmake-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6af1b5f08a471bd245b65a4c",
+    "at": "2026-11-15T14:52:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:46.613Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6af1b5eb93969c2b52b06776",
+    "at": "2026-11-16T01:37:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:41.992Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6af1b5ee8a471bd245b658d0",
+    "at": "2026-11-15T22:02:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:45.140Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6af1b5ec93969c2b52b0690f",
+    "at": "2026-11-16T00:18:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:44.120Z"
+   }
+  ],
+  "auto-2026-11-08/02-u-choice-route-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6af1b5f993969c2b52b07567",
+    "at": "2027-03-31T13:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:56.806Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6af1b5f1e94d5fc5f0f4a414",
+    "at": "2027-03-31T23:36:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:48.671Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6af1b5f822176b6b890ff267",
+    "at": "2027-03-31T17:16:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:55.669Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6af1b5f7e94d5fc5f0f4ab3c",
+    "at": "2027-03-31T22:42:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:50.070Z"
+   }
+  ],
+  "auto-2026-11-08/03-vs-aktia-fi": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6af1b5fc075856a8cadad65e",
+    "at": "2027-03-31T14:08:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:01:00.157Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6af1b5fa8a471bd245b6635a",
+    "at": "2027-04-01T00:35:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:57.355Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6af1b5fbe94d5fc5f0f4af2c",
+    "at": "2027-03-31T19:54:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:59.658Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6af1b5fb93969c2b52b076f3",
+    "at": "2027-03-31T23:43:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:00:58.394Z"
+   }
+  ],
+  "auto-2026-11-08/04-vs-beebom-com": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6af1b6018a471bd245b66724",
+    "at": "2026-11-09T13:03:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:01:04.319Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6af1b5fd8a471bd245b66561",
+    "at": "2026-11-09T22:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:01:00.617Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6af1b60022176b6b890ffce0",
+    "at": "2026-11-09T13:36:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:01:03.237Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6af1b5ff93969c2b52b07b34",
+    "at": "2026-11-09T21:21:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-09T12:01:02.334Z"
+   }
+  ],
   "auto-2026-11-09/01-u-beatmastering-ir": [
    {
     "channel": "linkedin",
@@ -10929,11 +11065,5 @@
     "checked": "2026-11-02T06:21:14.764Z"
    }
   ]
- },
- "retry": {
-  "auto-2026-11-08": {
-   "since": "2026-11-08T12:27:16.521Z",
-   "error": "The site did not serve https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/01-u-shortmake-com.jpg within 60 minutes."
-  }
  }
 }
