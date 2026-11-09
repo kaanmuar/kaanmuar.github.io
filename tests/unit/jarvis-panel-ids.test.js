@@ -41,9 +41,7 @@ const APP_ONLY = {
   systems: ["functions"],
   github: ["health", "summary", "workflows"],
   hub: ["studio"],
-  console: ["log"],
-  // The product list beside the picked product on wide screens; it sits outside the arranged panels.
-  products: ["list"]
+  console: ["log"]
 };
 
 const flat = (groups) => Object.entries(groups).flatMap(([tab, names]) => names.map((n) => (tab === "product" ? "$product-" : tab + "-") + n));
@@ -238,7 +236,7 @@ test("a panel both sides draw has one id", () => {
 test("every id belongs to a layout tab", () => {
   const tabs = new Set(core.LAYOUT_TABS);
   const bad = [...r.web.map((p) => p.id), ...r.app.map((p) => p.id)]
-    .filter((id) => id !== "briefing" && !id.startsWith("$product-") && !flat({ products: APP_ONLY.products }).includes(id))
+    .filter((id) => id !== "briefing" && !id.startsWith("$product-"))
     .filter((id) => !tabs.has(id.split("-")[0]));
   assert.deepEqual([...new Set(bad)], []);
 });
