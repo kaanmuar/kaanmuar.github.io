@@ -79,6 +79,19 @@ test("Microsoft 365 rows: each mailbox with its smtp aliases; blocked or unlicen
   assert.equal(rows[2].domain, "qalaburlreview.onmicrosoft.com");
 });
 
+test("Microsoft 365 rows: a blocked, unlicensed mailbox is a healthy shared mailbox unless Instantly sends from it", () => {
+  const shared = (mail, alias) => ({ displayName: mail.split("@")[0], mail, accountEnabled: false, assignedLicenses: [], proxyAddresses: ["SMTP:" + mail].concat(alias ? ["smtp:" + alias] : []) });
+  const rows = addresses.graphRows([shared("partners@qalabreview.com", "partner@qalabreview.com"), shared("students@qalabreview.com"), shared("Reports@qalabreview.com"), shared("sales@qalabreview.com")], ["sales@qalabreview.com"]);
+  assert.deepEqual(rows.map((r) => [r.address, r.kind, r.state, r.problem]), [
+    ["partners@qalabreview.com", "shared mailbox", "ok", ""], ["partner@qalabreview.com", "mailbox alias", "ok", ""],
+    ["students@qalabreview.com", "shared mailbox", "ok", ""], ["reports@qalabreview.com", "shared mailbox", "ok", ""],
+    ["sales@qalabreview.com", "mailbox", "error", "disabled"]
+  ]);
+  assert.match(rows[0].detail, /^partners: shared mailbox, no licence and no sign-in/);
+  assert.match(rows[4].detail, /Instantly cannot send from it/);
+  assert.deepEqual(addresses.issuesOf(rows, []).map((i) => i.key), ["m365:disabled:sales@qalabreview.com"]);
+});
+
 test("issues: one per problem with who fixes it; unchecked Microsoft 365 rows and bounces are not pushed", () => {
   const sending = addresses.instantlyRows(outreach.accountRows(ACCOUNTS), []);
   const rows = addresses.improvmxRows(ALIASES.filter((a) => a.alias !== "abuse"), [], { aliases: [], problems: [{ alias: "x", outcome: "refused", reason: "550 no" }] })
