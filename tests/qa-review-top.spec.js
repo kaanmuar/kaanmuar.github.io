@@ -571,6 +571,20 @@ test.describe('Report section index (#2770)', () => {
       expect(await indexEntries(page)).toEqual(await shownGroups(page));
     }
   });
+
+  test('on the Spanish and Italian pages the sample notice and the cover cases line read in that language (#2935)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const copy = {
+      es: [/^Informe de muestra\. Es la revisión de \S+ del \d+ de \w+ de \d{4}, .* Ciérralo /, 'Estos casos se proponen a partir de un análisis público. Ninguno se ejecutó.'],
+      it: [/^Report di esempio\. È la revisione di \S+ del \d+ \w+ \d{4}, .* Chiudilo /, 'Questi casi sono proposti a partire da un’analisi pubblica. Nessuno è stato eseguito.']
+    };
+    for (const [lang, [notice, statement]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#sample-note')).toHaveText(notice);
+      await expect(page.locator('#report-cover')).toContainText(statement);
+      await expect(page.locator('#report-cover')).not.toContainText('None of them were executed');
+    }
+  });
 });
 
 function reportCopy(lang) {

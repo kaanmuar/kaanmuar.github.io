@@ -125,6 +125,41 @@ test("every field error the server sends reads in each page language (#2837)", (
   }
 });
 
+test("the sample report's notice and the cover's cases line read in the page language, not in English (#2935)", () => {
+  const review = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const start = review.indexOf('const sampleNote = document.getElementById("sample-note")');
+  const notice = review.slice(start, review.indexOf("dash.classList.add(\"open\")", start));
+  assert.ok(start > 0 && notice.includes('rc.t("sampleNote"') && notice.includes('rc.t("sampleNoteUndated"'), "the sample notice does not read from the report copy");
+  assert.equal(notice.match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"/g), null, "the sample notice writes English");
+  const cover = review.slice(review.indexOf('slot("report-cover").innerHTML'), review.indexOf('if (!slotRoot) document.getElementById("print-mark")'));
+  assert.ok(!cover.includes("report.statement"), "the cover prints the report's English statement");
+  assert.ok(cover.includes('"coverStatementStopped"') && cover.includes('"coverStatement"'), "the cover does not read its cases line from the report copy");
+
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-report-copy.js"), "utf8");
+  const load = (lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+    vm.runInNewContext(source, sandbox);
+    return sandbox.window.QAReviewReportCopy;
+  };
+  const vars = { host: "automationexercise.com", date: "2 nov 2026" };
+  const keys = ["sampleNote", "sampleNoteUndated", "coverStatement", "coverStatementStopped"];
+  const en = load("en");
+  assert.match(en.t("sampleNote", vars), /^Sample report\. This is the review of automationexercise\.com from 2 nov 2026, /);
+  assert.equal(en.t("coverStatement"), "These cases are proposed from a public analysis. None of them were executed.");
+  for (const lang of LANGS) {
+    const rc = load(lang);
+    for (const key of keys) {
+      const text = rc.t(key, vars);
+      assert.notEqual(text, en.t(key, vars), lang + "." + key + " is still English");
+      assert.ok(!/\b(Sample report|the review of|None of them|was stopped|blurred|disclaimers)\b/.test(text), lang + "." + key + " reads English: " + text);
+      assert.ok(!/\{\w+\}/.test(text), lang + "." + key + " leaves a slot unfilled: " + text);
+    }
+    assert.ok(rc.t("sampleNote", vars).includes("automationexercise.com") && rc.t("sampleNote", vars).includes("2 nov 2026"), lang + ".sampleNote drops the host or the date");
+  }
+  assert.match(load("es").t("sampleNote", vars), /Ciérralo .* tu propia dirección\.$/, "es speaks to the reader as tú (#2909)");
+  assert.match(load("it").t("sampleNote", vars), /Chiudilo .* del tuo indirizzo\.$/, "it speaks to the reader as tu (#2909)");
+});
+
 test("the findings copy has every English finding template, with the same slots, in each language (#1297)", () => {
   const { EN } = require("../../functions/url-review-findings-en.js");
   const copy = copyOf("qa-review-findings-copy");
