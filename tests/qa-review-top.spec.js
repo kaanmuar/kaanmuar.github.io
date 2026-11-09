@@ -668,6 +668,25 @@ test.describe('Report section index (#2770)', () => {
     }
   });
 
+  test('on a phone the cover hostname fits its card and breaks only after a dot at 320, 360 and 390px (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await openSample(page, '/qa-review-es.html');
+    for (const width of [320, 360, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      const cover = await page.locator('#report-cover h2').evaluate((h2) => document.fonts.ready.then(() => ({
+        text: h2.textContent,
+        fits: h2.scrollWidth <= h2.clientWidth,
+        pieces: [...h2.childNodes].filter((node) => node.nodeType === 3).map((node) => {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          return range.getClientRects().length;
+        })
+      })));
+      expect(cover.text).toBe('automationexercise.com');
+      expect(cover, `${width}px`).toEqual({ text: 'automationexercise.com', fits: true, pieces: cover.pieces.map(() => 1) });
+    }
+  });
+
   test('on a phone the Close bar matches the report sheet in the light and dark looks (#2968)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openSample(page);
