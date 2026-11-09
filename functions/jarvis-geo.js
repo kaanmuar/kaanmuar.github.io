@@ -11,6 +11,9 @@
    links       short-link visits, reviews, paid unlocks and USD per prospect host
    gaps        why a country needs attention: prospects or reviewed sites but no campaign, visitors but no outreach,
                a target market with no activity, a reply rate under half the average, bounces over 5%, no prospects left
+   light       how far we got with a country, 0 to 5 (#2988): Dark, Spark (prospects or reviewed sites), Ember (contacted
+               or social replies drafted), Lit (opens, link visits, visitors or approved social replies), Bright (email
+               replies), Blazing (positive replies, interested, paid unlocks). Twins: lightOf in js/admin-jarvis-geo.js and Geo.kt.
 
    confirm     Live Reports the country finder was unsure of (jarvis_settings/live_report_countries items, #3009), most
                reports first. Carlos's answers go into the same doc's decisions (or skipped); the daily Live Reports job
@@ -86,6 +89,19 @@ function hostCountry(maps) {
   };
 }
 
+const LIGHTS = ["Dark", "Spark", "Ember", "Lit", "Bright", "Blazing"];
+
+/** A country's light level, 0 (nothing) to 5 (positive replies or money): the furthest step any channel reached. */
+function lightOf(r) {
+  const n = (k) => Number(r && r[k]) > 0;
+  if (n("positive") || n("interested") || n("paid") || n("usd")) return 5;
+  if (n("replies") || n("answered")) return 4;
+  if (n("opened") || n("visits") || n("visitors") || n("socialApproved")) return 3;
+  if (n("contacted") || n("sent") || n("social")) return 2;
+  if (n("prospects") || n("reviewed") || n("leads")) return 1;
+  return 0;
+}
+
 /** Every country's row and the ranked gaps, from the inputs the source gathers (pure, for the tests). */
 function geoRows(input) {
   const i = input || {};
@@ -98,7 +114,7 @@ function geoRows(input) {
       cc, name: nameOf(cc), langs: langsOf(cc), target: targets.has(cc),
       prospects: 0, swept: 0, left: 0, sectors: {}, reviewed: 0, scoreSum: 0, scored: 0,
       campaigns: 0, active: 0, leads: 0, contacted: 0, sent: 0, opened: 0, replies: 0, interested: 0, bounced: 0, est: false, camps: [],
-      answered: 0, positive: 0, social: 0, visitors: 0, visitorsPrior: 0, visits: 0, reviews: 0, paid: 0, usd: 0
+      answered: 0, positive: 0, social: 0, socialApproved: 0, visitors: 0, visitorsPrior: 0, visits: 0, reviews: 0, paid: 0, usd: 0
     });
   };
   targets.forEach(row);
@@ -163,10 +179,14 @@ function geoRows(input) {
     r.answered++;
     if (POSITIVE.test(rep.category || "")) r.positive++;
   });
-  (((i.engagement && i.engagement.waiting) || []).concat((i.engagement && i.engagement.approved) || [])).forEach((p) => {
+  const social = (list, approved) => (list || []).forEach((p) => {
     const r = p && p.report && row(countryOf(p.report.host));
-    if (r) r.social++;
+    if (!r) return;
+    r.social++;
+    if (approved) r.socialApproved++;
   });
+  social(i.engagement && i.engagement.waiting, false);
+  social(i.engagement && i.engagement.approved, true);
   ((i.ga4 && i.ga4.countries) || []).forEach((c) => {
     const r = row(codeOf(c.label));
     if (!r) return;
@@ -189,6 +209,7 @@ function geoRows(input) {
       replyRate: r.sent ? round((r.replies / r.sent) * 100, 10) : null, openRate: r.sent ? round((r.opened / r.sent) * 100, 10) : null });
     delete out.scoreSum;
     delete out.scored;
+    out.light = lightOf(out);
     return out;
   });
   const sending = list.filter((r) => r.sent >= MIN_SENT);
@@ -216,9 +237,23 @@ function geoRows(input) {
     totals: {
       countries: acting.length, targets: targets.size, targetsActive: acting.filter((r) => r.target).length,
       missing: list.filter((r) => r.gaps.some((k) => k !== "silent")).length, silent: list.filter((r) => r.gaps.includes("silent")).length, avgReply,
-      sent: list.reduce((s, r) => s + r.sent, 0), replies: list.reduce((s, r) => s + r.replies, 0), prospects: list.reduce((s, r) => s + r.prospects, 0)
+      sent: list.reduce((s, r) => s + r.sent, 0), replies: list.reduce((s, r) => s + r.replies, 0), prospects: list.reduce((s, r) => s + r.prospects, 0),
+      byLight: LIGHTS.map((_, n) => list.filter((r) => r.light === n).length)
     }
   };
+}
+
+/** Each row's next special date from the calendar source (#2989): nextDate {date, name, kind} and daysToDate from today. */
+function joinDates(rows, calendar, now) {
+  const next = (calendar && calendar.byCountry) || {};
+  const { bogotaDay, diffDays } = require("./jarvis-calendar");
+  const today = bogotaDay(now || Date.now());
+  rows.forEach((r) => {
+    const d = (next[r.cc] || []).find((x) => (x.end || x.date) >= today);
+    r.nextDate = d ? { date: d.date, name: d.name, kind: d.kind } : null;
+    r.daysToDate = d ? Math.max(0, diffDays(today, d.date)) : null;
+  });
+  return rows;
 }
 
 async function readTargets(db) {
@@ -293,13 +328,13 @@ async function geo(ctx) {
   const needs = [];
   const peer = (op) => (ctx.peer ? ctx.peer(op).then((o) => (o && o.ok !== false ? o : null)).catch(() => null) : Promise.resolve(null));
   const countryDoc = ctx.db.collection("jarvis_settings").doc(COUNTRY_DOC).get().then((s) => (s.exists ? s.data() : null)).catch(() => null);
-  const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4] = await Promise.all([
+  const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4, calendar] = await Promise.all([
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
     ctx.db.collection("url_review_sweep").doc("lane").get(),
     ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => null),
     readTargets(ctx.db),
-    peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4")
+    peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4"), peer("calendar")
   ]);
   const view = sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null);
   const q = queue.exists ? queue.data() : {};
@@ -311,9 +346,10 @@ async function geo(ctx) {
     queue: { hosts: q.hosts, sweptAt: view && view.outreachAt }, live, targets, marketing, sync, engagement, ga4,
     links: outreach && outreach.links
   });
+  joinDates(out.countries, calendar, ctx.now);
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
   return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
 }
 
-module.exports = { geo, geoRows, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
+module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };

@@ -90,6 +90,37 @@ test("flags a reply rate under half the average once a country has sent enough",
   assert.ok(!by(out, "US").gaps.includes("low-reply"));
 });
 
+test("lights each country by the furthest step any channel reached (#2988)", () => {
+  assert.deepEqual(geo.LIGHTS, ["Dark", "Spark", "Ember", "Lit", "Bright", "Blazing"]);
+  assert.equal(geo.lightOf({}), 0);
+  assert.equal(geo.lightOf({ prospects: 3 }), 1);
+  assert.equal(geo.lightOf({ reviewed: 1 }), 1);
+  assert.equal(geo.lightOf({ prospects: 3, sent: 10 }), 2);
+  assert.equal(geo.lightOf({ social: 1 }), 2);
+  assert.equal(geo.lightOf({ social: 1, socialApproved: 1 }), 3);
+  assert.equal(geo.lightOf({ visitors: 30 }), 3);
+  assert.equal(geo.lightOf({ sent: 10, opened: 2 }), 3);
+  assert.equal(geo.lightOf({ answered: 1 }), 4);
+  assert.equal(geo.lightOf({ sent: 10, replies: 1 }), 4);
+  assert.equal(geo.lightOf({ usd: 9 }), 5);
+  assert.equal(geo.lightOf({ replies: 2, interested: 1 }), 5);
+
+  const out = geo.geoRows({
+    targets: ["PT", "AO", "CO"],
+    queue: { hosts: [{ host: "a.edu.co", cc: "co" }], sweptAt: 0 },
+    engagement: { waiting: [{ report: { host: "a.edu.co" } }], approved: [{ report: { host: "x.pt" } }] },
+    live: { reports: [{ host: "x.pt", country: "PT", overall: 60 }] },
+    ga4: { countries: [{ label: "Japan", value: 30 }] }
+  });
+  assert.equal(by(out, "AO").light, 0);
+  assert.equal(by(out, "CO").light, 2);
+  assert.equal(by(out, "CO").socialApproved, 0);
+  assert.equal(by(out, "PT").light, 3);
+  assert.equal(by(out, "PT").socialApproved, 1);
+  assert.equal(by(out, "JP").light, 3);
+  assert.deepEqual(out.totals.byLight, [1, 0, 1, 2, 0, 0]);
+});
+
 test("defaults the target markets to every country speaking one of the six languages", () => {
   const out = geo.geoRows({});
   ["ES", "BR", "DE", "FR", "IT", "US", "MX"].forEach((cc) => assert.ok(out.targets.includes(cc), cc));
