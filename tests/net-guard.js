@@ -38,13 +38,13 @@ const STUBS = [
   // Visitor country: unknown, as prime() in qa-review-top.spec.js answers.
   [/^https:\/\/ipwho\.is\//, () => json({ success: false })],
   [/^https:\/\/dns\.google\/resolve/, dns],
+  // axe-core, which the catalog and lab pages load from jsDelivr: the copy in node_modules.
+  [/^https:\/\/cdn\.jsdelivr\.net\/npm\/axe-core@[\d.]+\/axe\.min\.js$/, () => ({ path: require.resolve('axe-core/axe.min.js'), contentType: 'text/javascript', headers: CORS })],
   // Firebase Auth refuses every sign-in, so no test signs in to the real project.
   [/^https:\/\/(identitytoolkit|securetoken)\.googleapis\.com\//, () => json({ error: { code: 400, message: 'INVALID_LOGIN_CREDENTIALS' } }, 400)],
   [/^https:\/\/[^/]+\.cloudfunctions\.net\//, () => json({ error: 'offline in tests' }, 503)],
   // The live site is this checkout.
-  [/^https:\/\/carlosandmunoz\.com\//, live],
-  // A link a test opens in a new tab.
-  [/^https:\/\/github\.com\//, () => ({ contentType: 'text/html', body: '<!doctype html><title>GitHub</title>' })]
+  [/^https:\/\/carlosandmunoz\.com\//, live]
 ];
 
 // Reached over the real network: [pattern, reason, spec files it is limited to (all when absent)].
@@ -71,6 +71,8 @@ async function guard(context, origin, spec, blocked) {
     if (stub) return route.fulfill(stub[1](url));
     // Images in the content under test (news cards, report screenshots) come from any host: they fail to load.
     if (request.resourceType() === 'image') return route.fulfill({ status: 404, body: '' });
+    // A link a test follows or opens in a new tab (a company's site, a profile): a blank page at that address.
+    if (request.resourceType() === 'document') return route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>' + new URL(url).hostname + '</title>' });
     blocked.push(url);
     return route.abort('blockedbyclient');
   });
