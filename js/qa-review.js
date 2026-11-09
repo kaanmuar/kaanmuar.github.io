@@ -39,21 +39,8 @@
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
   const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
-  const REASONS = [
-    { id: "own", label: "I own this site and want a test plan" },
-    { id: "client", label: "A client asked me to propose coverage before a release" },
-    { id: "redesign", label: "I am comparing this page with a redesign" },
-    { id: "release", label: "I need a case list before a release" },
-    { id: "tech", label: "I want the public technologies named" },
-    { id: "a11y", label: "I am preparing an accessibility review" },
-    { id: "security", label: "I am preparing a review of the public security headers" },
-    { id: "performance", label: "I need a performance and load case list" },
-    { id: "teaching", label: "I am teaching or learning how a page could be tested" },
-    { id: "allowed", label: "I am checking a page I am allowed to review" },
-    { id: "verify", label: "I want QA-lab to run a verification" },
-    { id: "credentials", label: "I have a username and password for this site" },
-    { id: "other", label: "Other" }
-  ];
+  // Each id needs a reason.<id> label in every language of js/qa-review-report-copy.js.
+  const REASONS = ["own", "client", "redesign", "release", "tech", "a11y", "security", "performance", "teaching", "allowed", "verify", "credentials", "other"];
   const gate = document.getElementById("gate");
   const app = document.getElementById("review-app");
   const termsForm = document.getElementById("terms-form");
@@ -250,28 +237,38 @@
     else if (!sectionTouched) box.checked = true;
     box.disabled = !path;
     if (!path) box.checked = false;
-    if (note) note.textContent = !path
-      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
-      : box.checked
-        ? "Later pages stay under " + path + "."
-        : "Later pages can follow links outside " + path + ".";
+    const copy = window.QAReviewReportCopy;
+    if (note) note.textContent = copy.t(!path ? "sectionNone" : box.checked ? "sectionStay" : "sectionLeave", { path });
+  }
+
+  function pageLangName(lang) {
+    const copy = window.QAReviewReportCopy;
+    if (copy.english || typeof Intl.DisplayNames !== "function") return PAGE_LANG_LABEL[lang] || lang;
+    return new Intl.DisplayNames([copy.lang], { type: "language" }).of(lang) || lang;
   }
 
   function scopeSummary() {
+    const copy = window.QAReviewReportCopy;
     const lang = selectedPageLang();
-    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
-    if (document.getElementById("stay-section").checked) parts.push("this section");
+    const parts = [copy.t("scopePages", { n: selectedPages() }), copy.t("scopeDepth", { n: selectedDepth() }), lang ? pageLangName(lang) : copy.t("scopeSite")];
+    if (document.getElementById("stay-section").checked) parts.push(copy.t("scopeSection"));
     return parts.join(", ");
   }
 
   function paintReasons() {
+    const copy = window.QAReviewReportCopy;
     const box = document.getElementById("reasons");
     const legend = box.querySelector("legend");
     box.innerHTML = "";
     box.appendChild(legend);
-    REASONS.forEach((item) => {
+    REASONS.forEach((id) => {
       const label = document.createElement("label");
-      label.innerHTML = '<input type="radio" name="reasonCode" value="' + item.id + '" disabled> ' + item.label;
+      label.innerHTML = '<input type="radio" name="reasonCode" value="' + id + '" disabled> ';
+      label.appendChild(document.createTextNode(copy.word("reason", id)));
+      if (!copy.english) {
+        label.lang = copy.lang;
+        label.setAttribute("translate", "no");
+      }
       box.appendChild(label);
     });
   }
@@ -596,15 +593,16 @@
     const host = urlInput.value.trim();
     if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
     if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: "Choose a reason." });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: "Write the reason in a sentence." });
+    const copy = window.QAReviewReportCopy;
+    if (!REASONS.includes(code)) errors.push({ field: "reason", message: copy.t("reasonPick") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: copy.t("reasonWrite") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: "Enter the client's name." });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: "Enter the client's email." });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: "Enter the client's website." });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: copy.t("clientNameNeeded") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: copy.t("clientEmailNeeded") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: copy.t("clientUrlNeeded") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -612,7 +610,7 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: window.QAReviewReportCopy ? QAReviewReportCopy.t("ownMailDomain") : "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: copy.t("ownMailDomain") });
       }
     }
     if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });

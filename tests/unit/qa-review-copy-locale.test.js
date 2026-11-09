@@ -74,6 +74,32 @@ test("the report copy has every English key, with the same slots, in each langua
   }
 });
 
+test("every reason on the form has a label in each page language, and the form code writes no English of its own (#2802)", () => {
+  const copy = copyOf("qa-review-report-copy");
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const ids = JSON.parse(source.match(/const REASONS = (\[[^\]]*\]);/)[1]);
+  const server = require("../../functions/url-review-core.js").REASONS.filter((item) => item.id !== "compare");
+  assert.deepEqual(ids, server.map((item) => item.id), "the form's reasons match the server's");
+  for (const item of server) assert.equal(copy.en.reason[item.id], item.label, "en.reason." + item.id);
+  for (const lang of LANGS) {
+    for (const id of ids) {
+      const text = copy[lang].reason[id];
+      assert.ok(text && text !== copy.en.reason[id], lang + ".reason." + id + " is missing or still English");
+    }
+  }
+  const body = (name) => {
+    const start = source.indexOf("function " + name + "(");
+    return source.slice(start, source.indexOf("\n  }\n", start));
+  };
+  for (const name of ["paintReasons", "syncSection", "scopeSummary"]) {
+    const english = body(name).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"/g);
+    assert.equal(english, null, name + " writes English: " + english);
+  }
+  for (const line of body("clientErrors").split("\n").filter((row) => /field: "(reason|client\w*)"/.test(row))) {
+    assert.ok(!/message: "/.test(line), "a reason error is English: " + line.trim());
+  }
+});
+
 test("the findings copy has every English finding template, with the same slots, in each language (#1297)", () => {
   const { EN } = require("../../functions/url-review-findings-en.js");
   const copy = copyOf("qa-review-findings-copy");
