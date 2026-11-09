@@ -52,7 +52,9 @@
    gh-delete-branch   merged branches without a live worktree are deleted, after the countdown
    gh-remove-worktree a merged, clean worktree no chat holds is queued for the Mac uploader, after the countdown
    gh-merge-pr, gh-close-issue  on a click or a Gemini pick only; PRs labelled jarvis-merge merge through merge-pr
-   gh-agent           a Cursor cloud agent; never on its own, every launch is Carlos's click
+   gh-agent           Carlos's click: Jarvis's worker (#2957), or a Cursor cloud agent when he picks Cursor
+   gh-worker          Jarvis's worker on its own, once per target: diagnoses (code, test, config) at the confidence bar and
+                      URL review bugs labelled needs-agent; nothing while the month's AI budget is used
    gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow or a security alert, on a click only (#2808)
    gh-dismiss-alert, gh-dismiss-low  dismiss security alerts; only on Carlos's click, never a Gemini pick (GH_CLICK_ONLY)
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
@@ -70,7 +72,7 @@ const jarvisLog = require("./jarvis-log");
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
-  "owner-tags-approve-verified": 20, "owner-tags-block": 10 };
+  "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
@@ -79,7 +81,7 @@ const LABELS = {
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
-  "gh-agent": "Launch a Cursor fix agent", "gh-diagnose": "Diagnose a failed run",
+  "gh-agent": "Launch a fix agent", "gh-worker": "Start Jarvis's worker on a fix", "gh-diagnose": "Diagnose a failed run",
   "gh-quarantine": "File a flaky-workflow ticket", "gh-security-ticket": "File a ticket for a security alert", "gh-dismiss-alert": "Dismiss a security alert", "gh-dismiss-low": "Dismiss the low security alerts",
   "owner-tags-approve-verified": "Approve verified owner-tag accounts", "owner-tags-block": "Block an account that asked us to stop tagging"
 };
@@ -575,6 +577,17 @@ async function autoRun({ db, now, settings, ops }) {
         await later({ action: "gh-remove-worktree", target: w.dir, part: w.path, payload: { path: w.path }, why: w.branch + " is merged, clean and no chat holds it." });
       }
     }
+  }
+
+  // #2957: Jarvis's own worker takes diagnosed code, test or config failures and the URL review bugs left for an agent.
+  if (ops.workerCandidates && ops.workerRun) {
+    handled.add("github:needs-agent");
+    let w = { tasks: [] };
+    try { w = await ops.workerCandidates(cfg.confidence); } catch (error) { w = { tasks: [] }; }
+    const fresh = [];
+    for (const c of w.tasks || []) if (!(await seen(db, "gh-worker", c.target))) fresh.push(c);
+    if (w.over) await wait("gh-worker", fresh.length, "This month's AI budget of $" + w.cap + " is used.");
+    else for (const c of fresh) await once("gh-worker", c.target, c.why, () => ops.workerRun(c.task));
   }
 
   if (ops.alerts && ops.ask && ops.catalog) {

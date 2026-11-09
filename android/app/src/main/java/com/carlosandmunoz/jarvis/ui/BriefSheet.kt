@@ -163,7 +163,7 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                                     put("prompt", JsonPrimitive(prompt))
                                     a.str("branch")?.let { put("branch", JsonPrimitive(it)) }
                                     pr?.let { put("pr", JsonPrimitive(it)) }
-                                }) { out -> "Cursor agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
+                                }) { out -> "Agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
                             }
                         }
                     }
