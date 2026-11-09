@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 
 async function prime(page, lang) {
@@ -178,7 +179,6 @@ test.describe('Review page language', () => {
 
   test('a retest case built from a finding reads in the page language (#1406)', async ({ page }) => {
     await prime(page, 'es');
-    const sample = require('../assets/qa-review-sample.json');
     const cache = { title: { id: 'pf-cache.title', vars: {} }, evidence: { id: 'pf-cache.evidence', vars: {} }, fix: { id: 'pf-cache.fix', vars: {} } };
     const rt = {
       id: 'RT-01', status: 'proposed', layer: 'Performance', verdict: 'risk', severity: 'high', priority: 'P1', risk: 90, fw: ['Playwright'], pages: ['/'],
@@ -204,7 +204,6 @@ test.describe('Review page language', () => {
 
   test('the case layers and the Proposed tag read in the page language (#1647)', async ({ page }) => {
     await prime(page, 'de');
-    const sample = require('../assets/qa-review-sample.json');
     const report = Object.assign({}, sample.report, { id: 'lc12cd34ef56' });
     await page.route('http://127.0.0.1:8768/**', (route) => {
       const req = route.request();
@@ -228,7 +227,6 @@ test.describe('Review page language', () => {
   });
 
   test('the public marks of At a glance keep every label inside its tile at 1024px, in German too (#1641)', async ({ page }) => {
-    const sample = require('../assets/qa-review-sample.json');
     const report = Object.assign({}, sample.report, { id: 'tk12cd34ef56' });
     await page.route('http://127.0.0.1:8768/**', (route) => {
       const req = route.request();
@@ -257,7 +255,6 @@ test.describe('Review page language', () => {
 
   test('the charts and practices read in the page language, axe titles of saved reports included (#1588)', async ({ page }) => {
     await prime(page, 'es');
-    const sample = require('../assets/qa-review-sample.json');
     const axe = {
       key: 'ax-button-name', area: 'Accessibility', verdict: 'fail', severity: 'medium', rank: 1, effort: 'minutes',
       title: 'Buttons must have discernible text', evidence: 'axe-core 4.14.0 found 1 element on /.', fix: 'Give each icon button visible text or an aria-label.',
@@ -290,6 +287,32 @@ test.describe('Review page language', () => {
     await expect(labels.first()).toHaveAttribute('translate', 'no');
     await expect(page.locator('.live-jump')).toHaveText('Voir les rapports en direct de vrais sites ↓');
   });
+
+  const REASON_LABELS = {
+    es: ['El sitio es mío y quiero un plan de pruebas', 'Otro', '20 páginas'],
+    pt: ['Este site é meu e quero um plano de testes', 'Outro', '20 páginas'],
+    de: ['Die Website gehört mir und ich möchte einen Testplan', 'Sonstiges', '20 Seiten'],
+    fr: ['Ce site m’appartient et je veux un plan de test', 'Autre', '20 pages, 2 de profondeur'],
+    it: ['Questo sito è mio e voglio un piano di test', 'Altro', '20 pagine']
+  };
+  const ENGLISH_REASONS = require('../functions/url-review-core').REASONS.filter((item) => item.id !== 'compare');
+  for (const [code, [own, other, scope]] of Object.entries(REASON_LABELS)) {
+    test(`the reason choices, the section note and the scope summary read in ${code} (#2802)`, async ({ page }) => {
+      await prime(page, code);
+      await page.goto(`/qa-review-${code}.html`);
+      const labels = page.locator('#reasons label');
+      await expect(labels).toHaveCount(ENGLISH_REASONS.length);
+      await expect(page.locator('#reasons label:has(input[value="own"])')).toHaveText(own);
+      await expect(page.locator('#reasons label:has(input[value="other"])')).toHaveText(other);
+      await expect(labels.first()).toHaveAttribute('lang', code);
+      await expect(labels.first()).toHaveAttribute('translate', 'no');
+      const texts = (await labels.allTextContents()).map((text) => text.trim());
+      for (const item of ENGLISH_REASONS) expect(texts, item.id).not.toContain(item.label);
+      await expect(page.locator('#section-note')).not.toContainText('Add a path');
+      await expect(page.locator('#req-scope .rg-meta')).toContainText(scope, { useInnerText: false });
+      await expect(page.locator('#req-scope .rg-meta')).not.toContainText(/deep|site language/, { useInnerText: false });
+    });
+  }
 
   for (const [code, own] of [['es', /\b(el|la|los|las|que|para|con|una|del)\b/g], ['de', /\b(der|die|das|und|ist|für|mit|ein|eine|nicht)\b/g]]) {
     test(`the ${code} page body is written in its language before any script runs`, async ({ browser }) => {

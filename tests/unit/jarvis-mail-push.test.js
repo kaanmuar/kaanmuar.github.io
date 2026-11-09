@@ -76,6 +76,9 @@ test("backup and ops failures go to alerts, ops only when a job failed", () => {
   const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }], ["sweepReviews", "buffer-sync"]);
   assert.equal(o.title, "2 scheduled jobs missed or failed");
   assert.equal(o.ref, "ops:sweepReviews,buffer-sync");
+  const mixed = mailPush.opsMessage([{ job: "sweepReviews", why: "x" }, { job: "Secret scanning", why: "1 new leaked secret" }], ["sweepReviews"], 1);
+  assert.equal(mixed.title, "2 problems need a look");
+  assert.equal(mailPush.opsMessage([{ job: "sweepReviews", why: "x" }], ["sweepReviews"], 1).title, "1 scheduled job missed or failed");
 });
 
 test("send passes ref and quiet, and a quiet push goes at normal priority", async () => {
@@ -88,6 +91,9 @@ test("send passes ref and quiet, and a quiet push goes at normal priority", asyn
   await jarvisPush.send(messaging, null, ["tok"], { kind: "inbox", title: "t", body: "b" });
   assert.equal(sent[1].data.quiet, undefined);
   assert.equal(sent[1].android.priority, "high");
+  assert.equal(sent[1].data.image, undefined);
+  await jarvisPush.send(messaging, null, ["tok"], mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "https://carlosandmunoz.com/a.jpg" }));
+  assert.equal(sent[2].data.image, "https://carlosandmunoz.com/a.jpg");
 });
 
 test("inbox and desk are kinds a device can turn off", () => {
@@ -141,6 +147,11 @@ test("outreach notices push one by one; social posts push once each, and a first
   assert.equal(s.kind, "social");
   assert.equal(s.ref, "social:14d11eaabbc6");
   assert.deepEqual(s.actions.map((a) => a.act), ["approved", "dismissed"]);
+  assert.equal(s.image, undefined);
+  const card = "https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-02.jpg";
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: card }).image, card);
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "assets/social/sweep-roundup/2026-11-02.jpg" }).image, undefined);
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "https://x.co/" + "a".repeat(1000) }).image, undefined);
 
   const pending = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }, { id: "e" }];
   assert.deepEqual(mailPush.socialDue(pending, null, 3), []);
@@ -154,6 +165,15 @@ test("the briefing push carries Done and Dismiss for the top proposal", () => {
   assert.equal(b.lines[0], "Do next: Fix the checkout copy");
   assert.deepEqual(b.actions.map((a) => a.act), ["done", "dismissed"]);
   assert.deepEqual(jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon" }).actions, []);
+  const job = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "job", title: "Fix the failing job", jobs: ["rivalSweep"], tab: "systems" } });
+  assert.deepEqual(job.actions, [{ act: "run", label: "Run rivalSweep again" }, { act: "open", label: "Open Systems", tab: "systems" }, { act: "dismissed", label: "Dismiss" }]);
+  const link = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "money:disputes", title: "Answer", link: "https://www.paypal.com/resolutioncenter" } });
+  assert.deepEqual(link.actions.map((a) => [a.act, a.url || ""]), [["open", "https://www.paypal.com/resolutioncenter"], ["done", ""], ["dismissed", ""]]);
+  const ps = jarvisPush.briefingMessage({ items, aiText: "", dateLabel: "Mon", top: { key: "pagespeed:pr:12", title: "Merge or close PageSpeed fixes #12", tab: "systems" } });
+  assert.deepEqual(ps.actions.map((a) => a.act), ["run", "close", "dismissed"]);
+  assert.deepEqual(mailPush.parseAct("proposal:job", "run"), { type: "proposal", id: "job", act: "run" });
+  assert.deepEqual(mailPush.parseAct("proposal:pagespeed:pr:12", "close"), { type: "proposal", id: "pagespeed:pr:12", act: "close" });
+  assert.throws(() => mailPush.parseAct("proposal:job", "open"), /no longer works/, "Open never reaches the server");
 });
 
 test("send carries the buttons as JSON, three at most", async () => {

@@ -3,6 +3,8 @@
 # functions, scripts, tests and designs are never published. Pull requests build and check only.
 # The deploy job runs only when Settings > Pages > Source is GitHub Actions (build_type workflow), or when the
 # repo variable PAGES_FROM_ACTIONS is 'true'; while the source is the legacy branch build it is skipped.
+# Pull requests leave the generated social hub files to the bots (#2242), so the build rebuilds the hub from its
+# sources first: a merge publishes its hub without waiting for the regen commit.
 
 name: Pages
 
@@ -28,18 +30,24 @@ jobs:
     timeout-minutes: 15
     outputs:
       build_type: ${{ steps.source.outputs.build_type }}
+      artifact_id: ${{ steps.upload.outputs.artifact_id }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: Build the site from the allowlist
         run: node scripts/build-pages.js _site
       - name: No forbidden paths, every local link resolves
         run: node scripts/check-pages.js _site
+      # Each bundle is about 300 MB of Actions storage, so pull requests are checked but not uploaded.
       - name: Upload the Pages artifact
+        id: upload
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: _site
@@ -60,6 +68,10 @@ jobs:
     if: github.event_name != 'pull_request' && (needs.build.outputs.build_type == 'workflow' || vars.PAGES_FROM_ACTIONS == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+      actions: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -69,3 +81,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+      - name: Delete the deployed bundle from Actions storage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID" || echo "::warning::Could not delete artifact $ARTIFACT_ID; it expires in a day."

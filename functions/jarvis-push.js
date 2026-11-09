@@ -7,6 +7,8 @@
  */
 const crypto = require("crypto");
 const webPush = require("./jarvis-webpush");
+const core = require("./jarvis-core");
+const jarvisLog = require("./jarvis-log");
 
 // Kinds that only make sense on the phone: app updates and reviews started from a shared link.
 const PHONE_ONLY = new Set(["update", "review"]);
@@ -77,7 +79,8 @@ function alertMessage(fresh) {
   };
 }
 
-/** top is the best-ranked proposal; Done and Dismiss on the push mark it (#1670). */
+/** top is the best-ranked proposal; its kind's buttons (core.proposalButtons, #1977) go on the push: run and Done or
+    Dismiss through notify-act, Open on the device with its tab or link. */
 function briefingMessage({ items, aiText, dateLabel, top }) {
   const alerts = items.filter((r) => r.level === "alert").length;
   const warns = items.filter((r) => r.level === "warn").length;
@@ -95,7 +98,7 @@ function briefingMessage({ items, aiText, dateLabel, top }) {
     tab: "overview",
     tag: "jarvis-briefing",
     ref: key ? "proposal:" + key : "",
-    actions: key ? [{ act: "done", label: "Done" }, { act: "dismissed", label: "Dismiss" }] : []
+    actions: key ? core.proposalButtons(top).map((b) => (b.act === "open" ? Object.assign({ act: "open", label: b.label }, b.link ? { url: b.link } : { tab: b.tab }) : { act: b.act, label: b.label })) : []
   };
 }
 
@@ -114,6 +117,8 @@ async function send(messaging, db, tokens, msg, browsers) {
 
 // Every push except tests lands in jarvis_pushes for the evening digest, delivered or not.
 async function logged(db, msg, out) {
+  await jarvisLog.log(null, { source: "push", level: out.sent ? "info" : "warn", ref: msg.ref || msg.tag || "", url: msg.url,
+    text: msg.kind + " push to " + out.sent + " device" + (out.sent === 1 ? "" : "s") + (out.failed ? " (" + out.failed + " failed)" : "") + ": " + String(msg.title || "") + (msg.body ? " · " + msg.body : "") });
   if (!db || msg.kind === "test") return out;
   const now = Date.now();
   try {
@@ -133,6 +138,7 @@ async function sendPhones(messaging, db, tokens, msg) {
   if (msg.url) data.url = msg.url;
   if (msg.ref) data.ref = msg.ref;
   if (msg.code) data.code = msg.code;
+  if (msg.image) data.image = msg.image;
   if (msg.quiet) data.quiet = "1";
   if (msg.actions && msg.actions.length) data.actions = JSON.stringify(msg.actions.slice(0, 3));
   const res = await messaging.sendEachForMulticast({ tokens, data, android: { priority: msg.quiet ? "normal" : "high", ttl: TTL[msg.kind] || TTL.test } });
@@ -177,4 +183,4 @@ async function releasePush(fetchFn, db, messaging, { token, now }) {
   return Object.assign({ pushed: true, version: rel.name }, out);
 }
 
-module.exports = { KINDS, PHONE_ONLY, idOf, cleanKinds, register, unregister, list, targets, webTargets, anyTargets, alertMessage, briefingMessage, send, newestRelease, releasePush };
+module.exports = { KINDS, PHONE_ONLY, DEAD, idOf, cleanKinds, register, unregister, list, targets, webTargets, anyTargets, alertMessage, briefingMessage, send, newestRelease, releasePush };

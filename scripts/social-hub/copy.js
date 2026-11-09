@@ -2,17 +2,12 @@
    js/social-hub.js). Spanish is Latin American (tú), Portuguese Brazilian, German formal (Sie). A review
    analyzes pages; it never "reads" them. */
 
-const PROFILES = [
-  { net: "youtube", name: "YouTube", url: "https://www.youtube.com/@qalaburlreview" },
-  { net: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@qalaburlreview" },
-  { net: "instagram", name: "Instagram", url: "https://www.instagram.com/qaurlreview/" },
-  { net: "threads", name: "Threads", url: "https://www.threads.com/@qaurlreview" },
-  { net: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/qalab-url-review" },
-  { net: "x", name: "X", url: "https://x.com/qalaburlreview" },
-  { net: "facebook", name: "Facebook", url: "https://www.facebook.com/qalaburlreview" },
-  { net: "reddit", name: "Reddit", url: "https://www.reddit.com/user/qalaburlreview/" },
-  { net: "devto", name: "DEV", url: "https://dev.to/qalaburlreview" }
-];
+const { FACES, CHANNELS, accounts } = require("../brand-kit/faces");
+
+// Both brand faces with the accounts each has (scripts/brand-kit/faces.js); PROFILES is every one of them, then the
+// brand's Live Reports channels.
+const FACE_PROFILES = Object.values(FACES).map((face) => ({ id: face.id, handle: face.handle, page: face.site, langs: face.langs, profiles: accounts(face) }));
+const PROFILES = FACE_PROFILES.flatMap((face) => face.profiles).concat(CHANNELS.map(({ net, name, url }) => ({ net, name, url })));
 
 // Caption fields of media/social-posts/<batch>/captions.json, in the order the copy menu lists them.
 const CAPTIONS = [
@@ -403,4 +398,4 @@ const COPY = {
   }
 };
 
-module.exports = { PROFILES, CAPTIONS, LANGS, COPY };
+module.exports = { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY };

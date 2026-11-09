@@ -16,10 +16,13 @@ const ACTS = {
   "owner-reply": ["resend", "stop", "unlist", "done"],
   "rerun-held": ["send-all", "drop-all"],
   ops: ["rerun"],
-  proposal: ["done", "dismissed"],
+  proposal: ["run", "close", "done", "dismissed"],
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
-  engagement: ["approve", "edit", "dismiss"]
+  engagement: ["approve", "edit", "dismiss"],
+  "owner-tags": ["approve", "edit", "dismiss"],
+  countdown: ["now", "cancel"],
+  pagespeed: ["merge", "close"]
 };
 const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
 
@@ -188,13 +191,14 @@ function backupMessage(day, error) {
 }
 
 /** rerunnable lists the jobs Cloud Scheduler can start now; GitHub workflows get no button. */
-function opsMessage(problems, rerunnable) {
+// scheduled: how many of the problems are scheduled jobs; the rest come from the system review (#2409).
+function opsMessage(problems, rerunnable, scheduled) {
   const list = Array.isArray(problems) ? problems : [];
   if (!list.length) return null;
   const jobs = list.map((p) => p.job).filter((job) => (rerunnable || []).includes(job));
   return {
     kind: "alerts",
-    title: plural(list.length, "scheduled job") + " missed or failed",
+    title: scheduled === undefined || scheduled === list.length ? plural(list.length, "scheduled job") + " missed or failed" : plural(list.length, "problem") + " need a look",
     body: clip(list.map((p) => p.job).join(", "), 220),
     lines: list.slice(0, 6).map((p) => clip(p.job + ": " + p.why, 120)),
     tab: "systems",
@@ -221,11 +225,13 @@ function noticeMessage(n) {
   };
 }
 
-/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. */
+/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. image is its card (#2248), which
+ * the phone shows big and the browser shows where it can; jarvis-social's pending() already made it https. */
 function socialMessage(p) {
   const id = clip(p && p.id, 40);
   if (!id) return null;
-  return {
+  const image = typeof p.image === "string" && /^https:\/\//.test(p.image) && p.image.length <= 1000 ? p.image : "";
+  return Object.assign({
     kind: "social",
     title: "Post this? " + clip(p.title, 100),
     body: clip([p.source, p.topic].filter(Boolean).join(" · ") + (p.summary ? ". " + p.summary : ""), 220),
@@ -234,7 +240,7 @@ function socialMessage(p) {
     tag: "jarvis-social-" + id,
     ref: "social:" + id,
     actions: [{ act: "approved", label: "Post" }, { act: "dismissed", label: "Skip" }]
-  };
+  }, image ? { image } : {});
 }
 
 /** Social proposals not pushed yet, best first, at most max. A first run only remembers what is there. */

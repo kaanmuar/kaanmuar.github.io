@@ -1,11 +1,12 @@
 {
  "version": 1,
- "updatedAt": "2026-11-02T04:11:11.795Z",
+ "updatedAt": "2026-11-09T11:33:56.905Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
     "impressions": 8,
-    "likes": 2
+    "likes": 2,
+    "comments": 1
    },
    "tiktok": {
     "impressions": 125,
@@ -16,7 +17,11 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
+    "likes": 2,
+    "comments": 1
+   },
+   "facebook": {
     "likes": 1
    }
   },
@@ -27,15 +32,18 @@
    },
    "tiktok": {
     "impressions": 127,
-    "views": 156,
+    "views": 157,
     "likes": 7
    },
    "x": {
     "impressions": 2
    },
    "youtube": {
-    "views": 11,
+    "views": 12,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/01-u-uber-com": {
@@ -46,15 +54,18 @@
    },
    "tiktok": {
     "impressions": 112,
-    "views": 120,
+    "views": 121,
     "likes": 3
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 10,
+    "views": 11,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/02-u-mercadolibre-com-co": {
@@ -65,7 +76,7 @@
    },
    "tiktok": {
     "impressions": 173,
-    "views": 206,
+    "views": 211,
     "likes": 8,
     "comments": 2
    },
@@ -73,8 +84,11 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/03-u-whatsapp-com": {
@@ -85,16 +99,19 @@
    },
    "tiktok": {
     "impressions": 88,
-    "views": 104,
+    "views": 105,
     "likes": 4,
-    "comments": 2
+    "comments": 3
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 2,
+    "views": 3,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/04-u-telegram-com": {
@@ -104,16 +121,19 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 63,
-    "views": 74,
+    "impressions": 64,
+    "views": 75,
     "likes": 4
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 95,
+    "views": 96,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/05-u-lamega-com-co": {
@@ -123,15 +143,94 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 94,
-    "views": 104,
+    "impressions": 96,
+    "views": 105,
     "likes": 4
    },
    "x": {
-    "impressions": 1
+    "impressions": 5,
+    "comments": 1
    },
    "youtube": {
-    "views": 14,
+    "views": 15,
+    "likes": 2,
+    "comments": 1
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "auto-2026-10-22/06-u-cognizant-com": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 3,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 60,
+    "views": 65,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "x": {
+    "impressions": 8,
+    "comments": 3
+   },
+   "youtube": {
+    "comments": 1
+   }
+  },
+  "auto-2026-10-22/07-u-zipdev-com": {
+   "facebook": {
+    "likes": 1
+   },
+   "telegram": {
+    "views": 2
+   },
+   "reddit": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 3,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 2
+   }
+  },
+  "auto-2026-10-22/08-u-avvillas-com-co": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-10-22/09-u-lenovo-com": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 1
+   }
+  },
+  "auto-2026-10-22/10-u-uniminuto-edu": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-22/11-u-davibank-com": {
+   "facebook": {
+    "impressions": 1,
     "likes": 1
    }
   },
@@ -142,15 +241,18 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 164,
-    "views": 185,
+    "impressions": 165,
+    "views": 186,
     "likes": 9
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 7,
+    "views": 8,
+    "likes": 1
+   },
+   "facebook": {
     "likes": 1
    }
   },
@@ -162,9 +264,9 @@
    },
    "tiktok": {
     "impressions": 91,
-    "views": 101,
+    "views": 102,
     "likes": 4,
-    "comments": 2
+    "comments": 3
    },
    "x": {
     "impressions": 1
@@ -172,6 +274,9 @@
    "youtube": {
     "views": 3,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-23/03-u-monsterenergy-com": {
@@ -181,8 +286,8 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 1,
-    "views": 16,
+    "impressions": 2,
+    "views": 17,
     "likes": 4
    },
    "x": {
@@ -190,17 +295,22 @@
    },
    "youtube": {
     "views": 3,
-    "likes": 2
+    "likes": 2,
+    "comments": 1
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-24/01-u-grupoexito-com-co": {
    "linkedin": {
     "impressions": 13,
-    "likes": 3
+    "likes": 3,
+    "comments": 1
    },
    "tiktok": {
-    "impressions": 114,
-    "views": 132,
+    "impressions": 116,
+    "views": 134,
     "likes": 6,
     "comments": 2
    },
@@ -208,8 +318,11 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 3,
+    "views": 4,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-24/02-u-colombia-com": {
@@ -218,17 +331,22 @@
     "likes": 2
    },
    "tiktok": {
-    "impressions": 78,
-    "views": 83,
+    "impressions": 81,
+    "views": 84,
     "likes": 4
    },
    "x": {
-    "impressions": 1,
-    "likes": 1
+    "impressions": 4,
+    "likes": 1,
+    "comments": 1
    },
    "youtube": {
-    "views": 5,
-    "likes": 2
+    "views": 6,
+    "likes": 2,
+    "comments": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "auto-2026-10-24/03-u-nibo-com-br": {
@@ -238,17 +356,63 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 108,
-    "views": 124,
+    "impressions": 119,
+    "views": 132,
     "likes": 6,
     "comments": 2
    },
    "x": {
-    "impressions": 3,
-    "comments": 1
+    "impressions": 6,
+    "comments": 2
    },
    "youtube": {
-    "views": 6,
+    "views": 7,
+    "likes": 2,
+    "comments": 1
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "auto-2026-10-24/04-u-kreuzwort-raetsel-net": {
+   "facebook": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 8
+   },
+   "x": {
+    "impressions": 3
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   }
+  },
+  "auto-2026-10-24/05-u-roottcostore-com": {
+   "facebook": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 8,
+    "likes": 1,
+    "comments": 1
+   },
+   "tiktok": {
+    "views": 7,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "telegram": {
+    "views": 2
+   },
+   "youtube": {
+    "views": 13
+   },
+   "reddit": {
     "likes": 1
    }
   },
@@ -259,16 +423,275 @@
     "comments": 2
    },
    "tiktok": {
-    "impressions": 85,
-    "views": 90,
+    "impressions": 87,
+    "views": 91,
     "likes": 4
    },
    "x": {
-    "impressions": 3
+    "impressions": 6,
+    "comments": 2
    },
    "youtube": {
     "views": 4,
     "likes": 3
+   },
+   "facebook": {
+    "impressions": 3,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-26/01-u-hubspot-com": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 4,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 89,
+    "views": 99,
+    "likes": 4,
+    "comments": 3
+   },
+   "x": {
+    "impressions": 4,
+    "comments": 2
+   },
+   "youtube": {
+    "views": 15,
+    "likes": 3,
+    "comments": 1
+   },
+   "facebook": {
+    "impressions": 2,
+    "likes": 1
+   }
+  },
+  "auto-2026-10-27/01-u-ciedi-edu-co": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 134,
+    "views": 151,
+    "likes": 5,
+    "comments": 3
+   },
+   "x": {
+    "impressions": 6,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 9,
+    "likes": 3
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "auto-2026-11-02/01-u-edeq-com-co": {
+   "linkedin": {
+    "impressions": 7,
+    "likes": 2,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 89,
+    "views": 95,
+    "likes": 3
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 12,
+    "comments": 3
+   },
+   "youtube": {
+    "comments": 1
+   }
+  },
+  "auto-2026-11-02/02-u-eep-com-co": {
+   "linkedin": {
+    "impressions": 8
+   },
+   "x": {
+    "impressions": 16,
+    "comments": 2
+   },
+   "youtube": {
+    "views": 2,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   }
+  },
+  "auto-2026-11-03/01-u-portal-upb-edu-co": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 2,
+    "views": 3,
+    "likes": 2
+   },
+   "youtube": {
+    "views": 1,
+    "comments": 1
+   }
+  },
+  "auto-2026-11-03/02-u-iteso-mx": {
+   "tiktok": {
+    "views": 93,
+    "likes": 1
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "telegram": {
+    "views": 2
+   },
+   "youtube": {
+    "views": 7,
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-03/03-u-sp-senai-br": {
+   "youtube": {
+    "views": 2,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-03/09-u-udg-mx": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 83,
+    "views": 88,
+    "likes": 2
+   },
+   "youtube": {
+    "comments": 1
+   }
+  },
+  "auto-2026-11-04/01-u-selia-co": {
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 10,
+    "likes": 1,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 1,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 4
+   },
+   "youtube": {
+    "views": 2,
+    "comments": 1
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-04/02-u-treinta-co": {
+   "telegram": {
+    "views": 2
+   },
+   "reddit": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 2,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 2,
+    "views": 4,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "youtube": {
+    "comments": 1
+   }
+  },
+  "auto-2026-11-04/08-u-itsrever-com": {
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 24,
+    "likes": 1,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 2
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-04/14-u-ciqa-edu-mx": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-05/01-u-houm-com": {
+   "telegram": {
+    "views": 1
+   }
+  },
+  "auto-2026-11-05/07-u-uacm-edu-mx": {
+   "telegram": {
+    "views": 1
+   }
+  },
+  "auto-2026-11-05/13-u-get-moment-com": {
+   "telegram": {
+    "views": 1
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -277,8 +700,8 @@
     "likes": 2
    },
    "tiktok": {
-    "impressions": 122,
-    "views": 128,
+    "impressions": 123,
+    "views": 129,
     "likes": 5
    },
    "x": {
@@ -286,8 +709,11 @@
     "likes": 1
    },
    "youtube": {
-    "views": 7,
+    "views": 8,
     "likes": 2
+   },
+   "facebook": {
+    "impressions": 2
    }
   },
   "compare-2026-11/02-berlin-vienna": {
@@ -296,51 +722,380 @@
     "likes": 3
    },
    "tiktok": {
-    "impressions": 122,
-    "views": 210,
+    "impressions": 180,
+    "views": 211,
     "likes": 6,
-    "comments": 2
+    "comments": 3
    },
    "x": {
     "impressions": 2
    },
    "youtube": {
     "views": 4,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "compare-2026-11/03-three-universities": {
+   "linkedin": {
+    "impressions": 9,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 108,
+    "likes": 4,
+    "comments": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 6,
+    "likes": 3
+   }
+  },
+  "compare-2026-11/04-quiz-banks": {
+   "linkedin": {
+    "impressions": 2,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 78,
+    "views": 81,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 3
+   },
+   "facebook": {
+    "impressions": 1,
     "likes": 1
+   }
+  },
+  "compare-2026-11/05-banks": {
+   "linkedin": {
+    "impressions": 7,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 97,
+    "views": 104,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 14,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/06-quiz-govuk-usagov": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 102,
+    "views": 110,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 2,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/07-govuk-usagov": {
+   "linkedin": {
+    "impressions": 12,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 87,
+    "views": 91,
+    "likes": 2
+   },
+   "youtube": {
+    "views": 6,
+    "likes": 1
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "compare-2026-11/08-quiz-metros": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2,
+    "comments": 1
+   },
+   "tiktok": {
+    "impressions": 85,
+    "views": 94,
+    "likes": 2,
+    "comments": 4
+   },
+   "youtube": {
+    "views": 28,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 2,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 1,
+    "likes": 1,
+    "comments": 1
+   }
+  },
+  "compare-2026-11/09-metros": {
+   "linkedin": {
+    "impressions": 12,
+    "likes": 3,
+    "comments": 2
+   },
+   "tiktok": {
+    "impressions": 81,
+    "views": 87,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 7
+   },
+   "youtube": {
+    "views": 3
+   },
+   "facebook": {
+    "impressions": 2
+   }
+  },
+  "compare-2026-11/10-quiz-cities": {
+   "linkedin": {
+    "impressions": 33
+   },
+   "x": {
+    "impressions": 1
+   },
+   "tiktok": {
+    "impressions": 83,
+    "views": 83,
+    "likes": 3
+   },
+   "youtube": {
+    "views": 1
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "compare-2026-11/11-cities": {
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 4
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 3,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 2
+   },
+   "facebook": {
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "digest-2026-10-30/01-this-week": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 96,
+    "views": 99,
+    "likes": 5
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 12,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "evergreen-2026-11/02-myth-lighthouse": {
+   "linkedin": {
+    "impressions": 2
+   },
+   "tiktok": {
+    "views": 2,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 2
+   },
+   "youtube": {
+    "views": 95,
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "evergreen-2026-11/05-myth-https": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "evergreen-2026-11/07-pre-release": {
+   "telegram": {
+    "views": 1
    }
   },
   "launch-2026-10/en/a11y": {
    "youtube": {
-    "views": 3,
-    "likes": 1
+    "views": 4,
+    "likes": 2
    }
   },
   "launch-2026-10/en/exports": {
    "youtube": {
-    "views": 11,
+    "views": 12,
     "likes": 2
    }
   },
   "launch-2026-10/en/first-read": {
    "youtube": {
-    "likes": 1
+    "views": 1,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 109,
+    "views": 120,
+    "likes": 3
+   }
+  },
+  "launch-2026-10/en/frameworks": {
+   "tiktok": {
+    "impressions": 149,
+    "views": 165,
+    "likes": 6
+   },
+   "youtube": {
+    "views": 3,
+    "likes": 2
+   }
+  },
+  "launch-2026-10/en/inherited": {
+   "tiktok": {
+    "impressions": 98,
+    "views": 115,
+    "likes": 2
+   }
+  },
+  "launch-2026-10/en/layers": {
+   "youtube": {
+    "views": 2,
+    "likes": 2
    }
   },
   "launch-2026-10/en/release": {
    "youtube": {
-    "views": 28,
-    "likes": 1
+    "views": 29,
+    "likes": 2
+   },
+   "tiktok": {
+    "impressions": 88,
+    "views": 100,
+    "likes": 3
    }
   },
   "launch-2026-10/en/security": {
    "youtube": {
-    "views": 2,
-    "likes": 1
+    "views": 3,
+    "likes": 2
    }
   },
   "launch-2026-10/en/talking": {
    "youtube": {
-    "views": 11,
+    "views": 12,
+    "likes": 2
+   },
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 101,
+    "views": 109,
+    "likes": 2
+   }
+  },
+  "live/2026-11-04": {
+   "telegram": {
+    "views": 2
+   }
+  },
+  "live/2026-11-05": {
+   "telegram": {
+    "views": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "live/2026-11-06": {
+   "telegram": {
+    "views": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "live/2026-11-07": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "live/2026-11-08": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
     "likes": 1
    }
   },
@@ -350,18 +1105,148 @@
     "likes": 2
    },
    "tiktok": {
-    "impressions": 165,
-    "views": 184,
+    "impressions": 166,
+    "views": 186,
     "likes": 7,
-    "comments": 2
+    "comments": 3
    },
    "x": {
     "impressions": 1,
     "likes": 1
    },
    "youtube": {
-    "views": 4,
+    "views": 6,
     "likes": 2
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "promo-social-hub-2026-10/06-copy-caption-es": {
+   "facebook": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 9,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 2,
+    "likes": 2
+   }
+  },
+  "promo-social-hub-2026-10/11-clips-pt": {
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 19
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 3,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 4
+   },
+   "youtube": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "promo-social-hub-2026-10/16-six-languages-de": {
+   "tiktok": {
+    "views": 6,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 31
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "promo-social-hub-2026-10/21-follow-fr": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "runs-3/01-ilo": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "series-dia-de-muertos-2026-11/01-ofrenda": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 111,
+    "views": 115,
+    "likes": 3,
+    "comments": 2
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 2,
+    "likes": 1
+   }
+  },
+  "series-dia-de-muertos-2026-11/02-epitaphs": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 113,
+    "views": 120,
+    "likes": 2,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 1
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "skits-friday-release/01-friday-release-en": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "skits-friday-release/02-friday-release-es": {
+   "facebook": {
+    "impressions": 1
    }
   },
   "tips-2026-10/01-img-size": {
@@ -371,6 +1256,18 @@
    },
    "x": {
     "impressions": 1,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 134,
+    "views": 178,
+    "likes": 7
+   },
+   "youtube": {
+    "views": 14,
+    "likes": 2
+   },
+   "facebook": {
     "likes": 1
    }
   },
@@ -385,6 +1282,9 @@
    "youtube": {
     "views": 4,
     "likes": 2
+   },
+   "facebook": {
+    "likes": 1
    }
   },
   "tips-2026-10/03-self-review": {
@@ -396,13 +1296,32 @@
     "impressions": 4
    },
    "youtube": {
-    "views": 5,
+    "views": 6,
+    "likes": 2
+   },
+   "facebook": {
     "likes": 1
    }
   },
   "tips-2026-10/04-slowest-page": {
    "linkedin": {
-    "impressions": 14,
+    "impressions": 15,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 15,
+    "likes": 3
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "tips-2026-10/05-contrast": {
+   "linkedin": {
+    "impressions": 3,
     "likes": 4
    },
    "x": {
@@ -413,23 +1332,307 @@
     "likes": 2
    }
   },
+  "tips-2026-10/06-utm": {
+   "linkedin": {
+    "impressions": 8,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 90,
+    "views": 99,
+    "likes": 2
+   },
+   "youtube": {
+    "views": 34,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/07-nosniff": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 106,
+    "views": 120,
+    "likes": 5
+   },
+   "youtube": {
+    "views": 8,
+    "likes": 2
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/08-input-names": {
+   "linkedin": {
+    "impressions": 4,
+    "likes": 1
+   },
+   "tiktok": {
+    "impressions": 99,
+    "views": 102,
+    "likes": 4
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "youtube": {
+    "views": 2
+   }
+  },
+  "tips-2026-10/09-llms-txt": {
+   "facebook": {
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 2
+   },
+   "x": {
+    "impressions": 5
+   },
+   "youtube": {
+    "views": 1
+   }
+  },
+  "tips-2026-10/10-keyboard": {
+   "telegram": {
+    "views": 2
+   },
+   "linkedin": {
+    "impressions": 28
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 3,
+    "likes": 2,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 9
+   },
+   "youtube": {
+    "views": 4
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "tips-2026-10/11-hsts": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "linkedin": {
+    "impressions": 4
+   },
+   "tiktok": {
+    "views": 2,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "telegram": {
+    "views": 136
+   },
+   "reddit": {
+    "likes": 1
+   },
+   "youtube": {
+    "views": 11
+   }
+  },
+  "tips-2026-10/12-one-h1": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "tips-2026-10/13-consent-before": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 1
+   }
+  },
+  "tips-2026-10/15-csp-report-only": {
+   "facebook": {
+    "impressions": 3,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/17-robots-ai": {
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  },
+  "tips-2026-10/18-broken-links": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "tips-2026-10/19-measure-action": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
+  "tips-2026-10/21-canonical": {
+   "facebook": {
+    "impressions": 1
+   }
+  },
   "tips-horror-headers-2026-10/01-missing-csp": {
    "linkedin": {
-    "impressions": 13,
+    "impressions": 14,
     "likes": 3
    },
    "tiktok": {
-    "impressions": 146,
-    "views": 171,
+    "impressions": 168,
+    "views": 176,
     "likes": 5
    },
    "x": {
     "impressions": 1
    },
    "youtube": {
-    "views": 21,
-    "likes": 2
+    "views": 33,
+    "likes": 3
+   },
+   "facebook": {
+    "likes": 1
    }
+  },
+  "tips-horror-headers-2026-10/02-zombie-redirects": {
+   "linkedin": {
+    "impressions": 15,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 228,
+    "views": 254,
+    "likes": 6,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 4,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/03-haunted-404": {
+   "linkedin": {
+    "impressions": 6,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 104,
+    "views": 120,
+    "likes": 3
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/04-cursed-alt": {
+   "linkedin": {
+    "impressions": 9,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 108,
+    "views": 119,
+    "likes": 4
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 19,
+    "likes": 2
+   },
+   "facebook": {
+    "likes": 1
+   }
+  },
+  "tips-horror-headers-2026-10/05-poltergeist-cls": {
+   "linkedin": {
+    "impressions": 5,
+    "likes": 4
+   },
+   "tiktok": {
+    "impressions": 148,
+    "views": 154,
+    "likes": 5,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 22,
+    "likes": 1
+   },
+   "facebook": {
+    "impressions": 1,
+    "likes": 1
+   }
+  }
+ },
+ "pages": {
+  "Facebook Page": {
+   "asked": 87,
+   "answered": 87,
+   "insights": 87
+  }
+ },
+ "channels": {
+  "telegram": {
+   "chat": "@qalab_live",
+   "members": 2,
+   "at": "2026-11-09T11:33:56.905Z",
+   "history": [
+    {
+     "date": "2026-11-05",
+     "members": 2
+    },
+    {
+     "date": "2026-11-06",
+     "members": 2
+    },
+    {
+     "date": "2026-11-07",
+     "members": 2
+    },
+    {
+     "date": "2026-11-08",
+     "members": 2
+    },
+    {
+     "date": "2026-11-09",
+     "members": 2
+    }
+   ]
   }
  }
 }

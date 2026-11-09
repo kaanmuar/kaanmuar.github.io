@@ -2,13 +2,17 @@
    and GA4 sources.
 
    campaigns  every Instantly campaign with its id, week, sequence, language, region, start date, sending window and
-              stats, so the tab can pause or activate one, plus the mix by language, region, sequence and status
+              stats, so the tab can pause or activate one, plus the mix by language, region, sequence and status. Leads
+              are counted from the leads list (#2475): Instantly's analytics leaves out campaigns with no activity yet
    sent       every cold email Instantly sent, with what the lead did since and the resends from Jarvis
    prospects  the sweep list (url_review_sweep/outreach) by country and segment
    notes      follow-up notes to askers (url_review_notes): sent and stopped per day, by kind and scene
 
    And the owner actions behind the tab's buttons: pause or activate a campaign, send a cold email again, block an address or domain in
-   Instantly, and append prospects to the sweep list the way scripts/sweep-outreach.js does. */
+   Instantly, and append prospects to the sweep list the way scripts/sweep-outreach.js does.
+
+   launchReady and launch (#2475) are Jarvis's launch-campaign action: a draft campaign with leads, steps, a mailbox and a
+   start date at most LAUNCH_DAYS away was made after the week's campaigns were activated and would never send. */
 
 const sweep = require("./url-review-sweep");
 
@@ -20,6 +24,8 @@ const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 const DOMAIN = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
 const QUEUE_MAX = 200;
+const LEAD_PAGES = 30;
+const LAUNCH_DAYS = 7;
 
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const toMs = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : Date.parse(v || "") || 0);
@@ -41,7 +47,8 @@ function windowOf(schedule) {
   return [span, s.timing ? s.timing.from + "-" + s.timing.to : "", s.timezone || ""].filter(Boolean).join(" ");
 }
 
-function campaignRows(campaigns, analytics, now) {
+// counts: { campaignId: leads } from leadCounts; a campaign missing from both it and the analytics has none.
+function campaignRows(campaigns, analytics, now, counts) {
   const stats = {};
   (analytics || []).forEach((a) => { if (a && a.campaign_id) stats[a.campaign_id] = a; });
   const rows = (campaigns || []).map((c) => {
@@ -53,7 +60,8 @@ function campaignRows(campaigns, analytics, now) {
       window: windowOf(schedule),
       dailyLimit: Number(c.daily_limit) || 0,
       steps: ((c.sequences || [])[0] || {}).steps ? c.sequences[0].steps.length : 0,
-      leads: Number(a.leads_count) || 0,
+      mailboxes: (c.email_list || []).length,
+      leads: Math.max(Number((counts || {})[c.id]) || 0, Number(a.leads_count) || 0),
       contacted: Number(a.contacted_count) || 0,
       sent: Number(a.emails_sent_count) || 0,
       opened: Number(a.open_count_unique || a.open_count) || 0,
@@ -151,14 +159,58 @@ async function instantly(ctx, path, init) {
 
 const needKey = (ctx) => { if (!(ctx.env || {}).INSTANTLY_API_KEY) throw new Error("INSTANTLY_API_KEY is not set in Secret Manager."); };
 
+// { campaignId: leads } over the whole leads list, LEAD_PAGES pages of 100 at most.
+async function leadCounts(ctx) {
+  const counts = {};
+  let after = "";
+  for (let page = 0; page < LEAD_PAGES; page++) {
+    const res = await instantly(ctx, "leads/list", { method: "POST", body: JSON.stringify(Object.assign({ limit: 100 }, after ? { starting_after: after } : {})) });
+    const items = res.items || [];
+    items.forEach((l) => { if (l && l.campaign) counts[l.campaign] = (counts[l.campaign] || 0) + 1; });
+    after = items.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return counts;
+}
+
+async function campaignList(ctx) {
+  const [list, analytics, counts] = await Promise.all([
+    instantly(ctx, "campaigns?limit=100"), instantly(ctx, "campaigns/analytics").catch(() => []), leadCounts(ctx).catch(() => null)
+  ]);
+  return campaignRows(list.items, Array.isArray(analytics) ? analytics : analytics.items, ctx.now, counts);
+}
+
+const ready = (r, now) => r.status === "draft" && r.leads > 0 && r.steps > 0 && r.mailboxes > 0 && r.start && Date.parse(r.start + "T00:00:00Z") - now <= LAUNCH_DAYS * DAY;
+
+// The draft campaigns Jarvis may launch: [{ id, name, start, leads }].
+async function launchReady(ctx) {
+  needKey(ctx);
+  return (await campaignList(ctx)).rows.filter((r) => ready(r, ctx.now)).map((r) => ({ id: r.id, name: r.name, start: r.start, leads: r.leads }));
+}
+
+// Activates the ids still ready; the rest come back with why.
+async function launch(ctx, ids) {
+  needKey(ctx);
+  const rows = (await campaignList(ctx)).rows;
+  const launched = [];
+  const left = [];
+  for (const id of ids) {
+    const r = rows.find((x) => x.id === id);
+    const why = !r ? "gone from Instantly" : r.status !== "draft" ? "already " + r.status : !ready(r, ctx.now) ? "no longer ready (" + r.leads + " leads, " + r.steps + " steps, start " + (r.start || "none") + ")" : "";
+    if (why) { left.push((r ? r.name : id) + ": " + why); continue; }
+    const after = await campaignAct(ctx, { id, action: "activate" });
+    if (after.status === "active") launched.push(after.name); else left.push(after.name + ": Instantly says " + after.status);
+  }
+  return { launched, left };
+}
+
 async function marketing(ctx) {
   const out = { ok: true, needs: [], days: ctx.days };
   const part = async (name, run) => { try { out[name] = Object.assign({ ok: true }, await run()); } catch (error) { out[name] = { ok: false, error: clean(error) }; } };
   await Promise.all([
     part("campaigns", async () => {
       needKey(ctx);
-      const [list, analytics] = await Promise.all([instantly(ctx, "campaigns?limit=100"), instantly(ctx, "campaigns/analytics").catch(() => [])]);
-      return campaignRows(list.items, Array.isArray(analytics) ? analytics : analytics.items, ctx.now);
+      return campaignList(ctx);
     }),
     part("sent", async () => {
       needKey(ctx);
@@ -193,6 +245,15 @@ async function campaignAct(ctx, body) {
   await instantly(ctx, "campaigns/" + id + "/" + action, { method: "POST", body: "{}" });
   const after = await instantly(ctx, "campaigns/" + id);
   return { id, name: String(after.name || ""), status: CAMPAIGN_STATUS[String(after.status)] || "status " + after.status };
+}
+
+// #1977: pause or resume one sending mailbox; its warm-up keeps its own switch.
+async function mailboxAct(ctx, email, action) {
+  needKey(ctx);
+  if (!EMAIL.test(String(email || ""))) throw new Error("That is not a mailbox address.");
+  if (action !== "pause" && action !== "resume") throw new Error("Pause or resume only.");
+  await instantly(ctx, "accounts/" + encodeURIComponent(email) + "/" + action, { method: "POST", body: "{}" });
+  return { email, action };
 }
 
 async function block(ctx, body) {
@@ -234,15 +295,28 @@ async function queueProspects(db, body, now) {
   return { added: added.length, already: parsed.hosts.length - added.length, skipped: parsed.skipped };
 }
 
-// --- The Mac's outreach folder (#1730) ------------------------------------------------------------------------
-// scripts/jarvis-marketing-sync.js uploads the folder to jarvis_settings/marketing_sync every 5 minutes and runs
-// the commands queued here in jarvis_commands. Replies and blocks go to Instantly at once; the rest wait for the Mac.
+// --- The outreach folder (#1730, #1980) ------------------------------------------------------------------------
+// The kaanmuar/qa-lab-outreach Action (scripts/outreach-weekly.js sync) uploads the folder to jarvis_settings/marketing_sync
+// every 3 hours and after each job, and runs the commands queued here in jarvis_commands. Queuing one starts that sync
+// at once. Replies and blocks go to Instantly at once.
 const WEEK = /^W\d{1,2}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const JOBS = ["prospects", "leads", "replies"];
 // Same list as EDITABLE in scripts/marketing-leads-autopilot.js.
 const LEAD_EDITABLE = ["first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit"];
-const STALE = 20 * 60 * 1000;
+const STALE = 4 * 3600 * 1000;
+const OUTREACH_WORKFLOW = "https://api.github.com/repos/kaanmuar/qa-lab-outreach/actions/workflows/outreach.yml/dispatches";
+
+// Starts the outreach Action's sync; false when there is no GitHub token or GitHub refuses, and the 3-hourly sync runs it.
+async function startSync(ctx) {
+  const token = ctx.githubToken ? await ctx.githubToken().catch(() => "") : "";
+  if (!token) return false;
+  const res = await ctx.fetch(OUTREACH_WORKFLOW, {
+    method: "POST", signal: AbortSignal.timeout(15000), body: JSON.stringify({ ref: "main", inputs: { mode: "sync" } }),
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" }
+  }).catch(() => null);
+  return !!res && res.status === 204;
+}
 const arr = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
 const str = (v, max) => String(v == null ? "" : v).slice(0, max);
 
@@ -271,8 +345,8 @@ async function syncSource(ctx) {
     ctx.db.collection("jarvis_commands").orderBy("createdAt", "desc").limit(60).get()
   ]);
   const out = Object.assign({ ok: true, needs: [] }, syncRows(doc.exists ? doc.data() : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
-  if (!out.at) out.needs.push("Mac sync: run `tools/weekly/run.sh install` on the Mac so the outreach folder reaches Jarvis.");
-  else if (out.stale) out.needs.push("Mac sync: last synced " + Math.round(out.age / 60000) + " minutes ago; the Mac is asleep or the job stopped.");
+  if (!out.at) out.needs.push("Outreach sync: run the qa-lab-outreach Action's sync so the outreach folder reaches Jarvis.");
+  else if (out.stale) out.needs.push("Outreach sync: last synced " + Math.round(out.age / 3600000) + " hours ago; check the qa-lab-outreach Action.");
   return out;
 }
 
@@ -321,7 +395,7 @@ function commandOf(body) {
   if (action === "run") {
     const job = str(b.job, 20);
     if (!JOBS.includes(job)) throw new Error("Run prospects, leads or replies.");
-    return { action, args: { job }, label: "Run the " + job + " job on the Mac" };
+    return { action, args: { job }, label: "Run the " + job + " job" };
   }
   throw new Error("Unknown marketing command.");
 }
@@ -376,15 +450,16 @@ async function command(ctx, db, body) {
     .then((ref) => ({ queued: ref.id, action: c.action, label: c.label }));
   if (body && body.action === "reply") {
     const sent = await sendReply(ctx, db, body);
-    return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent });
+    return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent, syncing: await startSync(ctx) });
   }
   const c = commandOf(body);
   const out = await add(c);
   if (c.action === "dnc" && (ctx.env || {}).INSTANTLY_API_KEY) out.blocked = (await block(ctx, { value: c.args.value })).blocked;
+  out.syncing = await startSync(ctx);
   return out;
 }
 
 module.exports = {
-  marketing, campaignRows, prospectRows, noteRows, parseName, windowOf, campaignAct, block, prospectLines, queueProspects,
+  marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
   syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
 };

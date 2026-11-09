@@ -18,7 +18,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = build
-        versionName = "1.0.$build"
+        versionName = "2.0.$build"
     }
 
     signingConfigs {
@@ -42,6 +42,9 @@ android {
         }
     }
 
+    // CI points this at the release's whats-new.txt (#2169); builds without it show no What's new window.
+    System.getenv("JARVIS_WHATS_NEW_DIR")?.let { sourceSets["main"].assets.srcDir(it) }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -58,6 +61,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.window)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)

@@ -227,8 +227,8 @@ function langOffset(j, batch, studio) {
   return j.mode === "render" ? Math.floor(Date.now() / 864e5) : null;
 }
 
-function run(args) {
-  const done = spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 });
+function run(args, env) {
+  const done = spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024, env: Object.assign({}, process.env, env) });
   const text = (done.stdout || "") + (done.stderr || "");
   fs.appendFileSync(LOG, "$ node " + args.join(" ") + "\n" + text);
   process.stdout.write(text);
@@ -245,7 +245,8 @@ function renderTips(j, batch) {
   if (j.mode === "rotate") args.push("--rotate");
   else if (j.mode === "captions") args.push("--captions-only", j.networks || TEXT_NETWORKS);
   else args.push("--start", startOf(j, batch));
-  run(args);
+  // A refused translator stops the render (exit 75) rather than voicing those clips in English (#2056).
+  run(args, { STRICT_TRANSLATE: "1" });
 }
 
 function renderSkit(j, batch) {
@@ -415,7 +416,29 @@ function preflightPlan(prompt) {
   return (done.stdout || "").trim() || "(the pre-flight plan was not available)";
 }
 
+const REFUSED = /translation failed; nothing was rendered/;
+
 function bugBody(j, ticket, tail, plan) {
+  const rerun = "gh workflow run studio-render.yml " + ["kind", "name", "mode", "batch", "start", "tips", "langs", "networks", "ticket"].filter((k) => j[k]).map((k) => "-f " + k + "=" + j[k]).join(" ");
+  if (REFUSED.test(tail || "")) {
+    const dir = "media/social-posts/" + batchOf(j);
+    return [
+      "**Kind:** Bug",
+      "**Area:** social",
+      "**Found while:** #" + ticket,
+      "**Where it stands:** Backlog. Google's translator refused, so nothing was drawn and no clip went out in English: [run](" + runUrl() + ").",
+      "",
+      "## What happened",
+      "The studio render of `" + j.name + "` (" + j.kind + ", " + j.mode + ") needs translations its cache does not hold, and Google's free translator rate-limited the run.",
+      "",
+      "## Fix",
+      "Translate by agent (`.cursor/rules/social-clips.mdc`), on a branch with a PR:",
+      "1. `node scripts/tips-studio/build.js --source " + j.name + " --batch " + batchOf(j) + " --export-strings` writes `" + dir + "/i18n-src.json`.",
+      "2. Fill `" + dir + "/i18n.json` in `translate.py`'s format: tú, você and tu, but Sie and vous.",
+      "3. `python3 scripts/tips-studio/translate.py " + dir + " --seed`, commit both files, merge.",
+      "4. Render again: `" + rerun + "`."
+    ].join("\n");
+  }
   return [
     "**Kind:** Bug",
     "**Area:** social",
@@ -430,7 +453,7 @@ function bugBody(j, ticket, tail, plan) {
     "```",
     "",
     "## Fix",
-    "Re-run it once fixed: `gh workflow run studio-render.yml " + ["kind", "name", "mode", "batch", "start", "tips", "langs", "networks", "ticket"].filter((k) => j[k]).map((k) => "-f " + k + "=" + j[k]).join(" ") + "`.",
+    "Re-run it once fixed: `" + rerun + "`.",
     "",
     "Pre-flight plan:",
     "",
@@ -443,8 +466,10 @@ function failed(j) {
   const last = tail.split("\n").filter(Boolean).pop() || "no output";
   const isIssue = j.ticket && tryGh(["api", "repos/" + REPO + "/issues/" + j.ticket, "-q", "if .pull_request then \"pr\" else \"issue\" end"]) === "issue";
   const parent = isIssue ? j.ticket : String(PARENT);
-  const plan = preflightPlan("Fix the failed studio render of " + j.kind + " " + j.name + " (" + j.mode + ") in scripts/tips-studio or scripts/skits-studio: " + last);
-  const title = "Social: The studio render of " + j.name + " (" + j.mode + ") failed";
+  const refused = REFUSED.test(tail);
+  const plan = refused ? "" : preflightPlan("Fix the failed studio render of " + j.kind + " " + j.name + " (" + j.mode + ") in scripts/tips-studio or scripts/skits-studio: " + last);
+  const title = refused ? "Social: The studio render of " + j.name + " waits for translations Google refused"
+    : "Social: The studio render of " + j.name + " (" + j.mode + ") failed";
   const n = gh(["api", "repos/" + REPO + "/issues", "-f", "title=" + title, "-f", "body=" + bugBody(j, parent, tail, plan), "-f", "labels[]=bug", "-f", "labels[]=area:social", "-q", ".number"]);
   const id = tryGh(["api", "repos/" + REPO + "/issues/" + n, "-q", ".id"]);
   if (id) tryGh(["api", "repos/" + REPO + "/issues/" + parent + "/sub_issues", "-F", "sub_issue_id=" + id]);

@@ -1,0 +1,749 @@
+{
+  "batch": "faces-2026-11/es",
+  "look": "Fusion (designs/3d)",
+  "face": {
+    "id": "es",
+    "handle": "qaurlreview",
+    "email": "qaurlreview@carlosandmunoz.com",
+    "langs": [
+      "es",
+      "pt"
+    ],
+    "hue": -150,
+    "accounts": [
+      {
+        "network": "X",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://x.com/qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Bio (160)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview"
+          },
+          {
+            "label": "Website",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=x&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile photo",
+            "file": "media/faces-2026-11/es/x/avatar-400.jpg"
+          },
+          {
+            "where": "Header photo; the profile photo covers the lower left",
+            "file": "media/faces-2026-11/es/x/header-1500x500.jpg"
+          }
+        ],
+        "steps": [
+          "Sign up at x.com/i/flow/signup with `qaurlreview@carlosandmunoz.com` and the handle `qaurlreview`; X asks for a phone number and a CAPTCHA."
+        ],
+        "access": "Connect the account in Buffer (#2310)."
+      },
+      {
+        "network": "YouTube",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://www.youtube.com/@qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Handle",
+            "value": "qaurlreview"
+          },
+          {
+            "label": "Description (1000)",
+            "value": "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.\n\nUma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.\n\nInformes en vivo, consejos, sketches y revisiones en directo, en español y português.\n\nEnglish, Deutsch, Français, Italiano: @qalaburlreview"
+          },
+          {
+            "label": "Links (14)",
+            "value": [
+              [
+                "Website",
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Social hub",
+                "https://carlosandmunoz.com/qa-review-social-es.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Português",
+                "https://carlosandmunoz.com/qa-review-pt.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "EN · DE · FR · IT",
+                "https://www.youtube.com/@qalaburlreview"
+              ],
+              [
+                "Informes en vivo en Telegram",
+                "https://t.me/qalab_live"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
+              ]
+            ]
+          },
+          {
+            "label": "Contact email",
+            "value": "qaurlreview@carlosandmunoz.com"
+          }
+        ],
+        "images": [
+          {
+            "where": "Picture",
+            "file": "media/faces-2026-11/es/youtube/avatar-800.jpg"
+          },
+          {
+            "where": "Banner image; phones show only the outlined middle",
+            "file": "media/faces-2026-11/es/youtube/banner-2560x1440.jpg"
+          },
+          {
+            "where": "Video watermark (Customization > Branding)",
+            "file": "media/faces-2026-11/es/youtube/watermark-150.png"
+          }
+        ],
+        "steps": [
+          "Create a Google account at accounts.google.com/signup with \"Use your existing email\" and `qaurlreview@carlosandmunoz.com`, then studio.youtube.com > Create channel with the handle `qaurlreview`.",
+          "Verify the channel by phone (youtube.com/verify) so custom thumbnails and videos over 15 minutes work."
+        ],
+        "access": "Connect the channel in Buffer (#2310)."
+      },
+      {
+        "network": "TikTok",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://www.tiktok.com/@qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Bio (80)",
+            "value": "Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: @qalaburlreview"
+          },
+          {
+            "label": "Website",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=tiktok&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile photo",
+            "file": "media/faces-2026-11/es/tiktok/avatar-1080.jpg"
+          }
+        ],
+        "steps": [
+          "Sign up at tiktok.com/signup with `qaurlreview@carlosandmunoz.com`, then set the username to `qaurlreview`.",
+          "Settings > Account > Switch to Business Account; personal accounts can't add a website link."
+        ],
+        "access": "Connect the account in Buffer (#2310)."
+      },
+      {
+        "network": "Reddit",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://www.reddit.com/user/qaurlreview/",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Display name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "About (200)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: u/qalaburlreview"
+          },
+          {
+            "label": "Social links (5)",
+            "value": [
+              [
+                "Website",
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Social hub",
+                "https://carlosandmunoz.com/qa-review-social-es.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Português",
+                "https://carlosandmunoz.com/qa-review-pt.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "EN · DE · FR · IT",
+                "https://www.reddit.com/user/qalaburlreview/"
+              ],
+              [
+                "r/QALabLiveReports",
+                "https://www.reddit.com/r/QALabLiveReports/"
+              ]
+            ]
+          }
+        ],
+        "images": [
+          {
+            "where": "Avatar",
+            "file": "media/faces-2026-11/es/reddit/avatar-256.png"
+          },
+          {
+            "where": "Banner; the copy stays in the middle third",
+            "file": "media/faces-2026-11/es/reddit/banner-1920x384.jpg"
+          }
+        ],
+        "steps": [
+          "Sign up at reddit.com/register with `qaurlreview@carlosandmunoz.com` and the username `qaurlreview`; Reddit can't rename a username later."
+        ],
+        "access": "None: Reddit posts stay manual."
+      },
+      {
+        "network": "Facebook",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://www.facebook.com/qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Page name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Username",
+            "value": "qaurlreview"
+          },
+          {
+            "label": "Intro (101)",
+            "value": "Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: fb.com/qalaburlreview"
+          },
+          {
+            "label": "About",
+            "value": "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.\n\nUma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.\n\nInformes en vivo, consejos, sketches y revisiones en directo, en español y português.\n\nEnglish, Deutsch, Français, Italiano: fb.com/qalaburlreview"
+          },
+          {
+            "label": "Website",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=facebook&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          },
+          {
+            "label": "Email",
+            "value": "qaurlreview@carlosandmunoz.com"
+          },
+          {
+            "label": "Categories",
+            "value": "Software, Internet Company"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile picture",
+            "file": "media/faces-2026-11/es/facebook/avatar-720.jpg"
+          },
+          {
+            "where": "Cover photo; phones show only the outlined middle",
+            "file": "media/faces-2026-11/es/facebook/cover-1640x624.jpg"
+          }
+        ],
+        "steps": [
+          "A Page has no login of its own: create it from your Facebook profile at facebook.com/pages/create, then set the username `qaurlreview` and `qaurlreview@carlosandmunoz.com` as the Page email.",
+          "Link the face's Instagram to this Page (Page settings > Linked accounts); Buffer only publishes to Instagram through a linked Page."
+        ],
+        "access": "Add the Page to the Meta app \"QA-lab Page Publisher\", then pipe a user token of that app: pbpaste | FACE=es FACEBOOK_PAGE_ID=<Page id> node scripts/meta-token.js page. It sets FACEBOOK_PAGE_TOKEN_ES, and scripts/facebook-queue.js posts (#2310)."
+      },
+      {
+        "network": "dev.to",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://dev.to/qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Username",
+            "value": "qaurlreview"
+          },
+          {
+            "label": "Bio (200)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: dev.to/qalaburlreview"
+          },
+          {
+            "label": "Website",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=devto&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile image (dev.to has no banner)",
+            "file": "media/faces-2026-11/es/devto/avatar-1000.jpg"
+          }
+        ],
+        "steps": [
+          "Sign up at dev.to/enter with email: `qaurlreview@carlosandmunoz.com`, username `qaurlreview`."
+        ],
+        "access": "Settings > Extensions > DEV Community API Keys: generate a key named QA-lab poster, then store it: pbpaste | gh secret set DEVTO_API_KEY_ES -R kaanmuar/kaanmuar.github.io. scripts/devto-queue.js then posts one article a day (#2326)."
+      },
+      {
+        "network": "Bluesky",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://bsky.app/profile/qaurlreview.bsky.social",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Display name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Description (256)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: @qalaburlreview.bsky.social"
+          }
+        ],
+        "images": [
+          {
+            "where": "Avatar",
+            "file": "media/faces-2026-11/es/bluesky/avatar-1000.jpg"
+          },
+          {
+            "where": "Banner; the avatar covers the lower left",
+            "file": "media/faces-2026-11/es/bluesky/banner-3000x1000.jpg"
+          }
+        ],
+        "steps": [
+          "Create account on bsky.app with `qaurlreview@carlosandmunoz.com` and the handle `qaurlreview.bsky.social`."
+        ],
+        "access": "Settings > Privacy and security > App passwords: make one and set the repo secrets BLUESKY_HANDLE_ES (qaurlreview.bsky.social) and BLUESKY_APP_PASSWORD_ES (#2310)."
+      },
+      {
+        "network": "Mastodon",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://mastodon.social/@qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Display name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Bio (500)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: @qalaburlreview@mastodon.social"
+          },
+          {
+            "label": "Extra fields (4)",
+            "value": [
+              [
+                "Website",
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Social hub",
+                "https://carlosandmunoz.com/qa-review-social-es.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Português",
+                "https://carlosandmunoz.com/qa-review-pt.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "EN · DE · FR · IT",
+                "https://mastodon.social/@qalaburlreview"
+              ]
+            ]
+          }
+        ],
+        "images": [
+          {
+            "where": "Avatar (rounded square)",
+            "file": "media/faces-2026-11/es/mastodon/avatar-400.jpg"
+          },
+          {
+            "where": "Header; the avatar covers the lower left",
+            "file": "media/faces-2026-11/es/mastodon/header-1500x500.jpg"
+          }
+        ],
+        "steps": [
+          "Sign up at mastodon.social/auth/sign_up with `qaurlreview@carlosandmunoz.com` and the username `qaurlreview`, then confirm the email.",
+          "Preferences > Public profile: put the Website link below in the first extra field and save. The face landing page links back with rel=\"me\" once this file marks the account as existing, so Mastodon shows the field as verified; save the profile again if it was set before."
+        ],
+        "access": "Preferences > Development > New application with write:statuses, write:media, read:accounts and read:statuses: set the repo secrets MASTODON_URL_ES (https://mastodon.social) and MASTODON_TOKEN_ES (#2310)."
+      },
+      {
+        "network": "Instagram",
+        "state": "exists",
+        "handle": "qaurlreview",
+        "profile": "https://www.instagram.com/qaurlreview/",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Bio (150)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview"
+          },
+          {
+            "label": "Links (5)",
+            "value": [
+              [
+                "Website",
+                "https://carlosandmunoz.com/qaurlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Social hub",
+                "https://carlosandmunoz.com/qa-review-social-es.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "Português",
+                "https://carlosandmunoz.com/qa-review-pt.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+              ],
+              [
+                "EN · DE · FR · IT",
+                "https://www.instagram.com/qalaburlreview/"
+              ],
+              [
+                "Informes en vivo en Telegram",
+                "https://t.me/qalab_live"
+              ]
+            ]
+          },
+          {
+            "label": "Highlight names",
+            "value": "Informes en vivo, Consejos, Sketches, En directo, Cómo funciona"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile picture",
+            "file": "media/faces-2026-11/es/instagram/avatar-1080.jpg"
+          },
+          {
+            "where": "Highlight cover: Informes en vivo",
+            "file": "media/faces-2026-11/es/instagram/highlight-reports.jpg"
+          },
+          {
+            "where": "Highlight cover: Consejos",
+            "file": "media/faces-2026-11/es/instagram/highlight-tips.jpg"
+          },
+          {
+            "where": "Highlight cover: Sketches",
+            "file": "media/faces-2026-11/es/instagram/highlight-skits.jpg"
+          },
+          {
+            "where": "Highlight cover: En directo",
+            "file": "media/faces-2026-11/es/instagram/highlight-runs.jpg"
+          },
+          {
+            "where": "Highlight cover: Cómo funciona",
+            "file": "media/faces-2026-11/es/instagram/highlight-guide.jpg"
+          }
+        ],
+        "steps": [
+          "Settings > Account type and tools > Switch to professional account (Business), then link the face's Facebook Page."
+        ],
+        "access": "Nothing in Buffer: once linked to the face's Facebook Page, FACE=es node scripts/meta-token.js page also sets INSTAGRAM_USER_ID_ES, and scripts/open-social-queue.js posts (#2310)."
+      },
+      {
+        "network": "Threads",
+        "state": "exists",
+        "handle": "qaurlreview",
+        "profile": "https://www.threads.com/@qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Bio (150)",
+            "value": "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview"
+          },
+          {
+            "label": "Link",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=threads&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          }
+        ],
+        "images": [
+          {
+            "where": "Profile picture (Threads can import it from Instagram)",
+            "file": "media/faces-2026-11/es/threads/avatar-1080.jpg"
+          }
+        ],
+        "steps": [],
+        "access": "Nothing in Buffer: a Threads user token of the app (User Token Generator) through pbpaste | FACE=es node scripts/meta-token.js threads sets THREADS_TOKEN_ES, and scripts/open-social-queue.js posts (#2310)."
+      },
+      {
+        "network": "LinkedIn",
+        "state": "new",
+        "handle": "qaurlreview",
+        "profile": "https://www.linkedin.com/company/qaurlreview",
+        "email": "qaurlreview@carlosandmunoz.com",
+        "fields": [
+          {
+            "label": "Page name",
+            "value": "QA-lab URL Review · ES/PT"
+          },
+          {
+            "label": "Public URL",
+            "value": "qaurlreview"
+          },
+          {
+            "label": "Tagline (120)",
+            "value": "Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: linkedin.com/company/qalab-url-review"
+          },
+          {
+            "label": "Overview",
+            "value": "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.\n\nUma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.\n\nInformes en vivo, consejos, sketches y revisiones en directo, en español y português.\n\nEnglish, Deutsch, Français, Italiano: linkedin.com/company/qalab-url-review"
+          },
+          {
+            "label": "Website",
+            "value": "https://carlosandmunoz.com/qaurlreview.html?utm_source=linkedin&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es"
+          },
+          {
+            "label": "Industry",
+            "value": "Software Development"
+          }
+        ],
+        "images": [
+          {
+            "where": "Page logo",
+            "file": "media/faces-2026-11/es/linkedin/logo-400.png"
+          },
+          {
+            "where": "Page cover; the logo covers the lower left",
+            "file": "media/faces-2026-11/es/linkedin/cover-1128x191@2x.jpg"
+          }
+        ],
+        "steps": [
+          "A Page has no login of its own: create it from your LinkedIn profile at linkedin.com/company/setup/new (Company, public URL `qaurlreview`), and add `qaurlreview@carlosandmunoz.com` as the page contact."
+        ],
+        "access": "Connect the Page in Buffer (#2310)."
+      }
+    ]
+  },
+  "files": [
+    {
+      "network": "X",
+      "where": "Profile photo",
+      "file": "media/faces-2026-11/es/x/avatar-400.jpg",
+      "size": [
+        400,
+        400
+      ]
+    },
+    {
+      "network": "X",
+      "where": "Header photo; the profile photo covers the lower left",
+      "file": "media/faces-2026-11/es/x/header-1500x500.jpg",
+      "size": [
+        1500,
+        500
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Picture",
+      "file": "media/faces-2026-11/es/youtube/avatar-800.jpg",
+      "size": [
+        800,
+        800
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Banner image; phones show only the outlined middle",
+      "file": "media/faces-2026-11/es/youtube/banner-2560x1440.jpg",
+      "size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "network": "YouTube",
+      "where": "Video watermark (Customization > Branding)",
+      "file": "media/faces-2026-11/es/youtube/watermark-150.png",
+      "size": [
+        150,
+        150
+      ]
+    },
+    {
+      "network": "TikTok",
+      "where": "Profile photo",
+      "file": "media/faces-2026-11/es/tiktok/avatar-1080.jpg",
+      "size": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "network": "Reddit",
+      "where": "Avatar",
+      "file": "media/faces-2026-11/es/reddit/avatar-256.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "network": "Reddit",
+      "where": "Banner; the copy stays in the middle third",
+      "file": "media/faces-2026-11/es/reddit/banner-1920x384.jpg",
+      "size": [
+        1920,
+        384
+      ]
+    },
+    {
+      "network": "Facebook",
+      "where": "Profile picture",
+      "file": "media/faces-2026-11/es/facebook/avatar-720.jpg",
+      "size": [
+        720,
+        720
+      ]
+    },
+    {
+      "network": "Facebook",
+      "where": "Cover photo; phones show only the outlined middle",
+      "file": "media/faces-2026-11/es/facebook/cover-1640x624.jpg",
+      "size": [
+        1640,
+        624
+      ]
+    },
+    {
+      "network": "dev.to",
+      "where": "Profile image (dev.to has no banner)",
+      "file": "media/faces-2026-11/es/devto/avatar-1000.jpg",
+      "size": [
+        1000,
+        1000
+      ]
+    },
+    {
+      "network": "Bluesky",
+      "where": "Avatar",
+      "file": "media/faces-2026-11/es/bluesky/avatar-1000.jpg",
+      "size": [
+        1000,
+        1000
+      ]
+    },
+    {
+      "network": "Bluesky",
+      "where": "Banner; the avatar covers the lower left",
+      "file": "media/faces-2026-11/es/bluesky/banner-3000x1000.jpg",
+      "size": [
+        3000,
+        1000
+      ]
+    },
+    {
+      "network": "Mastodon",
+      "where": "Avatar (rounded square)",
+      "file": "media/faces-2026-11/es/mastodon/avatar-400.jpg",
+      "size": [
+        400,
+        400
+      ]
+    },
+    {
+      "network": "Mastodon",
+      "where": "Header; the avatar covers the lower left",
+      "file": "media/faces-2026-11/es/mastodon/header-1500x500.jpg",
+      "size": [
+        1500,
+        500
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Profile picture",
+      "file": "media/faces-2026-11/es/instagram/avatar-1080.jpg",
+      "size": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Informes en vivo",
+      "file": "media/faces-2026-11/es/instagram/highlight-reports.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Consejos",
+      "file": "media/faces-2026-11/es/instagram/highlight-tips.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Sketches",
+      "file": "media/faces-2026-11/es/instagram/highlight-skits.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: En directo",
+      "file": "media/faces-2026-11/es/instagram/highlight-runs.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Instagram",
+      "where": "Highlight cover: Cómo funciona",
+      "file": "media/faces-2026-11/es/instagram/highlight-guide.jpg",
+      "size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "network": "Threads",
+      "where": "Profile picture (Threads can import it from Instagram)",
+      "file": "media/faces-2026-11/es/threads/avatar-1080.jpg",
+      "size": [
+        1080,
+        1080
+      ]
+    },
+    {
+      "network": "LinkedIn",
+      "where": "Page logo",
+      "file": "media/faces-2026-11/es/linkedin/logo-400.png",
+      "size": [
+        400,
+        400
+      ]
+    },
+    {
+      "network": "LinkedIn",
+      "where": "Page cover; the logo covers the lower left",
+      "file": "media/faces-2026-11/es/linkedin/cover-1128x191@2x.jpg",
+      "size": [
+        2256,
+        382
+      ]
+    }
+  ]
+}

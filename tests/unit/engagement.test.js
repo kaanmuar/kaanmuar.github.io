@@ -6,6 +6,7 @@ const E = require("../../functions/engagement.js");
 const S = require("../../functions/engagement-sources.js");
 const J = require("../../functions/jarvis-engagement.js");
 const push = require("../../functions/jarvis-mail-push.js");
+const { fakeDb } = require("./fixtures/fake-firestore.js");
 
 const NOW = Date.parse("2026-11-01T22:00:00Z");
 const hoursAgo = (h) => new Date(NOW - h * 3600000).toISOString();
@@ -15,7 +16,7 @@ const scored = (o) => { const p = post(o); return Object.assign({ key: E.keyOf(p
 test("settings fill defaults, clamp numbers and merge a patch", () => {
   const s = E.settings(null);
   assert.equal(s.paused, false);
-  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15 });
+  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15, join: 2 });
   assert.ok(s.competitors.includes("semrush"));
   assert.equal(E.settings({ caps: { like: -4, reply: 9999 } }).caps.like, 0);
   assert.equal(E.settings({ caps: { reply: 9999 } }).caps.reply, 500);
@@ -114,16 +115,41 @@ test("the default thresholds act on the posts a live run scores, not only on vir
   assert.equal(E.decide(quiet, null, c, {}, NOW, new Set()).verdict, "watch");
 });
 
-test("decide skips political, angry and promo posts, replies only in our six languages, and only reads trend networks", () => {
+test("decide skips political, angry and promo posts, replies only in the languages we search in, and only reads trend networks", () => {
   const c = E.settings(null);
   const p = scored({ text: "WCAG accessibility", metrics: { likes: 300, replies: 40, reposts: 60 } });
   assert.equal(E.decide(p, { political: true }, c, {}, NOW).skip, "political");
   assert.equal(E.decide(p, { sentiment: "angry" }, c, {}, NOW).skip, "angry");
   assert.equal(E.decide(p, { promo: true }, c, {}, NOW).skip, "promo");
-  const ja = E.decide(p, { worth: 0.9, reply: "それは良い", lang: "ja" }, c, {}, NOW);
-  assert.equal(ja.actions.reply, undefined);
-  assert.equal(ja.actions.like.status, "planned");
+  const th = E.decide(p, { worth: 0.9, reply: "เราทดสอบด้วยโปรแกรมอ่านหน้าจอ", lang: "th" }, c, {}, NOW);
+  assert.equal(th.actions.reply, undefined);
+  assert.equal(th.actions.like.status, "planned");
   assert.equal(E.decide(Object.assign({}, p, { network: "hn" }), null, c, {}, NOW).verdict, "trend");
+});
+
+test("a reply in a language Carlos may not read carries Gemini's English to the draft, the push and until an edit (#2630)", () => {
+  const p = scored({ id: "ja", text: "Playwright と WCAG のアクセシビリティテスト", metrics: { likes: 300, replies: 40, reposts: 60 } });
+  const en = scored({ id: "en", text: "WCAG accessibility" });
+  const out = E.parseAi(JSON.stringify([
+    { id: p.key, lang: "ja", worth: 0.9, reply: "私たちは同じ Playwright ジョブで axe を実行しています。", english: "We run axe in the same Playwright job — see https://x.com #a11y" },
+    { id: en.key, lang: "en", worth: 0.9, reply: "We run axe in the same Playwright job.", english: "We run axe in the same Playwright job." }
+  ]), [p, en]);
+  assert.equal(out[p.key].english, "We run axe in the same Playwright job, see");
+  assert.equal(out[en.key].english, "");
+  assert.ok(E.REPLY_LANGS.includes("ja") && E.REPLY_LANGS.includes("hi") && !E.REPLY_LANGS.includes("th"));
+  assert.match(E.aiPrompt([p]), /"english"/);
+  assert.match(E.chainPrompt([Object.assign({ parent: {} }, p)]), /ja, ko, zh/);
+  const d = E.decide(p, out[p.key], E.settings(null), {}, NOW, new Set());
+  assert.equal(d.actions.reply.status, "waiting");
+  assert.equal(d.actions.reply.lang, "ja");
+  assert.equal(d.actions.reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decide(en, out[en.key], E.settings(null), {}, NOW, new Set()).actions.reply.english, undefined);
+  const doc = Object.assign({ key: "mastodon_0123456789abcdef0123", seenAt: hoursAgo(1) }, p, { actions: d.actions });
+  assert.ok(E.replyPush(doc).lines.includes("In English: We run axe in the same Playwright job, see"));
+  assert.equal(E.decideReply(doc, "approve", "", "c", NOW).reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decideReply(doc, "edit", "私たちは CI で axe を実行します。", "c", NOW).reply.english, "");
+  const chain = E.chainDecide(Object.assign({}, p, { answered: false, liked: true }), { worth: 0.9, reply: "はい、そうです。ありがとう。", lang: "ja", english: "Yes, that's right. Thanks." }, E.settings(null), NOW);
+  assert.equal(chain.actions.reply.english, "Yes, that's right. Thanks.");
 });
 
 test("decideReply approves, takes an edit within the network's limit, dismisses, and refuses stale or decided replies", () => {
@@ -210,54 +236,7 @@ test("monthly reports cover the calendar month before, against the one before it
   assert.equal(wk.days[6], "2026-11-01");
 });
 
-// --- An in-memory Firestore, enough for the scout, a decision and the Jarvis source --------------------------
-
-function fakeDb() {
-  const data = new Map();
-  const get = (path) => data.get(path);
-  const merge = (a, b) => {
-    const out = Object.assign({}, a);
-    Object.entries(b).forEach(([k, v]) => {
-      if (v && v.inc !== undefined) out[k] = (out[k] || 0) + v.inc;
-      else if (v && typeof v === "object" && !Array.isArray(v)) out[k] = merge(out[k] || {}, v);
-      else out[k] = v;
-    });
-    return out;
-  };
-  const setPath = (obj, dotted, v) => { const parts = dotted.split("."); let o = obj; parts.slice(0, -1).forEach((p) => { o[p] = Object.assign({}, o[p]); o = o[p]; }); o[parts[parts.length - 1]] = v; };
-  const at = (obj, dotted) => dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
-  const snap = (path) => ({ id: path.split("/").pop(), exists: data.has(path), data: () => JSON.parse(JSON.stringify(get(path) || {})), get: (k) => at(get(path) || {}, k), ref: docRef(path) });
-  function docRef(path) {
-    return {
-      path, id: path.split("/").pop(),
-      get: async () => snap(path),
-      set: async (v, o) => { data.set(path, o && o.merge ? merge(get(path) || {}, v) : merge({}, v)); },
-      update: async (v) => { const cur = JSON.parse(JSON.stringify(get(path) || {})); Object.entries(v).forEach(([k, x]) => setPath(cur, k, x)); data.set(path, cur); },
-      delete: async () => { data.delete(path); }
-    };
-  }
-  function query(coll, filters, order, lim) {
-    return {
-      where: (f, op, v) => query(coll, filters.concat([[f, op, v]]), order, lim),
-      orderBy: (f, dir) => query(coll, filters, [f, dir || "asc"], lim),
-      limit: (n) => query(coll, filters, order, n),
-      get: async () => {
-        let rows = Array.from(data.keys()).filter((p) => p.startsWith(coll + "/") && p.split("/").length === 2).map((p) => snap(p));
-        filters.forEach(([f, op, v]) => { rows = rows.filter((s) => { const x = at(s.data(), f); return op === "==" ? x === v : op === ">=" ? x >= v : op === "<" ? x < v : true; }); });
-        if (order) rows.sort((a, b) => String(at(a.data(), order[0])).localeCompare(String(at(b.data(), order[0]))) * (order[1] === "desc" ? -1 : 1));
-        return { docs: rows.slice(0, lim || rows.length) };
-      }
-    };
-  }
-  const db = {
-    data,
-    collection: (name) => Object.assign(query(name, [], null, 0), { doc: (id) => docRef(name + "/" + id) }),
-    getAll: async (...refs) => refs.map((r) => snap(r.path)),
-    batch: () => { const ops = []; return { set: (r, v) => ops.push(() => r.set(v)), update: (r, v) => ops.push(() => r.update(v)), commit: async () => { for (const op of ops) await op(); } }; },
-    runTransaction: async (fn) => fn({ get: (r) => r.get(), update: (r, v) => r.update(v), set: (r, v) => r.set(v) })
-  };
-  return db;
-}
+// --- The scout end to end, on an in-memory Firestore ------------------------------------------------------
 
 function fakeFetch(gemini) {
   const toot = (id, text, likes) => ({ id, uri: "https://m.s/u/" + id, url: "https://m.s/@a/" + id, content: "<p>" + text + "</p>", language: "en", created_at: hoursAgo(1), favourites_count: likes, reblogs_count: likes, replies_count: 5, account: { acct: "ana" + id + "@m.s", display_name: "Ana" } });
@@ -288,7 +267,8 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(day.runs, 1);
   assert.equal(day.n.mastodon.drafted, 1);
   assert.equal(day.skip.competitor, 1);
-  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; failed: /);
+  assert.match(J.runNote(run), /2 new in field, 1 to engage, 1 replies drafted; dry run 3; report replies: The Live Reports index answered 503; failed: /);
+  assert.equal(day.n.mastodon.like_dry, 1, "a dry run logs the like it would have done");
 
   const again = await J.scout(Object.assign({}, deps, { now: NOW + 60000 }));
   assert.equal(again.fresh, 0);
@@ -309,8 +289,28 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.approved.length, 1);
   assert.equal(src.report.totals.edited, 1);
   assert.equal(src.stale, false);
-  assert.ok(src.needs.some((n) => /BLUESKY_APP_PASSWORD/.test(n)));
-  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser");
+  assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
+  assert.equal(src.live, false, "a dry run until Carlos turns it live");
+  assert.equal(src.accounts.length, 4);
+  assert.ok(src.needs.some((n) => /Telegram: paste the bot's token/.test(n)));
+  assert.ok(src.needs.some((n) => /Reddit sync has not run yet/.test(n)));
+  assert.match(src.networks.find((n) => n.network === "reddit").acts, /^Reddit app: replies under our subreddit's posts; waiting for the first sync/);
+  assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser, not set up");
+  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads, TikTok, Telegram and Reddit wait for the Mac's browser agent/.test(n)));
+});
+
+test("our X, TikTok and Bluesky account @qalaburlreview counts as our own (#1991)", () => {
+  assert.equal(E.guard(post({ network: "x", author: { handle: "qalaburlreview", name: "QA-lab URL Review" } }), E.settings(null), NOW), "own");
+});
+
+test("a browser network's own daily ceiling holds under the settings' caps (#1991)", () => {
+  const conf = E.settings({ caps: { like: 500, repost: 500, follow: 500, reply: 500 } });
+  const used = { tiktok: { like: 50 }, x: { like: 49 } };
+  const post = (network) => ({ network, id: "1", score: 100, text: "accessibility", author: { handle: "ana" }, createdAt: new Date(NOW).toISOString() });
+  assert.equal(E.decide(post("tiktok"), null, conf, used, NOW).actions.like.status, "capped");
+  assert.equal(E.decide(post("x"), null, conf, used, NOW).actions.like.status, "planned");
+  assert.equal(E.decide(post("linkedin"), null, conf, used, NOW).actions.repost, undefined, "our LinkedIn page likes and replies only");
+  assert.equal(E.decide(post("facebook"), null, conf, used, NOW).actions.follow, undefined, "Facebook takes likes and replies only");
 });
 
 test("a post first seen quiet is decided again once it starts to trend, counted once in the field, and not again for 6 hours (#2001)", async () => {
@@ -328,7 +328,7 @@ test("a post first seen quiet is decided again once it starts to trend, counted 
   assert.equal(risen.asked, 1, "Gemini never read it, so it gets a read and a draft now");
   const doc = db.data.get(key);
   assert.equal(doc.verdict, "engage");
-  assert.equal(doc.actions.like.status, "planned");
+  assert.equal(doc.actions.like.status, "dry", "planned, then logged by the dry-run poster in the same run");
   assert.equal(doc.actions.reply.status, "waiting");
   assert.equal(doc.seenAt, new Date(NOW).toISOString(), "first seen stays");
   const day = db.data.get("engagement_daily/" + E.bogotaDay(NOW));
@@ -363,4 +363,73 @@ test("settings save through Jarvis and refuse an empty change", async () => {
   assert.equal(out.settings.paused, true);
   assert.equal((await J.readSettings(db)).caps.like, 30);
   await assert.rejects(J.saveSettings(db, {}, "carlos", NOW), /Nothing to change/);
+});
+
+// --- Conversations (#2421) -------------------------------------------------------------------------------------
+
+test("no reply is drafted in a conversation we already answered; the rest of the plan stands", () => {
+  const conf = E.settings({});
+  const p = scored({ network: "bluesky", id: "at://ana/p2", thread: "at://bo/root", text: "WCAG and Playwright accessibility testing in CI", metrics: { likes: 400, replies: 40, reposts: 80, views: 0 } });
+  const ai = { lang: "en", sentiment: "positive", worth: 0.9, reply: "We run axe in the same job." };
+  const fresh = E.decide(p, ai, conf, {}, NOW, new Set(), new Set());
+  assert.equal(fresh.actions.reply.status, "waiting");
+  const used = {};
+  const again = E.decide(p, ai, conf, used, NOW, new Set(), new Set(["bluesky:at://bo/root"]));
+  assert.equal(again.actions.reply.status, "replied");
+  assert.equal(again.actions.like.status, "planned");
+  assert.equal((used.bluesky || {}).reply, undefined, "a skipped reply takes nothing from the day's cap");
+  assert.equal(E.threadKey({ network: "x", id: "9" }), "x:9", "a post stored before threads stands alone");
+  assert.equal(E.postDoc(p, ai, again, NOW).thread, "at://bo/root");
+  assert.equal(E.rollup({}, [Object.assign({ network: "bluesky" }, again)]).n.bluesky.already, 1);
+});
+
+test("a comment under our reply: a like unless we liked it, an answer only when it is owed, nothing when it is hostile", () => {
+  const conf = E.settings({});
+  const c = post({ network: "bluesky", id: "at://bo/c1", text: "Which rules do you turn off?", liked: false, answered: false });
+  const ai = { lang: "en", sentiment: "neutral", worth: 0.9, like: true, reply: "Only color-contrast on brand images." };
+  const d = E.chainDecide(c, ai, conf, NOW);
+  assert.equal(d.verdict, "engage");
+  assert.equal(d.actions.like.status, "planned");
+  assert.equal(d.actions.reply.status, "waiting");
+  assert.equal(d.actions.reply.expiresAt, new Date(NOW + E.CHAIN_TTL).toISOString());
+  assert.deepEqual(Object.keys(E.chainDecide(Object.assign({}, c, { liked: true, answered: true }), ai, conf, NOW).actions), []);
+  assert.deepEqual(Object.keys(E.chainDecide(c, Object.assign({}, ai, { worth: 0.2 }), conf, NOW).actions), ["like"]);
+  assert.equal(E.chainDecide(c, Object.assign({}, ai, { sentiment: "angry" }), conf, NOW).skip, "angry");
+  assert.equal(E.chainDecide(c, Object.assign({}, ai, { like: false, reply: "" }), conf, NOW).verdict, "watch");
+  assert.deepEqual(Object.keys(E.chainDecide(Object.assign({}, c, { network: "youtube" }), ai, conf, NOW).actions), ["reply"]);
+  assert.equal(E.chainDecide(Object.assign({}, c, { createdAt: hoursAgo(24 * 6) }), ai, conf, NOW).verdict, "engage", "a comment days old is still answered");
+  assert.equal(E.chainDecide(c, ai, E.settings({ paused: true }), NOW).actions.like.status, "paused");
+  assert.equal(E.reopens({ actions: { reply: { status: "replied" } } }), true, "a post the scout left unanswered can be taken over");
+  assert.equal(E.reopens({ actions: { reply: { status: "waiting" } } }), false);
+  assert.equal(E.reopens({ chain: { parent: "x" }, actions: {} }), false);
+});
+
+test("the chain prompt shows Gemini the post, our reply and the comment; parseAi keeps its like", () => {
+  const parent = { key: "bluesky_p", network: "bluesky", text: "Axe in CI?", actions: { reply: { draft: "We run axe in Playwright." } } };
+  const c = Object.assign({ key: "bluesky_c", parent }, post({ network: "bluesky", id: "at://bo/c1", text: "Which rules?" }));
+  const items = JSON.parse(E.chainPrompt([c]).split("\n").pop());
+  assert.deepEqual([items[0].post, items[0].ours, items[0].comment], ["Axe in CI?", "We run axe in Playwright.", "Which rules?"]);
+  const out = E.parseAi(JSON.stringify([{ id: "bluesky_c", like: false, reply: "" }]), [c]);
+  assert.equal(out.bluesky_c.like, false);
+  assert.equal(E.parseAi(JSON.stringify([{ id: "bluesky_c" }]), [c]).bluesky_c.like, true);
+});
+
+test("Bluesky posts keep their conversation's root; reports count answers not sent twice and comments on our replies", () => {
+  const b = S.blueskyPost({ uri: "at://did:plc:x/app.bsky.feed.post/3abc", cid: "c1", author: { handle: "a" }, record: { text: "", reply: { root: { uri: "at://did:plc:r/app.bsky.feed.post/root" } } } });
+  assert.equal(b.thread, "at://did:plc:r/app.bsky.feed.post/root");
+  assert.equal(S.blueskyPost({ uri: "at://top", author: {}, record: {} }).thread, "at://top");
+  const r = E.report("daily", [{ day: "2026-11-01", n: { bluesky: { already: 2, chained: 3 } } }], [], [], NOW);
+  assert.equal(r.totals.already, 2);
+  assert.equal(r.networks[0].chained, 3);
+  const rows = E.reportMail(r).rows;
+  assert.equal(rows.find((x) => x.label === "Comments on our replies").value, "3");
+  assert.equal(rows.find((x) => x.label === "Already answered, not sent again").value, "2");
+});
+
+test("a comment that names our site is still answered; one by our own account is left alone (#2447)", () => {
+  const conf = E.settings({});
+  const ai = { lang: "en", sentiment: "positive", worth: 0.9, like: true, reply: "Yes, the review is free." };
+  const c = post({ network: "bluesky", id: "at://eve/c1", text: "Is carlosandmunoz.com really free?", author: { handle: "eve.bsky.social" } });
+  assert.equal(E.chainDecide(c, ai, conf, NOW).verdict, "engage");
+  assert.equal(E.chainDecide(Object.assign({}, c, { author: { handle: "qalaburlreview.bsky.social" } }), ai, conf, NOW).skip, "own");
 });

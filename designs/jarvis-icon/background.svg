@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs>
+    <radialGradient id="bg-base" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#103249"/>
+      <stop offset="0.55" stop-color="#071A27"/>
+      <stop offset="1" stop-color="#02070C"/>
+    </radialGradient>
+    <radialGradient id="bg-cyan"><stop offset="0" stop-color="#38E1FF" stop-opacity="0.3"/><stop offset="1" stop-color="#38E1FF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bg-amber"><stop offset="0" stop-color="#FFB547" stop-opacity="0.2"/><stop offset="1" stop-color="#FFB547" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bg-violet"><stop offset="0" stop-color="#8B6BFF" stop-opacity="0.32"/><stop offset="1" stop-color="#8B6BFF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bg-fade" gradientUnits="userSpaceOnUse" x1="0" y1="60" x2="0" y2="94">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <mask id="bg-floor"><rect x="0" y="60" width="108" height="48" fill="url(#bg-fade)"/></mask>
+    <linearGradient id="bg-horizon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0.1" stop-color="#38E1FF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#38E1FF" stop-opacity="0.6"/>
+      <stop offset="0.9" stop-color="#38E1FF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="bg-vignette" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#bg-base)"/>
+  <circle cx="32" cy="30" r="34" fill="url(#bg-cyan)"/>
+  <circle cx="86" cy="58" r="28" fill="url(#bg-amber)"/>
+  <circle cx="50" cy="98" r="34" fill="url(#bg-violet)"/>
+  <path d="M0 0 L0 60 M9 0 L9 60 M18 0 L18 60 M27 0 L27 60 M36 0 L36 60 M45 0 L45 60 M54 0 L54 60 M63 0 L63 60 M72 0 L72 60 M81 0 L81 60 M90 0 L90 60 M99 0 L99 60 M108 0 L108 60 M0 6 L108 6 M0 15 L108 15 M0 24 L108 24 M0 33 L108 33 M0 42 L108 42 M0 51 L108 51" stroke="#38E1FF" stroke-opacity="0.06" stroke-width="0.25"/>
+  <path d="M54 60 L-114 108 M54 60 L-100 108 M54 60 L-86 108 M54 60 L-72 108 M54 60 L-58 108 M54 60 L-44 108 M54 60 L-30 108 M54 60 L-16 108 M54 60 L-2 108 M54 60 L12 108 M54 60 L26 108 M54 60 L40 108 M54 60 L54 108 M54 60 L68 108 M54 60 L82 108 M54 60 L96 108 M54 60 L110 108 M54 60 L124 108 M54 60 L138 108 M54 60 L152 108 M54 60 L166 108 M54 60 L180 108 M54 60 L194 108 M54 60 L208 108 M54 60 L222 108 M0 106.67 L108 106.67 M0 95 L108 95 M0 85.93 L108 85.93 M0 79.44 L108 79.44 M0 74 L108 74 M0 70 L108 70 M0 67 L108 67 M0 64.67 L108 64.67" stroke="#38E1FF" stroke-opacity="0.4" stroke-width="0.3" mask="url(#bg-floor)"/>
+  <rect x="0" y="59.7" width="108" height="0.6" fill="url(#bg-horizon)"/>
+  <circle cx="30" cy="22" r="0.5" fill="#CFF6FF" fill-opacity="0.5"/><circle cx="74" cy="18" r="0.4" fill="#CFF6FF" fill-opacity="0.5"/><circle cx="86" cy="34" r="0.35" fill="#CFF6FF" fill-opacity="0.5"/><circle cx="24" cy="46" r="0.3" fill="#CFF6FF" fill-opacity="0.5"/><circle cx="64" cy="28" r="0.3" fill="#CFF6FF" fill-opacity="0.5"/><circle cx="40" cy="36" r="0.25" fill="#CFF6FF" fill-opacity="0.5"/>
+  <rect width="108" height="108" fill="url(#bg-vignette)"/>
+</svg>

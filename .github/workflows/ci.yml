@@ -2,6 +2,8 @@
 # Merges are gated by Lint Code, url-review-unit, and playwright (branch ruleset on main).
 # Cypress and Robot fail their job when a case fails. Load and the native catalogs report but do not block a merge.
 # The Cypress catalog runs on pushes to main and manual runs, not on pull requests.
+# The Safari and iPhone catalog needs a macOS runner, so it lives in catalog-apple.yml (#2273).
+# Pull requests leave the generated social hub files to the bots (#2242): the jobs that read the hub build it first.
 
 name: E2E and Visual Tests
 
@@ -25,15 +27,23 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      # A pull request checks out its merge commit, whose first parent is main.
+      - name: The pull request leaves the generated social hub files to the bots
+        if: github.event_name == 'pull_request'
+        run: git diff --name-only HEAD^1 HEAD | node scripts/social-hub-outputs.js --guard
       - name: Install the critical CSS builder
         run: |
           read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
           npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: URL review scoring, journeys, pricing, guards, and generated scripts
         run: npm run test:review
       - name: style.css matches input.css
@@ -42,8 +52,8 @@ jobs:
         run: node scripts/build-critical-css.js --check
       - name: Review language pages match their builder
         run: python3 scripts/build-review-langs.py --check
-      - name: Social hub pages match their builder
-        run: node scripts/build-social-hub.js --check
+      - name: Face landing pages match scripts/brand-kit/faces.js
+        run: node scripts/build-face-pages.js --check
       - name: CSP script hashes match the pages' inline scripts
         run: node scripts/build-csp-hashes.js --check
       - name: Jarvis rules in functions match the admin page
@@ -65,20 +75,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Install dependencies
         run: npm ci
         env:
           CYPRESS_INSTALL_BINARY: 0
+      - name: Build the social hub from its sources
+        run: scripts/social-hub-build.sh
       - name: Read the Playwright version
         id: pw-version
         run: echo "version=$(node -p "require('./node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: pw-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
@@ -90,12 +102,12 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --workers=4 --shard=${{ matrix.shard }}/2
       - name: Upload Playwright report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
-          retention-days: 30
+          retention-days: 7
 
   # The main ruleset requires a check named playwright, so this job stands for both shards.
   playwright:
@@ -128,12 +140,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Cache Cypress binary
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/Cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -147,7 +159,7 @@ jobs:
       - name: Run Cypress tests
         run: npx cypress run --spec "${{ fromJSON(env.CYPRESS_SPECS)[matrix.group] }}"
       - name: Upload Cypress report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cypress-${{ matrix.group }}
@@ -155,6 +167,7 @@ jobs:
             cypress/reports/html
             cypress/screenshots
           if-no-files-found: ignore
+          retention-days: 7
 
   robot:
     runs-on: ubuntu-latest
@@ -165,7 +178,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
           cache: pip
@@ -178,12 +191,13 @@ jobs:
       - name: Run Robot Framework tests
         run: npm run test:robot
       - name: Upload Robot results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: robot-results
           path: robot-results
           if-no-files-found: ignore
+          retention-days: 7
 
   load:
     runs-on: ubuntu-latest
@@ -194,9 +208,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install k6
         uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
       - name: Run k6 load tests
@@ -210,7 +224,7 @@ jobs:
           cache-dependency-path: gatling/pom.xml
       - name: Cache JMeter
         id: jmeter-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/apache-jmeter-5.6.3
           key: jmeter-5.6.3
@@ -234,13 +248,15 @@ jobs:
   catalog-browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -265,60 +281,36 @@ jobs:
           path: |
             wdio-results
             runner-results
-
-  catalog-apple:
-    runs-on: macos-latest
-    timeout-minutes: 60
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '20'
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-        env:
-          CYPRESS_INSTALL_BINARY: 0
-      - name: Selenium catalog on Safari
-        run: TARGET_BROWSER=safari npm run test:selenium
-        continue-on-error: true
-      - name: Appium catalog on the first iPhone simulator
-        run: |
-          export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-          DEVICE=$(node -e "const {listTargets}=require('./scripts/targets'); const phone=(listTargets().devices||[]).find(d=>d.platform==='ios'&&/iPhone/.test(d.name)); if(!phone){console.error('no iPhone simulator'); process.exit(1)}; process.stdout.write(JSON.stringify(phone));")
-          APPIUM_DEVICE="$DEVICE" APPIUM_DEVICE_LABEL="$(node -e 'const d=JSON.parse(process.argv[1]); process.stdout.write(d.label)' "$DEVICE")" npm run test:appium
-        continue-on-error: true
-      - name: Upload Apple results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: apple-catalog-results
-          path: |
-            appium-results
-            runner-results
+          retention-days: 7
 
   catalog-android:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Install dependencies
         run: npm ci
         env:
           CYPRESS_INSTALL_BINARY: 0
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: Appium catalog on an Android emulator
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 34
+          target: google_apis
           arch: x86_64
           script: APPIUM_DEVICE='{"platform":"android","id":"emulator-5554","name":"emulator-5554","label":"Android emulator"}' npm run test:appium
         continue-on-error: true

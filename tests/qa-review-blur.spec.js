@@ -4,7 +4,7 @@ const sample = require('../assets/qa-review-sample.json');
 
 const TERMS = fs.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'bl12cd34ef56';
-const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample';
+const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index';
 
 async function openUnpaid(page, extra) {
   await page.addInitScript((version) => {
@@ -116,8 +116,12 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
     const json = JSON.parse(await exported(page, 'download-json'));
     const item = json.report.cases.find((one) => one.id === caseId);
     expect(item.title).toBe(shown + ' …');
-    const longest = JSON.stringify(json.report).match(/"[^"]{200,}"/g) || [];
-    expect(longest.filter((text) => text.split(/\s+/).length >= 4 && !/ …"$/.test(text))).toEqual([]);
+    const strings = [];
+    (function walk(value) {
+      if (typeof value === 'string') strings.push(value);
+      else if (value && typeof value === 'object') Object.values(value).forEach(walk);
+    })(json.report);
+    expect(strings.filter((text) => text.length >= 200 && text.split(/\s+/).length >= 4 && !/ …$/.test(text))).toEqual([]);
 
     const text = await exported(page, 'download-text');
     expect(text).toContain(caseId + ' [' + item.layer + '] ' + shown + ' … — ');

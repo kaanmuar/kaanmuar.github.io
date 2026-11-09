@@ -143,6 +143,35 @@ test("a notice waits for a live card and no stop or unlist", () => {
   assert.match(notice.sendBlock(Object.assign({}, pending, { status: "sent" }), { card }), /not waiting/);
 });
 
+test("a notice waits 30 days after we answered a post about the site with its report (#2470)", () => {
+  const card = { id: "u-acme-co", host: "acme.co" };
+  const pending = { status: "pending", host: "www.shop.acme.co", domain: "acme.co", email: "info@acme.co" };
+  assert.equal(notice.sendBlock(pending, { card, answered: new Map([["other.co", "2026-11-01T10:00:00Z"]]) }), "");
+  assert.equal(notice.sendBlock(pending, { card, answered: new Map([["shop.acme.co", "2026-11-01T10:00:00Z"]]) }),
+    "We answered a post about shop.acme.co with its report on 2026-11-01. The notice waits 30 days from then.");
+  assert.match(notice.sendBlock(pending, { card, answered: new Map([["acme.co", "2026-10-20T10:00:00Z"]]) }), /about acme\.co .* on 2026-10-20/);
+});
+
+test("one Send can go to several addresses, each once, and falls back to the notice's own", () => {
+  const row = { email: "info@acme.co" };
+  assert.deepEqual(notice.pickedEmails(row, [" Info@Acme.co", "x@acme.co", "info@acme.co", ""]), ["info@acme.co", "x@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, "x@acme.co"), ["x@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, []), ["info@acme.co"]);
+  assert.deepEqual(notice.pickedEmails(row, ""), ["info@acme.co"]);
+});
+
+test("approvals mark a notice ready, waiting for its Live Report, unlisted or stopped", () => {
+  const row = { host: "acme.co", domain: "acme.co", email: "a@acme.co", candidates: [{ email: "a@acme.co" }, { email: "b@acme.co" }] };
+  const index = { reports: [{ id: "u-acme-co", host: "acme.co" }] };
+  assert.equal(notice.readiness(row, { index }), "ready");
+  assert.equal(notice.readiness(row, { index: { reports: [] } }), "waiting");
+  assert.equal(notice.readiness(row, { index: null }), "");
+  assert.equal(notice.readiness(row, { index, unlisted: ["acme.co"] }), "unlisted");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["@acme.co"]) }), "stopped");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["a@acme.co"]) }), "ready", "one address left");
+  assert.equal(notice.readiness(row, { index, stopped: new Set(["a@acme.co", "b@acme.co"]) }), "stopped");
+});
+
 test("the second look reads unread contact pages, linked GitHub profiles and web search, on time", async () => {
   const report = { host: "acme.co", finalUrl: "https://acme.co/", pages: [{ path: "/" }, { path: "/contact" }], contacts: { found: [], profiles: ["acmeco"], paths: ["/la-compania/quienes-somos"] } };
   assert.equal(search.pathsToTry(report)[0], "/la-compania/quienes-somos");

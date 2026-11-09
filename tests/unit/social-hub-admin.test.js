@@ -81,7 +81,7 @@ test("channel status without a ledger entry: the calendar slot is only Scheduled
   const now = Date.parse("2026-10-25T18:00:00-05:00");
   const slots = { linkedin: "2026-10-25T07:30:00-05:00", facebook: "2026-10-26T17:10:00-05:00", youtube: "2026-10-25T17:45:00-05:00" };
   const byNet = (list) => Object.fromEntries(list.map((c) => [c.net, c.state]));
-  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", bluesky: "none", mastodon: "none", threads: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none" });
+  assert.deepEqual(byNet(admin.channels(slots, null, now)), { linkedin: "scheduled", x: "none", bluesky: "none", mastodon: "none", threads: "none", instagram: "none", "instagram-story": "none", facebook: "scheduled", youtube: "missing", tiktok: "none", telegram: "none", reddit: "none" });
   assert.equal(byNet(admin.channels(slots, "5b4Hr6r-cBk", now)).youtube, "live");
   const facebook = admin.channels(slots, null, now).find((c) => c.net === "facebook");
   assert.equal(facebook.via, "Facebook Page");
@@ -111,7 +111,8 @@ test("channel status from the Buffer and Page ledgers: failed if any profile fai
   assert.deepEqual(admin.ledgerEntries(ledgers, "auto-2026-10-24/02-b"), []);
   const list = admin.channels(slots, null, now, entries);
   const byNet = Object.fromEntries(list.map((c) => [c.net, c]));
-  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "scheduled", "scheduled", "scheduled", "failed", "none", "queued", "failed", "none"]);
+  assert.deepEqual(list.map((c) => c.state), ["sent", "queued", "scheduled", "scheduled", "scheduled", "failed", "none", "queued", "failed", "none", "scheduled", "scheduled"]);
+  assert.deepEqual([byNet.telegram.via, byNet.reddit.via], ["Telegram Bot API", "Reddit app"]);
   assert.equal(admin.statusLabel(byNet.linkedin), "Sent Oct 25");
   assert.equal(admin.statusLabel(byNet.x), "Queued Oct 25, 09:00");
   assert.equal(admin.statusLabel(byNet.instagram), "Failed Oct 25");

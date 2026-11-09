@@ -4,18 +4,25 @@
   const section = document.getElementById("live-reports");
   if (!section) return;
 
-  const BASE = "assets/live-reports/";
+  // live.html and the Reddit app (reddit/live-reports) mount the same section and may read the data elsewhere.
+  const BASE = section.dataset.liveBase || "assets/live-reports/";
   const AREAS = ["SEO", "GEO", "Analytics", "Security", "Accessibility", "Performance"];
   const SHORT = { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "A11y", Performance: "Speed" };
   const HUES = { government: 186, health: 160, media: 18, banking: 42, fintech: 280, transit: 140, opensource: 205, devdocs: 225, science: 255, highered: 330, education: 300, humanitarian: 0, international: 196, culture: 32, knowledge: 172, retail: 50, telecom: 268, energy: 58, travel: 120, airline: 210, insurance: 152, infrastructure: 24, standards: 240, sports: 100, apps: 12, rights: 350, environment: 88 };
   const STOP = new Set(["de", "del", "la", "el", "los", "las", "of", "the", "y", "and", "du", "da"]);
 
   // A review analyzes a site; it never "reads" it. Spanish is Latin American (tú), Portuguese is Brazilian (você).
+  // The channels that post each batch (#2549); live.html runs inside them, so only the review pages carry the line.
+  const FOLLOW = {
+    telegram: '<a href="https://t.me/qalab_live" rel="noopener" target="_blank">Telegram</a>',
+    reddit: '<a href="https://www.reddit.com/r/QALabLiveReports/" rel="noopener" target="_blank">Reddit</a>'
+  };
   const T = {
     en: {
       book: "Book a 15-min call about it",
       eyebrow: "Live reports", title: "Real sites. Real reviews.", titleEm: "Open any of them.",
       lede: "<b>{n} public sites</b>, analyzed by the same review anyone can run: government portals, newsrooms, banks, universities, open-source projects, and transit systems. Turn the ring, filter by sector or country, and open a report. Reviews people request are added in a daily batch. View and share only.",
+      follow: "New reports every day on {telegram} and {reddit}.",
       hub: "Back to Social", prev: "Previous report", next: "Next report", pause: "Pause rotation", play: "Play rotation", open: "Open report",
       carousel: "Live reports carousel", all: "All", sector: "Sector", scope: "Scope", country: "Country", focus: "Test focus",
       worldwide: "Worldwide", national: "National", regional: "Regional", local: "Local", requested: "Requested", global: "Global",
@@ -44,6 +51,7 @@
       book: "Agenda una llamada de 15 min sobre esto",
       eyebrow: "Informes en vivo", title: "Sitios reales. Análisis reales.", titleEm: "Abre el informe que quieras.",
       lede: "<b>{n} sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Solo para ver y compartir.",
+      follow: "Nuevos informes cada día en {telegram} y {reddit}.",
       hub: "Volver a Social", prev: "Informe anterior", next: "Informe siguiente", pause: "Pausar el carrusel", play: "Reanudar el carrusel", open: "Abrir informe",
       carousel: "Carrusel de informes en vivo", all: "Todos", sector: "Sector", scope: "Alcance", country: "País", focus: "Tipo de prueba",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
@@ -72,6 +80,7 @@
       book: "Agende uma conversa de 15 min sobre isto",
       eyebrow: "Relatórios ao vivo", title: "Sites reais. Análises reais.", titleEm: "Abra o relatório que quiser.",
       lede: "<b>{n} sites públicos</b>, analisados pela mesma revisão que qualquer pessoa pode executar: portais de governo, veículos de imprensa, bancos, universidades, projetos de código aberto e sistemas de transporte. Percorra o carrossel, filtre por setor ou país e abra um relatório. As revisões que as pessoas solicitam entram em um lote diário. Só para ver e compartilhar.",
+      follow: "Novos relatórios todos os dias no {telegram} e no {reddit}.",
       hub: "Voltar ao Social", prev: "Relatório anterior", next: "Próximo relatório", pause: "Pausar o carrossel", play: "Retomar o carrossel", open: "Abrir relatório",
       carousel: "Carrossel de relatórios ao vivo", all: "Todos", sector: "Setor", scope: "Alcance", country: "País", focus: "Tipo de teste",
       worldwide: "Mundial", national: "Nacional", regional: "Regional", local: "Local", requested: "Solicitado", global: "Global",
@@ -100,6 +109,7 @@
       book: "15-Minuten-Gespräch dazu buchen",
       eyebrow: "Live-Berichte", title: "Echte Websites. Echte Prüfungen.", titleEm: "Öffnen Sie jeden Bericht.",
       lede: "<b>{n} öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Nur ansehen und teilen.",
+      follow: "Jeden Tag neue Berichte auf {telegram} und {reddit}.",
       hub: "Zurück zu Social", prev: "Vorheriger Bericht", next: "Nächster Bericht", pause: "Karussell anhalten", play: "Karussell fortsetzen", open: "Bericht öffnen",
       carousel: "Karussell der Live-Berichte", all: "Alle", sector: "Branche", scope: "Reichweite", country: "Land", focus: "Testart",
       worldwide: "Weltweit", national: "National", regional: "Regional", local: "Lokal", requested: "Angefragt", global: "Global",
@@ -128,6 +138,7 @@
       book: "Réserver un appel de 15 min à ce sujet",
       eyebrow: "Rapports en direct", title: "De vrais sites. De vraies analyses.", titleEm: "Ouvrez le rapport de votre choix.",
       lede: "<b>{n} sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Consultation et partage uniquement.",
+      follow: "De nouveaux rapports chaque jour sur {telegram} et {reddit}.",
       hub: "Retour à Social", prev: "Rapport précédent", next: "Rapport suivant", pause: "Mettre le carrousel en pause", play: "Relancer le carrousel", open: "Ouvrir le rapport",
       carousel: "Carrousel des rapports en direct", all: "Tous", sector: "Secteur", scope: "Portée", country: "Pays", focus: "Type de test",
       worldwide: "Mondial", national: "National", regional: "Régional", local: "Local", requested: "Demandé", global: "Mondial",
@@ -156,6 +167,7 @@
       book: "Prenota una chiamata di 15 minuti su questo",
       eyebrow: "Report dal vivo", title: "Siti veri. Analisi vere.", titleEm: "Apri il report che vuoi.",
       lede: "<b>{n} siti pubblici</b>, analizzati con la stessa revisione che chiunque può avviare: portali pubblici, redazioni, banche, università, progetti open source e trasporti. Scorri il carosello, filtra per settore o paese e apri un report. Le revisioni richieste dagli utenti si aggiungono ogni giorno, in un unico lotto. Solo visualizzazione e condivisione.",
+      follow: "Nuovi report ogni giorno su {telegram} e {reddit}.",
       hub: "Torna a Social", prev: "Report precedente", next: "Report successivo", pause: "Metti in pausa il carosello", play: "Riprendi il carosello", open: "Apri il report",
       carousel: "Carosello dei report dal vivo", all: "Tutti", sector: "Settore", scope: "Portata", country: "Paese", focus: "Tipo di test",
       worldwide: "Mondiale", national: "Nazionale", regional: "Regionale", local: "Locale", requested: "Richiesto", global: "Globale",
@@ -461,7 +473,9 @@
     section.querySelector("[data-live-title]").innerHTML = esc(t("title")) + " <em>" + esc(t("titleEm")) + "</em>";
     section.querySelector("[data-live-eyebrow]").textContent = t("eyebrow");
     section.querySelector("[data-live-lede]").innerHTML = t("lede", { n: state.all.length || "100+" });
-    section.querySelectorAll("[data-live-title], [data-live-eyebrow], [data-live-lede]").forEach((el) => {
+    const follow = section.querySelector("[data-live-follow]");
+    if (follow) follow.innerHTML = t("follow", FOLLOW);
+    section.querySelectorAll("[data-live-title], [data-live-eyebrow], [data-live-lede], [data-live-follow]").forEach((el) => {
       if (state.lang === "en") el.removeAttribute("translate"); else el.setAttribute("translate", "no");
     });
     stage.setAttribute("aria-label", t("carousel"));
@@ -490,7 +504,6 @@
       el.setAttribute("role", "group");
       el.setAttribute("aria-roledescription", "slide");
       el.style.setProperty("--h", HUES[r.sector] || 186);
-      el.innerHTML = cardHtml(r);
       ring.appendChild(el);
       cards.set(r.id, el);
     });
@@ -553,9 +566,10 @@
     const target = keepId || before;
     const at = state.list.findIndex((r) => r.id === target);
     state.active = at >= 0 ? at : 0;
+    const listed = new Set(state.list);
     state.all.forEach((r) => {
       const el = cards.get(r.id);
-      const shown = state.list.includes(r);
+      const shown = listed.has(r);
       if (el.hidden === shown) lastD.delete(r.id);
       el.hidden = !shown;
       if (!shown) el.classList.remove("is-active");
@@ -587,15 +601,17 @@
     const n = state.list.length;
     state.list.forEach((r, i) => {
       const el = cards.get(r.id);
-      const btn = el.querySelector(".lc-open");
       const d = wrap(i - state.active + state.drag, n);
       const ad = Math.abs(d);
       const front = ad < 0.5;
+      const far = !state.flat && ad > state.vis + 1;
+      if (!far && !el.firstChild) el.innerHTML = cardHtml(r);
       el.classList.toggle("is-active", front);
       el.setAttribute("aria-label", t("slide", { i: i + 1, n, name: r.name }));
       el.setAttribute("aria-hidden", state.flat || front ? "false" : "true");
-      btn.tabIndex = state.flat || front ? 0 : -1;
+      if (el.firstChild) el.querySelector(".lc-open").tabIndex = state.flat || front ? 0 : -1;
       if (state.flat) {
+        el.classList.remove("is-far");
         el.style.transform = "";
         el.style.opacity = "";
         el.style.visibility = "";
@@ -604,6 +620,9 @@
       const prev = lastD.get(r.id);
       const jump = prev == null || Math.abs(prev - d) > 1.5;
       lastD.set(r.id, d);
+      // A thousand 3D-placed cards stall a phone or a CI runner; the ones behind the ring leave rendering and are built on first view.
+      el.classList.toggle("is-far", far);
+      if (far) return;
       el.style.transition = jump || state.dragging ? "none" : "";
       el.style.transform = "rotateY(" + (d * state.step).toFixed(2) + "deg) translateZ(" + state.R + "px)";
       const shown = ad <= state.vis;
@@ -1148,7 +1167,7 @@
     buildShell();
     paintEmpty();
     if (!state.all.length) return;
-    state.all.forEach((r) => { cards.get(r.id).innerHTML = cardHtml(r); });
+    state.all.forEach((r) => { const el = cards.get(r.id); if (el.firstChild) el.innerHTML = cardHtml(r); });
     renderFilters();
     layout();
     announce();

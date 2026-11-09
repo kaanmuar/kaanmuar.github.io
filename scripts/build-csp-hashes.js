@@ -2,7 +2,7 @@
  * Keeps each page's script-src free of 'unsafe-inline': the <meta> Content-Security-Policy lists a 'sha256-...' for
  * every inline script the page runs, so a changed inline script needs this builder run again or the browser refuses it.
  * Inline event handlers (onclick=, onload=) and javascript: URLs cannot be allowed by a hash; use addEventListener.
- * build-social-hub.js and build-review-langs.py apply the same rewrite to the pages they write.
+ * build-social-hub.js, build-face-pages.js and build-review-langs.py apply the same rewrite to the pages they write.
  *
  *   node scripts/build-csp-hashes.js          rewrites the pages
  *   node scripts/build-csp-hashes.js --check  exits 1 when a page's hashes no longer match its inline scripts

@@ -42,7 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
+import androidx.activity.addCallback
+import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.ui.ActionButton
@@ -52,6 +53,7 @@ import com.carlosandmunoz.jarvis.ui.Mono
 import com.carlosandmunoz.jarvis.ui.VoiceOrb
 import com.carlosandmunoz.jarvis.ui.glass
 import com.carlosandmunoz.jarvis.ui.reveal
+import com.carlosandmunoz.jarvis.ui.sheetFit
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.voice.Speaker
 import com.carlosandmunoz.jarvis.voice.Voice
@@ -67,6 +69,7 @@ class AssistActivity : FragmentActivity() {
     private var answer by mutableStateOf<String?>(null)
     private var thinking by mutableStateOf(false)
     private var failed by mutableStateOf<String?>(null)
+    private var cancelled = false
     private val askMic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) listen() else failed = "Jarvis needs the microphone to listen."
     }
@@ -74,15 +77,16 @@ class AssistActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         listener = Listener(this) { ask(it) }
-        speaker = Speaker(app)
+        speaker = app.speaker
+        onBackPressedDispatcher.addCallback(this) { dismiss() }
         val signedIn = app.auth.signedIn || (BuildConfig.DEBUG && java.io.File(filesDir, "jarvis/fixture.json").exists())
         setContent {
             JarvisTheme {
                 val heard by listener.state.collectAsState()
                 val speaking by speaker.speaking.collectAsState()
-                Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { finish() }, contentAlignment = Alignment.BottomCenter) {
+                Box(Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, null) { dismiss() }, contentAlignment = Alignment.BottomCenter) {
                     Column(
-                        Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
+                        Modifier.sheetFit().fillMaxWidth().navigationBarsPadding().padding(12.dp).reveal()
                             .background(J.bg.copy(alpha = 0.94f), RoundedCornerShape(20.dp)).glass(radius = 20.dp)
                             .clickable(remember { MutableInteractionSource() }, null) { }.padding(18.dp).animateContentSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -113,6 +117,7 @@ class AssistActivity : FragmentActivity() {
                         Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             ActionButton(if (heard.listening) "Stop" else "Ask again", false) { if (heard.listening) listener.stop() else listen() }
+                            ActionButton("Hands-free", false) { handsFree() }
                             ActionButton("Open Jarvis", false) { startActivity(Home.open(this@AssistActivity, "overview")); finish() }
                         }
                     }
@@ -122,9 +127,26 @@ class AssistActivity : FragmentActivity() {
         if (signedIn) unlockThen { listen() }
     }
 
+    /** Locking the phone or switching apps lets the question finish and the answer play (#2531); back or a tap outside cancels it. */
     override fun onStop() {
         super.onStop()
-        if (!isChangingConfigurations) { listener.stop(); speaker.stop(); finish() }
+        if (!isChangingConfigurations) finish()
+    }
+
+    private fun dismiss() {
+        cancelled = true
+        listener.stop()
+        speaker.stop()
+        finish()
+    }
+
+    /** Hands-free carries on after the sheet closes, until "stop" or the notification's Stop. */
+    private fun handsFree() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { askMic.launch(Manifest.permission.RECORD_AUDIO); return }
+        listener.stop()
+        speaker.stop()
+        app.handsFree.start()
+        finish()
     }
 
     private fun listen() {
@@ -138,15 +160,19 @@ class AssistActivity : FragmentActivity() {
         question = q
         answer = null
         thinking = true
-        lifecycleScope.launch {
-            val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang(app)), "spoken" to JsonPrimitive(true))
-            runCatching { app.api.call("ask", Home.days(app), extra).str("text") ?: "No answer." }
-                .onSuccess { a ->
-                    thinking = false
-                    answer = a
-                    if (Voice.speakOn(app)) runCatching { speaker.say(a) }.onFailure { failed = it.message }
-                }
-                .onFailure { thinking = false; failed = it.message ?: "Jarvis could not answer." }
+        app.scope.launch {
+            Keep.during(app, "Answering \"$q\"") {
+                val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang(app)), "spoken" to JsonPrimitive(true))
+                runCatching { app.api.call("ask", Home.days(app), extra).str("text") ?: "No answer." }
+                    .onSuccess { a ->
+                        thinking = false
+                        answer = a
+                        if (cancelled) return@onSuccess
+                        Keep.tell(app, q, a, "ask")
+                        if (Voice.speakOn(app)) runCatching { speaker.say(a) }.onFailure { failed = it.message }
+                    }
+                    .onFailure { thinking = false; failed = it.message ?: "Jarvis could not answer." }
+            }
         }
     }
 

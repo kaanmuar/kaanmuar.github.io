@@ -27,7 +27,7 @@ const RUNS = [
     tags: ["SEO", "WebPerformance", "Accessibility"]
   },
   {
-    id: "bogota", report: "bogota", scope: "Local",
+    id: "bogota", place: "Bogotá, Colombia", report: "bogota", scope: "Local",
     title: ["Bogotá city hall:", "*SEO {SEO}.*"],
     body: "Every page has a title and a description, the sitemap answers, structured data parses, and share cards are complete. The catch: every page reports to two GA4 properties.",
     action: "One site, one GA4 property, one gtag.js. If two teams need the data, share access instead of adding a tag.",
@@ -55,7 +55,7 @@ const RUNS = [
     tags: ["GEO", "AISearch", "SEO"]
   },
   {
-    id: "transmilenio", report: "transmilenio", scope: "Local",
+    id: "transmilenio", place: "Bogotá, Colombia", report: "transmilenio", scope: "Local",
     title: ["TransMilenio lets", "*search write its pitch.*"],
     body: "Every linked page answers and AI crawlers are welcome. But none of the 20 pages analyzed has a meta description, the start page included, so search engines write the snippet themselves.",
     action: "Write a description of about 150 characters for your ten most visited pages, starting with the home page.",

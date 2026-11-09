@@ -29,7 +29,8 @@ const critical = require("./build-critical-css");
 const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
 const metrics = require("./social-metrics");
-const { PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const { ORDER } = require("./brand-kit/faces");
 const i18n = require("./social-hub/i18n");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -210,16 +211,20 @@ function expand(posts) {
     }))));
 }
 
-// One card per post on each language's page: the post in that language, else in English, else as written.
+// One card per post on each language's page: the post in that language. The English page falls back to
+// the post as written; a localized page leaves out posts not yet in its language, such as a new pick the
+// translator refused. A skit is spoken in its take's language, so a page with no take in its language
+// leaves the skit out.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
   posts.forEach((post) => {
+    if (post.kind === "skit" && post.lang !== lang) return;
     const key = post.group || post.id;
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);
   });
-  return posts.filter((post) => best.get(post.group || post.id) === post);
+  return posts.filter((post) => best.get(post.group || post.id) === post && (lang === "en" || post.lang === lang));
 }
 
 // A quiz names its answer post; each language's quiz points at the answer in the same language when there is one.
@@ -233,7 +238,7 @@ function pairQuizzes(posts) {
 }
 
 // Post ids a network has taken: queued or sent in either ledger. A translated variant counts through its base post.
-function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK), queues.read(queues.OPEN_SOCIAL)]) {
+function queuedIds(books = [queues.BUFFER, queues.FACEBOOK, queues.OPEN_SOCIAL, "assets/social/telegram.json", "assets/social/reddit.json"].map(queues.read)) {
   const ids = new Set();
   books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => {
     if (list.some((entry) => entry.result === "queued" || entry.result === "sent")) ids.add(id);
@@ -256,8 +261,7 @@ function networkIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACE
 function postNets(post, nets) {
   const set = new Set(nets.get(post.base || post.id) || []);
   if (post.youtube) set.add("youtube");
-  const order = PROFILES.map((profile) => profile.net);
-  return [...set].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b));
+  return [...set].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99) || a.localeCompare(b));
 }
 
 function collect() {
@@ -519,7 +523,11 @@ function page(lang, posts, asOf) {
   const langLinks = Object.entries(LANGS).map(([code, info]) =>
     "<a href=\"" + card.pageFor(code) + "\" hreflang=\"" + code + "\" lang=\"" + code + "\"" + (code === lang ? " aria-current=\"page\"" : "") + ">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
-  const follow = PROFILES.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("");
+  const follow = FACE_PROFILES.slice().sort((a, b) => b.langs.includes(lang) - a.langs.includes(lang)).map((face) =>
+    "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"" + face.page + "\" translate=\"no\">@" + face.handle + " <small>" + face.langs.map((code) => code.toUpperCase()).join(" · ") + "</small></a>"
+    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("")
+    + "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"qa-review" + sfx + ".html#live-reports\">" + esc(copy.nav.live) + "</a>"
+    + CHANNELS.map((c) => "<a class=\"hub-follow-" + c.net + "\" href=\"" + c.url + "\" rel=\"me noopener\" data-net=\"" + c.net + "\">" + esc(c.name) + "</a>").join("") + "</p>";
   const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind))).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const option = (value, label) => "<option value=\"" + esc(value) + "\">" + esc(label) + "</option>";
@@ -527,7 +535,7 @@ function page(lang, posts, asOf) {
   const topicOptions = option("all", copy.allTopics) + topics(visible).map((cat) => option(cat, card.topic({ cat }, copy))).join("");
   const sortOptions = card.SORTS.map((key) => option(key, copy.sorts[key])).join("");
   const mediaOptions = ["all", "image", "video"].map((key) => option(key, copy.medias[key])).join("");
-  const netOptions = option("all", copy.allNets) + PROFILES.filter((profile) => visible.some((post) => (post.nets || []).includes(profile.net))).map((profile) => option(profile.net, profile.name)).join("");
+  const netOptions = option("all", copy.allNets) + PROFILES.filter((profile, i) => PROFILES.findIndex((other) => other.net === profile.net) === i && visible.some((post) => (post.nets || []).includes(profile.net))).map((profile) => option(profile.net, profile.name)).join("");
   const rangeOptions = ["all", "7", "30", "90", "custom"].map((key) => option(key, copy.ranges[key])).join("");
   const hubCopy = Object.assign({}, copy, { captions: CAPTIONS, lang, asOf });
   const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");

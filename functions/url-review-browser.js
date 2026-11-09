@@ -599,6 +599,21 @@ async function settle(page) {
   try { await page.waitForNetworkIdle({ idleTime: 700, timeout: IDLE_MS }); } catch (error) { /* busy pages keep polling */ }
 }
 
+// A page that moves itself on after its load event (a script's locale or route redirect) destroys the context a read runs in;
+// the read waits for the next page to settle and runs again, up to twice.
+const NAVIGATED = /Execution context was destroyed|Cannot find context with specified id/i;
+async function steady(page, read, moved) {
+  for (let tries = 0; ; tries += 1) {
+    try {
+      return await read();
+    } catch (error) {
+      if (tries >= 2 || !NAVIGATED.test(String((error && error.message) || ""))) throw error;
+      if (typeof moved === "function") moved();
+      await settle(page);
+    }
+  }
+}
+
 async function prepare(context, ua, rec, viewport, acceptLanguage) {
   const page = await context.newPage();
   await page.setViewport(viewport);
@@ -1394,6 +1409,44 @@ async function printPdf(html) {
   }
 }
 
+// job.kind "brave-submit": our own pages typed one at a time into Brave Search's re-fetch form, the only way Brave
+// takes a URL (no API, no sitemap upload). The form's proof-of-work runs in the page as for any visitor.
+const BRAVE_SUBMIT = "https://search.brave.com/submit-url";
+const BRAVE_OURS = /^https:\/\/carlosandmunoz\.com\/[^\s]*$/;
+const BRAVE_BATCH = 8;
+const BRAVE_DONE = /thank you for your submission/i;
+
+async function submitBrave(urls, budgetMs = BUDGET_MAX_MS - 10000) {
+  const list = (Array.isArray(urls) ? urls : []).filter((u) => typeof u === "string" && BRAVE_OURS.test(u)).slice(0, BRAVE_BATCH);
+  const started = Date.now();
+  const results = [];
+  if (!list.length) return { ok: true, results };
+  const browser = await launch();
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent((await browser.userAgent()).replace(/HeadlessChrome/g, "Chrome"));
+    for (const url of list) {
+      if (Date.now() - started > budgetMs - 15000) { results.push({ url, ok: false, text: "Out of time; sent again next week." }); continue; }
+      try {
+        // The page polls /api/feedback, so it never goes network-idle.
+        await page.goto(BRAVE_SUBMIT, { waitUntil: "domcontentloaded", timeout: NAV_MS });
+        await page.waitForSelector("#url", { timeout: 10000 });
+        await page.type("#url", url);
+        await page.waitForSelector('button[name="captcha-button"]:not([disabled])', { timeout: 10000 });
+        await page.click('button[name="captcha-button"]');
+        await page.waitForFunction((re) => new RegExp(re, "i").test((document.querySelector("form") || document.body).innerText), { timeout: 30000 }, BRAVE_DONE.source);
+        results.push({ url, ok: true, text: "Thank you for your submission." });
+      } catch (error) {
+        const said = await page.evaluate(() => ((document.querySelector("form") || document.body).innerText || "").replace(/\s+/g, " ").slice(0, 160)).catch(() => "");
+        results.push({ url, ok: false, text: said || String((error && error.message) || error).slice(0, 160) });
+      }
+    }
+    return { ok: true, results };
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 // A recovery read (job.html) only needs the document. Once that document is still refused,
 // axe-core, screenshots and the phone visit cannot become the review.
 function stopForRefusal(job, docStatus) {
@@ -1596,9 +1649,10 @@ async function browse(job, log, onStart) {
     lap("load");
     if (first.stalled) say("The page's load event had not fired after " + NAV_MS / 1000 + " s, though its document had arrived. Reading the page as it stands.");
     say(pathOf(first.finalUrl) + " loaded with status " + first.status + " in " + Math.round(timing.load / 100) / 10 + " s, after " + rec.state.requests + " requests to " + rec.state.hosts.size + " hosts.");
-    const view = await rendered(page);
+    const reread = (read) => steady(page, read, () => say("The page moved on to " + pathOf(page.url()) + " after it loaded. Reading it again once it settles."));
+    const view = await reread(() => rendered(page));
     let dom = null;
-    try { dom = await domFacts(page); } catch (error) { dom = null; }
+    try { dom = await reread(() => domFacts(page)); } catch (error) { dom = null; }
     if (dom) {
       try { dom.legal = legalLinks(await legalAnchors(page), first.finalUrl); } catch (error) { /* the HTML read still has its links */ }
     }
@@ -1652,7 +1706,7 @@ async function browse(job, log, onStart) {
     }
     lap("shot");
     say("Core Web Vitals in the lab: LCP " + result.start.vitals.lcp + " ms, CLS " + result.start.vitals.cls + ", TBT " + result.start.vitals.tbt + " ms. Took the desktop screenshot.");
-    const banner = await findBanner(page);
+    const banner = await reread(() => findBanner(page));
     const beforeCookies = await cookiesOf(coldContext, page, host);
     say(bannerSay(banner, beforeCookies));
     const consent = {
@@ -1874,4 +1928,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, steady, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

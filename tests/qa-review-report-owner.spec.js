@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const auth = require('../functions/url-review-auth');
 const core = require('../functions/url-review-core');
 const offers = require('../functions/url-review-offers');
-const sample = require('../assets/qa-review-sample.json');
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 
 const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'ab12cd34ef56';
@@ -68,6 +68,25 @@ test.describe('A paid report opens only for the account that ran it', () => {
     await expect(page.locator('body')).toHaveClass(/paid-copy/);
     await expect(page.locator('#pay')).toBeHidden();
     expect(asked).toEqual([{ id: ID, session: true }]);
+  });
+
+  test('on a desktop the pinned toolbar is one slim row, and every action stays one click away (#2829)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await open(page, 'ana');
+    await expect(page.locator('body')).toHaveClass(/paid-copy/);
+    const bar = page.locator('#dash-overlay .report-toolbar');
+    expect((await bar.boundingBox()).height).toBeLessThan(60);
+    await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1600));
+    await expect.poll(async () => Math.round((await bar.boundingBox()).y)).toBe(0);
+    await page.locator('#export-toggle').click();
+    for (const id of ['#download-json', '#download-text', '#print-report', '#case-export-open']) await expect(page.locator(id)).toBeVisible();
+    await page.locator('#share-toggle').click();
+    await expect(page.locator('#export-menu')).toBeHidden();
+    await expect(page.locator('#copy-link')).toBeVisible();
+    await expect(page.locator('#share-menu [data-net="linkedin"]')).toBeVisible();
+    await page.locator('#export-toggle').click();
+    await page.locator('#case-export-open').click();
+    await expect(page.locator('#case-export-title')).toBeVisible();
   });
 
   test('another signed-in account gets the blurred preview and a sign-in prompt', async ({ page }) => {

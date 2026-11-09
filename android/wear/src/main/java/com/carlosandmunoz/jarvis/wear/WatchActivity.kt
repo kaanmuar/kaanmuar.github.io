@@ -109,6 +109,7 @@ private fun Screen(note: String?, open: () -> Unit) {
             } else {
                 item { Text(status.today, color = Store.TEXT.c(), fontSize = 14.sp, fontWeight = FontWeight.Medium) }
                 item { Text(status.headline, color = status.color.c(), fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                status.processes?.let { line -> item { Text(line, color = status.processColor.c(), fontSize = 13.sp, fontWeight = FontWeight.Medium) } }
                 status.top?.let { top -> item {
                     Text(top, color = Store.MUTED.c(), fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 3,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp))

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Waits for every CI run on a commit and prints only what failed (#1970): one blocking REST watch per run,
-# then the last lines of each failed step instead of the whole log.
+# then the last lines of each failed step instead of the whole log. A run that has not started is skipped once every
+# check main requires has passed: the macOS runners can leave a run queued for hours (#2293).
 #   scripts/ci-wait.sh <sha|pr-number> [lines]
 set -uo pipefail
 R=repos/kaanmuar/kaanmuar.github.io
@@ -12,9 +13,23 @@ else
 	ref=$(gh api $R/commits/"$ref" -q .sha)
 fi
 
+# Every gh call can fail on the shared rate limit; retry it rather than read an error as a result.
+runs() { until gh run list --commit "$ref" --json databaseId -q '.[].databaseId' 2>/dev/null; do sleep 60; done; }
+
+required=$(gh api $R/rules/branches/main -q '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context] | unique | .[]' 2>/dev/null)
+required_passed() {
+	[ -n "$required" ] || return 1
+	local passed name
+	passed=$(gh api --paginate "$R/commits/$ref/check-runs?per_page=100" \
+		-q '.check_runs[] | select(.conclusion == "success" or .conclusion == "skipped" or .conclusion == "neutral") | .name' 2>/dev/null) || return 1
+	while IFS= read -r name; do
+		grep -qxF "$name" <<<"$passed" || return 1
+	done <<<"$required"
+}
+
 ids=""
 for _ in $(seq 1 20); do
-	ids=$(gh run list --commit "$ref" --json databaseId -q '.[].databaseId')
+	ids=$(runs)
 	[ -n "$ids" ] && break
 	sleep 15
 done
@@ -24,17 +39,35 @@ done
 }
 
 failed=0
+skipped=0
 seen=" "
 while [ -n "$ids" ]; do
 	for id in $ids; do
 		seen="$seen$id "
-		gh run watch "$id" -i 30 --exit-status >/dev/null 2>&1 && continue
+		until state=$(gh run view "$id" --json status,conclusion -q '"\(.status) \(.conclusion)"' 2>/dev/null) &&
+			[[ "$state" == completed* ]]; do
+			if [[ "$state" =~ ^(queued|waiting|pending|requested) ]]; then
+				required_passed && break
+				sleep 60
+			else
+				gh run watch "$id" -i 30 >/dev/null 2>&1 || sleep 60
+			fi
+		done
+		if [[ "$state" != completed* ]]; then
+			gh run view "$id" --json name,url -q '"SKIPPED \(.name) has not started; the required checks passed  \(.url)"'
+			skipped=1
+			continue
+		fi
+		# A run whose jobs all skipped has passed.
+		[[ "$state" == "completed success" || "$state" == "completed skipped" ]] && continue
 		failed=1
 		gh run view "$id" --json name,url -q '"FAILED  \(.name)  \(.url)"'
 		gh run view "$id" --log-failed 2>/dev/null | cut -f3- | sed 's/^[0-9T:.-]*Z //' | tail -n "$lines"
 	done
 	sleep 20
-	ids=$(gh run list --commit "$ref" --json databaseId -q '.[].databaseId' | while read -r id; do [[ "$seen" == *" $id "* ]] || echo "$id"; done)
+	ids=$(runs | while read -r id; do [[ "$seen" == *" $id "* ]] || echo "$id"; done)
 done
-[ $failed = 0 ] && echo "All runs passed for ${ref:0:7}."
+if [ $failed = 0 ]; then
+	[ $skipped = 1 ] && echo "Every run that started passed for ${ref:0:7}." || echo "All runs passed for ${ref:0:7}."
+fi
 exit $failed

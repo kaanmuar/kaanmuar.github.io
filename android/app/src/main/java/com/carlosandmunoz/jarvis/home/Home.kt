@@ -12,6 +12,7 @@ import com.carlosandmunoz.jarvis.R
 import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -23,6 +24,7 @@ import com.carlosandmunoz.jarvis.BuildConfig
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.MainActivity
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.Sections
 import com.carlosandmunoz.jarvis.data.at
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.doubles
@@ -45,8 +47,19 @@ object Home {
     const val EXTRA_ACTION = "jarvis.action"
     private const val WORK = "jarvis-home"
 
-    data class Status(val readiness: Double?, val alerts: Int, val warns: Int) {
-        val headline get() = if (alerts + warns == 0) "All clear" else listOfNotNull(alerts.takeIf { it > 0 }?.let { plural(it, "alert") }, warns.takeIf { it > 0 }?.let { plural(it, "warning") }).joinToString(" · ")
+    /** [note] is JarvisCore.systemsNote: down connections or low readiness, named once the briefing is empty (#2266). */
+    data class Status(val readiness: Double?, val alerts: Int, val warns: Int, val note: String = "") {
+        val headline get() = if (alerts + warns == 0) note.ifEmpty { "All clear" } else listOfNotNull(alerts.takeIf { it > 0 }?.let { plural(it, "alert") }, warns.takeIf { it > 0 }?.let { plural(it, "warning") }).joinToString(" · ")
+        val level get() = if (alerts > 0) "alert" else if (warns > 0 || note.isNotEmpty()) "warn" else "good"
+    }
+
+    fun systemsNote(states: List<String?>, readiness: Double?, readinessMin: Double?): String {
+        val off = states.count { it == "down" || it == "partial" }
+        return when {
+            off > 0 -> off.toString() + (if (off > 1) " connections need" else " connection needs") + " a look"
+            readiness != null && readinessMin != null && readiness < readinessMin -> "Readiness below ${readinessMin.toInt()}%"
+            else -> ""
+        }
     }
 
     data class Cell(val label: String, val value: String, val delta: String?, val dir: Int, val series: List<Double>, val note: String? = null)
@@ -70,7 +83,9 @@ object Home {
 
     fun status(snap: JsonObject): Status {
         val brief = snap.objs("briefing")
-        return Status(snap.num("readiness"), brief.count { it.str("level") == "alert" }, brief.count { it.str("level") == "warn" })
+        val ready = snap.num("readiness")
+        return Status(ready, brief.count { it.str("level") == "alert" }, brief.count { it.str("level") == "warn" },
+            systemsNote(snap.objs("connections").map { it.str("state") }, ready, snap.obj("thresholds").num("readinessMin") ?: 80.0))
     }
 
     fun numbers(snap: JsonObject): List<Cell> {
@@ -234,7 +249,7 @@ object Home {
             if (sy != null) add(Line("Replies", if (replies > 0) "$replies to answer" else "none waiting", if (replies > 0) "alert" else "good"))
             if (li.isNotEmpty()) add(Line("LinkedIn", "$liSent / ${li.size} sent", if (liSent < li.size) "warn" else "good"))
             if (mail != null) add(Line("Sent", "${fmt(mail.num("sent"), 0)} · ${fmt(mail.num("replies"), 0)} replies · ${fmt(mail.num("meetings"), 0)} meetings", "info"))
-            if (sy != null) add(Line("Mac sync", rel(sy.str("at"), now) ?: "never", if (sy.bool("stale") == true) "alert" else "good"))
+            if (sy != null) add(Line("Outreach sync", rel(sy.str("at"), now) ?: "never", if (sy.bool("stale") == true) "alert" else "good"))
         }
         return MarketingCard(headline, lines)
     }
@@ -293,8 +308,8 @@ object Home {
         }
         return when (key) {
             "sales" -> Pick("Sales", money.at("revenue").num("count")?.let { fmt(it, 0) } ?: "—", "24 h", "info", "business")
-            "readiness" -> Pick("Readiness", st.readiness?.let { fmt(it, 0) + "%" } ?: "—", st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
-            "alerts" -> Pick("Alerts", (st.alerts + st.warns).toString(), st.headline, if (st.alerts > 0) "alert" else if (st.warns > 0) "warn" else "good", "overview")
+            "readiness" -> Pick("Readiness", st.readiness?.let { fmt(it, 0) + "%" } ?: "—", st.headline, st.level, "overview")
+            "alerts" -> Pick("Alerts", (st.alerts + st.warns).toString(), st.headline, st.level, "overview")
             "needs" -> Pick("Waiting for you", needs.toString(), "notices and picks", if (needs > 0) "warn" else "good", "products:outreach")
             "reviews" -> product("review", "Reviews")
             "cv" -> product("cv", "CV visits")
@@ -361,7 +376,7 @@ object Home {
     }
 
     /** The one-day snapshot behind "today" figures, fetched at most once per redraw and only when asked for. */
-    private fun today(app: JarvisApp): suspend () -> JsonObject? {
+    fun today(app: JarvisApp): suspend () -> JsonObject? {
         var loaded = false
         var day: JsonObject? = null
         return {
@@ -387,6 +402,31 @@ object Home {
         val net = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
         WorkManager.getInstance(context).enqueueUniqueWork("$WORK-now", ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<RefreshWorker>().setConstraints(net).build())
+    }
+
+    /** The saved snapshots a section push touches: the app's range, and the one-day copy behind "today" when kept. */
+    private fun pushRanges(app: JarvisApp) = listOf(days(app)) + if (days(app) != 1 && app.api.saved("snapshot", 1) != null) listOf(1) else emptyList()
+
+    fun pushStale(app: JarvisApp, data: Map<String, String>) = pushRanges(app).any { d -> Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d).isNotEmpty() }
+
+    /** A section push (#2509): fetch the sections it names in the background, one push after the other. */
+    fun refreshSections(context: Context, data: Map<String, String>) {
+        val net = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        val input = Data.Builder().putString("sections", data["sections"]).putString("versions", data["versions"]).putString("days", data["days"]).build()
+        WorkManager.getInstance(context).enqueueUniqueWork("$WORK-sections", ExistingWorkPolicy.APPEND_OR_REPLACE,
+            OneTimeWorkRequestBuilder<SectionsWorker>().setConstraints(net).setInputData(input).build())
+    }
+
+    /** Fetches only the sections a push says moved into each saved snapshot, then redraws; false when a fetch failed. */
+    suspend fun applyPush(context: Context, data: Map<String, String>): Boolean {
+        val app = context.applicationContext as JarvisApp
+        var fetched = false
+        val ok = pushRanges(app).map { d ->
+            val only = Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d)
+            if (only.isEmpty()) true else runCatching { app.api.snapshot(d, only) }.isSuccess.also { fetched = true }
+        }.all { it }
+        if (fetched) redraw(context)
+        return ok
     }
 
     fun stop(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(WORK)
@@ -434,5 +474,13 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     override suspend fun doWork(): Result {
         if (!(applicationContext as JarvisApp).auth.signedIn) { Home.redraw(applicationContext); return Result.success() }
         return if (Home.refresh(applicationContext)) Result.success() else Result.retry()
+    }
+}
+
+class SectionsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        if (!(applicationContext as JarvisApp).auth.signedIn) return Result.success()
+        val data = listOf("sections", "versions", "days").mapNotNull { k -> inputData.getString(k)?.let { k to it } }.toMap()
+        return if (Home.applyPush(applicationContext, data)) Result.success() else Result.retry()
     }
 }

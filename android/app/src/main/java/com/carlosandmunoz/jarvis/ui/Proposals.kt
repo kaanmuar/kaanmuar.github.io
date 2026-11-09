@@ -15,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +73,7 @@ fun Proposals(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         else -> "From the rules"
     }
     ConfirmAction(confirm) { confirm = null }
-    Panel("Proposals", trailing = { TextButton(onClick = { round++ }, enabled = !busy) { Text(if (busy) "Ranking…" else "Rank again") } }) {
+    Panel("Proposals", id = "overview-proposals", trailing = { TextButton(onClick = { round++ }, enabled = !busy) { Text(if (busy) "Ranking…" else "Rank again", maxLines = 1, softWrap = false) } }) {
         Muted(note)
         if (list.isEmpty()) Muted(if (busy) "Reading the sources…" else "Nothing to propose right now.")
         list.forEachIndexed { i, p -> ProposalRow(i + 1, p, vm, open, { confirm = it }) { status -> mark(p, status) } }
@@ -83,7 +82,6 @@ fun Proposals(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
 
 @Composable
 private fun ProposalRow(rank: Int, p: JsonObject, vm: JarvisViewModel, open: (String) -> Unit, ask: (PendingAction) -> Unit, mark: (String) -> Unit) {
-    val uri = LocalUriHandler.current
     Row(verticalAlignment = Alignment.Top) {
         Text("$rank", fontFamily = Mono, fontSize = 18.sp, color = J.level(p.str("level")), modifier = Modifier.width(26.dp))
         Column(Modifier.weight(1f)) {
@@ -92,14 +90,7 @@ private fun ProposalRow(rank: Int, p: JsonObject, vm: JarvisViewModel, open: (St
             Text(tags.joinToString(" · "), fontFamily = Mono, fontSize = 11.sp, color = J.dim)
             p.str("why")?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = J.muted) }
             p.arr("evidence").forEach { Text("• " + it.text(), fontSize = 12.sp, color = J.muted) }
-            ProposalActions(p, vm, ask)
-            Row {
-                val tab = p.str("tab")
-                if (tab != null && tab in CHIPS.toMap()) TextButton(onClick = { open(tab) }) { Text("Open") }
-                p.str("link")?.let { link -> TextButton(onClick = { runCatching { uri.openUri(link) } }) { Text("Open ↗") } }
-                TextButton(onClick = { mark("done") }) { Text("Done") }
-                TextButton(onClick = { mark("dismissed") }) { Text("Dismiss", color = J.muted) }
-            }
+            ProposalActions(p, vm, ask, open, mark)
         }
     }
 }

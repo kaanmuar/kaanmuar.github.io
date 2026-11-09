@@ -3,6 +3,7 @@
 //   session  sessionStart: budget line and open worktrees
 //   prompt   beforeSubmitPrompt: answers scripted requests itself, blocks once at half context or for an
 //            expensive model on a small task over 70% of the plan, and starts the context pack in the background
+//            (and, hourly, scripts/fix-review-failures-sync.js)
 //   tool     postToolUse: hands the agent the context pack once per turn
 //   stop     stop: writes the handoff once the chat passes half its context
 //   pack     (background) builds the pack: local rule hints, referenced tickets, the Cloudflare brain
@@ -108,13 +109,61 @@ const HANDLERS = [
     return runs.map((r) => `${r.conclusion || r.status}  ${r.name}${r.conclusion === "failure" ? `  ${r.url}` : ""}`).join("\n");
   }],
   [/^(worktrees|tickets in flight)\??$/i, () => sh("git", ["worktree", "list"]).split("\n").filter((l) => l.includes(".worktrees")).map((l) => l.replace(/^.*\.worktrees\//, "")).join("\n") || "No ticket worktrees."],
+  // Renders run in studio-render.yml (#2056): "render evergreen --start 2026-11-10 for #1990", "render skit friday-release".
+  [/^render (?:(tips|skit) )?([a-z0-9-]+)((?: --[a-z]+ [\w,.:-]+)*)(?: for #?(\d+))?$/, (m) => {
+    const studio = require(path.join(ROOT, "scripts/studio-render.js"));
+    const j = studio.job(Object.assign(studio.parseCommand(`/render ${m[1] || "tips"} ${m[2]}${m[3]}`), m[4] ? { ticket: m[4] } : {}));
+    sh("gh", ["workflow", "run", "studio-render.yml", "-R", "kaanmuar/kaanmuar.github.io", ...Object.entries(j).flatMap(([k, v]) => ["-f", `${k}=${v}`])]);
+    return `Render of ${j.kind} ${j.name} (${j.mode}) started: https://github.com/kaanmuar/kaanmuar.github.io/actions/workflows/studio-render.yml\nIts review PR opens when it finishes${j.ticket ? `, and #${j.ticket} gets the links` : ""}.`;
+  }],
   [/^handoff$/i, (m, input) => fs.existsSync(file(`handoff-${input.conversation_id}.md`)) ? fs.readFileSync(file(`handoff-${input.conversation_id}.md`), "utf8") : writeHandoff(input)],
 ];
+
+// Worktree locks (#2244, scripts/worktree-lock.sh): keeps this chat's heartbeat fresh, and returns the worktrees
+// another chat took over from it, clearing that note once `report` is set.
+function worktreeLocks(id, report) {
+  const lost = [];
+  if (!id || id === "none") return lost;
+  let base, names;
+  try {
+    base = path.join(sh("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { timeout: 2000 }), "worktrees");
+    names = fs.readdirSync(base);
+  } catch { return lost; }
+  const now = Math.floor(Date.now() / 1000);
+  for (const name of names) {
+    const p = path.join(base, name, "chat-lock");
+    let lock;
+    try { lock = Object.fromEntries(fs.readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => l.split(/=(.*)/s).slice(0, 2))); } catch { continue; }
+    if (lock.chat === id && now - Number(lock.heartbeat) >= 60) lock.heartbeat = String(now);
+    else if (lock.chat !== id && lock.previous === id && report) {
+      let dir = name;
+      try { dir = path.dirname(fs.readFileSync(path.join(base, name, "gitdir"), "utf8").trim()); } catch {}
+      lost.push(`${dir} (now held by chat ${lock.chat})`);
+      delete lock.previous;
+    } else continue;
+    try { fs.writeFileSync(p, Object.entries(lock).map(([k, v]) => `${k}=${v}\n`).join("")); } catch {}
+  }
+  return lost;
+}
+
+// Feeds the cloud daily fix from the Mac (#2419): its Cursor plan and work-log rows, at most once an hour.
+function syncDailyFix() {
+  const stamp = file("fix-review-sync.json");
+  try { if (Date.now() - fs.statSync(stamp).mtimeMs < 3600000) return; } catch {}
+  try {
+    fs.utimesSync(stamp, new Date(), new Date());
+  } catch {
+    fs.writeFileSync(stamp, "{}");
+  }
+  spawn(process.execPath, [path.join(ROOT, "scripts", "fix-review-failures-sync.js")], { cwd: ROOT, detached: true, stdio: "ignore" }).unref();
+}
 
 function onPrompt(input) {
   const prompt = String(input.prompt || "").trim();
   const id = input.conversation_id || "none";
   const s = convState(id);
+  worktreeLocks(id, false);
+  try { syncDailyFix(); } catch {}
   if (/^agent:/i.test(prompt)) return out({ continue: true });
 
   if (prompt.length <= 60) {
@@ -205,9 +254,11 @@ async function onPack(id, generation, model) {
 function onTool(input) {
   const id = input.conversation_id || "none";
   const s = convState(id);
-  if (!s.pack || s.delivered || (s.generation && input.generation_id && s.generation !== input.generation_id)) return out({});
-  s.delivered = true; saveConv(id, s);
-  out({ additional_context: s.pack });
+  const lost = worktreeLocks(id, true).map((w) => `Another chat took over the worktree ${w}, with --take or after this chat's lock lapsed (#2244). Stop editing, committing and pushing there; tell Carlos, and only take it back with scripts/ticket-worktree.sh <branch> --take if he says so.`);
+  const due = s.pack && !s.delivered && !(s.generation && input.generation_id && s.generation !== input.generation_id);
+  if (due) { s.delivered = true; saveConv(id, s); }
+  const context = [due && s.pack, ...lost].filter(Boolean).join("\n");
+  out(context ? { additional_context: context } : {});
 }
 
 function onSession(input) {

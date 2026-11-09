@@ -26,18 +26,30 @@ jobs:
       JARVIS_VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # History and tags, without old file contents, for the What's new lines.
+          fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Unit tests and debug build
         run: ./gradlew --console=plain testDebugUnitTest assembleDebug
 
+      - name: What's new
+        if: github.event_name != 'pull_request'
+        working-directory: .
+        run: |
+          mkdir -p "$RUNNER_TEMP/whats-new"
+          node scripts/jarvis-whats-new.js "$GITHUB_SHA" | tee "$RUNNER_TEMP/whats-new/whats-new.txt"
+
       - name: Signed release
         if: github.event_name != 'pull_request'
         env:
+          JARVIS_WHATS_NEW_DIR: ${{ runner.temp }}/whats-new
           KEYSTORE_B64: ${{ secrets.JARVIS_KEYSTORE_BASE64 }}
           JARVIS_KEYSTORE_PASSWORD: ${{ secrets.JARVIS_KEYSTORE_PASSWORD }}
           JARVIS_KEY_ALIAS: ${{ secrets.JARVIS_KEY_ALIAS }}
@@ -49,18 +61,28 @@ jobs:
             c="com.carlosandmunoz.jarvis.home.${w}Widget"
             grep -qx "$c -> $c:" app/build/outputs/mapping/release/mapping.txt || { echo "::error::R8 renamed or merged $c; each widget would draw another's content"; exit 1; }
           done
-          mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-1.0.${JARVIS_VERSION_CODE}.apk"
-          mv wear/build/outputs/apk/release/wear-release.apk "$RUNNER_TEMP/jarvis-watch-1.0.${JARVIS_VERSION_CODE}.apk"
+          # The release name must match the versionName the app shows ("2.0.$build" gives 2.0.<run number>).
+          # shellcheck disable=SC2016 # $build is the literal text in build.gradle.kts
+          major=$(sed -n 's/.*versionName = "\([0-9.]*\)\.\$build".*/\1/p' app/build.gradle.kts)
+          [ -n "$major" ] || { echo "::error::versionName in app/build.gradle.kts is not \"<major>.<minor>.\$build\""; exit 1; }
+          v="$major.${JARVIS_VERSION_CODE}"
+          echo "JARVIS_VERSION=$v" >> "$GITHUB_ENV"
+          mv app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/jarvis-$v.apk"
+          mv wear/build/outputs/apk/release/wear-release.apk "$RUNNER_TEMP/jarvis-watch-$v.apk"
 
       - name: Publish the release
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          v="1.0.${JARVIS_VERSION_CODE}"
+          v="$JARVIS_VERSION"
+          new="$RUNNER_TEMP/whats-new/whats-new.txt"
+          {
+            if [ -s "$new" ]; then echo "What's new:"; sed 's/^/- /' "$new"; echo; fi
+            echo "First install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. After that the app updates itself. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "jarvis-android-v$v" "$RUNNER_TEMP/jarvis-$v.apk" "$RUNNER_TEMP/jarvis-watch-$v.apk" --target "$GITHUB_SHA" --latest=false \
-            --title "Jarvis for Android $v" \
-            --notes "First install: open this page on the phone, download jarvis-$v.apk, allow installs from the browser if asked. After that the app updates itself. Wear OS watch: install jarvis-watch-$v.apk with \`adb install\` over Wi-Fi debugging. Built from ${GITHUB_SHA::7}."
+            --title "Jarvis for Android $v" --notes-file "$RUNNER_TEMP/notes.md"
 
       # The function reads the release from GitHub itself and pushes each version once, so no secret is needed.
       - name: Tell the phones to update
@@ -76,4 +98,4 @@ jobs:
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             android/wear/build/outputs/apk/debug/wear-debug.apk
-          retention-days: 7
+          retention-days: 2

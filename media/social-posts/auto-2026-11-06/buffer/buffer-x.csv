@@ -1,0 +1,46 @@
+Text,Image URL,Tags,Posting Time
+"usehelios.ai: 75. The gap: the sitemap host.
+
+Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
+
+carlosandmunoz.com/qa-review?live=u-usehelios-ai&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usehelios-ai
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg","","2026-11-07 08:35"
+"ruvo.com: 79. The gap: the CSP.
+
+Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+carlosandmunoz.com/qa-review?live=u-ruvo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ruvo-com
+#WebSecurity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg","","2026-11-08 13:25"
+"mono.la: 81. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+carlosandmunoz.com/qa-review?live=u-mono-la&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-mono-la
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/03-u-mono-la.jpg","","2026-11-09 11:35"
+"Scored 42 of 100. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so…
+
+carlosandmunoz.com/qa-review?live=u-conservatoriodeltolima-edu-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-conservatoriodeltolima-edu-co","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/04-u-conservatoriodeltolima-edu-co.jpg","","2026-11-10 09:50"
+"footlocker.com: 80. The gap: schema fields.
+
+Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.
+
+carlosandmunoz.com/qa-review?live=u-footlocker-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-footlocker-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/05-u-footlocker-com.jpg","","2026-11-11 16:55"
+"kra.co.kr: 41. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site second.
+
+https://carlosandmunoz.com/qa-review.html?live=u-kra-co-kr&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-kra-co-kr
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg","","2026-11-12 16:05"
+"td.com vs desjardins.com. desjardins.com leads: 81.
+
+Benchmark against the sites your visitors compare you with, not against a perfect score: the…
+
+carlosandmunoz.com/qa-review?live=u-td-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-td-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg","","2026-11-13 15:30"
+"okta.com vs rippling.com. rippling.com leads: 66.
+
+Benchmark against the sites your visitors compare you with, not against a perfect score: the…
+
+carlosandmunoz.com/qa-review?live=u-okta-com&utm_source=x&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-okta-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/08-vs-okta-com.jpg","","2026-11-14 11:15"

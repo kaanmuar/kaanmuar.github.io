@@ -23,8 +23,8 @@ class ReadinessComplication : SuspendingComplicationDataSourceService() {
     private fun data(type: ComplicationType, s: Store.Status): ComplicationData? {
         fun plain(t: String) = PlainComplicationText.Builder(t).build()
         val tap = PendingIntent.getActivity(this, 0, Intent(this, WatchActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val describe = plain("Readiness ${s.percent}, ${s.headline}")
-        val title = when { s.alerts > 0 -> "${s.alerts} !"; s.warns > 0 -> "${s.warns} ⚠"; else -> "OK" }
+        val describe = plain("Readiness ${s.percent}, ${s.headline}" + (s.processes?.let { ", $it" } ?: ""))
+        val title = when { s.alerts > 0 -> "${s.alerts} !"; s.needsYou > 0 -> "${s.needsYou} you"; s.warns > 0 -> "${s.warns} ⚠"; s.running > 0 -> "${s.running} run"; else -> "OK" }
         return when (type) {
             ComplicationType.RANGED_VALUE ->
                 RangedValueComplicationData.Builder((s.readiness ?: 0.0).toFloat(), 0f, 100f, describe)

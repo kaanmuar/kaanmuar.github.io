@@ -1,0 +1,73 @@
+# .github/workflows/sweep-roundup.yml
+# Weekly: drafts one neutral post from the past week's nightly sweep (scripts/sweep-roundup.js writes
+# assets/social/sweep-roundups.json and its card image). The owner approves or dismisses it in Jarvis or admin.html;
+# nothing is posted from here. Pushes straight to main with LIVE_REPORTS_DEPLOY_KEY, like the field sweep.
+# Schedule: functions/ops-schedule.js.
+
+name: Sweep round-up
+
+on:
+  schedule:
+    - cron: '29 14 * * 1'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Run day (YYYY-MM-DD); the round-up covers the 7 days before it'
+        required: false
+
+concurrency:
+  group: sweep-roundup
+  cancel-in-progress: false
+
+jobs:
+  roundup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install the renderer
+        run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts playwright@"$(locked playwright)"
+          npx playwright install --with-deps chromium
+      - name: Draft the round-up
+        id: roundup
+        env:
+          DAY: ${{ inputs.date }}
+        run: node scripts/sweep-roundup.js ${DAY:+--date "$DAY"}
+      - name: Commit and push
+        if: steps.roundup.outputs.written == '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add assets/social/sweep-roundups.json assets/social/sweep-roundup
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Sweep round-up: ${{ steps.roundup.outputs.day }} [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; the round-up was not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            if ! git cherry-pick -X theirs "$DATA"; then
+              [ -z "$(git status --porcelain)" ] || exit 1
+              echo "main already has this round-up."; exit 0
+            fi
+          done
+      # Jarvis and admin read the round-up from the live site, and the [skip ci] push starts no Pages run (#2238).
+      - name: Publish it to the site
+        if: steps.roundup.outputs.written == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

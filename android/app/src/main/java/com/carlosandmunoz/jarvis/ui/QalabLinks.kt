@@ -49,23 +49,25 @@ private fun copy(context: Context, text: String) {
 fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
     val links = ou.obj("links")
     val context = LocalContext.current
-    if (links == null || !links.isOk()) { Panel("qalabreview.com links") { Muted(links?.str("error") ?: "Not loaded.") }; return }
+    if (links == null || !links.isOk()) { Panel("qalabreview.com links", id = "outreach-links") { Muted(links?.str("error") ?: "Not loaded.") }; return }
     val live = links.bool("live") == true
-    Panel("qalabreview.com links") {
+    Panel("qalabreview.com links", id = "outreach-links") {
         StatusRow(if (live) "good" else "alert", if (live) "Worker live" else "Worker not live", if (live) "Short links forward to the Live Reports." else "robots.txt answered ${fmt(links.num("workerStatus"))}. Deploy the Worker in qalabreview/.", url = links.str("base"))
+        val was = links.obj("prior")
         KpiPairs(listOf(
-            KpiData("Visits", fmt(links.num("visits"))),
-            KpiData("Free reviews", fmt(links.num("reviews"))),
-            KpiData("Visit → review", fmt(links.num("reviewRate")) + "%"),
-            KpiData("Paid unlocks", fmt(links.num("paid"))),
-            KpiData("Review → paid", fmt(links.num("payRate")) + "%"),
-            KpiData("Revenue", fmt(links.num("usd")) + " USD"),
+            kpiVs("Visits", links.num("visits"), was.num("visits")),
+            kpiVs("Free reviews", links.num("reviews"), was.num("reviews")),
+            kpiVs("Visit → review", links.num("reviewRate"), was.num("reviewRate")) { fmt(it) + "%" },
+            kpiVs("Paid unlocks", links.num("paid"), was.num("paid")),
+            kpiVs("Review → paid", links.num("payRate"), was.num("payRate")) { fmt(it) + "%" },
+            kpiVs("Revenue", links.num("usd"), was.num("usd")) { fmt(it) + " USD" },
         ))
     }
     val campaigns = links.pairs("byCampaign")
-    if (campaigns.isEmpty()) Panel("Visits by link") { Muted("No visits from qalabreview.com links in this range yet.") }
-    else TopList("Visits by link", campaigns)
-    Panel("Prospects who opened their link") {
+    if (campaigns.isEmpty()) Panel("Visits by link", id = "outreach-link-visits") { Muted("No visits from qalabreview.com links in this range yet.") }
+    else TopList("Visits by link", campaigns, id = "outreach-link-visits")
+    ReportReplyLinks(links.obj("social"))
+    Panel("Prospects who opened their link", id = "outreach-link-opens") {
         val prospects = links.objs("prospects")
         if (prospects.isEmpty()) Muted("No prospect has opened a link yet.")
         prospects.take(20).forEach { p ->
@@ -75,7 +77,7 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
                 url = "https://qalabreview.com/$host")
         }
     }
-    Panel("Make a prospect link") {
+    Panel("Make a prospect link", id = "outreach-link-make") {
         var host by remember { mutableStateOf("") }
         var lang by remember { mutableStateOf("es") }
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -88,7 +90,7 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
             Button(onClick = { link?.let { copy(context, it); vm.say("Copied $it") } }, enabled = link != null) { Text("Copy") }
         }
     }
-    Panel("Channel links") {
+    Panel("Channel links", id = "outreach-link-channels") {
         links.objs("channels").forEach { c ->
             val url = c.str("url") ?: return@forEach
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -97,5 +99,31 @@ fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {
             }
         }
         links.objs("funnel").forEach { f -> StatusRow(null, f.str("label") ?: "", "Funnel ticket", url = f.str("url")) }
+    }
+}
+
+private fun count(n: Double?, one: String) = "${fmt(n ?: 0.0)} $one" + if ((n ?: 0.0) == 1.0) "" else "s"
+
+/** "12 clicks · 1 run · 1 paid · 19 USD". */
+fun linkCounts(x: JsonObject?): String = "${count(x.num("visits"), "click")} · ${count(x.num("reviews"), "run")} · ${fmt(x.num("paid") ?: 0.0)} paid · ${fmt(x.num("usd") ?: 0.0)} USD"
+
+/** Report replies (#2465, #2471): clicks, runs and payments per network and per post, as on the web Outreach tab. */
+@Composable
+private fun ReportReplyLinks(social: JsonObject?) {
+    if (social == null) return
+    Panel("Report replies: clicks, runs and payments", id = "outreach-report-replies") {
+        KpiPairs(listOf(
+            KpiData("Clicks", fmt(social.num("visits"))), KpiData("Free runs", fmt(social.num("reviews"))),
+            KpiData("Paid unlocks", fmt(social.num("paid"))), KpiData("Revenue", fmt(social.num("usd")) + " USD")
+        ))
+        val nets = social.objs("networks")
+        if (nets.isEmpty()) Muted("No click on a report reply in this range yet.")
+        nets.forEach { n -> StatusRow(if ((n.num("paid") ?: 0.0) > 0) "good" else "info", "Report replies on ${n.str("name").orEmpty()}", linkCounts(n) + " · " + n.str("campaign").orEmpty()) }
+        social.objs("posts").take(15).forEach { p ->
+            val title = (p.str("title")?.ifEmpty { null } ?: p.str("author")?.ifEmpty { null } ?: p.str("ref").orEmpty()).take(80)
+            StatusRow(if ((p.num("paid") ?: 0.0) > 0) "good" else null, "${p.str("name").orEmpty()}: $title",
+                listOfNotNull(p.str("host")?.ifEmpty { null }, linkCounts(p), p.str("status")?.ifEmpty { null }?.let { "reply $it" }).joinToString(" · "),
+                url = (p.str("replyUrl") ?: p.str("url"))?.takeIf { it.startsWith("https://") })
+        }
     }
 }

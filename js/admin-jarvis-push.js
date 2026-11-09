@@ -24,9 +24,10 @@ function keyBytes(b64) {
     return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
-function browserName(ua) {
-    const b = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-    const os = /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'PC';
+/** "Chrome on Mac"; on a phone the model when the browser tells it (#2068): "Chrome on SM-F966U". */
+export function browserName(ua, model) {
+    const b = /SamsungBrowser\//.test(ua) ? 'Samsung Internet' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+    const os = model ? model : /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'PC';
     return b + ' on ' + os;
 }
 
@@ -109,5 +110,11 @@ export function createBrowserPush({ call, toast, esc }) {
         try { await setKind(kind, on); } catch (error) { toast('Not saved: ' + error.message, 6000); }
     }
 
-    return { supported, paint, handle, kindChanged };
+    /** This browser's push endpoint, or '' when notifications are off. */
+    async function endpoint() {
+        const sub = await subscription();
+        return sub && Notification.permission === 'granted' ? sub.endpoint : '';
+    }
+
+    return { supported, paint, handle, kindChanged, endpoint };
 }

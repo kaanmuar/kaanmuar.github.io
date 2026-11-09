@@ -4,6 +4,7 @@
  * notices waiting for approval. Each returns a jarvis-push message, or null when it should stay quiet.
  */
 const jarvisReview = require("./jarvis-review");
+const ownerNotice = require("./url-review-owner-notice");
 
 const PAID = { paid: "Report", "run-paid": "Run", "addon-paid": "Add-on", "pass-paid": "30-day pass" };
 const NOTICES_EVERY_MS = 3600 * 1000;
@@ -54,11 +55,13 @@ function reviewMessage(kind, record) {
   };
 }
 
-/** Pending owner notices created since the last push, at most one push an hour. */
-function noticesDue(pending, lastAt, now) {
+/** Pending owner notices created since the last push, plus those held back then (waiting: their domains), at most one
+ * push an hour. */
+function noticesDue(pending, lastAt, now, waiting) {
   if (lastAt && now - Date.parse(lastAt) < NOTICES_EVERY_MS) return [];
   const since = lastAt ? Date.parse(lastAt) : 0;
-  return pending.filter((n) => n && n.status === "pending" && Date.parse(n.createdAt || 0) > since);
+  const held = new Set(waiting || []);
+  return pending.filter((n) => n && n.status === "pending" && (Date.parse(n.createdAt || 0) > since || held.has(n.domain)));
 }
 
 function noticesMessage(fresh, pendingTotal) {
@@ -74,20 +77,27 @@ function noticesMessage(fresh, pendingTotal) {
   };
 }
 
-/** What the approvals list shows for each pending notice, newest first; reportOf builds the review link. */
-function noticeRows(rows, reportOf) {
+// Ready to send first and no Live Report yet last; "" is an unread Live Reports index.
+const NOTICE_ORDER = { ready: 0, "": 1, unlisted: 2, stopped: 2, waiting: 3 };
+
+/** What the approvals list shows for each pending notice, ready ones first, then newest first; reportOf builds
+ *  the review link. ctx is ownerNotice.readiness's: { index, unlisted, stopped }. */
+function noticeRows(rows, reportOf, ctx) {
+  const stopped = (ctx && ctx.stopped) || new Set();
   return rows.filter((n) => n && n.status === "pending").map((n) => ({
     domain: n.domain,
     host: n.host || n.domain,
     email: n.email || "",
-    candidates: (Array.isArray(n.candidates) ? n.candidates : []).slice(0, 8).map((c) => ({ email: c.email, sources: (c.sources || []).slice(0, 3), url: c.url || "", onDomain: !!c.onDomain })),
+    candidates: (Array.isArray(n.candidates) ? n.candidates : []).slice(0, 8).map((c) => ({ email: c.email, sources: (c.sources || []).slice(0, 3), url: c.url || "", onDomain: !!c.onDomain, stopped: stopped.has(c.email) })),
+    state: ownerNotice.readiness(n, ctx),
     critical: !!n.critical,
     lang: n.lang || "en",
+    tries: n.tries || 0,
     createdAt: n.createdAt || "",
     reviewedAt: n.reviewedAt || "",
     lastError: n.lastError || "",
     report: n.reviewId && reportOf ? reportOf(n) : ""
-  })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  })).sort((a, b) => NOTICE_ORDER[a.state] - NOTICE_ORDER[b.state] || String(b.createdAt).localeCompare(String(a.createdAt)));
 }
 
 module.exports = { PAID, NOTICES_EVERY_MS, paymentMessage, isCustomer, reviewMessage, noticesDue, noticesMessage, noticeRows };

@@ -26,10 +26,14 @@ object Store {
     data class Status(
         val readiness: Double?, val alerts: Int, val warns: Int, val headline: String,
         val revenue: String, val sales: Int, val top: String?, val at: Long,
+        val running: Int = 0, val needsYou: Int = 0,
     ) {
         val color get() = when { alerts > 0 -> PINK; warns > 0 -> AMBER; else -> GREEN }
         val percent get() = readiness?.let { "${it.toInt()}%" } ?: "—"
         val today get() = "$revenue today" + if (sales > 0) " · $sales sale" + (if (sales == 1) "" else "s") else ""
+        /** Live processes (#2548): "2 running · 1 needs you", or null when nothing runs or waits. */
+        val processes get() = listOfNotNull("$running running".takeIf { running > 0 }, "$needsYou needs you".takeIf { needsYou > 0 }).joinToString(" · ").ifEmpty { null }
+        val processColor get() = if (needsYou > 0) AMBER else CYAN
     }
 
     private fun prefs(context: Context) = context.getSharedPreferences("jarvis-watch", Context.MODE_PRIVATE)
@@ -41,6 +45,7 @@ object Store {
             p.getFloat("readiness", -1f).takeIf { it >= 0 }?.toDouble(), p.getInt("alerts", 0), p.getInt("warns", 0),
             p.getString("headline", "") ?: "", p.getString("revenue", "—") ?: "—", p.getInt("sales", 0),
             p.getString("top", null)?.takeIf { it.isNotBlank() }, p.getLong("at", 0),
+            p.getInt("running", 0), p.getInt("needsYou", 0),
         )
     }
 
@@ -58,6 +63,8 @@ object Store {
                 putInt("sales", map.getInt("sales"))
                 putString("top", map.getString("top"))
                 putLong("at", map.getLong("at"))
+                putInt("running", map.getInt("running", 0))
+                putInt("needsYou", map.getInt("needsYou", 0))
             }
         }.apply()
         TileService.getUpdater(context).requestUpdate(JarvisTile::class.java)

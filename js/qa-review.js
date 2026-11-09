@@ -4,7 +4,7 @@
   const SHOWN_KEY = "qa-review-shown";
   const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
-  const TERMS_VERSION = "2026-11-02";
+  const TERMS_VERSION = "2026-11-04b";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
   const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -39,21 +39,8 @@
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
   const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
-  const REASONS = [
-    { id: "own", label: "I own this site and want a test plan" },
-    { id: "client", label: "A client asked me to propose coverage before a release" },
-    { id: "redesign", label: "I am comparing this page with a redesign" },
-    { id: "release", label: "I need a case list before a release" },
-    { id: "tech", label: "I want the public technologies named" },
-    { id: "a11y", label: "I am preparing an accessibility review" },
-    { id: "security", label: "I am preparing a review of the public security headers" },
-    { id: "performance", label: "I need a performance and load case list" },
-    { id: "teaching", label: "I am teaching or learning how a page could be tested" },
-    { id: "allowed", label: "I am checking a page I am allowed to review" },
-    { id: "verify", label: "I want QA-lab to run a verification" },
-    { id: "credentials", label: "I have a username and password for this site" },
-    { id: "other", label: "Other" }
-  ];
+  // Each id needs a reason.<id> label in every language of js/qa-review-report-copy.js.
+  const REASONS = ["own", "client", "redesign", "release", "tech", "a11y", "security", "performance", "teaching", "allowed", "verify", "credentials", "other"];
   const gate = document.getElementById("gate");
   const app = document.getElementById("review-app");
   const termsForm = document.getElementById("terms-form");
@@ -123,9 +110,11 @@
     return !!(window.ReviewAuth && ReviewAuth.signedIn());
   }
 
+  // Review stays pressable while signed out: pressing it asks for the terms, then says to sign in.
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
-      if (!activeRun) reviewBtn.disabled = !on;
+      const name = document.getElementById("name");
+      if (on && name && !name.value.trim() && ReviewAuth.who().name) name.value = ReviewAuth.who().name;
     });
   }
 
@@ -140,7 +129,7 @@
     reasonBox.disabled = true;
     syncSection();
     stopBtn.disabled = true;
-    reviewBtn.disabled = !signedIn();
+    reviewBtn.disabled = false;
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
@@ -157,7 +146,8 @@
     gate.hidden = false;
     gate.classList.remove("is-leaving");
     document.body.classList.add("gate-open");
-    gate.querySelector(".gate-card").focus();
+    gate.scrollTop = 0;
+    gate.querySelector(".gate-card").focus({ preventScroll: true });
   }
 
   function closeGate() {
@@ -247,28 +237,38 @@
     else if (!sectionTouched) box.checked = true;
     box.disabled = !path;
     if (!path) box.checked = false;
-    if (note) note.textContent = !path
-      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
-      : box.checked
-        ? "Later pages stay under " + path + "."
-        : "Later pages can follow links outside " + path + ".";
+    const copy = window.QAReviewReportCopy;
+    if (note) note.textContent = copy.t(!path ? "sectionNone" : box.checked ? "sectionStay" : "sectionLeave", { path });
+  }
+
+  function pageLangName(lang) {
+    const copy = window.QAReviewReportCopy;
+    if (copy.english || typeof Intl.DisplayNames !== "function") return PAGE_LANG_LABEL[lang] || lang;
+    return new Intl.DisplayNames([copy.lang], { type: "language" }).of(lang) || lang;
   }
 
   function scopeSummary() {
+    const copy = window.QAReviewReportCopy;
     const lang = selectedPageLang();
-    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
-    if (document.getElementById("stay-section").checked) parts.push("this section");
+    const parts = [copy.t("scopePages", { n: selectedPages() }), copy.t("scopeDepth", { n: selectedDepth() }), lang ? pageLangName(lang) : copy.t("scopeSite")];
+    if (document.getElementById("stay-section").checked) parts.push(copy.t("scopeSection"));
     return parts.join(", ");
   }
 
   function paintReasons() {
+    const copy = window.QAReviewReportCopy;
     const box = document.getElementById("reasons");
     const legend = box.querySelector("legend");
     box.innerHTML = "";
     box.appendChild(legend);
-    REASONS.forEach((item) => {
+    REASONS.forEach((id) => {
       const label = document.createElement("label");
-      label.innerHTML = '<input type="radio" name="reasonCode" value="' + item.id + '" disabled> ' + item.label;
+      label.innerHTML = '<input type="radio" name="reasonCode" value="' + id + '" disabled> ';
+      label.appendChild(document.createTextNode(copy.word("reason", id)));
+      if (!copy.english) {
+        label.lang = copy.lang;
+        label.setAttribute("translate", "no");
+      }
       box.appendChild(label);
     });
   }
@@ -295,6 +295,8 @@
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
     paintTermGroups();
+    // On a phone Accept sits below the cards; once everything is ticked it comes into view.
+    if (!accept.disabled) accept.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
   paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
@@ -314,15 +316,22 @@
     reasonBox.required = other;
     if (!other) clearField("reason");
     document.getElementById("client-box").hidden = code !== "client";
-    document.getElementById("own-note").hidden = code !== "own";
     document.getElementById("verify-note").hidden = code !== "verify";
     document.getElementById("credential-note").hidden = code !== "credentials";
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function dropFixedErrors() {
+    const shown = [...reviewForm.querySelectorAll(".field-error[data-local]")];
+    if (!shown.length) return;
+    const still = new Set(clientErrors().map((item) => item.field));
+    shown.forEach((error) => { if (!still.has(error.dataset.field)) clearField(error.dataset.field); });
+  }
   function paintSteps() {
+    dropFixedErrors();
     const code = reasonCode();
     const names = selectedFrameworks();
+    document.getElementById("own-note").hidden = code !== "own" || !!document.getElementById("email-error").textContent;
     const done = {
       you: signedIn() && !!document.getElementById("name").value.trim(),
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
@@ -330,16 +339,57 @@
       cases: names.length > 0,
       scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
+    const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
-      const ok = !!done[group.dataset.step];
+      const flagged = [...group.querySelectorAll(".field-error")].some((error) => error.textContent.trim() && !error.closest("[hidden]"));
+      const ok = !!done[group.dataset.step] && !flagged;
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+      if (!ok) missing.push(group);
     });
+    paintNeeds(missing);
     const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
     const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
     if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
+  // The steps still open before Review, each a button to its step, labelled with the step's own title.
+  function paintNeeds(groups) {
+    const box = document.getElementById("review-needs");
+    if (!box || !window.QAReviewReportCopy) return;
+    box.hidden = !groups.length;
+    if (!groups.length) return;
+    const parts = QAReviewReportCopy.t("reviewNeeds").split("{steps}");
+    box.textContent = parts[0];
+    groups.forEach((group) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.step = group.dataset.step;
+      button.textContent = (Array.from(group.parentNode.querySelectorAll(".req-group")).indexOf(group) + 1) + " " + group.querySelector(".tg-title").textContent;
+      box.appendChild(button);
+    });
+    box.appendChild(document.createTextNode(parts[1] || ""));
+  }
+
+  function goToStep(step) {
+    const group = reviewForm.querySelector('.req-group[data-step="' + step + '"]');
+    if (!group) return;
+    group.open = true;
+    if (step === "you" && !signedIn() && window.ReviewAuth) {
+      ReviewAuth.focus();
+      return;
+    }
+    const target = [...group.querySelectorAll("input:not([type=hidden]), textarea")].find((el) => !el.disabled && !el.readOnly && el.offsetParent && !(el.type === "radio" && reviewForm.querySelector('input[name="' + el.name + '"]:checked')) && !(el.type !== "radio" && el.type !== "checkbox" && el.value.trim()));
+    group.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  const needsBox = document.getElementById("review-needs");
+  if (needsBox) needsBox.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-step]");
+    if (button) goToStep(button.dataset.step);
+  });
+
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
   reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
@@ -382,6 +432,44 @@
     urlInput.value = prefill;
     urlInput.dispatchEvent(new Event("input"));
   }
+
+  // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
+  // It takes the same address as the request's field, and the two stay in step.
+  const stageStart = document.getElementById("stage-start");
+  const stageUrl = document.getElementById("stage-url");
+  const stageError = document.getElementById("stage-url-error");
+  function stageInvalid(message) {
+    stageError.textContent = message;
+    document.getElementById("stage-url-field").classList.toggle("invalid", !!message);
+  }
+  if (stageUrl && urlInput.value) stageUrl.value = urlInput.value;
+  if (stageUrl) {
+    stageUrl.addEventListener("input", () => {
+      const next = stageUrl.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== stageUrl.value) stageUrl.value = next;
+      stageInvalid("");
+    });
+    urlInput.addEventListener("input", () => { if (stageUrl.value !== urlInput.value) stageUrl.value = urlInput.value; });
+  }
+  if (stageStart) stageStart.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value || /\s/.test(value)) {
+      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.word("fieldError", "urlNeeded") : "Enter a public page after https://.");
+      stageUrl.focus();
+      return;
+    }
+    stageInvalid("");
+    urlInput.value = value;
+    urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
+    const next = reviewForm.querySelector('.req-group:not(.done):not([data-step="page"])');
+    if (next) goToStep(next.dataset.step);
+    else {
+      document.getElementById("intake").scrollIntoView({ block: "end", behavior: "smooth" });
+      reviewBtn.focus({ preventScroll: true });
+    }
+  });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
@@ -459,7 +547,10 @@
 
   function clearField(name) {
     const error = document.getElementById(name + "-error");
-    if (error) error.textContent = "";
+    if (error) {
+      error.textContent = "";
+      delete error.dataset.local;
+    }
     const input = fieldInput(name);
     if (input) input.classList.remove("invalid");
     if (name === "url") document.getElementById("url-field").classList.remove("invalid");
@@ -472,7 +563,11 @@
     ["name", "email", "reason", "url", "frameworks", "clientName", "clientEmail", "clientUrl"].forEach(clearField);
     (errors || []).forEach((item) => {
       const error = document.getElementById(item.field + "-error");
-      if (error && !error.textContent) error.textContent = item.message;
+      if (error && !error.textContent) {
+        error.textContent = item.message;
+        error.dataset.field = item.field;
+        if (item.local) error.dataset.local = "";
+      }
       const input = fieldInput(item.field);
       if (input) input.classList.add("invalid");
       if (item.field === "url") document.getElementById("url-field").classList.add("invalid");
@@ -481,6 +576,7 @@
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
       openStepOf(error);
     });
+    paintSteps();
   }
 
   function openStepOf(el) {
@@ -495,17 +591,18 @@
     const code = reasonCode();
     const reason = reasonBox.value.trim();
     const host = urlInput.value.trim();
-    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
-    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: "Choose a reason." });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: "Write the reason in a sentence." });
+    const say = (id) => window.QAReviewReportCopy.word("fieldError", id);
+    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: say("nameNeeded") });
+    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: say("emailNeeded") });
+    if (!REASONS.includes(code)) errors.push({ field: "reason", message: say("reasonPick") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: say("reasonWrite") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: "Enter the client's name." });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: "Enter the client's email." });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: "Enter the client's website." });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: say("clientNameNeeded") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: say("clientEmailNeeded") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: say("clientUrlNeeded") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -513,12 +610,12 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: say("ownMailDomain") });
       }
     }
-    if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
-    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
-    return errors;
+    if (!host || /\s/.test(host)) errors.push({ field: "url", message: say("urlNeeded") });
+    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: say("frameworksNeeded") });
+    return errors.map((item) => Object.assign(item, { local: true }));
   }
 
   function fwLogo(name) {
@@ -611,7 +708,7 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -1691,7 +1788,7 @@
       activeRun = "";
       comparePool = null;
       hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
     endComparePool(compare, pool, confirmed);
@@ -1731,7 +1828,7 @@
         const field = (error.fields || []).find((item) => item.field === "url");
         row.state = "failed";
         row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", row.note);
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || row.note);
       }
     }
     paintCompareRows(pool);
@@ -2432,9 +2529,10 @@
     button.append(label, icon);
     heading.appendChild(button);
     heading.classList.add("fold-head");
+    if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
-    folds.push({ button, panel });
+    folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
   }
 
   function setFold(item, open) {
@@ -2466,7 +2564,8 @@
     const visuals = document.getElementById("report-visuals");
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
-    glance.textContent = "At a glance";
+    glance.textContent = rc.t("glance");
+    glance.dataset.indexGroup = "glance";
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2499,6 +2598,99 @@
   }
 
   setupFolds();
+
+  const reportIndex = document.getElementById("report-index");
+  const reportTop = document.getElementById("report-top");
+
+  function scrollBehavior() {
+    return matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  }
+
+  // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
+  function measureBar() {
+    const bar = dash.querySelector(".report-toolbar");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
+  }
+
+  function afterScroll(done) {
+    let timer = 0;
+    const settle = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        dash.removeEventListener("scroll", settle);
+        done();
+      }, 160);
+    };
+    dash.addEventListener("scroll", settle, { passive: true });
+    settle();
+  }
+
+  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
+  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  function jumpTo(item) {
+    if (item.panel.hidden) setFold(item, true);
+    measureBar();
+    const heading = item.button.parentElement;
+    item.button.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    afterScroll(() => {
+      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
+    });
+  }
+
+  function paintTop() {
+    if (reportTop) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+  }
+
+  const sectionName = (item) => item.button.firstChild.textContent.trim();
+
+  // Lists the groups of sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  function paintIndex() {
+    if (!reportIndex) return;
+    const shown = folds.filter((item) => item.button.getClientRects().length > 0)
+      .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    const groups = new Map();
+    shown.forEach((item) => {
+      if (!groups.has(item.group)) groups.set(item.group, []);
+      groups.get(item.group).push(item);
+    });
+    document.getElementById("report-index-list").replaceChildren(...[...groups].map(([key, items]) => {
+      const link = document.createElement("a");
+      link.href = "#" + items[0].button.parentElement.id;
+      link.textContent = rc.word("indexGroups", key, sectionName(items[0]));
+      link.title = items.map(sectionName).join(" · ");
+      link.dataset.indexGroup = key;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        items.forEach((item) => { if (item.panel.hidden) setFold(item, true); });
+        jumpTo(items[0]);
+      });
+      const row = document.createElement("li");
+      row.appendChild(link);
+      return row;
+    }));
+    reportIndex.hidden = !shown.length;
+    measureBar();
+    paintTop();
+  }
+
+  if (reportIndex && reportTop) {
+    let framed = false;
+    dash.addEventListener("scroll", () => {
+      if (framed) return;
+      framed = true;
+      requestAnimationFrame(() => {
+        framed = false;
+        paintTop();
+      });
+    }, { passive: true });
+    reportTop.addEventListener("click", () => {
+      const first = reportIndex.querySelector("a");
+      if (first) first.focus({ preventScroll: true });
+      dash.scrollTo({ top: 0, behavior: scrollBehavior() });
+    });
+  }
 
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
@@ -2739,6 +2931,7 @@
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
+    paintIndex();
   }
 
   function reviewBody(compare, url, runId) {
@@ -2777,8 +2970,8 @@
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
-      const error = new Error(body.error || "The review failed.");
-      error.fields = body.fields;
+      const error = new Error(rc.field(body.error) || "The review failed.");
+      error.fields = body.fields && body.fields.map((item) => Object.assign({}, item, { message: rc.field(item.message) }));
       error.paymentRequired = !!body.paymentRequired;
       error.body = body;
       throw error;
@@ -2804,6 +2997,13 @@
     return donePayload;
   }
 
+  // Signed out, sign-in is the step to point at, before the browser's own required-field bubbles on the rest.
+  reviewBtn.addEventListener("click", (event) => {
+    if (activeRun || signedIn()) return;
+    event.preventDefault();
+    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  });
+
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (activeRun) return;
@@ -2813,7 +3013,7 @@
     }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
-      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      setStatus(rc.t("signInToRun"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
@@ -2916,7 +3116,7 @@
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
       } else {
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
         if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
@@ -2932,7 +3132,7 @@
       runLog.classList.remove("is-live");
       activeRun = "";
       if (compare) hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
   });
@@ -3383,6 +3583,9 @@
     return showTotal(rc.t("totalCompareTitle"), lines.concat(sumLines(quote)));
   }
 
+  // The button that opened the sample: it is disabled while the sample loads, so focus has left it by then.
+  let dashOpener = null;
+
   function closeDashboard() {
     dash.classList.remove("open");
     document.body.style.overflow = "";
@@ -3400,6 +3603,7 @@
       const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
       const body = await res.json();
+      dashOpener = button || null;
       render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
     } catch (error) {
       if (button) button.textContent = "The sample could not be opened";
@@ -3420,6 +3624,31 @@
   document.getElementById("dash-close").addEventListener("click", closeDashboard);
   dash.addEventListener("click", (event) => {
     if (event.target === dash) closeDashboard();
+  });
+  // The report opens from several places; focus goes into it on open, unless a field or a control in the report already
+  // holds it (the sign-in box, the competitor's address), and back on close.
+  let dashReturn = null;
+  new MutationObserver(() => {
+    const open = dash.classList.contains("open");
+    if (open && !dashReturn) {
+      const before = document.activeElement;
+      dashReturn = dashOpener || before || document.body;
+      dashOpener = null;
+      setTimeout(() => {
+        const now = document.activeElement;
+        const loose = !now || now === document.body || (now === before && now.tagName === "BUTTON" && !dash.contains(now));
+        if (dash.classList.contains("open") && loose) dash.querySelector(".dash-modal").focus({ preventScroll: true });
+      }, 0);
+    } else if (!open && dashReturn) {
+      if (dashReturn.isConnected && dashReturn !== document.body) dashReturn.focus({ preventScroll: true });
+      dashReturn = null;
+    }
+  }).observe(dash, { attributes: true, attributeFilter: ["class"] });
+  dash.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || event.defaultPrevented || !dash.classList.contains("open")) return;
+    if (!event.target.closest(".dash-modal") || event.target.closest("#ask-panel")) return;
+    if (document.querySelector(".gate:not([hidden])")) return;
+    closeDashboard();
   });
   document.getElementById("pay-close").addEventListener("click", () => { payBox.hidden = true; });
   document.getElementById("run-pay-close").addEventListener("click", () => { runPay.hidden = true; });
@@ -3733,33 +3962,33 @@
   }
 
   function reviewTour() {
+    const copy = (key) => window.QAReviewReportCopy.word("tour", key);
+    const step = (selector, key, demoMs) => ({ selector, title: copy(key)[0], body: copy(key)[1], demoMs });
     const steps = [];
-    if (!gate.hidden) {
-      steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
-    }
+    if (!gate.hidden) steps.push(step("#terms-form", "terms", 1800));
     const counts = document.getElementById("reviews-fact");
-    if (counts && !counts.hidden) {
-      steps.push({ selector: "ul.facts", title: "You are not the first", body: "These two numbers count up live: pages read and reviews run by everyone so far. Only a review that really read a page adds to them.", demoMs: 1500 });
-    }
+    if (counts && !counts.hidden) steps.push(step("ul.facts", "counts", 1500));
     steps.push(
-      { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
-      { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
-      { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
-      { selector: "#url-field", title: "The page", body: "Start typing and the box helps. It suggests well-known sites, says \"Did you mean…?\" when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page.", demoMs: 1800 },
-      { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#req-scope", title: "Pages to review", body: "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts.", demoMs: 1800 },
-      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a \"Still working\" note instead of silence.", demoMs: 1800 },
-      { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. Each competitor is 9 USD.", demoMs: 1800 },
-      { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
-      { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
-      { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
-      { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
+      step("#sign-in", "signIn", 1500),
+      step("#name", "name", 1500),
+      step("#reasons", "reasons", 1600),
+      step("#url-field", "url", 1800),
+      step("#fw-picker", "frameworks", 1600),
+      step("#req-scope", "scope", 1800),
+      step("#review-btn", "start", 1500),
+      step("#run-log", "log", 1800),
+      step("#stop-btn", "stop", 1600),
+      step("#report-once", "report", 1800),
+      step("#report-once", "ask", 1800),
+      step("#report-once", "compare", 1800),
+      step("#report-once", "chatbot", 1800),
+      step(".topbar a[href='qa-review-account.html']", "account", 1600),
+      step("#langWrap", "lang", 1500),
+      step("#tour-start-btn", "again", 1500)
     );
-    return { name: "URL review", key: "hasSeenReviewTour", steps: steps };
+    const labels = {};
+    ["back", "close", "next", "finish", "step", "progress", "wait"].forEach((key) => { labels[key] = copy(key); });
+    return { name: "URL review", key: "hasSeenReviewTour", labels: labels, steps: steps };
   }
 
   function bootLanguageAndTour() {
@@ -3768,7 +3997,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
+    // No auto-start: on a first visit it scrolled away from the hero's address field and covered the consent buttons on phones.
   }
 
   bootLanguageAndTour();

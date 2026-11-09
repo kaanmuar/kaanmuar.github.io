@@ -20,12 +20,18 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const REPO = "kaanmuar/kaanmuar.github.io";
+// FACE=es stores @qaurlreview's tokens under its suffix (scripts/face-route.js); its Page id comes in FACEBOOK_PAGE_ID.
+const FACE = require("./brand-kit/faces").FACES[process.env.FACE || "en"];
+if (!FACE) throw new Error("FACE is en or es");
+const SFX = FACE.env;
+if (SFX && !process.env.FACEBOOK_PAGE_ID && process.argv[2] === "page") throw new Error("FACE=" + FACE.id + " needs FACEBOOK_PAGE_ID=<the face's Page id>");
 const PAGE_ID = process.env.FACEBOOK_PAGE_ID || "1384763784723160";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const THREADS = "https://graph.threads.net";
-const THREADS_FILE = path.join(os.homedir(), ".config/qa-lab/threads.json");
-// facebook-queue.js posts to the Page; open-social-queue.js publishes on Instagram.
-const PAGE_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "instagram_basic", "instagram_content_publish"];
+const THREADS_FILE = path.join(os.homedir(), ".config/qa-lab/threads" + SFX.toLowerCase().replace("_", "-") + ".json");
+// facebook-queue.js posts to the Page and its Reels (publish_video, #2729); open-social-queue.js publishes on Instagram;
+// social-metrics.js reads each post's views (read_insights) and reactions and comments (pages_read_user_content).
+const PAGE_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "publish_video", "instagram_basic", "instagram_content_publish", "read_insights", "pages_read_user_content"];
 
 async function get(url, params) {
   const res = await fetch(url + "?" + new URLSearchParams(params));
@@ -71,15 +77,16 @@ async function page() {
   if (!ig) throw new Error("The Page has no linked Instagram professional account yet (Page settings > Linked accounts > Instagram).");
   const quota = ((await get(GRAPH + "/" + ig.id + "/content_publishing_limit", { fields: "quota_usage,config", access_token: pg.access_token })).data || [])[0] || {};
   console.log("Instagram @" + ig.username + " (" + ig.id + "): " + (quota.quota_usage || 0) + " of " + ((quota.config && quota.config.quota_total) || "?") + " API posts used in the last 24 hours");
-  secret("FACEBOOK_PAGE_TOKEN", pg.access_token);
-  secret("INSTAGRAM_USER_ID", ig.id);
+  if (SFX) secret("FACEBOOK_PAGE_ID" + SFX, PAGE_ID);
+  secret("FACEBOOK_PAGE_TOKEN" + SFX, pg.access_token);
+  secret("INSTAGRAM_USER_ID" + SFX, ig.id);
 }
 
 function keepThreads(token, expires) {
   fs.mkdirSync(path.dirname(THREADS_FILE), { recursive: true });
   fs.writeFileSync(THREADS_FILE, JSON.stringify({ token, expires }) + "\n", { mode: 0o600 });
-  secret("THREADS_TOKEN", token);
-  variable("THREADS_TOKEN_EXPIRES", expires);
+  secret("THREADS_TOKEN" + SFX, token);
+  variable("THREADS_TOKEN_EXPIRES" + SFX, expires);
 }
 
 // Long-lived tokens at least a day old renew for 60 days; a fresh one is kept as it is.

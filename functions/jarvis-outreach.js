@@ -1,17 +1,24 @@
 /* Jarvis outreach source (#1405, data for the outreach plan in #1278). One call returns:
 
-   pipeline   prospects queued for the nightly sweep (url_review_sweep/outreach), how far the sweep got, the outreach
+   pipeline   prospects queued for the outreach lane (url_review_sweep/outreach), how far the lane got, the outreach
               reviews in range (url_reviews with sweep.outreach) by segment and result, and which have a Live Report
    instantly  campaigns by status, sent, opens, replies, positive replies, bounces, meetings, and mailbox warm-up
    plan       the private 90-day plan (jarvis_settings/outreach, uploaded by scripts/jarvis-outreach-plan.js):
               phase today, next milestone, deadlines, weekly funnel targets and the 90-day targets
    mail       the sending domain's MX, SPF, DKIM and DMARC
-   links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect
+   links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect,
+              and the report replies (#2465, #2471) per network and per post
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
+const dayRows = require("./jarvis-days");
+const sweep = require("./url-review-sweep");
+const E = require("./engagement");
+
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
+const REVIEW_CAP = 3000;
+const OPEN_CAP = 10000;
 const INSTANTLY = "https://api.instantly.ai/api/v2/";
 const CAMPAIGN_STATUS = { 0: "draft", 1: "active", 2: "paused", 3: "completed", 4: "running subsequences", "-1": "accounts unhealthy", "-2": "bounce protect", "-99": "suspended" };
 
@@ -30,15 +37,20 @@ function weekStart(now) {
   return Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() - back) + 5 * 3600 * 1000;
 }
 
+// A newest-first read that hit its cap holds every row only back to its oldest one.
+const reachesBack = (rows, cap, since) => rows.length < cap || rows.some((r) => toMs(r.createdAt) <= since);
+
 function pipelineRows(queue, state, reviews, published, ctx) {
   const hosts = (queue && Array.isArray(queue.hosts) ? queue.hosts : []);
   const bySegment = {};
   hosts.forEach((h) => tally(bySegment, h.sector));
   const start = ctx.now - ctx.days * DAY;
+  const priorStart = start - ctx.days * DAY;
   const week = weekStart(ctx.now);
   const live = new Set((published || []).map(bare));
   const mine = reviews.filter((r) => r.sweep && r.sweep.outreach);
   const inRange = mine.filter((r) => toMs(r.createdAt) >= start);
+  const before = mine.filter((r) => toMs(r.createdAt) >= priorStart && toMs(r.createdAt) < start);
   const result = {};
   const segments = {};
   inRange.forEach((r) => {
@@ -56,11 +68,13 @@ function pipelineRows(queue, state, reviews, published, ctx) {
     left: Math.max(0, hosts.length - (Number(state && state.outreachAt) || 0)),
     bySegment: listOf(bySegment),
     reviews: inRange.length,
+    priorReviews: reachesBack(reviews, REVIEW_CAP, priorStart) ? before.length : null,
     thisWeek: mine.filter((r) => toMs(r.createdAt) >= week).length,
     results: listOf(result),
     segments: listOf(segments),
     avgScore: scores.length ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : null,
     withLiveReport: hosts.filter((h) => live.has(bare(h.host))).length,
+    reviewedHosts: reviewedHosts.size,
     reviewedWithLiveReport: Array.from(reviewedHosts).filter((h) => live.has(h)).length,
     daily
   };
@@ -73,16 +87,12 @@ async function instantlyGet(ctx, path) {
   return data;
 }
 
-function instantlyRows(campaigns, overview, perCampaign, accounts) {
-  const status = {};
-  (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
+function mailCounts(overview) {
   const o = overview || {};
   const sent = Number(o.emails_sent_count) || 0;
   const contacted = Number(o.contacted_count) || 0;
   const replies = Number(o.reply_count_unique) || 0;
   return {
-    campaigns: (campaigns || []).length,
-    status: listOf(status),
     sent,
     contacted,
     opened: Number(o.open_count_unique) || 0,
@@ -92,31 +102,52 @@ function instantlyRows(campaigns, overview, perCampaign, accounts) {
     meetings: Number(o.total_meeting_booked) || 0,
     bounced: Number(o.bounced_count) || 0,
     unsubscribed: Number(o.unsubscribed_count) || 0,
-    rates: { open: pct(Number(o.open_count_unique) || 0, contacted), reply: pct(replies, contacted), positive: pct(Number(o.total_interested) || 0, contacted), bounce: pct(Number(o.bounced_count) || 0, sent) },
+    rates: { open: pct(Number(o.open_count_unique) || 0, contacted), reply: pct(replies, contacted), positive: pct(Number(o.total_interested) || 0, contacted), bounce: pct(Number(o.bounced_count) || 0, sent) }
+  };
+}
+
+function accountRows(accounts) {
+  return (accounts || []).map((a) => ({
+    email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
+    warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
+    dailyLimit: a.daily_limit || null,
+    error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
+  }));
+}
+
+function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview) {
+  const status = {};
+  (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
+  return Object.assign({
+    campaigns: (campaigns || []).length,
+    status: listOf(status),
+    openTracking: (campaigns || []).some((c) => c.open_tracking === true)
+  }, mailCounts(overview), {
+    prior: priorOverview ? mailCounts(priorOverview) : null,
     byCampaign: (perCampaign || []).filter((c) => (c.emails_sent_count || 0) > 0).map((c) => ({
       name: String(c.campaign_name || "").slice(0, 60), sent: c.emails_sent_count || 0, opened: c.open_count_unique || c.open_count || 0,
       replies: c.reply_count_unique || c.reply_count || 0, bounced: c.bounced_count || 0
     })).sort((a, b) => b.sent - a.sent).slice(0, 12),
-    accounts: (accounts || []).map((a) => ({
-      email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
-      warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
-      dailyLimit: a.daily_limit || null,
-      error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
-    }))
-  };
+    accounts: accountRows(accounts)
+  });
 }
 
 async function instantly(ctx) {
   if (!(ctx.env || {}).INSTANTLY_API_KEY) return { ok: false, error: "INSTANTLY_API_KEY is not set.", need: "Instantly: put the API key (Settings > Integrations > API keys) in Secret Manager as INSTANTLY_API_KEY." };
-  const from = new Date(ctx.now - ctx.days * DAY).toISOString().slice(0, 10);
-  const to = new Date(ctx.now).toISOString().slice(0, 10);
-  const [campaigns, overview, per, accounts] = await Promise.all([
+  const date = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const from = date(ctx.now - ctx.days * DAY);
+  const to = date(ctx.now);
+  // Instantly counts whole dates, both ends included: the period before has as many dates and ends the day before `from`.
+  const priorTo = date(ctx.now - (ctx.days + 1) * DAY);
+  const priorFrom = date(ctx.now - (2 * ctx.days + 1) * DAY);
+  const [campaigns, overview, per, accounts, prior] = await Promise.all([
     instantlyGet(ctx, "campaigns?limit=100"),
     instantlyGet(ctx, "campaigns/analytics/overview?start_date=" + from + "&end_date=" + to),
     instantlyGet(ctx, "campaigns/analytics?start_date=" + from + "&end_date=" + to).catch(() => []),
-    instantlyGet(ctx, "accounts?limit=50")
+    instantlyGet(ctx, "accounts?limit=50"),
+    instantlyGet(ctx, "campaigns/analytics/overview?start_date=" + priorFrom + "&end_date=" + priorTo).catch(() => null)
   ]);
-  return Object.assign({ ok: true }, instantlyRows(campaigns.items, overview, Array.isArray(per) ? per : per.items, accounts.items));
+  return Object.assign({ ok: true }, instantlyRows(campaigns.items, overview, Array.isArray(per) ? per : per.items, accounts.items, prior));
 }
 
 // The plan as of `now`: phase, next milestone, deadlines with days left.
@@ -149,18 +180,23 @@ async function dnsTxt(ctx, name, type) {
   return (data.Answer || []).filter((a) => a.type === code).map((a) => String(a.data || "").replace(/^"|"$/g, "").replace(/" "/g, ""));
 }
 
-async function mailHealth(ctx, domain) {
-  const [txt, dmarc, mx, s1, s2] = await Promise.all([
+// selectors: the DKIM CNAMEs the domain must publish; Microsoft 365's selector1 and selector2 unless given.
+async function mailHealth(ctx, domain, selectors) {
+  const keys = selectors || ["selector1", "selector2"];
+  const [txt, dmarc, mx, ...dkim] = await Promise.all([
     dnsTxt(ctx, domain, "TXT"), dnsTxt(ctx, "_dmarc." + domain, "TXT"), dnsTxt(ctx, domain, "MX"),
-    dnsTxt(ctx, "selector1._domainkey." + domain, "CNAME"), dnsTxt(ctx, "selector2._domainkey." + domain, "CNAME")
+    ...keys.map((s) => dnsTxt(ctx, s + "._domainkey." + domain, "CNAME"))
   ]);
   const spf = txt.filter((r) => /^v=spf1/i.test(r));
   const dm = dmarc.find((r) => /^v=DMARC1/i.test(r)) || "";
   const p = (/;\s*p=([a-z]+)/i.exec(dm) || [])[1] || "";
+  const missing = keys.filter((s, i) => !dkim[i].length);
+  const dkimDetail = !missing.length ? keys.join(", ").replace(/, ([^,]+)$/, " and $1") + " are published."
+    : selectors ? "DKIM selector " + missing.join(", ") + " missing." : "Microsoft 365 DKIM selector " + (dkim[0].length ? "2" : "1") + " is missing.";
   const checks = [
     { name: "MX", ok: mx.length > 0, detail: mx.length ? mx.join(", ").slice(0, 100) : "No MX record: replies bounce." },
     { name: "SPF", ok: spf.length === 1, detail: spf.length === 1 ? spf[0].slice(0, 100) : spf.length ? "Two SPF records." : "No SPF record." },
-    { name: "DKIM", ok: s1.length > 0 && s2.length > 0, detail: s1.length && s2.length ? "selector1 and selector2 are published." : "Microsoft 365 DKIM selector " + (s1.length ? "2" : "1") + " is missing." },
+    { name: "DKIM", ok: !missing.length, detail: dkimDetail },
     { name: "DMARC", ok: !!dm && p !== "none", detail: dm ? "p=" + (p || "?") + (p === "none" ? " (monitor only)" : "") : "No DMARC record." }
   ];
   return { domain, checks, ok: checks.every((c) => c.ok) };
@@ -176,11 +212,68 @@ const SHORT_PATHS = [["yt", "YouTube"], ["tiktok", "TikTok"], ["li", "LinkedIn"]
 const FUNNEL = [[1866, "Short links (Worker)"], [1867, "Landing in six languages"], [1868, "Jarvis clicks and revenue"], [1869, "Shared mailboxes"],
   [1870, "Partner referral links"], [1871, "Score badge"], [1872, "Prospect vs peers"], [1873, "Education hub"], [1874, "Score-change follow-up"], [1875, "Benchmark pages"]];
 
+// The utm_campaign values qalabreview/src/routes.js sets, by name.
+const CAMPAIGNS = {
+  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email", home: "qalabreview.com home",
+  landing: "Landing home", "landing-universities": "Landing for universities", "landing-colleges": "Landing for technical training",
+  "landing-agencies": "Landing for agencies", "landing-startups": "Landing for startups",
+  youtube: "YouTube short link", tiktok: "TikTok short link", linkedin: "LinkedIn short link", instagram: "Instagram short link", facebook: "Facebook short link",
+  x: "X short link", qr: "QR code", "one-pager": "One-pager", lecture: "Lecture slides", webinar: "Webinar", signature: "Email signature", "business-card": "Business card",
+  call: "Booking link", "unknown-path": "Unknown path"
+};
+const SOCIAL_REPLY = "social-reply-";
+const netName = (k) => (E.NETWORKS[k] || {}).name || k;
+const campaignName = (c) => (c.startsWith(SOCIAL_REPLY) ? "Report replies on " + netName(c.slice(SOCIAL_REPLY.length)) : CAMPAIGNS[c] || c);
+
 function linkTags(query) {
   try {
     const p = new URLSearchParams(String(query || ""));
-    return p.get("utm_source") === "qalabreview" ? { campaign: (p.get("utm_campaign") || "unknown").slice(0, 40), host: bare(p.get("utm_content") || "").slice(0, 80) } : null;
+    if (p.get("utm_source") !== "qalabreview") return null;
+    const term = String(p.get("utm_term") || "").toLowerCase();
+    return { campaign: (p.get("utm_campaign") || "unknown").slice(0, 40), host: bare(p.get("utm_content") || "").slice(0, 80), term: /^[a-z0-9]{4,12}$/.test(term) ? term : "" };
   } catch (error) { return null; }
+}
+
+/** Report replies' clicks, runs and payments, per network (utm_campaign social-reply-<network>) and per post (utm_term). */
+function socialTally() {
+  const t = { visits: 0, reviews: 0, paid: 0, usd: 0 };
+  const nets = {};
+  const posts = {};
+  const zero = () => ({ visits: 0, reviews: 0, paid: 0, usd: 0 });
+  const add = (x, k, usd) => { x[k] += 1; if (usd) x.usd = Math.round((x.usd + usd) * 100) / 100; };
+  return {
+    add(tags, k, usd) {
+      if (!tags || !tags.campaign.startsWith(SOCIAL_REPLY)) return;
+      const network = tags.campaign.slice(SOCIAL_REPLY.length);
+      add(t, k, usd);
+      add(nets[network] || (nets[network] = Object.assign({ network, name: netName(network), campaign: tags.campaign }, zero())), k, usd);
+      if (tags.term) add(posts[network + ":" + tags.term] || (posts[network + ":" + tags.term] = Object.assign({ network, name: netName(network), ref: tags.term, host: tags.host }, zero())), k, usd);
+    },
+    rows() {
+      const order = (a, b) => b.usd - a.usd || b.paid - a.paid || b.reviews - a.reviews || b.visits - a.visits;
+      return Object.assign({}, t, { usd: Math.round(t.usd * 100) / 100, networks: Object.values(nets).sort((a, b) => order(a, b) || a.network.localeCompare(b.network)),
+        posts: Object.values(posts).sort((a, b) => order(a, b) || a.ref.localeCompare(b.ref)).slice(0, 40) });
+    }
+  };
+}
+
+/** The post ref a report reply's link carries (functions/engagement-reports.js linkFor), from its engagement_posts key. */
+const postRef = (key) => String(key || "").split("_").pop().slice(0, 6);
+
+/** Per-post link results joined to the posts we answered (engagement_posts with campaign report-reply). */
+function socialPosts(posts, docs) {
+  const byRef = {};
+  (docs || []).forEach((d) => { byRef[d.network + ":" + postRef(d.key)] = d; });
+  return (posts || []).map((p) => {
+    const d = byRef[p.network + ":" + p.ref];
+    if (!d) return p;
+    const reply = (d.actions || {}).reply || {};
+    return Object.assign({}, p, {
+      host: p.host || (d.report || {}).host || "", url: d.url || "", author: (d.author || {}).name || (d.author || {}).handle || "",
+      title: String(d.title || d.text || "").replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim().slice(0, 120),
+      status: reply.status || "", replyUrl: reply.url || "", lang: reply.lang || d.lang || ""
+    });
+  });
 }
 
 function linkRows(opens, reviews, ctx) {
@@ -189,6 +282,7 @@ function linkRows(opens, reviews, ctx) {
   const prospects = {};
   const sourceById = {};
   const sourceByEmail = {};
+  const social = socialTally();
   const row = (host) => prospects[host] || (prospects[host] = { host, visits: 0, reviews: 0, paid: 0, usd: 0, last: "" });
   const t = { visits: 0, reviews: 0, paid: 0, usd: 0 };
   opens.forEach((o) => {
@@ -197,6 +291,7 @@ function linkRows(opens, reviews, ctx) {
     if (!tags || at < start) return;
     t.visits += 1;
     tally(byCampaign, tags.campaign);
+    social.add(tags, "visits");
     if (!tags.host) return;
     const r = row(tags.host);
     r.visits += 1;
@@ -208,6 +303,7 @@ function linkRows(opens, reviews, ctx) {
     const tags = linkTags(r.query);
     if (!tags) return;
     t.reviews += 1;
+    social.add(tags, "reviews");
     if (r.id) sourceById[r.id] = tags;
     const email = String(r.email || "").toLowerCase();
     if (email && !sourceByEmail[email]) sourceByEmail[email] = tags;
@@ -219,29 +315,53 @@ function linkRows(opens, reviews, ctx) {
     const usd = (Number(r.priceUsd) || 0) - (Number(r.refundedUsd) || 0);
     t.paid += 1;
     t.usd += usd;
+    social.add(tags, "paid", usd);
     if (tags.host) { const x = row(tags.host); x.paid += 1; x.usd = Math.round((x.usd + usd) * 100) / 100; }
   });
   return {
     visits: t.visits, reviews: t.reviews, paid: t.paid, usd: Math.round(t.usd * 100) / 100,
     reviewRate: pct(t.reviews, t.visits), payRate: pct(t.paid, t.reviews),
-    byCampaign: listOf(byCampaign),
-    prospects: Object.values(prospects).sort((a, b) => b.usd - a.usd || b.reviews - a.reviews || b.visits - a.visits || a.host.localeCompare(b.host)).slice(0, 50)
+    byCampaign: listOf(byCampaign).map((c) => ({ label: campaignName(c.label), value: c.value, campaign: c.label })),
+    prospects: Object.values(prospects).sort((a, b) => b.usd - a.usd || b.reviews - a.reviews || b.visits - a.visits || a.host.localeCompare(b.host)).slice(0, 50),
+    social: social.rows()
   };
 }
 
-async function shortLinks(ctx, reviewsP) {
-  const since = new Date(ctx.now - ctx.days * DAY);
-  const [opens, reviews, worker] = await Promise.all([
-    ctx.db.collection("url_review_opens").where("createdAt", ">=", since).select("query", "createdAt").limit(10000).get().then((s) => s.docs.map((d) => d.data())),
-    reviewsP,
+/** The posts we answered with a report link, for socialPosts; none when the read fails. */
+const replyDocs = (db) => db.collection("engagement_posts").where("campaign", "==", "report-reply").limit(800).get()
+  .then((snap) => snap.docs.map((d) => Object.assign({ key: d.id }, d.data()))).catch(() => []);
+
+async function shortLinks(ctx, loggedP) {
+  const [{ opens, reviews }, worker, docs] = await Promise.all([
+    loggedP,
     ctx.fetch(SHORT + "/robots.txt", { redirect: "manual", signal: AbortSignal.timeout(8000) })
-      .then(async (r) => ({ status: r.status, body: r.status === 200 ? (await r.text()).slice(0, 200) : "" })).catch((error) => ({ status: 0, body: clean(error) }))
+      .then(async (r) => ({ status: r.status, body: r.status === 200 ? (await r.text()).slice(0, 200) : "" })).catch((error) => ({ status: 0, body: clean(error) })),
+    replyDocs(ctx.db)
   ]);
   const live = worker.status === 200 && /User-agent/i.test(worker.body);
+  const rows = linkRows(opens, reviews, ctx);
+  rows.social.posts = socialPosts(rows.social.posts, docs);
   return Object.assign({ ok: true, live, workerStatus: worker.status, base: SHORT,
     channels: SHORT_PATHS.map(([path, label]) => ({ label, url: SHORT + "/" + path })),
     funnel: FUNNEL.map(([n, label]) => ({ label, url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/" + n })) },
-  linkRows(opens, reviews, ctx));
+  rows, { prior: linkPrior(opens, reviews, ctx) });
+}
+
+/** The report replies' link results over the last ctx.days, for the weekly results ticket. ctx: { db, now, days }. */
+async function socialResults(ctx) {
+  const [{ opens, reviews }, docs] = await Promise.all([dayRows.rows(ctx.db, ["reviews", "opens"], { from: ctx.now - ctx.days * DAY, now: ctx.now }), replyDocs(ctx.db)]);
+  const s = linkRows(opens, reviews, ctx).social;
+  return Object.assign(s, { posts: socialPosts(s.posts, docs) });
+}
+
+// The same numbers for the period before the range, or null when either read stopped short of it.
+function linkPrior(opens, reviews, ctx) {
+  const start = ctx.now - ctx.days * DAY;
+  const priorStart = start - ctx.days * DAY;
+  if (!reachesBack(opens, OPEN_CAP, priorStart) || !reachesBack(reviews, REVIEW_CAP, priorStart)) return null;
+  const before = (r) => toMs(r.createdAt) < start;
+  const x = linkRows(opens.filter(before), reviews.filter(before), { now: start, days: ctx.days });
+  return { visits: x.visits, reviews: x.reviews, paid: x.paid, usd: x.usd, reviewRate: x.reviewRate, payRate: x.payRate };
 }
 
 async function outreach(ctx) {
@@ -249,22 +369,21 @@ async function outreach(ctx) {
   const out = { ok: true, needs, days: ctx.days };
   const part = async (name, run) => { try { out[name] = await run(); } catch (error) { out[name] = { ok: false, error: clean(error) }; } };
   let planDoc = null;
-  const since = new Date(Math.min(ctx.now - ctx.days * DAY, weekStart(ctx.now))).toISOString();
-  const reviewsP = ctx.db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc")
-    .select("sweep", "createdAt", "status", "requestedUrl", "score", "query", "paid", "priceUsd", "refundedUsd", "refunded", "test", "email", "reportId").limit(3000).get()
-    .then((s) => s.docs.map((d) => Object.assign({ id: d.id }, d.data())));
-  reviewsP.catch(() => {});
+  const since = Math.min(ctx.now - 2 * ctx.days * DAY, weekStart(ctx.now));
+  const loggedP = dayRows.rows(ctx.db, ["reviews", "opens"], { from: since, now: ctx.now });
+  loggedP.catch(() => {});
   await Promise.all([
     part("pipeline", async () => {
-      const [queue, state, reviews, index] = await Promise.all([
+      const [queue, state, lane, { reviews }, index] = await Promise.all([
         ctx.db.collection("url_review_sweep").doc("outreach").get(),
         ctx.db.collection("url_review_sweep").doc("state").get(),
-        reviewsP,
+        ctx.db.collection("url_review_sweep").doc("lane").get(),
+        loggedP,
         ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => ({ reports: [] }))
       ]);
-      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, state.exists ? state.data() : null, reviews, (index.reports || []).map((r) => r.host), ctx));
+      return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null), reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
-    part("links", () => shortLinks(ctx, reviewsP)),
+    part("links", () => shortLinks(ctx, loggedP)),
     part("instantly", () => instantly(ctx)),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();
@@ -279,4 +398,4 @@ async function outreach(ctx) {
   return out;
 }
 
-module.exports = { outreach, pipelineRows, instantlyRows, planNow, mailHealth, linkRows, linkTags, weekStart, TTL: 30 * 60 * 1000 };
+module.exports = { outreach, pipelineRows, instantlyRows, accountRows, instantlyGet, planNow, mailHealth, linkRows, linkPrior, linkTags, campaignName, socialPosts, postRef, socialResults, weekStart, TTL: 30 * 60 * 1000 };

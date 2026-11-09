@@ -33,12 +33,12 @@ function wdioSession() {
       return browser.getTitle();
     },
     async text(selector) {
-      const el = await $(selector);
+      const el = await $(selector, { strict: false });
       await el.waitForExist({ timeout: 8000 });
       return el.getText();
     },
     async attr(selector, name) {
-      return $(selector).getAttribute(name);
+      return $(selector, { strict: false }).getAttribute(name);
     },
     async click(selector) {
       await browser.execute((sel) => document.querySelector(sel).click(), selector);
@@ -67,20 +67,20 @@ function wdioSession() {
       await browser.waitUntil(async () => browser.execute(
         () => document.readyState === 'complete' && (!!window.CarlosMunozCV || !!document.getElementById('login-overlay') || !!document.getElementById('runBtn') || !!document.querySelector('h1'))
       ), { timeout: 15000 });
-      const loaded = await browser.executeAsync((src, done) => {
+      const loaded = await browser.execute((src) => new Promise((done) => {
         if (window.CatalogChecks) { done(true); return; }
         const script = document.createElement('script');
         script.src = src;
         script.onload = () => done(!!window.CatalogChecks);
         script.onerror = () => done(false);
         document.head.appendChild(script);
-      }, BASE + '/js/catalog-checks.js');
+      }), BASE + '/js/catalog-checks.js');
       if (!loaded) throw new Error('catalog-checks.js did not load');
-      const message = await browser.executeAsync((caseId, done) => {
+      const message = await browser.execute((caseId) => {
         const check = window.CatalogChecks && window.CatalogChecks[caseId];
-        if (!check) { done('FAIL: missing ' + caseId); return; }
-        Promise.resolve(check()).then((msg) => done(String(msg || 'ok'))).catch((err) => {
-          done('FAIL: ' + (err && err.message ? err.message : err));
+        if (!check) return 'FAIL: missing ' + caseId;
+        return Promise.resolve(check()).then((msg) => String(msg || 'ok')).catch((err) => {
+          return 'FAIL: ' + (err && err.message ? err.message : err);
         });
       }, id);
       if (String(message).indexOf('FAIL:') === 0) throw new Error(String(message).slice(5).trim());

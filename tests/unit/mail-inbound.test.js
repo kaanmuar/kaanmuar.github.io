@@ -91,7 +91,10 @@ test("wiring: mailInbound reads its key, the snapshot carries the codes, and bot
   const index = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
   assert.deepEqual(secrets.mailInbound, ["SENDGRID_API_KEY", "MAIL_WEBHOOK_KEY"]);
   assert.match(index, /exports\.mailInbound = functions\.runWith\(\{[^}]*secrets: SECRETS\.mailInbound/);
-  assert.match(index, /op === "snapshot"\) out = Object\.assign\([^\n]*mailCodes: await mailCodeRows\(\)/);
+  assert.match(index, /op === "snapshot"\) out = await jarvisSnapshotOp\(/);
+  const op = index.slice(index.indexOf("async function jarvisSnapshotOp("), index.indexOf("async function jarvisHeld("));
+  assert.match(op, /mailCodeRows\(\)/);
+  assert.match(op, /\{ mailCodes \}/);
   assert.match(fs.readFileSync(path.join(root, "js/admin-jarvis-push.js"), "utf8"), /\['codes', 'Sign-in codes'/);
   assert.match(fs.readFileSync(path.join(root, "android/app/src/main/java/com/carlosandmunoz/jarvis/push/Push.kt"), "utf8"), /CODES to Triple\("Sign-in codes"/);
 });
@@ -137,9 +140,9 @@ test("replyId: the same mail gets the same row id through ImprovMX and SendGrid,
   assert.equal(replies.replyId(""), "");
 });
 
-test("wiring: qa@ mail that is not a code goes to the owner-replies flow, matched notices only", () => {
+test("wiring: qa@ and face-address mail that is not a code goes to the owner-replies flow, matched notices only", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
-  assert.match(index, /!row && mail\.alias === "qa" && !mailInbound\.fromUs\(mail\.fromEmail\)\) \{\n\s+const out = await takeOwnerReply\(mailInbound\.replyMail\(req\.body\), mailInbound\.replyAuth\(req\.body\.headers\), true\)/);
+  assert.match(index, /!row && \(mail\.alias === "qa" \|\| mailFace\.isFaceAlias\(mail\.alias\)\) && !mailInbound\.fromUs\(mail\.fromEmail\)\) \{\n\s+const out = await takeOwnerReply\(mailInbound\.replyMail\(req\.body\), mailInbound\.replyAuth\(req\.body\.headers\), true\)/);
   assert.match(index, /if \(matchedOnly && ownerReplies\.OPERATORS\.includes\(reply\.from\)\)/);
   assert.match(index, /if \(matchedOnly && !ref && !link\) return/);
   assert.match(index, /const id = ownerReplies\.replyId\(mail\.messageId\) \|\| crypto\.randomBytes/);

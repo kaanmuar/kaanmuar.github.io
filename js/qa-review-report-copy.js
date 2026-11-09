@@ -5,6 +5,45 @@
 
   const COPY = {
     en: {
+      fieldError: {
+        nameNeeded: "Enter your name.", emailNeeded: "Enter a valid email.", ownMailDomain: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.",
+        mailDead: "That email domain does not accept mail.", reasonPick: "Choose a reason.", reasonWrite: "Write the reason in a sentence.", clientNameNeeded: "Enter the client's name.", clientEmailNeeded: "Enter the client's email.",
+        clientUrlNeeded: "Enter the client's website.", clientMailDead: "The client email domain does not accept mail.", urlNeeded: "Enter a public page after https://.", urlEmpty: "Enter a URL.", urlInvalid: "Enter a valid https URL.",
+        urlHttps: "Only https URLs can be reviewed.", urlLogin: "Remove the username and password from the URL.", urlPort: "Only the standard https port can be reviewed.", urlPrivate: "That address is not a public website.",
+        frameworksNeeded: "Choose at least one framework for the proposed cases.", scopeInvalid: "Choose 20, 40, 60, 80, or 100 pages, and 2, 3, 4, or 5 links deep.", termsNeeded: "Accept the terms first.", compareFrom: "Start a comparison from one of your reports."
+      },
+      signInToRun: "Sign in above to run a review. The review runs on the device where you sign in.",
+      reviewNeeds: "Still needed before Review: {steps}",
+      reason: {
+        own: "I own this site and want a test plan", client: "A client asked me to propose coverage before a release", redesign: "I am comparing this page with a redesign",
+        release: "I need a case list before a release", tech: "I want the public technologies named", a11y: "I am preparing an accessibility review",
+        security: "I am preparing a review of the public security headers", performance: "I need a performance and load case list",
+        teaching: "I am teaching or learning how a page could be tested", allowed: "I am checking a page I am allowed to review",
+        verify: "I want QA-lab to run a verification", credentials: "I have a username and password for this site", other: "Other"
+      },
+      scopePages: "{n} pages", scopeDepth: "{n} deep", scopeSite: "site language", scopeSection: "this section",
+      sectionNone: "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.", sectionStay: "Later pages stay under {path}.", sectionLeave: "Later pages can follow links outside {path}.",
+      tour: {
+        back: "Back", close: "Close", next: "Next", finish: "Finish", step: "Step {n} of {m}.", progress: "Step progress", wait: "Available when this step finishes.",
+        terms: ["The disclaimers", "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text."],
+        counts: ["You are not the first", "These two numbers count up live: pages analyzed and reviews run by everyone so far. Only a review that really analyzed a page adds to them."],
+        signIn: ["Sign in", "Sign in with email or an account you already have. The review runs only on the device where you sign in."],
+        name: ["Who is asking", "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review."],
+        reasons: ["Why this review", "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence."],
+        url: ["The page", "Start typing and the box helps. It suggests well-known sites, says “Did you mean…?” when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page."],
+        frameworks: ["Frameworks", "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site."],
+        scope: ["Pages to review", "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts."],
+        start: ["Start the review", "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step."],
+        log: ["The log", "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a “Still working” note instead of silence."],
+        stop: ["Stop", "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run."],
+        report: ["The log beside the questions", "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw."],
+        ask: ["Ask the report", "In a paid report, ask “Why is F-01 rated this way?” and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw."],
+        compare: ["Next to a competitor", "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. Each competitor is 9 USD."],
+        chatbot: ["A word with your chatbot", "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone."],
+        account: ["Your reviews", "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag."],
+        lang: ["Language", "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them."],
+        again: ["Open this tour again", "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it."]
+      },
       callEyebrow: "Walkthrough", callTitle: "Go through this report with Carlos", callCopy: "A 30-minute video call on what the findings mean for your site and what to fix first.", callButton: "Book a 30-min walkthrough",
       dashEyebrow: "Run dashboard", dashTitle: "Report", captureNote: "This sheet does not include the report. The attempt is recorded with the review.",
       copyLink: "Copy link (opens for you)", caseExport: "Export and print test cases", export: "Export", text: "Text", printPdf: "Print or save as PDF",
@@ -25,6 +64,8 @@
       read_one: "{n} page analyzed", read_other: "{n} pages analyzed", readOf_one: "{n} page analyzed of {found} found", readOf_other: "{n} pages analyzed of {found} found",
       headless: "checked in a headless browser", risks: "Biggest risks", quick: "Quick wins", solid: "Already solid", noneFound: "None found.",
       noSolid: "No area scores B or better yet.", printSummary: "Print this summary", expandAll: "Expand all", collapseAll: "Collapse all", caseMore: "More", caseLess: "Less",
+      indexLabel: "On this report", backTop: "Back to top", glance: "At a glance",
+      indexGroups: { summary: "Summary", browser: "Browser and search", checks: "Checks and fixes", glance: "At a glance", exposure: "Exposure", evidence: "Evidence", cases: "Cases to run" },
       offerTitle: "Read the rest", offerFix: "Fix list · {usd} USD", offerFixBody: "Scores, every finding, the top 10 fixes in plain language, and a PDF of the summary.", offerFull: "Full report · {usd} USD", offerFullBody: "19 USD, plus 5 USD for each extra framework or tool. Every case and layer, the signals, the exports, and the scripts.", offerCredit: "The 5 USD fix list is already taken off.", offerFixOpen: "Your fix list is open: scores and findings read in full. The cases stay blurred until the full report is paid.",
       priceSay: "adds {usd} US dollars", competitorSay: "this competitor adds {usd} US dollars", totalEyebrow: "Before it starts", totalTitle: "The total for this review", totalCompareTitle: "The total for this comparison", totalIncluded_one: "{n} framework, included in your first review", totalIncluded_other: "{n} frameworks, included in your first review", totalPages: "{n} pages", totalDepth: "{n} links deep", totalCompetitor: "Competitor: {host}", totalList: "Total", totalReturn: "Return discount {percent}%", totalCoupon: "Code {code} {percent}%", totalDue: "To pay", totalSaved: "Saved in Your reviews for 12 months.", totalPay: "Pay and run", totalCancel: "Cancel", totalPassRun_one: "Pass run, {n} left after this one", totalPassRun_other: "Pass run, {n} left after this one", passOffer: "Or {runs} runs for {usd} USD with the {plan} pass, for 30 days.", passOfferUp: "Your pass is used up or ended. Or {runs} runs for {usd} USD with the {plan} pass, for 30 days.", passOfferGo: "Get the {plan} pass", passSignIn: "Sign in first. A pass belongs to the address you sign in with.",
       lighthouse: "Lighthouse scored performance {score}/100 on a simulated mid-range phone over slow 4G.", psiNoField: "PageSpeed Insights: Chrome has too few visits to publish real-user numbers for this site.", realVisitors: "Real visitors",
@@ -134,6 +175,46 @@
       }
     },
     es: {
+      fieldError: {
+        nameNeeded: "Escribe tu nombre.", emailNeeded: "Escribe un correo válido.", ownMailDomain: "Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.",
+        mailDead: "Ese dominio de correo no recibe mensajes.", reasonPick: "Elige un motivo.", reasonWrite: "Escribe el motivo en una frase.", clientNameNeeded: "Escribe el nombre del cliente.", clientEmailNeeded: "Escribe el correo del cliente.",
+        clientUrlNeeded: "Escribe el sitio web del cliente.", clientMailDead: "El dominio del correo del cliente no recibe mensajes.", urlNeeded: "Escribe una página pública después de https://.", urlEmpty: "Escribe una URL.",
+        urlInvalid: "Escribe una URL https válida.", urlHttps: "Solo se pueden revisar URL https.", urlLogin: "Quita el usuario y la contraseña de la URL.", urlPort: "Solo se puede revisar el puerto https estándar.",
+        urlPrivate: "Esa dirección no es un sitio web público.", frameworksNeeded: "Elige al menos un framework para los casos propuestos.", scopeInvalid: "Elige 20, 40, 60, 80 o 100 páginas, y 2, 3, 4 o 5 enlaces de profundidad.",
+        termsNeeded: "Primero acepta los términos.", compareFrom: "Empieza una comparación desde uno de tus informes."
+      },
+      signInToRun: "Inicia sesión arriba para ejecutar una revisión. La revisión se ejecuta en el dispositivo donde inicias sesión.",
+      reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "El sitio es mío y quiero un plan de pruebas", client: "Un cliente me pidió proponer la cobertura antes de un lanzamiento", redesign: "Estoy comparando esta página con un rediseño",
+        release: "Necesito una lista de casos antes de un lanzamiento", tech: "Quiero saber qué tecnologías públicas usa", a11y: "Estoy preparando una revisión de accesibilidad",
+        security: "Estoy preparando una revisión de los encabezados de seguridad públicos", performance: "Necesito una lista de casos de rendimiento y carga",
+        teaching: "Estoy enseñando o aprendiendo cómo se podría probar una página", allowed: "Estoy revisando una página que tengo permiso para revisar",
+        verify: "Quiero que QA-lab haga una verificación", credentials: "Tengo un usuario y una contraseña para este sitio", other: "Otro"
+      },
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidad", scopeSite: "idioma del sitio", scopeSection: "esta sección",
+      sectionNone: "Agrega una ruta, como example.com/docs, para mantener las páginas siguientes en esa sección. Con solo el host se revisa todo el sitio.", sectionStay: "Las páginas siguientes se quedan dentro de {path}.", sectionLeave: "Las páginas siguientes pueden seguir enlaces fuera de {path}.",
+      tour: {
+        back: "Atrás", close: "Cerrar", next: "Siguiente", finish: "Terminar", step: "Paso {n} de {m}.", progress: "Progreso del paso", wait: "Disponible cuando termine este paso.",
+        terms: ["Los avisos legales", "Ningún control se activa hasta que marques cada casilla. Los avisos legales nombran las normas locales, nacionales e internacionales. Una revisión completada, una detención y una sola muestra del informe forman parte de ese texto."],
+        counts: ["No eres el primero", "Estos dos números suben en vivo: páginas analizadas y revisiones hechas por todos hasta ahora. Solo una revisión que de verdad analizó una página los hace subir."],
+        signIn: ["Iniciar sesión", "Inicia sesión con tu correo o con una cuenta que ya tengas. La revisión solo se ejecuta en el dispositivo donde inicias sesión."],
+        name: ["Quién pregunta", "Tu nombre se guarda con la revisión. Tu correo viene del inicio de sesión. Cambiar el nombre no abre una segunda revisión completada."],
+        reasons: ["Por qué esta revisión", "Elige un motivo. Pedir una verificación de QA-lab muestra cómo ponerte en contacto. Otro abre el cuadro de abajo para que escribas el tuyo en una frase."],
+        url: ["La página", "Empieza a escribir y el cuadro te ayuda. Sugiere sitios conocidos, pregunta “¿Quisiste decir…?” cuando un host no existe y, después de una /, ofrece páginas reales del sitemap del sitio. https:// ya va delante, así que la revisión siempre pide una página pública y segura."],
+        frameworks: ["Frameworks", "Elige las herramientas con las que trabaja tu equipo. Cada caso propuesto se escribe para ellas, y la exportación de casos trae un script inicial para cada una. No se lanza nada contra tu sitio."],
+        scope: ["Páginas a revisar", "¿Solo te importa la documentación? Escribe example.com/docs y Quedarse en esta sección mantiene las páginas siguientes bajo esa ruta. Elige cuántas páginas, a cuántos enlaces de profundidad y el idioma que se le pide al sitio. La primera revisión incluida es de 20 páginas y 2 enlaces de profundidad. Una más grande muestra su precio antes de empezar."],
+        start: ["Iniciar la revisión", "Revisar comprueba primero los campos. Después analiza páginas públicas de ese host y escribe una línea por cada paso."],
+        log: ["El registro", "Sírvete un café y mira. Un medidor recorre la conexión, las páginas, la pasada del navegador, los casos, las pruebas de velocidad y la puntuación, y cada línea aparece en cuanto ocurre. Un sitio lento recibe una nota de “Sigue trabajando” en lugar de silencio."],
+        stop: ["Detener", "¿Cambiaste de idea? Detener termina el análisis, las páginas ya guardadas quedan en el informe y el registro dice que se detuvo. Solo tu sesión en este dispositivo puede detener tu revisión."],
+        report: ["El registro junto a las preguntas", "Cada línea es un paso del análisis. Cuando el análisis termina, se abre el panel del informe con las acciones de descargar, imprimir y compartir. Sus casos van primero por riesgo, y cada uno nombra la página real que vio."],
+        ask: ["Preguntar al informe", "En un informe pagado, pregunta “¿Por qué F-01 tiene esta calificación?” y la respuesta sale solo de esta revisión, con la corrección, un caso de Playwright o un issue de GitHub o Jira listo para pegar. Nunca adivina más allá de lo que vio la revisión."],
+        compare: ["Frente a un competidor", "¿Te da curiosidad cómo le va a la tienda de al lado? Comparar, en el informe, ejecuta las mismas comprobaciones públicas en su sitio y pone las seis puntuaciones lado a lado, con lo que solo uno de los dos tiene. Cada competidor cuesta 9 USD."],
+        chatbot: ["Unas palabras con tu chatbot", "En un sitio que demostraste que es tuyo, la revisión conversa con su widget de chat: precios, pedir una persona, un reembolso y dos trucos que un bot debería rechazar. Como máximo seis mensajes en un minuto, con un correo y un teléfono inventados."],
+        account: ["Tus revisiones", "Cada revisión que inicias te espera aquí. Búscalas, abre varias a la vez, descárgalas, bórralas o verifica un sitio tuyo con un registro DNS o una etiqueta en la página de inicio."],
+        lang: ["Idioma", "El idioma que elijas aquí es el del CV, el estudio, el laboratorio y esta revisión. La misma elección se mantiene cuando pasas de uno a otro."],
+        again: ["Abrir este recorrido otra vez", "Este recorrido queda cerrado después de la primera visita. Cómo funciona esta revisión lo vuelve a abrir cuando quieras."]
+      },
       callEyebrow: "Recorrido", callTitle: "Revisa este informe con Carlos", callCopy: "Una videollamada de 30 minutos sobre qué significan los hallazgos para tu sitio y qué corregir primero.", callButton: "Agenda un recorrido de 30 min",
       dashEyebrow: "Panel de la revisión", dashTitle: "Informe", captureNote: "Esta hoja no incluye el informe. El intento queda registrado con la revisión.",
       copyLink: "Copiar enlace (se abre para ti)", caseExport: "Exportar e imprimir casos de prueba", export: "Exportar", text: "Texto", printPdf: "Imprimir o guardar como PDF",
@@ -154,6 +235,8 @@
       read_one: "{n} página analizada", read_other: "{n} páginas analizadas", readOf_one: "{n} página analizada de {found} encontradas", readOf_other: "{n} páginas analizadas de {found} encontradas",
       headless: "revisado en un navegador sin interfaz", risks: "Mayores riesgos", quick: "Mejoras rápidas", solid: "Ya sólido", noneFound: "No se encontró ninguno.",
       noSolid: "Ninguna área tiene todavía B o más.", printSummary: "Imprimir este resumen", expandAll: "Desplegar todo", collapseAll: "Plegar todo", caseMore: "Más", caseLess: "Menos",
+      indexLabel: "En este informe", backTop: "Volver arriba", glance: "De un vistazo",
+      indexGroups: { summary: "Resumen", browser: "Navegador y buscadores", checks: "Controles y arreglos", glance: "De un vistazo", exposure: "Exposición", evidence: "Evidencia", cases: "Casos para ejecutar" },
       offerTitle: "Leer el resto", offerFix: "Lista de arreglos · {usd} USD", offerFixBody: "Puntuaciones, todos los hallazgos, los 10 primeros arreglos en palabras claras y un PDF del resumen.", offerFull: "Informe completo · {usd} USD", offerFullBody: "19 USD y 5 USD por cada framework o herramienta extra. Todos los casos y capas, las señales, las exportaciones y los scripts.", offerCredit: "Los 5 USD de la lista de arreglos ya están descontados.", offerFixOpen: "Tu lista de arreglos está abierta: puntuaciones y hallazgos se leen completos. Los casos siguen borrosos hasta pagar el informe completo.",
       priceSay: "suma {usd} dólares estadounidenses", competitorSay: "este competidor suma {usd} dólares estadounidenses", totalEyebrow: "Antes de empezar", totalTitle: "El total de esta revisión", totalCompareTitle: "El total de esta comparación", totalIncluded_one: "{n} framework, incluido en tu primera revisión", totalIncluded_other: "{n} frameworks, incluidos en tu primera revisión", totalPages: "{n} páginas", totalDepth: "{n} niveles de enlaces", totalCompetitor: "Competidor: {host}", totalList: "Total", totalReturn: "Descuento por volver {percent} %", totalCoupon: "Código {code} {percent} %", totalDue: "A pagar", totalSaved: "Se guarda en Tus revisiones durante 12 meses.", totalPay: "Pagar y revisar", totalCancel: "Cancelar", totalPassRun_one: "Revisión del pase, queda {n} después de esta", totalPassRun_other: "Revisión del pase, quedan {n} después de esta", passOffer: "O {runs} revisiones por {usd} USD con el pase {plan}, durante 30 días.", passOfferUp: "Tu pase se agotó o terminó. O {runs} revisiones por {usd} USD con el pase {plan}, durante 30 días.", passOfferGo: "Comprar el pase {plan}", passSignIn: "Inicia sesión primero. Un pase pertenece a la dirección con la que inicias sesión.",
       lighthouse: "Lighthouse dio {score}/100 de rendimiento en un celular de gama media simulado con 4G lenta.", psiNoField: "PageSpeed Insights: Chrome tiene muy pocas visitas para publicar datos de usuarios reales de este sitio.",
@@ -265,6 +348,46 @@
       }
     },
     pt: {
+      fieldError: {
+        nameNeeded: "Digite seu nome.", emailNeeded: "Digite um e-mail válido.", ownMailDomain: "Use um e-mail do mesmo domínio do site. Isso mostra que a caixa de e-mail está nesse host. Não prova a propriedade legal.",
+        mailDead: "Esse domínio de e-mail não recebe mensagens.", reasonPick: "Escolha um motivo.", reasonWrite: "Escreva o motivo em uma frase.", clientNameNeeded: "Digite o nome do cliente.", clientEmailNeeded: "Digite o e-mail do cliente.",
+        clientUrlNeeded: "Digite o site do cliente.", clientMailDead: "O domínio do e-mail do cliente não recebe mensagens.", urlNeeded: "Digite uma página pública depois de https://.", urlEmpty: "Digite uma URL.",
+        urlInvalid: "Digite uma URL https válida.", urlHttps: "Só é possível revisar URLs https.", urlLogin: "Tire o usuário e a senha da URL.", urlPort: "Só é possível revisar a porta https padrão.",
+        urlPrivate: "Esse endereço não é um site público.", frameworksNeeded: "Escolha pelo menos um framework para os casos propostos.", scopeInvalid: "Escolha 20, 40, 60, 80 ou 100 páginas, e 2, 3, 4 ou 5 links de profundidade.",
+        termsNeeded: "Aceite os termos primeiro.", compareFrom: "Comece uma comparação a partir de um dos seus relatórios."
+      },
+      signInToRun: "Entre acima para executar uma revisão. A revisão roda no dispositivo em que você entra.",
+      reviewNeeds: "Falta antes de Revisar: {steps}",
+      reason: {
+        own: "Este site é meu e quero um plano de testes", client: "Um cliente me pediu para propor a cobertura antes de um lançamento", redesign: "Estou comparando esta página com um novo design",
+        release: "Preciso de uma lista de casos antes de um lançamento", tech: "Quero saber quais tecnologias públicas ele usa", a11y: "Estou preparando uma revisão de acessibilidade",
+        security: "Estou preparando uma revisão dos cabeçalhos de segurança públicos", performance: "Preciso de uma lista de casos de desempenho e carga",
+        teaching: "Estou ensinando ou aprendendo como uma página poderia ser testada", allowed: "Estou verificando uma página que tenho permissão para revisar",
+        verify: "Quero que o QA-lab faça uma verificação", credentials: "Tenho um usuário e uma senha para este site", other: "Outro"
+      },
+      scopePages: "{n} páginas", scopeDepth: "{n} de profundidade", scopeSite: "idioma do site", scopeSection: "esta seção",
+      sectionNone: "Adicione um caminho, como example.com/docs, para manter as páginas seguintes nessa seção. Só com o host, o site inteiro é revisado.", sectionStay: "As páginas seguintes ficam dentro de {path}.", sectionLeave: "As páginas seguintes podem seguir links fora de {path}.",
+      tour: {
+        back: "Voltar", close: "Fechar", next: "Próximo", finish: "Concluir", step: "Etapa {n} de {m}.", progress: "Progresso da etapa", wait: "Disponível quando esta etapa terminar.",
+        terms: ["Os avisos", "Nenhum controle liga até você marcar cada caixa. Os avisos citam as regras locais, nacionais e internacionais. Uma revisão concluída, uma parada e uma única exibição do relatório fazem parte desse texto."],
+        counts: ["Você não é o primeiro", "Estes dois números sobem ao vivo: páginas analisadas e revisões feitas por todos até agora. Só uma revisão que realmente analisou uma página faz eles subirem."],
+        signIn: ["Entrar", "Entre com seu e-mail ou com uma conta que você já tem. A revisão só roda no dispositivo em que você entra."],
+        name: ["Quem está pedindo", "Seu nome fica salvo com a revisão. Seu e-mail vem do login. Mudar o nome não abre uma segunda revisão concluída."],
+        reasons: ["Por que esta revisão", "Escolha um motivo. Pedir uma verificação do QA-lab mostra como entrar em contato. Outro abre a caixa abaixo para você escrever o seu em uma frase."],
+        url: ["A página", "Comece a digitar e a caixa ajuda. Ela sugere sites conhecidos, pergunta “Você quis dizer…?” quando um host não existe e, depois de uma /, oferece páginas reais do sitemap do site. O https:// já vem na frente, então a revisão sempre pede uma página pública e segura."],
+        frameworks: ["Frameworks", "Escolha as ferramentas com que sua equipe trabalha. Cada caso proposto é escrito para elas, e a exportação de casos traz um script inicial para cada uma. Nada é executado contra o seu site."],
+        scope: ["Páginas a revisar", "Só quer a documentação? Digite example.com/docs e Ficar nesta seção mantém as próximas páginas dentro desse caminho. Escolha quantas páginas, quantos níveis de links e o idioma a pedir ao site. A primeira revisão incluída tem 20 páginas e 2 níveis de links. Uma maior mostra o preço antes de começar."],
+        start: ["Começar a revisão", "Revisar confere os campos primeiro. Depois analisa páginas públicas desse host e escreve uma linha para cada etapa."],
+        log: ["O registro", "Pegue um café e acompanhe. Um medidor passa pela conexão, as páginas, a passada do navegador, os casos, os testes de velocidade e a pontuação, e cada linha aparece no momento em que acontece. Um site lento recebe um aviso de “Ainda trabalhando” em vez de silêncio."],
+        stop: ["Parar", "Mudou de ideia? Parar encerra a análise, as páginas já salvas ficam no relatório e o registro diz que ela foi parada. Só o seu login neste dispositivo pode parar a sua revisão."],
+        report: ["O registro ao lado das perguntas", "Cada linha é uma etapa da análise. Quando a análise termina, o painel do relatório abre com as ações de baixar, imprimir e compartilhar. Os casos vêm primeiro por risco, e cada um cita a página real que viu."],
+        ask: ["Perguntar ao relatório", "Em um relatório pago, pergunte “Por que o F-01 tem essa nota?” e a resposta vem só desta revisão, com a correção, um caso de Playwright ou uma issue do GitHub ou do Jira pronta para colar. Ela nunca adivina além do que a revisão viu."],
+        compare: ["Ao lado de um concorrente", "Curioso para saber como vai a loja ao lado? Comparar, no relatório, roda as mesmas verificações públicas no site dela e coloca as seis notas lado a lado, com o que só um de vocês tem. Cada concorrente custa 9 USD."],
+        chatbot: ["Uma conversa com o seu chatbot", "Em um site que você comprovou ser seu, a revisão conversa com o widget de chat: preços, pedir uma pessoa, um reembolso e dois truques que um bot deveria recusar. No máximo seis mensagens em um minuto, com e-mail e telefone inventados."],
+        account: ["Suas revisões", "Cada revisão que você inicia espera aqui. Pesquise, abra várias de uma vez, baixe, apague ou verifique um site seu com um registro DNS ou uma tag na página inicial."],
+        lang: ["Idioma", "O idioma escolhido aqui vale para o CV, o estúdio, o laboratório e esta revisão. A mesma escolha continua quando você passa de um para outro."],
+        again: ["Abrir este tour de novo", "Este tour fica fechado depois da primeira visita. Como funciona esta revisão o traz de volta quando você quiser."]
+      },
       callEyebrow: "Tour guiado", callTitle: "Veja este relatório com o Carlos", callCopy: "Uma videochamada de 30 minutos sobre o que os achados significam para o seu site e o que corrigir primeiro.", callButton: "Agende um tour de 30 min",
       dashEyebrow: "Painel da revisão", dashTitle: "Relatório", captureNote: "Esta folha não inclui o relatório. A tentativa fica registrada com a revisão.",
       copyLink: "Copiar link (abre para você)", caseExport: "Exportar e imprimir casos de teste", export: "Exportar", text: "Texto", printPdf: "Imprimir ou salvar como PDF",
@@ -285,6 +408,8 @@
       read_one: "{n} página analisada", read_other: "{n} páginas analisadas", readOf_one: "{n} página analisada de {found} encontradas", readOf_other: "{n} páginas analisadas de {found} encontradas",
       headless: "verificado em um navegador sem interface", risks: "Maiores riscos", quick: "Ganhos rápidos", solid: "Já sólido", noneFound: "Nenhum encontrado.",
       noSolid: "Nenhuma área tem ainda B ou melhor.", printSummary: "Imprimir este resumo", expandAll: "Expandir tudo", collapseAll: "Recolher tudo", caseMore: "Mais", caseLess: "Menos",
+      indexLabel: "Neste relatório", backTop: "Voltar ao topo", glance: "Visão geral",
+      indexGroups: { summary: "Resumo", browser: "Navegador e pesquisa", checks: "Verificações e correções", glance: "Visão geral", exposure: "Exposição", evidence: "Evidências", cases: "Casos para executar" },
       offerTitle: "Ler o resto", offerFix: "Lista de correções · {usd} USD", offerFixBody: "Pontuações, todas as constatações, as 10 primeiras correções em palavras simples e um PDF do resumo.", offerFull: "Relatório completo · {usd} USD", offerFullBody: "19 USD e mais 5 USD por framework ou ferramenta extra. Todos os casos e camadas, os sinais, as exportações e os scripts.", offerCredit: "Os 5 USD da lista de correções já estão descontados.", offerFixOpen: "Sua lista de correções está aberta: pontuações e constatações aparecem completas. Os casos seguem borrados até o relatório completo ser pago.",
       priceSay: "soma {usd} dólares americanos", competitorSay: "este concorrente soma {usd} dólares americanos", totalEyebrow: "Antes de começar", totalTitle: "O total desta revisão", totalCompareTitle: "O total desta comparação", totalIncluded_one: "{n} framework, incluído na sua primeira revisão", totalIncluded_other: "{n} frameworks, incluídos na sua primeira revisão", totalPages: "{n} páginas", totalDepth: "{n} níveis de links", totalCompetitor: "Concorrente: {host}", totalList: "Total", totalReturn: "Desconto de retorno {percent}%", totalCoupon: "Código {code} {percent}%", totalDue: "A pagar", totalSaved: "Fica salva em Suas revisões por 12 meses.", totalPay: "Pagar e revisar", totalCancel: "Cancelar", totalPassRun_one: "Revisão do passe, resta {n} depois desta", totalPassRun_other: "Revisão do passe, restam {n} depois desta", passOffer: "Ou {runs} revisões por {usd} USD com o passe {plan}, por 30 dias.", passOfferUp: "Seu passe acabou ou terminou. Ou {runs} revisões por {usd} USD com o passe {plan}, por 30 dias.", passOfferGo: "Comprar o passe {plan}", passSignIn: "Entre primeiro. Um passe pertence ao endereço com que você entra.",
       lighthouse: "O Lighthouse deu {score}/100 de desempenho em um celular intermediário simulado com 4G lenta.", psiNoField: "PageSpeed Insights: o Chrome tem poucas visitas para publicar dados de usuários reais deste site.", realVisitors: "Visitantes reais",
@@ -397,6 +522,47 @@
       }
     },
     de: {
+      fieldError: {
+        nameNeeded: "Geben Sie Ihren Namen ein.", emailNeeded: "Geben Sie eine gültige E-Mail-Adresse ein.", ownMailDomain: "Nutzen Sie eine E-Mail-Adresse mit derselben Domain wie die Website. Das zeigt, dass das Postfach auf diesem Host liegt. Es beweist kein rechtliches Eigentum.",
+        mailDead: "Diese E-Mail-Domain nimmt keine E-Mails an.", reasonPick: "Wählen Sie einen Grund.", reasonWrite: "Schreiben Sie den Grund in einem Satz.", clientNameNeeded: "Geben Sie den Namen des Kunden ein.",
+        clientEmailNeeded: "Geben Sie die E-Mail-Adresse des Kunden ein.", clientUrlNeeded: "Geben Sie die Website des Kunden ein.", clientMailDead: "Die E-Mail-Domain des Kunden nimmt keine E-Mails an.",
+        urlNeeded: "Geben Sie nach https:// eine öffentliche Seite ein.", urlEmpty: "Geben Sie eine URL ein.", urlInvalid: "Geben Sie eine gültige https-URL ein.", urlHttps: "Nur https-URLs können geprüft werden.",
+        urlLogin: "Entfernen Sie Benutzername und Passwort aus der URL.", urlPort: "Nur der Standard-Port für https kann geprüft werden.", urlPrivate: "Diese Adresse ist keine öffentliche Website.",
+        frameworksNeeded: "Wählen Sie mindestens ein Framework für die vorgeschlagenen Fälle.", scopeInvalid: "Wählen Sie 20, 40, 60, 80 oder 100 Seiten und 2, 3, 4 oder 5 Links Tiefe.", termsNeeded: "Akzeptieren Sie zuerst die Bedingungen.",
+        compareFrom: "Starten Sie einen Vergleich aus einem Ihrer Berichte."
+      },
+      signInToRun: "Melden Sie sich oben an, um eine Prüfung zu starten. Die Prüfung läuft auf dem Gerät, auf dem Sie sich anmelden.",
+      reviewNeeds: "Noch offen vor „Prüfen“: {steps}",
+      reason: {
+        own: "Die Website gehört mir und ich möchte einen Testplan", client: "Ein Kunde hat mich gebeten, vor einem Release eine Testabdeckung vorzuschlagen", redesign: "Ich vergleiche diese Seite mit einem Redesign",
+        release: "Ich brauche vor einem Release eine Liste mit Fällen", tech: "Ich möchte die öffentlich erkennbaren Technologien kennen", a11y: "Ich bereite eine Prüfung der Barrierefreiheit vor",
+        security: "Ich bereite eine Prüfung der öffentlichen Sicherheits-Header vor", performance: "Ich brauche eine Liste mit Performance- und Lastfällen",
+        teaching: "Ich lehre oder lerne, wie man eine Seite testen könnte", allowed: "Ich prüfe eine Seite, die ich prüfen darf",
+        verify: "Ich möchte, dass QA-lab eine Verifizierung durchführt", credentials: "Ich habe einen Benutzernamen und ein Passwort für diese Website", other: "Sonstiges"
+      },
+      scopePages: "{n} Seiten", scopeDepth: "{n} Links tief", scopeSite: "Sprache der Website", scopeSection: "nur dieser Bereich",
+      sectionNone: "Fügen Sie einen Pfad wie example.com/docs hinzu, damit weitere Seiten in diesem Bereich bleiben. Ein Host allein prüft die ganze Website.", sectionStay: "Weitere Seiten bleiben unter {path}.", sectionLeave: "Weitere Seiten können Links außerhalb von {path} folgen.",
+      tour: {
+        back: "Zurück", close: "Schließen", next: "Weiter", finish: "Fertig", step: "Schritt {n} von {m}.", progress: "Fortschritt des Schritts", wait: "Verfügbar, sobald dieser Schritt fertig ist.",
+        terms: ["Die Hinweise", "Alle Bedienelemente bleiben aus, bis jedes Kästchen angehakt ist. Die Hinweise nennen die lokalen, nationalen und internationalen Regeln. Eine abgeschlossene Prüfung, ein Stopp und eine einmalige Anzeige des Berichts sind Teil dieses Textes."],
+        counts: ["Sie sind nicht die Ersten", "Diese zwei Zahlen zählen live mit: geprüfte Seiten und gelaufene Prüfungen aller bisher. Nur eine Prüfung, die wirklich eine Seite analysiert hat, erhöht sie."],
+        signIn: ["Anmelden", "Melden Sie sich per E-Mail oder mit einem bestehenden Konto an. Die Prüfung läuft nur auf dem Gerät, auf dem Sie sich anmelden."],
+        name: ["Wer fragt", "Ihr Name wird mit der Prüfung gespeichert. Ihre E-Mail-Adresse stammt aus der Anmeldung. Eine Namensänderung öffnet keine zweite abgeschlossene Prüfung."],
+        reasons: ["Warum diese Prüfung", "Wählen Sie einen Grund. Wer eine QA-lab-Verifizierung wünscht, sieht, wie er Kontakt aufnimmt. „Sonstiges“ öffnet das Feld darunter, damit Sie Ihren eigenen Grund in einem Satz schreiben."],
+        url: ["Die Seite", "Fangen Sie an zu tippen, und das Feld hilft. Es schlägt bekannte Websites vor, fragt „Meinten Sie…?“, wenn ein Host nicht existiert, und bietet nach einem / echte Seiten aus der Sitemap der Website an. https:// steht schon davor, also fragt die Prüfung immer nach einer öffentlichen, sicheren Seite."],
+        frameworks: ["Frameworks", "Wählen Sie die Werkzeuge, mit denen Ihr Team arbeitet. Jeder vorgeschlagene Fall wird für sie geschrieben, und der Fall-Export enthält für jedes ein Startskript. Gegen Ihre Website wird nichts gestartet."],
+        scope: ["Zu prüfende Seiten", "Nur die Dokumentation zählt? Geben Sie example.com/docs ein, und „In diesem Bereich bleiben“ hält spätere Seiten unter diesem Pfad. Wählen Sie, wie viele Seiten, wie viele Linkebenen tief und in welcher Sprache die Website angefragt wird. Die enthaltene erste Prüfung umfasst 20 Seiten und 2 Linkebenen. Eine größere zeigt ihren Preis, bevor sie startet."],
+        start: ["Die Prüfung starten", "„Prüfen“ kontrolliert zuerst die Felder. Dann analysiert es öffentliche Seiten dieses Hosts und schreibt für jeden Schritt eine Zeile."],
+        log: ["Das Protokoll", "Holen Sie sich einen Kaffee und schauen Sie zu. Eine Anzeige geht Verbindung, Seiten, Browser-Durchlauf, Fälle, Tempo-Messung und Bewertung durch, und jede Zeile erscheint in dem Moment, in dem es passiert. Eine langsame Website bekommt den Hinweis „Läuft noch“ statt Stille."],
+        stop: ["Stoppen", "Anders entschieden? „Stoppen“ beendet die Analyse, die schon gespeicherten Seiten bleiben im Bericht, und der Datensatz vermerkt den Stopp. Nur Ihre Anmeldung auf diesem Gerät kann Ihre Prüfung stoppen."],
+        report: ["Das Protokoll neben den Fragen", "Jede Zeile ist ein Schritt der Analyse. Wenn die Analyse fertig ist, öffnet sich das Berichts-Dashboard mit Herunterladen, Drucken und Teilen. Seine Fälle stehen nach Risiko geordnet, und jeder nennt die echte Seite, die er gesehen hat."],
+        ask: ["Den Bericht fragen", "Fragen Sie in einem bezahlten Bericht „Warum ist F-01 so bewertet?“, und die Antwort stammt nur aus dieser Prüfung, mit der Korrektur, einem Playwright-Fall oder einem GitHub- oder Jira-Issue zum Einfügen. Sie rät nie über das hinaus, was die Prüfung gesehen hat."],
+        compare: ["Im Vergleich mit einem Mitbewerber", "Neugierig, wie es beim Laden nebenan aussieht? „Vergleichen“ im Bericht führt dieselben öffentlichen Prüfungen auf dessen Website aus und stellt die sechs Werte nebeneinander, mit dem, was nur einer von Ihnen hat. Jeder Mitbewerber kostet 9 USD."],
+        chatbot: ["Ein Wort mit Ihrem Chatbot", "Auf einer Website, die nachweislich Ihnen gehört, chattet die Prüfung mit ihrem Chat-Widget: Preise, die Bitte um einen Menschen, eine Erstattung und zwei Tricks, die ein Bot ablehnen sollte. Höchstens sechs Nachrichten in einer Minute, mit erfundener E-Mail-Adresse und Telefonnummer."],
+        account: ["Ihre Prüfungen", "Jede Prüfung, die Sie starten, wartet hier. Durchsuchen Sie sie, öffnen Sie mehrere auf einmal, laden Sie sie herunter, löschen Sie sie oder verifizieren Sie eine eigene Website mit einem DNS-Eintrag oder einem Tag auf der Startseite."],
+        lang: ["Sprache", "Die hier gewählte Sprache gilt für den Lebenslauf, das Studio, das Labor und diese Prüfung. Dieselbe Wahl bleibt, wenn Sie zwischen ihnen wechseln."],
+        again: ["Diese Tour erneut öffnen", "Diese Tour bleibt nach dem ersten Besuch geschlossen. „So funktioniert diese Prüfung“ holt sie zurück, wann immer Sie möchten."]
+      },
       callEyebrow: "Durchgang", callTitle: "Gehen Sie diesen Bericht mit Carlos durch", callCopy: "Ein 30-minütiger Videoanruf dazu, was die Befunde für Ihre Website bedeuten und was zuerst zu beheben ist.", callButton: "30-Minuten-Durchgang buchen",
       dashEyebrow: "Prüfungs-Dashboard", dashTitle: "Bericht", captureNote: "Dieses Blatt enthält den Bericht nicht. Der Versuch wird mit der Prüfung gespeichert.",
       copyLink: "Link kopieren (öffnet sich für Sie)", caseExport: "Testfälle exportieren und drucken", export: "Exportieren", text: "Text", printPdf: "Drucken oder als PDF speichern",
@@ -417,6 +583,8 @@
       read_one: "{n} Seite analysiert", read_other: "{n} Seiten analysiert", readOf_one: "{n} Seite von {found} gefundenen analysiert", readOf_other: "{n} Seiten von {found} gefundenen analysiert",
       headless: "in einem Headless-Browser geprüft", risks: "Größte Risiken", quick: "Schnelle Erfolge", solid: "Bereits solide", noneFound: "Keine gefunden.",
       noSolid: "Noch kein Bereich erreicht B oder besser.", printSummary: "Diese Zusammenfassung drucken", expandAll: "Alle aufklappen", collapseAll: "Alle zuklappen", caseMore: "Mehr", caseLess: "Weniger",
+      indexLabel: "In diesem Bericht", backTop: "Nach oben", glance: "Auf einen Blick",
+      indexGroups: { summary: "Zusammenfassung", browser: "Browser und Suche", checks: "Prüfungen und Behebungen", glance: "Auf einen Blick", exposure: "Offen Sichtbares", evidence: "Belege", cases: "Ausführbare Fälle" },
       offerTitle: "Den Rest lesen", offerFix: "Fix-Liste · {usd} USD", offerFixBody: "Bewertungen, alle Befunde, die 10 wichtigsten Korrekturen in klaren Worten und ein PDF der Zusammenfassung.", offerFull: "Vollständiger Bericht · {usd} USD", offerFullBody: "19 USD und 5 USD für jedes weitere Framework oder Werkzeug. Alle Testfälle und Ebenen, die Signale, die Exporte und die Skripte.", offerCredit: "Die 5 USD der Fix-Liste sind bereits abgezogen.", offerFixOpen: "Ihre Fix-Liste ist offen: Bewertungen und Befunde sind vollständig lesbar. Die Testfälle bleiben unscharf, bis der vollständige Bericht bezahlt ist.",
       priceSay: "kostet {usd} US-Dollar mehr", competitorSay: "dieser Wettbewerber kostet {usd} US-Dollar", totalEyebrow: "Vor dem Start", totalTitle: "Die Summe dieser Prüfung", totalCompareTitle: "Die Summe dieses Vergleichs", totalIncluded_one: "{n} Framework, in Ihrer ersten Prüfung enthalten", totalIncluded_other: "{n} Frameworks, in Ihrer ersten Prüfung enthalten", totalPages: "{n} Seiten", totalDepth: "{n} Linkebenen tief", totalCompetitor: "Wettbewerber: {host}", totalList: "Summe", totalReturn: "Rückkehrrabatt {percent} %", totalCoupon: "Code {code} {percent} %", totalDue: "Zu zahlen", totalSaved: "Wird 12 Monate lang unter „Ihre Prüfungen“ gespeichert.", totalPay: "Bezahlen und starten", totalCancel: "Abbrechen", totalPassRun_one: "Pass-Prüfung, danach bleibt noch {n}", totalPassRun_other: "Pass-Prüfung, danach bleiben noch {n}", passOffer: "Oder {runs} Prüfungen für {usd} USD mit dem {plan}-Pass, 30 Tage lang.", passOfferUp: "Ihr Pass ist aufgebraucht oder abgelaufen. Oder {runs} Prüfungen für {usd} USD mit dem {plan}-Pass, 30 Tage lang.", passOfferGo: "{plan}-Pass kaufen", passSignIn: "Melden Sie sich zuerst an. Ein Pass gehört zu der Adresse, mit der Sie sich anmelden.",
       lighthouse: "Lighthouse bewertete die Leistung mit {score}/100 auf einem simulierten Mittelklasse-Smartphone über langsames 4G.", psiNoField: "PageSpeed Insights: Chrome hat zu wenige Besuche, um Daten echter Nutzer für diese Website zu veröffentlichen.",
@@ -528,6 +696,46 @@
       }
     },
     fr: {
+      fieldError: {
+        nameNeeded: "Saisissez votre nom.", emailNeeded: "Saisissez un e-mail valide.", ownMailDomain: "Utilisez un e-mail du même domaine que le site. Cela montre que la boîte est sur cet hôte. Cela ne prouve pas la propriété légale.",
+        mailDead: "Ce domaine de messagerie ne reçoit pas de courrier.", reasonPick: "Choisissez une raison.", reasonWrite: "Écrivez la raison en une phrase.", clientNameNeeded: "Saisissez le nom du client.",
+        clientEmailNeeded: "Saisissez l’e-mail du client.", clientUrlNeeded: "Saisissez le site web du client.", clientMailDead: "Le domaine de l’e-mail du client ne reçoit pas de courrier.", urlNeeded: "Saisissez une page publique après https://.",
+        urlEmpty: "Saisissez une URL.", urlInvalid: "Saisissez une URL https valide.", urlHttps: "Seules les URL https peuvent être analysées.", urlLogin: "Retirez le nom d’utilisateur et le mot de passe de l’URL.",
+        urlPort: "Seul le port https standard peut être analysé.", urlPrivate: "Cette adresse n’est pas un site web public.", frameworksNeeded: "Choisissez au moins un framework pour les cas proposés.",
+        scopeInvalid: "Choisissez 20, 40, 60, 80 ou 100 pages, et 2, 3, 4 ou 5 liens de profondeur.", termsNeeded: "Acceptez d’abord les conditions.", compareFrom: "Lancez une comparaison depuis l’un de vos rapports."
+      },
+      signInToRun: "Connectez-vous ci-dessus pour lancer une analyse. L’analyse s’exécute sur l’appareil où vous vous connectez.",
+      reviewNeeds: "Reste à remplir avant Analyser : {steps}",
+      reason: {
+        own: "Ce site m’appartient et je veux un plan de test", client: "Un client m’a demandé de proposer une couverture avant une mise en production", redesign: "Je compare cette page avec une refonte",
+        release: "J’ai besoin d’une liste de cas avant une mise en production", tech: "Je veux connaître les technologies publiques utilisées", a11y: "Je prépare une analyse d’accessibilité",
+        security: "Je prépare une analyse des en-têtes de sécurité publics", performance: "J’ai besoin d’une liste de cas de performance et de charge",
+        teaching: "J’enseigne ou j’apprends comment une page pourrait être testée", allowed: "Je vérifie une page que j’ai le droit d’analyser",
+        verify: "Je veux que QA-lab effectue une vérification", credentials: "J’ai un identifiant et un mot de passe pour ce site", other: "Autre"
+      },
+      scopePages: "{n} pages", scopeDepth: "{n} de profondeur", scopeSite: "langue du site", scopeSection: "cette section",
+      sectionNone: "Ajoutez un chemin, comme example.com/docs, pour garder les pages suivantes dans cette section. Avec l’hôte seul, tout le site est analysé.", sectionStay: "Les pages suivantes restent sous {path}.", sectionLeave: "Les pages suivantes peuvent suivre des liens hors de {path}.",
+      tour: {
+        back: "Retour", close: "Fermer", next: "Suivant", finish: "Terminer", step: "Étape {n} sur {m}.", progress: "Progression de l’étape", wait: "Disponible quand cette étape se termine.",
+        terms: ["Les avertissements", "Aucune commande ne s’active tant que chaque case n’est pas cochée. Les avertissements citent les règles locales, nationales et internationales. Une analyse terminée, un arrêt et un seul affichage du rapport font partie de ce texte."],
+        counts: ["Vous n’êtes pas le premier", "Ces deux nombres montent en direct : les pages analysées et les analyses lancées par tout le monde jusqu’ici. Seule une analyse qui a vraiment examiné une page les fait monter."],
+        signIn: ["Se connecter", "Connectez-vous par e-mail ou avec un compte que vous avez déjà. L’analyse tourne seulement sur l’appareil où vous vous connectez."],
+        name: ["Qui demande", "Votre nom est enregistré avec l’analyse. Votre e-mail vient de la connexion. Changer de nom n’ouvre pas une deuxième analyse terminée."],
+        reasons: ["Pourquoi cette analyse", "Choisissez une raison. Demander une vérification QA-lab indique comment prendre contact. Autre ouvre le champ en dessous pour écrire la vôtre en une phrase."],
+        url: ["La page", "Commencez à taper et le champ vous aide. Il suggère des sites connus, demande « Vouliez-vous dire… ? » quand un hôte n’existe pas et, après un /, propose de vraies pages du sitemap du site. https:// est déjà devant, donc l’analyse demande toujours une page publique et sécurisée."],
+        frameworks: ["Frameworks", "Choisissez les outils avec lesquels votre équipe travaille. Chaque cas proposé est écrit pour eux, et l’export des cas contient un script de départ pour chacun. Rien n’est lancé contre votre site."],
+        scope: ["Pages à analyser", "Seule la documentation vous intéresse ? Tapez example.com/docs et Rester dans cette section garde les pages suivantes sous ce chemin. Choisissez combien de pages, combien de niveaux de liens et la langue à demander au site. La première analyse incluse couvre 20 pages sur 2 niveaux de liens. Une plus grande affiche son prix avant de commencer."],
+        start: ["Lancer l’analyse", "Analyser vérifie d’abord les champs. Puis il analyse les pages publiques de cet hôte et écrit une ligne pour chaque étape."],
+        log: ["Le journal", "Prenez un café et regardez. Une jauge passe par la connexion, les pages, le passage du navigateur, les cas, la mesure de vitesse et la note, et chaque ligne apparaît au moment où elle se produit. Un site lent reçoit une note « Toujours en cours » au lieu du silence."],
+        stop: ["Arrêter", "Vous avez changé d’avis ? Arrêter met fin à l’analyse, les pages déjà enregistrées restent dans le rapport et l’historique indique l’arrêt. Seule votre connexion sur cet appareil peut arrêter votre analyse."],
+        report: ["Le journal à côté des questions", "Chaque ligne est une étape de l’analyse. Quand l’analyse se termine, le tableau de bord du rapport s’ouvre avec les actions télécharger, imprimer et partager. Ses cas sont classés d’abord par risque, et chacun nomme la vraie page qu’il a vue."],
+        ask: ["Interroger le rapport", "Dans un rapport payé, demandez « Pourquoi F-01 est-il noté ainsi ? » et la réponse vient uniquement de cette analyse, avec la correction, un cas Playwright ou un ticket GitHub ou Jira prêt à coller. Elle ne devine jamais au-delà de ce que l’analyse a vu."],
+        compare: ["Face à un concurrent", "Curieux de voir comment s’en sort la boutique d’à côté ? Comparer, dans le rapport, lance les mêmes contrôles publics sur son site et place les six notes côte à côte, avec ce qu’un seul de vous deux possède. Chaque concurrent coûte 9 USD."],
+        chatbot: ["Un mot avec votre chatbot", "Sur un site dont vous avez prouvé qu’il est à vous, l’analyse discute avec son widget de chat : les prix, la demande d’un humain, un remboursement et deux pièges qu’un bot devrait refuser. Six messages au plus en une minute, avec un e-mail et un téléphone inventés."],
+        account: ["Vos analyses", "Chaque analyse que vous lancez vous attend ici. Recherchez-les, ouvrez-en plusieurs à la fois, téléchargez-les, supprimez-les, ou vérifiez un site qui vous appartient avec un enregistrement DNS ou une balise sur la page d’accueil."],
+        lang: ["Langue", "La langue choisie ici est celle du CV, du studio, du labo et de cette analyse. Le même choix vous suit quand vous passez de l’un à l’autre."],
+        again: ["Rouvrir cette visite", "Cette visite reste fermée après la première fois. Comment fonctionne cette analyse la rouvre quand vous le souhaitez."]
+      },
       callEyebrow: "Visite guidée", callTitle: "Parcourez ce rapport avec Carlos", callCopy: "Un appel vidéo de 30 minutes sur ce que les constats signifient pour votre site et ce qu’il faut corriger en premier.", callButton: "Réserver une visite de 30 min",
       dashEyebrow: "Tableau de bord de l’analyse", dashTitle: "Rapport", captureNote: "Cette feuille n’inclut pas le rapport. La tentative est enregistrée avec l’analyse.",
       copyLink: "Copier le lien (s’ouvre pour vous)", caseExport: "Exporter et imprimer les cas de test", export: "Exporter", text: "Texte", printPdf: "Imprimer ou enregistrer en PDF",
@@ -548,6 +756,8 @@
       read_one: "{n} page analysée", read_other: "{n} pages analysées", readOf_one: "{n} page analysée sur {found} trouvées", readOf_other: "{n} pages analysées sur {found} trouvées",
       headless: "contrôlé dans un navigateur sans interface", risks: "Plus grands risques", quick: "Gains rapides", solid: "Déjà solide", noneFound: "Aucun trouvé.",
       noSolid: "Aucun domaine n’obtient encore B ou mieux.", printSummary: "Imprimer ce résumé", expandAll: "Tout déplier", collapseAll: "Tout replier", caseMore: "Plus", caseLess: "Moins",
+      indexLabel: "Dans ce rapport", backTop: "Retour en haut", glance: "En un coup d’œil",
+      indexGroups: { summary: "Synthèse", browser: "Navigateur et recherche", checks: "Contrôles et corrections", glance: "En un coup d’œil", exposure: "Exposition", evidence: "Preuves", cases: "Cas à exécuter" },
       offerTitle: "Lire la suite", offerFix: "Liste de corrections · {usd} USD", offerFixBody: "Les scores, tous les constats, les 10 premières corrections en mots simples et un PDF du résumé.", offerFull: "Rapport complet · {usd} USD", offerFullBody: "19 USD, puis 5 USD par framework ou outil en plus. Tous les cas et toutes les couches, les signaux, les exports et les scripts.", offerCredit: "Les 5 USD de la liste de corrections sont déjà déduits.", offerFixOpen: "Votre liste de corrections est ouverte : les scores et les constats se lisent en entier. Les cas restent flous jusqu’au paiement du rapport complet.",
       priceSay: "ajoute {usd} dollars américains", competitorSay: "ce concurrent ajoute {usd} dollars américains", totalEyebrow: "Avant de commencer", totalTitle: "Le total de cette analyse", totalCompareTitle: "Le total de cette comparaison", totalIncluded_one: "{n} framework, inclus dans votre première analyse", totalIncluded_other: "{n} frameworks, inclus dans votre première analyse", totalPages: "{n} pages", totalDepth: "{n} niveaux de liens", totalCompetitor: "Concurrent : {host}", totalList: "Total", totalReturn: "Remise de retour {percent} %", totalCoupon: "Code {code} {percent} %", totalDue: "À payer", totalSaved: "Enregistrée dans Vos analyses pendant 12 mois.", totalPay: "Payer et lancer", totalCancel: "Annuler", totalPassRun_one: "Analyse du pass, il en reste {n} après celle-ci", totalPassRun_other: "Analyse du pass, il en reste {n} après celle-ci", passOffer: "Ou {runs} analyses pour {usd} USD avec le pass {plan}, pendant 30 jours.", passOfferUp: "Votre pass est épuisé ou terminé. Ou {runs} analyses pour {usd} USD avec le pass {plan}, pendant 30 jours.", passOfferGo: "Acheter le pass {plan}", passSignIn: "Connectez-vous d’abord. Un pass appartient à l’adresse avec laquelle vous vous connectez.",
       lighthouse: "Lighthouse a noté la performance {score}/100 sur un téléphone milieu de gamme simulé en 4G lente.", psiNoField: "PageSpeed Insights : Chrome a trop peu de visites pour publier des données d’utilisateurs réels pour ce site.",
@@ -658,6 +868,46 @@
       }
     },
     it: {
+      fieldError: {
+        nameNeeded: "Scrivi il tuo nome.", emailNeeded: "Scrivi un’email valida.", ownMailDomain: "Usa un’email dello stesso dominio del sito. Questo mostra che la casella è su quell’host. Non dimostra la proprietà legale.",
+        mailDead: "Quel dominio email non riceve posta.", reasonPick: "Scegli un motivo.", reasonWrite: "Scrivi il motivo in una frase.", clientNameNeeded: "Scrivi il nome del cliente.", clientEmailNeeded: "Scrivi l’email del cliente.",
+        clientUrlNeeded: "Scrivi il sito web del cliente.", clientMailDead: "Il dominio dell’email del cliente non riceve posta.", urlNeeded: "Scrivi una pagina pubblica dopo https://.", urlEmpty: "Scrivi un URL.",
+        urlInvalid: "Scrivi un URL https valido.", urlHttps: "Si possono revisionare solo URL https.", urlLogin: "Togli nome utente e password dall’URL.", urlPort: "Si può revisionare solo la porta https standard.",
+        urlPrivate: "Quell’indirizzo non è un sito web pubblico.", frameworksNeeded: "Scegli almeno un framework per i casi proposti.", scopeInvalid: "Scegli 20, 40, 60, 80 o 100 pagine, e 2, 3, 4 o 5 link di profondità.",
+        termsNeeded: "Accetta prima i termini.", compareFrom: "Avvia un confronto da uno dei tuoi report."
+      },
+      signInToRun: "Accedi qui sopra per avviare un’analisi. L’analisi si avvia sul dispositivo su cui accedi.",
+      reviewNeeds: "Manca prima di Analizza: {steps}",
+      reason: {
+        own: "Questo sito è mio e voglio un piano di test", client: "Un cliente mi ha chiesto di proporre una copertura prima di un rilascio", redesign: "Sto confrontando questa pagina con un restyling",
+        release: "Mi serve un elenco di casi prima di un rilascio", tech: "Voglio conoscere le tecnologie pubbliche usate", a11y: "Sto preparando una revisione dell’accessibilità",
+        security: "Sto preparando una revisione degli header di sicurezza pubblici", performance: "Mi serve un elenco di casi di prestazioni e carico",
+        teaching: "Sto insegnando o imparando come si potrebbe testare una pagina", allowed: "Sto controllando una pagina che ho il permesso di rivedere",
+        verify: "Voglio che QA-lab esegua una verifica", credentials: "Ho un nome utente e una password per questo sito", other: "Altro"
+      },
+      scopePages: "{n} pagine", scopeDepth: "{n} di profondità", scopeSite: "lingua del sito", scopeSection: "questa sezione",
+      sectionNone: "Aggiungi un percorso, come example.com/docs, per tenere le pagine successive in quella sezione. Con il solo host si rivede tutto il sito.", sectionStay: "Le pagine successive restano sotto {path}.", sectionLeave: "Le pagine successive possono seguire link fuori da {path}.",
+      tour: {
+        back: "Indietro", close: "Chiudi", next: "Avanti", finish: "Fine", step: "Passo {n} di {m}.", progress: "Avanzamento del passo", wait: "Disponibile quando questo passo finisce.",
+        terms: ["Le avvertenze", "Ogni comando resta spento finché non spunti ogni casella. Le avvertenze nominano le regole locali, nazionali e internazionali. Una revisione completata, uno stop e una sola visualizzazione del report fanno parte di quel testo."],
+        counts: ["Non sei il primo", "Questi due numeri salgono dal vivo: le pagine analizzate e le revisioni avviate da tutti finora. Solo una revisione che ha davvero analizzato una pagina li fa salire."],
+        signIn: ["Accedi", "Accedi con la tua email o con un account che hai già. La revisione gira solo sul dispositivo in cui accedi."],
+        name: ["Chi lo chiede", "Il tuo nome viene salvato con la revisione. La tua email arriva dall’accesso. Cambiare il nome non apre una seconda revisione completata."],
+        reasons: ["Perché questa revisione", "Scegli un motivo. Chiedere una verifica QA-lab mostra come metterti in contatto. Altro apre il campo sotto per scrivere il tuo in una frase."],
+        url: ["La pagina", "Inizia a scrivere e il campo ti aiuta. Suggerisce siti noti, chiede “Forse intendevi…?” quando un host non esiste e, dopo una /, propone pagine reali dalla sitemap del sito. https:// è già davanti, quindi la revisione chiede sempre una pagina pubblica e sicura."],
+        frameworks: ["Framework", "Scegli gli strumenti con cui lavora il tuo team. Ogni caso proposto è scritto per loro, e l’esportazione dei casi contiene uno script iniziale per ciascuno. Niente viene lanciato contro il tuo sito."],
+        scope: ["Pagine da rivedere", "Ti interessa solo la documentazione? Scrivi example.com/docs e Resta in questa sezione tiene le pagine successive sotto quel percorso. Scegli quante pagine, quanti livelli di link e la lingua da chiedere al sito. La prima revisione inclusa è di 20 pagine e 2 livelli di link. Una più grande mostra il prezzo prima di partire."],
+        start: ["Avvia la revisione", "Analizza controlla prima i campi. Poi analizza le pagine pubbliche di quell’host e scrive una riga per ogni passo."],
+        log: ["Il registro", "Prenditi un caffè e guarda. Un indicatore passa per la connessione, le pagine, il passaggio del browser, i casi, la misura della velocità e il punteggio, e ogni riga compare nel momento in cui succede. Un sito lento riceve una nota “Ancora al lavoro” invece del silenzio."],
+        stop: ["Ferma", "Hai cambiato idea? Ferma chiude l’analisi, le pagine già salvate restano nel report e il registro dice che è stata fermata. Solo il tuo accesso su questo dispositivo può fermare la tua revisione."],
+        report: ["Il registro accanto alle domande", "Ogni riga è un passo dell’analisi. Quando l’analisi finisce, si apre il pannello del report con le azioni scarica, stampa e condividi. I suoi casi vengono prima per rischio, e ognuno nomina la pagina reale che ha visto."],
+        ask: ["Chiedi al report", "In un report pagato, chiedi “Perché F-01 ha questo giudizio?” e la risposta arriva solo da questa revisione, con la correzione, un caso Playwright o una issue GitHub o Jira pronta da incollare. Non tira mai a indovinare oltre quello che la revisione ha visto."],
+        compare: ["Accanto a un concorrente", "Curioso di vedere come va il negozio accanto? Confronta, nel report, esegue gli stessi controlli pubblici sul suo sito e mette i sei punteggi fianco a fianco, con quello che ha solo uno di voi. Ogni concorrente costa 9 USD."],
+        chatbot: ["Due parole con il tuo chatbot", "Su un sito che hai dimostrato essere tuo, la revisione chatta con il suo widget: prezzi, la richiesta di una persona, un rimborso e due trucchi che un bot dovrebbe rifiutare. Al massimo sei messaggi in un minuto, con email e telefono inventati."],
+        account: ["Le tue revisioni", "Ogni revisione che avvii ti aspetta qui. Cercale, aprine diverse insieme, scaricale, eliminale o verifica un sito tuo con un record DNS o un tag nella home page."],
+        lang: ["Lingua", "La lingua scelta qui vale per il CV, lo studio, il laboratorio e questa revisione. La stessa scelta resta quando passi dall’uno all’altro."],
+        again: ["Riapri questo tour", "Questo tour resta chiuso dopo la prima visita. Come funziona questa revisione lo riporta quando vuoi."]
+      },
       callEyebrow: "Giro guidato", callTitle: "Guarda questo report con Carlos", callCopy: "Una videochiamata di 30 minuti su cosa significano i risultati per il tuo sito e cosa correggere per primo.", callButton: "Prenota un giro guidato di 30 minuti",
       dashEyebrow: "Pannello della revisione", dashTitle: "Report", captureNote: "Questo foglio non include il report. Il tentativo viene registrato con la revisione.",
       copyLink: "Copia link (si apre per te)", caseExport: "Esporta e stampa i casi di test", export: "Esporta", text: "Testo", printPdf: "Stampa o salva come PDF",
@@ -678,6 +928,8 @@
       read_one: "{n} pagina analizzata", read_other: "{n} pagine analizzate", readOf_one: "{n} pagina analizzata su {found} trovate", readOf_other: "{n} pagine analizzate su {found} trovate",
       headless: "controllato in un browser headless", risks: "Rischi maggiori", quick: "Interventi rapidi", solid: "Già solido", noneFound: "Nessuno trovato.",
       noSolid: "Nessuna area ha ancora B o più.", printSummary: "Stampa questo riepilogo", expandAll: "Espandi tutto", collapseAll: "Comprimi tutto", caseMore: "Altro", caseLess: "Meno",
+      indexLabel: "In questo report", backTop: "Torna su", glance: "In breve",
+      indexGroups: { summary: "Riepilogo", browser: "Browser e ricerca", checks: "Controlli e correzioni", glance: "In breve", exposure: "Esposizione", evidence: "Evidenze", cases: "Casi da eseguire" },
       offerTitle: "Leggi il resto", offerFix: "Lista delle correzioni · {usd} USD", offerFixBody: "Punteggi, tutti i rilievi, le prime 10 correzioni in parole semplici e un PDF del riepilogo.", offerFull: "Report completo · {usd} USD", offerFullBody: "19 USD più 5 USD per ogni framework o strumento in più. Tutti i casi e i livelli, i segnali, gli export e gli script.", offerCredit: "I 5 USD della lista delle correzioni sono già scalati.", offerFixOpen: "La tua lista delle correzioni è aperta: punteggi e rilievi si leggono per intero. I casi restano sfocati finché il report completo non è pagato.",
       priceSay: "aggiunge {usd} dollari statunitensi", competitorSay: "questo concorrente aggiunge {usd} dollari statunitensi", totalEyebrow: "Prima di iniziare", totalTitle: "Il totale di questa revisione", totalCompareTitle: "Il totale di questo confronto", totalIncluded_one: "{n} framework, incluso nella tua prima revisione", totalIncluded_other: "{n} framework, inclusi nella tua prima revisione", totalPages: "{n} pagine", totalDepth: "{n} livelli di link", totalCompetitor: "Concorrente: {host}", totalList: "Totale", totalReturn: "Sconto di ritorno {percent}%", totalCoupon: "Codice {code} {percent}%", totalDue: "Da pagare", totalSaved: "Salvata in Le tue revisioni per 12 mesi.", totalPay: "Paga e avvia", totalCancel: "Annulla", totalPassRun_one: "Revisione del pass, ne resta {n} dopo questa", totalPassRun_other: "Revisione del pass, ne restano {n} dopo questa", passOffer: "Oppure {runs} revisioni per {usd} USD con il pass {plan}, per 30 giorni.", passOfferUp: "Il tuo pass è esaurito o scaduto. Oppure {runs} revisioni per {usd} USD con il pass {plan}, per 30 giorni.", passOfferGo: "Compra il pass {plan}", passSignIn: "Accedi prima. Un pass appartiene all’indirizzo con cui accedi.",
       lighthouse: "Lighthouse ha dato {score}/100 alle prestazioni su uno smartphone di fascia media simulato con 4G lento.", psiNoField: "PageSpeed Insights: Chrome ha troppo poche visite per pubblicare dati di utenti reali per questo sito.",
@@ -821,6 +1073,12 @@
     return (body && body.error) || fallback || "";
   }
 
+  // The server sends field errors in English, so they are read by their exact wording until #2830 sends codes; an unknown one stays as sent.
+  function field(message) {
+    const known = Object.keys(COPY.en.fieldError).find((key) => COPY.en.fieldError[key] === message);
+    return known ? word("fieldError", known) : message;
+  }
+
   if (!english) {
     document.querySelectorAll("[data-report-copy]").forEach((node) => {
       const text = book[node.getAttribute("data-report-copy")];
@@ -831,5 +1089,5 @@
     });
   }
 
-  window.QAReviewReportCopy = { lang: code, english: english, t: t, word: word, error: error };
+  window.QAReviewReportCopy = { lang: code, english: english, t: t, word: word, error: error, field: field };
 })();
