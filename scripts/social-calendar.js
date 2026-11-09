@@ -75,6 +75,37 @@ function slotTime(day, network, lane) {
   return hhmm(Math.round(from + part * at + part * (0.15 + 0.7 * r)));
 }
 
+// A post pinned to its day (the Friday digest, a compare batch): its lane's slot, or, when a row of another batch or a
+// post Buffer or the Facebook Page holds sits within CLASH minutes of it, the middle of the widest free stretch of the
+// network's window.
+const CLASH = 10;
+function busyAt(day, channel, own, root) {
+  const out = [];
+  const posts = path.join(root, POSTS);
+  fs.readdirSync(posts).filter((batch) => batch !== own && fs.existsSync(path.join(posts, batch, "calendar.csv"))).forEach((batch) => {
+    fs.readFileSync(path.join(posts, batch, "calendar.csv"), "utf8").trim().split("\n").slice(1).forEach((line) => {
+      const [date, time, ch] = line.split(",");
+      if (date === day && ch === channel && /^\d\d:\d\d$/.test(time)) out.push(minutes(time));
+    });
+  });
+  [ledger.BUFFER, ledger.FACEBOOK].forEach((file) => Object.entries(ledger.read(path.join(root, file)).posts).forEach(([id, entries]) => entries.forEach((e) => {
+    if (id.startsWith(own + "/") || e.result !== "queued" || e.channel !== channel || !e.at) return;
+    const local = new Date(Date.parse(e.at) - 5 * 3600e3).toISOString();
+    if (local.slice(0, 10) === day) out.push(minutes(local.slice(11, 16)));
+  })));
+  return out.sort((a, b) => a - b);
+}
+function freeSlot(day, channel, lane, own, root = ROOT) {
+  const slot = slotTime(day, channel, lane);
+  const taken = busyAt(day, channel, own, root);
+  if (!taken.some((t) => Math.abs(t - minutes(slot)) < CLASH)) return slot;
+  const [from, to] = WINDOWS[channel].map(minutes);
+  const marks = [from].concat(taken.filter((t) => t > from && t < to), to);
+  let best = [from, to];
+  marks.slice(1).forEach((t, i) => { if (t - marks[i] > best[1] - best[0] || best[0] === from && best[1] === to) best = [marks[i], t]; });
+  return hhmm(Math.round((best[0] + best[1]) / 2 / 5) * 5);
+}
+
 function kindOf(batch, c) {
   if (LANES[c.kind]) return c.kind;
   return batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review";
@@ -642,4 +673,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, monthly, readLimits, waitText, sync, hubLate, budget, bufferGql, scheduledPosts, EDIT, EDIT_AHEAD };
+module.exports = { NETWORKS, WINDOWS, LANES, WINDOW_CALLS, slotTime, freeSlot, kindOf, launchCalendar, load, plan, rowsFor, hubDay, write, reconcile, summary, targets, mark, editInput, daily, monthly, readLimits, waitText, sync, hubLate, budget, bufferGql, scheduledPosts, EDIT, EDIT_AHEAD };
