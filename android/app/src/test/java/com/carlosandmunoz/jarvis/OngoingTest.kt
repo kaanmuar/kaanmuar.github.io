@@ -70,10 +70,19 @@ class OngoingTest {
         assertEquals(listOf(75, 30, 90), card.bars.map { it.pct })
         assertEquals(listOf("Checkout is down", "Today $38 · 2 sales"), card.footer)
         assertEquals("1 alert · 1 approval waiting", c.counts)
+        assertNull(card.note)
         assertFalse(c.live)
         val bare = Ongoing.content(snap, null, 0L, 0, setOf(Ongoing.Part.MONEY)).card!!
         assertTrue(bare.rings.isEmpty())
         assertTrue(bare.bars.isEmpty())
+    }
+
+    @Test fun collapsedCardKeepsWhatNeedsYou() {
+        val snap = json("""{"readiness":85,"processes":{"rows":[{"state":"running"},{"state":"waiting","needsYou":true}]}}""")
+        assertEquals("1 running · 1 needs you", Ongoing.content(snap, null, 0L, 0).card!!.note)
+        assertNull(Ongoing.content(snap, null, 0L, 0, Ongoing.Part.DEFAULT - Ongoing.Part.PROCESSES).card!!.note)
+        val running = json("""{"readiness":85,"processes":{"rows":[{"state":"running"}]}}""")
+        assertNull(Ongoing.content(running, null, 0L, 0).card!!.note)
     }
 
     @Test fun cardAddsUptimeRingAndNinetyDayTargets() {
