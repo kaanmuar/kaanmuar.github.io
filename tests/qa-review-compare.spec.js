@@ -192,6 +192,29 @@ test.describe('The competitor comparison is drawn as charts', () => {
     });
   }
 
+  for (const [lang, unresolved, same] of [
+    ['es', 'El nombre del host no se pudo resolver.', 'Es el mismo sitio.'],
+    ['pt', 'O nome do host não foi resolvido.', 'É o mesmo site.'],
+    ['de', 'Der Hostname ließ sich nicht auflösen.', 'Das ist dieselbe Website.'],
+    ['fr', 'Le nom d’hôte n’a pas pu être résolu.', 'C’est le même site.'],
+    ['it', 'Il nome host non è stato risolto.', 'È lo stesso sito.']
+  ]) {
+    test(`on the ${lang} page a competitor the server cannot reach or refuses reads in ${lang}, not the server's English (#3008)`, async ({ page }) => {
+      let answer = JSON.stringify({ type: 'error', error: 'The host name did not resolve.' }) + '\n';
+      const ask = await open(page, null, () => answer, `/qa-review-${lang}.html`);
+      await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+      await ask.locator('#compare-url').fill('rival.example');
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText('rival.example');
+      await expect(page.locator('#compare-error')).toContainText(unresolved);
+      await expect(page.locator('#compare-error')).not.toContainText('did not resolve');
+      answer = { error: "That is the same site. Enter a competitor's address.", compare: true };
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText(same);
+      await expect(page.locator('#compare-error')).not.toContainText('same site');
+    });
+  }
+
   test('while a comparison runs, the log leads back to the report and the report says it is running', async ({ page }) => {
     let answer;
     const held = new Promise((resolve) => { answer = resolve; });

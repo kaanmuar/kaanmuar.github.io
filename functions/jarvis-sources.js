@@ -13,9 +13,11 @@
    people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
    pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
    local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
+   geo        the Map tab's numbers per country, rolled up from the other sources' cached answers (jarvis-geo.js)
+   calendar   each target market's public holidays and special dates for the next 60 days, and holiday pauses (jarvis-calendar.js)
 
-   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
-   jarvis_cache through TTL. */
+   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github, peer} and caches each
+   source in jarvis_cache through TTL; peer(op) is another source's cached answer. */
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DOMAIN = "carlosandmunoz.com";
@@ -27,7 +29,7 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE, targets: HOUR };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE, targets: HOUR, geo: 15 * MINUTE, calendar: 6 * HOUR };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
@@ -41,6 +43,8 @@ const jarvisAddresses = require("./jarvis-addresses");
 const jarvisIndex = require("./jarvis-index");
 const jarvisGithub = require("./jarvis-github");
 const jarvisTargets = require("./jarvis-targets");
+const jarvisGeo = require("./jarvis-geo");
+const jarvisCalendar = require("./jarvis-calendar");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
@@ -665,7 +669,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, "github-work": jarvisGithub.source, targets: jarvisTargets.source };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, "github-work": jarvisGithub.source, targets: jarvisTargets.source, geo: jarvisGeo.geo, calendar: jarvisCalendar.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];

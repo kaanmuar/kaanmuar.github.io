@@ -956,7 +956,7 @@
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
@@ -4447,7 +4447,7 @@
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
     const left = saved ? (saved.queue || []).length : 0;
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
+    if (saved) setStatus(left ? cc.t("runPaidMore", { url: saved.url, n: left }) : cc.t("runPaid", { url: saved.url }), false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
   document.getElementById("compare-add").addEventListener("click", () => {
@@ -4467,7 +4467,7 @@
   document.getElementById("compare-stop").addEventListener("click", (event) => {
     if (!activeRun || stopBtn.disabled) return;
     event.currentTarget.disabled = true;
-    document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
+    document.getElementById("compare-running-text").textContent = cc.t("runStopping");
     stopBtn.click();
   });
   compareInputs().forEach((compareInput) => {

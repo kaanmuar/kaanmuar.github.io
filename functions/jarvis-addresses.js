@@ -129,8 +129,11 @@ function instantlyRows(accounts, pauses) {
   });
 }
 
-/** Microsoft 365 users from Graph: each mailbox (sign-in blocked or no licence is an error) and its smtp aliases. */
-function graphRows(users) {
+/** Microsoft 365 users from Graph: each mailbox and its smtp aliases. Blocked and unlicensed is how Microsoft makes a
+    shared mailbox (#1869), so that is healthy, unless Instantly sends from it: Instantly has to sign in. Otherwise a
+    blocked sign-in or no licence is an error. senders: the addresses Instantly sends from. */
+function graphRows(users, senders) {
+  const sending = new Set([...(senders || [])].map(lower));
   const rows = [];
   (users || []).forEach((u) => {
     const proxies = u.proxyAddresses || [];
@@ -138,10 +141,15 @@ function graphRows(users) {
     if (!primary) return;
     const off = u.accountEnabled === false;
     const bare = !(u.assignedLicenses || []).length;
-    const fix = off || bare ? { by: "carlos", action: off ? "Allow sign-in" : "Assign a licence", link: LINKS.m365 } : null;
-    rows.push(row({
+    const shared = off && bare && !sending.has(primary);
+    const fix = !shared && (off || bare) ? { by: "carlos", action: off ? "Allow sign-in" : "Assign a licence", link: LINKS.m365 } : null;
+    const name = u.displayName ? u.displayName + ": " : "";
+    rows.push(row(shared ? {
+      address: primary, system: "Microsoft 365", kind: "shared mailbox",
+      detail: name + "shared mailbox, no licence and no sign-in, as Microsoft intends; members open it from their own Outlook."
+    } : {
       address: primary, system: "Microsoft 365", kind: "mailbox", state: fix ? "error" : "ok", problem: off ? "disabled" : bare ? "unlicensed" : "", fix,
-      detail: (u.displayName ? u.displayName + ": " : "") + (off ? "sign-in is blocked." : bare ? "no licence, so no mailbox." : "licensed, sign-in allowed.")
+      detail: name + (off ? "sign-in is blocked" + (sending.has(primary) ? ", so Instantly cannot send from it." : ".") : bare ? "no licence, so no mailbox." : "licensed, sign-in allowed.")
     }));
     proxies.filter((p) => p.slice(0, 5) === "smtp:").map((p) => lower(p.slice(5))).filter((a) => a && a !== primary).forEach((alias) => rows.push(row({
       address: alias, system: "Microsoft 365", kind: "mailbox alias", aliasOf: primary, state: fix ? "error" : "ok",
@@ -274,7 +282,7 @@ async function source(ctx) {
   ]);
   const aliasRows = mx ? improvmxRows(mx.aliases, mx.credentials, mx.box, FORWARD_DOMAIN) : null;
   const sendRows = sending ? instantlyRows(sending.accounts, sending.pauses) : [];
-  const m365 = users ? graphRows(users) : uncheckedRows(sendRows, outreachDomain);
+  const m365 = users ? graphRows(users, sendRows.map((r) => r.address)) : uncheckedRows(sendRows, outreachDomain);
   const rows = sortRows((aliasRows || []).concat(m365, sendRows, senderRows(env.SENDGRID_FROM, aliasRows, FORWARD_DOMAIN)));
   if (!rows.length && errors.length) return { ok: false, error: errors.join("; "), needs };
   return { ok: true, domains: domains || [], rows, issues: issuesOf(rows, domains || []), needs, errors, counts: countRows(rows), graph: !!users };

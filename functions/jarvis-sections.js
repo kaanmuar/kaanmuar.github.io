@@ -24,7 +24,7 @@ const SECTIONS = {
   processes: { fields: ["processes"], from: ["processes"] },
   systems: { external: ["health", "uptime", "speed", "platform", "safety", "cloudflare", "jobs", "github", "github-work"], from: ["external"] },
   pagespeed: { external: ["pagespeed", "local", "search"], from: ["external"] },
-  marketing: { external: ["marketing", "marketing-sync", "social", "outreach", "targets", "engagement", "ga4"], from: ["external"] },
+  marketing: { external: ["marketing", "marketing-sync", "social", "outreach", "targets", "engagement", "ga4", "geo", "calendar"], from: ["external"] },
   people: { external: ["people", "calls"], from: ["external"] },
   money: { external: ["money"], from: ["external"] },
   mail: { fields: ["mailCodes"], external: ["email", "mailbox", "addresses"], from: ["external"], live: true },

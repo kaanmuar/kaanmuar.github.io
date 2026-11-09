@@ -790,3 +790,30 @@
 }
 @media (pointer: coarse) { .jv-con-srcs button { padding: 0.35rem 0.7rem; } .jv-con-lines li { padding-top: 0.25rem; padding-bottom: 0.25rem; } }
 @media print { .jv-con-fab, .jv-con-dock { display: none !important; } }
+
+/* Map tab (#2976) */
+.jv-geo-controls { flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.jv-geo-metric { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.8rem; color: var(--dim); }
+.jv-geo-wrap { width: 100%; overflow: hidden; border-radius: 10px; background: #0a141b; }
+.jv-geo-map { display: block; width: 100%; height: auto; }
+.jv-geo-c { stroke: #0a141b; stroke-width: 0.5; cursor: pointer; transition: fill 0.25s, stroke 0.2s; outline: none; }
+.jv-geo-c.is-target { stroke: #2d5366; stroke-width: 0.8; }
+.jv-geo-c.is-gap { stroke: var(--amber); stroke-width: 0.9; stroke-dasharray: 2 1.5; }
+.jv-geo-c:hover, .jv-geo-c:focus-visible { stroke: #fff; stroke-width: 1.2; }
+.jv-geo-c.is-on { stroke: var(--amber); stroke-width: 2; }
+circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
+.jv-geo-legend { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.75rem; color: var(--dim); }
+.jv-geo-legend i, .jv-geo-gaps i { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-geo-scale { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--dim); }
+.jv-geo-scale > i { flex: 0 1 10rem; height: 0.5rem; border-radius: 4px; background: linear-gradient(90deg, rgba(56, 225, 255, 0.18), rgba(56, 225, 255, 1)); }
+.jv-geo-scale em { font-style: normal; margin-left: auto; }
+.jv-geo-scale b.is-target { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px; background: #1d3340; border: 1px solid #2d5366; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-geo-gaps { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; font-size: 0.8rem; }
+.jv-dates, .jv-dates ul, .jv-dates-country { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; font-size: 0.8rem; }
+.jv-dates { gap: 0.8rem; max-height: 32rem; overflow-y: auto; }
+.jv-dates h4 { margin: 0 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.jv-dates li li, .jv-dates-country li { padding-left: 0.6rem; border-left: 2px solid #1d3340; }
+.jv-dates .jv-note, .jv-dates-country .jv-note { margin-top: 0.15rem; }
+.jv-date-kind { font-size: 0.68rem; padding: 0 0.4rem; }
+.jv-dates-country .jv-btn { margin-left: 0.3rem; }
+@media (prefers-reduced-motion: reduce) { .jv-geo-c { transition: none; } }
