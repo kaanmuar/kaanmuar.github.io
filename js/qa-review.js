@@ -1439,21 +1439,21 @@
     const urls = [];
     for (const url of Array.isArray(only) ? only : compareUrls()) {
       if (/\s/.test(url)) {
-        error.textContent = "Check the address " + url + ": it has a space in it.";
+        error.textContent = cc.t("runSpace", { url });
         return;
       }
       if (siteKey(url) === own) {
-        error.textContent = url + " is the site of this report. Enter a competitor's address.";
+        error.textContent = cc.t("runOwn", { url });
         return;
       }
       if (!urls.some((seen) => siteKey(seen) === siteKey(url))) urls.push(url);
     }
     if (!urls.length) {
-      error.textContent = "Enter the competitor's address.";
+      error.textContent = cc.t("runEmpty");
       return;
     }
     if (activeRun) {
-      error.textContent = "Wait until the review that is running ends.";
+      error.textContent = cc.t("runBusy");
       return;
     }
     if (pricing) return;
@@ -1501,9 +1501,8 @@
 
   function compareDone(compare, tail) {
     const failed = compare.failed || [];
-    const host = (compare.report && compare.report.host) || "your site";
-    return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
-      (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+    const host = (compare.report && compare.report.host) || cc.t("runYourSite");
+    return [cc.t("runDone", { host }), failed.length ? cc.t("runNotDone", { list: failed.join(", ") }) : "", tail].filter(Boolean).join(" ");
   }
 
   // compare.done: the competitor reviews that finished. Two or more open with the report as one
@@ -1515,7 +1514,7 @@
     if (ids.length < 3 || !window.QAReviewMulti) return;
     const id = await QAReviewMulti.save(ids, "review", null);
     if (!id) {
-      setStatus(compareDone(compare, " Open your report of " + ((compare.report && compare.report.host) || "your site") + " and press Open the full comparison report to see them side by side."), true);
+      setStatus(compareDone(compare, cc.t("runOpenAll", { host: (compare.report && compare.report.host) || cc.t("runYourSite") })), true);
       return;
     }
     history.pushState(null, "", location.pathname + "?report=" + encodeURIComponent(compare.id) + "&comparison=" + encodeURIComponent(id));
@@ -1525,7 +1524,7 @@
 
   function compareStep(compare) {
     const total = compare.total || 1;
-    return total > 1 ? " (" + (total - (compare.queue || []).length) + " of " + total + ")" : "";
+    return total > 1 ? cc.t("runStep", { n: total - (compare.queue || []).length, total }) : "";
   }
 
   // Natural competitors (functions/url-review-rivals.js): the reader picks any or many, and each one with
@@ -1711,14 +1710,14 @@
   }
 
   function showComparing(compare) {
-    const own = (compare.report && compare.report.host) || "your site";
+    const own = (compare.report && compare.report.host) || cc.t("runYourSite");
     const many = (compare.queue || []).length + 1;
     document.getElementById("compare-run-text").textContent = many > 1
-      ? "Comparing " + own + " with " + many + " competitors, up to " + COMPARE_AT_ONCE + " at a time."
-      : "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+      ? cc.t("runComparingMany", { own, n: many, at: COMPARE_AT_ONCE })
+      : cc.t("runComparingOne", { own, rival: compare.url, step: compareStep(compare) });
     document.getElementById("compare-running-text").textContent = many > 1
-      ? "The comparison with " + many + " competitors is running. Stop keeps the pages already checked and does not start the ones still waiting."
-      : "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked.";
+      ? cc.t("runRunningMany", { n: many })
+      : cc.t("runRunningOne", { rival: compare.url, step: compareStep(compare) });
     const run = document.getElementById("compare-run");
     run.hidden = false;
     document.getElementById("compare-running").hidden = false;
@@ -1740,7 +1739,6 @@
   }
 
   const COMPARE_AT_ONCE = 3;
-  const ROW_STATE = { waiting: "Waiting", running: "Running", done: "Ready", stopped: "Stopped", failed: "Did not finish", payment: "Waits on payment" };
   let comparePool = null;
 
   function paintCompareRows(pool) {
@@ -1755,9 +1753,9 @@
     }
     list.hidden = !pool;
     if (!pool) return;
-    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(ROW_STATE[row.state]) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
+    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(cc.rowState(row.state)) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
     const ready = pool.rows.filter((row) => row.state === "done").length;
-    document.getElementById("compare-running-text").textContent = "The comparison is running: " + ready + " of " + pool.rows.length + " competitors ready. Stop keeps the pages already checked and does not start the ones still waiting.";
+    document.getElementById("compare-running-text").textContent = cc.t("runPool", { ready, total: pool.rows.length });
   }
 
   // The competitors of one comparison run side by side, up to three at a time, each its own review of the
@@ -1776,7 +1774,7 @@
     runLog.innerHTML = "";
     runLog.classList.add("is-live");
     if (window.ReviewProgress) ReviewProgress.reset();
-    setStatus("Reviewing " + rows.length + " competitors, up to " + COMPARE_AT_ONCE + " at a time.", false);
+    setStatus(cc.t("runReviewing", { n: rows.length, at: COMPARE_AT_ONCE }), false);
     let next = 0;
     const worker = async () => {
       while (next < rows.length && !pool.stopping && !pool.payment && !pool.signIn) await runCompareRow(compare, pool, rows[next++]);
@@ -1812,7 +1810,7 @@
         body: reviewBody(compare, row.url, row.runId)
       });
       const payload = await readStream(res, row.url);
-      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
       payload.reasonCode = "compare";
       row.payload = payload;
       row.state = payload.report.status === "stopped" ? "stopped" : "done";
@@ -1827,7 +1825,7 @@
       } else {
         const field = (error.fields || []).find((item) => item.field === "url");
         row.state = "failed";
-        row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
+        row.note = ((field && field.message) || error.message || rc.word("fieldError", "reviewFailed")).replace(/([^.!?])\s*$/, "$1.");
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || row.note);
       }
     }
@@ -1862,19 +1860,19 @@
       const due = Object.assign({}, pool.payment, { compareWith: compare.id, competitors: confirmed ? pending.length : 1 });
       if (confirmed) location.href = payQuery("new-run", due);
       else openRunPay(due);
-      setStatus("The comparison waits on payment: 9 USD for each competitor still to run.", true);
+      setStatus(cc.t("runPayRest"), true);
       return;
     }
     try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
-    const notStarted = pool.stopping && pending.length ? " Stopped: " + pending.join(", ") + (pending.length === 1 ? " was" : " were") + " not started." : "";
+    const notStarted = pool.stopping && pending.length ? cc.t("runNotStarted", { n: pending.length, list: pending.join(", ") }) : "";
     if (ran.done.length) {
       setStatus(compareDone(ran, notStarted), !!ran.failed.length);
       openCompared(ran, Object.fromEntries(rows.filter((row) => row.state === "failed").map((row) => [row.url, row.note])));
       return;
     }
     const why = rows.filter((row) => row.note).map((row) => row.url + ": " + row.note).join(" ");
-    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), "None of the competitor reviews finished. " + why)) {
-      setStatus("The comparison did not finish. Your report is open again.", true);
+    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), (cc.t("runNoneFinished") + " " + why).trim())) {
+      setStatus(cc.t("runReopened"), true);
       return;
     }
     setStatus(compareDone(ran, notStarted), true);
@@ -2972,7 +2970,7 @@
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
-      const error = new Error(rc.field(body.error) || "The review failed.");
+      const error = new Error(rc.field(body.error) || rc.word("fieldError", "reviewFailed"));
       error.fields = body.fields && body.fields.map((item) => Object.assign({}, item, { message: rc.field(item.message) }));
       error.paymentRequired = !!body.paymentRequired;
       error.body = body;
@@ -2992,7 +2990,7 @@
         if (!part.trim()) return;
         const msg = JSON.parse(part);
         if (msg.type === "log") appendLog(msg.text, host);
-        if (msg.type === "error") throw new Error(msg.error || "The review failed.");
+        if (msg.type === "error") throw Object.assign(new Error(rc.field(msg.error) || rc.word("fieldError", "reviewFailed")), { body: { error: msg.error } });
         if (msg.type === "done") donePayload = msg;
       });
     }
@@ -3074,7 +3072,7 @@
       stopBtn.disabled = false;
       document.getElementById("compare-stop").disabled = false;
       const payload = await readStream(res);
-      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
       layer = "All";
       payload.reasonCode = compare ? "compare" : reasonCode();
       if (compare) {
@@ -3113,19 +3111,19 @@
         const due = compare ? Object.assign({}, error.body, { compareWith: compare.id, competitors: confirmed ? compare.total || 1 : 1 }) : error.body;
         if (confirmed) location.href = payQuery("new-run", due);
         else openRunPay(due);
-        setStatus(compare ? "The comparison waits on payment: 9 USD for each competitor." : "Another review waits on payment.", true);
+        setStatus(compare ? cc.t("runPay") : "Another review waits on payment.", true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
-        const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
+        const reason = (rivalField && rivalField.message) || error.message || rc.word("fieldError", "reviewFailed");
         if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
           openCompared(ran, { [compare.url]: reason.replace(/([^.!?])\s*$/, "$1.") });
-        } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
-          setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
+        } else if (compare && reopenCompare(compare, cc.t("runOneFailed", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1.") }))) {
+          setStatus(cc.t("runReopenedOne", { url: compare.url }), true);
         } else {
           setStatus(reason, true);
         }
