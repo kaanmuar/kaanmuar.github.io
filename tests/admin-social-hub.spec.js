@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 
 // The Firebase SDK is swapped for stubs: a signed-in admin with an authenticator, and an in-memory
 // Firestore whose writes land in window.__writes.

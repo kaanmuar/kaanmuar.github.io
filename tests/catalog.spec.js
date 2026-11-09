@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const { catalog } = require('./native/cases');
 const { record, reset } = require('./native/summary');
 
