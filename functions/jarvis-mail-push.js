@@ -225,11 +225,13 @@ function noticeMessage(n) {
   };
 }
 
-/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. */
+/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. image is its card (#2248), which
+ * the phone shows big and the browser shows where it can; jarvis-social's pending() already made it https. */
 function socialMessage(p) {
   const id = clip(p && p.id, 40);
   if (!id) return null;
-  return {
+  const image = typeof p.image === "string" && /^https:\/\//.test(p.image) && p.image.length <= 1000 ? p.image : "";
+  return Object.assign({
     kind: "social",
     title: "Post this? " + clip(p.title, 100),
     body: clip([p.source, p.topic].filter(Boolean).join(" · ") + (p.summary ? ". " + p.summary : ""), 220),
@@ -238,7 +240,7 @@ function socialMessage(p) {
     tag: "jarvis-social-" + id,
     ref: "social:" + id,
     actions: [{ act: "approved", label: "Post" }, { act: "dismissed", label: "Skip" }]
-  };
+  }, image ? { image } : {});
 }
 
 /** Social proposals not pushed yet, best first, at most max. A first run only remembers what is there. */
