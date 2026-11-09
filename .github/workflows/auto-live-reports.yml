@@ -102,6 +102,12 @@ jobs:
           SINCE: ${{ inputs.since }}
         run: node scripts/auto-live-reports.js ${SINCE:+--since "$SINCE"}
 
+      # Signals only (no Gemini key here): sure countries go into data/live-report-countries.json and onto the
+      # cards; the unsure ones wait for a full run of the script, which queues them for Carlos in Jarvis (#2980).
+      - name: Place the new cards in their country
+        continue-on-error: true
+        run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini
+
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'
         # sharp writes the social hub thumbnails for the new posts.
@@ -176,7 +182,7 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
+          git add assets/live-reports data/live-report-countries.json llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
           if [ -d "media/social-posts/$BATCH" ]; then
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"
