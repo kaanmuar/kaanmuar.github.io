@@ -800,8 +800,9 @@ test.describe('admin statistics (Jarvis)', () => {
     page.once('dialog', (dialog) => { asked = dialog.message(); dialog.accept(); });
     await agent.click();
     await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.branch, c.body.prompt])).toEqual([['main', 'Update the admin visual baseline on main after the GitHub tab was added (#2526), then push.']]);
-    expect(asked).toContain('Cursor cloud agent');
+    expect(asked).toContain('start its own worker on main');
     expect(asked).toContain('Update the admin visual baseline on main');
+    expect(calls.find((c) => c.op === 'github-agent').body.engine).toBe('worker');
 
     await failing.locator('[data-gh-diagnose="902"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'github-diagnose').map((c) => c.body.run)).toEqual([902]);
