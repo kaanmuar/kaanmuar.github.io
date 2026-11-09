@@ -412,17 +412,17 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     // Human steps first: permissions, installs, the uploader.
     val needs = gh?.get("needs").strings().filter { it.isNotBlank() }
-    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you", span) {
+    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you", span, id = "github-needs") {
         if (gh == null) Muted(raw?.str("error") ?: "Pull down to read GitHub.")
         needs.forEach { Text("• $it", color = J.amber, fontSize = 13.sp) }
         gh.obj("access").objs("missing").take(5).forEach { KeyRow(it.str("repo").orEmpty(), it.str("why").orEmpty(), J.amber) }
     }
 
     val brief = Github.briefing(snap)
-    if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { b -> BriefRow(b) { sheet = b } } }
+    if (brief.isNotEmpty()) Panel("Briefing", id = "briefing") { brief.forEach { b -> BriefRow(b) { sheet = b } } }
     sheet?.let { BriefSheet(it, s, vm, {}) { sheet = null } }
     val props = Github.proposals(snap)
-    if (props.isNotEmpty()) Panel("Proposals", key = "GitHub proposals") {
+    if (props.isNotEmpty()) Panel("Proposals", key = "GitHub proposals", id = "github-proposals") {
         props.forEach { p ->
             StatusRow(p.str("level"), p.str("title").orEmpty(), p.str("why"))
             ProposalActions(p, vm, { confirm = it }, {}) { status ->
@@ -442,7 +442,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val dora = gh.obj("dora")
     val streaks = gh.obj("streaks")
 
-    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: ""), span) {
+    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: ""), span, id = "github-health") {
         val rings = listOf("overall" to score.obj("overall")) + listOf("ci", "prs", "board", "issues", "branches", "deploys", "security", "budget", "agents").mapNotNull { k -> areas.obj(k)?.let { k to it } }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val (per, size) = Github.ringGrid(maxWidth.value.toInt(), rings.size)
@@ -463,7 +463,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     // Every column across when it fits; on a cover screen a row that scrolls and stops on a column. A tap lists the column's cards.
     val stages = Github.stages(board, gh.objs("flow"))
     var flowOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    if (stages.isNotEmpty()) Panel("Process map", span) {
+    if (stages.isNotEmpty()) Panel("Process map", span, id = "github-flow") {
         val tap = { name: String -> flowOpen = Github.toggle(flowOpen, name) }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             if (Github.mapFits(maxWidth.value.toInt(), stages.size)) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -487,7 +487,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Tap a column to list its cards. Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
     }
 
-    Panel("GitHub") {
+    Panel("GitHub", id = "github-summary") {
         KpiPairs(listOf(
             KpiData("CI pass rate", pct(ci.num("passRate")), alert = (Github.rate(ci.num("passRate")) ?: 100.0) < 80),
             KpiData("Open PRs", fmt(prs.num("open"))),
@@ -504,14 +504,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             if (badges.isNotEmpty()) " · " + badges.joinToString(" · ") else "")
     }
 
-    if (dora != null) Panel("DORA" + (dora.str("level")?.let { " · $it" } ?: "")) {
+    if (dora != null) Panel("DORA" + (dora.str("level")?.let { " · $it" } ?: ""), id = "github-dora") {
         DoraRow("Deploys per day", fmt(dora.obj("deployFreq").num("perDay"), 2), dora.obj("deployFreq").str("level"))
         DoraRow("Lead time", fmt(dora.obj("leadTimeH").num("median")) + " h", dora.obj("leadTimeH").str("level"))
         DoraRow("Change fail rate", pct(dora.obj("changeFail").num("pct")), dora.obj("changeFail").str("level"))
         DoraRow("Time to restore", fmt(dora.obj("mttrH").num("median")) + " h", dora.obj("mttrH").str("level"))
     }
 
-    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: "")) {
+    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci") {
         Github.down(ci)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Runs", fmt(ci.num("runs"))), KpiData("Failed", fmt(ci.num("failed")), alert = (ci.num("failed") ?: 0.0) > 0),
@@ -523,9 +523,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         BarChart(daily.map { it.num("runs") ?: 0.0 }, days, title = "Workflow runs per day", yLabel = "runs per day", unit = "runs", legend = "Runs")
         if (daily.size >= 2) Sparkline(daily.map { it.num("failed") ?: 0.0 }, J.pink, title = "Failed runs per day", unit = "runs", labels = days, legend = "Failed")
     }
-    TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10) { "%.0f%%".format(it) }
+    TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10, id = "github-workflows") { "%.0f%%".format(it) }
     val flaky = ci.obj("flaky").objs("workflows")
-    if (flaky.isNotEmpty()) Panel("Flaky workflows · ${flaky.size}") {
+    if (flaky.isNotEmpty()) Panel("Flaky workflows · ${flaky.size}", id = "github-flaky") {
         flaky.take(8).forEach { w ->
             val name = w.str("name").orEmpty()
             val n = w.obj("newest")
@@ -557,7 +557,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val failing = ci.objs("failing")
     val idOf = { r: JsonObject -> r.num("id")?.toLong()?.toString() ?: r.str("id").orEmpty() }
     val failRows = failing + pinned.filterKeys { k -> failing.none { idOf(it) == k } }.values
-    if (failRows.isNotEmpty()) Panel("Failing runs · ${failing.size}") {
+    if (failRows.isNotEmpty()) Panel("Failing runs · ${failing.size}", id = "github-failing") {
         failRows.take(12).forEach { r ->
             val id = idOf(r)
             val name = r.str("name").orEmpty()
@@ -578,7 +578,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Fix runs what the diagnosis suggests: a re-run or an update with main. A re-run shows its state here until it finishes; an agent always asks first.")
     }
 
-    Panel("Pull requests" + (prs.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
+    Panel("Pull requests" + (prs.num("open")?.let { " · ${fmt(it)} open" } ?: ""), id = "github-prs") {
         Github.down(prs)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Merge-ready", fmt(prs.num("mergeReady"))), KpiData("Behind main", fmt(prs.num("behind"))),
@@ -604,9 +604,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             Sparkline(daily.map { it.num("merged") ?: 0.0 }, J.green, title = "PRs merged per day", unit = "PRs", labels = days, legend = "Merged")
         }
     }
-    TopList("PR sizes", prs.pairs("sizes"), yLabel = "Size (lines: XS <10, S <50, M <250, L <1000)", unit = "open PRs")
+    TopList("PR sizes", prs.pairs("sizes"), yLabel = "Size (lines: XS <10, S <50, M <250, L <1000)", unit = "open PRs", id = "github-pr-sizes")
 
-    Panel("Board" + (board.num("cycleMedD")?.let { " · cycle ${fmt(it)} d" } ?: "")) {
+    Panel("Board" + (board.num("cycleMedD")?.let { " · cycle ${fmt(it)} d" } ?: ""), id = "github-board") {
         Github.down(board)?.let { Muted(it); return@Panel }
         val cols = board.objs("columns")
         val top = (cols.maxOfOrNull { it.num("count") ?: 0.0 } ?: 0.0).coerceAtLeast(1.0)
@@ -627,7 +627,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     var issOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    Panel("Issues" + (issues.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
+    Panel("Issues" + (issues.num("open")?.let { " · ${fmt(it)} open" } ?: ""), id = "github-issues") {
         Github.down(issues)?.let { Muted(it); return@Panel }
         val sub = issues.obj("subIssues")
         val oldest = issues.objs("oldest")
@@ -645,14 +645,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Tap a number to list its issues.")
     }
     var areaOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    TopList("Open bugs by area", issues.pairs("bugsByArea"), yLabel = "Area", unit = "open bugs", legend = "Open bugs", open = areaOpen, onRow = { areaOpen = Github.toggle(areaOpen, it) }, footer = {
+    TopList("Open bugs by area", issues.pairs("bugsByArea"), yLabel = "Area", unit = "open bugs", legend = "Open bugs", open = areaOpen, onRow = { areaOpen = Github.toggle(areaOpen, it) }, id = "github-bug-areas", footer = {
         areaOpen?.let { k -> DrillBody(Github.areaDrills(issues).firstOrNull { it.key == k }) { areaOpen = null } }
         Muted("Tap an area to list its bugs.")
     })
-    TopList("Issues by kind", issues.pairs("byKind"), yLabel = "Kind", unit = "open issues")
+    TopList("Issues by kind", issues.pairs("byKind"), yLabel = "Kind", unit = "open issues", id = "github-kinds")
 
     var brOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    Panel("Branches" + (branches.num("total")?.let { " · ${fmt(it)}" } ?: "")) {
+    Panel("Branches" + (branches.num("total")?.let { " · ${fmt(it)}" } ?: ""), id = "github-branches") {
         Github.down(branches)?.let { Muted(it); return@Panel }
         val ahead = branches.objs("ahead")
         KpiPairs(listOf(KpiData("Branches", fmt(branches.num("total")), drill = "all"), KpiData("Stale", fmt(branches.num("stale")), alert = (branches.num("stale") ?: 0.0) > 0, drill = "stale"),
@@ -694,7 +694,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val deploys = gh.obj("deploys")
-    Panel("Deploys") {
+    Panel("Deploys", id = "github-deploys") {
         Github.down(deploys)?.let { Muted(it); return@Panel }
         deploys.objs("last").take(6).forEach { d -> StatusRow(if (d.str("conclusion") == "success") "good" else "alert", d.str("name").orEmpty(), listOfNotNull(d.str("conclusion"), ago(d.str("at")), d.str("sha")?.take(7)).joinToString(" · "), d.str("url")) }
         val daily = deploys.objs("daily")
@@ -706,7 +706,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val sec = gh.obj("security")
     val secScore = areas.obj("security")
     var dismiss by remember { mutableStateOf<Pair<String, JsonObject>?>(null) }
-    Panel("Security", span) {
+    Panel("Security", span, id = "github-security") {
         val rows = Github.severityRows(sec)
         val open = Github.ALERT_KINDS.sumOf { sec.obj(it.first)?.takeIf { x -> x.bool("ok") == true }.num("open") ?: 0.0 }
         KpiPairs(listOf(KpiData("Open alerts", fmt(open), alert = open > 0), KpiData("Critical", "${rows.sumOf { it.second[0] }}", alert = rows.any { it.second[0] > 0 }), KpiData("High", "${rows.sumOf { it.second[1] }}"),
@@ -743,7 +743,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     Github.ALERT_KINDS.forEach { (kind, label) ->
         val x = sec.obj(kind)?.takeIf { it.bool("ok") == true } ?: return@forEach
         val items = x.objs("items")
-        Panel("$label · ${fmt(x.num("open"))}") {
+        Panel("$label · ${fmt(x.num("open"))}", id = when (kind) { "dependabot" -> "github-dependabot"; "codeScanning" -> "github-code-scanning"; else -> "github-secrets" }) {
             KpiPairs(listOf(KpiData("Open", fmt(x.num("open")), alert = (x.num("open") ?: 0.0) > 0)) + Github.SEVERITIES.map { sv ->
                 val n = x.obj("bySeverity").num(sv) ?: 0.0
                 KpiData(sv.replaceFirstChar { it.uppercase() }, fmt(n), alert = sv in setOf("critical", "high") && n > 0)
@@ -790,7 +790,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val budget = gh.obj("budget")
-    Panel("API budget") {
+    Panel("API budget", id = "github-budget") {
         val gql = budget.obj("kaanmuar").obj("graphql")
         Row(verticalAlignment = Alignment.CenterVertically) {
             Ring(Github.left(gql), "GRAPHQL LEFT")
@@ -808,7 +808,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val agents = gh.obj("agents")
-    Panel("Agent work") {
+    Panel("Agent work", id = "github-agents") {
         val cost = agents.obj("cost")
         KpiPairs(listOf(KpiData("Hours", fmt(agents.objs("tickets").sumOf { it.num("hours") ?: 0.0 })), KpiData("On-demand", "$" + fmt(cost.num("onDemandUsd"), 2), cost.num("limitUsd")?.let { "of $" + fmt(it, 0) },
             alert = (cost.num("onDemandUsd") ?: 0.0) > (cost.num("limitUsd") ?: Double.MAX_VALUE) * 0.8)))
@@ -825,7 +825,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val android = gh.obj("android")
-    Panel("Android builds") {
+    Panel("Android builds", id = "github-android") {
         Github.down(android)?.let { Muted(it); return@Panel }
         KeyRow("Last build", listOfNotNull(android.obj("last").str("conclusion"), ago(android.obj("last").str("at"))).joinToString(" · ").ifEmpty { "—" }, if (android.obj("last").str("conclusion") == "success") J.green else J.pink, android.obj("last").str("url"))
         KeyRow("Builds · failed", fmt(android.num("builds")) + " · " + fmt(android.num("failed")))
@@ -833,7 +833,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val repos = gh.objs("repos")
-    if (repos.isNotEmpty()) Panel("Repos · ${repos.size}") {
+    if (repos.isNotEmpty()) Panel("Repos · ${repos.size}", id = "github-repos") {
         Muted("Showing " + Github.shownRepos(gh).joinToString(", ") + ". Edit the list in Settings › GitHub repos.")
         repos.forEach { r ->
             val red = r.obj("ci").str("conclusion").let { it != null && it != "success" }
@@ -843,7 +843,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val history = gh.objs("history")
-    if (history.size >= 2) Panel("Trend · ${history.size} days") {
+    if (history.size >= 2) Panel("Trend · ${history.size} days", id = "github-trend") {
         val days = history.map { it.str("day").orEmpty() }
         Sparkline(history.map { it.num("score") ?: 0.0 }, J.cyan, title = "Health score", unit = "of 100", labels = days, legend = "Score")
         Sparkline(history.map { Github.rate(it.num("passRate")) ?: 0.0 }, J.green, title = "CI pass rate", unit = "%", labels = days, legend = "Pass rate")
@@ -854,7 +854,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     val ai = gh.obj("ai")
     val diags = ai.objs("diagnoses")
-    if (diags.isNotEmpty() || ai.obj("retro") != null) Panel("Jarvis diagnoses") {
+    if (diags.isNotEmpty() || ai.obj("retro") != null) Panel("Jarvis diagnoses", id = "github-ai") {
         diags.take(8).forEach { d ->
             val id = d.num("run")?.toLong()?.toString() ?: return@forEach
             val name = d.str("workflow").orEmpty()
@@ -1052,7 +1052,7 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (AgentDraft) -> Unit, ask: (String, () -> Unit) -> Unit, sync: () -> Unit) {
-    Panel("Command deck", modifier) {
+    Panel("Command deck", modifier, id = "github-deck") {
         var task by rememberSaveable { mutableStateOf("") }
         var branch by rememberSaveable { mutableStateOf("") }
         OutlinedTextField(task, { task = it }, label = { Text("Task for a Cursor agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
