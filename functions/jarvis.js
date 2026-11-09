@@ -757,7 +757,7 @@ function normalizeSettings(data) {
   kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
   const github = { repos: core.githubRepos(d.github && d.github.repos) };
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), updatedAt: String(d.updatedAt || "") };
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -766,9 +766,27 @@ async function readSettings(db) {
 }
 
 async function saveSettings(db, input, by) {
-  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION }));
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const layout = input && input.layout !== undefined ? input.layout : (await readSettings(db)).layout;
+  const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION, layout }));
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
+  return normalizeSettings(doc);
+}
+
+// One tab's section layout (#2809) from the web or the app: the other tabs and the rest of the settings stay. A tab set to null is back to the default.
+async function saveLayout(db, patch, by) {
+  const tabs = Object.keys(patch && typeof patch === "object" && !Array.isArray(patch) ? patch : {}).filter((tab) => core.LAYOUT_TABS.includes(tab));
+  if (!tabs.length) throw new Error("No Jarvis tab in the layout.");
+  const ref = db.collection("jarvis_settings").doc("main");
+  const snap = await ref.get();
+  const data = snap && snap.exists ? snap.data() : {};
+  const layout = core.cleanLayout(data.layout);
+  tabs.forEach((tab) => {
+    const one = core.cleanLayout({ [tab]: patch[tab] })[tab];
+    if (one) layout[tab] = one; else delete layout[tab];
+  });
+  const doc = Object.assign({}, data, { layout, layoutAt: new Date().toISOString(), layoutBy: String(by || "") });
+  await ref.set(doc);
   return normalizeSettings(doc);
 }
 
@@ -1013,4 +1031,4 @@ async function unsentToday(db, items, { now }) {
 }
 
 module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
-  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
+  MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

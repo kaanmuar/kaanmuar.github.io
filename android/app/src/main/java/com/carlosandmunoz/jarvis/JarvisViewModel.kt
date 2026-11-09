@@ -14,6 +14,7 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
+import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
@@ -299,6 +300,19 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { api.call(op, _state.value.days, extra) }
                 .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** One tab's section layout (#2809), shown at once and saved through settings-save; a failed save puts the old one back. */
+    fun saveLayout(tab: String, layout: Layouts.Saved?) {
+        val before = Layouts.read(_state.value.snapshot, tab)
+        _state.update { it.copy(snapshot = Layouts.patch(it.snapshot, tab, layout)) }
+        if (fixture != null) return
+        keep("Saving the layout") {
+            runCatching { api.call("settings-save", _state.value.days, mapOf("layout" to JsonObject(mapOf(tab to Layouts.json(layout))))) }
+                .onSuccess { out -> _state.update { s -> s.copy(snapshot = out.obj("layout")?.let { Layouts.withLayout(s.snapshot, it) } ?: s.snapshot, toast = "Layout saved. The web shows it too.") } }
+                .onFailure { e -> fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") } }
             told()
         }
     }
