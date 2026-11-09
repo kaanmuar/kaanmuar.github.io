@@ -5289,7 +5289,6 @@ const jarvisCore = require("./jarvis-core");
 const jarvisSum = (field) => AggregateField.sum(field);
 const jarvisSources = require("./jarvis-sources");
 const jarvisIndex = require("./jarvis-index");
-const jarvisDays = require("./jarvis-days");
 const jarvisPush = require("./jarvis-push");
 const jarvisReview = require("./jarvis-review");
 const cube = require("./cube");
@@ -5610,16 +5609,6 @@ async function jarvisUsers() {
 // Sources whose answer does not depend on the range share one cache entry across ranges.
 const JARVIS_DAYLESS = new Set(["marketing-sync", "targets"]);
 
-// The web Jarvis's rows for its range and the one before (#2085), from the same day rollups as the app's snapshot.
-async function jarvisRows(body, now) {
-  const from = Math.max(Date.parse(body.from) || now - 30 * 864e5, now - 3 * 366 * 864e5);
-  const out = await jarvisDays.rows(getFirestore(), ["events", "opens", "reviews", "alerts"], { from, now });
-  return Object.keys(out).reduce((m, kind) => {
-    m[kind] = out[kind].map((row) => { const r = jarvisDays.plain(row); delete r.email; return r; });
-    return m;
-  }, { from: new Date(from).toISOString() });
-}
-
 async function jarvisSource(name, days) {
   const settings = await jarvis.readSettings(getFirestore());
   const keys = paypalKeys("live");
@@ -5748,22 +5737,23 @@ async function jarvisWeekly({ force }) {
   return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
-// Everything the stats page computes, in one answer for the Android app, which reads no Firestore itself.
+// Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore itself.
 async function jarvisSnapshot(days) {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const now = Date.now();
-  const [{ window, products, outreachVisits }, external, goalRows] = await Promise.all([
+  const [{ window, products, outreachVisits, feed, socialHeat }, external, goalRows, reports] = await Promise.all([
     jarvis.dailyProducts(db, { now, days }),
     jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"], days),
-    jarvis.goals(db, settings, { now, sum: jarvisSum })
+    jarvis.goals(db, settings, { now, sum: jarvisSum }),
+    jarvis.mailedReports(db).catch(() => [])
   ]);
   const state = { products, external, thresholds: settings.thresholds, goals: goalRows };
   const briefing = jarvisCore.briefing(state).map((b) => Object.assign({ detail: jarvisCore.briefDetail(b, state) }, b));
   const candidates = jarvisCore.proposalRules({ products, external, thresholds: settings.thresholds, goals: goalRows }, briefing).concat(await jarvisAiProposals(now));
   const proposals = jarvisCore.openProposals(candidates, await jarvisProposals.saved(db)).slice(0, 5).map(jarvisProposals.withButtons);
   const countdowns = await jarvisCountdown.view(db, now);
-  return { window, products, external, outreachVisits, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds), wide: jarvisCore.wide({ products, external, briefing, now: new Date(now) }) };
+  return { window, products, external, outreachVisits, feed, socialHeat, reports, goals: goalRows, briefing, proposals, countdowns, readiness: jarvisCore.readiness(external), connections: jarvisCore.connections(external), settings, thresholds: jarvisCore.thresholds(settings.thresholds), wide: jarvisCore.wide({ products, external, briefing, now: new Date(now) }) };
 }
 
 // The cached snapshot keeps every line; snoozed and dismissed ones move to briefHidden on each read.
@@ -6820,7 +6810,6 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "review") out = await jarvisReview.enqueue(getFirestore(), body, operator, now);
     else if (op === "snapshot") out = Object.assign(await jarvisBriefOpen(await jarvisCached(op, days, () => jarvisSnapshot(days))), { mailCodes: await mailCodeRows().catch(() => []),
       devices: await jarvisDevice.list(getFirestore(), now, body.device).catch(() => []) });
-    else if (op === "rows") out = await jarvisRows(body, now);
     else if (op === "mail-codes") out = { codes: await mailCodeRows() };
     else if (op === "calendar-connect") out = await bookingConnectUrl();
     else if (op === "brief-mark") out = await jarvisProposals.markBrief(getFirestore(), body, operator, now);
