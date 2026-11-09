@@ -582,18 +582,56 @@ function instagram(env = process.env, story = false) {
   };
 }
 
+// A bot uploads files up to 50 MB; Telegram fetches one by URL only up to 20 MB.
+const TELEGRAM_UPLOAD_MAX = 50 * 1024 * 1024;
+
+/* Telegram cannot fetch a release clip by URL: the download redirects to a signed release-assets address that serves
+   it as an application/octet-stream attachment (#3004). The plan's fields as a form, with the clip's bytes as the
+   video; null when the release has no such clip or it is over the upload limit. */
+async function telegramUpload(chat, body) {
+  const res = await fetch(body.video).catch(() => null);
+  if (!res || !res.ok) return null;
+  if (Number(res.headers.get("content-length")) > TELEGRAM_UPLOAD_MAX) {
+    if (res.body) await res.body.cancel().catch(() => {});
+    return null;
+  }
+  const bytes = Buffer.from(await res.arrayBuffer());
+  if (bytes.length > TELEGRAM_UPLOAD_MAX) return null;
+  const form = new FormData();
+  form.append("chat_id", chat);
+  for (const [key, value] of Object.entries(body)) {
+    if (key === "video") form.append(key, new Blob([bytes], { type: "video/mp4" }), path.basename(new URL(value).pathname));
+    else form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+  }
+  return form;
+}
+
 // The @qalab_live channel (TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL), where scripts/telegram-live.js posts the Live Reports.
 // A bot cannot read a channel's history, so the ledger alone keeps a post from going out twice.
 function telegram(env = process.env) {
   const chat = env.TELEGRAM_CHANNEL || "";
   let user = "";
   async function call(method, body) {
-    const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const form = body instanceof FormData;
+    const res = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/" + method,
+      form ? { method: "POST", body } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) {
       throw Object.assign(new Error("Telegram " + method + " " + res.status + ": " + String(json.description || "no answer").slice(0, 200)), { status: json.error_code || res.status });
     }
     return json.result;
+  }
+  // A clip Telegram refuses to fetch by URL is uploaded instead.
+  async function send(plan) {
+    try {
+      return await call(plan.method, Object.assign({ chat_id: chat }, plan.body));
+    } catch (error) {
+      if (error.status !== 400 || !plan.body.video) throw error;
+      const form = await telegramUpload(chat, plan.body);
+      if (!form) throw Object.assign(new Error(error.message + "; no clip under 50 MB to upload"), { status: 400 });
+      console.log("Telegram could not fetch the clip, uploading it - " + error.message);
+      return call(plan.method, form);
+    }
   }
   return {
     ready: Boolean(env.TELEGRAM_BOT_TOKEN && chat),
@@ -604,16 +642,17 @@ function telegram(env = process.env) {
     },
     async recent() { return []; },
     /* Tries each plan of scripts/open-social-compose.js, richest first. A request Telegram refuses as bad (400: a
-       parameter, or a clip it cannot fetch) moves to the next plan; any other failure is not retried as a plainer post. */
+       parameter, or a clip it can neither fetch nor take as an upload; 413: an upload too large) moves to the next
+       plan; any other failure is not retried as a plainer post. */
     async post(args) {
       await served(args.url);
       let refused = null;
       for (const plan of compose.telegram(args)) {
         try {
-          const m = await call(plan.method, Object.assign({ chat_id: chat }, plan.body));
+          const m = await send(plan);
           return { id: String(m.message_id), url: user ? "https://t.me/" + user + "/" + m.message_id : "", uses: plan.uses };
         } catch (error) {
-          if (error.status !== 400) throw error;
+          if (error.status !== 400 && error.status !== 413) throw error;
           refused = error;
           console.log("Telegram refused " + plan.uses.join(", ") + " - " + error.message);
         }
