@@ -152,6 +152,25 @@ async function runJob(fetchImpl, name) {
 
 // --- github ---------------------------------------------------------------------------------------------------
 
+/* #2287: CI on main is each active workflow's newest finished run on main that was not cancelled or skipped. Busy main
+   cancels most queued runs, so runs (the newest runs of every workflow) can hold none of a workflow's finished ones;
+   those workflows are read by id, from since on: one that has not run on main since is not CI on main any more. A run is
+   named by its workflow, not its run-name ("Push on main" is CodeQL). */
+async function mainRuns(get, runs, since) {
+  const usable = (r) => r.status === "completed" && !["cancelled", "skipped"].includes(r.conclusion);
+  const list = await get("repos/" + REPO + "/actions/workflows?per_page=100").catch(() => null);
+  const workflows = ((list && list.workflows) || []).filter((w) => w.state === "active");
+  const names = new Map(workflows.map((w) => [w.id, w.name]));
+  const newest = new Map();
+  (runs.workflow_runs || []).filter(usable).forEach((r) => { const key = r.workflow_id || r.name; if (!newest.has(key)) newest.set(key, r); });
+  const more = await Promise.all(workflows.filter((w) => !newest.has(w.id)).map((w) =>
+    get("repos/" + REPO + "/actions/workflows/" + w.id + "/runs?branch=main&status=completed&exclude_pull_requests=true&per_page=30&created=" + encodeURIComponent(">=" + since))
+      .then((res) => (res.workflow_runs || []).find(usable), () => null)));
+  return Array.from(newest.values()).concat(more.filter(Boolean))
+    .map((r) => names.has(r.workflow_id) ? Object.assign({}, r, { name: names.get(r.workflow_id) }) : r)
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+}
+
 async function github(fetchImpl, token, { now }) {
   if (!token) return { ok: false, error: "No GitHub token is set." };
   const get = async (path) => readJson(await fetchImpl("https://api.github.com/" + path, {
@@ -166,7 +185,7 @@ async function github(fetchImpl, token, { now }) {
     get("repos/" + REPO + "/issues?state=all&sort=created&direction=desc&per_page=12")
   ]);
   const byWorkflow = {};
-  (runs.workflow_runs || []).forEach((run) => {
+  (await mainRuns(get, runs, week)).forEach((run) => {
     if (byWorkflow[run.name] || run.status !== "completed" || run.conclusion === "cancelled") return;
     byWorkflow[run.name] = { name: run.name, conclusion: run.conclusion, at: run.updated_at, url: run.html_url, sha: String(run.head_sha || "").slice(0, 7) };
   });

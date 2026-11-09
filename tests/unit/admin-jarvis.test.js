@@ -175,6 +175,45 @@ test("server: GitHub keeps the latest finished run per workflow and groups bugs 
   assert.equal((await jarvis.github(fetch, "", { now: 0 })).ok, false);
 });
 
+test("server: CI on main reads a workflow by id when busy main left none of its finished runs in the list (#2287)", async () => {
+  const urls = [];
+  const fetch = async (url) => {
+    urls.push(url);
+    if (/actions\/workflows\?/.test(url)) return json({ workflows: [
+      { id: 1, name: "E2E and Visual Tests", state: "active" }, { id: 2, name: "Lint Code Base", state: "active" },
+      { id: 3, name: "CodeQL", state: "active" }, { id: 4, name: "Studio render", state: "active" }, { id: 5, name: "Old", state: "disabled_manually" }
+    ] });
+    if (/actions\/workflows\/1\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "cancelled", created_at: "2026-11-02T10:00:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z", html_url: "u/41410755312" }
+    ] });
+    if (/actions\/workflows\/4\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 4, name: "Studio issue_comment  ", status: "completed", conclusion: "skipped", created_at: "2026-11-02T11:00:00Z" },
+      { workflow_id: 4, name: "Studio mail render", status: "completed", conclusion: "failure", created_at: "2026-11-02T08:00:00Z" }
+    ] });
+    if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 4, name: "Studio issue_comment  ", status: "completed", conclusion: "skipped", created_at: "2026-11-02T12:05:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "in_progress", created_at: "2026-11-02T12:04:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "cancelled", created_at: "2026-11-02T12:03:00Z" },
+      { workflow_id: 3, name: "Push on main", status: "completed", conclusion: "success", created_at: "2026-11-02T12:02:00Z" },
+      { workflow_id: 2, name: "Lint Code Base", status: "completed", conclusion: "success", created_at: "2026-11-02T12:01:00Z" },
+      { workflow_id: 2, name: "Lint Code Base", status: "completed", conclusion: "failure", created_at: "2026-11-02T12:00:00Z" }
+    ] });
+    if (/search/.test(url)) return json({ total_count: 0, items: [] });
+    return json([]);
+  };
+  const out = await jarvis.github(fetch, "token", { now: NOW.getTime() });
+  assert.deepEqual(out.ci.map((run) => [run.name, run.conclusion]), [["CodeQL", "success"], ["Lint Code Base", "success"], ["E2E and Visual Tests", "failure"], ["Studio render", "failure"]]);
+  assert.equal(out.ci.find((run) => run.name === "E2E and Visual Tests").url, "u/41410755312");
+  const byId = urls.filter((url) => /actions\/workflows\/\d+\/runs/.test(url)).map((url) => url.match(/workflows\/(\d+)/)[1]);
+  assert.deepEqual(byId, ["1", "4"]);
+  const week = encodeURIComponent(">=" + new Date(NOW.getTime() - 7 * 86400000).toISOString().slice(0, 10));
+  assert.ok(urls.every((url) => !/workflows\/\d+\/runs/.test(url) || (/branch=main/.test(url) && url.endsWith("&created=" + week))), urls.join("\n"));
+  const lines = core.briefing({ products: {}, external: { github: out } }).filter((row) => row.key.startsWith("ci:")).map((row) => row.text);
+  assert.deepEqual(lines, ['CI "E2E and Visual Tests" on main is failure.', 'CI "Studio render" on main is failure.']);
+});
+
 test("server: Scheduler jobs get short names and run-job refuses odd names", async () => {
   const calls = [];
   const fetch = async (url, opts) => {
