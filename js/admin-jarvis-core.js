@@ -421,6 +421,71 @@
         return clean.length ? clean : GITHUB_REPOS.slice();
     }
 
+    // Section layout per tab (#2809): jarvis_settings/main layout[tab] = { order, hidden } of panel ids, saved by the web and the app.
+    // The app names a panel panelSlug(title); ids one side does not show keep their place when the other side saves.
+    const LAYOUT_TABS = PRODUCTS.map((p) => p.key);
+    const LAYOUT_ID = /^[a-z0-9][a-z0-9_.:-]{0,79}$/i;
+    const LAYOUT_MAX = 200;
+    function panelSlug(title) {
+        const slug = String(title || '').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '');
+        return slug || 'panel';
+    }
+    const layoutIds = (list) => Array.from(new Set((Array.isArray(list) ? list : []).filter((id) => typeof id === 'string' && LAYOUT_ID.test(id)))).slice(0, LAYOUT_MAX);
+    function cleanLayout(input) {
+        const out = {};
+        if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
+        LAYOUT_TABS.forEach((tab) => {
+            const t = input[tab];
+            if (!t || typeof t !== 'object' || Array.isArray(t)) return;
+            const order = layoutIds(t.order);
+            const hidden = layoutIds(t.hidden);
+            if (order.length || hidden.length) out[tab] = { order, hidden };
+        });
+        return out;
+    }
+    // base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is).
+    function layoutWeave(base, ref) {
+        const out = base.slice();
+        const placed = new Set(out);
+        ref.forEach((id, i) => {
+            if (placed.has(id)) return;
+            let at = 0;
+            for (let k = i - 1; k >= 0; k--) { const j = out.indexOf(ref[k]); if (j >= 0) { at = j + 1; break; } }
+            out.splice(at, 0, id);
+            placed.add(id);
+        });
+        return out;
+    }
+    // The panels a tab shows, in the saved order: new panels at their default place, saved ids no panel has any more ignored.
+    function applyLayout(defaultIds, layout) {
+        const ids = Array.from(new Set(Array.isArray(defaultIds) ? defaultIds : []));
+        const present = new Set(ids);
+        const l = layout || {};
+        const all = layoutWeave(layoutIds(l.order).filter((id) => present.has(id)), ids);
+        const hide = new Set(layoutIds(l.hidden));
+        return { all, order: all.filter((id) => !hide.has(id)), hidden: all.filter((id) => hide.has(id)) };
+    }
+    // One step up (-1) or down (1) past the next shown panel; hidden panels keep their place.
+    function layoutMove(all, hidden, id, step) {
+        const hide = new Set(hidden || []);
+        const seen = all.filter((x) => x === id || !hide.has(x));
+        const k = seen.indexOf(id) + step;
+        if (seen.indexOf(id) < 0 || k < 0 || k >= seen.length) return all.slice();
+        const out = all.filter((x) => x !== id);
+        const j = out.indexOf(seen[k]);
+        out.splice(step < 0 ? j : j + 1, 0, id);
+        return out;
+    }
+    // What to save after an edit: this side's order and hidden panels, with the ids it did not show (the other side's, or empty panels) kept.
+    function keepLayout(prev, all, hidden, shown) {
+        const p = prev || {};
+        const mine = new Set(shown || all);
+        return {
+            order: layoutWeave(layoutIds(all), layoutIds(p.order)).slice(0, LAYOUT_MAX),
+            hidden: layoutIds(layoutIds(p.hidden).filter((id) => !mine.has(id)).concat(layoutIds(hidden)))
+        };
+    }
+
     // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
     const CONNECTIONS = [
         { key: 'health', name: 'Firestore (server collections)' }, { key: 'jobs', name: 'Cloud Scheduler' }, { key: 'github', name: 'GitHub' },
@@ -1566,7 +1631,7 @@
             && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
     }
 
-    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsStale };
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsStale };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
