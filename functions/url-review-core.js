@@ -1062,20 +1062,20 @@ async function missingIntermediate(hostname, pinned) {
   return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, cookieText) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookieText);
   } catch (error) {
     if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookieText);
   }
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookieText) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1112,7 +1112,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
         "user-agent": USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
         connection: "close"
-      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
+      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookieText ? { cookie: cookieText } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: pinnedLookup(pinned)
     }, (res) => {
@@ -1205,6 +1205,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
     const seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
     onPulse("Waiting for " + current.hostname + " (" + seconds + "s).");
   }, 2000);
+  const cookieJar = new Map();
   try {
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       if (isStopped && isStopped()) {
@@ -1214,19 +1215,36 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       }
       const pinned = await assertPublic(current.hostname);
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
+      const cookieLines = [];
+      for (const [name, value] of cookieJar) {
+        cookieLines.push(name + "=" + value);
+      }
+      const cookieText = cookieLines.join("; ");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, cookieText);
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
         throw error;
       }
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) throw httpOnly(upgraded, true);
+      const rawCookies = res.headers["set-cookie"];
+      if (rawCookies) {
+        (Array.isArray(rawCookies) ? rawCookies : [rawCookies]).forEach((line) => {
+          const pair = String(line).split(";")[0] || "";
+          const parts = pair.split("=");
+          const name = parts[0].trim();
+          if (name) cookieJar.set(name, parts.slice(1).join("=").trim());
+        });
+      }
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
         const next = new URL(location, current);
+        if (next.hostname !== current.hostname && !next.hostname.endsWith("." + current.hostname) && !current.hostname.endsWith("." + next.hostname)) {
+          cookieJar.clear();
+        }
         upgraded = "";
         if (next.protocol === "http:") {
           upgraded = httpsUpgrade(next, upgrades);
@@ -2882,13 +2900,19 @@ async function probeRead(raw) {
   const upgrades = [];
   let upgraded = "";
   let current;
+  const cookieJar = new Map();
   try {
     current = normalizeUrl(raw);
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       const pinned = await assertPublic(current.hostname);
+      const cookieLines = [];
+      for (const [name, value] of cookieJar) {
+        cookieLines.push(name + "=" + value);
+      }
+      const cookieText = cookieLines.join("; ");
       let res;
       try {
-        res = await requestOnce(current, pinned, null, true);
+        res = await requestOnce(current, pinned, null, true, null, cookieText);
       } catch (error) {
         if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
@@ -2896,8 +2920,20 @@ async function probeRead(raw) {
       const location = header(res.headers, "location");
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
+      const rawCookies = res.headers["set-cookie"];
+      if (rawCookies) {
+        (Array.isArray(rawCookies) ? rawCookies : [rawCookies]).forEach((line) => {
+          const pair = String(line).split(";")[0] || "";
+          const parts = pair.split("=");
+          const name = parts[0].trim();
+          if (name) cookieJar.set(name, parts.slice(1).join("=").trim());
+        });
+      }
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         const next = new URL(location, current);
+        if (next.hostname !== current.hostname && !next.hostname.endsWith("." + current.hostname) && !current.hostname.endsWith("." + next.hostname)) {
+          cookieJar.clear();
+        }
         upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
         if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
         current = normalizeUrl(next.toString());

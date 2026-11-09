@@ -408,7 +408,7 @@ function fakeNetwork(routes) {
       const req = new EventEmitter();
       req.destroy = () => {};
       req.end = () => setImmediate(() => {
-        const route = routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 };
+        const route = typeof routes === "function" ? routes(options) : (routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 });
         // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
@@ -2228,6 +2228,30 @@ test("a start page six redirects away is read as Chrome reads it, and a longer c
   assert.equal(error.message, "The page redirected too many times.");
   assert.equal(failures.causeOf(error.message).id, "redirect-loop");
   assert.equal((await core.probeRead(past)).error, "The page redirected too many times.");
+});
+
+test("a start page that sets a cookie and redirects to itself does not loop indefinitely, passing the cookie back (#2605)", async (t) => {
+  let loops = 0;
+  t.after(fakeNetwork((options) => {
+    const url = options.protocol + "//" + options.hostname + options.path;
+    if (url === "https://irfarabi.com/") {
+      const cookie = (options.headers || {}).cookie || "";
+      if (cookie.includes("arcscoc=ok")) {
+        return { status: 200, headers: { "content-type": "text/html" }, body: HTML };
+      }
+      loops += 1;
+      return {
+        status: 307,
+        headers: { location: "https://irfarabi.com/", "set-cookie": "arcscoc=ok; Path=/; Domain=irfarabi.com" }
+      };
+    }
+    return { status: 404 };
+  }));
+  const read = await core.fetchPublic("https://irfarabi.com/");
+  assert.deepEqual([read.status, read.hops, read.url], [200, 1, "https://irfarabi.com/"]);
+  assert.equal(loops, 1);
+  const probe = await core.probeRead("https://irfarabi.com/");
+  assert.deepEqual([probe.status, probe.hops.length, probe.html], [200, 2, true]);
 });
 
 test("a start page whose host cuts Chrome off for the review tag is loaded again as plain Chrome; a slow one is not (#1180)", () => {
