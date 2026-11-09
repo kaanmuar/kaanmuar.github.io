@@ -69,6 +69,39 @@ test("a Page that refuses a post reports how many it answered and had insights, 
   assert.deepEqual(metrics.merge({ posts: {} }, [], "t", { "Facebook Page": report }).pages, { "Facebook Page": report });
 });
 
+test("the Telegram member count is read from getChatMemberCount, and a refusal says why without the token", async () => {
+  const asked = [];
+  const reply = (status, json) => async (url) => { asked.push(url); return { ok: status === 200, status, json: async () => json }; };
+  assert.equal(await metrics.telegramMembers("123:abc", "@qalab_live", reply(200, { ok: true, result: 42 })), 42);
+  assert.equal(asked[0], "https://api.telegram.org/bot123:abc/getChatMemberCount?chat_id=%40qalab_live");
+  await assert.rejects(metrics.telegramMembers("123:abc", "@qalab_live", reply(400, { ok: false, description: "Bad Request: chat not found" })), (error) => /Telegram 400: Bad Request: chat not found/.test(error.message) && !error.message.includes("123:abc"));
+  await assert.rejects(metrics.telegramMembers("t", "@c", reply(200, { ok: true, result: "many" })), /no member count/);
+});
+
+test("the Telegram history keeps one point a day, and a skipped or failed run keeps the last count and says why", () => {
+  const first = metrics.telegramEntry(undefined, { chat: "@qalab_live", members: 10 }, "2026-11-01T15:00:00.000Z");
+  assert.deepEqual(first, { chat: "@qalab_live", members: 10, at: "2026-11-01T15:00:00.000Z", history: [{ date: "2026-11-01", members: 10 }] });
+  const again = metrics.telegramEntry(first, { chat: "@qalab_live", members: 12 }, "2026-11-01T20:00:00.000Z");
+  assert.deepEqual(again.history, [{ date: "2026-11-01", members: 12 }]);
+  const next = metrics.telegramEntry(again, { chat: "@qalab_live", members: 15 }, "2026-11-02T15:00:00.000Z");
+  assert.deepEqual(next.history.map((p) => p.date + ":" + p.members), ["2026-11-01:12", "2026-11-02:15"]);
+  const skipped = metrics.telegramEntry(next, { chat: "", skipped: "no TELEGRAM_BOT_TOKEN secret" }, "2026-11-03T15:00:00.000Z");
+  assert.deepEqual([skipped.chat, skipped.members, skipped.at, skipped.history.length, skipped.skipped], ["@qalab_live", 15, "2026-11-02T15:00:00.000Z", 2, "no TELEGRAM_BOT_TOKEN secret"]);
+  const failed = metrics.telegramEntry(skipped, { chat: "@qalab_live", error: "Telegram 403: Forbidden" }, "2026-11-04T15:00:00.000Z");
+  assert.deepEqual([failed.members, failed.error, failed.skipped], [15, "Telegram 403: Forbidden", undefined]);
+  assert.deepEqual(metrics.telegramEntry(undefined, { skipped: "no TELEGRAM_CHANNEL variable" }, "2026-11-04T15:00:00.000Z"), { chat: "", history: [], skipped: "no TELEGRAM_CHANNEL variable" });
+  const long = { members: 1, history: Array.from({ length: 405 }, (_, i) => ({ date: new Date(Date.UTC(2025, 0, 1) + i * 86400000).toISOString().slice(0, 10), members: i })) };
+  const capped = metrics.telegramEntry(long, { members: 500 }, "2027-01-01T00:00:00.000Z");
+  assert.equal(capped.history.length, 400);
+  assert.deepEqual(capped.history[399], { date: "2027-01-01", members: 500 });
+});
+
+test("channels survive a run that does not touch them, and a new channels entry replaces them", () => {
+  const telegram = { chat: "@qalab_live", members: 3, history: [] };
+  assert.deepEqual(metrics.merge({ posts: {}, channels: { telegram } }, [], "t").channels, { telegram });
+  assert.deepEqual(metrics.merge({ posts: {}, channels: { telegram } }, [], "t", null, { telegram: { members: 4 } }).channels, { telegram: { members: 4 } });
+});
+
 test("fresh numbers replace a network's old ones and leave networks not asked this run alone", () => {
   const previous = { posts: { "a/1": { x: { views: 1 }, facebook: { likes: 4 } }, "a/2": { x: { views: 9 } } } };
   const next = metrics.merge(previous, [{ post: "a/1", channel: "x", numbers: { views: 5 } }, { post: "a/2", channel: "x", numbers: {} }, { post: "a/0", channel: "tiktok", numbers: { likes: 2 } }], "2026-10-26T00:00:00.000Z");

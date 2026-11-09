@@ -394,7 +394,9 @@ async function search(ctx) {
 // --- social ----------------------------------------------------------------------------------------------------
 
 // Facebook post numbers are read each morning by scripts/social-metrics.js in auto-live-reports.yml, which holds the
-// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why.
+// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why. The same run records
+// the Telegram channel's members (channels.telegram), read by jarvisSocial.telegramMembers. The subreddit's members
+// are in the Reddit ledger itself (reddit.json members), read by jarvisSocial.redditMembers.
 function facebookNeeds(metrics) {
   return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
     if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
@@ -410,13 +412,13 @@ async function social(ctx) {
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube"), ledger("metrics")]);
+  const [buffer, facebook, open, telegram, reddit, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("telegram"), ledger("reddit"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
   const latest = [];
   const scheduled = { count: 0, next: "" };
-  [buffer, facebook, open].forEach((book) => {
+  [buffer, facebook, open, telegram, reddit].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
@@ -448,6 +450,10 @@ async function social(ctx) {
     } catch (error) { needs.push("YouTube: " + clean(error)); }
   } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
   needs.push(...facebookNeeds(metrics));
+  const tgMembers = jarvisSocial.telegramMembers(metrics, since);
+  if (tgMembers.need) needs.push(tgMembers.need);
+  const rdMembers = jarvisSocial.redditMembers(reddit, since, ctx.now);
+  if (rdMembers.need) needs.push(rdMembers.need);
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
   return {
     ok: !!(buffer || facebook),
@@ -460,8 +466,10 @@ async function social(ctx) {
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
-    queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
+    queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since),
     media: jarvisMedia.mediaStats([buffer, facebook, open], metrics, videos),
+    telegram: tgMembers,
+    reddit: rdMembers,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
     needs
   };

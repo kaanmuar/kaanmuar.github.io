@@ -248,7 +248,7 @@ async function extrasFor(tip, browser) {
   if (EXTRAS.has(tip.id)) return EXTRAS.get(tip.id);
   const v = tip.visual || {};
   const host = tip.host || (v.type === "scores" && v.note ? v.note.split(" · ")[0].trim() : "");
-  const x = { nets: brands.networks(), handle: brands.HANDLE };
+  const x = { nets: brands.networks() };
   if (v.type === "matrix") {
     x.logos = {};
     for (const row of v.rows) x.logos[row[0]] = await assets.siteKind(row[0]) ? "" : await assets.siteLogo(row[0]);
