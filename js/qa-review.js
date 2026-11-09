@@ -2612,30 +2612,48 @@
     if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
   }
 
+  // On a busy device a smooth scroll can pause for longer than any quiet spell, so the end of a scroll is the
+  // browser's scrollend where it has one. Any scroll the reader starts, or Back to top, drops the pending check.
+  const SCROLL_INPUTS = ["wheel", "touchstart", "pointerdown", "keydown"];
+  let dropSettle = () => {};
   function afterScroll(done) {
+    dropSettle();
+    const ends = "onscrollend" in dash;
     let timer = 0;
+    const drop = () => {
+      clearTimeout(timer);
+      dash.removeEventListener(ends ? "scrollend" : "scroll", settle);
+      SCROLL_INPUTS.forEach((type) => dash.removeEventListener(type, drop));
+      dropSettle = () => {};
+    };
     const settle = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        dash.removeEventListener("scroll", settle);
+        drop();
         done();
-      }, 160);
+      }, ends ? 0 : 160);
     };
-    dash.addEventListener("scroll", settle, { passive: true });
-    settle();
+    dash.addEventListener(ends ? "scrollend" : "scroll", settle, { passive: true });
+    SCROLL_INPUTS.forEach((type) => dash.addEventListener(type, drop, { passive: true }));
+    dropSettle = drop;
+    if (!ends) settle();
   }
 
-  // Lazy screenshots above a section can load during a smooth scroll and push its heading down; once the scroll
-  // settles the heading is put back in place, unless the reader has scrolled away from it.
+  const headingOff = (heading) => heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+
+  // Lazy screenshots above a section can load during a smooth scroll and move its heading, so the scroll can end
+  // well short of it or past it; once the scroll ends the heading is put back in place, unless the reader has
+  // scrolled since.
   function jumpTo(item) {
     if (item.panel.hidden) setFold(item, true);
     measureBar();
     const heading = item.button.parentElement;
     item.button.focus({ preventScroll: true });
+    dropSettle();
+    if (Math.abs(headingOff(heading)) <= 2) return;
     heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
     afterScroll(() => {
-      const off = heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
-      if (Math.abs(off) > 2 && Math.abs(off) < dash.clientHeight) heading.scrollIntoView({ block: "start" });
+      if (Math.abs(headingOff(heading)) > 2) heading.scrollIntoView({ block: "start" });
     });
   }
 
@@ -2688,6 +2706,7 @@
     reportTop.addEventListener("click", () => {
       const first = reportIndex.querySelector("a");
       if (first) first.focus({ preventScroll: true });
+      dropSettle();
       dash.scrollTo({ top: 0, behavior: scrollBehavior() });
     });
   }
