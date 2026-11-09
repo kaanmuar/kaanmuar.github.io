@@ -17,7 +17,6 @@ const path = require("path");
 const { tagLine } = require("../social-tags");
 const { xPost } = require("./tips");
 const cal = require("../social-calendar");
-const ledger = require("../social-ledger");
 
 const ROOT = path.resolve(__dirname, "../..");
 const SITE = "https://carlosandmunoz.com";
@@ -27,7 +26,6 @@ const KIND = "news";
 const SLUG = "01-this-week";
 const CATS = { Field: { label: "Field sweep", color: "#e2c48a" } };
 const WINDOWS = Object.fromEntries(cal.NETWORKS.map((network) => [network, cal.WINDOWS[network]]));
-const CLASH = 10;
 
 const UI = {
   en: { tryThis: "Five picks", guided: "Social hub", never: "Our words, their sources", end: "This week in web quality.", endNote: "All five, with their sources, on our social hub." },
@@ -38,8 +36,6 @@ const UI = {
   it: { tryThis: "Cinque scelte", guided: "Hub social", never: "Parole nostre, fonti loro", end: "Questa settimana nella qualità web.", endNote: "Tutte e cinque, con le fonti, sul nostro hub social." }
 };
 
-const minutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-const hhmm = (min) => String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0");
 const addDays = (day, n) => { const d = new Date(day + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const longDate = (day) => new Date(day + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
@@ -109,36 +105,8 @@ function captions(tip) {
   };
 }
 
-// Times other posts hold on that day and network: their calendar rows and what Buffer or the Page has queued.
-function busy(day, channel) {
-  const out = [];
-  const posts = path.join(ROOT, "media/social-posts");
-  fs.readdirSync(posts).filter((batch) => batch !== BATCH && fs.existsSync(path.join(posts, batch, "calendar.csv"))).forEach((batch) => {
-    fs.readFileSync(path.join(posts, batch, "calendar.csv"), "utf8").trim().split("\n").slice(1).forEach((line) => {
-      const [date, time, ch] = line.split(",");
-      if (date === day && ch === channel && /^\d\d:\d\d$/.test(time)) out.push(minutes(time));
-    });
-  });
-  [ledger.BUFFER, ledger.FACEBOOK].forEach((file) => Object.entries(ledger.read(path.join(ROOT, file)).posts).forEach(([id, entries]) => entries.forEach((e) => {
-    if (id.startsWith(BATCH + "/") || e.result !== "queued" || e.channel !== channel || !e.at) return;
-    const local = new Date(Date.parse(e.at) - 5 * 3600e3).toISOString();
-    if (local.slice(0, 10) === day) out.push(minutes(local.slice(11, 16)));
-  })));
-  return out.sort((a, b) => a - b);
-}
-
-// The lane 3 slot of the planner (scripts/social-calendar.js); when a queued post already sits within CLASH
-// minutes of it, the middle of the widest free stretch of the network's window.
-function timeFor(tip, channel) {
-  const slot = cal.slotTime(tip.date, channel, cal.LANES[KIND]);
-  const taken = busy(tip.date, channel);
-  if (!taken.some((t) => Math.abs(t - minutes(slot)) < CLASH)) return slot;
-  const [from, to] = WINDOWS[channel].map(minutes);
-  const marks = [from].concat(taken.filter((t) => t > from && t < to), to);
-  let best = [from, to];
-  marks.slice(1).forEach((t, i) => { if (t - marks[i] > best[1] - best[0] || best[0] === from && best[1] === to) best = [marks[i], t]; });
-  return hhmm(Math.round((best[0] + best[1]) / 2 / 5) * 5);
-}
+// The lane 3 slot of the planner (scripts/social-calendar.js), moved when a queued post already sits next to it.
+function timeFor(tip, channel) { return cal.freeSlot(tip.date, channel, cal.LANES[KIND], BATCH); }
 
 /* --draft: the five best picks the sweep found in the seven days up to the Friday, at most one per topic first and
    two per source, reputable hosts first, never a link an earlier edition already ran. */
