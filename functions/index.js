@@ -48,6 +48,9 @@ const jarvisProcesses = require("./jarvis-processes");
 
 // A process row for Jarvis's live Processes panel (#2548); a failed report never stops the work it describes.
 const jarvisProcess = (rows) => jarvisProcesses.report(jarvisLiveDeps(), rows).catch((error) => console.error("Jarvis process report failed:", error));
+const jarvisLog = require("./jarvis-log");
+const jarvisLogPoll = require("./jarvis-log-poll");
+jarvisLog.use(getFirestore);
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -66,13 +69,16 @@ async function track(job, run) {
     await shown;
     await jarvisProcess(jarvisProcesses.jobRow(job, ok ? "done" : "failed", { startedAt, step }));
   };
+  const secs = () => Math.round((Date.now() - Date.parse(startedAt)) / 1000) + " s";
   try {
     const note = await run();
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" });
+    if (job !== "jarvisLogPoll") await jarvisLog.log(null, { source: "function", level: "info", ref: "job:" + job, text: job + " ok in " + secs() + (typeof note === "string" && note ? ": " + note : "") });
     await finish(true, typeof note === "string" ? note : "");
   } catch (error) {
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: false, note: "", error: String((error && error.message) || error).slice(0, 300) })
       .catch((write) => console.error("ops_runs/" + job + " was not written:", write));
+    await jarvisLog.log(null, { source: "function", level: "error", ref: "job:" + job, text: job + " failed after " + secs() + ": " + String((error && error.message) || error) });
     await finish(false, String((error && error.message) || error).slice(0, 160));
     throw error;
   }
@@ -6403,7 +6409,13 @@ async function jarvisGithubJob() {
   const said = (out) => (typeof out === "string" ? out : out && typeof out === "object"
     ? Object.keys(out).filter((k) => typeof out[k] === "number" || Array.isArray(out[k])).map((k) => k + " " + (Array.isArray(out[k]) ? out[k].length : out[k])).join(", ") || "done" : "done");
   const step = async (label, run) => {
-    try { const out = await run(); if (out !== null) notes.push(label + ": " + said(out)); } catch (error) { notes.push(label + " failed: " + String(error.message || error).slice(0, 120)); }
+    try {
+      const out = await run();
+      if (out !== null) { notes.push(label + ": " + said(out)); await jarvisLog.log(null, { source: "github", level: "info", ref: "job:jarvisGithub", text: "jarvisGithub " + label + ": " + said(out) }); }
+    } catch (error) {
+      notes.push(label + " failed: " + String(error.message || error).slice(0, 120));
+      await jarvisLog.log(null, { source: "github", level: "error", ref: "job:jarvisGithub", text: "jarvisGithub " + label + " failed: " + String(error.message || error) });
+    }
   };
   const snapshot = (await jarvisExternal(["github-work"], 1))["github-work"];
   await step("days", () => jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {})));
@@ -6600,6 +6612,10 @@ async function jarvisUptimeRun() {
 
 // Every ten minutes (#1977): the countdowns that came due run.
 exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisCountdowns }), "jarvisCountdowns", jarvisCountdownRun);
+
+// Every minute (#2810): Actions runs, issues, PRs, board moves and the Cloud Functions log into Jarvis > Console.
+exports.jarvisLogPoll = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.jarvisLogPoll }), "jarvisLogPoll",
+  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform") }));
 
 // Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
 exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);
@@ -7002,6 +7018,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     }
     else if (op === "github-agent") out = await jarvisGithubAgent(jarvisGithubCtx(now), body);
     else if (op === "github-act") out = await jarvisGithubAct(body, operator);
+    else if (op === "log") out = await jarvisLog.read(getFirestore(), { since: body.since, sources: body.sources, level: body.level, q: body.q, limit: body.limit });
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);

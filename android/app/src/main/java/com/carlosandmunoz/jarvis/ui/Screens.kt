@@ -64,8 +64,9 @@ import kotlinx.serialization.json.JsonPrimitive
 
 val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio", "lab" to "QA Lab", "review" to "URL Review", "hub" to "Social hub")
 
-/** Products-tab chips: the site products plus Outreach, Marketing, Engagement and GitHub (#2526), which the snapshot keeps under external. */
-val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement") + ("github" to "GitHub")
+/** Products-tab chips: the site products plus Outreach, Marketing, Engagement and GitHub (#2526), which the snapshot keeps under external,
+    and the Console (#2810), which reads the log op. */
+val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement") + ("github" to "GitHub") + ("console" to "Console")
 
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
 
@@ -214,7 +215,7 @@ fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (Stri
 @Composable
 private fun ProductList(rows: List<JsonObject>, product: String, pick: (String) -> Unit) {
     Panel("Products") {
-        val list = rows.ifEmpty { CHIPS.map { (k, n) -> JsonObject(mapOf("key" to JsonPrimitive(k), "name" to JsonPrimitive(n))) } }
+        val list = rows + CHIPS.filter { (k, _) -> rows.none { it.str("key") == k } && (rows.isEmpty() || k == "console") }.map { (k, n) -> JsonObject(mapOf("key" to JsonPrimitive(k), "name" to JsonPrimitive(n))) }
         list.forEach { r ->
             val key = r.str("key") ?: return@forEach
             val on = key == product
@@ -247,6 +248,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "marketing") { MarketingScreen(s, vm); return }
     if (product == "engagement") { EngagementScreen(s, vm); return }
     if (product == "github") { GithubScreen(s, vm); return }
+    if (product == "console") { ConsoleScreen(s, vm); return }
     if (product == "hub") SocialHub(s, vm)
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
