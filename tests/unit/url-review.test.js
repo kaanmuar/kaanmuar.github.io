@@ -2242,6 +2242,30 @@ test("a start page whose host cuts Chrome off for the review tag is loaded again
   assert.equal(tagCut(start, null), "");
 });
 
+test("a page that moves itself on after it loaded is read again once the next page settles, not failed as a browser that did not finish (#2268)", async () => {
+  const { steady } = require("../../functions/url-review-browser");
+  const destroyed = () => new Error("Execution context was destroyed, most likely because of a navigation.");
+  const page = { settled: 0, waitForNetworkIdle: async () => { page.settled += 1; } };
+  let calls = 0;
+  const moves = [];
+  const banner = await steady(page, async () => {
+    calls += 1;
+    if (calls === 1) throw destroyed();
+    return { found: true, name: "Cookiebot" };
+  }, () => moves.push(calls));
+  assert.deepEqual([banner, calls, moves, page.settled], [{ found: true, name: "Cookiebot" }, 2, [1], 1]);
+
+  let gone = 0;
+  const lost = new Error("Cannot find context with specified id");
+  await assert.rejects(steady(page, async () => { gone += 1; throw lost; }), lost);
+  assert.equal(gone, 3);
+
+  let other = 0;
+  await assert.rejects(steady(page, async () => { other += 1; throw new Error("Target closed"); }), /Target closed/);
+  assert.equal(other, 1);
+  assert.equal(await steady({}, async () => 7), 7);
+});
+
 test("an http:// redirect is read over https first, as Chrome does, and fails as an http:// redirect only when https gives no page (#1179)", async (t) => {
   t.after(fakeNetwork({
     "https://garena.example.com/": { status: 302, headers: { location: "http://intl.garena.example.com/" } },
