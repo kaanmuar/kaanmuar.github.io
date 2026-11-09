@@ -2646,8 +2646,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ['When', (t) => esc(ghAgo(t.at))],
             ['', (t) => (t.cursor ? `<button type="button" class="jv-btn small" data-worker-cursor="${esc(t.id)}">Hand to Cursor</button>${ghResult('worker:' + t.id)}` : '')]
         ], w.tasks || [], 'No worker runs yet.');
-        const waiting = (w.tasks || []).filter((t) => t.gate && t.gate.waiting);
-        const gates = waiting.length ? `<h4 class="jv-sub">At the gate · ${waiting.length}</h4>${waiting.map(workerGate).join('')}` : '';
+        const gated = (w.tasks || []).filter((t) => t.gate && t.gate.waiting);
+        const gates = gated.length ? `<h4 class="jv-sub">At the gate · ${gated.length}</h4>${gated.map(workerGate).join('')}` : '';
         return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + gates + tasks,
             { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini\'s request quota waits twice, then moves to Flash. Safe PRs merge on green after the countdown; visible and destructive ones wait for your Approve, and a fix main no longer needs is dropped. Prices are rounded up, so the meter overstates.' });
     }
