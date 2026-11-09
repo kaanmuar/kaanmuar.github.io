@@ -214,7 +214,8 @@ const FUNNEL = [[1866, "Short links (Worker)"], [1867, "Landing in six languages
 
 // The utm_campaign values qalabreview/src/routes.js sets, by name.
 const CAMPAIGNS = {
-  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email", home: "qalabreview.com home",
+  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email",
+  "outreach-rivals": "Competitor email, sample report", home: "qalabreview.com home",
   landing: "Landing home", "landing-universities": "Landing for universities", "landing-colleges": "Landing for technical training",
   "landing-agencies": "Landing for agencies", "landing-startups": "Landing for startups",
   youtube: "YouTube short link", tiktok: "TikTok short link", linkedin: "LinkedIn short link", instagram: "Instagram short link", facebook: "Facebook short link",

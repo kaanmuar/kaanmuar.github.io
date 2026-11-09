@@ -38,6 +38,8 @@ test("a competitor's /sample link opens the sample report with its site typed in
   assert.equal(params(out.location).get("url"), "exito.com");
   assert.equal(params(out.location).get("live"), null);
   assert.equal(params((await route(at("/exito.com/other"))).location).get("utm_campaign"), "unknown-path");
+  assert.equal(params((await route(at("/es/agencies/sample"))).location).get("utm_campaign"), "unknown-path");
+  assert.equal(params((await route(at("/es/qr/sample"))).location).get("utm_campaign"), "unknown-path");
 });
 
 test("a lookup that fails still sends the prospect somewhere useful", async () => {
