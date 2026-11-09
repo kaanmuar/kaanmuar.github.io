@@ -21,6 +21,7 @@ const P = require("./engagement-profiles");
 const Joins = require("./engagement-joins");
 const Offer = require("./url-review-domain-offer");
 const OwnerTags = require("./owner-tags");
+const Snapshot = require("./jarvis-snapshot");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -610,7 +611,7 @@ function withAccounts(env, creds) {
 
 async function clearCache(db) {
   const cache = db.collection("jarvis_cache");
-  await Promise.all(CACHE_DAYS.flatMap((d) => ["engagement-" + d, "snapshot-" + d]).map((id) => cache.doc(id).delete().catch(() => null)));
+  await Promise.all(CACHE_DAYS.map((d) => cache.doc("engagement-" + d).delete().catch(() => null)).concat(Snapshot.drop(db, ["external"])));
 }
 
 const dayList = (to, n) => Array.from({ length: n }, (_, i) => E.bogotaDay(Date.parse(to + "T12:00:00Z") - (n - 1 - i) * DAY));
