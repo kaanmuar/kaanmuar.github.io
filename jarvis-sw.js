@@ -16,7 +16,7 @@ function text(msg) {
 }
 
 function show(msg, body, actions) {
-    return self.registration.showNotification(msg.title || 'Jarvis', {
+    return self.registration.showNotification(msg.title || 'Jarvis', Object.assign({
         body,
         tag: msg.tag || msg.kind || 'jarvis',
         renotify: !msg.quiet && !!actions,
@@ -25,7 +25,7 @@ function show(msg, body, actions) {
         badge: ICON,
         data: msg,
         actions: (actions || []).map((a) => ({ action: a.act, title: a.label }))
-    });
+    }, /^https:\/\//.test(msg.image || '') ? { image: msg.image } : {}));
 }
 
 async function frontTab() {
