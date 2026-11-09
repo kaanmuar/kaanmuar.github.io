@@ -1098,6 +1098,67 @@ test.describe("start page reads", () => {
     assert.equal(failures.causeOf(wrong.message).id, "tls");
   });
 
+  test("a chain whose next issuer is also missing is read by following that AIA address", async () => {
+    // Failed run sweep-x7N1BM5IjxViMWl814Fh on www.centredentairemeiser.com (#1176): the plain read
+    // fails with "unable to get local issuer certificate" (UNABLE_TO_GET_ISSUER_CERT_LOCALLY). The
+    // leaf's AIA certificate does not chain to a trusted root, and that certificate's own AIA one does.
+    // sweep-lAWQ61TuoGsq7jlHHpNN on www.vitacentro.com failed with "unable to get issuer certificate".
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const crypto = require("node:crypto");
+    const tlsLib = require("node:tls");
+    const httpsLib = require("node:https");
+    const pem = (name) => fs.readFileSync(path.join(__dirname, "fixtures", "tls-chain", name + ".pem"), "utf8");
+    const der = (name) => new crypto.X509Certificate(pem(name)).raw;
+    const host = "ye.example.com";
+    const site = "https://" + host + "/";
+    const mid = pem("ye-mid");
+    const top = pem("ye-top");
+    const restore = fakeNetwork({
+      [site]: { status: 200, headers: STRONG_HEADERS, body: HTML.replace(/shop\.example\.com/g, host) },
+      "http://certs.ca.example.org/ye1.crt": { status: 200, headers: { "content-type": "application/pkix-cert" }, body: der("ye-mid") },
+      "http://certs.ca.example.org/root-ye.crt": { status: 200, headers: { "content-type": "application/pkix-cert" }, body: der("ye-top") }
+    });
+    const fake = httpsLib.request;
+    const savedConnect = tlsLib.connect;
+    const cas = [];
+    httpsLib.request = (options, onResponse) => {
+      if (options.hostname !== host) return fake(options, onResponse);
+      const both = !!(options.ca && options.ca.includes(mid) && options.ca.includes(top));
+      cas.push(both);
+      if (both) return fake(options, onResponse);
+      const { EventEmitter } = require("node:events");
+      const req = new EventEmitter();
+      req.destroy = () => {};
+      req.end = () => setImmediate(() => req.emit("error", Object.assign(new Error("unable to get local issuer certificate"), { code: "UNABLE_TO_GET_ISSUER_CERT_LOCALLY" })));
+      return req;
+    };
+    tlsLib.connect = (options, onSecure) => {
+      const { EventEmitter } = require("node:events");
+      const socket = new EventEmitter();
+      assert.deepEqual([options.servername, options.port], [host, 443]);
+      socket.getPeerCertificate = () => ({ raw: der("ye-leaf") });
+      socket.destroy = () => {};
+      setImmediate(onSecure);
+      return socket;
+    };
+    const lines = [];
+    try {
+      const report = await core.reviewTarget(site, { log: (text) => lines.push(text), browse: async () => ({ ok: false }) });
+      assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, "Example shop for garden tools"]);
+      assert.deepEqual(cas.slice(0, 2), [false, true]);
+      assert.ok(cas.slice(2).every(Boolean), "later requests carry both fetched certificates");
+      assert.ok(lines.includes("The server sent its certificate without the intermediate Review Test YE1, Review Test Root YE. Fetched it from http://certs.ca.example.org/ye1.crt, http://certs.ca.example.org/root-ye.crt, as browsers do, and verified the chain again."));
+      const chain = report.insights.findings.find((item) => item.key === "sec-tls-chain");
+      assert.deepEqual([chain.verdict, chain.severity], ["risk", "medium"]);
+      assert.match(chain.evidence, /without Review Test YE1, Review Test Root YE\. Browsers fetch/);
+    } finally {
+      httpsLib.request = fake;
+      tlsLib.connect = savedConnect;
+      restore();
+    }
+  });
+
   test("headless Chrome reads a page whose load event stalls once its document has arrived", async () => {
     // Re-run zyvKsDINcVhGirMeIupU on www.supersociedades.gov.co (#733): the document parses in about 12 s,
     // but an image or script never finishes, so the load event never fires and goto timed out at 20 s.
