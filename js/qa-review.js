@@ -4,6 +4,8 @@
   const SHOWN_KEY = "qa-review-shown";
   const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
+  // scripts/build-sample-langs.js writes assets/qa-review-sample.<lang>.json for each of these.
+  const SAMPLE_LANGS = ["es", "pt", "de", "fr", "it"];
   const TERMS_VERSION = "2026-11-04b";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
@@ -858,15 +860,11 @@
     const alerts = report.alerts || [];
     if (!box || !list) return;
     box.hidden = alerts.length === 0;
-    slot("alarm-note").textContent = alerts.length
-      ? (open
-        ? "The full wording is open because this section is paid. These lines are still not proof of a break-in."
-        : "The first words of each signal stay visible. The rest stays blurred until the full report is paid. These lines are what the public response showed. They are not proof that someone broke in.")
-      : "";
+    slot("alarm-note").textContent = alerts.length ? rc.t(open ? "alarmNoteOpen" : "alarmNote") : "";
     const opener = slot("alarm-open");
     if (opener) opener.hidden = open || alerts.length === 0;
     list.innerHTML = alerts.map((item) =>
-      "<li><span class=\"alarm-kicker\">" + esc(item.level) + " · " + esc(item.id) + "</span><strong>" + fadeText(item.title, open) + "</strong><p>" + fadeText(item.detail, open) + "</p></li>"
+      "<li><span class=\"alarm-kicker\">" + esc(rc.word("alertLevel", item.level, item.level)) + " · " + esc(item.id) + "</span><strong>" + fadeText(item.title, open) + "</strong><p>" + fadeText(item.detail, open) + "</p></li>"
     ).join("");
   }
 
@@ -875,8 +873,8 @@
     if (!list) return;
     const mentions = report.mentions || [];
     list.innerHTML = mentions.length
-      ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(item.tone || "Mention") + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
-      : "<li class=\"muted\">No public write-up was retrieved on this pass.</li>";
+      ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(rc.word("mentionTone", item.tone || "Mention")) + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
+      : "<li class=\"muted\">" + esc(rc.t("mentionsNone")) + "</li>";
   }
 
   // The walkthrough call (#1971): book.html with this report, in the page language.
@@ -1042,7 +1040,7 @@
   function verdictBadge(verdict, severity) {
     if (!verdict) return '<span class="badge">' + esc(rc.t("caseProposed")) + "</span>";
     return '<span class="badge v-' + esc(verdict) + '">' + esc(VERDICT_LABEL[verdict] || verdict) + "</span>" +
-      (severity && severity !== "info" ? '<span class="badge">' + esc(severity) + "</span>" : "");
+      (severity && severity !== "info" ? '<span class="badge">' + esc(rc.word("severity", severity)) + "</span>" : "");
   }
 
   function setInsightsVisible(on) {
@@ -2718,19 +2716,21 @@
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
       '<div class="bar-row"><span>' + esc(layerName(name)) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
-    ).join("") : '<p class="muted">No layer counts were saved.</p>';
+    ).join("") : '<p class="muted">' + esc(rc.t("factsNoLayers")) + "</p>";
     const tech = slot("tech");
     const technologies = report.technologies || [];
     tech.innerHTML = technologies.length
       ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(rc.word("techGroup", item.group, item.group)) + "</span>").join("")
-      : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
+      : '<span class="muted">' + esc(rc.t("factsNoTech")) + "</span>";
     const obs = report.observed || {};
     const limits = report.limits || {};
     const asked = "pageLang" in limits
-      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      ? [limits.pageLang ? rc.t("askedLang", { lang: pageLangName(limits.pageLang) }) : rc.t("askedOwn"), limits.section ? rc.t("askedSection", { section: limits.section }) : ""].filter(Boolean).join(" ") + " "
       : "";
-    slot("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
-      (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
+    const facts = rc.t("observedLine", { lang: obs.lang || rc.t("observedLangUnset"), h1: (obs.h1 || []).length, forms: obs.forms || 0, images: obs.images || 0, noAlt: obs.missingAlt || 0, scripts: obs.scripts || 0, bytes: obs.bytes || 0 });
+    const timedOut = rc.t("observedTimedOut", { read: limits.pagesRead || (report.pages || []).length, max: limits.maxPages || "?" });
+    slot("observed").innerHTML = "<p><b>" + esc(obs.title || rc.t("observedNoTitle")) + "</b></p><p class=\"muted\">" + esc(obs.description || rc.t("observedNoDescription")) + "</p><p>" + esc(facts) + "</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
+      (limits.timedOut ? '<p class="muted">' + esc(timedOut).replace("{email}", '<a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>') + "</p>" : "");
     const pages = report.pages || [];
     const found = foundCount(limits);
     const foundNote = slot("pages-found");
@@ -2738,17 +2738,17 @@
       const read = limits.pagesRead || pages.length;
       foundNote.hidden = !found;
       foundNote.textContent = found
-        ? found + " page" + (found === "1" ? " was" : "s were") + " found on " + (report.host || "the site") + " in the links of the pages analyzed and its sitemap. This review analyzed " + read + " of them" +
-          (limits.maxPages ? ", up to " + limits.maxPages + " pages and " + (limits.maxDepth || "?") + " links deep" : "") + "."
+        ? rc.t("pagesFound", { n: Number(limits.pagesFound), count: found, host: report.host || rc.t("theSite") }) + " " +
+          (limits.maxPages ? rc.t("pagesFoundReadCap", { read, max: limits.maxPages, depth: limits.maxDepth || "?" }) : rc.t("pagesFoundRead", { read }))
         : "";
     }
     slot("pages").innerHTML = pages.length ? pages.map((page) =>
       "<tr><td>" + esc(page.path) + "</td><td>" + esc(page.status || page.error || "—") + "</td><td>" + esc(page.ms) + "</td><td>" + esc(page.title) + "</td></tr>"
-    ).join("") : '<tr><td colspan="4">No page was saved.</td></tr>';
+    ).join("") : '<tr><td colspan="4">' + esc(rc.t("factsNoPages")) + "</td></tr>";
     const savedLog = report.log || [];
     slot("report-log").innerHTML = savedLog.length ? savedLog.map((line) =>
       "<li><time>" + esc(line.at || "") + "</time>" + esc(line.text || "") + "</li>"
-    ).join("") : '<li>No log line was saved.</li>';
+    ).join("") : "<li>" + esc(rc.t("factsNoLog")) + "</li>";
     return layers;
   }
 
@@ -2880,7 +2880,7 @@
     paintCall(report, sample);
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
-      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? name : layerName(name)) + "</button>"
+      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? rc.t("allAreas") : layerName(name)) + "</button>"
     ).join("");
     document.getElementById("layer-filters").onclick = (event) => {
       const button = event.target.closest("button");
@@ -2892,11 +2892,9 @@
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
     const urgent = ["P1", "P2"].map((level) => shown.filter((item) => item.priority === level).length);
     const ranked = shown.some((item) => item.priority)
-      ? " Ranked by risk: " + urgent[0] + " P1 and " + urgent[1] + " P2 come first, backed by what the review saw on " + (report.host || "the site") + "."
+      ? " " + rc.t("caseRanked", { p1: urgent[0], p2: urgent[1], host: report.host || rc.t("theSite") })
       : "";
-    document.getElementById("case-note").textContent = (paid
-      ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The top case is shown in full as a sample. The opening of every other line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
+    document.getElementById("case-note").textContent = rc.t(paid ? "caseNotePaid" : "caseNote", { n: shown.length }) + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -2908,9 +2906,7 @@
     const otherTools = extras.filter((name) => !listed.has(name));
     if (specialist) {
       specialist.hidden = otherTools.length === 0;
-      specialist.textContent = otherTools.length
-        ? "Also named where the page matches: " + otherTools.join(", ") + ". They are not launched."
-        : "";
+      specialist.textContent = otherTools.length ? rc.t("specialistTools", { list: otherTools.join(", ") }) : "";
     }
     paintTools(report);
     // Cases are stored best-first, so an unpaid report shows the first one in full; a server preview marks the one it kept whole.
@@ -2919,8 +2915,9 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
-      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="' + esc(rc.t("caseRisk", { risk: item.risk })) + '">' + esc(item.priority) + "</span>" : "";
+      const firstPages = item.pages && item.pages.slice(0, 6).join(", ");
+      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">' + esc(rc.t("casePages", { list: item.pages.length > 6 ? rc.t("casePagesMore", { list: firstPages, more: item.pages.length - 6 }) : firstPages })) + "</p>" : "";
       const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
       const title = fc.line(item.msg && item.msg.title, item.title);
       const why = fc.line(item.msg && item.msg.why, item.why);
@@ -2929,7 +2926,7 @@
           sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
       }
       return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
-    }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
+    }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
@@ -3602,13 +3599,15 @@
   async function openSample(button) {
     if (button) button.disabled = true;
     try {
-      const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
+      const own = SAMPLE_LANGS.indexOf(rc.lang) !== -1 ? SAMPLE_URL.replace(/\.json$/, "." + rc.lang + ".json") : "";
+      let res = own ? await fetch(own, { cache: "no-cache" }).catch(() => null) : null;
+      if (!res || !res.ok) res = await fetch(SAMPLE_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
       const body = await res.json();
       dashOpener = button || null;
       render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
     } catch (error) {
-      if (button) button.textContent = "The sample could not be opened";
+      if (button) button.textContent = rc.t("sampleOpenFailed");
     } finally {
       if (button) button.disabled = false;
     }

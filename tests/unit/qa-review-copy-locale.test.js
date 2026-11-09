@@ -44,6 +44,15 @@ for (const file of FILES) {
   });
 }
 
+test("the sample report's translated sentences are written in es-419 and pt-BR (#2937)", () => {
+  for (const lang of Object.keys(REGIONAL)) {
+    const book = JSON.parse(fs.readFileSync(path.join(__dirname, "../../scripts/qa-review-sample-copy/" + lang + ".json"), "utf8"));
+    for (const text of Object.values(book)) {
+      for (const pattern of REGIONAL[lang]) assert.ok(!pattern.test(text), "sample " + lang + " matches " + pattern + ": " + text);
+    }
+  }
+});
+
 test("the scripts ZIP README copy has every English key and slot, follows the glossary and the regional forms (#1401)", () => {
   const book = require("../../js/qa-review-scripts.js").README_COPY;
   const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(",");
