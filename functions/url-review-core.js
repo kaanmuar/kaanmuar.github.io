@@ -3585,16 +3585,76 @@ function stoppedReport(rawUrl, lines, host, scope) {
   };
 }
 
-// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
-// 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
+// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, a field nested past
+// 20 maps and arrays, and a string longer than one field ("Property report contains an invalid nested entity").
+// Page data can carry any of them, so they are rewritten. The whole report also has to stay under one document.
 const STORE_DEPTH = 20;
+const FIELD_BYTES = 1048487;
+const STORE_JSON = 850000;
+
+function cutToBytes(text, max) {
+  const value = String(text);
+  if (Buffer.byteLength(value) <= max) return value;
+  let lo = 0;
+  let hi = value.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (Buffer.byteLength(value.slice(0, mid)) <= max) lo = mid;
+    else hi = mid - 1;
+  }
+  if (lo > 0 && value.charCodeAt(lo - 1) >= 0xD800 && value.charCodeAt(lo - 1) <= 0xDBFF) lo -= 1;
+  return value.slice(0, lo);
+}
+
+function longestString(value) {
+  let best = null;
+  const consider = (parent, key, child, where) => {
+    if (typeof child === "string") {
+      if (!best || child.length > best.length) best = { parent, key, length: child.length, path: where };
+    } else walk(child, where);
+  };
+  const walk = (item, path) => {
+    if (Array.isArray(item)) {
+      item.forEach((child, index) => consider(item, index, child, path + "." + index));
+      return;
+    }
+    if (!item || typeof item !== "object" || Object.getPrototypeOf(item) !== Object.prototype) return;
+    Object.keys(item).forEach((key) => consider(item, key, item[key], path + "." + key));
+  };
+  walk(value, "report");
+  return best;
+}
+
+// The screenshot trim uses the same 850,000 character budget. A page kept from headless Chrome can be larger than that on its own.
+function fitDocument(value, fixed) {
+  const sizeOf = () => JSON.stringify(value).length;
+  let size = sizeOf();
+  for (let guard = 0; size > STORE_JSON && guard < 6; guard += 1) {
+    const found = longestString(value);
+    if (!found || found.length < 2000) break;
+    const next = found.parent[found.key].slice(0, Math.max(0, found.length - (size - STORE_JSON) - 64));
+    if (next.length >= found.length) break;
+    found.parent[found.key] = next;
+    if (found.key === "html") found.parent.htmlCut = true;
+    fixed.push(found.path + " (kept " + next.length + " characters so the report fits in one Firestore document)");
+    size = sizeOf();
+  }
+  return value;
+}
 
 function storable(value, fixed, at, depth) {
   const level = depth || 1;
   const path = at || "report";
   const plain = (item) => Array.isArray(item) || (!!item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype);
+  if (typeof value === "string") {
+    if (Buffer.byteLength(value) <= FIELD_BYTES) return value;
+    const kept = cutToBytes(value, FIELD_BYTES);
+    fixed.push(path + " (string of " + Buffer.byteLength(value) + " bytes, kept to " + Buffer.byteLength(kept) + ")");
+    return kept;
+  }
   if (!plain(value)) return value;
   const inner = (item, where) => {
+    if (typeof item === "string") return storable(item, fixed, where, level + 1);
     if (!plain(item)) return item;
     if (level >= STORE_DEPTH) {
       fixed.push(where + " (past " + STORE_DEPTH + " levels, kept as JSON)");
@@ -3615,7 +3675,7 @@ function storable(value, fixed, at, depth) {
     if (name !== key) fixed.push(path + "." + JSON.stringify(key) + " (renamed " + JSON.stringify(name) + ")");
     out[name] = inner(value[key], path + "." + name);
   });
-  return out;
+  return !at && !depth ? fitDocument(out, fixed) : out;
 }
 
 // The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
