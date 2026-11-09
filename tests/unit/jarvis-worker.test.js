@@ -148,6 +148,88 @@ test("a task on a PR comments there instead of opening another PR", async () => 
   assert.ok(!f.calls.some((c) => /\/pulls$/.test(c.url)));
 });
 
+test("route: the asked tier wins, else Flash for test and config fixes and Pro for code", () => {
+  assert.equal(worker.route({ tier: "flash", category: "code" }), "flash");
+  assert.equal(worker.route({ category: "test" }), "flash");
+  assert.equal(worker.route({ category: "config" }), "flash");
+  assert.equal(worker.route({ category: "code" }), "pro");
+  assert.equal(worker.route({ tier: "ultra" }), "pro");
+  assert.equal(worker.route(null), "pro");
+});
+
+test("spend levels: ok under $20, warn from $20, over from $40", async () => {
+  const at = async (usd) => { const db = fakeDb(); await db.collection("jarvis_worker_spend").doc("2026-11").set({ usd }); return worker.spend(db, NOW); };
+  assert.deepEqual([(await at(19.99)).level, (await at(20)).level, (await at(40)).level], ["ok", "warn", "over"]);
+  assert.equal((await at(12.5)).left, 27.5);
+  assert.equal((await at(41)).left, 0);
+  assert.deepEqual([worker.crossed(19, 21), worker.crossed(21, 22), worker.crossed(39, 40), worker.crossed(10, 45), worker.crossed(1, 2)], ["warn", null, "cap", "cap", null]);
+  assert.equal(worker.budgetMessage(null, 5), null);
+  assert.match(worker.budgetMessage("warn", 20.4).body, /\$20\.40 of \$40/);
+  assert.equal(worker.budgetMessage("cap", 40).tab, "products:github");
+});
+
+test("the run that carries the month past $20 says so once", async () => {
+  const db = fakeDb();
+  await db.collection("jarvis_worker_spend").doc("2026-11").set({ usd: 19.5, runs: 30 });
+  await queued(db);
+  const f = fakeFetch([["GET", /\/pulls\?state=open&head=/, () => [{ number: 5, html_url: "u" }]], ["POST", "/issues/5/labels", () => ({})]]);
+  const out = await worker.report(ctxOf(f, db), { id: "wabc", state: "done", branch: "jarvis/wabc-x", models: [{ model: "gemini-pro-latest", input: 200000, output: 10000 }] }, jwt());
+  assert.deepEqual([out.crossed, out.monthUsd], ["warn", 20.15]);
+  assert.ok(db.doc("jarvis_worker_spend", "2026-11").warnAt);
+  await queued(db, { id: "wdef" });
+  const next = await worker.report(ctxOf(f, db), { id: "wdef", state: "done", branch: "jarvis/wdef-x", models: [{ model: "gemini-flash-latest", input: 1000, output: 100 }] }, jwt({ run_id: "778" }));
+  assert.equal(next.crossed, undefined);
+});
+
+test("a failed Flash run starts again once on Pro; a failed Pro run waits for Cursor", async () => {
+  const db = fakeDb();
+  await queued(db, { tier: "flash", key: "gh:diag:9" });
+  const f = fakeFetch([["POST", "/dispatches", () => ({ _status: 204 })]]);
+  const out = await worker.report(ctxOf(f, db), { id: "wabc", state: "failed", error: "tests still fail" }, jwt());
+  assert.ok(out.escalated);
+  const call = f.calls.find((c) => c.url.includes("/dispatches"));
+  assert.equal(call.body.inputs.tier, "pro");
+  const next = db.doc("jarvis_worker", out.escalated);
+  assert.deepEqual([next.tier, next.escalatedFrom, next.key], ["pro", "wabc", "gh:diag:9"]);
+  assert.equal(db.doc("jarvis_worker", "wabc").escalatedTo, out.escalated);
+  const view = await worker.view(db, NOW);
+  assert.equal(view.tasks.find((t) => t.id === "wabc").cursor, null);
+
+  const db2 = fakeDb();
+  await queued(db2, { pr: 42, branch: "main" });
+  const f2 = fakeFetch([]);
+  const out2 = await worker.report(ctxOf(f2, db2), { id: "wabc", state: "failed", error: "Gemini quota" }, jwt());
+  assert.equal(out2.escalated, undefined);
+  assert.equal(f2.calls.filter((c) => c.url.includes("/dispatches")).length, 0);
+  const row = (await worker.view(db2, NOW)).tasks[0];
+  assert.deepEqual(row.cursor, { prompt: "Make the login test wait.", branch: undefined, pr: 42, name: "Jarvis fix: Fix login test" });
+});
+
+test("a failed Flash run over the cap is not tried again and says why", async () => {
+  const db = fakeDb();
+  await db.collection("jarvis_worker_spend").doc("2026-11").set({ usd: 40 });
+  await queued(db, { tier: "flash" });
+  const out = await worker.report(ctxOf(fakeFetch([]), db), { id: "wabc", state: "failed" }, jwt());
+  assert.equal(out.escalated, undefined);
+  assert.match(db.doc("jarvis_worker", "wabc").escalateError, /budget/);
+  assert.ok((await worker.view(db, NOW)).tasks[0].cursor);
+});
+
+test("view: the month's spend and the newest tasks first", async () => {
+  const db = fakeDb();
+  await db.collection("jarvis_worker_spend").doc("2026-11").set({ usd: 0.116, runs: 1 });
+  await queued(db, { id: "w1", at: "2026-11-09T10:00:00.000Z", state: "done", prNumber: 2977, prUrl: "https://github.com/x/pull/2977", usd: 0.116 });
+  await queued(db, { id: "w2", at: "2026-11-09T11:00:00.000Z", state: "running" });
+  const v = await worker.view(db, NOW);
+  assert.deepEqual([v.spend.usd, v.spend.level, v.spend.cap, v.spend.warn], [0.116, "ok", 40, 20]);
+  assert.deepEqual(v.tasks.map((t) => t.id), ["w2", "w1"]);
+  assert.deepEqual([v.tasks[1].pr, v.tasks[1].usd, v.tasks[1].cursor], [2977, 0.116, null]);
+});
+
+test("porcelain keeps the first file's name whole when its status starts with a space", () => {
+  assert.deepEqual(script.porcelain(" M tests/unit/jarvis-worker.test.js\n?? js/new.js\nM  .gemini/settings.json\n"), ["tests/unit/jarvis-worker.test.js", "js/new.js"]);
+});
+
 test("candidates: fresh code, test or config diagnoses on main or Jarvis's branches, and needs-agent bugs", async () => {
   const db = fakeDb();
   const diag = (run, over) => db.collection("jarvis_github_diag").doc(String(run)).set(Object.assign({ run, repo: worker.REPO, workflow: "E2E", branch: "main", pr: null, category: "code",
@@ -162,6 +244,19 @@ test("candidates: fresh code, test or config diagnoses on main or Jarvis's branc
   assert.deepEqual(out.map((c) => c.target).sort(), ["#2950", "run 1", "run 6"]);
   assert.equal(out.find((c) => c.target === "run 6").task.pr, 78);
   assert.equal(out.find((c) => c.target === "#2950").task.issue, 2950);
+});
+
+test("candidates leave out diagnoses on main of workflows that are no longer failing there", async () => {
+  const db = fakeDb();
+  const diag = (run, over) => db.collection("jarvis_github_diag").doc(String(run)).set(Object.assign({ run, repo: worker.REPO, workflow: "Pages", branch: "main", pr: null, category: "config",
+    confidence: 0.9, cause: "a step failed", prompt: "Fix the Pages deploy step.", at: new Date(NOW - 3600000).toISOString() }, over || {}));
+  await diag(1);
+  await diag(2, { workflow: "Merge PageSpeed PR" });
+  await diag(3, { workflow: "E2E", branch: "jarvis/wx-y", pr: 78 });
+  const out = await worker.candidates(db, { now: NOW, confidence: 0.8, github: {}, failing: ["Merge PageSpeed PR"] });
+  assert.deepEqual(out.map((c) => c.target).sort(), ["run 2", "run 3"]);
+  assert.equal(out.find((c) => c.target === "run 2").task.category, "config");
+  assert.equal((await worker.candidates(db, { now: NOW, confidence: 0.8, github: {} })).length, 3);
 });
 
 test("the hourly pass hands candidates to the worker once each, and waits while the budget is used", async () => {

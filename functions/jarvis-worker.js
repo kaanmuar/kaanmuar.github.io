@@ -9,9 +9,11 @@
    verifyOidc  checks a GitHub Actions OIDC token: signature (GitHub's JWKS), issuer, audience, expiry, and that it comes
                from jarvis-worker.yml on main of this repo
    spend       the month's spend against the cap;  candidates  what the hourly pass may hand the worker on its own
+   route       the model a task starts on (#2958);  view  the spend meter and the last tasks, for the worker op
 
    Prices are list prices per million tokens, rounded up so the meter overstates rather than understates; thinking
-   tokens bill as output and cached input bills in full. */
+   tokens bill as output and cached input bills in full. The month warns once at WARN_USD and stops the worker at
+   CAP_USD; past it, fixes go to a Cursor agent on tap. */
 
 const crypto = require("crypto");
 const jarvisLog = require("./jarvis-log");
@@ -27,6 +29,7 @@ const SPEND = "jarvis_worker_spend";
 const CAP_USD = 40;
 const WARN_USD = 20;
 const TIERS = ["pro", "flash"];
+const FLASH_CATEGORIES = ["test", "config"];
 const STATES = ["queued", "running", "done", "nochange", "failed"];
 const PRICES = [[/lite/i, { in: 0.1, out: 0.4 }], [/flash/i, { in: 0.5, out: 3 }], [/pro|.*/i, { in: 2.5, out: 15 }]];
 const LABEL = "jarvis";
@@ -80,10 +83,47 @@ async function spend(db, now) {
   const snap = await db.collection(SPEND).doc(month).get();
   const d = snap.exists ? snap.data() : {};
   const usd = round(Number(d.usd) || 0);
-  return { month, usd, runs: Number(d.runs) || 0, input: Number(d.input) || 0, output: Number(d.output) || 0, cap: CAP_USD, warn: WARN_USD, over: usd >= CAP_USD, warned: usd >= WARN_USD };
+  return { month, usd, runs: Number(d.runs) || 0, input: Number(d.input) || 0, output: Number(d.output) || 0, cap: CAP_USD, warn: WARN_USD, over: usd >= CAP_USD, warned: usd >= WARN_USD,
+    level: usd >= CAP_USD ? "over" : usd >= WARN_USD ? "warn" : "ok", left: round(Math.max(0, CAP_USD - usd)) };
 }
 
-/* task: { prompt, title?, tier?, branch?, pr?, issue?, key?, by? } -> { ok, id, message, url }. Throws over the cap. */
+/* The tier the task asks for; else Flash for test and config fixes, Pro for code. A failed Flash run is tried again once
+   on Pro (report); a failed Pro run waits for a Cursor agent on tap. */
+function route(task) {
+  const t = task || {};
+  if (TIERS.includes(t.tier)) return t.tier;
+  return FLASH_CATEGORIES.includes(t.category) ? "flash" : "pro";
+}
+
+// The threshold a run's cost carried the month over: "cap", "warn" or null.
+function crossed(before, after) {
+  if (before < CAP_USD && after >= CAP_USD) return "cap";
+  if (before < WARN_USD && after >= WARN_USD) return "warn";
+  return null;
+}
+
+function budgetMessage(level, usd) {
+  if (level !== "cap" && level !== "warn") return null;
+  const of = "$" + Number(usd || 0).toFixed(2) + " of $" + CAP_USD + " this month";
+  return level === "cap"
+    ? { kind: "alerts", title: "Jarvis's worker stopped: AI budget used", body: of + ". It takes no more tasks until next month; fixes go to a Cursor agent on tap.", tab: "products:github", tag: "jarvis-worker-budget" }
+    : { kind: "alerts", title: "Jarvis's AI spend passed $" + WARN_USD, body: of + ". The worker stops at $" + CAP_USD + ".", tab: "products:github", tag: "jarvis-worker-budget" };
+}
+
+/* The worker op: the month's spend and the last 20 tasks with what a row needs to hand a failed one to Cursor. */
+async function view(db, now) {
+  const [budget, snap] = await Promise.all([spend(db, now), db.collection(COLLECTION).orderBy("at", "desc").limit(20).get()]);
+  const tasks = snap.docs.map((doc) => {
+    const d = doc.data();
+    const stuck = (d.state === "failed" || d.state === "nochange") && !d.escalatedTo;
+    return { id: d.id, title: d.title, state: d.state, by: d.by, tier: d.tier, at: d.at, updatedAt: d.updatedAt, usd: round(Number(d.usd) || 0), pr: d.prNumber || null,
+      url: d.prUrl || d.runUrl || null, runUrl: d.runUrl || null, error: d.error || "", escalatedFrom: d.escalatedFrom || null, escalatedTo: d.escalatedTo || null,
+      cursor: stuck ? { prompt: block(d.prompt, 4000), branch: d.pr ? undefined : d.branch || "main", pr: d.pr || undefined, name: "Jarvis fix: " + text(d.title, 60) } : null };
+  });
+  return { spend: budget, tasks };
+}
+
+/* task: { prompt, title?, tier?, category?, branch?, pr?, issue?, key?, by?, escalatedFrom? } -> { ok, id, message, url }. Throws over the cap. */
 async function dispatch(ctx, task) {
   const t = task || {};
   const prompt = block(t.prompt, 20000).trim();
@@ -92,14 +132,14 @@ async function dispatch(ctx, task) {
   const pr = int(t.pr);
   const branch = text(t.branch, 200) || "main";
   if (!/^[\w./-]+$/.test(branch) || branch.includes("..")) throw new Error("That is not a branch name.");
-  const tier = TIERS.includes(t.tier) ? t.tier : "pro";
+  const tier = route(t);
   const title = text(t.title || t.name, 90) || (issue ? "Fix #" + issue : pr ? "Work on PR #" + pr : text(prompt, 60));
   const now = ctx.now || Date.now();
   const budget = await spend(ctx.db, now);
   if (budget.over) throw new Error("Jarvis's AI budget for " + budget.month + " is used ($" + budget.usd.toFixed(2) + " of $" + CAP_USD + "). Raise the cap or use a Cursor agent.");
   const id = "w" + now.toString(36) + crypto.randomBytes(3).toString("hex");
   const row = { id, state: "queued", title, prompt, tier, branch, pr: pr || null, issue: issue || null, key: text(t.key, 160) || null, by: text(t.by, 80) || "jarvis",
-    at: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() };
+    escalatedFrom: text(t.escalatedFrom, 40) || null, at: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() };
   await ctx.db.collection(COLLECTION).doc(id).set(row);
   try {
     await gh(ctx, "/repos/" + REPO + "/actions/workflows/" + WORKFLOW + "/dispatches", { method: "POST",
@@ -109,8 +149,8 @@ async function dispatch(ctx, task) {
     throw new Error(error.status === 403 ? "Give the qa-lab-agents app Actions: write so Jarvis can start its worker." : error.message);
   }
   const url = "https://github.com/" + REPO + "/actions/workflows/" + WORKFLOW;
-  await jarvisLog.log(null, { source: "github", level: "info", ref: "worker:" + id, url, text: "Started Jarvis's worker (" + tier + "): " + title + "." });
-  return { ok: true, id, url, message: "Jarvis's worker started: " + title + ". It opens a PR when the tests pass." };
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "worker:" + id, url, text: "Started Jarvis's worker (" + tier + (row.escalatedFrom ? ", after Flash failed" : "") + "): " + title + "." });
+  return { ok: true, id, tier, url, message: "Jarvis's worker started on " + (tier === "flash" ? "Flash" : "Pro") + ": " + title + ". It opens a PR when the tests pass." };
 }
 
 let jwks = { at: 0, keys: [] };
@@ -187,16 +227,27 @@ async function report(ctx, body, token) {
   const patch = { state, run, runUrl, updatedAt: new Date(now).toISOString(), summary: block(b.summary, 4000), tests: text(b.tests, 80), error: text(b.error, 600),
     files: (Array.isArray(b.files) ? b.files : []).slice(0, 100).map((f) => text(f, 200)), usd: round((Number(row.usd) || 0) + c.usd),
     input: (Number(row.input) || 0) + c.input, output: (Number(row.output) || 0) + c.output };
+  let budget = null;
   if (c.usd > 0 || c.input > 0) {
     const month = ctx.db.collection(SPEND).doc(monthOf(now));
     await ctx.db.runTransaction(async (tx) => {
       const m = await tx.get(month);
       const d = m.exists ? m.data() : {};
-      tx.set(month, { usd: round((Number(d.usd) || 0) + c.usd), input: (Number(d.input) || 0) + c.input, output: (Number(d.output) || 0) + c.output,
-        runs: (Number(d.runs) || 0) + (state === "running" ? 0 : 1), updatedAt: new Date(now).toISOString() }, { merge: true });
+      const before = Number(d.usd) || 0, after = round(before + c.usd);
+      budget = { usd: after, crossed: crossed(before, after) };
+      tx.set(month, Object.assign({ usd: after, input: (Number(d.input) || 0) + c.input, output: (Number(d.output) || 0) + c.output,
+        runs: (Number(d.runs) || 0) + (state === "running" ? 0 : 1), updatedAt: new Date(now).toISOString() },
+        budget.crossed ? { [budget.crossed + "At"]: new Date(now).toISOString() } : {}), { merge: true });
     });
   }
-  let out = { ok: true, state };
+  let out = Object.assign({ ok: true, state }, budget && budget.crossed ? { crossed: budget.crossed, monthUsd: budget.usd } : {});
+  if (state === "failed" && row.tier === "flash" && !row.escalatedTo) {
+    try {
+      const next = await dispatch(Object.assign({}, ctx, { now }), { prompt: row.prompt, title: row.title, tier: "pro", branch: row.branch, pr: row.pr, issue: row.issue, key: row.key, by: row.by, escalatedFrom: id });
+      patch.escalatedTo = next.id;
+      out.escalated = next.id;
+    } catch (error) { patch.escalateError = text(error.message, 300); }
+  }
   if (state === "done") {
     const branch = text(b.branch, 200);
     if (row.pr) {
@@ -213,16 +264,24 @@ async function report(ctx, body, token) {
   }
   await ref.set(patch, { merge: true });
   if (state !== "running") {
+    const then = patch.escalatedTo ? "; trying again on Pro" : state === "failed" || state === "nochange" ? "; hand it to a Cursor agent from the GitHub tab" : "";
     const said = state === "done" ? "opened " + (patch.prUrl ? "PR #" + patch.prNumber : "its PR") : state === "nochange" ? "found nothing to change" : "failed: " + (patch.error || "no reason given");
     await jarvisLog.log(null, { source: "github", level: state === "failed" ? "warn" : "info", ref: "worker:" + id, url: patch.prUrl || runUrl,
-      text: "Jarvis's worker " + said + " (" + row.title + ", $" + patch.usd.toFixed(2) + ")." });
+      text: "Jarvis's worker " + said + " (" + row.title + ", " + row.tier + ", $" + patch.usd.toFixed(2) + ")" + then + "." });
+  }
+  if (out.crossed) {
+    await jarvisLog.log(null, { source: "github", level: "warn", ref: "worker:budget", url: "https://github.com/" + REPO + "/actions/workflows/" + WORKFLOW,
+      text: budgetMessage(out.crossed, out.monthUsd).title + ": " + budgetMessage(out.crossed, out.monthUsd).body });
   }
   return out;
 }
 
 /* What the hourly pass may hand the worker on its own -> [{ target, task }]: code, test or config diagnoses from the last
-   two days at or over the confidence bar, and URL review bugs the Cursor fix agent left waiting (needs-agent). */
-async function candidates(db, { now, confidence, github }) {
+   two days at or over the confidence bar, and URL review bugs the Cursor fix agent left waiting (needs-agent).
+   failing: the workflows whose newest run on main in the last day failed; a diagnosis on main of any other workflow is
+   already fixed or not run lately, so it is left out (#2958). Without the list, every diagnosis counts. */
+async function candidates(db, { now, confidence, github, failing }) {
+  const stillFailing = Array.isArray(failing) ? new Set(failing) : null;
   const out = [];
   const since = new Date(now - DIAG_DAYS * 864e5).toISOString();
   const diags = await db.collection("jarvis_github_diag").orderBy("at", "desc").limit(30).get().catch(() => ({ docs: [] }));
@@ -232,8 +291,9 @@ async function candidates(db, { now, confidence, github }) {
     // A chat may still be pushing to another PR's branch; on its own the worker only touches main and its own branches.
     const own = /^jarvis\//.test(String(d.branch || ""));
     if (d.pr ? !own : d.branch && d.branch !== "main") continue;
+    if (!d.pr && stillFailing && !stillFailing.has(d.workflow)) continue;
     out.push({ target: "run " + d.run, why: text(d.workflow, 80) + " failed: " + text(d.cause, 160),
-      task: { prompt: d.prompt, title: "Fix " + text(d.workflow, 60) + " (run " + d.run + ")", branch: "main", pr: d.pr || undefined, key: "gh:diag:" + d.run, by: "jarvis (diagnosis)" } });
+      task: { prompt: d.prompt, title: "Fix " + text(d.workflow, 60) + " (run " + d.run + ")", branch: "main", pr: d.pr || undefined, category: d.category, key: "gh:diag:" + d.run, by: "jarvis (diagnosis)" } });
   }
   for (const bug of ((github || {}).needsAgent || []).slice(0, 10)) {
     out.push({ target: "#" + bug.number, why: "URL review bug left for the fix agent: " + text(bug.title, 160),
@@ -243,5 +303,6 @@ async function candidates(db, { now, confidence, github }) {
   return out;
 }
 
-module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, priceOf, cost, slug, monthOf, spend, dispatch, verifyOidc, report, candidates,
+module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, priceOf, cost, slug, monthOf, spend, route, crossed, budgetMessage, view,
+  dispatch, verifyOidc, report, candidates,
   _reset: () => { jwks = { at: 0, keys: [] }; } };
