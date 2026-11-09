@@ -180,4 +180,4 @@ async function releasePush(fetchFn, db, messaging, { token, now }) {
   return Object.assign({ pushed: true, version: rel.name }, out);
 }
 
-module.exports = { KINDS, PHONE_ONLY, idOf, cleanKinds, register, unregister, list, targets, webTargets, anyTargets, alertMessage, briefingMessage, send, newestRelease, releasePush };
+module.exports = { KINDS, PHONE_ONLY, DEAD, idOf, cleanKinds, register, unregister, list, targets, webTargets, anyTargets, alertMessage, briefingMessage, send, newestRelease, releasePush };
