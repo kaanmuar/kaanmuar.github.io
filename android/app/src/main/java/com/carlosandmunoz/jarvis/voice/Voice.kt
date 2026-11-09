@@ -5,14 +5,18 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.PowerManager
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Base64
 import com.carlosandmunoz.jarvis.JarvisApp
+import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.data.str
 import java.io.File
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,17 +65,24 @@ object Voice {
 
 data class Heard(val listening: Boolean = false, val level: Float = 0f, val partial: String = "", val error: String? = null)
 
-/** One question at a time through Android's SpeechRecognizer; must be used on the main thread. */
-class Listener(private val context: Context, private val onText: (String) -> Unit) {
+/**
+ * One question at a time through Android's SpeechRecognizer; must be used on the main thread. It holds [Keep] while
+ * listening, so a question started on screen is still heard after the phone locks. [onMiss] gets the recognizer's error.
+ */
+class Listener(context: Context, private val onMiss: (Int) -> Unit = {}, private val onText: (String) -> Unit) {
+    private val context = context.applicationContext
     private val _state = MutableStateFlow(Heard())
     val state: StateFlow<Heard> = _state
     private var rec: SpeechRecognizer? = null
+    private var hold: Long? = null
 
     fun start() {
         stop()
-        if (!Voice.available(context)) { _state.value = Heard(error = "Speech recognition is not available on this phone."); return }
+        if (!Voice.available(context)) { _state.value = Heard(error = "Speech recognition is not available on this phone."); onMiss(SpeechRecognizer.ERROR_CLIENT); return }
         val r = SpeechRecognizer.createSpeechRecognizer(context)
         rec = r
+        hold = Keep.hold(context, "Listening", mic = true)
+        active += this
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { _state.value = Heard(listening = true) }
             override fun onBeginningOfSpeech() {}
@@ -86,12 +97,13 @@ class Listener(private val context: Context, private val onText: (String) -> Uni
                     else -> "Listening stopped ($error)."
                 })
                 release()
+                onMiss(error)
             }
             override fun onResults(results: Bundle?) {
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim().orEmpty()
                 _state.value = Heard()
                 release()
-                if (text.isNotEmpty()) onText(text) else _state.value = Heard(error = "I didn't catch that.")
+                if (text.isNotEmpty()) onText(text) else { _state.value = Heard(error = "I didn't catch that."); onMiss(SpeechRecognizer.ERROR_NO_MATCH) }
             }
             override fun onPartialResults(partial: Bundle?) {
                 partial?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { _state.value = _state.value.copy(partial = it) }
@@ -113,40 +125,62 @@ class Listener(private val context: Context, private val onText: (String) -> Uni
 
     fun clearError() { _state.value = _state.value.copy(error = null) }
 
-    private fun release() { rec?.destroy(); rec = null }
+    private fun release() { rec?.destroy(); rec = null; hold?.let(Keep::release); hold = null; active -= this }
+
+    companion object {
+        private val active = mutableSetOf<Listener>()
+        fun stopAll() = active.toList().forEach { it.stop() }
+    }
 }
 
-/** Plays answers in the jarvis function's Cloud TTS voice; one at a time. */
+/** Plays answers in the jarvis function's Cloud TTS voice; one at a time for the whole app, also with the screen off. */
 class Speaker(private val app: JarvisApp) {
     private val _speaking = MutableStateFlow<String?>(null)
     /** The text being spoken, so a list can show which answer is playing. */
     val speaking: StateFlow<String?> = _speaking
     private var player: MediaPlayer? = null
+    private var done: CompletableDeferred<Unit>? = null
 
+    /** Returns when the answer has been played, or stopped. */
     suspend fun say(text: String, lang: String = Voice.lang(app), voice: String? = Voice.voice(app, lang)) {
         stop()
+        val finished = CompletableDeferred<Unit>()
+        done = finished
+        Keep.during(app, "Speaking the answer") {
+            try { play(text, lang, voice); finished.await() }
+            catch (e: CancellationException) { if (done === finished) stop(); throw e }
+        }
+    }
+
+    private suspend fun play(text: String, lang: String, voice: String?) {
+        val finished = done
         _speaking.value = text
         val extra = mapOf("text" to JsonPrimitive(text), "lang" to JsonPrimitive(lang), "rate" to JsonPrimitive(Voice.rate(app))) +
             (voice?.let { mapOf("voice" to JsonPrimitive(it)) } ?: emptyMap())
         val out = runCatching { app.api.call("speak", 1, extra) }
-            .getOrElse { _speaking.value = null; throw it }
-        val audio = out.str("audio") ?: run { _speaking.value = null; return }
+            .getOrElse { if (done === finished) stop(); throw it }
+        val audio = out.str("audio") ?: run { if (done === finished) stop(); return }
         val file = withContext(Dispatchers.IO) {
             File(app.cacheDir, "jarvis-voice.mp3").apply { writeBytes(Base64.decode(audio, Base64.DEFAULT)) }
         }
-        if (_speaking.value != text) return
-        player = MediaPlayer().apply {
-            setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            setDataSource(file.absolutePath)
-            setOnCompletionListener { stop() }
-            prepare()
-            start()
-        }
+        if (done !== finished) return
+        player = runCatching {
+            MediaPlayer().apply {
+                setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+                setWakeMode(app, PowerManager.PARTIAL_WAKE_LOCK)
+                setDataSource(file.absolutePath)
+                setOnCompletionListener { stop() }
+                prepare()
+                start()
+            }
+        }.getOrElse { stop(); throw it }
     }
 
     fun stop() {
         player?.runCatching { stop(); release() }
         player = null
         _speaking.value = null
+        done?.complete(Unit)
+        done = null
     }
 }

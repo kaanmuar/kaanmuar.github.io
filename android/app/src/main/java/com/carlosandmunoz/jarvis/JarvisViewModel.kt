@@ -3,6 +3,7 @@ package com.carlosandmunoz.jarvis
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.num
@@ -15,11 +16,11 @@ import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.voice.Heard
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.update.Updater
-import com.carlosandmunoz.jarvis.voice.Speaker
 import com.carlosandmunoz.jarvis.voice.Voice
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
@@ -51,6 +52,7 @@ data class UiState(
     val ongoing: Boolean = true,
     val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.DEFAULT,
     val heard: Heard = Heard(),
+    val handsFree: Boolean = false,
     val speaking: String? = null,
     val speak: Boolean = true,
     val voiceLang: String? = null,
@@ -73,7 +75,8 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
-    private val speaker = Speaker(jarvis)
+    private val speaker = jarvis.speaker
+    private val handsFree = jarvis.handsFree
 
     /** Debug builds only: files/jarvis/fixture.json stands in for the server, for emulator screenshots without the owner login. */
     private val fixture = File(app.filesDir, "jarvis/fixture.json").takeIf { BuildConfig.DEBUG && it.exists() }
@@ -82,7 +85,9 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         if (fixture != null) _state.update { it.copy(signedIn = true, email = "fixture", snapshot = JSON.parseToJsonElement(fixture.readText()) as JsonObject, savedAt = fixture.lastModified()) }
         else if (auth.signedIn) { showSaved(); refresh(); syncPush() }
         viewModelScope.launch { Home.redraw(jarvis) }
-        viewModelScope.launch { listener.state.collect { h -> _state.update { it.copy(heard = h) } } }
+        viewModelScope.launch { combine(listener.state, handsFree.heard, handsFree.on) { mine, hf, on -> if (on) hf else mine }.collect { h -> _state.update { it.copy(heard = h) } } }
+        viewModelScope.launch { handsFree.on.collect { on -> _state.update { it.copy(handsFree = on) } } }
+        viewModelScope.launch { handsFree.turns.collect { c -> _state.update { it.copy(chat = answered(it.chat, c)) } } }
         viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
     }
 
@@ -184,10 +189,10 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
 
     fun brief() {
         _state.update { it.copy(briefBusy = true) }
-        viewModelScope.launch {
+        keep("Writing today's brief") {
             runCatching { api.call("brief", _state.value.days) }
-                .onSuccess { out -> _state.update { it.copy(brief = out.str("text"), briefBusy = false) } }
-                .onFailure { e -> fail(e) { it.copy(briefBusy = false, toast = e.message) } }
+                .onSuccess { out -> _state.update { it.copy(brief = out.str("text"), briefBusy = false) }; out.str("text")?.let { Keep.tell(jarvis, "Today's brief", it) } }
+                .onFailure { e -> fail(e) { it.copy(briefBusy = false, toast = e.message) }; told() }
         }
     }
 
@@ -196,27 +201,38 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val q = question.trim()
         if (q.isEmpty()) return
         _state.update { it.copy(chat = it.chat + Chat(q, null, spoken = spoken)) }
-        viewModelScope.launch {
+        keep("Answering \"$q\"") {
             val extra = mapOf("question" to JsonPrimitive(q), "lang" to JsonPrimitive(Voice.lang(jarvis)), "spoken" to JsonPrimitive(spoken))
             val answer = runCatching { api.call("ask", _state.value.days, extra).str("text") ?: "No answer." }
-            _state.update { s ->
-                val i = s.chat.indexOfLast { it.question == q && it.answer == null }
-                if (i < 0) s else s.copy(chat = s.chat.toMutableList().also { list ->
-                    list[i] = answer.fold({ Chat(q, it, spoken = spoken) }, { Chat(q, it.message ?: "Jarvis could not answer.", error = true, spoken = spoken) })
-                })
-            }
-            answer.onSuccess { if (spoken && _state.value.speak) speak(it) }
+            val chat = answer.fold({ Chat(q, it, spoken = spoken) }, { Chat(q, it.message ?: "Jarvis could not answer.", error = true, spoken = spoken) })
+            _state.update { s -> s.copy(chat = answered(s.chat, chat)) }
+            Keep.tell(jarvis, q, chat.answer.orEmpty(), "ask")
+            answer.onSuccess { if (spoken && _state.value.speak) runCatching { speaker.say(it) } }
         }
     }
 
-    fun listen() { speaker.stop(); listener.start() }
-    fun stopListening() = listener.stop()
+    /** Fills in the answer of the question still waiting, or adds the turn. */
+    private fun answered(chat: List<Chat>, c: Chat): List<Chat> {
+        val i = chat.indexOfLast { it.question == c.question && it.answer == null }
+        return if (c.answer != null && i >= 0) chat.toMutableList().also { it[i] = c } else chat + c
+    }
+
+    fun listen() { handsFree.stop(); speaker.stop(); listener.start() }
+    fun stopListening() { listener.stop(); handsFree.stop() }
+
+    /** Hands-free listening (#2531); starting it needs the microphone permission and this screen showing. */
+    fun setHandsFree(on: Boolean) {
+        if (!on) { handsFree.stop(); return }
+        listener.stop()
+        speaker.stop()
+        handsFree.start()
+    }
     fun heardShown() = listener.clearError()
 
     /** Plays an answer, or stops it if it is the one playing. */
     fun speak(text: String) {
         if (_state.value.speaking == text) { speaker.stop(); return }
-        viewModelScope.launch { runCatching { speaker.say(text) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
+        keep("Speaking the answer") { runCatching { speaker.say(text) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
     }
 
     fun setSpeak(on: Boolean) {
@@ -247,28 +263,34 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
 
     fun preview(lang: String = Voice.lang(jarvis)) {
         val text = Voice.SAMPLE[lang] ?: Voice.SAMPLE.getValue("en")
-        viewModelScope.launch { runCatching { speaker.say(text, lang) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
+        keep("Playing the voice sample") { runCatching { speaker.say(text, lang) }.onFailure { e -> fail(e) { it.copy(toast = e.message ?: "Could not speak.") } } }
     }
 
-    override fun onCleared() { listener.stop(); speaker.stop() }
+    /** Work the owner started runs in the app's scope under Keep, so leaving Jarvis or locking the phone does not cut it off (#2531). */
+    private fun keep(label: String, block: suspend () -> Unit) = jarvis.scope.launch { Keep.during(jarvis, label) { block() } }
+
+    /** The toast as a notification, when it lands while Jarvis is out of sight. */
+    private fun told() { _state.value.toast?.let { Keep.tell(jarvis, "Jarvis", it) } }
 
     /** An action op (run-job, unlist, email-briefing, daily-now, send-report); the reply becomes a toast. */
     fun act(key: String, op: String, extra: Map<String, JsonElement> = emptyMap(), done: (JsonObject) -> String) {
         _state.update { it.copy(running = it.running + key) }
-        viewModelScope.launch {
+        keep("Running your action") {
             runCatching { api.call(op, _state.value.days, extra) }
                 .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
         }
     }
 
     /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the outreach sync. */
     fun market(key: String, op: String, extra: Map<String, JsonElement>, done: (JsonObject) -> String) {
         _state.update { it.copy(running = it.running + key) }
-        viewModelScope.launch {
+        keep("Running your action") {
             runCatching { api.call(op, _state.value.days, extra) }
                 .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) }; refresh() }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
         }
     }
 
@@ -348,11 +370,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun decideSocial(id: String, decision: String) {
         val key = "social:$id"
         _state.update { it.copy(running = it.running + key) }
-        viewModelScope.launch {
+        keep("Saving your decision") {
             runCatching { if (fixture == null) api.call("social-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
                 .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, proposals = s.proposals?.filter { it.str("id") != id },
                     toast = if (decision == "approved") "Approved. The next daily hub build publishes it." else "Dismissed.") } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
         }
     }
 
@@ -365,7 +388,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun decideNotice(domain: String, send: Boolean, emails: List<String>) {
         val key = "notice:$domain"
         _state.update { it.copy(running = it.running + key) }
-        viewModelScope.launch {
+        keep(if (send) "Sending to $domain" else "Dropping $domain") {
             runCatching {
                 val picked = JsonArray(emails.map { JsonPrimitive(it) })
                 if (fixture != null) JsonObject(mapOf("emails" to picked))
@@ -382,6 +405,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, noticeErrors = it.noticeErrors + (domain to (e.message ?: "Failed.")), toast = e.message ?: "Failed.") } }
+            told()
         }
     }
 
