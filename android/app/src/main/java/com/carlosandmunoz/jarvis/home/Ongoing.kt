@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.R
+import com.carlosandmunoz.jarvis.data.Processes
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
@@ -52,6 +53,7 @@ object Ongoing {
         READINESS("readiness", "Readiness and uptime", "Readiness and pages up as rings in the card; readiness is also the status-bar icon"),
         ALERTS("alerts", "Alerts and warnings", "How many, next to the app name"),
         APPROVALS("approvals", "Approvals waiting", "Notices waiting for Send or Drop"),
+        PROCESSES("processes", "Processes", "What runs now and what needs you, as \"2 running · 1 needs you\""),
         TOP("top", "Top briefing line", "The most urgent line from the briefing"),
         MONEY("money", "Today's money", "Revenue and sales today"),
         BAR("bar", "Bars", "Connections online, the 90-day targets and goals as bars"),
@@ -93,7 +95,7 @@ object Ongoing {
             (if (ready == null) "Readiness —" else "Readiness $ready%").takeIf { Part.READINESS in show },
             counts.ifEmpty { null },
         ).joinToString(" · ").ifEmpty { "Jarvis" }
-        val lines = listOfNotNull(w.top?.takeIf { Part.TOP in show }, money.takeIf { Part.MONEY in show })
+        val lines = listOfNotNull(Processes.summary(snap.obj("processes"))?.takeIf { Part.PROCESSES in show }, w.top?.takeIf { Part.TOP in show }, money.takeIf { Part.MONEY in show })
         val chip = when {
             Part.CHIP !in show -> null
             alerts && w.alerts > 0 -> Home.plural(w.alerts, "alert")

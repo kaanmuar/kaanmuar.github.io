@@ -102,10 +102,16 @@ function compose(got, src, now) {
   };
 }
 
-// The snapshot, its briefing marks, and the build time of the counts it shows (cachedAt).
+// The snapshot, its briefing marks, and the build time of the counts it shows (cachedAt). The processes (#2548) are
+// kept up to date by their writers in their own document, read as they are.
 async function load(db, days, src, now) {
-  const { got, meta } = await sections(db, days, src, now);
-  return { snap: Object.assign(compose(got, src, now), { cachedAt: meta.products.at }), marks: got.marks, meta };
+  const [{ got, meta }, proc] = await Promise.all([sections(db, days, src, now), src.processes ? src.processes().catch(() => null) : null]);
+  const snap = Object.assign(compose(got, src, now), { cachedAt: meta.products.at });
+  if (proc) {
+    snap.processes = proc.value;
+    meta.processes = { at: proc.at, v: proc.v };
+  }
+  return { snap, marks: got.marks, meta };
 }
 
 // Drops the named sections (all by default) in every range, so the next read builds them again. A section is stamped

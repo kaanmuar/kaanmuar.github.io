@@ -42,6 +42,8 @@ const BY_FUNCTION = {
   jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
   // jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
   jarvisGithub: list(MAIL, GITHUB, GEMINI),
+  // jarvisGithubHook (#2548): the secret GitHub signs the repo's workflow_run webhook with.
+  jarvisGithubHook: list(["GITHUB_WEBHOOK_SECRET"]),
   // jarvisLogPoll (#2810): the app token for the runs, issues and board moves it puts in Jarvis > Console.
   jarvisLogPoll: list(GITHUB),
   // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.

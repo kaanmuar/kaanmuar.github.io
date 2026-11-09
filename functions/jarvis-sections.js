@@ -19,9 +19,9 @@ const SECTIONS = {
   approvals: { fields: ["proposals", "countdowns"], from: ["proposals", "countdowns", "products", "external", "goals", "settings"] },
   goals: { fields: ["goals"], from: ["goals"] },
   reports: { fields: ["reports"], from: ["reports"] },
-  // Small and fast-changing: #2548 adds agents, review desk runs, Cube runs, deploys and the daily system review.
-  processes: { external: ["jobs", "github", "github-work"], from: ["external"] },
-  systems: { external: ["health", "uptime", "speed", "platform", "safety", "cloudflare"], from: ["external"] },
+  // Small and fast-changing (#2548): only jarvis_cache/processes, so a writer knows the version it pushes.
+  processes: { fields: ["processes"], from: ["processes"] },
+  systems: { external: ["health", "uptime", "speed", "platform", "safety", "cloudflare", "jobs", "github", "github-work"], from: ["external"] },
   pagespeed: { external: ["pagespeed", "local", "search"], from: ["external"] },
   marketing: { external: ["marketing", "marketing-sync", "social", "outreach", "targets", "engagement", "ga4"], from: ["external"] },
   people: { external: ["people", "calls"], from: ["external"] },
