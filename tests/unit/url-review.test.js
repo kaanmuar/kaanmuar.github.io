@@ -408,7 +408,8 @@ function fakeNetwork(routes) {
       const req = new EventEmitter();
       req.destroy = () => {};
       req.end = () => setImmediate(() => {
-        const route = routes[options.protocol + "//" + options.hostname + options.path] || { status: 404 };
+        const found = routes[options.protocol + "//" + options.hostname + options.path];
+        const route = (typeof found === "function" ? found(options) : found) || { status: 404 };
         // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
@@ -2228,6 +2229,44 @@ test("a start page six redirects away is read as Chrome reads it, and a longer c
   assert.equal(error.message, "The page redirected too many times.");
   assert.equal(failures.causeOf(error.message).id, "redirect-loop");
   assert.equal((await core.probeRead(past)).error, "The page redirected too many times.");
+});
+
+test("a redirect that sets a cookie and points at itself is read with that cookie, as Chrome does (#2605)", async (t) => {
+  // irfarabi.com answers 307 to the same address with ArvanCloud's __arcscoc and __arcsco. The next request that
+  // sends those cookies is the page. A client that drops Set-Cookie follows the same address until the hop limit.
+  const page = "<!doctype html><html dir=\"rtl\" lang=\"fa\"><head><title>گروه مالی فارابی، کارگزاری بورس، سرمایه گذاری و مدیریت دارایی</title></head><body>ok</body></html>";
+  const arc = [
+    "__arcscoc=arcookie-1794036973-6970a297fe6c718042a27874b990931d; Path=/; Max-Age=120; Domain=irfarabi.example.com",
+    "__arcsco=cffd63cf072582ac3b1d86d3e7148d58; Path=/; Max-Age=120; Domain=irfarabi.example.com"
+  ];
+  let otherCookie = "unset";
+  t.after(fakeNetwork({
+    "https://irfarabi.example.com/": (options) => {
+      const cookie = String((options.headers && options.headers.cookie) || "");
+      if (cookie.includes("__arcscoc=arcookie-1794036973-6970a297fe6c718042a27874b990931d") && cookie.includes("__arcsco=cffd63cf072582ac3b1d86d3e7148d58")) {
+        return { status: 200, headers: { "content-type": "text/html" }, body: page };
+      }
+      return { status: 307, headers: { location: "https://irfarabi.example.com/", "set-cookie": arc } };
+    },
+    "https://irfarabi.example.com/away": { status: 307, headers: { location: "https://other.example.com/", "set-cookie": arc } },
+    "https://other.example.com/": (options) => {
+      otherCookie = String((options.headers && options.headers.cookie) || "");
+      return { status: 200, headers: { "content-type": "text/html" }, body: "<html><body>other</body></html>" };
+    },
+    "https://spin.example.com/": { status: 307, headers: { location: "https://spin.example.com/" } }
+  }));
+  const read = await core.fetchPublic("https://irfarabi.example.com/");
+  assert.deepEqual([read.status, read.hops, read.url], [200, 1, "https://irfarabi.example.com/"]);
+  assert.match(read.body, /گروه مالی فارابی/);
+  const probe = await core.probeRead("https://irfarabi.example.com/");
+  assert.deepEqual([probe.status, probe.hops.length, probe.html, probe.error], [200, 2, true, undefined]);
+  assert.equal(probe.hops[0].status, 307);
+  const away = await core.fetchPublic("https://irfarabi.example.com/away");
+  assert.equal(away.url, "https://other.example.com/");
+  assert.equal(otherCookie, "");
+  const loop = await core.fetchPublic("https://spin.example.com/").then(() => null, (caught) => caught);
+  assert.equal(loop.message, "The page redirected too many times.");
+  assert.equal(failures.causeOf(loop.message).id, "redirect-loop");
 });
 
 test("a start page whose host cuts Chrome off for the review tag is loaded again as plain Chrome; a slow one is not (#1180)", () => {
