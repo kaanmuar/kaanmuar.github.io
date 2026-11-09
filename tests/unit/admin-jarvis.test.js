@@ -516,7 +516,7 @@ test("jarvisExternal has a loader for every op the snapshot, briefing and watch 
   const start = index.indexOf("async function jarvisExternal");
   const loaders = index.slice(start, index.indexOf("const out = {}", start));
   const known = new Set([...loaders.matchAll(/^\s+"?([\w-]+)"?: \(\) =>/gm)].map((m) => m[1]).concat(Object.keys(sources.SOURCES)));
-  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_OPS = \[([^\]]+)\]/g)])
+  const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)].concat([...index.matchAll(/const JARVIS_(?:SNAPSHOT_)?OPS = \[([^\]]+)\]/g)])
     .flatMap((m) => m[1].match(/"[\w-]+"/g).map((s) => s.slice(1, -1)));
   assert.ok(asked.includes("cloudflare"));
   assert.deepEqual(asked.filter((op) => !known.has(op)), []);
@@ -1579,7 +1579,8 @@ test("the web Jarvis reads no Firestore: it loads from the snapshot op the app r
   assert.doesNotMatch(src, /call\('rows'/);
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.doesNotMatch(index, /op === "rows"/);
-  const snapshot = index.slice(index.indexOf("async function jarvisSnapshot("), index.indexOf("async function jarvisBriefOpen("));
+  const sections = fs.readFileSync(path.join(__dirname, "../../functions/jarvis-snapshot.js"), "utf8");
+  const snapshot = sections.slice(sections.indexOf("function compose("), sections.indexOf("async function load("));
   ["feed", "socialHeat", "reports", "outreachVisits"].forEach((key) => assert.match(snapshot, new RegExp("\\b" + key + "\\b"), key));
 });
 

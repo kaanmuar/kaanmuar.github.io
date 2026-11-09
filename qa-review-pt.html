@@ -1063,9 +1063,14 @@
         .stage-link:hover { color: var(--text); }
         .stage-start { margin: 22px 0 0; max-width: 580px; }
         .stage-start-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text); }
-        .stage-start-row { display: flex; gap: 8px; }
-        .stage-start .url-row { flex: 1; min-width: 0; background: rgba(255, 255, 255, .07); border-color: rgba(159, 214, 220, .4); }
+        .stage-start-row { display: flex; align-items: flex-start; gap: 8px; }
+        .stage-start-field { flex: 1; min-width: 0; }
+        .stage-start .url-suggest { background: #0d1a20; border-color: rgba(159, 214, 220, .35); }
+        .stage-start .field-error:empty { display: none; }
+        .stage-start .url-row { min-width: 0; background: rgba(255, 255, 255, .07); border-color: rgba(159, 214, 220, .4); }
         .stage-start .url-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(126, 246, 251, .22); }
+        .stage-start .url-row.invalid { border-color: var(--red); }
+        .stage-start .url-row input:focus { outline: none; }
         .stage-start .url-row input { color: #f4fafb; font-size: 16px; padding: 12px 12px 12px 2px; }
         .stage-start .url-row input::placeholder { color: rgba(233, 243, 244, .45); }
         .stage-start .btn-primary { flex: none; padding: 12px 20px; font-size: 14px; }
@@ -1086,7 +1091,7 @@
             .dash-overlay.open #dash-close { position: fixed; top: 14px; right: 14px; z-index: 90; min-height: 44px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(8, 14, 18, .35); }
         }
         @media (max-width: 520px) {
-            .stage-start-row { flex-direction: column; }
+            .stage-start-row { flex-direction: column; align-items: stretch; }
             .stage-start .btn-primary { width: 100%; }
         }
         #gate .gate-tagline { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.45; }
@@ -1381,9 +1386,10 @@
             <form class="stage-start" id="stage-start" novalidate>
                 <label class="stage-start-label" for="stage-url" lang="pt" translate="no">Comece com o endereço de uma página pública</label>
                 <div class="stage-start-row">
-                    <div class="url-row notranslate"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div>
+                    <div class="stage-start-field"><div class="url-row notranslate" id="stage-url-field"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div></div>
                     <button class="btn btn-primary" type="submit" lang="pt" translate="no">Revisar esta página</button>
                 </div>
+                <p class="field-error" id="stage-url-error"></p>
                 <p class="stage-start-note" lang="pt" translate="no">Sua primeira revisão está incluída: até 20 páginas, a dois links de profundidade. Depois você entra neste dispositivo e escolhe um motivo; o relatório abre aqui quando a revisão termina.</p>
             </form>
             <ul class="facts">
@@ -1904,12 +1910,12 @@
 <script src="js/qa-review-ask.js?v=20261109a" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261106a" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261128g" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261128p" defer></script>
 <script src="js/qa-review-findings-copy.pt.js?v=20261110b" defer></script>
-<script src="js/qa-review.js?v=20261128g" defer></script>
+<script src="js/qa-review.js?v=20261128p" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
-<script src="js/url-suggest.js?v=20261109a" defer></script>
+<script src="js/url-suggest.js?v=20261109b" defer></script>
 <script src="js/qa-review-live.js?v=20261110c" defer></script>
 </body>
 </html>

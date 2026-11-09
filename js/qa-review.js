@@ -429,16 +429,32 @@
   }
 
   // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
+  // It takes the same address as the request's field, and the two stay in step.
   const stageStart = document.getElementById("stage-start");
   const stageUrl = document.getElementById("stage-url");
+  const stageError = document.getElementById("stage-url-error");
+  function stageInvalid(message) {
+    stageError.textContent = message;
+    document.getElementById("stage-url-field").classList.toggle("invalid", !!message);
+  }
   if (stageUrl && urlInput.value) stageUrl.value = urlInput.value;
+  if (stageUrl) {
+    stageUrl.addEventListener("input", () => {
+      const next = stageUrl.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== stageUrl.value) stageUrl.value = next;
+      stageInvalid("");
+    });
+    urlInput.addEventListener("input", () => { if (stageUrl.value !== urlInput.value) stageUrl.value = urlInput.value; });
+  }
   if (stageStart) stageStart.addEventListener("submit", (event) => {
     event.preventDefault();
     const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
-    if (!value) {
+    if (!value || /\s/.test(value)) {
+      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.t("urlNeeded") : "Enter a public page after https://.");
       stageUrl.focus();
       return;
     }
+    stageInvalid("");
     urlInput.value = value;
     urlInput.dispatchEvent(new Event("input", { bubbles: true }));
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
