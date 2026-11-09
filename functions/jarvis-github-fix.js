@@ -47,6 +47,7 @@ const RATE_POINTS = 48;
 const QUEUE_ACTIONS = ["remove-worktree", "prune-branches"];
 const CURSOR_AGENTS = "https://api.cursor.com/v1/agents";
 const NO_CURSOR_KEY = "Add CURSOR_API_KEY to the functions secrets (Cursor Dashboard > API Keys).";
+const NO_CURSOR_CREDIT = "Cursor's team prepaid balance is used up, so no agent can start. Buy credits in the Cursor Dashboard > Billing, then try again.";
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -529,6 +530,10 @@ async function launchAgent(ctx, args) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const e = data.error && typeof data.error === "object" ? data.error : { message: data.message || data.error, code: data.code };
+    if (e.code === "usage_limit_exceeded") {
+      await jarvisLog.log(null, { source: "github", level: "error", ref: "cursor:credit", text: "Cursor refused an agent: the team's prepaid balance is used up." }).catch(() => null);
+      throw new Error(NO_CURSOR_CREDIT);
+    }
     throw new Error("Cursor refused the agent (" + res.status + "): " + text(e.message || e.code || "no detail", 200));
   }
   const agent = data.agent || data;
@@ -690,7 +695,7 @@ function actArgs(action, body) {
 }
 
 module.exports = {
-  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
+  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
   quarantine, securityTicket, dismissAlert, dismissLow, runStatus, clearCache, draftFlaky,
   diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf, areaOfPath,
   _reset: () => { statusOptions = null; }

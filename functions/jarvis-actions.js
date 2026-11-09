@@ -398,7 +398,8 @@ async function autoRun({ db, now, settings, ops }) {
         await onceOrLater("rerun-ci", run.name + " #" + run.id, "Main has moved past the commit that failed, so it starts again on main's newest commit.", risky("rerun-ci", run.name), { run: run.id, name: run.name, workflow: run.path }, () => ops.dispatch(run.path));
         continue;
       }
-      await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name), { run: run.id, name: run.name }, () => ops.rerunRun(run.id));
+      await onceOrLater("rerun-ci", run.name + " #" + run.id, "Re-running the failed jobs on " + run.branch + ".", risky("rerun-ci", run.name),
+        Object.assign({ run: run.id, name: run.name }, run.branch === "main" && run.sha && run.path && ["push", "workflow_dispatch"].includes(run.event) ? { sha: run.sha, path: run.path } : {}), () => ops.rerunRun(run.id));
     }
   }
   if (ops.reviewFix && ops.runJob) {

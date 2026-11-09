@@ -251,6 +251,16 @@ test("a push run on main that main has moved past starts again on main, and a sc
   assert.match(res.detail, /^Started Pages on main's newest commit/);
 });
 
+test("a Pages run on main's head goes on the countdown with its commit, so the countdown can see main move (#2893)", async () => {
+  const { ops } = autoOps({
+    failedCi: async () => [{ id: 21, name: "Pages", branch: "main", attempt: 1, sha: "head", event: "push", path: ".github/workflows/pages.yml" }],
+    mainSha: async () => "head",
+    dispatch: async () => {}
+  });
+  const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(out.queued.find((r) => r.target === "Pages #21").payload, { run: 21, name: "Pages", sha: "head", path: ".github/workflows/pages.yml" });
+});
+
 test("every branch the PageSpeed routine creates is one Jarvis re-runs CI on", () => {
   for (const kind of ["safe", "ai"]) {
     const branch = "pagespeed/" + kind + "-2026-11-02";
