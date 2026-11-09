@@ -531,6 +531,58 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report-top')).toBeInViewport();
   });
 
+  test('the heading still lands below Close when the report above it grows during the scroll on a busy page (#2938)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.evaluate(() => {
+      const dash = document.getElementById('dash-overlay');
+      dash.addEventListener('scroll', () => {
+        const grow = document.createElement('div');
+        grow.style.height = '1200px';
+        document.getElementById('site-graph').prepend(grow);
+        setTimeout(() => { const until = performance.now() + 300; while (performance.now() < until); });
+      }, { once: true, passive: true });
+    });
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await expect.poll(() => page.evaluate(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
+    })).toBe(true);
+  });
+
+  for (const [lang, close] of Object.entries({ en: 'Close', es: 'Cerrar', pt: 'Fechar', de: 'Schließen', fr: 'Fermer', it: 'Chiudi' })) {
+    test(`on a ${lang} phone the pinned Close clears the report title and its eyebrow at 320, 360 and 390px (#2940)`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 844 });
+      await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      await expect(page.getByRole('button', { name: close, exact: true })).toHaveAttribute('id', 'dash-close');
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await expect.poll(() => page.evaluate(() => document.fonts.ready.then(() => {
+          const close = document.getElementById('dash-close').getBoundingClientRect();
+          return ['#dash-title', '.report-brand .eyebrow'].filter((sel) => {
+            const box = document.querySelector(sel).getBoundingClientRect();
+            return box.left < close.right && close.left < box.right && box.top < close.bottom && close.top < box.bottom;
+          });
+        })), `${lang} at ${width}px`).toEqual([]);
+      }
+    });
+  }
+
+  test('the browser pass screenshots keep their space before they load (#2938)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    const shots = await page.locator('#report .shots img').evaluateAll((imgs) => Promise.all(imgs.map(async (img) => {
+      const box = img.getBoundingClientRect();
+      const reserved = img.getAttribute('width') / img.getAttribute('height');
+      const shot = new Image();
+      shot.src = img.src;
+      await shot.decode();
+      return { set: reserved > 0, ratio: Math.abs(box.width / box.height - reserved) < 0.02 && Math.abs(shot.naturalWidth / shot.naturalHeight - reserved) < 0.02 };
+    })));
+    expect(shots.length).toBe(3);
+    expect(shots).toEqual(shots.map(() => ({ set: true, ratio: true })));
+  });
+
   test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openSample(page);
