@@ -3,7 +3,6 @@
 
 export const SITE = "https://carlosandmunoz.com";
 export const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-export const DEFAULT_CALL = "mailto:carlos@qalabreview.com?subject=" + encodeURIComponent("A call about my URL Review");
 
 // Short paths printed on clips, one-pagers, slides and profiles. The value is the utm_campaign Jarvis groups by.
 export const CHANNELS = {
@@ -42,6 +41,17 @@ function landing(lang, tags, extra) {
   return SITE + "/" + page(lang) + "?" + q.toString();
 }
 
+// The booking page (#1971) stands in for Microsoft Bookings (#1424); CALL_URL overrides it. book.js reads host
+// into the company field and sends utm_campaign as the booking's ref.
+function booking(lang, host) {
+  const q = new URLSearchParams({ utm_source: "qalabreview", utm_medium: "email", utm_campaign: "call" });
+  if (host) q.set("utm_content", host);
+  q.set("type", host ? "walkthrough" : "intro");
+  q.set("lang", lang);
+  if (host) q.set("host", host);
+  return SITE + "/book.html?" + q.toString();
+}
+
 /* Returns { status, location } or { status, body, type }. `findReport(bareHost)` resolves to a Live Report
    card ({ id }) or null. */
 export async function route(url, { acceptLanguage = "", findReport = async () => null, callUrl = "" } = {}) {
@@ -53,7 +63,9 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
   const [first = "", ...rest] = parts;
 
   if (first === "robots.txt") return { status: 200, type: "text/plain", body: "User-agent: *\nAllow: /\n" };
-  if (first === "call") return { status: 302, location: callUrl || DEFAULT_CALL };
+  if (first === "call" && rest.length <= 1 && (!rest.length || HOST.test(bare(rest[0])))) {
+    return { status: 302, location: callUrl || booking(lang, rest.length ? bare(rest[0]) : "") };
+  }
   if (!first) return { status: 302, location: landing(lang, { utm_campaign: "home", utm_medium: "web" }) };
   if (CHANNELS[first] && !rest.length) return { status: 302, location: landing(lang, { utm_campaign: CHANNELS[first], utm_medium: first }) };
 

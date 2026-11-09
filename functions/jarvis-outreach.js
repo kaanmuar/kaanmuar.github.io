@@ -217,7 +217,7 @@ const CAMPAIGNS = {
   outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email", home: "qalabreview.com home",
   youtube: "YouTube short link", tiktok: "TikTok short link", linkedin: "LinkedIn short link", instagram: "Instagram short link", facebook: "Facebook short link",
   x: "X short link", qr: "QR code", "one-pager": "One-pager", lecture: "Lecture slides", webinar: "Webinar", signature: "Email signature", "business-card": "Business card",
-  "unknown-path": "Unknown path"
+  call: "Booking link", "unknown-path": "Unknown path"
 };
 const SOCIAL_REPLY = "social-reply-";
 const netName = (k) => (E.NETWORKS[k] || {}).name || k;

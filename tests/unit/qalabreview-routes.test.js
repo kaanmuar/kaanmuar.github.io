@@ -44,13 +44,32 @@ test("channel paths tag the campaign so Jarvis can tell clips, QR codes and slid
 });
 
 test("home, /call, robots.txt and unknown paths", async () => {
-  const { route, DEFAULT_CALL } = await load();
+  const { route } = await load();
   assert.equal(params((await route(at("/"))).location).get("utm_campaign"), "home");
-  assert.equal((await route(at("/call"))).location, DEFAULT_CALL);
   assert.equal((await route(at("/call"), { callUrl: "https://outlook.office.com/book/x" })).location, "https://outlook.office.com/book/x");
   assert.equal((await route(at("/robots.txt"))).status, 200);
   assert.equal(params((await route(at("/nope/deeper"))).location).get("utm_campaign"), "unknown-path");
   assert.equal(params((await route(at("/%E0%A4%A"))).location).get("utm_campaign"), "unknown-path");
+});
+
+test("/call opens the booking page in the link's language, and /call/<host> the walkthrough for that site (#2904)", async () => {
+  const { route } = await load();
+  const intro = await route(at("/es/call"));
+  assert.equal(intro.status, 302);
+  assert.ok(intro.location.startsWith("https://carlosandmunoz.com/book.html?utm_source=qalabreview&utm_medium=email&utm_campaign=call"));
+  assert.equal(params(intro.location).get("type"), "intro");
+  assert.equal(params(intro.location).get("lang"), "es");
+  assert.equal(params(intro.location).get("host"), null);
+  assert.equal(params((await route(at("/call"), { acceptLanguage: "pt-BR,pt;q=0.9" })).location).get("lang"), "pt");
+
+  const site = params((await route(at("/fr/call/www.Acme.io"))).location);
+  assert.equal(site.get("type"), "walkthrough");
+  assert.equal(site.get("host"), "acme.io");
+  assert.equal(site.get("utm_content"), "acme.io");
+  assert.equal(site.get("lang"), "fr");
+
+  assert.equal(params((await route(at("/call/not-a-host"))).location).get("utm_campaign"), "unknown-path");
+  assert.equal(params((await route(at("/call/acme.io/more"))).location).get("utm_campaign"), "unknown-path");
 });
 
 test("browser language picks the page when the link has no language", async () => {
