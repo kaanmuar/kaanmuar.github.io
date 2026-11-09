@@ -44,7 +44,7 @@ fun CallsPanel(s: UiState, vm: JarvisViewModel) {
     val uri = LocalUriHandler.current
     val connected = calls.bool("connected") == true
     val rows = Calls.rows(calls)
-    Panel("Calls") {
+    Panel("Calls", id = "business-calls") {
         Needs(calls)
         if (calls != null && calls.isOk()) {
             KpiPairs(listOf(KpiData("Ahead", fmt(rows.size.toDouble(), 0)), KpiData("Booked in range", fmt(calls.num("bookedInRange"), 0))))

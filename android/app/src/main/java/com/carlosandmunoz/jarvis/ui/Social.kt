@@ -64,7 +64,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
         if (picked != null) context.startActivity(Intent(context, SharePostActivity::class.java).setAction(Intent.ACTION_SEND)
             .putExtra(Intent.EXTRA_STREAM, picked).setDataAndType(picked, context.contentResolver.getType(picked)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     }
-    Panel("Share a post") {
+    Panel("Share a post", id = "hub-share") {
         Muted("A photo or a video with sound and one caption. Gemini drafts each network's post; you check them, then LinkedIn, X and the Facebook Page (plus TikTok and YouTube for video) get it about 30 minutes later. Sharing from the gallery works too: Post with Jarvis.")
         ActionButton("Choose a photo or video", false) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
         s.shares.orEmpty().filter { it.str("status") != "draft" }.take(5).forEach { p ->
@@ -83,7 +83,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     val social = s.snapshot.obj("external").obj("social")
     val queue = social.objs("queue")
     val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
-    Panel("Queue by channel") {
+    Panel("Queue by channel", id = "hub-queue") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
         if (queue.isNotEmpty()) Muted("Numbers add up the posts sent in the range, as the morning run read them. On Telegram likes are reactions, on Reddit the post score. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live channel: the post of each Live Reports batch and the campaign posts (tips, series, skits, launch) in their own language; its members are read each morning. Reddit is r/QALabLiveReports: the app's daily batch post and the campaign posts, as links to their hub pages; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
@@ -91,7 +91,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     }
 
     var confirm by remember { mutableStateOf(false) }
-    Panel("Posting") {
+    Panel("Posting", id = "hub-runs") {
         val runs = s.runs.orEmpty()
         if (runs.isEmpty()) Muted(if ("social" in s.running) "Reading the workflow runs…" else "No runs to show.")
         runs.forEach { r ->
@@ -123,7 +123,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     StudioPanel(s, vm)
 
     val proposals = s.proposals.orEmpty()
-    Panel("Post proposals" + if (proposals.isNotEmpty()) " (${proposals.size})" else "") {
+    Panel("Post proposals" + if (proposals.isNotEmpty()) " (${proposals.size})" else "", id = "hub-proposals") {
         if (s.proposals == null) Muted("Reading the field sweep proposals…")
         else if (proposals.isEmpty()) Muted("No proposals are waiting.")
         else Muted("Approve adds it to the hub as a pick; the next daily build publishes it.")

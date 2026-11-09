@@ -42,7 +42,8 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Section layout per tab (#2809): jarvis_settings layout[tab] = { order, hidden } of panel ids, the same entry the web edits.
- * The web's panelSlug, applyLayout, layoutMove and keepLayout from js/admin-jarvis-core.js; the app's panel ids are title slugs.
+ * The web's panelSlug, applyLayout, layoutMove and keepLayout from js/admin-jarvis-core.js. Each panel passes the id of its web panel
+ * (#2866, tests/unit/jarvis-panel-ids.test.js); before that the app saved title slugs, which [alias] still reads.
  */
 object Layouts {
     data class Saved(val order: List<String> = emptyList(), val hidden: List<String> = emptyList())
@@ -79,6 +80,14 @@ object Layouts {
         val all = weave(ids(layout?.order).filter { it in present }, present)
         val hide = ids(layout?.hidden).toSet()
         return Applied(all, all.filter { it !in hide }, all.filter { it in hide })
+    }
+
+    /** The layout with each old title slug read as the id its panel has now; an id a panel has is never renamed, so the web's stay as they are. */
+    fun alias(layout: Saved?, present: List<String>, legacy: Map<String, String>): Saved? {
+        if (layout == null || legacy.isEmpty()) return layout
+        val have = present.toSet()
+        fun map(list: List<String>) = list.map { id -> legacy[id]?.takeIf { id !in have && it in have } ?: id }.distinct()
+        return Saved(map(layout.order), map(layout.hidden))
     }
 
     /** One step up (-1) or down (1) past the next shown panel; hidden panels keep their place. */
@@ -135,12 +144,23 @@ object Arrange {
     val edit = mutableStateOf<Edit?>(null)
     val defaults = mutableStateMapOf<String, List<String>>()
     internal val titles = HashMap<String, String>()
+    private val legacy = HashMap<String, HashMap<String, String>>()
+
+    /** A panel drawn on [tab]: its title for Add back, and the slug of that title it was saved under before #2866. */
+    fun seen(tab: String, id: String, title: String) {
+        titles["$tab/$id"] = title
+        val slug = Layouts.slug(title)
+        if (slug != id) legacy.getOrPut(tab) { HashMap() }[slug] = id
+    }
+
+    /** [saved] with the old slug ids of the panels [tab] drew read as their ids. */
+    fun aliased(tab: String, saved: Layouts.Saved?) = Layouts.alias(saved, defaults[tab].orEmpty(), legacy[tab].orEmpty())
 
     fun editing(tab: String?) = edit.value?.takeIf { tab != null && it.tab == tab }
     fun movable(tab: String?, id: String) = editing(tab) != null && defaults[tab]?.contains(id) == true
 
     fun start(tab: String, saved: Layouts.Saved?) {
-        val l = Layouts.apply(defaults[tab].orEmpty(), saved)
+        val l = Layouts.apply(defaults[tab].orEmpty(), aliased(tab, saved))
         edit.value = Edit(tab, l.all, l.hidden)
     }
 
@@ -163,7 +183,7 @@ object Arrange {
         edit.value = null
         if (!e.dirty) return
         val ids = defaults[e.tab].orEmpty()
-        save(if (e.reset && e.hidden.isEmpty() && e.all == ids) null else Layouts.keep(if (e.reset) null else saved, e.all, e.hidden, ids))
+        save(if (e.reset && e.hidden.isEmpty() && e.all == ids) null else Layouts.keep(if (e.reset) null else aliased(e.tab, saved), e.all, e.hidden, ids))
     }
 
     fun title(tab: String, id: String) = titles["$tab/$id"] ?: id
@@ -190,7 +210,7 @@ internal fun arranged(items: List<Measurable>, tab: String?, saved: Layouts.Save
     if (tab == null || ids.isEmpty()) return items
     if (Arrange.defaults[tab] != ids) Arrange.defaults[tab] = ids
     val e = Arrange.editing(tab)
-    val l = Layouts.apply(ids, e?.let { Layouts.Saved(it.all, it.hidden) } ?: saved)
+    val l = Layouts.apply(ids, e?.let { Layouts.Saved(it.all, it.hidden) } ?: Arrange.aliased(tab, saved))
     val rank = l.all.withIndex().associate { it.value to it.index }
     val sorted = items.filter { id(it) != null }.sortedBy { rank[id(it)] ?: 0 }.iterator()
     val hide = l.hidden.toSet()
@@ -206,7 +226,7 @@ fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, L
     val finish = { Arrange.done(saved) { save(tab, it) } }
     // Another tab's edit ends when this one shows; a fold or unfold keeps it going.
     LaunchedEffect(tab) { Arrange.edit.value?.takeIf { it.tab != tab }?.let { e -> Arrange.done(savedOf(e.tab)) { save(e.tab, it) } } }
-    val hidden = Layouts.apply(Arrange.defaults[tab].orEmpty(), if (edit != null) Layouts.Saved(edit.all, edit.hidden) else saved).hidden
+    val hidden = Layouts.apply(Arrange.defaults[tab].orEmpty(), if (edit != null) Layouts.Saved(edit.all, edit.hidden) else Arrange.aliased(tab, saved)).hidden
     if (edit == null) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             if (hidden.isNotEmpty()) Muted("${hidden.size} hidden")
