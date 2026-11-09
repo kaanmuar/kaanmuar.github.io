@@ -279,18 +279,23 @@ test("the social sitemap lists the six hub pages and each posted post page with 
   assert.match(page, /embed\/5b4Hr6r-cBk/);
   assert.doesNotMatch(xml, /social\/later\.html/);
 });
-
-test("a post page is canonical, in its own language, links its other languages and is noindex until its day", () => {
+test("a post page is canonical, in its own language, does not link its other languages if upcoming, and is noindex until its day", () => {
   const de = post({ id: "promo-x/02-topic-de", kind: "launch", lang: "de", group: "promo-x/topic", captions: { x: "Hallo <welt>" } });
   const en = post({ id: "promo-x/01-topic-en", kind: "launch", lang: "en", group: "promo-x/topic" });
   const html = hub.postPage(de, [en, de], [en], "2026-10-21");
   assert.match(html, /<html lang="de">/);
   assert.match(html, /<link rel="canonical" href="https:\/\/carlosandmunoz\.com\/social\/promo-x\/02-topic-de\.html">/);
-  assert.match(html, /hreflang="en" href="https:\/\/carlosandmunoz\.com\/social\/promo-x\/01-topic-en\.html"/);
-  assert.match(html, /hreflang="x-default" href="[^"]+01-topic-en\.html"/);
+  assert.doesNotMatch(html, /hreflang="en" href="https:\/\/carlosandmunoz\.com\/social\/promo-x\/01-topic-en\.html"/);
+  assert.doesNotMatch(html, /hreflang="x-default"/);
   assert.match(html, /<meta name="robots" content="noindex, follow">/);
   assert.match(html, /Hallo &lt;welt&gt;/);
   assert.match(html, /"@type": "SocialMediaPosting"/);
+
+  const htmlPublished = hub.postPage(de, [en, de], [en], "2026-10-22");
+  assert.match(htmlPublished, /hreflang="en" href="https:\/\/carlosandmunoz\.com\/social\/promo-x\/01-topic-en\.html"/);
+  assert.match(htmlPublished, /hreflang="x-default"/);
+  assert.doesNotMatch(htmlPublished, /noindex, follow/);
+
   assert.match(html, new RegExp(COPY.de.allPosts));
   assert.doesNotMatch(hub.postPage(de, [de], [], "2026-10-24"), /noindex|hreflang/);
 });

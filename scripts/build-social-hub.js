@@ -734,8 +734,9 @@ function postPage(post, siblings, related, asOf, answer, question) {
   const image = imageUrl(post);
   const json = (value) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c");
   const fallback = siblings.find((other) => other.lang === "en") || siblings[0];
-  const alternates = siblings.length > 1
-    ? siblings.map((other) => "    <link rel=\"alternate\" hreflang=\"" + other.lang + "\" href=\"" + card.permalink(other, other.lang, true) + "\">")
+  const publishedSiblings = siblings.filter((other) => other.date <= asOf);
+  const alternates = publishedSiblings.length > 1
+    ? publishedSiblings.map((other) => "    <link rel=\"alternate\" hreflang=\"" + other.lang + "\" href=\"" + card.permalink(other, other.lang, true) + "\">")
       .concat("    <link rel=\"alternate\" hreflang=\"x-default\" href=\"" + card.permalink(fallback, fallback.lang, true) + "\">").join("\n") + "\n"
     : "";
   const tagged = (net) => url + "?utm_source=" + net + "&utm_medium=social&utm_campaign=social-hub&utm_content=" + card.anchor(post);
