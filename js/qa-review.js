@@ -319,15 +319,22 @@
     reasonBox.required = other;
     if (!other) clearField("reason");
     document.getElementById("client-box").hidden = code !== "client";
-    document.getElementById("own-note").hidden = code !== "own";
     document.getElementById("verify-note").hidden = code !== "verify";
     document.getElementById("credential-note").hidden = code !== "credentials";
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function dropFixedErrors() {
+    const shown = [...reviewForm.querySelectorAll(".field-error[data-local]")];
+    if (!shown.length) return;
+    const still = new Set(clientErrors().map((item) => item.field));
+    shown.forEach((error) => { if (!still.has(error.dataset.field)) clearField(error.dataset.field); });
+  }
   function paintSteps() {
+    dropFixedErrors();
     const code = reasonCode();
     const names = selectedFrameworks();
+    document.getElementById("own-note").hidden = code !== "own" || !!document.getElementById("email-error").textContent;
     const done = {
       you: signedIn() && !!document.getElementById("name").value.trim(),
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
@@ -337,7 +344,8 @@
     };
     const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
-      const ok = !!done[group.dataset.step];
+      const flagged = [...group.querySelectorAll(".field-error")].some((error) => error.textContent.trim() && !error.closest("[hidden]"));
+      const ok = !!done[group.dataset.step] && !flagged;
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
       if (!ok) missing.push(group);
@@ -542,7 +550,10 @@
 
   function clearField(name) {
     const error = document.getElementById(name + "-error");
-    if (error) error.textContent = "";
+    if (error) {
+      error.textContent = "";
+      delete error.dataset.local;
+    }
     const input = fieldInput(name);
     if (input) input.classList.remove("invalid");
     if (name === "url") document.getElementById("url-field").classList.remove("invalid");
@@ -555,7 +566,11 @@
     ["name", "email", "reason", "url", "frameworks", "clientName", "clientEmail", "clientUrl"].forEach(clearField);
     (errors || []).forEach((item) => {
       const error = document.getElementById(item.field + "-error");
-      if (error && !error.textContent) error.textContent = item.message;
+      if (error && !error.textContent) {
+        error.textContent = item.message;
+        error.dataset.field = item.field;
+        if (item.local) error.dataset.local = "";
+      }
       const input = fieldInput(item.field);
       if (input) input.classList.add("invalid");
       if (item.field === "url") document.getElementById("url-field").classList.add("invalid");
@@ -564,6 +579,7 @@
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
       openStepOf(error);
     });
+    paintSteps();
   }
 
   function openStepOf(el) {
@@ -596,12 +612,12 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: window.QAReviewReportCopy ? QAReviewReportCopy.t("ownMailDomain") : "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
       }
     }
     if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
     if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
-    return errors;
+    return errors.map((item) => Object.assign(item, { local: true }));
   }
 
   function fwLogo(name) {
