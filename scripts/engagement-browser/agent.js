@@ -28,7 +28,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.7.0";
+const VERSION = "1.7.1";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
