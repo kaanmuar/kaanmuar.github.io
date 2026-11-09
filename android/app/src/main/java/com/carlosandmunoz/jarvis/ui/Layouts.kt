@@ -17,11 +17,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutIdParentData
@@ -201,11 +200,12 @@ internal fun arranged(items: List<Measurable>, tab: String?, saved: Layouts.Save
 /** Above a tab's panels: Edit layout, and while editing the help line, Reset, Done and the hidden sections with Add back. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LayoutBar(tab: String, saved: Layouts.Saved?, save: (Layouts.Saved?) -> Unit) {
+fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, Layouts.Saved?) -> Unit) {
     val edit = Arrange.editing(tab)
-    val latest = rememberUpdatedState(saved to save)
-    val finish = { val (s, put) = latest.value; Arrange.done(s, put) }
-    DisposableEffect(tab) { onDispose { if (Arrange.editing(tab) != null) finish() } }
+    val saved = savedOf(tab)
+    val finish = { Arrange.done(saved) { save(tab, it) } }
+    // Another tab's edit ends when this one shows; a fold or unfold keeps it going.
+    LaunchedEffect(tab) { Arrange.edit.value?.takeIf { it.tab != tab }?.let { e -> Arrange.done(savedOf(e.tab)) { save(e.tab, it) } } }
     val hidden = Layouts.apply(Arrange.defaults[tab].orEmpty(), if (edit != null) Layouts.Saved(edit.all, edit.hidden) else saved).hidden
     if (edit == null) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {

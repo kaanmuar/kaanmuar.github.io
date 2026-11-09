@@ -315,7 +315,7 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                     if (s.snapshot != null) {
                         val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
                         val saved = Layouts.read(s.snapshot, layoutTab)
-                        LayoutBar(layoutTab, saved) { vm.saveLayout(layoutTab, it) }
+                        LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
                         CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
