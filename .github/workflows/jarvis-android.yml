@@ -62,6 +62,7 @@ jobs:
             grep -qx "$c -> $c:" app/build/outputs/mapping/release/mapping.txt || { echo "::error::R8 renamed or merged $c; each widget would draw another's content"; exit 1; }
           done
           # The release name must match the versionName the app shows ("2.0.$build" gives 2.0.<run number>).
+          # shellcheck disable=SC2016 # $build is the literal text in build.gradle.kts
           major=$(sed -n 's/.*versionName = "\([0-9.]*\)\.\$build".*/\1/p' app/build.gradle.kts)
           [ -n "$major" ] || { echo "::error::versionName in app/build.gradle.kts is not \"<major>.<minor>.\$build\""; exit 1; }
           v="$major.${JARVIS_VERSION_CODE}"
