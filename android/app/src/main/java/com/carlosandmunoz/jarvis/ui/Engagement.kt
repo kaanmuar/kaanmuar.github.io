@@ -61,6 +61,12 @@ object Engagement {
         else -> "approve"
     }
 
+    /** Gemini's English translation of a draft in another language (#2630); after an edit it describes the original. */
+    fun english(reply: JsonObject?, typed: String): String? {
+        val en = reply.str("english")?.trim()?.ifEmpty { null } ?: return null
+        return if (typed.trim() == reply.str("draft").orEmpty().trim()) "In English: $en" else "In English (the original draft): $en"
+    }
+
     /** "like: planned · reply: waiting", or why the post was left alone. */
     fun plan(post: JsonObject): String {
         val acts = post.obj("actions")?.entries?.mapNotNull { (k, v) -> (v as? JsonObject)?.str("status")?.let { "$k: $it" } } ?: emptyList()
@@ -363,6 +369,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         TextButton({ open = !open }) { Text(if (open) "Hide the $what" else "Show the $what", color = J.cyan, fontSize = 12.sp) }
         if (open) Text(p.str("text").orEmpty(), color = J.muted, fontSize = 12.sp)
         OutlinedTextField(text, { text = it.take(limit) }, label = { Text("Reply · ${text.length}/$limit") }, minLines = 3, modifier = Modifier.fillMaxWidth())
+        Engagement.english(reply, text)?.let { Text(it, color = J.muted, fontSize = 12.sp) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ActionButton("Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)

@@ -115,16 +115,41 @@ test("the default thresholds act on the posts a live run scores, not only on vir
   assert.equal(E.decide(quiet, null, c, {}, NOW, new Set()).verdict, "watch");
 });
 
-test("decide skips political, angry and promo posts, replies only in our six languages, and only reads trend networks", () => {
+test("decide skips political, angry and promo posts, replies only in the languages we search in, and only reads trend networks", () => {
   const c = E.settings(null);
   const p = scored({ text: "WCAG accessibility", metrics: { likes: 300, replies: 40, reposts: 60 } });
   assert.equal(E.decide(p, { political: true }, c, {}, NOW).skip, "political");
   assert.equal(E.decide(p, { sentiment: "angry" }, c, {}, NOW).skip, "angry");
   assert.equal(E.decide(p, { promo: true }, c, {}, NOW).skip, "promo");
-  const ja = E.decide(p, { worth: 0.9, reply: "それは良い", lang: "ja" }, c, {}, NOW);
-  assert.equal(ja.actions.reply, undefined);
-  assert.equal(ja.actions.like.status, "planned");
+  const th = E.decide(p, { worth: 0.9, reply: "เราทดสอบด้วยโปรแกรมอ่านหน้าจอ", lang: "th" }, c, {}, NOW);
+  assert.equal(th.actions.reply, undefined);
+  assert.equal(th.actions.like.status, "planned");
   assert.equal(E.decide(Object.assign({}, p, { network: "hn" }), null, c, {}, NOW).verdict, "trend");
+});
+
+test("a reply in a language Carlos may not read carries Gemini's English to the draft, the push and until an edit (#2630)", () => {
+  const p = scored({ id: "ja", text: "Playwright と WCAG のアクセシビリティテスト", metrics: { likes: 300, replies: 40, reposts: 60 } });
+  const en = scored({ id: "en", text: "WCAG accessibility" });
+  const out = E.parseAi(JSON.stringify([
+    { id: p.key, lang: "ja", worth: 0.9, reply: "私たちは同じ Playwright ジョブで axe を実行しています。", english: "We run axe in the same Playwright job — see https://x.com #a11y" },
+    { id: en.key, lang: "en", worth: 0.9, reply: "We run axe in the same Playwright job.", english: "We run axe in the same Playwright job." }
+  ]), [p, en]);
+  assert.equal(out[p.key].english, "We run axe in the same Playwright job, see");
+  assert.equal(out[en.key].english, "");
+  assert.ok(E.REPLY_LANGS.includes("ja") && E.REPLY_LANGS.includes("hi") && !E.REPLY_LANGS.includes("th"));
+  assert.match(E.aiPrompt([p]), /"english"/);
+  assert.match(E.chainPrompt([Object.assign({ parent: {} }, p)]), /ja, ko, zh/);
+  const d = E.decide(p, out[p.key], E.settings(null), {}, NOW, new Set());
+  assert.equal(d.actions.reply.status, "waiting");
+  assert.equal(d.actions.reply.lang, "ja");
+  assert.equal(d.actions.reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decide(en, out[en.key], E.settings(null), {}, NOW, new Set()).actions.reply.english, undefined);
+  const doc = Object.assign({ key: "mastodon_0123456789abcdef0123", seenAt: hoursAgo(1) }, p, { actions: d.actions });
+  assert.ok(E.replyPush(doc).lines.includes("In English: We run axe in the same Playwright job, see"));
+  assert.equal(E.decideReply(doc, "approve", "", "c", NOW).reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decideReply(doc, "edit", "私たちは CI で axe を実行します。", "c", NOW).reply.english, "");
+  const chain = E.chainDecide(Object.assign({}, p, { answered: false, liked: true }), { worth: 0.9, reply: "はい、そうです。ありがとう。", lang: "ja", english: "Yes, that's right. Thanks." }, E.settings(null), NOW);
+  assert.equal(chain.actions.reply.english, "Yes, that's right. Thanks.");
 });
 
 test("decideReply approves, takes an edit within the network's limit, dismisses, and refuses stale or decided replies", () => {

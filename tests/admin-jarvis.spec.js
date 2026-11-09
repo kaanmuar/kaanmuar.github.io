@@ -637,7 +637,9 @@ test.describe('admin statistics (Jarvis)', () => {
     const eg = page.locator('[data-view="engagement"]');
     const waiting = eg.locator('[data-panel-id="engagement-waiting"]');
     await expect(waiting).toContainText('Playwright and WCAG accessibility testing in CI');
-    await expect(waiting.locator('[data-eg-draft]')).toHaveValue('We run axe in the same Playwright job.');
+    await expect(waiting.locator('[data-eg-draft]')).toHaveValue('Corremos axe en el mismo job de Playwright.');
+    await expect(waiting.locator('.jv-eg-english')).toHaveText('In English: We run axe in the same Playwright job.');
+    if (process.env.WAITING_SHOT) await waiting.screenshot({ path: process.env.WAITING_SHOT });
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('Mac browser');
     await expect(eg.locator('[data-panel-id="engagement-networks"]')).toContainText('API as qalaburlreview');
     const joins = eg.locator('[data-panel-id="engagement-joins"]');
