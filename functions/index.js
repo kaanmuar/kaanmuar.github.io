@@ -6635,7 +6635,8 @@ exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, me
 
 // Every minute (#2810): Actions runs, issues, PRs, board moves and the Cloud Functions log into Jarvis > Console.
 exports.jarvisLogPoll = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.jarvisLogPoll }), "jarvisLogPoll",
-  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform") }));
+  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform"),
+    onRuns: (repo, runs) => (repo === BUG_REPO ? jarvisProcesses.settleRuns(jarvisLiveDeps(), runs, { isDeploy: jarvisGithub.isDeploy, jobFiles: GITHUB_JOB_FILES }) : Promise.resolve()) }));
 
 // Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
 exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);
