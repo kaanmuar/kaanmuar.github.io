@@ -170,7 +170,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     ConfirmAction(confirm) { confirm = null }
     val v = view
     val off = v.obj("settings")?.bool("auto") == false
-    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions") {
+    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions", id = "systems-actions") {
         val hours = (v.obj("settings") ?: s.snapshot.obj("settings").obj("actions")).num("countdownHours") ?: Countdowns.HOURS
         val pending = Countdowns.pending(v, s.snapshot)
         Text("On the countdown (${Countdowns.hoursText(hours)})", color = J.text, fontSize = 14.sp)

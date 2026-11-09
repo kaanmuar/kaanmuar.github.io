@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosandmunoz.jarvis.background.Keep
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.Auth
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.bool
@@ -12,6 +14,7 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
+import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.push.Push
@@ -101,7 +104,13 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { handsFree.on.collect { on -> _state.update { it.copy(handsFree = on) } } }
         viewModelScope.launch { handsFree.turns.collect { c -> _state.update { it.copy(chat = answered(it.chat, c)) } } }
         viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
+        viewModelScope.launch { api.snapshots.collect { (days, saved) -> if (fixture == null && _state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at) } } }
+        // A processes push (#2548) lands on the screen in place, without a refresh.
+        viewModelScope.launch { Processes.pushed.collect { out -> out.obj("processes")?.let { p -> _state.update { s -> s.copy(snapshot = s.snapshot?.let { Processes.patch(it, p, out.obj("version")) }) } } } }
     }
+
+    /** While something runs and no push came, the Processes panel asks again (one read). */
+    fun refreshProcesses() { if (fixture == null && auth.signedIn) viewModelScope.launch { Push.processes(jarvis) } }
 
     fun signIn(email: String, password: String) = authStep {
         when (val step = auth.signIn(email.trim(), password)) {
@@ -188,7 +197,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val days = _state.value.days
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            runCatching { api.fetch("snapshot", days) }
+            runCatching { api.snapshot(days) }
                 .onSuccess { saved ->
                     if (_state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at, loading = false) }
                     Home.redraw(jarvis)
@@ -291,6 +300,19 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { api.call(op, _state.value.days, extra) }
                 .onSuccess { out -> _state.update { it.copy(running = it.running - key, toast = done(out)) } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** One tab's section layout (#2809), shown at once and saved through settings-save; a failed save puts the old one back. */
+    fun saveLayout(tab: String, layout: Layouts.Saved?) {
+        val before = Layouts.read(_state.value.snapshot, tab)
+        _state.update { it.copy(snapshot = Layouts.patch(it.snapshot, tab, layout)) }
+        if (fixture != null) return
+        keep("Saving the layout") {
+            runCatching { api.call("settings-save", _state.value.days, mapOf("layout" to JsonObject(mapOf(tab to Layouts.json(layout))))) }
+                .onSuccess { out -> _state.update { s -> s.copy(snapshot = out.obj("layout")?.let { Layouts.withLayout(s.snapshot, it) } ?: s.snapshot, toast = "Layout saved. The web shows it too.") } }
+                .onFailure { e -> fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") } }
             told()
         }
     }

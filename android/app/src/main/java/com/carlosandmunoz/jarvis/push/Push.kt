@@ -27,6 +27,11 @@ import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.Watch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Push alerts (#1416): channels, the FCM token handed to the jarvis function, and the notifications it sends. */
 object Push {
@@ -102,19 +107,30 @@ object Push {
         return NotificationCompat.Action.Builder(0, button.label, pi).build()
     }
 
-    /** A section push (#2509), data only: refresh, which redraws the widgets and syncs the watch, unless the saved
-        snapshot already holds those versions. Applying only the changed sections is #2510. */
+    /** A section push (#2509), data only: fetches just the sections the saved snapshots do not hold yet (#2510),
+        then redraws the widgets, the ongoing notification, the watch and the open app. */
     fun sections(context: Context, data: Map<String, String>) {
         val app = context.applicationContext as JarvisApp
-        val days = data["days"]?.toIntOrNull() ?: 1
-        if (sectionsStale(data["versions"], app.api.saved("snapshot", days)?.json)) Home.refreshSoon(context)
+        if (!app.auth.signedIn) return
+        val named = data["sections"].orEmpty().split(",")
+        val patched = "processes" in named && runBlocking { withTimeoutOrNull(8_000) { processes(app) } } == true
+        val rest = if (patched) data + ("sections" to named.filter { it != "processes" }.joinToString(",")) else data
+        if (Home.pushStale(app, rest)) Home.refreshSections(context, rest)
     }
 
-    /** True when the push names a section version the saved snapshot does not hold. */
-    fun sectionsStale(versions: String?, saved: JsonObject?): Boolean {
-        val pushed = runCatching { JSON.parseToJsonElement(versions ?: "{}") as JsonObject }.getOrNull() ?: return true
-        return pushed.any { (name, v) -> saved.obj("versions").obj(name).str("v") != (v as? JsonPrimitive)?.content }
+    /** A processes push (#2548): one read for the section, put into every kept snapshot and the screen on show, then the
+        status notification and the watch; the rest of the snapshot is left for its own push. */
+    suspend fun processes(app: JarvisApp): Boolean {
+        val out = runCatching { app.api.call("processes", 1) }.getOrNull() ?: return false
+        val p = out.obj("processes") ?: return false
+        listOf(1, 7, 30, 90, 365).forEach { d -> app.api.patchSaved("snapshot", d) { Processes.patch(it, p, out.obj("version")) } }
+        Processes.pushed.tryEmit(out)
+        val kept: suspend () -> JsonObject? = { app.api.saved("snapshot", 1)?.json }
+        runCatching { Ongoing.show(app, kept) }
+        runCatching { Watch.sync(app, kept) }
+        return true
     }
+
 
     private fun allowed(context: Context) =
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED

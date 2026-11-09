@@ -69,6 +69,7 @@ val PRODUCTS = listOf("inbox" to "Inbox", "cv" to "CV", "studio" to "QA Studio",
 val CHIPS = PRODUCTS + ("outreach" to "Outreach") + ("marketing" to "Marketing") + ("engagement" to "Engagement") + ("github" to "GitHub") + ("console" to "Console")
 
 private fun humanize(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
+private fun kebab(key: String) = key.replace(Regex("([a-z])([A-Z])"), "$1-$2").lowercase()
 
 private fun JsonObject?.ext(key: String): JsonObject? = this.obj("external").obj(key)
 
@@ -96,14 +97,16 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         }
     }
 
+    ProcessesPanel(snap.obj("processes"), Modifier.layoutId(WIDE), compact = true, poll = vm::refreshProcesses)
+
     val trend = wide.obj("trend")
     val lines = trend.objs("series").map { (it.str("name") ?: "") to it["values"].doubles() }
-    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE)) {
+    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE), id = "overview-trend") {
         LineChart(lines, trend.at("labels").strings(), height = if (roomy) 170 else 130)
         Muted("Visits for the sites, opens for URL Review, messages for the inbox, events for the hub.")
     }
 
-    Panel("Briefing", Modifier.layoutId(WIDE), trailing = { FoldAllButton(); TextButton(onClick = vm::brief, enabled = !s.briefBusy) { Text(if (s.briefBusy) "Thinking…" else if (s.brief == null) "Ask Gemini" else "Again", maxLines = 1, softWrap = false) } }) {
+    Panel("Briefing", Modifier.layoutId(WIDE), id = "briefing", trailing = { FoldAllButton(); TextButton(onClick = vm::brief, enabled = !s.briefBusy) { Text(if (s.briefBusy) "Thinking…" else if (s.brief == null) "Ask Gemini" else "Again", maxLines = 1, softWrap = false) } }) {
         s.brief?.let { text ->
             Text(text, fontSize = 14.sp)
             Row { ActionButton("Email it to me", "email-briefing" in s.running) { vm.act("email-briefing", "email-briefing", mapOf("text" to JsonPrimitive(text))) { if (it.bool("sent") == true) "Briefing sent." else "Mail is off." } } }
@@ -119,7 +122,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
 
     Proposals(s, vm, open)
 
-    Panel("Products") {
+    Panel("Products", id = "overview-products") {
         PRODUCTS.forEach { (key, name) ->
             val p = snap.obj("products").obj(key)
             val k = p.objs("kpis").firstOrNull()
@@ -133,7 +136,7 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
     Goals(snap.objs("goals"))
 
     val money = snap.ext("money")
-    if (money != null) Panel("Money") {
+    if (money != null) Panel("Money", id = "overview-money") {
         KpiPairs(listOf(
             KpiData("Revenue", "$" + fmt(money.at("revenue").num("usd"), 2), delta(money.at("revenue").num("usd"), money.at("prior").num("usd"))),
             KpiData("Sales", fmt(money.at("revenue").num("count")), delta(money.at("revenue").num("count"), money.at("prior").num("count")))
@@ -172,7 +175,7 @@ fun kpiVs(label: String, now: Double?, prior: Double?, alert: Boolean = false, s
 @Composable
 fun Goals(goals: List<JsonObject>) {
     if (goals.isEmpty()) return
-    Panel("Goals") {
+    Panel("Goals", id = "overview-goals") {
         goals.forEach { g ->
             Column {
                 Row {
@@ -212,7 +215,7 @@ fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (Stri
 /** Every product with its lead number and trend; the picked one is lit. Falls back to the chip names before the snapshot has `wide`. */
 @Composable
 private fun ProductList(rows: List<JsonObject>, product: String, pick: (String) -> Unit) {
-    Panel("Products") {
+    Panel("Products", id = "products-list") {
         val list = rows + CHIPS.filter { (k, _) -> rows.none { it.str("key") == k } && (rows.isEmpty() || k == "console") }.map { (k, n) -> JsonObject(mapOf("key" to JsonPrimitive(k), "name" to JsonPrimitive(n))) }
         list.forEach { r ->
             val key = r.str("key") ?: return@forEach
@@ -250,41 +253,41 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "hub") SocialHub(s, vm)
     val snap = s.snapshot
     val p = snap.obj("products").obj(product)
-    if (p == null) { Panel("No data") { Muted("Pull down to load this product.") }; return }
+    if (p == null) { Panel("No data", id = "$product-wait") { Muted("Pull down to load this product.") }; return }
 
-    Panel(PRODUCTS.toMap()[product] ?: product) {
+    Panel(PRODUCTS.toMap()[product] ?: product, id = "$product-summary") {
         KpiGrid(p.objs("kpis"))
         p.obj("anomaly")?.let { a -> Text("Unusual last day: ${fmt(a.num("last"))} against an average of ${fmt(a.num("mean"))} (z ${a.num("z")})", color = J.amber, fontSize = 12.sp) }
     }
     if (product == "review") {
         PeoplePanel(s)
         LocalPanel(s)
-        TopList("Funnel", p.pairs("funnel"), 4)
+        TopList("Funnel", p.pairs("funnel"), 4, id = "review-funnel")
     }
 
     val series = p.obj("series")
-    Panel(when (product) { "inbox" -> "Messages per day"; "review" -> "Opens per day"; "hub" -> "Hub and post views per day"; else -> "Visits per day" }) {
+    Panel(when (product) { "inbox" -> "Messages per day"; "review" -> "Opens per day"; "hub" -> "Hub and post views per day"; else -> "Visits per day" }, id = "$product-trend") {
         BarChart(series.at("values").doubles(), series.at("labels").strings())
     }
-    p.obj("reviewSeries")?.let { Panel("Reviews per day") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.violet) } }
-    p.obj("ratingSeries")?.let { Panel("Ratings per day") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.amber) } }
+    p.obj("reviewSeries")?.let { Panel("Reviews per day", id = "$product-reviews") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.violet) } }
+    p.obj("ratingSeries")?.let { Panel("Ratings per day", id = "$product-ratings") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.amber) } }
 
     val grid = (p["heatmap"] as? JsonArray)?.map { it.doubles() } ?: emptyList()
-    Heatmap(grid, p.str("peak"))
+    Heatmap(grid, p.str("peak"), id = "$product-heat")
 
     if (product in setOf("cv", "studio", "lab", "review", "hub")) PageHealth(snap, product)
 
-    (p["lists"] as? JsonObject)?.keys?.forEach { key -> TopList(humanize(key), p.obj("lists").pairs(key)) }
+    (p["lists"] as? JsonObject)?.keys?.forEach { key -> TopList(humanize(key), p.obj("lists").pairs(key), id = "$product-${kebab(key)}") }
 
     when (product) {
         "review" -> ReviewOps(s, vm)
-        "hub" -> Panel("Actions") {
+        "hub" -> Panel("Actions", id = "hub-actions") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RunJob(s, vm, "refreshSocialHubStats", "Refresh stats")
                 RunJob(s, vm, "dispatchFacebookQueue", "Post Facebook queue")
             }
         }
-        "cv", "studio", "lab" -> Panel("Reports") {
+        "cv", "studio", "lab" -> Panel("Reports", id = "$product-send-reports") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("daily", "weekly").forEach { period -> SendReport(s, vm, "site", period) }
             }
@@ -297,7 +300,7 @@ private fun PageHealth(snap: JsonObject?, product: String) {
     val up = snap.ext("uptime").objs("pages").firstOrNull { it.str("product") == product }
     val speed = snap.ext("speed").objs("pages").firstOrNull { it.str("product") == product }
     if (up == null && speed == null) return
-    Panel("Page health") {
+    Panel("Page health", id = "$product-speed") {
         up?.let { KeyRow("Uptime (${it.str("name")})", if (it.bool("ok") == true) "${it.num("status")?.toInt()} · ${fmt(it.num("ms"))} ms" else "DOWN ${it.str("error") ?: it.num("status")?.toInt() ?: ""}", if (it.bool("ok") == true) J.green else J.pink, it.str("url")) }
         speed?.let { sp ->
             KeyRow("PageSpeed score", fmt(sp.num("score")), score(sp.num("score")))
@@ -311,14 +314,14 @@ private fun score(v: Double?) = when { v == null -> J.muted; v >= 90 -> J.green;
 @Composable
 private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
     val health = s.snapshot.ext("health")
-    Panel("Failed runs") {
+    Panel("Failed runs", id = "review-failures") {
         Text("${fmt(health.at("failures").num("total"))} failures · ${fmt(health.at("reruns").num("total"))} re-runs", fontSize = 14.sp)
         health.at("failures").pairs("causes").take(6).forEach { (k, v) -> KeyRow(k, fmt(v)) }
         health.obj("failures").objs("latest").take(8).forEach { StatusRow("alert", it.str("host") ?: "", (it.str("cause") ?: "") + " · " + (it.str("message") ?: "")) }
     }
     val alerts = health.obj("alerts").objs("latest")
-    if (alerts.isNotEmpty()) Panel("Review alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
-    Panel("Actions") {
+    if (alerts.isNotEmpty()) Panel("Review alerts", id = "review-alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
+    Panel("Actions", id = "review-ops") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RunJob(s, vm, "sweepReviews", "Sweep reviews")
             RunJob(s, vm, "rerunReviewFailures", "Re-run failures")
@@ -351,10 +354,10 @@ private fun daysText(n: Int) = when { n == 0 -> "today"; n > 0 -> "in $n " + (if
 private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     val ou = snap.ext("outreach")
-    Approvals(s, vm)
+    Approvals(s, vm, id = "outreach-approvals")
     val brief = snap.objs("briefing").filter { it.str("product") == "outreach" }
-    if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { StatusRow(it.str("level"), it.str("text") ?: "") } }
-    if (ou == null || !ou.isOk()) { Panel("Outreach") { Muted(ou?.str("error") ?: "Pull down to read the outreach pipeline, Instantly and the plan.") }; return }
+    if (brief.isNotEmpty()) Panel("Briefing", id = "briefing") { brief.forEach { StatusRow(it.str("level"), it.str("text") ?: "") } }
+    if (ou == null || !ou.isOk()) { Panel("Outreach", id = "outreach-wait") { Muted(ou?.str("error") ?: "Pull down to read the outreach pipeline, Instantly and the plan.") }; return }
     val pipe = ou.obj("pipeline")?.takeIf { it.isOk() }
     val mail = ou.obj("instantly")?.takeIf { it.isOk() }
     val plan = ou.obj("plan")?.takeIf { it.isOk() }
@@ -372,7 +375,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     val links = ou.obj("links")?.takeIf { it.isOk() }
     fun paid(l: JsonObject?) = fmt(l.num("paid")) + " · " + fmt(l.num("usd")) + " USD"
 
-    Panel("Outreach") {
+    Panel("Outreach", id = "outreach-summary") {
         KpiPairs(listOf(
             KpiData("Prospects queued", fmt(pipe.num("queued"))),
             kpiVs("Reviewed in range", pipe.num("reviews"), pipe.num("priorReviews")),
@@ -388,7 +391,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         ))
     }
 
-    Panel("90-day plan") {
+    Panel("90-day plan", id = "outreach-plan") {
         if (plan == null) { Muted("The plan is not uploaded."); Needs(ou); return@Panel }
         val day = plan.num("day")?.toInt() ?: 0
         val length = plan.num("length")?.toInt() ?: 0
@@ -402,7 +405,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         plan.objs("milestones").forEach { m -> KeyRow("${m.str("label")} · ${m.str("date")}", if (m.bool("past") == true) "past" else "", J.dim) }
     }
 
-    Panel("Weekly funnel against the plan") {
+    Panel("Weekly funnel against the plan", id = "outreach-funnel") {
         fun ratio(a: Double?, b: Double?) = if (a == null || b == null || b == 0.0) null else Math.round(a / b * 100).toDouble()
         val openOff = contacted > 0 && mail?.bool("openTracking") == false
         listOf(
@@ -418,9 +421,9 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    TargetsPanel(s, vm)
+    TargetsPanel(s, vm, id = "outreach-targets")
 
-    Panel("Prospect pipeline (nightly sweep)") {
+    Panel("Prospect pipeline (nightly sweep)", id = "outreach-pipeline") {
         if (pipe == null) { Muted(ou.obj("pipeline").str("error") ?: "Not loaded."); return@Panel }
         KpiPairs(listOf(
             KpiData("Swept", fmt(pipe.num("swept"))),
@@ -431,11 +434,11 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         if (pipe.objs("bySegment").isEmpty()) Muted("No prospects queued. Add a list with scripts/sweep-outreach.js.")
     }
     if (pipe != null) {
-        TopList("Prospects by segment", pipe.pairs("bySegment"))
-        TopList("Review results", pipe.pairs("results"))
+        TopList("Prospects by segment", pipe.pairs("bySegment"), id = "outreach-segments")
+        TopList("Review results", pipe.pairs("results"), id = "outreach-results")
     }
 
-    Panel("Campaigns (Instantly)") {
+    Panel("Campaigns (Instantly)", id = "outreach-campaigns") {
         if (mail == null) { Muted(ou.obj("instantly").str("error") ?: "Not loaded."); return@Panel }
         mail.objs("status").forEach { KeyRow(it.str("label") ?: "", fmt(it.num("value"))) }
         KpiPairs(listOf(
@@ -456,7 +459,7 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     }
     ConfirmAction(confirm) { confirm = null }
 
-    if (mail != null) Panel("Mailboxes and warm-up") {
+    if (mail != null) Panel("Mailboxes and warm-up", id = "outreach-mailboxes") {
         if (accounts.isEmpty()) Muted("No mailboxes connected.")
         accounts.forEach { a ->
             val score = a.num("score")
@@ -469,15 +472,15 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
     QalabLinksPanel(ou, vm)
 
     val dns = ou.obj("mail")
-    Panel("Sending domain" + (dns.str("domain")?.let { " ($it)" } ?: "")) {
+    Panel("Sending domain" + (dns.str("domain")?.let { " ($it)" } ?: ""), id = "outreach-dns") {
         val checks = dns.objs("checks")
         if (checks.isEmpty()) Muted(dns.str("error") ?: "Not loaded.")
         checks.forEach { StatusRow(if (it.bool("ok") == true) "good" else "alert", it.str("name") ?: "", it.str("detail")) }
     }
 
     val visits = snap.obj("outreachVisits")
-    if (visits.objs("campaigns").isEmpty()) Panel("Visits from outreach links") { Muted("No visits tagged utm_source=outreach in this range yet.") }
-    else TopList("Visits from outreach links", visits.pairs("campaigns"))
+    if (visits.objs("campaigns").isEmpty()) Panel("Visits from outreach links", id = "outreach-visits") { Muted("No visits tagged utm_source=outreach in this range yet.") }
+    else TopList("Visits from outreach links", visits.pairs("campaigns"), id = "outreach-visits")
     Needs(ou)
 }
 
@@ -488,7 +491,7 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     CallsPanel(s, vm)
     val money = snap.ext("money")
-    Panel("Revenue") {
+    Panel("Revenue", id = "business-revenue") {
         Needs(money)
         if (money.isOk()) {
             val r = money.obj("revenue"); val p = money.obj("prior")
@@ -508,20 +511,20 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
     val empties = Empties()
     val wide = snap.obj("wide")
     val mix = wide.pairs("revenue")
-    if (mix.isNotEmpty()) Panel("Revenue by product") { Donut(mix, "USD") }
+    if (mix.isNotEmpty()) Panel("Revenue by product", id = "business-mix") { Donut(mix, "USD") }
     else empties.add("Revenue by product", if (money.isOk()) "no paid sale in this range" else money.str("error"))
     val funnel = wide.objs("funnel")
-    if (funnel.isNotEmpty()) Panel("Outreach funnel") {
+    if (funnel.isNotEmpty()) Panel("Outreach funnel", id = "business-funnel") {
         Funnel(funnel.map { (it.str("label") ?: "") to it.num("value") })
         Muted("Reviewed by the nightly sweep in range, emailed through Instantly, replied, and paid through a qalabreview.com link. Instantly counts every contact it emailed, so Notified can pass Reviewed.")
     } else empties.add("Outreach funnel", snap.ext("outreach").str("error"))
     if (money.isOk()) {
-        TopList("By provider", money.pairs("byProvider"))
+        TopList("By provider", money.pairs("byProvider"), id = "business-providers")
     }
 
     val email = snap.ext("email")
     if (!email.isOk()) empties.add("Email (SendGrid)", email.str("error"))
-    else Panel("Email (SendGrid)") {
+    else Panel("Email (SendGrid)", id = "business-email") {
         Needs(email)
         run {
             val t = email.obj("totals"); val r = email.obj("rates")
@@ -543,7 +546,7 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
 
     val search = snap.ext("search")
     if (!search.isOk()) empties.add("Search", search.str("error"))
-    else Panel("Search") {
+    else Panel("Search", id = "business-brave") {
         Needs(search)
         search.obj("console")?.let { c ->
             if (c.bool("ok") == true) KpiPairs(listOf(KpiData("Google clicks", fmt(c.num("clicks"))), KpiData("Impressions", fmt(c.num("impressions"))), KpiData("CTR", pct(c.num("ctr"))), KpiData("Avg position", fmt(c.num("position")))))
@@ -553,18 +556,18 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
         search.obj("brave").objs("queries").forEach { q -> KeyRow(q.str("query") ?: "", q.num("position")?.let { "#" + it.toInt() } ?: "not in top $braveDepth", if (q.num("position") != null) J.green else J.muted, q.str("url")) }
     }
     search.obj("index")?.takeIf { it.bool("ok") == true }?.let { ix ->
-        Panel("Search index (Brave)") {
+        Panel("Search index (Brave)", id = "business-index") {
             KpiPairs(listOf(KpiData("Pages indexed", fmt(ix.num("indexed"))), KpiData("Sitemap pages", fmt(ix.num("total"))), KpiData("Missing", fmt(ix.num("missing")))))
             ix.str("zeroSince")?.let { Muted("None indexed since " + it.take(10) + ".") }
             ix.at("mainMissing").strings().forEach { u -> KeyRow(u.removePrefix("https://carlosandmunoz.com").ifEmpty { "/" }, "missing", J.muted, u) }
             Muted(ix.str("pushedAt")?.let { at -> "Last sent " + at.take(10) + ": Brave took " + fmt(ix.obj("pushed").num("brave")) + "." } ?: "Not sent yet: Jarvis sends the missing pages on its next weekly pass.")
         }
     }
-    search.obj("console")?.let { c -> TopList("Google queries", c.objs("queries").map { (it.str("query") ?: "") to (it.num("clicks") ?: 0.0) }) }
+    search.obj("console")?.let { c -> TopList("Google queries", c.objs("queries").map { (it.str("query") ?: "") to (it.num("clicks") ?: 0.0) }, id = "business-gsc") }
 
     val social = snap.ext("social")
     if (!social.isOk()) empties.add("Social", social.str("error"))
-    else Panel("Social") {
+    else Panel("Social", id = "business-social") {
         Needs(social)
         if (social.isOk()) {
             KpiPairs(listOf(KpiData("Posts sent", fmt(social.num("sent"))), KpiData("Failed", fmt(social.num("failed")), alert = (social.num("failed") ?: 0.0) > 0), KpiData("YouTube views", fmt(social.at("youtube").num("views")))))
@@ -573,9 +576,9 @@ fun BusinessScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
     if (social.isOk()) {
-        TopList("Channels", social.pairs("channels"))
+        TopList("Channels", social.pairs("channels"), id = "business-channels")
         val videos = social.obj("youtube").objs("videos")
-        if (videos.isNotEmpty()) Panel("YouTube") { videos.take(10).forEach { v -> KeyRow(v.str("title") ?: "", "${fmt(v.num("views"))} views", url = v.str("id")?.let { "https://youtu.be/$it" }) } }
+        if (videos.isNotEmpty()) Panel("YouTube", id = "business-youtube") { videos.take(10).forEach { v -> KeyRow(v.str("title") ?: "", "${fmt(v.num("views"))} views", url = v.str("id")?.let { "https://youtu.be/$it" }) } }
     }
     NoDataRow(empties.items)
 }
@@ -589,18 +592,18 @@ fun TrafficScreen(s: UiState) {
     val traffic = snap.obj("wide").obj("traffic")
     val compare = traffic.obj("compare")
     val lines = compare.objs("series")
-    if (lines.isNotEmpty()) Panel("Site counter, GA4 and Cloudflare per day", Modifier.layoutId(WIDE)) {
+    if (lines.isNotEmpty()) Panel("Site counter, GA4 and Cloudflare per day", Modifier.layoutId(WIDE), id = "traffic-compare") {
         val color = mapOf("site" to J.green, "ga4" to J.cyan, "cloudflare" to J.violet)
         LineChart(lines.map { (it.str("name") ?: "") to it["values"].doubles() }, compare.at("labels").strings(), lines.map { color[it.str("key")] ?: J.dim }, if (LocalColumns.current >= 2) 170 else 130)
         compare.objs("totals").forEach { t -> KeyRow(t.str("label") ?: "", t.num("value")?.let { fmt(it) } ?: (t.str("why") ?: "off"), if (t.num("value") == null) J.muted else J.text) }
         Muted("The site counts every visit; GA4 only visitors who allow analytics; Cloudflare counts page views at the edge, bots it lets through included.")
     }
     val grid = (traffic?.get("heatmap") as? JsonArray)?.map { it.doubles() } ?: emptyList()
-    if (grid.any { r -> r.any { it > 0 } }) Heatmap(grid, traffic.str("peak"), "When visitors come, every site")
+    if (grid.any { r -> r.any { it > 0 } }) Heatmap(grid, traffic.str("peak"), "When visitors come, every site", id = "traffic-when")
     val sources = traffic.pairs("sources")
-    if (sources.isNotEmpty()) Panel("Where visits come from") { Donut(sources, "visits") }
+    if (sources.isNotEmpty()) Panel("Where visits come from", id = "traffic-mix") { Donut(sources, "visits") }
     snap?.let { Home.siteVisits(it) }?.let { site ->
-        Panel("Site visits") {
+        Panel("Site visits", id = "traffic-site") {
             val d = delta(site.value, site.prior)
             KpiPairs(listOf(KpiData("Site visits", fmt(site.value), d, site.prior?.let { site.value.compareTo(it) } ?: 0)) +
                 site.parts.map { (name, value) -> KpiData(name, fmt(value)) })
@@ -610,7 +613,7 @@ fun TrafficScreen(s: UiState) {
     }
     val ga = snap.ext("ga4")
     if (!ga.isOk()) empties.add("Google Analytics", ga.str("error"))
-    else Panel("Google Analytics") {
+    else Panel("Google Analytics", id = "traffic-groups") {
         Needs(ga)
         ga.objs("groups").forEach { g ->
             KeyRow(g.str("group") ?: "", "${fmt(g.num("sessions"))} sessions · ${fmt(g.num("users"))} users", url = null)
@@ -618,12 +621,12 @@ fun TrafficScreen(s: UiState) {
         }
         BarChart(ga.objs("daily").map { it.num("sessions") ?: 0.0 }, ga.objs("daily").map { it.str("date") ?: "" })
     }
-    TopList("GA4 countries", ga.pairs("countries"))
-    TopList("GA4 sources", ga.pairs("sources"))
+    TopList("GA4 countries", ga.pairs("countries"), id = "traffic-countries")
+    TopList("GA4 sources", ga.pairs("sources"), id = "traffic-sources")
 
     val cf = snap.ext("cloudflare")
     if (!cf.isOk()) empties.add("Cloudflare edge", cf.str("error"))
-    else Panel("Cloudflare edge") {
+    else Panel("Cloudflare edge", id = "traffic-cloudflare") {
         Needs(cf)
         run {
             KpiPairs(listOf(
@@ -635,8 +638,11 @@ fun TrafficScreen(s: UiState) {
             cf.str("breakdownError")?.let { Muted("Breakdown: $it") }
         }
     }
-    listOf("paths" to "Top paths", "countries" to "Edge countries", "statuses" to "Status codes", "contentTypes" to "Content types", "threatCountries" to "Threat countries")
-        .forEach { (k, t) -> TopList(t, cf.pairs(k)) }
+    TopList("Top paths", cf.pairs("paths"), id = "traffic-cf-paths")
+    TopList("Edge countries", cf.pairs("countries"), id = "traffic-cf-countries")
+    TopList("Status codes", cf.pairs("statuses"), id = "traffic-cf-statuses")
+    TopList("Content types", cf.pairs("contentTypes"), id = "traffic-cf-types")
+    TopList("Threat countries", cf.pairs("threatCountries"), id = "traffic-cf-threats")
     NoDataRow(empties.items)
 }
 
@@ -646,7 +652,7 @@ fun TrafficScreen(s: UiState) {
 @Composable
 fun SignInCodes(codes: List<JsonObject>) {
     val context = LocalContext.current
-    Panel("Sign-in codes") {
+    Panel("Sign-in codes", id = "systems-codes") {
         if (codes.isEmpty()) Muted("No codes in the last day.")
         codes.forEach { c ->
             val code = c.str("code").orEmpty()
@@ -669,7 +675,7 @@ private val CANARY_TEXT = mapOf("waiting" to "sent, waiting for it to come back"
 /** What ImprovMX did with the mail to the aliases, SMTP sends against the plan, and the daily canary round trip (#1900). */
 @Composable
 fun MailHealth(box: JsonObject?) {
-    Panel("Mail forwarding (ImprovMX)") {
+    Panel("Mail forwarding (ImprovMX)", id = "systems-mailbox") {
         if (box == null || !box.isOk()) { Muted(box.str("error") ?: "Asking ImprovMX…"); return@Panel }
         val t = box.obj("totals"); val smtp = box.obj("smtp"); val c = box.obj("canary")
         val month = smtp.num("month") ?: 0.0; val limit = smtp.num("monthLimit")
@@ -699,10 +705,11 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     val snap = s.snapshot
     val empties = Empties()
     val wide = snap.obj("wide")
+    ProcessesPanel(snap.obj("processes"), Modifier.layoutId(WIDE), poll = vm::refreshProcesses)
     val tiles = wide.objs("matrix")
-    if (tiles.isNotEmpty()) Panel("Status matrix", Modifier.layoutId(WIDE)) { TileMatrix(tiles) }
+    if (tiles.isNotEmpty()) Panel("Status matrix", Modifier.layoutId(WIDE), id = "systems-matrix") { TileMatrix(tiles) }
     val strip = wide.obj("uptime")
-    if (strip != null) Panel("Uptime, last 90 days", Modifier.layoutId(WIDE)) {
+    if (strip != null) Panel("Uptime, last 90 days", Modifier.layoutId(WIDE), id = "systems-uptime90") {
         val days = strip.objs("days")
         Muted(strip.num("pct")?.let { "${fmt(it)}% of checks answered since ${strip.str("since")}. Jarvis pings the product pages every hour and keeps one tally per day." }
             ?: "No checks recorded yet. Jarvis pings the product pages every hour and keeps one tally per day.")
@@ -717,25 +724,25 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     SignInCodes(snap.objs("mailCodes"))
     MailHealth(snap.ext("mailbox"))
     EmailAddresses(snap.ext("addresses"))
-    Panel("Connections") {
+    Panel("Connections", id = "systems-connections") {
         snap.objs("connections").forEach { c -> StatusRow(c.str("state"), c.str("name") ?: "", listOfNotNull(c.str("state"), c.str("detail")?.takeIf { it.isNotBlank() }, c.arr("needs").takeIf { it.isNotEmpty() }?.joinToString(" ") { it.text() }).filter { it.isNotBlank() }.joinToString(" · ")) }
     }
     val safety = snap.ext("safety")
     if (!safety.isOk()) empties.add("Safety", safety.str("error"))
-    else Panel("Safety", trailing = { Text(safety.num("score")?.let { "${it.toInt()}/100" } ?: "", fontFamily = Mono, color = J.muted) }) {
+    else Panel("Safety", id = "systems-safety", trailing = { Text(safety.num("score")?.let { "${it.toInt()}/100" } ?: "", fontFamily = Mono, color = J.muted) }) {
         Needs(safety)
         safety.objs("checks").forEach { StatusRow(it.str("level"), it.str("name") ?: "", it.str("detail")) }
     }
-    Panel("Uptime") {
+    Panel("Uptime", id = "systems-uptime") {
         val up = snap.ext("uptime")
         up.objs("pages").forEach { p -> StatusRow(if (p.bool("ok") == true) "good" else "alert", p.str("name") ?: "", if (p.bool("ok") == true) "${p.num("status")?.toInt()} · ${fmt(p.num("ms"))} ms · ${bytes(p.num("bytes"))}" else (p.str("error") ?: "down"), p.str("url")) }
         up.num("tlsDaysLeft")?.let { KeyRow("TLS certificate", "${it.toInt()} days left", if (it < 14) J.pink else J.green) }
     }
-    Panel("PageSpeed") {
+    Panel("PageSpeed", id = "systems-speed") {
         snap.ext("speed").objs("pages").forEach { p -> KeyRow(p.str("name") ?: "", p.num("score")?.let { fmt(it) } ?: (p.str("error") ?: "—"), score(p.num("score")), p.str("url")) }
     }
     PageSpeedPanels(snap.ext("pagespeed"), vm)
-    Panel("Scheduled jobs", trailing = { ActionButton("Daily now", "daily-now" in s.running) { vm.act("daily-now", "daily-now") { "Daily briefing: " + (it.str("sent") ?: "sent") } } }) {
+    Panel("Scheduled jobs", id = "systems-jobs", trailing = { ActionButton("Daily now", "daily-now" in s.running) { vm.act("daily-now", "daily-now") { "Daily briefing: " + (it.str("sent") ?: "sent") } } }) {
         snap.ext("jobs").objs("jobs").forEach { j ->
             val name = j.str("name") ?: return@forEach
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -747,7 +754,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
     val health = snap.ext("health")
-    Panel("Pipeline") {
+    Panel("Pipeline", id = "systems-queue") {
         health.objs("jobs").forEach { StatusRow(if (it.bool("ok") == false) "alert" else "good", it.str("job") ?: "", listOfNotNull(ago(it.str("endedAt")), it.str("note"), it.str("error")).filter { it.isNotBlank() }.joinToString(" · ")) }
         KeyRow("Review failures", fmt(health.at("failures").num("total")))
         KeyRow("Re-runs (held)", "${fmt(health.at("reruns").num("total"))} (${fmt(health.at("reruns").num("held"))})")
@@ -758,19 +765,19 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
     }
     val gh = snap.ext("github")
     if (!gh.isOk()) empties.add("GitHub", gh.str("error"))
-    else Panel("GitHub") {
+    else Panel("GitHub", id = "systems-ci") {
         Needs(gh)
         gh.objs("ci").forEach { StatusRow(if (it.str("conclusion") == "success") "good" else if (it.str("conclusion") == null) "info" else "alert", it.str("name") ?: "", (it.str("conclusion") ?: "running") + " · " + (ago(it.str("at")) ?: ""), it.str("url")) }
         KeyRow("Open bugs", fmt(gh.num("openBugs")), if ((gh.num("openBugs") ?: 0.0) > 0) J.amber else J.green, "https://github.com/kaanmuar/kaanmuar.github.io/issues?q=is%3Aopen+label%3Abug")
         KeyRow("PRs merged in range", fmt(gh.at("merged").num("total")))
     }
-    TopList("Bugs by area", gh.pairs("bugAreas"))
-    if (gh.obj("merged").objs("items").isNotEmpty()) Panel("Merged") { gh.obj("merged").objs("items").take(10).forEach { KeyRow("#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at"))?.take(10) ?: "", url = it.str("url")) } }
-    if (gh.objs("recent").isNotEmpty()) Panel("Newest issues") { gh.objs("recent").take(10).forEach { StatusRow(if (it.str("state") == "open") "warn" else "good", "#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at")), it.str("url")) } }
+    TopList("Bugs by area", gh.pairs("bugAreas"), id = "systems-bugs")
+    if (gh.obj("merged").objs("items").isNotEmpty()) Panel("Merged", id = "systems-merged") { gh.obj("merged").objs("items").take(10).forEach { KeyRow("#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at"))?.take(10) ?: "", url = it.str("url")) } }
+    if (gh.objs("recent").isNotEmpty()) Panel("Newest issues", id = "systems-recent") { gh.objs("recent").take(10).forEach { StatusRow(if (it.str("state") == "open") "warn" else "good", "#${it.num("number")?.toInt()} ${it.str("title")}", ago(it.str("at")), it.str("url")) } }
 
     val pl = snap.ext("platform")
     if (!pl.isOk()) empties.add("Google Cloud", pl.str("error"))
-    else Panel("Google Cloud") {
+    else Panel("Google Cloud", id = "systems-platform") {
         Needs(pl)
         run {
             val f = pl.obj("functions"); val g = pl.obj("gemini"); val fs = pl.obj("firestore"); val u = pl.obj("users")
@@ -785,6 +792,6 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
             f.objs("latest").take(6).forEach { StatusRow("alert", it.str("fn") ?: "", (it.str("kind") ?: "") + " · " + (ago(it.str("at")) ?: "")) }
         }
     }
-    TopList("Function failures", pl.obj("functions").pairs("byFunction"))
+    TopList("Function failures", pl.obj("functions").pairs("byFunction"), id = "systems-functions")
     NoDataRow(empties.items)
 }

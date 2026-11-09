@@ -176,6 +176,46 @@ test("server: GitHub keeps the latest finished run per workflow and groups bugs 
   assert.equal((await jarvis.github(fetch, "", { now: 0 })).ok, false);
 });
 
+test("server: CI on main reads a workflow by id when busy main left none of its finished runs in the list (#2287)", async () => {
+  const urls = [];
+  const fetch = async (url) => {
+    urls.push(url);
+    if (/actions\/workflows\?/.test(url)) return json({ workflows: [
+      { id: 1, name: "E2E and Visual Tests", state: "active" }, { id: 2, name: "Lint Code Base", state: "active" },
+      { id: 3, name: "CodeQL", state: "active" }, { id: 4, name: "Studio render", state: "active" }, { id: 5, name: "Old", state: "disabled_manually" }
+    ] });
+    if (/actions\/workflows\/1\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "cancelled", created_at: "2026-11-02T10:00:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z", html_url: "u/41410755312" }
+    ] });
+    if (/actions\/workflows\/4\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 4, name: "Studio issue_comment  ", status: "completed", conclusion: "skipped", created_at: "2026-11-02T11:00:00Z" },
+      { workflow_id: 4, name: "Studio mail render", status: "completed", conclusion: "failure", created_at: "2026-11-02T08:00:00Z" }
+    ] });
+    if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs\?event=pull_request/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs/.test(url)) return json({ workflow_runs: [
+      { workflow_id: 4, name: "Studio issue_comment  ", status: "completed", conclusion: "skipped", created_at: "2026-11-02T12:05:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "in_progress", created_at: "2026-11-02T12:04:00Z" },
+      { workflow_id: 1, name: "E2E and Visual Tests", status: "completed", conclusion: "cancelled", created_at: "2026-11-02T12:03:00Z" },
+      { workflow_id: 3, name: "Push on main", status: "completed", conclusion: "success", created_at: "2026-11-02T12:02:00Z" },
+      { workflow_id: 2, name: "Lint Code Base", status: "completed", conclusion: "success", created_at: "2026-11-02T12:01:00Z" },
+      { workflow_id: 2, name: "Lint Code Base", status: "completed", conclusion: "failure", created_at: "2026-11-02T12:00:00Z" }
+    ] });
+    if (/search/.test(url)) return json({ total_count: 0, items: [] });
+    return json([]);
+  };
+  const out = await jarvis.github(fetch, "token", { now: NOW.getTime() });
+  assert.deepEqual(out.ci.map((run) => [run.name, run.conclusion]), [["CodeQL", "success"], ["Lint Code Base", "success"], ["E2E and Visual Tests", "failure"], ["Studio render", "failure"]]);
+  assert.equal(out.ci.find((run) => run.name === "E2E and Visual Tests").url, "u/41410755312");
+  const byId = urls.filter((url) => /actions\/workflows\/\d+\/runs/.test(url)).map((url) => url.match(/workflows\/(\d+)/)[1]);
+  assert.deepEqual(byId, ["1", "4"]);
+  const week = encodeURIComponent(">=" + new Date(NOW.getTime() - 7 * 86400000).toISOString().slice(0, 10));
+  assert.ok(urls.every((url) => !/workflows\/\d+\/runs/.test(url) || (/branch=main/.test(url) && url.endsWith("&created=" + week))), urls.join("\n"));
+  const lines = core.briefing({ products: {}, external: { github: out } }).filter((row) => row.key.startsWith("ci:")).map((row) => row.text);
+  assert.deepEqual(lines, ['CI "E2E and Visual Tests" on main is failure.', 'CI "Studio render" on main is failure.']);
+});
+
 test("server: Scheduler jobs get short names and run-job refuses odd names", async () => {
   const calls = [];
   const fetch = async (url, opts) => {
@@ -386,6 +426,42 @@ test("server: settings are cleaned on save and read back with defaults", async (
   assert.equal(jarvis.normalizeSettings(db.writes[0].value).mail.daily, false);
   assert.equal(db.writes[0].path, "jarvis_settings/main");
   assert.equal(db.writes[0].value.by, "kaanmuar@gmail.com");
+});
+
+test("section layout: saved order first, new panels at their default place, gone ids ignored, hidden apart (#2809)", () => {
+  assert.deepEqual(core.applyLayout(["a", "b", "c"], null), { all: ["a", "b", "c"], order: ["a", "b", "c"], hidden: [] });
+  assert.deepEqual(core.applyLayout(["a", "b", "c", "d"], { order: ["c", "gone", "a"], hidden: ["d", "gone"] }), { all: ["c", "d", "a", "b"], order: ["c", "a", "b"], hidden: ["d"] });
+  assert.deepEqual(core.applyLayout(["new", "a", "b"], { order: ["b", "a"] }).order, ["new", "b", "a"]);
+  assert.deepEqual(core.applyLayout(["a", "a", "b"], { order: ["b", 5, "bad id!"] }).all, ["a", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b", "c", "d"], ["b"], "c", -1), ["c", "a", "b", "d"]);
+  assert.deepEqual(core.layoutMove(["a", "b", "c", "d"], ["c"], "b", 1), ["a", "c", "d", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b"], [], "a", -1), ["a", "b"]);
+  assert.deepEqual(core.layoutMove(["a", "b"], [], "zz", 1), ["a", "b"]);
+  const kept = core.keepLayout({ order: ["x", "a", "y", "b"], hidden: ["y", "a"] }, ["b", "a"], ["b"], ["a", "b"]);
+  assert.deepEqual(kept, { order: ["x", "b", "a", "y"], hidden: ["y", "b"] });
+  assert.equal(core.panelSlug("Failing runs · 3"), "failing-runs");
+  assert.equal(core.panelSlug("Open bugs by area (12)"), "open-bugs-by-area");
+  assert.equal(core.panelSlug("Google Maps: local businesses"), "google-maps-local-businesses");
+  assert.equal(core.panelSlug("· ·"), "panel");
+});
+
+test("server: the layout is cleaned, saved one tab at a time, kept by a settings save and read back in the settings (#2809)", async () => {
+  assert.deepEqual(core.cleanLayout({ review: { order: ["review-funnel", "review-funnel", 7, "<b>", "x".repeat(81)], hidden: ["review-heat"] }, nope: { order: ["a"] }, cv: { order: [] }, hub: "x" }),
+    { review: { order: ["review-funnel"], hidden: ["review-heat"] } });
+  assert.equal(core.cleanLayout({ review: { order: Array.from({ length: 300 }, (_, i) => "p" + i) } }).review.order.length, 200);
+  assert.deepEqual(core.cleanLayout([]), {});
+  const db = fakeDb({ docs: { "jarvis_settings/main": { goals: [], mail: { daily: false }, updatedAt: "2026-11-01T00:00:00.000Z" } } });
+  const one = await jarvis.saveLayout(db, { review: { order: ["review-heat", "review-funnel"], hidden: ["review-alerts"] }, bogus: { order: ["a"] } }, "carlos");
+  assert.deepEqual(one.layout, { review: { order: ["review-heat", "review-funnel"], hidden: ["review-alerts"] } });
+  assert.equal(one.updatedAt, "2026-11-01T00:00:00.000Z");
+  await jarvis.saveLayout(db, { systems: { order: ["systems-ci"], hidden: [] } }, "carlos");
+  const both = await jarvis.saveLayout(db, { review: null }, "carlos");
+  assert.deepEqual(both.layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  await assert.rejects(jarvis.saveLayout(db, { nope: {} }, "carlos"), /No Jarvis tab/);
+  const saved = await jarvis.saveSettings(db, { mail: { daily: true } }, "carlos");
+  assert.deepEqual(saved.layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  assert.deepEqual((await jarvis.readSettings(db)).layout, { systems: { order: ["systems-ci"], hidden: [] } });
+  assert.deepEqual((await jarvis.saveSettings(db, { layout: {} }, "carlos")).layout, {});
 });
 
 test("server: goal values come from count and sum aggregations with the right filters", async () => {
@@ -1375,13 +1451,13 @@ test("rerunCi re-runs the failed jobs of the newest failed run on main, and says
   const calls = [];
   const workflows = { workflows: [{ id: 1, name: "Buffer batch queue" }, { id: 2, name: "Deploy" }] };
   const runs = {
-    1: { workflow_runs: [{ id: 10, name: "Buffer batch queue", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", conclusion: "failure", html_url: "https://github.com/r/9" }] },
-    2: { workflow_runs: [{ id: 7, name: "Deploy", conclusion: "success", html_url: "https://github.com/r/7" }] }
+    1: { workflow_runs: [{ id: 11, name: "Buffer batch queue", status: "completed", conclusion: "skipped" }, { id: 10, name: "Buffer batch queue", status: "completed", conclusion: "cancelled" }, { id: 9, name: "Buffer batch queue", status: "completed", conclusion: "failure", html_url: "https://github.com/r/9" }] },
+    2: { workflow_runs: [{ id: 7, name: "Deploy", status: "completed", conclusion: "success", html_url: "https://github.com/r/7" }] }
   };
   const route = (url) => (/actions\/workflows\?/.test(url) ? json(workflows) : json(runs[(/workflows\/(\d+)\/runs\?branch=main/.exec(url) || [])[1]] || {}));
   const fetchOk = async (url, opts) => { calls.push([url, (opts || {}).method || "GET"]); return /rerun-failed-jobs/.test(url) ? json({}, 201) : route(url); };
   const out = await jarvis.rerunCi(fetchOk, "t", "Buffer batch queue");
-  assert.equal(out.run, 9, "the newest run that was not cancelled");
+  assert.equal(out.run, 9, "the newest run that was not cancelled or skipped (#2775)");
   assert.match(calls[1][0], /actions\/workflows\/1\/runs\?branch=main&status=completed/);
   assert.match(calls[2][0], /actions\/runs\/9\/rerun-failed-jobs$/);
   assert.equal(calls[2][1], "POST");
@@ -1390,6 +1466,22 @@ test("rerunCi re-runs the failed jobs of the newest failed run on main, and says
   const fetchNo = async (url) => (/rerun-failed-jobs/.test(url) ? json({ message: "Resource not accessible" }, 403) : route(url));
   await assert.rejects(() => jarvis.rerunCi(fetchNo, "t", "Buffer batch queue"), /Actions: write/);
   await assert.rejects(() => jarvis.rerunCi(fetchOk, "", "Deploy"), /No GitHub token/);
+});
+
+test("rerunCi re-runs the failed main run the briefing shows red, past newer skipped runs (#2775)", async () => {
+  const posts = [];
+  const runs = { workflow_runs: [
+    { id: 3, name: "Studio issue_comment", status: "completed", conclusion: "skipped" }, { id: 2, name: "Studio issue_comment", status: "completed", conclusion: "skipped" },
+    { id: 1, name: "Studio mail render", status: "completed", conclusion: "failure", html_url: "u/1" }
+  ] };
+  const fetchFake = async (url, opts) => {
+    if ((opts || {}).method === "POST") { posts.push(url); return json({}, 201); }
+    return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 4, name: "Studio render" }] } : runs);
+  };
+  const out = await jarvis.rerunCi(fetchFake, "t", "Studio render");
+  assert.equal(out.already, undefined);
+  assert.equal(out.run, 1);
+  assert.deepEqual(posts.map((url) => url.replace(/^.*actions\//, "")), ["runs/1/rerun-failed-jobs"]);
 });
 
 test("stalePrs keeps open, non-draft PRs whose newest run at their head failed before main went green (#2245)", () => {
@@ -1406,8 +1498,8 @@ test("stalePrs keeps open, non-draft PRs whose newest run at their head failed b
 
 test("rerunCi on a green main closes and reopens the stale PRs, spaced, skipping conflicts and keeping the cap (#2245)", async () => {
   const calls = [], slept = [];
-  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
-  const prRuns = { workflow_runs: [1, 2, 3, 4].map((n) => ({ id: 100 + n, name: "E2E", head_sha: "s" + n, status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" })) };
+  const mainRuns = { workflow_runs: [{ id: 50, name: "E2E", status: "completed", conclusion: "success", workflow_id: 11, created_at: "2026-11-02T10:00:00Z", html_url: "https://github.com/r/50" }] };
+  const prRuns = { workflow_runs: [1, 2, 3, 4].map((n) => ({ id: 100 + n, workflow_id: 11, name: "E2E", head_sha: "s" + n, status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" })) };
   const pulls = [1, 2, 3, 4].map((n) => ({ number: n, title: "PR " + n, html_url: "u/" + n, draft: false, head: { sha: "s" + n } }));
   const looks = {};
   const mergeable = (n) => (n === 2 ? false : n === 3 && (looks[n] = (looks[n] || 0) + 1) === 1 ? null : true);
@@ -1416,7 +1508,7 @@ test("rerunCi on a green main closes and reopens the stale PRs, spaced, skipping
     calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", "") + (opts && opts.body ? " " + opts.body : ""));
     if (/actions\/workflows\?/.test(url)) return json({ workflows: [{ id: 11, name: "E2E" }] });
     if (/actions\/workflows\/11\/runs\?branch=main/.test(url)) return json(mainRuns);
-    if (/actions\/workflows\/11\/runs\?event=pull_request/.test(url)) return json(prRuns);
+    if (/actions\/workflows\/11\/runs\?per_page/.test(url)) return json(prRuns);
     if (/pulls\?state=open/.test(url)) return json(pulls);
     const n = Number((/pulls\/(\d+)$/.exec(url) || [])[1]);
     if (method === "PATCH") return json({}, 200);
@@ -1453,11 +1545,47 @@ test("refreshPr retries a failed reopen once and says loudly when a PR stays clo
 });
 
 test("rerunCi with rerunMain false refuses while main is red (scripts/refresh-prs.sh, #2245)", async () => {
-  const runs = { workflow_runs: [{ id: 9, name: "E2E", conclusion: "failure", html_url: "https://github.com/r/9" }] };
+  const runs = { workflow_runs: [{ id: 9, name: "E2E", status: "completed", conclusion: "failure", html_url: "https://github.com/r/9" }] };
   const posts = [];
   const fetchFake = async (url, opts) => { if ((opts || {}).method === "POST") posts.push(url); return json(/actions\/workflows\?/.test(url) ? { workflows: [{ id: 3, name: "E2E" }] } : runs); };
   await assert.rejects(() => jarvis.rerunCi(fetchFake, "t", "E2E", { rerunMain: false }), /E2E is failure on main .*fix main before refreshing PRs/);
   assert.deepEqual(posts, []);
+});
+
+test("rerunCi finds CodeQL and Studio render by the workflow names the CI rows show, not their run-names (#2287)", async () => {
+  const workflows = { workflows: [{ id: 3, name: "CodeQL", state: "active" }, { id: 4, name: "Studio render", state: "active" }] };
+  const calls = [];
+  const fake = (mainConclusion) => async (url, opts) => {
+    const method = (opts || {}).method || "GET";
+    calls.push(method + " " + url.replace("https://api.github.com/repos/kaanmuar/kaanmuar.github.io/", ""));
+    if (/actions\/workflows\?/.test(url)) return json(workflows);
+    if (/actions\/workflows\/3\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", status: "completed", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z", html_url: "u/30" }] });
+    if (/actions\/workflows\/3\/runs\?per_page/.test(url)) return json({ workflow_runs: [
+      { id: 31, workflow_id: 3, name: "PR #1", event: "dynamic", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" },
+      { id: 30, workflow_id: 3, name: "Push on main", event: "dynamic", head_sha: "m", status: "completed", conclusion: mainConclusion, created_at: "2026-11-02T10:00:00Z" }
+    ] });
+    if (/pulls\?state=open/.test(url)) return json([{ number: 1, title: "PR 1", html_url: "u/1", draft: false, head: { sha: "s1" } }]);
+    if (method === "PATCH" || method === "POST") return json({}, 200);
+    return json({ number: 1, state: "open", mergeable: true });
+  };
+  await jarvis.rerunCi(fake("failure"), "t", "CodeQL", { sleep: async () => {} });
+  assert.ok(calls.includes("POST actions/runs/30/rerun-failed-jobs"), calls.join("\n"));
+  const green = await jarvis.rerunCi(fake("success"), "t", "CodeQL", { sleep: async () => {} });
+  assert.deepEqual(green.prs.refreshed, [1], "a PR whose CodeQL run is dynamic and named PR #1 is refreshed");
+
+  const fetch = async (url) => {
+    if (/actions\/workflows\?/.test(url)) return json(workflows);
+    if (/actions\/workflows\/4\/runs\?branch=main/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", status: "completed", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
+    if (/actions\/workflows\/\d+\/runs/.test(url)) return json({ workflow_runs: [] });
+    if (/actions\/runs\?event=pull_request/.test(url)) return json({ workflow_runs: [{ id: 41, workflow_id: 4, name: "Studio pull_request", head_sha: "s1", status: "completed", conclusion: "failure", created_at: "2026-11-02T09:00:00Z" }] });
+    if (/actions\/runs/.test(url)) return json({ workflow_runs: [{ id: 40, workflow_id: 4, name: "Studio push", status: "completed", conclusion: "success", created_at: "2026-11-02T10:00:00Z" }] });
+    if (/pulls\?state=open/.test(url)) return json([{ number: 1, title: "PR 1", html_url: "u/1", draft: false, head: { sha: "s1" } }]);
+    if (/search/.test(url)) return json({ total_count: 0, items: [] });
+    return json([]);
+  };
+  const out = await jarvis.github(fetch, "token", { now: NOW.getTime() });
+  assert.deepEqual(out.ci.map((run) => run.name), ["Studio render"]);
+  assert.deepEqual(out.prsStale.map((w) => [w.workflow, w.prs.map((pr) => pr.number)]), [["Studio render", [1]]]);
 });
 
 test("decideRatings approves or rejects pending ratings only, and briefItems lists them without test senders", async () => {

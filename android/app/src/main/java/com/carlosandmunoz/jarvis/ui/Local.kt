@@ -61,10 +61,10 @@ object Local {
 fun LocalPanel(s: UiState) {
     val g = s.snapshot.obj("external").obj("local")
     var all by rememberSaveable { mutableStateOf(false) }
-    if (g == null || !g.isOk()) { Panel("Google Maps: local businesses") { Muted(g.str("error") ?: "Pull down to read the Local checks.") }; return }
+    if (g == null || !g.isOk()) { Panel("Google Maps: local businesses", id = "review-local") { Muted(g.str("error") ?: "Pull down to read the Local checks.") }; return }
     val t = g.obj("totals")
     val sites = g.objs("sites")
-    Panel("Google Maps: local businesses · ${fmt(t.num("local"))}") {
+    Panel("Google Maps: local businesses · ${fmt(t.num("local"))}", id = "review-local") {
         KpiPairs(listOf(
             KpiData("Reviews in range", fmt(t.num("reviews"))),
             KpiData("Looked local", fmt(t.num("local"))),

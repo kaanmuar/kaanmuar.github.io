@@ -68,10 +68,10 @@ fun PeoplePanel(s: UiState) {
     val g = s.snapshot.obj("external").obj("people")
     var all by rememberSaveable { mutableStateOf(false) }
     var open by rememberSaveable { mutableStateOf("") }
-    if (g == null || !g.isOk()) { Panel("Signed-in people") { Muted(g.str("error") ?: "Pull down to read the signed-in people.") }; return }
+    if (g == null || !g.isOk()) { Panel("Signed-in people", id = "review-people") { Muted(g.str("error") ?: "Pull down to read the signed-in people.") }; return }
     val t = g.obj("totals")
     val people = g.objs("people").filter { it.bool("test") != true }
-    Panel("Signed-in people · ${people.size}") {
+    Panel("Signed-in people · ${people.size}", id = "review-people") {
         KpiPairs(listOf(
             KpiData("People", fmt(t.num("people"))),
             KpiData("Seen in range", fmt(t.num("active"))),

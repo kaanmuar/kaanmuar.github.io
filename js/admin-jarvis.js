@@ -5,12 +5,14 @@
    few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
+import * as Proc from "./admin-jarvis-processes.js?v=2548";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
 const LIVE_MS = 60 * 1000;
 // The server keeps a snapshot this long (jarvis.TTL.snapshot); asking sooner returns the same one.
 const SNAPSHOT_MS = 5 * 60 * 1000;
+const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
 const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
@@ -434,8 +436,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
-        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set()
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, kept: null,
+        panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set(), layoutEdit: null
     };
     readHash();
 
@@ -560,13 +562,65 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     // --- data -------------------------------------------------------------------------------------------------
 
-    // One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app shares.
-    async function loadSnapshot() {
+    // The last snapshot per range, kept in this browser so the page opens at once (#2510). Sign-in codes are not
+    // kept, and neither is the mail version, so every fetch brings the mail section back.
+    const SNAP_KEY = 'jv-snapshot-';
+    function savedSnapshot(range) {
+        if (S.kept && S.kept.range === range) return S.kept.snap;
+        try {
+            const kept = JSON.parse(localStorage.getItem(SNAP_KEY + range) || 'null');
+            return kept && auth.currentUser && kept.uid === auth.currentUser.uid && kept.snap && kept.snap.products ? kept.snap : null;
+        } catch (error) { return null; }
+    }
+    function keepSnapshot(range, snap) {
+        S.kept = { range, snap };
+        const versions = Object.assign({}, snap.versions);
+        delete versions.mail;
+        const stored = Object.assign({}, snap, { versions });
+        delete stored.mailCodes;
+        try { localStorage.setItem(SNAP_KEY + range, JSON.stringify({ uid: auth.currentUser && auth.currentUser.uid, snap: stored })); } catch (error) {
+            try { localStorage.removeItem(SNAP_KEY + range); } catch (e) { /* private mode: this visit only */ }
+        }
+    }
+    function forgetSnapshots() {
+        S.kept = null;
+        try { Object.keys(localStorage).filter((k) => k.startsWith(SNAP_KEY)).forEach((k) => localStorage.removeItem(k)); } catch (error) { /* nothing kept */ }
+    }
+
+    // Opens on the snapshot this browser kept for the range, with its age, before the first fetch answers.
+    function openSaved() {
+        const snap = savedSnapshot(S.range);
+        if (!snap) return false;
+        useSnapshot(snap);
+        compute();
+        render();
+        return true;
+    }
+
+    /* One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app
+       shares. With a kept copy it sends its versions as `since` and applies only the sections that changed (#2510);
+       `only` limits them to the ones a push named. An answer that cannot be applied means a full fetch. */
+    async function loadSnapshot(only) {
         SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
-        let snap;
+        const range = S.range;
+        const kept = savedSnapshot(range);
+        const since = kept && C.sectionSince(kept.versions);
         // With this browser's push endpoint the server knows the page is open and sends it section pushes (#2509).
-        try { snap = await call('snapshot', S.pushEndpoint ? { push: S.pushEndpoint } : undefined); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        const push = S.pushEndpoint ? { push: S.pushEndpoint } : {};
+        let snap;
+        try {
+            const answer = await call('snapshot', Object.assign({}, push, since ? { since } : {}, since && only && only.length ? { only } : {}));
+            snap = answer && answer.delta ? C.applySections(kept, answer) : answer;
+            if (!snap && answer && answer.ok !== false) snap = await call('snapshot', push);
+            else if (!snap) snap = answer;
+        } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
         if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        if (S.range !== range) return;
+        keepSnapshot(range, snap);
+        useSnapshot(snap);
+    }
+
+    function useSnapshot(snap) {
         S.versions = snap.versions || null;
         const date = (v) => (v ? new Date(v) : null);
         const w = snap.window || {};
@@ -576,6 +630,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.feed = snap.feed || [];
         S.socialHeat = snap.socialHeat || null;
         S.reports = snap.reports || [];
+        if (snap.processes) { S.processes = snap.processes; S.processesAt = Date.now(); }
         Object.assign(S.external, snap.external || {}, { 'mail-codes': { ok: true, codes: snap.mailCodes || [] } });
         if (snap.settings) S.settings = Object.assign({ ok: true }, snap.settings);
         if (Array.isArray(snap.goals)) S.goals = snap.goals;
@@ -589,12 +644,37 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.externalAt = Date.now();
     }
 
-    // Live: a newer snapshot once the server's has aged out; the pulse counts the feed lines it adds.
-    async function loadNewer() {
+    // Live processes (#2548): a processes push fetches the one-read processes op and redraws only that panel.
+    async function loadProcesses() {
+        const out = await call('processes').catch(() => null);
+        if (!out || out.ok === false || !out.processes) return false;
+        const before = Proc.active(S.processes).length;
+        S.processes = out.processes;
+        S.processesAt = Date.now();
+        if (S.versions && out.version) S.versions = Object.assign({}, S.versions, { processes: out.version });
+        if (S.kept) keepSnapshot(S.kept.range, Object.assign({}, S.kept.snap, { processes: out.processes }, out.version ? { versions: Object.assign({}, S.kept.snap.versions, { processes: out.version }) } : {}));
+        if (!before !== !Proc.active(S.processes).length) render();
+        else paintProcesses();
+        return true;
+    }
+
+    function paintProcesses() {
+        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact' }); });
+    }
+
+    function processesPanel(compact) {
+        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact });
+        if (compact && !body) return '';
+        return panel(compact ? 'overview-processes' : 'systems-processes', 'Processes', `<div data-processes="${compact ? 'compact' : 'full'}">${body}</div>`,
+            { wide: true, keep: true, data: (S.processes && S.processes.rows) || [] });
+    }
+
+    // Live: a newer snapshot once the server's has aged out, or the sections a push named; the pulse counts the feed lines it adds.
+    async function loadNewer(only) {
         if (S.loading) return;
         const newest = (S.feed[0] || {}).at || '';
         S.loading = true;
-        try { await loadSnapshot(); } catch (error) { S.loading = false; return; }
+        try { await loadSnapshot(only); } catch (error) { S.loading = false; return; }
         S.loading = false;
         compute();
         render();
@@ -763,6 +843,144 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     function foldAll(shut) {
         $$('.jv-panel[data-panel-id]').forEach((sec) => fold(sec.dataset.panelId, shut));
+    }
+
+    // --- section layout per tab (#2809): order and hidden sections from jarvis_settings layout, shared with the app --------
+    const layoutOf = (tab) => ((S.settings || {}).layout || {})[tab] || null;
+    const topPanels = (view) => Array.from(view.querySelectorAll('.jv-panel[data-panel-id]')).filter((sec) => !sec.parentElement.closest('.jv-panel'));
+    // The ids in the order the view drew them, before any layout; a fresh render numbers its sections again.
+    function defaultIds(view) {
+        const secs = topPanels(view);
+        secs.forEach((sec, i) => { if (!sec.dataset.at) sec.dataset.at = String(i); });
+        return Array.from(new Set(secs.sort((a, b) => a.dataset.at - b.dataset.at).map((sec) => sec.dataset.panelId)));
+    }
+    const panelTitle = (sec) => (sec && (sec.querySelector('.jv-fold') || sec.querySelector('h3'))?.textContent.trim()) || (sec ? sec.dataset.panelId : '');
+
+    // Each grid keeps its own slots; the panels in it take them in the layout's order.
+    function arrange(view, tab) {
+        view.querySelectorAll('.jv-lay-bar, .jv-lay-tools').forEach((el) => el.remove());
+        const ids = defaultIds(view);
+        const secs = topPanels(view);
+        if (!secs.length) return;
+        const edit = S.layoutEdit && S.layoutEdit.tab === tab ? S.layoutEdit : null;
+        const L = C.applyLayout(ids, edit ? { order: edit.all, hidden: edit.hidden } : layoutOf(tab));
+        const rank = new Map(L.all.map((id, i) => [id, i]));
+        const groups = new Map();
+        secs.forEach((sec) => groups.set(sec.parentElement, (groups.get(sec.parentElement) || []).concat(sec)));
+        groups.forEach((list) => {
+            const slots = list.map((sec) => { const mark = document.createComment(''); sec.replaceWith(mark); return mark; });
+            list.slice().sort((a, b) => rank.get(a.dataset.panelId) - rank.get(b.dataset.panelId)).forEach((sec, i) => slots[i].replaceWith(sec));
+        });
+        const hide = new Set(L.hidden);
+        const shown = L.order;
+        secs.forEach((sec) => {
+            const id = sec.dataset.panelId;
+            sec.hidden = hide.has(id);
+            sec.classList.toggle('is-arranging', !!edit);
+            if (!edit || sec.hidden) return;
+            const name = esc(panelTitle(sec));
+            const at = shown.indexOf(id);
+            sec.querySelector(':scope > header').insertAdjacentHTML('beforeend', `<span class="jv-lay-tools"><button type="button" class="jv-lay-drag" data-lay="drag" data-id="${esc(id)}" aria-label="Move ${name}: drag it, or press the up and down arrow keys" title="Drag to move">⠿</button><button type="button" class="jv-btn small" data-lay="up" data-id="${esc(id)}" aria-label="Move ${name} up"${at <= 0 ? ' disabled' : ''}>↑</button><button type="button" class="jv-btn small" data-lay="down" data-id="${esc(id)}" aria-label="Move ${name} down"${at >= shown.length - 1 ? ' disabled' : ''}>↓</button><button type="button" class="jv-btn small" data-lay="hide" data-id="${esc(id)}" aria-label="Hide ${name}">Hide</button></span>`);
+        });
+        const bar = document.createElement('div');
+        bar.className = 'jv-lay-bar' + (edit ? ' is-on' : '');
+        const title = (id) => panelTitle(secs.find((sec) => sec.dataset.panelId === id));
+        bar.innerHTML = edit
+            ? `<p class="jv-lay-help">Editing this tab: drag ⠿ or use ↑ ↓ to move a section, Hide to put it away.</p><div class="jv-actions"><button type="button" class="jv-btn small" data-lay="reset">Reset to default</button><button type="button" class="jv-btn small is-primary" data-lay="done">Done</button></div>
+              <div class="jv-lay-tray"><h4>Hidden sections${L.hidden.length ? ` (${L.hidden.length})` : ''}</h4>${L.hidden.length ? `<ul>${L.hidden.map((id) => `<li><span>${esc(title(id))}</span><button type="button" class="jv-btn small" data-lay="show" data-id="${esc(id)}" aria-label="Add back ${esc(title(id))}">Add back</button></li>`).join('')}</ul>` : '<p class="jv-note">None. Hide a section to keep it here.</p>'}</div>`
+            : `<button type="button" class="jv-link" data-lay="edit">Edit layout</button>${L.hidden.length ? `<span class="jv-note">${L.hidden.length} hidden</span>` : ''}`;
+        view.prepend(bar);
+    }
+
+    function focusLay(act, id) {
+        const view = $(`[data-view="${S.product}"]`);
+        const pick = (a) => view.querySelector(`[data-lay="${a}"]${id ? `[data-id="${CSS.escape(id)}"]` : ''}:not([disabled])`);
+        const el = pick(act) || (id && pick('drag')) || view.querySelector('[data-lay="done"], [data-lay="edit"]');
+        if (el) el.focus();
+    }
+
+    function layAct(act, id) {
+        const tab = S.product;
+        const view = $(`[data-view="${tab}"]`);
+        const ids = defaultIds(view);
+        if (act === 'edit') {
+            const L = C.applyLayout(ids, layoutOf(tab));
+            S.layoutEdit = { tab, all: L.all, hidden: L.hidden, dirty: false, reset: false };
+            arrange(view, tab);
+            focusLay('done');
+            return;
+        }
+        const E = S.layoutEdit;
+        if (!E || E.tab !== tab) return;
+        if (act === 'done') { layDone(); return; }
+        E.all = C.applyLayout(ids, { order: E.all }).all;
+        if (act === 'reset') Object.assign(E, { all: ids, hidden: [], reset: true });
+        else if (act === 'up' || act === 'down') E.all = C.layoutMove(E.all, E.hidden, id, act === 'up' ? -1 : 1);
+        else if (act === 'hide') E.hidden = E.hidden.concat(id);
+        else if (act === 'show') E.hidden = E.hidden.filter((x) => x !== id);
+        else return;
+        E.dirty = true;
+        arrange(view, tab);
+        if (act === 'hide') focusLay('done');
+        else focusLay(act === 'show' ? 'drag' : act, act === 'reset' ? null : id);
+    }
+
+    // Done: shown at once, saved through settings-save for this tab only; a failed save puts the old layout back.
+    async function layDone() {
+        const E = S.layoutEdit;
+        if (!E) return;
+        S.layoutEdit = null;
+        const view = $(`[data-view="${E.tab}"]`);
+        const ids = defaultIds(view);
+        const prev = layoutOf(E.tab);
+        const put = (l) => { const all = Object.assign({}, (S.settings || {}).layout); if (l) all[E.tab] = l; else delete all[E.tab]; S.settings = Object.assign({}, S.settings, { layout: all }); };
+        const next = E.reset && !E.hidden.length && E.all.join() === ids.join() ? null : C.keepLayout(E.reset ? null : prev, E.all, E.hidden, ids);
+        if (E.dirty) put(next);
+        arrange(view, E.tab);
+        if (S.product === E.tab) focusLay('edit');
+        if (!E.dirty) return;
+        const out = await call('settings-save', { layout: { [E.tab]: next } }).catch((error) => ({ ok: false, error: error.message }));
+        if (out.ok === false) {
+            put(prev);
+            arrange(view, E.tab);
+            toast('The layout did not save: ' + (out.error || 'failed') + '. It is back as it was.', 6000);
+            return;
+        }
+        if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+        toast('Layout saved. The app shows it too.');
+    }
+
+    // Drag by ⠿ with a mouse or a finger: the section follows the pointer through its grid, in reading order.
+    let dragging = null;
+    function dragMove(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        if (event.clientY < 56) window.scrollBy(0, -14); else if (event.clientY > window.innerHeight - 56) window.scrollBy(0, 14);
+        const over = Array.from(sec.parentElement.children).find((el) => {
+            if (el === sec || !el.matches('.jv-panel[data-panel-id]') || el.hidden) return false;
+            const r = el.getBoundingClientRect();
+            return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+        });
+        if (!over) return;
+        const r = over.getBoundingClientRect();
+        const before = (event.clientY - r.top) / r.height + (event.clientX - r.left) / r.width < 1;
+        sec.parentElement.insertBefore(sec, before ? over : over.nextSibling);
+        const handle = sec.querySelector('[data-lay="drag"]');
+        if (handle && !handle.hasPointerCapture(event.pointerId)) handle.setPointerCapture(event.pointerId);
+    }
+    function dragEnd(event) {
+        if (!dragging || event.pointerId !== dragging.pointer) return;
+        const { sec } = dragging;
+        dragging = null;
+        sec.classList.remove('is-dragging');
+        const E = S.layoutEdit;
+        const view = sec.closest('.jv-view');
+        if (!E || !view) return;
+        const shown = topPanels(view).filter((el) => !el.hidden).map((el) => el.dataset.panelId);
+        E.all = C.layoutWeave(shown, E.all);
+        E.dirty = true;
+        arrange(view, E.tab);
+        focusLay('drag', sec.dataset.panelId);
     }
 
     // A panel whose whole body is one "nothing here" line joins the view's No data yet chips instead (#2139).
@@ -2943,7 +3161,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         S.wide = W;
         const take = () => { const list = S.empties; S.empties = []; return noData(list); };
         S.empties = [];
-        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
+        out.overview = commandDeck(W) + `<div class="jv-tiles">${tiles}</div><div class="jv-grid">${processesPanel(true)}${productsPanel(W)}${trendPanel(W)}${briefPanel('overview')}${proposalsPanel()}${goalsPanel('overview')}
             ${panel('overview-feed', 'Live feed', feed.length ? `<ul class="jv-feed">${feed.map((f) => `<li><time>${when(f.at)}</time><span>${esc(f.text)}</span></li>`).join('')}</ul>` : '<p class="jv-empty">No events yet.</p>', { tall: true, data: feed.map((f) => ({ at: (C.toDate(f.at) || new Date()).toISOString(), event: f.text })) })}
             ${panel('overview-rings', 'Systems at a glance', `<div class="jv-rings">${ring(C.readiness(e), 'ready')}${(e.speed && e.speed.pages ? e.speed.pages : []).map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 84)).join('')}</div>`)}
             ${panel('overview-mix', 'Visits by product', bars(['cv', 'studio', 'lab'].map((k) => ({ label: (C.PRODUCTS.find((p) => p.key === k) || {}).name, value: s[k].totals.visits })).concat([{ label: 'URL Review (opens)', value: s.review.totals.opens }]), { color: COLORS.violet }), { data: ['cv', 'studio', 'lab'].map((k) => ({ product: k, visits: s[k].totals.visits, clicks: s[k].totals.clicks, exports: s[k].totals.exports, runs: s[k].totals.runs })) })}
@@ -2976,7 +3194,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('review-failures', 'Failed runs', h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : 'Not loaded.'}</p>`, { data: h && h.failures ? h.failures.latest : null })}
             ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], reviewAlerts(), 'No alerts in range.'), { wide: true, data: reviewAlerts().map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
             ${panel('review-reports', 'Mailed reports', table([['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))], ['Opens', (x) => fmt(x.opens || 0)], ['Reviews', (x) => fmt(x.reviews || 0)], ['Paid', (x) => fmt(x.paidUsd || 0) + ' USD']], S.reports, 'No mailed reports yet.'), { data: S.reports.map((x) => ({ period: x.period, label: x.label, opens: x.opens, reviews: x.reviews, paidUsd: x.paidUsd })) })}
-            ${panel('review-actions', 'Actions', `<div class="jv-actions">
+            ${panel('review-ops', 'Actions', `<div class="jv-actions">
                 <a class="jv-btn" href="${DESK}" target="_blank" rel="noopener">Review desk</a><a class="jv-btn" href="${DESK}/failures" target="_blank" rel="noopener">Failed runs</a>
                 <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button>
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
@@ -3031,7 +3249,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const up = e.uptime;
         const sp = e.speed;
         const tiles90 = C.statusMatrix(e, S.pending);
-        out.systems = `<div class="jv-grid">${briefPanel('systems')}
+        out.systems = `<div class="jv-grid">${processesPanel(false)}${briefPanel('systems')}
             ${panel('systems-matrix', 'Status matrix', matrix(tiles90), { wide: true, keep: true, data: tiles90 })}
             ${panel('systems-uptime90', 'Uptime, last 90 days', strip(W.uptime), { wide: true, keep: true, data: W.uptime.days })}
             ${actionsPanel()}${codesPanel()}${mailboxPanel()}${addressesPanel()}${connectionsPanel()}${safetyPanel()}${platformPanel()}
@@ -3077,6 +3295,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && !el.value) el.value = v; });
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
+                arrange(view, p.key);
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
@@ -3564,6 +3783,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     });
 
     function go(product) {
+        if (S.layoutEdit && S.layoutEdit.tab !== product) layDone();
         S.product = product;
         writeHash();
         render();
@@ -3810,11 +4030,16 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
-        // A section changed on the server (#2509): fetch again unless this page already holds those versions.
-        // Applying only the changed sections is #2510.
-        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden && C.sectionsStale(event.data.jarvisSections, S.versions, S.range)) loadNewer();
+        // A section changed on the server (#2509): fetch only the sections this page does not hold yet (#2510).
+        if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden) onSections(event.data.jarvisSections);
     });
     if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
+
+    async function onSections(msg) {
+        const processes = String(msg.sections || '').split(',').includes('processes') && await loadProcesses();
+        const only = C.sectionsToFetch(msg, S.versions, S.range).filter((name) => !(processes && name === 'processes'));
+        if (only.length) loadNewer(only);
+    }
 
     function readSettings() {
         const form = $('.jv-settings-box');
@@ -3851,7 +4076,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (!out.ok) { toast('Not saved: ' + (out.error || 'no answer'), 5000); return; }
         const repos = (s) => JSON.stringify(C.githubRepos(s && s.github && s.github.repos));
         const reposChanged = repos(S.settings) !== repos(out);
-        S.settings = out;
+        S.settings = Object.assign({ layout: (S.settings || {}).layout }, out);
         closeSettings();
         toast('Saved. Jarvis is recounting the goals.');
         compute();
@@ -3913,6 +4138,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
         if (!t || !root.contains(t)) return;
         if (t.dataset.conDock !== undefined) { dock(!docked); return; }
+        if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
         if (t.dataset.conClose !== undefined) { dock(false); return; }
         if (t.dataset.conFull !== undefined) { dock(false); go('console'); return; }
         if (t.closest('[data-con]')) return;
@@ -4134,11 +4360,33 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         else if (event.key === '/') { const ask = $(`[data-view="${S.product}"] .jv-ask input`); if (ask) { event.preventDefault(); ask.focus(); } }
     }
     document.addEventListener('keydown', onKey);
+    root.addEventListener('keydown', (event) => {
+        const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
+        if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+        event.preventDefault();
+        layAct(event.key === 'ArrowUp' ? 'up' : 'down', handle.dataset.id);
+        focusLay('drag', handle.dataset.id);
+    });
+    root.addEventListener('pointerdown', (event) => {
+        const handle = event.target.closest('[data-lay="drag"]');
+        if (!handle || !S.layoutEdit || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        event.preventDefault();
+        const sec = handle.closest('.jv-panel');
+        handle.setPointerCapture(event.pointerId);
+        dragging = { sec, pointer: event.pointerId };
+        sec.classList.add('is-dragging');
+    });
+    document.addEventListener('pointermove', dragMove);
+    document.addEventListener('pointerup', dragEnd);
+    document.addEventListener('pointercancel', dragEnd);
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voices = {}; };
 
     S.timers.push(setInterval(() => {
         const node = $('#jv-ago');
         if (node && S.updatedAt) node.textContent = S.live ? 'live · ' + ago(Date.now() - S.updatedAt) : 'paused';
+        Proc.tick(root, Date.now());
+        // While something runs and no push came (this browser not subscribed), ask again each minute: one read.
+        if (S.live && S.mounted && !document.hidden && Proc.active(S.processes).length && Date.now() - (S.processesAt || 0) > PROCESSES_MS) { S.processesAt = Date.now(); loadProcesses(); }
     }, 1000));
     S.timers.push(setInterval(() => {
         if (document.hidden || !visible() || !auth.currentUser) return;
@@ -4152,12 +4400,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     return {
         show() {
             greet();
-            if (!S.mounted) { S.mounted = true; refresh(); } else { compute(); render(); }
+            if (!S.mounted) { S.mounted = true; openSaved(); refresh(); } else { compute(); render(); }
             writeHash();
             openLink(new URLSearchParams(window.location.search));
         },
         open(search) { openLink(new URLSearchParams(search)); },
         inboxChanged() { if (S.mounted) { compute(); render(); } },
+        forget: forgetSnapshots,
         state: S,
         run,
         destroy() {
@@ -4167,6 +4416,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             holo.node = null;
             document.removeEventListener('visibilitychange', holoRun);
             document.removeEventListener('keydown', onKey);
+            document.removeEventListener('pointermove', dragMove);
+            document.removeEventListener('pointerup', dragEnd);
+            document.removeEventListener('pointercancel', dragEnd);
             const icon = document.querySelector('link[data-jv-icon]');
             if (icon) icon.remove();
             document.title = pageTitle;

@@ -273,6 +273,7 @@ function seed() {
 
 async function openStats(page, hash, extra) {
   const calls = [];
+  const layout = {};
   const data = seed();
   await page.addInitScript((rows) => { window.__data = rows; }, data);
   for (const [file, body] of Object.entries(STUBS)) {
@@ -284,8 +285,16 @@ async function openStats(page, hash, extra) {
     const body = JSON.parse(request.postData() || '{}');
     calls.push({ op: body.op, auth: request.headers().authorization, body });
     if (body.op === 'brief-mark') return route.fulfill({ json: { op: body.op, ok: true, key: body.key, status: body.status, until: new Date(Date.now() + 864e5).toISOString() }, headers: { 'Access-Control-Allow-Origin': '*' } });
+    if (body.op === 'settings-save' && body.layout) {
+      Object.entries(body.layout).forEach(([tab, l]) => { if (l) layout[tab] = l; else delete layout[tab]; });
+      return route.fulfill({ json: { op: body.op, ok: true, layout }, headers: { 'Access-Control-Allow-Origin': '*' } });
+    }
     if (body.op === 'settings-save') return route.fulfill({ json: Object.assign({ op: body.op, ok: true, updatedAt: new Date().toISOString() }, body.settings), headers: { 'Access-Control-Allow-Origin': '*' } });
-    if (body.op === 'snapshot') return route.fulfill({ json: snapshotOf(data, body.days, extra), headers: { 'Access-Control-Allow-Origin': '*' } });
+    if (body.op === 'snapshot') {
+      const snap = snapshotOf(data, body.days, extra);
+      const full = Object.assign(snap, { settings: Object.assign({}, snap.settings, { layout }) });
+      return route.fulfill({ json: extra && extra.snapshotAnswer ? await extra.snapshotAnswer(body, full) : full, headers: { 'Access-Control-Allow-Origin': '*' } });
+    }
     const answer = (extra || {})[body.op] || EXTERNAL[body.op] || (body.op === 'brief' || body.op === 'ask' ? { ok: true, text: 'Jarvis says the CV is up. Next: answer the inbox.' } : { ok: true, ran: body.job });
     return route.fulfill({ json: Object.assign({ op: body.op }, answer), headers: { 'Access-Control-Allow-Origin': '*' } });
   });
@@ -387,6 +396,93 @@ test.describe('admin statistics (Jarvis)', () => {
     await page.evaluate(() => { location.hash = '#stats/overview/30'; });
     await expect(page.locator('[data-view="overview"]')).toBeVisible();
     await expect(page.locator('[data-view="systems"]')).toBeHidden();
+  });
+
+  for (const [width, folded] of [[360, true], [720, false]]) {
+    test(`every tab's sections move, hide, come back and reset, saved per tab and kept after a reload, ${folded ? 'folded' : 'unfolded'} at ${width}px (#2809)`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 900 });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      const calls = await openStats(page, '#stats/review/30');
+      const view = page.locator('[data-view="review"]');
+      const shown = () => view.evaluate((v) => Array.from(v.querySelectorAll('.jv-grid > .jv-panel[data-panel-id]')).filter((p) => !p.hidden).map((p) => p.dataset.panelId));
+      await expect(view.locator('.jv-panel[data-panel-id="review-funnel"]')).toBeVisible();
+      await expect(view.locator('.jv-lay-tools')).toHaveCount(0);
+      const before = await shown();
+      expect(before.length).toBeGreaterThan(4);
+
+      await view.locator('[data-lay="edit"]').click();
+      await expect(view.locator('[data-lay="done"]')).toBeFocused();
+      const funnel = before.indexOf('review-funnel');
+      await view.locator('[data-lay="up"][data-id="review-funnel"]').click();
+      await expect.poll(shown).toEqual([...before.slice(0, funnel - 1), 'review-funnel', before[funnel - 1], ...before.slice(funnel + 1)]);
+      await expect(view.locator('[data-lay="up"][data-id="review-funnel"]')).toBeFocused();
+      await view.locator('[data-lay="drag"][data-id="review-funnel"]').press('ArrowDown');
+      await expect.poll(shown).toEqual(before);
+      await expect(view.locator('[data-lay="drag"][data-id="review-funnel"]')).toBeFocused();
+      const trend = before.indexOf('review-trend');
+      const ahead = before[trend - 1];
+      await view.locator(`.jv-panel[data-panel-id="${ahead}"]`).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      const from = await view.locator('[data-lay="drag"][data-id="review-trend"]').boundingBox();
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+      await page.mouse.down();
+      const target = await view.locator(`.jv-panel[data-panel-id="${ahead}"]`).boundingBox();
+      await page.mouse.move(target.x + 8, target.y + 8, { steps: 6 });
+      await page.mouse.up();
+      await expect.poll(shown).toEqual([...before.slice(0, trend - 1), 'review-trend', ahead, ...before.slice(trend + 1)]);
+      await view.locator('[data-lay="hide"][data-id="review-heat"]').click();
+      await expect(view.locator('.jv-panel[data-panel-id="review-heat"]')).toBeHidden();
+      await expect(view.locator('.jv-lay-tray')).toContainText('When they open it');
+      await view.locator('.jv-lay-bar').evaluate((el) => el.scrollIntoView());
+      await testInfo.attach('edit', { body: await page.screenshot(), contentType: 'image/png' });
+      if (process.env.LAYOUT_SHOTS) await page.screenshot({ path: `${process.env.LAYOUT_SHOTS}/2809-web-${width}-edit.png` });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+      const edited = await shown();
+      await view.locator('[data-lay="done"]').click();
+      await expect(view.locator('.jv-lay-tools')).toHaveCount(0);
+      await expect.poll(() => calls.filter((c) => c.op === 'settings-save').map((c) => c.body)).toHaveLength(1);
+      const saved = calls.find((c) => c.op === 'settings-save').body.layout.review;
+      expect(saved.order.indexOf('review-trend')).toBe(saved.order.indexOf(ahead) - 1);
+      expect(saved.hidden).toEqual(['review-heat']);
+      expect(calls.find((c) => c.op === 'settings-save').body.settings).toBeUndefined();
+
+      await page.reload();
+      await expect(view.locator('.jv-panel[data-panel-id="review-funnel"]')).toBeVisible();
+      await expect.poll(shown).toEqual(edited);
+      await expect(view.locator('.jv-panel[data-panel-id="review-heat"]')).toBeHidden();
+      await expect(view.locator('.jv-lay-bar')).toContainText('1 hidden');
+
+      await view.locator('[data-lay="edit"]').click();
+      await view.locator('[data-lay="show"][data-id="review-heat"]').click();
+      await expect(view.locator('.jv-panel[data-panel-id="review-heat"]')).toBeVisible();
+      await view.locator('[data-lay="reset"]').click();
+      await expect.poll(shown).toEqual(before);
+      await view.locator('[data-lay="done"]').click();
+      await expect.poll(() => calls.filter((c) => c.op === 'settings-save').length).toBe(2);
+      expect(calls.filter((c) => c.op === 'settings-save')[1].body.layout).toEqual({ review: null });
+      await page.reload();
+      await expect(view.locator('.jv-panel[data-panel-id="review-funnel"]')).toBeVisible();
+      await expect.poll(shown).toEqual(before);
+      expect(errors).toEqual([]);
+    });
+  }
+
+  test('a layout that does not save comes back as it was, with a note (#2809)', async ({ page }) => {
+    await openStats(page, '#stats/systems/30');
+    await page.route(/cloudfunctions\.net\/jarvis$/, async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      if (body.op === 'settings-save') return route.fulfill({ status: 500, json: { ok: false, error: 'offline' }, headers: { 'Access-Control-Allow-Origin': '*' } });
+      return route.fallback();
+    });
+    const view = page.locator('[data-view="systems"]');
+    const shown = () => view.evaluate((v) => Array.from(v.querySelectorAll('.jv-grid > .jv-panel[data-panel-id]')).filter((p) => !p.hidden).map((p) => p.dataset.panelId));
+    await expect(view.locator('.jv-panel[data-panel-id="systems-matrix"]')).toBeVisible();
+    const before = await shown();
+    await view.locator('[data-lay="edit"]').click();
+    await view.locator('[data-lay="hide"][data-id="systems-matrix"]').click();
+    await view.locator('[data-lay="done"]').click();
+    await expect(page.locator('.jv-toast')).toContainText('The layout did not save: offline');
+    await expect.poll(shown).toEqual(before);
   });
 
   test('every section folds and unfolds, Collapse all and Expand all work, and the folds survive a reload (#1973)', async ({ page }) => {
@@ -1453,5 +1549,40 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(snapshots).toBe(2);
     expect(calls.some((c) => c.op === 'rows' || c.op === 'health')).toBe(false);
     expect((await page.evaluate(() => window.__reads || [])).filter((name) => JARVIS_ROWS.includes(name))).toEqual([]);
+  });
+
+  test('opens on the kept snapshot, sends its versions as since and applies only the sections that changed (#2510)', async ({ page }) => {
+    await page.clock.install();
+    const at = new Date().toISOString();
+    const versions = { products: { v: 'p1', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } };
+    let answer = (body, full) => Object.assign(full, { versions });
+    const calls = await openStats(page, undefined, { snapshotAnswer: (body, full) => answer(body, full) });
+    const feed = page.locator('[data-view="overview"] [data-panel-id="overview-feed"]');
+    await expect(feed).toContainText('URL Review: paid review of shop.example/ (complete)');
+    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('jv-snapshot-30')).snap);
+    expect(kept.products).toBeTruthy();
+    expect(kept.mailCodes).toBeUndefined();
+    expect(Object.keys(kept.versions).sort()).toEqual(['processes', 'products']);
+
+    answer = (body, full) => ({ ok: true, op: 'snapshot', delta: true, days: body.days, cachedAt: new Date().toISOString(), checked: {},
+      versions: { products: { v: 'p2', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } },
+      sections: { products: { window: full.window, products: full.products, outreachVisits: full.outreachVisits, socialHeat: full.socialHeat, feed: [{ at: new Date().toISOString(), text: 'QA Studio: a new run' }].concat(full.feed) } } });
+    await page.clock.fastForward('06:00');
+    const snapshots = () => calls.filter((c) => c.op === 'snapshot');
+    await expect.poll(() => snapshots().length).toBe(2);
+    expect(snapshots()[1].body.since).toEqual({ products: 'p1', processes: 'j1', mail: 'm1' });
+    await expect(feed).toContainText('QA Studio: a new run');
+    await expect(feed).toContainText('URL Review: paid review of shop.example/ (complete)');
+
+    let release;
+    const held = new Promise((done) => { release = done; });
+    answer = async (body) => { await held; return { ok: true, op: 'snapshot', delta: true, days: body.days, cachedAt: new Date().toISOString(), versions: { products: { v: 'p2', at }, processes: { v: 'j1', at }, mail: { v: 'm1', at } }, sections: {} }; };
+    await page.reload();
+    await expect(page.locator('#stats-pane .jv')).toBeVisible();
+    await expect(feed).toContainText('QA Studio: a new run');
+    await expect.poll(() => snapshots().length).toBe(3);
+    expect(snapshots()[2].body.since).toEqual({ products: 'p2', processes: 'j1' });
+    release();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('jv-snapshot-30')).snap.versions.products.v)).toBe('p2');
   });
 });
