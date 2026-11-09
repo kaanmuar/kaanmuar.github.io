@@ -34,7 +34,7 @@ function fakeOps(over) {
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
-  "owner-tags-approve-verified": 20, "owner-tags-block": 10 };
+  "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 
 test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, caps stay within 0-100 and confidence within 0.5-1", () => {
   assert.deepEqual(actions.cleanSettings(), { auto: true, caps: DEFAULT_CAPS, confidence: 0.8, countdownHours: 2 });

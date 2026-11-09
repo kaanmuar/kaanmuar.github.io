@@ -99,7 +99,7 @@ class GithubTest {
         assertTrue(CHIPS.contains("github" to "GitHub"))
         listOf("gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent", "rerun-ci")
             .forEach { assertTrue(it, ACTION_LABELS.containsKey(it)) }
-        assertEquals("Launch a Cursor fix agent", ACTION_LABELS["gh-agent"])
+        assertEquals("Launch a fix agent", ACTION_LABELS["gh-agent"])
         assertEquals("squash-merge PR #12 into main now (it goes to production)", askFor("gh-merge-pr", null, null, 12))
         assertEquals("delete the merged branch fix/1", askFor("gh-delete-branch", "fix/1", null))
         assertEquals("delete the merged branches", askFor("gh-delete-branch", null, null))

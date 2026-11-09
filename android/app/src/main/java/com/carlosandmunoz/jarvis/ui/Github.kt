@@ -1024,35 +1024,43 @@ private fun DoraRow(label: String, value: String, level: String?) {
     }
 }
 
-/** Every agent launch asks, with the drafted prompt shown and editable. */
+/** Every agent launch asks, with the drafted prompt shown and editable: Jarvis's own worker (#2957), or a Cursor agent. */
 @Composable
 private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) {
     if (d == null) return
     var text by remember(d) { mutableStateOf(d.prompt) }
+    val ownRepo = d.repo == null || d.repo == "kaanmuar/kaanmuar.github.io"
+    val launch = { engine: String ->
+        val p = text.trim()
+        if (p.isNotEmpty()) {
+            vm.ghRow(d.key, "github-agent", buildMap {
+                put("prompt", JsonPrimitive(p))
+                put("engine", JsonPrimitive(engine))
+                d.branch?.let { put("branch", JsonPrimitive(it)) }
+                d.pr?.let { put("pr", JsonPrimitive(it)) }
+                d.repo?.let { put("repo", JsonPrimitive(it)) }
+                d.name?.let { put("name", JsonPrimitive(it)) }
+            }, "Launching the agent…") { out ->
+                GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the agent")
+            }
+            close()
+        }
+    }
     AlertDialog(
         onDismissRequest = close,
-        title = { Text("Launch a Cursor fix agent?") },
+        title = { Text("Launch a fix agent?") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Muted(listOfNotNull(d.title, d.branch?.let { "branch $it" }, d.pr?.let { "PR #$it" }).joinToString(" · "))
                 OutlinedTextField(text, { text = it }, label = { Text("Prompt") }, minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth())
-                Muted("The agent works in the cloud and opens a PR; nothing merges without you.")
+                Muted(if (ownRepo) "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass. Cursor uses Cursor credit." else "A Cursor agent works in the cloud and opens a PR.")
             }
         },
         confirmButton = {
-            TextButton({
-                val p = text.trim()
-                if (p.isNotEmpty()) {
-                    vm.ghRow(d.key, "github-agent", buildMap {
-                        put("prompt", JsonPrimitive(p))
-                        d.branch?.let { put("branch", JsonPrimitive(it)) }
-                        d.pr?.let { put("pr", JsonPrimitive(it)) }
-                        d.repo?.let { put("repo", JsonPrimitive(it)) }
-                        d.name?.let { put("name", JsonPrimitive(it)) }
-                    }, "Launching the agent…") { out -> GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
-                    close()
-                }
-            }) { Text("Launch", color = J.cyan) }
+            Row {
+                TextButton({ launch("cursor") }) { Text("Cursor", color = J.muted) }
+                if (ownRepo) TextButton({ launch("worker") }) { Text("Jarvis worker", color = J.cyan) }
+            }
         },
         dismissButton = { TextButton(close) { Text("Cancel", color = J.muted) } }
     )
@@ -1064,7 +1072,7 @@ private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (A
     Panel("Command deck", modifier, id = "github-deck") {
         var task by rememberSaveable { mutableStateOf("") }
         var branch by rememberSaveable { mutableStateOf("") }
-        OutlinedTextField(task, { task = it }, label = { Text("Task for a Cursor agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(task, { task = it }, label = { Text("Task for an agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(branch, { branch = it.trim() }, label = { Text("Branch (optional)") }, singleLine = true, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(8.dp))

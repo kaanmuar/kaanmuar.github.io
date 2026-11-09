@@ -999,7 +999,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
-        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent',
+        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix',
         'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
         'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
@@ -2257,7 +2257,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const prBtns = (p) => [
             ['behind', 'blocked', 'unstable'].includes(p.state) ? ghBtn('Update with main', 'gh-update-pr', '#' + p.number, { pr: p.number }) : '',
             p.state === 'clean' && p.checks === 'pass' ? ghBtn('Merge', 'gh-merge-pr', '#' + p.number, { pr: p.number }, { cls: ' is-primary' }) : '',
-            p.state === 'dirty' ? `<button type="button" class="jv-btn small" data-gh-agent-pr="${esc(p.number)}">Resolve with a Cursor agent</button>` : '',
+            p.state === 'dirty' ? `<button type="button" class="jv-btn small" data-gh-agent-pr="${esc(p.number)}">Resolve with an agent</button>` : '',
             !p.ticket && p.state !== 'draft' ? ghBtn('File a ticket', 'gh-orphan-ticket', '#' + p.number, { pr: p.number }) : ''
         ].filter(Boolean).join('');
         const prBody = prs ? stats([{ label: 'Open', value: prs.open }, { label: 'Draft', value: prs.draft }, { label: 'Ready to merge', value: prs.mergeReady }, { label: 'Conflicts', value: prs.conflicts, alert: prs.conflicts > 0 }, { label: 'Behind main', value: prs.behind }, { label: 'Red checks', value: prs.red, alert: prs.red > 0 }, { label: 'Stale', value: prs.stale, alert: prs.stale > 0 }, { label: 'No ticket', value: prs.orphan, alert: prs.orphan > 0 }, { label: 'Lead time (median)', value: ghHours(prs.leadMedH) }, { label: 'Lead time (p90)', value: ghHours(prs.leadP90H) }])
@@ -2584,13 +2584,21 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             `Read the run log, find the root cause, fix it on ${c.branch}${c.pr ? ` (PR #${c.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
     }
 
-    // A Cursor cloud agent costs money and writes code: it asks every time, showing the drafted prompt.
+    // An agent costs money and writes code: it asks every time, showing the drafted prompt. Jarvis's own worker (#2957) first;
+    // other repos, or Cancel and then OK, go to a Cursor cloud agent.
     async function ghLaunch(key, body) {
         const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
-        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return false;
+        const where = `${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}`;
+        let engine = 'worker';
+        if (body.repo && body.repo !== 'kaanmuar/kaanmuar.github.io') engine = 'cursor';
+        else if (!window.confirm(`Jarvis: start its own worker on ${where}? It opens a PR when the tests pass. Cancel to choose a Cursor agent instead.\n\n${shown}`)) engine = '';
+        if (engine === 'cursor' || !engine) {
+            if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${where}? It uses Cursor credit and opens a PR when it is done.${engine ? '\n\n' + shown : ''}`)) return false;
+            engine = 'cursor';
+        }
         ghMark(key, 'running', 'Launching the agent…');
-        const out = await call('github-agent', body).catch((error) => ({ ok: false, error: error.message }));
-        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
+        const out = await call('github-agent', Object.assign({}, body, { engine })).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: engine === 'worker' ? 'Open the worker runs' : 'Open the agent' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
         if (out.ok) ghFresh();
         return true;

@@ -474,6 +474,14 @@ test.describe('Report section index (#2770)', () => {
   });
   const indexEntries = (page) => page.locator('#report-index a').evaluateAll((links) => links.map((a) => ({ key: a.dataset.indexGroup, href: a.getAttribute('href'), names: a.title.split(' · ') })));
 
+  // On a phone a heading the index jumps to lands below the solid bar that holds Close (#2968).
+  const landsBelowBar = (page, name) => page.evaluate((title) => {
+    const dash = document.getElementById('dash-overlay');
+    const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === title).getBoundingClientRect().top;
+    const bar = parseFloat(getComputedStyle(dash, '::before').height);
+    return dash.classList.contains('bar-on') && bar >= document.getElementById('dash-close').getBoundingClientRect().bottom && top >= bar && top < 200;
+  }, name);
+
   test('the sample report groups the sections it shows into a short index, and an entry takes focus to the first heading of its group below the toolbar', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openSample(page);
@@ -531,7 +539,7 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report h2', { hasText: 'Health score' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
+  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below the Close bar', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openSample(page);
     const list = await page.locator('#report-index-list').evaluate((el) => ({ rows: new Set([...el.children].map((li) => li.offsetTop)).size, scrolls: el.scrollWidth > el.clientWidth }));
@@ -542,14 +550,11 @@ test.describe('Report section index (#2770)', () => {
 
     await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
     await expect(page.locator('#report h2', { hasText: 'Security and email' }).locator('.fold-toggle')).toBeFocused();
-    await expect.poll(() => page.evaluate(() => {
-      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
-      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
-    })).toBe(true);
+    await expect.poll(() => landsBelowBar(page, 'Security and email')).toBe(true);
     await expect(page.locator('#report-top')).toBeInViewport();
   });
 
-  test('the heading still lands below Close when the report above it grows during the scroll on a busy page (#2938)', async ({ page }) => {
+  test('the heading still lands below the Close bar when the report above it grows during the scroll on a busy page (#2938)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openSample(page);
     await page.evaluate(() => {
@@ -562,10 +567,7 @@ test.describe('Report section index (#2770)', () => {
       }, { once: true, passive: true });
     });
     await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
-    await expect.poll(() => page.evaluate(() => {
-      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
-      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
-    })).toBe(true);
+    await expect.poll(() => landsBelowBar(page, 'Security and email')).toBe(true);
   });
 
   for (const [lang, close] of Object.entries({ en: 'Close', es: 'Cerrar', pt: 'Fechar', de: 'Schließen', fr: 'Fermer', it: 'Chiudi' })) {
@@ -585,6 +587,102 @@ test.describe('Report section index (#2770)', () => {
       }
     });
   }
+
+  // Text under the phone's solid bar, or under the sticky toolbar on wider screens, is hidden by it; text anywhere else
+  // must stay clear of Close and of Back to top (#2968).
+  const textUnderButtons = (page) => page.evaluate(() => {
+    const dash = document.getElementById('dash-overlay');
+    const modal = dash.querySelector('.dash-modal');
+    const toolbar = modal.querySelector('.report-toolbar');
+    const shown = (el) => el && !el.hidden && el.getClientRects().length ? el.getBoundingClientRect() : null;
+    const buttons = { close: shown(document.getElementById('dash-close')), top: shown(document.getElementById('report-top')) };
+    const bar = getComputedStyle(dash, '::before');
+    const sticky = getComputedStyle(toolbar).position === 'sticky' ? toolbar.getBoundingClientRect().bottom : 0;
+    const barBottom = bar.content === 'none' ? sticky : dash.classList.contains('bar-on') ? parseFloat(bar.height) : 0;
+    const hits = [];
+    const walker = document.createTreeWalker(modal, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const el = node.parentElement;
+      if (!node.textContent.trim() || el.closest('#dash-close, #report-top') || !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      let clip = { left: 0, top: el.closest('.report-toolbar') ? 0 : barBottom, right: innerWidth, bottom: innerHeight };
+      for (let up = el; up && up !== modal; up = up.parentElement) {
+        const style = getComputedStyle(up);
+        if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
+        const box = up.getBoundingClientRect();
+        clip = { left: Math.max(clip.left, box.left), top: Math.max(clip.top, box.top), right: Math.min(clip.right, box.right), bottom: Math.min(clip.bottom, box.bottom) };
+      }
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const line of range.getClientRects()) {
+        const seen = { left: Math.max(line.left, clip.left), top: Math.max(line.top, clip.top), right: Math.min(line.right, clip.right), bottom: Math.min(line.bottom, clip.bottom) };
+        if (seen.right - seen.left < 1 || seen.bottom - seen.top < 1) continue;
+        for (const [name, b] of Object.entries(buttons)) {
+          if (b && seen.left < b.right && b.left < seen.right && seen.top < b.bottom && b.top < seen.bottom) hits.push(name + ': ' + node.textContent.trim().slice(0, 40));
+        }
+      }
+    }
+    return hits;
+  });
+
+  for (const [lang, backTop] of Object.entries({ en: 'Back to top', es: 'Volver arriba', pt: 'Voltar ao topo', de: 'Nach oben', fr: 'Retour en haut', it: 'Torna su' })) {
+    test(`on a ${lang} phone no report text sits under Close or Back to top while scrolling at 320, 360 and 390px (#2968)`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 844 });
+      await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      const dash = page.locator('#dash-overlay');
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.evaluate(() => document.fonts.ready);
+        const end = await dash.evaluate((el) => el.scrollHeight - el.clientHeight);
+        for (const at of [0, 30, 120, 600, 1500, 0.25, 0.5, 0.75, end - 300, end]) {
+          const top = at < 1 && at > 0 ? Math.round(end * at) : at;
+          await dash.evaluate((el, y) => el.scrollTo(0, y), top);
+          await expect.poll(() => textUnderButtons(page), `${lang} at ${width}px, scrolled to ${top}`).toEqual([]);
+        }
+        await expect(dash).toHaveClass(/\bbar-on\b/);
+        const back = page.getByRole('button', { name: backTop, exact: true });
+        await expect(back).toHaveAttribute('title', backTop);
+        const box = await back.boundingBox();
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        expect(box.x + box.width).toBeLessThanOrEqual(width);
+      }
+      await dash.evaluate((el) => el.scrollTo(0, 0));
+      await expect(dash).not.toHaveClass(/\bbar-on\b/);
+    });
+  }
+
+  test('on wider screens Back to top is the same round icon and covers no report text at 1024 and 1440px (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await openSample(page);
+    const dash = page.locator('#dash-overlay');
+    for (const width of [1024, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      const end = await dash.evaluate((el) => el.scrollHeight - el.clientHeight);
+      for (const top of [600, 1500, Math.round(end / 3), Math.round(end * 2 / 3), end]) {
+        await dash.evaluate((el, y) => el.scrollTo(0, y), top);
+        await expect.poll(() => textUnderButtons(page), `${width}px, scrolled to ${top}`).toEqual([]);
+      }
+      await expect(dash).not.toHaveClass(/\bbar-on\b/);
+      const box = await page.getByRole('button', { name: 'Back to top', exact: true }).boundingBox();
+      expect(box).toMatchObject({ width: 44, height: 44 });
+    }
+  });
+
+  test('on a phone the Close bar matches the report sheet in the light and dark looks (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
+    await expect(page.locator('#dash-overlay')).toHaveClass(/\bbar-on\b/);
+    for (const dark of [false, true]) {
+      await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+      const looks = await page.locator('#dash-overlay').evaluate((el) => {
+        const bar = getComputedStyle(el, '::before');
+        return { bar: bar.backgroundColor, sheet: getComputedStyle(el.querySelector('.dash-modal')).backgroundColor, opacity: bar.opacity, edge: bar.borderBottomStyle };
+      });
+      expect(looks.bar, dark ? 'dark' : 'light').toBe(looks.sheet);
+      expect(looks).toMatchObject({ opacity: '1', edge: 'solid' });
+    }
+  });
 
   test('the browser pass screenshots keep their space before they load (#2938)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
