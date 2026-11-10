@@ -72,7 +72,10 @@ done
 others() { gh api --paginate "$R/commits/$ref/check-runs?per_page=100" -q '.check_runs[] | select(.app.slug != "github-actions") | "\(.status)\t\(.conclusion)\t\(.name)\t\(.output.title // "")\t\(.html_url)"' 2>/dev/null; }
 checks=""
 for _ in $(seq 1 30); do
-	checks=$(others) || { sleep 60; continue; }
+	checks=$(others) || {
+		sleep 60
+		continue
+	}
 	grep -qv "^completed" <<<"$checks" || break
 	sleep 30
 done
