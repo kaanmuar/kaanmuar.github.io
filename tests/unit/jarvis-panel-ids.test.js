@@ -95,6 +95,11 @@ function webPanels() {
     tabs.forEach((t) => add(t + "-" + l[3], "list", l.index));
   }
   if (src.includes('data-panel-id="briefing"')) add("briefing", "panel", src.indexOf('data-panel-id="briefing"'));
+  // Modules the tab imports draw panels with the panel() it hands them; only their literal ids are read.
+  fs.readdirSync(path.join(ROOT, "js")).filter((f) => /^admin-jarvis-.+\.js$/.test(f) && f !== "admin-jarvis-core.js").forEach((f) => {
+    const mod = fs.readFileSync(path.join(ROOT, "js", f), "utf8");
+    for (const p of mod.matchAll(/\bpanel\(\s*'([^']+)'\s*,/g)) out.push({ id: p[1], kind: "panel", line: 0, file: f });
+  });
   return out;
 }
 
