@@ -530,8 +530,8 @@
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style">
     <link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c"></noscript>
-    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102"></noscript>
+    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326"></noscript>
     <link rel="preload" href="css/qa-review-multi.css?v=20261102p" as="style">
     <link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p"></noscript>
@@ -1644,6 +1644,12 @@
             <dd lang="pt" translate="no">Você entra no dispositivo que executa a revisão, com seu e-mail (um código de 6 dígitos ou um link, válido por 15 minutos no mesmo dispositivo) ou com uma conta que já tem: Google, Microsoft, GitHub, Yahoo ou X. Seu e-mail vem desse login. As revisões com login aparecem na <a href="qa-review-account.html">página da sua conta</a>.</dd>
             <dt lang="pt" translate="no">O que o relatório avalia</dt>
             <dd lang="pt" translate="no">Seis áreas de 0 a 100: SEO, GEO (se a busca com IA e os mecanismos de resposta conseguem ler e citar o site), analytics, segurança, acessibilidade e desempenho. O GEO mede se o site pode ser lido e citado, não se o ChatGPT, o Perplexity ou o Modo IA do Google o citam hoje. Cada verificação é marcada como falha agora, em risco, aprovada ou precisa de uma pessoa, com a evidência, uma correção e uma estimativa de esforço. Você também vê como o site aparece em um resultado do Google e em um link compartilhado, quais rastreadores de IA o robots.txt dele deixa entrar, um mapa das páginas analisadas e o que corrigir primeiro. Um navegador headless carrega até três páginas a partir de um endereço da UE na Bélgica: registra o rastreamento antes e depois de uma escolha de cookies, executa o axe-core, compara o texto do HTML com a página renderizada, verifica larguras de celular e tablet e guarda três capturas de tela. Também verifica widgets de chat e chatbots de IA (consentimento, peso e acesso por teclado), a declaração de acessibilidade, o aviso legal e as páginas de privacidade, bibliotecas front-end desatualizadas, o Google Safe Browsing via Web Risk, o vencimento e o bloqueio de transferência do domínio via RDAP, e MTA-STS, TLS-RPT e BIMI para o e-mail, e estima o carbono de uma visita. Um site cuja proteção contra bots recusa a requisição simples é analisado no Chrome headless.</dd>
+            <dt lang="pt" translate="no">Verificações de segurança</dt>
+            <dd lang="pt" translate="no">Toda revisão também procura problemas que um visitante não veria. Ela verifica o endereço com o Google Safe Browsing pelo Web Risk e com o Cloudflare URL Scanner, que reaproveita uma varredura do último dia ou envia uma que se torna pública no Cloudflare Radar. Cada host externo de onde a página carrega scripts, frames ou formulários, ou para onde aponta links, também é verificado com o Web Risk; um host de scripts listado é uma constatação crítica. Ela procura sinais de site invadido: spam injetado nos resultados de busca, páginas que mostram outra coisa ao Googlebot e links de spam ocultos. Ela lista domínios parecidos registrados para imitar o seu que têm site ou servidor de e-mail, verifica o domínio e seus servidores de e-mail e web em listas de bloqueio de spam gratuitas como SpamCop, Mailspike e NordSpam, e examina SPF, DMARC e DKIM em detalhe. Quando você comprova que o site é seu, ela também procura arquivos expostos, como .env, .git e backups.</dd>
+            <dt lang="pt" translate="no">Se uma revisão não puder terminar</dt>
+            <dd lang="pt" translate="no">Às vezes uma revisão para por um motivo do nosso lado, como um site que recusa servidores na nuvem. Guardamos seu e-mail, executamos a revisão de novo de outra forma e enviamos o relatório completo assim que estiver pronto, em até <span data-promise-hours>48</span> horas. Pelo transtorno, você recebe um código de 20% de desconto na próxima revisão, válido por 90 dias. Se o relatório ainda não estiver pronto após <span data-promise-hours>48</span> horas, escrevemos para avisar, e o código continua válido.</dd>
+            <dt lang="pt" translate="no">Depois do relatório</dt>
+            <dd lang="pt" translate="no">Peça para corrigirmos, de uma de quatro formas. Corrija você mesmo: o Pergunte ao relatório escreve a correção, e um relatório pago ganha uma nova verificação grátis quando suas mudanças estiverem no ar. Peça um orçamento: Carlos responde em dois dias úteis. Peça um pacote de preço fixo. Ou agende uma conversa. Pacotes a preço de lançamento: cabeçalhos de segurança US$99 (cerca de 3 dias úteis), e-mail e DNS US$89 (3), TLS e redirecionamentos US$69 (2), correções rápidas de acessibilidade US$169 (5), desempenho básico US$199 (5) e metadados de SEO e dados estruturados US$119 (4). Você paga com PayPal; códigos de desconto não valem para pacotes. Quando a correção estiver pronta, revisamos o site de novo de graça e enviamos por e-mail o antes e depois, que marca cada constatação como corrigida, ainda aberta ou dependente de uma pessoa.</dd>
             <dt lang="pt" translate="no">Frameworks e ferramentas</dt>
             <dd lang="pt" translate="no">Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling e k6 são os frameworks. O axe-core roda no navegador headless da revisão em até três páginas, e o Lighthouse roda na página inicial via Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar e Copado são citados quando se aplicam e não são executados contra o seu site.</dd>
             <dt lang="pt" translate="no">Scripts de automação</dt>
@@ -2134,12 +2140,12 @@
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
 <script src="js/qa-review-ask.js?v=20261109b" defer></script>
-<script src="js/qa-review-fix.js?v=20261110-3327" defer></script>
+<script src="js/qa-review-fix.js?v=20261110-3327-3326" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3330" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3332" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261110-3332-3326" defer></script>
 <script src="js/qa-review-findings-copy.pt.js?v=20261110-3154" defer></script>
-<script src="js/qa-review.js?v=20261110-3332-3327" defer></script>
+<script src="js/qa-review.js?v=20261110-3332-3327-3326" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

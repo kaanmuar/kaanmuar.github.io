@@ -530,8 +530,8 @@
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style">
     <link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c"></noscript>
-    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102"></noscript>
+    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326"></noscript>
     <link rel="preload" href="css/qa-review-multi.css?v=20261102p" as="style">
     <link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p"></noscript>
@@ -1644,6 +1644,12 @@
             <dd lang="de" translate="no">Sie melden sich auf dem Gerät an, das die Prüfung ausführt, per E-Mail (ein 6-stelliger Code oder ein Link, 15 Minuten auf demselben Gerät gültig) oder mit einem bestehenden Konto: Google, Microsoft, GitHub, Yahoo oder X. Ihre E-Mail-Adresse stammt aus dieser Anmeldung. Prüfungen mit Anmeldung stehen auf <a href="qa-review-account.html">Ihrer Kontoseite</a>.</dd>
             <dt lang="de" translate="no">Was der Bericht bewertet</dt>
             <dd lang="de" translate="no">Sechs Bereiche von 0 bis 100: SEO, GEO (ob KI-Suche und Antwortdienste die Website lesen und zitieren können), Analytics, Sicherheit, Barrierefreiheit und Performance. GEO misst, ob die Website gelesen und zitiert werden kann, nicht ob ChatGPT, Perplexity oder der KI-Modus von Google sie heute zitieren. Jede Prüfung ist als jetzt fehlerhaft, gefährdet, bestanden oder braucht einen Menschen markiert, mit dem Beleg, einer Korrektur und einer Aufwandsschätzung. Sie sehen auch, wie die Website in einem Google-Ergebnis und als geteilter Link aussieht, welche KI-Crawler ihre robots.txt zulässt, eine Karte der geprüften Seiten und was zuerst zu beheben ist. Ein Headless-Browser lädt bis zu drei Seiten von einer EU-Adresse in Belgien: Er zeichnet Tracking vor und nach einer Cookie-Wahl auf, führt axe-core aus, vergleicht den HTML-Text mit der gerenderten Seite, prüft Smartphone- und Tablet-Breiten und speichert drei Screenshots. Außerdem prüft er Chat-Widgets und KI-Chatbots (Einwilligung, Gewicht und Tastaturzugang), die Erklärung zur Barrierefreiheit, Impressum und Datenschutzseiten, veraltete Frontend-Bibliotheken, Google Safe Browsing über Web Risk, Domain-Ablauf und Transfersperre über RDAP sowie MTA-STS, TLS-RPT und BIMI für E-Mail, und er schätzt den CO₂-Ausstoß eines Besuchs. Eine Website, deren Bot-Schutz die einfache Anfrage ablehnt, wird in Headless-Chrome geprüft.</dd>
+            <dt lang="de" translate="no">Sicherheitsprüfungen</dt>
+            <dd lang="de" translate="no">Jede Prüfung sucht außerdem nach Problemen, die Besucher nicht sehen. Sie prüft die Adresse mit Google Safe Browsing über Web Risk und mit Cloudflare URL Scanner, der einen Scan vom letzten Tag wiederverwendet oder einen neuen einreicht, der auf Cloudflare Radar öffentlich wird. Jeder fremde Host, von dem die Seite Skripte, Frames oder Formulare lädt oder auf den sie verlinkt, wird ebenfalls mit Web Risk geprüft; ein gelisteter Skript-Host ist ein kritischer Befund. Sie sucht nach Anzeichen einer gehackten Website: in Suchergebnisse eingeschleuster Spam, Seiten, die Googlebot etwas anderes zeigen, und versteckte Spam-Links. Sie listet Domains auf, die Ihre nachahmen und eine Website oder einen Mailserver haben, prüft die Domain und ihre Mail- und Webserver gegen kostenlose Spam-Blocklisten wie SpamCop, Mailspike und NordSpam und untersucht SPF, DMARC und DKIM im Detail. Sobald Sie nachweisen, dass Ihnen die Website gehört, sucht sie auch nach offen liegenden Dateien wie .env, .git und Backups.</dd>
+            <dt lang="de" translate="no">Wenn eine Prüfung nicht fertig wird</dt>
+            <dd lang="de" translate="no">Manchmal bricht eine Prüfung aus einem Grund auf unserer Seite ab, etwa wenn eine Website Cloud-Server abweist. Wir behalten Ihre E-Mail-Adresse, starten die Prüfung auf anderem Weg erneut und senden Ihnen den vollständigen Bericht, sobald er fertig ist, spätestens in <span data-promise-hours>48</span> Stunden. Für die Umstände erhalten Sie einen Code über 20 % Rabatt auf Ihre nächste Prüfung, 90 Tage gültig. Ist der Bericht nach <span data-promise-hours>48</span> Stunden noch nicht fertig, schreiben wir Ihnen, und der Code bleibt gültig.</dd>
+            <dt lang="de" translate="no">Nach dem Bericht</dt>
+            <dd lang="de" translate="no">Bitten Sie uns um die Korrektur, auf eine von vier Arten. Selbst beheben: Den Bericht fragen schreibt die Korrektur, und ein bezahlter Bericht erhält eine kostenlose erneute Prüfung, sobald Ihre Änderungen live sind. Ein Angebot anfragen: Carlos antwortet innerhalb von zwei Werktagen. Ein Festpreis-Paket bestellen. Oder ein Gespräch buchen. Pakete zum Einführungspreis: Sicherheits-Header US$99 (etwa 3 Werktage), E-Mail und DNS US$89 (3), TLS und Weiterleitungen US$69 (2), schnelle Barrierefreiheits-Korrekturen US$169 (5), Performance-Grundlagen US$199 (5) sowie SEO-Metadaten und strukturierte Daten US$119 (4). Sie zahlen mit PayPal; Rabattcodes gelten nicht für Pakete. Ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen einen Vorher-nachher-Vergleich, der jeden Befund als behoben, noch offen oder von einem Menschen zu prüfen markiert.</dd>
             <dt lang="de" translate="no">Frameworks und Werkzeuge</dt>
             <dd lang="de" translate="no">Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling und k6 sind die Frameworks. axe-core läuft im Headless-Browser der Prüfung auf bis zu drei Seiten, und Lighthouse läuft über Google PageSpeed Insights auf der Startseite. BrowserStack, Applitools, Percy, Provar und Copado werden genannt, wenn sie zutreffen, und nicht gegen Ihre Website gestartet.</dd>
             <dt lang="de" translate="no">Automatisierungsskripte</dt>
@@ -2134,12 +2140,12 @@
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
 <script src="js/qa-review-ask.js?v=20261109b" defer></script>
-<script src="js/qa-review-fix.js?v=20261110-3327" defer></script>
+<script src="js/qa-review-fix.js?v=20261110-3327-3326" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3330" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3332" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261110-3332-3326" defer></script>
 <script src="js/qa-review-findings-copy.de.js?v=20261110-3154" defer></script>
-<script src="js/qa-review.js?v=20261110-3332-3327" defer></script>
+<script src="js/qa-review.js?v=20261110-3332-3327-3326" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

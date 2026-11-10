@@ -2,11 +2,14 @@ const { test, expect } = require('./net-guard');
 const fs = require('fs');
 const path = require('path');
 const auth = require('../functions/url-review-auth');
+const reviewPromise = require('../functions/url-review-promise');
 
 const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ANA = 'a'.repeat(64);
 const PHONE = { width: 390, height: 844 };
-const INCONCLUSIVE = { type: 'error', error: 'Headless Chrome did not finish the page in time.', code: 'inconclusive', email: 'ana@example.com', coupon: 'SORRY-ABCD2345', percent: 20 };
+const INCONCLUSIVE = reviewPromise.errorLine('Headless Chrome did not finish the page in time.', { email: 'ana@example.com', coupon: 'SORRY-ABCD2345', percent: 20 });
+// An inconclusive line from before the stream sent `hours`: the page falls back to its own copy of the deadline.
+const WITHOUT_HOURS = Object.assign({}, INCONCLUSIVE, { hours: undefined });
 
 // A free run whose stream ends on `last`, as runReview writes it.
 async function openReview(page, file, last) {
@@ -73,7 +76,7 @@ test.describe('A review that could not be concluded (#3079)', () => {
     const box = page.getByRole('dialog', { name: 'We could not conclude this review right now' });
     await expect(box).toBeVisible();
     await expect(box).toHaveAttribute('aria-modal', 'true');
-    await expect(box.locator('#incon-mail')).toHaveText('We will email the report to ana@example.com as soon as it is ready.');
+    await expect(box.locator('#incon-mail')).toHaveText('We will email the report to ana@example.com as soon as it is ready, within 48 hours.');
     await expect(box.locator('#incon-percent')).toHaveText('20%');
     await expect(box.locator('#incon-code-note')).toHaveText('For the trouble, 20% off your next review with this code:');
     await expect(box.locator('#incon-code')).toHaveText('SORRY-ABCD2345');
@@ -91,23 +94,30 @@ test.describe('A review that could not be concluded (#3079)', () => {
     await expect(box.locator('#incon-note')).toHaveText(/^(Code copied\.|Select the code and copy it\.)$/);
     await page.keyboard.press('Escape');
     await expect(page.locator('#inconclusive')).toBeHidden();
-    await expect(page.locator('#form-status')).toContainText('The review could not be concluded right now.');
+    await expect(page.locator('#form-status')).toContainText('The review could not be concluded right now. We will email the report as soon as it is ready, within 48 hours.');
     await expect(page.locator('#review-btn')).toBeFocused();
   });
 
   test('on the German page the splash reads in German, kept out of machine translation, and the X closes it', async ({ page }) => {
-    await openReview(page, '/qa-review-de.html', INCONCLUSIVE);
+    await openReview(page, '/qa-review-de.html', WITHOUT_HOURS);
     const box = page.locator('#inconclusive .pay-card');
     await expect(box).toBeVisible();
     await expect(box).toHaveAttribute('lang', 'de');
     await expect(box).toHaveAttribute('translate', 'no');
     await expect(box.locator('#incon-title')).toHaveText('Wir konnten diese Prüfung gerade nicht abschließen');
-    await expect(box.locator('#incon-mail')).toHaveText('Wir senden den Bericht an ana@example.com, sobald er fertig ist.');
+    await expect(box.locator('#incon-mail')).toHaveText('Wir senden den Bericht an ana@example.com, sobald er fertig ist, spätestens in 48 Stunden.');
     await expect(box.locator('#incon-percent')).toHaveText(/^20\s%$/);
     await expect(box.locator('#incon-x')).toHaveAttribute('aria-label', 'Schließen');
     await shot(page, 'splash-de');
     await box.locator('#incon-x').click();
     await expect(page.locator('#inconclusive')).toBeHidden();
+  });
+
+  test('on the Spanish page the splash promises the report within the hours the server sent', async ({ page }) => {
+    await openReview(page, '/qa-review-es.html', Object.assign({}, INCONCLUSIVE, { hours: 36 }));
+    const box = page.locator('#inconclusive .pay-card');
+    await expect(box.locator('#incon-mail')).toHaveText('Te enviaremos el informe a ana@example.com en cuanto esté listo, en un plazo de 36 horas.');
+    await expect(page.locator('#form-status')).toContainText('en un plazo de 36 horas');
   });
 
   test('a site-side failure keeps its own message and shows no splash', async ({ page }) => {

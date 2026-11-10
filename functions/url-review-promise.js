@@ -88,7 +88,7 @@ function promiseOf(record, coupon, now) {
 function errorLine(message, promise) {
   const error = message || "The review failed.";
   if (!promise) return { type: "error", error };
-  return { type: "error", error, code: "inconclusive", email: promise.email, coupon: promise.coupon, percent: promise.percent };
+  return { type: "error", error, code: "inconclusive", email: promise.email, coupon: promise.coupon, percent: promise.percent, hours: PROMISE_DEADLINE_H };
 }
 
 // The open promise behind a re-run group, and the failures that carry it. `rows` are the failures the plan was built from.

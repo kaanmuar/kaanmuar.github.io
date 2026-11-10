@@ -27,7 +27,7 @@ test("a failure on our side is promised; site-side causes, sweeps, comparisons a
 test("the stream's error line carries the inconclusive code, the email and the coupon only with a promise", () => {
   const promise = reviewPromise.promiseOf(failed("The review failed."), { code: "SORRY-ABCD2345", percent: 20, validUntil: "2027-02-07T00:00:00.000Z" });
   assert.deepEqual(reviewPromise.errorLine("The site took too long.", promise),
-    { type: "error", error: "The site took too long.", code: "inconclusive", email: "ana@example.com", coupon: "SORRY-ABCD2345", percent: 20 });
+    { type: "error", error: "The site took too long.", code: "inconclusive", email: "ana@example.com", coupon: "SORRY-ABCD2345", percent: 20, hours: 48 });
   assert.deepEqual(reviewPromise.errorLine("The host name did not resolve.", null), { type: "error", error: "The host name did not resolve." });
   assert.deepEqual(reviewPromise.errorLine("", null), { type: "error", error: "The review failed." });
   assert.equal(promise.lang, "de");
