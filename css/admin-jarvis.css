@@ -894,7 +894,7 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-sector-c:hover, .jv-sector-c:focus-visible { border-color: var(--cyan); }
 /* #3109: ranges against the span before, change shading and the week player. */
 .jv-geo-time { margin-top: 0.4rem; }
-.jv-geo-play { display: inline-flex; align-items: center; gap: 0.5rem; flex: 1 1 18rem; min-width: 0; }
+.jv-geo-play { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; flex: 1 1 18rem; min-width: 0; }
 .jv-geo-play .jv-btn { white-space: nowrap; }
 .jv-geo-play input[type="range"] { flex: 1 1 8rem; min-width: 6rem; accent-color: var(--cyan, #38e1ff); }
 .jv-geo-when { font: 600 0.75rem ui-monospace, Menlo, monospace; color: var(--amber); white-space: nowrap; }
