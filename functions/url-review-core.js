@@ -14,6 +14,7 @@ const { URL } = require("url");
 const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
+const threatLists = require("./url-review-threat-lists");
 const wordpress = require("./url-review-wordpress");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
@@ -2993,6 +2994,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const say = typeof note === "function" ? note : () => {};
   const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
   const findPlaces = lookups && typeof lookups.places === "function" ? lookups.places : null;
+  const checkLists = lookups && typeof lookups.threatLists === "function" ? lookups.threatLists : threatLists.check;
   const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
@@ -3021,7 +3023,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const lookalikeJob = lookups && typeof lookups.doh === "function"
     ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
     : Promise.resolve(undefined);
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local] = await Promise.all([
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -3069,14 +3071,15 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       else say("Google Maps has a Business Profile that " + (res.by === "website" ? "links to " + origin.hostname : "lists the site's phone") + " (place ID " + res.placeId + ")" +
         (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
       return res;
-    })
+    }),
+    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null)
   ]);
   const lookalikeFound = await lookalikeJob;
   if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
     : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
       : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
+  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
 }
 
 async function reviewTarget(rawUrl, hooks) {
