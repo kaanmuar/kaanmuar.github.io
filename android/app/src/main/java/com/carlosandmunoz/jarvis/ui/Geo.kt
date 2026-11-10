@@ -502,6 +502,7 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         onRow = { name -> picked = byName[name] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
+    GeoFlowPanels(g, picked, channel, s, vm) { text, run -> confirm = PendingAction(text, run) }
     GeoConfirm(g, s, vm) { text, run -> confirm = PendingAction(text, run) }
     ConfirmAction(confirm) { confirm = null }
 }
