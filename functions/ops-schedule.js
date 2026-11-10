@@ -48,6 +48,7 @@ const JOBS = [
   { job: "opsWatchdog", cron: "10 8 * * *", gap: 26, what: "Flag missed, failed or crashed jobs, and the system review (#2409): workflows failing on main with the cause from their logs and its fix, security alerts, stale PRs; Monday digest of budgets" },
   { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision, by email only with its switch on; the evening digest lists them too" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
+  { job: "outreachTrials", cron: "30 10 * * 1-6", gap: 50, what: "Outreach trials (#3136): each ended 2-day trial gets its AFTER- code and its person moves on in outreach_people; the note to them goes out with REVIEW_NOTES_LIVE=1" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
   // GitHub Actions crons are UTC, as written in .github/workflows (06:41, 11:07, 08:23, 04:00, 05:00 and 01:00 Bogotá). GitHub

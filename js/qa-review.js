@@ -3441,6 +3441,7 @@
   compareInputs().forEach((input) => input.addEventListener("input", paintCompareTags));
   if (window.ReviewAuth) ReviewAuth.onChange(refreshStanding);
   else refreshStanding();
+  window.addEventListener("qa-review-pass-changed", loadStanding);
 
   const totalBox = document.getElementById("run-total");
   let totalReturn = null;

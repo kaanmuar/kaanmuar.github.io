@@ -179,11 +179,12 @@ function sameAddress(row, email) {
   return !!row && String(row.email || "").trim().toLowerCase() === String(email || "").trim().toLowerCase();
 }
 
-// A paid pass, or one the desk granted, that is not refunded, not replaced by a newer one, and not past its end.
+// A paid pass, one the desk granted or an outreach trial (outreach-trials.js), that is not refunded, not replaced by a
+// newer one, and not past its end.
 function passLive(row, now) {
   const at = now == null ? Date.now() : Number(now);
   return !!row && row.status === "monthly-pass" && row.refunded !== true && !row.replacedBy
-    && (row.paid === true || row.localPass === true) && Date.parse(row.paidUntil || "") > at;
+    && (row.paid === true || row.localPass === true || row.trial === true) && Date.parse(row.paidUntil || "") > at;
 }
 
 // Rows written before runs were counted carry no `runs`; they hold their plan's runs.

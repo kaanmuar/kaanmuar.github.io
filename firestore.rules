@@ -169,6 +169,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /outreach_people/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
     match /mail/{id} {
       allow read, write: if false;
     }
