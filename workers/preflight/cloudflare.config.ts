@@ -1,6 +1,6 @@
 import { defineConfig } from "cf/config";
 
-// Deploy: cd workers/preflight && PREFLIGHT_TOKEN=... cf deploy
+// Deploy: cd workers/preflight && PREFLIGHT_TOKEN=... ../../scripts/cf-quiet-deploy.sh -q
 // cf has no builders for Workers AI or Vectorize yet, so the bindings go in the upload metadata as is.
 export default defineConfig({
   worker: {
