@@ -4,6 +4,7 @@
      node scripts/build-share-images.js            # every card and icon
      node scripts/build-share-images.js social     # only the outputs whose path contains "social"
      node scripts/build-share-images.js qa-review  # the URL Review cards and logo
+     SHARE_CONCURRENCY=1 node scripts/build-share-images.js   # one capture at a time (default: up to 4 pages)
 
    Share cards are 1200x630 JPEGs under assets/share/; WhatsApp drops previews over
    about 300 KB, which PNG cards exceed. The URL Review cards sit on a Fusion frame
@@ -13,6 +14,7 @@
    Google Fonts, so the run needs network access. */
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const fusion = require("./fusion/still");
 
@@ -175,15 +177,21 @@ function ico(pngs) {
   return Buffer.concat([header, ...entries, ...pngs.map(([, data]) => data)]);
 }
 
+// Captures run on this many pages at once (SHARE_CONCURRENCY=1 runs them one after another).
+const CONCURRENCY = Math.max(1, Number(process.env.SHARE_CONCURRENCY) || Math.min(4, os.cpus().length));
+
 async function main() {
   const only = process.argv[2];
   const browser = await fusion.launch();
-  const page = await browser.newPage({ deviceScaleFactor: 1 });
+  // Fusion frames render one at a time on the engine's shared page; each t is rendered once.
   const frames = {};
-  const frame = async (t) => frames[t] || (frames[t] = fusion.dataUri(await fusion.still(browser, Object.assign({ t }, FUSION_OG))));
-  async function shoot(html, width, height, out, transparent) {
+  let rendering = Promise.resolve();
+  const frame = (t) => frames[t] || (frames[t] = rendering = rendering.then(() => fusion.still(browser, Object.assign({ t }, FUSION_OG))).then(fusion.dataUri));
+  const pages = [];
+  async function shoot(worker, { html, width, height, out, transparent }) {
+    const page = pages[worker] || (pages[worker] = await browser.newPage({ deviceScaleFactor: 1 }));
     await page.setViewportSize({ width, height });
-    await page.setContent(html, { waitUntil: "networkidle" });
+    await page.setContent(typeof html === "function" ? await html() : html, { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
     const jpeg = !!out && out.endsWith(".jpg");
     const buffer = await page.screenshot(Object.assign({ type: jpeg ? "jpeg" : "png", clip: { x: 0, y: 0, width, height } }, jpeg ? { quality: 86 } : { omitBackground: !!transparent }));
@@ -194,14 +202,23 @@ async function main() {
     }
     return buffer;
   }
-  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) await shoot(typeof html === "string" ? html : html.html(await frame(html.t)), 1200, 630, out);
-  for (const [out, svg, size, maskable] of ICONS) if (!only || out.includes(only)) await shoot(icon(svg, size, maskable), size, size, out, !maskable);
-  if (only) return browser.close();
-  const sizes = [16, 32, 48];
-  const pngs = [];
-  for (const size of sizes) pngs.push([size, await shoot(icon("favicon.svg", size, false), size, size, null, true)]);
-  fs.writeFileSync(path.join(ROOT, "favicon.ico"), ico(pngs));
-  console.log("wrote favicon.ico");
+  const shots = [];
+  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) shots.push({ out, width: 1200, height: 630, html: typeof html === "string" ? html : async () => html.html(await frame(html.t)) });
+  for (const [out, svg, size, maskable] of ICONS) if (!only || out.includes(only)) shots.push({ out, width: size, height: size, html: icon(svg, size, maskable), transparent: !maskable });
+  const sizes = only ? [] : [16, 32, 48];
+  sizes.forEach((size) => shots.push({ out: null, width: size, height: size, html: icon("favicon.svg", size, false), transparent: true }));
+  const buffers = new Array(shots.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, shots.length) }, async (_, worker) => {
+    while (next < shots.length) {
+      const i = next++;
+      buffers[i] = await shoot(worker, shots[i]);
+    }
+  }));
+  if (sizes.length) {
+    fs.writeFileSync(path.join(ROOT, "favicon.ico"), ico(sizes.map((size, i) => [size, buffers[shots.length - sizes.length + i]])));
+    console.log("wrote favicon.ico");
+  }
   await browser.close();
 }
 
