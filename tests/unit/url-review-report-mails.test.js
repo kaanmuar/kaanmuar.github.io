@@ -252,3 +252,29 @@ test("an unpaid PDF frosts the problem titles of the comparison, and an open one
   assert.ok(!customerMail.reportPdf(compared).html.includes(customerMail.esc(title)));
   assert.ok(customerMail.reportPdf(compared).html.includes("Only " + rival.host + " has: " + cmp.rivalOnlyCount + "</h3>"));
 });
+
+test("a report mail with findings offers the ways to fix them, from the cheapest package, in the reader's language (#3331)", () => {
+  const mail = customerMail.reportMail(record, {});
+  assert.match(mail.html, /Fix what it found/);
+  assert.match(mail.html, /Fixed-price packages from US\$69, paid with PayPal/);
+  assert.match(mail.text, /^See the ways to fix it: https:\/\/carlosandmunoz\.com\/qa-review\.html\?report=r7Kq2mWx9&utm_campaign=report-fix/m);
+  assert.match(customerMail.reportMail(Object.assign({}, record, { lang: "es" }), {}).html, /Paquetes de precio fijo desde US\$69/);
+  const clear = JSON.parse(JSON.stringify(report));
+  clear.insights.findings = [];
+  assert.doesNotMatch(customerMail.reportMail(Object.assign({}, record, { report: clear }), {}).text, /See the ways to fix it/);
+});
+
+test("the period report counts fix requests by package and promised reports by where they stand (#3331)", () => {
+  const { fixLine, promiseLine } = require("../../functions/url-review-mail.js");
+  const fixes = [
+    { package: "security-headers", priceUsd: 99, paidAt: "2026-11-09T10:00:00Z", paid: { priceUsd: 99 }, status: "done" },
+    { package: "", status: "quoted" },
+    { kind: "self", package: "", status: "done" }
+  ];
+  assert.equal(fixLine(fixes), "3 requests (free re-check 1, quote 1, security-headers 1); 1 paid, 99 USD; 1 done");
+  assert.equal(fixLine([]), "");
+  assert.equal(promiseLine([{ state: "delivered" }, { state: "open" }, { state: "delivered" }]), "3 promised (delivered 2, open 1)");
+  const rows = reportRows(summarizePeriod([], [], [], []), null, "the day before", { fixes, promises: [{ state: "apologized" }] });
+  assert.ok(rows.some((row) => row.label === "Fix requests" && /security-headers 1/.test(row.value)));
+  assert.ok(rows.some((row) => row.label === "Promised reports" && row.value === "1 promised (apologized 1)"));
+});

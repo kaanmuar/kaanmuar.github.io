@@ -6,6 +6,7 @@ const findingsCopy = require("./url-review-findings-copy");
 const fusion = require("./url-review-fusion");
 const booking = require("./booking");
 const mailFace = require("./mail-face");
+const fixOffers = require("./url-review-fix-offers");
 
 const { FUSION, TEXT, ON_NIGHT } = fusion;
 const SITE = "https://carlosandmunoz.com";
@@ -51,6 +52,9 @@ const COPY = {
     deeperCta: "Write to qa@carlosandmunoz.com",
     book: "Book a 30-min call with Carlos",
     deeperSubject: "Going deeper on {host}",
+    fixTitle: "Fix what it found",
+    fixLines: ["Fix it yourself: Ask the report writes each fix for your stack, and a paid report includes one free re-check.", "Fixed-price packages from US${usd}, paid with PayPal, with a free re-review when the work is done.", "Or ask for a quote, answered within two working days, or book a 30-minute call."],
+    fixCta: "See the ways to fix it",
     why: "You get this because a review of {host} was run with this address at carlosandmunoz.com.",
     stop: "Stop follow-up notes",
     subjectOpen: "{host} scored {score}/100. The full report is open.",
@@ -95,6 +99,9 @@ const COPY = {
     deeperCta: "Escribe a qa@carlosandmunoz.com",
     book: "Agenda una llamada de 30 min con Carlos",
     deeperSubject: "Ir más a fondo con {host}",
+    fixTitle: "Arregla lo que encontró",
+    fixLines: ["Arréglalo tú: Pregúntale al informe escribe cada arreglo para tu stack, y un informe pagado incluye una nueva revisión gratis.", "Paquetes de precio fijo desde US${usd}, con pago por PayPal y una nueva revisión gratis cuando el trabajo esté listo.", "O pide una cotización, con respuesta en dos días hábiles, o agenda una llamada de 30 minutos."],
+    fixCta: "Ver las formas de arreglarlo",
     why: "Recibes esto porque se hizo una revisión de {host} con este correo en carlosandmunoz.com.",
     stop: "Dejar de recibir notas",
     subjectOpen: "{host} sacó {score}/100. El informe completo está abierto.",
@@ -139,6 +146,9 @@ const COPY = {
     deeperCta: "Escreva para qa@carlosandmunoz.com",
     book: "Agende uma conversa de 30 min com o Carlos",
     deeperSubject: "Ir mais fundo com {host}",
+    fixTitle: "Corrija o que ela encontrou",
+    fixLines: ["Corrija você mesmo: Pergunte ao relatório escreve cada correção para o seu stack, e um relatório pago inclui uma nova revisão grátis.", "Pacotes de preço fixo a partir de US${usd}, pagos com PayPal, com uma nova revisão grátis quando o trabalho estiver pronto.", "Ou peça um orçamento, respondido em dois dias úteis, ou agende uma conversa de 30 minutos."],
+    fixCta: "Ver as formas de corrigir",
     why: "Você recebe isto porque uma revisão de {host} foi feita com este e-mail em carlosandmunoz.com.",
     stop: "Parar de receber notas",
     subjectOpen: "{host} tirou {score}/100. O relatório completo está aberto.",
@@ -183,6 +193,9 @@ const COPY = {
     deeperCta: "Schreiben Sie an qa@carlosandmunoz.com",
     book: "Buchen Sie ein 30-Minuten-Gespräch mit Carlos",
     deeperSubject: "Tiefer gehen mit {host}",
+    fixTitle: "Beheben, was sie gefunden hat",
+    fixLines: ["Selbst beheben: Den Bericht fragen schreibt jede Korrektur für Ihren Stack, und ein bezahlter Bericht enthält eine kostenlose Nachprüfung.", "Pakete zum Festpreis ab US${usd}, bezahlt mit PayPal, mit kostenloser Nachprüfung, sobald die Arbeit erledigt ist.", "Oder fragen Sie ein Angebot an, beantwortet innerhalb von zwei Werktagen, oder buchen Sie ein 30-Minuten-Gespräch."],
+    fixCta: "Wege zur Behebung ansehen",
     why: "Sie erhalten diese Nachricht, weil mit dieser Adresse eine Prüfung von {host} auf carlosandmunoz.com gestartet wurde.",
     stop: "Keine Notizen mehr",
     subjectOpen: "{host} hat {score}/100. Der vollständige Bericht ist offen.",
@@ -227,6 +240,9 @@ const COPY = {
     deeperCta: "Écrivez à qa@carlosandmunoz.com",
     book: "Réservez un appel de 30 min avec Carlos",
     deeperSubject: "Aller plus loin avec {host}",
+    fixTitle: "Corriger ce qu'elle a trouvé",
+    fixLines: ["Corrigez vous-même : Interroger le rapport rédige chaque correctif pour votre stack, et un rapport payé inclut une nouvelle vérification gratuite.", "Forfaits à prix fixe dès US${usd}, payés avec PayPal, avec une nouvelle revue gratuite une fois le travail terminé.", "Ou demandez un devis, avec une réponse sous deux jours ouvrés, ou réservez un appel de 30 minutes."],
+    fixCta: "Voir les façons de corriger",
     why: "Vous recevez ce message parce qu'une revue de {host} a été lancée avec cette adresse sur carlosandmunoz.com.",
     stop: "Ne plus recevoir de notes",
     subjectOpen: "{host} obtient {score}/100. Le rapport complet est ouvert.",
@@ -271,6 +287,9 @@ const COPY = {
     deeperCta: "Scrivi a qa@carlosandmunoz.com",
     book: "Prenota una chiamata di 30 minuti con Carlos",
     deeperSubject: "Andare più a fondo con {host}",
+    fixTitle: "Correggi ciò che ha trovato",
+    fixLines: ["Correggi da solo: Chiedi al report scrive ogni correzione per il tuo stack, e un report pagato include una nuova verifica gratuita.", "Pacchetti a prezzo fisso da US${usd}, pagati con PayPal, con una nuova revisione gratuita a lavoro finito.", "Oppure chiedi un preventivo, con risposta entro due giorni lavorativi, o prenota una chiamata di 30 minuti."],
+    fixCta: "Vedi i modi per correggere",
     why: "Ricevi questo messaggio perché con questo indirizzo è stata avviata una revisione di {host} su carlosandmunoz.com.",
     stop: "Non ricevere più note",
     subjectOpen: "{host} ha preso {score}/100. Il report completo è aperto.",
@@ -532,6 +551,18 @@ function deeperBlock(t, host, reportId, lang, from, face) {
     "</td></tr></table></td></tr>";
 }
 
+// The four ways to get a report's findings fixed (js/qa-review-fix.js), with the cheapest package's price.
+const fixFrom = () => Math.min.apply(null, fixOffers.PACKAGES.map((item) => item.usd));
+
+function fixBlock(t, url) {
+  return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:16px;\">" +
+    "<tr><td style=\"padding:24px 28px;font-family:Arial,Helvetica,sans-serif;\">" +
+    "<p style=\"margin:0 0 12px;" + fusion.SERIF + "font-size:22px;line-height:27px;color:" + TEXT.strong + ";\">" + esc(t.fixTitle) + "</p>" +
+    t.fixLines.map((line) => "<p style=\"margin:0 0 8px;font-size:15px;line-height:22px;color:" + TEXT.body + ";\"><span style=\"color:" + TEXT.link + ";\">&check;</span>&nbsp; " + esc(fill(line, { usd: fixFrom() })) + "</p>").join("") +
+    "<p style=\"margin:14px 0 0;\">" + button(url, t.fixCta, true) + "</p>" +
+    "</td></tr></table></td></tr>";
+}
+
 function link(href, label) {
   return "<a href=\"" + esc(href) + "\" style=\"color:" + TEXT.link + ";\">" + esc(label) + "</a>";
 }
@@ -760,6 +791,7 @@ function reportMail(record, options) {
   const kept = promise ? fill(PROMISE[lang].kept, { code: promise.coupon, percent: promise.percent, date: dateOf(promise.validUntil) }) : "";
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { coupon: promise ? promise.coupon : "", utm_campaign: "report-another" });
+  const fixUrl = facts.findings.length ? pageUrl(lang, { report: facts.id, utm_campaign: "report-fix" }) : "";
   const cf = compareFacts(record, lang);
   const baseUrl = cf && cf.ownId ? pageUrl(lang, { report: cf.ownId, utm_campaign: "report-compare" }) : "";
   const scoreHtml = scoreBlock(t, p, facts, story.title);
@@ -775,6 +807,7 @@ function reportMail(record, options) {
     (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.link + ";font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
+    (fixUrl ? fixBlock(t, fixUrl) : "") +
     deeperBlock(t, facts.host, facts.id, lang, "report", opts.face);
   const findingLines = facts.findings.map((item) => "- [" + (t.areas[item.area] || item.area) + " · " + (p.sev[item.severity] || item.severity) + "] " + item.shown + (item.hidden ? " …" : "") +
     (item.fix ? "\n  " + FIX_LABEL[lang] + ": " + item.fix : ""));
@@ -796,6 +829,7 @@ function reportMail(record, options) {
     opts.attached ? attached : "",
     t.another + ": " + anotherUrl,
     "",
+    fixUrl ? t.fixTitle + "\n" + t.fixLines.map((line) => "- " + fill(line, { usd: fixFrom() })).join("\n") + "\n" + t.fixCta + ": " + fixUrl + "\n" : "",
     t.deeper,
     t.deeperLines.join("\n"),
     deeperCta(t, opts.face),

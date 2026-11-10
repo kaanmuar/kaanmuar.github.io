@@ -78,7 +78,13 @@ save("period-daily", Object.assign({ subject: reviewMail.reportSubject("Daily", 
   rows: reviewMail.reportRows(summary, previous, "the day before", {
     failures: failures.rows,
     followUp: { notes: 2, stops: 1, notices: 5, unlisted: 1, replies: 1, redemptions: 0 },
-    sweep: 24
+    sweep: 24,
+    fixes: [
+      { package: "security-headers", priceUsd: 99, paidAt: at(17), paid: { priceUsd: 99 }, status: "accepted" },
+      { package: "", status: "quoted" },
+      { kind: "self", package: "", status: "done" }
+    ],
+    promises: [{ state: "delivered" }, { state: "open" }]
   }),
   body: [summary.body, failures.body].join("\n\n")
 })));

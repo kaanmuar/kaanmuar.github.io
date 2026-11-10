@@ -1152,7 +1152,7 @@ async function sendReviewPeriodReport(period) {
   const id = "review-" + period + "-" + window.label.replace(/[\s:]/g, "-");
   const startStamp = Timestamp.fromDate(window.start);
   const endStamp = Timestamp.fromDate(window.end);
-  const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
+  const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns, fixes] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
     loadReviewRows(window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
@@ -1160,7 +1160,11 @@ async function sendReviewPeriodReport(period) {
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
     loadSummaries("url_review_failures", reviewFailures.SUMMARY_FIELDS, window.start, window.end),
     loadSummaries("url_review_failures", ["kind", "cause"], earlier.start, window.start),
-    loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end)
+    loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end),
+    loadBound("url_review_fix_requests", "createdAt", window.start.toISOString(), window.end.toISOString()).catch((error) => {
+      console.error("Fix requests for the review report were not read:", error);
+      return [];
+    })
   ]);
   const reviews = askedFor(allReviews);
   if (period === "quarter" && !opens.length && !reviews.length && !captures.length && !alerts.length && !pageEvents.length) return null;
@@ -1236,7 +1240,9 @@ async function sendReviewPeriodReport(period) {
       rows: reviewMail.reportRows(summary, previous, earlier.phrase, {
         failures: quiet ? [] : failures.rows,
         followUp,
-        sweep: period === "quarter" ? null : allReviews.length - reviews.length
+        sweep: period === "quarter" ? null : allReviews.length - reviews.length,
+        fixes,
+        promises: failed.map((row) => row.promise).filter(Boolean)
       }),
       body: [summary.body, quiet ? "" : failures.body, pageBody].filter(Boolean).join("\n\n")
     });
