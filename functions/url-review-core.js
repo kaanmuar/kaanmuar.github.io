@@ -165,6 +165,23 @@ const FRAMEWORKS = BROWSER_FW.concat(MOBILE_FW, LOAD_FW);
 const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
 const LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
 const USER_AGENT = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
+// A rescue of a failed review (#3080) reads as a person's Chrome, as the browser already does for a host that cuts the tag off (#1182).
+// Every plain request inside reviewTarget(url, { readAs: "chrome" }) and probeRead(url, { readAs: "chrome" }) carries these headers.
+const READ_AS = new (require("async_hooks").AsyncLocalStorage)();
+const CHROME_HEADERS = {
+  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "accept-language": "en-US,en;q=0.9,es;q=0.8",
+  "sec-ch-ua": "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": "\"macOS\"",
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "none",
+  "sec-fetch-user": "?1",
+  "upgrade-insecure-requests": "1"
+};
+const readHeaders = () => READ_AS.getStore() === "chrome" ? Object.assign({}, CHROME_HEADERS) : { "user-agent": USER_AGENT, accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8" };
 const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
@@ -1115,11 +1132,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, a
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
       maxHeaderSize: MAX_HEADER_BYTES,
-      headers: Object.assign({
-        "user-agent": agent || USER_AGENT,
-        accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-        connection: "close"
-      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
+      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: pinnedLookup(pinned)
     }, (res) => {
@@ -2883,7 +2896,11 @@ async function tcpCheck(raw, ms) {
   }
 }
 
-async function probeRead(raw) {
+function probeRead(raw, options) {
+  return (options || {}).readAs === "chrome" ? READ_AS.run("chrome", () => probeReadAs(raw)) : probeReadAs(raw);
+}
+
+async function probeReadAs(raw) {
   const started = Date.now();
   const hops = [];
   const took = () => Date.now() - started;
@@ -3084,6 +3101,10 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 }
 
 async function reviewTarget(rawUrl, hooks) {
+  if (hooks && hooks.readAs === "chrome" && READ_AS.getStore() !== "chrome") {
+    if (hooks.log) hooks.log("This rescue reads the site as a person's Chrome, without the review's name in its user agent.");
+    return READ_AS.run("chrome", () => reviewTarget(rawUrl, hooks));
+  }
   const controls = hooks || {};
   const lines = [];
   const note = (text) => {
