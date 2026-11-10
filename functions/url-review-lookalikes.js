@@ -201,7 +201,7 @@ async function find(hostname, deps, limits) {
   });
 
   const homeTitle = titleOf(deps.home);
-  const mentions = new RegExp("(^|[^a-z0-9.-])" + site.replace(/\./g, "\\.") + "\\b", "gi");
+  const mentions = new RegExp("(^|[^a-z0-9.-])" + site.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "gi");
   const left = () => Math.max(1000, started + cap.budgetMs - Date.now());
   // The brand's own name under another ending (decathlon-online.es → decathlon.com) counts as the site.
   const brand = site.split(".")[0];

@@ -5,7 +5,7 @@ const url = require("node:url");
 const lookalikes = require("../../functions/url-review-lookalikes");
 const { say, english } = require("../../functions/url-review-findings-en");
 
-const domains = (site) => lookalikes.permutations(site).map((item) => item.domain);
+const domains = (site) => new Set(lookalikes.permutations(site).map((item) => item.domain));
 
 test("the generator builds each kind of lookalike of the registrable name (#3084)", () => {
   const list = domains("example.com");
@@ -26,10 +26,10 @@ test("the generator builds each kind of lookalike of the registrable name (#3084
   };
   const kinds = new Map(lookalikes.permutations("example.com").map((item) => [item.domain, item.fuzzer]));
   for (const [fuzzer, domain] of Object.entries(expected)) assert.equal(kinds.get(domain), fuzzer, domain);
-  assert.ok(list.includes(url.domainToASCII("exаmple.com")), "a Cyrillic а is asked as its punycode name");
-  assert.ok(list.includes("exarnple.com"), "m read as rn");
-  assert.equal(new Set(list).size, list.length, "no lookalike is asked twice");
-  assert.ok(!list.includes("example.com"), "the site itself is not a lookalike");
+  assert.ok(list.has(url.domainToASCII("exаmple.com")), "a Cyrillic а is asked as its punycode name");
+  assert.ok(list.has("exarnple.com"), "m read as rn");
+  assert.equal(list.size, lookalikes.permutations("example.com").length, "no lookalike is asked twice");
+  assert.ok(!list.has("example.com"), "the site itself is not a lookalike");
   for (const domain of list) assert.match(domain.split(".")[0], /^(xn--)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, domain);
 });
 
@@ -43,9 +43,9 @@ test("the likeliest tricks come first, so the cap drops insertions and additions
 
 test("a multi-label public suffix keeps its ending and swaps it whole (#3084)", () => {
   const list = domains("example.co.uk");
-  assert.ok(list.includes("exmple.co.uk"));
-  assert.ok(list.includes("example.com"));
-  assert.ok(!list.some((domain) => /\.co\.uk\.|^co\.uk/.test(domain)));
+  assert.ok(list.has("exmple.co.uk"));
+  assert.ok(list.has("example.com"));
+  assert.ok(!Array.from(list).some((domain) => /\.co\.uk\.|^co\.uk/.test(domain)));
 });
 
 const NX = { status: 3, answers: [] };
@@ -117,13 +117,13 @@ test("only lookalikes with a website or mail and no tie to the site are kept, wo
 });
 
 test("sinkholes, shared nameservers, redirects home and sister sites are not reported (#3084)", async () => {
-  const kept = (await lookalikes.find("example.com", deps())).rows.map((row) => row.domain);
-  assert.ok(!kept.includes("exmple.com"), "127.0.0.1 and MX 0 localhost are a parking sinkhole");
-  assert.ok(!kept.includes("example.net"), "the same nameservers as the site is a defensive registration");
-  assert.ok(!kept.includes("example.org"), "it redirects to the site");
-  assert.ok(!kept.includes("example.de"), "the site links to it");
-  assert.ok(!kept.includes("example.fr"), "a same-name site that links back is a sister site");
-  assert.ok(!kept.includes("exanple.com"), "an address with no web server and no mail");
+  const kept = new Set((await lookalikes.find("example.com", deps())).rows.map((row) => row.domain));
+  assert.ok(!kept.has("exmple.com"), "127.0.0.1 and MX 0 localhost are a parking sinkhole");
+  assert.ok(!kept.has("example.net"), "the same nameservers as the site is a defensive registration");
+  assert.ok(!kept.has("example.org"), "it redirects to the site");
+  assert.ok(!kept.has("example.de"), "the site links to it");
+  assert.ok(!kept.has("example.fr"), "a same-name site that links back is a sister site");
+  assert.ok(!kept.has("exanple.com"), "an address with no web server and no mail");
 });
 
 test("a lookalike that redirects home over plain http is the owner's (#3084)", async () => {
