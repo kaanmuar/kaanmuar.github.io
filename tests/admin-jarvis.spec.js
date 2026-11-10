@@ -1083,6 +1083,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(panel.locator('tr', { hasText: 'Social' })).toContainText('$8.79 not spread');
     await expect(panel.locator('.jv-cost-sides ol').first().locator('li').first()).toContainText('Argentina');
     await expect(panel.locator('.jv-cost-sides ol').last().locator('li').first()).toContainText('United States');
+    const sides = await panel.locator('.jv-cost-sides li button').allTextContents();
+    expect(new Set(sides).size).toBe(sides.length);
     if (process.env.GEO_SHOTS) { await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3283-per-reply.png` }); await panel.screenshot({ path: `${process.env.GEO_SHOTS}/3283-panel.png` }); }
 
     await geo.locator('[data-geo-metric]').selectOption('costPerSent');

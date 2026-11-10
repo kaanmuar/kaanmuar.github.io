@@ -155,7 +155,7 @@ export function panels(g, tv, key, channel, h) {
     const list = ranked(tv.rows, m);
     const item = (r) => `<li><button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button> <b>${esc(show(value(r, m), m))}</b></li>`;
     const sides = list.length ? `<div class="jv-cost-sides"><div><h4>Best · ${esc(labelOf(m))}</h4><ol>${list.slice(0, 5).map(item).join('')}</ol></div>
-        <div><h4>Worst · ${esc(labelOf(m))}</h4><ol>${list.slice(-5).reverse().map(item).join('')}</ol></div></div>` : `<p class="jv-note">No country has ${esc(labelOf(m).toLowerCase())} over this span.</p>`;
+        ${list.length > 5 ? `<div><h4>Worst · ${esc(labelOf(m))}</h4><ol>${list.slice(Math.max(5, list.length - 5)).reverse().map(item).join('')}</ol></div>` : ''}</div>` : `<p class="jv-note">No country has ${esc(labelOf(m).toLowerCase())} over this span.</p>`;
     return panel('geo-cost', `Cost and return · ${esc(basis.split(',')[0])}`, `${kpis}<div class="jv-table-wrap"><table class="jv-table"><thead><tr><th>Channel</th><th>A month</th><th>This span</th><th>Spread by</th></tr></thead><tbody>${ch}</tbody></table></div>${sides}`,
         { keep: true, note: 'Monthly costs from Settings, prorated to the days shown. Email and All outreach costs are spread by each country\'s share of emails sent, social by social replies, short links by link visits. Revenue is paid unlocks from short links; Return is revenue over cost.',
             data: Object.keys(v.c).map((cc) => Object.assign({ cc }, fieldsOf(v, cc))) });

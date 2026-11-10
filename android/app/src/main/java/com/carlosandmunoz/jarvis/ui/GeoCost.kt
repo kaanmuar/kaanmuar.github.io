@@ -232,7 +232,7 @@ fun GeoCostPanel(g: JsonObject, tv: GeoTime.View, key: String, channel: String, 
         val m = if (key in GeoCost.SCALED) key else "costPerReply"
         val list = GeoCost.ranked(tv.rows, m)
         if (list.isEmpty()) Muted("No country has ${GeoCost.label(m).lowercase()} over this span.")
-        else listOf("BEST" to list.take(5), "WORST" to list.takeLast(5).reversed()).forEach { (head, rows) ->
+        else listOf("BEST" to list.take(5), "WORST" to list.drop(maxOf(5, list.size - 5)).reversed()).filter { it.second.isNotEmpty() }.forEach { (head, rows) ->
             Text("$head · ${GeoCost.label(m).uppercase()}", color = J.amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
             rows.forEach { r ->
                 Row(Modifier.fillMaxWidth().clickable { pick(r.str("cc").orEmpty()) }.padding(vertical = 3.dp)) {
