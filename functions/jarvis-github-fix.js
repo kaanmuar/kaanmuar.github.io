@@ -468,7 +468,7 @@ async function diagnose(ctx, args) {
   const repo = repoOf(a);
   const id = Number(a.run || a.target);
   if (!Number.isInteger(id) || id <= 0) throw new Error("Which run?");
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
   const { run, job, excerpt } = await failedLog(ctx, repo, id);
   if (!job) return { ok: false, message: "Run " + id + " has no failed job to read." };
   const facts = { repo, name: run.name, branch: run.head_branch, event: run.event, attempt: run.run_attempt, sha: run.head_sha };
@@ -554,7 +554,7 @@ function isoWeek(t) {
 
 /* args.summary: the source's compact numbers now (jarvis.js githubAsk). */
 async function retro(ctx, args) {
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
   const now = ctx.now || Date.now();
   const days = [];
   for (let i = 7; i >= 1; i -= 1) {

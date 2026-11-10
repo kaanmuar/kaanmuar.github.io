@@ -8,6 +8,8 @@
 // From Google's network most bot walls refuse every header profile, while a home connection reads the same sites (#3080),
 // so the ladder ends on Carlos's Mac.
 
+const Gemini = require("./gemini");
+
 const RESCUE_DAYS = 14;
 const RESCUES_PER_DAY = 6;
 const ATTEMPTS_PER_DAY = 3;
@@ -211,17 +213,15 @@ function parseAi(text) {
 }
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
-// Gemini on Vertex AI, billed to the Firebase project and called as the functions' service account (roles/aiplatform.user),
-// for when the AI Studio key answers 402 (credits spent) or 429 (#3189).
-const VERTEX_PROJECT = "carlosm-interactive-cv";
-const VERTEX_MODEL = "gemini-3.8-flash";
-const VERTEX_URL = "https://aiplatform.googleapis.com/v1/projects/" + VERTEX_PROJECT + "/locations/global/publishers/google/models/";
-const METADATA_TOKEN = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
 async function groundedCall(fetchImpl, url, headers, body, label) {
   const res = await fetchImpl(url, { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, headers), signal: AbortSignal.timeout(60000), body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(label + " answered " + res.status + ": " + clip((data.error || {}).message, 160)), { status: res.status });
+  return grounded(data, label);
+}
+
+function grounded(data, label) {
   const candidate = (data.candidates || [])[0] || {};
   const parsed = parseAi(((candidate.content || {}).parts || []).map((part) => part.text || "").join(""));
   if (!parsed) throw new Error(label + "'s answer was not in the schema.");
@@ -240,27 +240,16 @@ function aiDiagnose(evidence, deps) {
   }, "Gemini");
 }
 
-let vertexToken = null;
-async function metadataToken(fetchImpl) {
-  if (vertexToken && vertexToken.until > Date.now() + 60000) return vertexToken.value;
-  const res = await fetchImpl(METADATA_TOKEN, { headers: { "Metadata-Flavor": "Google" }, signal: AbortSignal.timeout(5000) });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.access_token) throw new Error("The metadata server gave no token (" + res.status + ").");
-  vertexToken = { value: data.access_token, until: Date.now() + (Number(data.expires_in) || 300) * 1000 };
-  return vertexToken.value;
-}
-
-// deps.token() replaces the metadata server outside Google Cloud, as with gcloud auth print-access-token.
+// Gemini on Vertex AI through functions/gemini.js; deps.token() replaces the metadata server outside Google Cloud.
 async function vertexDiagnose(evidence, deps) {
   const { fetch: fetchImpl, token, vertexModel } = deps || {};
   if (typeof fetchImpl !== "function") throw new Error("Vertex AI is not configured.");
-  const bearer = typeof token === "function" ? await token() : await metadataToken(fetchImpl);
-  const out = await groundedCall(fetchImpl, VERTEX_URL + (vertexModel || VERTEX_MODEL) + ":generateContent", { Authorization: "Bearer " + bearer }, {
+  const data = await Gemini.vertex(fetchImpl, {
     contents: [{ role: "user", parts: [{ text: aiPrompt(evidence) }] }],
     tools: [{ googleSearch: {} }],
     generationConfig: { temperature: 0.2, maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } }
-  }, "Vertex AI Gemini");
-  return Object.assign(out, { via: "vertex" });
+  }, { token, vertexModel });
+  return Object.assign(grounded(data, "Vertex AI Gemini"), { via: "vertex" });
 }
 
 // The AI Studio key first; Vertex AI when there is no key or the key is out of credits or rate-limited.

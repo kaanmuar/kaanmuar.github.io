@@ -635,7 +635,7 @@ async function platform(ctx) {
       return { executions: total, notOk, failures: failures.total, failureRate: total ? round((failures.total / total) * 100, 2) : 0, byFunction: failures.byFunction, kinds: failures.kinds, latest: failures.latest, capped: failures.capped };
     }),
     part("gemini", async () => {
-      const rows = await monitoring(ctx, token, 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"', { start: week, end, groupBy: ["metric.label.response_code_class", "resource.label.method"] });
+      const rows = await monitoring(ctx, token, 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service=one_of("generativelanguage.googleapis.com","aiplatform.googleapis.com")', { start: week, end, groupBy: ["metric.label.response_code_class", "resource.label.method"] });
       const byClass = {};
       const failedMethods = {};
       rows.forEach((r) => {
