@@ -155,6 +155,29 @@ function highlight(chapters, max = 55) {
   return total > max ? picked.filter((c) => c.scene !== "score") : picked;
 }
 
+// Each chapter with its episode: its own, else the one whose intro last began, in the order the recording played them
+// (episodes repeat in --loop).
+function withEpisodes(chapters, episodes) {
+  let n = -1;
+  return chapters.map((c) => {
+    if (c.scene === "intro" && !c.viewer) n += 1;
+    return Object.assign({}, c, { episode: c.episode || (episodes.length ? episodes[Math.max(0, n) % episodes.length] : "") });
+  });
+}
+
+// One highlight per episode, from the first time the recording played it: [{ episode, scenes }].
+function highlights(chapters, episodes = [], max = 55) {
+  const plays = [];
+  withEpisodes(chapters, episodes).forEach((c) => {
+    const last = plays[plays.length - 1];
+    if (!last || (c.scene === "intro" && !c.viewer) || last.episode !== c.episode) plays.push({ episode: c.episode, chapters: [c] });
+    else last.chapters.push(c);
+  });
+  const seen = new Set();
+  return plays.filter((p) => !seen.has(p.episode) && seen.add(p.episode))
+    .map((p) => ({ episode: p.episode, scenes: highlight(p.chapters, max) })).filter((h) => h.scenes.length);
+}
+
 function reviewLink(episodeId, platform) {
   return SITE + "/qa-review.html?utm_source=" + encodeURIComponent(platform || "live") + "&utm_medium=live&utm_campaign=" + encodeURIComponent(episodeId);
 }
@@ -162,5 +185,5 @@ function reviewLink(episodeId, platform) {
 module.exports = {
   ROOT, OUT, LANGS, SITE, PRESENTERS, SCENES, SCENE_TITLES, EPISODES, UI,
   studioVoices, sayAs, spoken, turnVoice, pickVoice, episode, fill, episodeStrings, viewerStrings, queuedStrings, headline, pickFinding,
-  rtmpTargets, outputArgs, chapterMeta, chapterList, highlight, reviewLink, stamp
+  rtmpTargets, outputArgs, chapterMeta, chapterList, highlight, withEpisodes, highlights, reviewLink, stamp
 };

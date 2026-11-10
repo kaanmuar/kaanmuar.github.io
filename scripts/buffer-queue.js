@@ -542,8 +542,8 @@ function xReplies(cap, text, english, linkedin) {
   return out;
 }
 
-// YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, the rest.
-const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23" };
+// YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, live show clips (Science & Technology), the rest.
+const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23", live: "28" };
 
 // One channel, one slug: the post inputs, each with its calendar slot (none when this network takes nothing
 // from the batch). Each post keeps its calendar slot; the queues already hold months of imported posts, so

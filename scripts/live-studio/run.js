@@ -24,7 +24,7 @@
    and --mic <avfoundation device, e.g. :0> mixes his microphone over the bed.
    --live names RTMP targets read from env: TIKTOK_RTMP_URL + TIKTOK_RTMP_KEY, INSTAGRAM_RTMP_URL + INSTAGRAM_RTMP_KEY.
    --coupon CODE shows a code on the call to action; --fps 30; --port 8793; --headed shows the browser.
-   A recording whose peak is not above -30 dB exits 2. */
+   A recording whose peak is not above -30 dB exits 2. After a live, scripts/live-studio/publish.js posts it (#3173). */
 
 require("../playwright-sandbox");
 const fs = require("fs");

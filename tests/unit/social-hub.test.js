@@ -144,7 +144,7 @@ test("every language has the full interface copy", () => {
 });
 
 test("the filter offers a chip for each kind that has posts, in lane order, labelled in the page language", () => {
-  assert.deepEqual(hub.KINDS, ["tip", "trick", "review", "news", "pick", "advice", "compare", "myth", "quiz", "term", "skit", "series", "launch"]);
+  assert.deepEqual(hub.KINDS, ["tip", "trick", "review", "news", "pick", "advice", "compare", "myth", "quiz", "term", "skit", "live", "series", "launch"]);
   for (const lang of Object.keys(LANGS)) for (const kind of hub.KINDS) assert.ok(COPY[lang].kinds[kind] && COPY[lang].kind[kind], lang + " " + kind);
   const html = hub.page("pt", [post({ id: "a/1", kind: "myth" }), post({ id: "a/2", kind: "trick" }), post({ id: "a/3" })], "2026-10-24");
   const chips = [...html.matchAll(/class="hub-chip" data-kind="([a-z]+)"[^>]*>([^<]+)</g)].map((m) => m[1] + ":" + m[2]);
