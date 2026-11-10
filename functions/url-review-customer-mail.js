@@ -1253,4 +1253,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, langOf, esc, fill, button, shell, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, COPY, langOf, esc, fill, button, shell, bodyCell, bookLink, footerHtml, footerText, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

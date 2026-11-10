@@ -1064,6 +1064,12 @@
       ask(fill(L().askWhy, { id }));
     }
 
+    async function fixFor(id) {
+      if (!payload || !(await open())) return;
+      const host = payload.report.host;
+      ask(fill(host ? L().askFixOn : L().askFix, { id, host }));
+    }
+
     function cardLink(id) {
       if (!payload) return "";
       const words = L();
@@ -1128,7 +1134,7 @@
       if (button) about(button.getAttribute("data-ask-about"));
     });
     if (root.ReviewAuth && root.ReviewAuth.onChange) root.ReviewAuth.onChange((on) => { if (!on) allowed.clear(); });
-    return { show, close, cardLink };
+    return { show, close, cardLink, fix: fixFor };
   }
 
   const api = { T, answer, suggestions, intentOf, idsIn, githubIssueUrl, issueFor: (report, id, options) => { const hit = lookup(report, id); return hit ? issueFor(report, hit, options || {}) : null; } };
@@ -1139,5 +1145,6 @@
     api.show = panel ? panel.show : () => {};
     api.close = panel ? panel.close : () => {};
     api.cardLink = panel ? panel.cardLink : () => "";
+    api.fix = panel ? panel.fix : () => {};
   }
 })(typeof window !== "undefined" ? window : globalThis);
