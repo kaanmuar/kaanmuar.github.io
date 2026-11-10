@@ -3,7 +3,8 @@
    The daily Live Reports job (scripts/auto-live-reports.js) reads GET /publishable on reviewUrl.
    It gets the newest complete review per host since a date, already filtered and trimmed: no
    requester name, email, reason, IP, device, page list, log, engine internals, or chat conversation
-   (report.chatTalk and any talk-* finding) ever leave here.
+   (report.chatTalk and any talk-* finding) ever leave here, nor any exposed-files (sec-exposed*) finding;
+   a report with an exposed file is held back whole, since its summary may name it.
    A host whose owner asked to be left out goes in Firestore url_review_unlisted/<host>; an asker who
    ticked "Don't publish" leaves `unlisted: true` on that one record. */
 
@@ -33,6 +34,7 @@ function heldReason(record, unlisted) {
   const score = report.insights && report.insights.score;
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
   if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "safe-browsing-flagged";
+  if ((report.insights.findings || []).some((f) => /^sec-exposed-/.test(String(f.key || "")) && f.verdict === "fail")) return "exposed-files";
   const limits = report.limits || {};
   const read = limits.pagesRead || (report.pages || []).length;
   // Reviews before #2016 set timedOut when PageSpeed ran past the deadline, even with every page read.
@@ -80,7 +82,7 @@ function publicReport(report) {
     insights: {
       score: ins.score,
       summary: ins.summary || "",
-      findings: (ins.findings || []).filter((f) => !/^talk-/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort", "msg"])),
+      findings: (ins.findings || []).filter((f) => !/^(talk-|sec-exposed)/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort", "msg"])),
       geo: {
         crawlers: (geo.crawlers || []).map((c) => pick(c, ["role", "allowed", "token"])),
         llms: { ok: !!(geo.llms && geo.llms.ok) },
