@@ -39,11 +39,14 @@ const FACES = {
       langs: "English · Deutsch · Français · Italiano"
     },
     bios: {
-      short: "One URL in, a QA review out. EN·DE·FR·IT. ES/PT: {other}",
-      bio: "One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: {other}",
-      about: "One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility and speed, with test cases for 20 frameworks. First review included. We post in English, Deutsch, Français and Italiano. Español y português: {other}",
+      short: "Is your site safe? We check, fix from $69. EN·DE·FR·IT. ES/PT: {other}",
+      bio: "Is your site safe? We check deeper, fix it at a fixed price from $69, and you always get your report. EN·DE·FR·IT. Español/Português: {other}",
+      about: "Is your site safe? We check deeper than most: phishing lists, hacked-site signs, lookalike domains, linked hosts. Fixed-price fixes from $69 with a free re-review, and your report always arrives. EN·DE·FR·IT. Español y português: {other}",
       long: [
-        "One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.",
+        "QA-lab URL Review tells you whether your site is safe, and looks deeper than most checkers: phishing and malware lists, signs of a hacked site, lookalike domains and every host your pages load or link to. If something needs fixing, we fix it at a fixed price from $69, then re-review it for free. And you always get your report: if the first run can't finish, the full report reaches your inbox within 48 hours.",
+        "Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis ab 69 US$, und Ihr Bericht kommt immer an.",
+        "Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe dès 69 US$, et votre rapport arrive toujours.",
+        "Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso da 69 US$ e il tuo report arriva sempre.",
         "Live Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.",
         "En español y português: {other}"
       ].join("\n\n")
@@ -75,12 +78,12 @@ const FACES = {
       langs: "Español · Português"
     },
     bios: {
-      short: "Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: {other}",
-      bio: "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: {other}",
-      about: "Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: {other}",
+      short: "¿Tu sitio es seguro? Arreglos desde 69 USD. ES·PT. EN/DE/FR/IT: {other}",
+      bio: "¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: {other}",
+      about: "¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y tu informe siempre llega. ES·PT. EN/DE/FR/IT: {other}",
       long: [
-        "Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.",
-        "Uma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.",
+        "QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.",
+        "Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.",
         "Informes en vivo, consejos, sketches y revisiones en directo, en español y português.",
         "English, Deutsch, Français, Italiano: {other}"
       ].join("\n\n")
