@@ -61,6 +61,8 @@ const J = require("./jarvis-engagement");
 const R = require("./engagement-reports");
 const Act = require("./engagement-act");
 const Joins = require("./engagement-joins");
+const Communities = require("./student-communities");
+const Students = require("./student-outreach");
 const OwnerTags = require("./owner-tags");
 
 const DAY = 24 * 3600000;
@@ -111,7 +113,15 @@ async function sites(deps) {
   const conf = await J.readSettings(deps.db);
   if (conf.paused) return { ok: true, paused: true, queries: [], topics: [], groups: {} };
   const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
-  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: E.DISCOVERY, groups }, look.error ? { error: look.error } : {});
+  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: Communities.withStudents(E.DISCOVERY), groups }, look.error ? { error: look.error } : {});
+}
+
+/** Student communities the searches found, student posts to comment on and students who answered us (#3138). */
+async function studentLeads(deps, groups, posts, comments) {
+  const fail = (error) => ({ error: String(error.message || error).slice(0, 200) });
+  const [found, read, met] = [await Communities.searched(deps, groups).catch(fail), await Students.takePosts(deps, posts).catch(fail), await Students.takeCommenters(deps, comments).catch(fail)];
+  return { communities: found.found || 0, drafted: read.drafted || 0, invited: met.invited || 0, trials: (read.trials || 0) + (met.invited || 0),
+    error: [found.error, read.error, met.error].concat(read.errors || [], met.errors || []).filter(Boolean).slice(0, 3).join("; ") };
 }
 
 /** The push when networks the Mac's last run had signed in read as signed out (#3163), once per sign-out. */
@@ -155,16 +165,17 @@ async function ingest(deps, body) {
   const before = ((await macRef(db).get()).data() || {}).signedIn || {};
   const signedIn = netMap(b.signedIn, (v) => v === true);
   const lost = BROWSER.filter((k) => before[k] === true && signedIn[k] === false);
+  const students = await studentLeads(deps, b.groups, posts, comments);
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn, accounts: netMap(b.accounts, (v) => clip(v, 120)),
     blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students
   }, { merge: true });
   await J.clearCache(db);
   if (lost.length && deps.push) await deps.push(signedOutPush(lost, errors)).catch(() => null);
   return {
     ok: true, lost, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students
   };
 }
 
@@ -232,12 +243,21 @@ async function queue(deps, body) {
     }
     return gifs[k] || 0;
   };
+  let studentsUsed = null;
   const take = async (t) => {
     if (!want.includes(t.doc.network) || leased(t.doc.actions[t.action], now) || (per[t.doc.network] || 0) >= PER_NETWORK) return;
+    let student = null;
+    if (t.doc.campaign === Students.CAMPAIGN) {
+      if (!studentsUsed) studentsUsed = ((await day.get()).data() || {}).n || {};
+      student = Students.task(t.doc, studentsUsed[t.doc.network]);
+      if (!student) return;
+      studentsUsed[t.doc.network] = Object.assign({}, studentsUsed[t.doc.network], { ["student_" + student.action]: ((studentsUsed[t.doc.network] || {})["student_" + student.action] || 0) + 1 });
+      await day.set({ n: { [t.doc.network]: { ["student_" + student.action]: inc(1) } } }, { merge: true });
+    }
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
     const r = t.doc.actions.reply || {};
-    const card = t.action === "reply" ? await Act.drawCard(deps, t.doc) : {};
+    const card = t.action === "reply" && !student ? await Act.drawCard(deps, t.doc) : {};
     const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
     const extras = t.action === "reply" ? extrasFor(t.doc, r.gif ? await gifsLeft(t.doc.network) : 0) : null;
     if (extras && extras.gif) gifs[t.doc.network] -= 1;
@@ -248,7 +268,7 @@ async function queue(deps, body) {
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
     }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
     own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
-    extras ? { extras } : {}));
+    extras ? { extras } : {}, student || {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
@@ -277,7 +297,7 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join").includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
   if (action === "join") {
     const out = await Joins.result(deps, Object.assign({}, b, { key }));
     if (!out) throw new MacError("That group is gone.", 404);
@@ -288,13 +308,15 @@ async function result(deps, body) {
   const snap = await ref.get();
   const doc = snap.exists ? snap.data() : null;
   if (!doc || E.carrier(doc) !== "mac") throw new MacError("That post is gone.", 404);
-  const cur = (doc.actions || {})[action] || {};
-  const k = "actions." + action + ".";
+  // A student post or DM (#3138) is the reply action of its draft.
+  const field = Students.ACTIONS.includes(action) ? "reply" : action;
+  const cur = (doc.actions || {})[field] || {};
+  const k = "actions." + field + ".";
   const at = new Date(now).toISOString();
   const count = (c) => db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
   const error = clip(b.error, 200);
   let status;
-  if (action === "reply") {
+  if (field === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
     const own = doc.ownerTags || {};
@@ -316,6 +338,7 @@ async function result(deps, body) {
       if (extras.gif === "added") await count("gif");
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
       if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
+      if (doc.campaign === Students.CAMPAIGN) await Students.sent(deps, doc, b);
     } else if (b.none && own.latest) {
       status = "failed";
       await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "error"]: error || "No post of theirs to answer on their profile.", [k + "tries"]: tries, [k + "leasedAt"]: "", "ownerTags.none": at, updatedAt: at });

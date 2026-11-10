@@ -44,12 +44,13 @@ const CAPS = ACTIONS.concat("join");
 // In the field the Mac's browser acts as Carlos's accounts (via "mac" on the post, see carrier): reactions, forwards to
 // @qalab_live and replies on Telegram; upvotes, crossposts to r/QALabLiveReports, follows and comments on Reddit; and
 // joins (caps.join), the most a young account takes before both networks ban it for volume, warmed up by joinCap.
+// LinkedIn joins student groups (#3138) as Carlos's personal profile: a company page cannot join a group.
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
   mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
   youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9 },
   x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
-  linkedin: { name: "LinkedIn", acts: true, browser: true, only: ["like", "reply"], limit: 1200, scale: 15, weight: 1.2, caps: { like: 25, reply: 8 } },
+  linkedin: { name: "LinkedIn", acts: true, browser: true, only: ["like", "reply"], limit: 1200, scale: 15, weight: 1.2, caps: { like: 25, reply: 8, join: 2 } },
   facebook: { name: "Facebook", acts: true, browser: true, only: ["like", "reply"], limit: 1000, scale: 20, weight: 0.8, caps: { like: 25, reply: 6 } },
   instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
   threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },

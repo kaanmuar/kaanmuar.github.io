@@ -470,7 +470,7 @@ async function run(opts) {
     if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
     if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
     if (r.ok) done += 1;
-    await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, error: r.error || "", card: r.card || "", cardError: r.cardError || "",
+    await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, pending: !!r.pending, rules: r.rules || "", error: r.error || "", card: r.card || "", cardError: r.cardError || "",
       target: r.target || null, none: !!r.none, mentions: r.mentions || [], extras: r.extras || null }).catch((error) => log(error.message));
     const linked = ((r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "")
       + (r.extras ? ", " + Object.entries(r.extras).map(([k, v]) => k + " " + v).join(", ") : "");
@@ -496,6 +496,7 @@ async function run(opts) {
     log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : "")
       + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : "")
       + (took.groups && took.groups.groups ? "; groups: " + took.groups.groups + " in our field, " + took.groups.found + " new" : "")
+      + (took.students && (took.students.drafted || took.students.invited || took.students.communities) ? "; students: " + took.students.communities + " communities, " + took.students.drafted + " posts to comment, " + took.students.invited + " invites drafted" : "")
       + (took.reports && took.reports.read ? "; reviewed sites: " + took.reports.read + " read, " + took.reports.matched + " name one, " + took.reports.drafted + " invites drafted" : ""));
 
     const ready = Object.keys(seen.signedIn).filter((k) => seen.signedIn[k] && !c.blocked[k]);
