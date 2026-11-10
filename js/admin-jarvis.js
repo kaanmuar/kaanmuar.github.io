@@ -6,11 +6,12 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
-import * as Geo from "./admin-jarvis-geo.js?v=3109";
+import * as Geo from "./admin-jarvis-geo.js?v=3281";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
-import * as GeoTime from "./admin-jarvis-geo-time.js?v=3109";
+import * as GeoTime from "./admin-jarvis-geo-time.js?v=3281";
 import * as GeoActions from "./admin-jarvis-geo-actions.js?v=3115";
+import * as GeoClicks from "./admin-jarvis-geo-clicks.js?v=3281";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -3013,6 +3014,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
             <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
         const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) : '<p class="jv-note">Drawing the map…</p>';
+        const clicksNote = key === 'clicks' && GeoClicks.note(g) ? `<p class="jv-note">${esc(GeoClicks.note(g))}</p>` : '';
         const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
         const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
             [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
@@ -3025,7 +3027,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
             { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
         <div class="jv-grid">
-            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
             ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
@@ -3095,6 +3097,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 { label: 'Prospects · left', value: `${fmt(r.prospects)} · ${fmt(r.left)}` }, { label: 'Reviewed · score', value: `${fmt(r.reviewed)}${r.score === null ? '' : ' · ' + r.score}` },
                 { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
             ${GeoTime.sheet(S.external.geo, r.cc, geoTimeState(), esc)}
+            ${GeoClicks.sheet(r, { esc, fmt })}
             ${r.sent || r.prospects ? funnel(steps) : ''}
             ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
             ${geoCountryDates(r, camps)}

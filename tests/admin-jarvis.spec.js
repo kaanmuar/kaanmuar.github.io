@@ -823,6 +823,33 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map shades short-link clicks by visitor country and the sheet sets visitors from a country against its prospects (#3281)', async ({ page }) => {
+    test.setTimeout(90000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const clicks = { BR: { clicks: 12, clicksPrior: 5, prospectClicks: 4, clickKinds: { outreach: 8, social: 3, channel: 1 }, visitorVisits: 9, visitorReviews: 3, visitorPaid: 1, visitorUsd: 19, visits: 4, reviews: 1, paid: 0, usd: 0 }, MX: { clicks: 3 } };
+    const geoClicks = Object.assign({}, GEO_DATED, { totals: Object.assign({}, GEO_DATED.totals, { clicks: 15, clicksPrior: 5, clicksUnknown: 2 }),
+      countries: GEO_DATED.countries.map((r) => Object.assign({}, r, clicks[r.cc] || {})) });
+    await openStats(page, '#stats/geo/30', { geo: geoClicks });
+    const geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
+    await geo.locator('[data-geo-channel="web"]').click();
+    await geo.locator('[data-geo-metric]').selectOption('clicks');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Short-link clicks');
+    await expect(geo.locator('[data-panel-id="geo-map"]')).toContainText('15 short-link clicks, 5 the span before; 2 with no country');
+    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
+    await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*12/);
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3281-map-clicks.png` });
+    await geo.locator('path[data-geo-cc="BR"]').click();
+    const block = geo.locator('[data-panel-id="geo-country"] .jv-geo-clicks');
+    await expect(block).toContainText('Visitors from here vs prospects here');
+    await expect(block.locator('tr', { hasText: 'Short-link clicks' })).toContainText(/12\s*4/);
+    await expect(block.locator('tr', { hasText: 'Revenue (USD)' })).toContainText('$19');
+    await expect(block).toContainText('Clicks: outreach email 8, social replies 3, channels 1 · +7 on the span before');
+    if (process.env.GEO_SHOTS) await block.screenshot({ path: `${process.env.GEO_SHOTS}/3281-sheet-clicks.png` });
+    expect(errors).toEqual([]);
+  });
+
   test('Map draws the campaign timeline and the channel flow, both following the country and channel, and a bar opens its campaign actions (#3114)', async ({ page }) => {
     test.setTimeout(90000);
     const errors = [];
