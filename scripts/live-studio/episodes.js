@@ -15,7 +15,8 @@ const LINES = {
   score: "{score} out of 100. Grade {grade}. {fails} checks fail, {risks} are at risk, and {passes} pass.",
   findings: "Fix these three first. One: {f1}. Two: {f2}. Three: {f3}.",
   ask: "Your turn. Comment your site's address below, and we review it live, right here on stream.",
-  cta: "Scan the code, or open carlosandmunoz.com/qa-review. Paste your address and get your own report in minutes."
+  cta: "Scan the code, or open carlosandmunoz.com/qa-review. Paste your address and get your own report in minutes.",
+  ctaTrial: "Scan the code for a free two-day trial: three full reviews of your own site. The link on screen has the code, and it works until tomorrow."
 };
 
 const UI = {
@@ -43,6 +44,8 @@ const UI = {
   exampleUrl: "yourwebsite.com",
   scan: "Scan to review your site",
   coupon: "Live code",
+  trial: "Free 2-day trial",
+  trialRuns: "3 full reviews",
   next: "Up next",
   askedBy: "Asked by",
   queued: "In the queue",

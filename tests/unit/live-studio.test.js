@@ -63,3 +63,40 @@ test("chapters become mp4 metadata, a YouTube list and a highlight of a social c
 test("the voice reads the review page's address, the caption shows it", () => {
   assert.strictEqual(studio.spoken("es", "Abre carlosandmunoz.com/qa-review ya"), "Abre carlosandmunoz.com barra QA review ya");
 });
+
+test("a live's call to action opens its trial in the show's language, and every language says so (#3176)", () => {
+  const { TRIAL } = require("../../functions/outreach-trials");
+  const es = studio.trialLink("TRY-ABC234", "es", "hotel-high-season", "tiktok");
+  assert.strictEqual(es.url, "https://carlosandmunoz.com/qa-review-es.html?trial=TRY-ABC234&utm_source=tiktok&utm_medium=live&utm_campaign=hotel-high-season");
+  assert.strictEqual(es.short, "carlosandmunoz.com/qa-review-es?trial=TRY-ABC234");
+  assert.strictEqual(studio.trialLink("TRY-ABC234", "en", "x").short, "carlosandmunoz.com/qa-review?trial=TRY-ABC234");
+  assert.strictEqual(studio.liveSession("tiktok", ["link-in-bio"], Date.parse("2026-11-09T15:04:00Z")), "2026-11-09-1504-tiktok-link-in-bio");
+  assert.strictEqual(studio.liveSession("instagram", ["a", "b"], Date.parse("2026-11-09T15:04:00Z")), "2026-11-09-1504-instagram-mix");
+  assert.match(studio.UI.trial, new RegExp("\\b" + TRIAL.days + "-day"));
+  assert.match(studio.UI.trialRuns, new RegExp("^" + TRIAL.runs + " "));
+  const i18n = require("../../scripts/live-studio/i18n/i18n.json");
+  studio.LANGS.filter((l) => l !== "en").forEach((lang) => {
+    assert.ok(i18n.ui[lang].trial && i18n.ui[lang].trialRuns, lang + " trial labels");
+    studio.EPISODES.forEach((ep) => assert.ok(i18n.clips[ep.id + "-" + lang].say_cta_trial, ep.id + "-" + lang));
+  });
+});
+
+test("the runner mints one shared live code for the show plus 24 hours with the Mac's token, and reads its uses back", async () => {
+  const trial = require("../../scripts/live-studio/trial");
+  const sent = [];
+  const fetch = async (url, init) => {
+    sent.push({ url, headers: init.headers, body: JSON.parse(init.body) });
+    const body = sent[sent.length - 1].body;
+    return { ok: true, json: async () => body.op === "outreach-mint"
+      ? { ok: true, code: "TRY-ABC234", url: "u", validUntil: "v", maxUses: 500, person: { id: "live:" + body.handle } }
+      : { ok: true, person: { uses: 7 } } };
+  };
+  const deps = { fetch, pair: { token: "t0k", endpoint: "https://jarvis.test" } };
+  const got = await trial.mintLive({ session: "2026-11-09-1504-tiktok-mix", lang: "es", hours: 2 }, deps);
+  assert.deepStrictEqual(got, { code: "TRY-ABC234", url: "u", validUntil: "v", maxUses: 500, person: "live:2026-11-09-1504-tiktok-mix" });
+  assert.strictEqual(sent[0].headers["x-mac-token"], "t0k");
+  assert.deepStrictEqual([sent[0].body.op, sent[0].body.kind, sent[0].body.network, sent[0].body.validHours, sent[0].body.maxUses], ["outreach-mint", "live", "live", 26, undefined]);
+  assert.strictEqual(await trial.closeLive(got.person, deps), 7);
+  assert.deepStrictEqual(sent[1].body, { op: "outreach-touch", id: got.person, patch: { note: "live ended" } });
+  await assert.rejects(trial.mintLive({ session: "s", hours: 1 }, { fetch, pair: {} }), /not paired/);
+});

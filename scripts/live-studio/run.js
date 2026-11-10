@@ -23,7 +23,12 @@
    --voice carlos: Carlos speaks (no neural voice); the captions follow the script, the terminal shows the next line,
    and --mic <avfoundation device, e.g. :0> mixes his microphone over the bed.
    --live names RTMP targets read from env: TIKTOK_RTMP_URL + TIKTOK_RTMP_KEY, INSTAGRAM_RTMP_URL + INSTAGRAM_RTMP_KEY.
-   --coupon CODE shows a code on the call to action; --fps 30; --port 8793; --headed shows the browser.
+   A live (--live or --obs) opens with a free trial code of its own (scripts/live-studio/trial.js): shared by every viewer,
+   one trial per address, valid for the show plus 24 hours (--hours, default 2 with --loop, else 1; --trial-uses caps it),
+   shown as the QR and the link on the call to action and in the ticker, and logged in media/live-studio/lives.jsonl.
+   --trial mints one for a recording too; --trial TRY-XXXXXX shows a code already minted; --no-trial and --coupon CODE
+   leave the trial out, --coupon showing that code instead. A still shows a demo trial code.
+   --fps 30; --port 8793; --headed shows the browser.
    A recording whose peak is not above -30 dB exits 2. After a live, scripts/live-studio/publish.js posts it (#3173). */
 
 require("../playwright-sandbox");
@@ -36,11 +41,13 @@ const { promisify } = require("util");
 const studio = require("./studio");
 const reviews = require("./review");
 const comments = require("./comments");
+const trial = require("./trial");
 
 const run = promisify(execFile);
 const { ROOT, OUT, UI } = studio;
 const CACHE = path.join(OUT, "cache");
 const I18N = path.join(__dirname, "i18n");
+const LIVES = path.join(OUT, "lives.jsonl");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
 const TTS_HOME = path.join(require("os").homedir(), ".local/share/review-tts");
@@ -293,6 +300,30 @@ function sessionVoice(opts, voices) {
   return { lang, carlos, voice: studio.pickVoice(voices, lang, gender), advance };
 }
 
+function livePlatform(opts) {
+  return opts.platform || (opts.live && opts.live !== true ? String(opts.live).split(",")[0] : "live");
+}
+
+// The session's trial code: minted for a live, given with --trial CODE, a demo for stills, none with --coupon or --no-trial.
+async function sessionTrial(opts, session, ids, still) {
+  if (opts.coupon || opts["no-trial"]) return null;
+  if (opts.trial && opts.trial !== true) return { code: String(opts.trial).toUpperCase() };
+  if (still) return { code: trial.DEMO_CODE };
+  if (!opts.live && !opts.obs && !opts.trial) return null;
+  const platform = livePlatform(opts);
+  const hours = Number(opts.hours) || (opts.loop ? 2 : 1);
+  const name = ids.length === 1 ? studio.episode(ids[0]).title : "Live studio mix";
+  try {
+    const got = await trial.mintLive({ session: studio.liveSession(platform, ids), name, lang: session.lang, hours, uses: opts["trial-uses"] });
+    say("trial code", got.code, "for", got.person, "until", got.validUntil, "(" + got.maxUses + " uses)");
+    trial.logLive(LIVES, { event: "start", at: new Date().toISOString(), platform, lang: session.lang, episodes: ids, code: got.code, person: got.person, validUntil: got.validUntil, maxUses: got.maxUses });
+    return got;
+  } catch (error) {
+    say("no trial code (" + error.message + "); the call to action shows the review page");
+    return null;
+  }
+}
+
 // One episode's plan: what show.html draws, and each scene's line, voice and length.
 async function prepareEpisode(ep, session, table, opts) {
   const raw = reviews.liveReport(ep.report);
@@ -305,12 +336,14 @@ async function prepareEpisode(ep, session, table, opts) {
   if (!loc) loc = { lang: "en", ui: UI, clips: { [slug]: en } };
   if (loc.lang !== session.voice.lang) session.voice = studio.pickVoice(session.voices, loc.lang, session.voice.gender);
   const t = loc.clips[slug];
+  const platform = livePlatform(opts);
+  const link = session.trial ? studio.trialLink(session.trial.code, loc.lang, ep.id, platform) : null;
   report.fix = report.fix.map((f, i) => Object.assign({}, f, { title: t["f" + i + "_title"] || f.title, evidence: t["f" + i + "_evidence"] || f.evidence }));
   report.headline = t.headline;
   report.log = reviews.runLog(report, loc.lang);
   const scenes = [];
   for (const id of studio.SCENES) {
-    const line = t["say_" + id];
+    const line = id === "cta" && link ? t.say_cta_trial : t["say_" + id];
     let voiced = null;
     if (session.carlos || session.silent) voiced = { dur: line.split(/\s+/).length / CARLOS_WPS };
     else voiced = await speak(line, session.voice, table);
@@ -323,7 +356,8 @@ async function prepareEpisode(ep, session, table, opts) {
     report,
     fix: { title: t.fixTitle, steps: ep.fix.steps.map((s, i) => t["step" + i] || s), before: ep.fix.before, after: ep.fix.after,
       metric: { label: t.metricLabel, before: t.metricBefore, after: t.metricAfter, unit: t.metricUnit } },
-    qr: studio.reviewLink(ep.id, opts.platform || (opts.live ? String(opts.live).split(",")[0] : "live")),
+    qr: link ? link.url : studio.reviewLink(ep.id, platform),
+    trial: link ? { code: session.trial.code, short: link.short } : null,
     coupon: opts.coupon && opts.coupon !== true ? String(opts.coupon).toUpperCase() : "",
     bed: "/live/bed.wav"
   };
@@ -361,6 +395,7 @@ async function main() {
   const ids = opts.episode ? String(opts.episode).split(",") : opts.loop ? studio.EPISODES.map((e) => e.id) : [studio.EPISODES[0].id];
   const still = command === "still";
   if (still) session.silent = true;
+  session.trial = await sessionTrial(opts, session, ids, still);
 
   say("session:", session.lang, session.carlos ? "Carlos speaks" : session.voice.voice, "· episodes:", ids.join(", "));
   const plans = [];
@@ -473,6 +508,8 @@ async function main() {
     let loc = await localize(session.voice.lang, { [slug]: strings });
     if (!loc) loc = { clips: { [slug]: strings } };
     const t = loc.clips[slug];
+  const platform = livePlatform(opts);
+  const link = session.trial ? studio.trialLink(session.trial.code, loc.lang, ep.id, platform) : null;
     const line = t[key];
     const v = session.carlos ? { dur: line.split(/\s+/).length / CARLOS_WPS } : await speak(line, session.voice, table);
     return { t, line, voice: v };
@@ -546,7 +583,7 @@ async function main() {
   if (engine) {
     await sleep(800);
     await engine.stop();
-    const meta = { file, episodes: ids, lang: plans[0].lang, voice: session.carlos ? "carlos" : session.voice.voice, fps, rounds: round, chapters };
+    const meta = { file, episodes: ids, lang: plans[0].lang, voice: session.carlos ? "carlos" : session.voice.voice, fps, rounds: round, trial: session.trial ? session.trial.code : "", chapters };
     fs.writeFileSync(file + ".chapters.json", JSON.stringify(meta, null, 1));
     fs.writeFileSync(file + ".chapters.txt", studio.chapterList(chapters) + "\n");
     const peak = peakDb(file);
@@ -554,6 +591,11 @@ async function main() {
     if (!session.carlos || !opts.mic) {
       if (!(peak > -30)) { say("the recording's peak is not above -30 dB"); process.exitCode = 2; }
     }
+  }
+  if (session.trial && session.trial.person) {
+    const uses = await trial.closeLive(session.trial.person).catch((error) => { say("trial uses not read (" + error.message + ")"); return null; });
+    trial.logLive(LIVES, { event: "end", at: new Date().toISOString(), code: session.trial.code, person: session.trial.person, uses, file: engine ? file : "" });
+    say("trial", session.trial.code, "claimed", uses == null ? "?" : uses, "times");
   }
   session.advance();
   if (browser) await browser.close();
