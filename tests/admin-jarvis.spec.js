@@ -4,6 +4,8 @@ const calendarSource = require('../functions/jarvis-calendar.js');
 
 // Country dates (#2989) counted from today, so the panel always has days ahead: a weekday holiday in Brazil and Mexico.
 const GEO = require('./fixtures/jarvis-geo.json');
+// The rescue, fixes and checks sources (#3329), built by functions/jarvis-review-ops.js from sample rows.
+const REVIEW_OPS = require('./fixtures/jarvis-review-ops.json');
 const CALENDAR = (() => {
   const today = core.zoneParts(new Date()).day;
   const plus = (n) => new Date(Date.parse(today + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10);
@@ -57,6 +59,7 @@ const STUBS = {
 };
 
 const EXTERNAL = {
+  ...REVIEW_OPS,
   health: { ok: true, jobs: [{ job: 'sweepReviews', ok: false, error: 'quota', endedAt: '2026-10-25T10:00:00Z' }], failures: { total: 2, causes: [{ label: 'timeout', value: 2 }], hosts: [], latest: [] }, reruns: { total: 0, status: [], held: 0 }, alerts: { total: 0, kinds: [], latest: [] }, notices: { total: 0, status: [] }, rivals: { total: 0 }, coupons: { total: 0, uses: 0 }, captures: { total: 0, kinds: [] } },
   jobs: { ok: true, jobs: [{ name: 'sweepReviews', schedule: '*/5 * * * *', timeZone: 'UTC', state: 'ENABLED', lastAttempt: '2026-10-25T10:00:00Z', nextRun: '2026-10-25T10:05:00Z', ok: true, error: '' }] },
   github: { ok: true, ci: [{ name: 'E2E and Visual Tests', conclusion: 'success', url: 'https://github.com/x' }], openBugs: 3, bugAreas: [{ label: 'be', value: 2 }], merged: { total: 5, items: [] }, recent: [] },
@@ -244,7 +247,7 @@ function actionsWork() {
 }
 
 // The external sources jarvisSnapshot (functions/index.js) carries.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'rescue', 'fixes', 'checks', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar'];
 // The collections the web Jarvis used to read itself (#2102); the snapshot op reads them on the server now.
 const JARVIS_ROWS = ['site_events', 'url_review_opens', 'url_reviews', 'url_review_alerts', 'url_review_reports', 'socialHubStats/latest'];
 
@@ -625,6 +628,39 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(local).toContainText('No profile found');
     await expect(local).toContainText('status 429');
     expect(errors).toEqual([]);
+  });
+
+  test('URL Review shows failed reviews and rescue, report promises, fix requests and the new checks, on a phone too (#3329)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openStats(page, '#stats/review/30');
+    const rescue = page.locator('[data-view="review"] [data-panel-id="review-failures"]');
+    await expect(rescue).toContainText('Failed reviews and rescue · 6');
+    await expect(rescue.locator('.jv-stats').first()).toContainText('AI: Vertex AI');
+    await expect(rescue).toContainText('Codes redeemed');
+    await expect(rescue).toContainText('dental-uno.mx');
+    await expect(rescue).toContainText('Waiting for the Mac');
+    const fixes = page.locator('[data-view="review"] [data-panel-id="review-fixes"]');
+    await expect(fixes).toContainText('Fix requests · 7');
+    await expect(fixes).toContainText('Paid / accepted');
+    await expect(fixes).toContainText('shop-andes.co');
+    await expect(fixes).toContainText('hotel-mar.pt');
+    const checks = page.locator('[data-view="review"] [data-panel-id="review-checks"]');
+    await expect(checks).toContainText('Phishing and malware lists');
+    await expect(checks).toContainText('Web Risk linked hosts today');
+    await expect(checks).toContainText('Cloudflare URL Scanner scans this month');
+    await expect(checks).toContainText('Wordfence answered 401');
+    await expect(checks).not.toContainText('PhishStats lookups today');
+    const brief = page.locator('[data-view="review"] [data-panel-id="briefing"]');
+    await expect(brief).toContainText('near the 48-hour deadline');
+    await expect(brief).toContainText('paid fix request');
+    expect(errors).toEqual([]);
+    if (process.env.JARVIS_SHOTS) {
+      for (const [id, name] of [['review-failures', 'web-rescue'], ['review-fixes', 'web-fixes'], ['review-checks', 'web-checks'], ['briefing', 'web-briefing']]) {
+        await page.locator(`[data-view="review"] [data-panel-id="${id}"]`).screenshot({ path: process.env.JARVIS_SHOTS + '/' + name + '.png' });
+      }
+    }
   });
 
   test('URL Review lists the signed-in people, their runs, returns and time, and the switch keeps tests apart (#1976)', async ({ page }) => {

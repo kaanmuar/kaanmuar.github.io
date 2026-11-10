@@ -272,11 +272,9 @@ private fun score(v: Double?) = when { v == null -> J.muted; v >= 90 -> J.green;
 @Composable
 private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
     val health = s.snapshot.ext("health")
-    Panel("Failed runs", id = "review-failures") {
-        Text("${fmt(health.at("failures").num("total"))} failures · ${fmt(health.at("reruns").num("total"))} re-runs", fontSize = 14.sp)
-        health.at("failures").pairs("causes").take(6).forEach { (k, v) -> KeyRow(k, fmt(v)) }
-        health.obj("failures").objs("latest").take(8).forEach { StatusRow("alert", it.str("host") ?: "", (it.str("cause") ?: "") + " · " + (it.str("message") ?: "")) }
-    }
+    RescuePanel(s)
+    FixesPanel(s)
+    ChecksPanel(s)
     val alerts = health.obj("alerts").objs("latest")
     if (alerts.isNotEmpty()) Panel("Review alerts", id = "review-alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
     Panel("Actions", id = "review-ops") {

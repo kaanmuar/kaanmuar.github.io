@@ -44,6 +44,8 @@ function waitingLines(waiting) {
     { n: (w.reruns || []).length, label: plural((w.reruns || []).length, "held re-run"), names: list(w.reruns, (r) => r.host) },
     { n: (w.ownerReplies || []).length, label: plural((w.ownerReplies || []).length, "owner reply", "owner replies"), names: list(w.ownerReplies, (r) => r.domain) },
     { n: (w.notices || []).length, label: plural((w.notices || []).length, "owner notice") + " to send", names: list(w.notices, (r) => r.domain) },
+    { n: (w.promises || []).length, label: plural((w.promises || []).length, "promised report") + " still open", names: list(w.promises, (r) => r.host + " (" + (r.hoursLeft <= 0 ? "past due" : r.hoursLeft + " h left") + ")") },
+    { n: (w.fixes || []).length, label: plural((w.fixes || []).length, "paid fix request") + " waiting for work", names: list(w.fixes, (r) => r.host + " " + (r.package || "quote") + (r.late ? " (late)" : "")) },
     { n: (w.proposals || []).length, label: plural((w.proposals || []).length, "proposal"), names: list(w.proposals, (r) => r.title) }
   ].filter((row) => row.n);
 }

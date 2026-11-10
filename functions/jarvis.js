@@ -644,6 +644,9 @@ async function uptimeHistory(db, now) {
 
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
   + "QA Lab (a regression lab), QA-lab URL Review (paid website reviews), the Social hub, and the systems behind them. "
+  + "A URL review also checks phishing and malware lists, linked hosts, hacked-site signs, lookalike domains, exposed files, WordPress vulnerabilities and blocklists; "
+  + "a review that fails on our side is re-run and, at the last rung, read from Carlos's Mac, and its asker is promised the report by email within 48 hours or gets an apology code; "
+  + "clients can ask us to fix findings (fix it yourself with a free re-check, a quote, a fixed-price package paid by PayPal, or a call). "
   + "Use only the numbers in the JSON you get. Plain English, short sentences, no hype, no markdown tables. "
   + "Name the product, the number and the comparison. Say when a number is too small to mean anything.";
 
@@ -957,6 +960,7 @@ function askSnapshot(snap, days) {
       mapCostAndReturn: require("./jarvis-geo-cost").ask(e.geo),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+      ...require("./jarvis-review-ops").ask(e),
       github: githubAsk(e["github-work"]),
       mapChange: ok(e.geo) ? require("./jarvis-geo-time").askView(e.geo.time) : null,
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
