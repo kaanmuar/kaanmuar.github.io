@@ -17,6 +17,9 @@
  * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
  * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups). LinkedIn (#3138) has
  * groups and join too, as Carlos's personal profile; its join and Reddit's return the group's rules and pending (asked).
+ * Both carry the student routine's approved drafts as Carlos (#3138): publish(page, task) posts task.title and
+ * task.draft in a group or task.sr, dm(page, task) messages task.to, and a LinkedIn reply with task.as "self" skips
+ * acting as the page.
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -931,6 +934,7 @@ const LI_GROUP_ABOUT = LI_MEMBERS + `
   const heads = Array.from(main.querySelectorAll('h2, h3')).filter((h) => /^(About|Acerca|Sobre|Info|À propos|Informazioni|Rules|Group rules|Reglas|Regras|Regeln|Règles|Regole)/i.test(h.innerText.trim()));
   const rules = heads.map((h) => String((h.closest('section') || h.parentElement).innerText || '')).join('\\n').trim() || String(main.innerText || '').slice(0, 2000);
   return { members: members(main.innerText), rules: rules.replace(/[ \\t]+/g, ' ').slice(0, 2000) };`;
+const LI_START = /(Start a post|Comenzar una publicación|Crear publicación|Começar uma publicação|Beitrag beginnen|Commencer un post|Inizia un post)/i;
 const LI_JOIN = /^\s*(Join|Unirse|Participar|Entrar|Beitreten|Rejoindre|Iscriviti|Partecipa)\s*$/i;
 const LI_ASKED = /^\s*(Requested|Request sent|Solicitad[oa]|Pendiente|Solicitação enviada|Angefragt|Demandé|Demande envoyée|Richiesta inviata)\s*$/i;
 
@@ -1045,7 +1049,7 @@ const linkedin = {
   async reply(page, task) {
     const tags = (task.mentions || []).length ? await named(page, this, task.mentions, (m) => "https://www.linkedin.com/" + m.handle + "/") : null;
     const main = await this.post(page, task);
-    await this.asPage(page, main);
+    if (task.as !== "self") await this.asPage(page, main);
     const box = main.locator('[contenteditable="true"][aria-label*="coment" i], [contenteditable="true"][aria-label*="comment" i]');
     if (!(await visible(box, 4000))) await click(await need(main.locator('button[aria-label="Comentar"], button[aria-label="Comment"]'), "Comment"));
     let mentions = null;
@@ -1115,6 +1119,30 @@ const linkedin = {
     if (await visible(asked, 6000)) return { pending: true, members: about.members, rules: about.rules };
     await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
     return { members: about.members, rules: about.rules };
+  },
+  // A student community post (#3138) in a group Carlos joined, as himself: title, a blank line, the body.
+  async publish(page, task) {
+    await go(page, this, task.url);
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: LI_START }).or(main.getByText(LI_START)), "Start a post"));
+    const dialog = page.locator('[role="dialog"]').filter({ has: page.locator('[contenteditable="true"]') }).last();
+    await type(page, await need(dialog.locator('[contenteditable="true"]'), "The post box"), [task.title, task.draft].filter(Boolean).join("\n\n"));
+    await click(await need(dialog.getByRole("button", { name: /^\s*(Post|Publicar|Publier|Posten|Veröffentlichen|Pubblica)\s*$/i }), "Post"));
+    await dialog.waitFor({ state: "hidden", timeout: 20000 }).catch(() => { throw new Error("LinkedIn did not take the post."); });
+    return { url: task.url };
+  },
+  // A student invite (#3138) from Carlos's profile: Message on theirs, typed and sent. Members outside his network
+  // without open messages have no Message button, so it fails rather than buy InMail.
+  async dm(page, task) {
+    await go(page, this, "https://www.linkedin.com/" + String(task.to).replace(/^\/+/, "") + "/");
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: /^\s*(Message|Enviar mensaje|Mensaje|Mensagem|Nachricht|Message privé|Messaggio)\b/i }), "Message"));
+    const form = page.locator(".msg-form, form").filter({ has: page.locator('[contenteditable="true"]') }).last();
+    const input = await need(form.locator('[contenteditable="true"]'), "The message box");
+    await type(page, input, task.draft);
+    await click(await need(form.getByRole("button", { name: /^\s*(Send|Enviar|Senden|Envoyer|Invia)\s*$/i }), "Send"));
+    await sent(input, task.draft);
+    return { url: page.url() };
   }
 };
 
@@ -1418,6 +1446,21 @@ const reddit = {
     const c = (((d.things || [])[0] || {}).data) || {};
     if (!c.id) throw new Error("The comment did not post.");
     return { url: RD + (c.permalink || new URL(task.url).pathname) };
+  },
+  // A student community post (#3138), as Carlos: a text post in task.sr.
+  async publish(page, task) {
+    await go(page, this, RD + "/r/" + enc(task.sr) + "/");
+    await pause(3000, 7000);
+    const d = await rdCall(page, "/api/submit", { kind: "self", sr: task.sr, title: String(task.title || "").slice(0, 300), text: task.draft, sendreplies: "true", resubmit: "true" });
+    if (!d.url) throw new Error("The post did not go up.");
+    return { url: d.url };
+  },
+  // A student invite (#3138) as a private message.
+  async dm(page, task) {
+    await go(page, this, RD + "/user/" + enc(task.to) + "/");
+    await pause(2000, 5000);
+    await rdCall(page, "/api/compose", { to: task.to, subject: String(task.subject || "Your trial").slice(0, 100), text: task.draft });
+    return { url: RD + "/message/sent/" };
   },
   async join(page, task) {
     await go(page, this, RD + "/r/" + enc(task.id) + "/");

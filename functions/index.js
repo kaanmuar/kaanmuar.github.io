@@ -6859,7 +6859,7 @@ const ownerTagsDeps = () => Object.assign(engagementDeps(), { site: customerMail
 exports.ownerTags = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "ownerTags",
   async () => ownerTags.runNote(await ownerTags.run(ownerTagsDeps())));
 
-// Daily at 10:45 (#3138): the student communities list in, and each active community's weekly value post drafted for Carlos.
+// Daily at 10:45 (#3138): the student communities list in, and each active community's weekly value post drafted (sent by the Mac once approved).
 const studentOutreach = require("./student-outreach");
 exports.studentOutreach = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB" }), "studentOutreach",
   async () => studentOutreach.runNote(await studentOutreach.run(engagementDeps())));

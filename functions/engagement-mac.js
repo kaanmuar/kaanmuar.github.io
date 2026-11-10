@@ -243,12 +243,21 @@ async function queue(deps, body) {
     }
     return gifs[k] || 0;
   };
+  let studentsUsed = null;
   const take = async (t) => {
     if (!want.includes(t.doc.network) || leased(t.doc.actions[t.action], now) || (per[t.doc.network] || 0) >= PER_NETWORK) return;
+    let student = null;
+    if (t.doc.campaign === Students.CAMPAIGN) {
+      if (!studentsUsed) studentsUsed = ((await day.get()).data() || {}).n || {};
+      student = Students.task(t.doc, studentsUsed[t.doc.network]);
+      if (!student) return;
+      studentsUsed[t.doc.network] = Object.assign({}, studentsUsed[t.doc.network], { ["student_" + student.action]: ((studentsUsed[t.doc.network] || {})["student_" + student.action] || 0) + 1 });
+      await day.set({ n: { [t.doc.network]: { ["student_" + student.action]: inc(1) } } }, { merge: true });
+    }
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
     const r = t.doc.actions.reply || {};
-    const card = t.action === "reply" ? await Act.drawCard(deps, t.doc) : {};
+    const card = t.action === "reply" && !student ? await Act.drawCard(deps, t.doc) : {};
     const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
     const extras = t.action === "reply" ? extrasFor(t.doc, r.gif ? await gifsLeft(t.doc.network) : 0) : null;
     if (extras && extras.gif) gifs[t.doc.network] -= 1;
@@ -259,7 +268,7 @@ async function queue(deps, body) {
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
     }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
     own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
-    extras ? { extras } : {}));
+    extras ? { extras } : {}, student || {}));
   };
   for (const t of replies) await take(t);
   let dry = 0;
@@ -288,7 +297,7 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join").includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
   if (action === "join") {
     const out = await Joins.result(deps, Object.assign({}, b, { key }));
     if (!out) throw new MacError("That group is gone.", 404);
@@ -299,13 +308,15 @@ async function result(deps, body) {
   const snap = await ref.get();
   const doc = snap.exists ? snap.data() : null;
   if (!doc || E.carrier(doc) !== "mac") throw new MacError("That post is gone.", 404);
-  const cur = (doc.actions || {})[action] || {};
-  const k = "actions." + action + ".";
+  // A student post or DM (#3138) is the reply action of its draft.
+  const field = Students.ACTIONS.includes(action) ? "reply" : action;
+  const cur = (doc.actions || {})[field] || {};
+  const k = "actions." + field + ".";
   const at = new Date(now).toISOString();
   const count = (c) => db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
   const error = clip(b.error, 200);
   let status;
-  if (action === "reply") {
+  if (field === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
     const own = doc.ownerTags || {};
@@ -327,6 +338,7 @@ async function result(deps, body) {
       if (extras.gif === "added") await count("gif");
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
       if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
+      if (doc.campaign === Students.CAMPAIGN) await Students.sent(deps, doc, b);
     } else if (b.none && own.latest) {
       status = "failed";
       await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "error"]: error || "No post of theirs to answer on their profile.", [k + "tries"]: tries, [k + "leasedAt"]: "", "ownerTags.none": at, updatedAt: at });

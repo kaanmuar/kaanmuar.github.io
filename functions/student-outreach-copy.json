@@ -1,11 +1,13 @@
 {
-  "note": "Student outreach copy (#3138), read by functions/student-outreach.js. posts: weekly value posts, one a week in turn; offer: added only where a community's rules allow promotion; reply: a value comment on a student's portfolio or 'roast my site' post, no link; invite: a reply or DM to a student who engaged with us, with their own trial link. {days}, {pct}, {link}, {name} are filled in.",
+  "note": "Student outreach copy (#3138), read by functions/student-outreach.js. posts: weekly value posts, one a week in turn; offer: added to a student-post comment with their own link, only where a community's rules allow promotion; offerPost: the same in a weekly post, asking for a comment or message (trial codes are one use each); subject: a Reddit DM's subject; reply: a value comment on a student's portfolio or 'roast my site' post, no link; invite: a reply or DM to a student who engaged with us, with their own trial link. {days}, {pct}, {link}, {name} are filled in.",
   "en": {
     "posts": [
       { "title": "Audit your portfolio site before a recruiter does", "body": "Recruiters often open a portfolio on their phone, and some run Lighthouse on it. A 10-minute checklist before you share yours:\n\n1. Performance: compress images (WebP/AVIF), lazy-load below the fold, aim for LCP under 2.5 s on mobile.\n2. Accessibility: alt text on every project image, visible focus styles, colour contrast of at least 4.5:1.\n3. SEO basics: a unique <title> and meta description per page, one <h1>, a sitemap.\n4. Trust: HTTPS everywhere, no mixed content, no broken links to old repos or demos.\n5. Mobile: no horizontal scroll at 360 px, tap targets of at least 44 px.\n\nWhat else do you check before sending your portfolio out?" },
       { "title": "What recruiters see when they run Lighthouse on your portfolio", "body": "Lighthouse grades four things: Performance, Accessibility, Best Practices and SEO. The most common misses we see on student portfolios:\n\n- A 3 MB hero image (Performance)\n- Icon buttons with no accessible name (Accessibility)\n- Console errors from a leftover demo script (Best Practices)\n- Every page titled \"React App\" (SEO)\n\nRun it in an incognito window from Chrome DevTools, on mobile, and fix the red items first. Happy to answer questions about any of them." }
     ],
     "offer": "Students: our full website audit (performance, accessibility, SEO, security) is free for {days} days, then {pct}% off. Redeem it with your school email: {link}",
+    "offerPost": "Students: our full website audit (performance, accessibility, SEO, security) is free for {days} days, then {pct}% off. Comment or message me and I will send you a personal trial link.",
+    "subject": "Your student trial of the website audit",
     "reply": [
       "Congrats on shipping it! Two things worth a quick check before you send it to recruiters: alt text on the project images and colour contrast on buttons and links. Lighthouse in Chrome DevTools (incognito, mobile) flags both.",
       "Nice work. One tip from auditing a lot of portfolios: give every page its own title and meta description, and compress the hero image; those two usually lift the Lighthouse score the most."
@@ -18,6 +20,8 @@
       { "title": "Lo que ve un reclutador cuando pasa Lighthouse por tu portafolio", "body": "Lighthouse califica cuatro cosas: Rendimiento, Accesibilidad, Buenas prácticas y SEO. Los fallos más comunes que vemos en portafolios de estudiantes:\n\n- Una imagen principal de 3 MB (Rendimiento)\n- Botones con solo un ícono y sin nombre accesible (Accesibilidad)\n- Errores en la consola por un script de demo olvidado (Buenas prácticas)\n- Todas las páginas con el título \"React App\" (SEO)\n\nCórrelo en una ventana de incógnito desde Chrome DevTools, en modo móvil, y arregla primero lo que salga en rojo. Con gusto respondemos dudas." }
     ],
     "offer": "Estudiantes: nuestra auditoría web completa (rendimiento, accesibilidad, SEO, seguridad) es gratis {days} días y luego tiene {pct}% de descuento. Actívala con tu correo institucional: {link}",
+    "offerPost": "Estudiantes: nuestra auditoría web completa (rendimiento, accesibilidad, SEO, seguridad) es gratis {days} días y luego tiene {pct}% de descuento. Comenta o escríbeme y te envío un enlace de prueba personal.",
+    "subject": "Tu prueba de estudiante de la auditoría web",
     "reply": [
       "¡Felicitaciones por publicarlo! Dos cosas que vale la pena revisar antes de mandárselo a reclutadores: el texto alternativo de las imágenes de proyectos y el contraste de botones y enlaces. Lighthouse en Chrome DevTools (incógnito, móvil) marca ambas.",
       "Buen trabajo. Un consejo después de auditar muchos portafolios: dale a cada página su propio título y meta description, y comprime la imagen principal; son los dos cambios que más suben el puntaje de Lighthouse."
@@ -30,6 +34,8 @@
       { "title": "O que um recrutador vê quando roda o Lighthouse no seu portfólio", "body": "O Lighthouse avalia quatro coisas: Desempenho, Acessibilidade, Boas práticas e SEO. Os erros mais comuns que vemos em portfólios de estudantes:\n\n- Uma imagem de destaque de 3 MB (Desempenho)\n- Botões só com ícone e sem nome acessível (Acessibilidade)\n- Erros no console de um script de demo esquecido (Boas práticas)\n- Todas as páginas com o título \"React App\" (SEO)\n\nRode numa janela anônima pelo Chrome DevTools, no modo celular, e corrija primeiro o que aparecer em vermelho. Ficamos felizes em tirar dúvidas." }
     ],
     "offer": "Estudantes: nossa auditoria completa de sites (desempenho, acessibilidade, SEO, segurança) é grátis por {days} dias e depois tem {pct}% de desconto. Ative com seu e-mail institucional: {link}",
+    "offerPost": "Estudantes: nossa auditoria completa de sites (desempenho, acessibilidade, SEO, segurança) é grátis por {days} dias e depois tem {pct}% de desconto. Comente ou me mande uma mensagem e eu envio um link de teste pessoal.",
+    "subject": "Seu teste de estudante da auditoria de sites",
     "reply": [
       "Parabéns por publicar! Duas coisas que valem uma conferida antes de mandar para recrutadores: o texto alternativo das imagens dos projetos e o contraste de botões e links. O Lighthouse no Chrome DevTools (anônimo, celular) aponta as duas.",
       "Bom trabalho. Uma dica depois de auditar muitos portfólios: dê a cada página seu próprio título e meta description, e comprima a imagem de destaque; são as duas mudanças que mais sobem a nota do Lighthouse."
@@ -42,6 +48,8 @@
       { "title": "Was Recruiter sehen, wenn sie Lighthouse über dein Portfolio laufen lassen", "body": "Lighthouse bewertet vier Bereiche: Performance, Barrierefreiheit, Best Practices und SEO. Die häufigsten Fehler, die wir in Portfolios von Studierenden sehen:\n\n- Ein 3 MB großes Hero-Bild (Performance)\n- Icon-Buttons ohne zugänglichen Namen (Barrierefreiheit)\n- Konsolenfehler von einem vergessenen Demo-Skript (Best Practices)\n- Jede Seite heißt \"React App\" (SEO)\n\nLass es in einem Inkognito-Fenster über die Chrome DevTools laufen, im Mobilmodus, und behebe zuerst alles Rote. Fragen beantworten wir gern." }
     ],
     "offer": "Für Studierende: Unser vollständiger Website-Audit (Performance, Barrierefreiheit, SEO, Sicherheit) ist {days} Tage kostenlos, danach {pct} % günstiger. Einlösen mit deiner Hochschul-E-Mail: {link}",
+    "offerPost": "Für Studierende: Unser vollständiger Website-Audit (Performance, Barrierefreiheit, SEO, Sicherheit) ist {days} Tage kostenlos, danach {pct} % günstiger. Kommentiere oder schreib mir, dann schicke ich dir einen persönlichen Testlink.",
+    "subject": "Dein Studierenden-Test des Website-Audits",
     "reply": [
       "Glückwunsch zum Launch! Zwei Dinge, die du prüfen solltest, bevor du es an Recruiter schickst: Alt-Texte der Projektbilder und der Kontrast von Buttons und Links. Lighthouse in den Chrome DevTools (inkognito, mobil) zeigt beides an.",
       "Starke Arbeit. Ein Tipp aus vielen Portfolio-Audits: Gib jeder Seite einen eigenen Titel und eine eigene Meta-Description und komprimiere das Hero-Bild; das hebt den Lighthouse-Score meist am stärksten."
@@ -54,6 +62,8 @@
       { "title": "Ce que voit un recruteur quand il passe votre portfolio dans Lighthouse", "body": "Lighthouse note quatre choses : Performance, Accessibilité, Bonnes pratiques et SEO. Les oublis les plus fréquents sur les portfolios d'étudiants :\n\n- Une image d'en-tête de 3 Mo (Performance)\n- Des boutons icônes sans nom accessible (Accessibilité)\n- Des erreurs console laissées par un script de démo (Bonnes pratiques)\n- Toutes les pages intitulées \"React App\" (SEO)\n\nLancez-le dans une fenêtre de navigation privée depuis les Chrome DevTools, en mode mobile, et corrigez d'abord ce qui est en rouge. Nous répondons volontiers aux questions." }
     ],
     "offer": "Étudiants : notre audit complet de site (performance, accessibilité, SEO, sécurité) est gratuit pendant {days} jours, puis à -{pct} %. Activez-le avec votre e-mail universitaire : {link}",
+    "offerPost": "Étudiants : notre audit complet de site (performance, accessibilité, SEO, sécurité) est gratuit pendant {days} jours, puis à -{pct} %. Commentez ou écrivez-moi et je vous envoie un lien d'essai personnel.",
+    "subject": "Votre essai étudiant de l'audit de site",
     "reply": [
       "Bravo pour la mise en ligne ! Deux points à vérifier avant de l'envoyer aux recruteurs : le texte alternatif des images de projets et le contraste des boutons et des liens. Lighthouse dans les Chrome DevTools (navigation privée, mobile) signale les deux.",
       "Beau travail. Un conseil après avoir audité beaucoup de portfolios : donnez à chaque page son propre titre et sa meta description, et compressez l'image d'en-tête ; ce sont les deux changements qui font le plus monter le score Lighthouse."
@@ -66,6 +76,8 @@
       { "title": "Cosa vede un recruiter quando passa il tuo portfolio su Lighthouse", "body": "Lighthouse valuta quattro aree: Prestazioni, Accessibilità, Best practice e SEO. Gli errori più comuni che vediamo nei portfolio degli studenti:\n\n- Un'immagine di copertina da 3 MB (Prestazioni)\n- Pulsanti con sola icona e senza nome accessibile (Accessibilità)\n- Errori in console da uno script demo dimenticato (Best practice)\n- Tutte le pagine intitolate \"React App\" (SEO)\n\nEseguilo in una finestra in incognito dai Chrome DevTools, in modalità mobile, e correggi prima tutto ciò che è rosso. Rispondiamo volentieri alle domande." }
     ],
     "offer": "Studenti: il nostro audit completo del sito (prestazioni, accessibilità, SEO, sicurezza) è gratis per {days} giorni, poi con il {pct}% di sconto. Attivalo con la tua email universitaria: {link}",
+    "offerPost": "Studenti: il nostro audit completo del sito (prestazioni, accessibilità, SEO, sicurezza) è gratis per {days} giorni, poi con il {pct}% di sconto. Commenta o scrivimi e ti mando un link di prova personale.",
+    "subject": "La tua prova studenti dell'audit del sito",
     "reply": [
       "Complimenti per averlo pubblicato! Due cose da controllare prima di mandarlo ai recruiter: il testo alternativo delle immagini dei progetti e il contrasto di pulsanti e link. Lighthouse nei Chrome DevTools (incognito, mobile) li segnala entrambi.",
       "Bel lavoro. Un consiglio dopo aver analizzato tanti portfolio: dai a ogni pagina un titolo e una meta description propri, e comprimi l'immagine di copertina; sono le due modifiche che alzano di più il punteggio Lighthouse."
