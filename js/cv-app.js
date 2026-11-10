@@ -4574,8 +4574,10 @@
 
             prevTourStep() {
                 if (this.state.currentTourStep > 0) {
+                    this.state.tourGoingBack = true;
                     this.state.currentTourStep--;
                     this.showTourStep(this.state.currentTourStep);
+                    this.state.tourGoingBack = false;
                 }
             },
 
@@ -4718,9 +4720,11 @@
                     const selector = typeof step.element === 'function' ? step.element.call(this) : step.element;
                     const targetElement = document.querySelector(selector);
 
-                if (!targetElement) {
+                // Testimonials stay display:none until reviews load, so a target with no box is skipped like a missing one, in the direction of travel.
+                if (!targetElement || !targetElement.getClientRects().length) {
                     this.state.tourDemoReady = true;
-                    this.nextTourStep();
+                    if (this.state.tourGoingBack && stepIndex > 0) this.prevTourStep();
+                    else this.nextTourStep();
                     return;
                 }
 
