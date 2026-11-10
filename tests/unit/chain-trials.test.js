@@ -8,6 +8,9 @@ const J = require("../../functions/jarvis-engagement.js");
 const M = require("../../functions/engagement-mac.js");
 const T = require("../../functions/chain-trials.js");
 const Card = require("../../functions/dm-card.js");
+const People = require("../../functions/outreach-people.js");
+const Trials = require("../../functions/outreach-trials.js");
+const Send = require("../../functions/outreach-send.js");
 const { fakeDb } = require("./fixtures/fake-firestore.js");
 
 const NOW = Date.parse("2026-11-09T18:00:00Z");
@@ -15,7 +18,8 @@ const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const ago = (h) => new Date(NOW - h * HOUR).toISOString();
 const TOKEN = "t".repeat(48);
-const PASS = (n) => "https://carlosandmunoz.com/qa-review.html?trial=T" + n;
+const PASS = (n) => "https://carlosandmunoz.com/qa-review.html?trial=TRY-AAAAA" + n;
+const TRY = /^TRY-[A-Z0-9]{6}$/;
 
 // Gemini: the chain read answers each comment with rows[author handle] (or a friendly default); the DM prompt gets a DM with the pass link.
 function gemini(rows, seen) {
@@ -30,11 +34,11 @@ function gemini(rows, seen) {
   };
 }
 
-// The outreach ledger (#3136) as the chain pass calls it.
+// The real outreach ledger and passes (#3136), with each call recorded.
 function outreach() {
   const L = { touches: [], mints: [] };
-  L.people = { idFor: (network, handle) => network + "_" + handle, touch: async (db, id, patch) => { L.touches.push({ id, patch }); } };
-  L.trials = { mintTrial: async (db, o) => { L.mints.push(o); return { code: "T" + L.mints.length, url: PASS(L.mints.length) }; } };
+  L.people = Object.assign({}, People, { touch: async (db, id, patch, now) => { L.touches.push({ id, patch }); return People.touch(db, id, patch, now); } });
+  L.trials = Object.assign({}, Trials, { mintTrial: async (db, o, now) => { L.mints.push(o); return Trials.mintTrial(db, o, now); } });
   return L;
 }
 
@@ -123,20 +127,23 @@ test("stages only move forward: replied, engaged on our own post, nice under the
 test("a nice reply under their own post touches the ledger, mints a 2-day pass and drafts a cheerful DM for Carlos", async () => {
   const db = fakeDb();
   const L = outreach();
-  await db.collection("outreach_people").doc("x_ana").set({ stage: "replied", friendly: 1, lastAt: ago(30), domain: "https://ana.dev/blog" });
+  await People.touch(db, "x:ana", { kind: "social", stage: "replied", domain: "https://ana.dev/blog" }, NOW - DAY);
+  await db.collection(T.LADDER).doc("x:ana").set({ friendly: 1, lastAt: ago(30) });
   const pushes = [];
   const prompts = [];
   const out = await J.takeChains(deps(db, { outreach: L, fetch: gemini({}, prompts), push: async (m) => pushes.push(m) }), conf(), chain(PARENT, comment("c1")));
   assert.equal(out.offers, 1);
   assert.equal(out.touched, 1);
-  assert.deepEqual(L.mints[0], { kind: "social", person: "x_ana", lang: "en", network: "x", handle: "ana", domain: "ana.dev", by: "chain:" + E.keyOf("x", "c1") });
+  assert.deepEqual(L.mints[0], { kind: "social", person: "x:ana", lang: "en", network: "x", handle: "ana", domain: "ana.dev", by: "chain" });
 
   const doc = (await db.collection("engagement_posts").doc(E.keyOf("x", "c1")).get()).data();
   assert.equal(doc.tone, "nice");
   assert.equal(doc.chain.rootAuthor, "ana");
-  assert.equal(doc.actions.dm.status, "waiting", "autoSendDm is off until Carlos turns it on");
-  assert.equal(doc.actions.dm.trial.url, PASS(1));
-  assert.ok(doc.actions.dm.draft.includes(PASS(1)));
+  assert.equal(doc.chain.rootUrl, PARENT.url);
+  assert.equal(doc.actions.dm.status, "waiting", "the first days after launch, every DM waits for Carlos");
+  assert.match(doc.actions.dm.trial.code, TRY);
+  assert.equal(doc.actions.dm.trial.url, "https://carlosandmunoz.com/qa-review.html?trial=" + doc.actions.dm.trial.code, "the pass opens the person's language page");
+  assert.ok(doc.actions.dm.draft.includes(doc.actions.dm.trial.url));
   assert.equal(doc.actions.dm.by, "gemini");
   assert.deepEqual(Object.keys(doc.actions.dm.card).sort(), ["first", "handle", "host", "look"]);
   assert.equal(doc.actions.dm.card.first, "Ana");
@@ -144,16 +151,18 @@ test("a nice reply under their own post touches the ledger, mints a 2-day pass a
   assert.match(prompts[0], /"invite":"none"/, "one friendly exchange so far: pure value");
   assert.match(prompts[1], /^People:$/m, "the DM is drafted in its own Gemini read");
 
-  const { id, patch } = L.touches[0];
-  assert.equal(id, "x_ana");
-  assert.equal(patch.stage, "offered");
-  assert.equal(patch.friendly, 2);
-  assert.equal(patch.threads[0].id, "p1");
-  assert.equal(patch.threads[0].on, "their-post");
-  assert.equal(patch.threads[0].theirLast, "Love this, we do the same with axe!");
-  assert.equal(patch.threads[0].ourLast, "Focus order first, then contrast: it catches the most.");
-  assert.equal(patch.offers[0].code, "T1");
-  assert.deepEqual(patch.history.map((h) => h.what), ["comment", "offer"]);
+  assert.equal(L.touches[0].id, "x:ana");
+  const ana = await People.get(db, "x:ana");
+  assert.equal(ana.stage, "offered");
+  assert.deepEqual(ana.threads.map((t) => [t.url, t.theirLast, t.ourLast]), [[PARENT.url, "Love this, we do the same with axe!", "Focus order first, then contrast: it catches the most."]], "the thread is the root post, by url");
+  assert.equal(ana.offers[0].code, doc.actions.dm.trial.code);
+  assert.equal(ana.offers[0].kind, "trial");
+  assert.match(ana.history[ana.history.length - 1].note, /Comment \(nice\).*2-day pass offered/);
+  assert.equal((await db.collection(T.LADDER).doc("x:ana").get()).data().friendly, 2, "the ladder's count lives beside the ledger");
+
+  const again = await J.takeChains(deps(db, { outreach: L }), conf(), chain(PARENT, comment("c9", { text: "Thanks again!" })));
+  assert.equal(again.offers, 0, "one pass per person");
+  assert.equal((await People.get(db, "x:ana")).threads.length, 1, "the same conversation stays one thread");
 
   assert.ok(pushes.some((p) => p.ref === "engagement-dm:" + E.keyOf("x", "c1") && /2-day pass/.test(p.title)), "Carlos gets the DM to approve");
   const parent = (await db.collection("engagement_posts").doc(PARENT.key).get()).data();
@@ -163,8 +172,10 @@ test("a nice reply under their own post touches the ledger, mints a 2-day pass a
 test("no pass for a comment on our own post, someone else's reply, a second time, or a hostile reply; the ladder reaches the link", async () => {
   const db = fakeDb();
   const L = outreach();
-  await db.collection("outreach_people").doc("x_ana").set({ stage: "offered", friendly: 5, lastAt: ago(2), offers: [{ kind: "social", code: "T0" }] });
-  await db.collection("outreach_people").doc("x_bo").set({ stage: "replied", friendly: 4, lastAt: ago(2), domain: "bo.shop" });
+  await People.touch(db, "x:ana", { kind: "social", stage: "offered", offers: [{ kind: "trial", code: "TRY-AAAAAA" }] }, NOW - DAY);
+  await People.touch(db, "x:bo", { kind: "social", stage: "replied", domain: "bo.shop" }, NOW - DAY);
+  await db.collection(T.LADDER).doc("x:ana").set({ friendly: 5, lastAt: ago(2) });
+  await db.collection(T.LADDER).doc("x:bo").set({ friendly: 4, lastAt: ago(2) });
   const own = Object.assign({}, PARENT, { key: "", own: true });
   const prompts = [];
   const out = await J.takeChains(deps(db, { outreach: L, fetch: gemini({ "Mia": { tone: "hostile", sentiment: "negative" } }, prompts) }), conf(), [
@@ -181,8 +192,9 @@ test("no pass for a comment on our own post, someone else's reply, a second time
   assert.equal(by.Bo.site, "bo.shop");
   assert.equal(by.Bo.active, true);
   assert.equal(by["Ana López"].invite, "none", "a person with a pass is not pitched again");
-  const stages = Object.fromEntries(L.touches.map((t) => [t.id, t.patch.stage]));
-  assert.deepEqual(stages, { x_ana: "offered", x_bo: "replied", x_cy: "engaged", x_mia: "declined" });
+  const stages = {};
+  for (const id of ["x:ana", "x:bo", "x:cy", "x:mia"]) stages[id] = (await People.get(db, id)).stage;
+  assert.deepEqual(stages, { "x:ana": "offered", "x:bo": "replied", "x:cy": "engaged", "x:mia": "declined" });
 });
 
 test("an answer that expired unanswered is drafted once more for a friendly person, and the ledger is optional until #3136 ships", async () => {
@@ -221,7 +233,8 @@ test("Carlos approves, edits or dismisses a DM; an edit that drops the pass link
 test("the Mac sends approved DMs with their card within each network's daily cap, and the ledger records each one", async () => {
   const db = fakeDb();
   await db.collection("engagement_private").doc("mac").set({ tokenHash: M.hash(TOKEN), pairedAt: ago(1) });
-  await db.collection("jarvis_settings").doc("engagement").set({ live: true, trials: { dmCaps: { x: 1, linkedin: 2 } } });
+  await db.collection("jarvis_settings").doc("engagement").set({ live: true });
+  await db.collection("jarvis_settings").doc("outreach_send").set({ launchAt: ago(24 * 10), caps: { x: 1, linkedin: 2 } });
   const dm = (extra) => Object.assign({ status: "approved", draft: "Hi! " + PASS(1), lang: "es", trial: { code: "T1", url: PASS(1) }, card: { look: "sunrise", first: "Ana" } }, extra);
   const put = (key, network, d) => db.collection("engagement_posts").doc(key).set({ network, id: key, url: "https://example.com/" + key, author: { handle: "ana" }, actions: { dm: d } });
   await put("x_" + "1".repeat(20), "x", dm());
@@ -244,9 +257,11 @@ test("the Mac sends approved DMs with their card within each network's daily cap
   assert.equal(res.status, "sent");
   const saved = (await db.collection("engagement_posts").doc(key).get()).data().actions.dm;
   assert.equal(saved.cardSent, "attached");
-  assert.equal(L.touches[0].id, "x_ana");
-  assert.equal(L.touches[0].patch.dms[0].status, "sent");
-  assert.equal((await db.collection("engagement_daily").doc(E.bogotaDay(NOW)).get()).data().n.x.dm_sent, 1);
+  assert.equal(L.touches[0].id, "x:ana");
+  const ana = await People.get(db, "x:ana");
+  assert.deepEqual(ana.dms.map((x) => [x.network, x.text, x.card]), [["x", "Hi! " + PASS(1), "sunrise"]]);
+  assert.match(ana.history[ana.history.length - 1].note, /DM sent on x with T1/);
+  assert.equal((await db.collection("outreach_send_daily").doc(Send.bogotaDay(NOW)).get()).data().x.dm, 1, "a sent DM takes from the network's daily cap");
 
   const next = await M.handle(d, { op: "engagement-mac-queue", networks: ["x", "threads", "instagram"] }, TOKEN);
   assert.deepEqual(next.tasks.filter((t) => t.action === "dm").map((t) => t.network), ["threads"], "X is at its cap for today; Threads goes with Instagram signed in");
@@ -269,7 +284,8 @@ test("a failed DM is tried again up to three times, then recorded as failed", as
   const L = outreach();
   const r = await M.dmResult(deps(db, { outreach: L }), key, { ok: false, error: "No Message button" });
   assert.equal(r.status, "failed");
-  assert.equal(L.touches[0].patch.dms[0].status, "failed");
+  assert.equal(L.touches[0].patch.dms, undefined, "only a sent DM goes in dms");
+  assert.match(L.touches[0].patch.note, /DM failed on x/);
   await db.collection("engagement_posts").doc(key).update({ "actions.dm.status": "approved", "actions.dm.tries": 0 });
   assert.equal((await M.dmResult(deps(db, { outreach: L }), key, { ok: false, retry: true, error: "Signed out" })).status, "approved");
 });
@@ -283,7 +299,7 @@ test("waiting DMs expire with the replies", async () => {
 });
 
 test("the DM and its card speak the person's language, greet them by first name or handle, and always carry the pass link", () => {
-  const trial = { code: "T1", url: PASS(1) };
+  const trial = { code: "TRY-AAAAA1", url: PASS(1) };
   T.LANGS.forEach((lang) => {
     const f = T.dmFacts(comment("c1", { lang }), { domain: "www.ana.dev" }, trial);
     assert.equal(f.lang, lang);
@@ -293,7 +309,11 @@ test("the DM and its card speak the person's language, greet them by first name 
     const card = Card.facts({ lang, card: { look: f.look, first: f.first, host: f.host }, trial });
     assert.equal(card.lang, lang);
     assert.match(Card.alt(card), /2/);
-    assert.ok(JSON.stringify(Card.tree(card)).includes(Card.COPY[lang].head), lang + " headline on the card");
+    const drawn = JSON.stringify(Card.tree(card));
+    assert.ok(drawn.includes(Card.COPY[lang].head), lang + " headline on the card");
+    assert.ok(drawn.includes("TRY-AAAAA1") && drawn.includes("carlosandmunoz.com") && drawn.includes(Card.COPY[lang].cta), lang + ": the pass code, our domain and the pill");
+    assert.ok(!drawn.includes("qa-review.html"), lang + ": no long link on the card");
+    assert.match(Card.alt(card), /TRY-AAAAA1/);
   });
   const noName = T.dmFacts(comment("c1", { author: { handle: "@qa_bob", name: "🚀" }, lang: "ja" }), null, trial);
   assert.equal(noName.lang, "en", "a language we do not write falls back to English");
@@ -310,13 +330,76 @@ test("the DM and its card speak the person's language, greet them by first name 
   assert.match(parsed.k2.draft, /Hallo Ana!/);
 });
 
-test("trials settings default to approval for every DM, and Jarvis can change them", () => {
+test("trials settings are in range, and Jarvis can change them", () => {
   const s = E.settings(null);
-  assert.equal(s.trials.autoSendDm, false);
   assert.equal(s.trials.offers, true);
-  assert.deepEqual(s.trials.dmCaps, T.TRIALS.dmCaps);
-  const next = E.settingsPatch(s, { trials: { autoSendDm: true, dmCaps: { x: 50 } } });
-  assert.equal(next.trials.autoSendDm, true);
-  assert.equal(next.trials.dmCaps.x, 20, "a cap stays within what a young account takes");
-  assert.equal(next.trials.dmCaps.linkedin, 3);
+  assert.equal(s.trials.soft, 2);
+  const next = E.settingsPatch(s, { trials: { soft: 3, activeDays: 500 } });
+  assert.equal(next.trials.soft, 3);
+  assert.equal(next.trials.link, 4);
+  assert.equal(next.trials.activeDays, 90);
+});
+
+test("outreach-send: everything waits for Carlos for the first 7 days after launch, then goes on its own; alwaysApprove keeps it waiting", async () => {
+  const db = fakeDb();
+  assert.equal(await Send.sendMode(db, { network: "x", kind: "dm", now: NOW }), "approve", "the first read is launch day");
+  assert.equal((await Send.readSend(db, NOW + DAY)).launchAt, new Date(NOW).toISOString(), "launchAt is set once");
+  assert.equal(await Send.sendMode(db, { network: "x", kind: "dm", now: NOW + 7 * DAY - 1 }), "approve");
+  assert.equal(await Send.sendMode(db, { network: "x", kind: "dm", now: NOW + 7 * DAY }), "auto");
+  assert.equal(Send.modeOf({ launchAt: ago(24 * 30), alwaysApprove: true }, { now: NOW }), "approve");
+  assert.equal(Send.modeOf({ launchAt: ago(24 * 30), approveDays: 40 }, { now: NOW }), "approve");
+  assert.equal(Send.modeOf({}, { now: NOW }), "approve", "no launch date, no sending on its own");
+  assert.equal(await Send.sendMode({ launchAt: ago(24 * 8) }, { network: "x", kind: "reply", now: NOW }), "auto", "settings work in place of a db");
+
+  const saved = await Send.save(db, { launchAt: "now", alwaysApprove: true, caps: { x: 2 } }, "carlos", NOW + 9 * DAY);
+  assert.equal(saved.mode, "approve");
+  assert.equal(saved.settings.launchAt, new Date(NOW + 9 * DAY).toISOString());
+  await assert.rejects(Send.save(db, {}, "carlos", NOW), /Nothing to change/);
+  await assert.rejects(Send.save(db, { launchAt: "soon" }, "carlos", NOW), /launchAt/);
+});
+
+test("outreach-send: per-network daily caps, X and Instagram 5 and the rest 3 by default, taken in a transaction per Bogotá day", async () => {
+  const db = fakeDb();
+  assert.equal(Send.capOf(null, "x"), 5);
+  assert.equal(Send.capOf(null, "instagram"), 5);
+  assert.equal(Send.capOf(null, "linkedin"), 3);
+  assert.equal(Send.capOf(null, "somewhere"), 3);
+  assert.equal(Send.capOf({ caps: { x: 500 } }, "x"), 50, "a cap stays in range");
+  await Send.save(db, { caps: { linkedin: 2 } }, "carlos", NOW);
+  const use = () => Send.useCap(db, { network: "linkedin", kind: "dm", now: NOW });
+  assert.deepEqual(await use(), { ok: true, left: 1, cap: 2 });
+  assert.deepEqual(await use(), { ok: true, left: 0, cap: 2 });
+  assert.deepEqual(await use(), { ok: false, left: 0, cap: 2 });
+  assert.equal(await Send.capLeft(db, { network: "linkedin", kind: "reply", now: NOW }), 2, "each kind has its own count");
+  assert.equal(await Send.capLeft(db, { network: "linkedin", kind: "dm", now: NOW + DAY }), 2, "a new day starts over");
+  await assert.rejects(Send.useCap(db, { network: "", kind: "dm", now: NOW }), /network/);
+
+  const op = await Send.handle({ db, now: NOW }, { op: "outreach-send-mode", network: "linkedin", kind: "dm" });
+  assert.deepEqual(op, { ok: true, mode: "approve", left: 0, cap: 2 });
+  assert.equal((await Send.handle({ db, now: NOW }, { op: "outreach-send-use", network: "x", kind: "email" })).ok, true);
+  await assert.rejects(Send.handle({ db, now: NOW }, { op: "outreach-send-nope" }), /Unknown send op/);
+});
+
+test("after the approval days, a live run sends answers and DMs on its own within the caps; a dry run still waits", async () => {
+  const run = async (live, launchedDaysAgo) => {
+    const db = fakeDb();
+    await db.collection("jarvis_settings").doc("outreach_send").set({ launchAt: ago(24 * launchedDaysAgo), caps: { x: 5 } });
+    await People.touch(db, "x:ana", { kind: "social", stage: "replied" }, NOW - DAY);
+    const L = outreach();
+    await J.takeChains(deps(db, { outreach: L }), E.settings({ live }), chain(PARENT, comment("c1")));
+    const doc = (await db.collection("engagement_posts").doc(E.keyOf("x", "c1")).get()).data();
+    return { reply: doc.actions.reply, dm: doc.actions.dm, used: ((await db.collection("outreach_send_daily").doc(Send.bogotaDay(NOW)).get()).data() || {}).x };
+  };
+  const auto = await run(true, 8);
+  assert.equal(auto.reply.status, "approved");
+  assert.equal(auto.reply.auto, true);
+  assert.equal(auto.dm.status, "approved");
+  assert.equal(auto.dm.auto, true);
+  assert.deepEqual(auto.used, { reply: 1 }, "the reply takes its cap now; a DM takes its cap when the Mac sends it");
+  const early = await run(true, 3);
+  assert.equal(early.reply.status, "waiting");
+  assert.equal(early.dm.status, "waiting");
+  const dry = await run(false, 8);
+  assert.equal(dry.reply.status, "waiting");
+  assert.equal(dry.dm.status, "waiting");
 });

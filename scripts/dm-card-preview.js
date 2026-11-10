@@ -6,6 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const Card = require("../functions/dm-card");
+const Trials = require("../functions/outreach-trials");
 
 const ROOT = path.resolve(__dirname, "..");
 const argv = process.argv.slice(2);
@@ -25,7 +26,7 @@ const PEOPLE = {
   for (const look of looks) {
     for (const lang of langs) {
       const p = PEOPLE[lang] || PEOPLE.en;
-      const dm = { lang, card: Object.assign({ look }, p), trial: { code: "QA-2D-7K4P", url: "https://carlosandmunoz.com/qa-review.html?trial=QA-2D-7K4P" } };
+      const dm = { lang, card: Object.assign({ look }, p), trial: { code: "TRY-7K4P2Q", url: Trials.pageUrl(lang, { trial: "TRY-7K4P2Q" }) } };
       const card = await Card.render(dm);
       const file = path.join(out, look + "-" + lang);
       fs.writeFileSync(file + ".png", card.png);

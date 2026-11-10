@@ -9,19 +9,21 @@
  *             climbs one rung per friendly exchange (soft from TRIALS.soft, link from TRIALS.link); after the link
  *             we go back to plain answers for linkGapDays, and a person who has a pass is never pitched again
  *   ledger    every comment touches the person in outreach_people (functions/outreach-people.js, #3136): stage,
- *             friendly exchanges, tones, and the thread's lastAt, theirLast and ourLast
+ *             and the thread (by its root post's url) with lastAt, theirLast and ourLast; what the comment was goes in
+ *             the history note. The ladder's own counts (friendly exchanges, tones, lastAt, softAt, linkAt) live
+ *             beside it in engagement_people/<the same id>, since the ledger keeps only its own fields
  *   offer     a nice comment from someone whose post we commented on mints a 2-day pass (outreach-trials.js
- *             mintTrial, kind social) and drafts a cheerful DM in their language with the pass link and a card
- *             (functions/dm-card.js) as actions.dm on the chain post. The DM waits for Carlos like a reply unless
- *             trials.autoSendDm; the Mac's browser sends it within trials.dmCaps a day per network.
+ *             mintTrial, kind social) and drafts a cheerful DM in their language with the pass link (their language's
+ *             review page) and a card (functions/dm-card.js) as actions.dm on the chain post
+ *   sending   functions/outreach-send.js decides: the DM and the answer wait for Carlos for the first days after
+ *             launch, then go out on their own (in a live run) within each network's daily cap
  *
- * Settings (jarvis_settings/engagement trials, see trialSettings): offers, autoSendDm, soft, link, linkGapDays,
- * activeDays (how long a thread with an active person keeps being read past the 7 chain days), answerAll (an active
- * person's comment always gets an answer drafted), dmTtlHours and dmCaps.
- *
- * Ledger patches carry arrays of new entries: touch merges threads by id and appends offers, dms and history.
+ * Settings (jarvis_settings/engagement trials, see trialSettings): offers, soft, link, linkGapDays, activeDays (how
+ * long a thread with an active person keeps being read past the 7 chain days), answerAll (an active person's comment
+ * always gets an answer drafted) and dmTtlHours.
  */
 const crypto = require("crypto");
+const Send = require("./outreach-send");
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -38,17 +40,14 @@ const STOPPED = ["declined", "blocked"];
 // The DM card's looks (functions/dm-card.js); a person keeps the same one.
 const LOOKS = ["confetti", "ticket", "sunrise"];
 
-// The most a young account sends a day before the networks read it as spam; LinkedIn and Facebook flag soonest.
 const TRIALS = {
   offers: true,
-  autoSendDm: false,
   soft: 2,
   link: 4,
   linkGapDays: 30,
   activeDays: 21,
   answerAll: true,
-  dmTtlHours: 48,
-  dmCaps: { x: 5, linkedin: 3, facebook: 3, instagram: 5, threads: 3, tiktok: 3, telegram: 3, reddit: 3 }
+  dmTtlHours: 48
 };
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
@@ -60,18 +59,15 @@ const handleOf = (a) => clip((a || {}).handle, 120).replace(/^@/, "").toLowerCas
 function trialSettings(doc) {
   const d = doc || {};
   const between = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Math.round(Number(v)))) : fb);
-  const capsIn = d.dmCaps || {};
   const soft = between(d.soft, 0, 20, TRIALS.soft);
   return {
     offers: d.offers === undefined ? TRIALS.offers : d.offers === true,
-    autoSendDm: d.autoSendDm === true,
     soft,
     link: Math.max(soft + 1, between(d.link, 1, 30, TRIALS.link)),
     linkGapDays: between(d.linkGapDays, 1, 365, TRIALS.linkGapDays),
     activeDays: between(d.activeDays, 7, 90, TRIALS.activeDays),
     answerAll: d.answerAll === undefined ? TRIALS.answerAll : d.answerAll === true,
-    dmTtlHours: between(d.dmTtlHours, 6, 168, TRIALS.dmTtlHours),
-    dmCaps: Object.fromEntries(DM_NETS.map((k) => [k, between(capsIn[k], 0, 20, TRIALS.dmCaps[k])]))
+    dmTtlHours: between(d.dmTtlHours, 6, 168, TRIALS.dmTtlHours)
   };
 }
 
@@ -131,9 +127,18 @@ function nextStage(cur, t, theirs, own) {
   return STAGE_ORDER.indexOf(cur) >= STAGE_ORDER.indexOf(want) ? cur : want;
 }
 
+/** The conversation's url in the ledger: the root post's, or the comment's own under our post. */
+function threadUrl(comment) {
+  const c = comment || {};
+  const parent = c.parent || {};
+  const root = (parent.chain || {}).rootUrl || (parent.own ? "" : parent.url);
+  return /^https?:\/\//.test(String(root || "")) ? clip(root, 500) : /^https?:\/\//.test(String(c.url || "")) ? clip(c.url, 500) : "";
+}
+
 /**
- * The ledger patch for one chain comment (comment with parent, as takeChains reads it) and the chain post stored
- * for it (doc, with tone and actions). person is the stored outreach_people document or null.
+ * What one chain comment (comment with parent, as takeChains reads it) and the chain post stored for it (doc, with
+ * tone and actions) change: { ledger, ladder }. ledger is the outreach-people touch patch; ladder is merged into
+ * engagement_people. person is the stored person (ledger and ladder fields together) or null.
  */
 function personPatch(comment, doc, person, now) {
   const p = person || {};
@@ -142,22 +147,20 @@ function personPatch(comment, doc, person, now) {
   const at = iso(now);
   const t = doc.tone || "neutral";
   const reply = (doc.actions || {}).reply || {};
-  const theirs = theirPost(c);
-  const friendly = (p.friendly || 0) + (t === "nice" || t === "neutral" ? 1 : 0);
-  const thread = clip(doc.thread || c.thread || c.id, 300);
-  const out = {
-    kind: "social", network: c.network, handle: handleOf(c.author), name: clip((c.author || {}).name, 120), lang: LANGS.includes(doc.lang) ? doc.lang : p.lang || "",
-    stage: nextStage(p.stage || "found", t, theirs, !!parent.own), friendly, lastAt: at,
-    tones: Object.assign({}, p.tones, { [t]: ((p.tones || {})[t] || 0) + 1 }),
-    threads: [Object.assign({
-      id: thread, network: c.network, url: clip(c.url, 500), on: parent.own ? "post" : theirs ? "their-post" : "reply", lastAt: at, theirLast: clip(c.text, 280), theirAt: at,
-      ourLast: clip(reply.draft || ((parent.actions || {}).reply || {}).draft, 280), waiting: reply.status === "waiting" || reply.status === "approved"
-    }, reply.status === "waiting" ? { ourAt: at } : {})],
-    history: [{ at, what: "comment", tone: t, thread, key: doc.key || "", invite: reply.invite || "none" }]
+  const url = threadUrl(c);
+  const ledger = {
+    kind: "social", network: c.network, handle: handleOf(c.author), name: clip((c.author || {}).name, 120), lang: LANGS.includes(doc.lang) ? doc.lang : "",
+    stage: nextStage(p.stage || "found", t, theirPost(c), !!parent.own),
+    threads: url ? [Object.assign({ url, lastAt: at, theirLast: clip(c.text, 500) }, clip(reply.draft, 500) ? { ourLast: clip(reply.draft, 500) } : {})] : [],
+    by: "chain", note: "Comment (" + t + ")" + (reply.draft ? ", answer drafted" + (reply.invite && reply.invite !== "none" ? " with a " + reply.invite + " invite" : "") : "") + ": " + clip(c.text, 160)
   };
-  if (reply.invite === "soft") out.softAt = at;
-  if (reply.invite === "link") out.linkAt = at;
-  return out;
+  const ladder = {
+    friendly: (p.friendly || 0) + (t === "nice" || t === "neutral" ? 1 : 0), lastAt: at,
+    tones: Object.assign({}, p.tones, { [t]: ((p.tones || {})[t] || 0) + 1 })
+  };
+  if (reply.invite === "soft") ladder.softAt = at;
+  if (reply.invite === "link") ladder.linkAt = at;
+  return { ledger, ladder };
 }
 
 /** Whether this comment earns a 2-day pass now. */
@@ -165,7 +168,7 @@ function offerable(comment, doc, person, conf) {
   const t = trialSettings(conf.trials);
   const p = person || {};
   return t.offers && !conf.paused && doc.tone === "nice" && theirPost(comment) && DM_NETS.includes(comment.network)
-    && !PITCHED.includes(p.stage) && !STOPPED.includes(p.stage) && !(p.offers || []).some((o) => o && o.kind === "social");
+    && !PITCHED.includes(p.stage) && !STOPPED.includes(p.stage) && !(p.offers || []).some((o) => o && (o.kind === "trial" || /^TRY-/.test(String(o.code || ""))));
 }
 
 /** A chain post we drafted an answer for that expired unanswered: drafted once more while the person is still friendly. */
@@ -235,14 +238,15 @@ function parseDms(text, items) {
   }));
 }
 
-/** actions.dm for a chain post: waiting for Carlos, or approved straight away with trials.autoSendDm. */
-function dmAction(dm, facts, trial, conf, now) {
+/** actions.dm for a chain post: waiting for Carlos, or approved straight away when outreach-send says "auto" in a live run. */
+function dmAction(dm, facts, trial, conf, now, mode) {
   const t = trialSettings(conf.trials);
+  const auto = mode === "auto" && conf.live === true;
   return Object.assign({
-    status: conf.paused ? "paused" : t.autoSendDm ? "approved" : "waiting", draft: dm.draft, lang: facts.lang, by: dm.by,
+    status: conf.paused ? "paused" : auto ? "approved" : "waiting", draft: dm.draft, lang: facts.lang, by: dm.by,
     trial: { code: clip(trial.code, 60), url: clip(trial.url, 300) }, card: { look: facts.look, host: facts.host, first: facts.first, handle: facts.handle },
     expiresAt: iso(now + t.dmTtlHours * HOUR)
-  }, dm.english ? { english: dm.english } : {}, t.autoSendDm ? { auto: true, decidedAt: iso(now), by: "auto" } : {});
+  }, dm.english ? { english: dm.english } : {}, auto ? { auto: true, decidedAt: iso(now), decidedBy: "auto" } : {});
 }
 
 /** Approve, edit or dismiss a waiting DM; an edit that drops the pass link gets it back at the end. */
@@ -281,19 +285,16 @@ function dmPush(doc, name) {
   };
 }
 
-/** The ledger patch once an offer is made, and once its DM went out. */
-const offerPatch = (comment, doc, trial, now) => ({
-  stage: "offered", lastAt: iso(now),
-  offers: [{ kind: "social", code: clip(trial.code, 60), url: clip(trial.url, 300), at: iso(now), network: comment.network, thread: clip(doc.thread, 300), key: doc.key || "" }],
-  history: [{ at: iso(now), what: "offer", code: clip(trial.code, 60), key: doc.key || "" }]
+/** The ledger patch once an offer is made, and once its DM went out (or failed). */
+const offerPatch = (comment, doc, trial) => ({
+  stage: "offered", offers: [{ code: clip(trial.code, 24), kind: "trial", url: clip(trial.url, 500) }],
+  by: "chain", note: "2-day pass offered on " + comment.network + " after a nice reply"
 });
-const dmPatch = (doc, sent, now) => {
+const dmPatch = (doc, sent) => {
   const d = (doc.actions || {}).dm || {};
-  return {
-    lastAt: iso(now),
-    dms: [{ at: iso(now), network: doc.network, key: doc.key || "", code: (d.trial || {}).code || "", look: (d.card || {}).look || "", lang: d.lang || "", status: sent.status, card: sent.card || "", url: clip(sent.url, 500) }],
-    history: [{ at: iso(now), what: "dm_" + sent.status, key: doc.key || "" }]
-  };
+  const look = (d.card || {}).look || "";
+  return Object.assign(sent.status === "sent" ? { dms: [{ network: doc.network, text: clip(d.draft, 2000), card: look ? look + (sent.card === "attached" ? "" : " (not attached)") : "" }] } : {},
+    { by: "chain-dm", note: "DM " + sent.status + " on " + doc.network + ((d.trial || {}).code ? " with " + d.trial.code : "") + (sent.url ? ": " + clip(sent.url, 200) : "") });
 };
 
 // --- I/O through deps -----------------------------------------------------------------------------------------------
@@ -307,15 +308,24 @@ function ledger(deps) {
   }
 }
 
-/** The stored person behind each comment, by comment key: { id, doc }. */
+const LADDER = "engagement_people";
+
+/** The stored person behind each comment, by comment key: { id, doc }, doc the ledger row with its ladder counts, or null. */
 async function people(db, L, comments) {
   const out = new Map();
   if (!L || !comments.length) return out;
-  const ids = comments.map((c) => (handleOf(c.author) ? L.people.idFor(c.network, handleOf(c.author)) : ""));
-  const refs = ids.filter(Boolean).map((id) => db.collection("outreach_people").doc(id));
-  const snaps = refs.length ? await db.getAll(...refs) : [];
-  const byId = new Map(snaps.map((s) => [s.id, s.exists ? Object.assign({ id: s.id }, s.data()) : null]));
-  comments.forEach((c, i) => { if (ids[i]) out.set(c.key, { id: ids[i], doc: byId.get(ids[i]) || null }); });
+  const ids = Array.from(new Set(comments.map((c) => (handleOf(c.author) ? L.people.idFor(c.network, handleOf(c.author)) : "")).filter(Boolean)));
+  if (!ids.length) return out;
+  const snaps = await db.getAll(...ids.map((id) => db.collection(L.people.COLLECTION || "outreach_people").doc(id)), ...ids.map((id) => db.collection(LADDER).doc(id)));
+  const byId = new Map(ids.map((id, i) => {
+    const row = snaps[i].exists ? snaps[i].data() : null;
+    const ladder = snaps[ids.length + i].exists ? snaps[ids.length + i].data() : null;
+    return [id, row || ladder ? Object.assign({ id }, row, ladder) : null];
+  }));
+  comments.forEach((c) => {
+    const id = handleOf(c.author) ? L.people.idFor(c.network, handleOf(c.author)) : "";
+    if (id) out.set(c.key, { id, doc: byId.get(id) || null });
+  });
   return out;
 }
 
@@ -324,7 +334,7 @@ async function people(db, L, comments) {
  * (before they are stored), then the people touched. Returns { offers, touched, errors }.
  * draftDms(items) => Gemini's text, or throws.
  */
-async function offers(deps, conf, L, fresh, docs, persons, draftDms) {
+async function offers(deps, conf, L, fresh, docs, persons, draftDms, send) {
   const out = { offers: 0, errors: [] };
   if (!L) return out;
   const byKey = new Map(docs.map((d) => [d.key, d]));
@@ -335,7 +345,7 @@ async function offers(deps, conf, L, fresh, docs, persons, draftDms) {
     const doc = byKey.get(c.key);
     try {
       const facts0 = dmFacts(c, per.doc);
-      const trial = await L.trials.mintTrial(deps.db, { kind: "social", person: per.id, lang: facts0.lang, network: c.network, handle: facts0.handle, domain: facts0.host, by: "chain:" + c.key });
+      const trial = await L.trials.mintTrial(deps.db, { kind: "social", person: per.id, lang: facts0.lang, network: c.network, handle: facts0.handle, domain: facts0.host, by: "chain" }, deps.now);
       if (!trial || !trial.url) throw new Error("mintTrial returned no link");
       items.push({ key: c.key, network: c.network, text: c.text, ours: ((c.parent.actions || {}).reply || {}).draft, post: (c.parent.chain || {}).post || c.parent.title || c.parent.text, facts: dmFacts(c, per.doc, trial), trial, comment: c, doc });
     } catch (error) {
@@ -347,7 +357,7 @@ async function offers(deps, conf, L, fresh, docs, persons, draftDms) {
   try { text = await draftDms(dmPrompt(items)); } catch (error) { out.errors.push("dm draft: " + clip(error.message || error, 160)); }
   const dms = parseDms(text, items);
   items.forEach((x) => {
-    x.doc.actions = Object.assign({}, x.doc.actions, { dm: dmAction(dms[x.key], x.facts, x.trial, conf, deps.now) });
+    x.doc.actions = Object.assign({}, x.doc.actions, { dm: dmAction(dms[x.key], x.facts, x.trial, conf, deps.now, send ? Send.modeOf(send, { network: x.network, kind: "dm", now: deps.now }) : "approve") });
     x.doc.offer = { code: x.trial.code, at: iso(deps.now) };
     out.offers += 1;
   });
@@ -355,22 +365,30 @@ async function offers(deps, conf, L, fresh, docs, persons, draftDms) {
   return out;
 }
 
-/** Each comment's person touched in the ledger, with the offer when one was made. */
+/** Each comment's person touched in the ledger (with the offer when one was made) and their ladder counts kept. */
 async function touchAll(deps, L, fresh, docs, persons, made) {
   const out = { touched: 0, errors: [] };
   if (!L) return out;
   const byKey = new Map(docs.map((d) => [d.key, d]));
   const offered = new Map((made || []).map((x) => [x.key, x.trial]));
+  const seen = new Map();
   for (const c of fresh) {
     const per = persons.get(c.key);
     const doc = byKey.get(c.key);
     if (!per || !doc) continue;
-    let patch = personPatch(c, doc, per.doc, deps.now);
+    const before = seen.get(per.id) || per.doc;
+    const { ledger, ladder } = personPatch(c, doc, before, deps.now);
+    let patch = ledger;
     if (offered.has(c.key)) {
-      const o = offerPatch(c, doc, offered.get(c.key), deps.now);
-      patch = Object.assign({}, patch, { stage: o.stage, offers: o.offers, history: patch.history.concat(o.history) });
+      const o = offerPatch(c, doc, offered.get(c.key));
+      patch = Object.assign({}, ledger, { stage: o.stage, offers: o.offers, note: ledger.note + "; " + o.note });
     }
-    try { await L.people.touch(deps.db, per.id, patch); out.touched += 1; } catch (error) { out.errors.push(per.id + ": " + clip(error.message || error, 160)); }
+    try {
+      const row = await L.people.touch(deps.db, per.id, patch, deps.now);
+      await deps.db.collection(LADDER).doc(per.id).set(Object.assign({ updatedAt: iso(deps.now) }, ladder), { merge: true });
+      seen.set(per.id, Object.assign({}, row, ladder));
+      out.touched += 1;
+    } catch (error) { out.errors.push(per.id + ": " + clip(error.message || error, 160)); }
   }
   return out;
 }
@@ -378,5 +396,5 @@ async function touchAll(deps, L, fresh, docs, persons, made) {
 module.exports = {
   TRIALS, TONES, RUNGS, LANGS, LOOKS, DM_NETS, DM_VIA, DM_COPY, STAGE_ORDER, REVIEW_URL,
   trialSettings, tone, theirPost, active, rung, ladderFor, used, nextStage, personPatch, offerable, owed,
-  dmFacts, dmFallback, dmPrompt, parseDms, dmAction, decideDm, dmPush, offerPatch, dmPatch, ledger, people, offers, touchAll, handleOf
+  dmFacts, dmFallback, dmPrompt, parseDms, dmAction, decideDm, dmPush, offerPatch, dmPatch, ledger, people, offers, touchAll, handleOf, threadUrl, LADDER
 };

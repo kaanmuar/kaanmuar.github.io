@@ -24,6 +24,7 @@ const OwnerTags = require("./owner-tags");
 const Snapshot = require("./jarvis-snapshot");
 const jarvisLog = require("./jarvis-log");
 const Trials = require("./chain-trials");
+const Send = require("./outreach-send");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -234,7 +235,14 @@ async function takeChains(deps, conf, found, into) {
 
   const docs = fresh.filter((c) => ai[c.key]).map((c) => Object.assign({ key: c.key }, E.chainDoc(c, c.parent, E.chainDecide(c, ai[c.key], conf, now), ai[c.key], now), again.has(c.key) ? { redrafted: true } : {}));
   if (!docs.length) return out;
-  const offers = await Trials.offers(deps, conf, L, fresh, docs, persons, (prompt) => geminiJson(deps.fetch, env, prompt));
+  const send = await Send.readSend(db, now);
+  // After the first days of approval (outreach-send.js), a live run sends answers on its own within the network's daily cap.
+  for (const d of docs) {
+    const r = d.actions.reply;
+    if (!r || r.status !== "waiting" || !conf.live || Send.modeOf(send, { network: d.network, kind: "reply", now }) !== "auto") continue;
+    if ((await Send.useCap(db, { network: d.network, kind: "reply", now, settings: send })).ok) Object.assign(r, { status: "approved", auto: true, decidedAt: new Date(now).toISOString(), by: "auto" });
+  }
+  const offers = await Trials.offers(deps, conf, L, fresh, docs, persons, (prompt) => geminiJson(deps.fetch, env, prompt), send);
   const batch = db.batch();
   docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
   await batch.commit();

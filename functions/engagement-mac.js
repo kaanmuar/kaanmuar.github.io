@@ -41,7 +41,7 @@
  *                                                                        for its composer (#2710); a DM with a
  *                                                                        2-day pass (#3137) is action "dm" with the
  *                                                                        person's profile as url, its draft and its
- *                                                                        card, within trials.dmCaps a day
+ *                                                                        card, within its outreach-send daily cap
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
  *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
@@ -69,6 +69,7 @@ const Students = require("./student-outreach");
 const OwnerTags = require("./owner-tags");
 const Trials = require("./chain-trials");
 const DmCard = require("./dm-card");
+const Send = require("./outreach-send");
 
 const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -236,9 +237,9 @@ async function dmTasks(deps, conf, want) {
   const rows = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
     .filter((t) => dmReady(t.doc.network, want) && !leased(t.doc.actions.dm, now) && (conf.live || !t.doc.actions.dm.auto));
   if (!rows.length) return [];
-  const caps = Trials.trialSettings(conf.trials).dmCaps;
-  const n = ((await db.collection("engagement_daily").doc(E.bogotaDay(now)).get()).data() || {}).n || {};
-  const left = Object.fromEntries(Trials.DM_NETS.map((k) => [k, (caps[k] || 0) - ((n[k] || {}).dm_sent || 0)]));
+  const send = await Send.readSend(db, now);
+  const left = {};
+  for (const k of new Set(rows.map((t) => t.doc.network))) left[k] = await Send.capLeft(db, { network: k, kind: "dm", now, settings: send });
   const at = new Date(now).toISOString();
   const tasks = [];
   for (const t of rows) {
@@ -273,8 +274,9 @@ async function dmResult(deps, key, b) {
     b.ok ? { "actions.dm.sentAt": at, "actions.dm.url": clip(b.url, 500), "actions.dm.cardSent": card, "actions.dm.cardError": card === "attached" ? "" : clip(b.cardError, 200) } : {}));
   if (status !== "approved") {
     await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { ["dm_" + status]: inc(1) } } }, { merge: true });
+    if (status === "sent") await Send.useCap(db, { network: doc.network, kind: "dm", now }).catch(() => null);
     const L = Trials.ledger(deps);
-    if (L && Trials.handleOf(doc.author)) await L.people.touch(db, L.people.idFor(doc.network, Trials.handleOf(doc.author)), Trials.dmPatch(doc, { status, card, url: b.url }, now)).catch(() => null);
+    if (L && Trials.handleOf(doc.author)) await L.people.touch(db, L.people.idFor(doc.network, Trials.handleOf(doc.author)), Trials.dmPatch(doc, { status, card, url: b.url }), now).catch(() => null);
   }
   await J.clearCache(db);
   return { ok: true, key, action: "dm", status };

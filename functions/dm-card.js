@@ -8,8 +8,9 @@
  *   sunrise   a warm coral-to-gold sky with the "2 days" in a white sun
  *
  * Each says "You just unlocked 2 days of URL review" in the DM's language, greets the person by first name or
- * @handle, names their site's host when we know it, and shows the pass link. Alt text goes with it in the same
- * language. satori lays it out and @resvg/resvg-js paints it, with the fonts report-card.js uses (assets/fonts).
+ * @handle, names their site's host when we know it, and shows the pass: carlosandmunoz.com with its TRY- code and an
+ * "Activate your pass" pill. The full link (their language's review page) is in the DM's text, so the card never
+ * prints a long, cut-off address. Alt text goes with it in the same language. satori lays it out and @resvg/resvg-js paints it, with the fonts report-card.js uses (assets/fonts).
  */
 const fs = require("fs");
 const path = require("path");
@@ -23,33 +24,33 @@ const LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const COPY = {
   en: {
     head: "You just unlocked 2 days of URL review", hi: (n) => "Hi " + n + ", thanks for the great chat!", thanks: "Thanks for the great chat!", days: "days free", pass: "Your pass",
-    try: (h) => "Try it on " + h, any: "SEO, accessibility, speed and security in one review", cta: "Claim your pass",
-    alt: (f) => "QA-lab URL Review card: " + (f.first ? f.first + ", you" : "You") + " just unlocked 2 days of free URL review" + (f.host ? ", ready for " + f.host : "") + ". Pass link: " + f.display + "."
+    try: (h) => "Try it on " + h, any: "SEO, accessibility, speed and security in one review", cta: "Activate your pass",
+    alt: (f) => "QA-lab URL Review card: " + (f.first ? f.first + ", you" : "You") + " just unlocked 2 days of free URL review" + (f.host ? ", ready for " + f.host : "") + ". Pass code " + f.code + " at carlosandmunoz.com."
   },
   es: {
     head: "¡Acabas de desbloquear 2 días de URL review!", hi: (n) => "Hola, " + n + ", ¡gracias por la gran conversación!", thanks: "¡Gracias por la gran conversación!", days: "días gratis", pass: "Tu pase",
     try: (h) => "Pruébalo con " + h, any: "SEO, accesibilidad, velocidad y seguridad en una revisión", cta: "Activa tu pase",
-    alt: (f) => "Tarjeta de QA-lab URL Review: " + (f.first ? f.first + ", acabas" : "Acabas") + " de desbloquear 2 días gratis de URL review" + (f.host ? ", listos para " + f.host : "") + ". Enlace del pase: " + f.display + "."
+    alt: (f) => "Tarjeta de QA-lab URL Review: " + (f.first ? f.first + ", acabas" : "Acabas") + " de desbloquear 2 días gratis de URL review" + (f.host ? ", listos para " + f.host : "") + ". Código del pase: " + f.code + " en carlosandmunoz.com."
   },
   pt: {
     head: "Você acabou de liberar 2 dias de URL review!", hi: (n) => "Oi, " + n + ", obrigado pela ótima conversa!", thanks: "Obrigado pela ótima conversa!", days: "dias grátis", pass: "Seu passe",
     try: (h) => "Experimente com " + h, any: "SEO, acessibilidade, velocidade e segurança em uma revisão", cta: "Ative seu passe",
-    alt: (f) => "Cartão do QA-lab URL Review: " + (f.first ? f.first + ", você" : "Você") + " acabou de liberar 2 dias grátis de URL review" + (f.host ? ", prontos para " + f.host : "") + ". Link do passe: " + f.display + "."
+    alt: (f) => "Cartão do QA-lab URL Review: " + (f.first ? f.first + ", você" : "Você") + " acabou de liberar 2 dias grátis de URL review" + (f.host ? ", prontos para " + f.host : "") + ". Código do passe: " + f.code + " em carlosandmunoz.com."
   },
   de: {
     head: "Sie haben 2 Tage URL Review freigeschaltet!", hi: (n) => "Hallo " + n + ", danke für den tollen Austausch!", thanks: "Danke für den tollen Austausch!", days: "Tage gratis", pass: "Ihr Pass",
-    try: (h) => "Testen Sie " + h, any: "SEO, Barrierefreiheit, Tempo und Sicherheit in einer Prüfung", cta: "Pass einlösen",
-    alt: (f) => "Karte von QA-lab URL Review: " + (f.first ? f.first + ", Sie" : "Sie") + " haben 2 Tage URL Review kostenlos freigeschaltet" + (f.host ? ", bereit für " + f.host : "") + ". Link zum Pass: " + f.display + "."
+    try: (h) => "Testen Sie " + h, any: "SEO, Barrierefreiheit, Tempo und Sicherheit in einer Prüfung", cta: "Pass aktivieren",
+    alt: (f) => "Karte von QA-lab URL Review: " + (f.first ? f.first + ", Sie" : "Sie") + " haben 2 Tage URL Review kostenlos freigeschaltet" + (f.host ? ", bereit für " + f.host : "") + ". Pass-Code " + f.code + " auf carlosandmunoz.com."
   },
   fr: {
     head: "Vous venez de débloquer 2 jours de URL review !", hi: (n) => "Bonjour " + n + ", merci pour ce super échange !", thanks: "Merci pour ce super échange !", days: "jours offerts", pass: "Votre pass",
     try: (h) => "Testez " + h, any: "SEO, accessibilité, vitesse et sécurité en un seul audit", cta: "Activer mon pass",
-    alt: (f) => "Carte QA-lab URL Review : " + (f.first ? f.first + ", vous" : "Vous") + " venez de débloquer 2 jours de URL review offerts" + (f.host ? ", prêts pour " + f.host : "") + ". Lien du pass : " + f.display + "."
+    alt: (f) => "Carte QA-lab URL Review : " + (f.first ? f.first + ", vous" : "Vous") + " venez de débloquer 2 jours de URL review offerts" + (f.host ? ", prêts pour " + f.host : "") + ". Code du pass : " + f.code + " sur carlosandmunoz.com."
   },
   it: {
     head: "Hai appena sbloccato 2 giorni di URL review!", hi: (n) => "Ciao " + n + ", grazie per il bello scambio!", thanks: "Grazie per il bello scambio!", days: "giorni gratis", pass: "Il tuo pass",
     try: (h) => "Provalo su " + h, any: "SEO, accessibilità, velocità e sicurezza in una revisione", cta: "Attiva il pass",
-    alt: (f) => "Scheda di QA-lab URL Review: " + (f.first ? f.first + ", hai" : "Hai") + " appena sbloccato 2 giorni gratis di URL review" + (f.host ? ", pronti per " + f.host : "") + ". Link del pass: " + f.display + "."
+    alt: (f) => "Scheda di QA-lab URL Review: " + (f.first ? f.first + ", hai" : "Hai") + " appena sbloccato 2 giorni gratis di URL review" + (f.host ? ", pronti per " + f.host : "") + ". Codice del pass: " + f.code + " su carlosandmunoz.com."
   }
 };
 
@@ -61,11 +62,9 @@ function facts(dm) {
   const c = d.card || {};
   const want = String(d.lang || "").slice(0, 2);
   const lang = LANGS.includes(want) ? want : "en";
-  const url = String((d.trial || {}).url || "https://carlosandmunoz.com/qa-review.html");
   return {
     lang, look: LOOKS.includes(c.look) ? c.look : LOOKS[0],
-    first: clip(c.first, 24), host: clip(c.host, 60).replace(/^www\./, ""), code: clip((d.trial || {}).code, 24),
-    display: url.replace(/^https?:\/\//, "").replace(/\/$/, "")
+    first: clip(c.first, 24), host: clip(c.host, 60).replace(/^www\./, ""), code: clip((d.trial || {}).code, 24).toUpperCase()
   };
 }
 
@@ -95,9 +94,18 @@ const brand = (color, sub) => h("div", { display: "flex", alignItems: "center" }
     h("div", caps(22, color), "QA-lab URL Review"),
     h("div", { fontSize: 18, fontWeight: 500, color: sub, marginTop: 3 }, "carlosandmunoz.com")));
 
+// The pass row: our domain, the TRY- code in a chip (unless the look shows it elsewhere), and the pill.
+const passRow = (f, t, o) => {
+  const size = o.size || 24;
+  return h("div", Object.assign({ display: "flex", alignItems: "center", borderRadius: 999, padding: "14px 14px 14px 28px" }, o.box),
+    h("div", { fontSize: size, fontWeight: 700, color: o.ink, letterSpacing: "0.01em", whiteSpace: "nowrap", flexShrink: 0 }, "carlosandmunoz.com"),
+    f.code && !o.noCode ? h("div", { display: "flex", fontFamily: "Fira Code", fontSize: size, color: o.codeInk, marginLeft: 14, padding: "6px 12px", borderRadius: 10, border: "2px solid " + o.codeLine, whiteSpace: "nowrap", flexShrink: 0 }, f.code) : null,
+    h("div", { display: "flex", flex: 1 }),
+    h("div", { display: "flex", fontWeight: 700, fontSize: size - 2, color: "#ffffff", padding: "12px 24px", borderRadius: 999, backgroundImage: o.pill, marginLeft: 14, whiteSpace: "nowrap", flexShrink: 0 }, t.cta));
+};
+
 const headSize = (s, big) => (s.length <= 40 ? big : s.length <= 48 ? big - 8 : big - 14);
 const greet = (t, f) => (f.first ? t.hi(f.first) : t.thanks);
-const linkSize = (f, room) => Math.max(16, Math.min(26, Math.floor(room / (f.display.length * 0.6))));
 
 function confetti(f, t) {
   return h("div", { width: W, height: H, display: "flex", position: "relative", backgroundColor: C.ink, fontFamily: "Inter", color: C.text,
@@ -113,9 +121,7 @@ function confetti(f, t) {
       h("div", { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 280, height: 280, borderRadius: 140, backgroundImage: "linear-gradient(150deg, #f4dca8, " + C.gold + ")", boxShadow: "0 0 60px rgba(226, 196, 138, 0.45)", transform: "rotate(-8deg)" },
         h("div", { fontFamily: "Instrument Serif", fontSize: 150, lineHeight: 0.9, color: C.ink }, "2"),
         h("div", caps(24, C.ink), t.days))),
-    h("div", { display: "flex", alignItems: "center", border: "1.5px solid rgba(126, 246, 251, 0.25)", borderRadius: 999, padding: "14px 14px 14px 28px", background: "rgba(10, 30, 36, 0.6)" },
-      h("div", { display: "block", flex: 1, fontFamily: "Fira Code", fontSize: linkSize(f, 700), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, f.display),
-      h("div", { display: "flex", fontWeight: 700, fontSize: 22, color: "#ffffff", padding: "12px 28px", borderRadius: 999, backgroundImage: "linear-gradient(135deg, #12a3ad, " + C.teal + ")", marginLeft: 16 }, t.cta))));
+    passRow(f, t, { box: { border: "1.5px solid rgba(126, 246, 251, 0.25)", background: "rgba(10, 30, 36, 0.6)" }, ink: C.text, codeInk: C.gold, codeLine: "rgba(226, 196, 138, 0.55)", pill: "linear-gradient(135deg, #12a3ad, " + C.teal + ")" })));
 }
 
 function ticket(f, t) {
@@ -135,9 +141,7 @@ function ticket(f, t) {
         h("div", { fontSize: 24, fontWeight: 500, color: C.teal }, greet(t, f)),
         h("div", { display: "block", fontFamily: "Instrument Serif", fontSize: headSize(t.head, 64), lineHeight: 1.04, marginTop: 14 }, t.head),
         h("div", { fontSize: 21, color: "#6b5d50", marginTop: 16 }, f.host ? t.try(f.host) : t.any)),
-      h("div", { display: "flex", alignItems: "center" },
-        h("div", { display: "block", flex: 1, fontFamily: "Fira Code", fontSize: linkSize(f, 400), color: C.brown, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, f.display),
-        h("div", { display: "flex", fontWeight: 700, fontSize: 21, color: "#ffffff", padding: "12px 26px", borderRadius: 999, backgroundColor: C.teal, marginLeft: 14 }, t.cta))),
+      passRow(f, t, { box: { padding: "0", borderRadius: 0 }, ink: C.brown, noCode: true, pill: "linear-gradient(135deg, #12a3ad, " + C.teal + ")" })),
     notch(-28), notch(532)));
 }
 
@@ -155,9 +159,7 @@ function sunrise(f, t) {
       h("div", { fontSize: 26, fontWeight: 700, color: "#fff4d6" }, greet(t, f)),
       h("div", { display: "block", fontFamily: "Instrument Serif", fontSize: headSize(t.head, 78), lineHeight: 1.02, marginTop: 14, textShadow: "0 2px 18px rgba(160, 50, 20, 0.35)" }, t.head),
       h("div", { fontSize: 23, fontWeight: 500, color: "#fff4d6", marginTop: 18 }, f.host ? t.try(f.host) : t.any)),
-    h("div", { display: "flex", alignItems: "center", borderRadius: 999, padding: "14px 14px 14px 28px", backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#7a2c1c" },
-      h("div", { display: "block", flex: 1, fontFamily: "Fira Code", fontSize: linkSize(f, 470), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, f.display),
-      h("div", { display: "flex", fontWeight: 700, fontSize: 21, color: "#ffffff", padding: "12px 26px", borderRadius: 999, backgroundColor: "#e2553f", marginLeft: 14 }, t.cta))));
+    passRow(f, t, { box: { backgroundColor: "rgba(255, 255, 255, 0.92)" }, ink: "#7a2c1c", size: 20, codeInk: "#e2553f", codeLine: "rgba(226, 85, 63, 0.45)", pill: "linear-gradient(135deg, #f0705a, #e2553f)" })));
 }
 
 const TREES = { confetti, ticket, sunrise };

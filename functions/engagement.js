@@ -497,11 +497,12 @@ function chainDoc(comment, parent, decision, ai, now) {
     relevance: parent.relevance || 0, trend: 0, score: parent.score || 0
   });
   const rootAuthor = parent.own ? "" : up.rootAuthor || Trials.handleOf(parent.author);
+  const rootUrl = up.rootUrl || (!parent.own && /^https?:\/\//.test(String(parent.url || "")) ? clip(parent.url, 500) : "");
   const doc = Object.assign(postDoc(post, ai, decision, now), {
     chain: Object.assign({
       parent: parent.key, root: up.root || parent.key, depth: (up.depth || 0) + 1, on: parent.own ? "post" : "reply",
       ours: clip(((parent.actions || {}).reply || {}).draft, 500), post: clip(up.post || parent.title || parent.text, 400)
-    }, rootAuthor ? { rootAuthor } : {})
+    }, rootAuthor ? { rootAuthor } : {}, rootUrl ? { rootUrl } : {})
   }, decision.tone ? { tone: decision.tone } : {});
   if (comment.parentId) Object.assign(doc, { parentId: clip(comment.parentId, 120), videoId: clip(comment.videoId, 40) });
   return doc;
