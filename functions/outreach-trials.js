@@ -25,6 +25,7 @@
 const crypto = require("crypto");
 const offers = require("./url-review-offers");
 const people = require("./outreach-people");
+const { POSTAL } = require("./url-review-customer-mail");
 
 // The follow-up percentages wait for Carlos's numbers; they live only here.
 const TRIAL = { days: 2, plan: "freelancer", runs: 3, followup: { social: 20, company: 20, student: 40, live: 20 }, followupDays: 7, codeDays: 14 };
@@ -213,7 +214,7 @@ const STOP = { en: "No more notes like this: {stop}", es: "No recibir más aviso
 function followupNote(lang, vars) {
   const l = langOf(lang);
   const fill = (s) => s.replace(/\{(\w+)\}/g, (all, k) => (vars[k] == null ? all : String(vars[k])));
-  const text = fill(NOTE[l].body) + "\n\n" + vars.url + "\n\nQA-lab URL Review" + (vars.stop ? "\n\n" + fill(STOP[l]) : "");
+  const text = fill(NOTE[l].body) + "\n\n" + vars.url + "\n\nQA-lab URL Review · Carlos A. Muñoz, " + POSTAL + (vars.stop ? "\n\n" + fill(STOP[l]) : "");
   return { lang: l, subject: fill(NOTE[l].subject), text, vars };
 }
 

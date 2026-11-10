@@ -232,6 +232,7 @@ test.describe("outreach trials", () => {
       assert.equal(note.lang, lang);
       assert.match(note.text, /AFTER-AAAAAA/);
       assert.match(note.text, /https:\/\/stop/);
+      assert.match(note.text, /Calle 29 # 29-31, Medellín, Colombia \(050016\)/);
       assert.doesNotMatch(note.subject + note.text, /\{\w+\}/);
     });
     assert.doesNotMatch(trials.followupNote("en", { code: "C", p: 1, days: 2, date: "d", url: "u" }).text, /No more notes/);
