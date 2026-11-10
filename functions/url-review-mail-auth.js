@@ -5,6 +5,7 @@
 // receiver returns permerror (RFC 7208 4.6.4), so SPF fails for every message. Two SPF records, an include that
 // leads to no SPF record, and two DMARC records are errors of the same kind.
 
+const crypto = require("crypto");
 const dns = require("dns").promises;
 const { say } = require("./url-review-findings-en");
 
@@ -170,6 +171,125 @@ function mailAuthChecks(dnsInfo, dnsRead, add) {
   return state;
 }
 
+// DKIM (#3409): a key lives at <selector>._domainkey.<domain> and nothing in DNS lists the selectors, so the review asks
+// the ones mail services use by default, the mail provider's own first. A key it does not find may sit at a custom selector.
+const DKIM_SELECTORS = ["google", "selector1", "selector2", "default", "k1", "k2", "k3", "s1", "s2", "mail", "dkim", "smtp", "mx",
+  "everlytickey1", "everlytickey2", "mandrill", "mxvault", "zoho", "protonmail", "protonmail2", "protonmail3", "fm1", "fm2", "fm3",
+  "sig1", "cm", "pm", "mailjet", "amazonses"];
+const MAIL_PROVIDERS = [
+  { name: "Google Workspace", mx: /(^|\.)(google|googlemail)\.com\.?$/i, spf: /\binclude:_spf\.google\.com\b/i, selectors: ["google"] },
+  { name: "Microsoft 365", mx: /\.mail\.protection\.outlook\.com\.?$/i, spf: /\binclude:spf\.protection\.outlook\.com\b/i, selectors: ["selector1", "selector2"] },
+  { name: "Proton Mail", mx: /(^|\.)protonmail\.ch\.?$/i, spf: /\binclude:_spf\.protonmail\.ch\b/i, selectors: ["protonmail", "protonmail2", "protonmail3"] },
+  { name: "Fastmail", mx: /(^|\.)messagingengine\.com\.?$/i, spf: /\binclude:spf\.messagingengine\.com\b/i, selectors: ["fm1", "fm2", "fm3"] }
+];
+const DKIM_QUERY_MS = 2500;
+const DKIM_MS = 6000;
+const DKIM_PARALLEL = 10;
+// RFC 8301 3.2: verifiers must not accept RSA keys below 1024 bits; 2048 is what providers issue today.
+const DKIM_MIN_BITS = 1024;
+const DKIM_GOOD_BITS = 2048;
+
+const dkimTags = (record) => dmarcTags(String(record || "").replace(/\s+/g, ""));
+// A wildcard TXT answers every name, so only a row that reads as a DKIM key counts.
+function isDkim(row) {
+  const tags = dkimTags(row);
+  return "v" in tags ? /^DKIM1$/i.test(tags.v) : "p" in tags;
+}
+
+function mailProvider(mx, spf) {
+  return MAIL_PROVIDERS.find((row) => (mx || []).some((host) => row.mx.test(String(host)))) || MAIL_PROVIDERS.find((row) => row.spf.test(String(spf || ""))) || null;
+}
+
+function rsaBits(p) {
+  const der = Buffer.from(p, "base64");
+  for (const type of ["spki", "pkcs1"]) {
+    try {
+      const bits = crypto.createPublicKey({ key: der, format: "der", type }).asymmetricKeyDetails.modulusLength;
+      if (bits) return bits;
+    } catch (error) { /* the other encoding, then the length */ }
+  }
+  // An SPKI wrapper and the exponent add about 34 bytes to the modulus; keys come in multiples of 256 bits.
+  return der.length > 34 ? Math.round((der.length - 34) * 8 / 256) * 256 : null;
+}
+
+function dkimKey(record) {
+  const tags = dkimTags(record);
+  const type = (tags.k || "rsa").toLowerCase().slice(0, 20);
+  const p = tags.p || "";
+  if (!p) return { type, revoked: true };
+  return { type, bits: type === "rsa" ? rsaBits(p) : null };
+}
+
+// The DKIM keys at the provider's and the common selectors. Only for a domain that receives mail.
+async function readDkim(domain, hints, halt) {
+  const provider = mailProvider(hints && hints.mx, hints && hints.spf);
+  const selectors = Array.from(new Set((provider ? provider.selectors : []).concat(DKIM_SELECTORS)));
+  const until = Date.now() + DKIM_MS;
+  const answers = new Array(selectors.length).fill(null);
+  let next = 0;
+  const worker = async () => {
+    while (next < selectors.length) {
+      const index = next++;
+      if (Date.now() >= until || (halt && halt())) continue;
+      answers[index] = await within(dns.resolveTxt(selectors[index] + "._domainkey." + domain).then((rows) => rows.map((parts) => parts.join(""))), Math.min(DKIM_QUERY_MS, until - Date.now()))
+        .catch((error) => (/^(ENODATA|ENOTFOUND)$/.test(error && error.code) ? [] : null));
+    }
+  };
+  await Promise.all(Array.from({ length: DKIM_PARALLEL }, worker));
+  const keys = [];
+  selectors.forEach((selector, index) => {
+    const record = (answers[index] || []).find(isDkim);
+    if (record) keys.push(Object.assign({ selector }, dkimKey(record)));
+  });
+  return { provider: provider ? provider.name : "", probed: selectors.length, unread: answers.filter((rows) => !rows).length, keys: keys.slice(0, 8) };
+}
+
+// The selectors with a live key, for the mail retest.
+const dkimSelectors = (dkim) => ((dkim && dkim.keys) || []).filter((key) => !key.revoked).map((key) => key.selector);
+
+function dkimChecks(dnsInfo, add) {
+  const dkim = dnsInfo.dkim;
+  if (!dkim || !(dnsInfo.mx || []).length) return;
+  const domain = dnsInfo.domain;
+  const keys = dkim.keys || [];
+  const name = (key) => key.selector + "._domainkey." + domain;
+  const describe = (key) => (key.type === "rsa" && key.bits ? say("sec-dkim.key.rsa", { name: name(key), bits: key.bits })
+    : key.type === "ed25519" ? say("sec-dkim.key.ed25519", { name: name(key) }) : say("sec-dkim.key.other", { name: name(key), type: key.type }));
+  const list = (rows) => ({ list: { items: rows.slice(0, 4).map(describe), join: "and" } });
+  if (!keys.length) {
+    // Most selectors unanswered says nothing about the keys.
+    if (dkim.unread > dkim.probed / 2) return;
+    const provider = MAIL_PROVIDERS.find((row) => row.name === dkim.provider);
+    add("Security", "person", "info", "sec-dkim-none", say("sec-dkim-none.title"),
+      provider ? say("sec-dkim-none.provider", { domain, provider: provider.name, selectors: { items: provider.selectors, join: "and" } }) : say("sec-dkim-none.evidence", { domain, n: dkim.probed }),
+      say("sec-dkim-none.fix"), { effort: "minutes" });
+    return;
+  }
+  const live = keys.filter((key) => !key.revoked);
+  const revoked = keys.filter((key) => key.revoked);
+  const weak = live.filter((key) => key.type === "rsa" && key.bits && key.bits < DKIM_MIN_BITS);
+  const short = live.filter((key) => key.type === "rsa" && key.bits >= DKIM_MIN_BITS && key.bits < DKIM_GOOD_BITS);
+  const good = live.filter((key) => weak.indexOf(key) === -1 && short.indexOf(key) === -1);
+  if (weak.length) {
+    add("Security", "fail", "high", "sec-dkim-weak", say("sec-dkim-weak.title", { n: weak.length }), say("sec-dkim-weak.evidence", list(weak)), say("sec-dkim-weak.fix"), { effort: "minutes", count: weak.length });
+  }
+  if (short.length) {
+    add("Security", "risk", "low", "sec-dkim-short", say("sec-dkim-short.title", { n: short.length }), say("sec-dkim-short.evidence", list(short)), say("sec-dkim-short.fix"), { effort: "minutes", count: short.length });
+  }
+  if (revoked.length) {
+    const names = { list: { items: revoked.slice(0, 4).map(name), join: "and" } };
+    add("Security", "risk", live.length ? "low" : "medium", "sec-dkim-revoked", say("sec-dkim-revoked.title", { n: revoked.length }),
+      say(live.length ? "sec-dkim-revoked.evidence" : "sec-dkim-revoked.only", names), say("sec-dkim-revoked.fix"), { effort: "minutes", count: revoked.length });
+  }
+  if (good.length && !weak.length) add("Security", "pass", "info", "sec-dkim", say("sec-dkim.pass.title", { n: good.length }), say("sec-dkim.pass.evidence", list(good)), "");
+}
+
+// The DKIM row of the report's check summary.
+function dkimState(findings) {
+  const has = (key) => findings.some((item) => item.key === key);
+  return has("sec-dkim-weak") ? "fail" : has("sec-dkim-short") || has("sec-dkim-revoked") ? "risk" : has("sec-dkim") ? "pass" : "unknown";
+}
+
 // The DMARC record with the gaps above closed, for the DNS records the report hands over.
 function dmarcRepair(record, domain) {
   // dnsFacts keeps the first 300 characters, so a longer record cannot be rewritten whole.
@@ -182,4 +302,4 @@ function dmarcRepair(record, domain) {
   return kept.join("; ") === parts.join("; ") ? "" : kept.join("; ");
 }
 
-module.exports = { readMailAuth, mailAuthChecks, dmarcRepair, dmarcTags, dmarcPolicy, spfTerms, SPF_LIMIT };
+module.exports = { readMailAuth, mailAuthChecks, dmarcRepair, dmarcTags, dmarcPolicy, spfTerms, SPF_LIMIT, readDkim, dkimChecks, dkimState, dkimSelectors, mailProvider, DKIM_SELECTORS };

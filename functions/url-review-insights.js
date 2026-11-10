@@ -8,7 +8,7 @@ const wordpress = require("./url-review-wordpress");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
-const { mailAuthChecks, dmarcRepair, dmarcPolicy } = require("./url-review-mail-auth");
+const { mailAuthChecks, dmarcRepair, dmarcPolicy, dkimChecks, dkimState } = require("./url-review-mail-auth");
 const blocklists = require("./url-review-blocklists");
 const exposedFiles = require("./url-review-exposed");
 const lookalikes = require("./url-review-lookalikes");
@@ -1692,6 +1692,7 @@ function analyze(input) {
     const domain = dnsInfo.domain;
     const enforced = /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc));
     const mailAuth = mailAuthChecks(dnsInfo, dnsRead, add);
+    if (dnsRead("mx")) dkimChecks(dnsInfo, add);
     if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", say("sec-spf.missing.title"), say("sec-spf.missing.evidence", { domain }), say("sec-spf.missing.fix"), { effort: "minutes" });
     if (mailRead && !sendsMail && !dnsInfo.spf) {
       if (dnsInfo.nullMx && enforced) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
@@ -1897,6 +1898,7 @@ function analyze(input) {
       { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
       { label: "Domain expiry", state: findingState("sec-domain-expiry") }
     ].concat(dnsRead("mx") && (dnsInfo.mx || []).length ? [
+      { label: "DKIM", state: dkimState(findings) },
       { label: "MTA-STS", state: findingState("sec-mta-sts") },
       { label: "TLS-RPT", state: findingState("sec-tlsrpt") }
     ] : []).concat([["Front-end libraries", "sec-libraries"], ["Privacy notice", "an-privacy"], ["Imprint", "an-imprint"], ["Accessibility statement", "a11y-statement"]]

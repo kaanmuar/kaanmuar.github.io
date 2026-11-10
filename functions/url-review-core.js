@@ -3091,14 +3091,16 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
     done(dnsFacts(origin.hostname).then(async (facts) => {
       const auth = facts.spf || facts.dmarc ? withTimeout(mailAuth.readMailAuth(facts.domain, halt), 10000, null).catch(() => null) : null;
+      const dkim = facts.mx.length ? withTimeout(mailAuth.readDkim(facts.domain, { mx: facts.mx, spf: facts.spf }, halt), 9000, null).catch(() => null) : null;
       const listed = blocklists.check(facts, origin.hostname);
       if (facts.mtaSts) facts.mtaStsPolicy = await withTimeout(mtaStsPolicy(facts.domain, halt), 8000, { error: "no answer in time" });
       if (auth) facts.mailAuth = await auth;
+      if (dkim) facts.dkim = await dkim;
       facts.blocklists = await listed;
       say(blocklists.note(facts.blocklists));
       return facts;
     }).catch(() => null), (facts) => facts
-      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
+      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + (facts.dkim ? ", DKIM " + (facts.dkim.keys.length ? "at " + facts.dkim.keys.map((key) => key.selector).join(", ") : "at none of " + facts.dkim.probed + " common selectors") : "") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
         ", MTA-STS " + (facts.mtaSts ? (facts.mtaStsPolicy && facts.mtaStsPolicy.mode ? "in " + facts.mtaStsPolicy.mode + " mode" : "announced, policy unread") : "missing") + ", TLS-RPT " + (facts.tlsRpt ? "found" : "missing") + ", BIMI " + (facts.bimi ? "found" : "missing") +
         (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
       : "The DNS records could not be read."),
