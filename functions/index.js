@@ -1342,11 +1342,12 @@ async function rerunFailure(group) {
   try {
     log("Re-run of a failed review of " + group.url + ". " + group.trigger.label);
     if (group.source === "sweep") {
-      record = (await sweepReview(group.sweep, { log, stopped: () => Date.now() - startedAt > 240000 })).record;
+      record = (await sweepReview(group.sweep, { log, stopped: () => Date.now() - startedAt > 240000, readAs: group.readAs || "" })).record;
     } else {
       const report = await urlReview.reviewTarget(group.url, {
         log,
         stopped: () => Date.now() - startedAt > 240000,
+        readAs: group.readAs || "",
         maxPages: options.pages || undefined,
         maxDepth: options.depth || undefined,
         pageLang: options.pageLang || "",
@@ -1482,6 +1483,25 @@ async function rerunReviewFailures() {
     }
   }
   console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
+  const fresh = (await col.where("at", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const rescued = await reviewRescue.runRescues({
+    db,
+    rows: fresh,
+    probeRead: urlReview.probeRead,
+    rerun: (group) => rerunFailure(group).catch((error) => {
+      console.error("Rescue re-run of " + group.url + " was not saved:", error);
+      return null;
+    }),
+    probeLines: reviewFailures.probeLines,
+    gemini: process.env.GEMINI_API_KEY ? (evidence) => reviewRescue.aiDiagnose(evidence, { fetch, key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }) : null,
+    until: started + 1650000,
+    log: (text) => console.log(text)
+  }).catch((error) => {
+    console.error("URL review rescues failed:", error);
+    return { done: [], notes: [], planned: 0, ai: 0 };
+  });
+  console.log("URL review rescues: " + rescued.planned + " planned, " + rescued.ai + " Gemini diagnoses" + (rescued.notes.length ? ": " + rescued.notes.join("; ") : "") + ".");
+  done.push(...rescued.done);
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
   await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
@@ -1761,6 +1781,7 @@ const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const reviewFailures = require("./url-review-failures");
 const reviewPromise = require("./url-review-promise");
+const reviewRescue = require("./url-review-rescue");
 const reviewPublish = require("./url-review-publish");
 
 // The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).

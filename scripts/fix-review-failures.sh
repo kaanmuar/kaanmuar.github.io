@@ -1,7 +1,7 @@
 #!/bin/bash
 # Every day at 07:30, after fileReviewFailureBugs (07:05) has filed the day's bugs, scripts/fix-review-failures.js takes the bugs the daily
 # check of failed URL reviews files (#320) in a clean clone of main: it settles what a script can, and starts a Cursor agent only for
-# bugs our code may fix (#1982).
+# bugs our code may fix (#1982). Then scripts/review-rescue.js reviews from this Mac the failed reviews the cloud could not read (#3080).
 #   scripts/fix-review-failures.sh install   installs the launchd job (re-run after changing this file)
 #   scripts/fix-review-failures.sh           runs once now
 set -euo pipefail
@@ -54,5 +54,11 @@ git clean -qfd
 log="$STATE/logs/$(date -u +%F).log"
 echo "$(date -u +%FT%TZ) start" >>"$log"
 perl -e 'alarm shift; exec @ARGV' 10800 node scripts/fix-review-failures.js >>"$log" 2>&1 || echo "exit $?" >>"$log"
+# The rescues the cloud queued for this Mac's home connection (#3080) need the functions' packages, installed again when their lock changes.
+lock="$(shasum functions/package-lock.json | cut -c1-40)"
+if [ ! -d functions/node_modules ] || [ "$lock" != "$(cat "$STATE/functions-lock" 2>/dev/null)" ]; then
+	npm ci --prefix functions --omit=dev --no-audit --no-fund >>"$log" 2>&1 && echo "$lock" >"$STATE/functions-lock"
+fi
+perl -e 'alarm shift; exec @ARGV' 7200 node scripts/review-rescue.js >>"$log" 2>&1 || echo "rescue exit $?" >>"$log"
 echo "$(date -u +%FT%TZ) end" >>"$log"
 find "$STATE/logs" -name '20*.log' -mtime +90 -delete

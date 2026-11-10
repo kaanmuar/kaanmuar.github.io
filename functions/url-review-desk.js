@@ -1477,6 +1477,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
       line(facts, "Re-run", item.rerun);
       const promise = item.promise;
       if (promise) line(facts, "Promise", "Report by email, " + promise.state + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
+      line(facts, "Rescue", item.rescue);
       const timings = item.timings || {};
       line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));
       const options = item.options || {};
@@ -1499,6 +1500,12 @@ const FAILURES_PAGE = `<!DOCTYPE html>
         raw.appendChild(node("summary", "Everything the probe saw"));
         raw.appendChild(Object.assign(node("pre", JSON.stringify(item.probe, null, 2)), { className: "log" }));
         detailEl.appendChild(raw);
+      }
+      if ((item.rescueLines || []).length) {
+        detailEl.appendChild(node("h2", "Rescue"));
+        const rescueList = document.createElement("ul");
+        item.rescueLines.forEach((row) => rescueList.appendChild(node("li", row)));
+        detailEl.appendChild(rescueList);
       }
       if ((item.lines || []).length) {
         detailEl.appendChild(node("h2", "Log, " + count(item.lineCount, "line") + (item.linesCut ? " (" + item.linesCut + " from the middle were not kept)" : "")));

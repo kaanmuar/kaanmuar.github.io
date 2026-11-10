@@ -25,7 +25,7 @@ const BY_FUNCTION = {
   booking: list(MAIL, ["TURNSTILE_SECRET_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
   mailWithGithub: list(MAIL, GITHUB),
   diagnoseReviewFailures: list(BROWSER),
-  rerunReviewFailures: list(MAIL, SCAN),
+  rerunReviewFailures: list(MAIL, SCAN, GEMINI),
   fileReviewFailureBugs: list(GITHUB),
   sweep: list(SCAN),
   // placesProspects (#2120): Places Text Search for local-business prospects.
