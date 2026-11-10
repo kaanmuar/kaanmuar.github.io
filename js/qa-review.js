@@ -2440,7 +2440,8 @@
       (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
-      (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
+      (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") +
+      (!slotRoot && window.QAReviewFix ? QAReviewFix.cardLinks(item) : "") + "</div>").join("")
       : '<p class="muted">' + esc(rc.t("noMatch")) + "</p>";
   }
 
@@ -2896,6 +2897,7 @@
     liveId = report.id;
     if (!sample) remember(report.id);
     if (window.QAReviewAsk) QAReviewAsk.show(payload);
+    if (window.QAReviewFix) QAReviewFix.show(payload, { title: (item) => said(item, "title") });
     const fixed = !sample && fixListOpen(report.id);
     document.body.classList.toggle("fix-open", fixed && !payload.paid);
     applyCopyMode(!!payload.paid);

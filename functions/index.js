@@ -1715,6 +1715,18 @@ const accountData = require("./url-review-account-data");
 const ownerProofs = require("./url-review-owner-proof");
 const domainOffer = require("./url-review-domain-offer");
 const outreachTrials = require("./outreach-trials");
+const fixRequests = require("./url-review-fix-requests");
+
+// A fix request opens for the account that ran the report, paid or not.
+function fixDeps() {
+  return {
+    db: getFirestore(),
+    access: (body, row) => reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, true),
+    mailOwner: (notice) => sendOwnerEmail(Object.assign({ to: REVIEW_ALERT_TO }, notice)),
+    mailCustomer: (lang, email, mail, category) => sendFaceMail(lang, email, mail, null, category),
+    deskUrl: REVIEW_FN_URL + "/desk"
+  };
+}
 
 async function ownerProofRows(email) {
   if (!ownerProofs.emailOf(email)) return [];
@@ -3949,7 +3961,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     ["/desk/rerun", "rerun"],
     ["/desk/unlist", "unlist"],
     ["/desk/notice", "notice"],
-    ["/desk/proof", "proof"]
+    ["/desk/proof", "proof"],
+    ["/desk/fix", "fix"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
   const deskName = routed
@@ -3991,7 +4004,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         }
         return rows;
       };
-      const [records, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
+      const [records, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap, fixRows] = await Promise.all([
         readRecords(),
         getFirestore().collection("url_review_alerts").limit(80).get(),
         getFirestore().collection("url_review_free_runs").limit(200).get(),
@@ -3999,7 +4012,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         getFirestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
         getFirestore().collection("url_review_unlisted").get(),
         getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
-        getFirestore().collection(ownerProofs.COLLECTION).limit(200).get()
+        getFirestore().collection(ownerProofs.COLLECTION).limit(200).get(),
+        fixRequests.deskRows(getFirestore()).catch((error) => {
+          console.error("Fix requests read failed:", error);
+          return [];
+        })
       ]);
       const ownerProofList = proofSnap.docs.map((doc) => ownerProofs.publicRow(doc.id, doc.data() || {}))
         .sort((a, b) => String(b.at).localeCompare(String(a.at)));
@@ -4019,8 +4036,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         freeRuns,
         reruns,
         ownerNotices,
-        ownerProofs: ownerProofList
+        ownerProofs: ownerProofList,
+        fixRequests: fixRows
       }));
+      return;
+    }
+    if (deskName === "fix" && req.method === "POST") {
+      await fixRequests.deskUpdate(req, res, operator, fixDeps());
       return;
     }
     if (deskName === "proof" && req.method === "POST") {
@@ -4358,6 +4380,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(204).send("");
     return;
   }
+  if (pathName.indexOf("/review/fix/") !== -1 && await fixRequests.route(req, res, pathName, fixDeps())) return;
   if (req.method === "POST" && pathName.endsWith("/review/ask")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);

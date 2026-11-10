@@ -1,0 +1,54 @@
+/* Fix what the report found (#3082): the per-finding links, the closing panel and the request sheet. */
+.fix-card-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.fix-card-links + .ask-about, .ask-about + .fix-card-links { margin-top: 8px; }
+.fix-card-link { border: 1px solid var(--look-edge, var(--line)); background: transparent; color: var(--cyan); border-radius: 999px; padding: 5px 12px; font: 600 12.5px/1.3 Inter, system-ui, sans-serif; cursor: pointer; transition: border-color .2s; }
+.fix-card-link:hover { border-color: var(--cyan); }
+.fix-card-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.fix-card-link[data-fix-request] { color: var(--text); }
+
+.fix-offer { margin: 28px 0 12px; padding: 22px; border: 1px solid var(--look-edge, var(--line)); border-radius: var(--look-radius, 22px); background: var(--look-card, color-mix(in srgb, var(--card) 92%, transparent)); }
+.fix-offer[hidden] { display: none; }
+.fix-offer h2 { margin: 0 0 6px; }
+.fix-lead { margin: 0 0 16px; color: var(--muted); }
+.fix-paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.fix-path { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--look-edge, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--panel) 60%, transparent); }
+.fix-path[data-path="packages"] { grid-column: 1 / -1; }
+.fix-path h3 { margin: 0; font-size: 1.05rem; }
+.fix-path p { margin: 0; font-size: 14px; line-height: 1.5; }
+.fix-path > .btn { align-self: flex-start; margin-top: auto; }
+.fix-muted { color: var(--muted); font-size: 13px; }
+.fix-packs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.fix-packs li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--look-edge, var(--line)); border-radius: 12px; }
+.fix-packs li > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fix-packs small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.fix-price { color: var(--cyan); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.fix-sheet { width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); box-sizing: border-box; padding: 20px; border: 1px solid var(--look-edge, var(--line)); border-radius: var(--look-radius, 22px); background: var(--card, #0b171c); color: var(--text); box-shadow: 0 24px 70px rgba(8, 14, 18, .35); }
+.fix-sheet::backdrop { background: rgba(4, 10, 13, .6); }
+.fix-sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+.fix-sheet-head h2 { margin: 0; font-size: 1.2rem; }
+.fix-form { display: flex; flex-direction: column; gap: 12px; }
+.fix-form p { margin: 0; }
+.fix-findings { margin: 0; padding: 10px 12px; border: 1px solid var(--look-edge, var(--line)); border-radius: 12px; max-height: 34vh; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.fix-findings legend { padding: 0 4px; font-size: 13px; color: var(--muted); }
+.fix-findings label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.fix-id { font-weight: 700; color: var(--cyan); white-space: nowrap; }
+.fix-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.fix-field small { font-size: 12px; }
+.fix-field input, .fix-field select, .fix-field textarea { box-sizing: border-box; width: 100%; border: 1px solid var(--look-edge, var(--line)); border-radius: 10px; padding: 9px 11px; background: color-mix(in srgb, var(--panel) 70%, transparent); color: var(--text); font: inherit; font-size: 14px; }
+.fix-field textarea { resize: vertical; }
+.fix-field :focus { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.fix-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fix-price-note { font-size: 13px; color: var(--cyan); }
+.fix-price-note:empty, .fix-msg:empty { display: none; }
+.fix-msg { font-size: 14px; color: var(--text); }
+.fix-actions { display: flex; justify-content: flex-end; }
+
+@media (max-width: 560px) {
+  .fix-offer { padding: 16px; }
+  .fix-packs li { flex-direction: column; }
+  .fix-sheet { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; padding: 16px; }
+  .fix-row { grid-template-columns: 1fr; }
+  .fix-field input, .fix-field select, .fix-field textarea { font-size: 16px; }
+  .fix-actions .btn { width: 100%; }
+}

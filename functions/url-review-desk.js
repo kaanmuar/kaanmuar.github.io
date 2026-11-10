@@ -3,6 +3,7 @@
  */
 const offers = require("./url-review-offers");
 const publish = require("./url-review-publish");
+const fixOffers = require("./url-review-fix-offers");
 
 const HELD_WORDS = {
   "not-complete": "the review did not complete",
@@ -387,6 +388,11 @@ const STYLE = `
     .gate-form button.quiet { margin-top: 0; }
     .lede a, .alert a { color: var(--teal); }
     .detail h2 { margin-top: 18px; }
+    .fix-status { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #e3f5f6; color: var(--teal); font: bold 12px Arial, sans-serif; }
+    .fix-status[data-status="new"] { background: #fff1d6; color: #7a4d00; }
+    .fix-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+    .fix-edit input { min-width: 0; width: 120px; }
+    .fix-edit input[type="url"] { width: min(320px, 100%); }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
 `;
 
@@ -674,6 +680,11 @@ const PAGE = `<!DOCTYPE html>
       <div id="owner-notices"></div>
     </section>
     <section>
+      <h2>Fix requests</h2>
+      <p class="empty">Clients who asked from their report for us to fix what it found: a fixed-price package or a quote. Set the status as the work moves. Saving a quoted request with a price or a pay link mails the client the quote in their language, once per price or link.</p>
+      <div id="fix-requests"></div>
+    </section>
+    <section>
       <h2>Free runs</h2>
       <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
       <div class="tools">
@@ -744,6 +755,9 @@ const PAGE = `<!DOCTYPE html>
     const proofListEl = document.getElementById("proof-list");
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
+    const fixesEl = document.getElementById("fix-requests");
+    const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
+    let fixesShown = "";
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -796,6 +810,7 @@ const PAGE = `<!DOCTYPE html>
       renderProofs();
       renderReruns();
       renderNotices();
+      renderFixes();
 
       alertsEl.replaceChildren();
       (data.alerts || []).slice(0, 12).forEach((alert) => {
@@ -1086,6 +1101,103 @@ const PAGE = `<!DOCTYPE html>
         button.disabled = false;
         return;
       }
+      load();
+    }
+    // The queue polls with the rest of the desk, but is not redrawn under a field being edited.
+    function renderFixes() {
+      const rows = data.fixRequests || [];
+      const shown = JSON.stringify(rows);
+      if (shown === fixesShown || fixesEl.contains(document.activeElement)) return;
+      fixesShown = shown;
+      fixesEl.replaceChildren();
+      rows.forEach((item) => {
+        const block = document.createElement("div");
+        block.className = "alert";
+        block.dataset.fix = item.id;
+        const head = node("b", (item.host || "—") + " · " + (item.name ? item.name + " <" + item.email + ">" : item.email));
+        const badge = node("span", item.status);
+        badge.className = "fix-status";
+        badge.dataset.status = item.status;
+        head.appendChild(badge);
+        block.appendChild(head);
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = [
+          when(item.createdAt),
+          item.lang,
+          item.package ? item.packageName + " US$" + item.priceUsd : "quote",
+          item.quoteUsd ? "quoted US$" + item.quoteUsd : "",
+          item.deadline ? "by " + item.deadline : "",
+          item.budget ? "budget " + item.budget : "",
+          item.quoteMailedAt ? "quote mailed " + when(item.quoteMailedAt) : "",
+          item.mailError ? "mail failed: " + item.mailError : ""
+        ].filter(Boolean).join(" · ");
+        block.appendChild(meta);
+        const list = document.createElement("ul");
+        item.findings.forEach((f) => list.appendChild(node("li", f.id + " · " + f.severity + " · " + f.title)));
+        block.appendChild(list);
+        if (item.reportId) {
+          const open = document.createElement("a");
+          open.href = "https://carlosandmunoz.com/qa-review.html?report=" + encodeURIComponent(item.reportId);
+          open.target = "_blank";
+          open.rel = "noopener";
+          open.textContent = "Open the report";
+          block.appendChild(open);
+        }
+        if (item.access) {
+          const more = document.createElement("details");
+          more.appendChild(node("summary", "Access notes"));
+          more.appendChild(node("pre", item.access));
+          block.appendChild(more);
+        }
+        if ((item.history || []).length > 1) block.appendChild(Object.assign(node("p", item.history.map((h) => h.status + " " + when(h.at) + (h.by && h.by !== "client" ? " by " + h.by : "")).join(" → ")), { className: "meta" }));
+        const edit = document.createElement("form");
+        edit.className = "fix-edit";
+        const pick = document.createElement("select");
+        pick.name = "status";
+        pick.setAttribute("aria-label", "Status of the request from " + item.email);
+        FIX_STATUSES.forEach((status) => {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = status;
+          option.selected = status === item.status;
+          pick.appendChild(option);
+        });
+        const quote = Object.assign(document.createElement("input"), { name: "quoteUsd", type: "number", min: "1", step: "1", placeholder: "Quote US$", value: item.quoteUsd || "" });
+        quote.setAttribute("aria-label", "Quoted price in US$");
+        const pay = Object.assign(document.createElement("input"), { name: "payUrl", type: "url", placeholder: "Pay link (https://…)", value: item.payUrl || "" });
+        pay.setAttribute("aria-label", "Pay link");
+        const save = Object.assign(document.createElement("button"), { type: "submit", textContent: "Save" });
+        const said = document.createElement("span");
+        said.className = "meta";
+        [pick, quote, pay, save, said].forEach((el) => edit.appendChild(el));
+        edit.addEventListener("submit", (event) => {
+          event.preventDefault();
+          saveFix(item.id, { status: pick.value, quoteUsd: quote.value, payUrl: pay.value.trim() }, save, said);
+        });
+        block.appendChild(edit);
+        fixesEl.appendChild(block);
+      });
+      if (!rows.length) fixesEl.appendChild(Object.assign(node("p", "No client has asked for a fix yet."), { className: "empty" }));
+    }
+    async function saveFix(id, body, button, said) {
+      button.disabled = true;
+      said.textContent = "";
+      const response = await fetch(deskBase() + "/desk/fix", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify(Object.assign({ id: id }, body))
+      });
+      const out = await response.json().catch(() => ({}));
+      button.disabled = false;
+      if (!response.ok) {
+        said.textContent = out.error || "The request did not save.";
+        return;
+      }
+      said.textContent = out.request && out.request.quoteMailedAt && out.request.quoteMailedAt === out.request.updatedAt ? "Saved, quote mailed" : "Saved";
+      button.blur();
+      fixesShown = "";
       load();
     }
     async function decideRerun(id, send, button) {

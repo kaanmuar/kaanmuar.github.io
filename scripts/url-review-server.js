@@ -16,6 +16,7 @@ const auth = require("../functions/url-review-auth");
 const phraser = require("../functions/url-review-phrase");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
+const fixOffers = require("../functions/url-review-fix-offers");
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
 function loadEnvFile(name) {
@@ -604,6 +605,31 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     sendJson(res, 200, { ok: true, phrase: !!process.env.GEMINI_API_KEY }, origin, deviceHint);
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/review/fix/offers") {
+    sendJson(res, 200, { packages: fixOffers.publicPackages() }, origin, deviceHint);
+    return;
+  }
+  // Saved to runner-results only: the local server mails no one.
+  if (req.method === "POST" && url.pathname === "/review/fix/request") {
+    let fixBody = {};
+    try { fixBody = await readBody(req); } catch (error) { fixBody = {}; }
+    const id = String(fixBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const found = id ? readStore().slice().reverse().find((row) => row && row.id === id && row.report) : null;
+    const access = await auth.askAccess(signIns, fixBody, found, true);
+    if (!access.ok) {
+      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
+      return;
+    }
+    const record = fixOffers.requestRecord(fixBody, found, access.email, Date.now());
+    if (record.error) {
+      sendJson(res, 400, { error: record.error, code: "invalid" }, origin, deviceHint);
+      return;
+    }
+    const fixId = crypto.randomBytes(10).toString("hex");
+    fs.appendFileSync(path.join(path.dirname(FILE), "url-review-fix-requests.jsonl"), JSON.stringify(Object.assign({ id: fixId }, record)) + "\n");
+    sendJson(res, 200, { ok: true, id: fixId, email: record.email, status: record.status }, origin, deviceHint);
     return;
   }
   if (req.method === "POST" && (url.pathname === "/review/pay" || url.pathname === "/pay")) {
