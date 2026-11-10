@@ -14,6 +14,8 @@ const HELD_WORDS = {
   "asker-opted-out": "the asker ticked don't publish",
   unlisted: "the owner asked to be left out",
   "safe-browsing-flagged": "Google's Safe Browsing lists flag the site",
+  "threat-listed": "URLhaus, PhishStats or Cloudflare lists the site as phishing or malware",
+  "exposed-files": "the site serves exposed files such as .git, .env or backups",
   "no-score": "the review has no score",
   "timed-out": "the review ran out of time",
   "too-few-pages": "fewer than " + publish.MIN_PAGES + " pages were analyzed",

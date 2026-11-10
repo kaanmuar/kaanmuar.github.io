@@ -34,6 +34,7 @@ function heldReason(record, unlisted) {
   const score = report.insights && report.insights.score;
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
   if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "safe-browsing-flagged";
+  if ((report.insights.findings || []).some((f) => f.key === "sec-threatlists" && f.verdict === "fail")) return "threat-listed";
   if ((report.insights.findings || []).some((f) => /^sec-exposed-/.test(String(f.key || "")) && f.verdict === "fail")) return "exposed-files";
   const limits = report.limits || {};
   const read = limits.pagesRead || (report.pages || []).length;

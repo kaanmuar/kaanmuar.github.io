@@ -2,6 +2,7 @@
 
 const { URL } = require("url");
 const libraries = require("./url-review-libraries");
+const threatLists = require("./url-review-threat-lists");
 const wordpress = require("./url-review-wordpress");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
@@ -734,6 +735,7 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
       say("sec-safebrowsing.fix"), { effort: "days", cases: ["SEC-11"] });
     else add("Security", "pass", "info", "sec-safebrowsing", say("sec-safebrowsing.pass.title"), say("sec-safebrowsing.pass.evidence", { url: sb.url }), "", { cases: ["SEC-11"] });
   }
+  threatLists.addFindings(extras.threatLists, add);
   const dom = extras.domain;
   if (dom && dom.read) {
     const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, "") : "";
