@@ -4,6 +4,7 @@
 const offers = require("./url-review-offers");
 const publish = require("./url-review-publish");
 const fixOffers = require("./url-review-fix-offers");
+const reviewPromise = require("./url-review-promise");
 
 const HELD_WORDS = {
   "not-complete": "the review did not complete",
@@ -336,6 +337,7 @@ function rerunRows(docs) {
     decidedAt: row.decidedAt || "",
     by: clip(row.by, 160),
     mailError: clip(row.mailError, 200),
+    promise: row.promise ? reviewPromise.deskLabel(Object.assign({}, row.promise, { state: "open" })) : "",
     run: row.record ? summary(row.record, new Map()) : null,
     log: (Array.isArray(row.lines) ? row.lines : []).slice(-30).map((line) => clip(line && line.text, 220))
   }));
@@ -671,7 +673,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Re-runs</h2>
-      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
       <div id="reruns"></div>
     </section>
     <section>
@@ -1007,7 +1009,8 @@ const PAGE = `<!DOCTYPE html>
       (data.reruns || []).forEach((item) => {
         const block = document.createElement("div");
         block.className = "alert";
-        block.appendChild(node("b", (labels[item.status] || item.status) + " · " + (item.host || item.url)));
+        block.appendChild(node("b", (labels[item.status] || item.status) + (item.promise ? " · Promised" : "") + " · " + (item.host || item.url)));
+        if (item.promise) block.appendChild(node("p", item.promise + (item.status === "held" ? ". The asker was told the report comes by email: send it, or drop it and they get the apology mail." : "")));
         const meta = document.createElement("div");
         meta.className = "meta";
         const run = item.run;
@@ -1443,7 +1446,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
         .forEach((row) => {
           const tr = document.createElement("tr");
           tr.setAttribute("aria-selected", String(row.id === selected));
-          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", row.rerun, count(row.lineCount, "line")]
+          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", [row.promise ? "Promised (" + row.promise.state + ")" : "", row.rerun].filter(Boolean).join(" · "), count(row.lineCount, "line")]
             .forEach((value) => tr.appendChild(node("td", text(value))));
           tr.addEventListener("click", () => openDetail(row.id));
           rowsEl.appendChild(tr);
@@ -1472,6 +1475,8 @@ const FAILURES_PAGE = `<!DOCTYPE html>
       line(facts, "Cause", item.cause ? item.cause + " · " + item.causeLabel : "");
       line(facts, "Now", item.now ? item.now + " (probed " + count(item.checks, "time") + ", last " + when(item.diagnosedAt) + ")" : "");
       line(facts, "Re-run", item.rerun);
+      const promise = item.promise;
+      if (promise) line(facts, "Promise", "Report by email, " + promise.state + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
       const timings = item.timings || {};
       line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));
       const options = item.options || {};
