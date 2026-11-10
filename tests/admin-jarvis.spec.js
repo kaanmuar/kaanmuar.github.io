@@ -987,6 +987,73 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map compares 7, 30 or 90 days with the span before, shades the change and plays the last 13 weeks (#3109)', async ({ page }) => {
+    test.setTimeout(90000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await openStats(page, '#stats/geo/30', { geo: Object.assign({}, GEO_DATED, { time: require('./fixtures/jarvis-geo-time.json') }) });
+    const geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Now');
+    await geo.locator('[data-geo-channel="email"]').click();
+    await geo.locator('[data-geo-metric]').selectOption('sent');
+    await geo.locator('[data-geo-span="7"]').click();
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Emails sent · last 7 days');
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Nov 2 – Nov 8 against Oct 26 – Nov 1');
+    const rank = geo.locator('[data-panel-id="geo-ranking"]');
+    await expect(rank.locator('th', { hasText: 'Change' })).toBeVisible();
+    await expect(rank.locator('tr', { hasText: 'Colombia' })).toContainText('▲ +18');
+    await expect(rank.locator('tr', { hasText: 'Brazil' })).toContainText('▼ −6');
+    await geo.locator('[data-geo-shade]').check();
+    await expect(geo.locator('path[data-geo-cc="CO"]')).toHaveAttribute('fill', /^rgba\(56,225,255/);
+    await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba\(255,77,141/);
+    await expect(geo.locator('.jv-geo-chg-scale')).toContainText('down · against the span before');
+    await geo.locator('path[data-geo-cc="BR"]').hover();
+    await expect(geo.locator('.jv-geo-card')).toContainText('Emails sent 13 · before 19 ▼ −6');
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3109-change-7d.png` });
+    await geo.locator('[data-geo-span="90"]').click();
+    await expect(geo.locator('.jv-geo-time-note')).toContainText('Only 1 of the 90 days before is recorded, so the change is partial.');
+    await geo.locator('[data-geo-metric]').selectOption('campaigns');
+    await expect(geo.locator('.jv-geo-time-note')).toContainText('Campaigns has no history; the map shows it now.');
+    await geo.locator('[data-geo-metric]').selectOption('sent');
+    await geo.locator('[data-geo-shade]').uncheck();
+
+    // The week player: the slider picks a week, Play steps through them and Pause holds one.
+    await geo.locator('[data-geo-week]').fill('3');
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Aug 31 – Sep 6');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Week of Aug 31');
+    await expect(geo.locator('path[data-geo-cc="BR"]')).not.toHaveAttribute('fill', '#1d3340');
+    await expect(geo.locator('path[data-geo-cc="PE"]')).toHaveAttribute('fill', '#1d3340');
+    await geo.locator('[data-geo-play]').click();
+    await expect(geo.locator('[data-geo-play]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Sep 7 – Sep 13', { timeout: 5000 });
+    await geo.locator('[data-geo-play]').click();
+    await expect(geo.locator('[data-geo-play]')).toHaveAttribute('aria-pressed', 'false');
+    const held = await geo.locator('.jv-geo-when').textContent();
+    await page.waitForTimeout(1600);
+    await expect(geo.locator('.jv-geo-when')).toHaveText(held);
+    await geo.locator('[data-geo-week]').fill('12');
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Nov 2 – Nov 8');
+    await expect(geo.locator('path[data-geo-cc="PE"]')).not.toHaveAttribute('fill', '#1d3340');
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3109-week.png` });
+
+    await geo.locator('[data-geo-span="30"]').click();
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Oct 10 – Nov 8 against Sep 10 – Oct 9');
+    await geo.locator('path[data-geo-cc="CO"]').click();
+    const sheet = geo.locator('[data-panel-id="geo-country"]');
+    await expect(sheet.locator('.jv-geo-sheet-chg')).toContainText('Last 30 days against the 30 before');
+    await expect(sheet.locator('.jv-geo-sheet-chg tr', { hasText: 'Emails sent' })).toContainText('▲');
+    if (process.env.GEO_SHOTS) {
+      await sheet.locator('.jv-geo-sheet-chg').screenshot({ path: `${process.env.GEO_SHOTS}/3109-country.png` });
+      await geo.screenshot({ path: `${process.env.GEO_SHOTS}/3109-desktop.png` });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await geo.locator('[data-geo-span="7"]').click();
+      await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3109-phone.png` });
+      await rank.screenshot({ path: `${process.env.GEO_SHOTS}/3109-phone-ranking.png` });
+    }
+    expect(errors).toEqual([]);
+  });
+
   test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

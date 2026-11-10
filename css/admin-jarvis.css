@@ -892,4 +892,18 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-sector-c.is-l4, .jv-sector-c.is-l5 { color: #04131a; font-weight: 600; }
 .jv-sector tr.is-on .jv-sector-c { border-color: var(--amber); }
 .jv-sector-c:hover, .jv-sector-c:focus-visible { border-color: var(--cyan); }
+/* #3109: ranges against the span before, change shading and the week player. */
+.jv-geo-time { margin-top: 0.4rem; }
+.jv-geo-play { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; flex: 1 1 18rem; min-width: 0; }
+.jv-geo-play .jv-btn { white-space: nowrap; }
+.jv-geo-play input[type="range"] { flex: 1 1 8rem; min-width: 6rem; accent-color: var(--cyan, #38e1ff); }
+.jv-geo-when { font: 600 0.75rem ui-monospace, Menlo, monospace; color: var(--amber); white-space: nowrap; }
+.jv-geo-time-note { margin: 0.3rem 0 0; }
+.jv-geo-chg { font: 600 0.78rem ui-monospace, Menlo, monospace; color: var(--dim); white-space: nowrap; }
+.jv-geo-chg.is-up { color: #38e1ff; }
+.jv-geo-chg.is-down { color: #ff4d8d; }
+.jv-geo-chg-scale > i { background: linear-gradient(90deg, rgba(255, 77, 141, 1), rgba(255, 77, 141, 0.18) 45%, #1d3340 50%, rgba(56, 225, 255, 0.18) 55%, rgba(56, 225, 255, 1)); }
+.jv-geo-card-chg { margin: 0.3rem 0 0; color: #fff; }
+.jv-geo-sheet-chg h4 { margin: 0.6rem 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+@media (max-width: 600px) { .jv-geo-play { flex-basis: 100%; } .jv-geo-when { white-space: normal; } }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c.is-l5 { animation: none; } }

@@ -19,9 +19,13 @@
                reports first. Carlos's answers go into the same doc's decisions (or skipped); the daily Live Reports job
                reads them through reviewUrl/country-decisions and writes them to data/live-report-countries.json.
 
+   time        the daily history summed into 7, 30 and 90-day ranges against the span before, and 13 weeks to play
+               (#3109, jarvis-geo-time.js); replyDays are the replies by Bogotá day it records.
+
    Target markets are every country speaking one of our six languages unless jarvis_settings/geo lists others. */
 
 const sweep = require("./url-review-sweep");
+const geoTime = require("./jarvis-geo-time");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const LANG_COUNTRIES = {
@@ -150,6 +154,7 @@ function geoRows(input) {
     if (l.host) leadHosts[bare(l.host)] = cc;
   });
   const countryOf = hostCountry([leadHosts, queueHosts, liveHosts]);
+  const replyDays = {};
 
   ((i.marketing && i.marketing.campaigns && i.marketing.campaigns.rows) || []).forEach((c) => {
     const weights = {};
@@ -178,6 +183,7 @@ function geoRows(input) {
     if (!r) return;
     r.answered++;
     if (POSITIVE.test(rep.category || "")) r.positive++;
+    if (geoTime.dayOf(rep.at)) geoTime.tally(replyDays, geoTime.dayOf(rep.at), r.cc, POSITIVE.test(rep.category || ""));
   });
   const social = (list, approved) => (list || []).forEach((p) => {
     const r = p && p.report && row(countryOf(p.report.host));
@@ -234,6 +240,7 @@ function geoRows(input) {
     targets: Array.from(targets).sort(),
     countries: list.sort((a, b) => b.sent - a.sent || b.prospects - a.prospects || a.cc.localeCompare(b.cc)),
     gaps: gaps.slice(0, 80),
+    replyDays,
     totals: {
       countries: acting.length, targets: targets.size, targetsActive: acting.filter((r) => r.target).length,
       missing: list.filter((r) => r.gaps.some((k) => k !== "silent")).length, silent: list.filter((r) => r.gaps.includes("silent")).length, avgReply,
@@ -353,6 +360,7 @@ async function geo(ctx) {
   out.sectors = heat.sectorGrid({ queue: { hosts: q.hosts }, sync, marketing });
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
+  out.time = await geoTime.read(ctx.db).catch(() => null);
   return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
 }
 

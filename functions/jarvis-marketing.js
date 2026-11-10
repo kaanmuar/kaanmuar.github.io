@@ -463,5 +463,5 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, instantly, needKey, TTL: 10 * 60 * 1000
 };

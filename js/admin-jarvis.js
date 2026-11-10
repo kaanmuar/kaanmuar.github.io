@@ -6,9 +6,10 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
-import * as Geo from "./admin-jarvis-geo.js?v=2988";
+import * as Geo from "./admin-jarvis-geo.js?v=3109";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
+import * as GeoTime from "./admin-jarvis-geo-time.js?v=3109";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -3006,12 +3007,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const key = metrics.some((m) => m[0] === S.geoMetric) ? S.geoMetric : metrics[0][0];
         const t = g.totals || {};
         const sel = rows.find((r) => r.cc === S.geoCc);
+        const tv = S.geoTv = Object.assign(GeoTime.view(g, geoTimeState(), key), { key });
         const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
-            <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>`;
-        const map = S.world ? geoMap(rows, key) + Geo.legend(rows, key, esc) : '<p class="jv-note">Drawing the map…</p>';
-        const top = Geo.ranked(rows, key === 'gaps' ? 'activity' : key);
+            <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
+        const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) : '<p class="jv-note">Drawing the map…</p>';
+        const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
         const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
             [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
+            ...(tv.delta ? [['Change', (r) => GeoTime.arrow(tv.delta[r.cc], key)]] : []),
             ['Sent · reply %', (r) => `${fmt(r.sent)}${r.replyRate === null ? '' : ' · ' + r.replyRate + '%'}${r.est ? ' <span class="jv-note" title="Split from campaigns that cover several countries">est.</span>' : ''}`],
             ['Prospects left', (r) => fmt(r.left)], ['Gaps', (r) => r.gaps.map((k) => `<span class="jv-chip" style="border-color:${(Geo.GAPS[k] || [, ''])[1]}">${esc((Geo.GAPS[k] || [k])[0])}</span>`).join(' ')]], list, 'No country has this yet.');
         const gapBody = (g.gaps || []).length ? `<ol class="jv-geo-gaps">${g.gaps.slice(0, 30).map((x) => `<li><i style="background:${(Geo.GAPS[x.kind] || [, '#5d7a8c'])[1]}"></i><button type="button" class="jv-link" data-geo-cc="${x.cc}">${esc(x.name)}</button> <span class="jv-note">${esc((Geo.GAPS[x.kind] || [x.kind])[0])}:</span> ${esc(x.text)}</li>`).join('')}</ol>` : '<p class="jv-empty">No country needs attention.</p>';
@@ -3020,7 +3023,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
             { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
         <div class="jv-grid">
-            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
             ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
@@ -3032,8 +3035,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         </div>`;
     }
 
+    // The time controls' state (#3109): a range to compare, a week to play, and value or change shading.
+    const geoTimeState = () => ({ span: S.geoSpan || 0, week: S.geoWeek === undefined ? null : S.geoWeek, shade: S.geoShade || 'value', playing: !!S.geoPlaying });
+
     // The map with name labels sized for the width it is drawn at: 9 to 13 screen pixels, so a phone shows fewer of them (#2988).
-    function geoMap(rows, key) {
+    function geoMap(rows, key, fills) {
         const w = S.world;
         if (!S.worldNames) {
             const dn = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
@@ -3043,7 +3049,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const at = $('.jv-geo-wrap');
         const k = ((at && at.clientWidth) || Math.min(root.clientWidth || 1000, 1100)) / w.w;
         const labels = Geo.labels(w, rows, { selected: S.geoCc, min: 9 / k, max: 13 / k });
-        return Geo.mapSvg(w, rows, key, { selected: S.geoCc, names: S.worldNames, labels }, esc);
+        return Geo.mapSvg(w, rows, key, { selected: S.geoCc, names: S.worldNames, labels, fills }, esc);
     }
 
     // The card beside the pointer or the focused country: flag, name, light level and the key numbers.
@@ -3053,8 +3059,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (!box) return;
         const cc = el.dataset.geoCc;
         const g = S.external.geo;
-        const r = ((g && g.countries) || []).find((c) => c.cc === cc);
-        box.innerHTML = Geo.card(r, esc, cc, (S.worldNames || {})[cc]);
+        const tv = S.geoTv && S.geoTv.mode !== 'now' ? S.geoTv : null;
+        const r = ((tv ? tv.rows : g && g.countries) || []).find((c) => c.cc === cc);
+        box.innerHTML = Geo.card(r, esc, cc, (S.worldNames || {})[cc]) + (tv ? GeoTime.cardLine(tv, cc, tv.key, esc) : '');
         box.hidden = false;
         const at = wrap.getBoundingClientRect();
         if (x === undefined) { const b = el.getBoundingClientRect(); x = b.left + b.width / 2; y = b.top + b.height / 2; }
@@ -3084,6 +3091,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${kpis([{ label: 'Emails sent · opened', value: `${fmt(r.sent)} · ${fmt(r.opened)}` }, { label: 'Reply rate', value: r.replyRate === null ? '—' : r.replyRate + '%' }, { label: 'Answered · positive', value: `${fmt(r.answered)} · ${fmt(r.positive)}` },
                 { label: 'Prospects · left', value: `${fmt(r.prospects)} · ${fmt(r.left)}` }, { label: 'Reviewed · score', value: `${fmt(r.reviewed)}${r.score === null ? '' : ' · ' + r.score}` },
                 { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
+            ${GeoTime.sheet(S.external.geo, r.cc, geoTimeState(), esc)}
             ${r.sent || r.prospects ? funnel(steps) : ''}
             ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
             ${geoCountryDates(r, camps)}
@@ -4425,6 +4433,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const c = event.target.closest && event.target.closest('.jv-geo-c');
         if (c) geoCard(c, event.clientX, event.clientY); else if (event.target.closest && event.target.closest('.jv-geo-wrap')) geoCardOff(event.target.closest('.jv-geo-wrap'));
     });
+    S.geoWeek = null;
+    GeoTime.bind(root, S, () => GeoTime.patch($('[data-view="geo"]'), geoView()), render);
     root.addEventListener('focusin', (event) => { if (event.target.matches && event.target.matches('.jv-geo-c')) geoCard(event.target); });
     root.addEventListener('focusout', (event) => { if (event.target.matches && event.target.matches('.jv-geo-c')) geoCardOff(event.target.closest('.jv-geo-wrap')); });
     root.addEventListener('toggle', (event) => {
