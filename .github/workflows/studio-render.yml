@@ -6,6 +6,8 @@
 # (op studio-render), by the owner's "/render tips <source> --start YYYY-MM-DD" comment on an issue, or by a merge that
 # adds a tips-studio source or a skit. Skit takes come from the skit-takes release as <skit>-<lang>.mp4.
 # Secrets: LIVE_REPORTS_DEPLOY_KEY pushes the studio/ branch (a deploy-key push starts its checks), PREFLIGHT_TOKEN.
+# QA_LAB_APP_ID and QA_LAB_APP_PEM (the qa-lab-agents app's client ID and private key) open the PR, so its pull_request
+# runs start without "approve and run" (#3390); without them the workflow token opens it and CI is dispatched instead.
 name: Studio render
 run-name: Studio ${{ inputs.kind || github.event_name }} ${{ inputs.name || '' }} ${{ inputs.mode || '' }}
 
@@ -104,6 +106,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       JOB: ${{ toJSON(matrix.job) }}
+      HAS_APP: ${{ secrets.QA_LAB_APP_ID != '' && secrets.QA_LAB_APP_PEM != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -153,8 +156,21 @@ jobs:
           key: studio-apt-${{ steps.keys.outputs.image }}
       - name: Render
         run: node scripts/studio-render.js render "$JOB"
+      - name: Token of the qa-lab-agents app
+        id: app
+        if: env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.QA_LAB_APP_ID }}
+          private-key: ${{ secrets.QA_LAB_APP_PEM }}
+          permission-contents: read
+          permission-pull-requests: write
       - name: Deliver for review
-        run: node scripts/studio-render.js deliver "$JOB"
+        env:
+          STUDIO_PR_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          [ -n "$STUDIO_PR_TOKEN" ] || echo "::warning::Add QA_LAB_APP_ID and QA_LAB_APP_PEM: the studio PR's pull_request runs wait for approval (#3390)."
+          node scripts/studio-render.js deliver "$JOB"
       - name: Log the failure as a bug
         if: failure()
         env:
