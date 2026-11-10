@@ -284,6 +284,39 @@ function grade(score) {
   return "F";
 }
 
+// Area scores, the overall score and the verdict and severity counts of a list of findings. compareSites rescores the
+// asker's findings with this on the checks a passive competitor run also got.
+function scoreFindings(findings) {
+  const areas = {};
+  AREAS.forEach((area) => {
+    const mine = findings.filter((item) => item.area === area);
+    let score = 100;
+    let lowRisk = 0;
+    mine.forEach((item) => {
+      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
+      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
+      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
+    });
+    score -= Math.min(LOW_RISK_CAP, lowRisk);
+    score = Math.max(0, Math.min(100, score));
+    areas[area] = {
+      score,
+      grade: grade(score),
+      fail: mine.filter((item) => item.verdict === "fail").length,
+      risk: mine.filter((item) => item.verdict === "risk").length,
+      pass: mine.filter((item) => item.verdict === "pass").length,
+      person: mine.filter((item) => item.verdict === "person").length
+    };
+  });
+  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
+  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
+  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
+  findings.forEach((item) => { if (totals[item.verdict] != null) totals[item.verdict] += 1; });
+  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach((item) => { if ((item.verdict === "fail" || item.verdict === "risk") && severities[item.severity] != null) severities[item.severity] += 1; });
+  return { overall, grade: grade(overall), areas, totals, severities };
+}
+
 function hostingHint(technologies, headers) {
   const names = (technologies || []).map((item) => String(item.name || "").toLowerCase());
   const server = String((headers && headers.server) || "").toLowerCase();
@@ -1784,33 +1817,7 @@ function analyze(input) {
   const ordered = actionable.concat(findings.filter((item) => item.verdict === "person"), findings.filter((item) => item.verdict === "pass"));
   ordered.forEach((item, index) => { item.id = "F-" + String(index + 1).padStart(2, "0"); });
 
-  const areas = {};
-  AREAS.forEach((area) => {
-    const mine = findings.filter((item) => item.area === area);
-    let score = 100;
-    let lowRisk = 0;
-    mine.forEach((item) => {
-      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
-      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
-      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
-    });
-    score -= Math.min(LOW_RISK_CAP, lowRisk);
-    score = Math.max(0, Math.min(100, score));
-    areas[area] = {
-      score,
-      grade: grade(score),
-      fail: mine.filter((item) => item.verdict === "fail").length,
-      risk: mine.filter((item) => item.verdict === "risk").length,
-      pass: mine.filter((item) => item.verdict === "pass").length,
-      person: mine.filter((item) => item.verdict === "person").length
-    };
-  });
-  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
-  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
-  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
-  findings.forEach((item) => { totals[item.verdict] += 1; });
-  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
-  actionable.forEach((item) => { if (severities[item.severity] != null) severities[item.severity] += 1; });
+  const { areas, overall, totals, severities } = scoreFindings(findings);
   const top = actionable[0];
   const summary = warnings.join(" ") + (warnings.length ? " " : "") + host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
     plural(totals.fail, "check fails", "checks fail") + " now, " + plural(totals.risk, "is", "are") + " at risk, and " + totals.pass + " pass." +
@@ -2084,4 +2091,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
+module.exports = { analyze, scoreFindings, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };

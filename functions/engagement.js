@@ -172,11 +172,19 @@ const round = (n, d) => Math.round(n * 10 ** (d || 2)) / 10 ** (d || 2);
 const lower = (list) => (Array.isArray(list) ? list : []).map((s) => clip(s, 60).toLowerCase()).filter(Boolean);
 
 /** The stored settings with every field present and in range. */
+// Saved competitor list plus any default added since it was saved; defaults removed in the form stay removed.
+function withDefaults(saved, dropped) {
+  const own = Array.isArray(saved) ? lower(saved) : [];
+  const added = DEFAULTS.competitors.filter((c) => !own.includes(c) && !dropped.includes(c));
+  return [...new Set(own.concat(added))].slice(0, 200);
+}
+
 function settings(doc) {
   const d = doc || {};
   const capsIn = d.caps || {};
   const thIn = d.thresholds || {};
   const between = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
+  const dropped = Array.isArray(d.competitorsDropped) ? lower(d.competitorsDropped).filter((c) => DEFAULTS.competitors.includes(c)) : [];
   return {
     paused: d.paused === true,
     live: d.live === true,
@@ -186,7 +194,8 @@ function settings(doc) {
     worth: between(d.worth, 0, 1, DEFAULTS.worth),
     maxAgeHours: between(d.maxAgeHours, 1, 24 * 14, DEFAULTS.maxAgeHours),
     perRun: Math.round(between(d.perRun, 0, 30, DEFAULTS.perRun)),
-    competitors: Array.isArray(d.competitors) ? lower(d.competitors).slice(0, 200) : DEFAULTS.competitors.slice(),
+    competitors: withDefaults(d.competitors, dropped),
+    competitorsDropped: dropped,
     own: Array.isArray(d.own) ? lower(d.own).slice(0, 40) : DEFAULTS.own.slice(),
     trials: Trials.trialSettings(d.trials),
     updatedAt: clip(d.updatedAt, 30),
@@ -206,6 +215,7 @@ function settingsPatch(current, body) {
   ["competitors", "own"].forEach((k) => {
     if (b[k] === undefined) return;
     next[k] = Array.isArray(b[k]) ? b[k] : String(b[k]).split(/[\n,]+/);
+    if (k === "competitors") { const kept = lower(next[k]); next.competitorsDropped = DEFAULTS.competitors.filter((c) => !kept.includes(c)); }
     changed = true;
   });
   if (!changed) throw new Error("Nothing to change.");

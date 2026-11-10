@@ -177,6 +177,51 @@ test("a competitor run's skipped lookalike and exposed-file checks are not liste
   assert.equal(compare.skippedOnRival("sec-exposedness"), false);
 });
 
+test("on a passive competitor run, the asker's scores, totals and indicators leave out the checks the competitor never got", () => {
+  const { scoreFindings } = require("../../functions/url-review-insights");
+  const finding = (key, area, verdict, severity) => ({ key, area, verdict, severity, title: key });
+  const findings = [finding("sec-lookalike", "Security", "fail", "critical"), finding("sec-exposed-env", "Security", "fail", "high"),
+    finding("sec-typed", "Security", "risk", "high"), finding("seo-title", "SEO", "risk", "medium"), finding("sec-hsts", "Security", "pass", "info")];
+  const mine = { host: "a.com", insights: { score: scoreFindings(findings), findings } };
+  const rivalFindings = [finding("seo-title", "SEO", "risk", "medium")];
+  const theirs = { host: "b.com", limits: { passive: true }, insights: { score: scoreFindings(rivalFindings), findings: rivalFindings } };
+  const kpi = (cmp, key) => cmp.kpis.find((row) => row.key === key);
+
+  const fair = compare.compareSites(mine, theirs);
+  const shared = scoreFindings([findings[3], findings[4]]);
+  assert.equal(fair.skipped, 3);
+  assert.equal(fair.ownFull, mine.insights.score.overall);
+  assert.equal(fair.overall.own, shared.overall);
+  assert.equal(fair.areas.find((row) => row.area === "Security").own, 100);
+  assert.equal(fair.areas.find((row) => row.area === "Security").ownOpen, 0);
+  assert.equal(kpi(fair, "open").own, 1);
+  assert.equal(kpi(fair, "urgent").own, 0);
+  assert.equal(kpi(fair, "urgent").winner, "tie");
+  assert.equal(kpi(fair, "passRate").own, 50);
+  assert.deepEqual(fair.severities.own, { critical: 0, high: 0, medium: 1, low: 0 });
+  assert.deepEqual(fair.verdicts.own, { fail: 0, risk: 1, pass: 1, person: 0 });
+  assert.equal(fair.ownOnlyCount, 0);
+  assert.equal(fair.shared, 1);
+  assert.equal(mine.insights.findings.length, 5, "the asker's review is not changed");
+
+  const active = compare.compareSites(mine, Object.assign({}, theirs, { limits: {} }));
+  assert.equal(active.skipped, 0);
+  assert.equal(active.overall.own, mine.insights.score.overall);
+  assert.equal(kpi(active, "open").own, 4);
+  assert.equal(kpi(active, "urgent").winner, "rival");
+});
+
+test("scoreFindings scores each area by severity and counts every verdict", () => {
+  const insights = require("../../functions/url-review-insights");
+  const findings = [{ area: "SEO", verdict: "fail", severity: "high" }, { area: "SEO", verdict: "risk", severity: "low" }, { area: "Performance", verdict: "pass", severity: "info" }];
+  const score = insights.scoreFindings(findings);
+  assert.equal(score.areas.SEO.score, 67);
+  assert.equal(score.areas.SEO.grade, "D");
+  assert.deepEqual(score.totals, { fail: 1, risk: 1, pass: 1, person: 0 });
+  assert.equal(score.areas.Performance.score, 100);
+  assert.deepEqual(score.severities, { critical: 0, high: 1, medium: 0, low: 1 });
+});
+
 test("the browser refuses to type into a field or open the chat on a competitor run", async () => {
   const browser = require("../../functions/url-review-browser");
   assert.equal(browser.passiveJob({ passive: true }), true);
