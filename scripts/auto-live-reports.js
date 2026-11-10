@@ -88,6 +88,8 @@ const LESSONS = {
   "pf-blocking": ["blocking scripts", "Add defer to every script the first paint does not need.", ["WebPerformance", "PageWeight", "LCP"]],
   "pf-field": ["real-user speed", "Start with the largest image on the first screen: size it, compress it, and preload it.", ["WebPerformance", "CoreWebVitals", "LCP"]],
   "sec-safebrowsing": ["a Safe Browsing listing", "Watch the Security issues report in Search Console, clean the cause the day it appears, then request a review.", ["WebSecurity", "SafeBrowsing", "Malware"]],
+  "sec-linked-script": ["a listed script host", "Load scripts only from hosts you chose, name them in a Content-Security-Policy, and remove any you do not know the day it appears.", ["WebSecurity", "SafeBrowsing", "Magecart"]],
+  "sec-linked-risk": ["a listed linked host", "Check what the site embeds and links to after every plugin or theme update, and unlink any host Google lists.", ["WebSecurity", "SafeBrowsing", "Phishing"]],
   "sec-domain-expiry": ["domain renewal", "Turn on automatic renewal for every domain you own, and keep the card on file valid.", ["WebSecurity", "Domains", "DNS"]],
   "sec-domain-lock": ["the domain transfer lock", "Turn on the registrar's transfer lock, and two-factor sign-in for the registrar account.", ["WebSecurity", "Domains", "DNS"]],
   "sec-mta-sts": ["MTA-STS", "Publish an MTA-STS policy in testing mode, read the TLS-RPT reports, then switch it to enforce.", ["EmailSecurity", "MTASTS", "DNS"]],
