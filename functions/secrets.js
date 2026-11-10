@@ -39,7 +39,8 @@ const BY_FUNCTION = {
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
   // fixRereview (#3102): the free re-review after a fix, then the before/after mail.
   fixRereview: list(MAIL, SCAN, SITE_TOKEN),
-  jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
+  // The daily briefing builds the geo source and its history, which read the short-link clicks (#3281).
+  jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI, CLOUDFLARE),
   // Both load the whole snapshot for the live push (#2509), so they hold every secret its sources read, like jarvis;
   // a missing one would be cached as a failed source for every client.
   jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),

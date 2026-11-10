@@ -7,14 +7,16 @@
          interested, bounced]; bounced is null when Instantly sends none. The first run backfills BACKFILL_DAYS once,
          every run after rewrites the last REFRESH_DAYS (opens and replies land late).
      a   the outreach replies dated that day (marketing-sync keeps the last 80): [answered, positive], never lowered.
+     k   the short-link clicks that day by visitor country, { cc: clicks } (#3281, jarvis-geo-clicks.js recordDays);
+         over the clicks in c when present.
 
    jarvis_settings/geo_time keeps when the backfill ran and the summary the geo source sends (`time` on the Map tab):
      ranges   7, 30 and 90 days to yesterday against the same span before: { cc: { field: [now, before] } }
      weeks    the 13 weeks to yesterday: start dates and { cc: { field: [13 values] } }
-   A null is a span with no history yet. Email, replies, visitors, link visits, reviews, paid and USD add up over a span;
+   A null is a span with no history yet. Email, replies, visitors, link visits, reviews, paid, USD and clicks add up over a span;
    prospects, swept, left, reviewed and social replies are levels, the last day's value. */
 
-const FIELDS = ["sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd"];
+const FIELDS = ["sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks"];
 const EMAIL = FIELDS.slice(0, 5);
 const LEVELS = new Set(["prospects", "swept", "left", "reviewed", "social"]);
 const COLLECTION = "jarvis_geo_history";
@@ -130,6 +132,7 @@ function dayRow(doc, cc) {
       return i === 4 && doc.nb ? null : 0;
     }
     if (f === "answered" || f === "positive") return doc.a ? ((doc.a[cc] || [0, 0])[f === "answered" ? 0 : 1]) : null;
+    if (f === "clicks" && doc.k) return doc.k[cc] || 0;
     return doc.c ? (doc.c[cc] ? doc.c[cc][i] : 0) : null;
   });
 }
@@ -153,7 +156,7 @@ function summarize(docs, to) {
   (docs || []).forEach((d) => { if (d && DAY.test(d.day) && d.day <= to) byDay[d.day] = d; });
   const days = Object.keys(byDay).sort();
   const ccs = new Set();
-  days.forEach((d) => ["c", "d", "a"].forEach((k) => Object.keys(byDay[d][k] || {}).forEach((cc) => { if (valid(cc)) ccs.add(cc); })));
+  days.forEach((d) => ["c", "d", "a", "k"].forEach((k) => Object.keys(byDay[d][k] || {}).forEach((cc) => { if (valid(cc)) ccs.add(cc); })));
   const span = (from, end, cc) => spanRow(days.filter((d) => d >= from && d <= end).map((d) => dayRow(byDay[d], cc)));
   const covered = (from, end) => days.filter((d) => d >= from && d <= end).length;
   const pack = (cols) => {
@@ -273,6 +276,7 @@ async function record(ctx) {
     await batch.commit();
     notes.push(replyDays.length + " reply days");
   }
+  if (ctx.clicks) notes.push(await require("./jarvis-geo-clicks").recordDays(ctx, col, to).catch((error) => "clicks failed: " + String(error.message || error).slice(0, 120)));
 
   const snap = await col.where("day", ">=", addDays(to, 1 - KEEP_DAYS)).get();
   const time = summarize(snap.docs.map((d) => d.data()), to);

@@ -6178,7 +6178,8 @@ async function jarvisGeoHistory(db) {
   const now = Date.now();
   const ext = await jarvisExternal(["geo"], 1);
   const mctx = { fetch, env: process.env, now };
-  const out = await jarvisGeoTime.record({ db, now, geo: ext.geo, instantly: process.env.INSTANTLY_API_KEY ? (path) => jarvisMarketing.instantly(mctx, path) : null });
+  const out = await jarvisGeoTime.record({ db, now, geo: ext.geo, instantly: process.env.INSTANTLY_API_KEY ? (path) => jarvisMarketing.instantly(mctx, path) : null,
+    clicks: (sql) => require("./jarvis-geo-clicks").query(fetch, process.env, sql) });
   await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
   return out;
 }

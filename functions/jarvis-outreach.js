@@ -347,6 +347,7 @@ async function shortLinks(ctx, loggedP) {
   const live = worker.status === 200 && /User-agent/i.test(worker.body);
   const rows = linkRows(opens, reviews, ctx);
   rows.social.posts = socialPosts(rows.social.posts, docs);
+  rows.byVisitor = require("./jarvis-geo-clicks").visitorRows(opens, reviews, ctx, { linkTags, revenue: REVENUE, toMs });
   return Object.assign({ ok: true, live, workerStatus: worker.status, base: SHORT,
     channels: SHORT_PATHS.map(([path, label]) => ({ label, url: SHORT + "/" + path })),
     funnel: FUNNEL.map(([n, label]) => ({ label, url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/" + n })) },
