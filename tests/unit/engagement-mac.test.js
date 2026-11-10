@@ -370,3 +370,22 @@ test("the agent's owner-tag helpers: a draft cut at its mention tokens, the menu
   ]);
   assert.equal(N.igMedia({ a: [{ code: "C1", taken_at: 1, user: { username: "upb" } }] }, new Map()).get("C1").user.username, "upb");
 });
+
+test("a network the last run had signed in that reads signed out pushes once, naming the restore (#3163)", async () => {
+  const db = await paired();
+  const pushed = [];
+  const d = deps(db, { push: async (m) => { pushed.push(m); } });
+  await M.ingest(d, { posts: [], signedIn: { x: true, linkedin: true, telegram: true } });
+  assert.equal(pushed.length, 0, "first heartbeat: nothing lost");
+  const out = await M.ingest(d, { posts: [], signedIn: { x: false, linkedin: false, telegram: true }, errors: { linkedin: "Not signed in in the agent's Chrome." } });
+  assert.deepEqual(out.lost, ["x", "linkedin"]);
+  assert.equal(pushed.length, 1);
+  assert.equal(pushed[0].kind, "alerts");
+  assert.equal(pushed[0].title, "Engagement agent signed out of X, LinkedIn");
+  assert.match(pushed[0].body, /agent\.js restore-sessions x,linkedin/);
+  assert.ok(pushed[0].lines.includes("LinkedIn: Not signed in in the agent's Chrome."));
+  await M.ingest(d, { posts: [], signedIn: { x: false, linkedin: false, telegram: true } });
+  assert.equal(pushed.length, 1, "still signed out: no second push");
+  await M.ingest(d, { posts: [], signedIn: { telegram: true } });
+  assert.equal(pushed.length, 1, "a network not read this run (busy) is no sign-out");
+});

@@ -23,12 +23,19 @@
  *   node scripts/engagement-browser/agent.js run [--force]      one run now (--force: outside the hours too)
  *   node scripts/engagement-browser/agent.js clone-profiles [network] [--force]   a profile per network from the main one
  *   node scripts/engagement-browser/agent.js import <file>      sessions signed in elsewhere (Playwright cookies JSON)
+ *   node scripts/engagement-browser/agent.js restore-sessions [network]   each network's last signed-in cookies back
  *   node scripts/engagement-browser/agent.js pair               a new token for Jarvis (with this Mac's gcloud sign-in)
  *   node scripts/engagement-browser/agent.js install|uninstall|status
  *   any of them: --parallel N   how many Chromes at once (install keeps it for the launchd job)
  *
- * State, the Chrome profiles (chrome, profiles/<network>), locks and logs live in
+ * State, the Chrome profiles (chrome, profiles/<network>), kept sessions (sessions/<profile>), locks and logs live in
  * ~/Library/Application Support/QALab/engagement-browser.
+ *
+ * Open these profiles only through this script. A Chrome started any other way (open -a "Google Chrome" --user-data-dir,
+ * a plain chromium launch) cannot read the cookies Playwright's Chrome encrypted and drops every session but Telegram's
+ * (#3163). For a check Playwright's Chrome cannot pass, sign in in a throwaway profile and bring the sessions in with
+ * import. A check or run that sees networks signed in keeps a copy of the profile's cookies; Jarvis pushes when one
+ * signs out, and restore-sessions brings back its last copy.
  */
 const fs = require("fs");
 const os = require("os");
@@ -36,7 +43,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.8.0";
+const VERSION = "1.9.0";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -46,6 +53,8 @@ const PROFILE = path.join(STATE, "chrome");
 const PROFILES = path.join(STATE, "profiles");
 const CONFIG = path.join(STATE, "config.json");
 const LOCKS = path.join(STATE, "locks");
+const SESSIONS = path.join(STATE, "sessions");
+const NOTE = "DO-NOT-OPEN-IN-CHROME.txt";
 const SHOTS = path.join(STATE, "shots");
 const LOGS = path.join(STATE, "logs");
 const PLIST = path.join(os.homedir(), "Library/LaunchAgents", LABEL + ".plist");
@@ -78,6 +87,7 @@ const netLog = (k) => (...a) => {
 const profileOf = (k) => (fs.existsSync(path.join(PROFILES, k)) ? path.join(PROFILES, k) : PROFILE);
 // The main profile keeps the single lock of agents before 1.8, so a run of an older install still keeps this one out.
 const lockOf = (profile) => (profile === PROFILE ? path.join(STATE, "lock") : path.join(LOCKS, path.basename(profile)));
+const sessionsOf = (profile) => path.join(SESSIONS, profile === PROFILE ? "main" : path.basename(profile));
 const names = (nets) => nets.map((k) => NETWORKS[k].name).join(", ");
 const stagger = () => STAGGER[0] + Math.random() * (STAGGER[1] - STAGGER[0]);
 
@@ -103,7 +113,13 @@ function playwright() {
 }
 
 async function launch(minimized, profile) {
-  const ctx = await playwright().chromium.launchPersistentContext(profile || PROFILE, {
+  const dir = profile || PROFILE;
+  if (chromeHas(dir)) throw new Error("A Chrome outside the agent has " + dir + " open; quit it. Such a Chrome drops the agent's sessions (#3163).");
+  if (fs.existsSync(dir) && !fs.existsSync(path.join(dir, NOTE))) {
+    fs.writeFileSync(path.join(dir, NOTE), "The engagement agent's profile. Open it only with scripts/engagement-browser/agent.js (login, check, run).\n"
+      + "A Chrome started any other way cannot read the agent's cookies and drops every session (#3163).\n");
+  }
+  const ctx = await playwright().chromium.launchPersistentContext(dir, {
     channel: "chrome", headless: false, viewport: null, locale: "en-US", timezoneId: "America/Bogota",
     ignoreDefaultArgs: ["--enable-automation"],
     args: ["--disable-blink-features=AutomationControlled", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--window-size=1280,900"]
@@ -199,7 +215,15 @@ async function check(nets, read, parallel) {
     const units = claim(nets, owned);
     const got = await P.pool(units, parallel || 1, async (u) => {
       const { ctx, page } = await launch(true, u.profile);
-      try { for (const k of u.nets) lines[k] = await checkOne(page, k, read); } finally { await ctx.close(); }
+      const signed = [];
+      try {
+        for (const k of u.nets) {
+          const r = await checkOne(page, k, read);
+          lines[k] = r.line;
+          if (r.who) signed.push(k);
+        }
+      } finally { await ctx.close(); }
+      keepSessions(u.profile, signed);
     });
     got.forEach((r, i) => { if (!r.ok) units[i].nets.forEach((k) => { lines[k] = lines[k] || NETWORKS[k].name.padEnd(10) + "NOT ready: Chrome failed on " + units[i].profile + ": " + String(r.error.message || r.error).slice(0, 160); }); });
   } finally { release(owned); }
@@ -223,13 +247,52 @@ async function checkOne(page, k, read) {
       line += got.error ? "; notifications failed: " + got.error : "; " + got.length + " comments and replies to us (" + got.filter((x) => !x.liked).length + " not liked, " + got.filter((x) => x.on && x.ours).length + " of " + got.filter((x) => x.on).length + " on our posts quote what we said)";
     }
   }
-  return line;
+  return { line, who };
+}
+
+/** A copy of a closed profile's cookies for the networks just seen signed in there; a failed copy never stops the caller. */
+function keepSessions(profile, signed) {
+  if (chromeHas(profile)) return;
+  try {
+    const out = P.saveSessions(profile, sessionsOf(profile), signed);
+    if (out) log("Kept the sessions of " + names(signed) + " in " + out);
+  } catch (error) { log("Keeping sessions: " + String(error.message || error).slice(0, 160)); }
+}
+
+/** Each network's newest kept cookies back into its profile through Playwright, so other networks keep theirs. */
+async function restoreSessions(nets, parallel) {
+  const owned = [];
+  const back = [];
+  try {
+    for (const u of claim(nets, owned)) {
+      const list = [];
+      for (const k of u.nets) {
+        const copy = P.sessionFor(sessionsOf(u.profile), k);
+        if (!copy) { log(NETWORKS[k].name + ": no kept session; sign in: node scripts/engagement-browser/agent.js login " + k); continue; }
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "qalab-sessions-"));
+        try {
+          fs.mkdirSync(path.join(tmp, "Default"));
+          ["Cookies", "Cookies-journal"].filter((f) => fs.existsSync(path.join(copy.dir, f))).forEach((f) => fs.copyFileSync(path.join(copy.dir, f), path.join(tmp, "Default", f)));
+          if (fs.existsSync(path.join(copy.dir, "Local State"))) fs.copyFileSync(path.join(copy.dir, "Local State"), path.join(tmp, "Local State"));
+          const { ctx } = await launch(true, tmp);
+          let got = [];
+          try { got = (await ctx.cookies()).filter((c) => P.cookieOf(c.domain, k)); } finally { await ctx.close(); }
+          list.push(...got);
+          log(NETWORKS[k].name + ": " + got.length + " cookies from " + copy.at);
+          if (got.length) back.push(k);
+        } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+      }
+      if (!list.length) continue;
+      const { ctx } = await launch(true, u.profile);
+      try { await ctx.addCookies(list); } finally { await ctx.close(); }
+    }
+  } finally { release(owned); }
+  if (back.length) await check(back, false, parallel);
 }
 
 /** Sessions signed in elsewhere on this Mac (Playwright cookies as JSON), only for the agent's networks, into every profile. */
 async function importCookies(file) {
-  const hosts = /(^|\.)(x\.com|twitter\.com|linkedin\.com|facebook\.com|instagram\.com|threads\.com|threads\.net|tiktok\.com|reddit\.com)$/;
-  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => hosts.test(String(c.domain || "").replace(/^\./, "")));
+  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => P.cookieOf(c.domain));
   const owned = [];
   try {
     for (const u of claim(Object.keys(NETWORKS), owned)) {
@@ -451,6 +514,7 @@ async function run(opts) {
     await report("failed", String(error.message || error).slice(0, 150));
     throw error;
   } finally {
+    units.forEach((u) => keepSessions(u.profile, u.nets.filter((k) => seen.accounts[k])));
     const stored = readConfig();
     writeConfig(Object.assign(stored, P.mergeHeld(stored, c, mine), { lastRun: new Date().toISOString() }));
     clearTimeout(timer);
@@ -516,6 +580,7 @@ async function main() {
   if (cmd === "login") return login(pickNets(arg), parallel);
   if (cmd === "check") return check(pickNets(arg), flag("--read"), parallel);
   if (cmd === "import") return importCookies(arg);
+  if (cmd === "restore-sessions") return restoreSessions(pickNets(arg), parallel);
   if (cmd === "run") return run({ force: flag("--force"), only: arg, parallel });
   if (cmd === "clone-profiles") return cloneProfiles(pickNets(arg), flag("--force"), parallel);
   if (cmd === "install") return install(parallel);
