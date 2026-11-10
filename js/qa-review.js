@@ -3039,7 +3039,7 @@
         if (!part.trim()) return;
         const msg = JSON.parse(part);
         if (msg.type === "log") appendLog(msg.text, host);
-        if (msg.type === "error") throw Object.assign(new Error(rc.field(msg.error) || rc.word("fieldError", "reviewFailed")), { body: { error: msg.error } });
+        if (msg.type === "error") throw Object.assign(new Error(rc.field(msg.error) || rc.word("fieldError", "reviewFailed")), { body: msg });
         if (msg.type === "done") donePayload = msg;
       });
     }
@@ -3164,6 +3164,10 @@
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
+      } else if (!compare && error.body && error.body.code === "inconclusive") {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_inconclusive", "URL Review", error.body.error || "");
+        setStatus(rc.t("inconStatus"), true);
+        showInconclusive(error.body);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
         const reason = (rivalField && rivalField.message) || error.message || rc.word("fieldError", "reviewFailed");
@@ -3537,6 +3541,84 @@
     if (event.key !== "Tab") return;
     const offerGo = document.getElementById("run-total-offer");
     const stops = (offerGo.hidden ? [] : [document.getElementById("run-total-offer-go")]).concat([document.getElementById("run-total-cancel"), document.getElementById("run-total-pay")]);
+    event.preventDefault();
+    stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
+  });
+
+  const inconBox = document.getElementById("inconclusive");
+  let inconBehind = [];
+
+  // A failure the server could not settle now: it promised the report by email and sent a code for the trouble.
+  function showInconclusive(body) {
+    const card = inconBox.querySelector(".pay-card");
+    if (!rc.english) {
+      card.setAttribute("lang", rc.lang);
+      card.setAttribute("translate", "no");
+    }
+    const email = String(body.email || "");
+    const code = String(body.coupon || "");
+    const percent = Number(body.percent) || 0;
+    document.getElementById("incon-eyebrow").textContent = rc.t("inconEyebrow");
+    document.getElementById("incon-title").textContent = rc.t("inconTitle");
+    document.getElementById("incon-lead").textContent = rc.t("inconLead");
+    const mail = document.getElementById("incon-mail");
+    if (email) {
+      const parts = rc.t("inconMail").split("{email}");
+      mail.replaceChildren(parts[0], Object.assign(document.createElement("b"), { textContent: email }), parts[1] || "");
+    } else {
+      mail.textContent = rc.t("inconMailNone");
+    }
+    inconBox.querySelector(".incon-deal").hidden = !code;
+    document.getElementById("incon-percent").textContent = new Intl.NumberFormat(rc.lang, { style: "percent" }).format(percent / 100);
+    document.getElementById("incon-code-note").textContent = rc.t("inconCode", { percent });
+    document.getElementById("incon-code").textContent = code;
+    document.getElementById("incon-copy").textContent = rc.t("inconCopy");
+    const kept = !!code && !!window.ReviewDeal && ReviewDeal.keep(code);
+    const applied = document.getElementById("incon-applied");
+    applied.hidden = !kept;
+    applied.textContent = kept ? rc.t("inconApplied") : "";
+    document.getElementById("incon-note").textContent = "";
+    document.getElementById("incon-close").textContent = rc.t("inconClose");
+    document.getElementById("incon-x").setAttribute("aria-label", rc.t("inconClose"));
+    inconBehind = [...document.body.children].filter((el) => el !== inconBox && !el.inert && !el.matches("script, .cookie-note"));
+    inconBehind.forEach((el) => { el.inert = true; });
+    inconBox.hidden = false;
+    document.body.classList.add("gate-open");
+    document.getElementById(code ? "incon-copy" : "incon-close").focus();
+  }
+
+  function closeInconclusive() {
+    if (inconBox.hidden) return;
+    inconBox.hidden = true;
+    inconBehind.forEach((el) => { el.inert = false; });
+    inconBehind = [];
+    document.body.classList.remove("gate-open");
+    reviewBtn.focus({ preventScroll: true });
+  }
+
+  document.getElementById("incon-close").addEventListener("click", closeInconclusive);
+  document.getElementById("incon-x").addEventListener("click", closeInconclusive);
+  document.getElementById("incon-copy").addEventListener("click", async () => {
+    const code = document.getElementById("incon-code");
+    const note = document.getElementById("incon-note");
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      note.textContent = rc.t("inconCopied");
+    } catch (error) {
+      window.getSelection().selectAllChildren(code);
+      note.textContent = rc.t("inconCopyFailed");
+    }
+  });
+  inconBox.addEventListener("click", (event) => { if (event.target === inconBox) closeInconclusive(); });
+  inconBox.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeInconclusive();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const stops = ["incon-x", "incon-copy", "incon-close"].map((id) => document.getElementById(id)).filter((el) => el.offsetParent !== null);
     event.preventDefault();
     stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
   });

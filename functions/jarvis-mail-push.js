@@ -135,10 +135,11 @@ function rerunMessage(done, deskUrl) {
   const held = count("held");
   const swept = count("swept");
   const failed = count("failed");
+  const sent = count("sent");
   return {
     kind: "desk",
     title: held ? plural(held, "re-run") + " held for you" : "URL review re-runs",
-    body: [held ? held + " held: send or drop each" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
+    body: [held ? held + " held: send or drop each" : "", sent ? sent + " sent as promised" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
     lines: list.slice(0, 6).map((row) => clip(row.status + " · " + (row.host || "?") + (row.name ? " for " + row.name : ""), 120)),
     tab: "products:review",
     tag: "jarvis-reruns",

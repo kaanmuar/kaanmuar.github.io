@@ -366,12 +366,14 @@ function sentRecord(doc, now) {
   });
 }
 
-const RERUN_LEAD = { held: "Held for you: ", swept: "Saved by the sweep: ", failed: "Failed again: " };
+const RERUN_LEAD = { held: "Held for you: ", swept: "Saved by the sweep: ", sent: "Sent to the asker, as promised: ", failed: "Failed again: " };
 
 // A sweep re-run has no asker: its report is saved like any sweep review and goes public through Live Reports.
+// A promised re-run (url-review-promise.js) may already be sent.
 function rerunMail(done) {
   const held = done.filter((row) => row.status === "held");
   const swept = done.filter((row) => row.status === "swept");
+  const sent = done.filter((row) => row.status === "sent");
   const failed = done.filter((row) => row.status === "failed");
   const blocks = done.map((row) => [
     (RERUN_LEAD[row.status] || RERUN_LEAD.failed) + row.host + " for " + (row.name || "an asker") + (row.email ? " <" + row.email + ">" : ""),
@@ -381,10 +383,10 @@ function rerunMail(done) {
       : "Report " + row.reportId + (row.reportStatus === "stopped" ? ", stopped before the last page" : "")
   ].join("\n"));
   return {
-    subject: "URL review re-runs: " + held.length + " held for you, " + (swept.length ? swept.length + " saved by the sweep, " : "") + failed.length + " failed again",
+    subject: "URL review re-runs: " + held.length + " held for you, " + (sent.length ? sent.length + " sent as promised, " : "") + (swept.length ? swept.length + " saved by the sweep, " : "") + failed.length + " failed again",
     intro: "Failed URL reviews were run again",
-    rows: [{ label: "Held for you", value: String(held.length) }].concat(swept.length ? [{ label: "Saved by the sweep", value: String(swept.length) }] : [], [{ label: "Failed again", value: String(failed.length) }]),
-    body: blocks.join("\n\n") + "\n\nNo asker was emailed. Send or drop each held report from the review desk."
+    rows: [{ label: "Held for you", value: String(held.length) }].concat(sent.length ? [{ label: "Sent as promised", value: String(sent.length) }] : [], swept.length ? [{ label: "Saved by the sweep", value: String(swept.length) }] : [], [{ label: "Failed again", value: String(failed.length) }]),
+    body: blocks.join("\n\n") + "\n\n" + (sent.length ? "Askers promised their report by email got it. No other asker was emailed." : "No asker was emailed.") + " Send or drop each held report from the review desk."
   };
 }
 
@@ -603,7 +605,7 @@ function bugFollowUps(failures, reruns, bugs) {
 }
 
 // The fields of a failure the reports and the desk list read; the log stays behind.
-const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert", "source"];
+const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert", "source", "promise"];
 const RERUN_FIELDS = ["status", "at", "host", "name", "trigger", "cause", "error.message", "decidedAt"];
 const RERUN_STATES = [["held", "held for you"], ["swept", "saved by the sweep"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
 const REPORT_ROWS = 60;
@@ -712,7 +714,8 @@ function failureRow(row) {
     rerunId: doc.rerun && doc.rerun.id ? clip(doc.rerun.id, 40) : "",
     lineCount: Number(doc.lineCount) || 0,
     ms: Number(doc.timings && doc.timings.ms) || 0,
-    fromAlert: !!doc.fromAlert
+    fromAlert: !!doc.fromAlert,
+    promise: doc.promise ? { state: clip(doc.promise.state, 20), coupon: clip(doc.promise.coupon, 24), percent: Number(doc.promise.percent) || 0, at: clip(doc.promise.at, 40), closedAt: clip(doc.promise.closedAt, 40) } : null
   };
 }
 
@@ -747,5 +750,5 @@ module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS
+  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide
 };

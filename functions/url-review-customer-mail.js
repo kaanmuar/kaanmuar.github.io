@@ -320,6 +320,70 @@ const CMP_COPY = {
   fr: { title: "Face à un concurrent", intro: "Votre analyse de {own}{when} à côté de cette analyse de {rival}.", introWhen: " du {date}", area: "Domaine", overall: "Global", yourLead: "Votre avance", wins: "{site} gagne {n} indicateurs sur {total}", sameWins: "Les deux sites gagnent le même nombre d’indicateurs", tally: "{own} {a}, {rival} {b}, égalité {c}.", onlyHas: "Seul {site} a", openProblems: "problèmes ouverts", shared_one: "{n} problème ouvert est présent sur les deux sites.", shared_other: "{n} problèmes ouverts sont présents sur les deux sites.", more: "et {n} de plus", none: "Aucun.", passive: "{rival} n’a reçu que les vérifications publiques et passives : aucune conversation avec le chat et aucun formulaire envoyé.", verdictNote: "Les deux scores viennent d’analyses automatisées : un point de départ, pas un verdict." },
   it: { title: "Accanto a un concorrente", intro: "La tua revisione di {own}{when} accanto a questa revisione di {rival}.", introWhen: " del {date}", area: "Area", overall: "Complessivo", yourLead: "Il tuo vantaggio", wins: "{site} vince {n} indicatori su {total}", sameWins: "I due siti vincono lo stesso numero di indicatori", tally: "{own} {a}, {rival} {b}, pari {c}.", onlyHas: "Solo {site} ha", openProblems: "problemi aperti", shared_one: "{n} problema aperto è presente su entrambi i siti.", shared_other: "{n} problemi aperti sono presenti su entrambi i siti.", more: "e altri {n}", none: "Nessuno.", passive: "{rival} ha ricevuto solo i controlli pubblici e passivi: nessuna conversazione con la chat e nessun modulo inviato.", verdictNote: "Entrambi i punteggi vengono da revisioni automatizzate: un punto di partenza, non un verdetto." }
 };
+// A review that failed for a reason on our side (url-review-promise.js): the code reminder in the re-run's report mail,
+// and the apology once the re-run window closes without a report.
+const PROMISE = {
+  en: {
+    kept: "As promised when it failed, here is your report. Your code {code} still takes {percent}% off your next review, until {date}.",
+    subject: "We could not finish your review of {host}",
+    title: "Your review of {host} could not be finished",
+    lead: "Your review of {host} failed on {date} for a reason on our side. We kept trying for {days} days and could not finish it. We are sorry for the trouble.",
+    leadUndated: "Your review of {host} failed for a reason on our side. We kept trying for {days} days and could not finish it. We are sorry for the trouble.",
+    code: "Your code takes {percent}% off your next review, until {date}:",
+    preheader: "We are sorry. Your code {code} takes {percent}% off your next review."
+  },
+  es: {
+    kept: "Como te prometimos cuando falló, aquí está tu informe. Tu código {code} sigue dándote un {percent} % de descuento en tu próxima revisión, hasta el {date}.",
+    subject: "No pudimos terminar tu revisión de {host}",
+    title: "Tu revisión de {host} no se pudo terminar",
+    lead: "Tu revisión de {host} falló el {date} por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla. Lamentamos la molestia.",
+    leadUndated: "Tu revisión de {host} falló por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla. Lamentamos la molestia.",
+    code: "Tu código te da un {percent} % de descuento en tu próxima revisión, hasta el {date}:",
+    preheader: "Lo sentimos. Tu código {code} te da un {percent} % de descuento en tu próxima revisión."
+  },
+  pt: {
+    kept: "Como prometemos quando ela falhou, aqui está o seu relatório. Seu código {code} continua dando {percent}% de desconto na sua próxima revisão, até {date}.",
+    subject: "Não conseguimos terminar sua revisão de {host}",
+    title: "Sua revisão de {host} não pôde ser terminada",
+    lead: "Sua revisão de {host} falhou em {date} por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
+    leadUndated: "Sua revisão de {host} falhou por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
+    code: "Seu código dá {percent}% de desconto na sua próxima revisão, até {date}:",
+    preheader: "Sentimos muito. Seu código {code} dá {percent}% de desconto na sua próxima revisão."
+  },
+  de: {
+    kept: "Wie beim Fehlschlag versprochen, hier ist Ihr Bericht. Ihr Code {code} gibt Ihnen weiterhin {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}.",
+    subject: "Wir konnten Ihre Prüfung von {host} nicht abschließen",
+    title: "Ihre Prüfung von {host} konnte nicht abgeschlossen werden",
+    lead: "Ihre Prüfung von {host} ist am {date} aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
+    leadUndated: "Ihre Prüfung von {host} ist aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
+    code: "Ihr Code gibt Ihnen {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}:",
+    preheader: "Das tut uns leid. Ihr Code {code} gibt Ihnen {percent} % Rabatt auf Ihre nächste Prüfung."
+  },
+  fr: {
+    kept: "Comme promis lors de l’échec, voici votre rapport. Votre code {code} vous donne toujours {percent} % de remise sur votre prochaine analyse, jusqu’au {date}.",
+    subject: "Nous n’avons pas pu terminer votre analyse de {host}",
+    title: "Votre analyse de {host} n’a pas pu être terminée",
+    lead: "Votre analyse de {host} a échoué le {date} pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
+    leadUndated: "Votre analyse de {host} a échoué pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
+    code: "Votre code vous donne {percent} % de remise sur votre prochaine analyse, jusqu’au {date} :",
+    preheader: "Nous sommes désolés. Votre code {code} vous donne {percent} % de remise sur votre prochaine analyse."
+  },
+  it: {
+    kept: "Come promesso quando non è riuscita, ecco il tuo rapporto. Il tuo codice {code} ti dà ancora il {percent}% di sconto sulla tua prossima revisione, fino al {date}.",
+    subject: "Non siamo riusciti a completare la tua revisione di {host}",
+    title: "La tua revisione di {host} non è stata completata",
+    lead: "La tua revisione di {host} non è riuscita il {date} per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla. Ci scusiamo per il disagio.",
+    leadUndated: "La tua revisione di {host} non è riuscita per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla. Ci scusiamo per il disagio.",
+    code: "Il tuo codice ti dà il {percent}% di sconto sulla tua prossima revisione, fino al {date}:",
+    preheader: "Ci scusiamo. Il tuo codice {code} ti dà il {percent}% di sconto sulla tua prossima revisione."
+  }
+};
+const { RERUN_DAYS } = require("./url-review-failures");
+
+function codeChip(code) {
+  return "<p style=\"margin:0 0 20px;\"><span style=\"display:inline-block;padding:10px 18px;background:#f3f8f8;border:1px solid " + fusion.LINE + ";border-left:4px solid " + FUSION.gold + ";border-radius:10px;font-family:'Fira Code','Courier New',monospace;font-size:24px;line-height:30px;letter-spacing:0.12em;font-weight:bold;color:" + TEXT.strong + ";\">" + esc(code) + "</span></p>";
+}
+
 const PDF_CASES = 24;
 const FILLER_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split(" ");
 
@@ -693,14 +757,17 @@ function reportMail(record, options) {
   const facts = reportFacts(record, isOpen(record), lang);
   const story = reportStory(record, t, facts, lang);
   const attached = story.open ? p.attachedOpen : p.attached;
+  const promise = opts.promise && opts.promise.coupon ? opts.promise : null;
+  const kept = promise ? fill(PROMISE[lang].kept, { code: promise.coupon, percent: promise.percent, date: dateOf(promise.validUntil) }) : "";
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
-  const anotherUrl = pageUrl(lang, { utm_campaign: "report-another" });
+  const anotherUrl = pageUrl(lang, { coupon: promise ? promise.coupon : "", utm_campaign: "report-another" });
   const cf = compareFacts(record, lang);
   const baseUrl = cf && cf.ownId ? pageUrl(lang, { report: cf.ownId, utm_campaign: "report-compare" }) : "";
   const scoreHtml = scoreBlock(t, p, facts, story.title);
   const head = scoreHtml || fusion.band("QA-lab URL Review", esc(story.title), metaHtml(t, p, facts), { size: 24 });
   const inner = head +
     bodyCell("16px 28px 4px", false, "font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:" + TEXT.body + ";") + esc(story.lead) + "</td></tr>" +
+    (kept ? bodyCell("12px 28px 0", false, "font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:" + TEXT.body + ";") + "<p style=\"margin:0 0 12px;\">" + esc(kept) + "</p>" + codeChip(promise.coupon) + "</td></tr>" : "") +
     (cf ? compareBlock(CMP_COPY[lang], cf, baseUrl) : "") +
     findingsBlock(t, p, lang, facts) +
     bodyCell("18px 28px 22px", true) +
@@ -721,6 +788,7 @@ function reportMail(record, options) {
     metaText(t, p, facts),
     "",
     story.lead,
+    kept ? "\n" + kept : "",
     cf ? "\n" + compareText(CMP_COPY[lang], cf) + (baseUrl ? "\n" + cf.own + ": " + baseUrl : "") : "",
     findingLines.length ? "\n" + t.findings + "\n" + findingLines.join("\n") : "",
     facts.moreCount ? fill(t.more, { n: facts.moreCount }) : "",
@@ -741,6 +809,54 @@ function reportMail(record, options) {
     subject: story.subject.slice(0, 140),
     text: text.slice(0, 16000),
     html: shell(lang, story.preheader, inner, footerHtml(t, why, foot))
+  };
+}
+
+// `promise` is a closed promise (url-review-promise.js apologiesDue) with its url, host, coupon, percent, validUntil and failedAt.
+function promiseClosedMail(promise, options) {
+  const opts = options || {};
+  const row = promise || {};
+  const lang = langOf(row.lang);
+  const t = COPY[lang];
+  const w = PROMISE[lang];
+  const face = mailFace.faceOf(row.lang);
+  const host = row.host || (() => { try { return new URL(row.url).hostname; } catch (error) { return ""; } })() || "your site";
+  const failedOn = dateOf(row.failedAt);
+  const vars = { host, date: failedOn, days: RERUN_DAYS, code: row.coupon, percent: row.percent };
+  const lead = fill(failedOn ? w.lead : w.leadUndated, vars);
+  const code = fill(w.code, { percent: row.percent, date: dateOf(row.validUntil) });
+  const anotherUrl = pageUrl(lang, { coupon: row.coupon, utm_campaign: "promise-closed" });
+  const why = fill(t.why, { host });
+  const inner = fusion.band("QA-lab URL Review &middot; " + esc(host), esc(fill(w.title, vars))) +
+    bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
+    "<p style=\"margin:0 0 18px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(lead) + "</p>" +
+    "<p style=\"margin:0 0 10px;font-size:15px;line-height:23px;color:" + TEXT.body + ";\">" + esc(code) + "</p>" +
+    codeChip(row.coupon) +
+    button(anotherUrl, t.another, true) +
+    "</td></tr>" +
+    "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
+    deeperBlock(t, host, "", lang, "promise", face);
+  const text = [
+    fill(w.title, vars),
+    "",
+    lead,
+    "",
+    code,
+    row.coupon,
+    "",
+    t.another + ": " + anotherUrl,
+    "",
+    t.deeper,
+    t.deeperLines.join("\n"),
+    deeperCta(t, face),
+    "",
+    footerText(t, why, { stopUrl: opts.stopUrl, face })
+  ].join("\n");
+  return {
+    lang,
+    subject: fill(w.subject, vars).slice(0, 140),
+    text: text.slice(0, 16000),
+    html: shell(lang, fill(w.preheader, vars), inner, footerHtml(t, why, { stopUrl: opts.stopUrl, face }))
   };
 }
 
@@ -1253,4 +1369,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, COPY, langOf, esc, fill, button, shell, bodyCell, bookLink, footerHtml, footerText, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, COPY, langOf, esc, fill, button, shell, bodyCell, bookLink, footerHtml, footerText, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, promiseClosedMail, PROMISE, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

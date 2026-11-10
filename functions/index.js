@@ -1373,10 +1373,46 @@ async function rerunFailure(group) {
     error = caught;
   }
   const doc = reviewFailures.rerunDoc(group, { record, error, lines, startedAt, endedAt: Date.now() });
+  if (group.promise) doc.promise = group.promise;
   await ref.set(doc);
   const mark = reviewFailures.rerunMark(ref.id, doc);
   await Promise.all(group.failureIds.map((id) => db.collection("url_review_failures").doc(id).update({ rerun: mark })));
+  return Object.assign({ id: ref.id }, doc);
+}
+
+// A finished re-run of a failure whose asker was promised the report goes to them, unless PROMISE_AUTO_SEND is off.
+async function keepPromise(doc) {
+  if (!doc.promise || doc.status !== "held") return doc;
+  const col = getFirestore().collection("url_review_failures");
+  if (reviewPromise.PROMISE_AUTO_SEND) {
+    const out = await releaseHeldRerun(doc.id, true, "promise");
+    if (out) return Object.assign({}, doc, { status: "sent" });
+  }
+  await Promise.all(doc.promise.ids.map((id) => col.doc(id).update({ "promise.state": "held" })));
   return doc;
+}
+
+async function sendPromiseApology(promise) {
+  const stopUrl = await stopLinkFor(promise.email, promise.lang);
+  return sendAskerMail(promise.email, customerMail.promiseClosedMail(promise, { stopUrl }), stopUrl, "url-review-promise");
+}
+
+// Promises whose re-run window closed without a report: the asker gets an apology and keeps the code.
+async function closeExpiredPromises() {
+  const col = getFirestore().collection("url_review_failures");
+  const rows = (await col.where("promise.state", "==", "open").limit(300).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const due = reviewPromise.apologiesDue(rows, Date.now());
+  let sent = 0;
+  for (const promise of due) {
+    try {
+      if (!(await sendPromiseApology(promise))) continue;
+      await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("apologized"))));
+      sent += 1;
+    } catch (error) {
+      console.error("Promise apology to " + promise.email + " failed:", error);
+    }
+  }
+  return sent;
 }
 
 async function rerunReviewFailures() {
@@ -1391,19 +1427,25 @@ async function rerunReviewFailures() {
     snap.docs.forEach((doc) => reviewed.push(doc.data()));
   }
   const plan = reviewFailures.rerunPlan(rows, reviewed, 8);
+  plan.runs.concat(plan.skipped).forEach((group) => { group.promise = reviewPromise.groupPromise(group, rows); });
   const at = new Date().toISOString();
-  await Promise.all(plan.skipped.flatMap((group) => group.failureIds.map((id) => col.doc(id).update({ rerun: { at, status: "skipped", reason: group.skip } }))));
+  await Promise.all(plan.skipped.flatMap((group) => group.failureIds.map((id) => col.doc(id).update(Object.assign({ rerun: { at, status: "skipped", reason: group.skip } },
+    group.promise && group.promise.ids.includes(id) ? reviewPromise.settled("own-run") : {})))));
   const started = Date.now();
   const done = [];
   for (const group of plan.runs) {
     if (Date.now() - started > 1500000) break;
     try {
-      done.push(await rerunFailure(group));
+      done.push(await keepPromise(await rerunFailure(group)));
     } catch (error) {
       console.error("Re-run of " + group.url + " was not saved:", error);
     }
   }
-  console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
+  const apologies = await closeExpiredPromises().catch((error) => {
+    console.error("Closing expired promises failed:", error);
+    return 0;
+  });
+  console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped, " + apologies + " promises closed with an apology.");
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
   await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
@@ -1681,6 +1723,7 @@ const urlReview = require("./url-review-core");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const reviewFailures = require("./url-review-failures");
+const reviewPromise = require("./url-review-promise");
 const reviewPublish = require("./url-review-publish");
 
 // The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).
@@ -1869,12 +1912,13 @@ async function reportPdfFor(record, options) {
   return pdf ? { content: pdf, filename: page.filename, type: "application/pdf", disposition: "attachment" } : null;
 }
 
-async function mailReportToAsker(record) {
-  if (!record || !record.email || !record.report) return;
-  if (record.status !== "complete" && record.status !== "stopped") return;
+// `promise` is the inconclusive promise a re-run keeps, so the mail reminds the asker of their code. True once the mail went out.
+async function mailReportToAsker(record, promise) {
+  if (!record || !record.email || !record.report) return false;
+  if (record.status !== "complete" && record.status !== "stopped") return false;
   const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
-  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf });
-  await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise });
+  return sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
 }
 
 // The period report counts report mails from this mark, so a report that never reached the asker shows there.
@@ -1883,6 +1927,7 @@ async function sendReportMail(id, send, pdf) {
   try {
     mark.sent = (await send()) === true;
     if (!mark.sent) mark.error = "mail is not configured";
+    return mark.sent;
   } catch (error) {
     mark.error = String((error && error.message) || "mail failed").slice(0, 200);
     throw error;
@@ -2169,7 +2214,20 @@ async function releaseHeldRerun(id, send, by) {
     tx.update(ref, { status: send ? "sent" : "dropped", decidedAt, by });
   });
   if (!doc) return null;
-  if (!send) return { status: "dropped" };
+  const promise = doc.promise || null;
+  const failures = db.collection("url_review_failures");
+  const settle = (fields) => Promise.all((promise ? promise.ids || [] : []).map((failureId) => failures.doc(failureId).update(fields)));
+  // A dropped promised re-run still owes the asker word: the apology, as when the window closes.
+  if (!send) {
+    if (promise) {
+      try {
+        if (await sendPromiseApology(promise)) await settle(reviewPromise.settled("apologized"));
+      } catch (error) {
+        console.error("Promise apology after a drop failed:", error);
+      }
+    }
+    return { status: "dropped" };
+  }
   const record = reviewFailures.sentRecord(doc, decidedAt);
   await db.collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
@@ -2178,14 +2236,16 @@ async function releaseHeldRerun(id, send, by) {
   } catch (error) {
     console.error("Owner notice queue failed:", error);
   }
-  let mailed = true;
+  let mailed = false;
   try {
-    await mailReportToAsker(record);
+    mailed = await mailReportToAsker(record, promise);
+    if (!mailed) await ref.update({ mailError: "mail is not configured" });
   } catch (error) {
     mailed = false;
     console.error("Re-run mail to the asker failed:", error);
     await ref.update({ mailError: String((error && error.message) || "mail failed").slice(0, 200) });
   }
+  if (promise) await settle(mailed ? reviewPromise.settled("delivered", { "promise.reportId": record.id }) : { "promise.state": "held" });
   return { status: "sent", reportId: record.id, mailed };
 }
 
@@ -3075,6 +3135,24 @@ async function mintReturnCoupon(note) {
   const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
   await getFirestore().collection("url_review_coupons").doc(code).set(reviewOffers.returnCoupon(note));
   return code;
+}
+
+// The inconclusive promise of a failed run, with its apology code; a retry of the same address keeps the first failure's code.
+async function promiseFor(record) {
+  if (!reviewPromise.promised(record)) return null;
+  const db = getFirestore();
+  try {
+    const prior = await db.collection("url_review_failures").where("email", "==", record.email).where("promise.state", "==", "open").limit(20).get();
+    const open = reviewPromise.openPromiseFor(prior.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), record.url);
+    if (open) return reviewPromise.promiseOf(record, { code: open.coupon, percent: open.percent, validUntil: open.validUntil });
+    const code = reviewPromise.couponCode(crypto.randomInt);
+    const coupon = reviewPromise.apologyCoupon(record);
+    await db.collection("url_review_coupons").doc(code).create(coupon);
+    return reviewPromise.promiseOf(record, Object.assign({ code }, coupon));
+  } catch (error) {
+    console.error("Inconclusive promise failed:", error);
+    return null;
+  }
 }
 
 async function redeemCoupon(code, record) {
@@ -5148,13 +5226,18 @@ async function runReview(req, res, placeOf) {
     if (payload.type === "log" && runLines.length < 5000) runLines.push({ t: Date.now() - runStarted, text: payload.text });
     if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
   };
+  // Answers the inconclusive promise the failure was saved with, or null.
   const saveRunLog = async (kind, error) => {
     try {
       const record = reviewFailures.failureRecord(Object.assign({}, intake.value, { kind, runId, error, lines: runLines, startedAt: runStarted, endedAt: Date.now() }));
+      const promise = kind === "failed" ? await promiseFor(record) : null;
+      if (promise) record.promise = promise;
       const col = getFirestore().collection("url_review_failures");
       await (runId ? col.doc(runId) : col.doc()).set(record);
+      return promise;
     } catch (saveError) {
       console.error("URL review log save failed:", saveError);
+      return null;
     }
   };
   try {
@@ -5276,9 +5359,9 @@ async function runReview(req, res, placeOf) {
         console.error("Credit return failed:", returnError);
       }
     }
-    await saveRunLog("failed", error);
+    const promise = await saveRunLog("failed", error);
     await mailReviewedSites(ip, failed);
-    writeLine({ type: "error", error: error.message || "The review failed." });
+    writeLine(reviewPromise.errorLine(error.message, promise));
     res.end();
   } finally {
     if (stopTimer) clearInterval(stopTimer);
