@@ -6986,7 +6986,11 @@ exports.ownerTags = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "
 // Daily at 10:45 (#3138): the student communities list in, and each active community's weekly value post drafted (sent by the Mac once approved).
 const studentOutreach = require("./student-outreach");
 exports.studentOutreach = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB" }), "studentOutreach",
-  async () => studentOutreach.runNote(await studentOutreach.run(engagementDeps())));
+  async () => {
+    const deps = engagementDeps();
+    deps.sendMode = (kind) => outreachSend.sendMode(deps.db, { kind, now: deps.now });
+    return studentOutreach.runNote(await studentOutreach.run(deps));
+  });
 
 const tiktokWatch = require("./tiktok-business-watch");
 

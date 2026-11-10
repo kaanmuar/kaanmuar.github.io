@@ -277,6 +277,19 @@ test("in a dry run an auto-approved DM waits, while one Carlos approved goes", a
   assert.deepEqual(tasks.map((t) => t.key), ["x_" + "6".repeat(20)]);
 });
 
+test("a student invite keeps its own dm result and browser step; a chain DM takes the card path", async () => {
+  const db = fakeDb();
+  await db.collection("engagement_posts").doc("linkedin_" + "7".repeat(20)).set({ network: "linkedin", campaign: "students", actions: { reply: { status: "approved", draft: "Hola" } } });
+  assert.equal(await M.dmResult(deps(db), "linkedin_" + "7".repeat(20), { ok: true }), null, "no actions.dm: the student path answers");
+
+  const calls = [];
+  const NETS = { linkedin: { name: "LinkedIn", async dm(page, task) { calls.push(["own", this.name, task.to]); return { url: "u" }; } } };
+  require("../../scripts/engagement-browser/dms.js").install(NETS, {});
+  await NETS.linkedin.dm(null, { to: "in/ana", draft: "Hola Ana" });
+  assert.deepEqual(calls, [["own", "LinkedIn", "in/ana"]]);
+  await assert.rejects(NETS.linkedin.dm(null, { author: {}, draft: "Hola Ana" }), /No handle to message on LinkedIn/, "no task.to: the chain DM step");
+});
+
 test("a failed DM is tried again up to three times, then recorded as failed", async () => {
   const db = fakeDb();
   const key = "x_" + "7".repeat(20);
@@ -311,7 +324,8 @@ test("the DM and its card speak the person's language, greet them by first name 
     assert.match(Card.alt(card), /2/);
     const drawn = JSON.stringify(Card.tree(card));
     assert.ok(drawn.includes(Card.COPY[lang].head), lang + " headline on the card");
-    assert.ok(drawn.includes("TRY-AAAAA1") && drawn.includes("carlosandmunoz.com") && drawn.includes(Card.COPY[lang].cta), lang + ": the pass code, our domain and the pill");
+    assert.ok(drawn.includes("TRY-AAAAA1") && drawn.includes(Card.COPY[lang].cta), lang + ": the pass code and the pill");
+    assert.match(drawn, /"carlosandmunoz\.com"/, lang + ": our domain as its own line");
     assert.ok(!drawn.includes("qa-review.html"), lang + ": no long link on the card");
     assert.match(Card.alt(card), /TRY-AAAAA1/);
   });
