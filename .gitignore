@@ -41,6 +41,8 @@ media/social-posts/*/voiced/
 media/buffer-upload/
 # Gemini takes and product screen recordings for scripts/skits-studio
 media/skits/
+# Live studio recordings, clips, stills, voices and translation cache (scripts/live-studio)
+media/live-studio/
 
 # Owner notice run outcomes carry owners' email addresses
 owner-notices-*.csv
