@@ -511,6 +511,8 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     GeoHeatPanels(g, picked, channel) { picked = it }
     GeoFlowPanels(g, picked, channel, s, vm) { text, run -> confirm = PendingAction(text, run) }
     GeoConfirm(g, s, vm) { text, run -> confirm = PendingAction(text, run) }
+    GeoPlan(g)
+    GeoNext(g, s, vm, open = { picked = it }) { text, run -> confirm = PendingAction(text, run) }
     ConfirmAction(confirm) { confirm = null }
 }
 

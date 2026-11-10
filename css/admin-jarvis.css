@@ -847,6 +847,31 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-fl-band { fill: none; stroke-opacity: 0.4; transition: stroke-opacity 0.15s; }
 .jv-fl-band:hover { stroke-opacity: 0.75; }
 @media (prefers-reduced-motion: reduce) { .jv-fl-band { transition: none; } }
+/* Plan progress and next best actions (#3115) */
+.jv-geo-bar { display: block; width: 100%; height: 8px; overflow: visible; }
+.jv-geo-bar-bg { fill: rgba(120, 220, 255, 0.12); }
+.jv-geo-pace { stroke: #fff; stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0.85; }
+.jv-geo-plan-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem; margin-bottom: 0.45rem; font-size: 0.9rem; }
+.jv-geo-plan-dates, .jv-geo-progs, .jv-geo-next { margin: 0.6rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; font-size: 0.82rem; }
+.jv-geo-prog { display: grid; grid-template-columns: minmax(8rem, 1.2fr) minmax(5rem, 1fr) auto auto; gap: 0.6rem; align-items: center; }
+.jv-geo-prog b { font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+.jv-geo-prog small { color: var(--dim); font-weight: 400; }
+.jv-geo-prog .jv-chip { white-space: nowrap; }
+.jv-geo-line { margin: 0 0 0.6rem; padding: 0.55rem 0.7rem; border: 1px solid rgba(169, 139, 255, 0.45); border-radius: 12px; background: linear-gradient(135deg, rgba(169, 139, 255, 0.14), rgba(56, 225, 255, 0.05)); font-size: 0.88rem; }
+.jv-geo-line span { color: var(--violet); }
+.jv-geo-next li { display: grid; grid-template-columns: 1.6rem 1fr auto; gap: 0.6rem; align-items: center; padding: 0.45rem 0.55rem; border: 1px solid var(--line); border-left: 3px solid var(--dim); border-radius: 10px; }
+.jv-geo-next li.lv-high { border-left-color: var(--pink); }
+.jv-geo-next li.lv-mid { border-left-color: var(--amber); }
+.jv-geo-next li .jv-note { margin: 0.15rem 0 0; }
+.jv-geo-next li .jv-chip { margin-left: 0.4rem; font-size: 0.66rem; }
+.jv-geo-next-n { font: 600 0.8rem ui-monospace, Menlo, monospace; color: var(--cyan); text-align: center; }
+.jv-geo-next .jv-btn.is-warn { border-color: rgba(255, 181, 71, 0.55); color: var(--amber); }
+@media (max-width: 720px) {
+    .jv-geo-prog { grid-template-columns: 1fr auto auto; }
+    .jv-geo-prog .jv-geo-bar { grid-column: 1 / -1; grid-row: 2; }
+    .jv-geo-next li { grid-template-columns: 1.4rem 1fr; }
+    .jv-geo-next li > .jv-btn { grid-column: 2; justify-self: start; }
+}
 /* Labels, light levels and the hover card (#2988) */
 .jv-geo-wrap { position: relative; }
 .jv-geo-c.is-l3, .jv-geo-c.is-l4 { stroke: rgba(255, 255, 255, 0.35); stroke-width: 0.6; }
