@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com https://static.cloudflareinsights.com 'sha256-wNStK0l9K9zIPWkJQj+b7max5zjan6PkU6sMQVKFCQY=' 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-bAgF3lKzSNy2ZXcJJZAiJ0seNNp1YUfDGcAHLksCKuQ=' 'sha256-IHhKMDzfnKIkb3y7A3Y+SFtD5B2LzzeDF/Qs+rK2ypY=' 'sha256-LfR+Qsz4IysAdzFTQpY9AMZP0Q5CjvbhDJSegRBL5cc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://cloudflareinsights.com; frame-src https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://www.gstatic.com https://static.cloudflareinsights.com 'sha256-wNStK0l9K9zIPWkJQj+b7max5zjan6PkU6sMQVKFCQY=' 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-bAgF3lKzSNy2ZXcJJZAiJ0seNNp1YUfDGcAHLksCKuQ=' 'sha256-IHhKMDzfnKIkb3y7A3Y+SFtD5B2LzzeDF/Qs+rK2ypY=' 'sha256-twaEsch/F8AePytm11uUL3hDfXZcdEKtQXLx9Ii+HfQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://cloudflareinsights.com; frame-src https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Pagamento · QA-lab URL Review</title>
     <meta name="description" content="O PayPal cobra o pagamento do QA-lab URL Review. O valor aparece nesta página antes de você confirmar. Os números de cartão são digitados no PayPal.">
@@ -89,6 +89,12 @@
         .method b { display: block; font-size: 15px; }
         .method small { display: block; color: var(--muted); line-height: 1.4; margin-top: 3px; }
         .method input { margin-top: 3px; accent-color: var(--cyan); }
+        .code { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+        .code[hidden] { display: none; }
+        .code label { flex: 1 0 100%; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+        .code input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--text); font: 700 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; }
+        .code-note { flex: 1 0 100%; margin: 0; font-size: 13px; }
+        .code-note:empty { display: none; }
         .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
         button:disabled { opacity: .55; cursor: wait; }
         .btn { border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
@@ -135,6 +141,12 @@
             <label class="method"><input type="radio" name="provider" value="paypal" checked><span><b>PayPal</b><small lang="pt" translate="no">Saldo, banco ou cartão. O PayPal cobra o pagamento.</small></span></label>
         </fieldset>
         <div class="row"><span id="pay-item">Nova revisão</span><b id="pay-amount">—</b></div>
+        <form class="code" id="pay-code" hidden>
+            <label for="pay-code-input" lang="pt" translate="no">Código de desconto</label>
+            <input id="pay-code-input" name="coupon" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24">
+            <button class="btn btn-ghost" id="pay-code-apply" type="submit" lang="pt" translate="no">Aplicar</button>
+            <p class="code-note" id="pay-code-note" role="status" lang="pt" translate="no"></p>
+        </form>
         <div class="row"><span id="pay-collect-label" lang="pt" translate="no">Conta PayPal</span><span id="pay-collector" lang="pt" translate="no">Cobrança feita por PayPal</span></div>
         <p id="pay-note" lang="pt" translate="no">Uma revisão só fica paga depois que o PayPal confirma o pagamento.</p>
         <p><a href="qa-review-legal.html" lang="pt" translate="no">Avisos legais</a> · <a href="accessibility.html">Accessibility</a></p>
@@ -151,7 +163,7 @@
     <script>try{localStorage.setItem("cv-preferred-lang","pt")}catch(e){}</script>
     <script src="js/site-i18n.js?v=20261104a"></script>
     <script src="js/site-glossary.js?v=20261102a" defer></script>
-    <script src="js/qa-review-pay-copy.js?v=20261108a"></script>
+    <script src="js/qa-review-pay-copy.js?v=20261109a"></script>
     <script>
         if (window.SiteI18n) SiteI18n.resolve().then((lang) => {
             const own = ["en", "es", "pt", "de", "fr", "it"];
@@ -161,7 +173,7 @@
     <script>
         const pc = window.QAReviewPayCopy;
         const params = new URLSearchParams(location.search);
-        const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
+        let coupon = window.ReviewDeal ? ReviewDeal.code() : "";
         let dealShown = false;
         let listUsd = 0;
         const purposeName = params.get("purpose");
@@ -406,6 +418,9 @@
             history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
         }
         const note = document.getElementById("pay-note");
+        const codeForm = document.getElementById("pay-code");
+        const codeInput = document.getElementById("pay-code-input");
+        const codeNote = document.getElementById("pay-code-note");
         const charge = document.getElementById("charge");
         const priceEl = document.querySelector(".price");
         const amountEl = document.getElementById("pay-amount");
@@ -508,9 +523,17 @@
                 const deal = purpose === "report" || purpose === "new-run"
                     ? "&deviceId=" + encodeURIComponent(deviceId()) + (coupon && !extrasPass ? "&coupon=" + encodeURIComponent(coupon) : "")
                     : "";
-                const res = await fetch(endpoint() + "/checkout/quote?" + query + deal);
+                // A pass code can be held to one address, so its quote is posted with the sign-in.
+                const res = purpose === "pass" && coupon
+                    ? await fetch(endpoint() + "/checkout/quote", {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ purpose: "pass", plan: passPlan, coupon: coupon, session: signInProof().session, deviceKey: signInProof().deviceKey })
+                    })
+                    : await fetch(endpoint() + "/checkout/quote?" + query + deal);
                 const body = await res.json();
                 if (!res.ok || !body.cop) throw new Error(body.error || "The peso price could not be loaded.");
+                if (purpose === "pass") codeNote.textContent = !coupon || needsSignIn() ? "" : body.coupon ? pc.t("codeApplied", { code: body.coupon, percent: body.percent }) : pc.t("codeClosed", { code: coupon });
                 quote = body;
                 if (body.usd) usd = body.usd;
                 creditUsd = Number(body.creditUsd) || 0;
@@ -534,6 +557,22 @@
             note.textContent = pc.t("note");
             paint();
         }));
+        // A pass takes a code typed here or the one the link brought (the trial's follow-up note links straight to this pass).
+        if (purpose === "pass" && passPlan) {
+            codeForm.hidden = false;
+            codeInput.value = coupon;
+            codeForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const typed = codeInput.value.trim().toUpperCase();
+                coupon = /^[A-Z0-9-]{4,24}$/.test(typed) ? typed : "";
+                codeInput.value = coupon;
+                try {
+                    if (coupon) sessionStorage.setItem("qa-review-coupon", coupon);
+                    else sessionStorage.removeItem("qa-review-coupon");
+                } catch (error) { /* the code still goes with this checkout */ }
+                loadQuote();
+            });
+        }
         async function confirm(sessionId, provider) {
             note.textContent = pc.t("asking", { name: names[provider] || names.paypal });
             let body = {};

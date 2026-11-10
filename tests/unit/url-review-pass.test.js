@@ -16,10 +16,29 @@ test.describe("pass pricing", () => {
     assert.deepEqual(offers.MONTHLY_PLANS.map((plan) => [plan.id, plan.name, plan.usd]), [["freelancer", "Freelancer", 29], ["team", "Team", 79], ["pro", "Pro", 189]]);
     assert.throws(() => core.priceForPass("gold"), /Freelancer, Team, or Pro/);
     assert.equal(core.chargedUsd({ purpose: "pass", plan: "team", priceUsd: 79 }).usd, 79);
-    assert.throws(() => core.chargedUsd({ purpose: "pass", plan: "team", priceUsd: 71.1, listUsd: 79 }), /out of range/);
     assert.throws(() => core.chargedUsd({ purpose: "pass", plan: "team", priceUsd: 29 }), /does not match/);
     [29, 79, 189].forEach((usd) => assert.equal(core.priceMatches(usd), true, usd));
     assert.equal(offers.paidPurpose("pass"), "pass");
+  });
+
+  test("a code takes its percent off a pass down to half the price, and a pass code's price is a QA-lab price (#3142)", () => {
+    assert.equal(core.chargedUsd({ purpose: "pass", plan: "freelancer", priceUsd: 23.2, listUsd: 29 }).usd, 23.2);
+    assert.equal(core.chargedUsd({ purpose: "pass", plan: "team", priceUsd: 39.5, listUsd: 79 }).usd, 39.5);
+    assert.throws(() => core.chargedUsd({ purpose: "pass", plan: "team", priceUsd: 39, listUsd: 79 }), /out of range/);
+    [23.2, 17.4, 14.5, 63.2, 151.2].forEach((usd) => assert.equal(core.priceMatches(usd), true, usd));
+    const after = { code: "AFTER-ABCDEF", percent: 40, perEmail: 1, maxUses: 1, uses: 0, purposes: ["new-run", "report", "pass"], source: "outreach-after", validUntil: iso(now + 7 * day) };
+    assert.equal(offers.couponOpen(after, "pass", "", now, 0), true);
+    assert.equal(offers.couponOpen(after, "pass", "", now, 1), false, "one use per address");
+    assert.equal(offers.couponOpen(after, "pass", "", now, null), false, "signed out, a per-address code stays closed");
+    assert.equal(offers.couponOpen(Object.assign({}, after, { purposes: ["new-run", "report"] }), "pass", "", now, 0), true, "an AFTER code minted before #3142 still opens a pass");
+    assert.equal(offers.couponOpen({ code: "SPRING", percent: 30 }, "pass", "", now), false, "a code without purposes stays with single reviews");
+    assert.equal(offers.couponOpen({ code: "SPRING", percent: 30 }, "new-run", "", now), true);
+    assert.equal(offers.couponOpen({ code: "RUNS", percent: 30, purposes: ["new-run"] }, "pass", "", now), false);
+    assert.equal(offers.couponOpen({ code: "PASS", percent: 30, purposes: ["pass"] }, "pass", "", now), true);
+    assert.equal(offers.couponOpen({ code: "PASS", percent: 30, purposes: ["pass"] }, "new-run", "", now), false);
+    const deal = offers.discountFor(2900, 1, { coupon: Object.assign({}, after, { percent: 20 }) });
+    assert.deepEqual([deal.usd, deal.listUsd, deal.percent, deal.source, deal.code], [23.2, 29, 20, "coupon", "AFTER-ABCDEF"]);
+    assert.equal(offers.discountFor(18900, 1, { coupon: Object.assign({}, after, { percent: 80 }) }).usd, 94.5, "never below half the price");
   });
 
   test("a run within the plan asks for nothing; Pro includes every framework, tool, page and link step", () => {
@@ -190,6 +209,13 @@ test.describe("pass writes", () => {
     assert.deepEqual(again, [null, null]);
     assert.equal([...db.docs.values()].filter((row) => row.status === "monthly-pass").length, 1);
     assert.deepEqual([db.docs.get("pass-ab12cd34").email, db.docs.get("pass-ab12cd34").runs, db.docs.get("pass-ab12cd34").priceUsd], ["ana@example.com", 25, 79]);
+  });
+
+  test("a pass bought with a code keeps its paid price, list price, percent and code on the row (#3142)", async () => {
+    const db = fakeDb();
+    const made = await reviewPass.writePass(db, Object.assign({}, open, { priceUsd: 63.2, listUsd: 79, percent: 20, coupon: "AFTER-ABCDEF" }), { reference: "cd78" }, [], now);
+    assert.deepEqual([made.priceUsd, made.listUsd, made.percent, made.coupon, made.paid], [63.2, 79, 20, "AFTER-ABCDEF", true]);
+    assert.equal("coupon" in (await reviewPass.writePass(db, open, { reference: "cd79" }, [], now)), false);
   });
 
   test("a pass bought over an open one replaces it and carries its runs left", async () => {

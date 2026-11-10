@@ -4,7 +4,8 @@
  */
 const offers = require("./url-review-offers");
 
-// One pass row per checkout reference, so a replayed webhook or a second confirm writes nothing more.
+// One pass row per checkout reference, so a replayed webhook or a second confirm writes nothing more. A checkout
+// that took a code keeps its list price, percent and code on the pass row.
 // `rows` are the payer's passes read before the transaction; the open one is read again inside it.
 async function writePass(db, open, payment, rows, now) {
   const col = db.collection("url_reviews");
@@ -17,7 +18,8 @@ async function writePass(db, open, payment, rows, now) {
     const current = offers.passFor(rows, email, at);
     const currentSnap = current ? await tx.get(col.doc(current.id)) : null;
     const fresh = currentSnap && currentSnap.exists ? [Object.assign({ id: current.id }, currentSnap.data())] : [];
-    const made = offers.passPurchase(open.plan, fresh, email, at, Object.assign({ priceUsd: open.priceUsd }, payment));
+    const deal = open.coupon ? { listUsd: open.listUsd, percent: open.percent, coupon: open.coupon } : {};
+    const made = offers.passPurchase(open.plan, fresh, email, at, Object.assign({ priceUsd: open.priceUsd }, deal, payment));
     tx.set(ref, made.row);
     if (made.replaces) tx.update(col.doc(made.replaces), { replacedBy: ref.id, replacedAt: new Date(at).toISOString() });
     return Object.assign({ id: ref.id }, made.row);

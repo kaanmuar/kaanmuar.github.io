@@ -92,15 +92,22 @@ function cleanCode(value) {
   return /^[A-Z0-9-]{4,24}$/.test(code) ? code : "";
 }
 
+// A pass takes only a code that names "pass" in its purposes, or an outreach AFTER- code (outreach-trials.js), which
+// is meant for the pass its holder just tried; a code without purposes stays with single reviews and reports.
+function couponForPass(coupon) {
+  return !!coupon && ((Array.isArray(coupon.purposes) && coupon.purposes.indexOf("pass") !== -1) || coupon.source === "outreach-after");
+}
+
 // `usedByEmail` is how many times the payer's address already redeemed this code; null when the address is unknown.
 function couponOpen(coupon, purpose, reportId, now, usedByEmail) {
   if (!coupon || !(Number(coupon.percent) > 0)) return false;
+  if (purpose === "pass" && !couponForPass(coupon)) return false;
   const at = now ? new Date(now).getTime() : Date.now();
   if (coupon.validUntil && Date.parse(coupon.validUntil) <= at) return false;
   if (coupon.validFrom && Date.parse(coupon.validFrom) > at) return false;
   if (Number(coupon.maxUses) > 0 && Number(coupon.uses || 0) >= Number(coupon.maxUses)) return false;
   if (Number(coupon.perEmail) > 0 && (usedByEmail == null || Number(usedByEmail) >= Number(coupon.perEmail))) return false;
-  if (Array.isArray(coupon.purposes) && coupon.purposes.length && coupon.purposes.indexOf(purpose) === -1) return false;
+  if (purpose !== "pass" && Array.isArray(coupon.purposes) && coupon.purposes.length && coupon.purposes.indexOf(purpose) === -1) return false;
   if (purpose === "report" && coupon.reportId && coupon.reportId !== reportId) return false;
   return true;
 }
@@ -549,6 +556,7 @@ module.exports = {
   discountFor,
   cleanCode,
   couponOpen,
+  couponForPass,
   REOPEN_FREE_DAYS,
   reopenFreeUntil,
   reopenFree,

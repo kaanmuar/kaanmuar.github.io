@@ -9,9 +9,10 @@
  *                                      percent 0 keeps it closed at checkout (couponOpen)
  *   url_reviews/trial-<code>          the pass row: offers.passPurchase with priceUsd 0, paid false, trial true,
  *                                      TRIAL.runs runs for TRIAL.days; followup "" until endTrials mints its AFTER code
- *   url_review_trials/email:<addr>    one trial per address, and domain:<host> one per locked student or company domain
+ *   url_review_trials/email:<addr>    one trial per address, and domain:<host> one per locked company domain; a
+ *                                      student trial's domain only asks for an address on the school's domain
  *   url_review_coupons/AFTER-XXXXXX  { percent: TRIAL.followup[kind], perEmail 1, maxUses 1, validUntil +followupDays,
- *                                      purposes new-run and report, the ones a checkout takes a code for }
+ *                                      purposes new-run, report and pass: the first payment, the pass included }
  *
  * The Mac agent and scripts call, signed with the Mac's paired token (engagement-mac.js verify):
  *   outreach-mint   { kind, person?, lang, email, domain, network, handle, name, by }  -> { ok, code, url, person }
@@ -32,7 +33,9 @@ const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const TRY = /^TRY-[A-Z0-9]{6}$/;
 const AFTER = /^AFTER-[A-Z0-9]{6}$/;
 const LOCKED_KINDS = ["student", "company"];
-const AFTER_PURPOSES = ["new-run", "report"];
+// A company gets one trial for its domain; a school's domain holds many students, each with a trial of their own.
+const ONE_PER_DOMAIN = ["company"];
+const AFTER_PURPOSES = ["new-run", "report", "pass"];
 
 const iso = (ms) => new Date(ms).toISOString();
 const clip = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
@@ -51,6 +54,16 @@ class TrialError extends Error {
 function pageUrl(lang, params) {
   const url = new URL(SITE + "/" + PAGES[langOf(lang)]);
   Object.entries(params || {}).forEach(([k, v]) => { if (v) url.searchParams.set(k, v); });
+  return url.toString();
+}
+
+/** The pay page for the trial's pass in the person's language, with the code filled in. */
+function passPayUrl(lang, code) {
+  const l = langOf(lang);
+  const url = new URL(SITE + "/" + (l === "en" ? "qa-review-pay.html" : "qa-review-pay-" + l + ".html"));
+  url.searchParams.set("purpose", "pass");
+  url.searchParams.set("plan", TRIAL.plan);
+  url.searchParams.set("coupon", code);
   return url.toString();
 }
 
@@ -121,8 +134,8 @@ const markerRef = (db, kind, value) => db.collection("url_review_trials").doc(ki
 
 /**
  * Claims a trial for a signed-in address in one transaction: { ok, why, id, pass, paidUntil }. why: code, gone, expired,
- * used, email (this address had a trial), domain (not an address on the locked domain), domain-used (that domain had
- * its trial) or pass (an open pass already). rows: the address's pass rows (index.js passRowsFor); matches:
+ * used, email (this address had a trial), domain (not an address on the locked domain or a subdomain), domain-used (that
+ * company domain had its trial) or pass (an open pass already). rows: the address's pass rows (index.js passRowsFor); matches:
  * core.mailboxMatchesHost. A second claim of the same code by the same address answers ok again.
  */
 async function redeemTrial(db, opts) {
@@ -146,7 +159,7 @@ async function redeemTrial(db, opts) {
     if (why) return { ok: false, why };
     if (mine.exists) return { ok: false, why: "email" };
     if (coupon.locked && !o.matches(email, coupon.domain)) return { ok: false, why: "domain" };
-    const site = coupon.locked ? await tx.get(markerRef(db, "domain", coupon.domain)) : null;
+    const site = coupon.locked && ONE_PER_DOMAIN.includes(coupon.kind) ? await tx.get(markerRef(db, "domain", coupon.domain)) : null;
     if (site && site.exists) return { ok: false, why: "domain-used" };
     if (offers.passFor(o.rows || [], email, at)) return { ok: false, why: "pass" };
     const made = offers.passPurchase(TRIAL.plan, [], email, at, {
@@ -168,12 +181,12 @@ async function redeemTrial(db, opts) {
 }
 
 const NOTE = {
-  en: { subject: "Your QA-lab trial ended: {p}% off your next review", body: "Thanks for trying QA-lab URL Review. Your {days}-day trial has ended.\n\nCode {code} takes {p}% off your next review or report until {date}. It is already in this link:" },
-  es: { subject: "Terminó tu prueba de QA-lab: {p}% de descuento en tu próxima revisión", body: "Gracias por probar QA-lab URL Review. Tu prueba de {days} días terminó.\n\nEl código {code} te da un {p}% de descuento en tu próxima revisión o informe hasta el {date}. Ya va en este enlace:" },
-  pt: { subject: "Seu teste do QA-lab terminou: {p}% de desconto na próxima revisão", body: "Obrigado por testar o QA-lab URL Review. Seu teste de {days} dias terminou.\n\nO código {code} dá {p}% de desconto na sua próxima revisão ou relatório até {date}. Ele já está neste link:" },
-  de: { subject: "Ihr QA-lab-Test ist beendet: {p} % Rabatt auf Ihre nächste Prüfung", body: "Danke, dass Sie QA-lab URL Review getestet haben. Ihr {days}-tägiger Test ist beendet.\n\nDer Code {code} gibt Ihnen bis {date} {p} % Rabatt auf Ihre nächste Prüfung oder Ihren nächsten Bericht. Er steckt schon in diesem Link:" },
-  fr: { subject: "Votre essai QA-lab est terminé : {p} % sur votre prochain audit", body: "Merci d'avoir essayé QA-lab URL Review. Votre essai de {days} jours est terminé.\n\nLe code {code} vous donne {p} % sur votre prochain audit ou rapport jusqu'au {date}. Il est déjà dans ce lien :" },
-  it: { subject: "La tua prova di QA-lab è finita: {p}% di sconto sulla prossima revisione", body: "Grazie per aver provato QA-lab URL Review. La tua prova di {days} giorni è finita.\n\nIl codice {code} ti dà il {p}% di sconto sulla prossima revisione o report fino al {date}. È già in questo link:" }
+  en: { subject: "Your QA-lab trial ended: {p}% off your first payment", body: "Thanks for trying QA-lab URL Review. Your {days}-day trial has ended.\n\nCode {code} takes {p}% off your first payment until {date}: the {plan} pass you tried, or a single review or report. This link opens the pass with the code already filled in:" },
+  es: { subject: "Terminó tu prueba de QA-lab: {p}% de descuento en tu primer pago", body: "Gracias por probar QA-lab URL Review. Tu prueba de {days} días terminó.\n\nEl código {code} te da un {p}% de descuento en tu primer pago hasta el {date}: el pase {plan} que probaste, o una revisión o un informe sueltos. Este enlace abre el pase con el código ya puesto:" },
+  pt: { subject: "Seu teste do QA-lab terminou: {p}% de desconto no primeiro pagamento", body: "Obrigado por testar o QA-lab URL Review. Seu teste de {days} dias terminou.\n\nO código {code} dá {p}% de desconto no seu primeiro pagamento até {date}: o passe {plan} que você testou, ou uma revisão ou um relatório avulso. Este link abre o passe com o código já preenchido:" },
+  de: { subject: "Ihr QA-lab-Test ist beendet: {p} % Rabatt auf Ihre erste Zahlung", body: "Danke, dass Sie QA-lab URL Review getestet haben. Ihr {days}-tägiger Test ist beendet.\n\nDer Code {code} gibt Ihnen bis {date} {p} % Rabatt auf Ihre erste Zahlung: den {plan}-Pass, den Sie getestet haben, oder eine einzelne Prüfung oder einen einzelnen Bericht. Dieser Link öffnet den Pass mit bereits eingetragenem Code:" },
+  fr: { subject: "Votre essai QA-lab est terminé : {p} % sur votre premier paiement", body: "Merci d'avoir essayé QA-lab URL Review. Votre essai de {days} jours est terminé.\n\nLe code {code} vous donne {p} % sur votre premier paiement jusqu'au {date} : le pass {plan} que vous avez essayé, ou un audit ou un rapport à l'unité. Ce lien ouvre le pass avec le code déjà saisi :" },
+  it: { subject: "La tua prova di QA-lab è finita: {p}% di sconto sul primo pagamento", body: "Grazie per aver provato QA-lab URL Review. La tua prova di {days} giorni è finita.\n\nIl codice {code} ti dà il {p}% di sconto sul primo pagamento fino al {date}: il pass {plan} che hai provato, oppure una singola revisione o un singolo report. Questo link apre il pass con il codice già inserito:" }
 };
 
 const STOP = { en: "No more notes like this: {stop}", es: "No recibir más avisos como este: {stop}", pt: "Não receber mais avisos como este: {stop}", de: "Keine solchen Hinweise mehr: {stop}", fr: "Ne plus recevoir ce type de message : {stop}", it: "Non ricevere più avvisi come questo: {stop}" };
@@ -220,9 +233,9 @@ async function endTrials(db, opts) {
     });
     if (!claimed) continue;
     minted += 1;
-    const url = pageUrl(row.lang, { coupon: code });
+    const url = passPayUrl(row.lang, code);
     if (row.person) await people.touch(db, row.person, { stage: "trial_ended", offers: [{ code, kind: "after", at: iso(at), url }], by: "outreachTrials" }, at).catch((error) => console.error("Ledger trial end failed:", error));
-    const note = followupNote(row.lang, { code, p: percent, days: TRIAL.days, date: iso(until).slice(0, 10), url });
+    const note = followupNote(row.lang, { code, p: percent, days: TRIAL.days, plan: offers.planById(TRIAL.plan).name, date: iso(until).slice(0, 10), url });
     const sent = o.mail ? await o.mail(row, note).catch((error) => { console.error("Trial follow-up mail failed:", error); return false; }) : false;
     if (!sent) continue;
     mailed += 1;
@@ -273,4 +286,4 @@ async function handle(deps, body) {
   return op(deps, body);
 }
 
-module.exports = { TRIAL, PAGES, OPS, TrialError, pageUrl, mintTrial, trialView, view, redeemTrial, followupNote, ended, endTrials, afterPaid, handle };
+module.exports = { TRIAL, PAGES, OPS, TrialError, pageUrl, passPayUrl, mintTrial, trialView, view, redeemTrial, followupNote, ended, endTrials, afterPaid, handle };
