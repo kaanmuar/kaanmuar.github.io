@@ -210,7 +210,7 @@ test("rescue: the cloud pass reads as Chrome, re-runs, keeps a hint, and queues 
     rows: [walled, blocked],
     probeRead: async (url, options) => {
       reads.push(url + " " + (options.readAs || "tagged"));
-      return url.includes("www.example.com") && options.readAs === "chrome" ? { status: 200, html: true, challenge: "" } : { status: 403, html: true, challenge: "Cloudflare" };
+      return new URL(url).hostname === "www.example.com" && options.readAs === "chrome" ? { status: 200, html: true, challenge: "" } : { status: 403, html: true, challenge: "Cloudflare" };
     },
     rerun: async (group) => {
       reruns.push(group);
