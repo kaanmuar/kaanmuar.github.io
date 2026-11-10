@@ -1420,9 +1420,10 @@ async function closeExpiredPromises() {
   return sent;
 }
 
-// The one step a promised review takes on each try; the rescue ladder of #3080 replaces this body once it lands.
+// The one step a promised review takes on each try: the rescue ladder of #3080, which hands back the report the Mac held,
+// a new re-run read as Chrome or on the other host name, or a failed stub while the Mac has it.
 async function rescuePromisedRun(group) {
-  return keepPromise(await rerunFailure(group));
+  return keepPromise(await reviewRescue.rescueGroup(rescueDeps(Date.now() + 300000), group));
 }
 
 // Every 15 minutes: open promises whose next try has come run again (RESCUES_PER_TICK at most), then the ones past the deadline get the apology.
@@ -1456,6 +1457,22 @@ exports.rescuePromisedReviews = require("firebase-functions/v2/scheduler").onSch
   secrets: SECRETS.rerunReviewFailures
 }, () => track("rescuePromisedReviews", () => rescuePromisedReviews()));
 
+// What the rescue of failed reviews (#3080) runs on: the daily pass in rerunReviewFailures and each promised try above.
+function rescueDeps(until) {
+  return {
+    db: getFirestore(),
+    probeRead: urlReview.probeRead,
+    rerun: (group) => rerunFailure(group).catch((error) => {
+      console.error("Rescue re-run of " + group.url + " was not saved:", error);
+      return null;
+    }),
+    probeLines: reviewFailures.probeLines,
+    gemini: (evidence) => reviewRescue.diagnoseWithFallback(evidence, { fetch, key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }),
+    until,
+    log: (text) => console.log(text)
+  };
+}
+
 async function rerunReviewFailures() {
   const db = getFirestore();
   const col = db.collection("url_review_failures");
@@ -1484,19 +1501,7 @@ async function rerunReviewFailures() {
   }
   console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
   const fresh = (await col.where("at", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const rescued = await reviewRescue.runRescues({
-    db,
-    rows: fresh,
-    probeRead: urlReview.probeRead,
-    rerun: (group) => rerunFailure(group).catch((error) => {
-      console.error("Rescue re-run of " + group.url + " was not saved:", error);
-      return null;
-    }),
-    probeLines: reviewFailures.probeLines,
-    gemini: process.env.GEMINI_API_KEY ? (evidence) => reviewRescue.aiDiagnose(evidence, { fetch, key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }) : null,
-    until: started + 1650000,
-    log: (text) => console.log(text)
-  }).catch((error) => {
+  const rescued = await reviewRescue.runRescues(Object.assign(rescueDeps(started + 1650000), { rows: fresh })).catch((error) => {
     console.error("URL review rescues failed:", error);
     return { done: [], notes: [], planned: 0, ai: 0 };
   });

@@ -1,6 +1,6 @@
 /**
- * The rescue of failed URL reviews (#3080): the rule diagnosis, Gemini's schema, the ladder, the plan and its caps,
- * and the daily cloud pass with a fake Firestore.
+ * The rescue of failed URL reviews (#3080): the rule diagnosis, Gemini's schema and its Vertex AI fallback, the ladder, the plan
+ * and its caps, the daily cloud pass and the promised re-run's step (#3079) with a fake Firestore.
  *
  *   node --test tests/unit/url-review-rescue.test.js
  */
@@ -83,6 +83,32 @@ test("rescue: aiDiagnose grounds the call and falls back on a bad answer", async
   await assert.rejects(rescue.aiDiagnose(ev, { fetch: answer("{}") }), /not configured/);
 });
 
+test("rescue: Gemini on Vertex AI answers when the AI Studio key is out of credits or rate-limited", async () => {
+  const ev = rescue.evidenceOf(failed("a"), null, []);
+  const good = '{"blocker":"waf-ip","vendor":"Cloudflare","confidence":0.7,"siteSide":false,"strategies":["mac"],"summary":"Data-center addresses are refused."}';
+  const calls = [];
+  const studio = (status) => async (url, init) => {
+    calls.push({ url, auth: init.headers.Authorization || "", body: JSON.parse(init.body) });
+    if (url.includes("generativelanguage")) return { ok: false, status, json: async () => ({ error: { message: "Your prepayment credits are depleted." } }) };
+    return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: good }] } }] }) };
+  };
+  const out = await rescue.diagnoseWithFallback(ev, { key: "k", fetch: studio(402), token: async () => "tok" });
+  assert.equal(out.via, "vertex");
+  assert.equal(out.blocker, "waf-ip");
+  assert.match(calls[1].url, /^https:\/\/aiplatform\.googleapis\.com\/v1\/projects\/carlosm-interactive-cv\/locations\/global\/publishers\/google\/models\/[\w.-]+:generateContent$/);
+  assert.equal(calls[1].auth, "Bearer tok");
+  assert.deepEqual(calls[1].body.tools, [{ googleSearch: {} }]);
+  calls.length = 0;
+  assert.equal((await rescue.diagnoseWithFallback(ev, { key: "k", fetch: studio(429), token: async () => "tok" })).via, "vertex");
+  calls.length = 0;
+  await assert.rejects(rescue.diagnoseWithFallback(ev, { key: "k", fetch: studio(500), token: async () => "tok" }), /Gemini answered 500/);
+  assert.equal(calls.length, 1);
+  calls.length = 0;
+  assert.equal((await rescue.diagnoseWithFallback(ev, { fetch: studio(402), token: async () => "tok" })).via, "vertex");
+  assert.equal(calls.length, 1);
+  assert.match(rescue.rescueLines({ status: "mac-wanted", diagnosis: Object.assign({}, out, { confidence: 0.7 }), attempts: [] })[0], /^Diagnosis \(Gemini on Vertex AI, confidence 70%\)/);
+});
+
 test("rescue: the ladder puts a fresh hint first and skips what this rescue lost", () => {
   const plan = { strategies: ["chrome-headers", "mac"], confidence: 0.6 };
   assert.deepEqual(rescue.ladder(plan, null, [], NOW), ["chrome-headers", "mac", "alt-host"]);
@@ -91,6 +117,7 @@ test("rescue: the ladder puts a fresh hint first and skips what this rescue lost
   const lost = [{ strategy: "chrome-headers", ok: false }, { strategy: "mac", ok: false }, { strategy: "mac", ok: null }];
   assert.deepEqual(rescue.ladder(plan, null, lost, NOW), ["mac", "alt-host"]);
   assert.deepEqual(rescue.ladder(plan, null, lost.concat([{ strategy: "mac", ok: false }]), NOW), ["alt-host"]);
+  assert.deepEqual(rescue.ladder(plan, null, lost.concat([{ strategy: "mac", ok: false }]), NOW, true), ["mac", "alt-host"]);
 });
 
 test("rescue: helpers for the other host name and a readable plain read", () => {
@@ -128,6 +155,23 @@ test("rescue: the plan takes failures no re-run settled, one per address and ask
   assert.equal(rescue.rescuePlan(many, [], NOW).length, rescue.RESCUES_PER_DAY);
 });
 
+test("rescue: a promised failure goes first, past the daily caps and an exhausted rescue", () => {
+  const promise = { state: "open", dueAt: "2026-11-11T10:00:00Z" };
+  const many = Array.from({ length: 20 }, (_, n) => failed("m" + n, { url: "https://m" + n + ".example/", at: "2026-11-10T0" + (n % 10) + ":00:00Z" }));
+  const kept = failed("kept", { url: "https://kept.example/", at: "2026-11-01T10:00:00Z", promise });
+  const tired = failed("tired", { url: "https://tired.example/", at: "2026-11-01T10:00:00Z", promise });
+  const prior = [
+    { id: "kept", key: "https://kept.example/|ana@example.org", status: "exhausted" },
+    { id: "tired", key: "https://tired.example/|ana@example.org", status: "trying", day: "2026-11-10", dayAttempts: rescue.ATTEMPTS_PER_DAY }
+  ];
+  const plan = rescue.rescuePlan(many.concat([kept, tired]), prior, NOW);
+  assert.deepEqual(plan.slice(0, 2).map((item) => [item.id, item.promised]), [["kept", true], ["tired", true]]);
+  assert.equal(plan.length, 2 + rescue.RESCUES_PER_DAY);
+  assert.equal(rescue.rescueDoc(plan[0], { status: "trying", attempts: [] }, NOW).promised, true);
+  const exhausted = rescue.rescuePlan([failed("x", { url: "https://kept.example/" })], prior, NOW);
+  assert.equal(exhausted.length, 0);
+});
+
 test("rescue: the AI cap holds per day and per failure", () => {
   assert.equal(rescue.aiDue(null, NOW, 0), true);
   assert.equal(rescue.aiDue(null, NOW, rescue.AI_PER_DAY), false);
@@ -142,7 +186,10 @@ function fakeDb(seed) {
   return {
     store,
     collection: (name) => ({
-      where: (field, op, value) => ({ get: async () => ({ docs: rowsOf(name).filter((row) => String(row[field] || "") >= value).map((row) => ({ id: row.id, data: () => row })) }) }),
+      where: (field, op, value) => {
+        const docs = () => rowsOf(name).filter((row) => op === "==" ? row[field] === value : String(row[field] || "") >= value).map((row) => ({ id: row.id, data: () => row }));
+        return { get: async () => ({ docs: docs() }), limit: (n) => ({ get: async () => ({ docs: docs().slice(0, n) }) }) };
+      },
       doc: (id) => ({
         get: async () => ({ exists: !!store[name + "/" + id], data: () => store[name + "/" + id] }),
         set: async (value) => { store[name + "/" + id] = value; },
@@ -199,4 +246,37 @@ test("rescue: the desk and the daily bug show what the rescue concluded", () => 
   const bugs = failures.bugPlan([Object.assign({}, doc, { diagnosis: { cleared: false, nowLabel: "Still refused" }, fixes: failures.FIXES.map((fix) => fix.cause + " " + fix.ref) })], [], []);
   assert.equal(bugs.length, 1);
   assert.match(bugs[0].body, /### Rescue of www\.example\.com \(#3080\)\n- Diagnosis \(Gemini, confidence 80%\)/);
+});
+
+test("rescue: the promised re-run's step returns the held re-run, waits on the Mac, or runs the ladder", async () => {
+  const promise = { state: "open", dueAt: "2026-11-11T10:00:00Z" };
+  const group = (url, ids) => ({ url, host: new URL(url).hostname, email: "ana@example.org", failureIds: ids, options: { pages: 20, depth: 2, frameworks: ["Playwright"] }, intake: {}, promise });
+  const db = fakeDb({
+    url_review_failures: [failed("done1", { url: "https://done.example/", promise }), failed("mac1", { url: "https://mac.example/", promise }), failed("new1", { promise })],
+    url_review_rescues: [
+      { id: "done1", key: "https://done.example/|ana@example.org", status: "rescued", rerunId: "r9" },
+      { id: "mac1", key: "https://mac.example/|ana@example.org", status: "mac-wanted" }
+    ],
+    url_review_reruns: [{ id: "r9", status: "held", reportId: "rep9" }]
+  });
+  const reruns = [];
+  const deps = {
+    db,
+    probeRead: async (url, options) => options.readAs === "chrome" ? { status: 200, html: true, challenge: "" } : { status: 403, html: true, challenge: "Cloudflare" },
+    rerun: async (one) => { reruns.push(one); return { id: "r10", status: "held", reportId: "rep10" }; },
+    probeLines: failures.probeLines,
+    gemini: null,
+    until: Date.now() + 60000
+  };
+  const held = await rescue.rescueGroup(deps, group("https://done.example/", ["done1"]));
+  assert.deepEqual([held.id, held.status, held.promise], ["r9", "held", promise]);
+  const waiting = await rescue.rescueGroup(deps, group("https://mac.example/", ["mac1"]));
+  assert.deepEqual([waiting.status, waiting.rescue], ["failed", "mac-wanted"]);
+  assert.equal(db.store["url_review_rescues/mac1"].promised, true);
+  assert.equal(reruns.length, 0);
+  const fresh = await rescue.rescueGroup(deps, group("https://www.example.com/", ["new1"]));
+  assert.deepEqual([fresh.id, fresh.status], ["r10", "held"]);
+  assert.equal(reruns[0].readAs, "chrome");
+  assert.equal(db.store["url_review_rescues/new1"].status, "rescued");
+  assert.equal(db.store["url_review_rescues/new1"].promised, true);
 });

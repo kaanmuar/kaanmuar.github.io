@@ -14,6 +14,8 @@ const ATTEMPTS_PER_DAY = 3;
 const AI_PER_DAY = 10;
 const AI_PER_FAILURE_DAY = 1;
 const MAC_PER_RUN = 8;
+// Promised rescues (#3079) the Mac takes in one hourly run, ahead of the others and outside the daily caps.
+const MAC_PROMISED_PER_HOUR = 4;
 const MAC_TRIES = 2;
 const HINT_DAYS = 60;
 const AI_LINES = 30;
@@ -209,28 +211,68 @@ function parseAi(text) {
 }
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
+// Gemini on Vertex AI, billed to the Firebase project and called as the functions' service account (roles/aiplatform.user),
+// for when the AI Studio key answers 402 (credits spent) or 429 (#3189).
+const VERTEX_PROJECT = "carlosm-interactive-cv";
+const VERTEX_MODEL = "gemini-3.8-flash";
+const VERTEX_URL = "https://aiplatform.googleapis.com/v1/projects/" + VERTEX_PROJECT + "/locations/global/publishers/google/models/";
+const METADATA_TOKEN = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
-// Gemini with Google Search grounding; the grounded sources are kept with the answer.
-async function aiDiagnose(evidence, deps) {
-  const { fetch: fetchImpl, key, model } = deps || {};
-  if (!key || typeof fetchImpl !== "function") throw new Error("Gemini is not configured.");
-  const res = await fetchImpl(GEMINI_URL + (model || "gemini-flash-latest") + ":generateContent", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-    signal: AbortSignal.timeout(60000),
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: aiPrompt(evidence) }] }],
-      tools: [{ google_search: {} }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "low" } }
-    })
-  });
+async function groundedCall(fetchImpl, url, headers, body, label) {
+  const res = await fetchImpl(url, { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, headers), signal: AbortSignal.timeout(60000), body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error("Gemini answered " + res.status + ": " + clip((data.error || {}).message, 160));
+  if (!res.ok) throw Object.assign(new Error(label + " answered " + res.status + ": " + clip((data.error || {}).message, 160)), { status: res.status });
   const candidate = (data.candidates || [])[0] || {};
   const parsed = parseAi(((candidate.content || {}).parts || []).map((part) => part.text || "").join(""));
-  if (!parsed) throw new Error("Gemini's answer was not in the schema.");
+  if (!parsed) throw new Error(label + "'s answer was not in the schema.");
   const chunks = ((candidate.groundingMetadata || {}).groundingChunks || []).map((chunk) => chunk && chunk.web).filter(Boolean);
   return Object.assign(parsed, { sources: chunks.slice(0, 4).map((web) => ({ title: clip(web.title, 120), uri: clip(web.uri, 300) })) });
+}
+
+// Gemini through the AI Studio key, with Google Search grounding; the grounded sources are kept with the answer.
+function aiDiagnose(evidence, deps) {
+  const { fetch: fetchImpl, key, model } = deps || {};
+  if (!key || typeof fetchImpl !== "function") return Promise.reject(new Error("Gemini is not configured."));
+  return groundedCall(fetchImpl, GEMINI_URL + (model || "gemini-flash-latest") + ":generateContent", { "x-goog-api-key": key }, {
+    contents: [{ role: "user", parts: [{ text: aiPrompt(evidence) }] }],
+    tools: [{ google_search: {} }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: "low" } }
+  }, "Gemini");
+}
+
+let vertexToken = null;
+async function metadataToken(fetchImpl) {
+  if (vertexToken && vertexToken.until > Date.now() + 60000) return vertexToken.value;
+  const res = await fetchImpl(METADATA_TOKEN, { headers: { "Metadata-Flavor": "Google" }, signal: AbortSignal.timeout(5000) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token) throw new Error("The metadata server gave no token (" + res.status + ").");
+  vertexToken = { value: data.access_token, until: Date.now() + (Number(data.expires_in) || 300) * 1000 };
+  return vertexToken.value;
+}
+
+// deps.token() replaces the metadata server outside Google Cloud, as with gcloud auth print-access-token.
+async function vertexDiagnose(evidence, deps) {
+  const { fetch: fetchImpl, token, vertexModel } = deps || {};
+  if (typeof fetchImpl !== "function") throw new Error("Vertex AI is not configured.");
+  const bearer = typeof token === "function" ? await token() : await metadataToken(fetchImpl);
+  const out = await groundedCall(fetchImpl, VERTEX_URL + (vertexModel || VERTEX_MODEL) + ":generateContent", { Authorization: "Bearer " + bearer }, {
+    contents: [{ role: "user", parts: [{ text: aiPrompt(evidence) }] }],
+    tools: [{ googleSearch: {} }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } }
+  }, "Vertex AI Gemini");
+  return Object.assign(out, { via: "vertex" });
+}
+
+// The AI Studio key first; Vertex AI when there is no key or the key is out of credits or rate-limited.
+async function diagnoseWithFallback(evidence, deps) {
+  if (deps && deps.key) {
+    try {
+      return await aiDiagnose(evidence, deps);
+    } catch (error) {
+      if (![402, 429].includes(error.status)) throw error;
+    }
+  }
+  return vertexDiagnose(evidence, deps);
 }
 
 function hintFresh(hint, now) {
@@ -238,15 +280,15 @@ function hintFresh(hint, now) {
 }
 
 // The strategies to try, in order: the host's hint, then the diagnosis, then the rest; never one this rescue already lost,
-// and the Mac only until it has tried MAC_TRIES times. A site-side diagnosis ends the ladder.
-function ladder(diagnosis, hint, attempts, now) {
+// and the Mac only until it has tried MAC_TRIES times, unless the asker was promised the report. A site-side diagnosis ends the ladder.
+function ladder(diagnosis, hint, attempts, now, promised) {
   const plan = diagnosis || {};
   if (plan.siteSide && plan.confidence >= 0.7) return [];
   const tried = Array.isArray(attempts) ? attempts : [];
   const lost = new Set(tried.filter((row) => row.ok === false && row.strategy !== "mac").map((row) => row.strategy));
   const macRuns = tried.filter((row) => row.strategy === "mac" && row.ok === false).length;
   const order = [].concat(hintFresh(hint, now) ? [hint.strategy] : [], plan.strategies || [], Object.keys(STRATEGIES));
-  return Array.from(new Set(order)).filter((id) => STRATEGIES[id] && !lost.has(id) && (id !== "mac" || macRuns < MAC_TRIES));
+  return Array.from(new Set(order)).filter((id) => STRATEGIES[id] && !lost.has(id) && (id !== "mac" || promised || macRuns < MAC_TRIES));
 }
 
 function rescuable(row) {
@@ -256,7 +298,8 @@ function rescuable(row) {
   return !(cause === "status" && row.diagnosis && row.diagnosis.site);
 }
 
-// One rescue per address and asker, for a failure with no re-run yet or whose re-run failed. The daily re-runs go first, so a
+// One rescue per address and asker, for a failure with no re-run yet or whose re-run failed. A failure whose asker was promised
+// a report (#3079, promise.state open) goes first and past the daily caps: the 48-hour deadline is its limit. The daily re-runs go first, so a
 // failure still without one here is one no fix covers, or one past their limit. `rescues` are url_review_rescues rows with their `id`.
 function rescuePlan(failures, rescues, now) {
   const at = Number(now) || Date.now();
@@ -274,8 +317,9 @@ function rescuePlan(failures, rescues, now) {
     rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
     const latest = rows[0];
     const prior = known.get(key) || null;
-    if (prior && ["rescued", "site", "exhausted", "mac-wanted", "settled"].includes(prior.status)) return;
-    if (prior && prior.day === today && (prior.dayAttempts || 0) >= ATTEMPTS_PER_DAY) return;
+    const promised = !!(latest.promise && latest.promise.state === "open");
+    if (prior && ["rescued", "site", "mac-wanted", "settled"].concat(promised ? [] : ["exhausted"]).includes(prior.status)) return;
+    if (!promised && prior && prior.day === today && (prior.dayAttempts || 0) >= ATTEMPTS_PER_DAY) return;
     const group = {
       url: latest.url,
       host: latest.host || hostOf(latest.url),
@@ -287,10 +331,11 @@ function rescuePlan(failures, rescues, now) {
       intake: latest.intake || {}
     };
     if (latest.source === "sweep" && latest.sweep) Object.assign(group, { source: "sweep", sweep: latest.sweep });
-    items.push({ id: prior ? prior.id : String(latest.id || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60), key, latest, prior, group });
+    items.push({ id: prior ? prior.id : String(latest.id || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60), key, latest, prior, group, promised });
   });
-  items.sort((a, b) => String(b.latest.at).localeCompare(String(a.latest.at)));
-  return items.slice(0, RESCUES_PER_DAY);
+  items.sort((a, b) => Number(b.promised) - Number(a.promised) || String(b.latest.at).localeCompare(String(a.latest.at)));
+  const promised = items.filter((item) => item.promised);
+  return promised.concat(items.filter((item) => !item.promised).slice(0, RESCUES_PER_DAY));
 }
 
 function aiDue(prior, now, usedToday) {
@@ -325,6 +370,7 @@ function rescueDoc(item, pass, now) {
     attempts: (prior.attempts || []).concat(pass.attempts || []).slice(-20),
     status: pass.status || "trying",
     rerunId: pass.rerunId || prior.rerunId || "",
+    promised: !!item.promised,
     strategy: pass.strategy || prior.strategy || "",
     day: today,
     dayAttempts: (sameDay ? prior.dayAttempts || 0 : 0) + added,
@@ -354,7 +400,7 @@ function rescueLines(rescue) {
   const plan = row.diagnosis || {};
   const out = [];
   if (plan.blocker) {
-    out.push("Diagnosis (" + (plan.by === "gemini" ? "Gemini" : "rules") + ", confidence " + Math.round((plan.confidence || 0) * 100) + "%): " +
+    out.push("Diagnosis (" + (plan.by === "gemini" ? (plan.via === "vertex" ? "Gemini on Vertex AI" : "Gemini") : "rules") + ", confidence " + Math.round((plan.confidence || 0) * 100) + "%): " +
       (BLOCKERS[plan.blocker] || plan.blocker) + (plan.vendor && !["none", "other"].includes(plan.vendor) ? ", " + plan.vendor : "") + ". " + clip(plan.summary, 300));
     if (plan.research) out.push("Research: " + clip(plan.research, 300));
     (plan.sources || []).forEach((source) => out.push("Source: " + source.title + " " + source.uri));
@@ -365,78 +411,109 @@ function rescueLines(rescue) {
   return out;
 }
 
-// The cloud's daily pass, after the re-runs: diagnose, try the cloud strategies the ladder names, and queue the rest for the Mac.
-// deps: { db, rows, probeRead(url, options), rerun(group) -> re-run doc with id or null, probeLines(probe), gemini(evidence) or null,
-//         until (ms), log }
-async function runRescues(deps) {
-  const { db, rows, probeRead, rerun, probeLines, gemini, until, log } = deps;
+// One rescue pass: diagnose, try the cloud strategies the ladder names, queue the rest for the Mac, and save the rescue.
+// deps: { db, probeRead(url, options), rerun(group) -> re-run doc with id or null, probeLines(probe), gemini(evidence) or null,
+//         until (ms), log }; budget: { ai } Gemini calls this run. Returns { doc, reruns }.
+async function rescueItem(deps, item, budget) {
+  const { db, probeRead, rerun, probeLines, gemini, until, log } = deps;
   const say = typeof log === "function" ? log : () => {};
   const now = Date.now();
-  const col = db.collection("url_review_rescues");
+  const hintRef = db.collection("url_review_read_hints").doc(hintId(item.group.host));
+  const hint = (await hintRef.get()).data() || null;
+  const rerunId = item.latest.rerun && item.latest.rerun.id;
+  const rerunRow = rerunId ? (await db.collection("url_review_reruns").doc(String(rerunId)).get()).data() || null : null;
+  const evidence = evidenceOf(item.latest, rerunRow, probeLines(item.latest.probe));
+  let diagnosis = null;
+  let ai = false;
+  if (typeof gemini === "function" && aiDue(item.prior, now, budget.ai)) {
+    budget.ai += 1;
+    ai = true;
+    diagnosis = await gemini(evidence).catch((error) => {
+      say("Rescue diagnosis of " + item.group.host + " fell back to the rules: " + clip(error && error.message, 160));
+      return null;
+    });
+  }
+  diagnosis = diagnosis || (!ai && item.prior && item.prior.diagnosis) || ruleDiagnosis(evidence);
+  const pass = { diagnosis, ai, attempts: [] };
+  const reruns = [];
+  const used = item.prior && item.prior.day === dayOf(now) ? item.prior.dayAttempts || 0 : 0;
+  const room = () => item.promised || ATTEMPTS_PER_DAY - used - pass.attempts.filter((row) => row.ok !== null).length > 0;
+  const order = ladder(diagnosis, hint, item.prior && item.prior.attempts, now, item.promised);
+  if (!order.length) pass.status = diagnosis.siteSide ? "site" : "exhausted";
+  for (const strategy of order) {
+    if (STRATEGIES[strategy].where === "mac") {
+      pass.status = "mac-wanted";
+      pass.attempts.push(attemptRow(strategy, null, "Queued for the Mac", Date.now()));
+      break;
+    }
+    if (!room() || Date.now() > until) break;
+    const url = strategy === "alt-host" ? altUrl(item.group.url) : item.group.url;
+    if (!url) {
+      pass.attempts.push(attemptRow(strategy, false, "No other host name to try", Date.now()));
+      continue;
+    }
+    const readAs = strategy === "chrome-headers" ? "chrome" : "";
+    const probe = await Promise.resolve().then(() => probeRead(url, readAs ? { readAs } : {})).catch((error) => ({ error: clip(error && error.message, 160) || "The read failed." }));
+    if (!readable(probe)) {
+      pass.attempts.push(attemptRow(strategy, false, "The plain read " + probeNote(probe), Date.now()));
+      continue;
+    }
+    const sweep = item.group.sweep ? { sweep: Object.assign({}, item.group.sweep, { host: hostOf(url) }) } : {};
+    const doc = await rerun(Object.assign({}, item.group, { url, host: hostOf(url), trigger: trigger(strategy), readAs }, sweep));
+    const ok = !!doc && doc.status !== "failed";
+    pass.attempts.push(attemptRow(strategy, ok, ok ? "Report " + doc.reportId : doc ? (doc.error && doc.error.message) || "The re-run failed." : "The re-run was not saved.", Date.now()));
+    if (doc) reruns.push(doc);
+    if (ok) {
+      Object.assign(pass, { status: "rescued", strategy, rerunId: doc.id || "" });
+      await hintRef.set(hintDoc(hint, strategy, "", url, Date.now()));
+      break;
+    }
+  }
+  const doc = rescueDoc(item, pass, Date.now());
+  await db.collection("url_review_rescues").doc(item.id).set(doc);
+  await Promise.all(item.group.failureIds.map((id) => db.collection("url_review_failures").doc(id).update({ rescue: rescueMark(item.id, doc) })));
+  return { doc, reruns };
+}
+
+// The cloud's daily pass, after the re-runs. deps as rescueItem's, and rows: the failures of the last RESCUE_DAYS.
+async function runRescues(deps) {
+  const now = Date.now();
   const since = new Date(now - (RESCUE_DAYS + 1) * 86400000).toISOString();
-  const prior = (await col.where("failedAt", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const plan = rescuePlan(rows, prior, now);
-  let aiUsed = 0;
+  const prior = (await deps.db.collection("url_review_rescues").where("failedAt", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const plan = rescuePlan(deps.rows, prior, now);
+  const budget = { ai: 0 };
   const done = [];
   const notes = [];
   for (const item of plan) {
-    if (Date.now() > until) break;
-    const hintRef = db.collection("url_review_read_hints").doc(hintId(item.group.host));
-    const hint = (await hintRef.get()).data() || null;
-    const rerunId = item.latest.rerun && item.latest.rerun.id;
-    const rerunRow = rerunId ? (await db.collection("url_review_reruns").doc(String(rerunId)).get()).data() || null : null;
-    const evidence = evidenceOf(item.latest, rerunRow, probeLines(item.latest.probe));
-    let diagnosis = null;
-    let ai = false;
-    if (typeof gemini === "function" && aiDue(item.prior, now, aiUsed)) {
-      aiUsed += 1;
-      ai = true;
-      diagnosis = await gemini(evidence).catch((error) => {
-        say("Rescue diagnosis of " + item.group.host + " fell back to the rules: " + clip(error && error.message, 160));
-        return null;
-      });
-    }
-    diagnosis = diagnosis || (!ai && item.prior && item.prior.diagnosis) || ruleDiagnosis(evidence);
-    const pass = { diagnosis, ai, attempts: [] };
-    const used = item.prior && item.prior.day === dayOf(now) ? item.prior.dayAttempts || 0 : 0;
-    const room = () => ATTEMPTS_PER_DAY - used - pass.attempts.filter((row) => row.ok !== null).length;
-    const order = ladder(diagnosis, hint, item.prior && item.prior.attempts, now);
-    if (!order.length) pass.status = diagnosis.siteSide ? "site" : "exhausted";
-    for (const strategy of order) {
-      if (STRATEGIES[strategy].where === "mac") {
-        pass.status = "mac-wanted";
-        pass.attempts.push(attemptRow(strategy, null, "Queued for the Mac", Date.now()));
-        break;
-      }
-      if (room() <= 0 || Date.now() > until) break;
-      const url = strategy === "alt-host" ? altUrl(item.group.url) : item.group.url;
-      if (!url) {
-        pass.attempts.push(attemptRow(strategy, false, "No other host name to try", Date.now()));
-        continue;
-      }
-      const readAs = strategy === "chrome-headers" ? "chrome" : "";
-      const probe = await Promise.resolve().then(() => probeRead(url, readAs ? { readAs } : {})).catch((error) => ({ error: clip(error && error.message, 160) || "The read failed." }));
-      if (!readable(probe)) {
-        pass.attempts.push(attemptRow(strategy, false, "The plain read " + probeNote(probe), Date.now()));
-        continue;
-      }
-      const sweep = item.group.sweep ? { sweep: Object.assign({}, item.group.sweep, { host: hostOf(url) }) } : {};
-      const doc = await rerun(Object.assign({}, item.group, { url, host: hostOf(url), trigger: trigger(strategy), readAs }, sweep));
-      const ok = !!doc && doc.status !== "failed";
-      pass.attempts.push(attemptRow(strategy, ok, ok ? "Report " + doc.reportId : doc ? (doc.error && doc.error.message) || "The re-run failed." : "The re-run was not saved.", Date.now()));
-      if (doc) done.push(doc);
-      if (ok) {
-        Object.assign(pass, { status: "rescued", strategy, rerunId: doc.id || "" });
-        await hintRef.set(hintDoc(hint, strategy, "", url, Date.now()));
-        break;
-      }
-    }
-    const doc = rescueDoc(item, pass, Date.now());
-    await col.doc(item.id).set(doc);
-    await Promise.all(item.group.failureIds.map((id) => db.collection("url_review_failures").doc(id).update({ rescue: rescueMark(item.id, doc) })));
-    notes.push(item.group.host + " " + (pass.status || "trying") + " (" + diagnosis.by + ": " + diagnosis.blocker + ")");
+    if (Date.now() > deps.until) break;
+    const { doc, reruns } = await rescueItem(deps, item, budget);
+    done.push(...reruns);
+    notes.push(item.group.host + " " + doc.status + (item.promised ? " (promised)" : "") + " (" + doc.diagnosis.by + ": " + doc.diagnosis.blocker + ")");
   }
-  return { done, notes, planned: plan.length, ai: aiUsed };
+  return { done, notes, planned: plan.length, ai: budget.ai };
+}
+
+// The step of a failure whose asker was promised a report (#3079): its frequent re-run calls this instead of a plain re-run.
+// It returns the re-run doc to keep the promise with: a new one, or the one the Mac held since the last try; or, with no report
+// yet, { status: "failed", rescue: "mac-wanted" } (or the rescue's other state). deps as rescueItem's; group as rerunPlan's, with its promise.
+async function rescueGroup(deps, group) {
+  const { db } = deps;
+  const key = String(group.url).toLowerCase() + "|" + String(group.email || "").toLowerCase();
+  const found = (await db.collection("url_review_rescues").where("key", "==", key).limit(1).get()).docs[0];
+  const prior = found ? Object.assign({ id: found.id }, found.data()) : null;
+  const waiting = { status: "failed", rescue: "mac-wanted", url: group.url, host: group.host || hostOf(group.url), failureIds: group.failureIds || [] };
+  if (prior && prior.status === "rescued" && prior.rerunId) {
+    const held = (await db.collection("url_review_reruns").doc(String(prior.rerunId)).get()).data();
+    if (held) return Object.assign({ id: prior.rerunId }, held, group.promise ? { promise: group.promise } : {});
+  }
+  if (prior && prior.status === "mac-wanted") {
+    if (!prior.promised) await db.collection("url_review_rescues").doc(prior.id).update({ promised: true });
+    return waiting;
+  }
+  const latest = (await db.collection("url_review_failures").doc(String((group.failureIds || [])[0] || "-")).get()).data() || {};
+  const item = { id: prior ? prior.id : String((group.failureIds || [])[0] || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60), key, latest, prior, group, promised: true };
+  const { doc, reruns } = await rescueItem(deps, item, { ai: 0 });
+  return reruns.find((row) => row.status !== "failed") || reruns[0] || Object.assign(waiting, { rescue: doc.status });
 }
 
 // The rescue as the failure keeps it, for the desk list, its detail and the daily bug.
@@ -446,9 +523,9 @@ function rescueMark(id, doc) {
 }
 
 module.exports = {
-  runRescues, rescueMark,
-  RESCUE_DAYS, RESCUES_PER_DAY, ATTEMPTS_PER_DAY, AI_PER_DAY, AI_PER_FAILURE_DAY, MAC_PER_RUN, MAC_TRIES, HINT_DAYS,
+  runRescues, rescueGroup, rescueMark,
+  RESCUE_DAYS, RESCUES_PER_DAY, ATTEMPTS_PER_DAY, AI_PER_DAY, AI_PER_FAILURE_DAY, MAC_PER_RUN, MAC_PROMISED_PER_HOUR, MAC_TRIES, HINT_DAYS,
   STRATEGIES, MAC_STEPS, BLOCKERS, VENDORS,
-  altUrl, readable, probeNote, vendorOf, evidenceOf, ruleDiagnosis, aiPrompt, parseAi, aiDiagnose, ladder, rescuePlan, aiDue,
+  altUrl, readable, probeNote, vendorOf, evidenceOf, ruleDiagnosis, aiPrompt, parseAi, aiDiagnose, vertexDiagnose, diagnoseWithFallback, ladder, rescuePlan, aiDue,
   trigger, attemptRow, rescueDoc, hintDoc, hintId, rescueLines, dayOf
 };
