@@ -2232,7 +2232,7 @@ async function reviewedLately(host) {
   return snaps.some((snap) => snap.docs.some((doc) => String(doc.get("createdAt") || "") > since));
 }
 
-// Up to sweep.PER_TICK sites a tick, one after another, at night, without web search. SWEEP_LIVE=1 turns it on.
+// Up to sweep.PER_TICK sites a tick, sweepConcurrency at once, at night, without web search. SWEEP_LIVE=1 turns it on.
 async function sweepReviews() {
   if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
   const tickStarted = Date.now();
@@ -2240,7 +2240,7 @@ async function sweepReviews() {
   const ref = db.collection("url_review_sweep").doc("state");
   const day = new Date().toISOString().slice(0, 10);
   const cap = ops.budget("sweepPerDay", process.env);
-  let state = (await ref.get()).data() || {};
+  const state = (await ref.get()).data() || {};
   if (sweep.doneOn(state, day) >= cap) return "daily cap reached";
   const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
   const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
@@ -2252,58 +2252,76 @@ async function sweepReviews() {
     const hosts = seeds.get(slot.cc);
     return { state: slot.state, target: hosts.length ? { host: hosts[slot.at % hosts.length], cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 } : null };
   };
-  const notes = [];
-  for (let n = 0; n < sweep.PER_TICK; n += 1) {
-    if (sweep.doneOn(state, day) >= cap) {
-      notes.push("daily cap reached");
-      break;
+  const hold = { state, save: (moved) => ref.set(moved) };
+  const full = (at, running) => sweep.doneOn(at, day) + running >= cap;
+  return sweepTick(hold, { slots: ops.budget("sweepConcurrency", process.env), tickStarted, day, unlisted, next, full });
+}
+
+// One tick of a lane: the next sites from next(state) (the lap's, or the outreach lane's), `slots` reviews at once,
+// each tallied and saved as it ends. hold: { state, save(state) }. full(state, running) stops new picks at the cap.
+async function sweepTick(hold, { slots, tickStarted, day, unlisted, next, full }) {
+  const busy = new Set();
+  let dirty = false;
+  const notes = await sweep.runTick({
+    slots,
+    room: () => sweep.roomForReview(Date.now() - tickStarted),
+    pick: async () => {
+      if (full(hold.state, busy.size)) return { note: "daily cap reached" };
+      const pick = await sweepPick(hold.state, day, unlisted, next, busy);
+      hold.state = pick.state;
+      dirty = true;
+      if (!pick.target) return { note: "nothing to review" };
+      busy.add(reviewPublish.bare(pick.target.host));
+      return { target: pick.target };
+    },
+    review: (target) => sweepRun(target),
+    settle: async (target, run) => {
+      busy.delete(reviewPublish.bare(target.host));
+      hold.state = sweep.tally(hold.state, day, run.outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome: run.outcome, note: run.note }, run.reason ? { reason: run.reason } : {}));
+      await hold.save(hold.state);
+      dirty = false;
+      return run.note;
     }
-    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(state, day, unlisted, next);
-    state = tick.state;
-    await ref.set(state);
-    notes.push(tick.note);
-    if (!tick.reviewed) break;
-  }
+  });
+  if (dirty) await hold.save(hold.state);
   return notes.join("; ");
 }
 
-// The next site from next(state) (the lap's, or the outreach lane's), reviewed and tallied.
-// Returns the moved-on state, a note, and whether a review ran.
-async function sweepOne(state, day, unlisted, next) {
-  let target = null;
-  for (let tries = 0; tries < 8 && !target; tries += 1) {
+// The next site from next(state) that nobody reviewed lately and no review of this tick is on (busy: bare hosts).
+// Returns the moved-on state, with the skipped sites tallied, and the target or null.
+async function sweepPick(state, day, unlisted, next, busy) {
+  for (let tries = 0; tries < 8; tries += 1) {
     const pick = await next(state);
     if (!pick) break;
     state = pick.state;
     const candidate = pick.target;
     if (!candidate) continue;
     const bare = reviewPublish.bare(candidate.host);
-    if (!candidate.host || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
+    if (!candidate.host || busy.has(bare) || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
       state = sweep.tally(state, day, "skipped", Object.assign({}, candidate, { at: new Date().toISOString(), outcome: "skipped" }));
       continue;
     }
-    target = candidate;
+    return { state, target: candidate };
   }
-  if (!target) return { state, note: "nothing to review", reviewed: false };
+  return { state, target: null };
+}
+
+// One sweep review run to its outcome; a failure is logged and saved, never thrown.
+async function sweepRun(target) {
   const startedAt = Date.now();
   const lines = [];
   const log = (text) => { if (lines.length < 5000) lines.push({ t: Date.now() - startedAt, text }); };
-  let outcome = "done";
-  let note = "";
-  let reason = "";
+  const stopped = () => Date.now() - startedAt > sweep.REVIEW_MS;
   try {
-    const { record, report } = await sweepReview(target, { log, stopped: () => Date.now() - startedAt > sweep.REVIEW_MS });
-    note = target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages";
+    const { record, report } = await sweepReview(target, { log, stopped, browse: sweep.patientBrowse(browseForReview, stopped) });
+    return { outcome: "done", note: target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages" };
   } catch (error) {
-    outcome = "failed";
-    reason = String((error && error.message) || error).slice(0, 160);
-    note = target.host + " (" + target.cc + ") failed: " + reason;
+    const reason = String((error && error.message) || error).slice(0, 160);
+    const note = target.host + " (" + target.cc + ") failed: " + reason;
     console.error("Sweep review of " + note);
     await saveSweepFailure(target, error, lines, startedAt);
+    return { outcome: "failed", reason, note };
   }
-  state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }, reason ? { reason } : {}));
-  return { state, note, reviewed: true };
 }
 
 // The outreach lane (#2363): prospects and peer-group sites from url_review_sweep/outreach, all day, apart from the
@@ -2315,19 +2333,11 @@ async function outreachSweep() {
   const day = new Date().toISOString().slice(0, 10);
   const cap = ops.budget("outreachPerDay", process.env);
   const [laneDoc, stateDoc, listDoc, unlisted] = await Promise.all([col.doc("lane").get(), col.doc("state").get(), col.doc("outreach").get(), unlistedHosts()]);
-  let lane = sweep.laneStart(laneDoc.data(), stateDoc.data());
+  const hold = { state: sweep.laneStart(laneDoc.data(), stateDoc.data()), save: (moved) => col.doc("lane").set(moved) };
   const list = (listDoc.data() || {}).hosts || [];
   const next = (at) => sweep.nextOutreach(at, list, day, cap);
-  const notes = [];
-  for (let n = 0; n < sweep.PER_TICK; n += 1) {
-    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(lane, day, unlisted, next);
-    lane = tick.state;
-    await col.doc("lane").set(lane);
-    notes.push(tick.note);
-    if (!tick.reviewed) break;
-  }
-  return notes.join("; ");
+  const full = (at, running) => (Number((((at || {}).days || {})[day] || {}).outreach) || 0) + running >= cap;
+  return sweepTick(hold, { slots: ops.budget("outreachConcurrency", process.env), tickStarted, day, unlisted, next, full });
 }
 
 // One sweep review, saved like any other: its url_reviews row, the counts, and its queued owner notice.
@@ -2370,7 +2380,7 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("sweepReviews"),
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: sweep.TICK_SECONDS,
-  memory: "1GiB",
+  memory: "2GiB",
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
@@ -2379,7 +2389,7 @@ exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("outreachSweep"),
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: sweep.TICK_SECONDS,
-  memory: "1GiB",
+  memory: "2GiB",
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("outreachSweep", () => outreachSweep()));
@@ -5391,7 +5401,8 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   memory: "4GiB",
   cpu: 4,
   concurrency: 1,
-  maxInstances: 6,
+  // At least sweepConcurrency + outreachConcurrency in ops-schedule.js, with room for people's reviews.
+  maxInstances: 12,
   timeoutSeconds: 120,
   secrets: SECRETS.reviewBrowser,
   // Renders untrusted pages, so it runs as an account whose only grant is secretAccessor on BROWSER_KEY.
