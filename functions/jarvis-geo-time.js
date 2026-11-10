@@ -9,15 +9,21 @@
      a   the outreach replies dated that day (marketing-sync keeps the last 80): [answered, positive], never lowered.
      k   the short-link clicks that day by visitor country, { cc: clicks } (#3281, jarvis-geo-clicks.js recordDays);
          over the clicks in c when present.
+     g   GA4 that day per country (#3282): [visitors, engaged, users, keyEvents], from one report by date and country.
+         Backfilled BACKFILL_DAYS once, then the last REFRESH_DAYS each run. c keeps 0 for these fields: the geo source
+         at days=1 reads GA4 from yesterday to today, so its numbers are not one day's.
 
    jarvis_settings/geo_time keeps when the backfill ran and the summary the geo source sends (`time` on the Map tab):
      ranges   7, 30 and 90 days to yesterday against the same span before: { cc: { field: [now, before] } }
      weeks    the 13 weeks to yesterday: start dates and { cc: { field: [13 values] } }
-   A null is a span with no history yet. Email, replies, visitors, link visits, reviews, paid, USD and clicks add up over a span;
-   prospects, swept, left, reviewed and social replies are levels, the last day's value. */
+   A null is a span with no history yet. Email, replies, GA4 visitors, engaged sessions, users and key events, link
+   visits, reviews, paid, USD and clicks add up over a span;
+   prospects, swept, left, reviewed and social replies are levels, the last day's value.
+   c rows are positional in FIELDS order, so new fields go last and older docs keep reading. */
 
-const FIELDS = ["sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks"];
+const FIELDS = ["sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks", "engaged", "users", "keyEvents"];
 const EMAIL = FIELDS.slice(0, 5);
+const GA4 = ["visitors", "engaged", "users", "keyEvents"];
 const LEVELS = new Set(["prospects", "swept", "left", "reviewed", "social"]);
 const COLLECTION = "jarvis_geo_history";
 const SUMMARY = ["jarvis_settings", "geo_time"];
@@ -54,7 +60,7 @@ function snapshotOf(countries) {
   const out = {};
   (countries || []).forEach((r) => {
     if (!r || !valid(r.cc)) return;
-    const row = FIELDS.map((f) => round(Number(r[f]) || 0));
+    const row = FIELDS.map((f) => (GA4.includes(f) ? 0 : round(Number(r[f]) || 0)));
     if (row.some((n) => n)) out[r.cc] = row;
   });
   return out;
@@ -133,6 +139,7 @@ function dayRow(doc, cc) {
     }
     if (f === "answered" || f === "positive") return doc.a ? ((doc.a[cc] || [0, 0])[f === "answered" ? 0 : 1]) : null;
     if (f === "clicks" && doc.k) return doc.k[cc] || 0;
+    if (GA4.includes(f)) return doc.g ? (doc.g[cc] ? doc.g[cc][GA4.indexOf(f)] : 0) : null;
     return doc.c ? (doc.c[cc] ? doc.c[cc][i] : 0) : null;
   });
 }
@@ -156,7 +163,7 @@ function summarize(docs, to) {
   (docs || []).forEach((d) => { if (d && DAY.test(d.day) && d.day <= to) byDay[d.day] = d; });
   const days = Object.keys(byDay).sort();
   const ccs = new Set();
-  days.forEach((d) => ["c", "d", "a", "k"].forEach((k) => Object.keys(byDay[d][k] || {}).forEach((cc) => { if (valid(cc)) ccs.add(cc); })));
+  days.forEach((d) => ["c", "d", "a", "k", "g"].forEach((k) => Object.keys(byDay[d][k] || {}).forEach((cc) => { if (valid(cc)) ccs.add(cc); })));
   const span = (from, end, cc) => spanRow(days.filter((d) => d >= from && d <= end).map((d) => dayRow(byDay[d], cc)));
   const covered = (from, end) => days.filter((d) => d >= from && d <= end).length;
   const pack = (cols) => {
@@ -233,7 +240,7 @@ async function fetchDaily(ctx, ids, from, to) {
  * The daily run, inside the daily briefing: yesterday's numbers from the geo source, the email days from Instantly
  * (BACKFILL_DAYS once, then REFRESH_DAYS) and the dated replies, then the summary. Every write is a set of whole
  * fields per day, so a run repeated gives the same documents. ctx: db, now, geo (the geo source at days=1), instantly
- * (path → JSON, or null without the key).
+ * (path → JSON, or null without the key), ga4Days ((from, to) → { day: { cc: [4] } }, jarvis.ga4Days).
  */
 async function record(ctx) {
   const db = ctx.db;
@@ -268,6 +275,21 @@ async function record(ctx) {
     }
   } else notes.push(ctx.instantly ? "no campaign to split" : "no Instantly key");
 
+  let ga4At = meta.ga4At || "";
+  if (ctx.ga4Days) {
+    const from = addDays(to, 1 - (ga4At ? REFRESH_DAYS : BACKFILL_DAYS));
+    try {
+      const got = await ctx.ga4Days(from, to);
+      const batch = db.batch();
+      daysFrom(from, to).forEach((day) => batch.set(col.doc(day), { day, g: (got && got[day]) || {} }, { mergeFields: ["day", "g"] }));
+      await batch.commit();
+      notes.push((ga4At ? "refreshed " : "backfilled ") + daysFrom(from, to).length + " GA4 days");
+      if (!ga4At) ga4At = at;
+    } catch (error) {
+      notes.push("GA4 days failed: " + String(error.message || error).slice(0, 120));
+    }
+  } else notes.push("no GA4");
+
   const replyDays = Object.keys((geo && geo.replyDays) || {}).filter((d) => DAY.test(d) && d <= to);
   if (replyDays.length) {
     const kept = await db.getAll(...replyDays.map((d) => col.doc(d)));
@@ -281,7 +303,7 @@ async function record(ctx) {
   const snap = await col.where("day", ">=", addDays(to, 1 - KEEP_DAYS)).get();
   const time = summarize(snap.docs.map((d) => d.data()), to);
   const json = JSON.stringify(time);
-  await metaRef.set({ at, to, backfilledAt, days: snap.size, json: json.length < 900000 ? json : "" }, { merge: true });
+  await metaRef.set({ at, to, backfilledAt, ga4At, days: snap.size, json: json.length < 900000 ? json : "" }, { merge: true });
   return "geo history " + to + ": " + notes.join(", ") + "; " + snap.size + " days kept";
 }
 

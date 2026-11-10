@@ -241,12 +241,21 @@ test("server: GA4 splits the current and prior range", async () => {
       { dimensionValues: [{ value: "cv" }, { value: "date_range_0" }], metricValues: ["10", "8", "20", "0.5", "61.4"].map((value) => ({ value })) },
       { dimensionValues: [{ value: "cv" }, { value: "date_range_1" }], metricValues: ["4", "3", "9", "0.4", "30"].map((value) => ({ value })) }
     ] });
+    if (dim === "date" && body.dimensions[1]) return json({ rows: [{ dimensionValues: [{ value: "20261024" }, { value: "CO" }], metricValues: ["3", "2", "3", "1"].map((value) => ({ value })) }] });
     if (dim === "date") return json({ rows: [{ dimensionValues: [{ value: "20261024" }], metricValues: [{ value: "3" }, { value: "2" }] }] });
+    if (dim === "countryId") return json({ rows: [
+      { dimensionValues: [{ value: "CO" }, { value: "Colombia" }, { value: "date_range_0" }], metricValues: ["6", "4", "5", "1"].map((value) => ({ value })) },
+      { dimensionValues: [{ value: "CO" }, { value: "Colombia" }, { value: "date_range_1" }], metricValues: ["2", "1", "2", "0"].map((value) => ({ value })) }
+    ] });
     return json({ rows: [] });
   };
   const out = await jarvis.ga4(fetch, { days: 7 });
   assert.deepEqual(out.groups[0], { group: "cv", sessions: 10, users: 8, views: 20, engagement: 50, duration: 61, priorSessions: 4, priorUsers: 3 });
   assert.deepEqual(out.daily, [{ date: "2026-10-24", sessions: 3, users: 2 }]);
+  assert.deepEqual(out.countries, [{ label: "Colombia", value: 6, prior: 2 }]);
+  assert.deepEqual(out.countryRows[0], { cc: "CO", label: "Colombia", visitors: 6, visitorsPrior: 2, engaged: 4, engagedPrior: 1, users: 5, usersPrior: 2, keyEvents: 1, keyEventsPrior: 0 });
+  assert.equal(out.keyEvents, true);
+  assert.deepEqual(await jarvis.ga4Days(fetch, "2026-10-24", "2026-10-24"), { "2026-10-24": { CO: [3, 2, 3, 1] } });
 });
 
 test("server: Cloudflare explains a missing analytics permission", async () => {

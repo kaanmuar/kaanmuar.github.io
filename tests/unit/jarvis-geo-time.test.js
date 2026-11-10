@@ -78,8 +78,12 @@ test("ranges add flows, keep the last level, and leave unrecorded spans null", (
     const day = time.addDays(to, -n);
     docs.push({ day, d: { CO: [10, 4, 1, 0, null] }, nb: true, a: n < 3 ? { CO: [1, n === 0 ? 1 : 0] } : undefined });
   }
-  docs[0].c = { CO: row({ prospects: 50, left: 20, visitors: 7 }), BR: row({ reviewed: 4 }) };
-  docs[7].c = { CO: row({ prospects: 40, left: 25, visitors: 3 }) };
+  docs[0].c = { CO: row({ prospects: 50, left: 20, visitors: 99 }), BR: row({ reviewed: 4 }) };
+  docs[7].c = { CO: row({ prospects: 40, left: 25 }) };
+  // GA4 comes from g, one day's sessions each: c's visitors (the geo source's two-day read) are ignored.
+  docs[0].g = { CO: [4, 3, 4, 1] };
+  docs[1].g = { CO: [3, 1, 2, 0] };
+  docs[7].g = { CO: [3, 2, 3, null] };
   const t = time.summarize(docs, to);
   assert.equal(t.since, "2026-10-26");
   assert.equal(t.levelsSince, "2026-11-01");
@@ -95,6 +99,10 @@ test("ranges add flows, keep the last level, and leave unrecorded spans null", (
   assert.deepEqual(r7.c.CO.prospects, [50, 40]);
   assert.deepEqual(r7.c.CO.left, [20, 25]);
   assert.deepEqual(r7.c.CO.visitors, [7, 3]);
+  assert.deepEqual(r7.c.CO.engaged, [4, 2]);
+  assert.deepEqual(r7.c.CO.users, [6, 3]);
+  assert.deepEqual(r7.c.CO.keyEvents, [1, null]);
+  assert.equal(r7.c.BR.visitors, undefined);
   assert.equal(r7.c.CO.bounced, undefined);
   // BR had no row on the day before's snapshot, so it had none then; with no snapshot at all it would be null.
   assert.deepEqual(r7.c.BR.reviewed, [4, 0]);
@@ -155,4 +163,38 @@ test("the daily run backfills once, then refreshes a week, and running it twice 
   assert.equal(db2.store.jarvis_settings.geo_time.backfilledAt, "");
   assert.equal(db2.store[time.COLLECTION]["2026-11-01"], undefined);
   assert.ok(db2.store[time.COLLECTION]["2026-11-08"].c);
+});
+
+test("the daily run records GA4 per day: 91 days once, then a week, every day written even with no visit", async () => {
+  const db = fakeDb();
+  const now = Date.parse("2026-11-09T12:40:00Z");
+  const spans = [];
+  const ga4Days = async (from, to) => {
+    spans.push([from, to]);
+    return { "2026-11-08": { CO: [7, 5, 6, 1], US: [40, 10, 38, 0] }, "2026-11-01": { CO: [2, 1, 2, 0] } };
+  };
+  const geoNow = { ok: true, countries: [{ cc: "CO", prospects: 9, visitors: 50 }, { cc: "US", visitors: 300 }] };
+  const first = await time.record({ db, now, geo: geoNow, ga4Days });
+  assert.match(first, /backfilled 91 GA4 days/);
+  assert.deepEqual(spans[0], ["2026-08-10", "2026-11-08"]);
+  const days = db.store[time.COLLECTION];
+  assert.deepEqual(days["2026-11-08"].g, { CO: [7, 5, 6, 1], US: [40, 10, 38, 0] });
+  assert.deepEqual(days["2026-11-02"].g, {});
+  // The geo source's visitors (yesterday plus today so far) stay out of c; a country with only visitors has no c row.
+  assert.deepEqual(days["2026-11-08"].c, { CO: row({ prospects: 9 }) });
+  assert.ok(db.store.jarvis_settings.geo_time.ga4At);
+  const summary = await time.read(db);
+  assert.deepEqual(summary.ranges[7].c.CO.visitors, [7, 2]);
+  assert.deepEqual(summary.ranges[7].c.US.users, [38, 0]);
+
+  const again = await time.record({ db, now, geo: geoNow, ga4Days });
+  assert.match(again, /refreshed 7 GA4 days/);
+  assert.deepEqual(spans[1], ["2026-11-02", "2026-11-08"]);
+
+  const db2 = fakeDb();
+  const out = await time.record({ db: db2, now, geo: geoNow, ga4Days: async () => { throw new Error("GA4 403: no access"); } });
+  assert.match(out, /GA4 days failed: GA4 403/);
+  assert.equal(db2.store.jarvis_settings.geo_time.ga4At, "");
+  assert.equal(db2.store[time.COLLECTION]["2026-11-08"].g, undefined);
+  assert.match(await time.record({ db: fakeDb(), now, geo: geoNow }), /no GA4/);
 });

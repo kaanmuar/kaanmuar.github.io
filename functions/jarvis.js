@@ -6,7 +6,8 @@
    health       ops_runs, failures, re-runs, alerts, owner notices, rivals, coupons, captures (server-only collections)
    jobs         Cloud Scheduler jobs: schedule, state, last attempt, last status
    github       CI on main, open bugs by area, PRs merged in the last 7 days, the newest issues
-   ga4          sessions, users, views and engagement by content group, country, source and day (property 495572902)
+   ga4          sessions, users, views and engagement by content group, country, source and day (property 495572902);
+                countryRows has every country with engaged sessions and key events (jarvis-geo-ga4.js)
    cloudflare   requests, bytes, cache ratio, threats and uniques for the zone (needs Zone Analytics Read)
    speed        PageSpeed (mobile) for each product page, CrUX history for the origin
    uptime       status, latency and TLS days left for each product page
@@ -454,10 +455,9 @@ async function decideRatings(db, { ids, decision }) {
 
 // --- ga4 ------------------------------------------------------------------------------------------------------
 
-async function ga4(fetchImpl, { days }) {
-  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
-  const span = rangeDays(days);
-  const run = async (body) => {
+// A runReport caller over the last `span` days and the span before (a body's own dateRanges win): rows as {dims, mets}.
+function ga4Runner(fetchImpl, bearer, span) {
+  return async (body) => {
     const data = await readJson(await fetchImpl("https://analyticsdata.googleapis.com/v1beta/properties/" + PROPERTY + ":runReport", {
       method: "POST",
       headers: { Authorization: "Bearer " + bearer, "Content-Type": "application/json" },
@@ -466,10 +466,23 @@ async function ga4(fetchImpl, { days }) {
     }), "GA4");
     return (data.rows || []).map((row) => ({ dims: (row.dimensionValues || []).map((v) => v.value), mets: (row.metricValues || []).map((v) => Number(v.value) || 0) }));
   };
+}
+
+/** GA4 sessions, engaged sessions, users and key events per country per day, from and to as YYYY-MM-DD (#3282). */
+async function ga4Days(fetchImpl, from, to) {
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
+  return require("./jarvis-geo-ga4").fetchDays(ga4Runner(fetchImpl, bearer, 1), from, to);
+}
+
+async function ga4(fetchImpl, { days }) {
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
+  const span = rangeDays(days);
+  const run = ga4Runner(fetchImpl, bearer, span);
+  const geoGa4 = require("./jarvis-geo-ga4");
   const metrics = [{ name: "sessions" }, { name: "totalUsers" }, { name: "screenPageViews" }, { name: "engagementRate" }, { name: "averageSessionDuration" }];
   const [groups, countries, sources, daily] = await Promise.all([
     run({ dimensions: [{ name: "contentGroup" }], metrics }),
-    run({ dimensions: [{ name: "country" }], metrics: [{ name: "sessions" }], limit: 12, orderBys: [{ metric: { metricName: "sessions" }, desc: true }] }),
+    geoGa4.fetchCountries(run),
     run({ dimensions: [{ name: "sessionSource" }, { name: "sessionMedium" }], metrics: [{ name: "sessions" }], limit: 12, orderBys: [{ metric: { metricName: "sessions" }, desc: true }] }),
     run({ dimensions: [{ name: "date" }], metrics: [{ name: "sessions" }, { name: "totalUsers" }], dateRanges: [{ startDate: span + "daysAgo", endDate: "today" }], orderBys: [{ dimension: { dimensionName: "date" } }] })
   ]);
@@ -492,7 +505,9 @@ async function ga4(fetchImpl, { days }) {
       const prior = named[key].prior || [0, 0, 0, 0, 0];
       return { group: key, sessions, users, views, engagement: Math.round(engagement * 1000) / 10, duration: Math.round(duration), priorSessions: prior[0], priorUsers: prior[1] };
     }).sort((a, b) => b.sessions - a.sessions),
-    countries: Object.entries(split(countries)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
+    countries: geoGa4.top(countries.countryRows),
+    countryRows: countries.countryRows,
+    keyEvents: countries.keyEvents,
     sources: Object.entries(split(sources)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
     daily: daily.map((row) => ({ date: row.dims[0].replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: row.mets[0], users: row.mets[1] }))
   };
@@ -1059,5 +1074,5 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
