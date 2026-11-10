@@ -389,8 +389,8 @@ function summarizePeriod(opens, rows, captures, alerts) {
   };
 }
 
-// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, sweep }.
-// followUp and sweep are left out of the quarter-hour report.
+// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, ours: { total, kinds } }.
+// followUp is left out of the quarter-hour report. Reviews are people's runs; ours are the sweeps, Jarvis runs and tests (#3194).
 function reportRows(summary, previous, phrase, extra) {
   const prior = previous || { opens: 0, reviews: 0, paidUsd: 0 };
   const more = extra || {};
@@ -401,7 +401,7 @@ function reportRows(summary, previous, phrase, extra) {
   return [
     { heading: "Volume and money" },
     { label: "Opens", value: summary.opens + delta(summary.opens, prior.opens || 0, phrase) + "; " + plural(summary.visitors || 0, "network") },
-    { label: "Reviews", value: summary.reviews + delta(summary.reviews, prior.reviews || 0, phrase) + (summary.reviews ? "; " + tally(summary.statuses) : "") + (summary.freeRuns ? "; " + summary.freeRuns + " free" : "") },
+    { label: "Reviews by people", value: summary.reviews + delta(summary.reviews, prior.reviews || 0, phrase) + (summary.reviews ? "; " + tally(summary.statuses) : "") + (summary.freeRuns ? "; " + summary.freeRuns + " free" : "") },
     { label: "Turned away", value: Object.keys(summary.turnedAway || {}).length ? tally(summary.turnedAway) : "" },
     { label: "Revenue", value: summary.paidUsd + " USD" + delta(summary.paidUsd, prior.paidUsd || 0, phrase, " USD") + " from " + plural(summary.paidCount, "payment") +
       (summary.paidCount ? " (" + tally(summary.paidKinds || {}) + ")" : "") + (summary.testPayments ? "; " + summary.testPayments + " test not counted" : "") },
@@ -416,7 +416,7 @@ function reportRows(summary, previous, phrase, extra) {
     { label: "Follow-up notes", value: follow ? plural(follow.notes, "note") + " sent, " + follow.stops + " stopped" : "" },
     { label: "Owner notices", value: follow ? follow.notices + " sent, " + (summary.claims || 0) + " claimed, " + follow.unlisted + " taken off Live Reports, " + replies : "" },
     { label: "Coupons", value: follow ? follow.redemptions + " redeemed" : "" },
-    { label: "Country sweep", value: more.sweep != null ? more.sweep + " reviewed, not counted above" : "" },
+    { label: "Our runs", value: more.ours ? more.ours.total + " not counted above" + (more.ours.total ? " (" + tally(more.ours.kinds || {}) + ")" : "") : "" },
     { heading: "Failures" }
   ].concat(more.failures || [], [
     { heading: "Where people came from" },
@@ -438,8 +438,8 @@ function reportRows(summary, previous, phrase, extra) {
 }
 
 // The subject line carries the numbers, so the inbox list is the summary.
-function reportSubject(title, label, summary, failed) {
-  const parts = [plural(summary.reviews, "review"), summary.paidCount ? summary.paidUsd + " USD" : "", failed ? failed + " failed" : ""].filter(Boolean);
+function reportSubject(title, label, summary, failed, ours) {
+  const parts = [plural(summary.reviews, "review") + " by people", ours ? ours + " ours" : "", summary.paidCount ? summary.paidUsd + " USD" : "", failed ? failed + " failed" : ""].filter(Boolean);
   return title + " URL review — " + label + " · " + parts.join(", ");
 }
 

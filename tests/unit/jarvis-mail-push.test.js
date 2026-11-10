@@ -68,6 +68,15 @@ test("sweep and test runs push only their problems", () => {
   assert.match(disputed.title, /^Test · A buyer opened/);
 });
 
+test("run alerts and pushes say when a run is ours or a test, not a person's (#3194)", () => {
+  const run = (email) => ({ runId: "r1", email, requestedUrl: "https://shop.co/", status: "running" });
+  assert.equal(reviewDesk.alertFrom("started", run("ana@shop.co")).title, "A review is running");
+  assert.equal(reviewDesk.alertFrom("report", Object.assign(run("kaanmuar@gmail.com"), { status: "complete" })).subject, "QA-lab · Ours · A review finished and a report was generated");
+  assert.equal(reviewDesk.alertFrom("failed", Object.assign(run("pw-bot@example.com"), { status: "failed" })).title, "Test · A review failed");
+  assert.equal(reviewDesk.alertFrom("capture", { id: "r1", status: "capture" }).title, "A report was copied or printed");
+  assert.match(mailPush.runMessage(run("qa@carlosandmunoz.com"), reviewDesk.alertFrom("started", run("qa@carlosandmunoz.com"))).title, /^Ours · Review running/);
+});
+
 test("backup and ops failures go to alerts, ops only when a job failed", () => {
   const b = mailPush.backupMessage("2026-10-25", "permission denied");
   assert.equal(b.kind, "alerts");

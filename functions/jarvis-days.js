@@ -39,7 +39,7 @@ const KINDS = {
   events: { name: "site_events", field: "createdAt", keep: 365 },
   opens: { name: "url_review_opens", field: "createdAt", keep: 365, fields: ["createdAt", "city", "country", "region", "lang", "languages", "page", "query", "referrerHost", "screen", "timezone", "title", "urls"] },
   // A refund lands on the review days or weeks later, so refunded reviews are read live over the stored ones.
-  reviews: { name: "url_reviews", field: "createdAt", iso: true, keep: 365, settle: 2 * DAY, live: ["refunded", "==", true], fields: REVIEW_FIELDS.concat(["sweep.outreach", "sweep.sector", "sweep.host", "refundedUsd", "refunded", "email", "reportId"]) },
+  reviews: { name: "url_reviews", field: "createdAt", iso: true, keep: 365, settle: 2 * DAY, live: ["refunded", "==", true], fields: REVIEW_FIELDS.concat(["sweep.outreach", "sweep.sector", "sweep.host", "refundedUsd", "refunded", "email", "reportId", "source", "rivalOf"]) },
   alerts: { name: "url_review_alerts", field: "at", iso: true, keep: 365, fields: ["at", "kind", "title", "url", "priceUsd"] },
   // A notice waits days for its send (status, lastError) and can be unlisted any time after.
   notices: { name: "url_review_owner_notices", field: "createdAt", iso: true, keep: 365, settle: 30 * DAY, fields: ["createdAt", "status", "unlistedAt", "lastError"] },

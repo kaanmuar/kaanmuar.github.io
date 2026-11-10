@@ -168,9 +168,10 @@ function runMessage(source, note) {
   const problem = PROBLEMS.has(n.kind);
   if (!problem && (s.source || s.test === true || !n.runId)) return null;
   const host = hostOf(n.url || "");
+  const ours = (String(n.title || "").match(/^(Test|Ours) · /) || [""])[0];
   return {
     kind: "desk",
-    title: (problem ? n.title : STAGE[n.kind] || n.title || "Review event") + (host ? " · " + host : ""),
+    title: (problem ? n.title : ours + (STAGE[n.kind] || n.title || "Review event")) + (host ? " · " + host : ""),
     body: [n.name, n.email].filter(Boolean).join(" · ") || clip(n.title, 220),
     lines: rowLines(n.rows),
     tab: "products:review",

@@ -832,11 +832,13 @@ async function goalValue(db, goal, start, end, sum) {
   }
   if (goal.product === "review") {
     if (goal.metric === "opens") return total(between(db.collection("url_review_opens")));
-    if (goal.metric === "reviews") return total(between(db.collection("url_reviews"), true));
-    const paid = between(db.collection("url_reviews").where("paid", "==", true), true);
-    if (goal.metric === "paid") return total(paid);
-    const snap = await paid.aggregate({ usd: sum("priceUsd") }).get();
-    return Math.round((Number(snap.data().usd) || 0) * 100) / 100;
+    // A count query cannot tell people's runs from ours (#3194), so the review goals read the day rows.
+    const until = Math.min(end.getTime(), Date.now());
+    const rows = (await dayRows.rows(db, ["reviews"], { from: start.getTime(), now: until })).reviews.filter((row) => dayRows.toMs(row.createdAt) < until);
+    if (goal.metric === "reviews") return core.splitReviews(rows).people.length;
+    const paid = rows.filter((row) => row.paid === true && row.test !== true && !core.reviewOrigin(row));
+    if (goal.metric === "paid") return paid.length;
+    return Math.round(paid.reduce((n, row) => n + (Number(row.priceUsd) || 0), 0) * 100) / 100;
   }
   if (goal.product === "inbox") return total(between(db.collection(goal.metric === "ratings" ? "ratings" : "messages")));
   throw new Error("No such goal.");
@@ -890,12 +892,13 @@ async function dailyProducts(db, { now, days = 1 }) {
   const was = events.filter((row) => !inside(row));
   const keep = (email) => !core.isTestEmail(email);
   const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
+  const priorReviews = core.splitReviews(reviews.filter((row) => !inside(row)));
   const products = {
     inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
-    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
+    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: priorReviews.people.length, ours: priorReviews.ours.length } }, window),
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
@@ -905,7 +908,7 @@ async function dailyProducts(db, { now, days = 1 }) {
 // The Mailed reports panel: the newest period reports sent to the owner.
 async function mailedReports(db) {
   const snap = await db.collection("url_review_reports").orderBy("emailedAt", "desc").limit(12).get();
-  return snap.docs.map((doc) => { const d = doc.data() || {}; return { id: doc.id, period: d.period || "", label: d.label || "", opens: d.opens || 0, reviews: d.reviews || 0, paidUsd: d.paidUsd || 0 }; });
+  return snap.docs.map((doc) => { const d = doc.data() || {}; return { id: doc.id, period: d.period || "", label: d.label || "", opens: d.opens || 0, reviews: d.reviews || 0, ours: d.ours ? d.ours.total || 0 : d.sweep || 0, paidUsd: d.paidUsd || 0 }; });
 }
 
 // The page's snapshot() for Gemini and the briefing mail, built from the server snapshot the Android app reads.

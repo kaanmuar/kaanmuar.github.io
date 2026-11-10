@@ -3,6 +3,7 @@
  */
 const offers = require("./url-review-offers");
 const publish = require("./url-review-publish");
+const jarvisCore = require("./jarvis-core");
 
 const HELD_WORDS = {
   "not-complete": "the review did not complete",
@@ -116,9 +117,14 @@ function rowsFor(source) {
   return items;
 }
 
+// Run alerts say when the run is ours (#3194); captures and payments carry no asker, so only the sandbox flag tags them.
+const RUN_ALERTS = new Set(["started", "report", "stopped", "failed"]);
+
 function alertFrom(kind, source) {
   const key = TITLES[kind] ? kind : (kindFor(source) || "report");
-  const title = (source && source.test === true ? "Test · " : "") + (TITLES[key] || "A review event");
+  const origin = RUN_ALERTS.has(key) ? jarvisCore.reviewOrigin(source || {}) : "";
+  const tag = (source && source.test === true) || origin === "test" ? "Test · " : origin ? "Ours · " : "";
+  const title = tag + (TITLES[key] || "A review event");
   const rows = rowsFor(source || {});
   const at = whenOf(source || {}) || new Date().toISOString();
   return {

@@ -284,7 +284,8 @@ function seed() {
       { id: 'e7', site: 'review', kind: 'click', name: 'qa_review_share', createdAt: at(6) }
     ],
     url_review_opens: [{ id: 'o1', createdAt: at(1), query: '?utm_source=x' }, { id: 'o2', createdAt: at(8) }, { id: 'o3', createdAt: at(9) }],
-    url_reviews: [{ id: 'r1', createdAt: iso(1), status: 'complete', paid: true, priceUsd: 9, score: 81, requestedUrl: 'https://shop.example/' }],
+    url_reviews: [{ id: 'r1', createdAt: iso(1), email: 'ana@shop.co', status: 'complete', paid: true, priceUsd: 9, score: 81, requestedUrl: 'https://shop.example/' },
+      { id: 's1', createdAt: iso(2), email: '', source: 'sweep', sweep: { host: 'big.example' }, status: 'complete', score: 40, requestedUrl: 'https://big.example/' }],
     url_review_alerts: [],
     url_review_reports: [],
     'socialHubStats/latest': { updatedAt: new Date().toISOString(), totals: { hubViews: 12, postViews: 7 } }
