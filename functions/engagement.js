@@ -150,7 +150,7 @@ const SENSITIVE = /\b(dies|died|death|rip|passed away|condolences|murder\w*|shoo
 const HASHTAG_SPAM = 8;
 
 // Vendors whose own posts we never answer under; edited in Jarvis > Engagement > Settings.
-const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming frog", "sitebulb", "seranking", "se ranking", "browserstack", "lambdatest", "saucelabs", "sauce labs", "accessibe", "userway", "siteimprove", "audioeye", "gtmetrix", "pingdom", "debugbear", "contentsquare", "hotjar", "conductor", "brightedge"];
+const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming frog", "sitebulb", "seranking", "se ranking", "browserstack", "lambdatest", "saucelabs", "sauce labs", "accessibe", "userway", "siteimprove", "audioeye", "gtmetrix", "pingdom", "debugbear", "contentsquare", "hotjar", "conductor", "brightedge", "sucuri", "wordfence", "mxtoolbox", "securityheaders", "ssllabs", "ssl labs", "detectify", "upguard"];
 
 // live: planned likes, reposts and follows are carried out; off (the default, a dry run) marks them "dry" instead.
 // Approved replies go out either way: Carlos approved each one.

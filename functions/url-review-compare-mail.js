@@ -177,7 +177,7 @@ function pairSection(cmp, links) {
   const rivalTrail = trailLine(cmp.trail && cmp.trail.rival);
   if (ownTrail) rows.push(row("Score history, " + cmp.ownHost, ownTrail));
   if (rivalTrail) rows.push(row("Score history, " + cmp.rivalHost, rivalTrail));
-  if (cmp.passive) rows.push(row("Checks", "Public checks only. This competitor run does not type into a form or open the chat."));
+  if (cmp.passive) rows.push(row("Checks", "Public checks only. This competitor run does not type into a form or open the chat, and lookalike domains and exposed files are checked only for a proven owner, so those checks are left out of the lists."));
   rows.push(row("Base report", extra.ownUrl || reportUrl(cmp.ownId)));
   rows.push(row("Competitor report", extra.rivalUrl || reportUrl(extra.rivalId)));
   rows.push(row("Full comparison", extra.versus || versusUrl(cmp.ownId, extra.rivalId)));

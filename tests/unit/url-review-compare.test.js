@@ -166,6 +166,17 @@ test("a competitor run's skipped typing and chat checks are not listed as the as
   assert.deepEqual(passive.ownOnly.map((row) => row.key), ["seo-title"]);
 });
 
+test("a competitor run's skipped lookalike and exposed-file checks are not listed as the asker's alone", () => {
+  const finding = (key) => ({ key, verdict: "fail", severity: "high", title: key, area: "Security" });
+  const keys = ["sec-lookalike", "sec-exposed-env", "sec-exposed-git", "sec-exposure", "seo-title"];
+  const mine = { host: "a.com", insights: { score: { overall: 70, areas: {} }, findings: keys.map(finding) } };
+  const theirs = { host: "b.com", limits: { passive: true }, insights: { score: { overall: 80, areas: {} }, findings: [] } };
+  assert.deepEqual(compare.compareSites(mine, theirs).ownOnly.map((row) => row.key).sort(), ["sec-exposure", "seo-title"]);
+  assert.equal(compare.compareSites(mine, Object.assign({}, theirs, { limits: {} })).ownOnlyCount, keys.length);
+  assert.equal(compare.skippedOnRival("sec-exposed"), true);
+  assert.equal(compare.skippedOnRival("sec-exposedness"), false);
+});
+
 test("the browser refuses to type into a field or open the chat on a competitor run", async () => {
   const browser = require("../../functions/url-review-browser");
   assert.equal(browser.passiveJob({ passive: true }), true);

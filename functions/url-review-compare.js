@@ -11,6 +11,13 @@ const LIST_MAX = 12;
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
 // Checks that need typing into a field or opening the chat, which a competitor run never does.
 const ACTIVE_KEYS = ["sec-typed", "a11y-chat-focus", "a11y-chat-trap", "an-chat-privacy"];
+// Owner-only checks a competitor run skips as well: lookalike domains, and exposed files (sec-exposed-env, -git, ...).
+const OWNER_KEYS = ["sec-lookalike"];
+const OWNER_PREFIXES = ["sec-exposed"];
+
+function skippedOnRival(key) {
+  return ACTIVE_KEYS.includes(key) || OWNER_KEYS.includes(key) || OWNER_PREFIXES.some((prefix) => key === prefix || key.startsWith(prefix + "-"));
+}
 
 function bare(host) {
   return String(host || "").trim().toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
@@ -150,7 +157,7 @@ function compareSites(own, rival, extra) {
   const a = openProblems(mine);
   const b = openProblems(theirs);
   const passive = !!(rival.limits && rival.limits.passive);
-  const ownOnly = onlyIn(a, b).filter((item) => !passive || !ACTIVE_KEYS.includes(item.key));
+  const ownOnly = onlyIn(a, b).filter((item) => !passive || !skippedOnRival(item.key));
   const rivalOnly = onlyIn(b, a);
   const areas = AREAS.map((name) => areaRow(mine, theirs, name));
   const kpis = kpisOf(own, rival);
@@ -239,4 +246,4 @@ function savedComparison(records, email, ids, isOpen) {
   return { base: { id: wanted[0], host, at: String(base.createdAt || "") }, list };
 }
 
-module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, SAVED_MAX, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf, savedComparison };
+module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, SAVED_MAX, skippedOnRival, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf, savedComparison };
