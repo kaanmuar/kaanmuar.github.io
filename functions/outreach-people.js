@@ -4,13 +4,14 @@
  *
  *   outreach_people/<idFor(network, handle)>  { kind, network, handle, name, lang, domain, email, links {},
  *     threads [{ url, lastAt, ourLast, theirLast }], stage, offers [{ code, kind, at, url }], dms [{ at, network, text, card }],
- *     notes, nextAt, history [{ at, stage, by, note }], createdAt, updatedAt }
+ *     notes, nextAt, history [{ at, stage, by, note }], uses (a live's claims), createdAt, updatedAt }
  *
  * A stage only moves forward along STAGES. "declined" and "blocked" apply from any stage ("declined" not after "paid"),
  * and nothing moves a blocked or declined person on, except declined to blocked.
  */
 const STAGES = ["found", "engaged", "replied", "nice", "offered", "claimed", "trial_ended", "discount_sent", "paid", "declined", "blocked"];
-const KINDS = ["social", "student", "company"];
+// A "live" row is one live show (live:<session>), not a person: its code is shared on stream, uses counts its claims.
+const KINDS = ["social", "student", "company", "live"];
 const COLLECTION = "outreach_people";
 const STOPPED = ["declined", "blocked"];
 const CAPS = { threads: 50, offers: 50, dms: 100, history: 200 };
@@ -75,6 +76,8 @@ function merged(prev, id, patch, now) {
   if (p.lang && /^[a-z]{2}$/.test(String(p.lang).slice(0, 2).toLowerCase())) doc.lang = String(p.lang).slice(0, 2).toLowerCase();
   if (p.domain) doc.domain = bareDomain(p.domain);
   if (p.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(p.email).trim())) doc.email = clip(p.email, 200).toLowerCase();
+  // Claims land out of order, so a live's uses only grow.
+  if (p.uses != null && Number.isFinite(Number(p.uses))) doc.uses = Math.max(Number(base.uses) || 0, Math.floor(Number(p.uses)));
   if (p.nextAt !== undefined) doc.nextAt = p.nextAt ? iso(Date.parse(p.nextAt) || now) : "";
   if (p.links && typeof p.links === "object") Object.entries(p.links).forEach(([k, v]) => { if (/^https?:\/\//.test(String(v || ""))) doc.links[clip(k, 30)] = clip(v, 500); });
   list(p.threads).map(cleanThread).filter(Boolean).forEach((t) => { doc.threads = byKey(doc.threads, "url", t); });
@@ -141,10 +144,11 @@ async function listAll(db, opts) {
 
 /** How many people stand at each stage, by kind: { total, stages: { stage: n }, kinds: { kind: { stage: n } } }. */
 function counts(people) {
-  const out = { total: 0, stages: {}, kinds: {} };
+  const out = { total: 0, stages: {}, kinds: {}, lives: { count: 0, uses: 0 } };
   (people || []).forEach((p) => {
     const stage = p.stage || "found";
     const kind = p.kind || "unknown";
+    if (kind === "live") { out.lives.count += 1; out.lives.uses += Number(p.uses) || 0; }
     out.total += 1;
     out.stages[stage] = (out.stages[stage] || 0) + 1;
     out.kinds[kind] = out.kinds[kind] || {};
@@ -153,7 +157,7 @@ function counts(people) {
   return out;
 }
 
-const CSV_FIELDS = ["id", "kind", "stage", "network", "handle", "name", "lang", "domain", "email", "offers", "lastOffer", "dms", "lastThread", "nextAt", "updatedAt", "createdAt", "notes"];
+const CSV_FIELDS = ["id", "kind", "stage", "network", "handle", "name", "lang", "domain", "email", "offers", "lastOffer", "dms", "uses", "lastThread", "nextAt", "updatedAt", "createdAt", "notes"];
 
 /** The ledger as CSV, one row per person. */
 function toCsv(people) {

@@ -215,6 +215,8 @@
   .ctaurl { font-family: "Fira Code", monospace; font-size: 44px; font-weight: 600; color: var(--cyan-hi); }
   .coupon { display: none; padding: 14px 30px; border-radius: 999px; border: 2px dashed var(--gold); font-size: 32px; font-weight: 700; color: var(--gold); }
   .coupon.on { display: inline-block; }
+  .ctaurl.trial { font-size: 31px; white-space: nowrap; }
+  .coupon.trial { border-style: solid; border-color: var(--cyan-hi); color: var(--cyan-hi); }
   .follow { font-size: 30px; color: var(--muted); }
 
   /* Captions and ticker */
@@ -328,7 +330,7 @@
     <section class="scene cta" data-scene="cta">
       <h2 class="h" data-ui="scan"></h2>
       <div class="qrwrap"><canvas id="qr" width="470" height="470"></canvas><div class="qrscan"></div></div>
-      <div class="ctaurl">carlosandmunoz.com/qa-review</div>
+      <div class="ctaurl" id="ctaurl">carlosandmunoz.com/qa-review</div>
       <div class="coupon" id="coupon"></div>
       <div class="follow" data-ui="follow"></div>
     </section>
@@ -380,7 +382,8 @@
 
   function applyUi() {
     document.querySelectorAll("[data-ui]").forEach((el) => { if (ui[el.dataset.ui]) el.textContent = ui[el.dataset.ui]; });
-    const tick = [ui.commentUrl, ui.weReview, "carlosandmunoz.com/qa-review", ui.areas || ""].filter(Boolean)
+    const trial = data && data.trial;
+    const tick = [ui.commentUrl, ui.weReview, trial ? ui.trial + ": " + trial.short : "carlosandmunoz.com/qa-review", ui.areas || ""].filter(Boolean)
       .map(esc).join("<b>✦</b>");
     $("ticker").innerHTML = (tick + "<b>✦</b>").repeat(4);
   }
@@ -420,8 +423,12 @@
       const QR = await import("https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm");
       await QR.default.toCanvas($("qr"), data.qr, { width: 470, margin: 0, color: { dark: "#050c0f", light: "#ffffff" }, errorCorrectionLevel: "M" });
     } catch (error) { /* offline: the URL under the code still reads */ }
-    $("coupon").textContent = data.coupon ? ui.coupon + ": " + data.coupon : "";
-    $("coupon").classList.toggle("on", !!data.coupon);
+    const trial = data.trial;
+    $("ctaurl").textContent = trial ? trial.short : "carlosandmunoz.com/qa-review";
+    $("ctaurl").classList.toggle("trial", !!trial);
+    $("coupon").textContent = trial ? ui.trial + " · " + ui.trialRuns : data.coupon ? ui.coupon + ": " + data.coupon : "";
+    $("coupon").classList.toggle("on", !!(trial || data.coupon));
+    $("coupon").classList.toggle("trial", !!trial);
   }
 
   function renderRail() {

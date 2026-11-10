@@ -2,7 +2,7 @@
 /* The outreach ledger (#3136, functions/outreach-people.js): everyone the social, student and company routines reached,
    where they stand, and the trials and codes they got.
 
-     node scripts/outreach-people.js list [--kind social|student|company] [--stage <stage>]
+     node scripts/outreach-people.js list [--kind social|student|company|live] [--stage <stage>]
      node scripts/outreach-people.js show <id>               e.g. bluesky:ana.dev or web:example.com
      node scripts/outreach-people.js export --csv [--kind] [--stage] > people.csv
 

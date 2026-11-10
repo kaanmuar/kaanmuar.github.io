@@ -7,7 +7,9 @@
  *   url_review_coupons/TRY-XXXXXX    { trial: true, percent: 0, purposes: ["trial"], maxUses 1, perEmail 1, validUntil
  *                                      +codeDays, kind, person, lang, email, domain, locked, network, handle, by }
  *                                      percent 0 keeps it closed at checkout (couponOpen)
- *   url_reviews/trial-<code>          the pass row: offers.passPurchase with priceUsd 0, paid false, trial true,
+ *                                      a live show's code (kind live, #3176) is shared: maxUses many, validUntil the
+ *                                      show's end + 24 h, still one trial per address
+ *   url_reviews/trial-<code>          the pass row (trial-<code>-<hash of the address> for a shared code): offers.passPurchase with priceUsd 0, paid false, trial true,
  *                                      TRIAL.runs runs for TRIAL.days; followup "" until endTrials mints its AFTER code
  *   url_review_trials/email:<addr>    one trial per address, and domain:<host> one per locked company domain; a
  *                                      student trial's domain only asks for an address on the school's domain
@@ -15,7 +17,8 @@
  *                                      purposes new-run, report and pass: the first payment, the pass included }
  *
  * The Mac agent and scripts call, signed with the Mac's paired token (engagement-mac.js verify):
- *   outreach-mint   { kind, person?, lang, email, domain, network, handle, name, by }  -> { ok, code, url, person }
+ *   outreach-mint   { kind, person?, lang, email, domain, network, handle, name, by, maxUses?, validHours? }
+ *                                                                                   -> { ok, code, url, validUntil, maxUses, person }
  *   outreach-touch  { id, patch }                                                   -> { ok, person }
  *   outreach-due    { kind, stage, before, limit }                                  -> { ok, people }
  */
@@ -24,7 +27,7 @@ const offers = require("./url-review-offers");
 const people = require("./outreach-people");
 
 // The follow-up percentages wait for Carlos's numbers; they live only here.
-const TRIAL = { days: 2, plan: "freelancer", runs: 3, followup: { social: 20, company: 20, student: 40 }, followupDays: 7, codeDays: 14 };
+const TRIAL = { days: 2, plan: "freelancer", runs: 3, followup: { social: 20, company: 20, student: 40, live: 20 }, followupDays: 7, codeDays: 14 };
 
 const DAY = 24 * 3600000;
 const SITE = "https://carlosandmunoz.com";
@@ -36,6 +39,10 @@ const LOCKED_KINDS = ["student", "company"];
 // A company gets one trial for its domain; a school's domain holds many students, each with a trial of their own.
 const ONE_PER_DOMAIN = ["company"];
 const AFTER_PURPOSES = ["new-run", "report", "pass"];
+// Only a live show's code is shared; everyone else's code is theirs alone.
+const SHARED_KINDS = ["live"];
+const LIVE_USES = 500;
+const MAX_USES = 5000;
 
 const iso = (ms) => new Date(ms).toISOString();
 const clip = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
@@ -82,25 +89,31 @@ async function createCoupon(db, prefix, coupon, rand) {
 }
 
 /**
- * A trial link for one person: { code, url }. person is the ledger id; without it, idFor(network, handle), or
- * web:<domain> for a company. A student or company trial with a domain opens only for an address on that domain.
+ * A trial link for one person: { code, url, validUntil, maxUses }. person is the ledger id; without it, idFor(network,
+ * handle), or web:<domain> for a company. A student or company trial with a domain opens only for an address on that
+ * domain. A live code (network "live", handle the session) takes maxUses (default LIVE_USES) and validHours.
  */
 async function mintTrial(db, opts, now, rand) {
   const o = opts || {};
-  if (!people.KINDS.includes(o.kind)) throw new TrialError("kind is social, student or company.");
+  if (!people.KINDS.includes(o.kind)) throw new TrialError("kind is social, student, company or live.");
   const at = now == null ? Date.now() : Number(now);
   const domain = domainOf(o.domain);
   const person = clip(o.person, 200) || (o.kind === "company" && domain ? people.idFor("web", domain) : people.idFor(o.network, o.handle));
   if (!person) throw new TrialError("Name the person: person, network and handle, or a company's domain.");
   const lang = langOf(o.lang);
+  const shared = SHARED_KINDS.includes(o.kind);
+  const maxUses = o.maxUses == null ? (shared ? LIVE_USES : 1) : Math.floor(Number(o.maxUses));
+  if (!(maxUses >= 1 && maxUses <= (shared ? MAX_USES : 1))) throw new TrialError(shared ? "maxUses is 1 to " + MAX_USES + "." : "Only a live code takes more than one use.");
+  const hours = o.validHours == null ? TRIAL.codeDays * 24 : Number(o.validHours);
+  if (!(hours > 0 && hours <= TRIAL.codeDays * 24)) throw new TrialError("validHours is above 0 and at most " + TRIAL.codeDays * 24 + ".");
   const coupon = {
     trial: true, percent: 0, kind: o.kind, person, lang, email: emailOf(o.email), domain, locked: !!domain && LOCKED_KINDS.includes(o.kind),
     network: clip(o.network, 30).toLowerCase(), handle: clip(o.handle, 120).replace(/^@+/, ""), by: clip(o.by, 60),
-    maxUses: 1, uses: 0, perEmail: 1, validFrom: iso(at), validUntil: iso(at + TRIAL.codeDays * DAY), purposes: ["trial"],
+    maxUses, uses: 0, perEmail: 1, validFrom: iso(at), validUntil: iso(at + Math.round(hours * 3600000)), purposes: ["trial"],
     source: "outreach-trial", createdAt: iso(at)
   };
   const code = await createCoupon(db, "TRY-", coupon, rand);
-  return { code, url: pageUrl(lang, { trial: code }) };
+  return { code, url: pageUrl(lang, { trial: code }), validUntil: coupon.validUntil, maxUses };
 }
 
 /** Why a trial coupon cannot be claimed now, or "": gone, expired or used. */
@@ -146,15 +159,17 @@ async function redeemTrial(db, opts) {
   if (!key) return { ok: false, why: "code" };
   if (!email) return { ok: false, why: "sign-in" };
   const col = db.collection("url_reviews");
-  const ref = col.doc("trial-" + key);
   const couponRef = db.collection("url_review_coupons").doc(key);
   const out = await db.runTransaction(async (tx) => {
-    const [done, couponSnap, mine] = await Promise.all([tx.get(ref), tx.get(couponRef), tx.get(markerRef(db, "email", email))]);
+    const [couponSnap, mine] = await Promise.all([tx.get(couponRef), tx.get(markerRef(db, "email", email))]);
+    const coupon = couponSnap.exists ? couponSnap.data() : null;
+    const shared = !!coupon && Number(coupon.maxUses || 1) > 1;
+    const ref = col.doc("trial-" + key + (shared ? "-" + crypto.createHash("sha256").update(email).digest("hex").slice(0, 10) : ""));
+    const done = await tx.get(ref);
     if (done.exists) {
       const row = Object.assign({ id: ref.id }, done.data());
       return row.email === email ? { ok: true, row, again: true } : { ok: false, why: "used" };
     }
-    const coupon = couponSnap.exists ? couponSnap.data() : null;
     const why = closed(coupon, at);
     if (why) return { ok: false, why };
     if (mine.exists) return { ok: false, why: "email" };
@@ -167,15 +182,18 @@ async function redeemTrial(db, opts) {
       runs: TRIAL.runs, paidUntil: iso(at + TRIAL.days * DAY), followup: "", createdAt: iso(at), expireAt: o.expireAt || null
     });
     tx.set(ref, made.row);
-    tx.update(couponRef, { uses: Number(coupon.uses || 0) + 1, lastUsedAt: iso(at), redeemedBy: email });
+    const uses = Number(coupon.uses || 0) + 1;
+    tx.update(couponRef, Object.assign({ uses, lastUsedAt: iso(at) }, shared ? {} : { redeemedBy: email }));
     const mark = { code: key, at: iso(at), person: coupon.person, kind: coupon.kind };
     tx.set(markerRef(db, "email", email), mark);
     if (site) tx.set(markerRef(db, "domain", coupon.domain), Object.assign({ email }, mark));
-    return { ok: true, row: Object.assign({ id: ref.id }, made.row) };
+    return { ok: true, row: Object.assign({ id: ref.id }, made.row), shared, uses };
   });
   if (!out.ok) return out;
   if (!out.again && out.row.person) {
-    await people.touch(db, out.row.person, { stage: "claimed", email, by: "trial-redeem", note: key }, at).catch((error) => console.error("Ledger claim failed:", error));
+    // A live's row counts claims and never holds a viewer's address.
+    const patch = out.shared ? { stage: "claimed", uses: out.uses, by: "trial-redeem", note: out.uses === 1 ? key : "" } : { stage: "claimed", email, by: "trial-redeem", note: key };
+    await people.touch(db, out.row.person, patch, at).catch((error) => console.error("Ledger claim failed:", error));
   }
   return { ok: true, why: "", id: out.row.id, pass: offers.passView(out.row), paidUntil: out.row.paidUntil };
 }
@@ -234,24 +252,26 @@ async function endTrials(db, opts) {
     if (!claimed) continue;
     minted += 1;
     const url = passPayUrl(row.lang, code);
-    if (row.person) await people.touch(db, row.person, { stage: "trial_ended", offers: [{ code, kind: "after", at: iso(at), url }], by: "outreachTrials" }, at).catch((error) => console.error("Ledger trial end failed:", error));
+    const person = SHARED_KINDS.includes(row.kind) ? "" : row.person;
+    if (person) await people.touch(db, person, { stage: "trial_ended", offers: [{ code, kind: "after", at: iso(at), url }], by: "outreachTrials" }, at).catch((error) => console.error("Ledger trial end failed:", error));
     const note = followupNote(row.lang, { code, p: percent, days: TRIAL.days, plan: offers.planById(TRIAL.plan).name, date: iso(until).slice(0, 10), url });
     const sent = o.mail ? await o.mail(row, note).catch((error) => { console.error("Trial follow-up mail failed:", error); return false; }) : false;
     if (!sent) continue;
     mailed += 1;
     await ref.update({ followupMailedAt: iso(at) });
-    if (row.person) await people.touch(db, row.person, { stage: "discount_sent", by: "outreachTrials", note: "mailed " + code }, at).catch((error) => console.error("Ledger discount note failed:", error));
+    if (person) await people.touch(db, person, { stage: "discount_sent", by: "outreachTrials", note: "mailed " + code }, at).catch((error) => console.error("Ledger discount note failed:", error));
   }
   return due.length ? due.length + " trials ended, " + minted + " follow-up codes, " + mailed + " mailed" : "no trials ended";
 }
 
-/** A payment that used an AFTER code moves its person to paid. */
+/** A payment that used an AFTER code moves its person to paid; a live's row only notes it. */
 async function afterPaid(db, code, now) {
   const key = clip(code, 24).toUpperCase();
   if (!AFTER.test(key)) return null;
   const snap = await db.collection("url_review_coupons").doc(key).get();
   const person = snap.exists ? snap.get("person") : "";
-  return person ? people.touch(db, person, { stage: "paid", by: "payment", note: key }, now) : null;
+  if (!person) return null;
+  return people.touch(db, person, SHARED_KINDS.includes(snap.get("kind")) ? { by: "payment", note: "paid " + key } : { stage: "paid", by: "payment", note: key }, now);
 }
 
 /** outreach-mint: a trial link, and the person moved to offered with the offer on their row. */
@@ -261,9 +281,9 @@ async function opMint(deps, body) {
   const id = clip(b.person, 200) || (b.kind === "company" && domainOf(b.domain) ? people.idFor("web", b.domain) : people.idFor(b.network, b.handle));
   const person = await people.touch(deps.db, id, {
     kind: b.kind, network: b.network, handle: b.handle, name: b.name, lang: b.lang, domain: b.domain, email: b.email,
-    stage: "offered", offers: [{ code: minted.code, kind: "trial", url: minted.url }], by: clip(b.by, 60) || "outreach-mint"
+    stage: "offered", offers: [{ code: minted.code, kind: b.kind === "live" ? "live" : "trial", url: minted.url }], by: clip(b.by, 60) || "outreach-mint"
   }, deps.now);
-  return { ok: true, code: minted.code, url: minted.url, person: { id: person.id, stage: person.stage, moved: person.moved } };
+  return { ok: true, code: minted.code, url: minted.url, validUntil: minted.validUntil, maxUses: minted.maxUses, person: { id: person.id, stage: person.stage, moved: person.moved } };
 }
 
 async function opTouch(deps, body) {

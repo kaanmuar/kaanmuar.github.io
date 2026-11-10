@@ -15,7 +15,7 @@ const redeem = (db, code, email, over) => trials.redeemTrial(db, Object.assign({
 
 test.describe("outreach trials", () => {
   test("TRIAL holds the contract's numbers", () => {
-    assert.deepEqual(trials.TRIAL, { days: 2, plan: "freelancer", runs: 3, followup: { social: 20, company: 20, student: 40 }, followupDays: 7, codeDays: 14 });
+    assert.deepEqual(trials.TRIAL, { days: 2, plan: "freelancer", runs: 3, followup: { social: 20, company: 20, student: 40, live: 20 }, followupDays: 7, codeDays: 14 });
   });
 
   test("mintTrial stores a one-use TRY- coupon for the trial only and links the page in the person's language", async () => {
@@ -30,8 +30,51 @@ test.describe("outreach trials", () => {
     const en = await trials.mintTrial(db, { kind: "company", domain: "https://www.Acme.com/about", lang: "xx" }, now);
     assert.match(en.url, /^https:\/\/carlosandmunoz\.com\/qa-review\.html\?trial=TRY-[A-Z0-9]{6}$/);
     assert.deepEqual([doc(db, "url_review_coupons/" + en.code).person, doc(db, "url_review_coupons/" + en.code).locked], ["web:acme.com", true]);
-    await assert.rejects(trials.mintTrial(db, { kind: "friend", handle: "x", network: "x" }, now), /social, student or company/);
+    await assert.rejects(trials.mintTrial(db, { kind: "friend", handle: "x", network: "x" }, now), /social, student, company or live/);
     await assert.rejects(trials.mintTrial(db, { kind: "social" }, now), /Name the person/);
+  });
+
+  test("a live code is shared for the show plus a day, one trial per address, and its row counts claims without addresses (#3176)", async () => {
+    const db = fakeDb();
+    const out = await trials.handle({ db, now }, { op: "outreach-mint", kind: "live", network: "live", handle: "2026-11-09-tiktok-hotel", name: "Hotel live", lang: "es", maxUses: 3, validHours: 25 });
+    assert.deepEqual([out.maxUses, Date.parse(out.validUntil) - now, out.person.id], [3, 25 * 3600000, "live:2026-11-09-tiktok-hotel"]);
+    assert.match(out.url, /qa-review-es\.html\?trial=TRY-/);
+    const c = doc(db, "url_review_coupons/" + out.code);
+    assert.deepEqual([c.kind, c.maxUses, c.perEmail, c.locked], ["live", 3, 1, false]);
+    const a = await redeem(db, out.code, "ana@example.com");
+    const b = await redeem(db, out.code, "bo@example.com");
+    assert.equal(a.ok && b.ok, true);
+    assert.notEqual(a.id, b.id);
+    assert.match(a.id, new RegExp("^trial-" + out.code + "-[0-9a-f]{10}$"));
+    assert.equal((await redeem(db, out.code, "ANA@example.com")).id, a.id, "the same address claiming again gets the same pass");
+    assert.equal(doc(db, "url_review_coupons/" + out.code).redeemedBy, undefined);
+    const other = await trials.mintTrial(db, { kind: "social", network: "x", handle: "cy" }, now);
+    assert.equal((await redeem(db, other.code, "cy@example.com")).ok, true);
+    assert.deepEqual(await redeem(db, out.code, "cy@example.com"), { ok: false, why: "email" }, "still one trial per address");
+    assert.equal((await redeem(db, out.code, "di@example.com")).ok, true);
+    assert.deepEqual(await redeem(db, out.code, "ed@example.com"), { ok: false, why: "used" });
+    const late = await trials.mintTrial(db, { kind: "live", network: "live", handle: "late", validHours: 2 }, now);
+    assert.deepEqual(await redeem(db, late.code, "fa@example.com", { now: now + 3 * 3600000 }), { ok: false, why: "expired" });
+    const row = doc(db, "outreach_people/live:2026-11-09-tiktok-hotel");
+    assert.deepEqual([row.kind, row.stage, row.uses, row.email, row.offers[0].kind], ["live", "claimed", 3, "", "live"]);
+    assert.equal(JSON.stringify(row).includes("@example.com"), false);
+    assert.equal(people.counts([row]).lives.uses, 3);
+    await assert.rejects(trials.mintTrial(db, { kind: "social", network: "x", handle: "a", maxUses: 2 }, now), /Only a live code/);
+    await assert.rejects(trials.mintTrial(db, { kind: "live", network: "live", handle: "a", maxUses: 0 }, now), /maxUses is 1 to 5000/);
+    await assert.rejects(trials.mintTrial(db, { kind: "live", network: "live", handle: "a", validHours: 24 * 15 }, now), /validHours/);
+    assert.equal(doc(db, "url_review_coupons/" + (await trials.mintTrial(db, { kind: "live", network: "live", handle: "b" }, now)).code).maxUses, 500);
+  });
+
+  test("an ended live trial gets its viewer's AFTER code at 20% and leaves the live's row where it was", async () => {
+    const db = fakeDb();
+    const { code } = await trials.handle({ db, now }, { op: "outreach-mint", kind: "live", network: "live", handle: "s1" });
+    const { id } = await redeem(db, code, "ana@example.com");
+    assert.match(await trials.endTrials(db, { now: now + 3 * DAY }), /1 trials ended, 1 follow-up codes/);
+    const after = doc(db, "url_reviews/" + id).followup;
+    assert.deepEqual([doc(db, "url_review_coupons/" + after).percent, doc(db, "url_review_coupons/" + after).email], [20, "ana@example.com"]);
+    await trials.afterPaid(db, after, now + 4 * DAY);
+    const row = doc(db, "outreach_people/live:s1");
+    assert.deepEqual([row.stage, row.offers.length, row.history[row.history.length - 1].note], ["claimed", 1, "paid " + after]);
   });
 
   test("a taken code is drawn again", async () => {
@@ -271,7 +314,7 @@ test.describe("outreach ledger", () => {
     assert.match(await cli.main(["list", "--kind", "company"], () => db), /1 people: found 1/);
     assert.equal(JSON.parse(await cli.main(["show", "x:ana"], () => db)).stage, "offered");
     const csv = (await cli.main(["export", "--csv"], () => db)).split("\n");
-    assert.equal(csv[0], "id,kind,stage,network,handle,name,lang,domain,email,offers,lastOffer,dms,lastThread,nextAt,updatedAt,createdAt,notes");
+    assert.equal(csv[0], "id,kind,stage,network,handle,name,lang,domain,email,offers,lastOffer,dms,uses,lastThread,nextAt,updatedAt,createdAt,notes");
     assert.ok(csv.some((l) => l.startsWith("x:ana,social,offered,x,ana,\"Ana, Dev\"")));
     await assert.rejects(cli.main(["list", "--stage", "nope"], () => db), /--stage is one of/);
     await assert.rejects(cli.main(["frob"], () => db), /Usage/);
@@ -279,6 +322,7 @@ test.describe("outreach ledger", () => {
 
   test("counts tally people at each stage, in all and by kind", () => {
     assert.deepEqual(people.counts([{ kind: "social", stage: "offered" }, { kind: "social", stage: "paid" }, { kind: "student" }]),
-      { total: 3, stages: { offered: 1, paid: 1, found: 1 }, kinds: { social: { offered: 1, paid: 1 }, student: { found: 1 } } });
+      { total: 3, stages: { offered: 1, paid: 1, found: 1 }, kinds: { social: { offered: 1, paid: 1 }, student: { found: 1 } }, lives: { count: 0, uses: 0 } });
+    assert.deepEqual(people.counts([{ kind: "live", stage: "claimed", uses: 4 }, { kind: "live", stage: "offered" }]).lives, { count: 2, uses: 4 });
   });
 });
