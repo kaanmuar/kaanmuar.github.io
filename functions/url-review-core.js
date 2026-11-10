@@ -20,6 +20,7 @@ const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
 const localProfile = require("./url-review-local");
 const mailAuth = require("./url-review-mail-auth");
+const blocklists = require("./url-review-blocklists");
 const { registrable, registryDomain } = require("./url-review-suffix");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
@@ -3035,8 +3036,11 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
     done(dnsFacts(origin.hostname).then(async (facts) => {
       const auth = facts.spf || facts.dmarc ? withTimeout(mailAuth.readMailAuth(facts.domain, halt), 10000, null).catch(() => null) : null;
+      const listed = blocklists.check(facts, origin.hostname);
       if (facts.mtaSts) facts.mtaStsPolicy = await withTimeout(mtaStsPolicy(facts.domain, halt), 8000, { error: "no answer in time" });
       if (auth) facts.mailAuth = await auth;
+      facts.blocklists = await listed;
+      say(blocklists.note(facts.blocklists));
       return facts;
     }).catch(() => null), (facts) => facts
       ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +

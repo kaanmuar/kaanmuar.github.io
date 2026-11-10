@@ -7,6 +7,7 @@ const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
 const { mailAuthChecks, dmarcRepair, dmarcPolicy } = require("./url-review-mail-auth");
+const blocklists = require("./url-review-blocklists");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1666,6 +1667,7 @@ function analyze(input) {
     if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
   domainChecks(extras, dnsInfo, dnsRead, add);
+  blocklists.report(dnsInfo && dnsInfo.blocklists, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, say("sec-leak.fix"), { effort: "hours" });
   });
