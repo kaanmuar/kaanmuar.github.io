@@ -1,6 +1,76 @@
 {
  "runs": [
   {
+   "at": "2026-11-10T17:37:39.033Z",
+   "run": {
+    "id": 42828887072,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/42828887072"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1679,
+   "scored": 1677,
+   "failed": 2,
+   "below": 1121,
+   "avg": {
+    "mobile": 85,
+    "desktop": 98
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-10",
+    "files": [
+     "simulador.html"
+    ],
+    "fixes": [
+     {
+      "page": "simulador.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     }
+    ],
+    "pages": [
+     {
+      "file": "simulador.html",
+      "mobile": {
+       "before": 66,
+       "after": 66,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 87,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/simulador.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "6 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-08T15:53:29.074Z",
    "run": {
     "id": 42480054840,
