@@ -1060,7 +1060,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await page.close();
     page = await page.context().newPage();
     page.on('pageerror', (error) => errors.push(error.message));
-    calls = await openStats(page, '#stats/geo/30', { geo: withCost(ITEMS), 'geo-costs': { ok: true, items: ITEMS, suggestions: [{ label: 'Domain renewals .com (3)', usd: 2.79, channel: 'email', from: '', to: '', source: 'Cloudflare Registrar', why: 'a.com, b.com, c.com: USD 11.17 a year each' }], note: '' },
+    calls = await openStats(page, '#stats/geo/30', { geo: withCost(ITEMS), 'geo-costs': { ok: true, items: ITEMS, suggestions: [{ label: 'Domain renewals .com (3)', usd: 2.79, channel: 'email', from: '', to: '', source: 'Cloudflare Registrar', why: 'a.com, b.com, c.com: USD 11.17 a year each' },
+      { label: 'Google Cloud (Jarvis)', usd: 12.69, channel: 'all', from: '', to: '', source: 'Google Cloud billing export', why: 'Net cost billed for 2026-10, after credits; mostly Vertex AI.' }], month: '2026-10', note: 'AI: the Jarvis worker spent nothing in 2026-10.' },
       'geo-costs-save': { ok: true, items: ITEMS.slice(0, 2).concat({ label: 'Domain renewals .com (3)', usd: 2.79, channel: 'email', from: '', to: '' }), monthly: { email: 32.79, social: 0, links: 0, all: 15, total: 47.79 } } });
     geo = page.locator('[data-view="geo"]');
     await expect(geo.locator('.jv-needs').first()).not.toContainText(geoCost.NEEDS);
@@ -1109,13 +1110,16 @@ test.describe('admin statistics (Jarvis)', () => {
     await geo.locator('[data-geo-week]').fill('12');
     await expect(geo.locator('[data-panel-id="geo-cost"] header')).toContainText('Week of Nov 2 – Nov 8');
 
-    // Settings: the saved list, a Cloudflare suggestion to add, and the whole list saved.
+    // Settings: the saved list, suggestions from Cloudflare and Google Cloud with a note for what had none, one added, and the whole list saved.
     await page.locator('[data-act="settings"]').first().click();
     const set = page.locator('.jv-settings-box [data-geo-costs]');
     await expect(set.locator('[data-gc-row]')).toHaveCount(3);
     await set.locator('[data-geo-cost="suggest"]').click();
-    await expect(set.locator('.jv-cost-sugg')).toContainText('Domain renewals .com (3)');
-    await set.locator('[data-geo-cost="use"]').click();
+    await expect(set.locator('[data-geo-cost="suggest"]')).toHaveText('Suggest costs');
+    await expect(set.locator('.jv-cost-sugg li')).toHaveCount(2);
+    await expect(set.locator('.jv-cost-sugg li').last()).toContainText('Google Cloud (Jarvis) · $12.69 a month · all');
+    await expect(set).toContainText('AI: the Jarvis worker spent nothing in 2026-10.');
+    await set.locator('[data-geo-cost="use"]').first().click();
     await expect(set.locator('[data-gc-row]')).toHaveCount(4);
     await set.locator('[data-geo-cost="remove"][data-i="2"]').click();
     await set.locator('[data-geo-cost="save"]').click();

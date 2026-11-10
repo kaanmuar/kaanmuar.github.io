@@ -129,12 +129,12 @@ test("with no history, Now is the campaigns' lifetime from the first one created
 test("the geo source's hook: Now fields on each country, and a need while the list is empty", async () => {
   const empty = { countries: [{ cc: "CO", sent: 10 }], time: TIME };
   const needs = [];
-  await cost.attach({ db: fakeDb(), days: 7, now: NOW }, empty, { needs });
+  await cost.attach({ db: docsDb(), days: 7, now: NOW }, empty, { needs });
   assert.deepEqual(needs, [cost.NEEDS]);
   assert.deepEqual(empty.cost.items, []);
   assert.equal(empty.countries[0].costPerSent, null);
   const out = { countries: [{ cc: "CO", sent: 10 }, { cc: "PE", sent: 0 }], time: TIME };
-  await cost.attach({ db: fakeDb({ "jarvis_settings/geo_costs": { items: [item({ usd: 30 }), { label: "", usd: 3 }] } }), days: 7, now: NOW }, out, { needs: [] });
+  await cost.attach({ db: docsDb({ "jarvis_settings/geo_costs": { items: [item({ usd: 30 }), { label: "", usd: 3 }] } }), days: 7, now: NOW }, out, { needs: [] });
   assert.equal(out.cost.items.length, 1);
   assert.equal(out.countries[0].costPerSent, 0.05);
   assert.equal(out.countries[1].cost, null);
@@ -150,21 +150,86 @@ test("saves a checked list and refuses a bad one", async () => {
   assert.equal((await cost.read(db)).items.length, 1);
 });
 
-test("suggests the Cloudflare Registrar domains at their renewal price a month, and notes when it cannot", async () => {
+const ok = (result) => ({ ok: true, json: async () => ({ success: true, result }) });
+const registrar = (calls, refuse) => async (url, init) => {
+  const auth = ((init && init.headers) || {}).Authorization;
+  calls.push([url.replace(/accounts\/\w+/, "accounts/A"), (init && init.method) || "GET", auth]);
+  if (refuse && refuse(auth, url)) return { ok: false, status: 403, json: async () => ({ success: false, errors: [{ message: "Authentication error" }] }) };
+  if (/registrations/.test(url)) return ok([{ domain_name: "tryqa.com", status: "active" }, { domain_name: "getqa.com", status: "active" }, { domain_name: "old.io", status: "expired" }, { domain_name: "qa.dev", status: "active" }]);
+  const tld = JSON.parse(init.body).domains[0].split(".").pop();
+  return ok({ domains: tld === "com" ? [{ name: "x.com", registrable: true, pricing: { currency: "USD", registration_cost: "11.17", renewal_cost: "11.17" } }] : [{ name: "x.dev", registrable: true }] });
+};
+
+test("suggests the Cloudflare Registrar domains at their renewal price a month, with the analytics token first", async () => {
   const calls = [];
-  const fetch = async (url, init) => {
-    calls.push([url.replace(/accounts\/\w+/, "accounts/A"), (init && init.method) || "GET"]);
-    if (/registrations/.test(url)) return { ok: true, json: async () => ({ success: true, result: [{ domain_name: "tryqa.com", status: "active" }, { domain_name: "getqa.com", status: "active" }, { domain_name: "old.io", status: "expired" }] }) };
-    return { ok: true, json: async () => ({ success: true, result: { domains: [{ name: "x.com", registrable: true, pricing: { currency: "USD", registration_cost: "11.17", renewal_cost: "11.17" } }] } }) };
-  };
-  const out = await cost.suggest({ fetch, env: { CLOUDFLARE_API_TOKEN: "t", CLOUDFLARE_ACCOUNT_ID: "abc123" } });
-  assert.deepEqual(calls, [["https://api.cloudflare.com/client/v4/accounts/A/registrar/registrations?per_page=50", "GET"], ["https://api.cloudflare.com/client/v4/accounts/A/registrar/domain-check", "POST"]]);
+  const env = { CLOUDFLARE_ANALYTICS_TOKEN: "an", CLOUDFLARE_API_TOKEN: "api", CLOUDFLARE_ACCOUNT_ID: "abc123" };
+  const out = await cost.domainSuggestions({ fetch: registrar(calls), env });
+  assert.deepEqual(calls.map((c) => c.slice(0, 2)), [["https://api.cloudflare.com/client/v4/accounts/A/registrar/registrations?per_page=50", "GET"],
+    ["https://api.cloudflare.com/client/v4/accounts/A/registrar/domain-check", "POST"], ["https://api.cloudflare.com/client/v4/accounts/A/registrar/domain-check", "POST"]]);
+  assert.ok(calls.every((c) => c[2] === "Bearer an"));
   assert.equal(out.suggestions.length, 1);
   assert.deepEqual(Object.assign({}, out.suggestions[0], { why: "" }), { label: "Domain renewals .com (2)", usd: 1.86, channel: "email", from: "", to: "", source: "Cloudflare Registrar", why: "" });
   assert.match(out.suggestions[0].why, /tryqa\.com, getqa\.com: USD 11\.17 a year each/);
-  assert.match((await cost.suggest({ fetch, env: {} })).note, /not set up/);
-  const denied = async () => ({ ok: false, status: 403, json: async () => ({ success: false, errors: [{ message: "Authentication error" }] }) });
-  assert.match((await cost.suggest({ fetch: denied, env: { CLOUDFLARE_API_TOKEN: "t", CLOUDFLARE_ACCOUNT_ID: "abc" } })).note, /could not be read: Authentication error/);
+  assert.match(out.note, /did not price \.dev; enter that renewal by hand/);
+  // The analytics token without Registrar: the API token is tried next.
+  const tried = [];
+  const fallback = await cost.domainSuggestions({ fetch: registrar(tried, (auth) => auth === "Bearer an"), env });
+  assert.equal(fallback.suggestions.length, 1);
+  assert.deepEqual(tried.map((c) => c[2]).slice(0, 2), ["Bearer an", "Bearer api"]);
+  assert.match((await cost.domainSuggestions({ fetch: registrar([]), env: {} })).note, /not set up/);
+  const none = await cost.domainSuggestions({ fetch: registrar([], () => true), env });
+  assert.match(none.note, /CLOUDFLARE_ANALYTICS_TOKEN the permission Account > Registrar Domains > Read \(Authentication error\)/);
+});
+
+const bq = (rows, seen) => async (url, init) => {
+  if (/metadata/.test(url)) return { ok: true, json: async () => ({ access_token: "g" }) };
+  if (/\/tables$/.test(url)) return { ok: true, json: async () => ({ tables: [{ tableReference: { tableId: "gcp_billing_export_v1_01" } }] }) };
+  seen.push(JSON.parse(init.body).query);
+  return { ok: true, json: async () => ({ rows }) };
+};
+
+test("suggests Google Cloud's net cost for the last full month in USD, from the billing export", async () => {
+  const seen = [];
+  const rows = [{ f: [{ v: "Vertex AI" }, { v: "COP" }, { v: "40000" }, { v: "52000" }, { v: "9.76" }] }, { f: [{ v: "Cloud Functions" }, { v: "COP" }, { v: "12000" }, { v: "12000" }, { v: "2.93" }] }];
+  const out = await cost.cloudSuggestions({ fetch: bq(rows, seen) }, "2026-10");
+  assert.match(seen[0], /invoice\.month = '202610'/);
+  assert.match(seen[0], /currency_conversion_rate/);
+  assert.doesNotMatch(seen[0], /INTERVAL/);
+  assert.equal(out.suggestions.length, 1);
+  assert.deepEqual(Object.assign({}, out.suggestions[0], { why: "" }), { label: "Google Cloud (Jarvis)", usd: 12.69, channel: "all", from: "", to: "", source: "Google Cloud billing export", why: "" });
+  assert.match(out.suggestions[0].why, /billed for 2026-10, after credits, converted from COP; mostly Vertex AI, Cloud Functions/);
+  assert.match((await cost.cloudSuggestions({ fetch: bq([], []) }, "2026-10")).note, /nothing billed for 2026-10/);
+  const off = async (url) => (/metadata/.test(url) ? { ok: true, json: async () => ({ access_token: "g" }) } : { ok: false, status: 404, json: async () => ({ error: { message: "Not found" } }) });
+  assert.match((await cost.cloudSuggestions({ fetch: off }, "2026-10")).note, /billing export to BigQuery is off/);
+  const down = async () => { throw new Error("no metadata server"); };
+  assert.match((await cost.cloudSuggestions({ fetch: down }, "2026-10")).note, /could not be read \(no metadata server\)/);
+});
+
+const docsDb = (docs) => ({ collection: (col) => ({ doc: (id) => ({ get: async () => ({ exists: !!docs[col + "/" + id], data: () => docs[col + "/" + id] }) }) }) });
+
+test("suggests AI spend: the Jarvis worker's last month, and Cursor on-demand once its cycle is a month old", async () => {
+  const now = Date.parse("2026-11-10T12:00:00Z");
+  const worker = { "jarvis_worker_spend/2026-10": { usd: 7.4321, runs: 12, input: 900000, output: 120000 } };
+  const young = await cost.aiSuggestions({ db: docsDb(Object.assign({ "jarvis_github_local/latest": { at: "2026-11-10T11:00:00Z", cost: { cycleStart: "2026-10-28T00:00:00Z", onDemandUsd: 31.5 } } }, worker)) }, "2026-10", now);
+  assert.deepEqual(young.suggestions.map((x) => [x.label, x.usd, x.channel]), [["AI: Jarvis worker (Gemini)", 7.43, "all"]]);
+  assert.match(young.suggestions[0].why, /2026-10: 12 runs/);
+  assert.match(young.note, /Cursor on-demand is \$31\.50 for the cycle since 2026-10-28 \(13 days, from the Mac upload\), not a full month yet/);
+  const full = await cost.aiSuggestions({ db: docsDb({ "jarvis_github_local/latest": { at: "2026-11-09T11:00:00Z", cost: { cycleStart: "2026-10-10T00:00:00Z", onDemandUsd: 64.2 } } }) }, "2026-10", now);
+  assert.deepEqual(full.suggestions.map((x) => [x.label, x.usd]), [["AI: Cursor on-demand", 64.2]]);
+  assert.match(full.suggestions[0].why, /cycle from 2026-10-10, as of 2026-11-09\. The plan's fixed fee is not in it/);
+  assert.match(full.note, /Jarvis worker spent nothing in 2026-10/);
+  assert.match((await cost.aiSuggestions({ db: docsDb({}) }, "2026-10", now)).note, /no Cursor cost yet/);
+  assert.match((await cost.aiSuggestions({}, "2026-10", now)).note, /Firestore is not reachable/);
+});
+
+test("suggest asks every source for the last full month, leaves out labels already saved and joins the notes", async () => {
+  assert.equal(cost.lastMonth(Date.parse("2026-01-05T00:00:00Z")), "2025-12");
+  const calls = [];
+  const fetch = async (url, init) => (/cloudflare/.test(url) ? registrar(calls)(url, init) : bq([{ f: [{ v: "Vertex AI" }, { v: "USD" }, { v: "5" }, { v: "5" }, { v: "5" }] }], [])(url, init));
+  const out = await cost.suggest({ fetch, env: { CLOUDFLARE_ANALYTICS_TOKEN: "an", CLOUDFLARE_ACCOUNT_ID: "abc" }, db: docsDb({}), now: Date.parse("2026-11-10T00:00:00Z"), items: [{ label: "google cloud (jarvis)" }] });
+  assert.equal(out.month, "2026-10");
+  assert.deepEqual(out.suggestions.map((x) => x.label), ["Domain renewals .com (2)"]);
+  assert.match(out.note, /did not price \.dev.*Jarvis worker spent nothing.*no Cursor cost yet/);
 });
 
 test("Ask gets the basis, the totals and the cheapest and costliest countries per reply", () => {

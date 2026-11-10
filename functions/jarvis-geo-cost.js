@@ -217,45 +217,110 @@ async function save(db, body, by, now) {
   return { ok: true, items, at, monthly: monthlyOf(items, bogotaDay(now || Date.now()).slice(0, 7)) };
 }
 
+/** The calendar month before now's, "YYYY-MM" (UTC). */
+const lastMonth = (now) => { const d = new Date(now); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7); };
+const why = (error) => String((error && error.message) || error).slice(0, 120);
+const REGISTRAR_NEED = "Cloudflare Registrar: give the token in CLOUDFLARE_ANALYTICS_TOKEN the permission Account > Registrar Domains > Read";
+
 /**
- * Suggested items to confirm: the domains on Cloudflare Registrar at their extension's renewal price a month. The price is
- * Cloudflare's at-cost one, read by checking an unregistered name on the same extension (the registrations list has none).
- * ctx: fetch, env (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). Never throws: a failure is a note.
+ * The domains on Cloudflare Registrar at their extension's renewal price a month. The price is Cloudflare's at-cost one, read
+ * by checking an unregistered name on the same extension (the registrations list has none). It reads with
+ * CLOUDFLARE_ANALYTICS_TOKEN, then CLOUDFLARE_API_TOKEN, whichever has Account > Registrar Domains > Read.
  */
-async function suggest(ctx) {
+async function domainSuggestions(ctx) {
   const env = (ctx && ctx.env) || {};
-  const token = env.CLOUDFLARE_API_TOKEN;
+  const tokens = [...new Set([env.CLOUDFLARE_ANALYTICS_TOKEN, env.CLOUDFLARE_API_TOKEN].filter(Boolean))];
   const account = String(env.CLOUDFLARE_ACCOUNT_ID || "").replace(/[^a-f0-9]/gi, "");
-  if (!token || !account) return { suggestions: [], note: "Cloudflare is not set up here, so there is nothing to suggest." };
-  const call = async (path, init) => {
+  if (!tokens.length || !account) return { note: "Cloudflare is not set up here, so there are no domains to suggest." };
+  const call = async (token, path, init) => {
     const res = await ctx.fetch(CF + account + path, Object.assign({ headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, signal: AbortSignal.timeout(15000) }, init));
     const j = await res.json().catch(() => ({}));
     if (!res.ok || j.success === false) throw new Error(((j.errors || [])[0] || {}).message || "Cloudflare answered " + res.status);
     return j.result;
   };
-  try {
-    const list = await call("/registrar/registrations?per_page=50");
-    const domains = (Array.isArray(list) ? list : []).filter((d) => d && d.domain_name && d.status !== "expired").map((d) => String(d.domain_name).toLowerCase());
-    if (!domains.length) return { suggestions: [], note: "No domain is registered on Cloudflare Registrar." };
-    const byTld = {};
-    domains.forEach((d) => { const tld = d.slice(d.indexOf(".") + 1); (byTld[tld] = byTld[tld] || []).push(d); });
-    const suggestions = [];
-    for (const tld of Object.keys(byTld).sort()) {
-      const probe = "jarvis-price-" + Date.now().toString(36) + "." + tld;
-      const res = await call("/registrar/domain-check", { method: "POST", body: JSON.stringify({ domains: [probe] }) }).catch(() => null);
-      const hit = ((res && res.domains) || []).find((x) => x && x.pricing && Number(x.pricing.renewal_cost) > 0);
-      if (!hit) continue;
-      const year = Number(hit.pricing.renewal_cost);
-      const names = byTld[tld];
-      suggestions.push({
-        label: `Domain renewals .${tld} (${names.length})`.slice(0, 60), usd: money((year * names.length) / 12), channel: "email", from: "", to: "",
-        source: "Cloudflare Registrar", why: `${names.join(", ")}: ${hit.pricing.currency || "USD"} ${year.toFixed(2)} a year each, renewed on Cloudflare. Leave it out if a domain is not for outreach.`
-      });
-    }
-    return { suggestions, note: suggestions.length ? "" : "Cloudflare did not give a renewal price for these domains." };
-  } catch (error) {
-    return { suggestions: [], note: "Cloudflare Registrar could not be read: " + String(error.message || error).slice(0, 120) };
+  let token = "", list, failed;
+  for (const t of tokens) {
+    try { list = await call(t, "/registrar/registrations?per_page=50"); token = t; break; } catch (error) { failed = failed || error; }
   }
+  if (!token) return { note: `${REGISTRAR_NEED} (${why(failed)}).` };
+  const domains = (Array.isArray(list) ? list : []).filter((d) => d && d.domain_name && d.status !== "expired").map((d) => String(d.domain_name).toLowerCase());
+  if (!domains.length) return { note: "No domain is registered on Cloudflare Registrar." };
+  const byTld = {};
+  domains.forEach((d) => { const tld = d.slice(d.indexOf(".") + 1); (byTld[tld] = byTld[tld] || []).push(d); });
+  const suggestions = [];
+  const unpriced = [];
+  for (const tld of Object.keys(byTld).sort()) {
+    const probe = "jarvis-price-" + Date.now().toString(36) + "." + tld;
+    const res = await call(token, "/registrar/domain-check", { method: "POST", body: JSON.stringify({ domains: [probe] }) }).catch(() => null);
+    const hit = ((res && res.domains) || []).find((x) => x && x.pricing && Number(x.pricing.renewal_cost) > 0);
+    if (!hit) { unpriced.push("." + tld); continue; }
+    const year = Number(hit.pricing.renewal_cost);
+    const names = byTld[tld];
+    suggestions.push({
+      label: `Domain renewals .${tld} (${names.length})`.slice(0, 60), usd: money((year * names.length) / 12), channel: "email", from: "", to: "",
+      source: "Cloudflare Registrar", why: `${names.join(", ")}: ${hit.pricing.currency || "USD"} ${year.toFixed(2)} a year each, renewed on Cloudflare. Leave it out if a domain is not for outreach.`
+    });
+  }
+  return { suggestions, note: unpriced.length ? `Cloudflare listed the domains but did not price ${unpriced.join(", ")}; enter that renewal by hand.` : "" };
+}
+
+/** Google Cloud's net cost for the last full month, after credits and in USD, from the billing export (the costs source). */
+async function cloudSuggestions(ctx, month) {
+  const sources = require("./jarvis-sources");
+  try {
+    const token = await sources.googleToken(ctx.fetch, "https://www.googleapis.com/auth/cloud-platform");
+    const out = await sources.costs({ fetch: ctx.fetch, month }, token);
+    if (out.need) return { note: "Google Cloud: the billing export to BigQuery is off, so there is no month to suggest." };
+    if (out.pending) return { note: "Google Cloud: the billing export has no rows yet." };
+    const usd = money(out.usd || 0);
+    if (!(usd > 0)) return { note: `Google Cloud: nothing billed for ${month}.` };
+    const top = (out.byService || []).filter((x) => x.value > 0).slice(0, 3).map((x) => x.label).join(", ");
+    return { suggestions: [{ label: "Google Cloud (Jarvis)", usd, channel: "all", from: "", to: "", source: "Google Cloud billing export",
+      why: `Net cost billed for ${month}, after credits${out.currency && out.currency !== "USD" ? ", converted from " + out.currency : ""}${top ? "; mostly " + top : ""}. Gemini on Vertex AI is in it.` }] };
+  } catch (error) {
+    return { note: "Google Cloud: the billing export could not be read (" + why(error) + ")." };
+  }
+}
+
+/**
+ * AI spend: the Jarvis worker's last full month (jarvis_worker_spend/<YYYY-MM>), and Cursor on-demand from the Mac upload
+ * (jarvis_github_local/latest), which only has the current billing cycle so far: it is suggested once that cycle is a month old.
+ */
+async function aiSuggestions(ctx, month, now) {
+  if (!ctx.db) return { note: "AI: Firestore is not reachable here." };
+  const read = (col, id) => ctx.db.collection(col).doc(id).get().then((d) => (d.exists ? d.data() : null)).catch(() => null);
+  const [spend, local] = await Promise.all([read("jarvis_worker_spend", month), read("jarvis_github_local", "latest")]);
+  const suggestions = [];
+  const notes = [];
+  const usd = money(Number(spend && spend.usd) || 0);
+  if (usd > 0) suggestions.push({ label: "AI: Jarvis worker (Gemini)", usd, channel: "all", from: "", to: "", source: "Jarvis worker spend",
+    why: `${month}: ${Number(spend.runs) || 0} runs, ${Number(spend.input) || 0} tokens in and ${Number(spend.output) || 0} out, at list prices rounded up, so it overstates a little. If GEMINI_API_KEY bills to this Google Cloud project, Google Cloud already has it: keep one.` });
+  else notes.push(`AI: the Jarvis worker spent nothing in ${month}.`);
+  const c = local && local.cost;
+  const start = Date.parse((c && c.cycleStart) || "");
+  const at = Date.parse((local && local.at) || "") || now;
+  const onDemand = money(Number(c && c.onDemandUsd) || 0);
+  const day = (ms) => new Date(ms).toISOString().slice(0, 10);
+  if (!c || !Number.isFinite(start)) notes.push("AI: the Mac upload has no Cursor cost yet.");
+  else if (at - start < 28 * 86400000) notes.push(`AI: Cursor on-demand is $${onDemand.toFixed(2)} for the cycle since ${day(start)} (${Math.max(0, Math.floor((at - start) / 86400000))} days, from the Mac upload), not a full month yet, so it is not suggested.`);
+  else if (onDemand > 0) suggestions.push({ label: "AI: Cursor on-demand", usd: onDemand, channel: "all", from: "", to: "", source: "Cursor, from the Mac upload",
+    why: `On-demand usage for the billing cycle from ${day(start)}, as of ${day(at)}. The plan's fixed fee is not in it: add that by hand.` });
+  else notes.push(`AI: Cursor on-demand was $0 for the cycle from ${day(start)}.`);
+  return { suggestions, note: notes.join(" ") };
+}
+
+/**
+ * Suggested items to confirm, never saved on their own: Cloudflare Registrar domains, Google Cloud and AI (Jarvis worker,
+ * Cursor on-demand) for the last full month. A label already in the list is left out.
+ * ctx: fetch, env, db, now, items (the saved list). Never throws: a missing or failing source is a note.
+ */
+async function suggest(ctx) {
+  const now = ctx.now || Date.now();
+  const month = lastMonth(now);
+  const parts = await Promise.all([domainSuggestions(ctx), cloudSuggestions(ctx, month), aiSuggestions(ctx, month, now)].map((p) => p.catch((error) => ({ note: why(error) }))));
+  const have = new Set((ctx.items || []).map((x) => String(x.label || "").toLowerCase()));
+  const suggestions = [].concat(...parts.map((p) => p.suggestions || [])).filter((x) => !have.has(x.label.toLowerCase()));
+  return { suggestions, month, note: parts.map((p) => p.note).filter(Boolean).join(" ") };
 }
 
 const showUsd = (v) => (v === null || v === undefined ? "none" : "$" + (v < 1 ? v.toFixed(3) : v.toFixed(2)));
@@ -280,4 +345,4 @@ function ask(geo) {
   };
 }
 
-module.exports = { CHANNELS, KEYS, NEEDS, DOC, MAX_ITEMS, cleanItems, keepValid, prorate, spendOf, monthlyOf, allocate, build, fieldsOf, read, attach, save, suggest, ask };
+module.exports = { CHANNELS, KEYS, NEEDS, DOC, MAX_ITEMS, cleanItems, keepValid, prorate, spendOf, monthlyOf, allocate, build, fieldsOf, read, attach, save, suggest, domainSuggestions, cloudSuggestions, aiSuggestions, lastMonth, ask };

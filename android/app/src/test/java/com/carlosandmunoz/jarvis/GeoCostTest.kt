@@ -105,6 +105,12 @@ class GeoCostTest {
         assertEquals("$", Geo.metric("costPerReply").unit)
     }
 
+    @Test fun suggestToastCountsAndCarriesTheNotes() {
+        assertEquals("Nothing to suggest.", GeoCost.suggestToast(0, ""))
+        assertEquals("1 suggestion to confirm under Outreach costs.", GeoCost.suggestToast(1, null))
+        assertEquals("2 suggestions to confirm under Outreach costs. AI: the Jarvis worker spent nothing in 2026-10.", GeoCost.suggestToast(2, "AI: the Jarvis worker spent nothing in 2026-10."))
+    }
+
     @Test fun cleansTheTypedListLikeTheServer() {
         val ok = GeoCost.clean(listOf(GeoCost.Draft("  Email   tool ", "30,5", "email"), GeoCost.Draft(), GeoCost.Draft("Seats", "15", "nope", "2026-01", "2026-12")))
         assertNull(ok.error)

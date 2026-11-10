@@ -7546,7 +7546,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = await jarvisGeo.setTarget(db, body);
       await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
     }
-    else if (op === "geo-costs") out = Object.assign({ ok: true }, await jarvisGeoCost.read(getFirestore()), body.suggest === true ? await jarvisGeoCost.suggest({ fetch, env }) : {});
+    else if (op === "geo-costs") {
+      const saved = await jarvisGeoCost.read(getFirestore());
+      out = Object.assign({ ok: true }, saved, body.suggest === true ? await jarvisGeoCost.suggest({ fetch, env, db: getFirestore(), now: Date.now(), items: saved.items }) : {});
+    }
     else if (op === "geo-costs-save") {
       const db = getFirestore();
       out = await jarvisGeoCost.save(db, body, operator, now);

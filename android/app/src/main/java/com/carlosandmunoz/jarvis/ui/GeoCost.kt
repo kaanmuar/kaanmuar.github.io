@@ -164,6 +164,9 @@ object GeoCost {
             (if (unspread > 0) ", ${show(unspread, "cost")} not spread (no country had the activity it is spread by)" else "") + ". Revenue is paid unlocks from short links."
     }
 
+    /** The toast after Suggest costs: how many to confirm, then what each source could not give. */
+    fun suggestToast(n: Int, note: String?) = (if (n == 0) "Nothing to suggest." else "$n suggestion${if (n == 1) "" else "s"} to confirm under Outreach costs.") + (note?.takeIf { it.isNotBlank() }?.let { " $it" } ?: "")
+
     data class Draft(val label: String = "", val usd: String = "", val channel: String = "email", val from: String = "", val to: String = "")
     data class Clean(val items: List<JsonObject>, val error: String? = null)
 
@@ -303,9 +306,9 @@ fun GeoCostSettings(s: UiState, vm: JarvisViewModel) {
             TextButton({
                 vm.market("geo-costs:suggest", "geo-costs", mapOf("suggest" to JsonPrimitive(true))) { out ->
                     suggestions = out.objs("suggestions")
-                    out.str("note") ?: if (suggestions.isEmpty()) "Nothing to suggest." else "${suggestions.size} suggestion${if (suggestions.size == 1) "" else "s"} under Outreach costs."
+                    GeoCost.suggestToast(suggestions.size, out.str("note"))
                 }
-            }, enabled = "geo-costs:suggest" !in s.running) { Text("Suggest from Cloudflare", color = J.cyan, fontSize = 13.sp) }
+            }, enabled = "geo-costs:suggest" !in s.running) { Text("Suggest costs", color = J.cyan, fontSize = 13.sp) }
             TextButton({
                 error = checked.error
                 if (checked.error == null) vm.market("geo-costs", "geo-costs-save", mapOf("items" to JsonArray(checked.items))) { out ->

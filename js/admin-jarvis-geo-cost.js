@@ -241,9 +241,9 @@ export function paintSettings(node, ctx) {
         <span class="jv-note">${esc(x.source || '')}: ${esc(x.why || '')}</span> <button type="button" class="jv-btn small" data-geo-cost="use" data-i="${i}">Add</button></li>`).join('')}</ul>` : '';
     const total = clean(d.items).items || [];
     node.innerHTML = `<h4>Outreach costs</h4>
-        <p class="jv-note">What outreach costs a month, in USD: the Instantly plan, mailbox seats, sending domains, anything else. The Map spreads it over the countries for cost per email, per reply and return.</p>
+        <p class="jv-note">What outreach costs a month, in USD: the Instantly plan, mailbox seats, sending domains, anything else. The Map spreads it over the countries for cost per email, per reply and return. Suggest costs reads last month from Cloudflare Registrar, Google Cloud billing, the Jarvis worker and Cursor; nothing is added until you add it.</p>
         <div class="jv-cost-list">${d.items.length ? `<div class="jv-cost-row jv-cost-head" aria-hidden="true"><span>Name</span><span>USD a month</span><span>Channel</span><span>From month</span><span>To month</span><span></span></div>${d.items.map(row).join('')}` : '<p class="jv-note">No cost yet.</p>'}</div>
-        <div class="jv-actions"><button type="button" class="jv-btn small" name="gc-at" data-geo-cost="add">Add a cost</button><button type="button" class="jv-btn small" data-geo-cost="suggest"${d.suggesting ? ' disabled' : ''}>${d.suggesting ? 'Reading Cloudflare…' : 'Suggest from Cloudflare'}</button>
+        <div class="jv-actions"><button type="button" class="jv-btn small" name="gc-at" data-geo-cost="add">Add a cost</button><button type="button" class="jv-btn small" data-geo-cost="suggest"${d.suggesting ? ' disabled' : ''}>${d.suggesting ? 'Reading the sources…' : 'Suggest costs'}</button>
             <button type="button" class="jv-btn" data-geo-cost="save"${d.saving ? ' disabled' : ''}>${d.saving ? 'Saving…' : 'Save costs'}</button><span class="jv-note">${esc(show(total.reduce((s, x) => s + x.usd, 0), 'cost'))} a month</span></div>
         ${sugg}${d.note ? `<p class="jv-note">${esc(d.note)}</p>` : ''}
         <p class="jv-note">Cold email and All outreach are spread by emails sent, Social by social replies, Short links by link visits. Leave the months empty for a cost that runs every month. Saved on its own, apart from Save below; the app edits the same list.</p>`;
@@ -283,7 +283,7 @@ function bind(node, ctx) {
             const out = await ctx.call('geo-costs', { suggest: true });
             d.suggesting = false;
             d.suggestions = out && out.ok ? out.suggestions || [] : [];
-            d.note = out && out.ok ? out.note || (d.suggestions.length ? '' : 'Nothing to suggest.') : 'Cloudflare could not be read: ' + ((out && out.error) || 'no answer');
+            d.note = out && out.ok ? out.note || (d.suggestions.length ? '' : 'Nothing to suggest.') : 'The suggestions could not be read: ' + ((out && out.error) || 'no answer');
             paintSettings(node, ctx);
             return;
         }
