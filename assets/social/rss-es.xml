@@ -762,23 +762,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Tu tarjeta al compartir es una primera impresión.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>SEO</category>
-      <description>Sin og:image ni og:title, cada enlace a tu sitio aparece como una caja gris en chats y feeds.
-
-Prueba esto hoy: Pega tu enlace en un chat privado contigo mismo. Lo que la gente ve ahí es tu verdadera primera impresión.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>3 competidores naturales. halloweencostumes.com va en cabeza: 75.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz-es.html</link>
       <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz-es</guid>
@@ -921,6 +904,26 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>ruvo.com: 79. La brecha: el CSP.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-06/02-u-ruvo-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-06/02-u-ruvo-com-es</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no hay política de seguridad de contenidos.
+
+La lección para cualquier equipo: Ajuste la política de seguridad de contenido una directiva a la vez, comenzando por default-src 'self'.
+
+Un análisis automatizado de páginas públicas el 5 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ruvo-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #SRE #QA #CSP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" length="225125" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

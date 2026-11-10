@@ -543,23 +543,6 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Seu card de compartilhamento é uma primeira impressão.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-pt.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card-pt</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Dica</category>
-      <category>SEO</category>
-      <description>Sem og:image e og:title, todo link para o seu site aparece como uma caixa cinza em chats e feeds.
-
-Experimente hoje: Cole seu link num chat privado com você mesmo. O que as pessoas veem ali é a sua verdadeira primeira impressão.
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>3 concorrentes naturais. halloweencostumes.com lidera: 75.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz-pt.html</link>
       <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz-pt</guid>
@@ -998,6 +981,25 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #Automation #SoftwareTesting #QA #Sitemap #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" length="242457" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>hreflang: a página certa para cada idioma.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/03-hreflang-pt.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/03-hreflang-pt</guid>
+      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Glossário</category>
+      <category>SEO</category>
+      <description>Palavra do dia: hreflang, a página certa para cada idioma.
+
+Um atributo que diz aos buscadores para qual idioma ou região é cada versão de uma página, para que quem fala espanhol chegue à página em espanhol.
+
+Confira: Abra uma página traduzida e confira se ela aponta para todas as versões de idioma, inclusive ela mesma. O Google ignora links sem retorno.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=hreflang
+
+#SEO #DevOps #Playwright #QA #hreflang #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg" length="241498" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
