@@ -527,7 +527,7 @@ async function run(opts) {
 
 function install(parallel) {
   fs.mkdirSync(APP, { recursive: true });
-  ["agent.js", "networks.js", "inbox-map.js", "pool.js"].forEach((f) => fs.copyFileSync(path.join(__dirname, f), path.join(APP, f)));
+  fs.readdirSync(__dirname).filter((f) => f.endsWith(".js")).forEach((f) => fs.copyFileSync(path.join(__dirname, f), path.join(APP, f)));
   const pw = (() => { try { return require("playwright/package.json").version; } catch (error) { return "1.63.0"; } })();
   fs.writeFileSync(path.join(APP, "package.json"), JSON.stringify({ name: "engagement-browser", private: true, dependencies: { "playwright-core": pw } }, null, 2));
   execFileSync("npm", ["install", "--omit=dev", "--no-audit", "--no-fund", "--silent"], { cwd: APP, stdio: "inherit" });
