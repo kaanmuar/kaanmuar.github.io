@@ -23,6 +23,7 @@ const localProfile = require("./url-review-local");
 const mailAuth = require("./url-review-mail-auth");
 const blocklists = require("./url-review-blocklists");
 const { registrable, registryDomain } = require("./url-review-suffix");
+const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const { siteLabel } = caseRank;
 
@@ -3017,6 +3018,9 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const localJob = findPlaces && lookups.inspect
     ? withTimeout(localProfile.lookup(lookups.inspect, origin.hostname, { places: findPlaces, reach }), 25000, null).catch(() => null)
     : Promise.resolve(null);
+  const lookalikeJob = lookups && typeof lookups.doh === "function"
+    ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
+    : Promise.resolve(undefined);
   const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
@@ -3067,8 +3071,12 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       return res;
     })
   ]);
+  const lookalikeFound = await lookalikeJob;
+  if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
+    : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
+      : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
+  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -3217,7 +3225,7 @@ async function reviewTarget(rawUrl, hooks) {
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, doh: passive ? null : controls.doh, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
