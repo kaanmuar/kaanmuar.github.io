@@ -49,6 +49,7 @@ const jarvisProcesses = require("./jarvis-processes");
 // A process row for Jarvis's live Processes panel (#2548); a failed report never stops the work it describes.
 const jarvisProcess = (rows) => jarvisProcesses.report(jarvisLiveDeps(), rows).catch((error) => console.error("Jarvis process report failed:", error));
 const jarvisLog = require("./jarvis-log");
+const Gemini = require("./gemini");
 const jarvisLogPoll = require("./jarvis-log-poll");
 jarvisLog.use(getFirestore);
 const linkedRisk = require("./url-review-linked-risk");
@@ -6117,7 +6118,7 @@ async function jarvisCalendarDaily(db, settings) {
 async function jarvisGeoActionsRefresh() {
   const db = getFirestore();
   const geo = (await jarvisExternal(["geo"], 30)).geo;
-  const out = await jarvisGeoActions.refresh({ db, now: Date.now(), gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null }, geo);
+  const out = await jarvisGeoActions.refresh({ db, now: Date.now(), gemini: Gemini.ready(process.env) ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null }, geo);
   if (out.saved) await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
   return "map actions " + out.note;
 }
@@ -6433,7 +6434,7 @@ function jarvisAutoOps(settings, now, th) {
       reason: p.reason, at: new Date(now).toISOString(), until: new Date(now + 2 * 864e5).toISOString()
     }))).then((out) => jarvisSnap.drop(db, ["proposals"]).then(() => out))
   };
-  if (process.env.GEMINI_API_KEY) out.ask = (prompt) => jarvis.gemini(fetch, process.env, prompt, 800);
+  if (Gemini.ready(process.env)) out.ask = (prompt) => jarvis.gemini(fetch, process.env, prompt, 800);
   // What the countdown runs (#1977); each checks its rule again first.
   Object.assign(out, {
     mergeCandidates: jarvisMergeCandidates,
@@ -6741,7 +6742,7 @@ async function jarvisClickAction(body, by) {
 function jarvisGithubCtx(now) {
   return {
     fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"),
-    gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
+    gemini: Gemini.ready(process.env) ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   };
 }
 
@@ -6905,7 +6906,7 @@ async function jarvisGithubJob() {
   await step("days", () => jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {})));
   await step("backfill", () => jarvisGithub.backfill(Object.assign({}, ctx, { limit: 10 })));
   await step("diagnosed", async () => {
-    if (!ctx.gemini) return "none (no GEMINI_API_KEY)";
+    if (!ctx.gemini) return "none (no Gemini)";
     const start = jarvisCore.zoneParts(new Date(now)).day + "T05:00:00.000Z";
     const today = (await db.collection("jarvis_github_diag").where("at", ">=", start).limit(50).get()).size;
     const room = Math.min(3, 12 - today);

@@ -26,7 +26,8 @@ const jarvisLog = require("./jarvis-log");
 const Trials = require("./chain-trials");
 const Send = require("./outreach-send");
 
-const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
+const Gemini = require("./gemini");
+
 const STALE = 75 * 60 * 1000;
 const PUSH_PER_RUN = 5;
 const CHAIN_AI = 20;
@@ -53,8 +54,8 @@ async function geminiJson(fetchImpl, env, prompt) {
   const started = Date.now();
   const what = String(prompt || "").replace(/\s+/g, " ").slice(0, 120);
   try {
-    const text = await geminiJsonCall(fetchImpl, env, prompt);
-    await jarvisLog.log(null, { source: "gemini", level: "info", text: "Gemini (engagement) ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
+    const { text, via } = await geminiJsonCall(fetchImpl, env, prompt);
+    await jarvisLog.log(null, { source: "gemini", level: "info", text: Gemini.label(via) + " (engagement) ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
     return text;
   } catch (error) {
     await jarvisLog.log(null, { source: "gemini", level: "error", text: "Gemini (engagement) failed in " + (Date.now() - started) + " ms: " + String(error.message || error).slice(0, 140) + " · " + what });
@@ -63,13 +64,11 @@ async function geminiJson(fetchImpl, env, prompt) {
 }
 
 async function geminiJsonCall(fetchImpl, env, prompt) {
-  const res = await fetchImpl(GEMINI + (env.GEMINI_MODEL || "gemini-flash-latest") + ":generateContent", {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, signal: AbortSignal.timeout(90000),
-    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 8192, responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" } } })
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error("Gemini answered " + res.status + ": " + String((data.error || {}).message || "").slice(0, 160));
-  return (((data.candidates || [])[0] || {}).content || { parts: [] }).parts.map((p) => p.text || "").join("");
+  const { data, via } = await Gemini.generate(fetchImpl, env, {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.6, maxOutputTokens: 8192, responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "low" } }
+  }, { timeoutMs: 90000 });
+  return { text: Gemini.text(data), via };
 }
 
 /** Waiting replies past their 6 hours, and waiting DMs past theirs (#3137), become expired. */
@@ -137,7 +136,7 @@ async function takeIn(deps, conf, posts, read, errors) {
   let ai = {};
   let aiError = "";
   const asked = E.forAi(fresh.concat(risen.filter((r) => E.askAgain(r.doc, conf)).map((r) => r.post)), conf, now);
-  if (asked.length && env.GEMINI_API_KEY) {
+  if (asked.length && Gemini.ready(env)) {
     try { ai = E.parseAi(await geminiJson(deps.fetch, env, E.aiPrompt(asked)), asked); } catch (error) { aiError = String(error.message || error).slice(0, 200); }
   }
 
@@ -226,7 +225,7 @@ async function takeChains(deps, conf, found, into) {
     return false;
   }).slice(0, CHAIN_AI);
   if (!fresh.length) return out;
-  if (!env.GEMINI_API_KEY) return Object.assign(out, { aiError: "GEMINI_API_KEY is not set, so comments on our replies wait unread." });
+  if (!Gemini.ready(env)) return Object.assign(out, { aiError: "Gemini is not configured, so comments on our replies wait unread." });
   const L = Trials.ledger(deps);
   const persons = await Trials.people(db, L, fresh).catch((error) => { out.errors.ledger = String(error.message || error).slice(0, 200); return new Map(); });
   fresh.forEach((c) => Object.assign(c, Trials.ladderFor(c, (persons.get(c.key) || {}).doc, conf.trials, now)));
@@ -382,7 +381,7 @@ async function takeReports(deps, conf, look, found) {
 
   let ai = {};
   const ask = fresh.filter((p) => !E.guard(p, Object.assign({}, conf, { maxAgeHours: Math.max(conf.maxAgeHours, R.MAX_AGE_HOURS) }), now));
-  if (ask.length && env.GEMINI_API_KEY) {
+  if (ask.length && Gemini.ready(env)) {
     try { ai = R.parse(await geminiJson(deps.fetch, env, R.prompt(ask)), ask); } catch (error) { out.aiError = String(error.message || error).slice(0, 200); }
   }
   const links = {};
@@ -568,7 +567,7 @@ async function profilePass(deps, conf) {
   const known = items.length ? await db.getAll(...items.map((i) => db.collection("engagement_posts").doc(i.key))) : [];
   const fresh = items.filter((i, n) => !known[n].exists);
   let texts = {};
-  if (fresh.length && env.GEMINI_API_KEY) {
+  if (fresh.length && Gemini.ready(env)) {
     try { texts = P.parse(await geminiJson(deps.fetch, env, P.prompt(fresh)), fresh); } catch (error) { out.aiError = String(error.message || error).slice(0, 200); }
   }
   const docs = [];

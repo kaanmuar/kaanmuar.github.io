@@ -29,7 +29,7 @@ const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE
 const SCHEDULER = "https://cloudscheduler.googleapis.com/v1/projects/" + PROJECT + "/locations/us-central1/jobs";
 const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
-const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
+const Gemini = require("./gemini");
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
@@ -633,13 +633,13 @@ const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosand
   + "Name the product, the number and the comparison. Say when a number is too small to mean anything.";
 
 async function gemini(fetchImpl, env, prompt, maxTokens) {
-  if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+  if (!Gemini.ready(env)) throw new Error("GEMINI_API_KEY is not set and Vertex AI is not reachable.");
   const started = Date.now();
   const what = String(prompt || "").replace(/\s+/g, " ").slice(0, 120);
   try {
-    const text = await geminiCall(fetchImpl, env, prompt, maxTokens);
-    await jarvisLog.log(null, { source: "gemini", level: "info", text: "Gemini ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
-    return text;
+    const out = await geminiCall(fetchImpl, env, prompt, maxTokens);
+    await jarvisLog.log(null, { source: "gemini", level: "info", text: Gemini.label(out.via) + " ok in " + (Date.now() - started) + " ms, " + out.text.length + " chars: " + what });
+    return out.text;
   } catch (error) {
     await jarvisLog.log(null, { source: "gemini", level: "error", text: "Gemini failed in " + (Date.now() - started) + " ms: " + String(error.message || error).slice(0, 140) + " · " + what });
     throw error;
@@ -647,21 +647,14 @@ async function gemini(fetchImpl, env, prompt, maxTokens) {
 }
 
 async function geminiCall(fetchImpl, env, prompt, maxTokens) {
-  const res = await fetchImpl(GEMINI + (env.GEMINI_MODEL || MODEL) + ":generateContent", {
-    method: "POST",
-    headers: { "x-goog-api-key": env.GEMINI_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: VOICE }] },
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1200, thinkingConfig: { thinkingLevel: "low" } }
-    }),
-    signal: AbortSignal.timeout(60000)
-  });
-  const data = await readJson(res, "Gemini");
-  const candidate = (data.candidates || [])[0] || {};
-  const text = ((candidate.content || {}).parts || []).map((part) => part.text || "").join("").trim();
-  if (!text) throw new Error("Gemini sent no text (" + (candidate.finishReason || "unknown") + ").");
-  return text;
+  const { data, via } = await Gemini.generate(fetchImpl, env, {
+    systemInstruction: { parts: [{ text: VOICE }] },
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1200, thinkingConfig: { thinkingLevel: "low" } }
+  }, { model: env.GEMINI_MODEL || MODEL, timeoutMs: 60000 });
+  const text = Gemini.text(data).trim();
+  if (!text) throw new Error(Gemini.label(via) + " sent no text (" + (((data.candidates || [])[0] || {}).finishReason || "unknown") + ").");
+  return { text, via };
 }
 
 function snapshotText(snapshot) {
