@@ -841,6 +841,26 @@
     "checked": "2026-11-10T00:10:52.687Z"
    }
   ],
+  "auto-2026-11-10/01-u-motorsport-total-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1805501363989855",
+    "at": "2026-11-17T17:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-10T11:35:33.004Z"
+   }
+  ],
+  "auto-2026-11-10/02-u-meutimao-com-br": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122108401287532027",
+    "at": "2026-11-11T18:58:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-10T11:35:35.663Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -1289,8 +1309,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094629067532027",
     "at": "2026-11-10T00:45:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-10T00:10:52.690Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094629067532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-10T11:35:23.292Z"
    }
   ],
   "promo-social-hub-2026-10/33-clips-it": [

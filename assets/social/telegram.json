@@ -229,8 +229,8 @@
     "at": "2026-11-04T18:38:14.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/3",
-    "checked": "2026-11-09T11:52:54.894Z",
-    "hash": "aabdce35069a"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "85169ec827d3"
    }
   ],
   "live/2026-11-05": [
@@ -241,8 +241,8 @@
     "at": "2026-11-05T11:50:17.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/5",
-    "checked": "2026-11-09T11:52:54.894Z",
-    "hash": "93cfbf8d268b"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "272cdebe818e"
    }
   ],
   "live/2026-11-06": [
@@ -253,8 +253,8 @@
     "at": "2026-11-06T13:38:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/14",
-    "checked": "2026-11-09T11:52:54.894Z",
-    "hash": "f434ec3f21e4"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "9173a2f47a83"
    }
   ],
   "live/2026-11-07": [
@@ -265,8 +265,8 @@
     "at": "2026-11-07T11:26:12.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/20",
-    "checked": "2026-11-09T11:52:54.894Z",
-    "hash": "beaccb70088c"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "8d8285a157b9"
    }
   ],
   "live/2026-11-08": [
@@ -277,8 +277,8 @@
     "at": "2026-11-08T13:27:30.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/26",
-    "checked": "2026-11-09T11:52:54.894Z",
-    "hash": "ac99603c2d83"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "e6e4ae4f8b2c"
    }
   ],
   "live/2026-11-09": [
@@ -289,8 +289,20 @@
     "at": "2026-11-09T11:52:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/34",
-    "checked": "2026-11-09T11:52:54.828Z",
-    "hash": "997357e50155"
+    "checked": "2026-11-10T11:35:36.369Z",
+    "hash": "4f899a155813"
+   }
+  ],
+  "live/2026-11-10": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "44",
+    "at": "2026-11-10T11:35:36.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/44",
+    "checked": "2026-11-10T11:35:36.295Z",
+    "hash": "4e5ab01b3969"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [

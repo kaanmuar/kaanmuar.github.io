@@ -1067,6 +1067,11 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F7d0mthvvemub9kdrfb8d.png</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/content-encoding-and-seo-can-the-crawler-decode-the-answer-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F7d0mthvvemub9kdrfb8d.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/esdrassantos06-liftbox-accessible-themeable-react-lightbox-a.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://opengraph.githubassets.com/1/esdrassantos06/liftbox</image:loc></image:image>
@@ -1092,12 +1097,27 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx4rgif2w1crjp8uzpwra.png</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-c-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx4rgif2w1crjp8uzpwra.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change-.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mwqy1c05vljgh0sad4g.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change--es.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mwqy1c05vljgh0sad4g.png</image:loc></image:image>
   </url>
@@ -1137,7 +1157,17 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/split-testing-685.png</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/seo-split-testing-in-2027-how-to-prove-a-change-actually-wor-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/split-testing-685.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://opengraph.githubassets.com/1/Snorlark/plop-ui</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on-es.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://opengraph.githubassets.com/1/Snorlark/plop-ui</image:loc></image:image>
   </url>
@@ -1157,12 +1187,27 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/growth-stack-195.png</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/the-new-organic-growth-stack-search-social-communities-ai-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/growth-stack-195.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fbrave-ai-search-index-publisher-implications.webp</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr-es.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fbrave-ai-search-index-publisher-implications.webp</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via-.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/tripadvisor-featured-1600x840-1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via--es.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/tripadvisor-featured-1600x840-1.jpg</image:loc></image:image>
   </url>
