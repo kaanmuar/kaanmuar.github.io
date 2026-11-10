@@ -1836,6 +1836,7 @@ const outreachSend = require("./outreach-send");
 const fixRequests = require("./url-review-fix-requests");
 const fixCheckout = require("./url-review-fix-checkout");
 const fixRereview = require("./url-review-fix-rereview");
+const watchCases = require("./url-review-watch");
 const fixMail = require("./url-review-fix-mail");
 
 // A fix request opens for the account that ran the report, paid or not; the free re-check only on a paid report.
@@ -5997,9 +5998,10 @@ exports.fixRereview = functions.runWith({ timeoutSeconds: 540, memory: "1GB", se
       places: findPlaces()
     });
     const record = fixRereview.rereviewRecord(urlReview.intakeRecord(Object.assign({}, goal.options, { url: goal.url, name: goal.name, email: goal.email, lang: goal.lang, reasonCode: original.reasonCode }), report, {}), original, change.after.id);
+    const result = fixRereview.beforeAfter(original.report, record.report, request.findings);
+    record.report = watchCases.withRegressions(record.report, watchCases.regressions(original.report, record.report, result));
     await db.collection("url_reviews").doc(record.id).set(record);
     await countReviewed(record.report);
-    const result = fixRereview.beforeAfter(original.report, record.report, request.findings);
     await ref.update(fixRereview.finishedPatch(request, record.id, result));
     const mailed = await Promise.allSettled([
       deps.mailCustomer(request.lang, request.email, fixMail.afterMail(request, record.id, result), "url-review-fix-rereview"),

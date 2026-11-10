@@ -2977,10 +2977,28 @@
       }
       return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
+    paintWatch(report, paid);
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
     paintIndex();
+  }
+
+  // The Cases card's watch subsection (#3391): retests for the newer checks, fix regressions and their scripts.
+  function paintWatch(report, paid) {
+    const box = document.getElementById("watch-cases");
+    if (!box) return;
+    const markup = window.QAReviewWatch ? QAReviewWatch.html(report, { lang: document.documentElement.lang, paid, fade: (text) => fadeText(text, paid), line: (msg, fallback) => fc.line(msg, fallback) }) : "";
+    box.innerHTML = markup;
+    box.hidden = !markup;
+    const button = document.getElementById("watch-download");
+    if (!button) return;
+    button.onclick = () => {
+      const files = QAReviewWatch.files(report, { lang: document.documentElement.lang, scripts: window.QAReviewScripts });
+      if (!files.length || !window.QAReviewScripts) return;
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_watch_scripts", "URL Review", String(files.length));
+      download("qa-lab-watch-" + (report.id || "report") + ".zip", QAReviewScripts.zip(files, "qa-lab-watch-" + (report.id || "report")), "application/zip");
+    };
   }
 
   function reviewBody(compare, url, runId) {

@@ -29,6 +29,7 @@ const { registrable, registryDomain } = require("./url-review-suffix");
 const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const hackSigns = require("./url-review-hack-signs");
+const watchCases = require("./url-review-watch");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-11-04b";
@@ -3577,6 +3578,13 @@ async function reviewTarget(rawUrl, hooks) {
   } catch (error) {
     console.error("URL review case ranking failed:", error);
   }
+  let watch = null;
+  try {
+    watch = watchCases.build((analysis && analysis.findings) || [], extras, { host: origin.hostname, base: origin.origin, browser: browser && browser.ok ? browser : null });
+    if (watch) note("Wrote " + watch.cases.length + " watch case" + (watch.cases.length === 1 ? "" : "s") + " for the open security, mail and accessibility findings: " + watch.cases.map((item) => item.id + " " + item.kind).join(", ") + ".");
+  } catch (error) {
+    console.error("URL review watch cases failed:", error);
+  }
   const byLayer = caseRank.countLayers(cases);
   const reportId = crypto.randomBytes(9).toString("hex");
   const fetchedAt = new Date().toISOString();
@@ -3662,6 +3670,7 @@ async function reviewTarget(rawUrl, hooks) {
       : "These cases are proposed from a public analysis. None of them were executed."
   };
   if (talked) result.chatTalk = talked;
+  if (watch) result.watch = watch;
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
@@ -4592,6 +4601,7 @@ function previewReport(report, options) {
       securityTxt: !!kit.securityTxt
     };
   }
+  if (copy.watch) copy.watch = watchCases.preview(copy.watch);
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
