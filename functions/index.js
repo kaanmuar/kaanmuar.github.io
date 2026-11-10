@@ -6178,13 +6178,13 @@ async function jarvisDaily({ force }) {
   return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length, calendar, geoHistory };
 }
 
-// The Map's daily history (#3109, jarvis-geo-time.js): yesterday's countries, Instantly's email days (backfilled once) and the dated replies.
+// The Map's daily history (#3109, jarvis-geo-time.js): yesterday's countries, Instantly's email days and GA4's days per country (backfilled once) and the dated replies.
 async function jarvisGeoHistory(db) {
   const now = Date.now();
   const ext = await jarvisExternal(["geo"], 1);
   const mctx = { fetch, env: process.env, now };
   const out = await jarvisGeoTime.record({ db, now, geo: ext.geo, instantly: process.env.INSTANTLY_API_KEY ? (path) => jarvisMarketing.instantly(mctx, path) : null,
-    clicks: (sql) => require("./jarvis-geo-clicks").query(fetch, process.env, sql) });
+    clicks: (sql) => require("./jarvis-geo-clicks").query(fetch, process.env, sql), ga4Days: (from, to) => jarvis.ga4Days(fetch, from, to) });
   await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
   return out;
 }

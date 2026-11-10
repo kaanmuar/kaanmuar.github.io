@@ -18,7 +18,7 @@ export const METRICS = [
     ['reviewed', 'Reviewed sites', 'sweep', ''], ['score', 'Average site score', 'sweep', ''],
     ['social', 'Social replies', 'social', ''],
     ['clicks', 'Short-link clicks (visitor country)', 'web', ''],
-    ['visitors', 'Site visitors (GA4)', 'web', ''], ['visits', 'Short-link visits', 'web', ''], ['reviews', 'Reviews from links', 'web', ''], ['paid', 'Paid unlocks', 'web', ''], ['usd', 'Revenue (USD)', 'web', ''],
+    ['visitors', 'Visitors (GA4)', 'web', ''], ['engaged', 'Engaged sessions', 'web', ''], ['keyEvents', 'Key events', 'web', ''], ['visits', 'Short-link visits', 'web', ''], ['reviews', 'Reviews from links', 'web', ''], ['paid', 'Paid unlocks', 'web', ''], ['usd', 'Revenue (USD)', 'web', ''],
     ...GeoCost.METRICS
 ];
 export const GAPS = {

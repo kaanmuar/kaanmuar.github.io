@@ -46,6 +46,6 @@ class GeoClicksTest {
         assertTrue(Geo.metricsFor("web").any { it.key == "clicks" })
         assertEquals(3, Geo.lightOf(json("""{"clicks":1}""")))
         assertEquals(12.0, Geo.value(br, "clicks"))
-        assertEquals("clicks", GeoTime.FIELDS.last())
+        assertEquals(17, GeoTime.FIELDS.indexOf("clicks"))
     }
 }

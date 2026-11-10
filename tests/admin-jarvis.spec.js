@@ -1197,6 +1197,50 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map shows GA4 visitors, engaged sessions and key events for every country with the change against before (#3282)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const ga = { US: [410, 300, 160, 100, 9, 4], IN: [140, 90, 30, 40, 0, 1], JP: [30, 12, 21, 6, 2, 0] };
+    const countries = GEO_DATED.countries.map((r) => {
+      const [v, vp, e, ep, k, kp] = ga[r.cc] || [r.visitors || 0, r.visitorsPrior || 0, 0, 0, 0, 0];
+      return Object.assign({}, r, { visitors: v, visitorsPrior: vp, engaged: e, engagedPrior: ep, users: v, usersPrior: vp, keyEvents: k, keyEventsPrior: kp, engagementRate: v ? Math.round((e / v) * 1000) / 10 : null });
+    });
+    const time = JSON.parse(JSON.stringify(require('./fixtures/jarvis-geo-time.json')));
+    time.ranges['30'].c.US = Object.assign({}, time.ranges['30'].c.US, { visitors: [900, 400], engaged: [300, 120], keyEvents: [9, 4] });
+    await openStats(page, '#stats/geo/30', { geo: Object.assign({}, GEO_DATED, { countries, time }) });
+    const geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-geo-map path').first()).toBeVisible();
+    await geo.locator('[data-geo-channel="web"]').click();
+    const picker = geo.locator('[data-geo-metric] option');
+    await expect(picker).toContainText(['Visitors (GA4)', 'Engaged sessions', 'Key events']);
+    await geo.locator('[data-geo-metric]').selectOption('engaged');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('World map · Engaged sessions');
+    const rank = geo.locator('[data-panel-id="geo-ranking"]');
+    await expect(rank.locator('tbody tr').first()).toContainText('United States');
+    await expect(rank.locator('tbody tr').nth(1)).toContainText('India');
+    await geo.locator('[data-geo-metric]').selectOption('keyEvents');
+    await expect(rank.locator('tbody tr')).toHaveCount(2);
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3282-map-key-events.png` });
+
+    await geo.locator('path[data-geo-cc="US"]').click();
+    const sheet = geo.locator('[data-panel-id="geo-country"]');
+    const kpi = (label) => sheet.locator('.jv-kpi', { hasText: label });
+    await expect(kpi('Visitors (GA4)')).toContainText('410');
+    await expect(kpi('Visitors (GA4)')).toContainText('+37%');
+    await expect(kpi('Visitors (GA4)')).toContainText('vs 300');
+    await expect(kpi('Engaged sessions · rate')).toContainText('160 · 39%');
+    await expect(kpi('Key events')).toContainText('+125%');
+    const chg = sheet.locator('.jv-geo-sheet-chg');
+    await expect(chg.locator('tr', { hasText: 'Engaged sessions' })).toContainText('▲ +180');
+    await expect(chg.locator('tr', { hasText: 'Key events' })).toContainText('▲ +5');
+    if (process.env.GEO_SHOTS) {
+      await sheet.screenshot({ path: `${process.env.GEO_SHOTS}/3282-country.png` });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await sheet.screenshot({ path: `${process.env.GEO_SHOTS}/3282-country-phone.png` });
+    }
+    expect(errors).toEqual([]);
+  });
+
   test('Map shows the 90-day plan against its targets and the next best actions, whose buttons reuse the Map actions (#3115)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

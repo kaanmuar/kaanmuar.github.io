@@ -7,7 +7,8 @@
                region that speak its language, weighted by prospects. A split row is marked est.
    replies     the outreach replies (marketing-sync) per country, and how many were positive
    social      engagement report replies (waiting or approved) about a site in that country
-   visitors    GA4 sessions per country, now and in the prior span
+   visitors    GA4 sessions, engaged sessions, users and key events for every country, now and in the prior span
+               (jarvis-geo-ga4.js, #3282)
    links       short-link visits, reviews, paid unlocks and USD per prospect host
    clicks      short-link clicks by the visitor's country from the Worker, and link reviews, paid unlocks and USD by the
                visitor's country (#3281, jarvis-geo-clicks.js); clicks light a country like visitors do
@@ -29,6 +30,7 @@
 const sweep = require("./url-review-sweep");
 const geoTime = require("./jarvis-geo-time");
 const clicks = require("./jarvis-geo-clicks");
+const geoGa4 = require("./jarvis-geo-ga4");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const LANG_COUNTRIES = {
@@ -196,12 +198,8 @@ function geoRows(input) {
   });
   social(i.engagement && i.engagement.waiting, false);
   social(i.engagement && i.engagement.approved, true);
-  ((i.ga4 && i.ga4.countries) || []).forEach((c) => {
-    const r = row(codeOf(c.label));
-    if (!r) return;
-    r.visitors += Number(c.value) || 0;
-    r.visitorsPrior += Number(c.prior) || 0;
-  });
+  const visitors = geoGa4.byCountry(i.ga4, codeOf);
+  Object.keys(visitors).forEach((cc) => { const r = row(cc); if (r) Object.assign(r, visitors[cc]); });
   ((i.links && i.links.prospects) || []).forEach((p) => {
     const r = row(countryOf(p.host));
     if (!r) return;
@@ -219,6 +217,7 @@ function geoRows(input) {
       replyRate: r.sent ? round((r.replies / r.sent) * 100, 10) : null, openRate: r.sent ? round((r.opened / r.sent) * 100, 10) : null });
     delete out.scoreSum;
     delete out.scored;
+    geoGa4.finish(out, i.ga4 && i.ga4.keyEvents);
     out.light = lightOf(out);
     return out;
   });
@@ -354,6 +353,7 @@ async function geo(ctx) {
   if (!marketing || !marketing.campaigns || marketing.campaigns.ok === false) needs.push("Instantly campaigns are missing, so email numbers per country are empty.");
   if (!sync) needs.push("Marketing sync has not run, so campaigns are split by region instead of by their leads.");
   if (!ga4) needs.push("GA4 is not connected, so visitors per country are empty.");
+  else needs.push(...geoGa4.needs(ga4));
   const linkClicks = await clicksP;
   if (!linkClicks.ok) needs.push(linkClicks.need || "Short-link clicks could not be read: " + linkClicks.error);
   const out = geoRows({

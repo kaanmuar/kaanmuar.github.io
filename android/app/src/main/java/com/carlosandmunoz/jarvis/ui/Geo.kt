@@ -93,7 +93,7 @@ object Geo {
         Metric("reviewed", "Reviewed sites", "sweep"), Metric("score", "Average site score", "sweep"),
         Metric("social", "Social replies", "social"),
         Metric("clicks", "Short-link clicks (visitor country)", "web"),
-        Metric("visitors", "Site visitors (GA4)", "web"), Metric("visits", "Short-link visits", "web"), Metric("reviews", "Reviews from links", "web"), Metric("paid", "Paid unlocks", "web"), Metric("usd", "Revenue (USD)", "web")
+        Metric("visitors", "Visitors (GA4)", "web"), Metric("engaged", "Engaged sessions", "web"), Metric("keyEvents", "Key events", "web"), Metric("visits", "Short-link visits", "web"), Metric("reviews", "Reviews from links", "web"), Metric("paid", "Paid unlocks", "web"), Metric("usd", "Revenue (USD)", "web")
     ) + GeoCost.METRICS
     val GAPS = linkedMapOf(
         "no-prospects-left" to ("Out of prospects" to Color(0xFFFF4D8D)), "bouncing" to ("Bouncing" to Color(0xFFFF8F5A)), "low-reply" to ("Low replies" to Color(0xFFFFB547)),
@@ -587,7 +587,8 @@ private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: ()
             KpiData("Emails sent · opened", "${fmt(r.num("sent"))} · ${fmt(r.num("opened"))}"), KpiData("Reply rate", r.num("replyRate")?.let { "$it%" } ?: "—"),
             KpiData("Answered · positive", "${fmt(r.num("answered"))} · ${fmt(r.num("positive"))}"), KpiData("Prospects · left", "${fmt(r.num("prospects"))} · ${fmt(r.num("left"))}"),
             KpiData("Reviewed · score", fmt(r.num("reviewed")) + (r.num("score")?.let { " · ${fmt(it)}" } ?: "")), KpiData("Social replies", fmt(r.num("social"))),
-            KpiData("Visitors (GA4)", fmt(r.num("visitors"))), KpiData("Link visits · paid", "${fmt(r.num("visits"))} · $${fmt(r.num("usd"))}")
+        ) + GeoGa4.kpis(r) + listOf(
+            KpiData("Link visits · paid", "${fmt(r.num("visits"))} · $${fmt(r.num("usd"))}")
         ))
         s.snapshot.obj("external").obj("geo")?.let { GeoTimeSheet(it, cc, span); GeoCostSheet(it, cc, span) }
         GeoClicksSheet(r)
