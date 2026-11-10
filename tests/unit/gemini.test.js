@@ -15,14 +15,15 @@ const CLOUD = { K_SERVICE: "jarvis" };
 const json = (status, body) => ({ ok: status < 400, status, json: async () => body });
 const answer = (text) => json(200, { candidates: [{ content: { parts: [{ text: "thinking", thought: true }, { text }] }, finishReason: "STOP" }] });
 
+const onVertex = (url) => new URL(url).host === "aiplatform.googleapis.com";
 // Answers by host: the metadata server's token, then Vertex and AI Studio with the given statuses.
 function net(vertexStatus, studioStatus) {
   const calls = [];
   const fetch = async (url, opts) => {
     calls.push({ url, headers: (opts || {}).headers || {}, body: opts && opts.body ? JSON.parse(opts.body) : null });
     if (url.startsWith("http://metadata.google.internal/")) return json(200, { access_token: "meta-token", expires_in: 3600 });
-    const status = url.includes("aiplatform.googleapis.com") ? vertexStatus : studioStatus;
-    return status === 200 ? answer(url.includes("aiplatform") ? "from vertex" : "from studio") : json(status, { error: { message: "nope" } });
+    const status = onVertex(url) ? vertexStatus : studioStatus;
+    return status === 200 ? answer(onVertex(url) ? "from vertex" : "from studio") : json(status, { error: { message: "nope" } });
   };
   return { fetch, calls, hosts: () => calls.map((c) => new URL(c.url).host) };
 }
@@ -45,7 +46,7 @@ test("gemini: on Google Cloud Vertex goes first with the metadata token and gemi
   const out = await Gemini.generate(n.fetch, Object.assign({ GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-flash-latest" }, CLOUD), BODY);
   assert.equal(out.via, "vertex");
   assert.equal(Gemini.text(out.data), "from vertex");
-  const call = n.calls.find((c) => c.url.includes("aiplatform"));
+  const call = n.calls.find((c) => onVertex(c.url));
   assert.match(call.url, /projects\/carlosm-interactive-cv\/locations\/global\/publishers\/google\/models\/gemini-3\.8-flash:generateContent$/);
   assert.equal(call.headers.Authorization, "Bearer meta-token");
   assert.equal(call.headers["x-goog-api-key"], undefined);
@@ -87,7 +88,7 @@ test("gemini: useToken reaches Vertex off Google Cloud, as with gcloud auth prin
 test("gemini: Jarvis's briefing and engagement's JSON calls go to Vertex on Google Cloud, to the key when Vertex fails", async () => {
   const brief = net(200, 200);
   assert.equal((await jarvis.brief(brief.fetch, Object.assign({ GEMINI_API_KEY: "k" }, CLOUD), { range: "7" })).text, "from vertex");
-  assert.equal(brief.calls.find((c) => c.url.includes("aiplatform")).body.systemInstruction.parts[0].text.startsWith("You are Jarvis"), true);
+  assert.equal(brief.calls.find((c) => onVertex(c.url)).body.systemInstruction.parts[0].text.startsWith("You are Jarvis"), true);
   const down = net(503, 200);
   assert.equal((await jarvis.brief(down.fetch, Object.assign({ GEMINI_API_KEY: "k" }, CLOUD), { range: "7" })).text, "from studio");
   const spent = net(200, 402);
@@ -96,5 +97,5 @@ test("gemini: Jarvis's briefing and engagement's JSON calls go to Vertex on Goog
 
   const eng = net(200, 402);
   assert.equal(await jarvisEngagement.geminiJson(eng.fetch, Object.assign({ GEMINI_API_KEY: "k" }, CLOUD), "Answer in JSON"), "from vertex");
-  assert.equal(eng.calls.find((c) => c.url.includes("aiplatform")).body.generationConfig.responseMimeType, "application/json");
+  assert.equal(eng.calls.find((c) => onVertex(c.url)).body.generationConfig.responseMimeType, "application/json");
 });
