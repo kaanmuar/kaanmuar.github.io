@@ -11,7 +11,19 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { stripTypeScriptTypes } = require("node:module");
-const yaml = require("js-yaml");
+
+// js-yaml is not a declared dependency; CI runners parse with Ruby's bundled Psych instead.
+function loadYaml(content) {
+  try {
+    return require("js-yaml").load(content);
+  } catch (error) {
+    if (error.code !== "MODULE_NOT_FOUND") throw error;
+  }
+  const out = spawnSync("ruby", ["-ryaml", "-rjson", "-e", "puts JSON.generate(YAML.safe_load(STDIN.read))"], { input: content, encoding: "utf8" });
+  if (out.error) throw new Error("no YAML parser: install js-yaml or Ruby");
+  if (out.status !== 0) throw new Error(out.stderr.trim());
+  return JSON.parse(out.stdout);
+}
 
 const watchCases = require("../../functions/url-review-watch");
 const blocklists = require("../../functions/url-review-blocklists");
@@ -208,7 +220,7 @@ function syntaxError(file, content, dir) {
     try { JSON.parse(content); return ""; } catch (error) { return error.message; }
   }
   if (/\.ya?ml$/.test(file)) {
-    try { yaml.load(content); return ""; } catch (error) { return error.message; }
+    try { loadYaml(content); return ""; } catch (error) { return error.message; }
   }
   const source = /\.ts$/.test(file) ? stripTypeScriptTypes(content) : content;
   fs.writeFileSync(target, source);
@@ -256,10 +268,10 @@ test.describe("watch scripts", () => {
     const tsv = byPath.get("zap/qa-lab-rules.tsv");
     ["10038\tFAIL", "10035\tFAIL", "10010\tFAIL", "10011\tFAIL", "10054\tFAIL"].forEach((rule) => assert.ok(tsv.indexOf(rule) !== -1, rule));
     ["zap/zap-baseline.sh", "nuclei/nuclei.sh"].forEach((file) => assert.ok(byPath.get(file).indexOf("OWNER_APPROVED") !== -1, file));
-    const flow = yaml.load(byPath.get(".github/workflows/qa-lab-watch.yml"));
+    const flow = loadYaml(byPath.get(".github/workflows/qa-lab-watch.yml"));
     assert.deepEqual(Object.keys(flow.jobs).sort(), ["browser", "dns", "http", "mail", "nuclei", "pa11y", "zap"]);
     assert.equal(flow.jobs.zap.if, "vars.OWNER_APPROVED == 'yes'");
-    assert.ok(flow.on.schedule[0].cron);
+    assert.ok((flow.on || flow.true).schedule[0].cron, "YAML 1.1 parsers such as Ruby's read the on: key as true");
   });
 
   test("the pinned fix reruns its case in Playwright", () => {
