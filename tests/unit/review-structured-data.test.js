@@ -70,10 +70,17 @@ for (const lang of LANGS) {
     const packs = faq.mainEntity.filter((q) => /PayPal/.test(q.acceptedAnswer.text));
     assert.equal(packs.length, 1);
     PACKAGES.forEach((p) => {
-      assert.ok(packs[0].acceptedAnswer.text.includes(p.name[lang]), p.name[lang]);
+      const plain = (text) => text.toLowerCase().replace(/’/g, "'");
+      assert.ok(plain(packs[0].acceptedAnswer.text).includes(plain(p.name[lang])), p.name[lang]);
       assert.match(packs[0].acceptedAnswer.text, new RegExp(`\\b${p.usd}\\b`), p.id);
     });
     assert.ok(faq.mainEntity.some((q) => /\b48\b/.test(q.acceptedAnswer.text) && /\b20\s?%/.test(q.acceptedAnswer.text)));
+  });
+
+  test(`${page}: the safety, promise and fix answers are the page's visible facts`, () => {
+    const visible = new Set([...html.matchAll(/<dd[^>]*>([\s\S]*?)<\/dd>/g)].map((m) => m[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").trim()));
+    const faq = nodes.find((n) => n["@type"] === "FAQPage");
+    faq.mainEntity.slice(-3).forEach((q) => assert.ok(visible.has(q.acceptedAnswer.text), q.name));
   });
 
   test(`${page}: canonical, hreflang and share tags point at this language's page`, () => {
