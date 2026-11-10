@@ -150,6 +150,39 @@ test("Cloudflare submits a public scan when none is recent, polls it, and report
   }
 });
 
+test("the public scan gets only scheme, host and path; the origin alone when a path segment looks like a token (#3345)", () => {
+  const cases = [
+    ["https://shop.example.com/cart?session=abc123&token=xyz#pay", "https://shop.example.com/cart"],
+    ["https://user:secret@shop.example.com/a/b/", "https://shop.example.com/a/b/"],
+    ["http://Shop.Example.com:8080/x?y=1", "http://shop.example.com:8080/x"],
+    ["https://shop.example.com", "https://shop.example.com/"],
+    ["https://shop.example.com/reset/" + "aB3_-".repeat(7) + "Zz/confirm?x=1", "https://shop.example.com/"],
+    ["https://shop.example.com/share/" + "a".repeat(32), "https://shop.example.com/"],
+    ["https://shop.example.com/blog/" + "a".repeat(31), "https://shop.example.com/blog/" + "a".repeat(31)],
+    ["https://shop.example.com/docs/" + "a".repeat(20) + ".pdf" + "b".repeat(20), "https://shop.example.com/docs/" + "a".repeat(20) + ".pdf" + "b".repeat(20)],
+    ["ftp://shop.example.com/file", ""],
+    ["not a url", ""],
+    ["", ""]
+  ];
+  for (const [input, expected] of cases) assert.equal(lists.scanTarget(input), expected, input);
+});
+
+test("a URL with credentials, query and fragment is searched by host and submitted without them (#3345)", async () => {
+  const { fetch, calls } = apis([
+    ...clean.slice(0, 2),
+    [/urlscanner\/v2\/search/, json({ results: [] })],
+    [/urlscanner\/v2\/scan$/, json({ uuid: "new2" })],
+    [/urlscanner\/v2\/result\/new2/, json({ task: { uuid: "new2", url: "https://shop.example.com/account", time: "2026-11-09T12:01:00Z" }, verdicts: { overall: { malicious: false } } })]
+  ]);
+  lists._cache.clear();
+  await lists.check("https://me:pw@shop.example.com/account?token=s3cret&email=a%40b.co#top", { env: KEYS, fetch, now: NOW, pause: async () => {} });
+  const search = calls.find((call) => /search/.test(call.url));
+  assert.equal(new URL(search.url).searchParams.get("q"), "page.domain:\"shop.example.com\" AND date:>now-1d");
+  const scan = calls.find((call) => /\/scan$/.test(call.url));
+  assert.deepEqual(JSON.parse(scan.init.body), { url: "https://shop.example.com/account", visibility: "Public" });
+  assert.ok(!calls.some((call) => /s3cret|a%40b|me:pw|#top/.test(call.url + (call.init.body || ""))), "nothing private leaves");
+});
+
 test("answers are cached per host for six hours; errors are logged and not cached (#3083)", async () => {
   const { fetch, calls } = apis([[/urlhaus-api/, json({}, 401)], ...clean.slice(1)]);
   const first = await run(fetch, KEYS);

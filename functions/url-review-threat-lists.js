@@ -92,6 +92,15 @@ const hostOf = (url) => {
   try { return new URL(String(url || "")).hostname.toLowerCase().replace(/\.$/, ""); } catch (error) { return ""; }
 };
 
+// Scans are public on Cloudflare Radar: no query, fragment or credentials, and only the origin when a path segment looks like a token.
+function scanTarget(url) {
+  let parsed;
+  try { parsed = new URL(String(url || "")); } catch (error) { return ""; }
+  if (!/^https?:$/.test(parsed.protocol)) return "";
+  const path = parsed.pathname || "/";
+  return parsed.origin + (path.split("/").some((part) => /^[A-Za-z0-9_-]{32,}$/.test(part)) ? "/" : path);
+}
+
 function hostsOf(host) {
   return [...new Set([host, registrable(host)].filter(Boolean))].slice(0, 2);
 }
@@ -162,6 +171,7 @@ async function cloudflare(url, host, token, account, fetchImpl, opts) {
     const done = ((found && found.results) || []).filter((row) => row.task && row.task.success !== false && row.task.uuid && hostOf(row.page && row.page.url) === host);
     const pick = done.find((row) => row.verdicts && row.verdicts.malicious === true) || done[0];
     if (pick) return scanVerdict(await result(pick.task.uuid), host);
+    if (!url) throw new Error("not an http address");
     const asked = await getJson(fetchImpl, base + "scan", {
       method: "POST",
       headers: Object.assign({ "Content-Type": "application/json" }, headers),
@@ -211,7 +221,7 @@ async function check(url, options) {
   const sources = [
     ["urlhaus", ["URLHAUS_AUTH_KEY"], () => urlhaus(host, env.URLHAUS_AUTH_KEY, opts.fetch)],
     ["phishstats", ["PHISHSTATS_KEY"], () => phishstats(host, env.PHISHSTATS_KEY, opts.fetch, opts.now)],
-    ["cloudflare", ["CLOUDFLARE_URLSCAN_TOKEN", "CLOUDFLARE_ACCOUNT_ID"], () => cloudflare(url, host, env.CLOUDFLARE_URLSCAN_TOKEN, env.CLOUDFLARE_ACCOUNT_ID, opts.fetch, opts)]
+    ["cloudflare", ["CLOUDFLARE_URLSCAN_TOKEN", "CLOUDFLARE_ACCOUNT_ID"], () => cloudflare(scanTarget(url), host, env.CLOUDFLARE_URLSCAN_TOKEN, env.CLOUDFLARE_ACCOUNT_ID, opts.fetch, opts)]
   ];
   const missing = (names) => names.find((name) => !env[name]);
   if (sources.every(([, names]) => missing(names))) {
@@ -272,4 +282,4 @@ function addFindings(result, add) {
     say("sec-threatlists.pass.evidence", { n: read.length, lists: { items: read.map(listName), join: "and" }, host: result.host, pending: pending ? say("threatlist.pending", { report: pending.report }) : "" }), "");
 }
 
-module.exports = { check, addFindings, use, usagePatch, USAGE, NAMES, PHISHSTATS_MIN_SCORE, PHISHSTATS_DAYS, _cache: cache };
+module.exports = { check, addFindings, scanTarget, use, usagePatch, USAGE, NAMES, PHISHSTATS_MIN_SCORE, PHISHSTATS_DAYS, _cache: cache };
