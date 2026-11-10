@@ -226,7 +226,7 @@ test("every finding renders in English and in each page language", async () => {
   const signs = await hack.look({
     url: HOME, html: CLOAKED, site: { title: "Harbor Bakery" },
     fetch: async (url, agent) => page(agent === hack.GOOGLEBOT ? CLOAKED.replace(/<title>[^<]*<\/title>/, "<title>Welcome</title>").replace(/<main>[\s\S]*<\/main>/, "<main>Other words</main>") : CLEAN, url),
-    search: async () => [{ title: "Slot gacor", url: HOME + "a", description: "" }, { title: "Togel online", url: HOME + "b", description: "" }]
+    search: async () => [{ title: "Slot gacor", url: HOME + "a", description: "" }, { title: "Togel online", url: HOME + "b", description: "" }, { title: "Replica Rolex", url: HOME + "c", description: "" }]
   });
   const rows = collect(signs);
   assert.deepEqual(rows.map((row) => row.key + ":" + row.verdict), ["sec-seo-spam:fail", "sec-cloaking:fail", "sec-spam-links:fail"]);

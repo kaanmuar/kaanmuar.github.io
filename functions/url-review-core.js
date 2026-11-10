@@ -228,7 +228,7 @@ const TECH = [
   ["SAP", "Platform", /sapui5|sap-ui-core|hana\.ondemand/i],
   ["ServiceNow", "Platform", /servicenow\.com|service-now\.com/i],
   ["Wix", "Site builder", /wix\.com|x-wix/i],
-  ["Squarespace", "Site builder", /squarespace/i],
+  ["Squarespace", "Site builder", /static1\.squarespace\.com|images\.squarespace-cdn\.com|Static\.SQUARESPACE_CONTEXT/i],
   ["Webflow", "Site builder", /webflow/i],
   ["Next.js", "Framework", /\/_next\/|__NEXT_DATA__/i],
   ["Nuxt", "Framework", /\/_nuxt\/|__NUXT__/i],
@@ -1574,6 +1574,8 @@ function technologies(html, headers, pageUrl, generator) {
   if (header(headers, "x-vercel-id")) found.push({ name: "Vercel", group: "Host", evidence: "x-vercel-id response header." });
   if (header(headers, "x-nf-request-id")) found.push({ name: "Netlify", group: "Host", evidence: "Netlify response header." });
   const seen = new Set();
+  // A WordPress site that embeds Squarespace images does not run on Squarespace (#3312).
+  if (found.some((item) => item.name === "WordPress")) seen.add("squarespace");
   return found.filter((item) => {
     const key = item.name.toLowerCase();
     if (seen.has(key)) return false;
@@ -2432,8 +2434,8 @@ async function braveSearch(query, key) {
   const data = await searchJson("https://api.search.brave.com/res/v1/web/search?count=10&q=" + encodeURIComponent(query), {
     headers: { accept: "application/json", "x-subscription-token": key }
   });
-  return searchResults(data && data.web && data.web.results,
-    (row) => [row.title, row.url, [row.description].concat(row.extra_snippets || []).join(" ")]);
+  return data ? searchResults(data.web && data.web.results,
+    (row) => [row.title, row.url, [row.description].concat(row.extra_snippets || []).join(" ")]) : null;
 }
 
 // Free plan: 1,000 credits a month, one per basic search (https://app.tavily.com).
@@ -2443,17 +2445,28 @@ async function tavilySearch(query, key) {
     headers: { "content-type": "application/json", authorization: "Bearer " + key },
     body: JSON.stringify({ query, max_results: 10, search_depth: "basic" })
   });
-  return searchResults(data && data.results, (row) => [row.title, row.url, row.content]);
+  return data ? searchResults(data.results, (row) => [row.title, row.url, row.content]) : null;
 }
 
 // Web results as [{ title, url, description }]: Brave Search, then Tavily when Brave has no key, fails or
-// finds nothing. Without either key the web search is off and answers [].
-async function webSearch(query, keys = process.env) {
+// finds nothing. null when every search it tried failed (an error, a spent quota or a timeout), so a caller can
+// tell "not checked" from "nothing found" (#3156). Without either key the web search is off and answers [].
+async function webSearchOrNull(query, keys = process.env) {
+  let answered = !keys.BRAVE_SEARCH_KEY && !keys.TAVILY_API_KEY;
   if (keys.BRAVE_SEARCH_KEY) {
     const rows = await braveSearch(query, keys.BRAVE_SEARCH_KEY);
-    if (rows.length) return rows;
+    if (rows && rows.length) return rows;
+    if (rows) answered = true;
   }
-  return keys.TAVILY_API_KEY ? tavilySearch(query, keys.TAVILY_API_KEY) : [];
+  if (keys.TAVILY_API_KEY) {
+    const rows = await tavilySearch(query, keys.TAVILY_API_KEY);
+    if (rows) return rows;
+  }
+  return answered ? [] : null;
+}
+
+async function webSearch(query, keys = process.env) {
+  return (await webSearchOrNull(query, keys)) || [];
 }
 
 function lookupMentions(hostname) {
@@ -3273,8 +3286,10 @@ async function reviewTarget(rawUrl, hooks) {
     html: first.body,
     site: { title: homeInspect.title, description: homeInspect.description, h1: homeInspect.h1, lang: homeInspect.lang, types: ((homeInspect.schema && homeInspect.schema.items) || []).reduce((all, item) => all.concat(item.types), []) },
     paths: browsePaths,
+    links: homeInspect.links || [],
+    sitemap: sitemapPromise,
     fetch: (url, agent) => fetchPublic(url, halt, null, false, acceptLanguage, agent),
-    search: controls.mentions === false || !(process.env.BRAVE_SEARCH_KEY || process.env.TAVILY_API_KEY) ? null : (query) => webSearch(query),
+    search: controls.mentions === false || !(process.env.BRAVE_SEARCH_KEY || process.env.TAVILY_API_KEY) ? null : (query) => webSearchOrNull(query),
     challenge: (res) => challengeOf(res.url, res.headers, res.body)
   }).catch(() => null);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
@@ -4670,6 +4685,7 @@ module.exports = {
   visibleText,
   fetchExtra,
   webSearch,
+  webSearchOrNull,
   parseMentions,
   humanCheck,
   createCheckout,
