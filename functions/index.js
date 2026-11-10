@@ -51,6 +51,8 @@ const jarvisProcess = (rows) => jarvisProcesses.report(jarvisLiveDeps(), rows).c
 const jarvisLog = require("./jarvis-log");
 const jarvisLogPoll = require("./jarvis-log-poll");
 jarvisLog.use(getFirestore);
+const linkedRisk = require("./url-review-linked-risk");
+linkedRisk.use(getFirestore, FieldValue);
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.

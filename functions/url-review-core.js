@@ -12,6 +12,7 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const threatLists = require("./url-review-threat-lists");
@@ -3453,6 +3454,7 @@ async function reviewTarget(rawUrl, hooks) {
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
+  const linkedPromise = stopped || typeof controls.webrisk !== "function" ? Promise.resolve(null) : linkedRisk.check(linkedRisk.collect(pages, browser, origin.hostname), controls.webrisk).catch(() => null);
   const outboundPromise = stopped ? Promise.resolve(null) : checkOutbound(pages, halt, deadline - 15000).catch(() => null);
   const wordpressPromise = stopped ? Promise.resolve(null) : withTimeout(wordpress.check(pages, {
     read: (url) => !robots.length || robotsAllows(pagePath(url), robots) ? fetchExtra(url, halt, false, acceptLanguage) : null
@@ -3460,6 +3462,8 @@ async function reviewTarget(rawUrl, hooks) {
   let extras = {};
   if (!extrasSettled) note("Waiting for the background checks to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  extras.linkedRisk = await linkedPromise;
+  if (extras.linkedRisk && extras.linkedRisk.found) note(linkedRisk.note(extras.linkedRisk));
   extras.outbound = await outboundPromise;
   extras.wordpress = await wordpressPromise;
   if (extras.wordpress) note(wordpress.note(extras.wordpress));

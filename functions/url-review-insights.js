@@ -1,6 +1,7 @@
 "use strict";
 
 const { URL } = require("url");
+const linkedRisk = require("./url-review-linked-risk");
 const libraries = require("./url-review-libraries");
 const threatLists = require("./url-review-threat-lists");
 const wordpress = require("./url-review-wordpress");
@@ -1671,6 +1672,7 @@ function analyze(input) {
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", say("sec-caa.title"), say("sec-caa.evidence", { domain }), say("sec-caa.fix"), { effort: "minutes" });
     if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
+  linkedRisk.findings(extras.linkedRisk, add);
   domainChecks(extras, dnsInfo, dnsRead, add);
   blocklists.report(dnsInfo && dnsInfo.blocklists, add);
   exposedFiles.checks(extras.exposed, add);

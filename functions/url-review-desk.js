@@ -13,7 +13,7 @@ const HELD_WORDS = {
   "test-run": "a sandbox test run",
   "asker-opted-out": "the asker ticked don't publish",
   unlisted: "the owner asked to be left out",
-  "safe-browsing-flagged": "Google's Safe Browsing lists flag the site",
+  "safe-browsing-flagged": "Google's Safe Browsing lists flag the site or a script it loads",
   "threat-listed": "URLhaus, PhishStats or Cloudflare lists the site as phishing or malware",
   "exposed-files": "the site serves exposed files such as .git, .env or backups",
   "no-score": "the review has no score",

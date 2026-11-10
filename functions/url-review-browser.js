@@ -290,6 +290,8 @@ function normal(text) {
 
 function recorder(pageHttps, readLibraries) {
   const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, bytes: 0, hosts: new Set(), canaries: [], typed: [] };
+  state.thirdParty = { scripts: new Set(), frames: new Set() };
+  const subFrame = (req) => { try { return !!req.frame().parentFrame(); } catch (error) { return false; } };
   const addLib = (row) => {
     const key = row.name + "@" + row.version;
     if (!state.libs.has(key) && state.libs.size < 20) state.libs.set(key, row);
@@ -349,6 +351,8 @@ function recorder(pageHttps, readLibraries) {
       if (pageHttps && url.protocol === "http:" && state.mixed.length < 6) state.mixed.push(shortUrl(raw));
       if (chatOf(url.hostname)) chatRow(state.phase, url.hostname).requests += 1;
       if (readLibraries && state.phase === "before" && req.resourceType() === "script") libraryFromUrl(raw).forEach(addLib);
+      if (req.resourceType() === "script" && state.thirdParty.scripts.size < 40) state.thirdParty.scripts.add(url.hostname);
+      else if (req.resourceType() === "document" && state.thirdParty.frames.size < 20 && subFrame(req)) state.thirdParty.frames.add(url.hostname);
       const name = vendorOf(url.hostname);
       if (!name) return;
       const row = vendorRow(state.phase, name);
@@ -1677,6 +1681,7 @@ async function browse(job, log, onStart) {
       requests: rec.state.requests,
       hosts: rec.state.hosts.size,
       bytes: rec.state.bytes,
+      thirdParty: { scripts: [...rec.state.thirdParty.scripts], frames: [...rec.state.thirdParty.frames] },
       dom
     };
     try { result.start.images = imageRows(await page.evaluate(imageProbe), images, vitals.lcpUrl); } catch (error) { /* the image checks stay unscored */ }

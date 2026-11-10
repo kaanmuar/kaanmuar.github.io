@@ -3338,6 +3338,24 @@ test.describe("domain health", () => {
     }
   });
 
+  test("a review looks up the script hosts the site loads in Web Risk, and a listed one fails the report (#3090)", async () => {
+    const html = HTML.replace("</head>", "<script src=\"https://skim.testsafebrowsing.appspot.com/s/malware.js\"></script></head>");
+    const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: html } });
+    const asked = [];
+    try {
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: /testsafebrowsing/.test(url) ? ["MALWARE"] : [] }; },
+        places: async () => null
+      });
+      assert.deepEqual(asked, [URL_, "https://skim.testsafebrowsing.appspot.com/"]);
+      assert.deepEqual([get(report.insights, "sec-linked-script").verdict, get(report.insights, "sec-linked-script").severity], ["fail", "critical"]);
+      assert.ok(report.log.some((line) => /read for 1 of 1 hosts the site loads or links to: skim\.testsafebrowsing\.appspot\.com \(MALWARE\) flagged/.test(line.text)));
+    } finally {
+      restore();
+    }
+  });
+
   test("a local business is checked against its Google Business Profile, and only the place ID is kept (#2067)", async () => {
     const ld = { "@context": "https://schema.org", "@type": "HardwareStore", name: "Example Garden Tools", telephone: "+1 415 555 0100", address: { "@type": "PostalAddress", streetAddress: "12 Garden Way", addressLocality: "Springfield" } };
     const html = HTML.replace("</head>", "<script type=\"application/ld+json\">" + JSON.stringify(ld) + "</script></head>");
