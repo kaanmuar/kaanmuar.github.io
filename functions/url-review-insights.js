@@ -5,6 +5,7 @@ const libraries = require("./url-review-libraries");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
+const { mailAuthChecks, dmarcRepair, dmarcPolicy } = require("./url-review-mail-auth");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1647,16 +1648,18 @@ function analyze(input) {
     // A lookup that timed out says nothing about the record, so it gets no finding either way.
     const mailRead = dnsRead("spf") && dnsRead("mx");
     const domain = dnsInfo.domain;
+    const enforced = /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc));
+    const mailAuth = mailAuthChecks(dnsInfo, dnsRead, add);
     if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", say("sec-spf.missing.title"), say("sec-spf.missing.evidence", { domain }), say("sec-spf.missing.fix"), { effort: "minutes" });
     if (mailRead && !sendsMail && !dnsInfo.spf) {
-      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
+      if (dnsInfo.nullMx && enforced) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
       else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", say("sec-spf.nullNoSpf.title"), say("sec-spf.nullNoSpf.evidence", { domain }), say("sec-spf.nullNoSpf.fix"), { effort: "minutes" });
       else add("Security", "risk", "low", "sec-spf", say("sec-spf.none.title"), say("sec-spf.none.evidence", { domain }), say("sec-spf.none.fix"), { effort: "minutes" });
     }
     if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", say("sec-dmarc.title"), say("sec-dmarc.evidence", { domain }), say("sec-dmarc.fix"), { effort: "minutes" });
-    else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
-    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
-    if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
+    else if (dnsInfo.dmarc && !enforced) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
+    else if (dnsInfo.dmarc && !mailAuth.dmarcBroken) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
+    if (dnsInfo.spf && sendsMail && mailAuth.spf !== "fail") add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", say("sec-caa.title"), say("sec-caa.evidence", { domain }), say("sec-caa.fix"), { effort: "minutes" });
     if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
@@ -1867,8 +1870,8 @@ function analyze(input) {
       { label: "Cross-Origin-Opener-Policy", state: findingState("sec-coop") },
       { label: "TLS certificate", state: tls && tls.validTo ? (tls.daysLeft < 14 ? "fail" : tls.daysLeft < 30 ? "risk" : "pass") : "unknown" },
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
-      { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
-      { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
+      { label: "SPF", state: dnsRead("spf") ? (findings.some((item) => /^sec-spf-/.test(item.key) && item.verdict === "fail") ? "fail" : dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
+      { label: "DMARC", state: dnsRead("dmarc") ? (findings.some((item) => item.key === "sec-dmarc-multiple") ? "fail" : dnsInfo.dmarc && /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) ? "pass" : "risk") : "unknown" },
       { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" },
       { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
       { label: "Domain expiry", state: findingState("sec-domain-expiry") }
@@ -1880,7 +1883,7 @@ function analyze(input) {
       .map(([label, key]) => findingState(key) === "person" ? { label, state: "unknown", person: true } : { label, state: findingState(key) })),
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
     domain: extras.domain && extras.domain.read ? { domain: extras.domain.domain, expires: extras.domain.expires, daysLeft: extras.domain.daysLeft, registrar: extras.domain.registrar, locked: extras.domain.locked } : null,
-    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "") } : null,
+    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) } : null,
     pages: headerRows.slice(0, 40)
   };
   const chatSeen = browsed && browsed.chat && (browsed.chat.found || []).length ? browsed.chat : null;
@@ -2001,6 +2004,7 @@ function fixKit(ctx) {
     const unread = ctx.dnsInfo.unread || [];
     if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
     if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
+    else if (ctx.dnsInfo.dmarc && dmarcRepair(ctx.dnsInfo.dmarc, domain)) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: dmarcRepair(ctx.dnsInfo.dmarc, domain) });
     if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
     if (mail && !ctx.dnsInfo.tlsRpt && !unread.includes("tlsrpt") && !unread.includes("mx")) dnsRecords.push({ name: "_smtp._tls." + domain, type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@" + domain });
     if (mail && !ctx.dnsInfo.mtaSts && !unread.includes("mta-sts") && !unread.includes("mx")) dnsRecords.push({ name: "_mta-sts." + domain, type: "TXT", value: "v=STSv1; id=" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "01" });
