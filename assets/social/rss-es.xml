@@ -398,7 +398,9 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-kra-co-kr&
 
 Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
-#SEO #SRE #Automation #QA #Titles #QAlab</description>
+#SEO #SRE #Automation #QA #Titles #QAlab
+
+https://www.youtube.com/shorts/kG8rtm1iz1s</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg" length="220209" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -458,7 +460,9 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-beebom-com
 
 Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
-#SEO #SoftwareTesting #QA #WebPerf #TechCommunity #QAlab</description>
+#SEO #SoftwareTesting #QA #WebPerf #TechCommunity #QAlab
+
+https://www.youtube.com/shorts/_xEegaG1WZc</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" length="262077" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -496,7 +500,9 @@ Compruébalo: Invierte el presupuesto del overlay primero en tus plantillas comp
 
 Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-overlay
 
-#Accessibility #Playwright #SoftwareTesting #QA #WCAG #QAlab</description>
+#Accessibility #Playwright #SoftwareTesting #QA #WCAG #QAlab
+
+https://www.youtube.com/shorts/IggzU08mj3E</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" length="261070" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -619,6 +625,23 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
 #Accessibility #i18n #A11y #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" length="248627" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Tu tarjeta al compartir es una primera impresión.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/14-share-card-es</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>SEO</category>
+      <description>Sin og:image ni og:title, cada enlace a tu sitio aparece como una caja gris en chats y feeds.
+
+Prueba esto hoy: Pega tu enlace en un chat privado contigo mismo. Lo que la gente ve ahí es tu verdadera primera impresión.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
+
+#SEO #OpenGraph #Marketing #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>3 competidores naturales. halloweencostumes.com va en cabeza: 75.</title>
@@ -921,24 +944,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
 #StructuredData #SEO #OpenSource #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg" length="251694" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>honda.com: 63. El punto débil: la redirección a https.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-22/16-u-honda-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-10-22/16-u-honda-com-es</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero http sin cifrar sirve el sitio sin redirigir.
-
-La lección para cualquier equipo: Redirige cada petición http a https con un único 301 permanente y luego añade HSTS.
-
-Un análisis automatizado de páginas públicas el 22 oct. 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-honda-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-honda-com
-
-#WebSecurity #HTTPS #Redirects #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg" length="236543" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

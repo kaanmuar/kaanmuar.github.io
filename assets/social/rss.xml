@@ -398,7 +398,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-kra-co-kr&amp;
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#SEO #SRE #Automation #QA #Titles #QAlab</description>
+#SEO #SRE #Automation #QA #Titles #QAlab
+
+https://www.youtube.com/shorts/kG8rtm1iz1s</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg" length="220209" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/06-u-kra-co-kr.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -458,7 +460,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-beebom-com&amp
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#SEO #SoftwareTesting #QA #WebPerf #TechCommunity #QAlab</description>
+#SEO #SoftwareTesting #QA #WebPerf #TechCommunity #QAlab
+
+https://www.youtube.com/shorts/_xEegaG1WZc</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" length="262077" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -496,9 +500,25 @@ Check it: Spend the overlay budget on your shared templates first: header, navig
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-overlay
 
-#Accessibility #Playwright #SoftwareTesting #QA #WCAG #QAlab</description>
+#Accessibility #Playwright #SoftwareTesting #QA #WCAG #QAlab
+
+https://www.youtube.com/shorts/IggzU08mj3E</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" length="261070" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Content-Encoding and SEO: Can the Crawler Decode the Answer?</title>
+      <link>https://carlosandmunoz.com/social/pick/content-encoding-and-seo-can-the-crawler-decode-the-answer.html</link>
+      <guid isPermaLink="false">pick/content-encoding-and-seo-can-the-crawler-decode-the-answer</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>When compressed HTML appears unreadable to a crawler, inspect the response's Content-Encoding and the...
+
+Via DEV, by Uriel Bitton, 2026-11-08.
+
+https://dev.to/urielbitton/content-encoding-and-seo-can-the-crawler-decode-the-answer-74n</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F7d0mthvvemub9kdrfb8d.png" medium="image"/>
     </item>
     <item>
       <title>esdrassantos06/liftbox: Accessible, themeable React lightbox and gallery with zoom, video, slideshow and deep links. Zero runtime dependencies.</title>
@@ -527,6 +547,57 @@ Via Search Engine Journal, by Roger Montti, 2026-10-30.
 
 https://www.searchenginejournal.com/googles-q3-earnings-call-casts-shadow-over-classic-search/595082/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/google-q3-search-782.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>How to Verify Googlebot in Server Logs Before Diagnosing a Crawl Failure</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-c.html</link>
+      <guid isPermaLink="false">pick/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-c</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>To verify Googlebot in server logs, start with the real source IP recorded at the edge. Match it...
+
+Via DEV, by Uriel Bitton, 2026-11-03.
+
+https://dev.to/urielbitton/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-crawl-failure-5ail</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx4rgif2w1crjp8uzpwra.png" medium="image"/>
+    </item>
+    <item>
+      <title>Nightly sweep: 1604 sites in 122 countries, Nov 2 to Nov 8</title>
+      <link>https://carlosandmunoz.com/social/pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8.html</link>
+      <guid isPermaLink="false">pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Field sweep</category>
+      <description>Our nightly sweep reviewed 1604 public websites in 122 countries last week (Nov 2 to Nov 8).
+
+What came up most often among each site's top issues:
+• Text with too little color contrast: 64% of sites
+• No HSTS header: 54% of sites
+• Form fields without a label: 47% of sites
+
+Most of these are small fixes. See one full case and its fix in our sample report:
+https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-09
+
+Ran a review already? Your report reopens free for 7 days.
+
+https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-09</description>
+      <enclosure url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg" length="121646" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Optimistic UI Rollback: Let Public Demo Testers See a Change Fail</title>
+      <link>https://carlosandmunoz.com/social/pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change-.html</link>
+      <guid isPermaLink="false">pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change-</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>To test optimistic UI rollback in a public SaaS demo, show an immediate interface change,...
+
+Via DEV, by Uriel Bitton, 2026-11-07.
+
+https://dev.to/urielbitton/optimistic-ui-rollback-let-public-demo-testers-see-a-change-fail-4m6f</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mwqy1c05vljgh0sad4g.png" medium="image"/>
     </item>
     <item>
       <title>Playwright fullPage screenshots return one viewport when the page scrolls inside a container</title>
@@ -571,6 +642,34 @@ https://dev.to/magdalenewanyeki/semantic-html-accessibility-what-i-learned-and-f
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flu1rkab6g8uvvuiuc5ev.png" medium="image"/>
     </item>
     <item>
+      <title>SEO Split Testing In 2027: How To Prove A Change Actually Worked</title>
+      <link>https://carlosandmunoz.com/social/pick/seo-split-testing-in-2027-how-to-prove-a-change-actually-wor.html</link>
+      <guid isPermaLink="false">pick/seo-split-testing-in-2027-how-to-prove-a-change-actually-wor</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Separate real SEO gains from Google's shifts with fair controls, clear decision rules, and results stakeholders can tie to revenue. The post SEO Split Testing In 2027: How To Prove A Change Actually Worked appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Sophie Brannon, 2026-11-09.
+
+https://www.searchenginejournal.com/seo-split-testing-prove-change-worked/594529/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/split-testing-685.png" medium="image"/>
+    </item>
+    <item>
+      <title>Snorlark/plop-ui: PlopUI: hand-drawn React UI kit, imperfect on purpose. Wobbly stickers, washi tape and a hand-lettered font, accessible to WCAG AA.</title>
+      <link>https://carlosandmunoz.com/social/pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on.html</link>
+      <guid isPermaLink="false">pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>PlopUI: hand-drawn React UI kit, imperfect on purpose. Wobbly stickers, washi tape and a hand-lettered font, accessible to WCAG AA.
+
+Via GitHub, by Snorlark, 2026-10-21.
+
+https://github.com/Snorlark/plop-ui</description>
+      <media:content url="https://opengraph.githubassets.com/1/Snorlark/plop-ui" medium="image"/>
+    </item>
+    <item>
       <title>The Link Building Graveyard: What To Bury &amp; What Still Wins via @sejournal, @hethr_campbell</title>
       <link>https://carlosandmunoz.com/social/pick/the-link-building-graveyard-what-to-bury-what-still-wins-via.html</link>
       <guid isPermaLink="false">pick/the-link-building-graveyard-what-to-bury-what-still-wins-via</guid>
@@ -583,6 +682,48 @@ Via Search Engine Journal, by Heather Campbell, 2026-10-30.
 
 https://www.searchenginejournal.com/the-link-building-graveyard-what-to-bury-what-still-wins-recap/593932/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/resolve-link-building-graveyard-on-demand-sej.png" medium="image"/>
+    </item>
+    <item>
+      <title>The New Organic Growth Stack: Search, Social, Communities &amp; AI</title>
+      <link>https://carlosandmunoz.com/social/pick/the-new-organic-growth-stack-search-social-communities-ai.html</link>
+      <guid isPermaLink="false">pick/the-new-organic-growth-stack-search-social-communities-ai</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Build an organic growth stack around the sources Google's AI answers and standalone chatbots cite most in your category. The post The New Organic Growth Stack: Search, Social, Communities &amp; AI appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Ross Simmonds, 2026-11-09.
+
+https://www.searchenginejournal.com/new-organic-growth-stack-search-social-communities-ai/594542/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/growth-stack-195.png" medium="image"/>
+    </item>
+    <item>
+      <title>The New York Times v. Brave Puts AI Search Indexing Under Scrutiny</title>
+      <link>https://carlosandmunoz.com/social/pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr.html</link>
+      <guid isPermaLink="false">pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>The New York Times Co. has filed a copyright complaint against Brave Software that places a growing...
+
+Via DEV, by Ali Farhat, 2026-11-09.
+
+https://blog.geosearchleads.com/brave-ai-search-index-publisher-implications/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fbrave-ai-search-index-publisher-implications.webp" medium="image"/>
+    </item>
+    <item>
+      <title>Tripadvisor Says SEO Will Still Weigh On Growth In 2027 via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via-.html</link>
+      <guid isPermaLink="false">pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via-</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Tripadvisor tied a writedown largely to search changes, expects SEO to weigh on growth next year, and says marketing takes more of its revenue. The post Tripadvisor Says SEO Will Still Weigh On Growth In 2027 appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-08.
+
+https://www.searchenginejournal.com/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027/596257/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/tripadvisor-featured-1600x840-1.jpg" medium="image"/>
     </item>
     <item>
       <title>Bancolombia's site won't let you zoom.</title>
@@ -619,6 +760,23 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #Accessibility #i18n #A11y #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" length="248627" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Your share card is a first impression.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card.html</link>
+      <guid isPermaLink="false">tips-2026-10/14-share-card</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>SEO</category>
+      <description>Without og:image and og:title, every link to your site shows up as a grey box in chats and feeds.
+
+Try this today: Paste your link into a private chat with yourself. What people see there is your real first impression.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
+
+#SEO #OpenGraph #Marketing #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>3 natural competitors. halloweencostumes.com leads: 75.</title>
@@ -763,182 +921,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ruvo.com: 79. The gap: the CSP.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/02-u-ruvo-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/02-u-ruvo-com</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.
-
-The lesson for every team: Tighten the content security policy one directive at a time, starting from default-src 'self'.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ruvo-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SRE #QA #CSP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" length="225125" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Scored 68 of 100. The gap: the https redirect.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-07/01-u-servicesaustralia-gov-au.html</link>
-      <guid isPermaLink="false">auto-2026-11-07/01-u-servicesaustralia-gov-au</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
-
-The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
-
-One automated analysis of public pages on 6 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-servicesaustralia-gov-au&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-servicesaustralia-gov-au
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #DevOps #QA #HTTPS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/01-u-servicesaustralia-gov-au.jpg" length="237187" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/01-u-servicesaustralia-gov-au.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Find the code your page never runs.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/04-coverage.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/04-coverage</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Trick</category>
-      <category>Perf</category>
-      <description>30-second trick: Find the code your page never runs.
-
-The Coverage panel in Chrome DevTools marks every byte of script and stylesheet as used or unused while you load and use the page.
-
-Try it now: Click through the page's main task, then sort by unused bytes. Split or defer the biggest file that stays mostly red.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=coverage
-
-#WebPerformance #Programming #OpenSource #QA #DevTools #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/04-coverage.jpg" length="232979" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/04-coverage.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The 10-minute pre-release check.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/07-pre-release.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/07-pre-release</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Best practice</category>
-      <category>QA</category>
-      <description>Checklist: The 10-minute pre-release check.
-
-Ten things that break at deploy time and that no unit test sees. About a minute each, on the live site, before you announce anything.
-
-Use it: Copy the list into your release ticket and tick it on the live site, not on staging.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=pre-release
-
-#QA #AI #SoftwareTesting #ReleaseManagement #WebDevelopment #QAlab
-
-https://www.youtube.com/shorts/_Fjz39h7Css</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/07-pre-release.jpg" length="224712" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/07-pre-release.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Building a reliable configuration pipeline for Python test automation</title>
-      <link>https://carlosandmunoz.com/social/pick/building-a-reliable-configuration-pipeline-for-python-test-a.html</link>
-      <guid isPermaLink="false">pick/building-a-reliable-configuration-pipeline-for-python-test-a</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>When you build a test automation framework, configuration is usually an afterthought. You write a...
-
-Via DEV, by Kabir Hossain, 2026-11-08.
-
-https://dev.to/praman/building-a-reliable-configuration-pipeline-for-python-test-automation-1koa</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mb4gpxq4xx1xcelxvvh.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google Rank Data Issues, Lighthouse Update &amp; AI Opt-Out – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-rank-data-issues-lighthouse-update-ai-opt-out-seo-pul.html</link>
-      <guid isPermaLink="false">pick/google-rank-data-issues-lighthouse-update-ai-opt-out-seo-pul</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Performance</category>
-      <description>Rank data may carry one-word results and redirect URLs. Other updates cover PageSpeed lab scores, a shared AI training opt-out, technical SEO and AI search. The post Google Rank Data Issues, Lighthouse Update &amp; AI Opt-Out – SEO Pulse appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-07.
-
-https://www.searchenginejournal.com/seo-pulse-rank-data-problems-pagespeed-scores-ai-training-opt-out/596104/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-06-1600x840-1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>The Screen Reader Read My Whole Answer 400 Times: Debugging a Live Region That Fired Per Token</title>
-      <link>https://carlosandmunoz.com/social/pick/the-screen-reader-read-my-whole-answer-400-times-debugging-a.html</link>
-      <guid isPermaLink="false">pick/the-screen-reader-read-my-whole-answer-400-times-debugging-a</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>A teammate opened our new streaming assistant with VoiceOver, typed a short prompt about the water...
-
-Via DEV, by babycat, 2026-11-07.
-
-https://dev.to/babycat/the-screen-reader-read-my-whole-answer-400-times-debugging-a-live-region-that-fired-per-token-h7i</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9j797rhqaxm01e0xuujo.png" medium="image"/>
-    </item>
-    <item>
-      <title>TransMilenio lets search write its pitch.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/06-transmilenio.html</link>
-      <guid isPermaLink="false">runs-2026-10/06-transmilenio</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Local</category>
-      <description>Every linked page answers and AI crawlers are welcome. But none of the 20 pages analyzed has a meta description, the start page included, so search engines write the snippet themselves.
-
-The lesson for every team: Write a description of about 150 characters for your ten most visited pages, starting with the home page.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=transmilenio
-
-#SEO #MetaDescription #SERP #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg" length="247786" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/06-transmilenio.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Python.org reads well. Its site name is missing.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/07-python.html</link>
-      <guid isPermaLink="false">runs-2026-10/07-python</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Every page has a title and a description, and the text reads without JavaScript. The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.
-
-The lesson for every team: Add &quot;name&quot; to your WebSite JSON-LD, written exactly as you want the site named in search results.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=python
-
-#StructuredData #SEO #OpenSource #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg" length="251694" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/07-python.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>honda.com: 63. The gap: the https redirect.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-22/16-u-honda-com.html</link>
-      <guid isPermaLink="false">auto-2026-10-22/16-u-honda-com</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
-
-The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
-
-One automated analysis of public pages on 22 Oct 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-honda-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-honda-com
-
-#WebSecurity #HTTPS #Redirects #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg" length="236543" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-22/feed/16-u-honda-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

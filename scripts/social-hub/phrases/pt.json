@@ -453,6 +453,10 @@
   "text": "Mas os cookies ⟦1⟧ são enviados sem segurança e o cookie de sessão ⟦2⟧ pode ser lido por scripts.",
   "machine": true
  },
+ "But ⟦1⟧ cookies are sent without Secure, and ⟦2⟧ session cookies are readable by scripts.": {
+  "text": "Mas os cookies ⟦1⟧ são enviados sem segurança e os cookies de sessão ⟦2⟧ podem ser lidos por scripts.",
+  "machine": true
+ },
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Mas ⟦1⟧ bloqueia o bingbot no site inteiro, e o índice do Bing também alimenta o Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Mas ⟦1⟧ bloqueia o ChatGPT-User, o agente que abre uma página quando alguém pergunta ao ChatGPT sobre ela.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Mas ⟦1⟧ bloqueia o OAI-SearchBot e outros nove agentes de busca de IA, então as respostas deles não podem citá-lo.",
@@ -1762,6 +1766,10 @@
  "SAMEORIGIN, so other sites cannot frame…": "SAMEORIGIN, para que outros sites não possam colocar…",
  "SAMEORIGIN, so other sites cannot…": {
   "text": "SAMEORIGIN, então outros sites não podem…",
+  "machine": true
+ },
+ "SAMEORIGIN, so other…": {
+  "text": "SAMEORIGIN, então outro…",
   "machine": true
  },
  "SAMEORIGIN.": "SAMEORIGIN.",

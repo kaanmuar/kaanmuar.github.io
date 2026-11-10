@@ -1,0 +1,37 @@
+Text,Image URL,Tags,Posting Time
+"motorsport-total.com: 74. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-motorsport-total-com&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-motorsport-total-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #Automation #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg","","2026-11-11 07:30"
+"meutimao.com.br: 64. The gap: cookie flags.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 11 cookies are sent without Secure, and 3 session cookies are readable by scripts.
+
+The lesson for every team: Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-meutimao-com-br&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-meutimao-com-br
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #Automation #QA #Cookies #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg","","2026-11-12 08:10"
+"2 natural competitors. globalbank.com.pa leads: 71.
+
+multimax.net leads in SEO, Analytics, Performance; globalbank.com.pa leads in GEO, Security, Accessibility.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 10 Nov 2026 of multimax.net, globalbank.com.pa, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-multimax-net&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-multimax-net
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #DevOps #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg","","2026-11-13 08:00"

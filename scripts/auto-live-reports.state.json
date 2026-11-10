@@ -1,5 +1,5 @@
 {
- "since": "2026-11-09T11:01:04.967Z",
+ "since": "2026-11-10T10:45:45.040Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -128,13 +128,16 @@
   "beatmastering.ir": "2026-11-09",
   "careeronestop.org": "2026-11-09",
   "vs:tide-forecast.com": "2026-11-09",
-  "vs:strandbags.co.nz": "2026-11-09"
+  "vs:strandbags.co.nz": "2026-11-09",
+  "motorsport-total.com": "2026-11-10",
+  "meutimao.com.br": "2026-11-10",
+  "vs:multimax.net": "2026-11-10"
  },
  "recent": [
+  "sec-cookies",
+  "sec-frame",
   "geo-crawlers",
   "a11y-labels",
-  "sec-hsts",
-  "sec-libraries",
-  "ax-button-name"
+  "sec-hsts"
  ]
 }

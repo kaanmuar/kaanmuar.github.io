@@ -1,0 +1,37 @@
+Text,Image URL,Tags,Posting Time
+"motorsport-total.com: 74. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Lesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #Clickjacking #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg","","2026-11-11 15:45"
+"meutimao.com.br: 64. The gap: cookie flags.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 11 cookies are sent without Secure, and 3 session cookies are readable by scripts.
+
+Lesson: Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Ransomware #QA #Cookies #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg","","2026-11-12 12:45"
+"2 natural competitors. globalbank.com.pa leads: 71.
+
+multimax.net leads in SEO, Analytics, Performance; globalbank.com.pa leads in GEO, Security, Accessibility.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 10 Nov 2026 of multimax.net, globalbank.com.pa, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #WebPerformance #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg","","2026-11-13 14:35"
