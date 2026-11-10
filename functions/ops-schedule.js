@@ -69,6 +69,8 @@ const JOBS = [
 const BUDGETS = {
   sweepPerDay: { env: "SWEEP_PER_DAY", value: 96, why: "24 night ticks x 4 reviews (#1099). Review browser: 4 vCPU x ~100 s a review, ~2,900 a month, well past the ~450 the free tier covers" },
   outreachPerDay: { env: "OUTREACH_PER_DAY", value: 384, why: "96 ticks x 4 reviews (#2363); the lane only spends what scripts/sweep-outreach.js and peer groups queue, ~$0.01 a review in the review browser" },
+  sweepConcurrency: { env: "SWEEP_CONCURRENCY", value: 4, why: "Country-sweep reviews a tick runs at once (#3166), 1 to 4; each holds a review browser instance (reviewBrowser maxInstances 12: both lanes' 8 and a person's 3-way comparison)" },
+  outreachConcurrency: { env: "OUTREACH_CONCURRENCY", value: 4, why: "Outreach-lane reviews a tick runs at once (#3166), 1 to 4; the per-day caps, not this, set the review browser bill" },
   ownerNoticesPerDay: { env: "OWNER_NOTICES_PER_DAY", value: 15, why: "Cold mail to strangers: keep sender reputation while bounces are unknown" },
   rivalsPerDay: { env: "RIVALS_PER_DAY", value: 4, why: "Up to 2 web searches and 3 passive reviews a site; 20 night ticks fit 4 sites" },
   webSearchPerMonth: { value: 2000, why: "Brave ~1,000 + Tavily 1,000 a month; the country sweep spends none, the rival sweep up to 8 a night" },
