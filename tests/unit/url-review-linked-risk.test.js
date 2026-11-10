@@ -58,7 +58,7 @@ test("a listed script host and a listed link are critical findings that name the
   const other = report.findings.find((row) => row.key === "sec-linked-risk");
   assert.deepEqual([script.verdict, script.severity, other.verdict, other.severity], ["fail", "critical", "fail", "critical"]);
   assert.equal(script.title, "Google lists a script host on the site as malware");
-  assert.match(script.evidence, new RegExp("^Google's Safe Browsing lists, read through the Web Risk API, flag a script from " + TEST.replace(/\./g, "\\.") + " on / \\(malware\\)\\. "));
+  assert.ok(script.evidence.startsWith("Google's Safe Browsing lists, read through the Web Risk API, flag a script from " + TEST + " on / (malware). "), script.evidence);
   assert.equal(other.title, "Google lists a host the site embeds or links to as phishing");
   assert.match(other.evidence, /flag a link to phish\.testsafebrowsing\.appspot\.com on \/ \(phishing\)\./);
   assert.deepEqual(script.pages, ["/"]);
