@@ -13,6 +13,8 @@
          which plays the voices and the bed itself
      node scripts/live-studio/run.js still [--episode id] [--scenes intro,score] [--lang en]
          one PNG per scene in media/live-studio/stills, for covers and review
+     node scripts/live-studio/run.js evergreen --episode a,b (--voice-name <voice> | --voice carlos --lang xx) --out <dir>
+         the evergreen call to action and ticker that cut.js splices into the clips of a live that showed a trial code
      node scripts/live-studio/run.js --list
      node scripts/live-studio/run.js translate [--lang es,pt] [--seed]
          every episode's strings through scripts/tips-studio/translate.py into scripts/live-studio/i18n (committed);
@@ -285,6 +287,9 @@ function peakDb(file) {
 // --- Sessions ---
 
 function sessionVoice(opts, voices) {
+  const named = opts["voice-name"] && voices.find((v) => v.voice === opts["voice-name"]);
+  if (opts["voice-name"] && !named) throw new Error(opts["voice-name"] + " is not one of the studio's voices");
+  if (named) return { lang: named.lang, carlos: false, voice: named, advance: () => {} };
   const turnFile = path.join(OUT, "turn.json");
   const turn = fs.existsSync(turnFile) ? JSON.parse(fs.readFileSync(turnFile, "utf8")).turn || 0 : 0;
   const auto = studio.turnVoice(turn);
@@ -338,12 +343,13 @@ async function prepareEpisode(ep, session, table, opts) {
   const t = loc.clips[slug];
   const platform = livePlatform(opts);
   const link = session.trial ? studio.trialLink(session.trial.code, loc.lang, ep.id, platform) : null;
+  const ever = !!session.evergreen;
   report.fix = report.fix.map((f, i) => Object.assign({}, f, { title: t["f" + i + "_title"] || f.title, evidence: t["f" + i + "_evidence"] || f.evidence }));
   report.headline = t.headline;
   report.log = reviews.runLog(report, loc.lang);
   const scenes = [];
   for (const id of studio.SCENES) {
-    const line = id === "cta" && link ? t.say_cta_trial : t["say_" + id];
+    const line = id === "cta" && link ? t.say_cta_trial : id === "cta" && ever ? t.say_cta_evergreen : t["say_" + id];
     let voiced = null;
     if (session.carlos || session.silent) voiced = { dur: line.split(/\s+/).length / CARLOS_WPS };
     else voiced = await speak(line, session.voice, table);
@@ -356,12 +362,53 @@ async function prepareEpisode(ep, session, table, opts) {
     report,
     fix: { title: t.fixTitle, steps: ep.fix.steps.map((s, i) => t["step" + i] || s), before: ep.fix.before, after: ep.fix.after,
       metric: { label: t.metricLabel, before: t.metricBefore, after: t.metricAfter, unit: t.metricUnit } },
-    qr: link ? link.url : studio.reviewLink(ep.id, platform),
+    qr: link ? link.url : studio.reviewLink(ep.id, ever ? "live-clip" : platform),
     trial: link ? { code: session.trial.code, short: link.short } : null,
+    evergreen: ever,
     coupon: opts.coupon && opts.coupon !== true ? String(opts.coupon).toUpperCase() : "",
     bed: "/live/bed.wav"
   };
   return { ep, init, scenes, lang: loc.lang };
+}
+
+// The call to action and ticker a clip of a live posts instead of the show's own, which carried the live's trial code
+// (#3254): the review page and "comment or DM for your free 2-day pass", which the outreach routines answer with a code
+// of the person's own. Writes <out>/<episode>-cta.mp4 per episode (none when Carlos voiced the live), ticker.mp4 (the
+// ticker band, one marquee loop) and evergreen.json, which cut.js reads.
+async function renderEvergreen({ plans, page, send, bed, fps, session, opts }) {
+  const dir = path.resolve(opts.out && opts.out !== true ? opts.out : path.join(OUT, "evergreen"));
+  fs.mkdirSync(dir, { recursive: true });
+  const record = async (file, plan, seconds, scene) => {
+    send("init", plan.init);
+    await sleep(800);
+    const engine = new Engine({ page, file, targets: [], fps, mic: null, bed });
+    await engine.start();
+    if (scene) {
+      send("scene", "cta", { line: scene.line, dur: scene.dur, speak: scene.voice.dur, lead: LEAD });
+      if (scene.voice.file) engine.play(scene.voice.file, LEAD);
+    }
+    await sleep(seconds * 1000);
+    await engine.stop();
+  };
+  const manifest = { lang: plans[0].lang, voice: session.carlos ? "carlos" : session.voice.voice, ticker: "ticker.mp4", cta: {} };
+  if (!session.carlos) {
+    for (const plan of plans) {
+      const scene = plan.scenes.find((s) => s.id === "cta");
+      const file = path.join(dir, plan.ep.id + "-cta.mp4");
+      await record(file, plan, scene.dur, scene);
+      manifest.cta[plan.ep.id] = { file: path.basename(file), dur: +scene.dur.toFixed(3), line: scene.line };
+      say("evergreen", file);
+    }
+  }
+  const full = path.join(dir, "ticker-full.mp4");
+  await record(full, plans[plans.length - 1], studio.TICKER.loop + 1.2, null);
+  const { y, h, loop } = studio.TICKER;
+  const crop = spawnSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y", "-ss", "0.6", "-t", String(loop), "-i", full, "-vf", "crop=1080:" + h + ":0:" + y,
+    "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", path.join(dir, manifest.ticker)], { encoding: "utf8" });
+  if (crop.status !== 0) throw new Error("ticker crop failed: " + crop.stderr);
+  fs.rmSync(full, { force: true });
+  fs.writeFileSync(path.join(dir, "evergreen.json"), JSON.stringify(manifest, null, 1));
+  say("evergreen ticker", path.join(dir, manifest.ticker));
 }
 
 async function main() {
@@ -394,8 +441,10 @@ async function main() {
   const port = Number(opts.port || 8793);
   const ids = opts.episode ? String(opts.episode).split(",") : opts.loop ? studio.EPISODES.map((e) => e.id) : [studio.EPISODES[0].id];
   const still = command === "still";
+  const evergreen = command === "evergreen";
   if (still) session.silent = true;
-  session.trial = await sessionTrial(opts, session, ids, still);
+  session.evergreen = evergreen;
+  session.trial = evergreen ? null : await sessionTrial(opts, session, ids, still);
 
   say("session:", session.lang, session.carlos ? "Carlos speaks" : session.voice.voice, "· episodes:", ids.join(", "));
   const plans = [];
@@ -433,6 +482,13 @@ async function main() {
         say("still", file);
       }
     }
+    await browser.close();
+    server.close();
+    return;
+  }
+
+  if (evergreen) {
+    await renderEvergreen({ plans, page, send, bed, fps, session, opts });
     await browser.close();
     server.close();
     return;
@@ -508,8 +564,6 @@ async function main() {
     let loc = await localize(session.voice.lang, { [slug]: strings });
     if (!loc) loc = { clips: { [slug]: strings } };
     const t = loc.clips[slug];
-  const platform = livePlatform(opts);
-  const link = session.trial ? studio.trialLink(session.trial.code, loc.lang, ep.id, platform) : null;
     const line = t[key];
     const v = session.carlos ? { dur: line.split(/\s+/).length / CARLOS_WPS } : await speak(line, session.voice, table);
     return { t, line, voice: v };

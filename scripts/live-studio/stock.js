@@ -52,7 +52,8 @@ function rows(cut, { recorded, peaks = {}, posts = {} } = {}) {
     url: assetUrl(assetName(cut.recording, c.file)),
     post: posts[c.file] || null
   }));
-  list.push({ id: stem(cut.recording) + "/chapters.mp4", recording: cut.recording, recorded: recorded || null, episode: (cut.episodes || []).join(","),
+  // A live's trial code expires, and the chaptered recording still shows it (#3254).
+  if (!cut.trial) list.push({ id: stem(cut.recording) + "/chapters.mp4", recording: cut.recording, recorded: recorded || null, episode: (cut.episodes || []).join(","),
     lang: cut.lang, voice: cut.voice, speaker, scene: "full", viewer: "", duration: null, peak: null,
     file: assetName(cut.recording, "chapters.mp4"), url: assetUrl(assetName(cut.recording, "chapters.mp4")), post: null });
   return list;
