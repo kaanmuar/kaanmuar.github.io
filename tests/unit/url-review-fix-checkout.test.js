@@ -216,7 +216,7 @@ test("the before/after mail reads in each language, with the score, each state a
   for (const lang of LANGS) {
     const mail = fixMail.afterMail(Object.assign({}, request, { lang }), "newreport1", result);
     const t = fixMail.FIX[lang];
-    assert.ok(mail.subject.includes("carlosandmunoz.com"), lang);
+    assert.match(mail.subject, / carlosandmunoz\.com\b/, lang);
     assert.ok(mail.text.includes(t.stateFixed) && mail.text.includes(t.stateOpen), lang);
     assert.ok(mail.text.includes(sample.insights.score.overall + " (" + sample.insights.score.grade + ") → 93 (A)"), lang);
     assert.match(mail.html, /report=newreport1/, lang);
