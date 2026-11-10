@@ -76,6 +76,8 @@ service cloud.firestore {
             'qa_review_language_change', 'qa_review_account_enter', 'qa_review_account_stop',
             'qa_review_sign_in', 'qa_review_sign_in_failed', 'qa_review_sign_in_needed', 'qa_review_deal_shown',
             'qa_review_live_open', 'qa_review_live_filter', 'qa_review_live_nav', 'open_url_review',
+            'qa_review_inconclusive', 'qa_review_apology_shown', 'qa_review_apology_copy', 'qa_review_fix_open',
+            'qa_review_fix_way', 'qa_review_fix_request', 'qa_review_fix_checkout', 'qa_review_fix_paid', 'qa_review_fix_recheck',
             'hub_open', 'hub_play', 'hub_copy', 'hub_share', 'hub_download', 'hub_report',
             'post_play', 'post_copy', 'post_share', 'post_download', 'post_report', 'post_related'
           ])
