@@ -143,8 +143,41 @@ test("the Firestore ledger reads today and yesterday, counts lookups with increm
   const result = await linked.check([{ host: TEST, element: "script", page: "/" }, { host: "stale.example", element: "link", page: "/" }], lookup(asked), { store, now: NOW });
   assert.deepEqual(asked, ["https://stale.example/"]);
   assert.deepEqual(result.hits.map((hit) => hit.host), [TEST]);
-  assert.deepEqual(writes[0], ["set", "webrisk_usage/2026-11", { lookups: { increment: 1 }, days: { "09": { increment: 1 } } }, { merge: true }]);
+  assert.deepEqual(writes[0], ["set", "webrisk_usage/2026-11", { lookups: { increment: 1 }, days: { "09": { increment: 1 } }, sweeps: { "09": { increment: 1 } } }, { merge: true }]);
   assert.deepEqual(writes[1].slice(0, 2), ["set", "webrisk_hosts/2026-11-09"]);
   assert.deepEqual(writes[1][2].hosts, { "stale.example": { t: "", at: NOW } });
   assert.deepEqual(writes[2], ["delete", "webrisk_hosts/2026-11-06"]);
+
+  docs["webrisk_usage/2026-11"] = { lookups: 121, days: { "09": 21 }, sweeps: { "09": 7 } };
+  assert.equal((await store.load(NOW)).sweep, 7);
+  writes.length = 0;
+  await linked.check([{ host: "asked.example", element: "link", page: "/" }], lookup(asked), { store, now: NOW, customer: true });
+  assert.deepEqual(writes[0], ["set", "webrisk_usage/2026-11", { lookups: { increment: 1 }, days: { "09": { increment: 1 } } }, { merge: true }]);
+});
+
+test("runs no customer asked for stop at half the day, and customer reviews keep the rest (#3273)", async () => {
+  assert.equal(linked.SWEEP_PER_DAY, Math.floor(linked.PER_DAY / 2));
+  const rows = Array.from({ length: 5 }, (_, i) => ({ host: "host" + i + ".example", element: "link", page: "/" }));
+  const ledger = (day, sweep) => ({ load: async () => ({ hosts: new Map(), month: 0, day, sweep }), save: async () => {} });
+
+  const asked = [];
+  const swept = await linked.check(rows, lookup(asked), { store: ledger(linked.SWEEP_PER_DAY - 2, linked.SWEEP_PER_DAY - 2), now: NOW });
+  assert.deepEqual([asked.length, swept.checked, swept.unchecked, swept.budget, swept.share], [2, 2, 3, true, true]);
+  assert.match(linked.note(swept), /Today's half of the lookup budget for runs no customer asked for left the rest unread\.$/);
+  const pass = insights.analyze({ pages: [HOME], extras: { linkedRisk: swept } }).findings.find((row) => row.key === "sec-linked-risk");
+  assert.match(pass.evidence, / 3 more hosts were not checked in this review\.$/);
+
+  const customer = await linked.check(rows, lookup(asked), { store: ledger(linked.SWEEP_PER_DAY, linked.SWEEP_PER_DAY), now: NOW, customer: true });
+  assert.deepEqual([asked.length, customer.checked, customer.unchecked, customer.budget], [7, 5, 0, false]);
+
+  const left = await linked.check(rows, lookup(asked), { store: ledger(linked.PER_DAY - 3, 100), now: NOW, customer: true });
+  assert.deepEqual([asked.length, left.checked, left.unchecked, left.budget, !!left.share], [10, 3, 2, true, false]);
+  assert.match(linked.note(left), /This month's lookup budget left the rest unread\.$/);
+  const capped = await linked.check(rows, lookup(asked), { store: ledger(linked.PER_DAY - 1, 0), now: NOW });
+  assert.deepEqual([asked.length, capped.checked, !!capped.share], [11, 1, false]);
+
+  const store = linked.memoryStore();
+  await linked.check(rows.slice(0, 2), lookup(asked), { store, now: NOW });
+  await linked.check(rows.slice(2), lookup(asked), { store, now: NOW, customer: true });
+  assert.deepEqual(await store.load(NOW).then((l) => [l.day, l.sweep]), [5, 2]);
 });
