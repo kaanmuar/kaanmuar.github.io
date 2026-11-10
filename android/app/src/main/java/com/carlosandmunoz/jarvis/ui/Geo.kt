@@ -83,7 +83,7 @@ import kotlin.math.sqrt
 /** The Map tab (#2976), twin of js/admin-jarvis-geo.js: the snapshot's `geo` source on the world map in assets/world.json.
  *  #2988: six light levels, name labels for every lit country and the tap card. */
 object Geo {
-    val CHANNELS = listOf("all" to "All", "email" to "Cold email", "sweep" to "Prospects", "social" to "Social", "web" to "Visitors")
+    val CHANNELS = listOf("all" to "All", "email" to "Cold email", "sweep" to "Prospects", "social" to "Social", "web" to "Visitors", GeoCost.CHANNEL)
     data class Metric(val key: String, val label: String, val channel: String, val unit: String = "")
     val METRICS = listOf(
         Metric("light", "Light", "all"), Metric("activity", "Activity", "all"), Metric("gaps", "Missing zones", "all"), Metric("dates", "Dates ahead", "all"),
@@ -94,7 +94,7 @@ object Geo {
         Metric("social", "Social replies", "social"),
         Metric("clicks", "Short-link clicks (visitor country)", "web"),
         Metric("visitors", "Site visitors (GA4)", "web"), Metric("visits", "Short-link visits", "web"), Metric("reviews", "Reviews from links", "web"), Metric("paid", "Paid unlocks", "web"), Metric("usd", "Revenue (USD)", "web")
-    )
+    ) + GeoCost.METRICS
     val GAPS = linkedMapOf(
         "no-prospects-left" to ("Out of prospects" to Color(0xFFFF4D8D)), "bouncing" to ("Bouncing" to Color(0xFFFF8F5A)), "low-reply" to ("Low replies" to Color(0xFFFFB547)),
         "no-campaign" to ("No campaign yet" to Color(0xFFA98BFF)), "visitors-no-outreach" to ("Visitors, no outreach" to Color(0xFF7AA2FF)), "silent" to ("Target, silent" to Color(0xFF5D7A8C))
@@ -198,6 +198,7 @@ object Geo {
 
     /** A country's number for a metric, or null when it has none. */
     fun value(r: JsonObject, key: String): Double? = when (key) {
+        in GeoCost.KEYS -> GeoCost.value(r, key)
         "light" -> light(r).toDouble()
         "activity" -> n(r, "sent") + n(r, "prospects") + n(r, "social") + n(r, "visits") + n(r, "visitors") + n(r, "reviewed")
         "gaps" -> gaps(r).size.toDouble()
@@ -208,7 +209,7 @@ object Geo {
         else -> n(r, key)
     }
 
-    fun show(v: Double?, key: String) = if (v == null) "—" else if (key == "light") LIGHTS[v.toInt().coerceIn(0, 5)].name else if (key == "dates") inDays((DATES_SPAN + 1 - v).toInt())
+    fun show(v: Double?, key: String) = if (key in GeoCost.KEYS) GeoCost.show(v, key) else if (v == null) "—" else if (key == "light") LIGHTS[v.toInt().coerceIn(0, 5)].name else if (key == "dates") inDays((DATES_SPAN + 1 - v).toInt())
         else (if (key == "usd") "$" else "") + fmt(v) + metric(key).unit
 
     /** Dates ahead (#2989) is higher the sooner a country's next date, over the calendar's 60 days. */
@@ -225,12 +226,13 @@ object Geo {
         return (r.str("name") ?: cc) + (if (cc == "WW") "" else " · $cc") + " · ${Math.round((r.num("confidence") ?: 0.0) * 100)}% sure"
     }
 
-    fun ranked(rows: List<JsonObject>, key: String) = rows.filter { (value(it, key) ?: 0.0) > 0 }
+    fun ranked(rows: List<JsonObject>, key: String) = if (key in GeoCost.KEYS) GeoCost.ranked(rows, key) else rows.filter { (value(it, key) ?: 0.0) > 0 }
         .sortedWith(compareByDescending<JsonObject> { value(it, key) ?: 0.0 }.thenByDescending { if (key == "light") value(it, "activity") ?: 0.0 else 0.0 }.thenBy { it.str("cc") })
 
     /** Each country's fill: the first gap's colour on Missing zones, the level colour on Light, else cyan by the square root of its share of the max. */
     fun fills(rows: List<JsonObject>, key: String): Map<String, Color> {
         if (key == "gaps") return rows.mapNotNull { r -> gaps(r).firstOrNull()?.let { (r.str("cc") ?: "") to (GAPS[it]?.second ?: J.dim) } }.toMap()
+        if (key in GeoCost.SCALED) return GeoCost.fills(rows, key)
         if (key == "light") return rows.mapNotNull { r -> light(r).takeIf { it > 0 }?.let { (r.str("cc") ?: "") to LIGHTS[it].color } }.toMap()
         val max = rows.maxOfOrNull { value(it, key) ?: 0.0 } ?: 0.0
         if (max <= 0) return emptyMap()
@@ -456,13 +458,14 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         if (tv.fills != null) GeoChangeLegend(tv, key)
         else if (key == "light") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Geo.LIGHTS.forEachIndexed { n, l -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(l.color); Muted("${l.name} · ${shown.count { Geo.light(it) == n }}") } }
-        } else if (key == "gaps") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        } else if (key in GeoCost.KEYS) GeoCostLegend(g, tv, key)
+        else if (key == "gaps") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Geo.GAPS.forEach { (k, v) -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(v.second); Muted("${v.first} · ${rows.count { Geo.gaps(it).firstOrNull() == k }}") } }
         }
         if (key == "clicks") GeoClicks.note(g).takeIf { it.isNotEmpty() }?.let { Muted(it) }
         if (key == "light") Muted("Tap a country for its numbers, then Open for its campaigns, prospects and replies. Spark: prospects or reviewed sites; Ember: contacted; Lit: opens, visits or social replies; Bright: email replies; Blazing: positive replies or money.")
         else if (key == "dates") Muted("Brighter is sooner: the country's next holiday, season, deadline or event within ${Geo.DATES_SPAN} days. ${rows.count { Geo.value(it, key) != null }} countries have one; tap one for its numbers and Open for its dates.")
-        else if (key != "gaps") Muted("Brighter is more, up to ${Geo.show(shown.maxOfOrNull { Geo.value(it, key) ?: 0.0 }, key)}. Tap a country for its numbers, then Open for its campaigns, prospects and replies; est. numbers are split from campaigns that cover several countries.")
+        else if (key != "gaps" && key !in GeoCost.KEYS) Muted("Brighter is more, up to ${Geo.show(shown.maxOfOrNull { Geo.value(it, key) ?: 0.0 }, key)}. Tap a country for its numbers, then Open for its campaigns, prospects and replies; est. numbers are split from campaigns that cover several countries.")
     }
 
     if (sel != null) GeoCountry(sel, s, vm, close = { picked = null }, span = time.span) { text, run -> confirm = PendingAction(text, run) }
@@ -510,8 +513,9 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
-    GeoHeatPanels(g, picked, channel) { picked = it }
-    GeoFlowPanels(g, picked, channel, s, vm) { text, run -> confirm = PendingAction(text, run) }
+    GeoCostPanel(g, tv, key, channel) { picked = it }
+    GeoHeatPanels(g, picked, if (channel == GeoCost.CHANNEL.first) "all" else channel) { picked = it }
+    GeoFlowPanels(g, picked, if (channel == GeoCost.CHANNEL.first) "all" else channel, s, vm) { text, run -> confirm = PendingAction(text, run) }
     GeoConfirm(g, s, vm) { text, run -> confirm = PendingAction(text, run) }
     GeoPlan(g)
     GeoNext(g, s, vm, open = { picked = it }) { text, run -> confirm = PendingAction(text, run) }
@@ -585,7 +589,7 @@ private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: ()
             KpiData("Reviewed · score", fmt(r.num("reviewed")) + (r.num("score")?.let { " · ${fmt(it)}" } ?: "")), KpiData("Social replies", fmt(r.num("social"))),
             KpiData("Visitors (GA4)", fmt(r.num("visitors"))), KpiData("Link visits · paid", "${fmt(r.num("visits"))} · $${fmt(r.num("usd"))}")
         ))
-        s.snapshot.obj("external").obj("geo")?.let { GeoTimeSheet(it, cc, span) }
+        s.snapshot.obj("external").obj("geo")?.let { GeoTimeSheet(it, cc, span); GeoCostSheet(it, cc, span) }
         GeoClicksSheet(r)
         if ((r.num("sent") ?: 0.0) > 0 || (r.num("prospects") ?: 0.0) > 0)
             Funnel(listOf("Prospects" to r.num("prospects"), "Leads" to r.num("leads"), "Contacted" to (r.num("contacted") ?: 0.0), "Replied" to r.num("replies"), "Interested" to r.num("interested")))

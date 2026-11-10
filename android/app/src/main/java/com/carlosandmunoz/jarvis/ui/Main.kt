@@ -573,6 +573,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 }
                 Muted("The Map tab lists the dates ahead per country. The web settings set any number from 1 to 60.")
             }
+            Panel("Outreach costs") { GeoCostSettings(s, vm) }
             if (settings != null) Panel("GitHub repos") {
                 var repos by remember(settings) { mutableStateOf(Github.cleanRepos(settings.obj("github")?.get("repos").strings()).joinToString("\n")) }
                 OutlinedTextField(repos, { repos = it }, label = { Text("Repos the GitHub tab shows, owner/name, one per line") }, minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth())
