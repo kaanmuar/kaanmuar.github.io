@@ -22,11 +22,13 @@ const P = require("./engagement-profiles");
 const E = require("./engagement");
 const people = require("./outreach-people");
 const trials = require("./outreach-trials");
+const Send = require("./outreach-send");
 
 const FUNNEL = ["found", "reviewed", "offered", "claimed", "paid"];
 const CLAIMED = ["claimed", "trial_ended", "discount_sent"];
 const STOPPED = ["declined", "blocked"];
 const SEQUENCE = "T";
+const SEND_KIND = "company";
 const SEVERITY = { critical: 4, high: 3, medium: 2, low: 1 };
 const SOCIAL_NETS = ["linkedin", "instagram", "facebook", "tiktok", "x", "threads", "bluesky", "mastodon", "youtube"];
 const SOCIAL_PER_COMPANY = 2;
@@ -35,7 +37,7 @@ const SOCIAL_PER_COMPANY = 2;
 const NO_COLD_EMAIL = new Set(["de", "at", "ch"]);
 const LEAD_HEADER = ["segment", "sector", "org", "host", "cc", "country", "language", "email", "email_kind", "phone", "linkedin_url", "instagram_url", "facebook_url",
   "tiktok_url", "x_url", "source", "sequence", "sender", "finding_1", "finding_2", "finding_1_en", "finding_2_en", "reason", "trial_code", "trial_url", "trial_days",
-  "after_percent", "live_report_url", "status"];
+  "after_percent", "live_report_url", "approved", "status"];
 
 const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
 
@@ -116,7 +118,7 @@ function leadRow(row, person, offer, trial, extra) {
     source: e.url || "", sequence: SEQUENCE, sender: "carlos",
     finding_1: x.finding_1 || offer.findings[0].title, finding_2: x.finding_2 || (offer.findings[1] || {}).title || "",
     finding_1_en: offer.findings[0].title, finding_2_en: (offer.findings[1] || {}).title || "", reason: offer.reason,
-    trial_code: trial.code, trial_url: trial.url, trial_days: String(t.days), after_percent: String(t.after), live_report_url: x.liveReport || "", status: "new"
+    trial_code: trial.code, trial_url: trial.url, trial_days: String(t.days), after_percent: String(t.after), live_report_url: x.liveReport || "", approved: x.approved || "", status: "new"
   };
 }
 
@@ -131,17 +133,33 @@ function socialItems(person, offer, trial) {
 }
 
 /**
- * Whether trial messages wait for Carlos. Carlos (2026-11-09): approval for the first week after launch, then they
- * send on their own within each network's daily cap.
- * TODO(#3137): read the shared send-mode switch once it is on main; until then every message waits.
+ * Whether a company trial message on a network waits for Carlos: the shared send switch (outreach-send.js sendMode,
+ * kind "company") approves everything in the first week after launch, then lets them go. send: db or readSend settings.
  */
-const needsApproval = () => true;
+async function needsApproval(send, network, now) {
+  return (await Send.sendMode(send, { network, kind: SEND_KIND, now })) === "approve";
+}
 
-/** The engagement_posts document for a trial message, waiting for Carlos like every profile message. */
+/**
+ * Lets a waiting trial message go on its own when the switch is on auto and the network's daily company cap has room
+ * (useCap takes one); true when it did. Otherwise it stays waiting for Carlos.
+ */
+async function release(db, doc, send, now) {
+  if (await needsApproval(send, doc.network, now)) return false;
+  if (!(await Send.useCap(db, { network: doc.network, kind: SEND_KIND, now, settings: send })).ok) return false;
+  Object.assign(doc.actions.reply, { status: "approved", auto: true, decidedAt: new Date(now).toISOString(), by: "auto" });
+  return true;
+}
+
+/** The lead row's approved value: "yes" once the switch lets company emails go, else "" for Carlos. Instantly's own daily limits cap them. */
+async function emailApproved(send, now) {
+  return (await needsApproval(send, "email", now)) ? "" : "yes";
+}
+
+/** The engagement_posts document for a trial message, waiting for Carlos like every profile message (see release). */
 function socialDoc(item, message, link, now) {
   const d = P.doc(item, message, link, now);
   d.report.offerKind = "trial";
-  d.report.approval = needsApproval();
   return d;
 }
 
@@ -214,4 +232,4 @@ async function dashboard(db) {
   return Object.assign({ ok: true }, stageCounts(snap.docs.map((d) => d.data())));
 }
 
-module.exports = { FUNNEL, SEQUENCE, LEAD_HEADER, SOCIAL_NETS, NO_COLD_EMAIL, terms, idOf, offeredYet, funnelOf, needsApproval, findingsFor, offerFor, personOf, ledgerPatch, companyFields, leadRow, socialItems, socialDoc, profileLedger, stageCounts, record, mint, dashboard };
+module.exports = { FUNNEL, SEQUENCE, LEAD_HEADER, SOCIAL_NETS, NO_COLD_EMAIL, terms, idOf, offeredYet, funnelOf, needsApproval, release, emailApproved, findingsFor, offerFor, personOf, ledgerPatch, companyFields, leadRow, socialItems, socialDoc, profileLedger, stageCounts, record, mint, dashboard };

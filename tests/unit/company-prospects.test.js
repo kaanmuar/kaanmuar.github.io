@@ -129,3 +129,39 @@ test("the ledger id is web:<domain> and the trial terms come from outreach-trial
   assert.equal(CP.idOf("https://www.Hotelcasabrava.com.co/x"), "web:hotelcasabrava.com.co");
   assert.deepEqual(CP.terms(), { days: 2, after: 20 });
 });
+
+test("the send switch keeps company trial messages waiting in the first week, then lets them go within each network's cap", async () => {
+  const { fakeDb } = require("./fixtures/fake-firestore");
+  const Send = require("../../functions/outreach-send");
+  const db = fakeDb();
+  const DAY = 24 * 3600000;
+  const launch = Date.parse("2026-11-10T12:00:00Z");
+  const o = CP.offerFor({ person: PERSON, findings: FINDINGS, sector: "hotel" });
+  const doc = () => CP.socialDoc(CP.socialItems(PERSON, o, TRIAL)[0], "@hotelcasabrava, revisamos su sitio. {link}", TRIAL.url, launch);
+
+  assert.equal(await CP.needsApproval(db, "instagram", launch), true, "the first read sets launchAt and approves");
+  assert.equal((await db.collection("jarvis_settings").doc("outreach_send").get()).data().launchAt, new Date(launch).toISOString());
+  const early = doc();
+  assert.equal(await CP.release(db, early, db, launch + 6 * DAY), false);
+  assert.equal(early.actions.reply.status, "waiting");
+  assert.equal(await CP.emailApproved(db, launch + 6 * DAY), "", "emails wait for Carlos in the first week too");
+
+  const later = launch + 8 * DAY;
+  const send = await Send.readSend(db, later);
+  const cap = Send.capOf(send, "instagram");
+  const out = [];
+  for (let i = 0; i <= cap; i += 1) { const d = doc(); out.push([await CP.release(db, d, send, later), d.actions.reply.status, d.actions.reply.auto === true]); }
+  assert.deepEqual(out.slice(0, cap), Array.from({ length: cap }, () => [true, "approved", true]));
+  assert.deepEqual(out[cap], [false, "waiting", false], "over the cap it waits for Carlos");
+  assert.equal(await Send.capLeft(db, { network: "instagram", kind: "company", now: later, settings: send }), 0);
+  assert.equal(await Send.capLeft(db, { network: "instagram", kind: "dm", now: later, settings: send }), cap, "company sends use their own kind of the cap");
+
+  assert.equal(await CP.emailApproved(send, later), "yes");
+  assert.equal(await Send.capLeft(db, { network: "email", kind: "company", now: later, settings: send }), Send.capOf(send, "email"), "emails are not counted against the cap: Instantly limits them");
+  const row = CP.leadRow({ host: "hotelcasabrava.com.co", cc: "co" }, PERSON, o, TRIAL, { approved: "yes" });
+  assert.equal(row.approved, "yes");
+
+  await db.collection("jarvis_settings").doc("outreach_send").set({ alwaysApprove: true }, { merge: true });
+  assert.equal(await CP.needsApproval(db, "facebook", later), true, "alwaysApprove holds everything");
+  assert.equal(await CP.emailApproved(db, later), "");
+});

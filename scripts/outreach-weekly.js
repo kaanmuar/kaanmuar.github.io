@@ -571,6 +571,7 @@ const SD = require("../functions/site-dependency");
 const CC = require("../functions/company-contacts");
 const CP = require("../functions/company-prospects");
 const EP = require("../functions/engagement-profiles");
+const Send = require("../functions/outreach-send");
 
 /** The newest finished review of a queued host with its findings: { id, findings }, or null before the sweep got to it. */
 async function reviewOf(db, host) {
@@ -622,6 +623,7 @@ async function companies(log) {
     ledger[bare(h.host)] = { stage: "found" };
     found += 1;
   }
+  const send = db && !DRY ? await Send.readSend(db, Date.now()) : null;
   const paid = db ? (await db.collection("url_reviews").where("paid", "==", true).select("email").limit(3000).get()).docs.map((d) => String(d.data().email || "")).filter(Boolean) : [];
   const perSector = {};
   const why = {};
@@ -657,7 +659,7 @@ async function companies(log) {
     const trial = await CP.mint(db, person, offer);
     if (offer.channels.includes("email")) {
       const [finding_1, finding_2] = await translateFindings(offer.findings, offer.lang, log);
-      rows.push(CP.leadRow(h, person, offer, trial, { finding_1, finding_2, country: COUNTRY[person.country] }));
+      rows.push(CP.leadRow(h, person, offer, trial, { finding_1, finding_2, country: COUNTRY[person.country], approved: await CP.emailApproved(send, Date.now()) }));
       used.add(offer.email);
     }
     if (offer.channels.includes("social")) items.push(...CP.socialItems(person, offer, trial).map((i) => Object.assign(i, { trialUrl: trial.url, led: prof && prof.exists ? prof.data() : null })));
@@ -665,6 +667,7 @@ async function companies(log) {
       { offeredAt: new Date().toISOString(), channels: offer.channels, findings: offer.findings });
   }
   let queued = 0;
+  let released = 0;
   if (items.length && !DRY) {
     const texts = EP.parse(await ai(EP.prompt(items), "Write the messages now.", { json: false, max: 1500 }).catch((error) => { if (error.fatal) throw error; log("social: " + error.message); return ""; }), items);
     const batch = db.batch();
@@ -672,7 +675,9 @@ async function companies(log) {
     for (const i of items.filter((x) => texts[x.key])) {
       const { trialUrl, led } = i;
       delete i.trialUrl; delete i.led;
-      batch.set(db.collection("engagement_posts").doc(i.key), CP.socialDoc(i, texts[i.key], trialUrl, Date.now()));
+      const doc = CP.socialDoc(i, texts[i.key], trialUrl, Date.now());
+      if (await CP.release(db, doc, send, Date.now())) released += 1;
+      batch.set(db.collection("engagement_posts").doc(i.key), doc);
       (byHost[i.target.host] = byHost[i.target.host] || { led, profiles: i.profiles, code: i.offer.code, keys: [] }).keys.push(i.key);
       queued += 1;
     }
@@ -685,8 +690,9 @@ async function companies(log) {
   }
   const skipped = Object.entries(why).map(([k, v]) => `${v} ${k}`).join(", ");
   const segs = Object.entries(perSector).map(([k, v]) => `${v} ${k}`).join(", ");
-  log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails for approval, ${queued} profile messages waiting${skipped ? "; skipped " + skipped : ""}`);
-  return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length} emails to approve in Jarvis > Marketing, ${queued} profile messages in Engagement.` : "";
+  const autoMail = rows.filter((r) => r.approved).length;
+  log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails (${autoMail} approved by the send switch), ${queued} profile messages (${released} sent on their own)${skipped ? "; skipped " + skipped : ""}`);
+  return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length - autoMail} emails to approve in Jarvis > Marketing, ${queued - released} profile messages waiting in Engagement${released ? `, ${released} sent on their own` : ""}.` : "";
 }
 
 // --- Main ---------------------------------------------------------------------------------------------------------
