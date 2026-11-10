@@ -5,6 +5,9 @@
 export const MODES = {
   "0 12 * * mon-fri": "prospects",
   "0 13 * * mon-fri": "replies",
+  // Company trials (#3139): up to 30 offers a day, before leads so the ones Carlos approved upload the same day; each
+  // Instantly campaign still sends at most 10 a day.
+  "0 14 * * mon-fri": "companies",
   "0 15 * * mon-fri": "leads",
   "17 */3 * * *": "holidays",
   // Peer groups (#2363): after leads, the groups the sweep finished are compared and sent; on Mondays, 10 new groups.
