@@ -396,6 +396,19 @@ private fun OutreachScreen(s: UiState, vm: JarvisViewModel) {
         TopList("Review results", pipe.pairs("results"), id = "outreach-results")
     }
 
+    Panel("Company trials by segment", id = "outreach-companies") {
+        val firms = ou.obj("companies")?.takeIf { it.isOk() }
+        if (firms == null) { Muted(ou.obj("companies").str("error") ?: "Not loaded."); return@Panel }
+        val total = firms.obj("total")
+        val stages = listOf("Found" to "found", "Reviewed" to "reviewed", "Offered the trial" to "offered", "Claimed" to "claimed", "Paid" to "paid")
+        KpiPairs(stages.map { (label, k) -> KpiData(label, fmt(total.num(k))) })
+        if (firms.objs("rows").isEmpty()) Muted("No site-dependency company found yet. The Places night adds them; the companies run offers the trial.")
+        firms.objs("rows").forEach { r ->
+            KeyRow(r.str("label") ?: "", stages.joinToString(" · ") { (_, k) -> fmt(r.num(k)) }, if ((r.num("paid") ?: 0.0) > 0) J.green else J.muted)
+        }
+        Muted("Found · reviewed · offered · claimed · paid. Each stage counts everyone who got that far.")
+    }
+
     Panel("Campaigns (Instantly)", id = "outreach-campaigns") {
         if (mail == null) { Muted(ou.obj("instantly").str("error") ?: "Not loaded."); return@Panel }
         mail.objs("status").forEach { KeyRow(it.str("label") ?: "", fmt(it.num("value"))) }
