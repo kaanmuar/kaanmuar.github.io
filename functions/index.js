@@ -5677,6 +5677,7 @@ const jarvisTargets = require("./jarvis-targets");
 const jarvisGeo = require("./jarvis-geo");
 const jarvisGeoTime = require("./jarvis-geo-time");
 const jarvisGeoActions = require("./jarvis-geo-actions");
+const jarvisGeoCost = require("./jarvis-geo-cost");
 const jarvisCalendar = require("./jarvis-calendar");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
@@ -6304,7 +6305,7 @@ async function jarvisLivePush(where) {
 }
 
 // The jarvis ops whose write drops a build section (jarvis-snapshot.js); each is followed by a live push.
-const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "geo-country-confirm", "send-report"]);
+const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "geo-country-confirm", "geo-costs-save", "send-report"]);
 
 const jarvisLiveNote = (out) => "live push " + (out && out.pushed ? out.sections.join(",") : (out && out.reason) || "none");
 
@@ -6966,7 +6967,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "geo-target": (b) => (b.on ? "target " : "drop ") + String(b.cc || "").slice(0, 2), "geo-country-confirm": (b) => (b.skip === true ? "skip " : String(b.cc || "").slice(0, 2).toUpperCase() + " ") + String(b.host || "").slice(0, 80), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "outreach-send-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "geo-target": (b) => (b.on ? "target " : "drop ") + String(b.cc || "").slice(0, 2), "geo-costs-save": (b) => (Array.isArray(b.items) ? b.items.length : 0) + " monthly costs", "geo-country-confirm": (b) => (b.skip === true ? "skip " : String(b.cc || "").slice(0, 2).toUpperCase() + " ") + String(b.host || "").slice(0, 80), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "outreach-send-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -7543,6 +7544,12 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "geo-target") {
       const db = getFirestore();
       out = await jarvisGeo.setTarget(db, body);
+      await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+    }
+    else if (op === "geo-costs") out = Object.assign({ ok: true }, await jarvisGeoCost.read(getFirestore()), body.suggest === true ? await jarvisGeoCost.suggest({ fetch, env }) : {});
+    else if (op === "geo-costs-save") {
+      const db = getFirestore();
+      out = await jarvisGeoCost.save(db, body, operator, now);
       await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
     }
     else if (op === "geo-country-confirm") {
