@@ -502,7 +502,7 @@ def build(source, code, data):
 
 
 PAY_KEYS = ("title", "description", "testMode", "eyebrow", "headingRun", "intro", "payWith", "paypalWays", "itemRun",
-            "accountPaypal", "collected", "note", "disclaimers", "back", "continueTo")
+            "accountPaypal", "collected", "note", "disclaimers", "back", "continueTo", "codeLabel", "codeApply")
 
 
 def pay_copy(code):
@@ -530,6 +530,9 @@ def build_pay(source, code):
     s = swap(s, f'<span id="pay-item">{en["itemRun"]}</span>', f'<span id="pay-item">{t["itemRun"]}</span>')
     s = retag(s, '<span id="pay-collect-label">', "</span>", t["accountPaypal"], code)
     s = retag(s, '<span id="pay-collector">', "</span>", t["collected"], code)
+    s = retag(s, '<label for="pay-code-input">', "</label>", t["codeLabel"], code)
+    s = retag(s, '<button class="btn btn-ghost" id="pay-code-apply" type="submit">', "</button>", t["codeApply"], code)
+    s = swap(s, '<p class="code-note" id="pay-code-note" role="status">', f'<p class="code-note" id="pay-code-note" role="status"{mark}>')
     s = retag(s, '<p id="pay-note">', "</p>", t["note"], code)
     s = swap(s, f'<a href="qa-review-legal.html">{en["disclaimers"]}</a>', f'<a href="qa-review-legal.html"{mark}>{t["disclaimers"]}</a>')
     s = swap(s, f'<a class="btn btn-ghost" href="qa-review.html">{en["back"]}</a>', f'<a class="btn btn-ghost" href="qa-review-{code}.html"{mark}>{t["back"]}</a>')

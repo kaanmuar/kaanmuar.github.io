@@ -128,7 +128,7 @@ function priceMatches(usd) {
   for (let count = 0; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     if (scopes.indexOf(cents - count * extraCents) !== -1) return true;
   }
-  const lists = [CREDENTIALS_CENTS];
+  const lists = [CREDENTIALS_CENTS].concat(Object.keys(PASS_CENTS).map((id) => PASS_CENTS[id]));
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = unitCents(count);
     lists.push(base, base - FIXLIST_CENTS);
@@ -812,7 +812,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || purpose === "pass" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;

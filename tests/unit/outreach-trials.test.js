@@ -85,15 +85,30 @@ test.describe("outreach trials", () => {
     assert.equal((await redeem(db, b.code, "bo@example.com")).ok, true);
   });
 
-  test("a locked student or company trial opens only on its domain, once per domain", async () => {
+  test("a locked company trial opens only on its domain, once per domain", async () => {
     const db = fakeDb();
     const a = await trials.mintTrial(db, { kind: "company", domain: "acme.com" }, now);
     const b = await trials.mintTrial(db, { kind: "company", domain: "acme.com", person: "web:acme.com" }, now);
     assert.deepEqual(await redeem(db, a.code, "ana@gmail.com"), { ok: false, why: "domain" });
     assert.equal((await redeem(db, a.code, "ana@mail.acme.com")).ok, true);
     assert.deepEqual(await redeem(db, b.code, "bo@acme.com"), { ok: false, why: "domain-used" });
+    assert.ok(doc(db, "url_review_trials/domain:acme.com"));
     const social = await trials.mintTrial(db, { kind: "social", network: "x", handle: "c", domain: "acme.com" }, now);
     assert.equal((await redeem(db, social.code, "cy@gmail.com")).ok, true, "a social trial is never domain-locked");
+  });
+
+  test("a student trial asks only for an address on the school's domain; each student gets one, not one per school (#3193)", async () => {
+    const db = fakeDb();
+    const mint = (handle) => trials.mintTrial(db, { kind: "student", network: "instagram", handle, domain: "uni.edu" }, now);
+    const [a, b, c, d] = await Promise.all(["ana", "bo", "cy", "di"].map(mint));
+    assert.equal(doc(db, "url_review_coupons/" + a.code).locked, true);
+    assert.deepEqual(await redeem(db, a.code, "ana@gmail.com"), { ok: false, why: "domain" });
+    assert.deepEqual(await redeem(db, a.code, "ana@uni.edu.evil.com"), { ok: false, why: "domain" });
+    assert.equal((await redeem(db, a.code, "ana@uni.edu")).ok, true);
+    assert.equal((await redeem(db, b.code, "bo@cs.uni.edu")).ok, true, "a subdomain of the school counts");
+    assert.equal(doc(db, "url_review_trials/domain:uni.edu"), null, "no domain marker for a school");
+    assert.deepEqual(await redeem(db, c.code, "ANA@uni.edu"), { ok: false, why: "email" }, "still one trial per address");
+    assert.equal((await redeem(db, d.code, "di@uni.edu")).ok, true);
   });
 
   test("a claim is refused signed out, for a bad, expired or unknown code, and while a pass is open", async () => {
@@ -127,16 +142,19 @@ test.describe("outreach trials", () => {
     const at = now + 2 * DAY + 2000;
     assert.equal(await trials.endTrials(db, { now: at, mail, rand: seq([1]) }), "1 trials ended, 1 follow-up codes, 1 mailed");
     const c = doc(db, "url_review_coupons/AFTER-BBBBBB");
-    assert.deepEqual([c.percent, c.perEmail, c.maxUses, c.purposes, c.email, c.person, c.trial, c.kind], [40, 1, 1, ["new-run", "report"], "stu@uni.fr", "instagram:stu", code, "student"]);
+    assert.deepEqual([c.percent, c.perEmail, c.maxUses, c.purposes, c.email, c.person, c.trial, c.kind], [40, 1, 1, ["new-run", "report", "pass"], "stu@uni.fr", "instagram:stu", code, "student"]);
     assert.equal(Date.parse(c.validUntil) - at, 7 * DAY);
     assert.equal(offers.couponOpen(Object.assign({ code: "AFTER-BBBBBB" }, c), "new-run", "", at, 0), true);
+    assert.equal(offers.couponOpen(Object.assign({ code: "AFTER-BBBBBB" }, c), "pass", "", at, 0), true, "the code opens the pass the person tried (#3142)");
+    assert.equal(offers.couponOpen(Object.assign({ code: "AFTER-BBBBBB" }, c), "pass", "", at + 7 * DAY, 0), false, "valid 7 days");
     assert.equal(offers.discountFor(2900, 1, { coupon: Object.assign({ code: "AFTER-BBBBBB" }, c) }).percent, 40);
+    assert.equal(core.chargedUsd({ purpose: "pass", plan: "freelancer", priceUsd: offers.discountFor(2900, 1, { coupon: c }).usd, listUsd: 29 }).usd, 17.4);
     const row = doc(db, "url_reviews/trial-" + code);
     assert.equal(row.followup, "AFTER-BBBBBB");
     assert.ok(row.followupMailedAt);
     assert.equal(notes[0].to, "stu@uni.fr");
     assert.match(notes[0].note.subject, /40 %/);
-    assert.match(notes[0].note.text, /AFTER-BBBBBB[\s\S]*https:\/\/carlosandmunoz\.com\/qa-review-fr\.html\?coupon=AFTER-BBBBBB/);
+    assert.match(notes[0].note.text, /AFTER-BBBBBB[\s\S]*pass Freelancer[\s\S]*https:\/\/carlosandmunoz\.com\/qa-review-pay-fr\.html\?purpose=pass&plan=freelancer&coupon=AFTER-BBBBBB/);
     const p = doc(db, "outreach_people/instagram:stu");
     assert.equal(p.stage, "discount_sent");
     assert.deepEqual(p.history.map((h) => h.stage), ["offered", "claimed", "trial_ended", "discount_sent"]);
@@ -167,13 +185,19 @@ test.describe("outreach trials", () => {
 
   test("the follow-up note exists in every page language and adds the stop link when given", () => {
     Object.keys(trials.PAGES).forEach((lang) => {
-      const note = trials.followupNote(lang, { code: "AFTER-AAAAAA", p: 20, days: 2, date: "2026-11-18", url: "https://x", stop: "https://stop" });
+      const note = trials.followupNote(lang, { code: "AFTER-AAAAAA", p: 20, days: 2, plan: "Freelancer", date: "2026-11-18", url: "https://x", stop: "https://stop" });
       assert.equal(note.lang, lang);
       assert.match(note.text, /AFTER-AAAAAA/);
       assert.match(note.text, /https:\/\/stop/);
       assert.doesNotMatch(note.subject + note.text, /\{\w+\}/);
     });
     assert.doesNotMatch(trials.followupNote("en", { code: "C", p: 1, days: 2, date: "d", url: "u" }).text, /No more notes/);
+  });
+
+  test("the follow-up link opens the trial's pass on the pay page in the person's language with the code filled in", () => {
+    assert.equal(trials.passPayUrl("en", "AFTER-AAAAAA"), "https://carlosandmunoz.com/qa-review-pay.html?purpose=pass&plan=freelancer&coupon=AFTER-AAAAAA");
+    assert.equal(trials.passPayUrl("de", "AFTER-AAAAAA"), "https://carlosandmunoz.com/qa-review-pay-de.html?purpose=pass&plan=freelancer&coupon=AFTER-AAAAAA");
+    assert.match(trials.passPayUrl("xx", "AFTER-AAAAAA"), /\/qa-review-pay\.html\?/);
   });
 });
 

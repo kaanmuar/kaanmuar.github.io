@@ -3001,9 +3001,16 @@ async function returnPrice(priced, opts) {
   return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
 }
 
-// purpose=pass&plan= prices a pass; pass=<plan> with a run's choices prices only what the run asks beyond that plan.
-// Neither takes a return step or a code. null for every other quote.
-async function quotePass(query) {
+// A pass takes no return step; a code whose purposes allow passes takes its percent off, down to half the price.
+async function passDeal(cents, code, email) {
+  const coupon = code ? await couponFor(code, "pass", "", email) : null;
+  return reviewOffers.discountFor(cents, 1, { coupon });
+}
+
+// purpose=pass&plan= prices a pass, with the code a pass takes when the buyer's address opens it (`email`);
+// pass=<plan> with a run's choices prices only what the run asks beyond that plan, with no return step and no code.
+// null for every other quote.
+async function quotePass(query, email) {
   const q = query || {};
   if (q.purpose === "pass") {
     const chosen = reviewOffers.knownPlan(String(q.plan || ""));
@@ -3012,8 +3019,9 @@ async function quotePass(query) {
       error.status = 400;
       throw error;
     }
-    const quote = await urlReview.copQuote(chosen.usd);
-    return { usd: chosen.usd, cop: quote.pesos, rate: quote.rate, count: 1, frameworks: [], tools: [], plan: chosen.id, pass: reviewOffers.passPlans().find((row) => row.id === chosen.id) };
+    const deal = await passDeal(Math.round(chosen.usd * 100), q.coupon, email);
+    const quote = await urlReview.copQuote(deal.usd);
+    return Object.assign({ usd: deal.usd, cop: quote.pesos, rate: quote.rate, count: 1, frameworks: [], tools: [], plan: chosen.id, pass: reviewOffers.passPlans().find((row) => row.id === chosen.id) }, dealFields(deal));
   }
   if (!q.pass) return null;
   const chosen = reviewOffers.knownPlan(String(q.pass));
@@ -4556,6 +4564,21 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     return;
   }
+  // A pass quote with a code: posted, so the sign-in that a per-address code is checked against stays out of the URL.
+  if (req.method === "POST" && pathName.indexOf("/checkout/quote") !== -1) {
+    try {
+      const body = req.body || {};
+      if (body.purpose !== "pass") {
+        res.status(400).json({ error: "Only a pass is quoted with a posted code." });
+        return;
+      }
+      const holder = body.coupon ? await offerHolder(body) : null;
+      res.status(200).json(await quotePass({ purpose: "pass", plan: body.plan, coupon: body.coupon }, holder && holder.email));
+    } catch (error) {
+      res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
+    }
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
     const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
@@ -4664,6 +4687,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
           deviceId,
           ip: req.ip || ""
         });
+      } else if (purpose === "pass") {
+        deal = await passDeal(priced.cents, req.body && req.body.coupon, passOwner);
       }
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
