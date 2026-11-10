@@ -10,6 +10,7 @@ import * as Geo from "./admin-jarvis-geo.js?v=3109";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
 import * as GeoTime from "./admin-jarvis-geo-time.js?v=3109";
+import * as GeoActions from "./admin-jarvis-geo-actions.js?v=3115";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -813,6 +814,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
                 targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
+                mapPlanAndNextActions: GeoActions.askOf(e.geo),
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites), ownerTags: otAsk(e.engagement.ownerTags) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
@@ -3032,6 +3034,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${GeoHeat.panels(S, g, channel, { panel, esc, fmt })}
             ${geoFlowPanels(g, sel, channel)}
             ${geoConfirmPanel(g)}
+            ${GeoActions.panels(g, { panel, esc, fmt, dayLabel: C.dayLabel })}
         </div>`;
     }
 
@@ -4494,6 +4497,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.geoHeat || t.dataset.geoSector) { GeoHeat.pick(S, t.dataset); render(); return; }
         if (t.dataset.geoTarget) { geoTarget(t); return; }
         if (t.dataset.geoConfirm) { geoConfirmAct(t); return; }
+        if (t.dataset.geoNext) { GeoActions.act(t, { call, toast, confirmRun, loadExternal, $ }); return; }
         if (t.dataset.calAct) { calendarAct(t); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }

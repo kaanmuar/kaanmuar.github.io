@@ -1054,6 +1054,61 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map shows the 90-day plan against its targets and the next best actions, whose buttons reuse the Map actions (#3115)', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const extra = JSON.parse(JSON.stringify(require('./fixtures/jarvis-geo-actions.json')));
+    extra.actions.rows.push({ id: 'confirm:queue', kind: 'confirm', level: 'mid', title: 'Confirm teaminternational.com as United States', why: '62% sure from 3 reports; 618 Live Reports wait for a country', do: { type: 'confirm', label: 'Confirm', host: 'teaminternational.com', cc: 'US', name: 'United States' } });
+    const calls = await openStats(page, '#stats/geo/30', { geo: Object.assign({}, GEO_DATED, extra), 'geo-country-confirm': { ok: true, host: 'teaminternational.com', cc: 'US', name: 'United States', skipped: false, left: 617 } });
+    const geo = page.locator('[data-view="geo"]');
+    const plan = geo.locator('[data-panel-id="geo-plan"]');
+    await expect(plan.locator('header')).toContainText('Plan · day 24 of 90');
+    await expect(plan).toContainText('First waves');
+    await expect(plan).toContainText('Second wave out');
+    await expect(plan).toContainText('Instantly renews');
+    await expect(plan.locator('.jv-geo-plan-head .jv-chip')).toHaveText('Behind');
+    await expect(plan.locator('.jv-geo-prog')).toHaveCount(9);
+    await expect(plan.locator('.jv-geo-prog', { hasText: 'Prospects reviewed' })).toContainText('14 of 40');
+    await expect(plan.locator('.jv-geo-prog', { hasText: 'Paid unlocks' }).locator('.jv-chip')).toHaveText('Behind');
+    await expect(plan.locator('.jv-geo-prog', { hasText: 'Talks and webinars' }).locator('.jv-chip')).toHaveText('Done');
+
+    const next = geo.locator('[data-panel-id="geo-next"]');
+    await expect(next.locator('.jv-geo-line')).toContainText('Pause W1 E-pt Brazil now');
+    await expect(next.locator('.jv-geo-next li').first()).toHaveAttribute('data-next-id', 'bouncing:BR', { message: "Gemini's order, not the rules'" });
+    await expect(next.locator('.jv-geo-next li').nth(1)).toContainText("Pause Brazil's campaigns for Proclamação da República");
+    await expect(next.locator('.jv-geo-next li').nth(1).locator('[data-cal-act="pause"]')).toHaveAttribute('data-date', '2026-11-15');
+    await expect(next).toContainText('Ranked by Gemini');
+    if (process.env.GEO_SHOTS) {
+      await plan.screenshot({ path: `${process.env.GEO_SHOTS}/3115-plan-desktop.png` });
+      await next.screenshot({ path: `${process.env.GEO_SHOTS}/3115-actions-desktop.png` });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await plan.screenshot({ path: `${process.env.GEO_SHOTS}/3115-plan-phone.png` });
+      await next.screenshot({ path: `${process.env.GEO_SHOTS}/3115-actions-phone.png` });
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+
+    page.once('dialog', (d) => d.accept());
+    await next.locator('[data-next-id="bouncing:BR"] [data-mk-campaign="pause"]').click();
+    await expect.poll(() => calls.find((c) => c.op === 'marketing-campaign')).toBeTruthy();
+    expect(calls.find((c) => c.op === 'marketing-campaign').body).toMatchObject({ id: 'c2', action: 'pause', name: 'W1 E-pt Brazil' });
+
+    page.once('dialog', (d) => d.accept());
+    await next.locator('[data-next-id="no-campaign:DE"] [data-mk-campaign="activate"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'marketing-campaign').length).toBe(2);
+    expect(calls.filter((c) => c.op === 'marketing-campaign')[1].body).toMatchObject({ id: 'c9', action: 'activate' });
+
+    page.once('dialog', (d) => d.accept());
+    await next.locator('[data-next-id="confirm:queue"] [data-geo-next="confirm"]').click();
+    await expect.poll(() => calls.find((c) => c.op === 'geo-country-confirm')).toBeTruthy();
+    expect(calls.find((c) => c.op === 'geo-country-confirm').body).toMatchObject({ host: 'teaminternational.com', cc: 'US' });
+
+    await expect(next.locator('[data-next-id="target:unlocks"] [data-copy-link]')).toHaveAttribute('data-copy-link', 'https://qalabreview.com/pdf');
+    await next.locator('[data-next-id="no-prospects-left:CO"] [data-geo-cc="CO"]').click();
+    await expect(geo.locator('[data-panel-id="geo-country"]')).toContainText('Colombia');
+    await expect(geo.locator('[data-panel-id="geo-country"] [data-mk-queue]')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
   test('Marketing shows every marketing number with pies, the plan timeline and countdowns, and its buttons go through the function after confirming (#1722)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));

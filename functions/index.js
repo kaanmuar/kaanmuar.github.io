@@ -5623,6 +5623,7 @@ const jarvisMarketing = require("./jarvis-marketing");
 const jarvisTargets = require("./jarvis-targets");
 const jarvisGeo = require("./jarvis-geo");
 const jarvisGeoTime = require("./jarvis-geo-time");
+const jarvisGeoActions = require("./jarvis-geo-actions");
 const jarvisCalendar = require("./jarvis-calendar");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
@@ -6005,6 +6006,15 @@ async function jarvisCalendarDaily(db, settings) {
   });
   if (out.paused || out.resumed || out.expired) await jarvisCalendarFresh(db);
   return out;
+}
+
+// Map next actions (#3115): Gemini ranks the 30-day rule set when it changes or a day on; a new answer drops the geo caches.
+async function jarvisGeoActionsRefresh() {
+  const db = getFirestore();
+  const geo = (await jarvisExternal(["geo"], 30)).geo;
+  const out = await jarvisGeoActions.refresh({ db, now: Date.now(), gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null }, geo);
+  if (out.saved) await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+  return "map actions " + out.note;
 }
 
 function jarvisCalendarCtx(db, now, by) {
@@ -6975,9 +6985,10 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
     .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
   const pagespeed = await pageSpeedDeps("jarvis").then((deps) => jarvisPageSpeed.tick(deps)).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
   const agents = await jarvisProcesses.cloudAgents(jarvisLiveDeps(), { fetch, key: process.env.CURSOR_API_KEY }).catch((error) => "cloud agents failed: " + String(error.message || error).slice(0, 120));
+  const mapActions = await jarvisGeoActionsRefresh().catch((error) => "map actions failed: " + String(error.message || error).slice(0, 120));
   // With no app or page reading, this hourly load is what finds the sections that moved (#2509).
   const live = jarvisLiveNote(await jarvisLivePush("jarvisWatch"));
-  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + agents + "; " + live;
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + agents + "; " + mapActions + "; " + live;
 });
 
 async function jarvisUptimeRun() {

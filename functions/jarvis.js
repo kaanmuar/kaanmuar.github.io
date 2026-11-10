@@ -942,6 +942,7 @@ function askSnapshot(snap, days) {
       outreach: outreachAsk(e.outreach, s.outreachVisits),
       targets: targetsAsk(e.targets),
       geoFlow: require("./jarvis-geo-flow").ask(e.geo),
+      mapPlanAndNextActions: require("./jarvis-geo-actions").askOf(e.geo),
       engagement: engagementAsk(e.engagement),
       geoHeat: require("./jarvis-geo-heat").heatAsk(e.geo),
       signedInPeople: ok(e.people) ? e.people.totals : null,
