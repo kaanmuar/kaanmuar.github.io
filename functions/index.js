@@ -54,6 +54,7 @@ const jarvisLogPoll = require("./jarvis-log-poll");
 jarvisLog.use(getFirestore);
 const linkedRisk = require("./url-review-linked-risk");
 linkedRisk.use(getFirestore, FieldValue);
+require("./url-review-threat-lists").use(getFirestore, FieldValue);
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -6162,7 +6163,7 @@ async function jarvisDaily({ force }) {
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach", "targets", "github-work", "calendar", "geo", "marketing"], 1),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach", "targets", "github-work", "calendar", "geo", "marketing", "rescue", "fixes", "checks"], 1),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
@@ -6206,7 +6207,7 @@ async function jarvisRanked({ state, items, days, candidates, snapshot, useGemin
   return Object.assign({}, out, { proposals: (out.proposals || []).map(jarvisProposals.withButtons) });
 }
 
-const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets"];
+const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "rescue", "fixes", "checks"];
 
 // Sunday 19:00 Bogotá: four weeks side by side, this week's proposals and Gemini's strategy for the next one.
 async function jarvisWeekly({ force }) {
@@ -6244,7 +6245,7 @@ async function jarvisWeekly({ force }) {
   return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
-const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work", "geo", "calendar"];
+const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "rescue", "fixes", "checks", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work", "geo", "calendar"];
 
 // Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore
 // itself. One builder per section, each kept until its TTL or the write that changes it (jarvis-snapshot.js, #2099).
@@ -7013,13 +7014,15 @@ async function jarvisEvening({ force }) {
   const settings = await jarvis.readSettings(db);
   if (!settings.mail.digest && !force) return "off in settings";
   const since = new Date(Date.now() - 24 * 3600000).toISOString();
-  const [pushes, actions, held, replies, notices, marks] = await Promise.all([
+  const [pushes, actions, held, replies, notices, marks, rescue, fixes] = await Promise.all([
     db.collection("jarvis_pushes").where("at", ">=", since).limit(500).get(),
     db.collection("jarvis_actions").where("at", ">=", since).limit(500).get(),
     jarvisHeld(),
     db.collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get(),
     db.collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
-    jarvisProposals.saved(db)
+    jarvisProposals.saved(db),
+    jarvisSource("rescue", 7).catch(() => null),
+    jarvisSource("fixes", 7).catch(() => null)
   ]);
   const mail = jarvisDigest.digestMail({
     pushes: pushes.docs.map((doc) => doc.data()),
@@ -7027,7 +7030,9 @@ async function jarvisEvening({ force }) {
     waiting: {
       reruns: held.map((h) => ({ host: h.data.host || h.id })),
       ownerReplies: replies.docs.map((doc) => ({ domain: doc.get("domain") || doc.get("from") })),
-      notices: notices.docs.map((doc) => ({ domain: doc.id }))
+      notices: notices.docs.map((doc) => ({ domain: doc.id })),
+      promises: (rescue && rescue.openList) || [],
+      fixes: (fixes && fixes.paidList) || []
     },
     marked: new Set(marks.map((row) => row.key))
   });

@@ -22,7 +22,7 @@ const LIVE_MS = 60 * 1000;
 const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'rescue', 'fixes', 'checks', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
@@ -822,6 +822,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites), ownerTags: otAsk(e.engagement.ownerTags) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+                ...C.reviewOpsAsk(e),
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -1131,6 +1132,72 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             wide: true,
             data: (g.sites || []).map((x) => ({ at: x.at, host: x.host, source: x.source, outreach: x.outreach, profile: x.profile, result: x.worst || 'ok', issues: x.issues.map((i) => i.key).join(' ') })),
             note: `Reviews whose start page looks like a local business are checked against their Google Business Profile (case SEO-05). Only finding keys are kept, never the profile's own data. Counted since ${esc(g.since)}; test runs are left out. ${fmt(t.callsToday || 0)} Places calls today.`
+        });
+    }
+
+    // URL Review > after a failure, fix requests and the newer checks (#3329): the rescue, fixes and checks sources.
+    const RO_STATE = { ok: 'c-fast', quiet: 'c-average', running: 'c-average', off: '', down: 'c-slow' };
+    const roChip = (state, text) => `<span class="jv-chip ${RO_STATE[state] || ''}">${esc(text || state)}</span>`;
+    const hoursLeft = (h) => (h <= 0 ? 'past due' : fmt(h) + ' h left');
+    function rescuePanel(h) {
+        const r = S.external.rescue;
+        if (!r || !r.ok || !r.promises) {
+            const body = h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : waiting('rescue', 'Reading failures, rescues and promises…');
+            return panel('review-failures', 'Failed reviews and rescue', body, { data: h && h.failures ? h.failures.latest : null });
+        }
+        const x = r.rescues, d = r.diagnoses, p = r.promises;
+        const head = stats([
+            { label: 'Failed reviews', value: r.failures.total }, { label: 'Re-runs', value: r.reruns.total }, { label: 'Re-runs sent', value: r.reruns.sent },
+            { label: 'Held on the desk', value: r.reruns.held, alert: r.reruns.held > 0 }, { label: 'Rescued', value: x.rescued }, { label: 'Read by the Mac', value: x.macDone },
+            { label: 'Waiting for the Mac', value: x.macPending, alert: x.macPromised > 0 }, { label: 'AI: Vertex AI', value: d.vertex }, { label: 'AI: AI Studio', value: d.studio }, { label: 'Rule diagnoses', value: d.rules }
+        ]);
+        const promised = stats([
+            { label: 'Promised by email', value: p.made }, { label: 'Open now', value: p.open }, { label: 'Near the deadline', value: p.atRisk, alert: p.atRisk > 0 },
+            { label: `Sent within ${r.deadlineHours} h`, value: p.within48h }, { label: 'Apologies sent', value: p.apologized }, { label: 'Apology codes sent', value: r.codes.sent }, { label: 'Codes redeemed', value: r.codes.redeemed }
+        ]);
+        const open = table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => esc(o.host)], ['Re-runs', (o) => fmt(o.tries) + ' of ' + r.triesAtHours.length], ['Deadline', (o) => roChip(o.hoursLeft <= 2 ? 'down' : o.hoursLeft <= 8 ? 'quiet' : 'ok', hoursLeft(o.hoursLeft))]], r.openList, 'No promised report is open.');
+        const mac = r.macList.length ? table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => `${esc(o.host)}${o.promised ? ' <span class="jv-chip c-average">promised</span>' : ''}`]], r.macList, '') : '';
+        const body = head + bars(r.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' }) + '<h4 class="jv-sub">Report promises</h4>' + promised + open + (mac ? '<h4 class="jv-sub">Waiting for the Mac</h4>' + mac : '');
+        return panel('review-failures', `Failed reviews and rescue · ${fmt(r.failures.total)}`, body, {
+            wide: true,
+            data: r.openList.map((o) => ({ failedAt: o.failedAt, host: o.host, code: o.code, tries: o.tries, hoursLeft: o.hoursLeft })),
+            note: `A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email within ${r.deadlineHours} hours (re-runs at ${r.triesAtHours.join(', ')} h) or an apology with a ${r.apologyPercent}% code.`
+        });
+    }
+
+    const FIX_WAYS = [['self', 'Fix it yourself'], ['quote', 'Quote'], ['package', 'Package'], ['call', 'Call']];
+    const FIX_STEPS = [['new', 'New'], ['quoted', 'Quoted'], ['accepted', 'Paid / accepted'], ['in-progress', 'In progress'], ['done', 'Done'], ['re-reviewed', 'Re-reviewed']];
+    function fixesPanel() {
+        const f = S.external.fixes;
+        if (!f || !f.ok || !f.ways) return panel('review-fixes', 'Fix requests', waiting('fixes', 'Reading fix requests…'), { wide: true });
+        const head = stats(FIX_WAYS.map(([k, label]) => ({ label, value: f.ways[k] || 0 })).concat([
+            { label: 'Package revenue (USD)', value: f.revenue.usd }, { label: 'Packages paid', value: f.revenue.count },
+            { label: 'Free re-checks', value: f.rechecks.total }, { label: 'Waiting for work', value: f.waiting.paid, alert: f.waiting.paid > 0 }
+        ]));
+        const pipe = `<ul class="jv-facts">${FIX_STEPS.map(([k, label]) => `<li>${esc(label)}: <b>${fmt(f.pipeline[k] || 0)}</b></li>`).join('')}</ul>`;
+        const paid = table([['Paid', (x) => esc(when(x.paidAt))], ['Site', (x) => esc(x.host)], ['Package', (x) => esc(x.package || 'quote')], ['USD', (x) => fmt(x.priceUsd)], ['Due', (x) => roChip(x.late ? 'down' : 'ok', x.due ? String(x.due).slice(0, 10) : '—')]], f.paidList, 'No paid fix request waits for work.');
+        const quotes = f.quoteList.length ? '<h4 class="jv-sub">Waiting for a reply or a quote</h4>' + table([['Sent', (x) => esc(when(x.createdAt))], ['Site', (x) => esc(x.host)], ['Way', (x) => esc(x.kind)], ['Days', (x) => fmt(x.daysWaiting)]], f.quoteList, '') : '';
+        const rev = f.revenue.byPackage.length ? bars(f.revenue.byPackage, { color: COLORS.green }) : '';
+        return panel('review-fixes', `Fix requests · ${fmt(f.total)}`, head + pipe + rev + '<h4 class="jv-sub">Paid, waiting for work</h4>' + paid + quotes, {
+            wide: true,
+            data: f.paidList.map((x) => ({ paidAt: x.paidAt, host: x.host, package: x.package, priceUsd: x.priceUsd, due: x.due, late: x.late })),
+            note: `From a report a client picks a way: fix it themselves (one free re-check on a paid report), ask for a quote, buy a fixed-price package (PayPal; coupons never apply) or book a call. Marking a fix done runs the free re-review and mails the before/after. Re-reviews in range: ${fmt(f.rereviews.total)} (${fmt(f.rereviews.fixed)} findings fixed). Quotes waiting for payment: ${fmt(f.waiting.quoted)}.`
+        });
+    }
+
+    function checksPanel() {
+        const c = S.external.checks;
+        if (!c || !c.ok || !c.families) return panel('review-checks', 'New checks: hits, quotas and sources', waiting('checks', 'Reading the new checks…'), { wide: true });
+        const t = c.totals;
+        const famDetail = (x) => [x.customerHits ? fmt(x.customerHits) + ' client' : '', x.critical ? fmt(x.critical) + ' high' : '', x.unchecked ? fmt(x.unchecked) + ' not checked' : ''].filter(Boolean).join(' · ');
+        const fam = table([['Check', (x) => esc(x.label)], ['Checked', (x) => fmt(x.checked)], ['Hits', (x) => fmt(x.hits)], ['Of those', (x) => esc(famDetail(x))]], c.families, 'No counted reviews yet.');
+        const quotas = table([['Quota', (x) => esc(x.label)], ['Used', (x) => fmt(x.used) + (x.cap ? ' of ' + fmt(x.cap) : '')], ['%', (x) => (x.pct === null ? '—' : roChip(x.pct >= 100 ? 'down' : x.pct >= 80 ? 'quiet' : 'ok', x.pct + '%'))],
+            ['Split', (x) => (x.sweep !== undefined ? `${fmt(x.customer)} clients · ${fmt(x.sweep)} sweeps (cap ${fmt(x.sweepCap)})` : x.calls !== undefined ? `${fmt(x.calls)} calls` : '')]], c.quotas, '');
+        const src = table([['Source', (x) => esc(x.name)], ['State', (x) => roChip(x.state)], ['Detail', (x) => esc(x.detail || '')], ['When', (x) => esc(x.at ? when(x.at) : '')]], c.sources, '');
+        return panel('review-checks', `New checks: hits, quotas and sources · ${fmt(t.withHits)}`, stats([{ label: 'Reviews in range', value: t.reviews }, { label: 'Counted', value: t.counted }, { label: 'With a hit', value: t.withHits }, { label: 'Wordfence feed', value: c.wordfence.stored ? 'stored' : 'not stored' }]) + fam + quotas + src, {
+            wide: true,
+            data: c.families.map((x) => ({ check: x.label, checked: x.checked, hits: x.hits, customerHits: x.customerHits, critical: x.critical, unchecked: x.unchecked })),
+            note: `Hits are counted from ${esc(c.since)}, when reviews started keeping a small summary of these checks; test runs are left out. A phishing-list or linked-script hit is critical and keeps the site off Live Reports. Web Risk keeps half of each day for client reviews; URL Scanner scans are public on Cloudflare Radar.`
         });
     }
 
@@ -3502,7 +3569,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${listPanel('review', 'frameworks', 'Frameworks', r.lists.frameworks, { color: COLORS.violet })}${listPanel('review', 'actions', 'Clicks on the review pages', r.lists.actions, { color: COLORS.amber })}
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
-            ${panel('review-failures', 'Failed runs', h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : 'Not loaded.'}</p>`, { data: h && h.failures ? h.failures.latest : null })}
+            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}
             ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], reviewAlerts(), 'No alerts in range.'), { wide: true, data: reviewAlerts().map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
             ${panel('review-reports', 'Mailed reports', table([['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))], ['Opens', (x) => fmt(x.opens || 0)], ['Reviews', (x) => fmt(x.reviews || 0)], ['Paid', (x) => fmt(x.paidUsd || 0) + ' USD']], S.reports, 'No mailed reports yet.'), { data: S.reports.map((x) => ({ period: x.period, label: x.label, opens: x.opens, reviews: x.reviews, paidUsd: x.paidUsd })) })}
             ${panel('review-ops', 'Actions', `<div class="jv-actions">

@@ -409,7 +409,10 @@
         firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 },
         outreachBouncePct: { value: 3, label: 'Outreach emails bounced: alert at (%)', min: 0.5, max: 50 },
         outreachWarmup: { value: 80, label: 'Mailbox warm-up score needed before campaigns send', min: 0, max: 100 },
-        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 }
+        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 },
+        promiseHours: { value: 8, label: 'Promised review reports: warn with this many hours or fewer left', min: 1, max: 48 },
+        fixWaitDays: { value: 1, label: 'Paid fix requests waiting for work: warn after (days)', min: 0, max: 30 },
+        quotaPct: { value: 80, label: 'Review check quotas (Web Risk, URL Scanner) used: warn at (%)', min: 10, max: 100 }
     };
 
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
@@ -497,7 +500,9 @@
         { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
         { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
         { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' },
-        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' }
+        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' },
+        { key: 'rescue', name: 'Review rescue (failures, re-runs, Mac, promises)' }, { key: 'fixes', name: 'Fix requests and packages' },
+        { key: 'checks', name: 'Review checks (quotas, Wordfence, outside lists)' }
     ];
 
     function connections(external, pending) {
@@ -735,6 +740,53 @@
             }
         });
         return lines;
+    }
+
+    // URL Review after a failure, fix requests and the newer checks (#3329): the lines the briefing, digest and weekly strategy carry.
+    function reviewOpsLines(ext, th) {
+        const out = [];
+        const add = (level, text, key) => out.push({ level, text, key });
+        const n = (x, one, many) => `${x} ${x === 1 ? one : many}`;
+        const r = ext.rescue;
+        if (r && r.ok !== false && r.promises) {
+            const risk = (r.openList || []).filter((p) => p.hoursLeft <= th.promiseHours);
+            if (risk.length) add(risk.some((p) => p.hoursLeft <= 2) ? 'alert' : 'warn', `${n(risk.length, 'promised report is', 'promised reports are')} near the ${r.deadlineHours}-hour deadline: ${risk.slice(0, 3).map((p) => `${p.host} (${p.hoursLeft <= 0 ? 'past due' : p.hoursLeft + ' h left'})`).join(', ')}.`, 'review:promise-risk');
+            const p = r.promises;
+            if (p.made) add('info', `${n(p.made, 'review', 'reviews')} promised by email in range: ${p.within48h} sent within ${r.deadlineHours} h, ${n(p.apologized, 'apology', 'apologies')}, ${p.open} still open; ${n(r.codes.redeemed, 'apology code', 'apology codes')} redeemed.`, 'review:promises');
+            const mac = r.rescues || {};
+            if (mac.macPending) add(mac.macPromised ? 'warn' : 'info', `${n(mac.macPending, 'rescue waits', 'rescues wait')} for the Mac${mac.macPromised ? ` (${mac.macPromised} promised)` : ''}; ${mac.macDone} read by the Mac in range.`, 'review:mac');
+        }
+        const f = ext.fixes;
+        if (f && f.ok !== false && f.waiting) {
+            const paid = (f.paidList || []).filter((x) => x.daysWaiting >= th.fixWaitDays || x.late);
+            if (paid.length) add(paid.some((x) => x.late) ? 'alert' : 'warn', `${n(paid.length, 'paid fix request waits', 'paid fix requests wait')} for work: ${paid.slice(0, 3).map((x) => `${x.host} ${x.package || 'quote'}${x.late ? ' (late)' : ` (${x.daysWaiting} d)`}`).join(', ')}.`, 'review:fix-paid');
+            if (f.waiting.quotes) add('warn', `${n(f.waiting.quotes, 'fix request waits', 'fix requests wait')} for a reply or a quote.`, 'review:fix-quote');
+            if (f.revenue && f.revenue.count) add('good', `Fix packages brought ${f.revenue.usd} USD in range (${n(f.revenue.count, 'payment', 'payments')}).`, 'review:fix-revenue');
+        }
+        const c = ext.checks;
+        if (c && c.ok !== false && c.quotas) {
+            c.quotas.filter((q) => q.cap && q.pct >= th.quotaPct).forEach((q) => add(q.pct >= 100 ? 'alert' : 'warn', `${q.label}: ${q.used} of ${q.cap} (${q.pct}%)${q.sweep !== undefined ? `, ${q.sweep} by sweeps` : ''}.`, 'review:quota:' + q.id));
+            const wf = c.wordfence || {};
+            if (!wf.stored) add(wf.state === 'down' ? 'warn' : 'info', `The Wordfence feed is not stored${wf.at ? ` (last attempt ${String(wf.at).slice(0, 10)}: ${wf.detail})` : ''}, so WordPress plugin versions are not checked.`, 'review:wordfence');
+            (c.sources || []).filter((x) => x.state === 'down' && x.key !== 'wordfence').forEach((x) => add('warn', `${x.name} is failing in reviews: ${x.detail}.`, 'review:source:' + x.key));
+            const hits = (c.families || []).filter((x) => x.hits);
+            if (hits.length) add(hits.some((x) => (x.id === 'phishing' || x.id === 'linked') && x.customerHits) ? 'warn' : 'info', `New checks in range: ${hits.map((x) => `${x.label} ${x.hits}`).join('; ')}.`, 'review:check-hits');
+        }
+        return out;
+    }
+
+    // The three review sources in a few hundred tokens, for Ask on the web and the server.
+    function reviewOpsAsk(e) {
+        const ok = (x) => x && x.ok !== false;
+        const r = (e || {}).rescue, f = (e || {}).fixes, c = (e || {}).checks;
+        return {
+            urlReviewAfterFailure: ok(r) && r.promises ? { failures: r.failures, reruns: { total: r.reruns.total, sent: r.reruns.sent, held: r.reruns.held }, rescues: r.rescues, aiDiagnoses: r.diagnoses, promises: r.promises, apologyCodes: r.codes,
+                promisesOpen: (r.openList || []).slice(0, 5).map((p) => p.host + ' ' + p.hoursLeft + ' h left') } : null,
+            urlReviewFixRequests: ok(f) && f.ways ? { byWay: f.ways, pipeline: f.pipeline, packageRevenue: f.revenue, freeRechecks: f.rechecks, rereviews: f.rereviews, waiting: f.waiting,
+                paidWaiting: (f.paidList || []).slice(0, 5).map((p) => p.host + ' ' + p.package + ' paid ' + p.daysWaiting + ' d ago' + (p.late ? ' (late)' : '')) } : null,
+            urlReviewNewChecks: ok(c) && c.families ? { countedSince: c.since, reviews: c.totals, hits: c.families.map((x) => x.label + ': ' + x.hits + ' of ' + x.checked), quotas: c.quotas.map((q) => q.label + ': ' + q.used + (q.cap ? ' of ' + q.cap : '')),
+                sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')), wordfenceStored: !!(c.wordfence && c.wordfence.stored) } : null
+        };
     }
 
     function briefing(state) {
@@ -996,6 +1048,7 @@
                 add(i.level, 'systems', i.text, 'addresses:' + i.key);
             });
         }
+        reviewOpsLines(ext, th).forEach((b) => add(b.level, 'review', b.text, b.key));
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
         calendarLines(ext, state.now).forEach((line) => out.push(line));
@@ -1033,6 +1086,13 @@
         { prefix: 'addresses:m365:', impact: 3, group: true, title: 'Fix the Microsoft 365 mailboxes', link: 'https://admin.microsoft.com/#/users' },
         { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
         { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
+        { prefix: 'review:promise-risk', impact: 5, title: 'Get the promised review reports out before the 48-hour deadline', tab: 'review' },
+        { prefix: 'review:fix-paid', impact: 5, title: 'Start the paid fix packages', tab: 'review' },
+        { prefix: 'review:fix-quote', impact: 4, title: 'Answer the fix requests that wait for a quote', tab: 'review' },
+        { prefix: 'review:quota:', impact: 3, group: true, title: 'Keep the review check quotas under their caps', tab: 'review' },
+        { prefix: 'review:wordfence', impact: 3, levels: ['warn'], title: 'Get the Wordfence feed stored so WordPress plugins are checked', tab: 'review' },
+        { prefix: 'review:source:', impact: 3, group: true, title: (n) => `Bring back ${n === 1 ? 'the review check source that fails' : n + ' review check sources that fail'}`, tab: 'review' },
+        { prefix: 'review:mac', impact: 3, levels: ['warn'], title: 'Let the Mac take the promised rescues waiting for it', tab: 'review' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
         { prefix: 'ci-prs:', impact: 3, group: true, title: 'Close and reopen the PRs that failed on the old main', link: 'https://github.com/kaanmuar/kaanmuar.github.io/pulls' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
@@ -1759,7 +1819,7 @@
             && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
     }
 
-    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

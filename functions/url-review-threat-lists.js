@@ -7,7 +7,10 @@
    CLOUDFLARE_URLSCAN_TOKEN (an API token with URL Scanner read and write on CLOUDFLARE_ACCOUNT_ID).
    A Cloudflare scan is public on Radar, and the free plan allows one scan every 10 seconds and 5,000 a month, so a
    scan of the host from the last day is read before a new one is asked for. PhishStats terms forbid passing on its
-   raw feed: the report names only the reviewed host's entries. */
+   raw feed: the report names only the reviewed host's entries.
+
+   threatlist_usage/<YYYY-MM> = { <source>: { calls, scans, errors, skipped, days: { "<DD>": { calls, scans, errors } },
+   lastOkAt, lastErrorAt, lastError } }   one write per review, so Jarvis shows the quotas and which source is down (#3329). */
 
 const { registrable } = require("./url-review-suffix");
 const { say, some } = require("./url-review-findings-en");
@@ -26,6 +29,36 @@ const PHISHSTATS_DAYS = 90;
 const NAMES = { urlhaus: "URLhaus", phishstats: "PhishStats", cloudflare: "Cloudflare URL Scanner" };
 
 const cache = new Map();
+const USAGE = "threatlist_usage";
+let backing = null;
+
+function use(getDb, FieldValue) {
+  backing = typeof getDb === "function" && FieldValue ? { getDb, FieldValue } : null;
+}
+
+// The usage write for one check: what each source was asked, from the rows and the new Cloudflare scans.
+function usagePatch(rows, scans, now, inc) {
+  const at = new Date(now).toISOString();
+  const dd = at.slice(8, 10);
+  const out = {};
+  rows.forEach((row) => {
+    if (!row.asked && !row.skipped) return;
+    const n = { calls: row.asked ? 1 : 0, scans: row.source === "cloudflare" ? scans : 0, errors: row.asked && !row.ok ? 1 : 0 };
+    const entry = { calls: inc(n.calls), scans: inc(n.scans), errors: inc(n.errors), skipped: inc(row.skipped ? 1 : 0), days: { [dd]: { calls: inc(n.calls), scans: inc(n.scans), errors: inc(n.errors) } } };
+    if (row.asked && row.ok) entry.lastOkAt = at;
+    if (row.asked && !row.ok) Object.assign(entry, { lastErrorAt: at, lastError: String(row.error || "failed").slice(0, 120) });
+    out[row.source] = entry;
+  });
+  return out;
+}
+
+async function recordUsage(rows, scans, now) {
+  if (!backing) return;
+  try {
+    const patch = usagePatch(rows, scans, now, (n) => backing.FieldValue.increment(n));
+    if (Object.keys(patch).length) await backing.getDb().collection(USAGE).doc(new Date(now).toISOString().slice(0, 7)).set(patch, { merge: true });
+  } catch (error) { /* usage is a count, never a reason to fail the review */ }
+}
 
 function remember(key, value, ms) {
   cache.set(key, { until: Date.now() + ms, value });
@@ -136,6 +169,7 @@ async function cloudflare(url, host, token, account, fetchImpl, opts) {
     });
     uuid = asked && asked.uuid;
     if (!uuid) throw new Error("no scan id");
+    if (opts.onScan) opts.onScan();
     remember(pendingKey, uuid, PENDING_MS);
   }
   const until = Date.now() + opts.wait;
@@ -184,6 +218,9 @@ async function check(url, options) {
     opts.note("No phishing or malware list beyond Google's was asked: URLHAUS_AUTH_KEY, PHISHSTATS_KEY and CLOUDFLARE_URLSCAN_TOKEN are not set.");
     return null;
   }
+  let scans = 0;
+  opts.onScan = () => { scans += 1; };
+  const asked = new Set();
   const rows = await Promise.all(sources.map(async ([source, names, ask]) => {
     let row;
     if (missing(names)) row = { source, ok: false, skipped: missing(names), listed: false };
@@ -191,6 +228,7 @@ async function check(url, options) {
       const key = source + " " + host;
       row = recall(key);
       if (!row) {
+        asked.add(source);
         try {
           row = await ask();
           if (!row.pending) remember(key, row, CACHE_MS);
@@ -202,6 +240,7 @@ async function check(url, options) {
     opts.note(line(row));
     return row;
   }));
+  await recordUsage(rows.map((row) => Object.assign({ asked: asked.has(row.source) }, row)), scans, opts.now);
   return { host, checkedAt: new Date(opts.now).toISOString(), sources: rows };
 }
 
@@ -233,4 +272,4 @@ function addFindings(result, add) {
     say("sec-threatlists.pass.evidence", { n: read.length, lists: { items: read.map(listName), join: "and" }, host: result.host, pending: pending ? say("threatlist.pending", { report: pending.report }) : "" }), "");
 }
 
-module.exports = { check, addFindings, NAMES, PHISHSTATS_MIN_SCORE, PHISHSTATS_DAYS, _cache: cache };
+module.exports = { check, addFindings, use, usagePatch, USAGE, NAMES, PHISHSTATS_MIN_SCORE, PHISHSTATS_DAYS, _cache: cache };

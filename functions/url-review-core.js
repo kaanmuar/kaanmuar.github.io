@@ -3736,6 +3736,17 @@ function localSummary(report) {
   };
 }
 
+// The newer security checks' findings in a few bytes (#3329), so Jarvis counts hits per check without reading reports.
+const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist)/;
+function checksSummary(report) {
+  const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
+  const rows = findings.filter((f) => f && CHECK_KEYS.test(f.key || "")).map((f) => {
+    const title = f.msg && f.msg.title && f.msg.title.id ? String(f.msg.title.id) : "";
+    return Object.assign({ key: f.key, verdict: f.verdict || "", severity: f.severity || "" }, /\.unchecked\./.test(title) ? { unchecked: true } : {});
+  });
+  return rows.length ? rows.slice(0, 30) : null;
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
   const fixed = [];
@@ -3780,6 +3791,7 @@ function intakeRecord(value, report, meta) {
     query: value.query || "",
     referrerHost: value.referrerHost || "",
     local: localSummary(report),
+    checks: checksSummary(report),
     report: kept
   };
 }
@@ -4703,6 +4715,7 @@ module.exports = {
   toolsForPage,
   intakeRecord,
   localSummary,
+  checksSummary,
   storable,
   analyzeHtml: inspect,
   challengeOf,
