@@ -9,6 +9,8 @@
    links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect,
               and the report replies (#2465, #2471) per network and per post
    people     the outreach ledger (outreach_people, #3136): people at each stage, in all and by kind
+   companies  site-dependency companies (#3139) per segment: found, reviewed, offered the trial, claimed, paid
+              (outreach_people, functions/company-prospects.js)
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
@@ -16,6 +18,7 @@ const dayRows = require("./jarvis-days");
 const sweep = require("./url-review-sweep");
 const E = require("./engagement");
 const people = require("./outreach-people");
+const Companies = require("./company-prospects");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
@@ -387,6 +390,7 @@ async function outreach(ctx) {
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null), reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
     part("links", () => shortLinks(ctx, loggedP)),
+    part("companies", () => Companies.dashboard(ctx.db)),
     part("instantly", () => instantly(ctx)),
     part("people", async () => {
       const snap = await ctx.db.collection(people.COLLECTION).select("stage", "kind").limit(5000).get();

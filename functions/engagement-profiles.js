@@ -137,7 +137,8 @@ const TONE_RULES = {
   cheer: "Touch 1, cheer: open on something genuine about them (their post when there is one, or what the organisation does), say we included their site in our public website reviews and invite them to see their report. No offer.",
   curious: "Touch 2, curious: one friendly, curious question tied to site.weakest (how they approach it), then say their live report has a few findings on it worth a look. No offer.",
   question: "Touch 3, question: a light question that hints there is something in site.weakest worth checking, without diagnosing, blaming or naming numbers, and mention a welcome offer for site.domain: offer.percent% off their first payment, offer.days days from when they open it.",
-  last: "Touch 4, last note: short and kind, say their report stays live and the offer.percent% welcome offer for site.domain is still there for offer.days days once opened. No pressure words, no countdowns."
+  last: "Touch 4, last note: short and kind, say their report stays live and the offer.percent% welcome offer for site.domain is still there for offer.days days once opened. No pressure words, no countdowns.",
+  trial: "Tone trial (#3139, a company whose business runs on its site): say we reviewed site.domain and name site.weakest as one area worth a look, then offer offer.days days of full free access for site.domain at {link}, and offer.percent% off their first payment after it. No pressure words, no countdowns."
 };
 
 /** The Gemini prompt for this run's messages, one per item, with {link} where the link goes. */
@@ -154,6 +155,7 @@ function prompt(items) {
     "For each item return one JSON object in a JSON array, same order: {\"id\": same id, \"text\": the message, or \"\" when nothing honest and welcome can be said}.",
     "mode \"reply\" is a reply under the organisation's own post (post): open on what the post says, and return \"\" when the post is about politics, elections, war, a tragedy, a death, a crisis or a fight. mode \"copy\" is a message to the profile: start with handle.",
     TONE_RULES.cheer, TONE_RULES.curious, TONE_RULES.question, TONE_RULES.last,
+    ...(items.some((p) => p.tone === "trial") ? [TONE_RULES.trial] : []),
     "Rules: write in lang (en, es, pt, de, fr or it). First person plural, warm, specific, one or two short sentences. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number and never call the site bad, slow, broken or unsafe. Say only what site says; no made-up findings. End with {link} exactly once. " + ORG_REGISTER,
     "Never: any other link or address (naming the site is fine), hashtags, more than one emoji, em dashes, flattery like \"Great post!\", made-up numbers, urgency or sales talk, or anything about a person.",
     "Stay under maxLength characters, {link} not counted.",

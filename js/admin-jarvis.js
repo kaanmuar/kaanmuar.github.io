@@ -803,6 +803,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 platform: e.platform && e.platform.ok ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
                 outreach: e.outreach && e.outreach.ok ? {
                     pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
+                    companies: e.outreach.companies && e.outreach.companies.ok ? { total: e.outreach.companies.total, bySegment: e.outreach.companies.rows.slice(0, 15) } : null,
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
                     visits: outreachSeen().total,
@@ -1736,6 +1737,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             + table([['Channel', (c) => esc(c.label)], ['Link', (c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https:\/\//, ''))}</a>`], ['', (c) => copyBtn(c.url)]], links.channels)
             + `<p class="jv-note">Funnel work: ${links.funnel.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join(' · ')}</p>`
             : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
+        const firms = ou.companies && ou.companies.ok ? ou.companies : null;
+        const stageCols = [['Found', 'found'], ['Reviewed', 'reviewed'], ['Offered', 'offered'], ['Claimed', 'claimed'], ['Paid', 'paid']].map(([label, k]) => [label, (r) => fmt(r[k])]);
+        const firmsBody = firms ? kpis([['Found', 'found'], ['Reviewed', 'reviewed'], ['Offered the trial', 'offered'], ['Claimed', 'claimed'], ['Paid', 'paid']].map(([label, k]) => ({ label, value: firms.total[k] })))
+            + table([['Segment', (r) => esc(r.label)]].concat(stageCols), firms.rows, 'No site-dependency company found yet. The Places night adds them; the companies run offers the trial.')
+            : `<p class="jv-empty">${esc((ou.companies && ou.companies.error) || 'Not loaded.')}</p>`;
         const soc = links && links.social ? links.social : null;
         const counts = [['Clicks', (x) => fmt(x.visits)], ['Runs', (x) => fmt(x.reviews)], ['Paid', (x) => fmt(x.paid)], ['USD', (x) => fmt(x.usd)]];
         const socialBody = soc ? stats([{ label: 'Clicks', value: soc.visits }, { label: 'Free runs', value: soc.reviews }, { label: 'Paid unlocks', value: soc.paid }, { label: 'Revenue (USD)', value: soc.usd }])
@@ -1750,6 +1756,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${panel('outreach-targets', '90-day targets', targets, { wide: true, data: S.external.targets && S.external.targets.targets, note: 'Jarvis counts from the plan start and judges the pace; the marker shows how much of the 90 days has gone. Log what he cannot see.' })}
             ${panel('outreach-pipeline', 'Prospect pipeline (nightly sweep)', pipeBody, { data: pipe ? pipe.bySegment : [] })}
+            ${panel('outreach-companies', 'Company trials by segment', firmsBody, { wide: true, data: firms ? firms.rows : [], note: 'Companies whose business runs on their site: found by the Places night, reviewed by the sweep, offered the 2-day trial on their published contacts, then the after-trial discount. Each stage counts everyone who got that far.' })}
             ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: camps ? camps.rows : mail ? mail.byCampaign : [], note: camps ? 'Activate starts a campaign on its start date and sending window; nothing goes out to a campaign with no leads. Pause stops it at once.' : '' })}
             ${mail ? panel('outreach-mailboxes', 'Mailboxes and warm-up', boxBody, { data: mail.accounts }) : ''}
             ${panel('outreach-dns', `Sending domain${ou.mail && ou.mail.domain ? ' (' + esc(ou.mail.domain) + ')' : ''}`, dnsBody)}

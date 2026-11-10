@@ -10,6 +10,11 @@
                          from yesterday, or from every day since --since; forwards a copy of each A, B, G reply to
                          students@ and each E, P reply to partners@ through Instantly, once per reply (#2927);
                          --forward-dry (or OUTREACH_FORWARD_DRY=1) runs everything else and only lists the forwards
+   companies  weekdays   site-dependency companies (#3139) the outreach sweep reviewed: their published contacts and
+                         profiles into outreach_people, a domain-locked 2-day trial each, the week's companies file for
+                         Instantly (sequence T, findings in their language) and profile messages waiting for Carlos;
+                         COMPANIES_PER_DAY in all, capped per segment; --hosts <csv> (host,cc,sector) with --dry tries
+                         a list without Firestore
    holidays   every run  pauses campaigns on their countries' public holidays
    sync                  runs Jarvis > Marketing's queued commands and uploads the folder (scripts/jarvis-marketing-sync.js)
    The model is Workers AI through the pre-flight Worker (PREFLIGHT_TOKEN, PREFLIGHT_URL). A field the model is unsure
@@ -27,7 +32,8 @@ const FN = path.join(__dirname, "..", "functions");
 const CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(require("os").homedir(), ".cursor/preflight/config.json"), "utf8")); } catch { return {}; } })();
 const AI_URL = process.env.PREFLIGHT_URL || CFG.url || "https://preflight.carlosandmunoz.com";
 const BOOKING = "https://carlosandmunoz.com/book.html";
-const JOBS = ["prospects", "leads", "replies"];
+const JOBS = ["prospects", "leads", "replies", "companies"];
+const COMPANIES_PER_DAY = 30;
 const PER_SEGMENT = 10;
 const PER_DAY = 40;
 const SEGMENTS = ["university", "tvet", "agency", "startup"];
@@ -57,6 +63,7 @@ let DRY = false;
 let FORWARD_DRY = false;
 let SINCE = "";
 let WEEK = "";
+let HOSTS = "";
 const read = (rel, fallback = "") => { try { return fs.readFileSync(path.join(DIR, rel), "utf8"); } catch { return fallback; } };
 const write = (rel, text) => {
   if (DRY) return;
@@ -107,16 +114,19 @@ async function ai(system, prompt, { json = true, max = 800 } = {}) {
 }
 
 // --- Jarvis push --------------------------------------------------------------------------------------------------
-async function push(title, body) {
-  if (DRY || !process.env.GOOGLE_APPLICATION_CREDENTIALS) return console.log("push skipped: " + title + ": " + body);
+function firebase() {
   const fnRequire = Module.createRequire(path.join(FN, "index.js"));
   const { initializeApp, getApps } = fnRequire("firebase-admin/app");
   const { getFirestore } = fnRequire("firebase-admin/firestore");
-  const { getMessaging } = fnRequire("firebase-admin/messaging");
   if (!getApps().length) initializeApp({ projectId: PROJECT });
+  return { db: getFirestore(), messaging: () => fnRequire("firebase-admin/messaging").getMessaging() };
+}
+
+async function push(title, body) {
+  if (DRY || !process.env.GOOGLE_APPLICATION_CREDENTIALS) return console.log("push skipped: " + title + ": " + body);
+  const { db, messaging } = firebase();
   const jarvisPush = require("../functions/jarvis-push");
-  const db = getFirestore();
-  await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "outreach"),
+  await jarvisPush.send(messaging(), db, await jarvisPush.targets(db, "outreach"),
     { kind: "outreach", title, body, tab: "products:marketing", tag: "jarvis-outreach-weekly" });
 }
 
@@ -556,6 +566,129 @@ async function prospects(log) {
     + `${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
 }
 
+// --- Companies (#3139) --------------------------------------------------------------------------------------------
+const SD = require("../functions/site-dependency");
+const CC = require("../functions/company-contacts");
+const CP = require("../functions/company-prospects");
+const EP = require("../functions/engagement-profiles");
+
+/** The newest finished review of a queued host with its findings: { id, findings }, or null before the sweep got to it. */
+async function reviewOf(db, host) {
+  const snap = await db.collection("url_reviews").where("sweep.host", "==", host).limit(5).get();
+  const done = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))
+    .filter((r) => r.report && r.report.insights && Array.isArray(r.report.insights.findings))
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
+  return done ? { id: done.id, findings: done.report.insights.findings } : null;
+}
+
+/** The findings in the row's language as short noun phrases, or the English ones when the model is unsure. */
+async function translateFindings(findings, lang, log) {
+  const en = findings.map((f) => f.title);
+  if (lang === "en") return en;
+  try {
+    const out = await ai(
+      "You translate website-review findings for a cold email into the given language as short noun phrases that keep the problem itself, plain words, no jargon, numbers kept. "
+      + 'Reply with JSON only: {"items": ["...", "..."]}, same order and count; an empty string where you are not sure.',
+      JSON.stringify({ lang, items: en }), { max: 300 });
+    return en.map((t, i) => String((out.items || [])[i] || "").trim().slice(0, 160) || t);
+  } catch (error) {
+    if (error.fatal) throw error;
+    log("translate: " + error.message);
+    return en;
+  }
+}
+
+async function companies(log) {
+  const week = WEEK || tool("week").trim();
+  const n = week.slice(1);
+  const rel = `prospects/week${n}-companies.csv`;
+  const used = usedHosts();
+  const live = !DRY || !HOSTS;
+  const db = live ? firebase().db : null;
+  const queue = HOSTS ? parseCsv(fs.readFileSync(HOSTS, "utf8")).rows : (((await db.collection("url_review_sweep").doc("outreach").get()).data() || {}).hosts || []);
+  const list = queue.filter((h) => h.host && SD.matchSector(h.sector))
+    .map((h) => Object.assign({}, h, { host: String(h.host), cc: String(h.cc || "").toLowerCase(), sector: SD.matchSector(h.sector) }))
+    .sort((a, b) => SD.sectorOf(b.sector).priority - SD.sectorOf(a.sector).priority);
+  const ledger = {};
+  if (db) {
+    for (let i = 0; i < list.length; i += 100) {
+      const refs = list.slice(i, i + 100).map((h) => db.collection("outreach_people").doc(CP.idOf(h.host)));
+      (await db.getAll(...refs)).forEach((s, k) => { if (s.exists) ledger[bare(list[i + k].host)] = s.data(); });
+    }
+  }
+  let found = 0;
+  for (const h of list.filter((x) => !ledger[bare(x.host)])) {
+    if (!DRY) await CP.record(db, CP.personOf(h, null, h.sector), "found");
+    ledger[bare(h.host)] = { stage: "found" };
+    found += 1;
+  }
+  const paid = db ? (await db.collection("url_reviews").where("paid", "==", true).select("email").limit(3000).get()).docs.map((d) => String(d.data().email || "")).filter(Boolean) : [];
+  const perSector = {};
+  const why = {};
+  const rows = [];
+  const items = [];
+  const offered = [];
+  let checked = 0;
+  for (const h of list) {
+    if (offered.length >= COMPANIES_PER_DAY || checked >= COMPANIES_PER_DAY * 4) break;
+    const host = bare(h.host);
+    const led = ledger[host] || {};
+    if (CP.offeredYet(led) || (perSector[h.sector] || 0) >= SD.capOf(h.sector)) continue;
+    const review = db ? await reviewOf(db, h.host) : { id: "", findings: h.findings ? JSON.parse(h.findings) : [] };
+    if (!review) continue;
+    checked += 1;
+    const contacts = await CC.discover(fetch, h.host, { cc: h.cc, lang: LANG[h.cc] || "es" });
+    if (!contacts) { why["no-site"] = (why["no-site"] || 0) + 1; continue; }
+    const person = CP.personOf(h, contacts, h.sector);
+    if (!DRY && !led.reviewedAt) await CP.record(db, person, "", { note: "reviewed" }, { reviewedAt: new Date().toISOString(), reviewId: review.id });
+    const prof = db ? await db.collection(EP.COLLECTION).doc(host).get() : null;
+    const offer = CP.offerFor({
+      person: Object.assign({}, person, { stage: led.stage, offers: led.offers }), findings: review.findings, sector: h.sector,
+      dnc: used.has(host) || person.emails.some((e) => used.has(e.email)), paid: paid.some((e) => EP.sameDomain(e, host)),
+      profileCampaign: !!(prof && prof.exists && prof.data().code)
+    });
+    if (!offer.ok) { why[offer.why] = (why[offer.why] || 0) + 1; continue; }
+    perSector[h.sector] = (perSector[h.sector] || 0) + 1;
+    offered.push(host);
+    if (DRY) {
+      log(`  ${h.sector} ${host} ${offer.lang} ${offer.channels.join("+")} <${offer.email || "-"}> ${offer.socials.map((s) => s.network).join(",")} | ${offer.findings.map((f) => f.title).join(" | ")}`);
+      continue;
+    }
+    const trial = await CP.mint(db, person, offer);
+    if (offer.channels.includes("email")) {
+      const [finding_1, finding_2] = await translateFindings(offer.findings, offer.lang, log);
+      rows.push(CP.leadRow(h, person, offer, trial, { finding_1, finding_2, country: COUNTRY[person.country] }));
+      used.add(offer.email);
+    }
+    if (offer.channels.includes("social")) items.push(...CP.socialItems(person, offer, trial).map((i) => Object.assign(i, { trialUrl: trial.url, led: prof && prof.exists ? prof.data() : null })));
+    await CP.record(db, person, "offered", { offers: [{ code: trial.code, kind: "company", url: trial.url }], note: "trial offered by " + offer.channels.join(" and ") },
+      { offeredAt: new Date().toISOString(), channels: offer.channels, findings: offer.findings });
+  }
+  let queued = 0;
+  if (items.length && !DRY) {
+    const texts = EP.parse(await ai(EP.prompt(items), "Write the messages now.", { json: false, max: 1500 }).catch((error) => { if (error.fatal) throw error; log("social: " + error.message); return ""; }), items);
+    const batch = db.batch();
+    const byHost = {};
+    for (const i of items.filter((x) => texts[x.key])) {
+      const { trialUrl, led } = i;
+      delete i.trialUrl; delete i.led;
+      batch.set(db.collection("engagement_posts").doc(i.key), CP.socialDoc(i, texts[i.key], trialUrl, Date.now()));
+      (byHost[i.target.host] = byHost[i.target.host] || { led, profiles: i.profiles, code: i.offer.code, keys: [] }).keys.push(i.key);
+      queued += 1;
+    }
+    Object.entries(byHost).forEach(([host, x]) => batch.set(db.collection(EP.COLLECTION).doc(host), CP.profileLedger(x.led, host, x.profiles, x.code, x.keys, Date.now()), { merge: true }));
+    await batch.commit();
+  }
+  if (rows.length) {
+    append(rel, CP.LEAD_HEADER, rows);
+    if (!DRY) log(tool("campaigns", "--week", week).trim());
+  }
+  const skipped = Object.entries(why).map(([k, v]) => `${v} ${k}`).join(", ");
+  const segs = Object.entries(perSector).map(([k, v]) => `${v} ${k}`).join(", ");
+  log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails for approval, ${queued} profile messages waiting${skipped ? "; skipped " + skipped : ""}`);
+  return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length} emails to approve in Jarvis > Marketing, ${queued} profile messages in Engagement.` : "";
+}
+
 // --- Main ---------------------------------------------------------------------------------------------------------
 async function main(argv) {
   const arg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ""; };
@@ -565,7 +698,9 @@ async function main(argv) {
   FORWARD_DRY = argv.includes("--forward-dry") || process.env.OUTREACH_FORWARD_DRY === "1";
   SINCE = /^\d{4}-\d{2}-\d{2}$/.test(arg("--since")) ? arg("--since") : "";
   WEEK = /^W\d{1,2}$/.test(arg("--week")) ? arg("--week") : "";
-  if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|holidays|sync> --dir <outreach folder> [--dry]");
+  HOSTS = arg("--hosts") ? path.resolve(arg("--hosts")) : "";
+  if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|companies|holidays|sync> --dir <outreach folder> [--dry]");
+  if (HOSTS && !DRY) throw new Error("--hosts only runs with --dry.");
   if (mode === "holidays") return console.log(tool("holidays", ...(DRY ? ["--dry"] : [])).trim());
   if (mode === "sync") {
     return execFileSync("node", [path.join(__dirname, "jarvis-marketing-sync.js"), "--dir", DIR, "--state", path.join(DIR, "tracker"), ...(DRY ? ["--dry"] : [])], { stdio: "inherit" });
@@ -576,7 +711,7 @@ async function main(argv) {
   let notify = "";
   let failed = false;
   try {
-    notify = await { prospects, leads: leadsJob, replies }[mode](log);
+    notify = await { prospects, leads: leadsJob, replies, companies }[mode](log);
   } catch (error) {
     failed = true;
     log("error: " + String(error.message || error).split("\n")[0]);
