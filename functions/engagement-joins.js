@@ -11,23 +11,30 @@
  *   dry      a dry run (settings.live off) would have joined it; it is joined once live
  *   joined   the Mac joined it (joinedAt, and members, read again as it joined)
  *   member   the account was in it already
+ *   requested  the group asks its admins first (LinkedIn); counted as joined for the cap
  *   failed   the network refused it MAX_TRIES times
+ *
+ * LinkedIn (#3138) joins groups as Carlos's personal profile, and student groups (web dev, CS, design, marketing, QA)
+ * count as our field there and everywhere: each joined one's rules go to functions/student-communities.js.
  *
  * engagement_private/mac.joinsFrom[network] is when its first live join went out, where the warm-up starts. Joined
  * groups and channels are also where the Mac reads the field (pool).
  */
 const E = require("./engagement");
+const Students = require("./student-communities");
 
 const COLLECTION = "engagement_joins";
 const JOINS = Object.keys(E.NETWORKS).filter((k) => (E.NETWORKS[k].caps || {}).join);
-const MIN_MEMBERS = { telegram: 300, reddit: 1000 };
+const MIN_MEMBERS = { telegram: 300, reddit: 1000, linkedin: 200 };
 const MAX_TRIES = 3;
 const LEASE = 20 * 60 * 1000;
 const POOL = 30;
 const MAX_GROUPS = 200;
-const OWN = { telegram: ["qalab_live"], reddit: ["qalablivereports"] };
-const ID = { telegram: /^[a-z][a-z0-9_]{3,31}$/, reddit: /^[a-z0-9][a-z0-9_]{1,20}$/ };
-const LOG = ["joined", "member", "dry", "failed"];
+const OWN = { telegram: ["qalab_live"], reddit: ["qalablivereports"], linkedin: [] };
+const ID = { telegram: /^[a-z][a-z0-9_]{3,31}$/, reddit: /^[a-z0-9][a-z0-9_]{1,20}$/, linkedin: /^\d{3,12}$/ };
+// Where the Mac reads a joined group's posts by name; LinkedIn groups are found and joined only.
+const READ = ["telegram", "reddit"];
+const LOG = ["joined", "requested", "member", "dry", "failed"];
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.round(Number(v)) : 0);
@@ -47,11 +54,13 @@ function cleanGroup(g, conf) {
   const members = num(g.members);
   const text = [name, about].join(" ").toLowerCase();
   const rivals = ((conf && conf.competitors) || []).find((c) => c && text.includes(c));
+  const student = Students.isStudentGroup(name + " " + about);
   const skip = OWN[g.network].includes(id) ? "own" : g.nsfw === true ? "nsfw" : g.open === false ? "private" : E.SENSITIVE.test(text) ? "sensitive"
-    : rivals ? "competitor" : !rel.hits ? "off-topic" : members < MIN_MEMBERS[g.network] ? "small" : "";
+    : rivals ? "competitor" : !rel.hits && !student ? "off-topic" : members < MIN_MEMBERS[g.network] ? "small" : "";
+  const hits = rel.hits + (student ? 1 : 0);
   return {
     key: E.keyOf(g.network, id), network: g.network, id, name, url, kind: clip(g.kind, 20), lang: clip(g.lang, 8).toLowerCase(), members, about,
-    topic: rel.topic, topics: rel.topics, relevance: rel.hits, score: Math.round((1 + rel.hits) * Math.log10(10 + members) * 100) / 100,
+    topic: rel.topic || (student ? "Students" : ""), topics: rel.topics.concat(student ? ["Students"] : []), relevance: hits, score: Math.round((1 + hits) * Math.log10(10 + members) * 100) / 100,
     query: clip(g.query, 80), member: g.member === true, skip
   };
 }
@@ -85,7 +94,7 @@ async function found(deps, conf, groups) {
 /** Where the Mac reads the field this run: per network, joined groups first, then the best found ones (Telegram: channels only, which read without joining). */
 async function pool(db) {
   const out = {};
-  for (const k of JOINS) {
+  for (const k of JOINS.filter((x) => READ.includes(x))) {
     const snap = await db.collection(COLLECTION).where("network", "==", k).limit(300).get();
     const rows = snap.docs.map((d) => d.data()).filter((d) => d.status !== "failed");
     const inside = rows.filter((d) => d.status === "joined" || d.status === "member").sort((a, b) => String(b.joinedAt || b.at).localeCompare(String(a.joinedAt || a.at)));
@@ -143,9 +152,10 @@ async function result(deps, b) {
   const count = (c) => db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
   let status = doc.status;
   if (b.ok) {
-    status = b.already ? "member" : "joined";
+    status = b.already ? "member" : b.pending ? "requested" : "joined";
     await ref(db, b.key).update({ status, at, joinedAt: b.already ? doc.joinedAt || "" : at, members: num(b.members) || doc.members || 0, error: "", leasedAt: "" });
     if (!b.already) await count("join_done");
+    if ((doc.topics || []).includes("Students") || b.rules) await Students.joined(deps, Object.assign({}, doc, { status, members: num(b.members) || doc.members || 0 }), clip(b.rules, 2000));
   } else if (b.retry) {
     await ref(db, b.key).update({ leasedAt: "", error: clip(b.error, 200) });
   } else {

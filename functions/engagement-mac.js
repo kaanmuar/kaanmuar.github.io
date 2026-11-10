@@ -61,6 +61,8 @@ const J = require("./jarvis-engagement");
 const R = require("./engagement-reports");
 const Act = require("./engagement-act");
 const Joins = require("./engagement-joins");
+const Communities = require("./student-communities");
+const Students = require("./student-outreach");
 const OwnerTags = require("./owner-tags");
 
 const DAY = 24 * 3600000;
@@ -111,7 +113,15 @@ async function sites(deps) {
   const conf = await J.readSettings(deps.db);
   if (conf.paused) return { ok: true, paused: true, queries: [], topics: [], groups: {} };
   const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
-  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: E.DISCOVERY, groups }, look.error ? { error: look.error } : {});
+  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: Communities.withStudents(E.DISCOVERY), groups }, look.error ? { error: look.error } : {});
+}
+
+/** Student communities the searches found, student posts to comment on and students who answered us (#3138). */
+async function studentLeads(deps, groups, posts, comments) {
+  const fail = (error) => ({ error: String(error.message || error).slice(0, 200) });
+  const [found, read, met] = [await Communities.searched(deps, groups).catch(fail), await Students.takePosts(deps, posts).catch(fail), await Students.takeCommenters(deps, comments).catch(fail)];
+  return { communities: found.found || 0, drafted: read.drafted || 0, invited: met.invited || 0, trials: (read.trials || 0) + (met.invited || 0),
+    error: [found.error, read.error, met.error].concat(read.errors || [], met.errors || []).filter(Boolean).slice(0, 3).join("; ") };
 }
 
 /** The push when networks the Mac's last run had signed in read as signed out (#3163), once per sign-out. */
@@ -155,16 +165,17 @@ async function ingest(deps, body) {
   const before = ((await macRef(db).get()).data() || {}).signedIn || {};
   const signedIn = netMap(b.signedIn, (v) => v === true);
   const lost = BROWSER.filter((k) => before[k] === true && signedIn[k] === false);
+  const students = await studentLeads(deps, b.groups, posts, comments);
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn, accounts: netMap(b.accounts, (v) => clip(v, 120)),
     blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students
   }, { merge: true });
   await J.clearCache(db);
   if (lost.length && deps.push) await deps.push(signedOutPush(lost, errors)).catch(() => null);
   return {
     ok: true, lost, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
-    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
+    reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students
   };
 }
 

@@ -15,7 +15,8 @@
  * adds task.extras (a GIF, a topic, a card image) where the composer has them and returns what came of each (#2710).
  * Telegram and Reddit (#2614) also have groups(page, query) => groups a topic search finds ({ network, id, name, url,
  * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
- * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups).
+ * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups). LinkedIn (#3138) has
+ * groups and join too, as Carlos's personal profile; its join and Reddit's return the group's rules and pending (asked).
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -910,6 +911,28 @@ const LI_REACT = {
   insightful: ["Insightful", "Interesar"], funny: ["Funny", "Hacer gracia"]
 };
 const liReact = (names) => new RegExp("(^|\\s)(" + names.join("|") + ")$", "i");
+// Group search results and a group's page (#3138). Counts read "12K members", "1.234 miembros"; a group asking for
+// approval shows Requested once joined.
+const LI_MEMBERS = "const members = (t) => { const m = String(t || '').replace(/(\\d)[.,](?=\\d{3}\\b)/g, '$1').match(/([\\d.,]+\\s*[KkMm]?)\\s*(members|miembros|membros|Mitglieder|membres|membri)/i); return m ? num(m[1]) : 0; };";
+const LI_GROUP_CARDS = LI_MEMBERS + `
+  const seen = {};
+  return Array.from(document.querySelectorAll('main a[href*="/groups/"]')).map((a) => {
+    const id = (String(a.href).match(/\\/groups\\/(\\d{3,12})(?:\\/|$|\\?)/) || [])[1];
+    const name = String(a.innerText || '').split('\\n')[0].trim();
+    if (!id || !name || seen[id]) return null;
+    seen[id] = 1;
+    const card = a.closest('li') || a.parentElement;
+    const text = String((card && card.innerText) || '').replace(/\\s+/g, ' ').trim();
+    return { network: 'linkedin', id, name, url: 'https://www.linkedin.com/groups/' + id + '/', members: members(text), lang: '', about: text.replace(name, '').trim().slice(0, 400),
+      kind: 'group', member: /\\b(Joined|Unido|Membro|Mitglied|Membre|Iscritto)\\b/i.test(text), open: true };
+  }).filter(Boolean);`;
+const LI_GROUP_ABOUT = LI_MEMBERS + `
+  const main = document.querySelector('main') || document.body;
+  const heads = Array.from(main.querySelectorAll('h2, h3')).filter((h) => /^(About|Acerca|Sobre|Info|À propos|Informazioni|Rules|Group rules|Reglas|Regras|Regeln|Règles|Regole)/i.test(h.innerText.trim()));
+  const rules = heads.map((h) => String((h.closest('section') || h.parentElement).innerText || '')).join('\\n').trim() || String(main.innerText || '').slice(0, 2000);
+  return { members: members(main.innerText), rules: rules.replace(/[ \\t]+/g, ' ').slice(0, 2000) };`;
+const LI_JOIN = /^\s*(Join|Unirse|Participar|Entrar|Beitreten|Rejoindre|Iscriviti|Partecipa)\s*$/i;
+const LI_ASKED = /^\s*(Requested|Request sent|Solicitad[oa]|Pendiente|Solicitação enviada|Angefragt|Demandé|Demande envoyée|Richiesta inviata)\s*$/i;
 
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", queries: GENERAL,
@@ -1068,6 +1091,30 @@ const linkedin = {
     await click(await need(form.locator('button[data-view-name="comment-reply-post"]'), "Reply"));
     await sent(input, task.draft);
     return { url: task.url };
+  },
+  // Groups a keyword search finds (#3138), for joins (functions/engagement-joins.js). Only a member joins a group, not
+  // a company page: these run in Carlos's personal session, and the group's rules come back with the join.
+  async groups(page, q) {
+    await go(page, this, "https://www.linkedin.com/search/results/groups/?keywords=" + enc(q));
+    await pause(2500, 4500);
+    await scroll(page, 1);
+    return evaluate(page, LI_GROUP_CARDS);
+  },
+  async join(page, task) {
+    await go(page, this, "https://www.linkedin.com/groups/" + enc(task.id) + "/");
+    await pause(2500, 4000);
+    const main = page.locator("main").first();
+    if (!(await visible(main, 20000))) throw new Error("LinkedIn did not show the group.");
+    const about = await evaluate(page, LI_GROUP_ABOUT);
+    const join = main.getByRole("button", { name: LI_JOIN });
+    const asked = main.getByRole("button", { name: LI_ASKED });
+    if (await visible(asked, 1500)) return { already: false, pending: true, members: about.members, rules: about.rules };
+    if (!(await visible(join, 6000))) return { already: true, members: about.members, rules: about.rules };
+    await click(join.first());
+    await pause(2500, 4000);
+    if (await visible(asked, 6000)) return { pending: true, members: about.members, rules: about.rules };
+    await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
+    return { members: about.members, rules: about.rules };
   }
 };
 
@@ -1380,7 +1427,8 @@ const reddit = {
     await pause(2000, 3500);
     const after = (await rdJson(page, "/r/" + enc(task.id) + "/about?raw_json=1")).data || {};
     if (!after.user_is_subscriber) throw new Error("The join did not stick.");
-    return { members: after.subscribers || before.subscribers || 0 };
+    const rules = await rdJson(page, "/r/" + enc(task.id) + "/about/rules?raw_json=1").catch(() => ({}));
+    return { members: after.subscribers || before.subscribers || 0, rules: (rules.rules || []).map((r) => r.short_name + ": " + String(r.description || "").replace(/\s+/g, " ")).join("\n").slice(0, 2000) };
   }
 };
 
