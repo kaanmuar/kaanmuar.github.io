@@ -92,6 +92,7 @@ object Geo {
         Metric("prospects", "Prospects queued", "sweep"), Metric("left", "Prospects left", "sweep"), Metric("saturation", "Saturation", "sweep", "%"),
         Metric("reviewed", "Reviewed sites", "sweep"), Metric("score", "Average site score", "sweep"),
         Metric("social", "Social replies", "social"),
+        Metric("clicks", "Short-link clicks (visitor country)", "web"),
         Metric("visitors", "Site visitors (GA4)", "web"), Metric("visits", "Short-link visits", "web"), Metric("reviews", "Reviews from links", "web"), Metric("paid", "Paid unlocks", "web"), Metric("usd", "Revenue (USD)", "web")
     )
     val GAPS = linkedMapOf(
@@ -112,7 +113,7 @@ object Geo {
         return when {
             on("positive") || on("interested") || on("paid") || on("usd") -> 5
             on("replies") || on("answered") -> 4
-            on("opened") || on("visits") || on("visitors") || on("socialApproved") -> 3
+            on("opened") || on("visits") || on("visitors") || on("clicks") || on("socialApproved") -> 3
             on("contacted") || on("sent") || on("social") -> 2
             on("prospects") || on("reviewed") || on("leads") -> 1
             else -> 0
@@ -458,6 +459,7 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         } else if (key == "gaps") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Geo.GAPS.forEach { (k, v) -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(v.second); Muted("${v.first} · ${rows.count { Geo.gaps(it).firstOrNull() == k }}") } }
         }
+        if (key == "clicks") GeoClicks.note(g).takeIf { it.isNotEmpty() }?.let { Muted(it) }
         if (key == "light") Muted("Tap a country for its numbers, then Open for its campaigns, prospects and replies. Spark: prospects or reviewed sites; Ember: contacted; Lit: opens, visits or social replies; Bright: email replies; Blazing: positive replies or money.")
         else if (key == "dates") Muted("Brighter is sooner: the country's next holiday, season, deadline or event within ${Geo.DATES_SPAN} days. ${rows.count { Geo.value(it, key) != null }} countries have one; tap one for its numbers and Open for its dates.")
         else if (key != "gaps") Muted("Brighter is more, up to ${Geo.show(shown.maxOfOrNull { Geo.value(it, key) ?: 0.0 }, key)}. Tap a country for its numbers, then Open for its campaigns, prospects and replies; est. numbers are split from campaigns that cover several countries.")
@@ -584,6 +586,7 @@ private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: ()
             KpiData("Visitors (GA4)", fmt(r.num("visitors"))), KpiData("Link visits · paid", "${fmt(r.num("visits"))} · $${fmt(r.num("usd"))}")
         ))
         s.snapshot.obj("external").obj("geo")?.let { GeoTimeSheet(it, cc, span) }
+        GeoClicksSheet(r)
         if ((r.num("sent") ?: 0.0) > 0 || (r.num("prospects") ?: 0.0) > 0)
             Funnel(listOf("Prospects" to r.num("prospects"), "Leads" to r.num("leads"), "Contacted" to (r.num("contacted") ?: 0.0), "Replied" to r.num("replies"), "Interested" to r.num("interested")))
         r.objs("sectors").forEach { x -> KeyRow(x.str("label").orEmpty(), "${fmt(x.num("value"))} prospects") }

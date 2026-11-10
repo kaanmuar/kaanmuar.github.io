@@ -9,6 +9,8 @@
    social      engagement report replies (waiting or approved) about a site in that country
    visitors    GA4 sessions per country, now and in the prior span
    links       short-link visits, reviews, paid unlocks and USD per prospect host
+   clicks      short-link clicks by the visitor's country from the Worker, and link reviews, paid unlocks and USD by the
+               visitor's country (#3281, jarvis-geo-clicks.js); clicks light a country like visitors do
    gaps        why a country needs attention: prospects or reviewed sites but no campaign, visitors but no outreach,
                a target market with no activity, a reply rate under half the average, bounces over 5%, no prospects left
    light       how far we got with a country, 0 to 5 (#2988): Dark, Spark (prospects or reviewed sites), Ember (contacted
@@ -26,6 +28,7 @@
 
 const sweep = require("./url-review-sweep");
 const geoTime = require("./jarvis-geo-time");
+const clicks = require("./jarvis-geo-clicks");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const LANG_COUNTRIES = {
@@ -100,7 +103,7 @@ function lightOf(r) {
   const n = (k) => Number(r && r[k]) > 0;
   if (n("positive") || n("interested") || n("paid") || n("usd")) return 5;
   if (n("replies") || n("answered")) return 4;
-  if (n("opened") || n("visits") || n("visitors") || n("socialApproved")) return 3;
+  if (n("opened") || n("visits") || n("visitors") || n("clicks") || n("socialApproved")) return 3;
   if (n("contacted") || n("sent") || n("social")) return 2;
   if (n("prospects") || n("reviewed") || n("leads")) return 1;
   return 0;
@@ -207,6 +210,7 @@ function geoRows(input) {
     r.paid += Number(p.paid) || 0;
     r.usd += Number(p.usd) || 0;
   });
+  clicks.addRows(i, row, rows, countryOf);
 
   const list = Object.values(rows).map((r) => {
     ["leads", "contacted", "sent", "opened", "replies", "interested", "bounced"].forEach((k) => { r[k] = Math.round(r[k]); });
@@ -225,9 +229,9 @@ function geoRows(input) {
   list.forEach((r) => {
     r.gaps = [];
     const add = (kind, weight, text) => { r.gaps.push(kind); gaps.push({ cc: r.cc, name: r.name, kind, weight, text }); };
-    const busy = r.prospects || r.reviewed || r.campaigns || r.social || r.visitors || r.visits;
+    const busy = r.prospects || r.reviewed || r.campaigns || r.social || r.visitors || r.visits || r.clicks;
     if (!r.campaigns && (r.prospects || r.reviewed)) add("no-campaign", r.prospects + r.reviewed, `${r.prospects} prospects and ${r.reviewed} reviewed sites, but no campaign`);
-    else if (!r.campaigns && (r.visitors || r.visits)) add("visitors-no-outreach", r.visitors + r.visits, `${r.visitors + r.visits} visits, but we never reach out`);
+    else if (!r.campaigns && (r.visitors || r.visits || r.clicks)) add("visitors-no-outreach", r.visitors + r.visits + r.clicks, `${r.visitors + r.visits + r.clicks} visits, but we never reach out`);
     if (r.target && !busy) add("silent", 1, `speaks ${r.langs.join(", ") || "a target language"}, no activity at all`);
     if (avgReply && r.sent >= MIN_SENT && r.replyRate < avgReply / 2) add("low-reply", r.sent, `${r.replyRate}% replies against ${avgReply}% on average`);
     if (r.sent >= MIN_SENT && r.bounced / r.sent > 0.05) add("bouncing", r.bounced, `${Math.round((r.bounced / r.sent) * 100)}% of emails bounced`);
@@ -335,6 +339,7 @@ async function geo(ctx) {
   const needs = [];
   const peer = (op) => (ctx.peer ? ctx.peer(op).then((o) => (o && o.ok !== false ? o : null)).catch(() => null) : Promise.resolve(null));
   const countryDoc = ctx.db.collection("jarvis_settings").doc(COUNTRY_DOC).get().then((s) => (s.exists ? s.data() : null)).catch(() => null);
+  const clicksP = clicks.read(ctx);
   const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4, calendar] = await Promise.all([
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
@@ -349,10 +354,13 @@ async function geo(ctx) {
   if (!marketing || !marketing.campaigns || marketing.campaigns.ok === false) needs.push("Instantly campaigns are missing, so email numbers per country are empty.");
   if (!sync) needs.push("Marketing sync has not run, so campaigns are split by region instead of by their leads.");
   if (!ga4) needs.push("GA4 is not connected, so visitors per country are empty.");
+  const linkClicks = await clicksP;
+  if (!linkClicks.ok) needs.push(linkClicks.need || "Short-link clicks could not be read: " + linkClicks.error);
   const out = geoRows({
     queue: { hosts: q.hosts, sweptAt: view && view.outreachAt }, live, targets, marketing, sync, engagement, ga4,
-    links: outreach && outreach.links
+    links: outreach && outreach.links, clicks: linkClicks
   });
+  out.totals = Object.assign(out.totals, clicks.totals(linkClicks));
   joinDates(out.countries, calendar, ctx.now);
   Object.assign(out, require("./jarvis-geo-flow").build({ campaigns: marketing && marketing.campaigns && marketing.campaigns.rows, countries: out.countries, calendar, now: ctx.now }));
   const heat = require("./jarvis-geo-heat");

@@ -7,7 +7,7 @@ import * as Geo from './admin-jarvis-geo.js?v=3109';
 
 export const SPANS = [[0, 'Now'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
 // The metrics the history can show; the rest (Missing zones, Dates ahead, Campaigns, Average site score) stay on now.
-const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', 'openRate', 'bounceRate', 'prospects', 'left', 'saturation', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd'];
+const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', 'openRate', 'bounceRate', 'prospects', 'left', 'saturation', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd', 'clicks'];
 // A rise that is bad news, shaded pink.
 const WORSE_UP = new Set(['bounceRate']);
 const UP = [56, 225, 255];
@@ -29,7 +29,7 @@ export function canShow(time, key) {
 }
 
 // The history's fields (FIELDS in functions/jarvis-geo-time.js).
-const FIELDS = ['sent', 'opened', 'replies', 'interested', 'bounced', 'answered', 'positive', 'prospects', 'swept', 'left', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd'];
+const FIELDS = ['sent', 'opened', 'replies', 'interested', 'bounced', 'answered', 'positive', 'prospects', 'swept', 'left', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd', 'clicks'];
 
 // A row with the geo row's fields from the history: name and target from today's row, numbers from get(field).
 function rowOf(base, cc, get) {

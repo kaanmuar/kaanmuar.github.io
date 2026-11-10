@@ -938,6 +938,7 @@ function askSnapshot(snap, days) {
       mapPlanAndNextActions: require("./jarvis-geo-actions").askOf(e.geo),
       engagement: engagementAsk(e.engagement),
       geoHeat: require("./jarvis-geo-heat").heatAsk(e.geo),
+      linkClicksByVisitorCountry: require("./jarvis-geo-clicks").ask(e.geo),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
       github: githubAsk(e["github-work"]),

@@ -15,6 +15,7 @@ export const METRICS = [
     ['prospects', 'Prospects queued', 'sweep', ''], ['left', 'Prospects left', 'sweep', ''], ['saturation', 'Saturation', 'sweep', '%'],
     ['reviewed', 'Reviewed sites', 'sweep', ''], ['score', 'Average site score', 'sweep', ''],
     ['social', 'Social replies', 'social', ''],
+    ['clicks', 'Short-link clicks (visitor country)', 'web', ''],
     ['visitors', 'Site visitors (GA4)', 'web', ''], ['visits', 'Short-link visits', 'web', ''], ['reviews', 'Reviews from links', 'web', ''], ['paid', 'Paid unlocks', 'web', ''], ['usd', 'Revenue (USD)', 'web', '']
 ];
 export const GAPS = {
@@ -44,7 +45,7 @@ export function lightOf(r) {
     const n = (k) => Number(r && r[k]) > 0;
     if (n('positive') || n('interested') || n('paid') || n('usd')) return 5;
     if (n('replies') || n('answered')) return 4;
-    if (n('opened') || n('visits') || n('visitors') || n('socialApproved')) return 3;
+    if (n('opened') || n('visits') || n('visitors') || n('clicks') || n('socialApproved')) return 3;
     if (n('contacted') || n('sent') || n('social')) return 2;
     if (n('prospects') || n('reviewed') || n('leads')) return 1;
     return 0;
