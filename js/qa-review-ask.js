@@ -371,6 +371,9 @@
   const DNS_OF = {
     "sec-spf": (row) => /^v=spf1/.test(row.value),
     "sec-dmarc": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-rua": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-sp": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-pct": (row) => /^_dmarc\./.test(row.name),
     "sec-caa": (row) => row.type === "CAA",
     "sec-tlsrpt": (row) => /^_smtp\._tls\./.test(row.name),
     "sec-mta-sts": (row) => /^_mta-sts\./.test(row.name)
