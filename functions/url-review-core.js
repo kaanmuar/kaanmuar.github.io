@@ -14,6 +14,7 @@ const { URL } = require("url");
 const insights = require("./url-review-insights");
 const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
+const fixOffers = require("./url-review-fix-offers");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
 const threatLists = require("./url-review-threat-lists");
 const wordpress = require("./url-review-wordpress");
@@ -128,6 +129,7 @@ function priceMatches(usd) {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
   if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (fixOffers.PACKAGES.some((pkg) => pkg.usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
   const extraCents = EXTRA_FRAMEWORK_USD * 100;
@@ -575,6 +577,16 @@ function priceForFixList() {
   return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
+function priceForFix(packageId, host) {
+  const pkg = fixOffers.packageById(packageId);
+  if (!pkg) {
+    const error = new Error("That fix package is not offered. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  return { usd: pkg.usd, cents: pkg.usd * 100, count: 1, frameworks: [], layers: [], package: pkg.id, host: String(host || "").slice(0, 120) };
+}
+
 function normalizeLayers(list) {
   const source = Array.isArray(list) ? list : String(list || "").split(",");
   const seen = new Set();
@@ -813,6 +825,8 @@ function chargedUsd(options) {
       ? priceForPassExtras(options.passPlan, options)
     : purpose === "fixlist"
     ? priceForFixList()
+    : purpose === "fix"
+    ? priceForFix(options.fixPackage, options.fixHost)
     : purpose === "cases"
       ? priceForLayers(options.layers)
       : purpose === "credentials"
@@ -835,7 +849,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -3860,6 +3874,10 @@ function productName(purpose, frameworks, scope) {
   if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
+  if (purpose === "fix") {
+    const pkg = fixOffers.packageById(scope && scope.package);
+    return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
+  }
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
   const fw = purpose === "cases" ? normalizeLayers(frameworks) : normalizeFrameworks(frameworks);
   const toolNames = purpose === "cases" ? [] : normalizeTools(scope && scope.tools);
@@ -4034,7 +4052,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -4594,6 +4612,8 @@ module.exports = {
   priceFor,
   priceForReport,
   priceForFixList,
+  priceForFix,
+  productName,
   priceForLayers,
   priceForScope,
   priceForRun,

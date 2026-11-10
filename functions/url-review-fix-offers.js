@@ -247,6 +247,22 @@ function priceOf(record) {
   return Number((record && (record.quoteUsd || record.priceUsd)) || 0);
 }
 
+function deskRereview(run) {
+  if (!run) return null;
+  const result = run.result || {};
+  return {
+    status: run.status || "",
+    at: run.at || "",
+    error: run.error || "",
+    reportId: run.reportId || "",
+    fixed: result.fixed || 0,
+    total: (result.items || []).length,
+    scoreBefore: result.scoreBefore || 0,
+    scoreAfter: result.scoreAfter || 0,
+    newCount: result.newCount || 0
+  };
+}
+
 function deskRow(id, data) {
   const row = data || {};
   return {
@@ -270,6 +286,10 @@ function deskRow(id, data) {
     history: row.history || [],
     deskNote: row.deskNote || "",
     quoteMailedAt: row.quoteMailedAt || "",
+    paidAt: row.paidAt || "",
+    paidUsd: (row.paid && row.paid.priceUsd) || 0,
+    paidTest: !!(row.paid && row.paid.test),
+    rereview: deskRereview(row.rereview),
     mailError: row.mailError || "",
     createdAt: row.createdAt || "",
     updatedAt: row.updatedAt || ""

@@ -37,6 +37,8 @@ const BY_FUNCTION = {
   reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY"]),
   reviewBrowser: list(BROWSER),
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
+  // fixRereview (#3102): the free re-review after a fix, then the before/after mail.
+  fixRereview: list(MAIL, SCAN, SITE_TOKEN),
   jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
   // Both load the whole snapshot for the live push (#2509), so they hold every secret its sources read, like jarvis;
   // a missing one would be cached as a failed source for every client.

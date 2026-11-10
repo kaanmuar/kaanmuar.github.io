@@ -2,6 +2,8 @@ const path = require('path');
 const { test, expect } = require('./net-guard');
 const auth = require('../functions/url-review-auth');
 const fixOffers = require('../functions/url-review-fix-offers');
+const fixCheckout = require('../functions/url-review-fix-checkout');
+const fixRereview = require('../functions/url-review-fix-rereview');
 const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
 
 const TERMS = require('fs').readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
@@ -12,12 +14,14 @@ const HEADERS = fixOffers.packageById('security-headers');
 const SHOTS = process.env.FIX_SHOTS || '';
 
 // The stub answers /review/fix/* with the real access rule and request record, so the page sees what the server decides.
-async function open(page, { lang = 'en', signedIn = true } = {}) {
+async function open(page, { lang = 'en', signedIn = true, query = '' } = {}) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const me = Object.assign(await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA }), { email: 'ana@example.com', deviceKey: ANA });
   const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID }) };
   const sent = [];
+  const checkouts = [];
+  let rechecked = false;
   await page.addInitScript(({ version, me, lang, signedIn }) => {
     try {
       sessionStorage.setItem('qa-review-terms', version);
@@ -54,12 +58,25 @@ async function open(page, { lang = 'en', signedIn = true } = {}) {
       const record = fixOffers.requestRecord(body, row, access.email, Date.now());
       if (record.error) return json(400, { error: record.error });
       sent.push(record);
-      return json(200, { ok: true, id: 'fix1', email: record.email, status: record.status });
+      return json(200, { ok: true, id: 'fix1', email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 });
+    }
+    if (where === '/checkout') {
+      checkouts.push(body);
+      return json(200, { url: 'http://127.0.0.1:8768/paypal-stub?token=5O190127TN364715T', id: '5O190127TN364715T', provider: 'paypal' });
+    }
+    if (where === '/paypal-stub') return route.fulfill({ status: 200, contentType: 'text/html', body: '<title>PayPal</title><h1>PayPal sandbox</h1>' });
+    if (where === '/review/fix/recheck') {
+      const access = await auth.askAccess(store, body, row, false);
+      if (!access.ok) return json(access.status, { error: access.error });
+      if (rechecked) return json(409, { error: 'used', code: 'used' });
+      rechecked = !fixRereview.selfRecord(row, access.email, body.lang, Date.now()).error;
+      return json(200, { ok: true, id: 'self-' + ID, email: access.email, status: 'done' });
     }
     return json(200, where === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
   });
-  await page.goto((lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html') + '?report=' + ID);
+  await page.goto((lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html') + '?report=' + ID + query);
   await expect(page.locator('body')).toHaveClass(/paid-copy/);
+  sent.checkouts = checkouts;
   return sent;
 }
 
@@ -67,7 +84,7 @@ async function shot(target, name) {
   if (SHOTS) await target.screenshot({ path: path.join(SHOTS, name) });
 }
 
-test.describe('Fix what the report found (#3082)', () => {
+test.describe('Fix what the report found (#3082, #3102)', () => {
   test('every open finding offers the fix and the request; a passing one does not', async ({ page }) => {
     await open(page);
     const card = page.locator('#findings .finding', { has: page.locator('.id', { hasText: /^F-01$/ }) });
@@ -116,15 +133,65 @@ test.describe('Fix what the report found (#3082)', () => {
     expect(sent[0].findings.map((f) => f.id)).toEqual(['F-01']);
   });
 
-  test('ordering a package checks every finding it covers', async ({ page }) => {
+  test('ordering a package checks every finding it covers, saves the request and opens PayPal for it', async ({ page }) => {
     const sent = await open(page);
+    const dns = fixOffers.packageById('email-dns');
     await page.locator('[data-fix-package="email-dns"]').click();
     const sheet = page.locator('#fix-sheet');
     await expect(sheet.locator('select[name=package]')).toHaveValue('email-dns');
     await expect(sheet.locator('input[name=finding]:checked')).toHaveCount(2);
-    await sheet.getByRole('button', { name: 'Send the request' }).click();
-    await expect(sheet).toContainText('Request sent');
-    expect(sent[0]).toMatchObject({ kind: 'package', package: 'email-dns', priceUsd: fixOffers.packageById('email-dns').usd });
+    await expect(sheet.locator('.fix-price-note')).toContainText('You pay now with PayPal');
+    await sheet.getByRole('button', { name: 'Send and pay US$' + dns.usd }).click();
+    await page.waitForURL(/paypal-stub/);
+    expect(sent[0]).toMatchObject({ kind: 'package', package: 'email-dns', priceUsd: dns.usd });
+    expect(sent.checkouts).toHaveLength(1);
+    expect(sent.checkouts[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', fixId: 'fix1', reportId: ID, lang: 'en' });
+    expect(sent.checkouts[0].session).toBeTruthy();
+  });
+
+  test('a paid report offers one free re-check after the client fixes it themselves', async ({ page }) => {
+    await open(page);
+    const self = page.locator('#fix-offer [data-path="self"]');
+    await expect(self.locator('.fix-recheck')).toContainText('re-check this report once for free');
+    await self.locator('[data-fix-recheck]').click();
+    await expect(self.locator('.fix-recheck-msg')).toHaveText('We are reviewing the site again. The before/after arrives at ana@example.com in a few minutes.');
+    await expect(self.locator('[data-fix-recheck]')).toBeHidden();
+  });
+
+  test('back from PayPal, the report says the payment arrived and what happens next', async ({ page }) => {
+    await open(page, { query: '&fixPaid=1' });
+    await expect(page.locator('#fix-offer .fix-paid')).toHaveText(/^Payment received\. Carlos starts the fix within two working days/);
+  });
+
+  test('the pay page prices a fix package from the server, and a confirmed payment returns to the report', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
+    const confirmed = [];
+    await page.route('http://127.0.0.1:8768/**', async (route) => {
+      const req = route.request();
+      const where = new URL(req.url()).pathname;
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const json = (data) => route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
+      if (where === '/checkout/quote') return json(Object.assign(fixCheckout.quote(new URL(req.url()).searchParams.get('package')), { cop: HEADERS.usd * 4000, rate: 4000 }));
+      if (where === '/checkout/confirm') {
+        confirmed.push(JSON.parse(req.postData()));
+        return json({ paid: true, purpose: 'fix', priceUsd: HEADERS.usd, reference: 'abc', reportId: ID });
+      }
+      return json({ items: [] });
+    });
+    await page.addInitScript(() => { try { localStorage.setItem('qa-review-analytics', 'necessary'); } catch (e) { /* storage is optional */ } });
+    await page.goto('/qa-review-pay-es.html?purpose=fix&package=security-headers&fixId=fix1&reportId=' + ID);
+    await expect(page.locator('#pay-heading')).toHaveText('Un paquete de arreglo');
+    await expect(page.locator('#pay-item')).toHaveText(HEADERS.name.es);
+    await expect(page.locator('#pay-amount')).toHaveText(HEADERS.usd + ' USD');
+    await expect(page.locator('#pay-copy')).toContainText('revisamos el sitio de nuevo gratis');
+    await expect(page.locator('#charge')).toBeEnabled();
+    await shot(page, 'fix-pay-page-es.png');
+    await page.route('**/qa-review-es.html*', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>report</title>' }));
+    await page.goto('/qa-review-pay-es.html?purpose=fix&package=security-headers&fixId=fix1&reportId=' + ID + '&provider=paypal&result=success&reference=abc&token=5O190127TN364715T');
+    await page.waitForURL(/qa-review-es\.html\?report=ab12cd34ef56&fixPaid=1$/);
+    expect(confirmed[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', sessionId: '5O190127TN364715T' });
   });
 
   test('on a phone the panel and the form fit the screen, in the page language', async ({ page }) => {
@@ -147,6 +214,15 @@ test.describe('Fix what the report found (#3082)', () => {
     await expect(sheet.locator('h2')).toHaveText('Pídenos que lo arreglemos');
     const box = await sheet.boundingBox();
     expect(box.width).toBeLessThanOrEqual(390);
+    await sheet.locator('select[name=package]').selectOption('security-headers');
+    await expect(sheet.getByRole('button', { name: 'Enviar y pagar US$' + HEADERS.usd })).toBeVisible();
     await shot(page, 'fix-request-form-es.png');
+    await sheet.locator('[data-fix-close]').click();
+    const self = panel.locator('[data-path="self"]');
+    await expect(self.locator('[data-fix-recheck]')).toHaveText('Revisar de nuevo gratis');
+    await self.locator('[data-fix-recheck]').click();
+    await expect(self.locator('.fix-recheck-msg')).toContainText('El antes y después llega a ana@example.com');
+    await self.evaluate((el) => { el.scrollIntoView({ block: 'start' }); document.getElementById('dash-overlay').scrollBy(0, -80); });
+    await shot(page, 'fix-recheck-es.png');
   });
 });

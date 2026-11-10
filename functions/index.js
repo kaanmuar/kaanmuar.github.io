@@ -1825,12 +1825,16 @@ const domainOffer = require("./url-review-domain-offer");
 const outreachTrials = require("./outreach-trials");
 const outreachSend = require("./outreach-send");
 const fixRequests = require("./url-review-fix-requests");
+const fixCheckout = require("./url-review-fix-checkout");
+const fixRereview = require("./url-review-fix-rereview");
+const fixMail = require("./url-review-fix-mail");
 
-// A fix request opens for the account that ran the report, paid or not.
+// A fix request opens for the account that ran the report, paid or not; the free re-check only on a paid report.
 function fixDeps() {
   return {
     db: getFirestore(),
     access: (body, row) => reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, true),
+    paidAccess: (body, row) => reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, false),
     mailOwner: (notice) => sendOwnerEmail(Object.assign({ to: REVIEW_ALERT_TO }, notice)),
     mailCustomer: (lang, email, mail, category) => sendFaceMail(lang, email, mail, null, category),
     deskUrl: REVIEW_FN_URL + "/desk"
@@ -3397,7 +3401,7 @@ async function fulfillPayment(result, ctx) {
   }
   const open = claim.open;
   const paidBody = (purpose) => Object.assign({ paid: true, purpose, priceUsd: Number(open.priceUsd || result.amount) || 0, reference: result.reference, test: testRun },
-    purpose === "report" ? { reportId: String(open.reportId || "") } : {});
+    purpose === "report" || purpose === "fix" ? { reportId: String(open.reportId || "") } : {});
   if (claim.state !== "claimed") {
     const purpose = open.paidPurpose || reviewOffers.paidPurpose(open.purpose);
     return { code: 200, body: paidBody(purpose) };
@@ -3490,6 +3494,24 @@ async function fulfillPayment(result, ctx) {
       expireAt: urlReview.paymentExpireAt()
     }, await passRowsFor(passEmail));
     if (made) await rememberReview("pass-paid", Object.assign({ via }, made));
+  } else if (paidPurpose === "fix") {
+    const fixPaid = await fixCheckout.recordPayment(getFirestore(), open, {
+      provider: result.provider,
+      method: choice,
+      deviceId: payer,
+      sessionId: result.sessionId,
+      captureId,
+      payerEmail,
+      payerName,
+      reference: result.reference,
+      test: testRun,
+      priceUsd: paidPrice,
+      amount: result.amount,
+      currency: result.currency,
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    }, fixDeps());
+    await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, fixPaid, { name: payerName, email: fixPaid.email || who.email }));
   } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
     const runRef = paidReport ? getFirestore().collection("url_reviews").doc(paidReport) : null;
     const runSnap = runRef ? await runRef.get() : null;
@@ -4676,6 +4698,16 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         res.status(200).json(passQuote);
         return;
       }
+      if (req.query.purpose === "fix") {
+        const fixQuote = fixCheckout.quote(String(req.query.package || ""));
+        if (!fixQuote) {
+          res.status(400).json({ error: "That fix package is not offered." });
+          return;
+        }
+        const fixCop = await urlReview.copQuote(fixQuote.usd);
+        res.status(200).json(Object.assign(fixQuote, { cop: fixCop.pesos, rate: fixCop.rate }));
+        return;
+      }
       let priced = req.query.purpose === "fixlist"
         ? urlReview.priceForFixList()
         : req.query.purpose === "credentials"
@@ -4758,7 +4790,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
-    const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
     const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
@@ -4792,6 +4824,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       if (purpose === "fixlist" && !reportId) {
         res.status(400).json({ error: "A fix list belongs to one report. Open the report first. No charge was made." });
         return;
+      }
+      let fixPay = null;
+      if (purpose === "fix") {
+        const fixSnap = await getFirestore().collection(fixRereview.COLLECTION).doc(fixCheckout.cleanId(req.body.fixId) || "-").get();
+        const signed = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, req.body || {}, { touch: false })).catch(() => null);
+        fixPay = fixCheckout.payable(fixSnap.exists ? fixSnap.data() : null, signed && signed.ok ? signed.email : "", reportId);
+        if (!fixPay.ok) {
+          res.status(fixPay.status).json({ error: fixPay.error, signIn: !!fixPay.signIn });
+          return;
+        }
+        fixPay.fixId = fixSnap.id;
+        priced = urlReview.priceForFix(fixPay.package, fixPay.host);
       }
       if (purpose === "report" || purpose === "fixlist") {
         const reportSnap = await getFirestore().collection("url_reviews").doc(reportId).get();
@@ -4871,7 +4915,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
       const base = reviewOrigin(req) + "/" + urlReview.payPage(req.body && req.body.lang) + "?purpose=" + purpose + "&provider=" + choice
-        + (purpose === "pass" ? "&plan=" + priced.plan : passPlan ? "&pass=" + passPlan.id : "");
+        + (purpose === "pass" ? "&plan=" + priced.plan : passPlan ? "&pass=" + passPlan.id : "")
+        + (fixPay ? "&fixId=" + fixPay.fixId + "&package=" + fixPay.package + "&reportId=" + reportId : "");
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
         : base + "&result=success&reference=" + reference;
@@ -4894,6 +4939,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         alertCount: priced.alertCount,
         plan: priced.plan,
         passPlan,
+        fixPackage: fixPay ? fixPay.package : "",
+        fixHost: fixPay ? fixPay.host : "",
         priceUsd: priced.usd,
         listUsd,
         creditCents,
@@ -4923,6 +4970,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         competitors: priced.competitors || null,
         lang: String((req.body && req.body.lang) || "").slice(0, 2),
         ...(passOwner ? { email: passOwner, plan: priced.plan || "", passExtra: !!passPlan } : {}),
+        ...(fixPay ? { fixId: fixPay.fixId, fixPackage: fixPay.package } : {}),
         priceUsd: priced.usd,
         creditUsd: creditCents / 100,
         amount: session.amount,
@@ -5896,6 +5944,61 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
     await desk("failed", { step: reason });
+  }
+});
+
+// The free re-review after a fix (#3102): the desk marking a request done, or the client's free re-check, queues it.
+exports.fixRereview = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.fixRereview }).firestore.document(fixRereview.COLLECTION + "/{id}").onWrite(async (change) => {
+  const before = change.before.exists ? change.before.data() : null;
+  const request = change.after.exists ? change.after.data() : null;
+  if (!fixRereview.due(before, request)) return;
+  const ref = change.after.ref;
+  const db = getFirestore();
+  let claimed = false;
+  await db.runTransaction(async (tx) => {
+    const now = (await tx.get(ref)).data() || {};
+    if (!now.rereview || now.rereview.status !== "queued" || now.rereview.at !== request.rereview.at) return;
+    tx.update(ref, { rereview: Object.assign({}, now.rereview, { status: "running", startedAt: new Date().toISOString() }) });
+    claimed = true;
+  });
+  if (!claimed) return;
+  const deps = fixDeps();
+  try {
+    const originalSnap = await db.collection("url_reviews").doc(String(request.reportId || "-")).get();
+    if (!originalSnap.exists) throw new Error("The report this fix belongs to is gone.");
+    const original = originalSnap.data() || {};
+    const goal = fixRereview.target(original);
+    if (!goal.url) throw new Error("The report has no address to review again.");
+    const startedAt = Date.now();
+    const report = await urlReview.reviewTarget(goal.url, {
+      log: () => {},
+      stopped: () => Date.now() - startedAt > 420000,
+      maxPages: goal.options.pages,
+      maxDepth: goal.options.depth,
+      pageLang: goal.options.pageLang,
+      section: goal.options.section,
+      asker: { reasonCode: original.reasonCode || "own", email: goal.email, proofs: await ownerProofRows(goal.email), siteToken: siteTokenFor(goal.email) },
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+      places: findPlaces()
+    });
+    const record = fixRereview.rereviewRecord(urlReview.intakeRecord(Object.assign({}, goal.options, { url: goal.url, name: goal.name, email: goal.email, lang: goal.lang, reasonCode: original.reasonCode }), report, {}), original, change.after.id);
+    await db.collection("url_reviews").doc(record.id).set(record);
+    await countReviewed(record.report);
+    const result = fixRereview.beforeAfter(original.report, record.report, request.findings);
+    await ref.update(fixRereview.finishedPatch(request, record.id, result));
+    const mailed = await Promise.allSettled([
+      deps.mailCustomer(request.lang, request.email, fixMail.afterMail(request, record.id, result), "url-review-fix-rereview"),
+      deps.mailOwner(fixRereview.ownerNotice(request, record.id, result, deps.deskUrl))
+    ]);
+    const failed = mailed.filter((out) => out.status === "rejected").map((out) => String((out.reason && out.reason.message) || out.reason).slice(0, 200));
+    if (failed.length) await ref.update({ mailError: failed.join("; ") });
+  } catch (error) {
+    console.error("Fix re-review of " + change.after.id + " failed:", error);
+    await ref.update(fixRereview.failedPatch(error));
+    await deps.mailOwner({ subject: "Fix re-review failed: " + (request.host || change.after.id), intro: "The free re-review did not finish. Run it again from the review desk.", rows: [{ label: "Error", value: String((error && error.message) || error).slice(0, 300) }], respondUrl: deps.deskUrl, buttonLabel: "Open the review desk" }).catch(() => {});
   }
 });
 

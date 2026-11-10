@@ -1245,7 +1245,7 @@ const RECEIPT = {
     notInvoice: "This is a payment receipt, not a tax invoice (factura electrónica). Write to {mail} if you need one.",
     button: "Open QA-lab URL Review",
     why: "You get this receipt because you paid on QA-lab URL Review.",
-    items: { report: "Full report", "new-run": "Review run", pass: "Monthly pass", fixlist: "Fix list", cases: "Test case export", alerts: "Change alerts", credentials: "Signed-in run" }
+    items: { report: "Full report", "new-run": "Review run", pass: "Monthly pass", fixlist: "Fix list", fix: "Fix package", cases: "Test case export", alerts: "Change alerts", credentials: "Signed-in run" }
   },
   es: {
     subject: "Tu recibo de QA-lab URL Review: {item}, US${amount}",
@@ -1257,7 +1257,7 @@ const RECEIPT = {
     notInvoice: "Este es un recibo de pago, no una factura electrónica. Escribe a {mail} si necesitas una.",
     button: "Abrir QA-lab URL Review",
     why: "Recibes este recibo porque pagaste en QA-lab URL Review.",
-    items: { report: "Informe completo", "new-run": "Revisión", pass: "Pase mensual", fixlist: "Lista de arreglos", cases: "Exportación de casos de prueba", alerts: "Alertas de cambios", credentials: "Revisión con sesión iniciada" }
+    items: { report: "Informe completo", "new-run": "Revisión", pass: "Pase mensual", fixlist: "Lista de arreglos", fix: "Paquete de arreglo", cases: "Exportación de casos de prueba", alerts: "Alertas de cambios", credentials: "Revisión con sesión iniciada" }
   },
   pt: {
     subject: "Seu recibo do QA-lab URL Review: {item}, US${amount}",
@@ -1269,7 +1269,7 @@ const RECEIPT = {
     notInvoice: "Este é um recibo de pagamento, não uma nota fiscal (factura electrónica). Escreva para {mail} se precisar de uma.",
     button: "Abrir o QA-lab URL Review",
     why: "Você recebe este recibo porque pagou no QA-lab URL Review.",
-    items: { report: "Relatório completo", "new-run": "Revisão", pass: "Passe mensal", fixlist: "Lista de correções", cases: "Exportação de casos de teste", alerts: "Alertas de mudanças", credentials: "Revisão com login" }
+    items: { report: "Relatório completo", "new-run": "Revisão", pass: "Passe mensal", fixlist: "Lista de correções", fix: "Pacote de correção", cases: "Exportação de casos de teste", alerts: "Alertas de mudanças", credentials: "Revisão com login" }
   },
   de: {
     subject: "Ihre Quittung von QA-lab URL Review: {item}, US${amount}",
@@ -1281,7 +1281,7 @@ const RECEIPT = {
     notInvoice: "Dies ist eine Zahlungsquittung, keine Steuerrechnung (factura electrónica). Schreiben Sie an {mail}, wenn Sie eine benötigen.",
     button: "QA-lab URL Review öffnen",
     why: "Sie erhalten diese Quittung, weil Sie bei QA-lab URL Review bezahlt haben.",
-    items: { report: "Vollständiger Bericht", "new-run": "Prüfung", pass: "Monatspass", fixlist: "Korrekturliste", cases: "Export der Testfälle", alerts: "Änderungsalarme", credentials: "Prüfung mit Anmeldung" }
+    items: { report: "Vollständiger Bericht", "new-run": "Prüfung", pass: "Monatspass", fixlist: "Korrekturliste", fix: "Fix-Paket", cases: "Export der Testfälle", alerts: "Änderungsalarme", credentials: "Prüfung mit Anmeldung" }
   },
   fr: {
     subject: "Votre reçu QA-lab URL Review : {item}, US${amount}",
@@ -1293,7 +1293,7 @@ const RECEIPT = {
     notInvoice: "Ceci est un reçu de paiement, pas une facture fiscale (factura electrónica). Écrivez à {mail} si vous en avez besoin.",
     button: "Ouvrir QA-lab URL Review",
     why: "Vous recevez ce reçu parce que vous avez payé sur QA-lab URL Review.",
-    items: { report: "Rapport complet", "new-run": "Revue", pass: "Pass mensuel", fixlist: "Liste de corrections", cases: "Export des cas de test", alerts: "Alertes de changement", credentials: "Revue connectée" }
+    items: { report: "Rapport complet", "new-run": "Revue", pass: "Pass mensuel", fixlist: "Liste de corrections", fix: "Forfait de correction", cases: "Export des cas de test", alerts: "Alertes de changement", credentials: "Revue connectée" }
   },
   it: {
     subject: "La tua ricevuta di QA-lab URL Review: {item}, US${amount}",
@@ -1305,7 +1305,7 @@ const RECEIPT = {
     notInvoice: "Questa è una ricevuta di pagamento, non una fattura fiscale (factura electrónica). Scrivi a {mail} se ne hai bisogno.",
     button: "Apri QA-lab URL Review",
     why: "Ricevi questa ricevuta perché hai pagato su QA-lab URL Review.",
-    items: { report: "Report completo", "new-run": "Revisione", pass: "Pass mensile", fixlist: "Lista delle correzioni", cases: "Esportazione dei casi di test", alerts: "Avvisi di modifica", credentials: "Revisione con accesso" }
+    items: { report: "Report completo", "new-run": "Revisione", pass: "Pass mensile", fixlist: "Lista delle correzioni", fix: "Pacchetto di correzione", cases: "Esportazione dei casi di test", alerts: "Avvisi di modifica", credentials: "Revisione con accesso" }
   }
 };
 
