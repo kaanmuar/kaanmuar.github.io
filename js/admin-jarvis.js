@@ -6,10 +6,11 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
-import * as Geo from "./admin-jarvis-geo.js?v=3283";
+import * as Geo from "./admin-jarvis-geo.js?v=3282";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
-import * as GeoTime from "./admin-jarvis-geo-time.js?v=3283";
+import * as GeoTime from "./admin-jarvis-geo-time.js?v=3282";
+import * as GeoGa4 from "./admin-jarvis-geo-ga4.js?v=3282";
 import * as GeoActions from "./admin-jarvis-geo-actions.js?v=3115";
 import * as GeoClicks from "./admin-jarvis-geo-clicks.js?v=3281";
 import * as GeoCost from "./admin-jarvis-geo-cost.js?v=3283";
@@ -3098,7 +3099,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <p class="jv-note">${r.target ? 'Target market' : 'Not a target market'}${r.langs.length ? ' · speaks ' + esc(r.langs.join(', ')) : ''}${r.gaps.length ? ' · ' + r.gaps.map((k) => esc((Geo.GAPS[k] || [k])[0])).join(', ') : ''}</p>
             ${kpis([{ label: 'Emails sent · opened', value: `${fmt(r.sent)} · ${fmt(r.opened)}` }, { label: 'Reply rate', value: r.replyRate === null ? '—' : r.replyRate + '%' }, { label: 'Answered · positive', value: `${fmt(r.answered)} · ${fmt(r.positive)}` },
                 { label: 'Prospects · left', value: `${fmt(r.prospects)} · ${fmt(r.left)}` }, { label: 'Reviewed · score', value: `${fmt(r.reviewed)}${r.score === null ? '' : ' · ' + r.score}` },
-                { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
+                { label: 'Social replies', value: r.social }, ...GeoGa4.kpis(r), { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
             ${GeoTime.sheet(S.external.geo, r.cc, geoTimeState(), esc)}
             ${GeoClicks.sheet(r, { esc, fmt })}
             ${GeoCost.sheet(S.external.geo, r.cc, S.geoTv, esc)}
