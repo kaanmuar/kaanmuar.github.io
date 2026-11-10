@@ -10,11 +10,14 @@ const TERMS = require('fs').readFileSync(path.join(__dirname, '../js/qa-review.j
 const ID = 'ab12cd34ef56';
 const ANA = 'a'.repeat(64);
 const HEADERS = fixOffers.packageById('security-headers');
+// Prices are read on a launch day and on the day after it, so the specs pass whatever the date (#3393).
+const LAUNCH_DAY = Date.parse('2026-11-12T12:00:00Z');
+const AFTER_LAUNCH = Date.parse('2026-12-11T05:00:00Z');
 // Phone screenshots for review: FIX_SHOTS=<dir> npx playwright test tests/qa-review-fix.spec.js
 const SHOTS = process.env.FIX_SHOTS || '';
 
 // The stub answers /review/fix/* with the real access rule and request record, so the page sees what the server decides.
-async function open(page, { lang = 'en', signedIn = true, query = '' } = {}) {
+async function open(page, { lang = 'en', signedIn = true, query = '', at = LAUNCH_DAY } = {}) {
   const store = auth.memoryStore();
   const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
   const me = Object.assign(await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA }), { email: 'ana@example.com', deviceKey: ANA });
@@ -51,11 +54,11 @@ async function open(page, { lang = 'en', signedIn = true, query = '' } = {}) {
       const access = await auth.askAccess(store, body, row, false);
       return json(access.ok ? 200 : access.status, access.ok ? { ok: true } : { error: access.error });
     }
-    if (where === '/review/fix/offers') return json(200, { packages: fixOffers.publicPackages() });
+    if (where === '/review/fix/offers') return json(200, { packages: fixOffers.publicPackages(at) });
     if (where === '/review/fix/request') {
       const access = await auth.askAccess(store, body, row, true);
       if (!access.ok) return json(access.status, { error: access.error, code: access.code || '', signIn: !!access.signIn });
-      const record = fixOffers.requestRecord(body, row, access.email, Date.now());
+      const record = fixOffers.requestRecord(body, row, access.email, at);
       if (record.error) return json(400, { error: record.error });
       sent.push(record);
       return json(200, { ok: true, id: 'fix1', email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 });
@@ -108,8 +111,9 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     await expect(panel).toBeVisible();
     await expect(panel.locator('.fix-path')).toHaveCount(4);
     await expect(panel.locator('.fix-packs li')).toHaveCount(fixOffers.offersFor(sample.report.insights.findings).length);
-    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.usd + ' · about ' + HEADERS.days + ' working days');
-    await expect(panel.locator('.fix-packs .fix-launch')).toHaveText(Array(await panel.locator('.fix-packs li').count()).fill('Launch price'));
+    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.usd + ' · about ' + HEADERS.days + ' working days List price US$' + HEADERS.listUsd);
+    await expect(panel.locator('[data-package="security-headers"] .fix-list')).toHaveCSS('text-decoration-line', 'line-through');
+    await expect(panel.locator('.fix-packs .fix-launch')).toHaveText(Array(await panel.locator('.fix-packs li').count()).fill('Launch price until Dec 10'));
     const call = new URL(await panel.locator('[data-fix-call]').getAttribute('href'), 'https://carlosandmunoz.com/');
     expect(call.searchParams.get('review')).toBe(ID);
     expect(call.searchParams.get('findings')).toMatch(/^F-01,F-02,/);
@@ -174,7 +178,7 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
       const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
       if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
       const json = (data) => route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
-      if (where === '/checkout/quote') return json(Object.assign(fixCheckout.quote(new URL(req.url()).searchParams.get('package')), { cop: HEADERS.usd * 4000, rate: 4000 }));
+      if (where === '/checkout/quote') return json(Object.assign(fixCheckout.quote(new URL(req.url()).searchParams.get('package'), LAUNCH_DAY), { cop: HEADERS.usd * 4000, rate: 4000 }));
       if (where === '/checkout/confirm') {
         confirmed.push(JSON.parse(req.postData()));
         return json({ paid: true, purpose: 'fix', priceUsd: HEADERS.usd, reference: 'abc', reportId: ID });
@@ -195,11 +199,19 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     expect(confirmed[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', sessionId: '5O190127TN364715T' });
   });
 
+  test('after Dec 10 the cards show the list price, with no launch label and nothing struck through (#3393)', async ({ page }) => {
+    await open(page, { at: AFTER_LAUNCH });
+    const panel = page.locator('#fix-offer');
+    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.listUsd + ' · about ' + HEADERS.days + ' working days');
+    await expect(panel.locator('.fix-launch')).toHaveCount(0);
+    await expect(panel.locator('.fix-list')).toHaveCount(0);
+  });
+
   test('on a phone each package carries the launch price label next to its price (#3326)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     const pack = page.locator('#fix-offer [data-package="security-headers"]');
-    await expect(pack.locator('.fix-launch')).toHaveText('Launch price');
+    await expect(pack.locator('.fix-launch')).toHaveText('Launch price until Dec 10');
     const label = await pack.locator('.fix-launch').boundingBox();
     expect(label.x + label.width).toBeLessThanOrEqual(390);
     await page.locator('#fix-offer .fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
@@ -217,7 +229,7 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     await panel.evaluate((el) => { el.scrollIntoView({ block: 'start' }); document.getElementById('dash-overlay').scrollBy(0, -80); });
     await shot(page, 'fix-offer-panel-es.png');
     await panel.locator('.fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
-    await expect(panel.locator('[data-package="security-headers"] .fix-launch')).toHaveText('Precio de lanzamiento');
+    await expect(panel.locator('[data-package="security-headers"] .fix-launch')).toHaveText('Precio de lanzamiento hasta el 10 de dic.');
     await shot(page, 'fix-offer-packages-es.png');
     const card = page.locator('#findings .finding', { has: page.locator('.id', { hasText: /^F-01$/ }) });
     await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));

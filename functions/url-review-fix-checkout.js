@@ -16,7 +16,7 @@ function refused(status, error, extra) {
 }
 
 /** Whether the signed-in address may pay for this request now, and the package it pays for. */
-function payable(row, email, reportId) {
+function payable(row, email, reportId, now) {
   if (!row) return refused(404, "That fix request was not found. No charge was made.");
   if (!email) return refused(401, "Sign in with the address on the report to pay for the fix. No charge was made.", { signIn: true });
   if (String(row.email || "").toLowerCase() !== String(email).toLowerCase()) return refused(403, "Only the address that asked for this fix can pay for it. No charge was made.");
@@ -25,13 +25,15 @@ function payable(row, email, reportId) {
   if (PAYABLE.indexOf(row.status) === -1) return refused(409, "This fix request is past payment. No charge was made.");
   const pkg = fixOffers.packageById(row.package);
   if (!pkg) return refused(400, "This request asks for a quote, not a package. The price comes by email. No charge was made.");
-  return { ok: true, package: pkg.id, usd: pkg.usd, host: row.host || "", reportId: row.reportId || "" };
+  return { ok: true, package: pkg.id, usd: fixOffers.usdOf(pkg, now), host: row.host || "", reportId: row.reportId || "" };
 }
 
-/** The pay page's figures for one package, with its name in every language. */
-function quote(packageId) {
+/** The pay page's figures for one package, with its name in every language and its list price while the launch holds. */
+function quote(packageId, now) {
   const pkg = fixOffers.packageById(packageId);
-  return pkg ? { usd: pkg.usd, count: 1, fixPackage: { id: pkg.id, days: pkg.days, name: pkg.name } } : null;
+  if (!pkg) return null;
+  const launch = fixOffers.launchOn(now);
+  return { usd: fixOffers.usdOf(pkg, now), count: 1, fixPackage: { id: pkg.id, days: pkg.days, name: pkg.name, listUsd: pkg.listUsd, launch, launchUntil: launch ? fixOffers.LAUNCH.until : "" } };
 }
 
 /** The request after its payment: accepted, with the payment on it. Null when it was already paid. */

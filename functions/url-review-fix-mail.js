@@ -208,7 +208,7 @@ function confirmMail(record) {
   const pack = fixOffers.packageById(record.package);
   const vars = { host: record.host || "", n: countOf(t, (record.findings || []).length) };
   const rows = findingRows(code, record).concat([
-    [t.package, pack ? fill(t.packageLine, { name: pack.name[code], usd: pack.usd, days: pack.days }) : t.quote],
+    [t.package, pack ? fill(t.packageLine, { name: pack.name[code], usd: record.priceUsd || fixOffers.usdOf(pack), days: pack.days }) : t.quote],
     record.deadline ? [t.deadline, record.deadline] : null,
     record.budget ? [t.budget, record.budget] : null
   ].filter(Boolean));
