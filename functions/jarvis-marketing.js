@@ -57,6 +57,8 @@ function campaignRows(campaigns, analytics, now, counts) {
     return Object.assign({ id: String(c.id || ""), name: String(c.name || "").slice(0, 80) }, parseName(c.name), {
       status: CAMPAIGN_STATUS[String(c.status)] || "status " + c.status,
       start: schedule.start_date || "",
+      created: String(c.timestamp_created || "").slice(0, 10),
+      updated: String(c.timestamp_updated || "").slice(0, 10),
       window: windowOf(schedule),
       dailyLimit: Number(c.daily_limit) || 0,
       steps: ((c.sequences || [])[0] || {}).steps ? c.sequences[0].steps.length : 0,

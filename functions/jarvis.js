@@ -941,6 +941,7 @@ function askSnapshot(snap, days) {
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
       targets: targetsAsk(e.targets),
+      geoFlow: require("./jarvis-geo-flow").ask(e.geo),
       engagement: engagementAsk(e.engagement),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,

@@ -347,6 +347,7 @@ async function geo(ctx) {
     links: outreach && outreach.links
   });
   joinDates(out.countries, calendar, ctx.now);
+  Object.assign(out, require("./jarvis-geo-flow").build({ campaigns: marketing && marketing.campaigns && marketing.campaigns.rows, countries: out.countries, calendar, now: ctx.now }));
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
   return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });

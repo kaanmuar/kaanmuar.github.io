@@ -7,6 +7,7 @@
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
 import * as Geo from "./admin-jarvis-geo.js?v=2988";
+import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -3024,6 +3025,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
             ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
             ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
+            ${geoFlowPanels(g, sel, channel)}
             ${geoConfirmPanel(g)}
         </div>`;
     }
@@ -3060,6 +3062,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         box.style.top = `${Math.max(4, top + box.offsetHeight > at.height ? top - box.offsetHeight - 28 : top)}px`;
     }
     function geoCardOff(wrap) { const box = wrap && wrap.querySelector('.jv-geo-card'); if (box) box.hidden = true; }
+
+    // #3114: the campaign timeline and the channel flow (admin-jarvis-geo-flow.js), following the picked country and the channel.
+    function geoFlowPanels(g, sel, channel) {
+        const f = GeoFlow.sections(g, { esc, fmt, button: campaignButton, chip: campStatusChip, mk: ((S.external.marketing || {}).campaigns || {}).rows, cc: sel ? sel.cc : '', name: sel && sel.name,
+            channel, group: S.geoTlGroup, camp: S.geoCamp, width: ($('.jv-geo-wrap') || {}).clientWidth || Math.min(root.clientWidth || 1000, 1100) });
+        const opts = (x) => ({ wide: true, keep: true, note: x.note, data: x.data });
+        return (f.timeline ? panel('geo-timeline', f.timeline.title, f.timeline.body, opts(f.timeline)) : '') + (f.flow ? panel('geo-flow', f.flow.title, f.flow.body, opts(f.flow)) : '');
+    }
 
     // The country sheet under the map: its numbers, funnel, campaigns with Pause or Activate, and a queue form for it.
     function geoCountry(r) {
@@ -4467,6 +4477,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
         if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
+        if (t.dataset.geoCamp !== undefined) { event.preventDefault(); S.geoCamp = S.geoCamp === t.dataset.geoCamp ? '' : t.dataset.geoCamp; render(); const at = S.geoCamp && $('[data-geo-camp-sheet]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+        if (t.dataset.geoTlGroup) { S.geoTlGroup = t.dataset.geoTlGroup; render(); return; }
         if (t.dataset.geoTarget) { geoTarget(t); return; }
         if (t.dataset.geoConfirm) { geoConfirmAct(t); return; }
         if (t.dataset.calAct) { calendarAct(t); return; }

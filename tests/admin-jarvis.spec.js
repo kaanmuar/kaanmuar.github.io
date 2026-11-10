@@ -822,6 +822,75 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map draws the campaign timeline and the channel flow, both following the country and channel, and a bar opens its campaign actions (#3114)', async ({ page }) => {
+    test.setTimeout(90000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const geoFlow = require('../functions/jarvis-geo-flow.js');
+    const today = core.zoneParts(new Date()).day;
+    const plus = (n) => new Date(Date.parse(today + 'T12:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+    const camps = [
+      { id: 'c1', name: 'W1 B-es Americas', week: 'W1', lang: 'es', region: 'Americas', status: 'active', start: plus(-24), window: 'Tue-Thu 08:00-10:30 America/Bogota' },
+      { id: 'c2', name: 'W1 E-pt Brazil', week: 'W1', lang: 'pt', region: 'Brazil', status: 'active', start: plus(-17) },
+      { id: 'c3', name: 'W1 A-es Europe', week: 'W1', lang: 'es', region: 'Europe', status: 'paused', start: plus(-31), updated: plus(-6) },
+      { id: 'c4', name: 'W1 A-en US', week: 'W1', lang: 'en', region: 'US', status: 'active', start: plus(-10) },
+      { id: 'c5', name: 'W2 B-es Americas', week: 'W2', lang: 'es', region: 'Americas', status: 'active', start: plus(7) },
+      { id: 'c6', name: 'W2 E-pt Brazil', week: 'W2', lang: 'pt', region: 'Brazil', status: 'draft', start: '' }
+    ];
+    const countries = GEO_DATED.countries.map((r) => (r.cc === 'CO' || r.cc === 'MX' ? Object.assign({}, r, { camps: r.camps.concat({ id: 'c5', name: 'W2 B-es Americas', status: 'active', share: 50 }) }) : r));
+    const geoData = Object.assign({}, GEO_DATED, { countries }, geoFlow.build({ campaigns: camps, countries, calendar: CALENDAR, now: Date.now() }));
+    const calls = await openStats(page, '#stats/geo/30', { geo: geoData, 'marketing-campaign': { ok: true, id: 'c1', name: 'W1 B-es Americas', status: 'paused' } });
+    const geo = page.locator('[data-view="geo"]');
+    const tl = geo.locator('[data-panel-id="geo-timeline"]');
+    const fl = geo.locator('[data-panel-id="geo-flow"]');
+    await expect(tl.locator('header')).toContainText('Campaign timeline · 6');
+    await expect(tl.locator('.jv-tl-bar')).toHaveCount(5);
+    await expect(tl.locator('.jv-tl-group').first()).toContainText('Spanish · es');
+    await expect(tl.locator('.jv-tl-now')).toHaveText('Today');
+    await expect(tl.locator('.jv-tl-marker[data-kind="holiday"]').first()).toBeAttached();
+    await expect(tl).toContainText('No start date: W2 E-pt Brazil');
+    await expect(tl.locator('.jv-tl-legend')).toContainText('Scheduled · 1');
+    await expect(fl.locator('header')).toContainText('Channel flow');
+    await expect(fl.locator('.jv-fl-band')).toHaveCount(8);
+    await expect(fl.locator('.jv-needs')).toContainText('Cold email stops at replied');
+    await expect(fl.locator('.jv-fl-num').first()).toHaveText('379');
+    if (process.env.GEO_SHOTS) {
+      await tl.screenshot({ path: `${process.env.GEO_SHOTS}/3114-timeline.png` });
+      await fl.screenshot({ path: `${process.env.GEO_SHOTS}/3114-flow.png` });
+    }
+    await tl.locator('[data-geo-tl-group="region"]').click();
+    await expect(tl.locator('.jv-tl-group').first()).toContainText('Europe');
+    await tl.locator('.jv-tl-bar[data-geo-camp="c1"]').click();
+    const sheet = tl.locator('.jv-tl-sheet');
+    await expect(sheet).toContainText('W1 B-es Americas');
+    await expect(sheet).toContainText('Tue-Thu 08:00-10:30');
+    await expect(sheet).toContainText('CO, ');
+    expect(page.url()).toContain('#stats/geo');
+    page.once('dialog', (d) => d.accept());
+    await sheet.locator('[data-mk-campaign="pause"]').click();
+    await expect.poll(() => calls.find((c) => c.op === 'marketing-campaign')).toBeTruthy();
+    expect(calls.find((c) => c.op === 'marketing-campaign').body).toMatchObject({ id: 'c1', action: 'pause' });
+    await geo.locator('path[data-geo-cc="BR"]').click();
+    await expect(tl.locator('header')).toContainText('Campaign timeline · Brazil · 1');
+    await expect(tl.locator('.jv-tl-bar')).toHaveCount(1);
+    await expect(tl.locator('.jv-tl-marker')).not.toHaveCount(0);
+    await expect(fl.locator('header')).toContainText('Channel flow · Brazil');
+    await expect(fl.locator('.jv-needs')).toContainText('Left out, no data in Brazil yet');
+    await expect(fl.locator('.jv-needs')).toContainText('Social replies: start → prospect');
+    await geo.locator('[data-geo-channel="email"]').click();
+    await expect(fl.locator('header')).toContainText('Channel flow · Brazil · Cold email');
+    await expect(fl.locator('.jv-fl-band')).toHaveCount(4);
+    await expect(fl.locator('.jv-needs')).not.toContainText('Sweep');
+    if (process.env.GEO_SHOTS) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await geo.locator('[data-geo-channel="all"]').click();
+      await geo.locator('[data-geo-cc=""]').first().click();
+      await tl.screenshot({ path: `${process.env.GEO_SHOTS}/3114-timeline-phone.png` });
+      await fl.screenshot({ path: `${process.env.GEO_SHOTS}/3114-flow-phone.png` });
+    }
+    expect(errors).toEqual([]);
+  });
+
   test('Map lists the Live Report countries the finder was unsure of, and Confirm, Change, Worldwide and Skip go through the function (#3009)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
