@@ -3489,7 +3489,7 @@ async function reviewTarget(rawUrl, hooks) {
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
-  const linkedPromise = stopped || typeof controls.webrisk !== "function" ? Promise.resolve(null) : linkedRisk.check(linkedRisk.collect(pages, browser, origin.hostname), controls.webrisk).catch(() => null);
+  const linkedPromise = stopped || typeof controls.webrisk !== "function" ? Promise.resolve(null) : linkedRisk.check(linkedRisk.collect(pages, browser, origin.hostname), controls.webrisk, { customer: controls.customer === true }).catch(() => null);
   const outboundPromise = stopped ? Promise.resolve(null) : checkOutbound(pages, halt, deadline - 15000).catch(() => null);
   const wordpressPromise = stopped ? Promise.resolve(null) : withTimeout(wordpress.check(pages, {
     read: (url) => !robots.length || robotsAllows(pagePath(url), robots) ? fetchExtra(url, halt, false, acceptLanguage) : null

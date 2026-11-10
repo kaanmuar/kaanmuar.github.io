@@ -6,7 +6,9 @@
    Each host is looked up once as https://<host>/ with uris:search, the call the start URL already uses. Never call
    threatLists.computeDiff: it reprices every lookup to $50 per 1,000.
 
-   webrisk_usage/<YYYY-MM> = { lookups, days: { "<DD>": n } }   linked-host lookups spent, the budget guard
+   webrisk_usage/<YYYY-MM> = { lookups, days: { "<DD>": n }, sweeps: { "<DD>": n } }   linked-host lookups spent, the
+   budget guard; sweeps counts the runs no customer asked for (sweep, outreach, rivals, Jarvis), which may spend at
+   most SWEEP_PER_DAY so customer reviews keep the other half of the day (#3273)
    webrisk_hosts/<YYYY-MM-DD> = { hosts: { "<host>": { t, at } }, expireAt }   answers of that UTC day; t is the
    space-joined threat types ("" when clean), at the lookup time. A review reads today's and yesterday's.
 
@@ -20,6 +22,7 @@ const { EN, say } = require("./url-review-findings-en");
 const FREE_PER_MONTH = 100000;
 const PER_MONTH = 80000;
 const PER_DAY = Math.ceil(PER_MONTH / 31);
+const SWEEP_PER_DAY = Math.floor(PER_DAY / 2);
 const MAX_HOSTS = 60;
 const AT_ONCE = 8;
 const TIME_MS = 20000;
@@ -37,13 +40,14 @@ function memoryStore() {
   const spent = {};
   return {
     async load(now) {
-      return { hosts, month: spent[monthOf(now)] || 0, day: spent[dayOf(now)] || 0 };
+      return { hosts, month: spent[monthOf(now)] || 0, day: spent[dayOf(now)] || 0, sweep: spent["sweep " + dayOf(now)] || 0 };
     },
-    async save(now, answers, n) {
+    async save(now, answers, n, ledger, sweep) {
       Object.keys(answers).forEach((host) => hosts.set(host, answers[host]));
       if (hosts.size > CACHE_MAX) hosts.forEach((entry, host) => { if (now - entry.at >= CACHE_MS) hosts.delete(host); });
       spent[monthOf(now)] = (spent[monthOf(now)] || 0) + n;
       spent[dayOf(now)] = (spent[dayOf(now)] || 0) + n;
+      if (sweep) spent["sweep " + dayOf(now)] = (spent["sweep " + dayOf(now)] || 0) + n;
     }
   };
 }
@@ -64,13 +68,17 @@ function firestoreStore(db, FieldValue) {
         hosts,
         month: Number(spent.lookups) || 0,
         day: Number((spent.days || {})[dayOf(now).slice(8)]) || 0,
+        sweep: Number((spent.sweeps || {})[dayOf(now).slice(8)]) || 0,
         first: !today.exists,
         size: today.exists ? Object.keys(today.data().hosts || {}).length : 0
       };
     },
-    async save(now, answers, n, ledger) {
+    async save(now, answers, n, ledger, sweep) {
       const batch = db.batch();
-      batch.set(usage(now), { lookups: FieldValue.increment(n), days: { [dayOf(now).slice(8)]: FieldValue.increment(n) } }, { merge: true });
+      const dd = dayOf(now).slice(8);
+      const spent = { lookups: FieldValue.increment(n), days: { [dd]: FieldValue.increment(n) } };
+      if (sweep) spent.sweeps = { [dd]: FieldValue.increment(n) };
+      batch.set(usage(now), spent, { merge: true });
       if (Object.keys(answers).length && ledger.size < CACHE_MAX) batch.set(day(now), { hosts: answers, expireAt: new Date(now + 3 * CACHE_MS) }, { merge: true });
       if (ledger.first) batch.delete(day(now - 3 * CACHE_MS));
       await batch.commit();
@@ -117,7 +125,9 @@ function collect(pages, browser, siteHost) {
   return [...rows.values()];
 }
 
-// lookup(url) -> { ok, threats } (core.webRisk). -> { found, checked, unchecked, budget, hits: [{ host, element, page, threats }] }
+// lookup(url) -> { ok, threats } (core.webRisk); options.customer marks a review a customer asked for, which may spend the
+// whole day. -> { found, checked, unchecked, budget, share, hits: [{ host, element, page, threats }] }, share when the
+// sweeps' half of the day was the limit.
 async function check(rows, lookup, options) {
   const opts = options || {};
   const now = opts.now || Date.now();
@@ -136,8 +146,10 @@ async function check(rows, lookup, options) {
     if (hit && now - hit.at < CACHE_MS) entries[i] = hit;
     else ask.push(i);
   });
-  const room = Math.max(0, Math.min(PER_MONTH - ledger.month, PER_DAY - ledger.day));
-  if (ask.length > room) out.budget = true;
+  const sweep = opts.customer !== true;
+  const shared = Math.min(PER_MONTH - ledger.month, PER_DAY - ledger.day);
+  const room = Math.max(0, sweep ? Math.min(shared, SWEEP_PER_DAY - (Number(ledger.sweep) || 0)) : shared);
+  if (ask.length > room) Object.assign(out, { budget: true, share: sweep && room < shared });
   const asking = ask.slice(0, room);
   const answers = {};
   let spent = 0;
@@ -153,7 +165,7 @@ async function check(rows, lookup, options) {
     }));
   }
   if (spent) {
-    try { await db.save(now, answers, spent, ledger); } catch (error) { /* this report keeps the answers */ }
+    try { await db.save(now, answers, spent, ledger, sweep); } catch (error) { /* this report keeps the answers */ }
   }
   list.forEach((row, i) => {
     if (!entries[i]) { out.unchecked += 1; return; }
@@ -168,7 +180,8 @@ function note(result) {
   const flagged = result.hits.map((hit) => hit.host + " (" + hit.threats.join(", ") + ")");
   return "Google's Safe Browsing lists were read for " + result.checked + " of " + result.found + " hosts the site loads or links to" +
     (flagged.length ? ": " + flagged.join(", ") + " flagged" : ", and none is flagged") +
-    (result.error ? ". " + result.error[0].toUpperCase() + result.error.slice(1) : result.budget ? ". This month's lookup budget left the rest unread" : "") + ".";
+    (result.error ? ". " + result.error[0].toUpperCase() + result.error.slice(1) : result.share ? ". Today's half of the lookup budget for runs no customer asked for left the rest unread" :
+      result.budget ? ". This month's lookup budget left the rest unread" : "") + ".";
 }
 
 const threatWord = (type) => EN["threat." + type] ? say("threat." + type) : type.toLowerCase().replace(/_/g, " ");
@@ -192,4 +205,4 @@ function findings(result, add) {
     say("sec-linked-risk.pass.evidence", { n: result.checked, rest: result.unchecked ? say("sec-linked-risk.rest", { n: result.unchecked }) : "" }), "", { count: result.checked, cases: ["SEC-11"] });
 }
 
-module.exports = { FREE_PER_MONTH, PER_MONTH, PER_DAY, MAX_HOSTS, CACHE_MS, use, collect, check, note, findings, memoryStore, firestoreStore };
+module.exports = { FREE_PER_MONTH, PER_MONTH, PER_DAY, SWEEP_PER_DAY, MAX_HOSTS, CACHE_MS, use, collect, check, note, findings, memoryStore, firestoreStore };
