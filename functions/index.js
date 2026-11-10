@@ -1714,6 +1714,7 @@ const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
 const ownerProofs = require("./url-review-owner-proof");
 const domainOffer = require("./url-review-domain-offer");
+const outreachTrials = require("./outreach-trials");
 
 async function ownerProofRows(email) {
   if (!ownerProofs.emailOf(email)) return [];
@@ -2089,6 +2090,22 @@ async function sendReviewNotes() {
 
 // Monday to Saturday at 10:00 Bogotá: Ley 2300 de 2023 keeps commercial contact off Sundays and outside daytime hours.
 exports.sendReviewNotes = scheduled(withMail, "sendReviewNotes", () => sendReviewNotes());
+
+// Ended outreach trials get their AFTER code (#3136); the note to the person goes out only with the follow-up notes' switch.
+async function outreachTrialsRun() {
+  const db = getFirestore();
+  return outreachTrials.endTrials(db, {
+    mail: async (row, note) => {
+      if (process.env.REVIEW_NOTES_LIVE !== "1" || !row.email) return false;
+      const stopped = await db.collection("url_review_notes").where("email", "==", row.email).where("status", "==", "follow-stop").limit(1).get();
+      if (!stopped.empty) return false;
+      const stopUrl = await stopLinkFor(row.email, note.lang);
+      return sendFaceMail(note.lang, row.email, outreachTrials.followupNote(note.lang, Object.assign({}, note.vars, { stop: stopUrl })), stopUrl, "url-review-trial-followup");
+    }
+  });
+}
+
+exports.outreachTrials = scheduled(withMail, "outreachTrials", () => outreachTrialsRun());
 
 // Claims one pending owner notice, sends it, and records the outcome. Shared by sendOwnerNotices and
 // scripts/owner-notice-send-all.js. Returns { outcome, reason, email, source, sourceUrl, sentAt }.
@@ -3239,6 +3256,7 @@ async function fulfillPayment(result, ctx) {
     const owner = paidReport ? await getFirestore().collection("url_reviews").doc(paidReport).get() : null;
     const email = String((owner && owner.exists && owner.get("email")) || open.email || "").trim().toLowerCase();
     await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
+    if (!testRun) await outreachTrials.afterPaid(getFirestore(), open.coupon).catch((error) => console.error("Ledger payment failed:", error));
   }
   if (paidPurpose === "report" && paidReport) {
     const runRef = getFirestore().collection("url_reviews").doc(paidReport);
@@ -4441,6 +4459,28 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   if (req.method === "GET" && /\/offer$/.test(pathName)) {
     const note = await offerNote(req.query.code, req.query.seen === "1").catch(() => ({}));
     res.status(note.offer ? 200 : 404).json(note.offer ? note : { error: "That offer was not found." });
+    return;
+  }
+  // An outreach trial link (#3136, ?trial=TRY-...): GET says what it is; POST { op: "trial-redeem", session } claims it.
+  if (/\/trial$/.test(pathName) && (req.method === "GET" || req.method === "POST")) {
+    try {
+      const db = getFirestore();
+      const body = req.body || {};
+      if (req.method === "GET" || body.op !== "trial-redeem") {
+        const trial = await outreachTrials.view(db, req.method === "GET" ? req.query.code : body.code);
+        res.status(trial ? 200 : 404).json(trial ? { trial } : { error: "That trial was not found." });
+        return;
+      }
+      const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(db), Object.assign({}, body, { touch: false })).catch(() => null) : null;
+      if (!signedIn || !signedIn.ok) { res.status(401).json({ ok: false, why: "sign-in" }); return; }
+      const out = await outreachTrials.redeemTrial(db, {
+        code: body.code, email: signedIn.email, rows: await passRowsFor(signedIn.email), matches: urlReview.mailboxMatchesHost, expireAt: urlReview.paymentExpireAt()
+      });
+      res.status(out.ok ? 200 : 409).json(out);
+    } catch (error) {
+      console.error("Trial claim failed:", error);
+      res.status(502).json({ ok: false, why: "error" });
+    }
     return;
   }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
@@ -6978,6 +7018,15 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
       res.json(Object.assign({ op: "github-local" }, await jarvisGithubFix.localIngest(db, req.body, Date.now())));
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "github-local", error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
+  // The outreach routines (#3136) mint trials and keep the people ledger with the Mac's paired token.
+  if (Object.prototype.hasOwnProperty.call(outreachTrials.OPS, String((req.body || {}).op || ""))) {
+    try {
+      const db = getFirestore();
+      await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
+      res.json(Object.assign({ op: req.body.op }, await outreachTrials.handle({ db, now: Date.now() }, req.body)));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: req.body.op, error: String(error.message || error).slice(0, 300) }); }
     return;
   }
   // Jarvis's worker (jarvis-worker.yml, #2957) proves itself with its run's GitHub OIDC token.

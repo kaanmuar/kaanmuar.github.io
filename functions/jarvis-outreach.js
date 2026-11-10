@@ -8,12 +8,14 @@
    mail       the sending domain's MX, SPF, DKIM and DMARC
    links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect,
               and the report replies (#2465, #2471) per network and per post
+   people     the outreach ledger (outreach_people, #3136): people at each stage, in all and by kind
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
 const dayRows = require("./jarvis-days");
 const sweep = require("./url-review-sweep");
 const E = require("./engagement");
+const people = require("./outreach-people");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
@@ -386,6 +388,10 @@ async function outreach(ctx) {
     }),
     part("links", () => shortLinks(ctx, loggedP)),
     part("instantly", () => instantly(ctx)),
+    part("people", async () => {
+      const snap = await ctx.db.collection(people.COLLECTION).select("stage", "kind").limit(5000).get();
+      return Object.assign({ ok: true }, people.counts(snap.docs.map((d) => d.data())));
+    }),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();
       planDoc = snap.exists ? snap.data() : null;
