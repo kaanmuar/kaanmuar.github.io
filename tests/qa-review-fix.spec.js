@@ -109,6 +109,7 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     await expect(panel.locator('.fix-path')).toHaveCount(4);
     await expect(panel.locator('.fix-packs li')).toHaveCount(fixOffers.offersFor(sample.report.insights.findings).length);
     await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.usd + ' · about ' + HEADERS.days + ' working days');
+    await expect(panel.locator('.fix-packs .fix-launch')).toHaveText(Array(await panel.locator('.fix-packs li').count()).fill('Launch price'));
     const call = new URL(await panel.locator('[data-fix-call]').getAttribute('href'), 'https://carlosandmunoz.com/');
     expect(call.searchParams.get('review')).toBe(ID);
     expect(call.searchParams.get('findings')).toMatch(/^F-01,F-02,/);
@@ -194,6 +195,17 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     expect(confirmed[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', sessionId: '5O190127TN364715T' });
   });
 
+  test('on a phone each package carries the launch price label next to its price (#3326)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page);
+    const pack = page.locator('#fix-offer [data-package="security-headers"]');
+    await expect(pack.locator('.fix-launch')).toHaveText('Launch price');
+    const label = await pack.locator('.fix-launch').boundingBox();
+    expect(label.x + label.width).toBeLessThanOrEqual(390);
+    await page.locator('#fix-offer .fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await shot(page, 'fix-offer-packages-en.png');
+  });
+
   test('on a phone the panel and the form fit the screen, in the page language', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page, { lang: 'es' });
@@ -205,6 +217,7 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
     await panel.evaluate((el) => { el.scrollIntoView({ block: 'start' }); document.getElementById('dash-overlay').scrollBy(0, -80); });
     await shot(page, 'fix-offer-panel-es.png');
     await panel.locator('.fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await expect(panel.locator('[data-package="security-headers"] .fix-launch')).toHaveText('Precio de lanzamiento');
     await shot(page, 'fix-offer-packages-es.png');
     const card = page.locator('#findings .finding', { has: page.locator('.id', { hasText: /^F-01$/ }) });
     await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));

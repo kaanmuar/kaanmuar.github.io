@@ -530,8 +530,8 @@
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style">
     <link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-ask.css?v=20261024c"></noscript>
-    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261109-3102"></noscript>
+    <link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-fix.css?v=20261110-3326"></noscript>
     <link rel="preload" href="css/qa-review-multi.css?v=20261102p" as="style">
     <link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-multi.css?v=20261102p"></noscript>
@@ -1644,6 +1644,12 @@
             <dd lang="fr" translate="no">Vous vous connectez sur l’appareil qui lance l’analyse, par e-mail (un code à 6 chiffres ou un lien, valable 15 minutes sur le même appareil) ou avec un compte que vous avez déjà : Google, Microsoft, GitHub, Yahoo ou X. Votre e-mail vient de cette connexion. Les analyses connectées figurent sur <a href="qa-review-account.html">la page de votre compte</a>.</dd>
             <dt lang="fr" translate="no">Ce que le rapport note</dt>
             <dd lang="fr" translate="no">Six domaines de 0 à 100 : SEO, GEO (si la recherche IA et les moteurs de réponse peuvent lire et citer le site), analytics, sécurité, accessibilité et performance. Le GEO mesure si le site peut être lu et cité, pas si ChatGPT, Perplexity ou le mode IA de Google le citent aujourd’hui. Chaque contrôle est marqué en échec, à risque, réussi ou à confier à une personne, avec la preuve, une correction et une estimation de l’effort. Vous voyez aussi l’aspect du site dans un résultat Google et dans un lien partagé, les robots d’IA que son robots.txt laisse entrer, une carte des pages analysées et ce qu’il faut corriger en premier. Un navigateur headless charge jusqu’à trois pages depuis une adresse de l’UE en Belgique : il relève le suivi avant et après un choix de cookies, lance axe-core, compare le texte HTML à la page rendue, vérifie les largeurs téléphone et tablette et garde trois captures d’écran. Il contrôle aussi les widgets de chat et les chatbots IA (consentement, poids et accès au clavier), la déclaration d’accessibilité, les mentions légales et les pages de confidentialité, les bibliothèques front-end obsolètes, Google Safe Browsing via Web Risk, l’expiration et le verrou de transfert du domaine via RDAP, ainsi que MTA-STS, TLS-RPT et BIMI pour l’e-mail, et il estime le carbone d’une visite. Un site dont la protection anti-bots refuse la requête simple est analysé dans Chrome headless.</dd>
+            <dt lang="fr" translate="no">Contrôles de sécurité</dt>
+            <dd lang="fr" translate="no">Chaque analyse cherche aussi les problèmes qu’un visiteur ne verrait pas. Elle vérifie l’adresse avec Google Safe Browsing via Web Risk et avec Cloudflare URL Scanner, qui réutilise un scan de la veille ou en soumet un qui devient public sur Cloudflare Radar. Chaque hôte externe dont la page charge des scripts, des cadres ou des formulaires, ou vers lequel elle renvoie, est aussi vérifié avec Web Risk ; un hôte de scripts listé est un constat critique. Elle cherche les signes d’un site piraté : du spam injecté dans les résultats de recherche, des pages qui montrent autre chose à Googlebot et des liens de spam cachés. Elle liste les domaines sosies enregistrés pour imiter le vôtre qui ont un site ou un serveur de messagerie, vérifie le domaine et ses serveurs de messagerie et web dans des listes de blocage de spam gratuites comme SpamCop, Mailspike et NordSpam, et examine SPF, DMARC et DKIM en détail. Une fois que vous prouvez que le site est à vous, elle cherche aussi les fichiers laissés à découvert, comme .env, .git et les sauvegardes.</dd>
+            <dt lang="fr" translate="no">Si une analyse ne peut pas aboutir</dt>
+            <dd lang="fr" translate="no">Il arrive qu’une analyse s’arrête pour une raison de notre côté, par exemple un site qui refuse les serveurs cloud. Nous gardons votre e-mail, la relançons autrement et vous envoyons le rapport complet dès qu’il est prêt, sous <span data-promise-hours>48</span> heures. Pour le dérangement, vous recevez un code de 20 % de réduction sur votre prochaine analyse, valable 90 jours. Si le rapport n’est toujours pas prêt après <span data-promise-hours>48</span> heures, nous vous écrivons pour vous prévenir, et le code reste valable.</dd>
+            <dt lang="fr" translate="no">Après le rapport</dt>
+            <dd lang="fr" translate="no">Demandez-nous de corriger, de l’une de quatre façons. Corriger vous-même : Interroger le rapport rédige la correction, et un rapport payé donne droit à une nouvelle vérification gratuite une fois vos changements en ligne. Demander un devis : Carlos répond sous deux jours ouvrés. Commander un forfait à prix fixe. Ou réserver un appel. Forfaits au prix de lancement : en-têtes de sécurité US$99 (environ 3 jours ouvrés), e-mail et DNS US$89 (3), TLS et redirections US$69 (2), corrections rapides d’accessibilité US$169 (5), performance de base US$199 (5), et métadonnées SEO et données structurées US$119 (4). Vous payez avec PayPal ; les codes de réduction ne s’appliquent pas aux forfaits. Une fois la correction faite, nous revoyons le site gratuitement et vous envoyons par e-mail un avant/après qui marque chaque constat comme corrigé, encore ouvert ou à vérifier par une personne.</dd>
             <dt lang="fr" translate="no">Frameworks et outils</dt>
             <dd lang="fr" translate="no">Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling et k6 sont les frameworks. axe-core tourne dans le navigateur headless de l’analyse sur jusqu’à trois pages, et Lighthouse tourne sur la page d’accueil via Google PageSpeed Insights. BrowserStack, Applitools, Percy, Provar et Copado sont nommés lorsqu’ils s’appliquent et ne sont pas lancés contre votre site.</dd>
             <dt lang="fr" translate="no">Scripts d’automatisation</dt>
@@ -2134,12 +2140,12 @@
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
 <script src="js/qa-review-ask.js?v=20261109b" defer></script>
-<script src="js/qa-review-fix.js?v=20261110-3327" defer></script>
+<script src="js/qa-review-fix.js?v=20261110-3327-3326" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3330" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3332" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261110-3332-3326" defer></script>
 <script src="js/qa-review-findings-copy.fr.js?v=20261110-3154" defer></script>
-<script src="js/qa-review.js?v=20261110-3332-3327" defer></script>
+<script src="js/qa-review.js?v=20261110-3332-3327-3326" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

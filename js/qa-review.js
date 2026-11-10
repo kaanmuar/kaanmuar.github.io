@@ -3166,7 +3166,7 @@
         setStatus("Opening this report again waits on payment.", true);
       } else if (!compare && error.body && error.body.code === "inconclusive") {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_inconclusive", "URL Review", error.body.error || "");
-        setStatus(rc.t("inconStatus"), true);
+        setStatus(rc.t("inconStatus", { hours: promiseHours(error.body) }), true);
         showInconclusive(error.body);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
@@ -3547,6 +3547,11 @@
 
   const inconBox = document.getElementById("inconclusive");
   let inconBehind = [];
+  // The same deadline as PROMISE_DEADLINE_H in functions/url-review-promise.js (a unit test holds them together);
+  // the stream's inconclusive line also sends it as `hours`.
+  const PROMISE_HOURS = 48;
+  const promiseHours = (body) => Number(body && body.hours) || PROMISE_HOURS;
+  document.querySelectorAll("[data-promise-hours]").forEach((node) => { node.textContent = String(PROMISE_HOURS); });
 
   // A failure the server could not settle now: it promised the report by email and sent a code for the trouble.
   function showInconclusive(body) {
@@ -3558,15 +3563,16 @@
     const email = String(body.email || "");
     const code = String(body.coupon || "");
     const percent = Number(body.percent) || 0;
+    const hours = promiseHours(body);
     document.getElementById("incon-eyebrow").textContent = rc.t("inconEyebrow");
     document.getElementById("incon-title").textContent = rc.t("inconTitle");
     document.getElementById("incon-lead").textContent = rc.t("inconLead");
     const mail = document.getElementById("incon-mail");
     if (email) {
-      const parts = rc.t("inconMail").split("{email}");
+      const parts = rc.t("inconMail", { hours }).split("{email}");
       mail.replaceChildren(parts[0], Object.assign(document.createElement("b"), { textContent: email }), parts[1] || "");
     } else {
-      mail.textContent = rc.t("inconMailNone");
+      mail.textContent = rc.t("inconMailNone", { hours });
     }
     inconBox.querySelector(".incon-deal").hidden = !code;
     document.getElementById("incon-percent").textContent = new Intl.NumberFormat(rc.lang, { style: "percent" }).format(percent / 100);

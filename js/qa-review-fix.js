@@ -15,7 +15,7 @@
       selfTitle: "Fix it yourself", selfCopy: "Ask the report writes the fix for the stack this review saw, the Playwright case that proves it, and a GitHub or Jira issue draft.",
       selfButton: "Open Ask the report", selfLocked: "Ask the report opens with the full report.",
       packTitle: "Fixed-price packages", packCopy: "We fix one area for a set price, then tell you when it is live.",
-      packLine: "US${usd} · about {days} working days", packCovers: "Covers {list}", packOrder: "Order",
+      packLine: "US${usd} · about {days} working days", packLaunch: "Launch price", packCovers: "Covers {list}", packOrder: "Order",
       quoteTitle: "We fix it for you", quoteCopy: "Tell us which findings to fix and how to reach the site. Carlos replies with a quote within two working days.", quoteButton: "Ask for a quote",
       callTitle: "Talk it through", callCopy: "A 30-minute call on these findings and what to fix first.", callButton: "Book a call",
       formTitle: "Ask us to fix it", formLead: "Pick a package and pay now with PayPal, or ask for a quote: Carlos replies within two working days with a price, a date and the access we need.",
@@ -45,7 +45,7 @@
       selfTitle: "Arréglalo tú", selfCopy: "Pregúntale al informe escribe el arreglo para el stack que vio esta revisión, el caso de Playwright que lo comprueba y un borrador de issue para GitHub o Jira.",
       selfButton: "Abrir Pregúntale al informe", selfLocked: "Pregúntale al informe se abre con el informe completo.",
       packTitle: "Paquetes de precio fijo", packCopy: "Arreglamos un área por un precio fijo y te avisamos cuando esté en producción.",
-      packLine: "US${usd} · unos {days} días hábiles", packCovers: "Cubre {list}", packOrder: "Pedir",
+      packLine: "US${usd} · unos {days} días hábiles", packLaunch: "Precio de lanzamiento", packCovers: "Cubre {list}", packOrder: "Pedir",
       quoteTitle: "Lo arreglamos por ti", quoteCopy: "Dinos qué hallazgos arreglar y cómo llegar al sitio. Carlos responde con una cotización en dos días hábiles.", quoteButton: "Pedir una cotización",
       callTitle: "Hablémoslo", callCopy: "Una llamada de 30 minutos sobre estos hallazgos y qué arreglar primero.", callButton: "Reservar una llamada",
       formTitle: "Pídenos que lo arreglemos", formLead: "Elige un paquete y paga ahora con PayPal, o pide una cotización: Carlos responde en dos días hábiles con un precio, una fecha y el acceso que necesitamos.",
@@ -75,7 +75,7 @@
       selfTitle: "Corrija você mesmo", selfCopy: "Pergunte ao relatório escreve a correção para o stack que esta revisão viu, o caso de Playwright que a comprova e um rascunho de issue para GitHub ou Jira.",
       selfButton: "Abrir Pergunte ao relatório", selfLocked: "Pergunte ao relatório abre com o relatório completo.",
       packTitle: "Pacotes de preço fixo", packCopy: "Corrigimos uma área por um preço fixo e avisamos quando estiver no ar.",
-      packLine: "US${usd} · cerca de {days} dias úteis", packCovers: "Cobre {list}", packOrder: "Pedir",
+      packLine: "US${usd} · cerca de {days} dias úteis", packLaunch: "Preço de lançamento", packCovers: "Cobre {list}", packOrder: "Pedir",
       quoteTitle: "Nós corrigimos para você", quoteCopy: "Diga quais achados corrigir e como acessar o site. Carlos responde com um orçamento em dois dias úteis.", quoteButton: "Pedir um orçamento",
       callTitle: "Vamos conversar", callCopy: "Uma chamada de 30 minutos sobre estes achados e o que corrigir primeiro.", callButton: "Agendar uma chamada",
       formTitle: "Peça para corrigirmos", formLead: "Escolha um pacote e pague agora com PayPal, ou peça um orçamento: Carlos responde em dois dias úteis com um preço, uma data e o acesso de que precisamos.",
@@ -105,7 +105,7 @@
       selfTitle: "Selbst beheben", selfCopy: "Den Bericht fragen schreibt die Korrektur für den Stack, den diese Prüfung gesehen hat, den Playwright-Fall, der sie belegt, und einen Issue-Entwurf für GitHub oder Jira.",
       selfButton: "Den Bericht fragen öffnen", selfLocked: "Den Bericht fragen öffnet sich mit dem vollständigen Bericht.",
       packTitle: "Pakete zum Festpreis", packCopy: "Wir beheben einen Bereich zum Festpreis und sagen Ihnen, wann es live ist.",
-      packLine: "US${usd} · etwa {days} Werktage", packCovers: "Umfasst {list}", packOrder: "Bestellen",
+      packLine: "US${usd} · etwa {days} Werktage", packLaunch: "Einführungspreis", packCovers: "Umfasst {list}", packOrder: "Bestellen",
       quoteTitle: "Wir beheben es für Sie", quoteCopy: "Sagen Sie uns, welche Befunde wir beheben sollen und wie wir die Website erreichen. Carlos antwortet innerhalb von zwei Werktagen mit einem Angebot.", quoteButton: "Angebot anfragen",
       callTitle: "Darüber sprechen", callCopy: "Ein 30-minütiges Gespräch über diese Befunde und was zuerst zu beheben ist.", callButton: "Gespräch buchen",
       formTitle: "Bitten Sie uns um die Korrektur", formLead: "Wählen Sie ein Paket und zahlen Sie jetzt mit PayPal, oder fragen Sie nach einem Angebot: Carlos antwortet innerhalb von zwei Werktagen mit Preis, Termin und dem Zugang, den wir brauchen.",
@@ -135,7 +135,7 @@
       selfTitle: "Corrigez vous-même", selfCopy: "Interroger le rapport écrit le correctif pour la pile vue par cette revue, le cas Playwright qui le prouve et un brouillon de ticket GitHub ou Jira.",
       selfButton: "Ouvrir Interroger le rapport", selfLocked: "Interroger le rapport s'ouvre avec le rapport complet.",
       packTitle: "Forfaits à prix fixe", packCopy: "Nous corrigeons un domaine à prix fixe, puis vous prévenons quand c'est en ligne.",
-      packLine: "US${usd} · environ {days} jours ouvrés", packCovers: "Couvre {list}", packOrder: "Commander",
+      packLine: "US${usd} · environ {days} jours ouvrés", packLaunch: "Prix de lancement", packCovers: "Couvre {list}", packOrder: "Commander",
       quoteTitle: "Nous corrigeons pour vous", quoteCopy: "Dites-nous quels constats corriger et comment accéder au site. Carlos répond avec un devis sous deux jours ouvrés.", quoteButton: "Demander un devis",
       callTitle: "En parler", callCopy: "Un appel de 30 minutes sur ces constats et ce qu'il faut corriger d'abord.", callButton: "Réserver un appel",
       formTitle: "Demandez-nous de corriger", formLead: "Choisissez un forfait et payez maintenant avec PayPal, ou demandez un devis : Carlos répond sous deux jours ouvrés avec un prix, une date et l'accès dont nous avons besoin.",
@@ -165,7 +165,7 @@
       selfTitle: "Correggilo tu", selfCopy: "Chiedi al report scrive la correzione per lo stack visto da questa revisione, il caso Playwright che la dimostra e una bozza di issue per GitHub o Jira.",
       selfButton: "Apri Chiedi al report", selfLocked: "Chiedi al report si apre con il report completo.",
       packTitle: "Pacchetti a prezzo fisso", packCopy: "Correggiamo un'area a prezzo fisso e ti avvisiamo quando è online.",
-      packLine: "US${usd} · circa {days} giorni lavorativi", packCovers: "Copre {list}", packOrder: "Ordina",
+      packLine: "US${usd} · circa {days} giorni lavorativi", packLaunch: "Prezzo di lancio", packCovers: "Copre {list}", packOrder: "Ordina",
       quoteTitle: "Lo correggiamo noi", quoteCopy: "Dicci quali risultati correggere e come raggiungere il sito. Carlos risponde con un preventivo entro due giorni lavorativi.", quoteButton: "Chiedi un preventivo",
       callTitle: "Parliamone", callCopy: "Una chiamata di 30 minuti su questi risultati e su cosa correggere per primo.", callButton: "Prenota una chiamata",
       formTitle: "Chiedici di correggerlo", formLead: "Scegli un pacchetto e paga ora con PayPal, oppure chiedi un preventivo: Carlos risponde entro due giorni lavorativi con un prezzo, una data e l'accesso che ci serve.",
@@ -285,7 +285,7 @@
         : '<p class="fix-muted">' + esc(words.selfLocked) + "</p>";
       const banner = new URLSearchParams(location.search).get("fixPaid") === "1" ? '<p class="fix-paid" role="status">' + esc(words.paidBanner) + "</p>" : "";
       const packs = offers.length ? path("packages", words.packTitle, words.packCopy, '<ul class="fix-packs">' + offers.map((item) =>
-        '<li data-package="' + esc(item.id) + '"><div><strong>' + esc(name(item)) + '</strong><span class="fix-price">' + esc(fill(words.packLine, { usd: item.usd, days: item.days })) + "</span>" +
+        '<li data-package="' + esc(item.id) + '"><div><strong>' + esc(name(item)) + '</strong><span class="fix-launch">' + esc(words.packLaunch) + '</span><span class="fix-price">' + esc(fill(words.packLine, { usd: item.usd, days: item.days })) + "</span>" +
         "<small>" + esc(what(item)) + '</small><small class="notranslate" translate="no">' + esc(fill(words.packCovers, { list: item.findings.join(", ") })) + "</small></div>" +
         '<button type="button" class="btn btn-primary" data-fix-package="' + esc(item.id) + '">' + esc(words.packOrder) + "</button></li>").join("") + "</ul>") : "";
       slot.innerHTML = banner + '<p class="eyebrow">' + esc(words.eyebrow) + '</p><h2 id="fix-offer-title">' + esc(words.title) + '</h2><p class="fix-lead">' + esc(fill(words.lead, { n: open.length })) + '</p><div class="fix-paths">' +

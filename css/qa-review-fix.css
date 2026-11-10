@@ -27,6 +27,7 @@
 .fix-packs li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--look-edge, var(--line)); border-radius: 12px; }
 .fix-packs li > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .fix-packs small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.fix-launch { align-self: flex-start; padding: 1px 8px; border: 1px solid var(--cyan); border-radius: 999px; color: var(--cyan); font-size: 11px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
 .fix-price { color: var(--cyan); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
 
 .fix-sheet { width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); box-sizing: border-box; padding: 20px; border: 1px solid var(--look-edge, var(--line)); border-radius: var(--look-radius, 22px); background: var(--card, #0b171c); color: var(--text); box-shadow: 0 24px 70px rgba(8, 14, 18, .35); }
