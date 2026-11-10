@@ -64,7 +64,7 @@ test("posts the Mac read are cleaned, kept to its networks, scored and planned l
   assert.equal(x.reads, "Mac browser as @qalabreview");
   assert.equal(x.lastRead, 2);
   assert.match(x.acts, /^Mac browser: likes, reposts, follows and replies \(dry run/);
-  assert.ok(src.needs.some((n) => /sign in to LinkedIn in the agent's Chrome: node scripts\/engagement-browser\/agent.js login linkedin/.test(n)));
+  assert.ok(src.needs.some((n) => /LinkedIn is signed out. The Mac agent puts its last session back on its next run; if none is kept, node scripts\/engagement-browser\/agent.js login linkedin/.test(n)));
 });
 
 async function seeded(live) {
@@ -388,4 +388,11 @@ test("a network the last run had signed in that reads signed out pushes once, na
   assert.equal(pushed.length, 1, "still signed out: no second push");
   await M.ingest(d, { posts: [], signedIn: { telegram: true } });
   assert.equal(pushed.length, 1, "a network not read this run (busy) is no sign-out");
+  await M.ingest(d, { posts: [], signedIn: { x: true, linkedin: true, telegram: true } });
+  await M.ingest(d, { posts: [], signedIn: { x: false, linkedin: true, telegram: true }, errors: { x: "Not signed in in the agent's Chrome. The last kept session did not sign it back in." }, triedRestore: ["x", "nope"] });
+  assert.equal(pushed.length, 2);
+  assert.match(pushed[1].body, /the agent already put the last session back and it did not hold. Sign in: node scripts\/engagement-browser\/agent.js login x/);
+  assert.doesNotMatch(pushed[1].body, /restore-sessions/);
+  const after = await J.source({ db, now: NOW, days: 7, env: {} });
+  assert.ok(after.needs.some((n) => /X stayed signed out after the agent put its last session back. Sign in: node scripts\/engagement-browser\/agent.js login x/.test(n)));
 });

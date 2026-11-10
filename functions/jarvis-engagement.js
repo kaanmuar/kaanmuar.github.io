@@ -908,7 +908,9 @@ async function source(ctx) {
   if (!mac) needs.push("Engagement: " + joinAnd(browser.map((k) => E.NETWORKS[k].name)) + " wait for the Mac's browser agent; on the Mac run " + AGENT + " setup (#1991).");
   else {
     if (now - Date.parse(mac.at) > MAC_STALE && bogotaHour >= 8 && bogotaHour < 22) needs.push("Engagement: the Mac's browser agent last reported " + Math.round((now - Date.parse(mac.at)) / 3600000) + " hours ago; it runs every 30 minutes from 7:00 to 22:00 while the Mac is awake (" + AGENT + " status).");
-    browser.filter((k) => !signed(k)).forEach((k) => needs.push("Engagement: sign in to " + E.NETWORKS[k].name + " in the agent's Chrome: " + AGENT + " login " + k + "."));
+    browser.filter((k) => !signed(k)).forEach((k) => needs.push(/did not sign it back/.test((mac.errors || {})[k] || "")
+      ? "Engagement: " + E.NETWORKS[k].name + " stayed signed out after the agent put its last session back. Sign in: " + AGENT + " login " + k + "."
+      : "Engagement: " + E.NETWORKS[k].name + " is signed out. The Mac agent puts its last session back on its next run; if none is kept, " + AGENT + " login " + k + "."));
     browser.filter((k) => (mac.blocked || {})[k]).forEach((k) => needs.push("Engagement: " + E.NETWORKS[k].name + " asked for a check (a captcha or unusual activity), so the agent leaves it alone until " + mac.blocked[k] + ". Clear it with " + AGENT + " login " + k + "."));
   }
   if (redditLate) needs.push("Engagement: " + (reddit ? "the Reddit sync last ran " + Math.round((now - Date.parse(reddit.at)) / 3600000) + " hours ago" : "the Reddit sync has not run yet") + ", so comments under r/QALabLiveReports posts wait; check reddit-engagement.yml (DEVVIT_TOKEN and REDDIT_ENGAGEMENT_TOKEN).");

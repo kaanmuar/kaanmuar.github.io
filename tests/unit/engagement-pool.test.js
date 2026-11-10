@@ -112,12 +112,19 @@ test("kept sessions: a copy per gap unless more networks signed in, each network
   assert.equal(P.saveSessions(profile, dir, ["x"], Date.parse("2026-11-09T10:00:00Z")), "", "no cookie store yet");
   fs.writeFileSync(path.join(profile, "Default", "Cookies"), "v1");
   fs.writeFileSync(path.join(profile, "Local State"), "{}");
+  fs.mkdirSync(path.join(profile, "Default", "Local Storage"));
+  fs.writeFileSync(path.join(profile, "Default", "Local Storage", "a"), "auth");
   const H = 3600000;
   const t0 = Date.parse("2026-11-09T10:00:00Z");
   const first = P.saveSessions(profile, dir, ["x", "linkedin"], t0);
   assert.ok(first);
   assert.equal(fs.readFileSync(path.join(first, "Cookies"), "utf8"), "v1");
   assert.ok(fs.existsSync(path.join(first, "Local State")));
+  assert.equal(fs.readFileSync(path.join(first, "Local Storage", "a"), "utf8"), "auth");
+  const back = path.join(root, "back");
+  assert.equal(P.putStores(back, first), 1);
+  assert.equal(fs.readFileSync(path.join(back, "Default", "Local Storage", "a"), "utf8"), "auth");
+  assert.equal(P.putStores(back, path.join(root, "empty")), 0);
   assert.equal(P.saveSessions(profile, dir, ["x"], t0 + H), "", "within the gap and nothing new signed in");
   assert.equal(P.saveSessions(profile, dir, [], t0 + 7 * H), "", "nothing signed in: nothing kept");
   fs.writeFileSync(path.join(profile, "Default", "Cookies"), "v2");
@@ -129,4 +136,6 @@ test("kept sessions: a copy per gap unless more networks signed in, each network
   assert.deepEqual(P.sessionFor(dir, "linkedin").nets, ["x", "linkedin", "reddit"], "LinkedIn's last signed-in copy survives the pruning");
   assert.deepEqual(P.sessionFor(dir, "x").at, copies[0].at);
   assert.equal(P.sessionFor(dir, "tiktok"), null);
+  assert.deepEqual(P.restoreList({ x: false, linkedin: true, tiktok: false, facebook: false }, (k) => k !== "facebook"), ["x", "tiktok"]);
+  assert.deepEqual(P.restoreList({ x: true }, () => true), []);
 });
