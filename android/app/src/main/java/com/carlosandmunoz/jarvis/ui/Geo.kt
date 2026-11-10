@@ -313,10 +313,10 @@ private fun DateKind(kind: String?) {
 }
 
 @Composable
-private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, onTap: (String?, Offset) -> Unit) {
-    val fill = remember(rows, key) { Geo.fills(rows, key) }
+private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, onTap: (String?, Offset) -> Unit) {
+    val fill = remember(rows, key, fills) { fills ?: Geo.fills(rows, key) }
     val by = remember(rows) { rows.associateBy { it.str("cc") ?: "" } }
-    val lit = key == "light"
+    val lit = key == "light" && fills == null
     val order = remember(rows, key, selected) {
         world.shapes.keys.sortedBy { cc -> if (cc == selected) 9 else if (lit) by[cc]?.let(Geo::light) ?: 0 else 0 }
     }
@@ -370,7 +370,7 @@ private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, sele
 
 /** The tapped country's card over the map (phones have no hover): flag, name, light level, key numbers and Open. */
 @Composable
-private fun GeoCard(cc: String, r: JsonObject?, modifier: Modifier, open: () -> Unit, close: () -> Unit) {
+private fun GeoCard(cc: String, r: JsonObject?, modifier: Modifier, open: () -> Unit, close: () -> Unit, change: (@Composable () -> Unit)? = null) {
     val level = r?.let(Geo::light) ?: 0
     val name = r?.str("name") ?: java.util.Locale("", cc).getDisplayCountry(java.util.Locale.ENGLISH).ifBlank { cc }
     Column(modifier.width(196.dp).background(Color(0xF0081218), RoundedCornerShape(8.dp)).border(1.dp, Color(0xFF2D5366), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp)) {
@@ -385,6 +385,7 @@ private fun GeoCard(cc: String, r: JsonObject?, modifier: Modifier, open: () -> 
                 Row(Modifier.fillMaxWidth()) { Text(k, fontSize = 11.sp, color = J.muted, modifier = Modifier.weight(1f)); Text(v, fontSize = 11.sp, color = J.text) }
             }
         }
+        change?.invoke()
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             if (r != null) TextButton(open, contentPadding = PaddingValues(horizontal = 6.dp)) { Text("Open", color = J.cyan, fontSize = 13.sp) }
             TextButton(close, contentPadding = PaddingValues(horizontal = 6.dp)) { Text("Close", color = J.muted, fontSize = 13.sp) }
@@ -422,12 +423,15 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     val t = g.obj("totals")
     val sel = rows.firstOrNull { it.str("cc") == picked }
     val rankKey = if (key == "gaps") "activity" else key
-    val byName = rows.associate { (it.str("name") ?: "") to (it.str("cc") ?: "") }
+    val time = rememberGeoTime()
+    val tv = remember(g, time.span, time.weekAt, time.shade, key) { GeoTime.view(g, time.span, time.week, time.shade, key) }
+    val shown = tv.rows
+    val byName = shown.associate { (it.str("name") ?: "") to (it.str("cc") ?: "") }
 
     Needs(g)
     // Wide screens: the map spans every column right under the product chips, its numbers three to a row above it.
     val wide = LocalColumns.current >= 2
-    Panel("World map · ${Geo.metric(key).label}", if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map") {
+    Panel("World map · ${Geo.metric(key).label}" + when (tv.mode) { "week" -> " · ${tv.label}"; "span" -> " · last ${tv.span} days"; else -> "" }, if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map") {
         val kpis = listOf(
             KpiData("Countries we act in", fmt(t?.num("countries"))), KpiData("Target markets reached", "${fmt(t?.num("targetsActive"))} of ${fmt(t?.num("targets"))}", t?.num("silent")?.takeIf { it > 0 }?.let { "${fmt(it)} silent" }),
             KpiData("Need attention", fmt(t?.num("missing")), alert = (t?.num("missing") ?: 0.0) > 0), KpiData("Average reply rate", t?.num("avgReply")?.let { "$it%" } ?: "—"),
@@ -438,26 +442,28 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         } else KpiPairs(kpis)
         Chips(Geo.CHANNELS, channel) { channel = it }
         Chips(metrics.map { it.key to it.label }, key) { metric = it }
+        GeoTimeControls(g, time, tv)
         world?.let { w ->
             Box {
-                WorldMap(w, rows, key, tapped ?: picked) { cc, at -> tapped = cc; tapAt = at }
+                WorldMap(w, shown, key, tapped ?: picked, tv.fills) { cc, at -> tapped = cc; tapAt = at }
                 tapped?.let { cc ->
-                    GeoCard(cc, rows.firstOrNull { it.str("cc") == cc }, Modifier.align(if (tapAt.x < 0.5f) Alignment.TopEnd else Alignment.TopStart).padding(6.dp),
-                        open = { picked = cc; tapped = null }, close = { tapped = null })
+                    GeoCard(cc, shown.firstOrNull { it.str("cc") == cc }, Modifier.align(if (tapAt.x < 0.5f) Alignment.TopEnd else Alignment.TopStart).padding(6.dp),
+                        open = { picked = cc; tapped = null }, close = { tapped = null }, change = if (tv.delta != null) ({ GeoChangeLine(tv, cc, key) }) else null)
                 }
             }
         } ?: Muted("Drawing the map…")
-        if (key == "light") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Geo.LIGHTS.forEachIndexed { n, l -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(l.color); Muted("${l.name} · ${rows.count { Geo.light(it) == n }}") } }
+        if (tv.fills != null) GeoChangeLegend(tv, key)
+        else if (key == "light") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Geo.LIGHTS.forEachIndexed { n, l -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(l.color); Muted("${l.name} · ${shown.count { Geo.light(it) == n }}") } }
         } else if (key == "gaps") Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Geo.GAPS.forEach { (k, v) -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { Swatch(v.second); Muted("${v.first} · ${rows.count { Geo.gaps(it).firstOrNull() == k }}") } }
         }
         if (key == "light") Muted("Tap a country for its numbers, then Open for its campaigns, prospects and replies. Spark: prospects or reviewed sites; Ember: contacted; Lit: opens, visits or social replies; Bright: email replies; Blazing: positive replies or money.")
         else if (key == "dates") Muted("Brighter is sooner: the country's next holiday, season, deadline or event within ${Geo.DATES_SPAN} days. ${rows.count { Geo.value(it, key) != null }} countries have one; tap one for its numbers and Open for its dates.")
-        else if (key != "gaps") Muted("Brighter is more, up to ${Geo.show(rows.maxOfOrNull { Geo.value(it, key) ?: 0.0 }, key)}. Tap a country for its numbers, then Open for its campaigns, prospects and replies; est. numbers are split from campaigns that cover several countries.")
+        else if (key != "gaps") Muted("Brighter is more, up to ${Geo.show(shown.maxOfOrNull { Geo.value(it, key) ?: 0.0 }, key)}. Tap a country for its numbers, then Open for its campaigns, prospects and replies; est. numbers are split from campaigns that cover several countries.")
     }
 
-    if (sel != null) GeoCountry(sel, s, vm, close = { picked = null }) { text, run -> confirm = PendingAction(text, run) }
+    if (sel != null) GeoCountry(sel, s, vm, close = { picked = null }, span = time.span) { text, run -> confirm = PendingAction(text, run) }
 
     val cal = s.snapshot.obj("external").obj("calendar")?.takeIf { it.isOk() }
     val days = remember(cal) { CountryDates.days(cal, CountryDates.today()) }
@@ -498,8 +504,8 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
-    TopList("Ranking · ${Geo.metric(rankKey).label}", Geo.ranked(rows, rankKey).map { (it.str("name") ?: "") to (Geo.value(it, rankKey) ?: 0.0) }, limit = 15,
-        onRow = { name -> picked = byName[name] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
+    TopList("Ranking · ${Geo.metric(rankKey).label}", Geo.ranked(shown, rankKey).map { (it.str("name") ?: "") + (tv.delta?.let { d -> " · " + GeoTime.arrow(d[it.str("cc")], rankKey) } ?: "") to (Geo.value(it, rankKey) ?: 0.0) }, limit = 15,
+        onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
     GeoHeatPanels(g, picked, channel) { picked = it }
@@ -553,7 +559,7 @@ private fun GeoConfirm(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Str
 
 /** The tapped country: its numbers, funnel, segments, campaigns with Pause or Activate, a queue form and the target toggle. */
 @Composable
-private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: () -> Unit, ask: (String, () -> Unit) -> Unit) {
+private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: () -> Unit, span: Int = 0, ask: (String, () -> Unit) -> Unit) {
     val cc = r.str("cc").orEmpty()
     val name = r.str("name") ?: cc
     val target = r["target"]?.jsonPrimitive?.booleanOrNull == true
@@ -575,6 +581,7 @@ private fun GeoCountry(r: JsonObject, s: UiState, vm: JarvisViewModel, close: ()
             KpiData("Reviewed · score", fmt(r.num("reviewed")) + (r.num("score")?.let { " · ${fmt(it)}" } ?: "")), KpiData("Social replies", fmt(r.num("social"))),
             KpiData("Visitors (GA4)", fmt(r.num("visitors"))), KpiData("Link visits · paid", "${fmt(r.num("visits"))} · $${fmt(r.num("usd"))}")
         ))
+        s.snapshot.obj("external").obj("geo")?.let { GeoTimeSheet(it, cc, span) }
         if ((r.num("sent") ?: 0.0) > 0 || (r.num("prospects") ?: 0.0) > 0)
             Funnel(listOf("Prospects" to r.num("prospects"), "Leads" to r.num("leads"), "Contacted" to (r.num("contacted") ?: 0.0), "Replied" to r.num("replies"), "Interested" to r.num("interested")))
         r.objs("sectors").forEach { x -> KeyRow(x.str("label").orEmpty(), "${fmt(x.num("value"))} prospects") }

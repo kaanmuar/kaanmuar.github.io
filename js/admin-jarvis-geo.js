@@ -199,8 +199,8 @@ export function mapSvg(world, rows, key, opts, esc) {
     const o = opts || {};
     const by = {};
     rows.forEach((r) => { by[r.cc] = r; });
-    const fill = fills(rows, key);
-    const lit = key === 'light';
+    const fill = o.fills || fills(rows, key);
+    const lit = key === 'light' && !o.fills;
     const tip = (cc) => {
         const r = by[cc];
         const name = (r && r.name) || (o.names && o.names[cc]) || cc;

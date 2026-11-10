@@ -5595,6 +5595,7 @@ const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisTargets = require("./jarvis-targets");
 const jarvisGeo = require("./jarvis-geo");
+const jarvisGeoTime = require("./jarvis-geo-time");
 const jarvisCalendar = require("./jarvis-calendar");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
@@ -6002,8 +6003,9 @@ async function jarvisDaily({ force }) {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
   const calendar = await jarvisCalendarDaily(db, settings).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  const geoHistory = await jarvisGeoHistory(db).catch((error) => "geo history failed: " + String(error.message || error).slice(0, 200));
   const phones = await jarvisPush.targets(db, "briefing");
-  if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return { off: "off in settings", calendar };
+  if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return { off: "off in settings", calendar, geoHistory };
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
@@ -6026,7 +6028,17 @@ async function jarvisDaily({ force }) {
   const top = ranked && ranked.proposals && ranked.proposals[0];
   if (top) await jarvisProposals.saveRun(db, top, now).catch((error) => console.error("Jarvis proposal run not saved:", error));
   const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
-  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length, calendar };
+  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length, calendar, geoHistory };
+}
+
+// The Map's daily history (#3109, jarvis-geo-time.js): yesterday's countries, Instantly's email days (backfilled once) and the dated replies.
+async function jarvisGeoHistory(db) {
+  const now = Date.now();
+  const ext = await jarvisExternal(["geo"], 1);
+  const mctx = { fetch, env: process.env, now };
+  const out = await jarvisGeoTime.record({ db, now, geo: ext.geo, instantly: process.env.INSTANTLY_API_KEY ? (path) => jarvisMarketing.instantly(mctx, path) : null });
+  await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+  return out;
 }
 
 // Rule proposals (or the page's own, as candidates) ranked by Gemini unless useGemini is off; Done and Dismissed ones stay out.
@@ -6838,7 +6850,7 @@ exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300,
   const out = await jarvisDaily({ force: false });
   const cal = out.calendar && typeof out.calendar === "object" ? out.calendar : null;
   const dates = cal ? (cal.error ? "; calendar failed: " + cal.error : "; calendar " + cal.paused + " paused, " + cal.resumed + " resumed, " + cal.reminded + " reminded") : "";
-  return (out.off || (out.sent ? "sent" : "not sent") + ", " + out.items + " lines") + dates;
+  return (out.off || (out.sent ? "sent" : "not sent") + ", " + out.items + " lines") + dates + (out.geoHistory ? "; " + out.geoHistory : "");
 });
 
 // The evening digest (#1672): the last 24 hours of pushes, what still waits for a decision, and what ran.
