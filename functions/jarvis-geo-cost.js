@@ -113,7 +113,7 @@ function allocate(items, from, to, rows) {
     if (spread) ccs.forEach((cc) => { const w = pos(rows[cc][by]) / sums[by]; if (w) cost[cc] = (cost[cc] || 0) + spread * w; });
     channels[ch] = { usd: money(usd), unspread: money(usd - spread), over: ccs.filter((cc) => pos(rows[cc][by]) > 0).length };
   });
-  const total = (k) => ccs.reduce((s, cc) => s + pos(rows[cc][k]), 0);
+  const total = (k) => round(ccs.reduce((s, cc) => s + pos(rows[cc][k]), 0), 100);
   const c = {};
   ccs.forEach((cc) => {
     const r = rows[cc];

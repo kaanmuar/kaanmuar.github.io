@@ -6,12 +6,13 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
-import * as Geo from "./admin-jarvis-geo.js?v=3281";
+import * as Geo from "./admin-jarvis-geo.js?v=3283";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
 import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
-import * as GeoTime from "./admin-jarvis-geo-time.js?v=3281";
+import * as GeoTime from "./admin-jarvis-geo-time.js?v=3283";
 import * as GeoActions from "./admin-jarvis-geo-actions.js?v=3115";
 import * as GeoClicks from "./admin-jarvis-geo-clicks.js?v=3281";
+import * as GeoCost from "./admin-jarvis-geo-cost.js?v=3283";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -816,6 +817,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 } : null,
                 targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
                 mapPlanAndNextActions: GeoActions.askOf(e.geo),
+                mapCostAndReturn: GeoCost.askOf(e.geo),
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites), ownerTags: otAsk(e.engagement.ownerTags) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
@@ -3013,7 +3015,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const tv = S.geoTv = Object.assign(GeoTime.view(g, geoTimeState(), key), { key });
         const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
             <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
-        const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) : '<p class="jv-note">Drawing the map…</p>';
+        const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) + (GeoCost.KEYS.has(key) ? GeoCost.note(g, tv, esc) : '') : '<p class="jv-note">Drawing the map…</p>';
         const clicksNote = key === 'clicks' && GeoClicks.note(g) ? `<p class="jv-note">${esc(GeoClicks.note(g))}</p>` : '';
         const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
         const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
@@ -3033,8 +3035,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
             ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
             ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
-            ${GeoHeat.panels(S, g, channel, { panel, esc, fmt })}
-            ${geoFlowPanels(g, sel, channel)}
+            ${GeoCost.panels(g, tv, key, channel, { panel, esc, fmt })}
+            ${GeoHeat.panels(S, g, channel === 'cost' ? 'all' : channel, { panel, esc, fmt })}
+            ${geoFlowPanels(g, sel, channel === 'cost' ? 'all' : channel)}
             ${geoConfirmPanel(g)}
             ${GeoActions.panels(g, { panel, esc, fmt, dayLabel: C.dayLabel })}
         </div>`;
@@ -3098,6 +3101,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 { label: 'Social replies', value: r.social }, { label: 'Visitors (GA4)', value: r.visitors }, { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
             ${GeoTime.sheet(S.external.geo, r.cc, geoTimeState(), esc)}
             ${GeoClicks.sheet(r, { esc, fmt })}
+            ${GeoCost.sheet(S.external.geo, r.cc, S.geoTv, esc)}
             ${r.sent || r.prospects ? funnel(steps) : ''}
             ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
             ${geoCountryDates(r, camps)}
@@ -4224,6 +4228,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <div class="jv-th-grid">${Object.keys(MOVED_MAIL).map((k) => `<label class="jv-check"><input type="checkbox" name="m-${k}"${d.mail[k] ? ' checked' : ''}> ${esc(MOVED_MAIL[k])}</label>`).join('')}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
+            <section data-geo-costs></section>
             <section data-voice-section>${voiceSection()}</section>
             <section data-devices-section>${devicesSection()}</section>
             <section><h4>Actions</h4>
@@ -4245,6 +4250,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <p class="jv-note">Left empty, the tab shows the four shown. The app shows the same list; a repo the qa-lab-agents app cannot see is listed under Needs you.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
+        GeoCost.paintSettings($('[data-geo-costs]'), { call, esc, toast, S, reload: () => loadExternal(['geo']) });
     }
 
     /** #2068: this browser as Jarvis reads it, and every phone and browser seen in the last 30 days, as in the app's Settings. */

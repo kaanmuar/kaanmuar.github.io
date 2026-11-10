@@ -1014,6 +1014,116 @@ test.describe('admin statistics (Jarvis)', () => {
     expect(errors).toEqual([]);
   });
 
+  test('Map shows cost and return per country, ranks it cheapest first, and edits the monthly costs in Settings (#3283)', async ({ page }) => {
+    test.setTimeout(90000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const geoCost = require('../functions/jarvis-geo-cost.js');
+    const TIME = require('./fixtures/jarvis-geo-time.json');
+    // The geo source's hook (attach) over the fixtures, with made-up costs; Now is the 30-day range.
+    const withCost = (items) => {
+      const g = JSON.parse(JSON.stringify(Object.assign({}, GEO_DATED, { time: TIME })));
+      g.cost = geoCost.build({ items, days: 30, countries: g.countries, time: g.time, campaigns: [], now: Date.parse('2026-11-09T17:00:00Z') });
+      g.countries.forEach((r) => Object.assign(r, geoCost.fieldsOf(g.cost.now, r.cc)));
+      if (!items.length) g.needs = (g.needs || []).concat(geoCost.NEEDS);
+      return g;
+    };
+    const ITEMS = [{ label: 'Email tool', usd: 30, channel: 'email' }, { label: 'Mailbox seats', usd: 15, channel: 'all' }, { label: 'Social scheduler', usd: 9, channel: 'social' }];
+
+    // No costs saved: the layer, the panel and the need ask for them, and Settings adds one.
+    let calls = await openStats(page, '#stats/geo/30', { geo: withCost([]), 'geo-costs-save': { ok: true, items: [{ label: 'Email tool', usd: 30, channel: 'email', from: '2026-10', to: '' }], monthly: { email: 30, social: 0, links: 0, all: 0, total: 30 } } });
+    let geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-needs').first()).toContainText(geoCost.NEEDS);
+    await geo.locator('[data-geo-channel="cost"]').click();
+    await expect(geo.locator('[data-geo-metric] option')).toHaveText(['Missing zones', 'Outreach cost', 'USD per email sent', 'USD per reply', 'USD per positive reply', 'Return on cost']);
+    await geo.locator('[data-geo-metric]').selectOption('costPerReply');
+    await expect(geo.locator('.jv-cost-need')).toContainText('Add monthly outreach costs in Settings to see cost and return.');
+    await expect(geo.locator('[data-panel-id="geo-cost"]')).toContainText(geoCost.NEEDS);
+    await expect(geo.locator('[data-panel-id="geo-heat"] .jv-heat-c')).toHaveCount(168);
+    if (process.env.GEO_SHOTS) await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3283-empty.png` });
+    await geo.locator('.jv-cost-need [data-act="settings"]').click();
+    const box = page.locator('.jv-settings-box [data-geo-costs]');
+    await expect(box).toContainText('No cost yet.');
+    await expect(box.locator('[name="gc-at"]')).toBeFocused();
+    await box.locator('[data-geo-cost="add"]').click();
+    await box.locator('[name="gc-label"]').fill('Email tool');
+    await box.locator('[data-geo-cost="save"]').click();
+    await expect(page.locator('.jv-toast')).toContainText('Email tool: give the USD a month, above 0.');
+    await box.locator('[name="gc-usd"]').fill('30');
+    await box.locator('[name="gc-from"]').fill('2026-10');
+    await box.locator('[data-geo-cost="save"]').click();
+    await expect(page.locator('.jv-toast')).toContainText('Saved 1 monthly cost.');
+    expect(calls.filter((c) => c.op === 'geo-costs-save').map((c) => c.body.items)).toEqual([[{ label: 'Email tool', usd: 30, channel: 'email', from: '2026-10', to: '' }]]);
+    expect(errors).toEqual([]);
+
+    // Costs saved: the scale runs cheapest to costliest, the ranking and the panel follow it, and ranges compare it.
+    await page.close();
+    page = await page.context().newPage();
+    page.on('pageerror', (error) => errors.push(error.message));
+    calls = await openStats(page, '#stats/geo/30', { geo: withCost(ITEMS), 'geo-costs': { ok: true, items: ITEMS, suggestions: [{ label: 'Domain renewals .com (3)', usd: 2.79, channel: 'email', from: '', to: '', source: 'Cloudflare Registrar', why: 'a.com, b.com, c.com: USD 11.17 a year each' }], note: '' },
+      'geo-costs-save': { ok: true, items: ITEMS.slice(0, 2).concat({ label: 'Domain renewals .com (3)', usd: 2.79, channel: 'email', from: '', to: '' }), monthly: { email: 32.79, social: 0, links: 0, all: 15, total: 47.79 } } });
+    geo = page.locator('[data-view="geo"]');
+    await expect(geo.locator('.jv-needs').first()).not.toContainText(geoCost.NEEDS);
+    await geo.locator('[data-geo-channel="cost"]').click();
+    await geo.locator('[data-geo-metric]').selectOption('costPerReply');
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('World map · USD per reply');
+    await expect(geo.locator('.jv-cost-scale')).toContainText('$0.522 cheapest');
+    await expect(geo.locator('.jv-cost-scale')).toContainText('$0.938 costliest');
+    await expect(geo.locator('path[data-geo-cc="AR"]')).toHaveAttribute('fill', 'rgb(61,255,168)');
+    await expect(geo.locator('path[data-geo-cc="US"]')).toHaveAttribute('fill', 'rgb(255,77,141)');
+    await expect(geo.locator('[data-panel-id="geo-map"]')).toContainText('Cost and return over the last 30 days, Oct 10 – Nov 8: $52.72 spent, $8.79 not spread');
+    const rank = geo.locator('[data-panel-id="geo-ranking"] tbody tr');
+    await expect(rank.first()).toContainText('Argentina');
+    await expect(rank.first()).toContainText('$0.522');
+    await expect(rank.last()).toContainText('United States');
+    const panel = geo.locator('[data-panel-id="geo-cost"]');
+    await expect(panel.locator('header')).toContainText('Cost and return · last 30 days');
+    await expect(panel.locator('.jv-cost-kpis')).toContainText('$52.72');
+    await expect(panel.locator('.jv-cost-kpis')).toContainText('0.85×');
+    await expect(panel.locator('tr', { hasText: 'Social' })).toContainText('$8.79 not spread');
+    await expect(panel.locator('.jv-cost-sides ol').first().locator('li').first()).toContainText('Argentina');
+    await expect(panel.locator('.jv-cost-sides ol').last().locator('li').first()).toContainText('United States');
+    if (process.env.GEO_SHOTS) { await geo.locator('[data-panel-id="geo-map"]').screenshot({ path: `${process.env.GEO_SHOTS}/3283-per-reply.png` }); await panel.screenshot({ path: `${process.env.GEO_SHOTS}/3283-panel.png` }); }
+
+    await geo.locator('[data-geo-metric]').selectOption('costPerSent');
+    await expect(geo.locator('.jv-cost-scale')).toContainText('$0.019 in each of 8 countries: email costs are spread by emails sent');
+    await geo.locator('[data-geo-metric]').selectOption('roi');
+    await expect(geo.locator('.jv-cost-scale')).toContainText('1 of 8 pay back · best 2.4×');
+    await expect(geo.locator('path[data-geo-cc="CO"]')).toHaveAttribute('fill', 'rgb(61,255,168)');
+    await expect(rank.first()).toContainText('Colombia');
+
+    await geo.locator('[data-geo-metric]').selectOption('costPerReply');
+    await geo.locator('[data-geo-span="7"]').click();
+    await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('USD per reply · last 7 days');
+    await expect(rank.filter({ hasText: 'Colombia' })).toContainText('▼ −$0.027');
+    await expect(rank.filter({ hasText: 'Colombia' }).locator('.jv-geo-chg')).toHaveClass(/is-up/);
+    await geo.locator('path[data-geo-cc="CO"]').click();
+    const sheet = geo.locator('[data-panel-id="geo-country"] .jv-geo-sheet-cost');
+    await expect(sheet.locator('thead')).toContainText('last 7 days, Nov 2 – Nov 8');
+    await expect(sheet.locator('tr', { hasText: 'USD per reply' })).toContainText('$0.459');
+    await expect(sheet.locator('tr', { hasText: 'USD per reply' })).toContainText('$0.486');
+    await expect(sheet.locator('tr', { hasText: 'Return on cost' })).toContainText('10.39×');
+    if (process.env.GEO_SHOTS) await sheet.screenshot({ path: `${process.env.GEO_SHOTS}/3283-country.png` });
+    await geo.locator('[data-geo-week]').fill('12');
+    await expect(geo.locator('[data-panel-id="geo-cost"] header')).toContainText('Week of Nov 2 – Nov 8');
+
+    // Settings: the saved list, a Cloudflare suggestion to add, and the whole list saved.
+    await page.locator('[data-act="settings"]').first().click();
+    const set = page.locator('.jv-settings-box [data-geo-costs]');
+    await expect(set.locator('[data-gc-row]')).toHaveCount(3);
+    await set.locator('[data-geo-cost="suggest"]').click();
+    await expect(set.locator('.jv-cost-sugg')).toContainText('Domain renewals .com (3)');
+    await set.locator('[data-geo-cost="use"]').click();
+    await expect(set.locator('[data-gc-row]')).toHaveCount(4);
+    await set.locator('[data-geo-cost="remove"][data-i="2"]').click();
+    await set.locator('[data-geo-cost="save"]').click();
+    await expect.poll(() => calls.filter((c) => c.op === 'geo-costs-save').length).toBe(1);
+    expect(calls.find((c) => c.op === 'geo-costs-save').body.items.map((x) => x.label)).toEqual(['Email tool', 'Mailbox seats', 'Domain renewals .com (3)']);
+    expect(calls.find((c) => c.op === 'geo-costs' && c.body.suggest === true)).toBeTruthy();
+    if (process.env.GEO_SHOTS) { await set.screenshot({ path: `${process.env.GEO_SHOTS}/3283-settings.png` }); await page.setViewportSize({ width: 390, height: 844 }); await set.screenshot({ path: `${process.env.GEO_SHOTS}/3283-settings-phone.png` }); }
+    expect(errors).toEqual([]);
+  });
+
   test('Map compares 7, 30 or 90 days with the span before, shades the change and plays the last 13 weeks (#3109)', async ({ page }) => {
     test.setTimeout(90000);
     const errors = [];

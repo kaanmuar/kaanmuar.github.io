@@ -4,8 +4,10 @@
  * assets/jarvis/world.json (scripts/build-world-map.js). The Android app's twin is android/.../ui/Geo.kt.
  * #2988: six light levels, name labels for every lit country and the hover card.
  */
+import * as GeoCost from './admin-jarvis-geo-cost.js?v=3283';
+
 export const CHANNELS = [
-    ['all', 'All'], ['email', 'Cold email'], ['sweep', 'Prospects'], ['social', 'Social'], ['web', 'Visitors']
+    ['all', 'All'], ['email', 'Cold email'], ['sweep', 'Prospects'], ['social', 'Social'], ['web', 'Visitors'], GeoCost.CHANNEL
 ];
 // [key, label, channel, unit]; a rate is a percent, everything else a count.
 export const METRICS = [
@@ -16,7 +18,8 @@ export const METRICS = [
     ['reviewed', 'Reviewed sites', 'sweep', ''], ['score', 'Average site score', 'sweep', ''],
     ['social', 'Social replies', 'social', ''],
     ['clicks', 'Short-link clicks (visitor country)', 'web', ''],
-    ['visitors', 'Site visitors (GA4)', 'web', ''], ['visits', 'Short-link visits', 'web', ''], ['reviews', 'Reviews from links', 'web', ''], ['paid', 'Paid unlocks', 'web', ''], ['usd', 'Revenue (USD)', 'web', '']
+    ['visitors', 'Site visitors (GA4)', 'web', ''], ['visits', 'Short-link visits', 'web', ''], ['reviews', 'Reviews from links', 'web', ''], ['paid', 'Paid unlocks', 'web', ''], ['usd', 'Revenue (USD)', 'web', ''],
+    ...GeoCost.METRICS
 ];
 export const GAPS = {
     'no-prospects-left': ['Out of prospects', '#ff4d8d'], bouncing: ['Bouncing', '#ff8f5a'], 'low-reply': ['Low replies', '#ffb547'],
@@ -55,6 +58,7 @@ const lightIn = (r) => (r && Number.isInteger(r.light) ? r.light : lightOf(r));
 /** A country's number for a metric, or null when it has none (no emails sent has no reply rate). */
 export function value(r, key) {
     if (!r) return null;
+    if (GeoCost.KEYS.has(key)) return GeoCost.value(r, key);
     switch (key) {
         case 'light': return lightIn(r);
         case 'activity': return r.sent + r.prospects + r.social + r.visits + r.visitors + r.reviewed;
@@ -72,7 +76,7 @@ export const labelOf = (key) => metricOf(key)[1];
 /** Days to a date from the Dates ahead score, which is higher the sooner the date (#2989). */
 export const daysOf = (v) => DATES_SPAN + 1 - v;
 const inDays = (d) => (d <= 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`);
-export const show = (v, key) => (v === null || v === undefined ? '—' : key === 'light' ? (LIGHTS[v] || LIGHTS[0])[0] : key === 'dates' ? inDays(daysOf(v))
+export const show = (v, key) => (GeoCost.KEYS.has(key) ? GeoCost.show(v, key) : v === null || v === undefined ? '—' : key === 'light' ? (LIGHTS[v] || LIGHTS[0])[0] : key === 'dates' ? inDays(daysOf(v))
     : (key === 'usd' ? '$' : '') + Number(v).toLocaleString('en-US') + unitOf(key));
 
 // Map labels for the names too long to sit on a country.
@@ -166,6 +170,7 @@ function shade(v, max) {
 
 /** Each country's fill for the metric: the gap colour on Missing zones, the level colour on Light, else a shade of the max. */
 export function fills(rows, key) {
+    if (GeoCost.SCALED.has(key)) return GeoCost.fills(rows, key);
     const out = {};
     if (key === 'gaps') {
         rows.forEach((r) => { if (r.gaps.length) out[r.cc] = GAPS[r.gaps[0]] ? GAPS[r.gaps[0]][1] : '#5d7a8c'; });
@@ -182,6 +187,7 @@ export function fills(rows, key) {
 
 /** The ranking for a metric: countries with a number, highest first. */
 export function ranked(rows, key) {
+    if (GeoCost.KEYS.has(key)) return GeoCost.ranked(rows, key);
     return rows.filter((r) => { const v = value(r, key); return v !== null && v > 0; })
         .sort((a, b) => value(b, key) - value(a, key) || (key === 'light' ? value(b, 'activity') - value(a, 'activity') : 0) || a.cc.localeCompare(b.cc));
 }
@@ -231,6 +237,7 @@ export function mapSvg(world, rows, key, opts, esc) {
 
 /** The legend under the map: the six levels on Light, gap colours on Missing zones, else the scale from 0 to the max. */
 export function legend(rows, key, esc) {
+    if (GeoCost.SCALED.has(key)) return GeoCost.legend(rows, key, esc);
     if (key === 'light') return `<ul class="jv-geo-legend jv-geo-lights">${LIGHTS.map(([name, color, what], n) => `<li class="is-l${n}" title="${esc(what)}"><i style="background:${color}"></i>${esc(name)} · ${rows.filter((r) => lightIn(r) === n).length}</li>`).join('')}</ul>`;
     if (key === 'dates') return `<div class="jv-geo-scale"><span>in ${DATES_SPAN} days</span><i></i><span>today</span><em><b class="is-target"></b>target market, no date in the next ${DATES_SPAN} days · ${rows.filter((r) => value(r, key)).length} with one</em></div>`;
     if (key === 'gaps') return `<ul class="jv-geo-legend">${Object.keys(GAPS).map((k) => `<li><i style="background:${GAPS[k][1]}"></i>${esc(GAPS[k][0])} · ${rows.filter((r) => r.gaps[0] === k).length}</li>`).join('')}</ul>`;
