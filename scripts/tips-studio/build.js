@@ -44,7 +44,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { spawnSync } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 require("../playwright-sandbox");
 const { chromium } = require("playwright");
 const brands = require("./brands");
@@ -348,12 +348,23 @@ function seconds(file) {
   return parseFloat(spawnSync(FFPROBE, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).stdout) || 0;
 }
 
-function speak(voice, text, file) {
+// spawnSync without blocking the event loop, so the frame workers keep drawing while edge-tts and ffmpeg run.
+function exec(cmd, argv) {
+  return new Promise((resolve) => {
+    const child = spawn(cmd, argv);
+    let stderr = "";
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("error", (error) => resolve({ status: null, error, stderr }));
+    child.on("close", (status) => resolve({ status, stderr }));
+  });
+}
+
+async function speak(voice, text, file) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const run = spawnSync(EDGE_TTS, ["--voice", voice.voice, "--rate=+6%", "--pitch=+2Hz", "--text", text, "--write-media", file], { encoding: "utf8" });
+    const run = await exec(EDGE_TTS, ["--voice", voice.voice, "--rate=+6%", "--pitch=+2Hz", "--text", text, "--write-media", file]);
     if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
     if (run.error || /ModuleNotFoundError|No module named/.test(run.stderr)) break;
-    spawnSync("sleep", [String(3 + attempt * 5)]);
+    await new Promise((resolve) => setTimeout(resolve, (3 + attempt * 5) * 1000));
   }
   if (spawnSync(EDGE_TTS, ["--version"]).status !== 0) throw new Error("edge-tts does not run at " + EDGE_TTS + "; install it with: " + TTS_INSTALL);
   throw new Error("voice failed for " + voice.file);
@@ -367,15 +378,26 @@ async function renderStill(page, tip, fmt, index, total, file, ui, cat, extras) 
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
 
-// Each line is voiced first, so every scene knows how long it runs before a frame is drawn.
-function timeline(said, tmp) {
+// Each line is voiced first, so every scene knows how long it runs before a frame is drawn. A clip's lines are voiced
+// VOICE_JOBS at a time, all in the clip's one voice.
+const VOICE_JOBS = 3;
+async function timeline(said, tmp) {
+  const ids = Object.keys(SCENES).filter((id) => id !== "more" || said.lines[id]);
+  const durs = new Array(ids.length).fill(0);
+  let next = 0;
+  await Promise.all(Array.from({ length: VOICE_JOBS }, async () => {
+    while (next < ids.length) {
+      const i = next++;
+      const text = said.lines[ids[i]];
+      if (text) durs[i] = await speak(said.voice, sayAs(said.lang, text), path.join(tmp, ids[i] + ".mp3"));
+    }
+  }));
   const scenes = [];
   let at = 0;
-  for (const id of Object.keys(SCENES)) {
+  for (const [i, id] of ids.entries()) {
     const text = said.lines[id];
-    if (id === "more" && !text) continue;
     const audio = text ? path.join(tmp, id + ".mp3") : null;
-    const voiceDur = text ? speak(said.voice, sayAs(said.lang, text), audio) : 0;
+    const voiceDur = durs[i];
     const lead = id === "hook" ? VOICE_AT : LEAD;
     const dur = Math.max(SCENES[id], text ? lead + voiceDur + TAIL : 0);
     scenes.push({ id, start: at, dur, voiceAt: at + lead, voiceDur, audio });
@@ -396,9 +418,35 @@ async function framePages(browser, page) {
   return Promise.all(pages.map(async (p) => ({ page: p, cdp: await p.context().newCDPSession(p) })));
 }
 
-async function renderClip(workers, tip, index, total, file, cover, said, extras) {
-  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
-  const { scenes, length } = timeline(said, tmp);
+// Clips overlap (#3167): the next clip is voiced while this one's frames are drawn, and this one is encoded while the
+// next one's frames are drawn. One encode at a time, so ffmpeg never starves the frame workers of every core.
+function clipPipeline(workers) {
+  let encoding = Promise.resolve();
+  const voicing = new Map();
+  function voice(said) {
+    if (!voicing.has(said)) {
+      const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "tip-"));
+      const timed = timeline(said, tmp).then((t) => Object.assign(t, { tmp }));
+      timed.catch(() => {});
+      voicing.set(said, timed);
+    }
+    return voicing.get(said);
+  }
+  // after runs once the clip is encoded and heard; next is the said of the clip that follows, voiced ahead.
+  async function render(tip, index, total, file, cover, said, extras, next, after) {
+    const timed = voice(said);
+    if (next) voice(next);
+    const { scenes, length, tmp } = await timed;
+    voicing.delete(said);
+    await drawFrames(workers, tip, index, total, tmp, cover, said, extras, scenes, length);
+    await encoding;
+    encoding = encodeClip(tip, file, tmp, scenes, length).then(after);
+    encoding.catch(() => {});
+  }
+  return { render, done: () => encoding };
+}
+
+async function drawFrames(workers, tip, index, total, tmp, cover, said, extras, scenes, length) {
   const frames = Math.ceil(length * FPS);
   const size = { width: 1080, height: 1920 };
   await Promise.all(workers.map(async ({ page, cdp }, k) => {
@@ -415,20 +463,23 @@ async function renderClip(workers, tip, index, total, file, cover, said, extras)
   // Buffer previews and TikTok's default cover use the first frame, so it shows the finished story card.
   await renderStill(page, said.tip, "story", index, total, cover, said.ui, said.cat, extras);
   fs.copyFileSync(cover, path.join(tmp, "00000.jpg"));
+}
+
+async function encodeClip(tip, file, tmp, scenes, length) {
   // Same bed level, fades and loudness as the launch reels in post-studio.
   const voiced = scenes.filter((s) => s.audio);
   const delay = (s) => Math.round(s.voiceAt * 1000);
-  const run = spawnSync(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%05d.jpg")]
+  const run = await exec(FFMPEG, ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(tmp, "%05d.jpg")]
     .concat(...voiced.map((s) => ["-i", s.audio]), ["-stream_loop", "-1", "-i", BED, "-filter_complex",
     voiced.map((s, i) => "[" + (i + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,adelay=" + delay(s) + "|" + delay(s) + ",apad[v" + i + "];").join("") +
     "[" + (voiced.length + 1) + ":a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.16,afade=t=in:d=1.2,afade=t=out:st=" + (length - 1.6).toFixed(3) + ":d=1.6[ba];" +
     voiced.map((s, i) => "[v" + i + "]").join("") + "[ba]amix=inputs=" + (voiced.length + 1) + ":duration=first:normalize=0,atrim=0:" + length.toFixed(3) +
     ",loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000[a]",
     "-map", "0:v", "-map", "[a]", "-t", length.toFixed(3),
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]), { encoding: "utf8" });
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "128k", file]));
   fs.rmSync(tmp, { recursive: true, force: true });
   if (run.status !== 0) throw new Error("ffmpeg failed for " + tip.id + ": " + run.stderr);
-  const peak = parseFloat((spawnSync(FFMPEG, ["-hide_banner", "-i", file, "-af", "volumedetect", "-vn", "-f", "null", "-"], { encoding: "utf8" }).stderr.match(/max_volume: (-?[\d.]+) dB/) || [])[1]);
+  const peak = parseFloat(((await exec(FFMPEG, ["-hide_banner", "-i", file, "-af", "volumedetect", "-vn", "-f", "null", "-"])).stderr.match(/max_volume: (-?[\d.]+) dB/) || [])[1]);
   if (!(peak > -30)) throw new Error("clip " + tip.id + " is silent (peak " + peak + " dB); never post a muted clip");
 }
 
@@ -479,18 +530,25 @@ function rewriteCaptions(all, networks) {
   if (opts.rotate) {
     const i18n = loadI18n();
     fs.mkdirSync(path.join(OUT, "voiced", "cover"), { recursive: true });
+    const todo = [];
     for (const tip of tips) {
       const index = all.indexOf(tip);
       const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
       const file = path.join(OUT, "voiced", slug + ".mp4");
       if (opts.resume && fs.existsSync(file.replace(/\.mp4$/, ".json"))) continue;
       if (!translated(tip, voiceFor(index, tip).lang, i18n)) { console.log("untranslated", slug); continue; }
-      const said = localize(tip, index, total, i18n);
-      await renderClip(workers, tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said, await extrasFor(tip, browser));
-      fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
-        speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
-      console.log("voiced", slug, said.voice.file);
+      todo.push({ tip, index, slug, file, said: localize(tip, index, total, i18n) });
     }
+    const clips = clipPipeline(workers);
+    for (const [n, { tip, index, slug, file, said }] of todo.entries()) {
+      // The .json marks the clip done for --resume, so it is written only once the clip is encoded and heard.
+      await clips.render(tip, index, total, file, path.join(OUT, "voiced", "cover", slug + ".jpg"), said, await extrasFor(tip, browser), (todo[n + 1] || {}).said, () => {
+        fs.writeFileSync(file.replace(/\.mp4$/, ".json"), JSON.stringify({ slug, lang: said.lang, voice: said.voice.file,
+          speech: said.speech, tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube }, null, 1));
+        console.log("voiced", slug, said.voice.file);
+      });
+    }
+    await clips.done();
     await browser.close();
     return;
   }
@@ -504,16 +562,25 @@ function rewriteCaptions(all, networks) {
     if (run.status !== 0) console.warn("translation failed; untranslated clips speak English");
   }
   const i18n = loadI18n();
-  for (const tip of opts["schedule-only"] ? [] : tips) {
+  const todo = opts["schedule-only"] ? [] : tips;
+  const saids = todo.map((tip) => localize(tip, all.indexOf(tip), total, i18n));
+  const clips = opts["skip-video"] ? null : clipPipeline(workers);
+  const began = Date.now();
+  for (const [n, tip] of todo.entries()) {
     const index = all.indexOf(tip);
     const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
     const ui = tip.lang ? uiFor(tip.lang, i18n) : studio.UI ? uiFor("en", i18n) : {};
     const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
-    const said = localize(tip, index, total, i18n);
-    if (!opts["skip-video"]) await renderClip(workers, tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras);
-    console.log("rendered", slug, said.voice.file);
+    const said = saids[n];
+    const done = () => console.log("rendered", slug, said.voice.file);
+    if (clips) await clips.render(tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras, saids[n + 1], done);
+    else done();
+  }
+  if (clips) {
+    await clips.done();
+    console.log("drew, voiced and encoded", todo.length, "clip(s) in", Math.round((Date.now() - began) / 1000), "s");
   }
   await browser.close();
 
