@@ -7,6 +7,7 @@ const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS,
 const TERMS = require('fs').readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'ab12cd34ef56';
 const ANA = 'a'.repeat(64);
+const HEADERS = fixOffers.packageById('security-headers');
 // Phone screenshots for review: FIX_SHOTS=<dir> npx playwright test tests/qa-review-fix.spec.js
 const SHOTS = process.env.FIX_SHOTS || '';
 
@@ -90,7 +91,7 @@ test.describe('Fix what the report found (#3082)', () => {
     await expect(panel).toBeVisible();
     await expect(panel.locator('.fix-path')).toHaveCount(4);
     await expect(panel.locator('.fix-packs li')).toHaveCount(fixOffers.offersFor(sample.report.insights.findings).length);
-    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$149 · about 3 working days');
+    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.usd + ' · about ' + HEADERS.days + ' working days');
     const call = new URL(await panel.locator('[data-fix-call]').getAttribute('href'), 'https://carlosandmunoz.com/');
     expect(call.searchParams.get('review')).toBe(ID);
     expect(call.searchParams.get('findings')).toMatch(/^F-01,F-02,/);
@@ -104,7 +105,7 @@ test.describe('Fix what the report found (#3082)', () => {
     await expect(sheet.locator('input[value="F-01"]')).toBeChecked();
     await expect(sheet.locator('input[value="F-02"]')).not.toBeChecked();
     await expect(sheet.locator('select[name=package]')).toHaveValue('security-headers');
-    await expect(sheet.locator('.fix-price-note')).toContainText('US$149');
+    await expect(sheet.locator('.fix-price-note')).toContainText('US$' + HEADERS.usd);
     await sheet.locator('select[name=package]').selectOption('');
     await sheet.locator('textarea[name=access]').fill('Cloudflare Pages, repo on GitHub');
     await sheet.locator('input[name=budget]').fill('300 USD');
@@ -123,7 +124,7 @@ test.describe('Fix what the report found (#3082)', () => {
     await expect(sheet.locator('input[name=finding]:checked')).toHaveCount(2);
     await sheet.getByRole('button', { name: 'Send the request' }).click();
     await expect(sheet).toContainText('Request sent');
-    expect(sent[0]).toMatchObject({ kind: 'package', package: 'email-dns', priceUsd: 129 });
+    expect(sent[0]).toMatchObject({ kind: 'package', package: 'email-dns', priceUsd: fixOffers.packageById('email-dns').usd });
   });
 
   test('on a phone the panel and the form fit the screen, in the page language', async ({ page }) => {

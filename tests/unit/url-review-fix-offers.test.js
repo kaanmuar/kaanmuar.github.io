@@ -71,7 +71,7 @@ test("a request keeps only findings the stored report holds, and prices a packag
   const record = fixOffers.requestRecord({ findings: ["f-01", "F-03", "F-99"], package: "security-headers", deadline: "2026-12-01", budget: "  500 USD ", access: "Cloudflare, ask Ana", lang: "de-DE" }, row(), "Ana@Example.com", NOW);
   assert.deepEqual(record.findings.map((f) => f.id), ["F-01", "F-03"]);
   assert.equal(record.findings[0].package, "security-headers");
-  assert.equal(record.priceUsd, 149);
+  assert.equal(record.priceUsd, fixOffers.packageById("security-headers").usd);
   assert.equal(record.kind, "package");
   assert.equal(record.email, "ana@example.com");
   assert.equal(record.lang, "de");
@@ -123,7 +123,7 @@ test("the quote mail goes once per price or pay link on a quoted request", () =>
   assert.equal(fixOffers.quoteMailDue(Object.assign({ quoteMailedAt: "x" }, quoted), quoted), false);
   assert.equal(fixOffers.quoteMailDue(Object.assign({ quoteMailedAt: "x" }, quoted), { status: "quoted", quoteUsd: 260 }), true);
   assert.equal(fixOffers.quoteMailDue(before, { status: "accepted", quoteUsd: 240 }), false);
-  assert.equal(fixOffers.quoteMailDue(before, { status: "quoted", priceUsd: 149 }), true);
+  assert.equal(fixOffers.quoteMailDue(before, { status: "quoted", priceUsd: 99 }), true);
 });
 
 test("open requests come first on the desk, newest first", () => {
@@ -138,7 +138,7 @@ test("open requests come first on the desk, newest first", () => {
 test("the owner mail names the client, site, package, deadline and each finding", () => {
   const record = fixOffers.requestRecord({ findings: ["F-01", "F-14"], package: "security-headers", deadline: "2026-12-01", access: "Cloudflare" }, row(), "ana@example.com", NOW);
   const mail = fixOffers.ownerNotice(record, "https://desk.example/desk");
-  assert.match(mail.subject, /carlosandmunoz\.com · Security headers US\$149/);
+  assert.ok(mail.subject.endsWith("carlosandmunoz.com · Security headers US$" + fixOffers.packageById("security-headers").usd), mail.subject);
   assert.equal(mail.respondUrl, "https://desk.example/desk");
   const values = mail.rows.filter((r) => r.label).map((r) => r.label + "=" + r.value).join("\n");
   assert.match(values, /F-01 · medium=HSTS is not sent/);
@@ -229,7 +229,7 @@ test("a signed-in owner's request is saved, mailed to the desk and confirmed to 
   assert.equal(res.body.email, "ana@example.com");
   const saved = db.data[fixOffers.COLLECTION].get(res.body.id);
   assert.equal(saved.status, "new");
-  assert.equal(saved.priceUsd, 149);
+  assert.equal(saved.priceUsd, fixOffers.packageById("security-headers").usd);
   assert.deepEqual(mailed.map((m) => m[0]), ["owner", "customer"]);
   assert.deepEqual(mailed[1].slice(1), ["ana@example.com", "es", "url-review-fix-request"]);
 });

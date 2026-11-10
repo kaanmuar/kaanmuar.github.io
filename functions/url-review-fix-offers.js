@@ -8,7 +8,7 @@
 const PACKAGES = [
   {
     id: "security-headers",
-    usd: 149,
+    usd: 99,
     days: 3,
     keys: ["sec-hsts", "sec-csp", "sec-frame", "sec-nosniff", "sec-referrer", "sec-permissions", "sec-coop", "sec-isolation", "sec-headers-uneven", "sec-cookies", "sec-mixed", "sec-sri", "sec-version"],
     name: {
@@ -26,7 +26,7 @@ const PACKAGES = [
   },
   {
     id: "email-dns",
-    usd: 129,
+    usd: 89,
     days: 3,
     keys: ["sec-spf", "sec-dmarc", "sec-caa", "sec-mta-sts", "sec-tlsrpt", "sec-bimi", "sec-securitytxt"],
     name: {
@@ -44,7 +44,7 @@ const PACKAGES = [
   },
   {
     id: "tls-redirects",
-    usd: 99,
+    usd: 69,
     days: 2,
     keys: ["sec-http", "sec-tls", "sec-domain-lock", "seo-redirect-chain", "seo-internal-redirects"],
     name: {
@@ -62,7 +62,7 @@ const PACKAGES = [
   },
   {
     id: "accessibility",
-    usd: 249,
+    usd: 169,
     days: 5,
     keys: ["a11y-", "ax-"],
     name: {
@@ -80,7 +80,7 @@ const PACKAGES = [
   },
   {
     id: "performance",
-    usd: 299,
+    usd: 199,
     days: 5,
     keys: ["pf-"],
     name: {
@@ -98,7 +98,7 @@ const PACKAGES = [
   },
   {
     id: "seo-meta",
-    usd: 179,
+    usd: 119,
     days: 4,
     keys: ["seo-title", "seo-description", "seo-duplicate", "seo-canonical", "seo-social", "seo-schema", "seo-favicon", "seo-viewport", "seo-hreflang", "seo-sitemap", "geo-entity", "geo-llms", "geo-dated", "geo-trust"],
     name: {
