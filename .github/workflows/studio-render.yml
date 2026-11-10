@@ -83,6 +83,9 @@ jobs:
       - id: plan
         run: node scripts/studio-render.js plan
 
+  # One job per render (a push that adds several sources or skits plans several). Within a job, scripts/tips-studio/
+  # build.js draws frames on 4 pages and overlaps voicing and encoding with the next clip (#3167). A batch is not split
+  # across jobs: each shard would pay the install again and ask Google's translator for the same strings.
   render:
     needs: plan
     if: needs.plan.outputs.jobs != '[]' && needs.plan.outputs.jobs != ''
@@ -90,7 +93,7 @@ jobs:
     timeout-minutes: 300
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 6
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.jobs) }}
     permissions:
@@ -109,16 +112,45 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Read the cache keys
+        id: keys
+        run: |
+          echo "playwright=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+      # apt-get from the Ubuntu mirror has stalled for 5 to 14 minutes (ci.yml), so the browser and ffmpeg's packages
+      # are cached. The packages follow the runner image, so a new image fetches only the ones that changed.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.keys.outputs.playwright }}
+      - id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/studio-apt
+          key: studio-apt-${{ steps.keys.outputs.image }}
+          restore-keys: studio-apt-
       - name: Install the renderer
-        # sharp writes the social hub thumbnails, as in auto-live-reports.yml.
+        # sharp writes the social hub thumbnails, as in auto-live-reports.yml. No --with-deps: the runner image already
+        # has Chromium's libraries; they are installed only if Chromium does not start.
         run: |
           locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
           npm install --no-save --ignore-scripts playwright@"$(locked playwright)" sharp@"$(locked sharp)"
-          npx playwright install --with-deps chromium
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          npx playwright install chromium
+          node -e "require('playwright').chromium.launch().then((b) => b.close())" || npx playwright install-deps chromium
+          mkdir -p ~/.cache/studio-apt/partial
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq -o Dir::Cache::Archives="$HOME/.cache/studio-apt" -o APT::Keep-Downloaded-Packages=true ffmpeg
+          sudo apt-get autoclean -qq -o Dir::Cache::Archives="$HOME/.cache/studio-apt"
+          sudo rm -rf ~/.cache/studio-apt/partial ~/.cache/studio-apt/lock && sudo chown -R "$USER" ~/.cache/studio-apt
           pip install -q edge-tts
           echo "EDGE_TTS=$(command -v edge-tts)" >> "$GITHUB_ENV"
           gh release download studio-assets -p bed.wav -D media/url-review-demos
+      # Saved now rather than at the end, so a render that fails still leaves the packages for the next one.
+      - if: steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/studio-apt
+          key: studio-apt-${{ steps.keys.outputs.image }}
       - name: Render
         run: node scripts/studio-render.js render "$JOB"
       - name: Deliver for review
