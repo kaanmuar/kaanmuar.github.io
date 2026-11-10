@@ -227,6 +227,312 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Is your site on a blocklist?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/01-new-checks-en.html</link>
+      <guid isPermaLink="false">release-2026-11/01-new-checks-en</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Every review now checks the site, and every script, iframe and form host it loads, against Google Safe Browsing and the Cloudflare URL Scanner, plus spam blocklists, signs of a hack, lookalike domains and WordPress vulnerabilities.
+
+Try this: Run a review and read the Security findings first.
+
+Review your site: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-en
+
+#WebSecurity #CyberSecurity #Ransomware #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/01-new-checks-en.jpg" length="230775" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/01-new-checks-en.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>¿Tu sitio está en una lista negra?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/02-new-checks-es.html</link>
+      <guid isPermaLink="false">release-2026-11/02-new-checks-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Cada revisión ahora comprueba el sitio, y cada host de scripts, iframes y formularios que carga, en Google Safe Browsing y el Cloudflare URL Scanner, además de listas negras de spam, señales de hackeo, dominios imitadores y vulnerabilidades de WordPress.
+
+Pruébalo: Haz una revisión y lee primero los hallazgos de seguridad.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-es
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/02-new-checks-es.jpg" length="244679" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/02-new-checks-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Seu site está numa lista de bloqueio?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/03-new-checks-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/03-new-checks-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Toda revisão agora verifica o site, e cada host de scripts, iframes e formulários que ele carrega, no Google Safe Browsing e no Cloudflare URL Scanner, além de listas de bloqueio de spam, sinais de invasão, domínios imitadores e vulnerabilidades do WordPress.
+
+Experimente: Faça uma revisão e leia primeiro os achados de segurança.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-pt
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/03-new-checks-pt.jpg" length="251172" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/03-new-checks-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Steht Ihre Website auf einer Blockliste?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/04-new-checks-de.html</link>
+      <guid isPermaLink="false">release-2026-11/04-new-checks-de</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Jede Prüfung gleicht jetzt die Website und jeden geladenen Script-, iframe- und Formular-Host mit Google Safe Browsing und dem Cloudflare URL Scanner ab, dazu Spam-Blocklisten, Hinweise auf einen Hack, Doppelgänger-Domains und WordPress-Schwachstellen.
+
+Probieren Sie es aus: Starten Sie eine Prüfung und lesen Sie zuerst die Sicherheitsbefunde.
+
+Website prüfen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-de
+
+#WebSecurity #CyberSecurity #Ransomware #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/04-new-checks-de.jpg" length="254422" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/04-new-checks-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Votre site est-il sur une liste noire ?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/05-new-checks-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/05-new-checks-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Chaque revue vérifie désormais le site, et chaque hôte de scripts, d'iframes et de formulaires qu'il charge, auprès de Google Safe Browsing et du Cloudflare URL Scanner, ainsi que les listes noires de spam, les signes de piratage, les domaines sosies et les vulnérabilités WordPress.
+
+Essayez: Lancez une revue et lisez d'abord les constats de sécurité.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-fr
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/05-new-checks-fr.jpg" length="249209" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/05-new-checks-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Il tuo sito è in una blocklist?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/06-new-checks-it.html</link>
+      <guid isPermaLink="false">release-2026-11/06-new-checks-it</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Ogni revisione ora controlla il sito, e ogni host di script, iframe e moduli che carica, con Google Safe Browsing e il Cloudflare URL Scanner, oltre a blocklist antispam, segni di violazione, domini sosia e vulnerabilità di WordPress.
+
+Prova: Avvia una revisione e leggi per primi i risultati sulla sicurezza.
+
+Revisiona il tuo sito: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-it
+
+#WebSecurity #DevOps #Automation #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/06-new-checks-it.jpg" length="231503" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/06-new-checks-it.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Found a problem? Get it fixed.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/07-get-it-fixed-en.html</link>
+      <guid isPermaLink="false">release-2026-11/07-get-it-fixed-en</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Every report now ends with four ways to fix what it found: do it yourself with Ask the report, ask for a quote, pick a fixed-price package, or book a 30-minute call.
+
+Try this: Packages start at US$69 and end with a free re-review.
+
+Review your site: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-en
+
+#WebDev #NodeJS #OpenSource #QA #SmallBusiness #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/07-get-it-fixed-en.jpg" length="216284" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/07-get-it-fixed-en.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>¿Encontraste un problema? Haz que lo arreglen.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/08-get-it-fixed-es.html</link>
+      <guid isPermaLink="false">release-2026-11/08-get-it-fixed-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Cada informe ahora termina con cuatro formas de arreglar lo que encontró: hazlo tú con Pregúntale al informe, pide una cotización, elige un paquete de precio fijo o agenda una llamada de 30 minutos.
+
+Pruébalo: Los paquetes cuestan desde US$69 y terminan con una nueva revisión gratis.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-es
+
+#WebDev #NodeJS #QA #SmallBusiness #PruebasDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/08-get-it-fixed-es.jpg" length="246205" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/08-get-it-fixed-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Achou um problema? Peça a correção.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/09-get-it-fixed-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/09-get-it-fixed-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Todo relatório agora termina com quatro formas de corrigir o que encontrou: faça você mesmo com Pergunte ao relatório, peça um orçamento, escolha um pacote de preço fixo ou agende uma conversa de 30 minutos.
+
+Experimente: Os pacotes custam a partir de US$69 e terminam com uma nova revisão grátis.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-pt
+
+#WebDev #NodeJS #QA #SmallBusiness #TesteDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/09-get-it-fixed-pt.jpg" length="242490" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/09-get-it-fixed-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Problem gefunden? Lassen Sie es beheben.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/10-get-it-fixed-de.html</link>
+      <guid isPermaLink="false">release-2026-11/10-get-it-fixed-de</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Jeder Bericht endet jetzt mit vier Wegen zur Behebung: selbst mit Den Bericht fragen, per Angebot, mit einem Paket zum Festpreis oder in einem 30-Minuten-Gespräch.
+
+Probieren Sie es aus: Pakete ab US$69, danach eine kostenlose Nachprüfung.
+
+Website prüfen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-de
+
+#WebDev #NodeJS #OpenSource #QA #SmallBusiness #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/10-get-it-fixed-de.jpg" length="238103" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/10-get-it-fixed-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Un problème trouvé ? Faites-le corriger.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/11-get-it-fixed-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/11-get-it-fixed-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Chaque rapport se termine désormais par quatre façons de corriger ce qu'il a trouvé : vous-même avec Interroger le rapport, sur devis, avec un forfait à prix fixe ou lors d'un appel de 30 minutes.
+
+Essayez: Les forfaits commencent à US$69 et se terminent par une nouvelle revue gratuite.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-fr
+
+#WebDev #NodeJS #QA #SmallBusiness #TestLogiciel #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/11-get-it-fixed-fr.jpg" length="239501" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/11-get-it-fixed-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Trovato un problema? Fallo correggere.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/12-get-it-fixed-it.html</link>
+      <guid isPermaLink="false">release-2026-11/12-get-it-fixed-it</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Ogni report ora si chiude con quattro modi per correggere ciò che ha trovato: da solo con Chiedi al report, con un preventivo, con un pacchetto a prezzo fisso o con una chiamata di 30 minuti.
+
+Prova: I pacchetti partono da US$69 e finiscono con una nuova revisione gratuita.
+
+Revisiona il tuo sito: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-it
+
+#WebDev #Programming #QA #SmallBusiness #TestSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/12-get-it-fixed-it.jpg" length="231581" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/12-get-it-fixed-it.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Review blocked? We keep trying.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/13-we-keep-trying-en.html</link>
+      <guid isPermaLink="false">release-2026-11/13-we-keep-trying-en</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>When a site blocks the review, we find out why and retry with the method that fits, as a last resort in a real browser. If we can't finish right away, the full report reaches your inbox as soon as it's ready.
+
+Try this: Run a review: if it can't finish, you also get 20% off your next one.
+
+Review your site: https://carlosandmunoz.com/qa-review.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-en
+
+#QA #OpenSource #Programming #WebDev #Cloudflare #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/13-we-keep-trying-en.jpg" length="212579" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/13-we-keep-trying-en.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>¿Revisión bloqueada? Seguimos intentando.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/14-we-keep-trying-es.html</link>
+      <guid isPermaLink="false">release-2026-11/14-we-keep-trying-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Cuando un sitio bloquea la revisión, averiguamos por qué y reintentamos con el método adecuado, como último recurso en un navegador real. Si no podemos terminar enseguida, el informe completo llega a tu correo en cuanto esté listo.
+
+Pruébalo: Haz una revisión: si no puede terminar, también recibes 20% de descuento en la siguiente.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-es
+
+#QA #Programming #WebDev #Cloudflare #PruebasDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/14-we-keep-trying-es.jpg" length="240265" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/14-we-keep-trying-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisão bloqueada? Seguimos tentando.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/15-we-keep-trying-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/15-we-keep-trying-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Quando um site bloqueia a revisão, descobrimos o motivo e tentamos de novo com o método certo, em último caso num navegador real. Se não der para terminar na hora, o relatório completo chega ao seu e-mail assim que estiver pronto.
+
+Experimente: Faça uma revisão: se ela não puder terminar, você também ganha 20% de desconto na próxima.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-pt
+
+#QA #Programming #WebDev #Cloudflare #TesteDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/15-we-keep-trying-pt.jpg" length="236045" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/15-we-keep-trying-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Prüfung blockiert? Wir bleiben dran.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/16-we-keep-trying-de.html</link>
+      <guid isPermaLink="false">release-2026-11/16-we-keep-trying-de</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Blockiert eine Website die Prüfung, finden wir den Grund und versuchen es mit der passenden Methode erneut, zuletzt in einem echten Browser. Lässt sie sich nicht sofort abschließen, kommt der vollständige Bericht per E-Mail, sobald er fertig ist.
+
+Probieren Sie es aus: Starten Sie eine Prüfung: Wird sie nicht fertig, erhalten Sie zudem 20 % Rabatt auf die nächste.
+
+Website prüfen: https://carlosandmunoz.com/qa-review-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-de
+
+#QA #OpenSource #Programming #WebDev #Cloudflare #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/16-we-keep-trying-de.jpg" length="233890" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/16-we-keep-trying-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revue bloquée ? Nous insistons.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/17-we-keep-trying-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/17-we-keep-trying-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Quand un site bloque la revue, nous cherchons pourquoi et réessayons avec la bonne méthode, en dernier recours dans un vrai navigateur. Si elle ne peut pas aboutir tout de suite, le rapport complet arrive dans votre boîte mail dès qu'il est prêt.
+
+Essayez: Lancez une revue : si elle ne peut pas aboutir, vous avez aussi 20 % de réduction sur la suivante.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-fr
+
+#QA #Programming #WebDev #Cloudflare #TestLogiciel #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/17-we-keep-trying-fr.jpg" length="231025" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/17-we-keep-trying-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisione bloccata? Continuiamo a provare.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/18-we-keep-trying-it.html</link>
+      <guid isPermaLink="false">release-2026-11/18-we-keep-trying-it</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>News</category>
+      <category>News</category>
+      <description>Quando un sito blocca la revisione, scopriamo perché e riproviamo con il metodo giusto, come ultima risorsa in un vero browser. Se non si può finire subito, il report completo arriva nella tua email appena è pronto.
+
+Prova: Avvia una revisione: se non può finire, ricevi anche il 20% di sconto sulla prossima.
+
+Revisiona il tuo sito: https://carlosandmunoz.com/qa-review-it.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-it
+
+#QA #WebDev #NodeJS #Cloudflare #TestSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/18-we-keep-trying-it.jpg" length="228549" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/18-we-keep-trying-it.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Wikipedia leaves the snippet to search.</title>
       <link>https://carlosandmunoz.com/social/runs-100/01-wikipedia.html</link>
       <guid isPermaLink="false">runs-100/01-wikipedia</guid>
@@ -612,318 +918,6 @@ Via DEV, by CurlShot, 2026-11-07.
 
 https://dev.to/curlshot/playwright-fullpage-screenshots-return-one-viewport-when-the-page-scrolls-inside-a-container-2nm5</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F50as02zc960eyijh1sg5.png" medium="image"/>
-    </item>
-    <item>
-      <title>rankmyseo/skills: Agent skills for SEO: plan, build, publish, and maintain a website with RankMySEO, Search Console, and GA4.</title>
-      <link>https://carlosandmunoz.com/social/pick/rankmyseo-skills-agent-skills-for-seo-plan-build-publish-and.html</link>
-      <guid isPermaLink="false">pick/rankmyseo-skills-agent-skills-for-seo-plan-build-publish-and</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Agent skills for SEO: plan, build, publish, and maintain a website with RankMySEO, Search Console, and GA4.
-
-Via GitHub, by rankmyseo, 2026-10-23.
-
-https://github.com/rankmyseo/skills</description>
-      <media:content url="https://opengraph.githubassets.com/1/rankmyseo/skills" medium="image"/>
-    </item>
-    <item>
-      <title>Semantic HTML &amp; Accessibility: what I learned and fixed</title>
-      <link>https://carlosandmunoz.com/social/pick/semantic-html-accessibility-what-i-learned-and-fixed.html</link>
-      <guid isPermaLink="false">pick/semantic-html-accessibility-what-i-learned-and-fixed</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Introduction When I started learning web development through the IYF Season 12 programme, I learned...
-
-Via DEV, by Jaja juliana, 2026-11-07.
-
-https://dev.to/magdalenewanyeki/semantic-html-accessibility-what-i-learned-and-fixed-5ln</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flu1rkab6g8uvvuiuc5ev.png" medium="image"/>
-    </item>
-    <item>
-      <title>SEO Split Testing In 2027: How To Prove A Change Actually Worked</title>
-      <link>https://carlosandmunoz.com/social/pick/seo-split-testing-in-2027-how-to-prove-a-change-actually-wor.html</link>
-      <guid isPermaLink="false">pick/seo-split-testing-in-2027-how-to-prove-a-change-actually-wor</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Separate real SEO gains from Google's shifts with fair controls, clear decision rules, and results stakeholders can tie to revenue. The post SEO Split Testing In 2027: How To Prove A Change Actually Worked appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Sophie Brannon, 2026-11-09.
-
-https://www.searchenginejournal.com/seo-split-testing-prove-change-worked/594529/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/split-testing-685.png" medium="image"/>
-    </item>
-    <item>
-      <title>Snorlark/plop-ui: PlopUI: hand-drawn React UI kit, imperfect on purpose. Wobbly stickers, washi tape and a hand-lettered font, accessible to WCAG AA.</title>
-      <link>https://carlosandmunoz.com/social/pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on.html</link>
-      <guid isPermaLink="false">pick/snorlark-plop-ui-plopui-hand-drawn-react-ui-kit-imperfect-on</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>PlopUI: hand-drawn React UI kit, imperfect on purpose. Wobbly stickers, washi tape and a hand-lettered font, accessible to WCAG AA.
-
-Via GitHub, by Snorlark, 2026-10-21.
-
-https://github.com/Snorlark/plop-ui</description>
-      <media:content url="https://opengraph.githubassets.com/1/Snorlark/plop-ui" medium="image"/>
-    </item>
-    <item>
-      <title>The Link Building Graveyard: What To Bury &amp; What Still Wins via @sejournal, @hethr_campbell</title>
-      <link>https://carlosandmunoz.com/social/pick/the-link-building-graveyard-what-to-bury-what-still-wins-via.html</link>
-      <guid isPermaLink="false">pick/the-link-building-graveyard-what-to-bury-what-still-wins-via</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Resolve's Michael Johnson outlined a keep-or-cut approach to link building, from qualifying publishers and earning roundup placements to creating linkable assets and a 90-day execution plan. The post The Link Building Graveyard: What To Bury &amp; What Still Wins appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Heather Campbell, 2026-10-30.
-
-https://www.searchenginejournal.com/the-link-building-graveyard-what-to-bury-what-still-wins-recap/593932/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/resolve-link-building-graveyard-on-demand-sej.png" medium="image"/>
-    </item>
-    <item>
-      <title>The New Organic Growth Stack: Search, Social, Communities &amp; AI</title>
-      <link>https://carlosandmunoz.com/social/pick/the-new-organic-growth-stack-search-social-communities-ai.html</link>
-      <guid isPermaLink="false">pick/the-new-organic-growth-stack-search-social-communities-ai</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Build an organic growth stack around the sources Google's AI answers and standalone chatbots cite most in your category. The post The New Organic Growth Stack: Search, Social, Communities &amp; AI appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Ross Simmonds, 2026-11-09.
-
-https://www.searchenginejournal.com/new-organic-growth-stack-search-social-communities-ai/594542/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/growth-stack-195.png" medium="image"/>
-    </item>
-    <item>
-      <title>The New York Times v. Brave Puts AI Search Indexing Under Scrutiny</title>
-      <link>https://carlosandmunoz.com/social/pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr.html</link>
-      <guid isPermaLink="false">pick/the-new-york-times-v-brave-puts-ai-search-indexing-under-scr</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>The New York Times Co. has filed a copyright complaint against Brave Software that places a growing...
-
-Via DEV, by Ali Farhat, 2026-11-09.
-
-https://blog.geosearchleads.com/brave-ai-search-index-publisher-implications/</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fbrave-ai-search-index-publisher-implications.webp" medium="image"/>
-    </item>
-    <item>
-      <title>Tripadvisor Says SEO Will Still Weigh On Growth In 2027 via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via-.html</link>
-      <guid isPermaLink="false">pick/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027-via-</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Tripadvisor tied a writedown largely to search changes, expects SEO to weigh on growth next year, and says marketing takes more of its revenue. The post Tripadvisor Says SEO Will Still Weigh On Growth In 2027 appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-08.
-
-https://www.searchenginejournal.com/tripadvisor-says-seo-will-still-weigh-on-growth-in-2027/596257/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/tripadvisor-featured-1600x840-1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Bancolombia's site won't let you zoom.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/08-bancolombia.html</link>
-      <guid isPermaLink="false">runs-2026-10/08-bancolombia</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Language versions link to each other, share cards are complete, and pages read without JavaScript. But the viewport sets maximum-scale=1, which blocks pinch-zoom on many phones for people who need larger text.
-
-The lesson for every team: Drop maximum-scale and user-scalable=no from your viewport tag. Zoom is how many people read.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=bancolombia
-
-#Accessibility #A11y #MobileUX #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" length="249919" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The UN home page never says its language.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/09-un.html</link>
-      <guid isPermaLink="false">runs-2026-10/09-un</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Links answer, campaign tags survive redirects, and AI answer crawlers are welcome. But the start page's &lt;html&gt; tag has no lang, so screen readers guess the voice and browsers guess the translation.
-
-The lesson for every team: Put lang on the html tag of every language version: lang=&quot;en&quot;, lang=&quot;fr&quot;, lang=&quot;ar&quot;. One attribute per page.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=un
-
-#Accessibility #i18n #A11y #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" length="248627" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>3 natural competitors. halloweencostumes.com leads: 75.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>looksharpstore.co.nz leads in SEO, Security; yellow.co.nz leads in GEO; halloweencostumes.com leads in Analytics, Accessibility, Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 27 Oct 2026 of looksharpstore.co.nz, halloweencostumes.com, yellow.co.nz, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-looksharpstore-co-nz&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-looksharpstore-co-nz
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #WebPerf #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" length="266361" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>mercadolibre.com.ec: 44. The gap: page titles.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-02/06-u-mercadolibre-com-ec.html</link>
-      <guid isPermaLink="false">auto-2026-11-02/06-u-mercadolibre-com-ec</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 2 pages have no title.
-
-The lesson for every team: Give every page a unique title of about 60 characters: the page first, the site second.
-
-One automated analysis of public pages on 28 Oct 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-ec&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-mercadolibre-com-ec
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #AI #QA #Titles #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/06-u-mercadolibre-com-ec.jpg" length="232188" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/06-u-mercadolibre-com-ec.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>hneu.edu.ua: 52. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-03/05-u-hneu-edu-ua.html</link>
-      <guid isPermaLink="false">auto-2026-11-03/05-u-hneu-edu-ua</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 40 form controls have no label.
-
-The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 2 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-hneu-edu-ua&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-hneu-edu-ua
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #Playwright #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg" length="232532" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>movinglake.com: 73. The gap: text contrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/04-u-movinglake-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/04-u-movinglake-com</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
-
-The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
-
-One automated analysis of public pages on 3 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-movinglake-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-movinglake-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" length="238262" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>beau.to: 70. The gap: broken links.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/03-u-beau-to.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/03-u-beau-to</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 2 internal links lead to an error.
-
-The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
-
-One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-beau-to&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-beau-to
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" length="225482" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uacm.edu.mx: 56. The gap: the sitemap host.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/07-u-uacm-edu-mx.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/07-u-uacm-edu-mx</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 3823 sitemap URLs point at another host or scheme.
-
-The lesson for every team: Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uacm-edu-mx
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab
-
-https://www.youtube.com/shorts/bfF-x2kuDpE</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" length="240044" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>get-moment.com: 73. The gap: canonicals.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/13-u-get-moment-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/13-u-get-moment-com</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 16 pages name another URL as canonical.
-
-The lesson for every team: Point each page's canonical at itself, unless it really is a copy of another page.
-
-One automated analysis of public pages on 5 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-get-moment-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-get-moment-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #CSS #Programming #QA #Canonical #QAlab
-
-https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ruvo.com: 79. The gap: the CSP.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/02-u-ruvo-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/02-u-ruvo-com</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But no content security policy.
-
-The lesson for every team: Tighten the content security policy one directive at a time, starting from default-src 'self'.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ruvo-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SRE #QA #CSP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" length="225125" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

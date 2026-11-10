@@ -227,6 +227,57 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>¿Tu sitio está en una lista negra?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/02-new-checks-es.html</link>
+      <guid isPermaLink="false">release-2026-11/02-new-checks-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Noticia</category>
+      <category>News</category>
+      <description>Cada revisión ahora comprueba el sitio, y cada host de scripts, iframes y formularios que carga, en Google Safe Browsing y el Cloudflare URL Scanner, además de listas negras de spam, señales de hackeo, dominios imitadores y vulnerabilidades de WordPress.
+
+Pruébalo: Haz una revisión y lee primero los hallazgos de seguridad.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-es
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/02-new-checks-es.jpg" length="244679" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/02-new-checks-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>¿Encontraste un problema? Haz que lo arreglen.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/08-get-it-fixed-es.html</link>
+      <guid isPermaLink="false">release-2026-11/08-get-it-fixed-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Noticia</category>
+      <category>News</category>
+      <description>Cada informe ahora termina con cuatro formas de arreglar lo que encontró: hazlo tú con Pregúntale al informe, pide una cotización, elige un paquete de precio fijo o agenda una llamada de 30 minutos.
+
+Pruébalo: Los paquetes cuestan desde US$69 y terminan con una nueva revisión gratis.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-es
+
+#WebDev #NodeJS #QA #SmallBusiness #PruebasDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/08-get-it-fixed-es.jpg" length="246205" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/08-get-it-fixed-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>¿Revisión bloqueada? Seguimos intentando.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/14-we-keep-trying-es.html</link>
+      <guid isPermaLink="false">release-2026-11/14-we-keep-trying-es</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Noticia</category>
+      <category>News</category>
+      <description>Cuando un sitio bloquea la revisión, averiguamos por qué y reintentamos con el método adecuado, como último recurso en un navegador real. Si no podemos terminar enseguida, el informe completo llega a tu correo en cuanto esté listo.
+
+Pruébalo: Haz una revisión: si no puede terminar, también recibes 20% de descuento en la siguiente.
+
+Revisa tu sitio: https://carlosandmunoz.com/qa-review-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-es
+
+#QA #Programming #WebDev #Cloudflare #PruebasDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/14-we-keep-trying-es.jpg" length="240265" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/14-we-keep-trying-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Wikipedia deja el fragmento al buscador.</title>
       <link>https://carlosandmunoz.com/social/runs-100/01-wikipedia-es.html</link>
       <guid isPermaLink="false">runs-100/01-wikipedia-es</guid>
@@ -860,70 +911,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" length="225482" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uacm.edu.mx: 56. La brecha: el host del mapa del sitio.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/07-u-uacm-edu-mx-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/07-u-uacm-edu-mx-es</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 3823 las URL del mapa del sitio apuntan a otro host o esquema.
-
-La lección para cualquier equipo: Publique sitemap.xml desde el mismo host que las páginas que enumera y asígnele el nombre robots.txt.
-
-Un análisis automatizado de páginas públicas el 5 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uacm-edu-mx
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab
-
-https://www.youtube.com/shorts/bfF-x2kuDpE</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" length="240044" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>get-moment.com: 73. La brecha: canónicos.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/13-u-get-moment-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/13-u-get-moment-com-es</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>National</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 16 las páginas nombran otra URL como canónica.
-
-La lección para cualquier equipo: Apunte el canonical de cada página hacia sí mismo, a menos que realmente sea una copia de otra página.
-
-Un análisis automatizado de páginas públicas el 5 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-get-moment-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-get-moment-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#SEO #CSS #Programming #QA #Canonical #QAlab
-
-https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ruvo.com: 79. La brecha: el CSP.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/02-u-ruvo-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/02-u-ruvo-com-es</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no hay política de seguridad de contenidos.
-
-La lección para cualquier equipo: Ajuste la política de seguridad de contenido una directiva a la vez, comenzando por default-src 'self'.
-
-Un análisis automatizado de páginas públicas el 5 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ruvo-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SRE #QA #CSP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" length="225125" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/02-u-ruvo-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

@@ -227,6 +227,57 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Seu site está numa lista de bloqueio?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/03-new-checks-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/03-new-checks-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Notícia</category>
+      <category>News</category>
+      <description>Toda revisão agora verifica o site, e cada host de scripts, iframes e formulários que ele carrega, no Google Safe Browsing e no Cloudflare URL Scanner, além de listas de bloqueio de spam, sinais de invasão, domínios imitadores e vulnerabilidades do WordPress.
+
+Experimente: Faça uma revisão e leia primeiro os achados de segurança.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-pt
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/03-new-checks-pt.jpg" length="251172" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/03-new-checks-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Achou um problema? Peça a correção.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/09-get-it-fixed-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/09-get-it-fixed-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Notícia</category>
+      <category>News</category>
+      <description>Todo relatório agora termina com quatro formas de corrigir o que encontrou: faça você mesmo com Pergunte ao relatório, peça um orçamento, escolha um pacote de preço fixo ou agende uma conversa de 30 minutos.
+
+Experimente: Os pacotes custam a partir de US$69 e terminam com uma nova revisão grátis.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-pt
+
+#WebDev #NodeJS #QA #SmallBusiness #TesteDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/09-get-it-fixed-pt.jpg" length="242490" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/09-get-it-fixed-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisão bloqueada? Seguimos tentando.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/15-we-keep-trying-pt.html</link>
+      <guid isPermaLink="false">release-2026-11/15-we-keep-trying-pt</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Notícia</category>
+      <category>News</category>
+      <description>Quando um site bloqueia a revisão, descobrimos o motivo e tentamos de novo com o método certo, em último caso num navegador real. Se não der para terminar na hora, o relatório completo chega ao seu e-mail assim que estiver pronto.
+
+Experimente: Faça uma revisão: se ela não puder terminar, você também ganha 20% de desconto na próxima.
+
+Revise seu site: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-pt
+
+#QA #Programming #WebDev #Cloudflare #TesteDeSoftware #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/15-we-keep-trying-pt.jpg" length="236045" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/15-we-keep-trying-pt.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>A Wikipedia deixa o snippet para a busca.</title>
       <link>https://carlosandmunoz.com/social/runs-100/01-wikipedia-pt.html</link>
       <guid isPermaLink="false">runs-100/01-wikipedia-pt</guid>
@@ -941,65 +992,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/ciyeTN8dzNY</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" length="231912" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>skydropx.com: 56. A lacuna: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/02-u-skydropx-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/02-u-skydropx-com-pt</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas o HSTS não é enviado.
-
-A lição para toda equipe: Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.
-
-Uma análise automatizada de páginas públicas em 4 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-skydropx-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-skydropx-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg" length="228601" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>usehelios.ai: 75. A lacuna: o host do mapa do site.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/01-u-usehelios-ai-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/01-u-usehelios-ai-pt</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os URLs do mapa do site 31 apontam para outro host ou esquema.
-
-A lição para toda equipe: Sirva sitemap.xml do mesmo host das páginas listadas e nomeie-o em robots.txt.
-
-Uma análise automatizada de páginas públicas em 5 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-usehelios-ai&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-usehelios-ai
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #SoftwareTesting #QA #Sitemap #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" length="242457" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>hreflang: a página certa para cada idioma.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/03-hreflang-pt.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/03-hreflang-pt</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glossário</category>
-      <category>SEO</category>
-      <description>Palavra do dia: hreflang, a página certa para cada idioma.
-
-Um atributo que diz aos buscadores para qual idioma ou região é cada versão de uma página, para que quem fala espanhol chegue à página em espanhol.
-
-Confira: Abra uma página traduzida e confira se ela aponta para todas as versões de idioma, inclusive ela mesma. O Google ignora links sem retorno.
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=hreflang
-
-#SEO #DevOps #Playwright #QA #hreflang #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg" length="241498" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/03-hreflang.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

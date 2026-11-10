@@ -227,6 +227,57 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Votre site est-il sur une liste noire ?</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/05-new-checks-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/05-new-checks-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Actualité</category>
+      <category>News</category>
+      <description>Chaque revue vérifie désormais le site, et chaque hôte de scripts, d'iframes et de formulaires qu'il charge, auprès de Google Safe Browsing et du Cloudflare URL Scanner, ainsi que les listes noires de spam, les signes de piratage, les domaines sosies et les vulnérabilités WordPress.
+
+Essayez: Lancez une revue et lisez d'abord les constats de sécurité.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=new-checks-fr
+
+#WebSecurity #Ransomware #DevOps #QA #Phishing #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/05-new-checks-fr.jpg" length="249209" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/05-new-checks-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Un problème trouvé ? Faites-le corriger.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/11-get-it-fixed-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/11-get-it-fixed-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Actualité</category>
+      <category>News</category>
+      <description>Chaque rapport se termine désormais par quatre façons de corriger ce qu'il a trouvé : vous-même avec Interroger le rapport, sur devis, avec un forfait à prix fixe ou lors d'un appel de 30 minutes.
+
+Essayez: Les forfaits commencent à US$69 et se terminent par une nouvelle revue gratuite.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=get-it-fixed-fr
+
+#WebDev #NodeJS #QA #SmallBusiness #TestLogiciel #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/11-get-it-fixed-fr.jpg" length="239501" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/11-get-it-fixed-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revue bloquée ? Nous insistons.</title>
+      <link>https://carlosandmunoz.com/social/release-2026-11/17-we-keep-trying-fr.html</link>
+      <guid isPermaLink="false">release-2026-11/17-we-keep-trying-fr</guid>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Actualité</category>
+      <category>News</category>
+      <description>Quand un site bloque la revue, nous cherchons pourquoi et réessayons avec la bonne méthode, en dernier recours dans un vrai navigateur. Si elle ne peut pas aboutir tout de suite, le rapport complet arrive dans votre boîte mail dès qu'il est prêt.
+
+Essayez: Lancez une revue : si elle ne peut pas aboutir, vous avez aussi 20 % de réduction sur la suivante.
+
+Revoir votre site: https://carlosandmunoz.com/qa-review-fr.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=release-2026-11&amp;utm_content=we-keep-trying-fr
+
+#QA #Programming #WebDev #Cloudflare #TestLogiciel #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/17-we-keep-trying-fr.jpg" length="231025" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/release-2026-11/feed/17-we-keep-trying-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Wikipédia laisse les moteurs écrire l’extrait.</title>
       <link>https://carlosandmunoz.com/social/runs-100/01-wikipedia-fr.html</link>
       <guid isPermaLink="false">runs-100/01-wikipedia-fr</guid>
@@ -936,68 +987,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #QA #Forms #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/03-u-tributi-com.jpg" length="233961" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/03-u-tributi-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ciqa.edu.mx: 47. Le point faible : la redirection https.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/14-u-ciqa-edu-mx-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/14-u-ciqa-edu-mx-fr</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais le http simple sert le site sans rediriger.
-
-La leçon pour chaque équipe : Redirigez chaque requête http vers https avec un 301 permanent, puis ajoutez HSTS.
-
-Une analyse automatisée des pages publiques le 4 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-ciqa-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ciqa-edu-mx
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SoftwareTesting #QA #HTTPS #QAlab
-
-https://www.youtube.com/shorts/ciyeTN8dzNY</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" length="231912" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/14-u-ciqa-edu-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>skydropx.com: 56. Le point faible : HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/02-u-skydropx-com-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/02-u-skydropx-com-fr</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais HSTS n’est pas envoyé.
-
-La leçon pour chaque équipe : Envoyez Strict-Transport-Security avec un max-age d’au moins un an, pour que les navigateurs ne retentent jamais le http simple.
-
-Une analyse automatisée des pages publiques le 4 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-skydropx-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-skydropx-com
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg" length="228601" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>usehelios.ai: 75. La lacune : l’hébergeur du plan du site.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/01-u-usehelios-ai-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/01-u-usehelios-ai-fr</guid>
-      <pubDate>Sat, 07 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 31 les URL du plan de site pointent vers un autre hôte ou un autre système.
-
-La leçon pour chaque équipe : Servez sitemap.xml du même hôte que les pages qu'il répertorie et nommez-le en robots.txt.
-
-Une analyse automatisée des pages publiques le 5 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-usehelios-ai&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-usehelios-ai
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #SoftwareTesting #QA #Sitemap #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" length="242457" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/01-u-usehelios-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
