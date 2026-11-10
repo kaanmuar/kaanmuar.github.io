@@ -20,7 +20,8 @@
  * the reply turns "replied" with a link to ours and is not sent. A report reply (#2465) carries its mini report card
  * (report-card.js, #2466); when the card cannot be drawn or uploaded, the reply goes as text with its link and
  * actions.reply.card says "text", with cardError saying why. pendingChains reads the comments under the replies
- * we posted in the last CHAIN_DAYS, each reply at most once per CHAIN_EVERY, for jarvis-engagement to like and answer.
+ * we posted in the last CHAIN_DAYS, or until chainUntil while the person there is active (#3137), each reply at most
+ * once per CHAIN_EVERY, for jarvis-engagement to like and answer.
  */
 const crypto = require("crypto");
 const E = require("./engagement");
@@ -732,7 +733,7 @@ async function pendingChains(deps) {
   const recheck = new Date(now - CHAIN_EVERY).toISOString();
   const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(300).get();
   const posted = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
-    .filter((t) => API.includes(t.doc.network) && String(t.doc.actions.reply.postedAt || "") >= since && String(t.doc.chainAt || "") < recheck)
+    .filter((t) => API.includes(t.doc.network) && (String(t.doc.actions.reply.postedAt || "") >= since || String(t.doc.chainUntil || "") > at) && String(t.doc.chainAt || "") < recheck)
     .sort((a, b) => String(b.doc.actions.reply.postedAt).localeCompare(String(a.doc.actions.reply.postedAt)));
   const out = { found: [], checked: 0, errors: {} };
   if (!posted.length) return out;

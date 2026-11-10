@@ -38,7 +38,10 @@
  *                                                                        owner's profile as url and since, for the
  *                                                                        newest own post to answer (#2638); a Threads
  *                                                                        reply brings extras { topic, image, gif }
- *                                                                        for its composer (#2710)
+ *                                                                        for its composer (#2710); a DM with a
+ *                                                                        2-day pass (#3137) is action "dm" with the
+ *                                                                        person's profile as url, its draft and its
+ *                                                                        card, within its outreach-send daily cap
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
  *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
@@ -64,6 +67,9 @@ const Joins = require("./engagement-joins");
 const Communities = require("./student-communities");
 const Students = require("./student-outreach");
 const OwnerTags = require("./owner-tags");
+const Trials = require("./chain-trials");
+const DmCard = require("./dm-card");
+const Send = require("./outreach-send");
 
 const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -221,6 +227,61 @@ function extrasFor(doc, gifs) {
   return Object.keys(out).length ? out : null;
 }
 
+// A DM goes out as Carlos's account wherever the post was read; a Threads DM needs Instagram signed in too.
+const dmReady = (network, want) => Trials.DM_NETS.includes(network) && want.includes(network) && (!Trials.DM_VIA[network] || want.includes(Trials.DM_VIA[network]));
+
+/** Approved DMs with a 2-day pass (#3137), within each network's daily DM cap, each with its card; in a dry run only the ones Carlos approved. */
+async function dmTasks(deps, conf, want) {
+  const { db, now } = deps;
+  const snap = await db.collection("engagement_posts").where("actions.dm.status", "==", "approved").limit(50).get();
+  const rows = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
+    .filter((t) => dmReady(t.doc.network, want) && !leased(t.doc.actions.dm, now) && (conf.live || !t.doc.actions.dm.auto));
+  if (!rows.length) return [];
+  const send = await Send.readSend(db, now);
+  const left = {};
+  for (const k of new Set(rows.map((t) => t.doc.network))) left[k] = await Send.capLeft(db, { network: k, kind: "dm", now, settings: send });
+  const at = new Date(now).toISOString();
+  const tasks = [];
+  for (const t of rows) {
+    if (left[t.doc.network] <= 0) continue;
+    left[t.doc.network] -= 1;
+    await t.ref.update({ "actions.dm.leasedAt": at, updatedAt: at });
+    const d = t.doc.actions.dm;
+    const card = await (deps.dmCard || DmCard.render)(d).then((c) => ({ card: c }), (error) => ({ error: "The card was not drawn: " + error.message }));
+    const a = t.doc.author || {};
+    tasks.push(Object.assign({
+      key: t.key, network: t.doc.network, action: "dm", id: t.doc.id, url: t.doc.url, author: { handle: a.handle || "", id: a.id || "", name: a.name || "" },
+      draft: d.draft || "", lang: d.lang || "", via: Trials.DM_VIA[t.doc.network] || ""
+    }, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {}));
+  }
+  return tasks;
+}
+
+/** What came of a DM the Mac sent: sent, or tried again on the next run up to MAX_TRIES; the person's ledger records it. */
+async function dmResult(deps, key, b) {
+  const { db, now, inc } = deps;
+  const ref = db.collection("engagement_posts").doc(key);
+  const snap = await ref.get();
+  const doc = snap.exists ? Object.assign({ key }, snap.data()) : null;
+  const cur = ((doc || {}).actions || {}).dm;
+  if (!cur) return null;
+  if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
+  const at = new Date(now).toISOString();
+  const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
+  const status = b.ok ? "sent" : !b.retry && tries >= Act.MAX_TRIES ? "failed" : "approved";
+  const card = b.card === "attached" ? "attached" : cur.card ? "text" : "";
+  await ref.update(Object.assign({ "actions.dm.status": status, "actions.dm.tries": tries, "actions.dm.leasedAt": "", "actions.dm.error": b.ok ? "" : clip(b.error, 200), updatedAt: at },
+    b.ok ? { "actions.dm.sentAt": at, "actions.dm.url": clip(b.url, 500), "actions.dm.cardSent": card, "actions.dm.cardError": card === "attached" ? "" : clip(b.cardError, 200) } : {}));
+  if (status !== "approved") {
+    await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { ["dm_" + status]: inc(1) } } }, { merge: true });
+    if (status === "sent") await Send.useCap(db, { network: doc.network, kind: "dm", now }).catch(() => null);
+    const L = Trials.ledger(deps);
+    if (L && Trials.handleOf(doc.author)) await L.people.touch(db, L.people.idFor(doc.network, Trials.handleOf(doc.author)), Trials.dmPatch(doc, { status, card, url: b.url }), now).catch(() => null);
+  }
+  await J.clearCache(db);
+  return { ok: true, key, action: "dm", status };
+}
+
 /** The Mac's work for this run: approved replies first, then planned likes, reposts and follows, best first. */
 async function queue(deps, body) {
   const { db, now, inc } = deps;
@@ -271,6 +332,7 @@ async function queue(deps, body) {
     extras ? { extras } : {}, student || {}));
   };
   for (const t of replies) await take(t);
+  tasks.push(...await dmTasks(deps, conf, want));
   let dry = 0;
   let missed = 0;
   for (const t of planned) {
@@ -298,6 +360,10 @@ async function result(deps, body) {
   const key = String(b.key || "");
   const action = String(b.action || "");
   if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (action === "dm") {
+    const out = await dmResult(deps, key, b);
+    if (out) return out;
+  }
   if (action === "join") {
     const out = await Joins.result(deps, Object.assign({}, b, { key }));
     if (!out) throw new MacError("That group is gone.", 404);
@@ -377,4 +443,4 @@ async function handle(deps, body, token) {
   return op(deps, body);
 }
 
-module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, TOPIC_LABELS, GIF_PER_DAY, MacError, hash, verify, cleanPost, reaction, extrasFor, signedOutPush, sites, ingest, queue, result, handle };
+module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, TOPIC_LABELS, GIF_PER_DAY, MacError, hash, verify, cleanPost, reaction, extrasFor, signedOutPush, sites, ingest, queue, result, handle, dmTasks, dmResult };
