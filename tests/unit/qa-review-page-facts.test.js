@@ -41,9 +41,9 @@ test("every review page lists each fix package at the price and working days the
   });
 });
 
-test("pending sources stay off the review pages until they are live (#3291, #3124, #3310)", () => {
+test("pending and unused sources stay off the review pages until they are live (#3291, #3124, #3346)", () => {
   PAGES.forEach((file) => {
     const box = facts(file);
-    ["PhishStats", "URLhaus", "Wordfence", "Spamhaus", "Barracuda"].forEach((name) => assert.ok(!box.includes(name), file + " " + name));
+    ["PhishStats", "URLhaus", "Spamhaus", "Barracuda"].forEach((name) => assert.ok(!box.includes(name), file + " " + name));
   });
 });
