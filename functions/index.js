@@ -1356,6 +1356,7 @@ async function rerunFailure(group) {
         pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
         crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
         webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+        doh: lookalikes.doh,
         places: findPlaces()
       });
       record = urlReview.intakeRecord(Object.assign({}, group.intake, {
@@ -1755,6 +1756,7 @@ async function mailComparison(notice) {
 }
 
 const urlReview = require("./url-review-core");
+const lookalikes = require("./url-review-lookalikes");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const reviewFailures = require("./url-review-failures");
@@ -2446,6 +2448,7 @@ async function sweepReview(target, controls) {
     pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
     crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
     webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+    doh: lookalikes.doh,
     places: findPlaces()
   }, controls));
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
@@ -5314,6 +5317,7 @@ async function runReview(req, res, placeOf) {
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      doh: lookalikes.doh,
       places: findPlaces()
     });
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
@@ -5841,6 +5845,7 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
       pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+      doh: lookalikes.doh,
       places: findPlaces()
     });
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
