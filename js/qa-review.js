@@ -3585,6 +3585,7 @@
     inconBox.hidden = false;
     document.body.classList.add("gate-open");
     document.getElementById(code ? "incon-copy" : "incon-close").focus();
+    if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_shown", "URL Review", String(percent));
   }
 
   function closeInconclusive() {
@@ -3604,9 +3605,11 @@
     try {
       await navigator.clipboard.writeText(code.textContent);
       note.textContent = rc.t("inconCopied");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_copy", "URL Review", "copied");
     } catch (error) {
       window.getSelection().selectAllChildren(code);
       note.textContent = rc.t("inconCopyFailed");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_copy", "URL Review", "selected");
     }
   });
   inconBox.addEventListener("click", (event) => { if (event.target === inconBox) closeInconclusive(); });

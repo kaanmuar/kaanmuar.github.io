@@ -191,6 +191,8 @@
   };
 
   const OPEN = ["fail", "risk"];
+  // The four ways of the panel as qa_review_fix_way labels; the free re-check reports as qa_review_fix_recheck.
+  const WAYS = { fixSelf: "self", fixGet: "self", fixRequest: "quote", fixPackage: "package", fixCall: "call" };
 
   function book(lang) {
     return T[lang] || T.en;
@@ -305,6 +307,7 @@
         return;
       }
       paint();
+      if (root.SiteAnalytics) root.SiteAnalytics.once("fix-open-" + report.id, "qa_review_fix_open", "URL Review", paid() ? "paid" : "unpaid");
       if (!packages) loadPackages().then(() => { if (payload === next) paint(); });
     }
 
@@ -364,7 +367,8 @@
     }
 
     // A package is paid at once through the review checkout; PayPal returns to the pay page, which confirms and comes back here.
-    async function pay(fixId, report) {
+    async function pay(fixId, report, packageId) {
+      if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix_checkout", "URL Review", packageId || "");
       try {
         const res = await fetch(endpoint() + "/checkout", {
           method: "POST",
@@ -478,7 +482,7 @@
         if (res.ok && body.ok && body.package && body.priceUsd) {
           button.textContent = words.paying;
           if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix_request", "URL Review", body.package);
-          if (await pay(body.id, report)) return;
+          if (await pay(body.id, report, body.package)) return;
           sheet.innerHTML = '<div class="fix-done"><div class="fix-sheet-head"><h2 id="fix-sheet-title">' + esc(words.doneTitle) + '</h2><button type="button" class="btn btn-ghost" data-fix-close>' + esc(words.close) + "</button></div><p>" + esc(words.payLater) + "</p></div>";
           sheet.querySelector("[data-fix-close]").focus();
           return;
@@ -515,7 +519,8 @@
         const id = button.getAttribute("data-fix-request");
         request(id ? [id] : [], "");
       }
-      if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix", "URL Review", Object.keys(button.dataset)[0] || "");
+      const way = WAYS[Object.keys(button.dataset)[0]];
+      if (way && root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix_way", "URL Review", way);
     });
 
     return { show, cardLinks, request };
