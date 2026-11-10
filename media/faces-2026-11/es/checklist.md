@@ -13,7 +13,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (160):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Website:
   ```text
@@ -37,9 +37,9 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Description (1000):
   ```text
-  Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
   
-  Uma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   
@@ -71,7 +71,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (80):
   ```text
-  Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Arreglos desde 69 USD. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Website:
   ```text
@@ -89,7 +89,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] About (200):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: u/qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: u/qalaburlreview
   ```
 - [ ] Social links (5):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -115,13 +115,13 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Intro (101):
   ```text
-  Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: fb.com/qalaburlreview
+  ¿Tu sitio es seguro? Arreglos desde 69 USD. ES·PT. EN/DE/FR/IT: fb.com/qalaburlreview
   ```
 - [ ] About:
   ```text
-  Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
   
-  Uma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   
@@ -156,7 +156,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (200):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: dev.to/qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: dev.to/qalaburlreview
   ```
 - [ ] Website:
   ```text
@@ -174,7 +174,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Description (256):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: @qalaburlreview.bsky.social
+  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview.bsky.social
   ```
 - [ ] Upload Avatar: `media/faces-2026-11/es/bluesky/avatar-1000.jpg`
 - [ ] Upload Banner; the avatar covers the lower left: `media/faces-2026-11/es/bluesky/banner-3000x1000.jpg`
@@ -190,7 +190,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (500):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks. La primera revisión va incluida. En español y português. EN/DE/FR/IT: @qalaburlreview@mastodon.social
+  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview@mastodon.social
   ```
 - [ ] Extra fields (4):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -212,7 +212,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (150):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Links (5):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -237,7 +237,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
 - [ ] Log in and check the account email is `qaurlreview@carlosandmunoz.com`; change it in the account settings if not.
 - [ ] Bio (150):
   ```text
-  Entra una URL pública, sale una revisión QA: SEO, búsqueda con IA, analítica, seguridad, accesibilidad, velocidad. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Link:
   ```text
@@ -259,13 +259,13 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Tagline (120):
   ```text
-  Entra una URL, sale una revisión QA. ES·PT. EN/DE/FR/IT: linkedin.com/company/qalab-url-review
+  ¿Tu sitio es seguro? Arreglos desde 69 USD. ES·PT. EN/DE/FR/IT: linkedin.com/company/qalab-url-review
   ```
 - [ ] Overview:
   ```text
-  Entra una URL pública, sale una revisión QA en lenguaje claro: SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, calificadas página por página, con casos de prueba para 20 frameworks y exportación a Jira, TestRail, Xray y Zephyr. Entra con tu email o una cuenta que ya tengas; la primera revisión va incluida.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
   
-  Uma URL pública entra, uma revisão de QA sai: SEO, busca com IA, analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks. A primeira revisão está incluída.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   
