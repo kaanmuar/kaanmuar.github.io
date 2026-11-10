@@ -59,8 +59,8 @@ import kotlin.math.sqrt
 object GeoTime {
     val SPANS = listOf(0 to "Now", 7 to "7 days", 30 to "30 days", 90 to "90 days")
     /** The history's fields, FIELDS in functions/jarvis-geo-time.js. */
-    val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd")
-    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd")
+    val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks")
+    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks")
     private val WORSE_UP = setOf("bounceRate")
     val UP = Color(0xFF38E1FF)
     val DOWN = Color(0xFFFF4D8D)
