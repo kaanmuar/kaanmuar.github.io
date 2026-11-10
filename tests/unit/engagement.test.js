@@ -28,6 +28,26 @@ test("settings fill defaults, clamp numbers and merge a patch", () => {
   assert.throws(() => E.settingsPatch(s, {}), /Nothing to change/);
 });
 
+test("a saved competitor list keeps its own names and picks up defaults added later, but not removed ones", () => {
+  const saved = E.settings({ competitors: ["Acme", "semrush", "moz"] });
+  assert.deepEqual(saved.competitors.slice(0, 3), ["acme", "semrush", "moz"]);
+  ["sucuri", "wordfence", "mxtoolbox", "detectify", "upguard"].forEach((name) => assert.ok(saved.competitors.includes(name), name));
+  assert.equal(new Set(saved.competitors).size, saved.competitors.length);
+
+  const posted = E.settingsPatch(saved, { competitors: saved.competitors.filter((c) => c !== "moz" && c !== "sucuri") });
+  assert.deepEqual(posted.competitorsDropped, ["moz", "sucuri"]);
+  const reread = E.settings(posted);
+  assert.ok(!reread.competitors.includes("moz") && !reread.competitors.includes("sucuri"));
+  assert.ok(reread.competitors.includes("acme") && reread.competitors.includes("wordfence"));
+  const post = (handle) => ({ author: { handle }, text: "hello", createdAt: new Date().toISOString() });
+  assert.notEqual(E.guard(post("Sucuri"), reread), "competitor");
+  assert.equal(E.guard(post("wordfence"), reread), "competitor");
+
+  const back = E.settings(E.settingsPatch(reread, { competitors: reread.competitors.concat("moz") }));
+  assert.ok(back.competitors.includes("moz"));
+  assert.deepEqual(back.competitorsDropped, ["sucuri"]);
+});
+
 test("relevance counts our field's keywords and hashtags, and nothing else", () => {
   const r = E.relevance("Our #a11y audit: WCAG 2.2 contrast fails and the screen reader skips the menu");
   assert.equal(r.topic, "Accessibility");

@@ -97,3 +97,13 @@ test("the Mac uploads only the plan fields the cloud run reads (#2419, #2481)", 
   assert.deepEqual(JSON.parse(quotaPayload(full)), { planPct: 41, cycleEnd: "2026-11-20T00:00:00Z", at: 1793700000, odEnabled: true, odRemaining: 2550 });
   assert.equal(quotaPayload(null), null);
 });
+
+test("the daily fix waits for any other firebase deploy to finish before deploying (#3383)", () => {
+  const answers = [true, true, false];
+  let waits = 0;
+  fix.deployIdle(() => answers.shift(), () => { waits += 1; }, 60000);
+  assert.equal(waits, 2);
+  assert.throws(() => fix.deployIdle(() => true, () => {}, -1), /still running/);
+  assert.ok(new RegExp(fix.DEPLOY_BUSY).test("node /x/npx -y firebase-tools deploy --only functions:a"));
+  assert.ok(!new RegExp(fix.DEPLOY_BUSY).test("zsh -c pgrep -f \"" + fix.DEPLOY_BUSY + "\""));
+});

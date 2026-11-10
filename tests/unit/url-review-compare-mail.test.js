@@ -95,3 +95,15 @@ test("a saved comparison lists every indicator and the problems, and names repor
   assert.match(body, /Compared at: 2026-10-20 15:04 UTC/);
   assert.equal(mail.savedNotice("cmp123", { ids: [own.id] }, records, { email }), null);
 });
+
+test("a passive comparison mail says the skipped checks are out of the scores and gives the full score", () => {
+  const { scoreFindings } = require("../../functions/url-review-insights");
+  const findings = [{ key: "sec-lookalike", area: "Security", verdict: "fail", severity: "critical", title: "Lookalike" }, { key: "seo-title", area: "SEO", verdict: "pass", severity: "info", title: "Title" }];
+  const mine = { id: "a1", host: "a.com", insights: { score: scoreFindings(findings), findings } };
+  const theirs = { id: "b1", host: "b.com", limits: { passive: true }, insights: { score: scoreFindings([findings[1]]), findings: [findings[1]] } };
+  const cmp = compare.compareSites(mine, theirs);
+  const body = values(mail.runNotice(record(Object.assign({}, theirs, { compare: cmp }), { paid: true })));
+  assert.match(body, /Checks: Public checks only\..*left out of the lists, the counts and the scores of both sites \(a\.com scores \d+\/100 in its full review\)\./);
+  assert.match(body, new RegExp("Health score: a.com " + cmp.overall.own + "/100"));
+  assert.notEqual(cmp.overall.own, cmp.ownFull);
+});
