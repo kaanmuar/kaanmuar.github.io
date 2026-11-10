@@ -131,7 +131,7 @@ export function panels(S, g, channel, h) {
         heatNote = `Replies are the outreach sync's last 80; sends are Instantly's last 200 sent emails${heat.unzoned ? `; ${fmt(heat.unzoned)} have no known country or time zone` : ''}.${multi.length ? ' Countries with several zones use their most populous one: ' + esc(multi.join(', ')) + '.' : ''}`;
     }
     const metric = SECTOR_METRICS.some((m) => m[0] === S.geoSector) ? S.geoSector : channel === 'email' ? 'sent' : 'prospects';
-    const gridBody = !grid ? '<p class="jv-empty">The geo source has no sector grid yet; it comes with the next refresh.</p>'
+    const gridBody = grid === undefined || grid === null ? '<p class="jv-empty">The geo source has no sector grid yet; it comes with the next refresh.</p>'
         : `${(grid.needs || []).length ? `<ul class="jv-needs">${grid.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}<div class="jv-actions">${seg(SECTOR_METRICS, metric, 'geo-sector', 'Grid metric', esc)}</div>
             ${(grid.rows || []).length ? sectorTable(grid, metric, S.geoCc, esc) + lightKey(esc) : '<p class="jv-empty">No country has prospects or emails by sector yet.</p>'}`;
     const gridNote = grid ? `Sectors from the prospect queue. Sent and replies are est.: each campaign split across its synced leads, a lead taking its site's sector from the queue.${grid.more ? ` ${fmt(grid.more)} smaller countries left out.` : ''} Tap a cell for the country.` : '';
