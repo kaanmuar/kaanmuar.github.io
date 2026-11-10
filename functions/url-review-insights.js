@@ -10,6 +10,7 @@ const { mailAuthChecks, dmarcRepair, dmarcPolicy } = require("./url-review-mail-
 const blocklists = require("./url-review-blocklists");
 const exposedFiles = require("./url-review-exposed");
 const lookalikes = require("./url-review-lookalikes");
+const hackSigns = require("./url-review-hack-signs");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1672,6 +1673,7 @@ function analyze(input) {
   blocklists.report(dnsInfo && dnsInfo.blocklists, add);
   exposedFiles.checks(extras.exposed, add);
   lookalikes.checks(extras.lookalikes, add, say);
+  hackSigns.findings(extras.hackSigns, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, say("sec-leak.fix"), { effort: "hours" });
   });
