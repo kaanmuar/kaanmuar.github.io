@@ -738,6 +738,15 @@
     "checked": "2026-11-10T17:20:44.223Z"
    },
    {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18137961178630657",
+    "at": "2026-11-10T22:31:39.535Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Dfk_Kq9gIeu/",
+    "checked": "2026-11-10T22:33:04.555Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18111341143908699",
@@ -1076,6 +1085,17 @@
     "checked": "2026-11-09T21:01:13.693Z"
    }
   ],
+  "evergreen-2026-11/12-myth-sitemap": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzyilnfgvt2s",
+    "at": "2026-11-10T22:31:02.212Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzyilnfgvt2s",
+    "checked": "2026-11-10T22:31:21.957Z"
+   }
+  ],
   "promo-social-hub-2026-10/01-one-page-en": [
    {
     "channel": "bluesky",
@@ -1183,6 +1203,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzsstqfzz42c",
     "checked": "2026-11-08T16:18:51.592Z"
+   }
+  ],
+  "promo-social-hub-2026-10/26-real-reviews-it": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzyim3yn7x2c",
+    "at": "2026-11-10T22:31:21.957Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzyim3yn7x2c",
+    "checked": "2026-11-10T22:31:38.703Z"
    }
   ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
