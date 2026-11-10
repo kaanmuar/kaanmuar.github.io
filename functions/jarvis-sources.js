@@ -602,10 +602,16 @@ async function costs(ctx, token) {
   const table = ((tables.tables || []).map((t) => t.tableReference.tableId).filter((id) => /^gcp_billing_export_v1_/.test(id)).sort()[0]) || "";
   if (!table) return { pending: true, note: "The billing export is on; Google writes the first rows within a day." };
   const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
-  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)), 2) AS net, ROUND(SUM(cost), 2) AS gross " +
-    "FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY) GROUP BY service, currency ORDER BY gross DESC LIMIT 15";
+  // ctx.month ("YYYY-MM", #3283): that invoice month instead of the last days, with the net in USD too.
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(ctx.month || "") ? ctx.month : "";
+  const credits = "IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)";
+  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(" + credits + "), 2) AS net, ROUND(SUM(cost), 2) AS gross" +
+    (month ? ", ROUND(SUM((cost + " + credits + ") / IFNULL(NULLIF(currency_conversion_rate, 0), 1)), 2) AS usd" : "") +
+    " FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE " + (month ? "invoice.month = '" + month.replace("-", "") + "'" : "usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY)") +
+    " GROUP BY service, currency ORDER BY gross DESC LIMIT " + (month ? 50 : 15);
   const data = await getJson(ctx.fetch, bq + "/queries", Object.assign({ method: "POST", body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth), "BigQuery");
-  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0 }));
+  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0, usd: Number(r.f[4] && r.f[4].v) || 0 }));
+  if (month) return { month, currency: (rows[0] || {}).currency || "", net: round(rows.reduce((s, r) => s + r.net, 0), 2), usd: round(rows.reduce((s, r) => s + r.usd, 0), 2), byService: rows.map((r) => ({ label: r.label, value: r.net })) };
   return {
     days,
     currency: (rows[0] || {}).currency || "",
@@ -681,4 +687,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };
+module.exports = { costs, googleToken, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

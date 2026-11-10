@@ -369,6 +369,7 @@ async function geo(ctx) {
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
   out.time = await geoTime.read(ctx.db).catch(() => null);
+  await require("./jarvis-geo-cost").attach(ctx, out, { marketing, needs }).catch(() => null);
   await require("./jarvis-geo-actions").attach(ctx, out, { outreach, marketing, calendar, confirm: confirm.rows });
   return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
 }

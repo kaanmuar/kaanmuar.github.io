@@ -60,8 +60,8 @@ object GeoTime {
     val SPANS = listOf(0 to "Now", 7 to "7 days", 30 to "30 days", 90 to "90 days")
     /** The history's fields, FIELDS in functions/jarvis-geo-time.js. */
     val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks")
-    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks")
-    private val WORSE_UP = setOf("bounceRate")
+    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks") + GeoCost.KEYS
+    private val WORSE_UP = setOf("bounceRate", "cost") + GeoCost.LOWER
     val UP = Color(0xFF38E1FF)
     val DOWN = Color(0xFFFF4D8D)
     const val STEP_MS = 1400L
@@ -108,9 +108,9 @@ object GeoTime {
     }
 
     /** Every country over a range: which 0 is the last n days to yesterday, 1 the n days before. */
-    fun spanRows(g: JsonObject, n: Int, which: Int) = rowsFrom(g, g.obj("time").obj("ranges").obj("$n").obj("c")) { it.getOrNull(which) }
+    fun spanRows(g: JsonObject, n: Int, which: Int) = GeoCost.join(rowsFrom(g, g.obj("time").obj("ranges").obj("$n").obj("c")) { it.getOrNull(which) }, GeoCost.range(g, n, which))
     /** Every country in week k of the 13 (0 the oldest). */
-    fun weekRows(g: JsonObject, k: Int) = rowsFrom(g, g.obj("time").obj("weeks").obj("c")) { it.getOrNull(k) }
+    fun weekRows(g: JsonObject, k: Int) = GeoCost.join(rowsFrom(g, g.obj("time").obj("weeks").obj("c")) { it.getOrNull(k) }, GeoCost.week(g, k))
 
     /** A row's number for a metric, null where the history has none (Geo.value reads a missing count as 0). */
     fun valueOf(r: JsonObject?, key: String): Double? = if (r == null || (key in FIELDS && r[key] is JsonNull)) null else Geo.value(r, key)
@@ -119,7 +119,7 @@ object GeoTime {
     fun deltaOf(now: JsonObject?, before: JsonObject?, key: String): Double? {
         val a = valueOf(now, key) ?: return null
         val b = valueOf(before, key) ?: return null
-        return round1(a - b)
+        return if (key in GeoCost.KEYS) Math.round((a - b) * 10000) / 10000.0 else round1(a - b)
     }
 
     data class View(val mode: String, val rows: List<JsonObject>, val delta: Map<String, Double?>? = null, val before: Map<String, JsonObject> = emptyMap(),
@@ -171,7 +171,7 @@ object GeoTime {
         if (d == null) return "—"
         if (d == 0.0) return "= 0"
         val unit = if (key != "light" && Geo.metric(key).unit == "%") " pts" else ""
-        return (if (d > 0) "▲ +" else "▼ −") + (if (key == "usd") "$" else "") + fmt(abs(d)) + unit
+        return (if (d > 0) "▲ +" else "▼ −") + if (key in GeoCost.KEYS) GeoCost.show(abs(d), key) else (if (key == "usd") "$" else "") + fmt(abs(d)) + unit
     }
     fun arrowColor(d: Double?, key: String): Color = if (d == null || d == 0.0) J.muted else if (good(d, key)) UP else DOWN
 }

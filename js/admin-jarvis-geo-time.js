@@ -3,13 +3,14 @@
  * from the geo source's `time` (functions/jarvis-geo-time.js). Rows built here have the fields of the geo rows, so the
  * map, labels, ranking and card in admin-jarvis-geo.js draw them as they draw today's. Twin: android/.../ui/GeoTime.kt.
  */
-import * as Geo from './admin-jarvis-geo.js?v=3109';
+import * as Geo from './admin-jarvis-geo.js?v=3283';
+import * as GeoCost from './admin-jarvis-geo-cost.js?v=3283';
 
 export const SPANS = [[0, 'Now'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
 // The metrics the history can show; the rest (Missing zones, Dates ahead, Campaigns, Average site score) stay on now.
-const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', 'openRate', 'bounceRate', 'prospects', 'left', 'saturation', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd', 'clicks'];
+const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', 'openRate', 'bounceRate', 'prospects', 'left', 'saturation', 'reviewed', 'social', 'visitors', 'visits', 'reviews', 'paid', 'usd', 'clicks', ...GeoCost.KEYS];
 // A rise that is bad news, shaded pink.
-const WORSE_UP = new Set(['bounceRate']);
+const WORSE_UP = new Set(['bounceRate', 'cost', ...GeoCost.LOWER]);
 const UP = [56, 225, 255];
 const DOWN = [255, 77, 141];
 const STEP_MS = 1400;
@@ -52,9 +53,9 @@ function rowsFrom(g, byCc, pick) {
 }
 
 /** Every country over a range: which 0 is the last n days to yesterday, 1 the n days before. */
-export const spanRows = (g, n, which) => rowsFrom(g, g.time.ranges[n].c, (list) => list[which]);
+export const spanRows = (g, n, which) => GeoCost.join(rowsFrom(g, g.time.ranges[n].c, (list) => list[which]), g.cost && (g.cost.ranges || {})[n] && g.cost.ranges[n][which]);
 /** Every country in week k of the 13 (0 the oldest). */
-export const weekRows = (g, k) => rowsFrom(g, g.time.weeks.c, (list) => list[k]);
+export const weekRows = (g, k) => GeoCost.join(rowsFrom(g, g.time.weeks.c, (list) => list[k]), g.cost && (g.cost.weeks || [])[k]);
 
 /** A row's number for a metric, null where the history has none (Geo.value reads a missing count as 0). */
 export const valueOf = (r, key) => (!r || (FIELDS.includes(key) && r[key] === null) ? null : Geo.value(r, key));
@@ -63,7 +64,8 @@ export const valueOf = (r, key) => (!r || (FIELDS.includes(key) && r[key] === nu
 export function deltaOf(now, before, key) {
     const a = valueOf(now, key);
     const b = valueOf(before, key);
-    return a === null || a === undefined || b === null || b === undefined ? null : round1(a - b);
+    if (a === null || a === undefined || b === null || b === undefined) return null;
+    return GeoCost.KEYS.has(key) ? Math.round((a - b) * 10000) / 10000 : round1(a - b);
 }
 
 /**
@@ -128,7 +130,7 @@ export function arrow(d, key) {
     const good = (d > 0) !== WORSE_UP.has(key);
     const unit = key === 'light' ? '' : Geo.unitOf(key) === '%' ? ' pts' : '';
     const n = Math.abs(d).toLocaleString('en-US');
-    return `<span class="jv-geo-chg ${good ? 'is-up' : 'is-down'}">${d > 0 ? '▲ +' : '▼ −'}${key === 'usd' ? '$' : ''}${n}${unit}</span>`;
+    return `<span class="jv-geo-chg ${good ? 'is-up' : 'is-down'}">${d > 0 ? '▲ +' : '▼ −'}${key === 'usd' || Geo.unitOf(key) === '$' ? '$' : ''}${n}${unit}</span>`;
 }
 
 /** The legend under the map on change shading. */
@@ -139,7 +141,7 @@ export function legend(v, key, esc) {
     const max = Math.max(0, ...ds.map(Math.abs));
     return `<div class="jv-geo-scale jv-geo-chg-scale"><span>${esc(arrowText(-max, key))}</span><i></i><span>${esc(arrowText(max, key))}</span><em>${up} up · ${down} down · ${v.mode === 'week' ? 'against the week before' : 'against the span before'}</em></div>`;
 }
-const arrowText = (d, key) => (d ? `${d > 0 ? '+' : '−'}${key === 'usd' ? '$' : ''}${Math.abs(d).toLocaleString('en-US')}${Geo.unitOf(key) === '%' ? ' pts' : ''}` : '0');
+const arrowText = (d, key) => (d ? `${d > 0 ? '+' : '−'}${key === 'usd' || Geo.unitOf(key) === '$' ? '$' : ''}${Math.abs(d).toLocaleString('en-US')}${Geo.unitOf(key) === '%' ? ' pts' : ''}` : '0');
 
 /** The range picker, change shading and week player, under the channel and metric filters. */
 export function controls(g, st, v, esc) {

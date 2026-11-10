@@ -934,4 +934,25 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-geo-clicks h4 { margin: 0.6rem 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .jv-geo-clicks td:nth-child(n+2), .jv-geo-clicks th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .jv-geo-play { flex-basis: 100%; } .jv-geo-when { white-space: normal; } }
+/* Map cost and return (#3283) */
+.jv-cost-scale > i { background: linear-gradient(90deg, #3dffa8, #ffb547, #ff4d8d); }
+.jv-cost-scale.is-up > i { background: linear-gradient(90deg, #ff4d8d, #ffb547, #3dffa8); }
+.jv-cost-need .jv-link { margin-left: 0.3rem; }
+.jv-cost-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.4rem 0.8rem; margin: 0 0 0.6rem; }
+.jv-cost-kpis dt { color: var(--dim); font-size: 0.72rem; }
+.jv-cost-kpis dd { margin: 0; color: #fff; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.jv-cost-warn { color: var(--amber); }
+.jv-cost-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.4rem 1.2rem; margin-top: 0.6rem; }
+.jv-cost-sides h4, .jv-geo-sheet-cost h4 { margin: 0.4rem 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.jv-cost-sides ol { margin: 0; padding-left: 1.2rem; font-size: 0.85rem; }
+.jv-cost-sides b { font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 0.3rem; }
+.jv-cost-list { display: grid; gap: 0.35rem; margin: 0.4rem 0; }
+.jv-cost-row { display: grid; grid-template-columns: 1.6fr 0.9fr 1fr 1fr 1fr auto; gap: 0.4rem; align-items: center; }
+.jv-cost-row input[type="text"], .jv-cost-row input:not([type]), .jv-cost-row input[type="month"] { width: 100%; min-width: 0; background: rgba(4, 18, 28, 0.85); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.55rem; font-size: 0.85rem; color-scheme: dark; }
+.jv-cost-usd { display: flex; align-items: center; gap: 0.2rem; color: var(--dim); min-width: 0; }
+.jv-cost-row > button { justify-self: start; }
+.jv-cost-head { color: var(--dim); font-size: 0.72rem; }
+@media (max-width: 720px) { .jv-cost-row { grid-template-columns: 1fr 1fr; } .jv-cost-row input[name="gc-label"] { grid-column: 1 / -1; } .jv-cost-head { display: none; } }
+.jv-cost-sugg { list-style: none; margin: 0.4rem 0; padding: 0; display: grid; gap: 0.35rem; font-size: 0.85rem; }
+.jv-cost-sugg .jv-note { display: block; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c.is-l5 { animation: none; } }
