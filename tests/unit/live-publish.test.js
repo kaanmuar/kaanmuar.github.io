@@ -87,3 +87,60 @@ test("the review PR carries the studio-render marker, so merging it publishes th
   assert.deepStrictEqual(marker(body), { kind: "live", name: "hotel-high-season", mode: "render", batch: "live-x", ticket: "3173" });
   assert.match(body, /releases\/download\/live-x\/01-hotel-high-season-es\.mp4/);
 });
+
+test("a live that showed a trial code is cut evergreen: its ticker covered, each call to action re-rendered, a viewer's left out (#3254)", () => {
+  const cut = require("../../scripts/live-studio/cut");
+  const fs = require("fs");
+  const os = require("os");
+  const path = require("path");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cut-3254-"));
+  const meta = { trial: "TRY-ABC234", lang: "es", voice: "es-MX-DaliaNeural", episodes: ["link-in-bio"] };
+  assert.strictEqual(cut.evergreen(Object.assign({}, meta, { trial: "" }), dir, () => assert.fail("no render without a code")), null);
+  const calls = [];
+  const render = (m, out) => {
+    calls.push(out);
+    fs.mkdirSync(out, { recursive: true });
+    fs.writeFileSync(path.join(out, "evergreen.json"), JSON.stringify({ lang: "es", voice: m.voice, ticker: "ticker.mp4", cta: { "link-in-bio": { file: "link-in-bio-cta.mp4", dur: 11.5, line: "Escanea…" } } }));
+  };
+  const ever = cut.evergreen(meta, dir, render);
+  assert.strictEqual(ever.ticker, path.join(dir, "evergreen", "ticker.mp4"));
+  assert.strictEqual(cut.evergreen(meta, dir, render).cta["link-in-bio"].dur, 11.5);
+  assert.strictEqual(calls.length, 1, "a matching render is reused");
+  assert.throws(() => cut.evergreen(Object.assign({}, meta, { episodes: ["link-in-bio", "bank-login-a11y"] }), dir, render), /every episode/);
+
+  const intro = { scene: "intro", episode: "link-in-bio", start: 0, end: 8, line: "Hola" };
+  const cta = { scene: "cta", episode: "link-in-bio", start: 70, end: 80, line: "TRY-ABC234" };
+  assert.deepStrictEqual(cut.piece(intro, ever), { start: 0, len: 8, line: "Hola", ticker: ever.ticker });
+  assert.deepStrictEqual(cut.piece(cta, ever), { file: ever.cta["link-in-bio"].file, len: 11.5, line: "Escanea…" });
+  assert.strictEqual(cut.piece(Object.assign({}, cta, { viewer: "ana" }), ever), null);
+  assert.strictEqual(cut.piece(cta, { ticker: ever.ticker, cta: {} }), null, "Carlos's call to action has no evergreen render");
+  assert.deepStrictEqual(cut.piece(cta, null), { start: 70, len: 10, line: "TRY-ABC234" });
+
+  const args = cut.joinArgs([cut.piece(intro, ever), cut.piece(cta, ever)], "rec.mp4");
+  assert.deepStrictEqual(args.slice(0, 12), ["-ss", "0.000", "-t", "8.000", "-i", "rec.mp4", "-stream_loop", "-1", "-i", ever.ticker, "-t", "11.500"]);
+  const graph = args[args.indexOf("-filter_complex") + 1];
+  assert.match(graph, new RegExp("\\[0:v\\]\\[1:v\\]overlay=0:" + studio.TICKER.y + ":shortest=1"));
+  assert.match(graph, /\[2:v\]setpts=PTS-STARTPTS\[v1\]/);
+  assert.match(graph, /\[v0\]\[a0\]\[v1\]\[a1\]concat=n=2:v=1:a=1\[v\]\[a\]$/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("publish posts no clip of a live that still shows its trial code, and keeps its chaptered recording out of the stock", () => {
+  const meta = { trial: "TRY-ABC234" };
+  assert.strictEqual(publish.stale({ trial: "" }, { clips: [{}] }), "");
+  assert.match(publish.stale(meta, { clips: [{ file: "highlight.mp4" }] }), /not evergreen/);
+  assert.match(publish.stale(meta, { evergreen: true, clips: [{ evergreen: true }, { file: "x" }] }), /not evergreen/);
+  assert.strictEqual(publish.stale(meta, { evergreen: true, clips: [{ evergreen: true }] }), "");
+  const c = { recording: "live-es.mp4", episodes: ["link-in-bio"], lang: "es", voice: "es-MX-DaliaNeural", clips: [{ file: "highlight.mp4", scene: "highlight", length: 40 }] };
+  assert.ok(stock.rows(c, {}).some((r) => r.scene === "full"));
+  assert.ok(!stock.rows(Object.assign({ trial: "TRY-ABC234" }, c), {}).some((r) => r.scene === "full"));
+});
+
+test("the evergreen call to action and ticker speak every language without a code (#3254)", () => {
+  const i18n = require("../../scripts/live-studio/i18n/i18n.json");
+  assert.ok(!/TRY-|tomorrow/.test(studio.UI.evergreen + require("../../scripts/live-studio/episodes").LINES.ctaEvergreen));
+  studio.LANGS.filter((l) => l !== "en").forEach((lang) => {
+    assert.ok(i18n.ui[lang].evergreen, lang);
+    studio.EPISODES.forEach((ep) => assert.match(i18n.clips[ep.id + "-" + lang].say_cta_evergreen, /carlosandmunoz\.com\/qa-review/));
+  });
+});

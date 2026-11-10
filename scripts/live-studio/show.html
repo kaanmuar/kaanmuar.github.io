@@ -217,6 +217,7 @@
   .coupon.on { display: inline-block; }
   .ctaurl.trial { font-size: 31px; white-space: nowrap; }
   .coupon.trial { border-style: solid; border-color: var(--cyan-hi); color: var(--cyan-hi); }
+  .coupon.evergreen { max-width: 1000px; font-size: 27px; border-radius: 30px; text-align: center; line-height: 1.25; }
   .follow { font-size: 30px; color: var(--muted); }
 
   /* Captions and ticker */
@@ -383,7 +384,7 @@
   function applyUi() {
     document.querySelectorAll("[data-ui]").forEach((el) => { if (ui[el.dataset.ui]) el.textContent = ui[el.dataset.ui]; });
     const trial = data && data.trial;
-    const tick = [ui.commentUrl, ui.weReview, trial ? ui.trial + ": " + trial.short : "carlosandmunoz.com/qa-review", ui.areas || ""].filter(Boolean)
+    const tick = [ui.commentUrl, ui.weReview, data && data.evergreen ? ui.evergreen : "", trial ? ui.trial + ": " + trial.short : "carlosandmunoz.com/qa-review", ui.areas || ""].filter(Boolean)
       .map(esc).join("<b>✦</b>");
     $("ticker").innerHTML = (tick + "<b>✦</b>").repeat(4);
   }
@@ -426,9 +427,10 @@
     const trial = data.trial;
     $("ctaurl").textContent = trial ? trial.short : "carlosandmunoz.com/qa-review";
     $("ctaurl").classList.toggle("trial", !!trial);
-    $("coupon").textContent = trial ? ui.trial + " · " + ui.trialRuns : data.coupon ? ui.coupon + ": " + data.coupon : "";
-    $("coupon").classList.toggle("on", !!(trial || data.coupon));
-    $("coupon").classList.toggle("trial", !!trial);
+    $("coupon").textContent = trial ? ui.trial + " · " + ui.trialRuns : data.evergreen ? ui.evergreen : data.coupon ? ui.coupon + ": " + data.coupon : "";
+    $("coupon").classList.toggle("on", !!(trial || data.evergreen || data.coupon));
+    $("coupon").classList.toggle("trial", !!(trial || data.evergreen));
+    $("coupon").classList.toggle("evergreen", !!data.evergreen);
   }
 
   function renderRail() {

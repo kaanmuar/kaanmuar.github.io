@@ -68,7 +68,7 @@ function episodeStrings(ep, report, picked) {
     chip: ep.chip, hook0: ep.hook[0], hook1: ep.hook[1], title: ep.title,
     say_intro: fill(ep.intro, vals), say_run: fill(LINES.run, vals), say_score: fill(LINES.score, vals), say_findings: fill(LINES.findings, vals),
     say_fix: fill(ep.fix.say, vals), say_beforeafter: fill(ep.beforeafter, vals), say_ask: fill(LINES.ask, vals), say_cta: fill(LINES.cta, vals),
-    say_cta_trial: LINES.ctaTrial,
+    say_cta_trial: LINES.ctaTrial, say_cta_evergreen: LINES.ctaEvergreen,
     fixTitle: picked ? picked.title : "", metricLabel: ep.fix.metric.label, metricBefore: ep.fix.metric.before, metricAfter: ep.fix.metric.after,
     metricUnit: ep.fix.metric.unit, headline: report.headline || ""
   };
@@ -183,6 +183,9 @@ function reviewLink(episodeId, platform) {
   return SITE + "/qa-review.html?utm_source=" + encodeURIComponent(platform || "live") + "&utm_medium=live&utm_campaign=" + encodeURIComponent(episodeId);
 }
 
+// show.html's ticker band (.ticker: top, height) and its marquee's period in seconds.
+const TICKER = { y: 1464, h: 74, loop: 26 };
+
 // The review page in the show's language opening the live's trial: url for the QR (with UTM), short for the screen.
 function trialLink(code, lang, episodeId, platform) {
   const page = lang && lang !== "en" ? "qa-review-" + lang : "qa-review";
@@ -201,5 +204,5 @@ function liveSession(platform, episodes, now) {
 module.exports = {
   ROOT, OUT, LANGS, SITE, PRESENTERS, SCENES, SCENE_TITLES, EPISODES, UI,
   studioVoices, sayAs, spoken, turnVoice, pickVoice, episode, fill, episodeStrings, viewerStrings, queuedStrings, headline, pickFinding,
-  rtmpTargets, outputArgs, chapterMeta, chapterList, highlight, withEpisodes, highlights, reviewLink, trialLink, liveSession, stamp
+  rtmpTargets, outputArgs, chapterMeta, chapterList, highlight, withEpisodes, highlights, reviewLink, trialLink, liveSession, stamp, TICKER
 };

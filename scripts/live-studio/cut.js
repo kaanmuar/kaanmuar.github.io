@@ -11,6 +11,11 @@
      chapters.mp4       the whole recording with its scenes as mp4 chapters (stream copy)
      chapters.txt       "0:00 Title" lines for a YouTube description
      clips.json         each clip's file, episode, scene, start, length, language and line
+   A live that showed a trial code (chapters.json "trial", #3176) expires a day after it ends, so its clips never show it
+   (#3254): run.js evergreen renders, in the live's language and voice, each episode's call to action with the review page
+   and "comment or DM for your free 2-day pass", and the ticker band with the same; every clip plays under that ticker,
+   each episode's call to action is that render, and a viewer's call to action (or any, when Carlos voiced the live) is
+   left out. chapters.mp4 keeps the code, so it stays local (clips.json "trial", publish.js).
    scripts/live-studio/publish.js runs this when a recording has no clips yet, then posts the highlights.
    Every clip keeps the session's one language and voice. Clips whose peak is not above -30 dB are listed and exit 2. */
 
@@ -32,6 +37,61 @@ function peakDb(file) {
   return m ? parseFloat(m[1]) : -Infinity;
 }
 
+const RUN = path.join(__dirname, "run.js");
+
+// The evergreen renders for a live that showed a trial code, made by run.js evergreen when missing: { ticker, cta: {
+// episode: { file, dur } } }, or null for a live with no code.
+function evergreen(meta, dir, render = renderEvergreen) {
+  if (!meta.trial) return null;
+  const out = path.join(dir, "evergreen");
+  const file = path.join(out, "evergreen.json");
+  const fits = (m) => m && m.lang === meta.lang && m.voice === meta.voice && (meta.voice === "carlos" || (meta.episodes || []).every((e) => m.cta[e]));
+  let m = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
+  if (!fits(m)) {
+    render(meta, out);
+    m = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!fits(m)) throw new Error("run.js evergreen did not render every episode's call to action in " + meta.lang);
+  }
+  const cta = {};
+  Object.entries(m.cta).forEach(([id, c]) => { cta[id] = { file: path.join(out, c.file), dur: c.dur, line: c.line }; });
+  return { ticker: path.join(out, m.ticker), cta };
+}
+
+function renderEvergreen(meta, out) {
+  const voice = meta.voice === "carlos" ? ["--voice", "carlos", "--lang", meta.lang] : ["--voice-name", meta.voice];
+  const done = spawnSync(process.execPath, [RUN, "evergreen", "--episode", (meta.episodes || []).join(","), "--out", out].concat(voice), { stdio: "inherit" });
+  if (done.status !== 0) throw new Error("run.js evergreen failed");
+}
+
+// One piece of a clip: a stretch of the recording (under the evergreen ticker when there is one), or the evergreen call
+// to action in place of the episode's own; null when the piece must not be posted.
+function piece(c, ever) {
+  const own = { start: c.start, len: c.end - c.start, line: c.line };
+  if (!ever) return own;
+  if (c.scene !== "cta") return Object.assign(own, { ticker: ever.ticker });
+  const swap = !c.viewer && ever.cta[c.episode];
+  return swap ? { file: swap.file, len: swap.dur, line: swap.line } : null;
+}
+
+// ffmpeg arguments that join pieces into one clip: inputs, then a graph ending in [v] and [a].
+function joinArgs(pieces, recording) {
+  const args = [];
+  const parts = [];
+  let n = 0;
+  pieces.forEach((p, i) => {
+    if (p.file) args.push("-t", p.len.toFixed(3), "-i", p.file);
+    else args.push("-ss", p.start.toFixed(3), "-t", p.len.toFixed(3), "-i", recording);
+    const at = n++;
+    if (p.ticker) {
+      args.push("-stream_loop", "-1", "-i", p.ticker);
+      parts.push("[" + at + ":v][" + n++ + ":v]overlay=0:" + studio.TICKER.y + ":shortest=1,setpts=PTS-STARTPTS[v" + i + "]");
+    } else parts.push("[" + at + ":v]setpts=PTS-STARTPTS[v" + i + "]");
+    parts.push("[" + at + ":a]asetpts=PTS-STARTPTS[a" + i + "]");
+  });
+  const graph = parts.join(";") + ";" + pieces.map((p, i) => "[v" + i + "][a" + i + "]").join("") + "concat=n=" + pieces.length + ":v=1:a=1[v][a]";
+  return args.concat(["-filter_complex", graph, "-map", "[v]", "-map", "[a]"]);
+}
+
 const ENCODE = ["-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart"];
 
 function main() {
@@ -46,28 +106,29 @@ function main() {
   const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
   const clips = [];
   const episodes = meta.episodes || [];
+  const ever = evergreen(meta, dir);
+  const flag = ever ? { evergreen: true } : {};
   studio.withEpisodes(meta.chapters, episodes).forEach((c, i) => {
-    const len = c.end - c.start;
-    if (len < min) return;
+    const p = piece(c, ever);
+    if (!p || c.end - c.start < min) return;
     const name = String(i + 1).padStart(2, "0") + "-" + (c.viewer ? slug(c.title.split(" · ").pop()) + "-" : "") + c.scene + ".mp4";
-    ff(["-ss", c.start.toFixed(3), "-i", file, "-t", len.toFixed(3)].concat(ENCODE, [path.join(dir, name)]));
-    clips.push({ file: name, episode: c.episode, scene: c.scene, viewer: c.viewer, start: +c.start.toFixed(2), length: +len.toFixed(2), lang: meta.lang, voice: meta.voice, line: c.line });
+    ff(joinArgs([p], file).concat(ENCODE, [path.join(dir, name)]));
+    clips.push(Object.assign({ file: name, episode: c.episode, scene: c.scene, viewer: c.viewer, start: +c.start.toFixed(2), length: +p.len.toFixed(2), lang: meta.lang, voice: meta.voice, line: p.line }, flag));
   });
   const reels = studio.highlights(meta.chapters, episodes);
-  reels.forEach(({ episode, scenes: reel }) => {
+  reels.forEach(({ episode, scenes }) => {
+    const reel = scenes.map((c) => ({ c, p: piece(c, ever) })).filter((x) => x.p);
+    if (!reel.length) return;
     const name = reels.length > 1 ? "highlight-" + episode + ".mp4" : "highlight.mp4";
-    const inputs = [];
-    reel.forEach((c) => inputs.push("-ss", c.start.toFixed(3), "-t", (c.end - c.start).toFixed(3), "-i", file));
-    const graph = reel.map((c, i) => "[" + i + ":v][" + i + ":a]").join("") + "concat=n=" + reel.length + ":v=1:a=1[v][a]";
-    ff(inputs.concat(["-filter_complex", graph, "-map", "[v]", "-map", "[a]"], ENCODE, [path.join(dir, name)]));
-    clips.push({ file: name, episode, scene: "highlight", start: 0, length: +reel.reduce((n, c) => n + c.end - c.start, 0).toFixed(2), lang: meta.lang, voice: meta.voice,
-      line: reel.map((c) => c.line).join(" "), scenes: reel.map((c) => c.scene) });
+    ff(joinArgs(reel.map((x) => x.p), file).concat(ENCODE, [path.join(dir, name)]));
+    clips.push(Object.assign({ file: name, episode, scene: "highlight", start: 0, length: +reel.reduce((n, x) => n + x.p.len, 0).toFixed(2), lang: meta.lang, voice: meta.voice,
+      line: reel.map((x) => x.p.line).join(" "), scenes: reel.map((x) => x.c.scene) }, flag));
   });
   const metaFile = path.join(dir, "chapters.ffmeta");
   fs.writeFileSync(metaFile, studio.chapterMeta(meta.chapters));
   ff(["-i", file, "-i", metaFile, "-map_metadata", "1", "-map_chapters", "1", "-c", "copy", "-movflags", "+faststart", path.join(dir, "chapters.mp4")]);
   fs.writeFileSync(path.join(dir, "chapters.txt"), studio.chapterList(meta.chapters) + "\n");
-  fs.writeFileSync(path.join(dir, "clips.json"), JSON.stringify({ recording: path.basename(file), episodes, lang: meta.lang, voice: meta.voice, clips }, null, 1));
+  fs.writeFileSync(path.join(dir, "clips.json"), JSON.stringify({ recording: path.basename(file), episodes, lang: meta.lang, voice: meta.voice, trial: meta.trial || "", evergreen: !!ever, clips }, null, 1));
   const quiet = clips.filter((c) => !(peakDb(path.join(dir, c.file)) > -30));
   clips.forEach((c) => console.log(c.file.padEnd(40), c.length + " s"));
   console.log("wrote", clips.length, "clips to", dir);
@@ -77,9 +138,13 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error.message);
-  process.exit(1);
+if (require.main === module) {
+  try {
+    main();
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 }
+
+module.exports = { evergreen, piece, joinArgs };

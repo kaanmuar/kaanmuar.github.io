@@ -14,6 +14,7 @@
       (textLang, so no network puts an English caption on it), feed and story cards from the clip's hook frame (the show
       draws its text in that language) on a blurred backdrop, clip/<slug>.mp4, and a calendar slotted into the free
       lanes by social-calendar.js --write --batch.
+   A live that showed a trial code is cut evergreen first (cut.js, #3254); its chaptered recording keeps the code and stays local.
    4. Uploads every clip (scenes, highlights, the chaptered recording) to the live-stock release and lists them in
       assets/social/live-stock.json (stock.js), each highlight with the batch post it became.
    5. Uploads the highlights to the batch's own prerelease and opens a studio/ PR. Merging it runs studio-render.yml's
@@ -154,10 +155,19 @@ function parseArgs(argv) {
   return opts;
 }
 
-// The cut recording: cut.js's clips.json, cutting first when there is none.
-function cutRecording(file) {
+// Why a cut may not be posted, or "": a live's trial code expires a day after it, so every clip of a live that showed one
+// must be cut evergreen (cut.js, #3254).
+function stale(meta, c) {
+  if (!meta.trial) return "";
+  return c && c.evergreen && c.clips.every((x) => x.evergreen) ? "" : "the live showed the trial code " + meta.trial + ", which expires; its clips are not evergreen";
+}
+
+// The cut recording: cut.js's clips.json, cutting first when there is none or it still shows the live's trial code.
+function cutRecording(file, meta) {
   const dir = file.replace(/\.mp4$/, "-clips");
-  if (!fs.existsSync(path.join(dir, "clips.json"))) {
+  const known = path.join(dir, "clips.json");
+  if (fs.existsSync(known) && stale(meta, JSON.parse(fs.readFileSync(known, "utf8")))) fs.rmSync(known);
+  if (!fs.existsSync(known)) {
     const done = spawnSync(process.execPath, [path.join(__dirname, "cut.js"), file], { stdio: "inherit" });
     if (done.status === 1) throw new Error("cut.js failed on " + file);
   }
@@ -237,7 +247,9 @@ async function main() {
   const file = path.resolve(opts.file);
   const meta = JSON.parse(fs.readFileSync(file + ".chapters.json", "utf8"));
   const rule = checkRule(meta);
-  const { dir: clipsDir, cut: c } = cutRecording(file);
+  const { dir: clipsDir, cut: c } = cutRecording(file, meta);
+  const why = stale(meta, c);
+  if (why) throw new Error(why + ": run cut.js on " + file + " again");
   c.episodes = c.episodes && c.episodes.length ? c.episodes : meta.episodes || [];
   const recorded = fs.statSync(file).mtime.toISOString();
   const batch = "live-" + slugify(path.basename(file, ".mp4"));
@@ -284,7 +296,7 @@ async function main() {
       return;
     }
 
-    const all = c.clips.map((x) => x.file).concat("chapters.mp4");
+    const all = c.clips.map((x) => x.file).concat(c.trial ? [] : ["chapters.mp4"]);
     const staged = fs.mkdtempSync(path.join(os.tmpdir(), "live-stock-"));
     const assets = all.map((f) => { const to = path.join(staged, stock.assetName(c.recording, f)); fs.copyFileSync(path.join(clipsDir, f), to); return to; });
     upload(stock.RELEASE, assets, "Live studio media stock (#" + TICKET + "): every clip cut from a live. Index: " + stock.MANIFEST + ".", false);
@@ -314,4 +326,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { PHRASES, MIN_S, MAX_S, checkRule, unpostable, episodeText, caption, calendarCsv, prBody };
+module.exports = { PHRASES, MIN_S, MAX_S, checkRule, stale, unpostable, episodeText, caption, calendarCsv, prBody };
