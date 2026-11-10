@@ -59,8 +59,8 @@ import kotlin.math.sqrt
 object GeoTime {
     val SPANS = listOf(0 to "Now", 7 to "7 days", 30 to "30 days", 90 to "90 days")
     /** The history's fields, FIELDS in functions/jarvis-geo-time.js. */
-    val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks")
-    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks") + GeoCost.KEYS
+    val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks", "engaged", "users", "keyEvents")
+    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "engaged", "keyEvents", "visits", "reviews", "paid", "usd", "clicks") + GeoCost.KEYS
     private val WORSE_UP = setOf("bounceRate", "cost") + GeoCost.LOWER
     val UP = Color(0xFF38E1FF)
     val DOWN = Color(0xFFFF4D8D)
@@ -256,7 +256,7 @@ fun GeoChangeLegend(v: GeoTime.View, key: String) {
     Muted("${ds.count { it > 0 }} up · ${ds.count { it < 0 }} down · against the ${if (v.mode == "week") "week" else "span"} before")
 }
 
-/** The country sheet's changes over the picked range (30 days when none): sent, replies, positive, reply rate, visitors, prospects left and reviewed. */
+/** The country sheet's changes over the picked range (30 days when none): sent, replies, positive, reply rate, GA4 visitors, engaged sessions and key events, prospects left and reviewed. */
 @Composable
 fun GeoTimeSheet(g: JsonObject, cc: String, span: Int) {
     val n = if (span > 0) span else 30
@@ -265,7 +265,7 @@ fun GeoTimeSheet(g: JsonObject, cc: String, span: Int) {
     val was = GeoTime.spanRows(g, n, 1).firstOrNull { it.str("cc") == cc }
     Text("LAST $n DAYS AGAINST THE $n BEFORE", color = J.amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
     Column {
-        listOf("sent", "replies", "positive", "replyRate", "visitors", "left", "reviewed").forEach { k ->
+        listOf("sent", "replies", "positive", "replyRate", "visitors", "engaged", "keyEvents", "left", "reviewed").forEach { k ->
             val d = GeoTime.deltaOf(now, was, k)
             Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(Geo.metric(k).label, fontSize = 13.sp, color = J.text, modifier = Modifier.weight(1f))
