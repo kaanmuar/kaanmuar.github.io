@@ -34,6 +34,17 @@
     "checked": "2026-11-09T00:52:13.080Z"
    }
   ],
+  "auto-2026-10-22/10-u-uniminuto-edu": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "42",
+    "at": "2026-11-10T00:12:30.593Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/42",
+    "checked": "2026-11-10T00:12:40.463Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -131,6 +142,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/32",
     "checked": "2026-11-09T00:52:19.073Z"
+   }
+  ],
+  "auto-2026-11-06/06-u-kra-co-kr": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "43",
+    "at": "2026-11-10T00:12:40.463Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/43",
+    "checked": "2026-11-10T00:12:48.388Z"
    }
   ],
   "auto-2026-11-08/04-vs-beebom-com": [
@@ -368,6 +390,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/29",
     "checked": "2026-11-08T20:51:35.648Z"
+   }
+  ],
+  "tips-2026-10/14-share-card": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "41",
+    "at": "2026-11-10T00:12:29.625Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/41",
+    "checked": "2026-11-10T00:12:30.593Z"
    }
   ]
  }
