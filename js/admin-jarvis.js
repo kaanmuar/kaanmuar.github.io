@@ -8,6 +8,7 @@ import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.j
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
 import * as Geo from "./admin-jarvis-geo.js?v=2988";
 import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
+import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -3025,6 +3026,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
             ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
             ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
+            ${GeoHeat.panels(S, g, channel, { panel, esc, fmt })}
             ${geoFlowPanels(g, sel, channel)}
             ${geoConfirmPanel(g)}
         </div>`;
@@ -4479,6 +4481,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
         if (t.dataset.geoCamp !== undefined) { event.preventDefault(); S.geoCamp = S.geoCamp === t.dataset.geoCamp ? '' : t.dataset.geoCamp; render(); const at = S.geoCamp && $('[data-geo-camp-sheet]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoTlGroup) { S.geoTlGroup = t.dataset.geoTlGroup; render(); return; }
+        if (t.dataset.geoHeat || t.dataset.geoSector) { GeoHeat.pick(S, t.dataset); render(); return; }
         if (t.dataset.geoTarget) { geoTarget(t); return; }
         if (t.dataset.geoConfirm) { geoConfirmAct(t); return; }
         if (t.dataset.calAct) { calendarAct(t); return; }

@@ -348,6 +348,9 @@ async function geo(ctx) {
   });
   joinDates(out.countries, calendar, ctx.now);
   Object.assign(out, require("./jarvis-geo-flow").build({ campaigns: marketing && marketing.campaigns && marketing.campaigns.rows, countries: out.countries, calendar, now: ctx.now }));
+  const heat = require("./jarvis-geo-heat");
+  out.heat = heat.heatRows({ sync, marketing, queue: { hosts: q.hosts }, live, countries: out.countries, now: ctx.now });
+  out.sectors = heat.sectorGrid({ queue: { hosts: q.hosts }, sync, marketing });
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
   return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });

@@ -17,6 +17,7 @@ const GEO_DATED = Object.assign({}, GEO, { countries: GEO.countries.map((r) => {
   const next = (CALENDAR.byCountry[r.cc] || [])[0];
   return Object.assign({}, r, next ? { nextDate: { date: next.date, name: next.name, kind: next.kind }, daysToDate: next.daysAway } : { nextDate: null, daysToDate: null });
 }) });
+Object.assign(GEO_DATED, require('./fixtures/jarvis-geo-heat.json'));
 
 // Firestore is an in-memory stub seeded from window.__data (collection name → rows) that logs every read in window.__reads, and the
 // owner-only /jarvis function is answered by page.route (its snapshot op built from the same seed), so the whole Statistics tab runs offline.
@@ -937,6 +938,52 @@ test.describe('admin statistics (Jarvis)', () => {
     await box.locator('[data-geo-confirm-row="globalhub.io"] [data-geo-confirm="skip"]').click();
     await expect.poll(sent).toContainEqual(['globalhub.io', 'skip']);
     await expect.poll(() => calls.filter((c) => c.op === 'geo').length, { message: 'the next sites are read once the shown ones are answered' }).toBeGreaterThan(reads);
+    expect(errors).toEqual([]);
+  });
+
+  test('Map shows replies by weekday and local hour with the sending window, and a country-by-sector grid whose cells open the country (#3112)', async ({ page }) => {
+    test.setTimeout(90000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await openStats(page, '#stats/geo/30');
+    const geo = page.locator('[data-view="geo"]');
+    const heat = geo.locator('[data-panel-id="geo-heat"]');
+    const grid = geo.locator('[data-panel-id="geo-sectors"]');
+    await expect(heat.locator('.jv-heat-c')).toHaveCount(168);
+    await expect(heat).toContainText("62 replies in each country's local time");
+    await expect(heat).toContainText('Pick a country to see its campaigns');
+    await expect(heat).toContainText('most populous one: AR America/Argentina/Buenos_Aires');
+    await expect(heat.locator('.jv-heat-w')).toHaveCount(0);
+    await expect(grid.locator('thead')).toContainText('University');
+    await expect(grid.locator('thead')).toContainText('No sector');
+    await expect(grid).toContainText('1 of 37 synced leads have no site in the prospect queue');
+    if (process.env.GEO_SHOTS) { await heat.screenshot({ path: `${process.env.GEO_SHOTS}/3112-heatmap-all.png` }); await grid.screenshot({ path: `${process.env.GEO_SHOTS}/3112-sectors.png` }); }
+
+    await grid.locator('tr', { hasText: 'Colombia' }).locator('.jv-sector-c').first().click();
+    await expect(geo.locator('[data-panel-id="geo-country"]')).toContainText('Colombia');
+    await expect(heat.locator('header')).toContainText('Colombia');
+    await expect(heat).toContainText("Colombia's local time (America/Bogota)");
+    await expect(heat).toContainText('inside the sending window');
+    expect(await heat.locator('.jv-heat-w').count()).toBe(5 * 8);
+    await expect(grid.locator('tr.is-on')).toContainText('Colombia');
+    await heat.locator('[data-geo-heat="sends"]').click();
+    await expect(heat.locator('header')).toContainText('sends');
+    await expect(heat).toContainText('sends in Colombia');
+    if (process.env.GEO_SHOTS) await heat.screenshot({ path: `${process.env.GEO_SHOTS}/3112-heatmap-colombia.png` });
+
+    await grid.locator('[data-geo-sector="replyRate"]').click();
+    await expect(grid.locator('header')).toContainText('Reply rate');
+    await expect(grid.locator('tr', { hasText: 'Colombia' })).toContainText('%');
+    await geo.locator('[data-geo-channel="social"]').click();
+    await expect(heat).toContainText('Only cold email has hours');
+    await geo.locator('[data-geo-channel="sweep"]').click();
+    await geo.locator('[data-geo-channel="email"]').click();
+    await expect(heat.locator('.jv-heat-c')).toHaveCount(168);
+    if (process.env.GEO_SHOTS) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await heat.screenshot({ path: `${process.env.GEO_SHOTS}/3112-heatmap-phone.png` });
+      await grid.screenshot({ path: `${process.env.GEO_SHOTS}/3112-sectors-phone.png` });
+    }
     expect(errors).toEqual([]);
   });
 

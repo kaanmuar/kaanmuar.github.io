@@ -870,4 +870,26 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-geo-card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.1rem 0.6rem; margin: 0; }
 .jv-geo-card dt { color: var(--dim); }
 .jv-geo-card dd { margin: 0; color: #fff; text-align: right; }
+/* Map heatmap and sector grid (#3112) */
+.jv-heat { display: block; width: 100%; max-width: 46rem; height: auto; margin: 0.4rem 0 0.2rem; }
+.jv-heat-h, .jv-heat-d { fill: var(--dim); font-size: 7.5px; font-family: inherit; }
+.jv-heat-c.is-l0 { stroke: #1d3340; stroke-width: 0.5; }
+.jv-heat-c.is-l5 { filter: drop-shadow(0 0 2px #ffd76e); }
+.jv-heat-legend { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.75rem; color: var(--muted); }
+.jv-heat-legend i { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-heat-legend li.is-l0 { color: var(--dim); }
+.jv-heat-legend li.is-l5 i { box-shadow: 0 0 6px #ffd76e; }
+.jv-heat-key { display: inline-block; width: 0.7rem; height: 0.7rem; border: 1.5px solid; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-heat-dot { display: inline-block; width: 0.45rem; height: 0.45rem; border-radius: 50%; margin: 0 0.3rem 0 0.4rem; }
+.jv-sector-wrap { overflow-x: auto; margin-top: 0.4rem; }
+.jv-sector { border-collapse: separate; border-spacing: 3px; font-size: 0.75rem; }
+.jv-sector th { color: var(--dim); font-weight: 500; text-align: left; white-space: nowrap; padding: 0 0.4rem 0 0; }
+.jv-sector thead th { text-align: center; padding: 0 0.2rem; }
+.jv-sector tr.is-on th .jv-link { color: var(--amber); font-weight: 600; }
+.jv-sector td { padding: 0; }
+.jv-sector-c { display: block; width: 100%; min-width: 3.2rem; min-height: 1.9rem; padding: 0 0.35rem; border: 1px solid transparent; border-radius: 5px; color: #fff; font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
+.jv-sector-c.is-l0 { border-color: #1d3340; }
+.jv-sector-c.is-l4, .jv-sector-c.is-l5 { color: #04131a; font-weight: 600; }
+.jv-sector tr.is-on .jv-sector-c { border-color: var(--amber); }
+.jv-sector-c:hover, .jv-sector-c:focus-visible { border-color: var(--cyan); }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c.is-l5 { animation: none; } }
