@@ -1,6 +1,6 @@
 /**
  * Owner proofs besides the mailbox (#667): a desk-recorded credentials run and the owner's
- * qa-lab-verify token in DNS or on the homepage. Each one unlocks the chat conversation; nothing else does.
+ * qa-lab-verify token in DNS or on the homepage. Each one unlocks the chat conversation and the exposed-files probes (#3085); nothing else does.
  *
  *   npm run test:review
  */

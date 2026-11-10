@@ -18,6 +18,7 @@ const wordpress = require("./url-review-wordpress");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const exposedFiles = require("./url-review-exposed");
 const localProfile = require("./url-review-local");
 const mailAuth = require("./url-review-mail-auth");
 const blocklists = require("./url-review-blocklists");
@@ -288,7 +289,7 @@ function mailboxMatchesHost(email, hostname) {
   return !!domain && !!site && registrable(domain) === site;
 }
 
-// Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
+// Why the asker may talk to the host finally reviewed (the chat conversation, form testing, exposed files), or "":
 // "own" for "I own this site" from a mailbox on the host's domain; "credentials" or "site" from the
 // unexpired url_review_owner_proofs rows the caller loaded for the signed-in email (url-review-owner-proof.js).
 // The "credentials" reason on its own proves nothing: it is a choice in a list.
@@ -3229,6 +3230,18 @@ async function reviewTarget(rawUrl, hooks) {
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
   const proofPromise = stopped || passive || !controls.asker ? Promise.resolve(null) : proveOwner(controls.asker, origin.hostname).catch(() => null);
+  const exposedPromise = stopped || passive || !controls.asker ? Promise.resolve(null) : proofPromise.then((proof) => {
+    if (!proof || !proof.kind) return { locked: true };
+    if (halt()) return null;
+    const readCapped = async (url) => {
+      const target = new URL(url);
+      return exposedFiles.read(target, { lookup: pinnedLookup(await assertPublic(target.hostname)), agent: USER_AGENT });
+    };
+    return exposedFiles.probe(origin.origin, { get: readCapped, allowed: (path) => !robots.length || robotsAllows(path, robots), halt }).then((res) => {
+      note("Checked " + res.checked + " well-known paths for exposed files" + (res.found.length ? ": " + res.found.map((row) => row.path).join(", ") + " gave out content." : "; none gave out content."));
+      return res;
+    });
+  }).catch(() => null);
   const canTalk = !passive && !!controls.asker && typeof controls.browse === "function";
   const published = canTalk ? chatTalk.facts() : null;
   if (published) published.read(visibleText(first.body));
@@ -3429,6 +3442,7 @@ async function reviewTarget(rawUrl, hooks) {
   extras.outbound = await outboundPromise;
   extras.wordpress = await wordpressPromise;
   if (extras.wordpress) note(wordpress.note(extras.wordpress));
+  extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
