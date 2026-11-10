@@ -168,7 +168,7 @@ test("the period summary counts runs as reviews, and reads money from the paymen
 test("the period report leads with volume and money, puts deltas inline, and drops empty sections", () => {
   const summary = summarizePeriod([{ ip: "1", createdAt: at(15) }, { ip: "2", createdAt: at(13) }], rows, [], []);
   const previous = summarizePeriod([{ ip: "1" }], rows.slice(0, 1), [], []);
-  const list = reportRows(summary, previous, "the day before", { followUp: { notes: 1, stops: 0, notices: 2, unlisted: 0, replies: 1, redemptions: 0 }, sweep: 3 });
+  const list = reportRows(summary, previous, "the day before", { followUp: { notes: 1, stops: 0, notices: 2, unlisted: 0, replies: 1, redemptions: 0 }, ours: { total: 3, kinds: { "country sweep": 2, test: 1 } } });
   const row = (label) => (list.find((item) => item.label === label) || {}).value;
   assert.equal(list[0].heading, "Volume and money");
   assert.equal(row("Opens"), "2 (1 the day before, +1); 2 networks");
@@ -176,13 +176,15 @@ test("the period report leads with volume and money, puts deltas inline, and dro
   assert.equal(row("Conversion"), "200% of opens ran a review, 25% of reviews were paid for");
   assert.equal(row("Report mails"), "1 sent (1 with PDF), 1 failed, 1 not recorded");
   assert.equal(row("Owner notices"), "2 sent, 1 claimed, 0 taken off Live Reports, 1 reply");
-  assert.equal(row("Country sweep"), "3 reviewed, not counted above");
+  assert.match(row("Reviews by people"), /^4 \(1 the day before, \+3\)/);
+  assert.equal(row("Our runs"), "3 not counted above (country sweep 2, test 1)");
+  assert.equal((reportRows(summary, previous, "the day before", { ours: { total: 0, kinds: {} } }).find((item) => item.label === "Our runs") || {}).value, "0 not counted above");
   assert.equal(row("Hours"), "08 1, 10 1 America/Bogota");
   const kept = ownerRows(list);
   assert.ok(!kept.some((item) => item.heading === "Failures"));
   assert.ok(!kept.some((item) => item.label === "Follow-up notes" && !item.value));
-  assert.equal(reportSubject("Daily", "22 Oct 2026", summary, 1), "Daily URL review — 22 Oct 2026 · 4 reviews, 28 USD, 1 failed");
-  assert.equal(reportSubject("Daily", "22 Oct 2026", summarizePeriod([], [rows[0]], [], []), 0), "Daily URL review — 22 Oct 2026 · 1 review");
+  assert.equal(reportSubject("Daily", "22 Oct 2026", summary, 1, 3), "Daily URL review — 22 Oct 2026 · 4 reviews by people, 3 ours, 28 USD, 1 failed");
+  assert.equal(reportSubject("Daily", "22 Oct 2026", summarizePeriod([], [rows[0]], [], []), 0), "Daily URL review — 22 Oct 2026 · 1 review by people");
 });
 
 test("a slimmed review row keeps everything the period summary reads and drops the rest of the report", () => {

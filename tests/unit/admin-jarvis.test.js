@@ -40,18 +40,48 @@ test("URL Review splits opens, reviews, payments and the funnel", () => {
   const summary = core.summarizeReview({
     opens: [{ createdAt: daysAgo(1), query: "?utm_source=x&utm_campaign=premium" }, { createdAt: daysAgo(2) }, { createdAt: daysAgo(2) }, { createdAt: daysAgo(3) }],
     reviews: [
-      { createdAt: daysAgo(1).toISOString(), status: "complete", paid: true, priceUsd: 9, score: 80, requestedUrl: "https://shop.example/a", frameworks: ["React"] },
-      { createdAt: daysAgo(2).toISOString(), status: "failed", score: 0, requestedUrl: "nope" }
+      { createdAt: daysAgo(1).toISOString(), email: "ana@shop.co", status: "complete", paid: true, priceUsd: 9, score: 80, requestedUrl: "https://shop.example/a", frameworks: ["React"] },
+      { createdAt: daysAgo(2).toISOString(), email: "leo@real.co", status: "failed", score: 0, requestedUrl: "nope" },
+      { createdAt: daysAgo(1).toISOString(), email: "", source: "sweep", sweep: { host: "big.example" }, status: "complete", score: 40, requestedUrl: "https://big.example/" },
+      { createdAt: daysAgo(1).toISOString(), email: "", source: "rivals", status: "complete", requestedUrl: "https://rival.example/" },
+      { createdAt: daysAgo(1).toISOString(), email: "kaanmuar@gmail.com", source: "jarvis", status: "complete", paid: true, free: true, priceUsd: 0, requestedUrl: "https://mine.example/" },
+      { createdAt: daysAgo(1).toISOString(), email: "buyer@real.co", test: true, status: "complete", paid: true, priceUsd: 9, requestedUrl: "https://sandbox.example/" },
+      { createdAt: daysAgo(3).toISOString(), email: "qa@carlosandmunoz.com", status: "complete", requestedUrl: "https://team.example/" },
+      { createdAt: daysAgo(1).toISOString(), email: "ana@shop.co", status: "checkout-open", requestedUrl: "https://shop.example/a" },
+      { createdAt: daysAgo(1).toISOString(), email: "ana@shop.co", status: "owner-claim", requestedUrl: "https://shop.example/a" }
     ],
     events: [{ site: "review", kind: "click", name: "qa_review_share", createdAt: daysAgo(1) }, { site: "review", kind: "click", name: "hub_x", createdAt: daysAgo(1) }],
-    prior: { opens: 2, reviews: 2 }
+    prior: { opens: 2, reviews: 2, ours: 10 }
   }, window);
-  assert.deepEqual(summary.totals, { opens: 4, reviews: 2, paid: 1, usd: 9, complete: 1, conversion: 50, avgScore: 80 });
+  assert.deepEqual(summary.totals, { opens: 4, reviews: 2, ours: 5, paid: 1, usd: 9, complete: 1, conversion: 50, avgScore: 80 });
   assert.deepEqual(summary.funnel.map((row) => row.value), [4, 2, 1, 1]);
   assert.equal(summary.kpis[0].delta, "+100%");
+  assert.deepEqual(summary.kpis.slice(1, 3).map((k) => [k.label, k.value, k.delta]), [["Reviews by people", 2, "0%"], ["Our runs", 5, "-50%"]]);
   assert.ok(summary.lists.sources.some((row) => row.label === "x / premium (tagged link)"));
   assert.deepEqual(summary.lists.hosts.map((row) => row.label).sort(), ["none", "shop.example"]);
+  assert.deepEqual(summary.lists.ourRuns.map((row) => row.label).sort(), ["country sweep", "our address", "rival sweep", "shared from Jarvis", "test"]);
+  assert.equal(summary.reviewSeries.values.reduce((a, b) => a + b, 0), 2);
+  assert.equal(summary.oursSeries.values.reduce((a, b) => a + b, 0), 5);
   assert.equal(summary.lists.actions.length, 1);
+});
+
+test("a review run is ours when a sweep, Jarvis, a test or our own address asked for it (#3194)", () => {
+  const origin = (row) => core.reviewOrigin(Object.assign({ status: "complete" }, row));
+  assert.equal(origin({ email: "ana@shop.co" }), "");
+  assert.equal(origin({ email: "", sweep: { host: "a.example" } }), "sweep");
+  assert.equal(origin({ email: "", source: "rivals" }), "rivals");
+  assert.equal(origin({ email: "", rivalOf: "r1" }), "rivals");
+  assert.equal(origin({ email: "", reasonCode: "rivals" }), "automated");
+  assert.equal(origin({ email: "carlos@x.co", source: "jarvis" }), "jarvis");
+  assert.equal(origin({ email: "buyer@real.co", test: true }), "test");
+  assert.equal(origin({ email: "playwright+1@shop.example" }), "test");
+  assert.equal(origin({ email: "ana@example.com" }), "test");
+  assert.equal(origin({ email: "Kaanmuar@Gmail.com" }), "team");
+  assert.equal(origin({ email: "hello@qalabreview.com" }), "team");
+  assert.equal(origin({ email: "x@notcarlosandmunoz.com" }), "");
+  assert.equal(core.reviewOrigin({ status: "checkout-open", email: "" }), "", "a payment row is not a run");
+  const split = core.splitReviews([{ status: "complete", email: "ana@shop.co" }, { status: "running", email: "" }, { status: "paid-report", email: "" }]);
+  assert.deepEqual([split.people.length, split.ours.length, split.kinds], [1, 1, { "no asker email": 1 }]);
 });
 
 test("the inbox honours the real/test filter and flags what waits", () => {
@@ -464,18 +494,26 @@ test("server: the layout is cleaned, saved one tab at a time, kept by a settings
   assert.deepEqual((await jarvis.saveSettings(db, { layout: {} }, "carlos")).layout, {});
 });
 
-test("server: goal values come from count and sum aggregations with the right filters", async () => {
-  const db = fakeDb({ usd: 34.2, counts: {
+test("server: goal values come from count aggregations, and review goals count only people's runs (#3194)", async () => {
+  const db = fakeDb({ counts: {
     'site_events["site==cv","kind==visit","createdAt>=date","createdAt<date"]': 120,
-    'url_reviews["paid==true","createdAt>=iso","createdAt<iso"]': 7,
     'url_review_opens["createdAt>=date","createdAt<date"]': 561
-  } });
+  }, rows: { url_reviews: [
+    { createdAt: "2026-10-20T10:00:00.000Z", email: "ana@shop.co", status: "complete", paid: true, priceUsd: 19 },
+    { createdAt: "2026-10-21T10:00:00.000Z", email: "leo@real.co", status: "complete" },
+    { createdAt: "2026-10-21T11:00:00.000Z", email: "", source: "sweep", status: "complete" },
+    { createdAt: "2026-10-22T10:00:00.000Z", email: "kaanmuar@gmail.com", source: "jarvis", status: "complete", paid: true, free: true, priceUsd: 0 },
+    { createdAt: "2026-10-22T11:00:00.000Z", email: "b@real.co", test: true, status: "complete", paid: true, priceUsd: 9 },
+    { createdAt: "2026-10-23T10:00:00.000Z", email: "ana@shop.co", status: "paid-report", paid: true, priceUsd: 15.2 },
+    { createdAt: "2026-10-27T10:00:00.000Z", email: "zoe@real.co", status: "complete" }
+  ] } });
   const start = new Date("2026-10-19T05:00:00Z");
   const end = new Date("2026-10-26T05:00:00Z");
   assert.equal(await jarvis.goalValue(db, { product: "cv", metric: "visits" }, start, end), 120);
-  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "paid" }, start, end), 7);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "reviews" }, start, end), 2);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "paid" }, start, end), 2);
   assert.equal(await jarvis.goalValue(db, { product: "review", metric: "opens" }, start, end), 561);
-  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "usd" }, start, end, (field) => ({ sum: field })), 34.2);
+  assert.equal(await jarvis.goalValue(db, { product: "review", metric: "usd" }, start, end), 34.2);
   const rows = await jarvis.goals(db, { goals: [{ product: "cv", metric: "visits", period: "week", target: 300 }] }, { now: Date.parse("2026-10-21T17:00:00Z") });
   assert.deepEqual([rows[0].value, rows[0].status], [120, "on-track"]);
 });
@@ -486,7 +524,7 @@ test("server: the daily briefing reads the last 24 hours, drops test emails and 
   const db = fakeDb({ rows: {
     site_events: [{ site: "cv", kind: "visit", createdAt: ts(2) }, { site: "cv", kind: "visit", createdAt: ts(3) }, { site: "cv", kind: "visit", createdAt: ts(30) }],
     url_review_opens: [{ createdAt: ts(1) }],
-    url_reviews: [{ createdAt: new Date(now - 3600000).toISOString(), paid: true, priceUsd: 9, status: "complete" }],
+    url_reviews: [{ createdAt: new Date(now - 3600000).toISOString(), email: "ana@shop.co", paid: true, priceUsd: 9, status: "complete" }],
     messages: [{ email: "a@real.co", createdAt: ts(2) }, { email: "pw-bot@example.com", createdAt: ts(2) }],
     ratings: [{ id: "r1", email: "b@real.co", createdAt: ts(5), rating: 5, status: "pending" }]
   } });
@@ -507,11 +545,13 @@ test("server: the snapshot reads only the summary fields of a review, not its re
   const now = Date.parse("2026-10-25T12:40:00Z");
   const iso = new Date(now - 3600000).toISOString();
   const db = fakeDb({ rows: { url_reviews: [
-    { createdAt: iso, paid: true, test: false, priceUsd: 19, status: "complete", score: 80, requestedUrl: "https://shop.example/", frameworks: ["WordPress"], query: "utm_source=tiktok", report: "x".repeat(300000) }
+    { createdAt: iso, email: "ana@shop.co", paid: true, test: false, priceUsd: 19, status: "complete", score: 80, requestedUrl: "https://shop.example/", frameworks: ["WordPress"], query: "utm_source=tiktok", report: "x".repeat(300000) },
+    { createdAt: iso, email: "", source: "sweep", sweep: { host: "big.example" }, status: "complete", score: 30, requestedUrl: "https://big.example/" }
   ] } });
   const { products } = await jarvis.dailyProducts(db, { now, days: 7 });
   assert.ok(db.selects.url_reviews && !db.selects.url_reviews.includes("report"));
-  assert.deepEqual([products.review.totals.usd, products.review.totals.complete, products.review.totals.avgScore], [19, 1, 80]);
+  assert.deepEqual([products.review.totals.usd, products.review.totals.complete, products.review.totals.avgScore, products.review.totals.ours], [19, 1, 80, 1]);
+  assert.ok(db.selects.url_reviews.includes("source") && db.selects.url_reviews.includes("email"));
   assert.deepEqual(products.review.lists.hosts[0].label, "shop.example");
   assert.match(products.review.lists.reviewSources[0].label, /^tiktok/);
 });
@@ -880,7 +920,7 @@ test("social: Facebook needs come from the daily metrics' word on each Page, not
 test("a source that does not answer gets a briefing line, and test payments stay out of revenue", () => {
   const rows = core.briefing({ external: { cloudflare: { ok: false, error: "Cloudflare 401: no answer" } } });
   assert.equal(rows.find((r) => r.key === "connections:down:cloudflare").text, "Cloudflare did not answer: Cloudflare 401: no answer");
-  const sum = core.summarizeReview({ reviews: [{ paid: true, priceUsd: 19, createdAt: daysAgo(1) }, { paid: true, priceUsd: 15.2, test: true, createdAt: daysAgo(1) }] }, core.windowFor(30, NOW));
+  const sum = core.summarizeReview({ reviews: [{ email: "ana@shop.co", paid: true, priceUsd: 19, createdAt: daysAgo(1) }, { email: "ana@shop.co", paid: true, priceUsd: 15.2, test: true, createdAt: daysAgo(1) }] }, core.windowFor(30, NOW));
   assert.equal(sum.totals.usd, 19);
   assert.equal(sum.totals.paid, 1);
 });
@@ -1743,9 +1783,11 @@ test("the live feed and the social heat map come from the range's rows, newest f
     { site: "lab", kind: "visit", createdAt: at(5), query: "?utm_source=outreach&utm_campaign=w1" },
     { site: "studio", kind: "visit", createdAt: at(6), referrerHost: "www.google.com" }
   ];
-  const lines = core.feed({ events, opens: [{ createdAt: at(2) }], reviews: [{ createdAt: at(4).toISOString(), paid: true, requestedUrl: "https://shop.example/?a=1&b=2", status: "complete" }] });
+  const lines = core.feed({ events, opens: [{ createdAt: at(2) }], reviews: [{ createdAt: at(4).toISOString(), email: "ana@shop.co", paid: true, requestedUrl: "https://shop.example/?a=1&b=2", status: "complete" },
+    { createdAt: at(4).toISOString(), email: "ana@shop.co", status: "checkout-open" }] });
   assert.deepEqual(lines.map((l) => l.text.split(":")[0]), ["CV", "URL Review", "CV", "URL Review", "QA Lab", "QA Studio"]);
   assert.equal(lines[3].text, "URL Review: paid review of shop.example/?a=1&b=2 (complete)");
+  assert.equal(core.feed({ reviews: [{ createdAt: at(1).toISOString(), email: "", source: "sweep", requestedUrl: "https://big.example/", status: "complete" }] })[0].text, "URL Review: our review of big.example/ (country sweep, complete)");
   assert.ok(lines.every((l) => typeof l.at === "string" && !Number.isNaN(Date.parse(l.at))));
   assert.equal(core.feed({ events: Array.from({ length: 50 }, (_, i) => ({ site: "cv", kind: "visit", createdAt: at(i + 1) })) }).length, 18);
   const grid = core.socialHeat(events);

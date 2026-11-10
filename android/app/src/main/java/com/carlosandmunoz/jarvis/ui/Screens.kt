@@ -227,7 +227,8 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     Panel(when (product) { "inbox" -> "Messages per day"; "review" -> "Opens per day"; "hub" -> "Hub and post views per day"; else -> "Visits per day" }, id = "$product-trend") {
         BarChart(series.at("values").doubles(), series.at("labels").strings())
     }
-    p.obj("reviewSeries")?.let { Panel("Reviews per day", id = "$product-reviews") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.violet) } }
+    p.obj("reviewSeries")?.let { Panel("Reviews by people per day", id = "$product-reviews") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.violet) } }
+    p.obj("oursSeries")?.let { Panel("Our runs per day (sweeps, Jarvis, tests)", id = "$product-ours-trend") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.amber) } }
     p.obj("ratingSeries")?.let { Panel("Ratings per day", id = "$product-ratings") { BarChart(it.at("values").doubles(), it.at("labels").strings(), J.amber) } }
 
     val grid = (p["heatmap"] as? JsonArray)?.map { it.doubles() } ?: emptyList()

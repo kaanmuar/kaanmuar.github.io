@@ -31,8 +31,8 @@ const WEB_ONLY = {
 };
 const APP_ONLY = {
   // "$product-…" ids are drawn on every site product tab (Screens.kt PRODUCTS). The web shows the KPIs above its panels and draws
-  // reviews and ratings inside review-trend and inbox-trend.
-  product: ["summary", "wait", "reviews", "ratings", "send-reports"],
+  // reviews, our runs and ratings inside review-trend and inbox-trend.
+  product: ["summary", "wait", "reviews", "ours-trend", "ratings", "send-reports"],
   overview: ["money"],
   outreach: ["summary", "segments", "results", "link-visits", "link-opens", "link-make", "link-channels"],
   marketing: ["summary", "approvals", "countdowns"],
