@@ -443,7 +443,7 @@ const ADDONS = ["fixlist", "cases", "alerts", "credentials"];
 
 function paidPurpose(value) {
   const purpose = String(value || "");
-  return purpose === "report" || purpose === "pass" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
+  return purpose === "report" || purpose === "pass" || purpose === "fix" || ADDONS.indexOf(purpose) !== -1 ? purpose : "new-run";
 }
 
 // The payment row for a fix list, case export, signals, or a signed-in run bought on a report; never a run credit.

@@ -683,7 +683,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Fix requests</h2>
-      <p class="empty">Clients who asked from their report for us to fix what it found: a fixed-price package or a quote. Set the status as the work moves. Saving a quoted request with a price or a pay link mails the client the quote in their language, once per price or link.</p>
+      <p class="empty">Clients who asked from their report for us to fix what it found: a fixed-price package or a quote. Set the status as the work moves. Saving a quoted request with a price or a pay link mails the client the quote in their language, once per price or link. A package paid through checkout turns accepted by itself. Setting a request to done runs the free re-review of the same address and mails the client the before/after.</p>
       <div id="fix-requests"></div>
     </section>
     <section>
@@ -1133,9 +1133,31 @@ const PAGE = `<!DOCTYPE html>
           item.deadline ? "by " + item.deadline : "",
           item.budget ? "budget " + item.budget : "",
           item.quoteMailedAt ? "quote mailed " + when(item.quoteMailedAt) : "",
+          item.paidAt ? "paid US$" + item.paidUsd + " " + when(item.paidAt) + (item.paidTest ? " (test)" : "") : "",
+          item.kind === "self" ? "client's own fix, free re-check" : "",
           item.mailError ? "mail failed: " + item.mailError : ""
         ].filter(Boolean).join(" · ");
         block.appendChild(meta);
+        const rr = item.rereview;
+        if (rr) {
+          const line = node("p", rr.status === "done"
+            ? "Re-review " + when(rr.at) + ": " + rr.fixed + " of " + rr.total + " fixed, score " + rr.scoreBefore + " → " + rr.scoreAfter + (rr.newCount ? ", " + rr.newCount + " new" : "") + ". Before/after mailed."
+            : rr.status === "failed" ? "Re-review failed " + when(rr.at) + ": " + rr.error
+            : "Re-review " + rr.status + " since " + when(rr.at));
+          line.className = "meta fix-rereview";
+          line.dataset.state = rr.status;
+          if (rr.reportId) {
+            const fresh = Object.assign(document.createElement("a"), { href: "https://carlosandmunoz.com/qa-review.html?report=" + encodeURIComponent(rr.reportId), target: "_blank", rel: "noopener", textContent: " Open the new report" });
+            line.appendChild(fresh);
+          }
+          if (rr.status === "failed") {
+            const again = Object.assign(document.createElement("button"), { type: "button", textContent: "Run the re-review again" });
+            const said = document.createElement("span");
+            again.addEventListener("click", () => saveFix(item.id, { rereview: true }, again, said));
+            line.append(" ", again, said);
+          }
+          block.appendChild(line);
+        }
         const list = document.createElement("ul");
         item.findings.forEach((f) => list.appendChild(node("li", f.id + " · " + f.severity + " · " + f.title)));
         block.appendChild(list);

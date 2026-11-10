@@ -2,6 +2,7 @@
  * Fix what the report found (#3082): every open finding gets "Get the fix" (Ask the report, on a paid report)
  * and "Fix this for me", and the report ends with the four paths: fix it yourself, a fixed-price package,
  * a quote, or a call. Requests go to /review/fix/request; prices come from functions/url-review-fix-offers.js.
+ * A package is paid through the review checkout (#3102); a paid report also gets one free re-check after the client's own fix.
  */
 (function (root) {
   "use strict";
@@ -17,11 +18,15 @@
       packLine: "US${usd} · about {days} working days", packCovers: "Covers {list}", packOrder: "Order",
       quoteTitle: "We fix it for you", quoteCopy: "Tell us which findings to fix and how to reach the site. Carlos replies with a quote within two working days.", quoteButton: "Ask for a quote",
       callTitle: "Talk it through", callCopy: "A 30-minute call on these findings and what to fix first.", callButton: "Book a call",
-      formTitle: "Ask us to fix it", formLead: "Carlos replies within two working days with a price, a date and the access we need. Nothing is charged until you agree.",
+      formTitle: "Ask us to fix it", formLead: "Pick a package and pay now with PayPal, or ask for a quote: Carlos replies within two working days with a price, a date and the access we need.",
       findingsLabel: "Findings to fix", packageLabel: "Package", packageNone: "No package, quote me",
-      priceLine: "{name}: US${usd}, about {days} working days. You pay once Carlos confirms the work.",
+      priceLine: "{name}: US${usd}, about {days} working days. You pay now with PayPal; when the fix is done we re-review the site for free and send you the before/after.",
       accessLabel: "How we reach the site (optional)", accessHint: "Host, CMS or repository, and who can give us access. Do not send passwords here.",
       deadlineLabel: "Deadline (optional)", budgetLabel: "Budget (optional)",
+      payButton: "Send and pay US${usd}", paying: "Opening PayPal…", payLater: "Your request is saved, but PayPal did not open. Carlos will email you a pay link.",
+      recheckCopy: "When your changes are live, re-check this report once for free and get the before/after by email.", recheckButton: "Re-check for free", rechecking: "Starting…",
+      recheckSent: "We are reviewing the site again. The before/after arrives at {email} in a few minutes.", recheckUsed: "The free re-check of this report was already used.", recheckFailed: "The re-check did not start. Try again in a moment.",
+      paidBanner: "Payment received. Carlos starts the fix within two working days; when it is done we re-review the site for free and email you the before/after.",
       submit: "Send the request", sending: "Sending…", close: "Close",
       pickOne: "Pick at least one finding.",
       doneTitle: "Request sent", done: "We emailed a copy to {email}. Carlos replies within two working days.",
@@ -43,11 +48,15 @@
       packLine: "US${usd} · unos {days} días hábiles", packCovers: "Cubre {list}", packOrder: "Pedir",
       quoteTitle: "Lo arreglamos por ti", quoteCopy: "Dinos qué hallazgos arreglar y cómo llegar al sitio. Carlos responde con una cotización en dos días hábiles.", quoteButton: "Pedir una cotización",
       callTitle: "Hablémoslo", callCopy: "Una llamada de 30 minutos sobre estos hallazgos y qué arreglar primero.", callButton: "Reservar una llamada",
-      formTitle: "Pídenos que lo arreglemos", formLead: "Carlos responde en dos días hábiles con un precio, una fecha y el acceso que necesitamos. No se cobra nada hasta que aceptes.",
+      formTitle: "Pídenos que lo arreglemos", formLead: "Elige un paquete y paga ahora con PayPal, o pide una cotización: Carlos responde en dos días hábiles con un precio, una fecha y el acceso que necesitamos.",
       findingsLabel: "Hallazgos para arreglar", packageLabel: "Paquete", packageNone: "Sin paquete, quiero una cotización",
-      priceLine: "{name}: US${usd}, unos {days} días hábiles. Pagas cuando Carlos confirma el trabajo.",
+      priceLine: "{name}: US${usd}, unos {days} días hábiles. Pagas ahora con PayPal; cuando el arreglo esté listo revisamos el sitio de nuevo gratis y te enviamos el antes y después.",
       accessLabel: "Cómo llegamos al sitio (opcional)", accessHint: "Hosting, CMS o repositorio, y quién puede darnos acceso. No envíes contraseñas aquí.",
       deadlineLabel: "Fecha límite (opcional)", budgetLabel: "Presupuesto (opcional)",
+      payButton: "Enviar y pagar US${usd}", paying: "Abriendo PayPal…", payLater: "Tu solicitud quedó guardada, pero PayPal no se abrió. Carlos te enviará un enlace de pago por correo.",
+      recheckCopy: "Cuando tus cambios estén publicados, vuelve a revisar este informe una vez gratis y recibe el antes y después por correo.", recheckButton: "Revisar de nuevo gratis", rechecking: "Iniciando…",
+      recheckSent: "Estamos revisando el sitio de nuevo. El antes y después llega a {email} en unos minutos.", recheckUsed: "La revisión gratuita de este informe ya se usó.", recheckFailed: "La revisión no empezó. Inténtalo de nuevo en un momento.",
+      paidBanner: "Pago recibido. Carlos empieza el arreglo en dos días hábiles; cuando esté listo revisamos el sitio de nuevo gratis y te enviamos el antes y después.",
       submit: "Enviar la solicitud", sending: "Enviando…", close: "Cerrar",
       pickOne: "Elige al menos un hallazgo.",
       doneTitle: "Solicitud enviada", done: "Enviamos una copia a {email}. Carlos responde en dos días hábiles.",
@@ -69,11 +78,15 @@
       packLine: "US${usd} · cerca de {days} dias úteis", packCovers: "Cobre {list}", packOrder: "Pedir",
       quoteTitle: "Nós corrigimos para você", quoteCopy: "Diga quais achados corrigir e como acessar o site. Carlos responde com um orçamento em dois dias úteis.", quoteButton: "Pedir um orçamento",
       callTitle: "Vamos conversar", callCopy: "Uma chamada de 30 minutos sobre estes achados e o que corrigir primeiro.", callButton: "Agendar uma chamada",
-      formTitle: "Peça para corrigirmos", formLead: "Carlos responde em dois dias úteis com um preço, uma data e o acesso de que precisamos. Nada é cobrado até você aceitar.",
+      formTitle: "Peça para corrigirmos", formLead: "Escolha um pacote e pague agora com PayPal, ou peça um orçamento: Carlos responde em dois dias úteis com um preço, uma data e o acesso de que precisamos.",
       findingsLabel: "Achados para corrigir", packageLabel: "Pacote", packageNone: "Sem pacote, quero um orçamento",
-      priceLine: "{name}: US${usd}, cerca de {days} dias úteis. Você paga quando Carlos confirma o trabalho.",
+      priceLine: "{name}: US${usd}, cerca de {days} dias úteis. Você paga agora com PayPal; quando a correção estiver pronta, revisamos o site de novo de graça e enviamos o antes e depois.",
       accessLabel: "Como acessamos o site (opcional)", accessHint: "Host, CMS ou repositório, e quem pode nos dar acesso. Não envie senhas aqui.",
       deadlineLabel: "Prazo (opcional)", budgetLabel: "Orçamento disponível (opcional)",
+      payButton: "Enviar e pagar US${usd}", paying: "Abrindo o PayPal…", payLater: "Seu pedido foi salvo, mas o PayPal não abriu. Carlos vai enviar um link de pagamento por e-mail.",
+      recheckCopy: "Quando suas mudanças estiverem no ar, revise este relatório de novo uma vez de graça e receba o antes e depois por e-mail.", recheckButton: "Revisar de novo de graça", rechecking: "Iniciando…",
+      recheckSent: "Estamos revisando o site de novo. O antes e depois chega em {email} em alguns minutos.", recheckUsed: "A revisão gratuita deste relatório já foi usada.", recheckFailed: "A revisão não começou. Tente de novo em instantes.",
+      paidBanner: "Pagamento recebido. Carlos começa a correção em dois dias úteis; quando estiver pronta, revisamos o site de novo de graça e enviamos o antes e depois por e-mail.",
       submit: "Enviar o pedido", sending: "Enviando…", close: "Fechar",
       pickOne: "Escolha pelo menos um achado.",
       doneTitle: "Pedido enviado", done: "Enviamos uma cópia para {email}. Carlos responde em dois dias úteis.",
@@ -95,11 +108,15 @@
       packLine: "US${usd} · etwa {days} Werktage", packCovers: "Umfasst {list}", packOrder: "Bestellen",
       quoteTitle: "Wir beheben es für Sie", quoteCopy: "Sagen Sie uns, welche Befunde wir beheben sollen und wie wir die Website erreichen. Carlos antwortet innerhalb von zwei Werktagen mit einem Angebot.", quoteButton: "Angebot anfragen",
       callTitle: "Darüber sprechen", callCopy: "Ein 30-minütiges Gespräch über diese Befunde und was zuerst zu beheben ist.", callButton: "Gespräch buchen",
-      formTitle: "Bitten Sie uns um die Korrektur", formLead: "Carlos antwortet innerhalb von zwei Werktagen mit Preis, Termin und dem Zugang, den wir brauchen. Berechnet wird erst, wenn Sie zustimmen.",
+      formTitle: "Bitten Sie uns um die Korrektur", formLead: "Wählen Sie ein Paket und zahlen Sie jetzt mit PayPal, oder fragen Sie nach einem Angebot: Carlos antwortet innerhalb von zwei Werktagen mit Preis, Termin und dem Zugang, den wir brauchen.",
       findingsLabel: "Zu behebende Befunde", packageLabel: "Paket", packageNone: "Kein Paket, Angebot erwünscht",
-      priceLine: "{name}: US${usd}, etwa {days} Werktage. Sie zahlen, sobald Carlos die Arbeit bestätigt.",
+      priceLine: "{name}: US${usd}, etwa {days} Werktage. Sie zahlen jetzt mit PayPal; ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen den Vorher-nachher-Vergleich.",
       accessLabel: "Wie wir die Website erreichen (optional)", accessHint: "Host, CMS oder Repository, und wer uns Zugang geben kann. Senden Sie hier keine Passwörter.",
       deadlineLabel: "Frist (optional)", budgetLabel: "Budget (optional)",
+      payButton: "Senden und US${usd} zahlen", paying: "PayPal wird geöffnet…", payLater: "Ihre Anfrage ist gespeichert, aber PayPal hat sich nicht geöffnet. Carlos schickt Ihnen einen Zahlungslink per E-Mail.",
+      recheckCopy: "Sind Ihre Änderungen live, prüfen Sie diesen Bericht einmal kostenlos erneut und erhalten den Vorher-nachher-Vergleich per E-Mail.", recheckButton: "Kostenlos erneut prüfen", rechecking: "Wird gestartet…",
+      recheckSent: "Wir prüfen die Website erneut. Der Vorher-nachher-Vergleich kommt in wenigen Minuten an {email}.", recheckUsed: "Die kostenlose erneute Prüfung dieses Berichts wurde schon genutzt.", recheckFailed: "Die erneute Prüfung ist nicht gestartet. Versuchen Sie es gleich noch einmal.",
+      paidBanner: "Zahlung erhalten. Carlos beginnt die Korrektur innerhalb von zwei Werktagen; danach prüfen wir die Website kostenlos erneut und senden Ihnen den Vorher-nachher-Vergleich.",
       submit: "Anfrage senden", sending: "Wird gesendet…", close: "Schließen",
       pickOne: "Wählen Sie mindestens einen Befund.",
       doneTitle: "Anfrage gesendet", done: "Wir haben eine Kopie an {email} geschickt. Carlos antwortet innerhalb von zwei Werktagen.",
@@ -121,11 +138,15 @@
       packLine: "US${usd} · environ {days} jours ouvrés", packCovers: "Couvre {list}", packOrder: "Commander",
       quoteTitle: "Nous corrigeons pour vous", quoteCopy: "Dites-nous quels constats corriger et comment accéder au site. Carlos répond avec un devis sous deux jours ouvrés.", quoteButton: "Demander un devis",
       callTitle: "En parler", callCopy: "Un appel de 30 minutes sur ces constats et ce qu'il faut corriger d'abord.", callButton: "Réserver un appel",
-      formTitle: "Demandez-nous de corriger", formLead: "Carlos répond sous deux jours ouvrés avec un prix, une date et l'accès dont nous avons besoin. Rien n'est facturé avant votre accord.",
+      formTitle: "Demandez-nous de corriger", formLead: "Choisissez un forfait et payez maintenant avec PayPal, ou demandez un devis : Carlos répond sous deux jours ouvrés avec un prix, une date et l'accès dont nous avons besoin.",
       findingsLabel: "Constats à corriger", packageLabel: "Forfait", packageNone: "Pas de forfait, je veux un devis",
-      priceLine: "{name} : US${usd}, environ {days} jours ouvrés. Vous payez une fois que Carlos confirme le travail.",
+      priceLine: "{name} : US${usd}, environ {days} jours ouvrés. Vous payez maintenant avec PayPal ; une fois la correction faite, nous revoyons le site gratuitement et vous envoyons l'avant/après.",
       accessLabel: "Comment accéder au site (facultatif)", accessHint: "Hébergeur, CMS ou dépôt, et qui peut nous donner accès. N'envoyez pas de mots de passe ici.",
       deadlineLabel: "Échéance (facultatif)", budgetLabel: "Budget (facultatif)",
+      payButton: "Envoyer et payer US${usd}", paying: "Ouverture de PayPal…", payLater: "Votre demande est enregistrée, mais PayPal ne s'est pas ouvert. Carlos vous enverra un lien de paiement par e-mail.",
+      recheckCopy: "Quand vos changements sont en ligne, revoyez ce rapport une fois gratuitement et recevez l'avant/après par e-mail.", recheckButton: "Revoir gratuitement", rechecking: "Démarrage…",
+      recheckSent: "Nous revoyons le site. L'avant/après arrive à {email} dans quelques minutes.", recheckUsed: "La nouvelle revue gratuite de ce rapport a déjà été utilisée.", recheckFailed: "La nouvelle revue n'a pas démarré. Réessayez dans un instant.",
+      paidBanner: "Paiement reçu. Carlos commence la correction sous deux jours ouvrés ; une fois terminée, nous revoyons le site gratuitement et vous envoyons l'avant/après.",
       submit: "Envoyer la demande", sending: "Envoi…", close: "Fermer",
       pickOne: "Choisissez au moins un constat.",
       doneTitle: "Demande envoyée", done: "Nous avons envoyé une copie à {email}. Carlos répond sous deux jours ouvrés.",
@@ -147,11 +168,15 @@
       packLine: "US${usd} · circa {days} giorni lavorativi", packCovers: "Copre {list}", packOrder: "Ordina",
       quoteTitle: "Lo correggiamo noi", quoteCopy: "Dicci quali risultati correggere e come raggiungere il sito. Carlos risponde con un preventivo entro due giorni lavorativi.", quoteButton: "Chiedi un preventivo",
       callTitle: "Parliamone", callCopy: "Una chiamata di 30 minuti su questi risultati e su cosa correggere per primo.", callButton: "Prenota una chiamata",
-      formTitle: "Chiedici di correggerlo", formLead: "Carlos risponde entro due giorni lavorativi con un prezzo, una data e l'accesso che ci serve. Non si paga nulla finché non accetti.",
+      formTitle: "Chiedici di correggerlo", formLead: "Scegli un pacchetto e paga ora con PayPal, oppure chiedi un preventivo: Carlos risponde entro due giorni lavorativi con un prezzo, una data e l'accesso che ci serve.",
       findingsLabel: "Risultati da correggere", packageLabel: "Pacchetto", packageNone: "Nessun pacchetto, voglio un preventivo",
-      priceLine: "{name}: US${usd}, circa {days} giorni lavorativi. Paghi quando Carlos conferma il lavoro.",
+      priceLine: "{name}: US${usd}, circa {days} giorni lavorativi. Paghi ora con PayPal; quando la correzione è pronta rivediamo il sito gratis e ti inviamo il prima e dopo.",
       accessLabel: "Come raggiungiamo il sito (facoltativo)", accessHint: "Host, CMS o repository, e chi può darci l'accesso. Non inviare password qui.",
       deadlineLabel: "Scadenza (facoltativa)", budgetLabel: "Budget (facoltativo)",
+      payButton: "Invia e paga US${usd}", paying: "Apertura di PayPal…", payLater: "La tua richiesta è salvata, ma PayPal non si è aperto. Carlos ti invierà un link di pagamento via email.",
+      recheckCopy: "Quando le tue modifiche sono online, rivedi questo report una volta gratis e ricevi il prima e dopo via email.", recheckButton: "Rivedi gratis", rechecking: "Avvio…",
+      recheckSent: "Stiamo rivedendo il sito. Il prima e dopo arriva a {email} tra pochi minuti.", recheckUsed: "La revisione gratuita di questo report è già stata usata.", recheckFailed: "La revisione non è partita. Riprova tra un momento.",
+      paidBanner: "Pagamento ricevuto. Carlos inizia la correzione entro due giorni lavorativi; quando è pronta rivediamo il sito gratis e ti inviamo il prima e dopo.",
       submit: "Invia la richiesta", sending: "Invio…", close: "Chiudi",
       pickOne: "Scegli almeno un risultato.",
       doneTitle: "Richiesta inviata", done: "Abbiamo inviato una copia a {email}. Carlos risponde entro due giorni lavorativi.",
@@ -253,13 +278,15 @@
       const what = (item) => (item.what && (item.what[lang()] || item.what.en)) || "";
       const path = (key, title, copy, action) => '<article class="fix-path" data-path="' + key + '"><h3>' + esc(title) + "</h3><p>" + esc(copy) + "</p>" + action + "</article>";
       const self = paid()
-        ? '<button type="button" class="btn btn-ghost" data-fix-self>' + esc(words.selfButton) + "</button>"
+        ? '<button type="button" class="btn btn-ghost" data-fix-self>' + esc(words.selfButton) + "</button>" +
+          '<p class="fix-recheck">' + esc(words.recheckCopy) + '</p><button type="button" class="btn btn-ghost" data-fix-recheck>' + esc(words.recheckButton) + '</button><p class="fix-recheck-msg" role="status" aria-live="polite"></p>'
         : '<p class="fix-muted">' + esc(words.selfLocked) + "</p>";
+      const banner = new URLSearchParams(location.search).get("fixPaid") === "1" ? '<p class="fix-paid" role="status">' + esc(words.paidBanner) + "</p>" : "";
       const packs = offers.length ? path("packages", words.packTitle, words.packCopy, '<ul class="fix-packs">' + offers.map((item) =>
         '<li data-package="' + esc(item.id) + '"><div><strong>' + esc(name(item)) + '</strong><span class="fix-price">' + esc(fill(words.packLine, { usd: item.usd, days: item.days })) + "</span>" +
         "<small>" + esc(what(item)) + '</small><small class="notranslate" translate="no">' + esc(fill(words.packCovers, { list: item.findings.join(", ") })) + "</small></div>" +
         '<button type="button" class="btn btn-primary" data-fix-package="' + esc(item.id) + '">' + esc(words.packOrder) + "</button></li>").join("") + "</ul>") : "";
-      slot.innerHTML = '<p class="eyebrow">' + esc(words.eyebrow) + '</p><h2 id="fix-offer-title">' + esc(words.title) + '</h2><p class="fix-lead">' + esc(fill(words.lead, { n: open.length })) + '</p><div class="fix-paths">' +
+      slot.innerHTML = banner + '<p class="eyebrow">' + esc(words.eyebrow) + '</p><h2 id="fix-offer-title">' + esc(words.title) + '</h2><p class="fix-lead">' + esc(fill(words.lead, { n: open.length })) + '</p><div class="fix-paths">' +
         path("self", words.selfTitle, words.selfCopy, self) + packs +
         path("quote", words.quoteTitle, words.quoteCopy, '<button type="button" class="btn btn-primary" data-fix-request="">' + esc(words.quoteButton) + "</button>") +
         path("call", words.callTitle, words.callCopy, '<a class="btn btn-ghost" data-fix-call href="' + esc(bookUrl(report, open.map((f) => f.id), lang())) + '">' + esc(words.callButton) + "</a>") +
@@ -322,6 +349,67 @@
       const item = (packages || []).find((p) => p.id === pick.value);
       const name = item && ((item.name && (item.name[lang()] || item.name.en)) || item.id);
       form.querySelector(".fix-price-note").textContent = item ? fill(L().priceLine, { name, usd: item.usd, days: item.days }) : "";
+      submitLabel(form);
+    }
+
+    function submitLabel(form) {
+      const pick = form.querySelector("select[name=package]");
+      const item = pick && (packages || []).find((p) => p.id === pick.value);
+      const button = form.querySelector("button[type=submit]");
+      if (button) button.textContent = item ? fill(L().payButton, { usd: item.usd }) : L().submit;
+    }
+
+    function testKey() {
+      try { return localStorage.getItem("qa-review-test-key") || ""; } catch (error) { return ""; }
+    }
+
+    // A package is paid at once through the review checkout; PayPal returns to the pay page, which confirms and comes back here.
+    async function pay(fixId, report) {
+      try {
+        const res = await fetch(endpoint() + "/checkout", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(root.ReviewAuth.proof(), { purpose: "fix", provider: "paypal", fixId, reportId: report.id, lang: lang(), testKey: testKey() }))
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.url) {
+          location.href = body.url;
+          return true;
+        }
+      } catch (error) { /* the request is saved; the pay link comes by mail */ }
+      return false;
+    }
+
+    async function recheck(button, report) {
+      const words = L();
+      const box = slot.querySelector(".fix-recheck-msg");
+      if (!root.ReviewAuth || !root.ReviewAuth.signedIn()) {
+        box.textContent = words.signIn;
+        return;
+      }
+      button.disabled = true;
+      button.textContent = words.rechecking;
+      try {
+        const res = await fetch(endpoint() + "/review/fix/recheck", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(root.ReviewAuth.proof(), { id: report.id, lang: lang() }))
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.ok) {
+          box.textContent = fill(words.recheckSent, { email: body.email || root.ReviewAuth.who().email });
+          button.hidden = true;
+          if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix_recheck", "URL Review", "sent");
+          return;
+        }
+        box.textContent = res.status === 409 ? words.recheckUsed : body.code === "sign-in" || body.signIn ? words.expired : res.status === 403 ? words.notOwner : words.recheckFailed;
+        if (res.status === 409) button.hidden = true;
+      } catch (error) {
+        box.textContent = words.recheckFailed;
+      }
+      button.disabled = false;
+      button.textContent = words.recheckButton;
     }
 
     async function request(ids, packageId) {
@@ -387,6 +475,14 @@
           }))
         });
         const body = await res.json().catch(() => ({}));
+        if (res.ok && body.ok && body.package && body.priceUsd) {
+          button.textContent = words.paying;
+          if (root.SiteAnalytics) root.SiteAnalytics.trackEvent("qa_review_fix_request", "URL Review", body.package);
+          if (await pay(body.id, report)) return;
+          sheet.innerHTML = '<div class="fix-done"><div class="fix-sheet-head"><h2 id="fix-sheet-title">' + esc(words.doneTitle) + '</h2><button type="button" class="btn btn-ghost" data-fix-close>' + esc(words.close) + "</button></div><p>" + esc(words.payLater) + "</p></div>";
+          sheet.querySelector("[data-fix-close]").focus();
+          return;
+        }
         if (res.ok && body.ok) {
           sheet.innerHTML = '<div class="fix-done"><div class="fix-sheet-head"><h2 id="fix-sheet-title">' + esc(words.doneTitle) + '</h2><button type="button" class="btn btn-ghost" data-fix-close>' + esc(words.close) + "</button></div><p>" +
             esc(fill(words.done, { email: body.email || root.ReviewAuth.who().email })) + "</p></div>";
@@ -403,15 +499,16 @@
       } finally {
         if (button.isConnected) {
           button.disabled = false;
-          button.textContent = words.submit;
+          submitLabel(form);
         }
       }
     }
 
     document.addEventListener("click", (event) => {
-      const button = event.target.closest && event.target.closest("[data-fix-get], [data-fix-request], [data-fix-package], [data-fix-self], [data-fix-call]");
+      const button = event.target.closest && event.target.closest("[data-fix-get], [data-fix-request], [data-fix-package], [data-fix-self], [data-fix-recheck], [data-fix-call]");
       if (!button || !payload) return;
-      if (button.hasAttribute("data-fix-get")) root.QAReviewAsk.fix(button.getAttribute("data-fix-get"));
+      if (button.hasAttribute("data-fix-recheck")) recheck(button, payload.report);
+      else if (button.hasAttribute("data-fix-get")) root.QAReviewAsk.fix(button.getAttribute("data-fix-get"));
       else if (button.hasAttribute("data-fix-self")) document.getElementById("ask-open").click();
       else if (button.hasAttribute("data-fix-package")) request([], button.getAttribute("data-fix-package"));
       else if (button.hasAttribute("data-fix-request")) {

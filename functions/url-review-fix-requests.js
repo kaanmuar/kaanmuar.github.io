@@ -3,10 +3,11 @@
  * owner sends, and the desk's status change. Firestore, sign-in and mail come in `deps`, so tests run them in memory.
  *
  * deps: { db, access(body, row) -> { ok, email } | { ok: false, status, error, code }, mailOwner(notice),
- *         mailCustomer(lang, email, mail, category), deskUrl }
+ *         paidAccess(body, row), mailCustomer(lang, email, mail, category), deskUrl }
  */
 const fixOffers = require("./url-review-fix-offers");
 const fixMail = require("./url-review-fix-mail");
+const fixRereview = require("./url-review-fix-rereview");
 
 const cleanId = (value, pattern, max) => String(value || "").replace(pattern, "").slice(0, max);
 
@@ -14,12 +15,16 @@ function fail(res, status, error, extra) {
   res.status(status).json(Object.assign({ error }, extra || {}));
 }
 
-async function sendRequest(req, res, deps) {
-  const body = req.body || {};
-  const id = cleanId(body.id, /[^a-f0-9]/g, 32);
-  const snap = id ? await deps.db.collection("url_reviews").doc(id).get() : null;
+async function reportRow(db, id) {
+  const snap = id ? await db.collection("url_reviews").doc(id).get() : null;
   const row = snap && snap.exists ? Object.assign({}, snap.data()) : null;
   if (row && row.report && !row.report.id) row.report = Object.assign({ id }, row.report);
+  return row;
+}
+
+async function sendRequest(req, res, deps) {
+  const body = req.body || {};
+  const row = await reportRow(deps.db, cleanId(body.id, /[^a-f0-9]/g, 32));
   const access = await deps.access(body, row);
   if (!access.ok) return fail(res, access.status, access.error, { code: access.code || "", signIn: !!access.signIn });
   const requests = deps.db.collection(fixOffers.COLLECTION);
@@ -37,6 +42,25 @@ async function sendRequest(req, res, deps) {
     console.error("Fix request mail failed:", failed.join("; "));
     await ref.update({ mailError: failed.join("; ") }).catch(() => {});
   }
+  res.status(200).json({ ok: true, id: ref.id, email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 });
+}
+
+// One free re-check per paid report; the doc id makes a second ask fail instead of running again.
+async function sendRecheck(req, res, deps) {
+  const body = req.body || {};
+  const id = cleanId(body.id, /[^a-f0-9]/g, 32);
+  const row = await reportRow(deps.db, id);
+  const access = await deps.paidAccess(body, row);
+  if (!access.ok) return fail(res, access.status, access.error, { code: access.code || "", signIn: !!access.signIn });
+  const record = fixRereview.selfRecord(row, access.email, body.lang, Date.now());
+  if (record.error) return fail(res, 400, record.error, { code: "invalid" });
+  const ref = deps.db.collection(fixOffers.COLLECTION).doc("self-" + id);
+  try {
+    await ref.create(record);
+  } catch (error) {
+    if (error && (error.code === 6 || /already exists/i.test(String(error.message)))) return fail(res, 409, "The free re-check of this report was already used.", { code: "used" });
+    throw error;
+  }
   res.status(200).json({ ok: true, id: ref.id, email: record.email, status: record.status });
 }
 
@@ -51,6 +75,10 @@ async function route(req, res, pathName, deps) {
     await sendRequest(req, res, deps);
     return true;
   }
+  if (pathName.endsWith("/review/fix/recheck") && req.method === "POST") {
+    await sendRecheck(req, res, deps);
+    return true;
+  }
   return false;
 }
 
@@ -59,7 +87,7 @@ async function deskRows(db) {
   return fixOffers.deskOrder(snap.docs.map((doc) => fixOffers.deskRow(doc.id, doc.data())));
 }
 
-/** POST /desk/fix from the desk: { id, status, quoteUsd, payUrl, note }. */
+/** POST /desk/fix from the desk: { id, status, quoteUsd, payUrl, note, rereview }. Marking a fix done queues its re-review. */
 async function deskUpdate(req, res, operator, deps) {
   const body = req.body || {};
   const id = cleanId(body.id, /[^A-Za-z0-9]/g, 40);
@@ -69,6 +97,7 @@ async function deskUpdate(req, res, operator, deps) {
   const before = snap.data() || {};
   const patch = fixOffers.statusPatch(before, body, operator, Date.now());
   if (patch.error) return fail(res, 400, patch.error);
+  Object.assign(patch, fixRereview.queuePatch(before, patch, body, Date.now()));
   const after = Object.assign({}, before, patch);
   if (fixOffers.quoteMailDue(before, after)) {
     try {

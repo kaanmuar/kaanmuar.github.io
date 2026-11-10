@@ -1,4 +1,4 @@
-/* Fix what the report found (#3082): the per-finding links, the closing panel and the request sheet. */
+/* Fix what the report found (#3082, #3102): the per-finding links, the closing panel, the request sheet and the free re-check. */
 .fix-card-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .fix-card-links + .ask-about, .ask-about + .fix-card-links { margin-top: 8px; }
 .fix-card-link { border: 1px solid var(--look-edge, var(--line)); background: transparent; color: var(--cyan); border-radius: 999px; padding: 5px 12px; font: 600 12.5px/1.3 Inter, system-ui, sans-serif; cursor: pointer; transition: border-color .2s; }
@@ -17,6 +17,12 @@
 .fix-path p { margin: 0; font-size: 14px; line-height: 1.5; }
 .fix-path > .btn { align-self: flex-start; margin-top: auto; }
 .fix-muted { color: var(--muted); font-size: 13px; }
+.fix-path > [data-fix-self] { margin-top: 0; }
+.fix-path p.fix-recheck { margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--look-edge, var(--line)); color: var(--muted); font-size: 13px; }
+.fix-path > [data-fix-recheck] { margin-top: 0; }
+.fix-path p.fix-recheck-msg { font-size: 13px; }
+.fix-recheck-msg:empty { display: none; }
+.fix-paid { margin: 0 0 14px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--cyan) 10%, transparent); font-size: 14px; line-height: 1.5; }
 .fix-packs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
 .fix-packs li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--look-edge, var(--line)); border-radius: 12px; }
 .fix-packs li > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }

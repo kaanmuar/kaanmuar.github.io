@@ -17,6 +17,8 @@ const phraser = require("../functions/url-review-phrase");
 const accountData = require("../functions/url-review-account-data");
 const oauth = require("../functions/url-review-oauth");
 const fixOffers = require("../functions/url-review-fix-offers");
+const fixCheckout = require("../functions/url-review-fix-checkout");
+const fixRereview = require("../functions/url-review-fix-rereview");
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
 function loadEnvFile(name) {
@@ -629,7 +631,26 @@ const server = http.createServer(async (req, res) => {
     }
     const fixId = crypto.randomBytes(10).toString("hex");
     fs.appendFileSync(path.join(path.dirname(FILE), "url-review-fix-requests.jsonl"), JSON.stringify(Object.assign({ id: fixId }, record)) + "\n");
-    sendJson(res, 200, { ok: true, id: fixId, email: record.email, status: record.status }, origin, deviceHint);
+    sendJson(res, 200, { ok: true, id: fixId, email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 }, origin, deviceHint);
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/review/fix/recheck") {
+    let fixBody = {};
+    try { fixBody = await readBody(req); } catch (error) { fixBody = {}; }
+    const id = String(fixBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const found = id ? readStore().slice().reverse().find((row) => row && row.id === id && row.report) : null;
+    const access = await auth.askAccess(signIns, fixBody, found, false);
+    if (!access.ok) {
+      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
+      return;
+    }
+    const record = fixRereview.selfRecord(found, access.email, fixBody.lang, Date.now());
+    if (record.error) {
+      sendJson(res, 400, { error: record.error, code: "invalid" }, origin, deviceHint);
+      return;
+    }
+    fs.appendFileSync(path.join(path.dirname(FILE), "url-review-fix-requests.jsonl"), JSON.stringify(Object.assign({ id: "self-" + id }, record)) + "\n");
+    sendJson(res, 200, { ok: true, id: "self-" + id, email: record.email, status: record.status }, origin, deviceHint);
     return;
   }
   if (req.method === "POST" && (url.pathname === "/review/pay" || url.pathname === "/pay")) {
@@ -681,6 +702,16 @@ const server = http.createServer(async (req, res) => {
       const pageQuery = url.searchParams.get("pages");
       const purposeQuery = url.searchParams.get("purpose");
       const passQuery = offers.knownPlan(url.searchParams.get("pass") || "");
+      if (purposeQuery === "fix") {
+        const fixQuote = fixCheckout.quote(url.searchParams.get("package") || "");
+        if (!fixQuote) {
+          sendJson(res, 400, { error: "That fix package is not offered." }, origin, deviceHint);
+          return;
+        }
+        const fixCop = await core.copQuote(fixQuote.usd);
+        sendJson(res, 200, Object.assign(fixQuote, { cop: fixCop.pesos, rate: fixCop.rate }), origin, deviceHint);
+        return;
+      }
       if (purposeQuery === "pass" || passQuery) {
         const pricedPass = purposeQuery === "pass" ? core.priceForPass(url.searchParams.get("plan"))
           : core.priceForPassExtras(passQuery, passRequest(Object.fromEntries(url.searchParams)));
