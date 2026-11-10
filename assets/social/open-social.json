@@ -130,6 +130,17 @@
     "checked": "2026-11-10T00:11:24.463Z"
    }
   ],
+  "auto-2026-10-22/11-u-davibank-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzxx6356tx2t",
+    "at": "2026-11-10T17:19:17.891Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzxx6356tx2t",
+    "checked": "2026-11-10T17:19:32.573Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -705,6 +716,35 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfiAQsrjUOO",
     "checked": "2026-11-09T21:01:15.078Z"
+   }
+  ],
+  "auto-2026-11-09/03-vs-tide-forecast-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzxx65clis2c",
+    "at": "2026-11-10T17:19:32.574Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzxx65clis2c",
+    "checked": "2026-11-10T17:19:34.472Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17918814444530270",
+    "at": "2026-11-10T17:20:34.069Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4027464772337125103",
+    "checked": "2026-11-10T17:20:44.223Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18111341143908699",
+    "at": "2026-11-10T17:19:35.730Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Dfkbb3KCpkw",
+    "checked": "2026-11-10T17:20:33.402Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
