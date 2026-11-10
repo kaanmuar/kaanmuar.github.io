@@ -673,7 +673,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Re-runs</h2>
-      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): that report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after the re-run window gets the apology mail. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
       <div id="reruns"></div>
     </section>
     <section>

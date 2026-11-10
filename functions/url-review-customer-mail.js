@@ -327,8 +327,8 @@ const PROMISE = {
     kept: "As promised when it failed, here is your report. Your code {code} still takes {percent}% off your next review, until {date}.",
     subject: "We could not finish your review of {host}",
     title: "Your review of {host} could not be finished",
-    lead: "Your review of {host} failed on {date} for a reason on our side. We kept trying for {days} days and could not finish it. We are sorry for the trouble.",
-    leadUndated: "Your review of {host} failed for a reason on our side. We kept trying for {days} days and could not finish it. We are sorry for the trouble.",
+    lead: "Your review of {host} failed on {date} for a reason on our side. We kept trying for {hours} hours and could not finish it. We are sorry for the trouble.",
+    leadUndated: "Your review of {host} failed for a reason on our side. We kept trying for {hours} hours and could not finish it. We are sorry for the trouble.",
     code: "Your code takes {percent}% off your next review, until {date}:",
     preheader: "We are sorry. Your code {code} takes {percent}% off your next review."
   },
@@ -336,8 +336,8 @@ const PROMISE = {
     kept: "Como te prometimos cuando falló, aquí está tu informe. Tu código {code} sigue dándote un {percent} % de descuento en tu próxima revisión, hasta el {date}.",
     subject: "No pudimos terminar tu revisión de {host}",
     title: "Tu revisión de {host} no se pudo terminar",
-    lead: "Tu revisión de {host} falló el {date} por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla. Lamentamos la molestia.",
-    leadUndated: "Tu revisión de {host} falló por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla. Lamentamos la molestia.",
+    lead: "Tu revisión de {host} falló el {date} por una causa de nuestro lado. Seguimos intentándolo durante {hours} horas y no pudimos terminarla. Lamentamos la molestia.",
+    leadUndated: "Tu revisión de {host} falló por una causa de nuestro lado. Seguimos intentándolo durante {hours} horas y no pudimos terminarla. Lamentamos la molestia.",
     code: "Tu código te da un {percent} % de descuento en tu próxima revisión, hasta el {date}:",
     preheader: "Lo sentimos. Tu código {code} te da un {percent} % de descuento en tu próxima revisión."
   },
@@ -345,8 +345,8 @@ const PROMISE = {
     kept: "Como prometemos quando ela falhou, aqui está o seu relatório. Seu código {code} continua dando {percent}% de desconto na sua próxima revisão, até {date}.",
     subject: "Não conseguimos terminar sua revisão de {host}",
     title: "Sua revisão de {host} não pôde ser terminada",
-    lead: "Sua revisão de {host} falhou em {date} por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
-    leadUndated: "Sua revisão de {host} falhou por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
+    lead: "Sua revisão de {host} falhou em {date} por uma causa do nosso lado. Continuamos tentando por {hours} horas e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
+    leadUndated: "Sua revisão de {host} falhou por uma causa do nosso lado. Continuamos tentando por {hours} horas e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
     code: "Seu código dá {percent}% de desconto na sua próxima revisão, até {date}:",
     preheader: "Sentimos muito. Seu código {code} dá {percent}% de desconto na sua próxima revisão."
   },
@@ -354,8 +354,8 @@ const PROMISE = {
     kept: "Wie beim Fehlschlag versprochen, hier ist Ihr Bericht. Ihr Code {code} gibt Ihnen weiterhin {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}.",
     subject: "Wir konnten Ihre Prüfung von {host} nicht abschließen",
     title: "Ihre Prüfung von {host} konnte nicht abgeschlossen werden",
-    lead: "Ihre Prüfung von {host} ist am {date} aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
-    leadUndated: "Ihre Prüfung von {host} ist aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
+    lead: "Ihre Prüfung von {host} ist am {date} aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {hours} Stunden lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
+    leadUndated: "Ihre Prüfung von {host} ist aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {hours} Stunden lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
     code: "Ihr Code gibt Ihnen {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}:",
     preheader: "Das tut uns leid. Ihr Code {code} gibt Ihnen {percent} % Rabatt auf Ihre nächste Prüfung."
   },
@@ -363,8 +363,8 @@ const PROMISE = {
     kept: "Comme promis lors de l’échec, voici votre rapport. Votre code {code} vous donne toujours {percent} % de remise sur votre prochaine analyse, jusqu’au {date}.",
     subject: "Nous n’avons pas pu terminer votre analyse de {host}",
     title: "Votre analyse de {host} n’a pas pu être terminée",
-    lead: "Votre analyse de {host} a échoué le {date} pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
-    leadUndated: "Votre analyse de {host} a échoué pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
+    lead: "Votre analyse de {host} a échoué le {date} pour une raison de notre côté. Nous avons réessayé pendant {hours} heures sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
+    leadUndated: "Votre analyse de {host} a échoué pour une raison de notre côté. Nous avons réessayé pendant {hours} heures sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
     code: "Votre code vous donne {percent} % de remise sur votre prochaine analyse, jusqu’au {date} :",
     preheader: "Nous sommes désolés. Votre code {code} vous donne {percent} % de remise sur votre prochaine analyse."
   },
@@ -372,13 +372,12 @@ const PROMISE = {
     kept: "Come promesso quando non è riuscita, ecco il tuo rapporto. Il tuo codice {code} ti dà ancora il {percent}% di sconto sulla tua prossima revisione, fino al {date}.",
     subject: "Non siamo riusciti a completare la tua revisione di {host}",
     title: "La tua revisione di {host} non è stata completata",
-    lead: "La tua revisione di {host} non è riuscita il {date} per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla. Ci scusiamo per il disagio.",
-    leadUndated: "La tua revisione di {host} non è riuscita per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla. Ci scusiamo per il disagio.",
+    lead: "La tua revisione di {host} non è riuscita il {date} per un motivo dalla nostra parte. Abbiamo continuato a provare per {hours} ore senza riuscire a completarla. Ci scusiamo per il disagio.",
+    leadUndated: "La tua revisione di {host} non è riuscita per un motivo dalla nostra parte. Abbiamo continuato a provare per {hours} ore senza riuscire a completarla. Ci scusiamo per il disagio.",
     code: "Il tuo codice ti dà il {percent}% di sconto sulla tua prossima revisione, fino al {date}:",
     preheader: "Ci scusiamo. Il tuo codice {code} ti dà il {percent}% di sconto sulla tua prossima revisione."
   }
 };
-const { RERUN_DAYS } = require("./url-review-failures");
 
 function codeChip(code) {
   return "<p style=\"margin:0 0 20px;\"><span style=\"display:inline-block;padding:10px 18px;background:#f3f8f8;border:1px solid " + fusion.LINE + ";border-left:4px solid " + FUSION.gold + ";border-radius:10px;font-family:'Fira Code','Courier New',monospace;font-size:24px;line-height:30px;letter-spacing:0.12em;font-weight:bold;color:" + TEXT.strong + ";\">" + esc(code) + "</span></p>";
@@ -812,7 +811,7 @@ function reportMail(record, options) {
   };
 }
 
-// `promise` is a closed promise (url-review-promise.js apologiesDue) with its url, host, coupon, percent, validUntil and failedAt.
+// `promise` is a closed promise (url-review-promise.js apologiesDue) with its url, host, coupon, percent, validUntil, failedAt and the deadline in hours.
 function promiseClosedMail(promise, options) {
   const opts = options || {};
   const row = promise || {};
@@ -822,7 +821,7 @@ function promiseClosedMail(promise, options) {
   const face = mailFace.faceOf(row.lang);
   const host = row.host || (() => { try { return new URL(row.url).hostname; } catch (error) { return ""; } })() || "your site";
   const failedOn = dateOf(row.failedAt);
-  const vars = { host, date: failedOn, days: RERUN_DAYS, code: row.coupon, percent: row.percent };
+  const vars = { host, date: failedOn, hours: row.hours, code: row.coupon, percent: row.percent };
   const lead = fill(failedOn ? w.lead : w.leadUndated, vars);
   const code = fill(w.code, { percent: row.percent, date: dateOf(row.validUntil) });
   const anotherUrl = pageUrl(lang, { coupon: row.coupon, utm_campaign: "promise-closed" });

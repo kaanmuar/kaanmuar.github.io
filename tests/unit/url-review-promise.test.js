@@ -76,22 +76,48 @@ test("a re-run group keeps the open promise of its failures, and the ids that ca
   assert.equal(reviewPromise.groupPromise({ failureIds: ["c"] }, rows), null);
 });
 
-test("an open promise past the re-run window gets one apology per code; a newer, settled or address-less one waits", () => {
+test("an open promise past the 48-hour deadline gets one apology per code, counted from its first failure; a newer, settled or address-less one waits", () => {
   const now = Date.parse("2026-11-30T12:00:00Z");
-  const old = new Date(now - (reviewFailures.RERUN_DAYS + 1) * DAY).toISOString();
-  const older = new Date(now - (reviewFailures.RERUN_DAYS + 2) * DAY).toISOString();
+  const HOUR = 3600000;
+  assert.equal(reviewPromise.PROMISE_DEADLINE_H, 48);
+  const first = new Date(now - 49 * HOUR).toISOString();
+  const retry = new Date(now - 2 * HOUR).toISOString();
   const rows = [
-    { id: "a", at: old, url: "https://shop.example.com/", host: "shop.example.com", promise: { state: "open", coupon: "SORRY-FIRST234", email: "ana@example.com", lang: "es", percent: 20 } },
-    { id: "b", at: older, url: "https://shop.example.com/", host: "shop.example.com", promise: { state: "open", coupon: "SORRY-FIRST234", email: "ana@example.com", lang: "es", percent: 20 } },
-    { id: "c", at: new Date(now - DAY).toISOString(), promise: { state: "open", coupon: "SORRY-NEW23456", email: "ana@example.com" } },
-    { id: "d", at: old, promise: { state: "held", coupon: "SORRY-HELD2345", email: "ana@example.com" } },
-    { id: "e", at: old, promise: { state: "open", coupon: "SORRY-NOMAIL23", email: "" } }
+    { id: "a", at: retry, url: "https://shop.example.com/", host: "shop.example.com", promise: { state: "open", coupon: "SORRY-FIRST234", email: "ana@example.com", lang: "es", percent: 20 } },
+    { id: "b", at: first, url: "https://shop.example.com/", host: "shop.example.com", promise: { state: "open", coupon: "SORRY-FIRST234", email: "ana@example.com", lang: "es", percent: 20 } },
+    { id: "c", at: new Date(now - 47 * HOUR).toISOString(), promise: { state: "open", coupon: "SORRY-NEW23456", email: "ana@example.com" } },
+    { id: "d", at: first, promise: { state: "held", coupon: "SORRY-HELD2345", email: "ana@example.com" } },
+    { id: "e", at: first, promise: { state: "open", coupon: "SORRY-NOMAIL23", email: "" } }
   ];
   const due = reviewPromise.apologiesDue(rows, now);
   assert.equal(due.length, 1);
-  assert.deepEqual(due[0].ids.sort(), ["a", "b"]);
-  assert.equal(due[0].failedAt, older);
+  assert.deepEqual(due[0].ids, ["b", "a"]);
+  assert.equal(due[0].failedAt, first);
   assert.equal(due[0].host, "shop.example.com");
+  assert.equal(due[0].hours, 48);
+});
+
+test("a promised review runs again about 30 minutes after it failed, then at each later slot before the deadline, nearest deadline first", () => {
+  const HOUR = 3600000;
+  const now = Date.parse("2026-11-30T12:00:00Z");
+  const row = (id, hoursAgo, extra) => Object.assign({ id, at: new Date(now - hoursAgo * HOUR).toISOString(), url: "https://" + id + ".example.com/", host: id + ".example.com", email: "ana@example.com", name: "Ana",
+    options: { pages: 20, depth: 2, frameworks: [] }, intake: { lang: "fr" } }, extra, { promise: Object.assign({ state: "open", coupon: "SORRY-" + id.toUpperCase().padEnd(8, "2"), email: "ana@example.com", percent: 20 }, extra && extra.promise) });
+  assert.deepEqual(reviewPromise.rescuesDue([row("fresh", 0.2)], now), []);
+  const [first] = reviewPromise.rescuesDue([row("soon", 0.6)], now);
+  assert.equal(first.tries, 1);
+  assert.equal(first.trigger.id, "promise");
+  assert.match(first.trigger.label, /^Promised re-run 1 of 5, 1 h after the failure, before the 48 h deadline$/);
+  assert.deepEqual(first.options.frameworks, ["Playwright"]);
+  assert.deepEqual(first.promise.ids, ["soon"]);
+  assert.equal(first.intake.lang, "fr");
+  assert.deepEqual(reviewPromise.rescuesDue([row("tried", 2, { promise: { tries: 1 } })], now), []);
+  assert.equal(reviewPromise.rescuesDue([row("second", 5, { promise: { tries: 1 } })], now)[0].tries, 2);
+  assert.deepEqual(reviewPromise.rescuesDue([row("spent", 45, { promise: { tries: 5 } })], now), []);
+  assert.deepEqual(reviewPromise.rescuesDue([row("late", 48.5)], now), []);
+  assert.deepEqual(reviewPromise.rescuesDue([row("kept", 1, { promise: { state: "delivered" } })], now), []);
+  const many = [row("aa", 1), row("bb", 30, { promise: { tries: 3 } }), row("cc", 13, { promise: { tries: 2 } })];
+  assert.deepEqual(reviewPromise.rescuesDue(many, now).map((group) => group.host), ["bb.example.com", "cc.example.com"]);
+  assert.equal(reviewPromise.rescuesDue(many, now, 5).length, 3);
 });
 
 test("a settled promise is written with dotted paths, and the desk names its state and code", () => {
@@ -128,10 +154,11 @@ test("the re-run report mail of a kept promise reminds the asker of their code a
 });
 
 test("the apology mail says the review could not be finished, in the asker's language, and keeps the code", () => {
-  const promise = { email: "ana@example.com", lang: "en", host: "shop.example.com", url: "https://shop.example.com/", coupon: "SORRY-FIRST234", percent: 20, validUntil: "2027-02-07T00:00:00.000Z", failedAt: "2026-11-09T12:00:00Z" };
+  const promise = { email: "ana@example.com", lang: "en", host: "shop.example.com", url: "https://shop.example.com/", coupon: "SORRY-FIRST234", percent: 20, validUntil: "2027-02-07T00:00:00.000Z", failedAt: "2026-11-09T12:00:00Z", hours: 48 };
   const en = customerMail.promiseClosedMail(promise, { stopUrl: "https://example.com/stop" });
   assert.equal(en.subject, "We could not finish your review of shop.example.com");
-  assert.match(en.text, /failed on 2026-11-09 for a reason on our side\. We kept trying for 14 days/);
+  assert.match(en.text, /failed on 2026-11-09 for a reason on our side\. We kept trying for 48 hours/);
+  assert.match(customerMail.promiseClosedMail(Object.assign({}, promise, { lang: "it" }), {}).text, /per 48 ore/);
   assert.match(en.text, /Your code takes 20% off your next review, until 2027-02-07:\nSORRY-FIRST234/);
   assert.ok(en.html.includes("coupon=SORRY-FIRST234"));
   const de = customerMail.promiseClosedMail(Object.assign({}, promise, { lang: "de" }), {});

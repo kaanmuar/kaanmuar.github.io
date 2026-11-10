@@ -1397,11 +1397,14 @@ async function sendPromiseApology(promise) {
   return sendAskerMail(promise.email, customerMail.promiseClosedMail(promise, { stopUrl }), stopUrl, "url-review-promise");
 }
 
-// Promises whose re-run window closed without a report: the asker gets an apology and keeps the code.
+const PROMISE_FIELDS = ["at", "url", "host", "name", "email", "options", "intake", "promise"];
+const openPromises = () => getFirestore().collection("url_review_failures").where("promise.state", "==", "open").select(...PROMISE_FIELDS).limit(300).get()
+  .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+
+// Promises past PROMISE_DEADLINE_H without a report: the asker gets an apology and keeps the code.
 async function closeExpiredPromises() {
   const col = getFirestore().collection("url_review_failures");
-  const rows = (await col.where("promise.state", "==", "open").limit(300).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
-  const due = reviewPromise.apologiesDue(rows, Date.now());
+  const due = reviewPromise.apologiesDue(await openPromises(), Date.now());
   let sent = 0;
   for (const promise of due) {
     try {
@@ -1414,6 +1417,42 @@ async function closeExpiredPromises() {
   }
   return sent;
 }
+
+// The one step a promised review takes on each try; the rescue ladder of #3080 replaces this body once it lands.
+async function rescuePromisedRun(group) {
+  return keepPromise(await rerunFailure(group));
+}
+
+// Every 15 minutes: open promises whose next try has come run again (RESCUES_PER_TICK at most), then the ones past the deadline get the apology.
+async function rescuePromisedReviews() {
+  const col = getFirestore().collection("url_review_failures");
+  const due = reviewPromise.rescuesDue(await openPromises(), Date.now());
+  const started = Date.now();
+  const done = [];
+  for (const group of due) {
+    if (Date.now() - started > 200000) break;
+    const triedAt = new Date().toISOString();
+    await Promise.all(group.failureIds.map((id) => col.doc(id).update({ "promise.tries": group.tries, "promise.triedAt": triedAt })));
+    try {
+      done.push(await rescuePromisedRun(group));
+    } catch (error) {
+      console.error("Promised re-run of " + group.url + " was not saved:", error);
+    }
+  }
+  const apologies = await closeExpiredPromises();
+  const settledNow = done.filter((doc) => doc.status !== "failed");
+  if (settledNow.length) await pushOwner(jarvisMailPush.rerunMessage(settledNow, REVIEW_FN_URL + "/desk"));
+  return done.length + " promised re-runs (" + done.filter((doc) => doc.status === "sent").length + " sent), " + apologies + " apologies";
+}
+
+exports.rescuePromisedReviews = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("rescuePromisedReviews"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1,
+  secrets: SECRETS.rerunReviewFailures
+}, () => track("rescuePromisedReviews", () => rescuePromisedReviews()));
 
 async function rerunReviewFailures() {
   const db = getFirestore();
@@ -1441,11 +1480,7 @@ async function rerunReviewFailures() {
       console.error("Re-run of " + group.url + " was not saved:", error);
     }
   }
-  const apologies = await closeExpiredPromises().catch((error) => {
-    console.error("Closing expired promises failed:", error);
-    return 0;
-  });
-  console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped, " + apologies + " promises closed with an apology.");
+  console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
   await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));

@@ -7,8 +7,15 @@ const core = require("./url-review-core");
 const APOLOGY_PERCENT = 20;
 // A finished re-run of a promised failure goes to the asker on its own; false holds it on the desk like any other re-run.
 const PROMISE_AUTO_SEND = true;
+// With no finished report this long after the failure, the asker gets the apology and keeps the code.
+const PROMISE_DEADLINE_H = 48;
+// Hours after the failure when a promised review runs again; the rescue job ticks every 15 minutes, so each slot can run up to a tick late.
+const PROMISE_TRIES_AT_H = [0.5, 4, 12, 24, 40];
+// Re-runs one rescue tick starts, each up to 4 minutes, inside the job's 9-minute timeout.
+const RESCUES_PER_TICK = 2;
 const COUPON_DAYS = 90;
 const DAY_MS = 86400000;
+const HOUR_MS = 3600000;
 const PREFIX = "SORRY-";
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 // open: waiting on a re-run; held: a re-run waits on the desk; delivered: the report went out;
@@ -93,21 +100,54 @@ function groupPromise(group, rows) {
   return Object.assign({}, kept[0].promise, { ids: kept.map((row) => row.id), failedAt: String(kept[kept.length - 1].at || "") });
 }
 
-// Open promises whose re-run window has closed, one apology per code (retries share theirs).
-function apologiesDue(rows, now) {
-  const at = Number(now) || Date.now();
-  const cutoff = at - reviewFailures.RERUN_DAYS * DAY_MS;
+// Open promises by code, oldest failure first: a retry of the same address shares its first failure's code and deadline.
+function openByCode(rows) {
   const byCode = new Map();
   (Array.isArray(rows) ? rows : []).forEach((row) => {
     const promise = row && row.promise;
-    if (!promise || promise.state !== "open" || !promise.email || !(Date.parse(row.at) < cutoff)) return;
+    if (!row.id || !promise || promise.state !== "open" || !promise.email) return;
     const key = promise.coupon || row.id;
-    const item = byCode.get(key) || Object.assign({}, promise, { url: row.url || "", host: row.host || "", ids: [], failedAt: String(row.at || "") });
-    item.ids.push(row.id);
-    if (String(row.at) < item.failedAt) item.failedAt = String(row.at);
-    byCode.set(key, item);
+    byCode.set(key, (byCode.get(key) || []).concat(row));
   });
-  return Array.from(byCode.values());
+  return Array.from(byCode.values()).map((group) => group.sort((a, b) => String(a.at).localeCompare(String(b.at))));
+}
+
+// Open promises past PROMISE_DEADLINE_H, one apology per code.
+function apologiesDue(rows, now) {
+  const at = Number(now) || Date.now();
+  return openByCode(rows).filter((group) => Date.parse(group[0].at) <= at - PROMISE_DEADLINE_H * HOUR_MS).map((group) => {
+    const last = group[group.length - 1];
+    return Object.assign({}, last.promise, { url: last.url || "", host: last.host || "", ids: group.map((row) => row.id), failedAt: String(group[0].at || ""), hours: PROMISE_DEADLINE_H });
+  });
+}
+
+// Promised reviews whose next PROMISE_TRIES_AT_H slot has come, as re-run groups (rerunPlan's shape), nearest deadline first.
+function rescuesDue(rows, now, limit) {
+  const at = Number(now) || Date.now();
+  const due = [];
+  openByCode(rows).forEach((group) => {
+    const first = group[0];
+    const last = group[group.length - 1];
+    const age = at - Date.parse(first.at);
+    const tries = Math.max(...group.map((row) => Number(row.promise.tries) || 0));
+    if (!(age >= 0) || age >= PROMISE_DEADLINE_H * HOUR_MS || tries >= PROMISE_TRIES_AT_H.length || age < PROMISE_TRIES_AT_H[tries] * HOUR_MS) return;
+    const options = last.options || {};
+    due.push({
+      key: String(last.url || "").toLowerCase() + "|" + String(last.email || "").toLowerCase(),
+      url: last.url,
+      host: last.host || "",
+      name: last.name || "",
+      email: last.email || "",
+      at: last.at,
+      failureIds: group.map((row) => row.id),
+      trigger: { id: "promise", ref: "#3079", label: "Promised re-run " + (tries + 1) + " of " + PROMISE_TRIES_AT_H.length + ", " + Math.round(age / HOUR_MS) + " h after the failure, before the " + PROMISE_DEADLINE_H + " h deadline" },
+      options: Object.assign({}, options, { frameworks: (options.frameworks || []).length ? options.frameworks : reviewFailures.RERUN_FRAMEWORKS }),
+      intake: last.intake || {},
+      tries: tries + 1,
+      promise: Object.assign({}, last.promise, { ids: group.map((row) => row.id), failedAt: String(first.at || "") })
+    });
+  });
+  return due.sort((a, b) => String(a.promise.failedAt).localeCompare(String(b.promise.failedAt))).slice(0, Number(limit) || RESCUES_PER_TICK);
 }
 
 // The fields a promise's failures take once it is settled, for a Firestore update with dotted paths.
@@ -123,6 +163,6 @@ function deskLabel(promise) {
 }
 
 module.exports = {
-  APOLOGY_PERCENT, PROMISE_AUTO_SEND, COUPON_DAYS, PREFIX, STATES,
-  promised, couponCode, apologyCoupon, openPromiseFor, promiseOf, errorLine, groupPromise, apologiesDue, settled, deskLabel
+  APOLOGY_PERCENT, PROMISE_AUTO_SEND, PROMISE_DEADLINE_H, PROMISE_TRIES_AT_H, RESCUES_PER_TICK, COUPON_DAYS, PREFIX, STATES,
+  promised, couponCode, apologyCoupon, openPromiseFor, promiseOf, errorLine, groupPromise, apologiesDue, rescuesDue, settled, deskLabel
 };

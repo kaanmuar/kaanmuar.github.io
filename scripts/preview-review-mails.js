@@ -27,6 +27,11 @@ function save(name, mail) {
 save("report-blurred", customerMail.reportMail(base, { stopUrl: "https://fn/notes/stop?t=1", attached: true }));
 save("report-open", customerMail.reportMail(Object.assign({}, base, { paid: true }), { stopUrl: "https://fn/notes/stop?t=1", attached: true }));
 save("report-rerun", customerMail.reportMail(Object.assign({}, base, { free: true, rerunOf: ["f1"], failedAt: "2026-10-20T10:00:00Z" }), { attached: true }));
+const promise = { email: "ana@example.com", lang: "en", host: report.host, url: "https://" + report.host + "/", coupon: "SORRY-ABCD2345", percent: 20, validUntil: "2027-01-18T15:04:00Z", failedAt: "2026-10-20T10:00:00Z", hours: 48 };
+save("report-promise", customerMail.reportMail(Object.assign({}, base, { free: true, rerunOf: ["f1"], failedAt: promise.failedAt }), { attached: true, promise }));
+save("report-promise-es", customerMail.reportMail(Object.assign({}, base, { lang: "es", free: true, rerunOf: ["f1"], failedAt: promise.failedAt }), { attached: true, promise }));
+save("promise-closed", customerMail.promiseClosedMail(promise, { stopUrl: "https://fn/notes/stop?t=1" }));
+save("promise-closed-de", customerMail.promiseClosedMail(Object.assign({}, promise, { lang: "de" }), { stopUrl: "https://fn/notes/stop?t=1" }));
 save("report-stopped", customerMail.reportMail(Object.assign({}, base, { status: "stopped" }), { attached: true }));
 save("report-noscore", customerMail.reportMail(noScore, { attached: false }));
 save("report-blurred-de", customerMail.reportMail(Object.assign({}, base, { lang: "de" }), { attached: true }));

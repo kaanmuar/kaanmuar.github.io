@@ -747,7 +747,7 @@ function failureDetail(doc, rerun) {
 }
 
 module.exports = {
-  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
+  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, RERUN_FRAMEWORKS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
   bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide

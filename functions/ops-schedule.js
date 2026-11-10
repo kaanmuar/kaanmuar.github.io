@@ -19,6 +19,7 @@ const JOBS = [
   { job: "ensureLiveReportsBatch", cron: "0 6 * * *", gap: 26, what: "Start the Live Reports workflow once the night's sweep is done (GitHub fires its own slots hours late)" },
   { job: "diagnoseReviewFailures", cron: "0 6 * * *", gap: 26, what: "Probe why yesterday's failed reviews failed" },
   { job: "rerunReviewFailures", cron: "30 6 * * *", gap: 26, what: "Re-run failed reviews a fix now covers" },
+  { job: "rescuePromisedReviews", cron: "*/15 * * * *", gap: 1, what: "Re-run reviews whose asker was promised the report by email (#3079): about 30 minutes after the failure, then at 4, 12, 24 and 40 hours (2 a tick), sending each finished report; at 48 hours without one, the apology mail with their code" },
   { job: "fileReviewFailureBugs", cron: "5 7 * * *", gap: 26, what: "Open a bug under #320 for each new failure cause" },
   { job: "emailDailySiteReport", cron: "15 7 * * *", gap: 26, what: "Daily site report" },
   { job: "emailDailyReviewReport", cron: "20 7 * * *", gap: 26, what: "Daily URL review report" },
