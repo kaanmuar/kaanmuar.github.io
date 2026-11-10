@@ -5715,8 +5715,8 @@ async function jarvisNotifyAct(body, by) {
     return { message: out.status === "sent" ? "Sent to " + out.email + "." : "Skipped." };
   }
   if (type === "owner-tags") return ownerTags.decide(Object.assign(engagementDeps(), { now }), id, act, body.text, by);
-  if (type === "engagement") {
-    const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), { key: id, decision: act, text: body.text }, by);
+  if (type === "engagement" || type === "engagement-dm") {
+    const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), Object.assign({ key: id, decision: act, text: body.text }, type === "engagement-dm" ? { what: "dm" } : {}), by);
     return { message: out.message };
   }
   if (type === "countdown" && /^pagespeed-/.test(id)) {

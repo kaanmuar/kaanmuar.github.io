@@ -23,6 +23,7 @@ const Offer = require("./url-review-domain-offer");
 const OwnerTags = require("./owner-tags");
 const Snapshot = require("./jarvis-snapshot");
 const jarvisLog = require("./jarvis-log");
+const Trials = require("./chain-trials");
 
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
 const STALE = 75 * 60 * 1000;
@@ -70,16 +71,20 @@ async function geminiJsonCall(fetchImpl, env, prompt) {
   return (((data.candidates || [])[0] || {}).content || { parts: [] }).parts.map((p) => p.text || "").join("");
 }
 
-/** Waiting replies past their 6 hours become expired. */
+/** Waiting replies past their 6 hours, and waiting DMs past theirs (#3137), become expired. */
 async function expire(deps) {
   const { db, now, inc } = deps;
-  const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(200).get();
-  const old = snap.docs.filter((d) => Date.parse(((d.data().actions || {}).reply || {}).expiresAt) < now);
-  for (const d of old) {
-    await d.ref.update({ "actions.reply.status": "expired", updatedAt: new Date(now).toISOString() });
-    await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ n: { [d.data().network]: { expired: 1 } } }, inc), { merge: true });
+  let n = 0;
+  for (const [action, counter] of [["reply", "expired"], ["dm", "dm_expired"]]) {
+    const snap = await db.collection("engagement_posts").where("actions." + action + ".status", "==", "waiting").limit(200).get();
+    const old = snap.docs.filter((d) => Date.parse(((d.data().actions || {})[action] || {}).expiresAt) < now);
+    for (const d of old) {
+      await d.ref.update({ ["actions." + action + ".status"]: "expired", updatedAt: new Date(now).toISOString() });
+      await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ n: { [d.data().network]: { [counter]: 1 } } }, inc), { merge: true });
+    }
+    n += old.length;
   }
-  return old.length;
+  return n;
 }
 
 /** Authors already planned for a follow in the last 30 days, as "network:handle". */
@@ -194,10 +199,17 @@ async function followChains(deps, conf) {
   return takeChains(deps, conf, chains.found.concat(inbox.found), out);
 }
 
-/** Comments found ([{ parent, comments }]) into chain posts: read by Gemini, a like planned, an answer drafted and pushed. */
+/**
+ * Comments found ([{ parent, comments }]) into chain posts: read by Gemini, a like planned, an answer drafted and pushed.
+ * The person behind each (#3137, functions/chain-trials.js) sets how far the answer may invite them, is touched in the
+ * outreach ledger, and a nice comment under their own post earns a 2-day pass with a DM for Carlos. An answer that
+ * expired unanswered is drafted once more while the person is friendly, and the thread keeps being read past the
+ * chain days while they are active.
+ */
 async function takeChains(deps, conf, found, into) {
   const { db, now, env, inc } = deps;
   const out = into || { checked: 0, chained: 0, liked: 0, drafted: 0, pushed: 0, aiError: "", errors: {} };
+  Object.assign(out, { offers: out.offers || 0, touched: out.touched || 0 });
   if (conf.paused) return out;
   const byKey = new Map();
   found.forEach(({ parent, comments }) => comments.forEach((c) => {
@@ -206,28 +218,47 @@ async function takeChains(deps, conf, found, into) {
   }));
   const all = Array.from(byKey.values());
   const known = all.length ? await db.getAll(...all.map((c) => db.collection("engagement_posts").doc(c.key))) : [];
-  const fresh = all.filter((c, i) => !known[i].exists || E.reopens(known[i].data())).slice(0, CHAIN_AI);
+  const again = new Set();
+  const fresh = all.filter((c, i) => {
+    if (!known[i].exists || E.reopens(known[i].data())) return true;
+    if (Trials.owed(known[i].data(), conf)) { again.add(c.key); return true; }
+    return false;
+  }).slice(0, CHAIN_AI);
   if (!fresh.length) return out;
   if (!env.GEMINI_API_KEY) return Object.assign(out, { aiError: "GEMINI_API_KEY is not set, so comments on our replies wait unread." });
+  const L = Trials.ledger(deps);
+  const persons = await Trials.people(db, L, fresh).catch((error) => { out.errors.ledger = String(error.message || error).slice(0, 200); return new Map(); });
+  fresh.forEach((c) => Object.assign(c, Trials.ladderFor(c, (persons.get(c.key) || {}).doc, conf.trials, now)));
   let ai;
   try { ai = E.parseAi(await geminiJson(deps.fetch, env, E.chainPrompt(fresh)), fresh); } catch (error) { return Object.assign(out, { aiError: String(error.message || error).slice(0, 200) }); }
 
-  const docs = fresh.filter((c) => ai[c.key]).map((c) => Object.assign({ key: c.key }, E.chainDoc(c, c.parent, E.chainDecide(c, ai[c.key], conf, now), ai[c.key], now)));
+  const docs = fresh.filter((c) => ai[c.key]).map((c) => Object.assign({ key: c.key }, E.chainDoc(c, c.parent, E.chainDecide(c, ai[c.key], conf, now), ai[c.key], now), again.has(c.key) ? { redrafted: true } : {}));
   if (!docs.length) return out;
+  const offers = await Trials.offers(deps, conf, L, fresh, docs, persons, (prompt) => geminiJson(deps.fetch, env, prompt));
   const batch = db.batch();
   docs.forEach((d) => batch.set(db.collection("engagement_posts").doc(d.key), d));
   await batch.commit();
+  const touched = await Trials.touchAll(deps, L, fresh, docs, persons, offers.made);
+  Object.assign(out, { offers: out.offers + offers.offers, touched: out.touched + touched.touched });
+  if (offers.errors.length || touched.errors.length) out.errors.ledger = offers.errors.concat(touched.errors).join("; ").slice(0, 400);
+  const days = Trials.trialSettings(conf.trials).activeDays;
+  for (const c of fresh) {
+    const d = docs.find((x) => x.key === c.key);
+    if (d && c.parent.key && ["nice", "neutral"].includes(d.tone)) await db.collection("engagement_posts").doc(c.parent.key).update({ chainUntil: new Date(now + days * DAY).toISOString() }).catch(() => null);
+  }
   const n = {};
   docs.forEach((d) => {
     const x = n[d.network] = n[d.network] || {};
     x.chained = (x.chained || 0) + 1;
     if ((d.actions.like || {}).status === "planned") { x.like = (x.like || 0) + 1; out.liked += 1; }
     if ((d.actions.reply || {}).status === "waiting") { x.drafted = (x.drafted || 0) + 1; out.drafted += 1; }
+    if (d.actions.dm) x.offer = (x.offer || 0) + 1;
   });
   out.chained = docs.length;
   await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(Object.assign({ day: E.bogotaDay(now) }, increments({ n }, inc)), { merge: true });
   if (deps.push) {
     for (const d of docs.filter((x) => (x.actions.reply || {}).status === "waiting").slice(0, PUSH_PER_RUN)) { await deps.push(E.replyPush(d)).catch(() => null); out.pushed += 1; }
+    for (const d of docs.filter((x) => (x.actions.dm || {}).status === "waiting")) { await deps.push(Trials.dmPush(d, (E.NETWORKS[d.network] || {}).name)).catch(() => null); out.pushed += 1; }
   }
   return out;
 }
@@ -610,7 +641,7 @@ const reportNote = (x) => {
 const chainNote = (c) => {
   if (!c) return "";
   const errs = Object.entries(c.errors || {}).map(([k, v]) => k + ": " + v);
-  return (c.chained ? "; " + c.chained + " new comments on our replies (" + c.liked + " to like, " + c.drafted + " answers drafted)" : "")
+  return (c.chained ? "; " + c.chained + " new comments on our replies (" + c.liked + " to like, " + c.drafted + " answers drafted" + (c.offers ? ", " + c.offers + " 2-day passes offered" : "") + ")" : "")
     + (c.aiError ? "; comment chains: " + c.aiError : "") + (errs.length ? "; comment chains: " + errs.join("; ") : "");
 };
 const runNote = (r) => Object.values(r.read).reduce((a, b) => a + b, 0) + " read, " + r.fresh + " new in field, " + r.engaged + " to engage, " + r.drafted + " replies drafted"
@@ -703,11 +734,31 @@ async function resultsTicket(deps) {
   }
 }
 
-/** Approve, edit or dismiss a waiting reply. */
+/** Approve, edit or dismiss a waiting DM with a 2-day pass (#3137); the Mac's browser sends an approved one. */
+async function decideDm(deps, key, body, by) {
+  const { db, now, inc } = deps;
+  const ref = db.collection("engagement_posts").doc(key);
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new Error("That post is gone.");
+    const doc = snap.data();
+    const d = Trials.decideDm(doc, String(body.decision || ""), body.text, String(by || ""), now);
+    tx.update(ref, { "actions.dm": d.dm, updatedAt: new Date(now).toISOString() });
+    return { network: doc.network, d };
+  });
+  await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments({ n: { [out.network]: { [out.d.counter]: 1 } } }, inc), { merge: true });
+  await clearCache(db);
+  const name = (E.NETWORKS[out.network] || {}).name || out.network;
+  if (out.d.dm.status === "dismissed") return { key, status: "dismissed", message: "Dismissed; the pass stays unused." };
+  return { key, status: "approved", message: (out.d.counter === "dm_edited" ? "Your version is approved" : "Approved") + "; the Mac's browser sends the DM on " + name + " on its next run, within today's DM cap." };
+}
+
+/** Approve, edit or dismiss a waiting reply, or a waiting DM (what: "dm"). */
 async function decide(deps, body, by) {
   const { db, now, inc } = deps;
   const key = String((body && (body.key || body.id)) || "");
   if (!/^[a-z]+_[a-f0-9]{20}$/.test(key)) throw new Error("That is not a post of the engagement list.");
+  if (body.what === "dm") return decideDm(deps, key, body, by);
   const ref = db.collection("engagement_posts").doc(key);
   const out = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
@@ -875,4 +926,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, expire, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };

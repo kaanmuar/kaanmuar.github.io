@@ -65,3 +65,5 @@ workers/outreach-cron/dist/
 
 # Mini report card previews (#2466): node scripts/report-card-preview.js
 media/report-cards/
+# Trial DM card previews (#3137): node scripts/dm-card-preview.js
+media/dm-cards/

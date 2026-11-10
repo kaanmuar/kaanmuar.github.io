@@ -1620,4 +1620,8 @@ const telegram = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };
+const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit };
+// dm(page, task) on each network: a 2-day pass DM Carlos approved (#3137, dms.js).
+require("./dms").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused, rdCall });
+
+module.exports = { NETWORKS, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };
