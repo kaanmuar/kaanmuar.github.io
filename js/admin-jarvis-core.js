@@ -166,7 +166,8 @@
     // Runs nobody outside asked for (#3194). Sweep and rival runs have no asker email, and stored Jarvis days before
     // #3194 have no source, so an empty email counts as ours too.
     const REVIEW_ORIGINS = { sweep: 'country sweep', rivals: 'rival sweep', jarvis: 'shared from Jarvis', test: 'test', team: 'our address', automated: 'no asker email' };
-    const TEAM_EMAIL = /^kaanmuar@gmail\.com$|@(carlosandmunoz\.com|qalabreview\.com|qa-lab\.co)$/;
+    // Carlos, Ginna (two Gmail addresses) and our own domains.
+    const TEAM_EMAIL = /^(kaanmuar|gicohiro|ingsofgicohiro)@gmail\.com$|@(carlosandmunoz\.com|qalabreview\.com|qa-lab\.co)$/;
     function reviewOrigin(row) {
         if (!isReviewRun(row)) return '';
         if (row.source === 'sweep' || row.sweep) return 'sweep';

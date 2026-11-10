@@ -78,6 +78,9 @@ test("a review run is ours when a sweep, Jarvis, a test or our own address asked
   assert.equal(origin({ email: "ana@example.com" }), "test");
   assert.equal(origin({ email: "Kaanmuar@Gmail.com" }), "team");
   assert.equal(origin({ email: "hello@qalabreview.com" }), "team");
+  assert.equal(origin({ email: "gicohiro@gmail.com" }), "team");
+  assert.equal(origin({ email: "IngsOfGicohiro@gmail.com" }), "team");
+  assert.equal(origin({ email: "notgicohiro@gmail.com" }), "");
   assert.equal(origin({ email: "x@notcarlosandmunoz.com" }), "");
   assert.equal(core.reviewOrigin({ status: "checkout-open", email: "" }), "", "a payment row is not a run");
   const split = core.splitReviews([{ status: "complete", email: "ana@shop.co" }, { status: "running", email: "" }, { status: "paid-report", email: "" }]);
