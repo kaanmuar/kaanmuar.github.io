@@ -382,9 +382,12 @@ function openPr(j, batch, tag, clips) {
   const title = "Studio: " + (j.mode === "captions" ? "captions of " : "") + j.kind + " " + j.name + " into " + batch;
   sh("git", ["-c", "user.name=github-actions[bot]", "-c", "user.email=41898299+github-actions[bot]@users.noreply.github.com", "commit", "-q", "-m", title]);
   sh("git", ["push", "-q", "origin", branch]);
-  const pr = JSON.parse(gh(["api", "repos/" + REPO + "/pulls", "-f", "title=" + title, "-f", "head=" + branch, "-f", "base=main", "-f", "body=" + prBody(j, batch, tag, clips)]));
-  // A PR opened with the workflow token starts no pull_request run, so the required checks are started on its branch.
-  tryGh(["workflow", "run", "ci.yml", "--ref", branch]);
+  const appToken = process.env.STUDIO_PR_TOKEN;
+  const as = appToken ? { env: Object.assign({}, process.env, { GH_TOKEN: appToken }) } : {};
+  const pr = JSON.parse(gh(["api", "repos/" + REPO + "/pulls", "-f", "title=" + title, "-f", "head=" + branch, "-f", "base=main", "-f", "body=" + prBody(j, batch, tag, clips)], as));
+  // A PR opened by the qa-lab-agents app starts its pull_request runs. One opened with the workflow token waits for
+  // "approve and run" (#3390), so its checks are at least started on the branch.
+  if (!appToken) tryGh(["workflow", "run", "ci.yml", "--ref", branch]);
   return pr;
 }
 
