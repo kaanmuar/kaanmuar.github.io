@@ -55,7 +55,7 @@
       lookalike: ["Watch {n} lookalike {n:domain|domains} of {domain}", "These registered names imitate {domain}. The case records what each one serves today and alerts when one starts serving a website or mail."],
       serves: { web: "website", mx: "mail", nothing: "nothing yet" },
       exposed: ["Private files on {host} stay closed", "This review read {n} {n:file|files} that should never be public. The case requests each path and passes only on 401, 403, 404 or 410."],
-      mail: ["SPF, DKIM and DMARC for {domain} parse and meet policy", "The case expects one SPF record within 10 DNS lookups that ends in -all or ~all, one DMARC record with p=quarantine or p=reject and a report address, and a DKIM key on each selector you name."],
+      mail: ["SPF, DKIM and DMARC for {domain} parse and meet policy", "The case expects one SPF record within 10 DNS lookups that ends in -all or ~all, one DMARC record with p=quarantine or p=reject and a report address, and a DKIM key at each selector the review found keys at, or each one you name in DKIM_SELECTORS."],
       blocklist: ["{domain} and its servers stay off the spam blocklists", "The case asks {lists} about {targets} and fails on any listing. Barracuda answers only registered resolvers, so a silent answer from it is not a pass."],
       listedOn: "Listed now: {list}",
       headers: ["Passive security baseline for {host}", "OWASP ZAP's baseline scan and Nuclei's exposure and misconfiguration templates recheck the headers and cookies this review flagged. Both run only with the owner's written permission."],
@@ -74,7 +74,7 @@
       readmeIntro: "Watch scripts for {base}, written from a public analysis by QA-lab URL Review. They were not run by QA-lab.",
       readmeRun: "How to run",
       readmeEnv: "Optional settings",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (search for spam pages) and DKIM_SELECTORS are read from the environment; without them those checks print a NOTE. OWNER_APPROVED=yes starts OWASP ZAP and Nuclei; set it only with the owner's written permission.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY and BRAVE_API_KEY (search for spam pages) are read from the environment; without them those checks print a NOTE. DKIM_SELECTORS replaces the DKIM selectors the review found keys at. OWNER_APPROVED=yes starts OWASP ZAP and Nuclei; set it only with the owner's written permission.",
       readmePins: "Fix regressions"
     },
     de: {
@@ -95,7 +95,7 @@
       lookalike: ["{n} ähnliche {n:Domain|Domains} von {domain} beobachten", "Diese registrierten Namen ahmen {domain} nach. Der Fall hält fest, was jede heute bereitstellt, und schlägt Alarm, wenn eine beginnt, eine Website oder E-Mail zu bedienen."],
       serves: { web: "Website", mx: "E-Mail", nothing: "noch nichts" },
       exposed: ["Private Dateien auf {host} bleiben geschlossen", "Diese Prüfung hat {n} {n:Datei|Dateien} gelesen, die nie öffentlich sein dürften. Der Fall ruft jeden Pfad ab und besteht nur bei 401, 403, 404 oder 410."],
-      mail: ["SPF, DKIM und DMARC für {domain} sind gültig und erfüllen die Richtlinie", "Der Fall erwartet genau einen SPF-Eintrag mit höchstens 10 DNS-Abfragen, der auf -all oder ~all endet, genau einen DMARC-Eintrag mit p=quarantine oder p=reject und einer Berichtsadresse sowie einen DKIM-Schlüssel für jeden Selektor, den Sie nennen."],
+      mail: ["SPF, DKIM und DMARC für {domain} sind gültig und erfüllen die Richtlinie", "Der Fall erwartet genau einen SPF-Eintrag mit höchstens 10 DNS-Abfragen, der auf -all oder ~all endet, genau einen DMARC-Eintrag mit p=quarantine oder p=reject und einer Berichtsadresse sowie einen DKIM-Schlüssel unter jedem Selektor, unter dem die Prüfung Schlüssel fand, oder jedem, den Sie in DKIM_SELECTORS nennen."],
       blocklist: ["{domain} und seine Server bleiben von den Spam-Blocklisten fern", "Der Fall fragt {lists} nach {targets} und schlägt bei jedem Eintrag fehl. Barracuda antwortet nur registrierten Resolvern, eine stumme Antwort von dort ist also kein Bestehen."],
       listedOn: "Aktuell gelistet: {list}",
       headers: ["Passiver Sicherheits-Basisscan für {host}", "Der Baseline-Scan von OWASP ZAP und die Exposure- und Misconfiguration-Vorlagen von Nuclei prüfen erneut die Header und Cookies, die diese Prüfung bemängelt hat. Beide laufen nur mit der schriftlichen Erlaubnis des Inhabers."],
@@ -114,7 +114,7 @@
       readmeIntro: "Watch-Skripte für {base}, geschrieben aus einer öffentlichen Analyse von QA-lab URL Review. QA-lab hat sie nicht ausgeführt.",
       readmeRun: "So führen Sie sie aus",
       readmeEnv: "Optionale Einstellungen",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (Suche nach Spam-Seiten) und DKIM_SELECTORS werden aus der Umgebung gelesen; ohne sie geben diese Prüfungen einen NOTE-Hinweis aus. OWNER_APPROVED=yes startet OWASP ZAP und Nuclei; setzen Sie es nur mit der schriftlichen Erlaubnis des Inhabers.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY und BRAVE_API_KEY (Suche nach Spam-Seiten) werden aus der Umgebung gelesen; ohne sie geben diese Prüfungen einen NOTE-Hinweis aus. DKIM_SELECTORS ersetzt die DKIM-Selektoren, unter denen die Prüfung Schlüssel fand. OWNER_APPROVED=yes startet OWASP ZAP und Nuclei; setzen Sie es nur mit der schriftlichen Erlaubnis des Inhabers.",
       readmePins: "Rückfälle nach Behebung"
     },
     es: {
@@ -135,7 +135,7 @@
       lookalike: ["Vigilar {n} {n:dominio parecido|dominios parecidos} a {domain}", "Estos nombres registrados imitan a {domain}. El caso anota lo que sirve cada uno hoy y avisa cuando uno empieza a servir una web o correo."],
       serves: { web: "web", mx: "correo", nothing: "nada por ahora" },
       exposed: ["Los archivos privados de {host} siguen cerrados", "Esta revisión leyó {n} {n:archivo|archivos} que nunca deberían ser públicos. El caso pide cada ruta y solo pasa con 401, 403, 404 o 410."],
-      mail: ["SPF, DKIM y DMARC de {domain} se leen bien y cumplen la política", "El caso espera un solo registro SPF con 10 consultas DNS como máximo que termine en -all o ~all, un solo registro DMARC con p=quarantine o p=reject y una dirección de informes, y una clave DKIM en cada selector que indiques."],
+      mail: ["SPF, DKIM y DMARC de {domain} se leen bien y cumplen la política", "El caso espera un solo registro SPF con 10 consultas DNS como máximo que termine en -all o ~all, un solo registro DMARC con p=quarantine o p=reject y una dirección de informes, y una clave DKIM en cada selector donde la revisión encontró claves, o en cada uno que indiques en DKIM_SELECTORS."],
       blocklist: ["{domain} y sus servidores siguen fuera de las listas negras de spam", "El caso consulta {lists} sobre {targets} y falla ante cualquier inclusión. Barracuda solo responde a resolvers registrados, así que su silencio no cuenta como aprobado."],
       listedOn: "En lista ahora: {list}",
       headers: ["Línea base de seguridad pasiva de {host}", "El escaneo baseline de OWASP ZAP y las plantillas de exposición y mala configuración de Nuclei vuelven a comprobar los encabezados y cookies que señaló esta revisión. Ambos se ejecutan solo con el permiso por escrito del propietario."],
@@ -154,7 +154,7 @@
       readmeIntro: "Scripts de vigilancia para {base}, escritos a partir de un análisis público de QA-lab URL Review. QA-lab no los ejecutó.",
       readmeRun: "Cómo ejecutarlos",
       readmeEnv: "Ajustes opcionales",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (búsqueda de páginas de spam) y DKIM_SELECTORS se leen del entorno; sin ellas, esas comprobaciones imprimen un NOTE. OWNER_APPROVED=yes inicia OWASP ZAP y Nuclei; actívala solo con el permiso por escrito del propietario.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY y BRAVE_API_KEY (búsqueda de páginas de spam) se leen del entorno; sin ellas, esas comprobaciones imprimen un NOTE. DKIM_SELECTORS reemplaza los selectores DKIM donde la revisión encontró claves. OWNER_APPROVED=yes inicia OWASP ZAP y Nuclei; actívala solo con el permiso por escrito del propietario.",
       readmePins: "Regresiones de arreglos"
     },
     fr: {
@@ -175,7 +175,7 @@
       lookalike: ["Surveiller {n} {n:domaine sosie|domaines sosies} de {domain}", "Ces noms enregistrés imitent {domain}. Le cas note ce que chacun sert aujourd’hui et alerte quand l’un commence à servir un site ou des e-mails."],
       serves: { web: "site web", mx: "e-mail", nothing: "rien pour l’instant" },
       exposed: ["Les fichiers privés de {host} restent fermés", "Cette analyse a lu {n} {n:fichier|fichiers} qui ne devraient jamais être publics. Le cas demande chaque chemin et ne passe qu’avec 401, 403, 404 ou 410."],
-      mail: ["SPF, DKIM et DMARC de {domain} sont valides et respectent la politique", "Le cas attend un seul enregistrement SPF d’au plus 10 requêtes DNS se terminant par -all ou ~all, un seul enregistrement DMARC avec p=quarantine ou p=reject et une adresse de rapport, et une clé DKIM pour chaque sélecteur que vous indiquez."],
+      mail: ["SPF, DKIM et DMARC de {domain} sont valides et respectent la politique", "Le cas attend un seul enregistrement SPF d’au plus 10 requêtes DNS se terminant par -all ou ~all, un seul enregistrement DMARC avec p=quarantine ou p=reject et une adresse de rapport, et une clé DKIM sous chaque sélecteur où la revue a trouvé des clés, ou sous chacun de ceux que vous indiquez dans DKIM_SELECTORS."],
       blocklist: ["{domain} et ses serveurs restent hors des listes noires de spam", "Le cas interroge {lists} sur {targets} et échoue à la moindre inscription. Barracuda ne répond qu’aux résolveurs enregistrés : son silence ne vaut pas réussite."],
       listedOn: "Inscrit en ce moment : {list}",
       headers: ["Base de sécurité passive pour {host}", "Le scan baseline d’OWASP ZAP et les modèles d’exposition et de mauvaise configuration de Nuclei revérifient les en-têtes et cookies signalés par cette analyse. Les deux ne tournent qu’avec l’autorisation écrite du propriétaire."],
@@ -194,7 +194,7 @@
       readmeIntro: "Scripts de surveillance pour {base}, écrits à partir d’une analyse publique de QA-lab URL Review. QA-lab ne les a pas exécutés.",
       readmeRun: "Comment les lancer",
       readmeEnv: "Réglages facultatifs",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (recherche de pages de spam) et DKIM_SELECTORS sont lus dans l’environnement ; sans eux, ces vérifications affichent un NOTE. OWNER_APPROVED=yes lance OWASP ZAP et Nuclei ; ne le définissez qu’avec l’autorisation écrite du propriétaire.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY et BRAVE_API_KEY (recherche de pages de spam) sont lus dans l’environnement ; sans eux, ces vérifications affichent un NOTE. DKIM_SELECTORS remplace les sélecteurs DKIM où la revue a trouvé des clés. OWNER_APPROVED=yes lance OWASP ZAP et Nuclei ; ne le définissez qu’avec l’autorisation écrite du propriétaire.",
       readmePins: "Régressions des correctifs"
     },
     it: {
@@ -215,7 +215,7 @@
       lookalike: ["Sorveglia {n} {n:dominio sosia|domini sosia} di {domain}", "Questi nomi registrati imitano {domain}. Il caso annota cosa serve ciascuno oggi e avvisa quando uno inizia a servire un sito o la posta."],
       serves: { web: "sito", mx: "posta", nothing: "niente per ora" },
       exposed: ["I file privati di {host} restano chiusi", "Questa revisione ha letto {n} file che non dovrebbero mai essere pubblici. Il caso richiede ogni percorso e passa solo con 401, 403, 404 o 410."],
-      mail: ["SPF, DKIM e DMARC di {domain} sono validi e rispettano la policy", "Il caso si aspetta un solo record SPF entro 10 query DNS che termini con -all o ~all, un solo record DMARC con p=quarantine o p=reject e un indirizzo per i report, e una chiave DKIM per ogni selettore che indichi."],
+      mail: ["SPF, DKIM e DMARC di {domain} sono validi e rispettano la policy", "Il caso si aspetta un solo record SPF entro 10 query DNS che termini con -all o ~all, un solo record DMARC con p=quarantine o p=reject e un indirizzo per i report, e una chiave DKIM in ogni selettore in cui la revisione ha trovato chiavi, o in ognuno che indichi in DKIM_SELECTORS."],
       blocklist: ["{domain} e i suoi server restano fuori dalle blocklist anti-spam", "Il caso interroga {lists} su {targets} e fallisce a ogni inserimento. Barracuda risponde solo ai resolver registrati, quindi un suo silenzio non vale come superato."],
       listedOn: "In lista ora: {list}",
       headers: ["Base di sicurezza passiva per {host}", "La scansione baseline di OWASP ZAP e i template di esposizione e configurazione errata di Nuclei ricontrollano gli header e i cookie segnalati da questa revisione. Entrambi girano solo con il permesso scritto del proprietario."],
@@ -234,7 +234,7 @@
       readmeIntro: "Script di sorveglianza per {base}, scritti a partire da un’analisi pubblica di QA-lab URL Review. QA-lab non li ha eseguiti.",
       readmeRun: "Come eseguirli",
       readmeEnv: "Impostazioni facoltative",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (ricerca di pagine di spam) e DKIM_SELECTORS vengono letti dall’ambiente; senza di essi quei controlli stampano un NOTE. OWNER_APPROVED=yes avvia OWASP ZAP e Nuclei; impostalo solo con il permesso scritto del proprietario.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY e BRAVE_API_KEY (ricerca di pagine di spam) vengono letti dall’ambiente; senza di essi quei controlli stampano un NOTE. DKIM_SELECTORS sostituisce i selettori DKIM in cui la revisione ha trovato chiavi. OWNER_APPROVED=yes avvia OWASP ZAP e Nuclei; impostalo solo con il permesso scritto del proprietario.",
       readmePins: "Regressioni delle correzioni"
     },
     pt: {
@@ -255,7 +255,7 @@
       lookalike: ["Vigiar {n} {n:domínio parecido|domínios parecidos} com {domain}", "Estes nomes registrados imitam {domain}. O caso registra o que cada um serve hoje e avisa quando um começa a servir um site ou e-mail."],
       serves: { web: "site", mx: "e-mail", nothing: "nada por enquanto" },
       exposed: ["Os arquivos privados de {host} continuam fechados", "Esta revisão leu {n} {n:arquivo|arquivos} que nunca deveriam ser públicos. O caso pede cada caminho e só passa com 401, 403, 404 ou 410."],
-      mail: ["SPF, DKIM e DMARC de {domain} são válidos e cumprem a política", "O caso espera um único registro SPF com no máximo 10 consultas DNS terminando em -all ou ~all, um único registro DMARC com p=quarantine ou p=reject e um endereço de relatórios, e uma chave DKIM em cada seletor que você indicar."],
+      mail: ["SPF, DKIM e DMARC de {domain} são válidos e cumprem a política", "O caso espera um único registro SPF com no máximo 10 consultas DNS terminando em -all ou ~all, um único registro DMARC com p=quarantine ou p=reject e um endereço de relatórios, e uma chave DKIM em cada seletor onde a revisão encontrou chaves, ou em cada um que você indicar em DKIM_SELECTORS."],
       blocklist: ["{domain} e seus servidores continuam fora das listas de bloqueio de spam", "O caso consulta {lists} sobre {targets} e falha em qualquer listagem. O Barracuda só responde a resolvedores registrados, então o silêncio dele não conta como aprovado."],
       listedOn: "Listado agora: {list}",
       headers: ["Linha de base de segurança passiva para {host}", "O scan baseline do OWASP ZAP e os templates de exposição e má configuração do Nuclei verificam de novo os cabeçalhos e cookies que esta revisão apontou. Os dois só rodam com a permissão por escrito do proprietário."],
@@ -274,7 +274,7 @@
       readmeIntro: "Scripts de vigilância para {base}, escritos a partir de uma análise pública do QA-lab URL Review. O QA-lab não os executou.",
       readmeRun: "Como executar",
       readmeEnv: "Configurações opcionais",
-      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY, BRAVE_API_KEY (busca de páginas de spam) e DKIM_SELECTORS são lidos do ambiente; sem eles, essas verificações imprimem um NOTE. OWNER_APPROVED=yes inicia o OWASP ZAP e o Nuclei; defina-o só com a permissão por escrito do proprietário.",
+      readmeEnvText: "WEBRISK_KEY (Google Web Risk), URLHAUS_AUTH_KEY e BRAVE_API_KEY (busca de páginas de spam) são lidos do ambiente; sem eles, essas verificações imprimem um NOTE. DKIM_SELECTORS substitui os seletores DKIM onde a revisão encontrou chaves. OWNER_APPROVED=yes inicia o OWASP ZAP e o Nuclei; defina-o só com a permissão por escrito do proprietário.",
       readmePins: "Regressões de correções"
     }
   };
@@ -307,9 +307,15 @@
     zone: (v) => /^[a-z0-9.-]+$/.test(String(v || "")),
     term: (v) => /^[\p{L}\p{N} -]{2,40}$/u.test(String(v || "")),
     key: (v) => /^[a-z0-9-]+$/.test(String(v || "")),
+    selector: (v) => /^[a-z0-9][a-z0-9-]{0,62}$/i.test(String(v || "")),
     base: (v) => /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(String(v || "")),
     url: (v) => /^https:\/\/[^\s"'<>]+$/.test(String(v || ""))
   };
+
+  // The DKIM selectors the review found keys at; DKIM_SELECTORS overrides them.
+  function foundSelectors(by) {
+    return keep(((by.mail || [])[0] || { data: {} }).data.dkimSelectors || [], SAFE.selector, 8);
+  }
 
   function keep(list, test, max) {
     const out = [];
@@ -530,8 +536,9 @@
         "if [ \"$dmarc_count\" = 1 ]; then pass \"$DOMAIN has one DMARC record\"; else fail \"$DOMAIN has $dmarc_count DMARC records; it needs exactly one\"; fi",
         "if printf '%s' \"$dmarc\" | grep -Eiq '(^|;)[[:space:]]*p=(quarantine|reject)'; then pass 'DMARC policy is quarantine or reject'; else fail 'DMARC policy is not quarantine or reject'; fi",
         "if printf '%s' \"$dmarc\" | grep -iq 'rua=mailto:'; then pass 'DMARC names a report address'; else fail 'DMARC has no rua report address'; fi",
-        "if [ -z \"${DKIM_SELECTORS:-}\" ]; then note 'Set DKIM_SELECTORS=\"selector1 google\" to check DKIM keys.'; fi",
-        "for selector in ${DKIM_SELECTORS:-}; do",
+        "SELECTORS=\"${DKIM_SELECTORS:-" + foundSelectors(by).join(" ") + "}\"",
+        "if [ -z \"$SELECTORS\" ]; then note 'The review found no DKIM key at the common selectors; set DKIM_SELECTORS=\"yourselector\" to check yours.'; fi",
+        "for selector in $SELECTORS; do",
         "  key=$(ask \"$selector._domainkey.$DOMAIN\" TXT | tr -d '\" ')",
         "  if printf '%s' \"$key\" | grep -Eq '(^|;)p=[A-Za-z0-9+/]'; then pass \"DKIM key published for $selector\"; else fail \"no DKIM key for selector $selector\"; fi",
         "done",
@@ -636,7 +643,7 @@
       "\"\"\"" + line + " · SPF, DKIM and DMARC for " + watch.domain + " (" + ids(by.mail) + ").",
       "",
       "pip install checkdmarc, then: python checkdmarc/check_mail.py",
-      "Set DKIM_SELECTORS=\"selector1 google\" to check DKIM keys. Exits 1 when a check fails.",
+      "Checks DKIM keys at the selectors the review found; set DKIM_SELECTORS=\"selector1 google\" to check others. Exits 1 when a check fails.",
       "\"\"\"",
       "import json",
       "import os",
@@ -647,6 +654,7 @@
       "",
       "DOMAIN = " + q(watch.domain),
       "LOOKUP_LIMIT = 10",
+      "FOUND_SELECTORS = " + q(foundSelectors(by).join(" ")),
       "FAILED = []",
       "",
       "",
@@ -693,9 +701,9 @@
       "    check(bool(dmarc.get(\"valid\")), \"DMARC parses: \" + (dmarc.get(\"record\") or str(dmarc.get(\"error\", \"no record\"))))",
       "    check(policy in (\"quarantine\", \"reject\"), \"DMARC policy is quarantine or reject (p=%s)\" % (policy or \"none\"))",
       "    check(bool((tags.get(\"rua\") or {}).get(\"value\")), \"DMARC names a report address (rua)\")",
-      "    selectors = os.environ.get(\"DKIM_SELECTORS\", \"\").split()",
+      "    selectors = (os.environ.get(\"DKIM_SELECTORS\") or FOUND_SELECTORS).split()",
       "    if not selectors:",
-      "        print(\"NOTE Set DKIM_SELECTORS to check DKIM keys, for example DKIM_SELECTORS=\\\"selector1 google\\\".\")",
+      "        print(\"NOTE The review found no DKIM key at the common selectors; set DKIM_SELECTORS to check yours, for example DKIM_SELECTORS=\\\"selector1 google\\\".\")",
       "    for selector in selectors:",
       "        key = dkim_key(selector)",
       "        if key is None:",

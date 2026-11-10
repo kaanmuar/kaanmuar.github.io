@@ -6,6 +6,7 @@
    so every list holds objects or strings. */
 
 const blocklists = require("./url-review-blocklists");
+const { dkimSelectors } = require("./url-review-mail-auth");
 const { registryDomain } = require("./url-review-suffix");
 
 const OPEN = ["fail", "risk"];
@@ -50,7 +51,7 @@ function kindOf(key) {
   if (HACK_KEYS.indexOf(k) !== -1) return "hacked";
   if (k === "sec-lookalike") return "lookalike";
   if (/^sec-exposed-/.test(k)) return "exposed";
-  if (/^sec-(spf|dmarc)(-|$)/.test(k)) return "mail";
+  if (/^sec-(spf|dmarc|dkim)(-|$)/.test(k)) return "mail";
   if (/^sec-blocklist-\d+$/.test(k)) return "blocklist";
   if (HEADER_KEYS.indexOf(k) !== -1) return "headers";
   if (TLS_KEYS.indexOf(k) !== -1) return "tls";
@@ -120,7 +121,8 @@ function mailData(extras, opened, domain) {
     domain: dns.domain || domain,
     keys: uniq(opened.map((f) => f.key)),
     spfRecords: auth.spfRecords == null ? -1 : auth.spfRecords,
-    lookups: auth.lookups == null ? -1 : auth.lookups
+    lookups: auth.lookups == null ? -1 : auth.lookups,
+    dkimSelectors: dkimSelectors(dns.dkim)
   };
 }
 

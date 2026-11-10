@@ -200,8 +200,115 @@ test.describe("DMARC reporting, subdomains and pct (#3089)", () => {
   });
 });
 
+test.describe("DKIM keys at the common selectors (#3409)", () => {
+  const crypto = require("node:crypto");
+  const watchCases = require("../../functions/url-review-watch");
+  const watch = require("../../js/qa-review-watch.js");
+  const rsa = (bits) => crypto.generateKeyPairSync("rsa", { modulusLength: bits }).publicKey.export({ type: "spki", format: "der" }).toString("base64");
+  const KEY_2048 = rsa(2048);
+  const KEY_1024 = rsa(1024);
+  const KEY_512 = rsa(512);
+  const GOOGLE_MX = ["aspmx.l.google.com", "alt1.aspmx.l.google.com"];
+
+  // Each name answers the listed TXT rows; every other name is NXDOMAIN.
+  const zone = (rows, asked) => async (name) => {
+    if (asked) asked.push(name);
+    if (rows[name]) return rows[name].map((row) => [row]);
+    throw Object.assign(new Error("ENOTFOUND " + name), { code: "ENOTFOUND" });
+  };
+  const dkim = (domain, rows, hints, asked) => withTxt(zone(rows, asked), () => mailAuth.readDkim(domain, hints || {}));
+  const keys = (result) => result.findings.filter((item) => /^sec-dkim/.test(item.key));
+  const reviewDkim = (domain, found, extra) => review(domain, { spfRecords: 1, dmarcRecords: 1 }, Object.assign({ dkim: found }, extra));
+
+  test("a Google Workspace domain asks the google selector first and passes with its 2048-bit key", async () => {
+    const asked = [];
+    // A wildcard TXT answers every name; its SPF row is not a DKIM key.
+    const found = await dkim("panaderia.example.co", { "google._domainkey.panaderia.example.co": ["v=DKIM1; k=rsa; p=" + KEY_2048.slice(0, 200) + " " + KEY_2048.slice(200)], "selector1._domainkey.panaderia.example.co": ["v=spf1 -all"] },
+      { mx: GOOGLE_MX, spf: "v=spf1 include:_spf.google.com ~all" }, asked);
+    assert.equal(asked[0], "google._domainkey.panaderia.example.co");
+    assert.equal(found.provider, "Google Workspace");
+    assert.equal(found.probed, mailAuth.DKIM_SELECTORS.length);
+    assert.deepEqual(found.keys, [{ selector: "google", type: "rsa", bits: 2048 }]);
+    const result = reviewDkim("panaderia.example.co", found, { mx: GOOGLE_MX });
+    assert.deepEqual(keys(result).map((item) => [item.key, item.verdict]), [["sec-dkim", "pass"]]);
+    assert.match(finding(result, "sec-dkim").evidence, /google\._domainkey\.panaderia\.example\.co \(RSA, 2048-bit\)/);
+    assert.equal(row(result, "DKIM"), "pass");
+  });
+
+  test("Microsoft 365 by MX, then by SPF, puts selector1 and selector2 first", () => {
+    assert.deepEqual(mailAuth.mailProvider(["example-com.mail.protection.outlook.com"], "").selectors, ["selector1", "selector2"]);
+    assert.equal(mailAuth.mailProvider(["mx1.filter.example.net"], "v=spf1 include:spf.protection.outlook.com -all").name, "Microsoft 365");
+    assert.equal(mailAuth.mailProvider(["mx.example.net"], "v=spf1 mx -all"), null);
+  });
+
+  test("a revoked key alone breaks DKIM; next to a live key it only retires a selector", async () => {
+    const only = await dkim("old.example.org", { "selector1._domainkey.old.example.org": ["v=DKIM1; k=rsa; p="] });
+    assert.deepEqual(only.keys, [{ selector: "selector1", type: "rsa", revoked: true }]);
+    let result = reviewDkim("old.example.org", only);
+    assert.deepEqual(keys(result).map((item) => [item.key, item.verdict, item.severity]), [["sec-dkim-revoked", "risk", "medium"]]);
+    assert.match(finding(result, "sec-dkim-revoked").evidence, /selector1\._domainkey\.old\.example\.org has an empty p= tag/);
+    assert.equal(row(result, "DKIM"), "risk");
+    const both = await dkim("old.example.org", { "selector1._domainkey.old.example.org": ["v=DKIM1; p="], "selector2._domainkey.old.example.org": ["v=DKIM1; k=rsa; p=" + KEY_2048] });
+    result = reviewDkim("old.example.org", both);
+    assert.deepEqual(keys(result).map((item) => [item.key, item.severity]), [["sec-dkim-revoked", "low"], ["sec-dkim", "info"]]);
+    assert.deepEqual(mailAuth.dkimSelectors(both), ["selector2"], "the retest skips a revoked selector");
+  });
+
+  test("an RSA key below 1024 bits fails, 1024 bits is advice to move to 2048", async () => {
+    const found = await dkim("legacy.example.net", { "k1._domainkey.legacy.example.net": ["k=rsa; p=" + KEY_512], "s1._domainkey.legacy.example.net": ["v=DKIM1; k=rsa; p=" + KEY_1024], "s2._domainkey.legacy.example.net": ["v=DKIM1; k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="] });
+    assert.deepEqual(found.keys.map((key) => [key.selector, key.type, key.bits]), [["k1", "rsa", 512], ["s1", "rsa", 1024], ["s2", "ed25519", null]]);
+    const result = reviewDkim("legacy.example.net", found);
+    const weak = finding(result, "sec-dkim-weak");
+    assert.deepEqual([weak.verdict, weak.severity], ["fail", "high"]);
+    assert.match(weak.evidence, /k1\._domainkey\.legacy\.example\.net \(RSA, 512-bit\)/);
+    const short = finding(result, "sec-dkim-short");
+    assert.deepEqual([short.verdict, short.severity], ["risk", "low"]);
+    assert.match(short.fix, /2048-bit/);
+    assert.equal(finding(result, "sec-dkim"), undefined, "a key receivers reject earns no pass");
+    assert.equal(row(result, "DKIM"), "fail");
+  });
+
+  test("no key at the common selectors is an info line for a person, never a failure", async () => {
+    const found = await dkim("custom.example.com", {}, { mx: GOOGLE_MX });
+    assert.deepEqual([found.keys, found.unread], [[], 0]);
+    let result = reviewDkim("custom.example.com", found, { mx: GOOGLE_MX });
+    const none = finding(result, "sec-dkim-none");
+    assert.deepEqual([none.verdict, none.severity], ["person", "info"]);
+    assert.match(none.evidence, /through Google Workspace, whose DKIM selector is google/);
+    assert.match(none.evidence, /custom selector/);
+    assert.equal(row(result, "DKIM"), "unknown");
+    result = reviewDkim("custom.example.com", Object.assign({}, found, { provider: "" }));
+    assert.match(finding(result, "sec-dkim-none").evidence, new RegExp("None of the " + mailAuth.DKIM_SELECTORS.length + " selectors"));
+    assert.equal(watchCases.build(keys(result), { dns: { domain: "custom.example.com" } }, { host: "custom.example.com" }), null, "an info line opens no retest");
+  });
+
+  test("a domain without MX gets no DKIM finding or summary row, and an unanswered lookup says nothing", async () => {
+    const found = await dkim("static.example.com", {});
+    let result = reviewDkim("static.example.com", found, { mx: [], nullMx: true });
+    assert.deepEqual(keys(result), []);
+    assert.equal(result.security.headers.find((item) => item.label === "DKIM"), undefined);
+    const silent = await withTxt(() => new Promise(() => {}), () => mailAuth.readDkim("slow.example.com", {}));
+    assert.equal(silent.unread, silent.probed);
+    result = reviewDkim("slow.example.com", silent);
+    assert.deepEqual(keys(result), []);
+  });
+
+  test("the mail retest checks the selectors the review found, unless DKIM_SELECTORS names others", async () => {
+    const found = await dkim("shop.example.com", { "google._domainkey.shop.example.com": ["v=DKIM1; k=rsa; p=" + KEY_1024] }, { mx: GOOGLE_MX });
+    const result = reviewDkim("shop.example.com", found, { mx: GOOGLE_MX });
+    const built = watchCases.build(result.findings, { dns: { domain: "example.com", mailAuth: { spfRecords: 1 }, dkim: found } }, { host: "shop.example.com" });
+    const mail = built.cases.find((item) => item.kind === "mail");
+    assert.ok(mail.keys.includes("sec-dkim-short"));
+    assert.deepEqual(mail.data.dkimSelectors, ["google"]);
+    const files = new Map(watch.files({ id: "rep1", host: "shop.example.com", finalUrl: "https://shop.example.com/", cases: [], watch: built }).map((file) => [file.path, file.content]));
+    assert.ok(files.get("dig/qa-lab-dns.sh").includes("SELECTORS=\"${DKIM_SELECTORS:-google}\""));
+    assert.ok(files.get("checkdmarc/check_mail.py").includes("FOUND_SELECTORS = \"google\""));
+    assert.ok(files.get("checkdmarc/check_mail.py").includes("os.environ.get(\"DKIM_SELECTORS\") or FOUND_SELECTORS"));
+  });
+});
+
 test("every new finding reads in all six languages with the same slots", () => {
-  const ids = Object.keys(EN).filter((id) => /^sec-(spf|dmarc)-/.test(id));
+  const ids = Object.keys(EN).filter((id) => /^sec-(spf|dmarc|dkim)[-.]/.test(id));
   assert.ok(ids.length >= 30, ids.length + " ids");
   const slots = (text) => (String(text).match(/\{\w+\}/g) || []).sort().join(",");
   for (const lang of ["es", "pt", "de", "fr", "it"]) {
