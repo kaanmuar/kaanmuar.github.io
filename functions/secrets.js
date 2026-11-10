@@ -30,6 +30,8 @@ const BY_FUNCTION = {
   sweep: list(SCAN),
   // placesProspects (#2120): Places Text Search for local-business prospects.
   prospects: list(["PLACES_KEY"]),
+  // wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
+  wordfenceFeed: list(["WORDFENCE_KEY"]),
   ownerReplies: list(MAIL, ["OWNER_REPLY_KEY"]),
   reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY"]),
   reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY"]),

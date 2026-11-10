@@ -2,6 +2,7 @@
 
 const { URL } = require("url");
 const libraries = require("./url-review-libraries");
+const wordpress = require("./url-review-wordpress");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
@@ -1498,6 +1499,7 @@ function analyze(input) {
 
   // Security
   libraryChecks({ read, browsed, origin }, add);
+  wordpress.checks(extras.wordpress, add);
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
   const headerRows = read.map((page) => {
