@@ -1,0 +1,23 @@
+/* The Cases card's watch subsection (#3391). Cards reuse .case, .fw-name and .fw-logo from the page. */
+.watch { margin: 18px 0 0; padding: 16px 16px 6px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 14px; background: var(--panel); overflow-wrap: anywhere; }
+.watch[hidden] { display: none; }
+.watch-title { margin: 0 0 6px; font-family: "Instrument Serif", "Source Serif 4", Georgia, serif; font-weight: 400; font-size: 1.55rem; line-height: 1.15; }
+.watch-intro { margin: 0 0 10px; font-size: 14px; }
+.watch-tools { display: grid; gap: 4px; margin: 0 0 8px; }
+.watch-tools .fw-group { gap: 6px 10px; }
+.watch-tool { display: inline-flex; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; opacity: .55; }
+.watch-tool.on { opacity: 1; border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); }
+.watch-case .watch-verdict.watch-pass, .watch-case .watch-verdict.watch-gone { color: var(--green, #3fb950); }
+.watch-case .watch-verdict.watch-fail { color: var(--red); }
+.watch-owners { color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.watch-links, .watch-rows { margin: 4px 0 6px; padding-left: 18px; font-size: 13px; }
+.watch-links a { color: var(--cyan); }
+.watch-sub { margin: 16px 0 2px; font-size: 1rem; }
+.watch-pin { border-left: 3px solid var(--green, #3fb950); padding-left: 10px; }
+.watch-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0 6px; }
+.watch-foot .watch-schedule, .watch-foot .watch-locked { margin: 0; font-size: 12.5px; flex: 1 1 260px; }
+@media (max-width: 640px) {
+  .watch { padding: 12px 12px 4px; }
+  .watch-title { font-size: 1.3rem; }
+  .watch-download { width: 100%; }
+}
