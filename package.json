@@ -54,7 +54,7 @@
     "appium-chromium-driver": "^3.2.0",
     "axe-core": "^4.14.0",
     "codeceptjs": "^4.2.2",
-    "css-select": "^5.2.2",
+    "css-select": "^7.0.0",
     "css-what": "^8.0.0",
     "cypress": "^16.2.1",
     "cypress-axe": "^1.7.0",
