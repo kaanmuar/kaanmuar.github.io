@@ -130,7 +130,7 @@ function priceMatches(usd) {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
   if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
-  if (fixOffers.PACKAGES.some((pkg) => pkg.usd * 100 === cents)) return true;
+  if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
   const extraCents = EXTRA_FRAMEWORK_USD * 100;
@@ -585,7 +585,8 @@ function priceForFix(packageId, host) {
     error.status = 400;
     throw error;
   }
-  return { usd: pkg.usd, cents: pkg.usd * 100, count: 1, frameworks: [], layers: [], package: pkg.id, host: String(host || "").slice(0, 120) };
+  const usd = fixOffers.usdOf(pkg, Date.now());
+  return { usd, cents: usd * 100, count: 1, frameworks: [], layers: [], package: pkg.id, host: String(host || "").slice(0, 120) };
 }
 
 function normalizeLayers(list) {

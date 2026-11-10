@@ -4,11 +4,13 @@
  */
 
 // The one price table. A finding belongs to the first package whose `keys` holds a prefix of its key;
-// one no package holds is quoted by hand.
+// one no package holds is quoted by hand. `usd` is the launch price, charged until LAUNCH.endsAt; `listUsd` after it
+// (about launch / 0.7, ending in 9).
 const PACKAGES = [
   {
     id: "security-headers",
     usd: 99,
+    listUsd: 139,
     days: 3,
     keys: ["sec-hsts", "sec-csp", "sec-frame", "sec-nosniff", "sec-referrer", "sec-permissions", "sec-coop", "sec-isolation", "sec-headers-uneven", "sec-cookies", "sec-mixed", "sec-sri", "sec-version"],
     name: {
@@ -27,6 +29,7 @@ const PACKAGES = [
   {
     id: "email-dns",
     usd: 89,
+    listUsd: 129,
     days: 3,
     keys: ["sec-spf", "sec-dmarc", "sec-caa", "sec-mta-sts", "sec-tlsrpt", "sec-bimi", "sec-securitytxt"],
     name: {
@@ -45,6 +48,7 @@ const PACKAGES = [
   {
     id: "tls-redirects",
     usd: 69,
+    listUsd: 99,
     days: 2,
     keys: ["sec-http", "sec-tls", "sec-domain-lock", "seo-redirect-chain", "seo-internal-redirects"],
     name: {
@@ -63,6 +67,7 @@ const PACKAGES = [
   {
     id: "accessibility",
     usd: 169,
+    listUsd: 239,
     days: 5,
     keys: ["a11y-", "ax-"],
     name: {
@@ -81,6 +86,7 @@ const PACKAGES = [
   {
     id: "performance",
     usd: 199,
+    listUsd: 289,
     days: 5,
     keys: ["pf-"],
     name: {
@@ -99,6 +105,7 @@ const PACKAGES = [
   {
     id: "seo-meta",
     usd: 119,
+    listUsd: 169,
     days: 4,
     keys: ["seo-title", "seo-description", "seo-duplicate", "seo-canonical", "seo-social", "seo-schema", "seo-favicon", "seo-viewport", "seo-hreflang", "seo-sitemap", "geo-entity", "geo-llms", "geo-dated", "geo-trust"],
     name: {
@@ -115,6 +122,25 @@ const PACKAGES = [
     }
   }
 ];
+
+// Launch prices run through Dec 10 in Bogotá (UTC-5); from endsAt every quote, request and checkout takes listUsd.
+const LAUNCH = { until: "2026-12-10", endsAt: "2026-12-11T05:00:00.000Z" };
+
+function launchOn(now) {
+  return (now == null ? Date.now() : new Date(now).getTime()) < Date.parse(LAUNCH.endsAt);
+}
+
+// What a package costs at `now`: its launch price until LAUNCH.endsAt, its list price after.
+function usdOf(pkg, now) {
+  if (!pkg) return 0;
+  return launchOn(now) ? pkg.usd : pkg.listUsd || pkg.usd;
+}
+
+// Every amount a package can be charged at, for the checkout's price check: a checkout opened on the launch's
+// last minute may be captured after it.
+function chargeableUsd() {
+  return PACKAGES.reduce((all, pkg) => all.concat([pkg.usd, pkg.listUsd || pkg.usd]), []);
+}
 
 const STATUSES = ["new", "quoted", "accepted", "in-progress", "done", "re-reviewed"];
 const COLLECTION = "url_review_fix_requests";
@@ -152,15 +178,17 @@ function isOpen(finding) {
 }
 
 // The packages a report's open findings call for, in table order, each with the findings it covers.
-function offersFor(findings) {
+function offersFor(findings, now) {
   const open = (findings || []).filter(isOpen);
-  return PACKAGES.map((item) => ({ id: item.id, usd: item.usd, days: item.days, findings: open.filter((f) => packageFor(f.key) === item.id).map((f) => f.id) }))
+  return PACKAGES.map((item) => ({ id: item.id, usd: usdOf(item, now), days: item.days, findings: open.filter((f) => packageFor(f.key) === item.id).map((f) => f.id) }))
     .filter((offer) => offer.findings.length);
 }
 
-// What the report page needs to show the packages: no matching rules beyond the prefixes.
-function publicPackages() {
-  return PACKAGES.map((item) => ({ id: item.id, usd: item.usd, days: item.days, keys: item.keys.slice(), name: Object.assign({}, item.name), what: Object.assign({}, item.what) }));
+// What the report page needs to show the packages: no matching rules beyond the prefixes. `launch` is true while the
+// launch price holds; the card then shows the list price struck through and the launch end date.
+function publicPackages(now) {
+  const launch = launchOn(now);
+  return PACKAGES.map((item) => ({ id: item.id, usd: usdOf(item, now), listUsd: item.listUsd || item.usd, launch, launchUntil: launch ? LAUNCH.until : "", days: item.days, keys: item.keys.slice(), name: Object.assign({}, item.name), what: Object.assign({}, item.what) }));
 }
 
 function dayOf(value) {
@@ -197,7 +225,7 @@ function requestRecord(input, row, email, now) {
     findings: findings.map((f) => Object.assign({ id: String(f.id), key: String(f.key || ""), area: String(f.area || ""), verdict: String(f.verdict || ""), severity: String(f.severity || ""), title: line(f.title, 160), package: packageFor(f.key) },
       f.msg && f.msg.title ? { titleMsg: f.msg.title } : {})),
     package: pack ? pack.id : "",
-    priceUsd: pack ? pack.usd : 0,
+    priceUsd: pack ? usdOf(pack, at) : 0,
     kind: pack ? "package" : "quote",
     access: clip(body.access, 2000),
     deadline,
@@ -310,14 +338,14 @@ function reportUrl(record) {
 function ownerNotice(record, deskUrl) {
   const pack = packageById(record.package);
   return {
-    subject: "Fix request: " + (record.host || "a report") + (pack ? " · " + pack.name.en + " US$" + pack.usd : " · quote"),
+    subject: "Fix request: " + (record.host || "a report") + (pack ? " · " + pack.name.en + " US$" + (record.priceUsd || usdOf(pack)) : " · quote"),
     intro: (record.name || record.email) + " asks us to fix " + record.findings.length + (record.findings.length === 1 ? " finding" : " findings") + " on " + (record.host || "their site"),
     rows: [
       { heading: "Request" },
       { label: "From", value: record.name ? record.name + " (" + record.email + ")" : record.email },
       { label: "Site", value: record.host },
       { label: "Report", value: reportUrl(record) },
-      { label: "Package", value: pack ? pack.name.en + ", US$" + pack.usd + ", about " + pack.days + " working days" : "None, wants a quote" },
+      { label: "Package", value: pack ? pack.name.en + ", US$" + (record.priceUsd || usdOf(pack)) + ", about " + pack.days + " working days" : "None, wants a quote" },
       { label: "Deadline", value: record.deadline },
       { label: "Budget", value: record.budget },
       { label: "Language", value: record.lang },
@@ -332,6 +360,10 @@ function ownerNotice(record, deskUrl) {
 
 module.exports = {
   PACKAGES,
+  LAUNCH,
+  launchOn,
+  usdOf,
+  chargeableUsd,
   STATUSES,
   COLLECTION,
   DAILY_LIMIT,

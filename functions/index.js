@@ -1817,6 +1817,7 @@ function findPlaces() {
 
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
+const launchMail = require("./launch-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
@@ -1998,7 +1999,22 @@ async function mailReportToAsker(record, promise) {
   if (record.status !== "complete" && record.status !== "stopped") return false;
   const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
   const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise });
-  return sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+  const sent = await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+  if (sent) await mailFixableFollowup(record, stopUrl).catch((error) => console.error("Fixable follow-up failed:", error));
+  return sent;
+}
+
+// After a report whose findings a fix package covers, once per report, unless the address stopped follow-up notes.
+// Off until FIXABLE_FOLLOWUP_MAIL=on (#3393).
+async function mailFixableFollowup(record, stopUrl) {
+  if (!launchMail.fixableOn(process.env)) return false;
+  const mail = launchMail.fixableMail(record, { stopUrl });
+  if (!mail) return false;
+  const db = getFirestore();
+  const stopped = await db.collection("url_review_notes").where("email", "==", record.email).where("status", "==", "follow-stop").limit(1).get();
+  if (!stopped.empty) return false;
+  const claimed = await db.collection("url_review_fixable_mails").doc(String(record.id || "-")).create({ at: new Date().toISOString(), count: mail.count, expireAt: keepUntil() }).then(() => true, () => false);
+  return claimed ? sendAskerMail(record.email, mail, stopUrl, "url-review-fixable") : false;
 }
 
 // The period report counts report mails from this mark, so a report that never reached the asker shows there.

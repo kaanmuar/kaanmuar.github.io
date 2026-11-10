@@ -67,7 +67,9 @@ async function sendRecheck(req, res, deps) {
 /** The client routes; true when the path was one of them. */
 async function route(req, res, pathName, deps) {
   if (pathName.endsWith("/review/fix/offers") && req.method === "GET") {
-    res.set("Cache-Control", "public, max-age=600");
+    // The cache never outlives the launch price, so the cards switch to list prices when checkout does.
+    const left = Math.floor((Date.parse(fixOffers.LAUNCH.endsAt) - Date.now()) / 1000);
+    res.set("Cache-Control", "public, max-age=" + (left > 0 ? Math.min(600, left) : 600));
     res.status(200).json({ packages: fixOffers.publicPackages() });
     return true;
   }

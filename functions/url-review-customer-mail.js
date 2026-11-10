@@ -552,7 +552,7 @@ function deeperBlock(t, host, reportId, lang, from, face) {
 }
 
 // The four ways to get a report's findings fixed (js/qa-review-fix.js), with the cheapest package's price.
-const fixFrom = () => Math.min.apply(null, fixOffers.PACKAGES.map((item) => item.usd));
+const fixFrom = () => Math.min.apply(null, fixOffers.PACKAGES.map((item) => fixOffers.usdOf(item)));
 
 function fixBlock(t, url) {
   return "<tr><td style=\"padding:0 0 16px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:16px;\">" +
