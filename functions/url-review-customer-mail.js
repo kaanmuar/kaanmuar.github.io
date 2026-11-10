@@ -344,6 +344,14 @@ const CMP_COPY = {
 const PROMISE = {
   en: {
     kept: "As promised when it failed, here is your report. Your code {code} still takes {percent}% off your next review, until {date}.",
+    late: "Here is your report — sorry it took longer than promised. Your {percent}% code {code} still stands, until {date}.",
+    still: "We are still trying: if we finish it within {days} days of the failure, we will email you the report.",
+    subjectFinal: "We have stopped trying to finish your review of {host}",
+    titleFinal: "Your review of {host}: we have stopped trying",
+    leadFinal: "Your review of {host} failed on {date} for a reason on our side. We kept trying for {days} days and could not finish it, so we have stopped. We are sorry.",
+    leadFinalUndated: "Your review of {host} failed for a reason on our side. We kept trying for {days} days and could not finish it, so we have stopped. We are sorry.",
+    codeFinal: "Your code still takes {percent}% off your next review, until {date}:",
+    preheaderFinal: "We are sorry. Your code {code} still takes {percent}% off your next review.",
     subject: "We could not finish your review of {host}",
     title: "Your review of {host} could not be finished",
     lead: "Your review of {host} failed on {date} for a reason on our side. We kept trying for {hours} hours and could not finish it. We are sorry for the trouble.",
@@ -353,6 +361,14 @@ const PROMISE = {
   },
   es: {
     kept: "Como te prometimos cuando falló, aquí está tu informe. Tu código {code} sigue dándote un {percent} % de descuento en tu próxima revisión, hasta el {date}.",
+    late: "Aquí está tu informe; perdona que haya tardado más de lo prometido. Tu código del {percent} % {code} sigue valiendo, hasta el {date}.",
+    still: "Seguimos intentándolo: si la terminamos dentro de los {days} días siguientes al fallo, te enviaremos el informe por correo.",
+    subjectFinal: "Hemos dejado de intentar terminar tu revisión de {host}",
+    titleFinal: "Tu revisión de {host}: hemos dejado de intentarlo",
+    leadFinal: "Tu revisión de {host} falló el {date} por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla, así que lo hemos dejado. Lo sentimos.",
+    leadFinalUndated: "Tu revisión de {host} falló por una causa de nuestro lado. Seguimos intentándolo durante {days} días y no pudimos terminarla, así que lo hemos dejado. Lo sentimos.",
+    codeFinal: "Tu código sigue dándote un {percent} % de descuento en tu próxima revisión, hasta el {date}:",
+    preheaderFinal: "Lo sentimos. Tu código {code} sigue dándote un {percent} % de descuento en tu próxima revisión.",
     subject: "No pudimos terminar tu revisión de {host}",
     title: "Tu revisión de {host} no se pudo terminar",
     lead: "Tu revisión de {host} falló el {date} por una causa de nuestro lado. Seguimos intentándolo durante {hours} horas y no pudimos terminarla. Lamentamos la molestia.",
@@ -362,6 +378,14 @@ const PROMISE = {
   },
   pt: {
     kept: "Como prometemos quando ela falhou, aqui está o seu relatório. Seu código {code} continua dando {percent}% de desconto na sua próxima revisão, até {date}.",
+    late: "Aqui está o seu relatório — desculpe por ter demorado mais do que o prometido. Seu código de {percent}% {code} continua valendo, até {date}.",
+    still: "Continuamos tentando: se a terminarmos em até {days} dias após a falha, enviaremos o relatório por e-mail.",
+    subjectFinal: "Paramos de tentar terminar sua revisão de {host}",
+    titleFinal: "Sua revisão de {host}: paramos de tentar",
+    leadFinal: "Sua revisão de {host} falhou em {date} por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la, então paramos. Sentimos muito.",
+    leadFinalUndated: "Sua revisão de {host} falhou por uma causa do nosso lado. Continuamos tentando por {days} dias e não conseguimos terminá-la, então paramos. Sentimos muito.",
+    codeFinal: "Seu código continua dando {percent}% de desconto na sua próxima revisão, até {date}:",
+    preheaderFinal: "Sentimos muito. Seu código {code} continua dando {percent}% de desconto na sua próxima revisão.",
     subject: "Não conseguimos terminar sua revisão de {host}",
     title: "Sua revisão de {host} não pôde ser terminada",
     lead: "Sua revisão de {host} falhou em {date} por uma causa do nosso lado. Continuamos tentando por {hours} horas e não conseguimos terminá-la. Sentimos muito pelo transtorno.",
@@ -371,6 +395,14 @@ const PROMISE = {
   },
   de: {
     kept: "Wie beim Fehlschlag versprochen, hier ist Ihr Bericht. Ihr Code {code} gibt Ihnen weiterhin {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}.",
+    late: "Hier ist Ihr Bericht – entschuldigen Sie, dass es länger gedauert hat als versprochen. Ihr {percent}-%-Code {code} gilt weiterhin, bis zum {date}.",
+    still: "Wir versuchen es weiter: Wenn wir sie innerhalb von {days} Tagen nach dem Fehlschlag abschließen, schicken wir Ihnen den Bericht per E-Mail.",
+    subjectFinal: "Wir haben die Versuche für Ihre Prüfung von {host} eingestellt",
+    titleFinal: "Ihre Prüfung von {host}: Wir haben die Versuche eingestellt",
+    leadFinal: "Ihre Prüfung von {host} ist am {date} aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen, deshalb haben wir aufgehört. Das tut uns leid.",
+    leadFinalUndated: "Ihre Prüfung von {host} ist aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {days} Tage lang weiter versucht und konnten sie nicht abschließen, deshalb haben wir aufgehört. Das tut uns leid.",
+    codeFinal: "Ihr Code gibt Ihnen weiterhin {percent} % Rabatt auf Ihre nächste Prüfung, bis zum {date}:",
+    preheaderFinal: "Das tut uns leid. Ihr Code {code} gibt Ihnen weiterhin {percent} % Rabatt auf Ihre nächste Prüfung.",
     subject: "Wir konnten Ihre Prüfung von {host} nicht abschließen",
     title: "Ihre Prüfung von {host} konnte nicht abgeschlossen werden",
     lead: "Ihre Prüfung von {host} ist am {date} aus einem Grund auf unserer Seite fehlgeschlagen. Wir haben es {hours} Stunden lang weiter versucht und konnten sie nicht abschließen. Das tut uns leid.",
@@ -380,6 +412,14 @@ const PROMISE = {
   },
   fr: {
     kept: "Comme promis lors de l’échec, voici votre rapport. Votre code {code} vous donne toujours {percent} % de remise sur votre prochaine analyse, jusqu’au {date}.",
+    late: "Voici votre rapport — désolés qu’il ait pris plus de temps que promis. Votre code de {percent} % {code} reste valable, jusqu’au {date}.",
+    still: "Nous continuons d’essayer : si nous la terminons dans les {days} jours suivant l’échec, nous vous enverrons le rapport par e-mail.",
+    subjectFinal: "Nous avons arrêté d’essayer de terminer votre analyse de {host}",
+    titleFinal: "Votre analyse de {host} : nous avons arrêté d’essayer",
+    leadFinal: "Votre analyse de {host} a échoué le {date} pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer, alors nous avons arrêté. Nous sommes désolés.",
+    leadFinalUndated: "Votre analyse de {host} a échoué pour une raison de notre côté. Nous avons réessayé pendant {days} jours sans pouvoir la terminer, alors nous avons arrêté. Nous sommes désolés.",
+    codeFinal: "Votre code vous donne toujours {percent} % de remise sur votre prochaine analyse, jusqu’au {date} :",
+    preheaderFinal: "Nous sommes désolés. Votre code {code} vous donne toujours {percent} % de remise sur votre prochaine analyse.",
     subject: "Nous n’avons pas pu terminer votre analyse de {host}",
     title: "Votre analyse de {host} n’a pas pu être terminée",
     lead: "Votre analyse de {host} a échoué le {date} pour une raison de notre côté. Nous avons réessayé pendant {hours} heures sans pouvoir la terminer. Nous sommes désolés pour la gêne.",
@@ -389,6 +429,14 @@ const PROMISE = {
   },
   it: {
     kept: "Come promesso quando non è riuscita, ecco il tuo rapporto. Il tuo codice {code} ti dà ancora il {percent}% di sconto sulla tua prossima revisione, fino al {date}.",
+    late: "Ecco il tuo rapporto: scusa se ci è voluto più del promesso. Il tuo codice del {percent}% {code} resta valido, fino al {date}.",
+    still: "Continuiamo a provare: se la completiamo entro {days} giorni dall’errore, ti invieremo il rapporto via e-mail.",
+    subjectFinal: "Abbiamo smesso di provare a completare la tua revisione di {host}",
+    titleFinal: "La tua revisione di {host}: abbiamo smesso di provare",
+    leadFinal: "La tua revisione di {host} non è riuscita il {date} per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla, quindi ci siamo fermati. Ci scusiamo.",
+    leadFinalUndated: "La tua revisione di {host} non è riuscita per un motivo dalla nostra parte. Abbiamo continuato a provare per {days} giorni senza riuscire a completarla, quindi ci siamo fermati. Ci scusiamo.",
+    codeFinal: "Il tuo codice ti dà ancora il {percent}% di sconto sulla tua prossima revisione, fino al {date}:",
+    preheaderFinal: "Ci scusiamo. Il tuo codice {code} ti dà ancora il {percent}% di sconto sulla tua prossima revisione.",
     subject: "Non siamo riusciti a completare la tua revisione di {host}",
     title: "La tua revisione di {host} non è stata completata",
     lead: "La tua revisione di {host} non è riuscita il {date} per un motivo dalla nostra parte. Abbiamo continuato a provare per {hours} ore senza riuscire a completarla. Ci scusiamo per il disagio.",
@@ -788,7 +836,7 @@ function reportMail(record, options) {
   const story = reportStory(record, t, facts, lang);
   const attached = story.open ? p.attachedOpen : p.attached;
   const promise = opts.promise && opts.promise.coupon ? opts.promise : null;
-  const kept = promise ? fill(PROMISE[lang].kept, { code: promise.coupon, percent: promise.percent, date: dateOf(promise.validUntil) }) : "";
+  const kept = promise ? fill(PROMISE[lang][promise.state === "apologized" ? "late" : "kept"], { code: promise.coupon, percent: promise.percent, date: dateOf(promise.validUntil) }) : "";
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { coupon: promise ? promise.coupon : "", utm_campaign: "report-another" });
   const fixUrl = facts.findings.length ? pageUrl(lang, { report: facts.id, utm_campaign: "report-fix" }) : "";
@@ -845,22 +893,25 @@ function reportMail(record, options) {
   };
 }
 
-// `promise` is a closed promise (url-review-promise.js apologiesDue) with its url, host, coupon, percent, validUntil, failedAt and the deadline in hours.
+// `promise` is a closed promise (url-review-promise.js apologiesDue) with its url, host, coupon, percent, validUntil, failedAt,
+// the deadline in hours and, while the rescue still tries, the days it keeps trying (`stillDays`). options.final is the last
+// note once those days passed (giveUpsDue, with `days`), shorter and without the deeper block.
 function promiseClosedMail(promise, options) {
   const opts = options || {};
   const row = promise || {};
   const lang = langOf(row.lang);
   const t = COPY[lang];
   const w = PROMISE[lang];
+  const end = opts.final ? "Final" : "";
   const face = mailFace.faceOf(row.lang);
   const host = row.host || (() => { try { return new URL(row.url).hostname; } catch (error) { return ""; } })() || "your site";
   const failedOn = dateOf(row.failedAt);
-  const vars = { host, date: failedOn, hours: row.hours, code: row.coupon, percent: row.percent };
-  const lead = fill(failedOn ? w.lead : w.leadUndated, vars);
-  const code = fill(w.code, { percent: row.percent, date: dateOf(row.validUntil) });
-  const anotherUrl = pageUrl(lang, { coupon: row.coupon, utm_campaign: "promise-closed" });
+  const vars = { host, date: failedOn, hours: row.hours, days: row.days, code: row.coupon, percent: row.percent };
+  const lead = [fill(failedOn ? w["lead" + end] : w["lead" + end + "Undated"], vars), !end && row.stillDays ? fill(w.still, { days: row.stillDays }) : ""].filter(Boolean).join(" ");
+  const code = fill(w["code" + end], { percent: row.percent, date: dateOf(row.validUntil) });
+  const anotherUrl = pageUrl(lang, { coupon: row.coupon, utm_campaign: end ? "promise-given-up" : "promise-closed" });
   const why = fill(t.why, { host });
-  const inner = fusion.band("QA-lab URL Review &middot; " + esc(host), esc(fill(w.title, vars))) +
+  const inner = fusion.band("QA-lab URL Review &middot; " + esc(host), esc(fill(w["title" + end], vars))) +
     bodyCell("22px 28px 22px", true, "font-family:Arial,Helvetica,sans-serif;") +
     "<p style=\"margin:0 0 18px;font-size:16px;line-height:25px;color:" + TEXT.body + ";\">" + esc(lead) + "</p>" +
     "<p style=\"margin:0 0 10px;font-size:15px;line-height:23px;color:" + TEXT.body + ";\">" + esc(code) + "</p>" +
@@ -868,9 +919,9 @@ function promiseClosedMail(promise, options) {
     button(anotherUrl, t.another, true) +
     "</td></tr>" +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
-    deeperBlock(t, host, "", lang, "promise", face);
+    (end ? "" : deeperBlock(t, host, "", lang, "promise", face));
   const text = [
-    fill(w.title, vars),
+    fill(w["title" + end], vars),
     "",
     lead,
     "",
@@ -879,19 +930,19 @@ function promiseClosedMail(promise, options) {
     "",
     t.another + ": " + anotherUrl,
     "",
-    t.deeper,
-    t.deeperLines.join("\n"),
-    deeperCta(t, face),
-    "",
+    end ? "" : t.deeper + "\n" + t.deeperLines.join("\n") + "\n" + deeperCta(t, face) + "\n",
     footerText(t, why, { stopUrl: opts.stopUrl, face })
-  ].join("\n");
+  ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
   return {
     lang,
-    subject: fill(w.subject, vars).slice(0, 140),
+    subject: fill(w["subject" + end], vars).slice(0, 140),
     text: text.slice(0, 16000),
-    html: shell(lang, fill(w.preheader, vars), inner, footerHtml(t, why, { stopUrl: opts.stopUrl, face }))
+    html: shell(lang, fill(w["preheader" + end], vars), inner, footerHtml(t, why, { stopUrl: opts.stopUrl, face }))
   };
 }
+
+// The last note to an asker whose promised report never finished, PROMISE_GIVE_UP_DAYS after the failure; the code stays valid.
+const promiseGivenUpMail = (promise, options) => promiseClosedMail(promise, Object.assign({}, options, { final: true }));
 
 function filler(length, seed) {
   const out = [];
@@ -1402,4 +1453,4 @@ function stopPage(lang, state, email) {
     "<body><main>" + body + "</main></body></html>";
 }
 
-module.exports = { SITE, POSTAL, LANGS, AREAS, COPY, langOf, esc, fill, button, shell, bodyCell, bookLink, footerHtml, footerText, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, promiseClosedMail, PROMISE, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };
+module.exports = { SITE, POSTAL, LANGS, AREAS, COPY, langOf, esc, fill, button, shell, bodyCell, bookLink, footerHtml, footerText, brandHtml, brandText, scoreColor, scoreFill, frost, reportFacts, reportMail, reportPdf, noteMail, promiseClosedMail, promiseGivenUpMail, PROMISE, signInMail, sharedOpenMail, receiptMail, stopPage, pageUrl };

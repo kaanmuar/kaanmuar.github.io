@@ -39,7 +39,8 @@ test.describe('What a review is: the new checks, the 48-hour promise and the fix
     await expect(answer('Safety checks')).toContainText('Cloudflare URL Scanner');
     await expect(answer('Safety checks')).toContainText('lookalike domains');
     await expect(answer('Safety checks')).toContainText('Once you prove you own the site');
-    await expect(answer('If a review cannot finish')).toContainText('within ' + reviewPromise.PROMISE_DEADLINE_H + ' hours');
+    await expect(answer('If a review cannot finish')).toContainText('usually within ' + reviewPromise.PROMISE_DEADLINE_H + ' hours');
+    await expect(answer('If a review cannot finish')).toContainText('a report that finishes within ' + reviewPromise.PROMISE_GIVE_UP_DAYS + ' days still reaches you');
     await expect(facts.locator('[data-promise-hours]')).toHaveText([String(reviewPromise.PROMISE_DEADLINE_H), String(reviewPromise.PROMISE_DEADLINE_H)]);
     await expect(answer('After the report')).toContainText('security headers US$99 (about 3 working days)');
     await expect(answer('After the report')).toContainText('You pay with PayPal');
@@ -52,7 +53,8 @@ test.describe('What a review is: the new checks, the 48-hour promise and the fix
     const facts = await open(page, '/qa-review-es.html');
     const term = facts.locator('dt', { hasText: 'Si una revisión no puede terminar' });
     await expect(term).toHaveAttribute('translate', 'no');
-    await expect(term.locator('xpath=following-sibling::dd[1]')).toContainText('en un plazo de 48 horas');
+    await expect(term.locator('xpath=following-sibling::dd[1]')).toContainText('normalmente en 48 horas');
+    await expect(term.locator('xpath=following-sibling::dd[1]')).toContainText('si se termina dentro de 14 días, te llega igual');
     await expect(facts.locator('dt', { hasText: 'Después del informe' }).locator('xpath=following-sibling::dd[1]')).toContainText('Paquetes a precio de lanzamiento');
     await shot(page, facts, 'Comprobaciones de seguridad', 'facts-safety-es.png');
   });

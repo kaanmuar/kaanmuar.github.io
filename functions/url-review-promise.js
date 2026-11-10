@@ -1,5 +1,6 @@
 // The promise to an asker whose review failed for a reason on our side (#3079): the report by email once a re-run
-// finishes, or an apology once the re-run window closes, with a code off their next review either way.
+// finishes, or an apology once the re-run window closes, with a code off their next review either way; a report that
+// finishes after the apology still goes out, until PROMISE_GIVE_UP_DAYS, and then a last note (#3257).
 const reviewFailures = require("./url-review-failures");
 const core = require("./url-review-core");
 
@@ -11,6 +12,9 @@ const PROMISE_AUTO_SEND = true;
 const PROMISE_DEADLINE_H = 48;
 // Hours after the failure when a promised review runs again; the rescue job ticks every 15 minutes, so each slot can run up to a tick late.
 const PROMISE_TRIES_AT_H = [0.5, 4, 12, 24, 40];
+// Past the deadline the rescue keeps trying, and a report that finishes is still sent, until this many days after the failure;
+// then the asker gets a last note. Matches the rescue's RESCUE_DAYS.
+const PROMISE_GIVE_UP_DAYS = 14;
 // Re-runs one rescue tick starts, each up to 4 minutes, inside the job's 9-minute timeout.
 const RESCUES_PER_TICK = 2;
 const COUPON_DAYS = 90;
@@ -19,8 +23,15 @@ const HOUR_MS = 3600000;
 const PREFIX = "SORRY-";
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 // open: waiting on a re-run; held: a re-run waits on the desk; delivered: the report went out;
-// apologized: the window closed without a report; own-run: the asker reviewed the site again themselves.
-const STATES = ["open", "held", "delivered", "apologized", "own-run"];
+// apologized: the window closed without a report, the rescue still tries; sent-late: the report went out after the apology;
+// given-up: PROMISE_GIVE_UP_DAYS passed without a report, or the desk dropped the report before the apology; own-run: the asker reviewed the site again themselves.
+const STATES = ["open", "held", "delivered", "apologized", "sent-late", "given-up", "own-run"];
+// Still owed a report: a re-run that finishes goes to the asker.
+const PENDING = ["open", "held", "apologized"];
+const STATE_LABELS = {
+  open: "open", held: "held on the desk", delivered: "report sent", apologized: "apology sent, still trying",
+  "sent-late": "report sent late, after the apology", "given-up": "given up, last note sent", "own-run": "the asker ran it again"
+};
 
 const clip = (value, max) => String(value == null ? "" : value).trim().slice(0, max);
 const lower = (value) => clip(value, 160).toLowerCase();
@@ -94,18 +105,32 @@ function errorLine(message, promise) {
 // The open promise behind a re-run group, and the failures that carry it. `rows` are the failures the plan was built from.
 function groupPromise(group, rows) {
   const ids = new Set((group && group.failureIds) || []);
-  const kept = (Array.isArray(rows) ? rows : []).filter((row) => row && ids.has(row.id) && row.promise && row.promise.state === "open")
-    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  if (!kept.length) return null;
-  return Object.assign({}, kept[0].promise, { ids: kept.map((row) => row.id), failedAt: String(kept[kept.length - 1].at || "") });
+  return pendingPromise((Array.isArray(rows) ? rows : []).filter((row) => row && ids.has(row.id)));
 }
 
-// Open promises by code, oldest failure first: a retry of the same address shares its first failure's code and deadline.
-function openByCode(rows) {
+const ageOf = (row, now) => (Number(now) || Date.now()) - Date.parse(row && row.at);
+const withinGiveUp = (row, now) => ageOf(row, now) < PROMISE_GIVE_UP_DAYS * DAY_MS;
+
+// The promise still owed on these failures (one code), with the ids that carry it, or null; with `now`, also null once
+// PROMISE_GIVE_UP_DAYS passed. Its state is apologized once any of them got the apology, so the report mail says it is late.
+function pendingPromise(rows, now) {
+  const kept = (Array.isArray(rows) ? rows : []).filter((row) => row && row.id && row.promise && PENDING.includes(row.promise.state))
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  if (!kept.length || (now && !withinGiveUp(kept[kept.length - 1], now))) return null;
+  const state = kept.some((row) => row.promise.state === "apologized") ? "apologized" : kept[0].promise.state;
+  return Object.assign({}, kept[0].promise, { state, url: kept[0].url || "", host: kept[0].host || "", ids: kept.map((row) => row.id), failedAt: String(kept[kept.length - 1].at || "") });
+}
+
+// What a promise becomes once its report went out.
+const reportState = (promise) => (promise && promise.state === "apologized" ? "sent-late" : "delivered");
+
+// Promises by code, oldest failure first: a retry of the same address shares its first failure's code and deadline.
+function openByCode(rows, states) {
+  const kept = states || ["open"];
   const byCode = new Map();
   (Array.isArray(rows) ? rows : []).forEach((row) => {
     const promise = row && row.promise;
-    if (!row.id || !promise || promise.state !== "open" || !promise.email) return;
+    if (!row.id || !promise || !kept.includes(promise.state) || !promise.email) return;
     const key = promise.coupon || row.id;
     byCode.set(key, (byCode.get(key) || []).concat(row));
   });
@@ -150,6 +175,26 @@ function rescuesDue(rows, now, limit) {
   return due.sort((a, b) => String(a.promise.failedAt).localeCompare(String(b.promise.failedAt))).slice(0, Number(limit) || RESCUES_PER_TICK);
 }
 
+// Owed reports a re-run has finished, by any path (a promised try, the daily re-run, the Mac, a re-run from the desk), at any
+// time before PROMISE_GIVE_UP_DAYS: one held re-run per code, to send to the asker.
+function finishedDue(rows, now) {
+  return openByCode(rows, PENDING).filter((group) => withinGiveUp(group[0], now)).map((group) => {
+    const done = group.slice().reverse().find((row) => row.rerun && row.rerun.status === "held" && row.rerun.id);
+    return done ? { rerunId: String(done.rerun.id), code: group[0].promise.coupon || "", host: done.host || "", ids: group.map((row) => row.id) } : null;
+  }).filter(Boolean);
+}
+
+// Promises still without a report PROMISE_GIVE_UP_DAYS after the failure: the asker gets a last note and keeps the code.
+function giveUpsDue(rows, now) {
+  return openByCode(rows, ["open", "apologized"]).filter((group) => !withinGiveUp(group[0], now)).map((group) => {
+    const last = group[group.length - 1];
+    return Object.assign({}, last.promise, {
+      url: last.url || "", host: last.host || "", ids: group.map((row) => row.id), failedAt: String(group[0].at || ""), days: PROMISE_GIVE_UP_DAYS,
+      key: String(last.url || "").toLowerCase() + "|" + String(last.email || "").toLowerCase()
+    });
+  });
+}
+
 // The fields a promise's failures take once it is settled, for a Firestore update with dotted paths.
 function settled(state, extra) {
   return Object.assign({ "promise.state": state, "promise.closedAt": new Date().toISOString() }, extra || {});
@@ -158,11 +203,15 @@ function settled(state, extra) {
 // A line the desk shows on a promised failure or re-run.
 function deskLabel(promise) {
   if (!promise || !promise.state) return "";
-  const what = { open: "promised: report by email", held: "promised: waiting on your send", delivered: "promise kept: report sent", apologized: "promise closed: apology sent", "own-run": "promise settled: the asker ran it again" };
+  const what = {
+    open: "promised: report by email", held: "promised: waiting on your send", delivered: "promise kept: report sent", apologized: "promise late: apology sent, still trying",
+    "sent-late": "promise kept late: report sent after the apology", "given-up": "promise given up: last note sent", "own-run": "promise settled: the asker ran it again"
+  };
   return (what[promise.state] || "promised") + (promise.coupon ? " · " + promise.coupon + " " + (promise.percent || APOLOGY_PERCENT) + "%" : "");
 }
 
 module.exports = {
-  APOLOGY_PERCENT, PROMISE_AUTO_SEND, PROMISE_DEADLINE_H, PROMISE_TRIES_AT_H, RESCUES_PER_TICK, COUPON_DAYS, PREFIX, STATES,
-  promised, couponCode, apologyCoupon, openPromiseFor, promiseOf, errorLine, groupPromise, apologiesDue, rescuesDue, settled, deskLabel
+  APOLOGY_PERCENT, PROMISE_AUTO_SEND, PROMISE_DEADLINE_H, PROMISE_GIVE_UP_DAYS, PROMISE_TRIES_AT_H, RESCUES_PER_TICK, COUPON_DAYS, PREFIX, STATES, PENDING, STATE_LABELS,
+  promised, couponCode, apologyCoupon, openPromiseFor, promiseOf, errorLine, groupPromise, pendingPromise, reportState, apologiesDue, rescuesDue, finishedDue, giveUpsDue,
+  settled, deskLabel
 };

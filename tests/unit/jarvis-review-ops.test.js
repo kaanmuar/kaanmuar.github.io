@@ -41,7 +41,7 @@ test("rescue counts failures by cause, re-runs, Mac rescues and AI diagnoses by 
   assert.deepEqual(out.diagnoses, { vertex: 1, studio: 1, rules: 1 });
 });
 
-test("rescue follows each promise by its code: sent within 48 h, apologies, open ones near the deadline and redeemed codes", () => {
+test("rescue follows each promise by its code: sent within 48 h, apologies, sent late, given up, open ones near the deadline and redeemed codes", () => {
   const promise = (state, coupon, extra) => Object.assign({ state, coupon, at: "" }, extra || {});
   const out = ops.rescueSummary({
     failures: [
@@ -49,7 +49,9 @@ test("rescue follows each promise by its code: sent within 48 h, apologies, open
       { id: "p1b", at: at(29), kind: "failed", host: "late.com", promise: promise("delivered", "SORRY-A", { closedAt: at(1) }) },
       { id: "p2", at: at(80), kind: "failed", host: "slow.com", promise: promise("delivered", "SORRY-B", { closedAt: at(10) }) },
       { id: "p3", at: at(60), kind: "failed", host: "sorry.com", promise: promise("apologized", "SORRY-C", { closedAt: at(12) }) },
-      { id: "p4", at: at(45), kind: "failed", host: "open.com", promise: promise("open", "SORRY-D", { tries: 4 }) }
+      { id: "p4", at: at(45), kind: "failed", host: "open.com", promise: promise("open", "SORRY-D", { tries: 4 }) },
+      { id: "p6", at: at(100), kind: "failed", host: "mac.com", promise: promise("sent-late", "SORRY-F", { closedAt: at(2) }) },
+      { id: "p7", at: at(150), kind: "failed", host: "gone.com", promise: promise("given-up", "SORRY-G", { closedAt: at(3) }) }
     ],
     rescues: [], macWaiting: [], reruns: [],
     coupons: [{ createdAt: at(60), source: "inconclusive", uses: 1 }, { createdAt: at(30), source: "inconclusive", uses: 0 }, { createdAt: at(5), source: "outreach", uses: 1 }],
@@ -58,7 +60,8 @@ test("rescue follows each promise by its code: sent within 48 h, apologies, open
       { id: "p5", at: at(5), host: "fresh.com", promise: promise("open", "SORRY-E", { tries: 1 }) }
     ]
   }, range);
-  assert.deepEqual(out.promises, { made: 4, open: 2, atRisk: 1, delivered: 2, within48h: 1, apologized: 1, ownRun: 0, held: 0 });
+  assert.deepEqual(out.promises, { made: 6, open: 2, atRisk: 1, delivered: 2, within48h: 1, apologized: 3, stillTrying: 1, sentLate: 1, givenUp: 1, ownRun: 0, held: 0 });
+  assert.equal(out.giveUpDays, 14);
   assert.deepEqual(out.codes, { sent: 2, redeemed: 1 });
   assert.equal(out.openList[0].host, "open.com");
   assert.equal(out.openList[0].hoursLeft, 3);

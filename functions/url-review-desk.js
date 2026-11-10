@@ -675,7 +675,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Re-runs</h2>
-      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The rescue keeps trying after that: a report that finishes within 14 days still goes out on its own, saying it is late (Promised: report sent late), and after 14 days the asker gets a last note (Promised: given up). The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
       <div id="reruns"></div>
     </section>
     <section>
@@ -761,6 +761,7 @@ const PAGE = `<!DOCTYPE html>
     const noticesEl = document.getElementById("owner-notices");
     const fixesEl = document.getElementById("fix-requests");
     const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
+    const PROMISE_STATES = ${JSON.stringify(reviewPromise.STATE_LABELS)};
     let fixesShown = "";
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
@@ -1470,7 +1471,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
         .forEach((row) => {
           const tr = document.createElement("tr");
           tr.setAttribute("aria-selected", String(row.id === selected));
-          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", [row.promise ? "Promised (" + row.promise.state + ")" : "", row.rerun].filter(Boolean).join(" · "), count(row.lineCount, "line")]
+          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", [row.promise ? "Promised (" + (PROMISE_STATES[row.promise.state] || row.promise.state) + ")" : "", row.rerun].filter(Boolean).join(" · "), count(row.lineCount, "line")]
             .forEach((value) => tr.appendChild(node("td", text(value))));
           tr.addEventListener("click", () => openDetail(row.id));
           rowsEl.appendChild(tr);
@@ -1500,7 +1501,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
       line(facts, "Now", item.now ? item.now + " (probed " + count(item.checks, "time") + ", last " + when(item.diagnosedAt) + ")" : "");
       line(facts, "Re-run", item.rerun);
       const promise = item.promise;
-      if (promise) line(facts, "Promise", "Report by email, " + promise.state + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
+      if (promise) line(facts, "Promise", "Report by email, " + (PROMISE_STATES[promise.state] || promise.state) + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
       line(facts, "Rescue", item.rescue);
       const timings = item.timings || {};
       line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));

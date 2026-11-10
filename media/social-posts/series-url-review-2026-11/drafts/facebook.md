@@ -127,7 +127,7 @@ Veja as opções no seu relatório: https://carlosandmunoz.com/qa-review-pt.html
 ```text
 Some sites don't want to be read. Bot walls, Cloudflare challenges, servers that time out.
 
-When a review can't finish right away, you no longer get an error. You get a promise: we keep trying with the method that fits the block, and email you the full report as soon as it's ready. If it still isn't done after 48 hours, you get an apology by email instead.
+When a review can't finish right away, you no longer get an error. You get a promise: we keep trying with the method that fits the block, and email you the full report as soon as it's ready. It usually arrives within 48 hours. If it takes longer, you get an apology by email, and we keep trying for up to 14 days.
 
 Either way, you get a code for 20% off your next review, valid for 90 days.
 
@@ -144,7 +144,7 @@ Try the site you thought nobody could read: https://carlosandmunoz.com/qa-review
 ```text
 Algunos sitios no quieren ser leídos. Muros antibots, desafíos de Cloudflare, servidores que no responden a tiempo.
 
-Cuando una revisión no puede terminar enseguida, ya no recibes un error. Recibes una promesa: seguimos intentando con el método adecuado para ese bloqueo y te enviamos el informe completo por correo en cuanto esté listo. Si a las 48 horas aún no está, te llega una disculpa por correo.
+Cuando una revisión no puede terminar enseguida, ya no recibes un error. Recibes una promesa: seguimos intentando con el método adecuado para ese bloqueo y te enviamos el informe completo por correo en cuanto esté listo. Normalmente llega en 48 horas. Si tarda más, te llega una disculpa por correo y seguimos intentándolo hasta 14 días.
 
 En ambos casos recibes un código de 20% de descuento en tu próxima revisión, válido 90 días.
 
@@ -161,7 +161,7 @@ Prueba con el sitio que creías imposible de leer: https://carlosandmunoz.com/qa
 ```text
 Alguns sites não querem ser lidos. Bloqueios antibots, desafios da Cloudflare, servidores que estouram o tempo.
 
-Quando uma revisão não pode terminar na hora, você não recebe mais um erro. Recebe uma promessa: seguimos tentando com o método certo para aquele bloqueio e enviamos o relatório completo por e-mail assim que estiver pronto. Se depois de 48 horas ainda não estiver, você recebe um pedido de desculpas por e-mail.
+Quando uma revisão não pode terminar na hora, você não recebe mais um erro. Recebe uma promessa: seguimos tentando com o método certo para aquele bloqueio e enviamos o relatório completo por e-mail assim que estiver pronto. Normalmente chega em até 48 horas. Se demorar mais, você recebe um pedido de desculpas por e-mail e seguimos tentando por até 14 dias.
 
 Nos dois casos, você ganha um código de 20% de desconto na próxima revisão, válido por 90 dias.
 

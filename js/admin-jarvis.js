@@ -1153,7 +1153,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         ]);
         const promised = stats([
             { label: 'Promised by email', value: p.made }, { label: 'Open now', value: p.open }, { label: 'Near the deadline', value: p.atRisk, alert: p.atRisk > 0 },
-            { label: `Sent within ${r.deadlineHours} h`, value: p.within48h }, { label: 'Apologies sent', value: p.apologized }, { label: 'Apology codes sent', value: r.codes.sent }, { label: 'Codes redeemed', value: r.codes.redeemed }
+            { label: `Sent within ${r.deadlineHours} h`, value: p.within48h }, { label: 'Apologies sent', value: p.apologized }, { label: 'Still trying after the apology', value: p.stillTrying || 0 },
+            { label: 'Sent late', value: p.sentLate || 0 }, { label: `Given up after ${r.giveUpDays || 14} days`, value: p.givenUp || 0, alert: (p.givenUp || 0) > 0 }, { label: 'Apology codes sent', value: r.codes.sent }, { label: 'Codes redeemed', value: r.codes.redeemed }
         ]);
         const open = table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => esc(o.host)], ['Re-runs', (o) => fmt(o.tries) + ' of ' + r.triesAtHours.length], ['Deadline', (o) => roChip(o.hoursLeft <= 2 ? 'down' : o.hoursLeft <= 8 ? 'quiet' : 'ok', hoursLeft(o.hoursLeft))]], r.openList, 'No promised report is open.');
         const mac = r.macList.length ? table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => `${esc(o.host)}${o.promised ? ' <span class="jv-chip c-average">promised</span>' : ''}`]], r.macList, '') : '';
@@ -1161,7 +1162,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         return panel('review-failures', `Failed reviews and rescue · ${fmt(r.failures.total)}`, body, {
             wide: true,
             data: r.openList.map((o) => ({ failedAt: o.failedAt, host: o.host, code: o.code, tries: o.tries, hoursLeft: o.hoursLeft })),
-            note: `A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email within ${r.deadlineHours} hours (re-runs at ${r.triesAtHours.join(', ')} h) or an apology with a ${r.apologyPercent}% code.`
+            note: `A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email, usually within ${r.deadlineHours} hours (re-runs at ${r.triesAtHours.join(', ')} h); past that, an apology with a ${r.apologyPercent}% code, and the rescue keeps trying: a report finished within ${r.giveUpDays || 14} days is sent late, otherwise a last note goes out.`
         });
     }
 

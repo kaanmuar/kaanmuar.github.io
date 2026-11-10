@@ -103,6 +103,7 @@ fun RescuePanel(s: UiState) {
     val p = r.obj("promises")
     val c = r.obj("codes")
     val deadline = (r.num("deadlineHours") ?: 48.0).toInt()
+    val giveUp = (r.num("giveUpDays") ?: 14.0).toInt()
     Panel("Failed reviews and rescue · ${fmt(f.num("total"))}", id = "review-failures") {
         KpiPairs(listOf(
             KpiData("Failed reviews", fmt(f.num("total"))),
@@ -124,6 +125,9 @@ fun RescuePanel(s: UiState) {
             KpiData("Near the deadline", fmt(p.num("atRisk")), alert = (p.num("atRisk") ?: 0.0) > 0),
             KpiData("Sent within $deadline h", fmt(p.num("within48h"))),
             KpiData("Apologies sent", fmt(p.num("apologized"))),
+            KpiData("Still trying after the apology", fmt(p.num("stillTrying") ?: 0.0)),
+            KpiData("Sent late", fmt(p.num("sentLate") ?: 0.0)),
+            KpiData("Given up after $giveUp days", fmt(p.num("givenUp") ?: 0.0), alert = (p.num("givenUp") ?: 0.0) > 0),
             KpiData("Apology codes sent", fmt(c.num("sent"))),
             KpiData("Codes redeemed", fmt(c.num("redeemed")))
         ))
@@ -137,7 +141,7 @@ fun RescuePanel(s: UiState) {
         mac.take(ReviewRescue.SHOWN).forEach { m ->
             StatusRow(if (m.bool("promised") == true) "warn" else "info", m.str("host").orEmpty(), listOfNotNull(if (m.bool("promised") == true) "promised" else null, ago(m.str("failedAt"))).joinToString(" · "))
         }
-        Muted("A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email within $deadline hours or an apology with a ${fmt(r.num("apologyPercent"))}% code.")
+        Muted("A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email, usually within $deadline hours; past that, an apology with a ${fmt(r.num("apologyPercent"))}% code, and the rescue keeps trying: a report finished within $giveUp days is sent late, otherwise a last note goes out.")
     }
 }
 
