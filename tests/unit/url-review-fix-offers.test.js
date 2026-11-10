@@ -167,7 +167,7 @@ test("the client gets the confirmation and the quote in their language, with not
     assert.doesNotMatch(confirm.subject + confirm.text, /\{\w+\}/, lang);
     const quote = fixMail.quoteMail(Object.assign({}, record, { status: "quoted", quoteUsd: 240, payUrl: "https://pay.example/abc" }));
     assert.match(quote.subject, /240/);
-    assert.ok(quote.html.includes("https://pay.example/abc"), lang);
+    assert.match(quote.html, /href="https:\/\/pay\.example\/abc"/, lang);
     assert.ok(quote.text.includes(fixMail.FIX[lang].pay + ": https://pay.example/abc"), lang);
     assert.doesNotMatch(quote.subject + quote.text, /\{\w+\}/, lang);
   }
