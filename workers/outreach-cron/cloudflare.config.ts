@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { defineConfig, triggers } from "cf/config";
 import { MODES } from "./src/index.js";
 
-// Deploy: cd workers/outreach-cron && npm ci && cf deploy
+// Deploy: cd workers/outreach-cron && npm ci && ../../scripts/cf-quiet-deploy.sh -q
+// cf deploy prints secret_text bindings; the wrapper redacts PEM so APP_KEY never hits the terminal (#3336).
 // Reads the qa-lab-agents app from ~/.config/qa-lab (as scripts/gh-app-token.js does) and uploads its key as PKCS#8,
 // the only private key format WebCrypto imports. The secret goes in the upload metadata as in workers/preflight.
 const dir = join(homedir(), ".config", "qa-lab");
