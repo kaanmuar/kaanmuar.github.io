@@ -110,4 +110,64 @@ function cloneSkip(rel) {
   return parts.some((p) => SKIP.has(p) || /^Singleton/.test(p) || /^BrowserMetrics/.test(p));
 }
 
-module.exports = { groups, held, lock, unlock, pool, parallelArg, mergeHeld, cloneSkip, alive, MAX_PARALLEL, DEFAULT_PARALLEL };
+// --- kept sessions (#3163) ---------------------------------------------------------------------------------------------
+// A Chrome outside Playwright on a profile cannot read the agent's cookies (Playwright's mock keychain key) and drops
+// every session, so each profile's cookie store is copied while its networks read signed in, for restore-sessions.
+
+const SESSION_GAP = 6 * 3600000;
+const SESSION_KEEP = 8;
+const HOSTS = {
+  x: ["x.com", "twitter.com"], linkedin: ["linkedin.com"], facebook: ["facebook.com"], instagram: ["instagram.com"],
+  threads: ["threads.com", "threads.net"], tiktok: ["tiktok.com"], reddit: ["reddit.com"], telegram: ["telegram.org"]
+};
+
+/** Whether a cookie's domain belongs to network k (or, with no k, to any of the agent's networks). */
+function cookieOf(domain, k) {
+  const d = String(domain || "").replace(/^\./, "").toLowerCase();
+  return (k ? HOSTS[k] || [] : Object.values(HOSTS).flat()).some((h) => d === h || d.endsWith("." + h));
+}
+
+/** A profile's kept copies under dir, newest first: [{ dir, at, nets }]. */
+function sessionCopies(dir) {
+  let list = [];
+  try { list = fs.readdirSync(dir); } catch (error) { return []; }
+  return list.map((n) => {
+    try { return Object.assign({ dir: path.join(dir, n) }, JSON.parse(fs.readFileSync(path.join(dir, n, "nets.json"), "utf8"))); } catch (error) { return null; }
+  }).filter((c) => c && Array.isArray(c.nets)).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+}
+
+/** The newest SESSION_KEEP copies stay, and each network's newest copy however old. */
+function pruneSessions(dir, keep) {
+  const seen = new Set();
+  sessionCopies(dir).forEach((c, i) => {
+    const only = c.nets.filter((k) => !seen.has(k));
+    c.nets.forEach((k) => seen.add(k));
+    if (i >= (keep || SESSION_KEEP) && !only.length) fs.rmSync(c.dir, { recursive: true, force: true });
+  });
+}
+
+/**
+ * Copies a closed profile's cookie store into dir/<time> with the networks just seen signed in there; at most one copy
+ * per gapMs unless more networks are signed in than in the newest. The copy's dir, or "" when none was made.
+ */
+function saveSessions(profile, dir, nets, now, gapMs) {
+  const t = now || Date.now();
+  const src = path.join(profile, "Default", "Cookies");
+  const last = sessionCopies(dir)[0];
+  if (!nets.length || !fs.existsSync(src)) return "";
+  if (last && t - Date.parse(last.at) < (gapMs || SESSION_GAP) && nets.every((k) => last.nets.includes(k))) return "";
+  const at = new Date(t).toISOString();
+  const out = path.join(dir, at.replace(/[:.]/g, "-"));
+  fs.mkdirSync(out, { recursive: true });
+  ["Default/Cookies", "Default/Cookies-journal", "Local State"].forEach((f) => {
+    if (fs.existsSync(path.join(profile, f))) fs.copyFileSync(path.join(profile, f), path.join(out, path.basename(f)));
+  });
+  fs.writeFileSync(path.join(out, "nets.json"), JSON.stringify({ at, nets }));
+  pruneSessions(dir);
+  return out;
+}
+
+/** The newest copy in which network k read signed in, or null. */
+const sessionFor = (dir, k) => sessionCopies(dir).find((c) => c.nets.includes(k)) || null;
+
+module.exports = { groups, held, lock, unlock, pool, parallelArg, mergeHeld, cloneSkip, alive, cookieOf, sessionCopies, saveSessions, pruneSessions, sessionFor, HOSTS, MAX_PARALLEL, DEFAULT_PARALLEL, SESSION_GAP, SESSION_KEEP };

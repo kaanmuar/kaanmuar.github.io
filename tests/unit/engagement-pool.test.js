@@ -93,3 +93,40 @@ test("a clone leaves out caches and Chrome's open-profile locks, and keeps cooki
   ["Local State", "Default/Cookies", "Default/Local Storage/leveldb/000003.log", "Default/IndexedDB/https_www.instagram.com_0.indexeddb.leveldb/LOG",
     "Default/Preferences", "Default/Service Worker/Database/LOG"].forEach((p) => assert.equal(P.cloneSkip(p), false, p));
 });
+
+test("cookies belong to their network's hosts and subdomains only (#3163)", () => {
+  assert.equal(P.cookieOf(".linkedin.com", "linkedin"), true);
+  assert.equal(P.cookieOf("www.linkedin.com", "linkedin"), true);
+  assert.equal(P.cookieOf(".twitter.com", "x"), true);
+  assert.equal(P.cookieOf(".instagram.com", "threads"), false);
+  assert.equal(P.cookieOf("notlinkedin.com", "linkedin"), false);
+  assert.equal(P.cookieOf(".example.com"), false, "no network: not one of the agent's");
+  assert.equal(P.cookieOf(".tiktok.com"), true);
+});
+
+test("kept sessions: a copy per gap unless more networks signed in, each network's newest kept however old (#3163)", () => {
+  const root = tmp();
+  const profile = path.join(root, "chrome");
+  const dir = path.join(root, "sessions", "main");
+  fs.mkdirSync(path.join(profile, "Default"), { recursive: true });
+  assert.equal(P.saveSessions(profile, dir, ["x"], Date.parse("2026-11-09T10:00:00Z")), "", "no cookie store yet");
+  fs.writeFileSync(path.join(profile, "Default", "Cookies"), "v1");
+  fs.writeFileSync(path.join(profile, "Local State"), "{}");
+  const H = 3600000;
+  const t0 = Date.parse("2026-11-09T10:00:00Z");
+  const first = P.saveSessions(profile, dir, ["x", "linkedin"], t0);
+  assert.ok(first);
+  assert.equal(fs.readFileSync(path.join(first, "Cookies"), "utf8"), "v1");
+  assert.ok(fs.existsSync(path.join(first, "Local State")));
+  assert.equal(P.saveSessions(profile, dir, ["x"], t0 + H), "", "within the gap and nothing new signed in");
+  assert.equal(P.saveSessions(profile, dir, [], t0 + 7 * H), "", "nothing signed in: nothing kept");
+  fs.writeFileSync(path.join(profile, "Default", "Cookies"), "v2");
+  assert.ok(P.saveSessions(profile, dir, ["x", "linkedin", "reddit"], t0 + 2 * H), "a network more signs in within the gap");
+  assert.equal(P.sessionFor(dir, "reddit").nets.length, 3);
+  for (let i = 1; i <= P.SESSION_KEEP + 2; i += 1) P.saveSessions(profile, dir, ["x"], t0 + (2 + i * 7) * H);
+  const copies = P.sessionCopies(dir);
+  assert.equal(copies.length, P.SESSION_KEEP + 1, "the newest copies, and the last one with LinkedIn and Reddit");
+  assert.deepEqual(P.sessionFor(dir, "linkedin").nets, ["x", "linkedin", "reddit"], "LinkedIn's last signed-in copy survives the pruning");
+  assert.deepEqual(P.sessionFor(dir, "x").at, copies[0].at);
+  assert.equal(P.sessionFor(dir, "tiktok"), null);
+});

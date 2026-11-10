@@ -20,7 +20,9 @@
  *                                                                        answered like the API networks' (#2447);
  *                                                                        groups: Telegram and Reddit groups a topic
  *                                                                        search found, for joins
- *                                                                        (functions/engagement-joins.js)
+ *                                                                        (functions/engagement-joins.js); a network
+ *                                                                        signed in at the last run that reads signed
+ *                                                                        out pushes an alert (#3163)
  *   engagement-mac-queue   { networks }                                  planned likes, reposts, follows and approved
  *                                                                        replies for the networks signed in, and
  *                                                                        joins within the warmed-up cap; a
@@ -112,6 +114,19 @@ async function sites(deps) {
   return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: E.DISCOVERY, groups }, look.error ? { error: look.error } : {});
 }
 
+/** The push when networks the Mac's last run had signed in read as signed out (#3163), once per sign-out. */
+function signedOutPush(lost, errors) {
+  const name = (k) => (E.NETWORKS[k] || {}).name || k;
+  return {
+    kind: "alerts",
+    title: "Engagement agent signed out of " + lost.map(name).join(", "),
+    body: "On the Mac: node scripts/engagement-browser/agent.js restore-sessions " + lost.join(",") + ", else agent.js login " + lost.join(","),
+    lines: lost.map((k) => clip(name(k) + ": " + (errors[k] || "Not signed in."), 120)),
+    tab: "products:engagement",
+    tag: "jarvis-engagement-signed-out"
+  };
+}
+
 /** Posts the Mac read: the same scoring, Gemini read and plan as the scout's, site posts through the report pass, and the agent's heartbeat. */
 async function ingest(deps, body) {
   const { db, now } = deps;
@@ -137,14 +152,18 @@ async function ingest(deps, body) {
   const found = comments.map((c) => ({ parent: { key: "", own: true, network: c.network, id: c.on, thread: c.on || c.id, text: "", score: 0, actions: { reply: { draft: c.ours } } }, comments: [c] }));
   const chains = found.length ? await J.takeChains(deps, conf, found).catch((error) => ({ chained: 0, aiError: String(error.message || error).slice(0, 200) })) : { chained: 0, aiError: "" };
   const groups = await Joins.found(deps, conf, b.groups).catch((error) => ({ found: 0, groups: 0, error: String(error.message || error).slice(0, 200) }));
+  const before = ((await macRef(db).get()).data() || {}).signedIn || {};
+  const signedIn = netMap(b.signedIn, (v) => v === true);
+  const lost = BROWSER.filter((k) => before[k] === true && signedIn[k] === false);
   await macRef(db).set({
-    at: new Date(now).toISOString(), read, errors, signedIn: netMap(b.signedIn, (v) => v === true), accounts: netMap(b.accounts, (v) => clip(v, 120)),
+    at: new Date(now).toISOString(), read, errors, signedIn, accounts: netMap(b.accounts, (v) => clip(v, 120)),
     blocked: netMap(b.blocked, (v) => clip(v, 30)), agent: clip(b.agent, 40), fresh: r.fresh, engaged: r.engaged, drafted: r.drafted,
     reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
   }, { merge: true });
   await J.clearCache(db);
+  if (lost.length && deps.push) await deps.push(signedOutPush(lost, errors)).catch(() => null);
   return {
-    ok: true, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
+    ok: true, lost, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
     reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups
   };
 }
@@ -335,4 +354,4 @@ async function handle(deps, body, token) {
   return op(deps, body);
 }
 
-module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, TOPIC_LABELS, GIF_PER_DAY, MacError, hash, verify, cleanPost, reaction, extrasFor, sites, ingest, queue, result, handle };
+module.exports = { BROWSER, LEASE, PER_NETWORK, REACTIONS, TOPIC_LABELS, GIF_PER_DAY, MacError, hash, verify, cleanPost, reaction, extrasFor, signedOutPush, sites, ingest, queue, result, handle };
