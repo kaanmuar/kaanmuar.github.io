@@ -28,9 +28,9 @@ const FIXES = [
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
   { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
   { cause: "browser", at: "2026-11-09T12:37:32Z", ref: "#2876", label: "A page that moves itself on after it loaded is read again once it settles" },
-  { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3080", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
-  { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3080", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
-  { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3080", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" }
+  { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
+  { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
+  { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" }
 ];
 const fixKey = (fix) => fix.cause + " " + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
