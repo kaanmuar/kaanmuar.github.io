@@ -1,5 +1,6 @@
 /* Signs that a site was hacked for search spam (#3088):
-   - spam pages on the domain in web search: one Brave query per review (site:<domain> with spam words);
+   - spam pages on the domain in web search: one Brave query per review (site:<domain> with spam words). A result
+     counts only with a sign it was planted (#3308); a failed search is not checked, never clean (#3156);
    - cloaking: the start page and up to two more, requested as Googlebot and as a phone browser at the same moment.
      Only the user agent differs, so a geo or language redirect answers both alike. Googlebot's verified IPs cannot
      be faked, so cloaking by IP is out of reach;
@@ -118,17 +119,77 @@ function spamQuery(domain) {
   return "site:" + domain + " " + SEARCH_WORDS.join(" OR ");
 }
 
-// Search rows on the domain that carry spam phrases. Rows from other sites are dropped, since the query's operators
-// are only a hint to the search engine.
-function spamResults(rows, domain, skip) {
+const SCRIPTS = [
+  ["cjk", /[\u3040-\u30ff\u3400-\u9fff]/g],
+  ["hangul", /[\uac00-\ud7af]/g],
+  ["cyrillic", /[\u0400-\u04ff]/g],
+  ["greek", /[\u0370-\u03ff]/g],
+  ["arabic", /[\u0600-\u06ff]/g],
+  ["hebrew", /[\u0590-\u05ff]/g],
+  ["thai", /[\u0e00-\u0e7f]/g],
+  ["devanagari", /[\u0900-\u097f]/g],
+  ["latin", /[a-z\u00c0-\u024f]/gi]
+];
+const LANG_SCRIPTS = {
+  ja: "cjk", zh: "cjk", ko: "hangul", ru: "cyrillic", uk: "cyrillic", bg: "cyrillic", mk: "cyrillic", be: "cyrillic", kk: "cyrillic", ky: "cyrillic", mn: "cyrillic",
+  el: "greek", ar: "arabic", fa: "arabic", ur: "arabic", he: "hebrew", yi: "hebrew", th: "thai", hi: "devanagari", mr: "devanagari", ne: "devanagari"
+};
+const SCRIPT_MIN = 6;
+// A first path segment or query that names a language: such a page is a translation, not a page in a stray language.
+const LOCALE_PATH = /^\/[a-z]{2}(?:[-_](?:[a-z]{2}|hans|hant))?(?:\/|$)|[?&](?:lang|locale|hl)=/i;
+
+// The writing system most of a text uses, or "" when too little of it is in one.
+function scriptOf(text) {
+  let best = "";
+  let most = 0;
+  SCRIPTS.forEach(([name, re]) => {
+    const count = (String(text || "").match(re) || []).length;
+    if (count > most) { best = name; most = count; }
+  });
+  return most >= SCRIPT_MIN ? best : "";
+}
+
+function siteScript(site) {
+  const facts = site || {};
+  const lang = String(facts.lang || "").toLowerCase().split(/[-_]/)[0];
+  if (/^[a-z]{2,3}$/.test(lang)) return LANG_SCRIPTS[lang] || "latin";
+  return scriptOf([facts.title, facts.description].concat(facts.h1 || []).join(" "));
+}
+
+const bareHost = (host) => String(host || "").toLowerCase().replace(/^www\./, "");
+const pageKey = (href) => { try { const url = new URL(href); return bareHost(url.hostname) + (url.pathname.replace(/\/+$/, "") || "/") + url.search; } catch (error) { return ""; } };
+
+/* Search rows on the domain that carry spam phrases. Rows from other sites are dropped, since the query's operators
+   are only a hint to the search engine. A phrase in a snippet alone is what a page about spam reads like (#3308), so
+   each row also lists the signs that it was planted, in signs:
+   - name: a spam phrase in its title or address;
+   - orphan: on the site's own host, but missing from a sitemap read in full and from the start page's links;
+   - language: on the site's own host, outside a language path, in another script than the site.
+   context: { host, script, known } with known a Set of pageKey()s, or null when the sitemap was not read in full. */
+function spamResults(rows, domain, skip, context) {
+  const leave = skip || [];
+  const near = context || {};
   const seen = new Set();
   return (Array.isArray(rows) ? rows : []).map((row) => {
     const host = hostOf(row && row.url);
     if (!host || registrable(host) !== domain || seen.has(row.url)) return null;
     seen.add(row.url);
-    const terms = spamTerms([row.title, pathWords(row.url), row.description].join(" "), skip);
-    return terms.length ? { url: row.url, title: String(row.title || "").slice(0, 160), terms } : null;
+    const terms = spamTerms([row.title, pathWords(row.url), row.description].join(" "), leave);
+    if (!terms.length) return null;
+    const own = !!near.host && bareHost(host) === bareHost(near.host);
+    const signs = [];
+    if (spamTerms([row.title, pathWords(row.url)].join(" "), leave.concat("japanese")).length) signs.push("name");
+    if (own && near.known && !near.known.has(pageKey(row.url))) signs.push("orphan");
+    const script = scriptOf(row.title) || scriptOf(row.description);
+    if (own && near.script && script && script !== near.script && !LOCALE_PATH.test(pathOf(row.url))) signs.push("language");
+    return { url: row.url, path: own ? pathOf(row.url) : row.url, title: String(row.title || "").slice(0, 160), terms, signs };
   }).filter(Boolean);
+}
+
+// The pages a sitemap read in full and the start page's links name, as pageKey()s; null when the sitemap was partial.
+function knownPages(sitemap, links) {
+  if (!sitemap || sitemap.partial || !(sitemap.urls || []).length) return null;
+  return new Set(sitemap.urls.concat(links || []).map(pageKey).filter(Boolean));
 }
 
 function readPage(html, pageUrl) {
@@ -248,17 +309,30 @@ function within(promise, ms, fallback) {
 const usable = (res, challenge) => !!res && res.status >= 200 && res.status < 300 && !(challenge && challenge(res));
 
 /* opts: url and html of the start page; site: { title, description, h1, types, lang } of the start page;
-   paths: other same-site addresses; fetch(url, agent) answers { url, status, headers, body };
-   search(query) answers [{ title, url, description }] or is missing when web search is off;
-   challenge(res) names a bot check page. Never rejects; parts that do not answer in time are null. */
+   paths: other same-site addresses; links: the start page's links; sitemap: { urls, partial } or a promise of it;
+   fetch(url, agent) answers { url, status, headers, body };
+   search(query) answers [{ title, url, description }], null when the search failed, or is missing when web search is off;
+   challenge(res) names a bot check page. Never rejects; parts that do not answer in time are null, except a search
+   that was asked for, which is { failed: true }. */
 async function look(opts) {
   const host = hostOf(opts.url);
   const domain = registrable(host);
   const skip = siteTopics(opts.site);
+  const budget = opts.budgetMs || BUDGET_MS;
+  const started = Date.now();
   const fetchAs = (url, agent) => Promise.resolve().then(() => opts.fetch(url, agent)).catch(() => null);
   const urls = [opts.url].concat((opts.paths || []).filter((url) => hostOf(url) === host && url !== opts.url).slice(0, EXTRA_PAGES));
-  const searchJob = typeof opts.search === "function"
-    ? Promise.resolve().then(() => opts.search(spamQuery(domain))).then((rows) => ({ query: spamQuery(domain), rows: spamResults(rows, domain, skip) })).catch(() => null)
+  const query = spamQuery(domain);
+  const failed = { query, failed: true, rows: [] };
+  const searching = typeof opts.search === "function";
+  const searchJob = searching
+    ? Promise.resolve().then(() => opts.search(query)).then(async (rows) => {
+      if (!Array.isArray(rows)) return failed;
+      // A sitemap still loading near the deadline counts as unread, so the answered search is not lost with it.
+      const sitemap = await within(Promise.resolve(opts.sitemap).catch(() => null), Math.max(0, budget - (Date.now() - started) - 250), null);
+      const context = { host, script: siteScript(opts.site), known: knownPages(sitemap, opts.links) };
+      return { query, rows: spamResults(rows, domain, skip, context) };
+    }).catch(() => failed)
     : Promise.resolve(null);
   const pageJob = Promise.all(urls.map(async (url) => {
     const [browser, bot] = await Promise.all([fetchAs(url, BROWSER), fetchAs(url, GOOGLEBOT)]);
@@ -266,8 +340,7 @@ async function look(opts) {
     if (!usable(bot, opts.challenge)) return { url, path: pathOf(url), verdict: "blocked", status: bot ? bot.status : 0, browser };
     return Object.assign({ url, path: pathOf(url), browser }, compare(browser, bot, { skip, domain }));
   }));
-  const budget = opts.budgetMs || BUDGET_MS;
-  const [search, pages] = await Promise.all([within(searchJob, budget, null), within(pageJob, budget, null)]);
+  const [search, pages] = await Promise.all([within(searchJob, budget, searching ? failed : null), within(pageJob, budget, null)]);
   const links = [];
   const scanned = [{ url: opts.url, body: opts.html }].concat((pages || []).filter((page) => page.browser && page.url !== opts.url).map((page) => page.browser));
   scanned.forEach((page) => spamLinks(page.body, page.url, skip).forEach((row) => { if (links.length < 20 && !links.some((item) => item.href && item.href === row.href)) links.push(Object.assign({ path: pathOf(page.url) }, row)); }));
@@ -285,7 +358,12 @@ async function look(opts) {
 function line(signs) {
   if (!signs) return "The hacked-site checks did not answer in time.";
   const parts = [];
-  if (signs.search) parts.push("web search for spam on " + signs.domain + ": " + (signs.search.rows.length ? signs.search.rows.length + " page" + (signs.search.rows.length === 1 ? "" : "s") + " with spam phrases" : "nothing"));
+  if (signs.search) {
+    const rows = signs.search.rows;
+    const planted = rows.filter((row) => (row.signs || []).length).length;
+    parts.push("web search for spam on " + signs.domain + ": " + (signs.search.failed ? "failed or did not answer, so not checked"
+      : rows.length ? rows.length + " page" + (rows.length === 1 ? "" : "s") + " with spam phrases, " + planted + " with signs of being planted" : "nothing"));
+  }
   const pages = signs.pages || [];
   const compared = pages.filter((page) => page.verdict === "spam" || page.verdict === "differs" || page.verdict === "same");
   if (compared.length) parts.push(compared.length + " page" + (compared.length === 1 ? "" : "s") + " compared as Googlebot and as a phone browser: " + compared.map((page) => page.path + " " + page.verdict).join(", "));
@@ -296,17 +374,31 @@ function line(signs) {
 }
 
 const termList = (terms) => ({ items: terms.slice(0, 3).map((term) => "“" + term + "”") });
+// High needs evidence that agrees: three planted-looking pages, or one with two independent signs.
+const HIGH_PAGES = 3;
 
 function findings(signs, add) {
   if (!signs) return;
   const fix = say("hack.fix");
   const search = signs.search;
-  if (search) {
-    const rows = search.rows;
-    if (rows.length) add("Security", rows.length > 1 ? "fail" : "risk", rows.length > 1 ? "high" : "medium", "sec-seo-spam", say("sec-seo-spam.title", { n: rows.length, domain: signs.domain }),
-      say("sec-seo-spam.evidence", { domain: signs.domain, list: some(rows.map((row) => say("pathNote", { path: row.url, note: termList(row.terms) })), 5) }), fix,
-      { effort: "days", pages: rows.map((row) => row.url), count: rows.length });
-    else add("Security", "pass", "info", "sec-seo-spam", say("sec-seo-spam.pass.title", { domain: signs.domain }), say("sec-seo-spam.pass.evidence", { domain: signs.domain }), "");
+  if (search && search.failed) {
+    add("Security", "person", "info", "sec-seo-spam", say("sec-seo-spam.unchecked.title", { domain: signs.domain }),
+      say("sec-seo-spam.unchecked.evidence", { domain: signs.domain }), say("sec-seo-spam.unchecked.fix", { domain: signs.domain }));
+  } else if (search) {
+    const where = (row) => row.path || row.url;
+    const planted = search.rows.filter((row) => (row.signs || []).length);
+    const mentions = search.rows.filter((row) => !(row.signs || []).length);
+    if (planted.length) {
+      const high = planted.length >= HIGH_PAGES || planted.some((row) => row.signs.length >= 2);
+      const note = (row) => say("hack.searchNote", { terms: termList(row.terms), signs: { items: row.signs.map((sign) => say("hack.sign." + sign)), join: "and" } });
+      add("Security", high ? "fail" : "risk", high ? "high" : "medium", "sec-seo-spam", say("sec-seo-spam.title", { n: planted.length, domain: signs.domain }),
+        say("sec-seo-spam.evidence", { domain: signs.domain, list: some(planted.map((row) => say("pathNote", { path: where(row), note: note(row) })), 5) }), fix,
+        { effort: "days", pages: planted.map(where), count: planted.length });
+    } else if (mentions.length) {
+      add("Security", "person", "info", "sec-seo-spam", say("sec-seo-spam.mention.title", { n: mentions.length, domain: signs.domain }),
+        say("sec-seo-spam.mention.evidence", { domain: signs.domain, list: some(mentions.map((row) => say("pathNote", { path: where(row), note: termList(row.terms) })), 5) }),
+        say("sec-seo-spam.mention.fix"), { pages: mentions.map(where), count: mentions.length });
+    } else add("Security", "pass", "info", "sec-seo-spam", say("sec-seo-spam.pass.title", { domain: signs.domain }), say("sec-seo-spam.pass.evidence", { domain: signs.domain }), "");
   }
   const pages = signs.pages || [];
   const spam = pages.filter((page) => page.verdict === "spam");
@@ -329,4 +421,4 @@ function findings(signs, add) {
   else if ((signs.linksRead || []).length) add("Security", "pass", "info", "sec-spam-links", say("sec-spam-links.pass.title"), say("sec-spam-links.pass.evidence", { n: signs.linksRead.length }), "");
 }
 
-module.exports = { look, line, findings, compare, spamTerms, spamResults, spamLinks, siteTopics, spamQuery, readPage, GOOGLEBOT, BROWSER, BUDGET_MS };
+module.exports = { look, line, findings, compare, spamTerms, spamResults, spamLinks, siteTopics, siteScript, scriptOf, knownPages, spamQuery, readPage, GOOGLEBOT, BROWSER, BUDGET_MS };

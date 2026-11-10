@@ -3872,5 +3872,5 @@ test("technologies come from the site's own markup, not from words, prose attrib
   assert.deepEqual(names(prose).filter((name) => /Wix|Shopify|Squarespace|Webflow|Joomla|Svelte|Drupal|WordPress/.test(name)), []);
   const own = "<html><head><meta name=\"generator\" content=\"WordPress 6.6\"><!-- This is Squarespace. --><script>Shopify.theme = {\"name\":\"Dawn\"};</script></head><body>" +
     "<a href=\"/sites/default/files/menu.pdf\">Menu</a><a href=\"https://shop.example.com/wp-content/a.pdf\">A</a></body></html>";
-  assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "Squarespace", "WordPress"]);
+  assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "WordPress"], "a comment naming Squarespace is not its marker (#3312)");
 });
