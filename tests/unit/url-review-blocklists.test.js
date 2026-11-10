@@ -60,8 +60,9 @@ test("a clean domain and its mail and web servers pass, naming every list that a
   ]);
   assert.deepEqual(result.read, blocklists.LISTS.map((list) => list.id));
   assert.deepEqual([result.unread, result.listed], [[], []]);
-  assert.ok(resolver.asked.includes("example.com.dbl.nordspam.com"));
-  assert.ok(resolver.asked.includes("1.0.0.127.bl.spamcop.net") && resolver.asked.includes("invalid.dbl.nordspam.com"), "test points are asked first");
+  const asked = new Set(resolver.asked);
+  assert.ok(asked.has("example.com.dbl.nordspam.com"));
+  assert.ok(asked.has("1.0.0.127.bl.spamcop.net") && asked.has("invalid.dbl.nordspam.com"), "test points are asked first");
   const [pass] = findings(result);
   assert.deepEqual([pass.key, pass.verdict], ["sec-blocklist", "pass"]);
   assert.equal(pass.evidence, "SpamCop, Barracuda, Mailspike, PSBL, 0spam, NordSpam and NordSpam DBL answered for example.com, the mail server mx1.example.com (198.51.200.10), the mail server mx2.example.com (203.0.200.20) and the web server (93.184.216.34) and list none of them.");
@@ -153,7 +154,7 @@ test("at most four addresses are checked, private ones never, and nothing to che
     "d.example.com": ["198.51.200.6"]
   }, many);
   assert.deepEqual(result.targets.map((row) => row.ip), ["198.51.200.1", "198.51.200.2", "198.51.200.4", "93.184.216.34"]);
-  assert.ok(!resolver.asked.includes("d.example.com"), "only the first three MX hosts are resolved");
+  assert.ok(!new Set(resolver.asked).has("d.example.com"), "only the first three MX hosts are resolved");
   assert.ok(!resolver.asked.some((name) => name.startsWith("5.0.0.10.")));
   for (const zone of IP_ZONES) assert.equal(resolver.asked.filter((name) => name.endsWith("." + zone) && !/^[12]\.0\.0\.127\./.test(name)).length, 4, zone);
   blocklists._health.clear();
