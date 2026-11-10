@@ -13,6 +13,7 @@ const JOBS = [
   { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep sites (up to 4 a tick, each tick done in 15 minutes, capped per day)" },
   { job: "outreachSweep", cron: "*/15 * * * *", gap: 20, what: "Review the next outreach prospects and peer-group sites, all day (up to 4 a tick, capped per day, no owner notices)" },
   { job: "placesProspects", cron: "30 23 * * *", gap: 26, what: "Find local-business prospects on Google Maps for tonight's outreach sweep (up to 20 Places searches, skipped while two nights are still queued)" },
+  { job: "wordfenceFeed", cron: "45 22 * * *", gap: 26, what: "Download the Wordfence Intelligence vulnerability feed once and store its plugin, theme and core index for the reviews' WordPress check (#3086; skipped without WORDFENCE_KEY or when the stored index is under 20 hours old)" },
   { job: "rivalSweep", cron: "7-52/15 1-5 * * *", gap: 20, what: "Find a country-sweep site's 2-3 natural competitors, review them passively and store the comparison (one step per tick)" },
   { job: "refreshSocialHubStats", cron: "40 5 * * *", gap: 26, what: "GA4 and site_events numbers for the Social hub pane, and the hub's Trending order (pulled by the 06:00 Live Reports run)" },
   { job: "ensureLiveReportsBatch", cron: "0 6 * * *", gap: 26, what: "Start the Live Reports workflow once the night's sweep is done (GitHub fires its own slots hours late)" },

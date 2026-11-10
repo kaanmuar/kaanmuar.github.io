@@ -14,6 +14,7 @@ const { URL } = require("url");
 const insights = require("./url-review-insights");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
+const wordpress = require("./url-review-wordpress");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
@@ -1954,6 +1955,7 @@ function inspect(html, headers, pageUrl) {
     textEmails: emailsInText(text, 5),
     legal: legalLinks(anchors, pageUrl),
     libraries,
+    wordpress: wordpress.fromHtml(html, pageUrl),
     piiLinks,
     sri: { cross: crossScripts.length, missing: sriMissing },
     resources: {
@@ -3411,10 +3413,15 @@ async function reviewTarget(rawUrl, hooks) {
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
   const outboundPromise = stopped ? Promise.resolve(null) : checkOutbound(pages, halt, deadline - 15000).catch(() => null);
+  const wordpressPromise = stopped ? Promise.resolve(null) : withTimeout(wordpress.check(pages, {
+    read: (url) => !robots.length || robotsAllows(pagePath(url), robots) ? fetchExtra(url, halt, false, acceptLanguage) : null
+  }), Math.max(3000, deadline - 15000 - Date.now()), null).catch(() => null);
   let extras = {};
   if (!extrasSettled) note("Waiting for the background checks to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
   extras.outbound = await outboundPromise;
+  extras.wordpress = await wordpressPromise;
+  if (extras.wordpress) note(wordpress.note(extras.wordpress));
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;

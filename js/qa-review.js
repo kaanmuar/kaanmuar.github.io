@@ -776,11 +776,14 @@
     root.normalize();
   }
 
+  function cveLinks(text) {
+    return esc(text).replace(/\bCVE-\d{4}-\d{4,7}\b/g, (id) => '<a class="notranslate" translate="no" href="https://www.cve.org/CVERecord?id=' + id + '" target="_blank" rel="noopener noreferrer">' + id + "</a>");
+  }
   function fadeText(text, paid) {
     const raw = String(text || "");
-    if (paid) return esc(raw);
+    if (paid) return cveLinks(raw);
     const cut = fadeCut(raw);
-    if (cut >= raw.length) return esc(raw);
+    if (cut >= raw.length) return cveLinks(raw);
     const parts = raw.slice(cut).split(/(\s+)/);
     let seen = 0;
     const total = parts.filter((part) => /\S/.test(part)).length || 1;
@@ -790,7 +793,7 @@
       const blur = (0.35 + (seen / total) * 7.6).toFixed(2);
       return '<span class="case-fade" style="--fade:' + blur + 'px">' + esc(part) + "</span>";
     }).join("");
-    return '<span class="fade-line">' + esc(raw.slice(0, cut)) + faded + "</span>";
+    return '<span class="fade-line">' + cveLinks(raw.slice(0, cut)) + faded + "</span>";
   }
 
   function addonPaid(name, id) {

@@ -2397,6 +2397,19 @@ exports.placesProspects = require("firebase-functions/v2/scheduler").onSchedule(
   secrets: SECRETS.prospects
 }, () => track("placesProspects", () => placesProspects()));
 
+// The Wordfence vulnerability feed for the reviews' WordPress check (#3086); see functions/url-review-wordpress.js.
+exports.wordfenceFeed = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("wordfenceFeed"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1,
+  secrets: SECRETS.wordfenceFeed
+}, () => track("wordfenceFeed", async () => {
+  const out = await require("./url-review-wordpress").refreshFeed({ key: process.env.WORDFENCE_KEY });
+  return out.skipped ? "skipped: " + out.skipped : out.count + " records, " + out.slugs + " slugs stored";
+}));
+
 const rivals = require("./url-review-rivals");
 
 // Reviews of a host (with or without www.) that could go public; the newest recent one, or null.

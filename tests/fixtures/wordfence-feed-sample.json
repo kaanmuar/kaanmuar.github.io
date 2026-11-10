@@ -1,0 +1,87 @@
+{
+  "0b2fc8f9-4d1a-4ce1-a5a3-0d4a8f8e5c11": {
+    "id": "0b2fc8f9-4d1a-4ce1-a5a3-0d4a8f8e5c11",
+    "title": "Contact Form 7 <= 5.3.1 - Unrestricted File Upload",
+    "software": [{
+      "type": "plugin", "name": "Contact Form 7", "slug": "contact-form-7",
+      "affected_versions": { "* - 5.3.1": { "from_version": "*", "from_inclusive": true, "to_version": "5.3.1", "to_inclusive": true } },
+      "patched": true, "patched_versions": ["5.3.2"], "remediation": "Update to version 5.3.2, or a newer patched version"
+    }],
+    "informational": false,
+    "description": "The plugin does not sanitize file names, so a crafted upload can run code.",
+    "references": ["https://www.wordfence.com/blog/2020/12/critical-vulnerability-patched-in-contact-form-7/"],
+    "cwe": { "id": 434, "name": "Unrestricted Upload of File with Dangerous Type" },
+    "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", "score": 10.0, "rating": "Critical" },
+    "cve": "CVE-2020-35489",
+    "cve_link": "https://www.cve.org/CVERecord?id=CVE-2020-35489",
+    "published": "2020-12-17 00:00:00",
+    "copyrights": { "message": "This record contains material that is subject to copyright", "defiant": { "notice": "Copyright 2012-2026 Defiant Inc." } }
+  },
+  "1c3e9a10-77b2-4f0e-9f61-2d2b9e0c7a22": {
+    "id": "1c3e9a10-77b2-4f0e-9f61-2d2b9e0c7a22",
+    "title": "Contact Form 7 <= 5.9.1 - Reflected Cross-Site Scripting via \"active-tab\" {param}",
+    "software": [{
+      "type": "plugin", "name": "Contact Form 7", "slug": "contact-form-7",
+      "affected_versions": { "* - 5.9.1": { "from_version": "*", "from_inclusive": true, "to_version": "5.9.1", "to_inclusive": true } },
+      "patched": true, "patched_versions": ["5.9.2"]
+    }],
+    "informational": false,
+    "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N", "score": 6.1, "rating": "Medium" },
+    "cve": "CVE-2024-2242",
+    "published": "2024-03-13 00:00:00"
+  },
+  "2d4fab21-88c3-4a1f-8e72-3e3caf1d8b33": {
+    "id": "2d4fab21-88c3-4a1f-8e72-3e3caf1d8b33",
+    "title": "Elementor Website Builder 3.6.0 - 3.6.2 - Authenticated Remote Code Execution",
+    "software": [{
+      "type": "plugin", "name": "Elementor Website Builder", "slug": "elementor",
+      "affected_versions": { "3.6.0 - 3.6.2": { "from_version": "3.6.0", "from_inclusive": true, "to_version": "3.6.2", "to_inclusive": true } },
+      "patched": true, "patched_versions": ["3.6.3"]
+    }],
+    "informational": false,
+    "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H", "score": 9.9, "rating": "Critical" },
+    "cve": "CVE-2022-1329",
+    "published": "2022-04-12 00:00:00"
+  },
+  "3e5abc32-99d4-4b2a-9f83-4f4dba2e9c44": {
+    "id": "3e5abc32-99d4-4b2a-9f83-4f4dba2e9c44",
+    "title": "Astra <= 4.6.8 - Authenticated (Contributor+) Stored Cross-Site Scripting",
+    "software": [{
+      "type": "theme", "name": "Astra", "slug": "astra",
+      "affected_versions": { "* - 4.6.8": { "from_version": "*", "from_inclusive": true, "to_version": "4.6.8", "to_inclusive": true } },
+      "patched": false, "patched_versions": []
+    }],
+    "informational": false,
+    "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:L/A:N", "score": 6.4, "rating": "Medium" },
+    "cve": null,
+    "published": "2024-05-02 00:00:00"
+  },
+  "4f6bcd43-aae5-4c3b-8a94-5a5ecb3fad55": {
+    "id": "4f6bcd43-aae5-4c3b-8a94-5a5ecb3fad55",
+    "title": "WordPress Core 6.4 - 6.4.1 - PHP Object Injection via POP Chain",
+    "software": [{
+      "type": "core", "name": "WordPress Core", "slug": "wordpress",
+      "affected_versions": {
+        "6.4 - 6.4.1": { "from_version": "6.4", "from_inclusive": true, "to_version": "6.4.1", "to_inclusive": true },
+        "6.3 - 6.3.2": { "from_version": "6.3", "from_inclusive": true, "to_version": "6.3.2", "to_inclusive": true }
+      },
+      "patched": true, "patched_versions": ["6.3.3", "6.4.2"]
+    }],
+    "informational": false,
+    "cvss": { "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 8.1, "rating": "High" },
+    "cve": null,
+    "published": "2023-12-06 00:00:00"
+  },
+  "5a7cde54-bbf6-4d4c-9ba5-6b6fdc4abe66": {
+    "id": "5a7cde54-bbf6-4d4c-9ba5-6b6fdc4abe66",
+    "title": "Cookie Notice <= 2.4.0 - Informational Note",
+    "software": [{
+      "type": "plugin", "name": "Cookie Notice", "slug": "cookie-notice",
+      "affected_versions": { "* - 2.4.0": { "from_version": "*", "from_inclusive": true, "to_version": "2.4.0", "to_inclusive": true } },
+      "patched": true, "patched_versions": ["2.4.1"]
+    }],
+    "informational": true,
+    "cvss": null,
+    "cve": null
+  }
+}
