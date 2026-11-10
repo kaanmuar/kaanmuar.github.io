@@ -25,6 +25,7 @@ const blocklists = require("./url-review-blocklists");
 const { registrable, registryDomain } = require("./url-review-suffix");
 const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
+const hackSigns = require("./url-review-hack-signs");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-11-04b";
@@ -1067,20 +1068,20 @@ async function missingIntermediate(hostname, pinned) {
   return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage) {
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent);
   } catch (error) {
     if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent);
   }
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1114,7 +1115,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage) {
       timeout: PAGE_TIMEOUT_MS,
       maxHeaderSize: MAX_HEADER_BYTES,
       headers: Object.assign({
-        "user-agent": USER_AGENT,
+        "user-agent": agent || USER_AGENT,
         accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
         connection: "close"
       }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
@@ -1198,7 +1199,7 @@ const httpOnly = (href, tried) => new Error("The site redirected to " + clean(hr
 const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
 const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   const upgrades = [];
@@ -1221,7 +1222,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent);
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
@@ -3228,6 +3229,15 @@ async function reviewTarget(rawUrl, hooks) {
   const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, doh: passive ? null : controls.doh, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const hackPromise = stopped || firstChallenge ? Promise.resolve(null) : hackSigns.look({
+    url: first.url,
+    html: first.body,
+    site: { title: homeInspect.title, description: homeInspect.description, h1: homeInspect.h1, lang: homeInspect.lang, types: ((homeInspect.schema && homeInspect.schema.items) || []).reduce((all, item) => all.concat(item.types), []) },
+    paths: browsePaths,
+    fetch: (url, agent) => fetchPublic(url, halt, null, false, acceptLanguage, agent),
+    search: controls.mentions === false || !(process.env.BRAVE_SEARCH_KEY || process.env.TAVILY_API_KEY) ? null : (query) => webSearch(query),
+    challenge: (res) => challengeOf(res.url, res.headers, res.body)
+  }).catch(() => null);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
   let showStart = null;
   const renderedStart = new Promise((resolve) => { showStart = resolve; });
@@ -3451,6 +3461,8 @@ async function reviewTarget(rawUrl, hooks) {
   extras.wordpress = await wordpressPromise;
   if (extras.wordpress) note(wordpress.note(extras.wordpress));
   extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
+  extras.hackSigns = await withTimeout(hackPromise, 5000, null);
+  if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
