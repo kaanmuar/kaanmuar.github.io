@@ -280,3 +280,50 @@ test("rescue: the promised re-run's step returns the held re-run, waits on the M
   assert.equal(db.store["url_review_rescues/new1"].status, "rescued");
   assert.equal(db.store["url_review_rescues/new1"].promised, true);
 });
+
+test("rescue: the Mac takes promised rescues inside the deadline first, then those past it until 14 days, each after its retry wait, then the others (#3257)", () => {
+  const HOUR = 3600000;
+  const row = (id, hoursAgo, extra) => Object.assign({ id, host: id + ".example.com", status: "mac-wanted", promised: true, failedAt: new Date(NOW - hoursAgo * HOUR).toISOString(), attempts: [] }, extra);
+  const macFail = (hoursAgo) => [{ strategy: "mac", ok: null, at: new Date(NOW - 50 * HOUR).toISOString() }, { strategy: "mac", ok: false, at: new Date(NOW - hoursAgo * HOUR).toISOString() }];
+  const rows = [
+    row("other", 1, { promised: false }),
+    row("late-old", 300),
+    row("late-new", 60),
+    row("window-new", 2),
+    row("window-old", 40, { group: { promise: { failedAt: new Date(NOW - 46 * HOUR).toISOString() } } }),
+    row("window-retried", 20, { attempts: macFail(1) }),
+    row("late-retried", 100, { attempts: macFail(6) }),
+    row("late-waited", 90, { attempts: macFail(13) }),
+    row("expired", 15 * 24)
+  ];
+  const queue = rescue.macQueue(rows, NOW);
+  assert.deepEqual(queue.promised.map((r) => r.id), ["window-old", "window-new", "late-old", "late-waited"]);
+  assert.deepEqual(queue.others.map((r) => r.id), ["other", "expired"]);
+  assert.equal(rescue.MAC_PROMISED_PER_HOUR, 4);
+  assert.deepEqual(rescue.macQueue(rows.filter((r) => !r.id.startsWith("window")), NOW).promised.map((r) => r.id), ["late-old", "late-waited", "late-new"]);
+  assert.deepEqual(rescue.macQueue(rows, NOW + 3 * HOUR).promised.map((r) => r.id), ["window-retried", "window-new", "late-old", "late-waited"]);
+  assert.deepEqual(rescue.macQueue([], NOW), { promised: [], others: [] });
+});
+
+test("rescue: a failed Mac read keeps an owed promised rescue queued until 14 days; others go back to the cloud until MAC_TRIES", () => {
+  const HOUR = 3600000;
+  const at = (hoursAgo) => new Date(NOW - hoursAgo * HOUR).toISOString();
+  assert.equal(rescue.macStatus({ promised: true, failedAt: at(60) }, true, NOW), "rescued");
+  assert.equal(rescue.macStatus({ promised: true, failedAt: at(60) }, false, NOW), "mac-wanted");
+  assert.equal(rescue.macStatus({ promised: true, failedAt: at(10) }, false, NOW), "mac-wanted");
+  assert.equal(rescue.macStatus({ promised: true, failedAt: at(15 * 24) }, false, NOW), "trying");
+  assert.equal(rescue.macStatus({ promised: false, failedAt: at(10) }, false, NOW), "trying");
+  assert.equal(rescue.macStatus({ promised: false, failedAt: at(10), attempts: [{ strategy: "mac", ok: false, at: at(30) }] }, false, NOW), "exhausted");
+});
+
+test("rescue: a failure still owed its report after the apology stays first in the plan, past the daily caps; a given-up rescue is not planned again", () => {
+  const owedLate = failed("late", { at: "2026-11-05T10:00:00Z", promise: { state: "apologized", coupon: "SORRY-LATE2345" } });
+  const plain = Array.from({ length: 8 }, (_, i) => failed("p" + i, { url: "https://p" + i + ".example.com/", at: "2026-11-09T1" + i + ":00:00Z" }));
+  const plan = rescue.rescuePlan(plain.concat(owedLate), [], NOW);
+  assert.equal(plan[0].latest.id, "late");
+  assert.equal(plan[0].promised, true);
+  assert.equal(plan.length, 1 + rescue.RESCUES_PER_DAY);
+  const key = "https://www.example.com/|ana@example.org";
+  assert.deepEqual(rescue.rescuePlan([owedLate], [{ id: "r", key, status: "given-up" }], NOW), []);
+  assert.equal(rescue.rescuePlan([owedLate], [{ id: "r", key, status: "exhausted" }], NOW).length, 1);
+});

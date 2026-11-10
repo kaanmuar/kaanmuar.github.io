@@ -2,13 +2,15 @@
 // ladder of read strategies from cheap to expensive, a Gemini diagnosis that may reorder it, and a per-host hint of what worked.
 //
 //   url_review_rescues/{id}     one per address and asker: { url, host, failedAt, group, diagnosis, attempts, status, day, ... }
-//                               status: trying, mac-wanted (scripts/review-rescue.js takes it), rescued, site, exhausted, settled
+//                               status: trying, mac-wanted (scripts/review-rescue.js takes it), rescued, site, exhausted, settled,
+//                               given-up (its promise ran out, url-review-promise.js PROMISE_GIVE_UP_DAYS)
 //   url_review_read_hints/{h}   one per bare host: { strategy, step, url, at, wins } so the next rescue tries it first
 //
 // From Google's network most bot walls refuse every header profile, while a home connection reads the same sites (#3080),
 // so the ladder ends on Carlos's Mac.
 
 const Gemini = require("./gemini");
+const reviewPromise = require("./url-review-promise");
 
 const RESCUE_DAYS = 14;
 const RESCUES_PER_DAY = 6;
@@ -16,8 +18,12 @@ const ATTEMPTS_PER_DAY = 3;
 const AI_PER_DAY = 10;
 const AI_PER_FAILURE_DAY = 1;
 const MAC_PER_RUN = 8;
-// Promised rescues (#3079) the Mac takes in one hourly run, ahead of the others and outside the daily caps.
+// Promised rescues (#3079) the Mac takes in one hourly run, ahead of the others and outside the daily caps: those inside the
+// 48-hour deadline first, then those past it, still owed until PROMISE_GIVE_UP_DAYS (#3257).
 const MAC_PROMISED_PER_HOUR = 4;
+// Hours a promised rescue waits after a failed Mac read before the Mac tries it again, inside the deadline and past it.
+const MAC_RETRY_H = 3;
+const MAC_LATE_RETRY_H = 12;
 const MAC_TRIES = 2;
 const HINT_DAYS = 60;
 const AI_LINES = 30;
@@ -287,8 +293,8 @@ function rescuable(row) {
   return !(cause === "status" && row.diagnosis && row.diagnosis.site);
 }
 
-// One rescue per address and asker, for a failure with no re-run yet or whose re-run failed. A failure whose asker was promised
-// a report (#3079, promise.state open) goes first and past the daily caps: the 48-hour deadline is its limit. The daily re-runs go first, so a
+// One rescue per address and asker, for a failure with no re-run yet or whose re-run failed. A failure whose asker is still owed
+// a report (#3079, promise.state open or, past the deadline, apologized) goes first and past the daily caps. The daily re-runs go first, so a
 // failure still without one here is one no fix covers, or one past their limit. `rescues` are url_review_rescues rows with their `id`.
 function rescuePlan(failures, rescues, now) {
   const at = Number(now) || Date.now();
@@ -306,8 +312,8 @@ function rescuePlan(failures, rescues, now) {
     rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
     const latest = rows[0];
     const prior = known.get(key) || null;
-    const promised = !!(latest.promise && latest.promise.state === "open");
-    if (prior && ["rescued", "site", "mac-wanted", "settled"].concat(promised ? [] : ["exhausted"]).includes(prior.status)) return;
+    const promised = !!(latest.promise && reviewPromise.PENDING.includes(latest.promise.state));
+    if (prior && ["rescued", "site", "mac-wanted", "settled", "given-up"].concat(promised ? [] : ["exhausted"]).includes(prior.status)) return;
     if (!promised && prior && prior.day === today && (prior.dayAttempts || 0) >= ATTEMPTS_PER_DAY) return;
     const group = {
       url: latest.url,
@@ -379,7 +385,8 @@ const STATUS_LINE = {
   rescued: "Rescued",
   site: "The site's own state, so the rescue stopped",
   exhausted: "Every strategy failed",
-  settled: "A re-run settled the failure first"
+  settled: "A re-run settled the failure first",
+  "given-up": "The promise ran out, so the rescue stopped"
 };
 
 // Lines for the review desk and the daily bug: what the diagnosis concluded and what the rescue tried.
@@ -505,6 +512,38 @@ async function rescueGroup(deps, group) {
   return reruns.find((row) => row.status !== "failed") || reruns[0] || Object.assign(waiting, { rescue: doc.status });
 }
 
+const promisedAt = (row) => msOf(((row.group || {}).promise || {}).failedAt) || msOf(row.failedAt);
+const lastMacFail = (row) => Math.max(0, ...(row.attempts || []).filter((one) => one && one.strategy === "mac" && one.ok === false).map((one) => msOf(one.at)));
+
+// The Mac's hourly pick from the mac-wanted rescues: promised ones inside the deadline (nearest first), then those past it
+// (oldest first), MAC_PROMISED_PER_HOUR in all, each only once its retry wait passed; then MAC_PER_RUN others. A promised
+// rescue past PROMISE_GIVE_UP_DAYS counts as any other.
+function macQueue(rows, now) {
+  const at = Number(now) || Date.now();
+  const lanes = { window: [], late: [], other: [] };
+  (Array.isArray(rows) ? rows : []).filter(Boolean).forEach((row) => {
+    const age = at - promisedAt(row);
+    const lane = !row.promised || !(age < reviewPromise.PROMISE_GIVE_UP_DAYS * 86400000) ? "other" : age < reviewPromise.PROMISE_DEADLINE_H * 3600000 ? "window" : "late";
+    if (lane !== "other" && at - lastMacFail(row) < (lane === "window" ? MAC_RETRY_H : MAC_LATE_RETRY_H) * 3600000) return;
+    lanes[lane].push(row);
+  });
+  const oldest = (a, b) => promisedAt(a) - promisedAt(b);
+  return {
+    promised: lanes.window.sort(oldest).concat(lanes.late.sort(oldest)).slice(0, MAC_PROMISED_PER_HOUR),
+    others: lanes.other.slice(0, MAC_PER_RUN)
+  };
+}
+
+// The rescue's status after the Mac read it: rescued, or, failed, still queued while a promise is owed; otherwise tried
+// again by the cloud's daily pass until MAC_TRIES failed reads.
+function macStatus(row, ok, now) {
+  if (ok) return "rescued";
+  const age = (Number(now) || Date.now()) - promisedAt(row || {});
+  if (row && row.promised && age < reviewPromise.PROMISE_GIVE_UP_DAYS * 86400000) return "mac-wanted";
+  const macRuns = ((row && row.attempts) || []).filter((one) => one && one.strategy === "mac" && one.ok === false).length + 1;
+  return macRuns >= MAC_TRIES ? "exhausted" : "trying";
+}
+
 // The rescue as the failure keeps it, for the desk list, its detail and the daily bug.
 function rescueMark(id, doc) {
   const plan = doc.diagnosis || {};
@@ -512,8 +551,8 @@ function rescueMark(id, doc) {
 }
 
 module.exports = {
-  runRescues, rescueGroup, rescueMark,
-  RESCUE_DAYS, RESCUES_PER_DAY, ATTEMPTS_PER_DAY, AI_PER_DAY, AI_PER_FAILURE_DAY, MAC_PER_RUN, MAC_PROMISED_PER_HOUR, MAC_TRIES, HINT_DAYS,
+  runRescues, rescueGroup, rescueMark, macQueue, macStatus,
+  RESCUE_DAYS, RESCUES_PER_DAY, ATTEMPTS_PER_DAY, AI_PER_DAY, AI_PER_FAILURE_DAY, MAC_PER_RUN, MAC_PROMISED_PER_HOUR, MAC_RETRY_H, MAC_LATE_RETRY_H, MAC_TRIES, HINT_DAYS,
   STRATEGIES, MAC_STEPS, BLOCKERS, VENDORS,
   altUrl, readable, probeNote, vendorOf, evidenceOf, ruleDiagnosis, aiPrompt, parseAi, aiDiagnose, vertexDiagnose, diagnoseWithFallback, ladder, rescuePlan, aiDue,
   trigger, attemptRow, rescueDoc, hintDoc, hintId, rescueLines, dayOf

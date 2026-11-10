@@ -30,7 +30,7 @@ const rowsOf = (snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, do
 
 // --- rescue -------------------------------------------------------------------------------------------------
 
-const FINAL = ["delivered", "apologized", "own-run", "held", "open"];
+const FINAL = ["delivered", "sent-late", "given-up", "apologized", "own-run", "held", "open"];
 
 // One promise per code: a retry of the same address shares the first failure's code and deadline.
 function promiseGroups(failures) {
@@ -75,6 +75,7 @@ function rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open },
     ok: true,
     deadlineHours: promise.PROMISE_DEADLINE_H,
     triesAtHours: promise.PROMISE_TRIES_AT_H,
+    giveUpDays: promise.PROMISE_GIVE_UP_DAYS,
     apologyPercent: promise.APOLOGY_PERCENT,
     failures: { total: failed.length, causes: top(causes, 8), promised: failed.filter((row) => row.promise).length },
     reruns: { total: rr.length, status: top(rerunStatus, 6), sent: rerunStatus.sent || 0, held: rerunStatus.held || 0, failed: rerunStatus.failed || 0 },
@@ -100,7 +101,10 @@ function rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open },
       atRisk: openNow.filter((g) => g.hoursLeft <= 8).length,
       delivered: delivered.length,
       within48h: delivered.filter((g) => g.closedAt && ms(g.closedAt) - ms(g.failedAt) <= deadline).length,
-      apologized: groups.filter((g) => g.state === "apologized").length,
+      apologized: groups.filter((g) => ["apologized", "sent-late", "given-up"].includes(g.state)).length,
+      stillTrying: groups.filter((g) => g.state === "apologized").length,
+      sentLate: groups.filter((g) => g.state === "sent-late").length,
+      givenUp: groups.filter((g) => g.state === "given-up").length,
       ownRun: groups.filter((g) => g.state === "own-run").length,
       held: groups.filter((g) => g.state === "held").length
     },

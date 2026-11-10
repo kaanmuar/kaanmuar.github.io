@@ -18,5 +18,5 @@ No statistics are claimed. The case stories quote only the wordpress.org live re
 1. Launch prices "until December 10": the site and `functions/url-review-fix-offers.js` give no end date. Confirm the date, or drop it (li11, x11, x18, clip06).
 2. Naming wordpress.org's findings in public (a lookalike domain with a login page; a spam blocklist listing its mail server): li04, li08, x03, x13, rd01–rd03.
 3. "Past reviewers get a special code by email": confirm the mail goes out before 25 Nov (li07, x10).
-4. The 48-hour promise: the splash doesn't say "48 hours" yet (#3324), and a report the Mac finishes after 40 h isn't sent (#3257). The copy says "report by email, or an apology after 48 hours", not "always".
+4. The 48-hour promise: the splash doesn't say "48 hours" yet (#3324). A report finished after the apology is sent, up to 14 days after the failure (#3257). The copy says "report by email, usually within 48 hours; longer, an apology and we keep trying", not "always".
 5. Reddit rules: re-read each sidebar before posting.

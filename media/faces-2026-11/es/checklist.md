@@ -13,7 +13,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (160):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y siempre te respondemos. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Website:
   ```text
@@ -37,9 +37,9 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Description (1000):
   ```text
-  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y siempre te respondemos: si la primera revisión no puede terminar, seguimos intentándolo y te enviamos el informe por correo, normalmente en un plazo de 48 horas, con un 20 % de descuento en tu próxima revisión si tarda más.
   
-  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e você sempre tem retorno.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   
@@ -89,7 +89,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] About (200):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: u/qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y siempre te respondemos. ES·PT. EN/DE/FR/IT: u/qalaburlreview
   ```
 - [ ] Social links (5):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -119,9 +119,9 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] About:
   ```text
-  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y siempre te respondemos: si la primera revisión no puede terminar, seguimos intentándolo y te enviamos el informe por correo, normalmente en un plazo de 48 horas, con un 20 % de descuento en tu próxima revisión si tarda más.
   
-  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e você sempre tem retorno.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   
@@ -156,7 +156,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (200):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: dev.to/qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y siempre te respondemos. ES·PT. EN/DE/FR/IT: dev.to/qalaburlreview
   ```
 - [ ] Website:
   ```text
@@ -174,7 +174,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Description (256):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview.bsky.social
+  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y siempre te respondemos. ES·PT. EN/DE/FR/IT: @qalaburlreview.bsky.social
   ```
 - [ ] Upload Avatar: `media/faces-2026-11/es/bluesky/avatar-1000.jpg`
 - [ ] Upload Banner; the avatar covers the lower left: `media/faces-2026-11/es/bluesky/banner-3000x1000.jpg`
@@ -190,7 +190,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (500):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview@mastodon.social
+  ¿Tu sitio es seguro? Revisamos más a fondo: phishing, señales de hackeo, dominios parecidos y hosts enlazados. Arreglos a precio fijo desde 69 USD con nueva revisión gratis, y siempre te respondemos. ES·PT. EN/DE/FR/IT: @qalaburlreview@mastodon.social
   ```
 - [ ] Extra fields (4):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -212,7 +212,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Bio (150):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y siempre te respondemos. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Links (5):
   - Website: https://carlosandmunoz.com/qaurlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-es
@@ -237,7 +237,7 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
 - [ ] Log in and check the account email is `qaurlreview@carlosandmunoz.com`; change it in the account settings if not.
 - [ ] Bio (150):
   ```text
-  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y tu informe siempre llega. ES·PT. EN/DE/FR/IT: @qalaburlreview
+  ¿Tu sitio es seguro? Revisamos más a fondo, corregimos a precio fijo desde 69 USD y siempre te respondemos. ES·PT. EN/DE/FR/IT: @qalaburlreview
   ```
 - [ ] Link:
   ```text
@@ -263,9 +263,9 @@ Built by `node scripts/brand-kit/build.js --face es`; the contact sheet is `medi
   ```
 - [ ] Overview:
   ```text
-  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y tu informe siempre llega: si la primera revisión no puede terminar, recibes el informe completo por correo en un plazo de 48 horas.
+  QA-lab URL Review te dice si tu sitio es seguro y revisa más a fondo que la mayoría de los verificadores: listas de phishing y malware, señales de un sitio hackeado, dominios parecidos y cada host que tus páginas cargan o enlazan. Si hay algo que corregir, lo corregimos a precio fijo desde 69 USD y luego lo revisamos de nuevo gratis. Y siempre te respondemos: si la primera revisión no puede terminar, seguimos intentándolo y te enviamos el informe por correo, normalmente en un plazo de 48 horas, con un 20 % de descuento en tu próxima revisión si tarda más.
   
-  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e seu relatório sempre chega.
+  Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo a partir de US$ 69 e você sempre tem retorno.
   
   Informes en vivo, consejos, sketches y revisiones en directo, en español y português.
   

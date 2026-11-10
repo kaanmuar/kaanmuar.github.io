@@ -14,7 +14,9 @@
  * the step that worked is kept in url_review_read_hints. Firestore is read and written with this Mac's gcloud sign-in.
  *
  *   node scripts/review-rescue.js             takes up to MAC_PROMISED_PER_HOUR promised rescues, then MAC_PER_RUN others
- *   node scripts/review-rescue.js --promised  the hourly run: only the promised ones, silent when there are none
+ *   node scripts/review-rescue.js --promised  the hourly run: only the promised ones, silent when there are none; those
+ *                                             past the 48-hour deadline stay queued, after the others, until the promise
+ *                                             runs out (rescue.macQueue)
  *   node scripts/review-rescue.js --dry       lists them and the step each would start with
  *   node scripts/review-rescue.js <url>    runs the ladder on one address and saves nothing
  *
@@ -277,9 +279,8 @@ async function rescueOne(row, say) {
   if (run.record && group.source === "sweep") await write("url_reviews/" + run.record.id, run.record);
   const mark = failures.rerunMark(rerunId, doc);
   const ok = !!run.record;
-  const macRuns = (row.attempts || []).filter((one) => one.strategy === "mac" && one.ok === false).length + (ok ? 0 : 1);
   const pass = {
-    status: ok ? "rescued" : !row.promised && macRuns >= rescue.MAC_TRIES ? "exhausted" : "trying",
+    status: rescue.macStatus(row, ok, Date.now()),
     strategy: ok ? "mac" : "",
     rerunId: ok ? rerunId : "",
     attempts: [rescue.attemptRow("mac", ok, ok ? "Report " + doc.reportId : (doc.error && doc.error.message) || "The review failed.", Date.now(), run.step)]
@@ -303,9 +304,8 @@ async function main() {
   const promisedOnly = process.argv.includes("--promised");
   const dry = process.argv.includes("--dry");
   signIn();
-  const waiting = await queued(200);
-  const promised = waiting.filter((row) => row.promised).slice(0, rescue.MAC_PROMISED_PER_HOUR);
-  const rows = promised.concat(promisedOnly ? [] : waiting.filter((row) => !row.promised).slice(0, rescue.MAC_PER_RUN));
+  const { promised, others } = rescue.macQueue(await queued(200), Date.now());
+  const rows = promised.concat(promisedOnly ? [] : others);
   if (promisedOnly && !rows.length) return;
   console.log(new Date().toISOString() + " " + rows.length + " rescues wait for the Mac (" + promised.length + " promised).");
   for (const row of rows) {

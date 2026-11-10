@@ -1413,19 +1413,58 @@ async function sendPromiseApology(promise) {
 const PROMISE_FIELDS = ["at", "url", "host", "name", "email", "options", "intake", "promise"];
 const openPromises = () => getFirestore().collection("url_review_failures").where("promise.state", "==", "open").select(...PROMISE_FIELDS).limit(300).get()
   .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+const pendingPromises = () => getFirestore().collection("url_review_failures").where("promise.state", "in", reviewPromise.PENDING).select(...PROMISE_FIELDS, "rerun").limit(500).get()
+  .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
 
-// Promises past PROMISE_DEADLINE_H without a report: the asker gets an apology and keeps the code.
+// Promises past PROMISE_DEADLINE_H without a report: the asker gets an apology, keeps the code, and hears the rescue goes on.
 async function closeExpiredPromises() {
   const col = getFirestore().collection("url_review_failures");
   const due = reviewPromise.apologiesDue(await openPromises(), Date.now());
   let sent = 0;
   for (const promise of due) {
     try {
-      if (!(await sendPromiseApology(promise))) continue;
+      if (!(await sendPromiseApology(Object.assign({ stillDays: reviewPromise.PROMISE_GIVE_UP_DAYS }, promise)))) continue;
       await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("apologized"))));
       sent += 1;
     } catch (error) {
       console.error("Promise apology to " + promise.email + " failed:", error);
+    }
+  }
+  return sent;
+}
+
+// Owed reports a re-run finished since the last tick, by whatever path, sent once each: releaseHeldRerun moves the re-run
+// from held to sent in a transaction, so a second tick or a desk send finds nothing to send.
+async function deliverFinishedPromises() {
+  if (!reviewPromise.PROMISE_AUTO_SEND) return [];
+  const sent = [];
+  for (const due of reviewPromise.finishedDue(await pendingPromises(), Date.now())) {
+    try {
+      const out = await releaseHeldRerun(due.rerunId, true, "promise");
+      if (out && out.status === "sent") sent.push({ id: due.rerunId, status: "sent", host: due.host, reportId: out.reportId });
+    } catch (error) {
+      console.error("Finished promised report " + due.rerunId + " was not sent:", error);
+    }
+  }
+  return sent;
+}
+
+// Promises still without a report PROMISE_GIVE_UP_DAYS after the failure: the asker gets a last note and keeps the code,
+// and the rescue leaves the Mac's queue.
+async function giveUpPromises() {
+  const db = getFirestore();
+  const col = db.collection("url_review_failures");
+  let sent = 0;
+  for (const promise of reviewPromise.giveUpsDue(await pendingPromises(), Date.now())) {
+    try {
+      const stopUrl = await stopLinkFor(promise.email, promise.lang);
+      if (!(await sendAskerMail(promise.email, customerMail.promiseGivenUpMail(promise, { stopUrl }), stopUrl, "url-review-promise"))) continue;
+      await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("given-up"))));
+      const rescues = await db.collection("url_review_rescues").where("key", "==", promise.key).limit(3).get();
+      await Promise.all(rescues.docs.filter((doc) => ["mac-wanted", "trying"].includes(doc.data().status)).map((doc) => doc.ref.update({ status: "given-up", promised: false })));
+      sent += 1;
+    } catch (error) {
+      console.error("Last promise note to " + promise.email + " failed:", error);
     }
   }
   return sent;
@@ -1437,7 +1476,8 @@ async function rescuePromisedRun(group) {
   return keepPromise(await reviewRescue.rescueGroup(rescueDeps(Date.now() + 300000), group));
 }
 
-// Every 15 minutes: open promises whose next try has come run again (RESCUES_PER_TICK at most), then the ones past the deadline get the apology.
+// Every 15 minutes: open promises whose next try has come run again (RESCUES_PER_TICK at most), owed reports finished by any
+// path go out (late ones too), the ones past the deadline get the apology, and the ones past PROMISE_GIVE_UP_DAYS the last note.
 async function rescuePromisedReviews() {
   const col = getFirestore().collection("url_review_failures");
   const due = reviewPromise.rescuesDue(await openPromises(), Date.now());
@@ -1453,10 +1493,13 @@ async function rescuePromisedReviews() {
       console.error("Promised re-run of " + group.url + " was not saved:", error);
     }
   }
+  const finished = await deliverFinishedPromises();
   const apologies = await closeExpiredPromises();
-  const settledNow = done.filter((doc) => doc.status !== "failed");
+  const givenUp = await giveUpPromises();
+  const settledNow = done.filter((doc) => doc.status !== "failed").concat(finished);
   if (settledNow.length) await pushOwner(jarvisMailPush.rerunMessage(settledNow, REVIEW_FN_URL + "/desk"));
-  return done.length + " promised re-runs (" + done.filter((doc) => doc.status === "sent").length + " sent), " + apologies + " apologies";
+  return done.length + " promised re-runs (" + done.filter((doc) => doc.status === "sent").length + " sent), " + finished.length + " finished reports sent, " +
+    apologies + " apologies, " + givenUp + " given up";
 }
 
 exports.rescuePromisedReviews = require("firebase-functions/v2/scheduler").onSchedule({
@@ -2310,14 +2353,17 @@ async function releaseHeldRerun(id, send, by) {
     tx.update(ref, { status: send ? "sent" : "dropped", decidedAt, by });
   });
   if (!doc) return null;
-  const promise = doc.promise || null;
   const failures = db.collection("url_review_failures");
+  const rows = await rerunFailures(doc);
+  const promise = reviewPromise.pendingPromise(rows, Date.now());
   const settle = (fields) => Promise.all((promise ? promise.ids || [] : []).map((failureId) => failures.doc(failureId).update(fields)));
-  // A dropped promised re-run still owes the asker word: the apology, as when the window closes.
+  await Promise.all(rows.filter((row) => row.rerun && row.rerun.id === String(id)).map((row) => failures.doc(row.id).update({ "rerun.status": send ? "sent" : "dropped" })));
+  // A dropped promised re-run still owes the asker word: the apology, as when the window closes. One that already had it
+  // gets the last note when PROMISE_GIVE_UP_DAYS pass.
   if (!send) {
-    if (promise) {
+    if (promise && promise.state !== "apologized") {
       try {
-        if (await sendPromiseApology(promise)) await settle(reviewPromise.settled("apologized"));
+        if (await sendPromiseApology(Object.assign({ hours: reviewPromise.PROMISE_DEADLINE_H }, promise))) await settle(reviewPromise.settled("given-up", { "promise.dropped": true }));
       } catch (error) {
         console.error("Promise apology after a drop failed:", error);
       }
@@ -2341,8 +2387,24 @@ async function releaseHeldRerun(id, send, by) {
     console.error("Re-run mail to the asker failed:", error);
     await ref.update({ mailError: String((error && error.message) || "mail failed").slice(0, 200) });
   }
-  if (promise) await settle(mailed ? reviewPromise.settled("delivered", { "promise.reportId": record.id }) : { "promise.state": "held" });
+  if (promise) {
+    await settle(mailed ? reviewPromise.settled(reviewPromise.reportState(promise), { "promise.reportId": record.id })
+      : promise.state === "apologized" ? { "promise.mailError": "the report mail failed" } : { "promise.state": "held" });
+  }
   return { status: "sent", reportId: record.id, mailed };
+}
+
+// A re-run's failures, and the others that share their promise's code, so the promise is read where it is kept: a Mac
+// rescue or a re-run from the desk saves the re-run without it, and a re-run's own copy may predate the apology.
+async function rerunFailures(doc) {
+  const col = getFirestore().collection("url_review_failures");
+  const ids = Array.from(new Set((doc.failureIds || []).concat((doc.promise && doc.promise.ids) || []).map(String))).slice(0, 40);
+  const rows = (await Promise.all(ids.map((id) => col.doc(id).get()))).filter((snap) => snap.exists).map((snap) => Object.assign({ id: snap.id }, snap.data()));
+  const coded = rows.find((row) => row.promise && row.promise.coupon);
+  if (!coded) return rows;
+  const same = await col.where("promise.coupon", "==", coded.promise.coupon).limit(40).get();
+  same.docs.forEach((snap) => { if (!ids.includes(snap.id)) rows.push(Object.assign({ id: snap.id }, snap.data())); });
+  return rows;
 }
 
 const NOTICE_TRIES = 3;
