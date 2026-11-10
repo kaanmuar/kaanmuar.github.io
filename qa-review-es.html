@@ -476,7 +476,7 @@
                         "name": "¿Una revisión busca phishing, malware y hackeos?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sí. Cada revisión compara el sitio con listas de phishing y malware (Google Web Risk y Cloudflare URL Scanner, cuyos escaneos son públicos en Cloudflare Radar), revisa con Google Web Risk cada host de terceros de scripts, iframes, formularios y enlaces, y busca señales de un sitio hackeado: spam en los resultados de búsqueda, cloaking para Googlebot y enlaces de spam ocultos. También revisa listas de bloqueo de spam y DNS, dominios parecidos que tienen sitio web o servidor de correo, vulnerabilidades del núcleo, plugins y temas de WordPress según el feed de Wordfence Intelligence, y SPF, DMARC y DKIM en detalle. Un sitio listado es un hallazgo crítico y no se publica en Live Reports."
+                            "text": "Cada revisión busca también problemas que un visitante no vería. Comprueba la dirección con Google Safe Browsing a través de Web Risk y con Cloudflare URL Scanner, que reutiliza un escaneo del último día o envía uno que se vuelve público en Cloudflare Radar. Cada host externo del que la página carga scripts, marcos o formularios, o al que enlaza, también se comprueba con Web Risk; un host de scripts listado es un hallazgo crítico. Busca señales de un sitio hackeado: spam inyectado en los resultados de búsqueda, páginas que le muestran otra cosa a Googlebot y enlaces de spam ocultos. Enumera los dominios parecidos registrados para imitar el tuyo que tienen sitio web o servidor de correo, comprueba el dominio y sus servidores de correo y web en listas de bloqueo de spam gratuitas como SpamCop, Mailspike y NordSpam, y examina SPF, DMARC y DKIM en detalle. Cuando demuestras que el sitio es tuyo, también busca archivos expuestos, como .env, .git y copias de seguridad."
                         }
                     },
                     {
@@ -484,7 +484,7 @@
                         "name": "¿Qué pasa si una revisión no se puede terminar?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Cuando una revisión falla por una causa que no se puede resolver en el momento, ves que todavía no se pudo concluir y te enviamos el informe completo por correo en cuanto esté listo, con un plazo de 48 horas. También recibes un código del 20 % de descuento en tu siguiente revisión, válido por 90 días."
+                            "text": "A veces una revisión se detiene por un motivo de nuestro lado, como un sitio que rechaza los servidores en la nube. Guardamos tu correo, la volvemos a ejecutar de otra forma y te enviamos el informe completo en cuanto esté listo, en un plazo de 48 horas. Por la molestia, recibes un código con 20 % de descuento en tu próxima revisión, válido por 90 días. Si el informe aún no está listo después de 48 horas, te escribimos para avisarte, y el código sigue siendo válido."
                         }
                     },
                     {
@@ -492,7 +492,7 @@
                         "name": "¿Pueden arreglar lo que encuentra el informe?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sí. Bajo el informe hay cuatro caminos: arréglalo tú, con una guía y una nueva revisión gratis para informes pagados; lo arreglamos por ti, con una cotización; paquetes de precio fijo; o una llamada. Paquetes: Cabeceras de seguridad 99 USD (3 días hábiles), Correo y DNS 89 USD (3), TLS y redirecciones 69 USD (2), Arreglos rápidos de accesibilidad 169 USD (5), Rendimiento básico 199 USD (5) y Metadatos SEO y datos estructurados 119 USD (4). Se pagan con PayPal, los cupones no aplican a los paquetes y, cuando el trabajo está hecho, una nueva revisión gratis te envía un antes y después de cada hallazgo."
+                            "text": "Pídenos que lo arreglemos, de una de cuatro formas. Arréglalo tú: Pregúntale al informe escribe el arreglo, y un informe pagado incluye una nueva revisión gratis cuando tus cambios estén publicados. Pide una cotización: Carlos responde en dos días hábiles. Pide un paquete de precio fijo. O agenda una llamada. Paquetes a precio de lanzamiento: cabeceras de seguridad US$99 (unos 3 días hábiles), correo y DNS US$89 (3), TLS y redirecciones US$69 (2), arreglos rápidos de accesibilidad US$169 (5), rendimiento básico US$199 (5) y metadatos SEO y datos estructurados US$119 (4). Pagas con PayPal; los códigos de descuento no aplican a los paquetes. Cuando el arreglo esté listo, revisamos el sitio de nuevo gratis y te enviamos por correo el antes y después, que marca cada hallazgo como arreglado, aún abierto o que necesita una persona."
                         }
                     }
                 ]

@@ -476,7 +476,7 @@
                         "name": "Uma revisão procura phishing, malware e invasões?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sim. Cada revisão compara o site com listas de phishing e malware (Google Web Risk e Cloudflare URL Scanner, cujas varreduras são públicas no Cloudflare Radar), verifica no Google Web Risk cada host de terceiros de scripts, iframes, formulários e links, e procura sinais de site hackeado: spam nos resultados de busca, cloaking para o Googlebot e links de spam ocultos. Também verifica listas de bloqueio de spam e DNS, domínios parecidos que têm site ou servidor de e-mail, vulnerabilidades do núcleo, plugins e temas do WordPress pelo feed do Wordfence Intelligence, e SPF, DMARC e DKIM em detalhe. Um site listado é um achado crítico e fica fora dos Live Reports."
+                            "text": "Toda revisão também procura problemas que um visitante não veria. Ela verifica o endereço com o Google Safe Browsing pelo Web Risk e com o Cloudflare URL Scanner, que reaproveita uma varredura do último dia ou envia uma que se torna pública no Cloudflare Radar. Cada host externo de onde a página carrega scripts, frames ou formulários, ou para onde aponta links, também é verificado com o Web Risk; um host de scripts listado é uma constatação crítica. Ela procura sinais de site invadido: spam injetado nos resultados de busca, páginas que mostram outra coisa ao Googlebot e links de spam ocultos. Ela lista domínios parecidos registrados para imitar o seu que têm site ou servidor de e-mail, verifica o domínio e seus servidores de e-mail e web em listas de bloqueio de spam gratuitas como SpamCop, Mailspike e NordSpam, e examina SPF, DMARC e DKIM em detalhe. Quando você comprova que o site é seu, ela também procura arquivos expostos, como .env, .git e backups."
                         }
                     },
                     {
@@ -484,7 +484,7 @@
                         "name": "E se uma revisão não puder ser concluída?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Quando uma revisão falha por um motivo que não pode ser resolvido na hora, você vê que ela ainda não pôde ser concluída e enviamos o relatório completo por e-mail assim que estiver pronto, com prazo de 48 horas. Você também recebe um código de 20% de desconto na próxima revisão, válido por 90 dias."
+                            "text": "Às vezes uma revisão para por um motivo do nosso lado, como um site que recusa servidores na nuvem. Guardamos seu e-mail, executamos a revisão de novo de outra forma e enviamos o relatório completo assim que estiver pronto, em até 48 horas. Pelo transtorno, você recebe um código de 20% de desconto na próxima revisão, válido por 90 dias. Se o relatório ainda não estiver pronto após 48 horas, escrevemos para avisar, e o código continua válido."
                         }
                     },
                     {
@@ -492,7 +492,7 @@
                         "name": "Vocês podem corrigir o que o relatório encontra?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sim. Abaixo do relatório há quatro caminhos: corrija você mesmo, com orientação e uma nova revisão grátis para relatórios pagos; nós corrigimos para você, com um orçamento; pacotes de preço fixo; ou uma conversa. Pacotes: Cabeçalhos de segurança US$ 99 (3 dias úteis), E-mail e DNS US$ 89 (3), TLS e redirecionamentos US$ 69 (2), Correções rápidas de acessibilidade US$ 169 (5), Desempenho básico US$ 199 (5) e Metadados de SEO e dados estruturados US$ 119 (4). O pagamento é pelo PayPal, cupons não valem para pacotes e, quando o trabalho termina, uma nova revisão grátis envia um antes e depois de cada achado."
+                            "text": "Peça para corrigirmos, de uma de quatro formas. Corrija você mesmo: o Pergunte ao relatório escreve a correção, e um relatório pago ganha uma nova verificação grátis quando suas mudanças estiverem no ar. Peça um orçamento: Carlos responde em dois dias úteis. Peça um pacote de preço fixo. Ou agende uma conversa. Pacotes a preço de lançamento: cabeçalhos de segurança US$99 (cerca de 3 dias úteis), e-mail e DNS US$89 (3), TLS e redirecionamentos US$69 (2), correções rápidas de acessibilidade US$169 (5), desempenho básico US$199 (5) e metadados de SEO e dados estruturados US$119 (4). Você paga com PayPal; códigos de desconto não valem para pacotes. Quando a correção estiver pronta, revisamos o site de novo de graça e enviamos por e-mail o antes e depois, que marca cada constatação como corrigida, ainda aberta ou dependente de uma pessoa."
                         }
                     }
                 ]

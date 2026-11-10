@@ -476,7 +476,7 @@
                         "name": "Una revisione cerca phishing, malware e violazioni?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sì. Ogni revisione confronta il sito con liste di phishing e malware (Google Web Risk e Cloudflare URL Scanner, le cui scansioni sono pubbliche su Cloudflare Radar), controlla con Google Web Risk ogni host di terze parti di script, iframe, moduli e link, e cerca segni di un sito violato: spam nei risultati di ricerca, cloaking per Googlebot e link di spam nascosti. Controlla anche le blocklist di spam e DNS, i domini sosia che hanno un sito web o un server di posta, le vulnerabilità di core, plugin e temi WordPress dal feed Wordfence Intelligence, e SPF, DMARC e DKIM in dettaglio. Un sito in lista è un risultato critico e resta fuori dai Live Reports."
+                            "text": "Ogni revisione cerca anche i problemi che un visitatore non vedrebbe. Controlla l’indirizzo con Google Safe Browsing tramite Web Risk e con Cloudflare URL Scanner, che riusa una scansione dell’ultimo giorno o ne invia una che diventa pubblica su Cloudflare Radar. Ogni host esterno da cui la pagina carica script, frame o moduli, o a cui rimanda, viene controllato anche con Web Risk; un host di script segnalato è un problema critico. Cerca i segni di un sito violato: spam iniettato nei risultati di ricerca, pagine che mostrano a Googlebot altro e link di spam nascosti. Elenca i domini sosia registrati per imitare il tuo che hanno un sito o un server di posta, controlla il dominio e i suoi server di posta e web nelle blocklist antispam gratuite come SpamCop, Mailspike e NordSpam, ed esamina SPF, DMARC e DKIM in dettaglio. Quando dimostri che il sito è tuo, cerca anche i file lasciati esposti, come .env, .git e i backup."
                         }
                     },
                     {
@@ -484,7 +484,7 @@
                         "name": "E se una revisione non si può completare?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Quando una revisione fallisce per un motivo che non si può risolvere subito, vedi che non è stato ancora possibile concluderla e ti inviamo il report completo via email appena è pronto, con una scadenza di 48 ore. Ricevi anche un codice del 20% di sconto sulla prossima revisione, valido 90 giorni."
+                            "text": "A volte una revisione si ferma per un motivo da parte nostra, per esempio un sito che rifiuta i server cloud. Conserviamo la tua email, la eseguiamo di nuovo in un altro modo e ti inviamo il rapporto completo appena è pronto, entro 48 ore. Per il disturbo ricevi un codice del 20% di sconto sulla prossima revisione, valido 90 giorni. Se il rapporto non è ancora pronto dopo 48 ore, ti scriviamo per avvisarti, e il codice resta valido."
                         }
                     },
                     {
@@ -492,7 +492,7 @@
                         "name": "Potete correggere ciò che trova il report?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Sì. Sotto il report ci sono quattro strade: correggilo tu, con una guida e una nuova revisione gratuita per i report pagati; lo correggiamo noi, su preventivo; pacchetti a prezzo fisso; o una chiamata. Pacchetti: Header di sicurezza 99 US$ (3 giorni lavorativi), Email e DNS 89 US$ (3), TLS e reindirizzamenti 69 US$ (2), Correzioni rapide di accessibilità 169 US$ (5), Prestazioni di base 199 US$ (5) e Metadati SEO e dati strutturati 119 US$ (4). Si paga con PayPal, i coupon non valgono per i pacchetti e, a lavoro finito, una nuova revisione gratuita invia un prima e dopo per ogni risultato."
+                            "text": "Chiedici di correggerlo, in uno di quattro modi. Correggilo tu: Chiedi al report scrive la correzione, e un report pagato include un nuovo controllo gratuito quando le tue modifiche sono online. Chiedi un preventivo: Carlos risponde entro due giorni lavorativi. Ordina un pacchetto a prezzo fisso. Oppure prenota una chiamata. Pacchetti a prezzo di lancio: header di sicurezza US$99 (circa 3 giorni lavorativi), email e DNS US$89 (3), TLS e reindirizzamenti US$69 (2), correzioni rapide di accessibilità US$169 (5), prestazioni di base US$199 (5) e metadati SEO e dati strutturati US$119 (4). Paghi con PayPal; i codici sconto non valgono per i pacchetti. Quando la correzione è pronta, rivediamo il sito gratis e ti inviamo via email un prima e dopo che segna ogni problema come risolto, ancora aperto o da verificare da una persona."
                         }
                     }
                 ]
