@@ -862,6 +862,16 @@
     "checked": "2026-11-10T21:45:48.434Z"
    }
   ],
+  "auto-2026-11-11/01-u-808ball16-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122108889969532027",
+    "at": "2026-11-12T17:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-11T11:32:36.547Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -1127,8 +1137,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094925209532027",
     "at": "2026-11-10T22:51:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-10T21:45:48.435Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094925209532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-11T11:32:34.088Z"
    }
   ],
   "evergreen-2026-11/09-inp": [
@@ -1362,8 +1373,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122093298927532027",
     "at": "2026-11-10T23:05:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-10T21:45:48.436Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122093298927532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-11T11:32:34.088Z"
    }
   ],
   "runs-100/02-mozilla": [
