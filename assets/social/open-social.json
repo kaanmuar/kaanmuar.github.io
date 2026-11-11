@@ -1531,6 +1531,17 @@
     "checked": "2026-11-10T00:11:00.609Z"
    }
   ],
+  "tips-2026-10/15-csp-report-only": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3mzyv2vhubj2m",
+    "at": "2026-11-11T02:14:35.149Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzyv2vhubj2m",
+    "checked": "2026-11-11T02:14:37.885Z"
+   }
+  ],
   "tips-horror-headers-2026-10/01-missing-csp": [
    {
     "channel": "bluesky",
