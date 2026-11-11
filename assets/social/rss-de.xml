@@ -260,23 +260,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Schreiben Sie die Testliste vor dem Testcode.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/16-list-first-de</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>QA</category>
-      <description>Die Wahl eines Frameworks ist die zweite Frage. Die erste ist, was diese Seite tut und was ein echter Mensch darauf ausprobieren würde.
-
-Probieren Sie es heute: Schreiben Sie vor Ihrem nächsten Automatisierungssprint zehn Fälle in Klartext. Dann wählen Sie das Tool.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
-
-#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>unn.edu.ng vs. uniport.edu.ng. unn.edu.ng führt: 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng-de.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng-de</guid>
@@ -866,23 +849,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Ihre Share-Karte ist ein erster Eindruck.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/14-share-card-de</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>SEO</category>
-      <description>Ohne og:image und og:title erscheint jeder Link zu Ihrer Website in Chats und Feeds als graue Box.
-
-Probieren Sie es heute: Fügen Sie Ihren Link in einen privaten Chat mit sich selbst ein. Was Menschen dort sehen, ist Ihr eigentlicher erster Eindruck.
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
-
-#SEO #OpenGraph #Marketing #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>3 natürliche Konkurrenten. halloweencostumes.com führt: 75.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz-de.html</link>
       <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz-de</guid>
@@ -981,6 +947,50 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" length="225482" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>uacm.edu.mx: 56. Die Lücke: der Sitemap-Host.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/07-u-uacm-edu-mx-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/07-u-uacm-edu-mx-de</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 3823 Sitemap-URLs verweisen auf einen anderen Host oder ein anderes Schema.
+
+Die Lektion für jedes Team: Stellen Sie sitemap.xml vom selben Host wie die aufgelisteten Seiten bereit und benennen Sie es in robots.txt.
+
+Eine automatisierte Analyse öffentlicher Seiten am 5 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uacm-edu-mx
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab
+
+https://www.youtube.com/shorts/bfF-x2kuDpE</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" length="240044" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>get-moment.com: 73. Die Lücke: Kanonika.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/13-u-get-moment-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/13-u-get-moment-com-de</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 16 Seiten nennen eine andere URL als kanonisch.
+
+Die Lektion für jedes Team: Richten Sie die Kanonik jeder Seite auf sich selbst, es sei denn, es handelt sich tatsächlich um eine Kopie einer anderen Seite.
+
+Eine automatisierte Analyse öffentlicher Seiten am 5 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-get-moment-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-get-moment-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#SEO #CSS #Programming #QA #Canonical #QAlab
+
+https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
