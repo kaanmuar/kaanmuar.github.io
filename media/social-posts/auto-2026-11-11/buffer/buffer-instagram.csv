@@ -1,0 +1,61 @@
+Text,Image URL,Tags,Posting Time
+"808ball16.com: 53. The gap: button names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+Lesson: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #OpenSource #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg","","2026-11-12 15:45"
+"windrawwin.com: 77. The gap: form labels.
+
+Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 4 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg","","2026-11-13 12:45"
+"habi.co: 29. The gap: page titles.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 4 pages have no title.
+
+Lesson: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 10 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #QA #Titles #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/03-u-habi-co.jpg","","2026-11-14 14:35"
+"aol.de vs fitforfun.de. fitforfun.de leads: 74.
+
+aol.de leads in SEO, GEO; fitforfun.de leads in Analytics, Security, Accessibility, Performance.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 11 Nov 2026 of aol.de, fitforfun.de, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #WebPerformance #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/04-vs-aol-de.jpg","","2026-11-15 12:05"
+"4 natural competitors. zetatijuana.com leads: 72.
+
+milenio.com leads in SEO; movierulez2.com leads in GEO, Analytics, Accessibility; zetatijuana.com leads in Security, Performance. elimparcial.com leads in none of the six areas.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 11 Nov 2026 of elimparcial.com, milenio.com, zetatijuana.com, movierulez2.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/05-vs-elimparcial-com.jpg","","2026-11-16 15:10"

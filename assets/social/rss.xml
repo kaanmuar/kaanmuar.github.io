@@ -260,6 +260,23 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Write the test list before the test code.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>QA</category>
+      <description>Picking a framework is the second question. The first is what this page does and what a real person would try on it.
+
+Try this today: Before your next automation sprint, write ten cases in plain language. Then choose the tool.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>unn.edu.ng vs uniport.edu.ng. unn.edu.ng leads: 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng</guid>
@@ -435,7 +452,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-tide-forecast-
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #QAlab</description>
+#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #QAlab
+
+https://www.youtube.com/shorts/yTVL5Is8oz8</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/03-vs-tide-forecast-com.jpg" length="258538" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/03-vs-tide-forecast-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -473,7 +492,9 @@ Check it: Open the Pages report in Search Console and filter it by your sitemap.
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-sitemap
 
-#SEO #Playwright #AI #QA #Sitemap #QAlab</description>
+#SEO #Playwright #AI #QA #Sitemap #QAlab
+
+https://www.youtube.com/shorts/_ESPYoKilzA</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" length="246412" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -918,26 +939,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/04-u-lexter-ai.jpg" length="229020" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/04-u-lexter-ai.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>mono.la: 81. The gap: framing.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/03-u-mono-la.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/03-u-mono-la</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
-
-The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-mono-la&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-mono-la
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #Vulnerability #DevOps #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/03-u-mono-la.jpg" length="228783" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/03-u-mono-la.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

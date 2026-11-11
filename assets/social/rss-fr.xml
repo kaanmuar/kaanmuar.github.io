@@ -260,6 +260,23 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Écrivez la liste des tests avant le code des tests.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-fr</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>QA</category>
+      <description>Choisir un framework, c’est la deuxième question. La première, c’est ce que fait cette page et ce qu’une vraie personne y essaierait.
+
+À essayer aujourd’hui : Avant votre prochain sprint d’automatisation, écrivez dix cas en langage clair. Ensuite, choisissez l’outil.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>unn.edu.ng contre uniport.edu.ng. unn.edu.ng pistes : 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng-fr.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng-fr</guid>
@@ -435,7 +452,9 @@ Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-tide-forec
 
 Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 
-#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #QAlab</description>
+#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #QAlab
+
+https://www.youtube.com/shorts/yTVL5Is8oz8</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/03-vs-tide-forecast-com.jpg" length="258538" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/03-vs-tide-forecast-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -473,7 +492,9 @@ Vérifiez : Ouvrez le rapport Pages de la Search Console et filtrez-le par votre
 
 Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-sitemap
 
-#SEO #Playwright #AI #QA #Sitemap #QAlab</description>
+#SEO #Playwright #AI #QA #Sitemap #QAlab
+
+https://www.youtube.com/shorts/_ESPYoKilzA</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" length="246412" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/12-myth-sitemap.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -862,6 +883,23 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Votre carte de partage, c’est une première impression.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/14-share-card-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/14-share-card-fr</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>SEO</category>
+      <description>Sans og:image ni og:title, chaque lien vers votre site s’affiche comme un rectangle gris dans les messageries et les fils.
+
+À essayer aujourd’hui : Collez votre lien dans une conversation privée avec vous-même. Ce que les gens y voient, c’est votre vraie première impression.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=share-card
+
+#SEO #OpenGraph #Marketing #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" length="222020" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/14-share-card.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>3 concurrents naturels. halloweencostumes.com est en tête : 75.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz-fr.html</link>
       <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz-fr</guid>
@@ -940,48 +978,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" length="238262" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>beau.to: 70. Le point faible : les liens cassés.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/03-u-beau-to-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/03-u-beau-to-fr</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 2 liens internes mènent à une erreur.
-
-La leçon pour chaque équipe : Vérifiez vos liens après chaque mise en production, et corrigez ou redirigez tous ceux qui répondent 404.
-
-Une analyse automatisée des pages publiques le 4 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-beau-to&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-beau-to
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" length="225482" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uacm.edu.mx: 56. La lacune : l’hébergeur du plan du site.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/07-u-uacm-edu-mx-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/07-u-uacm-edu-mx-fr</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Requested</category>
-      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 3823 les URL du plan de site pointent vers un autre hôte ou un autre système.
-
-La leçon pour chaque équipe : Servez sitemap.xml du même hôte que les pages qu'il répertorie et nommez-le en robots.txt.
-
-Une analyse automatisée des pages publiques le 5 novembre 2026, demandée via QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uacm-edu-mx
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab
-
-https://www.youtube.com/shorts/bfF-x2kuDpE</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" length="240044" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

@@ -2447,6 +2447,18 @@
    ],
    "at": "2026-11-10"
   },
+  "comunidad.madrid": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    ".madrid is a city or region ending",
+    "RDAP registrant in ES",
+    "written in es, spoken in ES"
+   ],
+   "at": "2026-11-11"
+  },
   "confidentalcr.com": {
    "country": "CR",
    "scope": "country",
@@ -2642,6 +2654,19 @@
     "Hand-checked card with no single country (Creative Commons)"
    ],
    "at": "2026-11-09"
+  },
+  "credifuerza.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +54 9 11 6593-6579",
+    "locale es-AR",
+    "locale es-AR"
+   ],
+   "at": "2026-11-11"
   },
   "creditop.com.py": {
    "country": "PY",
@@ -3607,6 +3632,16 @@
    ],
    "at": "2026-11-09"
   },
+  "draanaruggiero.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-10"
+  },
   "dracik.sk": {
    "country": "SK",
    "scope": "country",
@@ -3822,6 +3857,16 @@
     "written in es, spoken in CR"
    ],
    "at": "2026-11-09"
+  },
+  "ecoaire.net": {
+   "country": "CR",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-10"
   },
   "edifice.io": {
    "country": "FR",
@@ -4567,6 +4612,19 @@
     "in the CrUX top sites of SK only"
    ],
    "at": "2026-11-09"
+  },
+  "eurostarshotels.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "CIF/NIF printed (legal/contact page)",
+    "phone +34913342196",
+    "phone +34913342196 (legal/contact page)",
+    "address names ES (legal/contact page)"
+   ],
+   "at": "2026-11-11"
   },
   "evvelcevap.com": {
    "country": "TR",
@@ -5356,6 +5414,19 @@
    ],
    "at": "2026-11-09"
   },
+  "gptc.edu": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "schema.org addressCountry US (legal/contact page)",
+    ".edu is a US-only ending",
+    "written in en, spoken in US"
+   ],
+   "at": "2026-11-11"
+  },
   "gruaselsalvador.com": {
    "country": "SV",
    "scope": "country",
@@ -5951,6 +6022,19 @@
     "Hand-checked card with no single country (IKEA)"
    ],
    "at": "2026-11-09"
+  },
+  "imactions.agency": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +541150328065",
+    "phone +54.(11)5032-8065 (legal/contact page)",
+    "address names AR"
+   ],
+   "at": "2026-11-11"
   },
   "impactpool.org": {
    "country": "SE",
@@ -6896,6 +6980,19 @@
    ],
    "at": "2026-11-09"
   },
+  "linkana.com": {
+   "country": "BR",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BR",
+    "schema.org addressCountry BR (legal/contact page)",
+    "locale pt-BR",
+    "locale pt-BR"
+   ],
+   "at": "2026-11-11"
+  },
   "lisbonsmile.com": {
    "country": "PT",
    "scope": "country",
@@ -7232,6 +7329,19 @@
     "written in en, spoken in ZM"
    ],
    "at": "2026-11-09"
+  },
+  "mcrs.ms": {
+   "country": "MS",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +1 (664) 491-3816 (legal/contact page)",
+    "address names MS (legal/contact page)",
+    "in the CrUX top sites of MS only",
+    ".ms is often used as a generic ending"
+   ],
+   "at": "2026-11-11"
   },
   "medicaldent.in": {
    "country": "BO",
@@ -7614,6 +7724,19 @@
     "prices in ₹"
    ],
    "at": "2026-11-09"
+  },
+  "motorsport-total.com": {
+   "country": "DE",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "Handelsregister printed (legal/contact page)",
+    "locale de-DE",
+    "locale de-DE (legal/contact page)",
+    "written in de, spoken in DE"
+   ],
+   "at": "2026-11-11"
   },
   "motorz.tn": {
    "country": "TN",
@@ -8372,6 +8495,19 @@
     "NIT printed (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "okeydigital.net": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "schema.org addressCountry AR (legal/contact page)",
+    "phone +54 11 2273 5390",
+    "phone +54 11 2273 5390 (legal/contact page)"
+   ],
+   "at": "2026-11-11"
   },
   "okteto.com": {
    "country": "US",
@@ -10437,6 +10573,19 @@
    ],
    "at": "2026-11-09"
   },
+  "seolocalarg.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +5491170668675",
+    "phone +54 9 11 7066-8675 (legal/contact page)",
+    "locale es-AR"
+   ],
+   "at": "2026-11-11"
+  },
   "servi-madrid24.com": {
    "country": "ES",
    "scope": "country",
@@ -10691,6 +10840,19 @@
     "locale fr-FR"
    ],
    "at": "2026-11-09"
+  },
+  "sistemaisis.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "schema.org addressCountry AR (legal/contact page)",
+    "phone +54-11-2152-0011",
+    "phone +54-11-2152-0011 (legal/contact page)"
+   ],
+   "at": "2026-11-11"
   },
   "sisvaa.com": {
    "country": "EC",
@@ -12469,6 +12631,19 @@
    ],
    "at": "2026-11-09"
   },
+  "upwaydigitalsolutions.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "schema.org addressCountry AR (legal/contact page)",
+    "phone +54-11-5944-5536",
+    "phone +54-11-5944-5536 (legal/contact page)"
+   ],
+   "at": "2026-11-11"
+  },
   "urgentplumber.pt": {
    "country": "PT",
    "scope": "country",
@@ -12679,6 +12854,19 @@
    ],
    "at": "2026-11-09"
   },
+  "vincoed.com": {
+   "country": "MX",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry MX",
+    "address names MX",
+    "address names MX (legal/contact page)",
+    "locale es-MX"
+   ],
+   "at": "2026-11-11"
+  },
   "vineurology.com": {
    "country": "VI",
    "scope": "country",
@@ -12798,6 +12986,19 @@
     "written in en, spoken in US"
    ],
    "at": "2026-11-09"
+  },
+  "vnet-services.com": {
+   "country": "AT",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "Firmenbuch printed",
+    "Firmenbuch printed (legal/contact page)",
+    "phone +4322363983980",
+    "phone +4322363983980 (legal/contact page)"
+   ],
+   "at": "2026-11-11"
   },
   "vodafone.cz": {
    "country": "CZ",
@@ -12919,6 +13120,19 @@
     "written in es, spoken in VE"
    ],
    "at": "2026-11-09"
+  },
+  "web360.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +54-11-4096-5434",
+    "address names AR",
+    "locale es-AR"
+   ],
+   "at": "2026-11-11"
   },
   "webhexup.com": {
    "country": "CO",
@@ -13049,6 +13263,19 @@
     "in the CrUX top sites of BZ only"
    ],
    "at": "2026-11-09"
+  },
+  "wubook.net": {
+   "country": "IT",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "Partita IVA printed",
+    "Partita IVA printed (legal/contact page)",
+    "address names IT",
+    "address names IT (legal/contact page)"
+   ],
+   "at": "2026-11-11"
   },
   "xelapan.com": {
    "country": "GT",

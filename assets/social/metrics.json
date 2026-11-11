@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-10T11:23:54.715Z",
+ "updatedAt": "2026-11-11T11:20:15.305Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -220,8 +220,9 @@
     "comments": 1
    },
    "tiktok": {
-    "views": 128,
-    "likes": 2
+    "impressions": 114,
+    "views": 169,
+    "likes": 4
    },
    "youtube": {
     "views": 14
@@ -244,6 +245,10 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
    }
   },
   "auto-2026-10-22/10-u-uniminuto-edu": {
@@ -252,15 +257,34 @@
     "likes": 1
    },
    "linkedin": {
-    "impressions": 1
+    "impressions": 7
    },
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 100,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-10-22/11-u-davibank-com": {
    "facebook": {
     "impressions": 1,
+    "likes": 1
+   },
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
     "likes": 1
    }
   },
@@ -431,6 +455,7 @@
     "comments": 1
    },
    "tiktok": {
+    "impressions": 1,
     "views": 7,
     "likes": 1
    },
@@ -438,10 +463,10 @@
     "impressions": 2
    },
    "telegram": {
-    "views": 2
+    "views": 3
    },
    "youtube": {
-    "views": 13
+    "views": 12
    },
    "reddit": {
     "likes": 1
@@ -459,7 +484,7 @@
     "likes": 4
    },
    "x": {
-    "impressions": 6,
+    "impressions": 7,
     "comments": 2
    },
    "youtube": {
@@ -484,7 +509,7 @@
     "comments": 3
    },
    "x": {
-    "impressions": 6,
+    "impressions": 12,
     "comments": 2
    },
    "youtube": {
@@ -580,7 +605,7 @@
   },
   "auto-2026-11-03/02-u-iteso-mx": {
    "tiktok": {
-    "impressions": 83,
+    "impressions": 87,
     "views": 93,
     "likes": 1
    },
@@ -588,7 +613,7 @@
     "likes": 1
    },
    "telegram": {
-    "views": 2
+    "views": 3
    },
    "youtube": {
     "views": 7,
@@ -628,7 +653,7 @@
   },
   "auto-2026-11-04/01-u-selia-co": {
    "telegram": {
-    "views": 2
+    "views": 3
    },
    "linkedin": {
     "impressions": 11,
@@ -721,7 +746,9 @@
     "comments": 1
    },
    "tiktok": {
-    "views": 78
+    "impressions": 78,
+    "views": 79,
+    "likes": 1
    },
    "youtube": {
     "views": 3
@@ -740,6 +767,10 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 2,
+    "likes": 1
    }
   },
   "auto-2026-11-05/07-u-uacm-edu-mx": {
@@ -752,11 +783,15 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
    }
   },
   "auto-2026-11-05/13-u-get-moment-com": {
    "telegram": {
-    "views": 1
+    "views": 2
    },
    "linkedin": {
     "impressions": 4,
@@ -764,17 +799,43 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
    }
   },
   "auto-2026-11-06/06-u-kra-co-kr": {
    "linkedin": {
-    "impressions": 3
+    "impressions": 7
    },
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 87,
+    "likes": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-11-08/04-vs-beebom-com": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
+   }
+  },
+  "auto-2026-11-09/03-vs-tide-forecast-com": {
    "telegram": {
     "views": 1
    },
@@ -1006,7 +1067,7 @@
     "likes": 1
    },
    "tiktok": {
-    "impressions": 1,
+    "impressions": 2,
     "views": 3,
     "likes": 2
    },
@@ -1047,14 +1108,15 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 2,
+    "impressions": 1,
+    "views": 3,
     "likes": 1
    },
    "telegram": {
     "views": 2
    },
    "youtube": {
-    "views": 97,
+    "views": 96,
     "likes": 1
    },
    "reddit": {
@@ -1076,8 +1138,9 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 99,
-    "likes": 2
+    "impressions": 97,
+    "views": 100,
+    "likes": 3
    },
    "youtube": {
     "views": 8
@@ -1092,9 +1155,13 @@
     "likes": 1
    },
    "youtube": {
-    "views": 2
+    "views": 5
    },
    "reddit": {
+    "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
     "likes": 1
    }
   },
@@ -1107,6 +1174,21 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 6
+   }
+  },
+  "evergreen-2026-11/12-myth-sitemap": {
+   "telegram": {
+    "views": 1
    }
   },
   "launch-2026-10/en/a11y": {
@@ -1134,7 +1216,7 @@
   },
   "launch-2026-10/en/frameworks": {
    "tiktok": {
-    "impressions": 149,
+    "impressions": 150,
     "views": 165,
     "likes": 6
    },
@@ -1203,7 +1285,7 @@
   },
   "live/2026-11-06": {
    "telegram": {
-    "views": 2
+    "views": 3
    },
    "reddit": {
     "likes": 1
@@ -1226,6 +1308,14 @@
    }
   },
   "live/2026-11-09": {
+   "telegram": {
+    "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "live/2026-11-10": {
    "telegram": {
     "views": 1
    },
@@ -1283,7 +1373,7 @@
     "likes": 1
    },
    "tiktok": {
-    "impressions": 1,
+    "impressions": 2,
     "views": 3,
     "likes": 2
    },
@@ -1299,7 +1389,8 @@
   },
   "promo-social-hub-2026-10/16-six-languages-de": {
    "tiktok": {
-    "views": 6,
+    "impressions": 1,
+    "views": 7,
     "likes": 1
    },
    "telegram": {
@@ -1331,10 +1422,17 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 76
+    "impressions": 6,
+    "views": 78,
+    "likes": 1
    },
    "youtube": {
-    "views": 6
+    "views": 7
+   }
+  },
+  "promo-social-hub-2026-10/26-real-reviews-it": {
+   "telegram": {
+    "views": 1
    }
   },
   "runs-3/01-ilo": {
@@ -1397,11 +1495,12 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 163,
-    "likes": 8
+    "impressions": 163,
+    "views": 164,
+    "likes": 9
    },
    "youtube": {
-    "views": 13
+    "views": 14
    }
   },
   "skits-friday-release/02-friday-release-es": {
@@ -1410,6 +1509,16 @@
    },
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 5,
+    "likes": 1
+   },
+   "youtube": {
+    "views": 6
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "tips-2026-10/01-img-size": {
@@ -1516,7 +1625,7 @@
     "likes": 1
    },
    "tiktok": {
-    "impressions": 109,
+    "impressions": 110,
     "views": 121,
     "likes": 5
    },
@@ -1564,14 +1673,14 @@
   },
   "tips-2026-10/10-keyboard": {
    "telegram": {
-    "views": 2
+    "views": 3
    },
    "linkedin": {
     "impressions": 29,
     "likes": 1
    },
    "tiktok": {
-    "impressions": 1,
+    "impressions": 2,
     "views": 3,
     "likes": 2,
     "comments": 1
@@ -1596,6 +1705,7 @@
     "likes": 1
    },
    "tiktok": {
+    "impressions": 1,
     "views": 2,
     "likes": 1
    },
@@ -1603,7 +1713,7 @@
     "impressions": 3
    },
    "telegram": {
-    "views": 172
+    "views": 203
    },
    "reddit": {
     "likes": 1
@@ -1624,10 +1734,12 @@
     "likes": 1
    },
    "tiktok": {
-    "views": 84
+    "impressions": 83,
+    "views": 85,
+    "likes": 1
    },
    "x": {
-    "impressions": 2
+    "impressions": 3
    },
    "youtube": {
     "views": 39
@@ -1650,17 +1762,37 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
    }
   },
   "tips-2026-10/14-share-card": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 68,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 6
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "tips-2026-10/15-csp-report-only": {
    "facebook": {
     "impressions": 3,
     "likes": 1
+   },
+   "telegram": {
+    "views": 1
    }
   },
   "tips-2026-10/17-robots-ai": {
@@ -1754,7 +1886,7 @@
     "likes": 4
    },
    "tiktok": {
-    "impressions": 108,
+    "impressions": 109,
     "views": 119,
     "likes": 4
    },
@@ -1795,16 +1927,16 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 98,
-   "answered": 98,
-   "insights": 98
+   "asked": 103,
+   "answered": 103,
+   "insights": 103
   }
  },
  "channels": {
   "telegram": {
    "chat": "@qalab_live",
    "members": 2,
-   "at": "2026-11-10T11:23:54.715Z",
+   "at": "2026-11-11T11:20:15.305Z",
    "history": [
     {
      "date": "2026-11-05",
@@ -1828,6 +1960,10 @@
     },
     {
      "date": "2026-11-10",
+     "members": 2
+    },
+    {
+     "date": "2026-11-11",
      "members": 2
     }
    ]

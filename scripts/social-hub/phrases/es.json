@@ -72,6 +72,10 @@
   "text": "⟦1⟧ líderes en SEO, Seguridad; ⟦2⟧ lidera en GEO; ⟦3⟧ lidera en Análisis, Accesibilidad, Rendimiento.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics, Accessibility; ⟦3⟧ leads in Security, Performance. ⟦4⟧ leads in none of the six areas.": {
+  "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ líderes en GEO, Análisis, Accesibilidad; ⟦3⟧ lidera en Seguridad, Rendimiento. ⟦4⟧ lidera en ninguna de las seis áreas.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Analytics, Security, Accessibility, Performance. ⟦3⟧ leads in none of the six areas.": {
   "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ lidera en GEO, Análisis, Seguridad, Accesibilidad, Rendimiento. ⟦3⟧ lidera en ninguna de las seis áreas.",
   "machine": true
@@ -135,6 +139,10 @@
  "⟦1⟧ waits on ⟦2⟧ scripts.": "⟦1⟧ espera a ⟦2⟧ scripts.",
  "⟦1⟧-second trick card.": "Tarjeta de truco de ⟦1⟧ segundos.",
  "⟦1⟧-second trick:": "Truco de ⟦1⟧ segundos:",
+ "⟦1⟧, ⟦2⟧ pages analyzed, ⟦3⟧ Nov ⟦4⟧.": {
+  "text": "⟦1⟧, ⟦2⟧ páginas analizadas, ⟦3⟧ noviembre ⟦4⟧.",
+  "machine": true
+ },
  "⟦1⟧, a sitemap in ⟦2⟧, and pages that name their language.": "⟦1⟧, un sitemap en ⟦2⟧ y páginas que declaran su idioma.",
  "⟦1⟧, a strict content security policy, and framing denied. ⟦2⟧ even keeps AI bots off images only.": "⟦1⟧, una política de seguridad de contenido estricta y framing denegado. ⟦2⟧ incluso aleja a los bots de IA solo de las imágenes.",
  "⟦1⟧, but no JSON-LD.": "⟦1⟧, pero sin JSON-LD.",
@@ -1992,6 +2000,10 @@
  "Nariño's home page is ⟦1⟧ KB of HTML.": "La portada de Nariño pesa ⟦1⟧ KB de HTML.",
  "NASA is wide open to AI search.": "La NASA está totalmente abierta a la búsqueda con IA.",
  "NatGeo sets cookies without Secure.": "NatGeo pone cookies sin Secure.",
+ "Natural competitors found on…": {
+  "text": "Competidores naturales encontrados en...",
+  "machine": true
+ },
  "Natural competitors found…": {
   "text": "Se encontraron competidores naturales...",
   "machine": true
@@ -2438,6 +2450,10 @@
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación…",
   "machine": true
  },
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧…": {
+  "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧;…": "Puntuaciones comparadas: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analítica ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analítica ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧;…",
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧.": {
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧.",
@@ -2572,6 +2588,10 @@
  "Send Strict-Transport-Security with max-age=⟦1⟧ on every https response once all subdomains serve https.": "Envía Strict-Transport-Security con max-age=⟦1⟧ en cada respuesta https cuando todos los subdominios sirvan https.",
  "Send X-Content-Type-Options: nosniff on every response.": "Envía X-Content-Type-Options: nosniff en cada respuesta.",
  "Send X-Content-Type-Options: nosniff, and X-Frame-Options:": "Envía X-Content-Type-Options: nosniff, y X-Frame-Options:",
+ "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧.": {
+  "text": "SEO ⟦1⟧, GEO ⟦2⟧, Análisis ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧.",
+  "machine": true
+ },
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ page analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analítica ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. ⟦7⟧, ⟦8⟧ página analizada, ⟦9⟧ oct. ⟦10⟧.",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Nov ⟦10⟧.": {
   "text": "SEO ⟦1⟧, GEO ⟦2⟧, Análisis ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. ⟦7⟧, ⟦8⟧ páginas analizadas, ⟦9⟧ noviembre ⟦10⟧.",
