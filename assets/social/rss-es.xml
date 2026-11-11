@@ -260,23 +260,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Escribe la lista de pruebas antes del código de pruebas.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/16-list-first-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>QA</category>
-      <description>Elegir un framework es la segunda pregunta. Lo primero es qué hace esta página y qué intentaría hacer en ella una persona real.
-
-Prueba esto hoy: Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano. Después elige la herramienta.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
-
-#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>unn.edu.ng contra uniport.edu.ng. unn.edu.ng pistas: 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng-es.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng-es</guid>
@@ -949,6 +932,20 @@ Vía GitHub, por rankingmyseo, 2026-10-23.
 
 https://github.com/rankmyseo/skills</description>
       <media:content url="https://opengraph.githubassets.com/1/rankmyseo/skills" medium="image"/>
+    </item>
+    <item>
+      <title>HTML semántico y accesibilidad: lo que aprendí y arreglé</title>
+      <link>https://carlosandmunoz.com/social/pick/semantic-html-accessibility-what-i-learned-and-fixed-es.html</link>
+      <guid isPermaLink="false">pick/semantic-html-accessibility-what-i-learned-and-fixed-es</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Accessibility</category>
+      <description>Introducción Cuando comencé a aprender desarrollo web a través del programa IYF Season 12, aprendí...
+
+Vía DEV, de Jaja juliana, 2026-11-07.
+
+https://dev.to/magdalenewanyeki/semantic-html-accessibility-what-i-learned-and-fixed-5ln</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flu1rkab6g8uvvuiuc5ev.png" medium="image"/>
     </item>
   </channel>
 </rss>
