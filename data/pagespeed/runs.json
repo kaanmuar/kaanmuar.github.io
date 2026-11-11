@@ -1,6 +1,345 @@
 {
  "runs": [
   {
+   "at": "2026-11-11T17:14:05.804Z",
+   "run": {
+    "id": 43026441365,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/43026441365"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1763,
+   "scored": 1762,
+   "failed": 1,
+   "below": 1167,
+   "avg": {
+    "mobile": 85,
+    "desktop": 98
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-11",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/pt/a11y.html",
+     "social/launch-2026-10/pt/exports.html",
+     "social/launch-2026-10/pt/first-read.html",
+     "social/launch-2026-10/pt/frameworks.html",
+     "social/launch-2026-10/pt/inherited.html",
+     "social/launch-2026-10/pt/layers.html",
+     "social/launch-2026-10/pt/performance.html",
+     "social/launch-2026-10/pt/release.html",
+     "social/launch-2026-10/pt/security.html",
+     "social/launch-2026-10/pt/talking.html",
+     "social/promo-social-hub-2026-10/03-one-page-pt.html",
+     "social/promo-social-hub-2026-10/04-one-page-fr.html",
+     "social/promo-social-hub-2026-10/08-copy-caption-pt.html",
+     "social/promo-social-hub-2026-10/09-copy-caption-de.html",
+     "social/promo-social-hub-2026-10/11-clips-pt.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-darpan-shah.html",
+      "mobile": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 91,
+       "after": 92,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-darpan-shah.html"
+     },
+     {
+      "file": "social/auto-2026-10-22/11-u-davibank-com-it.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com-it.html"
+     },
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-kevin-korenhof-es.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 88,
+       "after": 88,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-kevin-korenhof-es.html"
+     },
+     {
+      "file": "social/tips-2026-10/13-consent-before-es.html",
+      "mobile": {
+       "before": 93,
+       "after": 93,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-es.html"
+     },
+     {
+      "file": "social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt.html",
+      "mobile": {
+       "before": 90,
+       "after": 90,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt.html"
+     },
+     {
+      "file": "social/auto-2026-10-22/10-u-uniminuto-edu-de.html",
+      "mobile": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-22/10-u-uniminuto-edu-de.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "7 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-11",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-es.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "assets/social/rss.xml",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/launch-2026-10/pt/a11y.html",
+     "social/launch-2026-10/pt/exports.html",
+     "social/launch-2026-10/pt/first-read.html",
+     "social/launch-2026-10/pt/frameworks.html",
+     "social/launch-2026-10/pt/inherited.html",
+     "social/launch-2026-10/pt/layers.html",
+     "social/launch-2026-10/pt/performance.html",
+     "social/launch-2026-10/pt/release.html",
+     "social/launch-2026-10/pt/security.html",
+     "social/launch-2026-10/pt/talking.html",
+     "social/promo-social-hub-2026-10/03-one-page-pt.html",
+     "social/promo-social-hub-2026-10/04-one-page-fr.html",
+     "social/promo-social-hub-2026-10/08-copy-caption-pt.html",
+     "social/promo-social-hub-2026-10/09-copy-caption-de.html",
+     "social/promo-social-hub-2026-10/11-clips-pt.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-darpan-shah.html",
+      "mobile": {
+       "before": 77,
+       "after": 100,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 93,
+       "after": 91,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-darpan-shah.html"
+     },
+     {
+      "file": "social/auto-2026-10-22/11-u-davibank-com-it.html",
+      "mobile": {
+       "before": 92,
+       "after": 100,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-22/11-u-davibank-com-it.html"
+     },
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-kevin-korenhof-es.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 89,
+       "after": 89,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-kevin-korenhof-es.html"
+     },
+     {
+      "file": "social/tips-2026-10/13-consent-before-es.html",
+      "mobile": {
+       "before": 93,
+       "after": 100,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/tips-2026-10/13-consent-before-es.html"
+     },
+     {
+      "file": "social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt.html",
+      "mobile": {
+       "before": 85,
+       "after": 89,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 90,
+       "after": 90,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/aria-selected-on-tabs-the-selected-tab-that-lies-wcag-4-1-2-pt.html"
+     },
+     {
+      "file": "social/auto-2026-10-22/10-u-uniminuto-edu-de.html",
+      "mobile": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-22/10-u-uniminuto-edu-de.html"
+     }
+    ],
+    "verdict": {
+     "up": true,
+     "reason": "Rose on social/pick/cypress-ambassador-spotlight-darpan-shah.html (mobile 77 → 100), social/auto-2026-10-22/11-u-davibank-com-it.html (mobile 92 → 100), social/tips-2026-10/13-consent-before-es.html (mobile 93 → 100) and 1 more; nothing fell more than 2.",
+     "drops": 0,
+     "rises": 4,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-10T17:37:39.033Z",
    "run": {
     "id": 42828887072,
