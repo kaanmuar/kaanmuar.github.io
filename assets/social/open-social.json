@@ -805,6 +805,26 @@
     "checked": "2026-11-11T17:54:00.554Z"
    }
   ],
+  "auto-2026-11-11/01-u-808ball16-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n24unaear52n",
+    "at": "2026-11-12T16:17:36.219Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n24unaear52n",
+    "checked": "2026-11-12T16:17:38.129Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18059731007652501",
+    "at": "2026-11-12T16:17:41.206Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Dfpd9guk57W",
+    "checked": "2026-11-12T16:18:58.636Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -1079,6 +1099,26 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfnyQGwoOVq",
     "checked": "2026-11-12T00:37:44.190Z"
+   }
+  ],
+  "compare-2026-11b/02-medellin-universities": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n24unc24m42u",
+    "at": "2026-11-12T16:17:38.129Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n24unc24m42u",
+    "checked": "2026-11-12T16:17:39.905Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18398661595161484",
+    "at": "2026-11-12T16:18:58.636Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfpeH44DhGa",
+    "checked": "2026-11-12T16:20:15.053Z"
    }
   ],
   "digest-2026-10-30/01-this-week": [

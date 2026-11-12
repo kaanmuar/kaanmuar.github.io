@@ -210,6 +210,17 @@
     "checked": "2026-11-11T17:56:17.297Z"
    }
   ],
+  "auto-2026-11-11/01-u-808ball16-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "58",
+    "at": "2026-11-12T16:20:16.427Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/58",
+    "checked": "2026-11-12T16:20:22.022Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -230,6 +241,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/56",
     "checked": "2026-11-12T00:39:46.587Z"
+   }
+  ],
+  "compare-2026-11b/02-medellin-universities": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "59",
+    "at": "2026-11-12T16:20:22.022Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/59",
+    "checked": "2026-11-12T16:20:26.823Z"
    }
   ],
   "evergreen-2026-11/02-myth-lighthouse": [
