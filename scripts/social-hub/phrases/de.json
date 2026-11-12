@@ -39,6 +39,10 @@
   "text": "⟦1⟧ führend in SEO, Analytics, Performance; ⟦2⟧ führt in den Bereichen GEO, Sicherheit, Barrierefreiheit.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Analytics, Security, Performance; ⟦2⟧ leads in GEO, Accessibility.": {
+  "text": "⟦1⟧ führt in den Bereichen SEO, Analytics, Sicherheit, Leistung; ⟦2⟧ führt in GEO, Barrierefreiheit.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
   "text": "⟦1⟧ führt in SEO, Analytics; ⟦2⟧ führt in GEO, Sicherheit, Zugänglichkeit, Leistung.",
   "machine": true
@@ -53,6 +57,10 @@
  },
  "⟦1⟧ leads in SEO, GEO, Security, Accessibility; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Performance.": {
   "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit, Barrierefreiheit; ⟦2⟧ führt in Analytics; ⟦3⟧ führt in der Leistung.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Accessibility, Performance.": {
+  "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit; ⟦2⟧ führt in Analytics; ⟦3⟧ führt in den Bereichen Zugänglichkeit und Leistung.",
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ führt bei SEO und GEO; ⟦2⟧ führt bei Analytics, Sicherheit, Barrierefreiheit und Performance.",

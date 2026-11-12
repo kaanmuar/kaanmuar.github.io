@@ -1,5 +1,9 @@
 {
  "\"Choose which email and push alerts you...": "\"Elige qué alertas por correo electrónico y push...",
+ "“F*** Keywords” – Well, What Are You Replacing Them With? via ⟦1⟧, ⟦2⟧": {
+  "text": "“F*** palabras clave” – Bueno, ¿con qué las estás reemplazando? vía ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
  "\"Home\" alone wastes the slot.": "\"Home\" a secas desperdicia el espacio.",
  "\"Is my website accessible?\" is a question more business...": "\"¿Mi sitio web es accesible?\" es una pregunta que cada vez más negocios...",
  "\"Semana - Últimas Noticias de Colombia y el Mundo\".": "\"Semana - Últimas Noticias de Colombia y el Mundo\".",
@@ -39,6 +43,10 @@
   "text": "⟦1⟧ líderes en SEO, análisis y rendimiento; ⟦2⟧ lidera en GEO, Seguridad, Accesibilidad.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Analytics, Security, Performance; ⟦2⟧ leads in GEO, Accessibility.": {
+  "text": "⟦1⟧ líderes en SEO, análisis, seguridad, rendimiento; ⟦2⟧ lidera en GEO, Accesibilidad.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
   "text": "⟦1⟧ clientes potenciales en SEO, análisis; ⟦2⟧ lidera en GEO, Seguridad, Accesibilidad, Rendimiento.",
   "machine": true
@@ -53,6 +61,10 @@
  },
  "⟦1⟧ leads in SEO, GEO, Security, Accessibility; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Performance.": {
   "text": "⟦1⟧ líderes en SEO, GEO, Seguridad, Accesibilidad; ⟦2⟧ clientes potenciales en Analytics; ⟦3⟧ lidera en Rendimiento.",
+  "machine": true
+ },
+ "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Accessibility, Performance.": {
+  "text": "⟦1⟧ líderes en SEO, GEO, Seguridad; ⟦2⟧ clientes potenciales en Analytics; ⟦3⟧ lidera en Accesibilidad, Rendimiento.",
   "machine": true
  },
  "⟦1⟧ leads in SEO, GEO; ⟦2⟧ leads in Analytics, Security, Accessibility, Performance.": "⟦1⟧ lidera en SEO y GEO; ⟦2⟧ lidera en Analítica, Seguridad, Accesibilidad y Rendimiento.",
@@ -194,6 +206,10 @@
  "A ⟦1⟧ there means crawlers lose your map.": "Un ⟦1⟧ ahí significa que los rastreadores pierden tu mapa.",
  "A ~⟦1⟧-line Python script that runs PageSpeed Insights for a list of URLs with concurrency, retries and quota handling, separates lab data from real-user CrUX data (LCP, INP, CLS) and writes one CSV.": {
   "text": "Un script Python de ~⟦1⟧ línea que ejecuta PageSpeed ​​Insights para obtener una lista de URL con simultaneidad, reintentos y manejo de cuotas, separa los datos de laboratorio de los datos CrUX del usuario real (LCP, INP, CLS) y escribe un CSV.",
+  "machine": true
+ },
+ "A Background Tab Alone Didn't Fix It.": {
+  "text": "Una pestaña de fondo por sí sola no solucionó el problema.",
   "machine": true
  },
  "A broken link is a test you forgot to write.": "Un enlace roto es una prueba que olvidaste escribir.",
@@ -514,6 +530,10 @@
   "machine": true
  },
  "Axe-core ⟦1⟧ now runs the WCAG ⟦2⟧ Label in Name rule by default.": "Axe-core ⟦1⟧ ya ejecuta por defecto la regla de WCAG ⟦2⟧, Etiqueta en el nombre.",
+ "Bad pSEO:": {
+  "text": "Mal pSEO:",
+  "machine": true
+ },
  "Bancolombia has the faster pages, ⟦1⟧ to ⟦2⟧, and analytics is tied at ⟦3⟧.": "Bancolombia tiene las páginas más rápidas, ⟦1⟧ a ⟦2⟧, y en analítica empatan a ⟦3⟧.",
  "Bancolombia's site won't let you zoom.": "El sitio de Bancolombia no te deja hacer zoom.",
  "Bar chart: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.": "Gráfico de barras: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.",
@@ -595,6 +615,10 @@
  "Build a Static Site with Interactive Components": "Crea un sitio estático con componentes interactivos",
  "Build an organic growth stack around the sources Google's AI answers and standalone chatbots cite most in your category.": {
   "text": "Cree una pila de crecimiento orgánico en torno a las fuentes que las respuestas de inteligencia artificial de Google y los chatbots independientes citan más en su categoría.",
+  "machine": true
+ },
+ "Build programmatic SEO pages that earn their place with unique data, clear publishing standards, and pruning rules that keep scale from becoming spam.": {
+  "text": "Cree páginas SEO programáticas que se ganen su lugar con datos únicos, estándares de publicación claros y reglas de poda que eviten que la escala se convierta en spam.",
   "machine": true
  },
  "Build sitemap URLs from the public https host, and recheck after any server move.": "Genera las URLs del sitemap desde el host https público y vuelve a revisarlas tras cualquier cambio de servidor.",
@@ -1115,6 +1139,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decide bot por bot en ⟦1⟧: permite los motores de respuestas por los que quieres que…",
+ "Declaring keywords dead is easy.": {
+  "text": "Declarar palabras clave muertas es fácil.",
+  "machine": true
+ },
  "Default both to denied where consent is required, and grant them on acceptance.": "Pon ambos en denied por defecto donde se requiera consentimiento y concédelos al aceptar.",
  "Default to camera=(), microphone=(), geolocation=().": "Por defecto, camera=(), microphone=(), geolocation=().",
  "Defensoría's HTML weighs over ⟦1⟧ MB.": "El HTML de la Defensoría pesa más de ⟦1⟧ MB.",
@@ -1251,6 +1279,10 @@
  "Éxito's title says ⟦1⟧ twice.": "El título de Éxito dice ⟦1⟧ dos veces.",
  "Exorcise it today:": "Exorcízalo hoy:",
  "Exorcise it:": "Exorcízalo:",
+ "Explaining what you’ll track, how you’ll govern content, and what stakeholders buy into is the harder part.": {
+  "text": "Explicar qué rastrearás, cómo gobernarás el contenido y qué aceptan las partes interesadas es la parte más difícil.",
+  "machine": true
+ },
  "Fact:": "Realidad:",
  "Facts in the HTML (pass): ⟦1⟧What we do⟦2⟧, ⟦3⟧Who it is for…⟦4⟧.": "Datos en el HTML (aprobado): ⟦1⟧Qué hacemos⟦2⟧, ⟦3⟧Para quién es…⟦4⟧.",
  "Falabella's home declares no language.": "La portada de Falabella no declara idioma.",
@@ -1379,6 +1411,10 @@
  "Go through the images on your top page.": "Revisa las imágenes de tu página principal.",
  "Good is ⟦1⟧ seconds or less for at least ⟦2⟧ of page loads.": "Lo bueno es ⟦1⟧ segundos o menos en al menos el ⟦2⟧ de las cargas de página.",
  "Good sites deliver it in under ⟦1⟧ s.": "Los buenos sitios lo entregan en menos de ⟦1⟧ s.",
+ "Good Vs.": {
+  "text": "Bueno vs.",
+  "machine": true
+ },
  "Google": "Google",
  "Google AI Mode Adds Booking and Quote Links for Home Services": {
   "text": "El modo Google AI agrega enlaces de reserva y cotización para servicios para el hogar",
@@ -1403,6 +1439,10 @@
   "machine": true
  },
  "Google has been moving the results page away from fixed modules for a couple of years, and a Google Research paper, Generative UI:": "Desde hace un par de años, Google ha ido alejando la página de resultados de los módulos fijos, y un artículo de Google Research, Generative UI:",
+ "Google has begun rolling out its November ⟦1⟧ core update globally and says it may take up to two weeks to complete.": {
+  "text": "Google ha comenzado a implementar su actualización principal del ⟦1⟧ de noviembre a nivel mundial y dice que puede tardar hasta dos semanas en completarse.",
+  "machine": true
+ },
  "Google has expanded AI Mode in Search to surface direct booking and quote links for home services in...": {
   "text": "Google ha ampliado el modo AI en la búsqueda para mostrar enlaces de reserva directa y cotización de servicios para el hogar en...",
   "machine": true
@@ -1462,6 +1502,10 @@
  "Google's John Mueller said raw square brackets and their encoded form, %⟦1⟧B and %⟦2⟧D, make two different URLs.": "John Mueller, de Google, dijo que los corchetes sin codificar y su forma codificada, %⟦1⟧B y %⟦2⟧D, son dos URL distintas.",
  "Google's John Mueller says raw and percent-encoded brackets are different URLs and recommends using one form across links, canonical tags, and sitemaps.": {
   "text": "John Mueller de Google dice que los corchetes sin formato y codificados por porcentaje son URL diferentes y recomienda usar un formulario en todos los enlaces, etiquetas canónicas y mapas de sitio.",
+  "machine": true
+ },
+ "Google’s November ⟦1⟧ Core Update Starts Rolling Out via ⟦2⟧, ⟦3⟧": {
+  "text": "La actualización principal del ⟦1⟧ de noviembre de Google comienza a implementarse a través de ⟦2⟧, ⟦3⟧",
   "machine": true
  },
  "Google’s own announcement […] The post How Do We Move Forward if the SERP Is Generative?…": "El propio anuncio de Google […] La entrada ¿Cómo avanzamos si la SERP es generativa?…",
@@ -1566,6 +1610,10 @@
  },
  "How to connect Claude Code to Cypress": "Cómo conectar Claude Code con Cypress",
  "How to find broken links with Playwright (a test you can drop into CI)": "Cómo encontrar enlaces rotos con Playwright (una prueba que puedes agregar a tu CI)",
+ "How to fix flaky Playwright tests: a step-by-step checklist": {
+  "text": "Cómo solucionar pruebas de dramaturgia deficientes: una lista de verificación paso a paso",
+  "machine": true
+ },
  "How To Prove A Change Actually Worked": {
   "text": "Cómo demostrar que un cambio realmente funcionó",
   "machine": true
@@ -1832,6 +1880,14 @@
   "machine": true
  },
  "Learn more here.": "Obtén más información aquí.",
+ "Learnings From A Decade Of Building Scalable Content Engines appeared first on Search Engine Journal .": {
+  "text": "Los aprendizajes de una década de creación de motores de contenido escalables aparecieron por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "Learnings From A Decade Of Building Scalable Content Engines via ⟦1⟧, ⟦2⟧": {
+  "text": "Aprendizajes de una década de creación de motores de contenido escalables a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
  "Lesson:": "Lección:",
  "Lesson: hreflang alternates must point to the same page in each language, including the page itself.": "Lección: las alternativas hreflang deben apuntar a la misma página en cada idioma, incluida la propia página.",
  "Let people zoom; the layout can cope.": "Deja que la gente haga zoom; el diseño lo aguanta.",
@@ -2059,6 +2115,10 @@
  "October's Live Reports followed the internal links of ⟦1⟧ public sites: on ⟦2⟧ every link answered, on ⟦3⟧ at least one led to a page that is gone, and on ⟦4⟧ of those the dead link was on the home page.": "Los Live Reports de octubre siguieron los enlaces internos de ⟦1⟧ sitios públicos: en ⟦2⟧ respondieron todos los enlaces, en ⟦3⟧ al menos uno llevaba a una página que ya no existe y en ⟦4⟧ de ellos el enlace muerto estaba en la página de inicio.",
  "Old links and typed addresses still arrive there.": "Los enlaces antiguos y las direcciones tecleadas siguen llegando ahí.",
  "On ⟦1⟧ sites, at least one led to a page that is gone.": "En ⟦1⟧ sitios, al menos uno llevaba a una página que ya no existe.",
+ "On a Mac, Playwright's new_page() brought a headed Chrome to the front, so I opened tabs through CDP and hid the browser with a launch wrapper.": {
+  "text": "En una Mac, new_page() de Playwright trajo un Chrome con encabezado al frente, así que abrí pestañas a través de CDP y oculté el navegador con un contenedor de inicio.",
+  "machine": true
+ },
  "On Google, ⟦1⟧ […] The post How the Same ⟦2⟧ Users Behave in AI Search vs.": "En Google, ⟦1⟧ […] La entrada Cómo se comportan los mismos ⟦2⟧ usuarios en la búsqueda con IA vs.",
  "One attribute fixes every page at once.": "Un atributo arregla todas las páginas a la vez.",
  "One attribute fixes every page.": "Un atributo arregla todas las páginas.",
@@ -2233,6 +2293,10 @@
  },
  "Playwright request fixture.": "Fixture request de Playwright.",
  "Playwright v1.⟦1⟧": "Playwright v1.⟦1⟧",
+ "Playwright's new_page() Pulled Chrome to the Front.": {
+  "text": "New_page() del dramaturgo llevó a Chrome al frente.",
+  "machine": true
+ },
  "PlopUI: hand-drawn React UI kit, imperfect on purpose.": {
   "text": "PlopUI: kit de interfaz de usuario de React dibujado a mano, imperfecto a propósito.",
   "machine": true
@@ -2377,6 +2441,10 @@
  "Replace ALLOW-FROM with Content-Security-Policy: frame-ancestors 'self' plus the one partner you allow.": "Sustituye ALLOW-FROM por Content-Security-Policy: frame-ancestors 'self' más el único socio que permitas.",
  "Report-Only shows what would be blocked, so you can enforce with confidence a week later.": "Report-Only muestra lo que se bloquearía, así que una semana después puedes aplicarla con confianza.",
  "Reporting SEO when GA4 sees less": "Informar de SEO cuando GA4 ve menos",
+ "Reproduce the flake, read the trace, then fix timing, selectors, shared data or the CI environment, in that order.": {
+  "text": "Reproduzca la escama, lea el seguimiento y luego corrija la sincronización, los selectores, los datos compartidos o el entorno de CI, en ese orden.",
+  "machine": true
+ },
  "Request your error page and every PDF you link to.": "Pide tu página de error y cada PDF que enlazas.",
  "Research is how you answer these questions, and how you keep up with what’s changing in AI search.": {
   "text": "La investigación es la forma de responder estas preguntas y de mantenerse al día con los cambios en la búsqueda con IA.",
@@ -2906,6 +2974,10 @@
  "The Planetarium skips a link in its TLS chain.": "El Planetario omite un eslabón de su cadena TLS.",
  "The poltergeist layout shift: the button moved by itself.": "El poltergeist del diseño: el botón se movió solo.",
  "The portal for more than ⟦1⟧ government procedures sends an HTML body with almost no text.": "El portal de más de ⟦1⟧ trámites del gobierno envía un HTML casi sin texto.",
+ "The post “F*** Keywords” – Well, What Are You Replacing Them With? appeared first on Search Engine Journal .": {
+  "text": "La publicación “F*** palabras clave” – Bueno, ¿con qué las estás reemplazando? apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
  "The post AI Knows Your Brand – It Rarely Puts You On The Shortlist appeared first on Search Engine Journal .": {
   "text": "La publicación La IA conoce su marca: rara vez lo coloca en la lista corta apareció por primera vez en Search Engine Journal.",
   "machine": true
@@ -2942,6 +3014,10 @@
   "text": "El post GEO es una distracción:",
   "machine": true
  },
+ "The post Good Vs.": {
+  "text": "La publicación Bueno vs.",
+  "machine": true
+ },
  "The post Google Crawls Raw And Encoded Bracket URLs Separately appeared first on Search Engine Journal .": {
   "text": "La publicación Google rastrea las URL entre corchetes sin procesar y codificadas por separado apareció por primera vez en Search Engine Journal.",
   "machine": true
@@ -2976,6 +3052,10 @@
   "machine": true
  },
  "The post Google Updates Spam Guide For Shared Pages, Generated Content & Apps appeared first on Search Engine Journal .": "La entrada Google actualiza su guía de spam para páginas compartidas, contenido generado y apps apareció primero en Search Engine Journal .",
+ "The post Google’s November ⟦1⟧ Core Update Starts Rolling Out appeared first on Search Engine Journal .": {
+  "text": "La publicación La actualización principal del ⟦1⟧ de noviembre de Google comienza a implementarse apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
  "The post Google’s Q3 ⟦1⟧ Earnings Call:": {
   "text": "La publicación Llamada de resultados del tercer trimestre ⟦1⟧ de Google:",
   "machine": true
@@ -3280,6 +3360,10 @@
   "text": "Vía DEV, de Jaja juliana, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by John, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por John, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Kabir Hossain, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Kabir Hossain, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3295,6 +3379,10 @@
  "Via DEV, by Legal Web Agency, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Legal Web Agency, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via DEV, by Ling Chen, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Ling Chen, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via DEV, by Maciek Chmura, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, de Maciek Chmura, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via DEV, by Marco Schulz, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -3396,6 +3484,10 @@
   "text": "Vía Search Engine Journal, de Bartek Jazwinski, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via Search Engine Journal, by Chris Green, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Search Engine Journal, de Chris Green, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via Search Engine Journal, by Duane Forrester, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía Search Engine Journal, de Duane Forrester, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3428,6 +3520,10 @@
  },
  "Via Search Engine Journal, by Motoko Hunt, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía Search Engine Journal, de Motoko Hunt, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via Search Engine Journal, by Nitin Manchanda, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Search Engine Journal, de Nitin Manchanda, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via Search Engine Journal, by Roger Montti, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía Search Engine Journal, por Roger Montti, ⟦1⟧-⟦2⟧-⟦3⟧.",

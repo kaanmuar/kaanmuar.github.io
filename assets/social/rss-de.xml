@@ -84,6 +84,23 @@ So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https:/
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Alle Beiträge, eine Seite.</title>
+      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/31-one-page-de.html</link>
+      <guid isPermaLink="false">promo-social-hub-2026-10/31-one-page-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produkt</category>
+      <category>Social</category>
+      <description>Tipps, echte Website-Prüfungen und kurze Clips von YouTube, TikTok, LinkedIn, X und Facebook, in einem durchsuchbaren Feed.
+
+Probieren Sie es aus: Öffnen Sie den Hub und filtern Sie nach Tipps, Website-Prüfungen oder Videos.
+
+Alle Beiträge an einem Ort: https://carlosandmunoz.com/qa-review-social-de.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=one-page-de
+
+#SocialMedia #SoftwareTesting #OpenSource #QA #WebDev #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/31-one-page-de.jpg" length="208685" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/31-one-page-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Die Startseiten des W3C teilen sich einen Titel.</title>
       <link>https://carlosandmunoz.com/social/runs-100/04-w3c-de.html</link>
       <guid isPermaLink="false">runs-100/04-w3c-de</guid>
@@ -275,7 +292,9 @@ Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-meut
 
 Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 
-#WebSecurity #DevOps #Automation #QA #Cookies #QAlab</description>
+#WebSecurity #DevOps #Automation #QA #Cookies #QAlab
+
+https://www.youtube.com/shorts/080bazpPyM4</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" length="243312" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -292,7 +311,9 @@ Ihr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten ko
 
 So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-medellin-universities
 
-#WebQuality #DevOps #SoftwareTesting #QA #Quiz #QAlab</description>
+#WebQuality #DevOps #SoftwareTesting #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/IuyAgA1qTQk</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" length="241108" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -330,7 +351,9 @@ Nutzen Sie sie: Führen Sie alle fünf auf Ihrer Startseite und Ihrem meistgenut
 
 So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=a11y-check
 
-#Accessibility #DevOps #QA #WCAG #SoftwareEngineering #QAlab</description>
+#Accessibility #DevOps #QA #WCAG #SoftwareEngineering #QAlab
+
+https://www.youtube.com/shorts/bw6fd3xnauM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" length="224449" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -369,6 +392,23 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
 #GEO #StructuredData #WebDev #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" length="245640" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Schreiben Sie die Testliste vor dem Testcode.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-de.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-de</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tipp</category>
+      <category>QA</category>
+      <description>Die Wahl eines Frameworks ist die zweite Frage. Die erste ist, was diese Seite tut und was ein echter Mensch darauf ausprobieren würde.
+
+Probieren Sie es heute: Schreiben Sie vor Ihrem nächsten Automatisierungssprint zehn Fälle in Klartext. Dann wählen Sie das Tool.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>unn.edu.ng vs. uniport.edu.ng. unn.edu.ng führt: 55.</title>
@@ -940,44 +980,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
 #Accessibility #A11y #MobileUX #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" length="249919" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Die UN-Startseite nennt nie ihre Sprache.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/09-un-de.html</link>
-      <guid isPermaLink="false">runs-2026-10/09-un-de</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Worldwide</category>
-      <description>Links antworten, Kampagnen-Tags überstehen Weiterleitungen und KI-Antwort-Crawler sind willkommen. Doch das &lt;html&gt;-Tag der Startseite hat kein lang, also raten Screenreader die Stimme und Browser die Übersetzung.
-
-Die Lektion für jedes Team: Setzen Sie lang im html-Tag jeder Sprachversion: lang=&quot;en&quot;, lang=&quot;fr&quot;, lang=&quot;ar&quot;. Ein Attribut pro Seite.
-
-Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
-So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=un
-
-#Accessibility #i18n #A11y #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" length="248627" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>3 natürliche Konkurrenten. halloweencostumes.com führt: 75.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-10-27/12-vs-looksharpstore-co-nz-de.html</link>
-      <guid isPermaLink="false">auto-2026-10-27/12-vs-looksharpstore-co-nz-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Versus</category>
-      <description>looksharpstore.co.nz führt in den Bereichen SEO, Sicherheit; yellow.co.nz führt in GEO; halloweencostumes.com führend in den Bereichen Analytics, Barrierefreiheit, Leistung.
-
-Die Lektion für jedes Team: Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht an einer perfekten Punktzahl: Teuer wird die Lücke, die ein Mitbewerber schon geschlossen hat.
-
-Automatisierte Analysen öffentlicher Seiten am 27. Okt. 2026 von looksharpstore.co.nz, halloweencostumes.com und yellow.co.nz, natürlichen Konkurrenten, die der Konkurrenz-Scan von QA-lab URL Review im offenen Web gefunden hat. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-looksharpstore-co-nz&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-looksharpstore-co-nz
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #WebPerf #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" length="266361" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

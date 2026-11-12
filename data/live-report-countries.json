@@ -196,6 +196,19 @@
    ],
    "at": "2026-11-09"
   },
+  "advanceconstrucciones.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.91,
+   "by": "signals",
+   "evidence": [
+    "phone +5491139497689",
+    "phone +5491139497689 (legal/contact page)",
+    "Google Maps link in AR",
+    "Google Maps link in AR (legal/contact page)"
+   ],
+   "at": "2026-11-12"
+  },
   "aelf.org": {
    "country": "FR",
    "scope": "country",
@@ -757,6 +770,19 @@
     "address names FR (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "asegurus.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "schema.org addressCountry AR (legal/contact page)",
+    "phone +54 9 11 5949-7602",
+    "phone +54 9 11 5949-7602 (legal/contact page)"
+   ],
+   "at": "2026-11-12"
   },
   "asekose.am": {
    "country": "AM",
@@ -1609,6 +1635,19 @@
    ],
    "at": "2026-11-09"
   },
+  "caranddriver.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "schema.org addressCountry US (legal/contact page)",
+    "written in en, spoken in US",
+    "locale en-US"
+   ],
+   "at": "2026-11-12"
+  },
   "careeronestop.org": {
    "country": "US",
    "scope": "country",
@@ -2436,6 +2475,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "combismargua.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +5491160985688",
+    "phone +5491160985688 (legal/contact page)",
+    "written in es, spoken in AR"
+   ],
+   "at": "2026-11-12"
   },
   "commentcamarche.net": {
    "country": "FR",
@@ -3385,6 +3437,19 @@
     "address names CL"
    ],
    "at": "2026-11-09"
+  },
+  "dermoeczanem.com": {
+   "country": "TR",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry TR",
+    "phone +908505324500",
+    "in the CrUX top sites of TR only",
+    "locale tr-TR"
+   ],
+   "at": "2026-11-12"
   },
   "desjardins.com": {
    "country": "CA",
@@ -4590,6 +4655,19 @@
    ],
    "at": "2026-11-09"
   },
+  "estudiokohon.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +54 911 2464 8507",
+    "phone +54 911 2464 8507 (legal/contact page)",
+    "locale es-AR"
+   ],
+   "at": "2026-11-12"
+  },
   "eta.gov.eg": {
    "country": "EG",
    "scope": "country",
@@ -4613,6 +4691,18 @@
    ],
    "at": "2026-11-09"
   },
+  "etstur.com": {
+   "country": "TR",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry TR",
+    "phone +90-216-542-9999",
+    "written in tr"
+   ],
+   "at": "2026-11-12"
+  },
   "eurostarshotels.com": {
    "country": "ES",
    "scope": "country",
@@ -4625,6 +4715,19 @@
     "address names ES (legal/contact page)"
    ],
    "at": "2026-11-11"
+  },
+  "evdeeczane.com": {
+   "country": "TR",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry TR",
+    "phone +908503052571",
+    "address names TR",
+    "locale tr-TR"
+   ],
+   "at": "2026-11-12"
   },
   "evvelcevap.com": {
    "country": "TR",
@@ -5207,6 +5310,19 @@
     "written in es, spoken in PY"
    ],
    "at": "2026-11-09"
+  },
+  "gdtabogados.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +54 9 11 3316-6267",
+    "phone +54 9 11 3316-6267 (legal/contact page)",
+    "written in es, spoken in AR"
+   ],
+   "at": "2026-11-12"
   },
   "ged.com.do": {
    "country": "DO",
@@ -6849,6 +6965,19 @@
    ],
    "at": "2026-11-09"
   },
+  "lascanasrestaurant.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone 005443710604",
+    "phone 00541143710604 (legal/contact page)",
+    "address names AR (legal/contact page)",
+    "RDAP registrant in AR"
+   ],
+   "at": "2026-11-12"
+  },
   "laserdentkids.com": {
    "country": "PE",
    "scope": "country",
@@ -7168,6 +7297,19 @@
    ],
    "at": "2026-11-09"
   },
+  "malapeluqueria.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "phone +54 9 11 3420 4252",
+    "phone +54 9 11 3420 4252 (legal/contact page)",
+    "written in es, spoken in AR"
+   ],
+   "at": "2026-11-12"
+  },
   "man.eu": {
    "country": "",
    "scope": "worldwide",
@@ -7279,6 +7421,19 @@
     "written in en, spoken in IE"
    ],
    "at": "2026-11-09"
+  },
+  "matiasmorla.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AR",
+    "schema.org addressCountry AR (legal/contact page)",
+    "phone +54 9 11 2329 3842",
+    "phone +54 9 11 2329 3842 (legal/contact page)"
+   ],
+   "at": "2026-11-12"
   },
   "max.com.gt": {
    "country": "GT",
@@ -9302,6 +9457,19 @@
     "locale es-PY"
    ],
    "at": "2026-11-09"
+  },
+  "pluggy.ai": {
+   "country": "BR",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BR",
+    "CNPJ printed",
+    "CNPJ printed (legal/contact page)",
+    "locale pt-BR"
+   ],
+   "at": "2026-11-12"
   },
   "plumber-dublin.ie": {
    "country": "IE",

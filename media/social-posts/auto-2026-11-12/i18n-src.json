@@ -1,0 +1,106 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-made-in-china-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "made-in-china.com: 50.",
+    "title.1": "*The gap: the https redirect.*",
+    "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.",
+    "action": "Redirect every http request to https with one permanent 301, then add HSTS.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 11 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "made-in-china.com · 20 pages analyzed · 11 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.\n\nLesson: Redirect every http request to https with one permanent 301, then add HSTS.\n\nOne automated analysis of public pages on 11 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-made-in-china-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-made-in-china-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #Vulnerability #SoftwareTesting #QA #HTTPS #Redirects #WebDevelopment #Coding #InfoSec #SearchConsole #TestAutomation #QAlab"
+   }
+  },
+  "u-pneusgom-re": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "pneusgom.re: 38.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 12 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "pneusgom.re · 20 pages analyzed · 12 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 12 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-pneusgom-re&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-pneusgom-re\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #HTTPS #TechTips #WebDevelopment #QualityAssurance #InfoSec #TestAutomation #QAlab"
+   }
+  },
+  "vs-sosfanta-com": {
+   "lang": "it",
+   "strings": {
+    "live": "u-sosfanta-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*fantamaster.it leads: 70.*",
+    "body": "sosfanta.com leads in SEO, GEO, Security; calciomercato.com leads in Analytics; fantamaster.it leads in Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 12 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "sosfanta.com",
+    "visual.rows.1.0": "fantacalcio.it",
+    "visual.rows.2.0": "fantamaster.it",
+    "visual.rows.3.0": "calciomercato.com",
+    "visual.note": "Natural competitors found on the open web · 12 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "sosfanta.com leads in SEO, GEO, Security; calciomercato.com leads in Analytics; fantamaster.it leads in Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 12 Nov 2026 of sosfanta.com, fantacalcio.it, fantamaster.it, calciomercato.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-sosfanta-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-sosfanta-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SoftwareTesting #QA #WebPerf #LearnOnYouTube #TechTips #TechnicalSEO #PageSpeed #TestAutomation #SEOTips #QAlab"
+   }
+  },
+  "vs-dermoeczanem-com": {
+   "lang": "en",
+   "strings": {
+    "live": "u-dermoeczanem-com",
+    "title.0": "2 natural competitors.",
+    "title.1": "*evdeeczane.com leads: 70.*",
+    "body": "evdeeczane.com leads in SEO, Analytics, Security, Performance; dermoeczanem.com leads in GEO, Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 12 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "dermoeczanem.com",
+    "visual.rows.1.0": "evdeeczane.com",
+    "visual.note": "Natural competitors found on the open web · 12 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "evdeeczane.com leads in SEO, Analytics, Security, Performance; dermoeczanem.com leads in GEO, Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 12 Nov 2026 of dermoeczanem.com, evdeeczane.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-dermoeczanem-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-dermoeczanem-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #SoftwareTesting #Automation #QA #WebPerf #TechTips #WebDevelopment #SearchConsole #Testing #ContentMarketing #Lighthouse #QAlab"
+   }
+  }
+ }
+}
