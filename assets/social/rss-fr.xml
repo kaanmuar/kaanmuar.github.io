@@ -377,23 +377,6 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Écrivez la liste des tests avant le code des tests.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-fr.html</link>
-      <guid isPermaLink="false">tips-2026-10/16-list-first-fr</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Conseil</category>
-      <category>QA</category>
-      <description>Choisir un framework, c’est la deuxième question. La première, c’est ce que fait cette page et ce qu’une vraie personne y essaierait.
-
-À essayer aujourd’hui : Avant votre prochain sprint d’automatisation, écrivez dix cas en langage clair. Ensuite, choisissez l’outil.
-
-Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
-
-#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>unn.edu.ng contre uniport.edu.ng. unn.edu.ng pistes : 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng-fr.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng-fr</guid>
@@ -980,6 +963,24 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
 #Accessibility #A11y #MobileUX #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" length="249919" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/08-bancolombia.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La page d’accueil de l’ONU n’indique jamais sa langue.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/09-un-fr.html</link>
+      <guid isPermaLink="false">runs-2026-10/09-un-fr</guid>
+      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Worldwide</category>
+      <description>Les liens répondent, les tags de campagne survivent aux redirections, et les crawlers de réponse IA sont les bienvenus. Mais la balise &lt;html&gt; de la page de démarrage n’a pas de lang : les lecteurs d’écran devinent la voix et les navigateurs la traduction.
+
+La leçon pour chaque équipe : Mettez lang sur la balise html de chaque version linguistique : lang=&quot;en&quot;, lang=&quot;fr&quot;, lang=&quot;ar&quot;. Un attribut par page.
+
+Une analyse automatisée des pages publiques, le 19 oct. 2026. Un point de départ, pas un verdict.
+Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=un
+
+#Accessibility #i18n #A11y #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" length="248627" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/09-un.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
