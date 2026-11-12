@@ -341,6 +341,76 @@ https://www.youtube.com/shorts/bw6fd3xnauM</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>“F*** palabras clave” – Bueno, ¿con qué las estás reemplazando? vía @sejournal, @chrisgreenseo</title>
+      <link>https://carlosandmunoz.com/social/pick/f-keywords-well-what-are-you-replacing-them-with-via-sejourn-es.html</link>
+      <guid isPermaLink="false">pick/f-keywords-well-what-are-you-replacing-them-with-via-sejourn-es</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Declarar palabras clave muertas es fácil. Explicar qué rastrearás, cómo gobernarás el contenido y qué aceptan las partes interesadas es la parte más difícil. La publicación “F*** palabras clave” – Bueno, ¿con qué las estás reemplazando? apareció por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Chris Green, 2026-11-10.
+
+https://www.searchenginejournal.com/forget-keywords-well-what-are-you-replacing-them-with/596349/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/forget-keywords-850.png" medium="image"/>
+    </item>
+    <item>
+      <title>Bueno vs. Mal pSEO: Aprendizajes de una década de creación de motores de contenido escalables a través de @sejournal, @_nitman</title>
+      <link>https://carlosandmunoz.com/social/pick/good-vs-bad-pseo-learnings-from-a-decade-of-building-scalabl-es.html</link>
+      <guid isPermaLink="false">pick/good-vs-bad-pseo-learnings-from-a-decade-of-building-scalabl-es</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Cree páginas SEO programáticas que se ganen su lugar con datos únicos, estándares de publicación claros y reglas de poda que eviten que la escala se convierta en spam. La publicación Bueno vs. Mal pSEO: Los aprendizajes de una década de creación de motores de contenido escalables aparecieron por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Nitin Manchanda, 2026-11-10.
+
+https://www.searchenginejournal.com/good-vs-bad-pseo-learnings-from-a-decade-of-building-scalable-content-engines/594204/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/programmatic-seo-806.png" medium="image"/>
+    </item>
+    <item>
+      <title>La actualización principal del 2026 de noviembre de Google comienza a implementarse a través de @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-s-november-2026-core-update-starts-rolling-out-via-se-es.html</link>
+      <guid isPermaLink="false">pick/google-s-november-2026-core-update-starts-rolling-out-via-se-es</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Google ha comenzado a implementar su actualización principal del 2026 de noviembre a nivel mundial y dice que puede tardar hasta dos semanas en completarse. La publicación La actualización principal del 2026 de noviembre de Google comienza a implementarse apareció por primera vez en Search Engine Journal.
+
+A través de Search Engine Journal, por Matt G. Sur, 2026-11-10.
+
+https://www.searchenginejournal.com/google-november-2026-core-update/596614/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-core-update-featured.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Cómo solucionar pruebas de dramaturgia deficientes: una lista de verificación paso a paso</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-fix-flaky-playwright-tests-a-step-by-step-checklist-es.html</link>
+      <guid isPermaLink="false">pick/how-to-fix-flaky-playwright-tests-a-step-by-step-checklist-es</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>Reproduzca la escama, lea el seguimiento y luego corrija la sincronización, los selectores, los datos compartidos o el entorno de CI, en ese orden.
+
+Vía DEV, de Maciek Chmura, 2026-11-10.
+
+https://dev.to/maciek_chmura_building/how-to-fix-flaky-playwright-tests-a-step-by-step-checklist-36e8</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fw489hkpo2gsojybb98pq.png" medium="image"/>
+    </item>
+    <item>
+      <title>New_page() del dramaturgo llevó a Chrome al frente. Una pestaña de fondo por sí sola no solucionó el problema.</title>
+      <link>https://carlosandmunoz.com/social/pick/playwright-s-new-page-pulled-chrome-to-the-front-a-backgroun-es.html</link>
+      <guid isPermaLink="false">pick/playwright-s-new-page-pulled-chrome-to-the-front-a-backgroun-es</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>En una Mac, new_page() de Playwright trajo un Chrome con encabezado al frente, así que abrí pestañas a través de CDP y oculté el navegador con un contenedor de inicio.
+
+Vía DEV, por John, 2026-11-09.
+
+https://hexisteme.github.io/notes/playwright-new-page-brought-chrome-to-front.html</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fhexisteme.github.io%2Fnotes%2Fcovers%2Fplaywright-new-page-brought-chrome-to-front.png%3Fv%3D8eaa247b7e0f7ef95edd94d088a8e74f2dacd5226e147b54055baf0f258a7f77" medium="image"/>
+    </item>
+    <item>
       <title>Mozilla: 85 idiomas, sin sitemap.</title>
       <link>https://carlosandmunoz.com/social/runs-100/02-mozilla-es.html</link>
       <guid isPermaLink="false">runs-100/02-mozilla-es</guid>
@@ -883,96 +953,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #CyberSecurity #OpenSource #QA #Dependencies #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/01-u-shortmake-com.jpg" length="238915" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/01-u-shortmake-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>3 competidores naturales. beebom.com va en cabeza: 87.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-08/04-vs-beebom-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-08/04-vs-beebom-com-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Versus</category>
-      <description>xda-developers.com clientes potenciales en SEO; beebom.com lidera en GEO, Seguridad, Accesibilidad, Rendimiento; destructoid.com leads en Analytics.
-
-La lección para cualquier equipo: Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha que te cuesta es la que un competidor ya ha cerrado.
-
-Análisis automatizados de páginas públicas el 8 de noviembre del 2026 de beebom.com, destructoid.com, xda-developers.com, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-beebom-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-beebom-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #QA #WebPerf #TechCommunity #QAlab
-
-https://www.youtube.com/shorts/_xEegaG1WZc</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" length="262077" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/04-vs-beebom-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>SRI: una huella para los scripts prestados.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/06-sri-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glosario</category>
-      <category>Security</category>
-      <description>Palabra del día: SRI: una huella para los scripts prestados.
-
-Subresource Integrity pone un hash del archivo en la etiqueta. Si la CDN llega a servir otra cosa, el navegador se niega a ejecutarla.
-
-Encuéntralo: Haz una lista de los scripts que cargas desde otros dominios. Añade un hash de integridad a cada uno que tenga una versión fija.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
-
-#WebSecurity #Programming #Phishing #QA #SRI #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg" length="230333" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Mito: una línea de código hace accesible un sitio.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/10-myth-overlay-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/10-myth-overlay-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Mito vs. realidad</category>
-      <category>A11y</category>
-      <description>Mito vs. realidad: Mito: una línea de código hace accesible un sitio.
-
-Los widgets de superposición prometen cumplir WCAG con un solo script. En abril de 2025, la Comisión Federal de Comercio de EE. UU. ordenó a un proveedor pagar 1 millón de dólares y dejar de afirmar sin pruebas que su herramienta hace conforme cualquier sitio.
-
-Compruébalo: Invierte el presupuesto del overlay primero en tus plantillas compartidas: cabecera, navegación, formularios y pie de página.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-overlay
-
-#Accessibility #Playwright #SoftwareTesting #QA #WCAG #QAlab
-
-https://www.youtube.com/shorts/IggzU08mj3E</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" length="261070" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/10-myth-overlay.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Codificación de contenido y SEO: ¿Puede el rastreador decodificar la respuesta?</title>
-      <link>https://carlosandmunoz.com/social/pick/content-encoding-and-seo-can-the-crawler-decode-the-answer-es.html</link>
-      <guid isPermaLink="false">pick/content-encoding-and-seo-can-the-crawler-decode-the-answer-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Cuando el HTML comprimido parezca ilegible para un rastreador, inspeccione la codificación de contenido de la respuesta y...
-
-Vía DEV, de Uriel Bitton, 2026-11-08.
-
-https://dev.to/urielbitton/content-encoding-and-seo-can-the-crawler-decode-the-answer-74n</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F7d0mthvvemub9kdrfb8d.png" medium="image"/>
-    </item>
-    <item>
-      <title>esdrassantos06/liftbox: Caja de luz y galería React accesible y temática con zoom, video, presentación de diapositivas y enlaces profundos. Cero dependencias de tiempo de ejecución.</title>
-      <link>https://carlosandmunoz.com/social/pick/esdrassantos06-liftbox-accessible-themeable-react-lightbox-a-es.html</link>
-      <guid isPermaLink="false">pick/esdrassantos06-liftbox-accessible-themeable-react-lightbox-a-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>Caja de luz y galería React accesible y temática con zoom, video, presentación de diapositivas y enlaces profundos. Cero dependencias de tiempo de ejecución.
-
-Vía GitHub, por esdrassantos06, 2026-11-02.
-
-https://github.com/esdrassantos06/liftbox</description>
-      <media:content url="https://opengraph.githubassets.com/1/esdrassantos06/liftbox" medium="image"/>
     </item>
   </channel>
 </rss>
