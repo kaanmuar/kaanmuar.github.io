@@ -5,9 +5,120 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Wed, 11 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>808ball16.com: 53. Die Lücke: Button-Namen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-11/01-u-808ball16-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-11/01-u-808ball16-com-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Buttons brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 10 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-808ball16-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-808ball16-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #JavaScript #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" length="232254" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>EAFIT 75, UdeA 53. Bei der Sicherheit ist der Abstand am größten.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11b/02-medellin-universities-de.html</link>
+      <guid isPermaLink="false">compare-2026-11b/02-medellin-universities-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Vergleich</category>
+      <category>Local</category>
+      <description>EAFIT führt bei Sicherheit, 77 zu 16, bei SEO, 72 zu 34, und bei GEO, 86 zu 56. UdeA kontert beim Tempo, 68 zu 58, und bei Barrierefreiheit, 78 zu 76. Bei Analytics liegen sie nah beieinander, 85 zu 82.
+
+Lektion: Ein großer Abstand beginnt oft in einem schwachen Bereich. Suchen Sie Ihren niedrigsten Bereichswert und beheben Sie diesen zuerst.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=medellin-universities
+
+#WebQuality #SoftwareTesting #Automation #QA #HigherEd #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" length="238599" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Simulieren Sie Farbenblindheit mit zwei Klicks.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/11-vision-de.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/11-vision-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Trick</category>
+      <category>A11y</category>
+      <description>30-Sekunden-Trick: Simulieren Sie Farbenblindheit mit zwei Klicks.
+
+Die Chrome DevTools können verschwommenes Sehen, verringerten Kontrast und vier Arten von Farbsehschwäche direkt auf Ihrer Seite simulieren.
+
+Jetzt testen: Prüfen Sie jede Fehlermeldung, jedes Diagramm und jeden Link. Ist Farbe das einzige Signal, ergänzen Sie Text, ein Symbol oder eine Unterstreichung.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=vision
+
+#Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mythos: Meta-Keywords helfen noch beim Ranking.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-de.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mythos oder Fakt</category>
+      <category>SEO</category>
+      <description>Mythos oder Fakt: Mythos: Meta-Keywords helfen noch beim Ranking.
+
+Google erklärte 2009, dass es das Meta-Tag keywords für das Web-Ranking nicht verwendet. Den Mitbewerbern zeigt das Tag allerdings, auf welche Wörter Sie zielen.
+
+Prüfen Sie es: Suchen Sie in Ihren Vorlagen nach name=&quot;keywords&quot;. Entfernen Sie es und schreiben Sie stattdessen eine echte Description für jede wichtige Seite.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
+
+#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die Startseiten des W3C teilen sich einen Titel.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/04-w3c-de.html</link>
+      <guid isPermaLink="false">runs-100/04-w3c-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>HSTS mit Preload, ein lang auf jeder Seite und schnelle Seiten für echte Besucher. Doch die englische, japanische und chinesische Startseite heißen alle nur „W3C“, und die japanische Beschreibung lautet „Homepage“.
+
+Die Lektion für jedes Team: Übersetzen Sie Titel und Beschreibung mit der Seite. Jede Sprachversion sollte in ihrer Sprache sagen, was sie ist.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=w3c
+
+#SEO #i18n #Multilingual #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" length="248631" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die UNESCO hat llms.txt, aber kein HSTS.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/05-unesco-de.html</link>
+      <guid isPermaLink="false">runs-100/05-unesco-de</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Die UNESCO veröffentlicht eine llms.txt für KI-Tools, setzt eine Content Security Policy und erlaubt Framing nur sich selbst. Doch keine analysierte Seite sendet Strict-Transport-Security, und http:// wechselt per temporärer 302 auf https.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von einem Jahr oder mehr und machen Sie den Sprung von http zu https zu einem 301.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=unesco
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg" length="245312" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>daniladigital.com.ar: 70. Die Lücke: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/08-u-daniladigital-com-ar-de.html</link>
@@ -867,130 +978,6 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #SEO #Automation #QA #WebPerf #TechCommunity #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" length="266361" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-10-27/feed/12-vs-looksharpstore-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>mercadolibre.com.ec: 44. Die Lücke: Seitentitel.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-02/06-u-mercadolibre-com-ec-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-02/06-u-mercadolibre-com-ec-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>National</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und Crawler für Modelltraining sind bewusst blockiert. Doch 2 Seiten haben keinen Titel.
-
-Die Lektion für jedes Team: Geben Sie jeder Seite einen eindeutigen Titel mit etwa 60 Zeichen: zuerst die Seite, dann die Website.
-
-Eine automatisierte Analyse öffentlicher Seiten am 28. Okt. 2026, eine der meistbesuchten Websites ihres Landes, aus dem Länder-Scan von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-mercadolibre-com-ec&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-mercadolibre-com-ec
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #AI #QA #Titles #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/06-u-mercadolibre-com-ec.jpg" length="232188" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-02/feed/06-u-mercadolibre-com-ec.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>hneu.edu.ua: 52. Die Lücke: Formular-Labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-03/05-u-hneu-edu-ua-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-03/05-u-hneu-edu-ua-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>National</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 40 Formularfelder haben kein Label.
-
-Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
-
-Eine automatisierte Analyse öffentlicher Seiten am 2 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-hneu-edu-ua&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-hneu-edu-ua
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #Playwright #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg" length="232532" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>movinglake.com: 73. Die Lücke: Textkontrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/04-u-movinglake-com-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/04-u-movinglake-com-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Elemente müssen Mindestwerte beim Farbkontrast erfüllen.
-
-Die Lektion für jedes Team: Halten Sie Fließtext bei einem Kontrastverhältnis von 4.5:1 oder mehr zum Hintergrund.
-
-Eine automatisierte Analyse öffentlicher Seiten am 3 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-movinglake-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-movinglake-com
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" length="238262" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/04-u-movinglake-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>beau.to: 70. Die Lücke: defekte Links.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/03-u-beau-to-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/03-u-beau-to-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 2 interne Links führen zu einem Fehler.
-
-Die Lektion für jedes Team: Prüfen Sie Ihre eigenen Links nach jedem Release und reparieren Sie jeden, der 404 liefert, oder leiten Sie ihn um.
-
-Eine automatisierte Analyse öffentlicher Seiten am 4 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-beau-to&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-beau-to
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" length="225482" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uacm.edu.mx: 56. Die Lücke: der Sitemap-Host.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/07-u-uacm-edu-mx-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/07-u-uacm-edu-mx-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 3823 Sitemap-URLs verweisen auf einen anderen Host oder ein anderes Schema.
-
-Die Lektion für jedes Team: Stellen Sie sitemap.xml vom selben Host wie die aufgelisteten Seiten bereit und benennen Sie es in robots.txt.
-
-Eine automatisierte Analyse öffentlicher Seiten am 5 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uacm-edu-mx
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab
-
-https://www.youtube.com/shorts/bfF-x2kuDpE</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" length="240044" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>get-moment.com: 73. Die Lücke: Kanonika.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/13-u-get-moment-com-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/13-u-get-moment-com-de</guid>
-      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>National</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 16 Seiten nennen eine andere URL als kanonisch.
-
-Die Lektion für jedes Team: Richten Sie die Kanonik jeder Seite auf sich selbst, es sei denn, es handelt sich tatsächlich um eine Kopie einer anderen Seite.
-
-Eine automatisierte Analyse öffentlicher Seiten am 5 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-get-moment-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-get-moment-com
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #CSS #Programming #QA #Canonical #QAlab
-
-https://www.youtube.com/shorts/UGOhJxdK3Vo</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" length="236038" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

@@ -221,6 +221,17 @@
     "checked": "2026-11-05T18:11:33.124Z"
    }
   ],
+  "compare-2026-11b/01-quiz-medellin-universities": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "56",
+    "at": "2026-11-12T00:39:45.341Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/56",
+    "checked": "2026-11-12T00:39:46.587Z"
+   }
+  ],
   "evergreen-2026-11/02-myth-lighthouse": [
    {
     "channel": "telegram",
@@ -274,6 +285,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/47",
     "checked": "2026-11-10T22:33:10.972Z"
+   }
+  ],
+  "evergreen-2026-11/14-a11y-check": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "54",
+    "at": "2026-11-12T00:39:36.483Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/54",
+    "checked": "2026-11-12T00:39:41.880Z"
    }
   ],
   "live/2026-11-04": [
@@ -436,6 +458,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/40",
     "checked": "2026-11-09T21:02:43.316Z"
+   }
+  ],
+  "skits-friday-release/03-friday-release-pt": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "55",
+    "at": "2026-11-12T00:39:41.880Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/55",
+    "checked": "2026-11-12T00:39:45.341Z"
    }
   ],
   "tips-2026-10/10-keyboard": [

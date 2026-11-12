@@ -5,9 +5,120 @@
     <link>https://carlosandmunoz.com/qa-review-social-es.html</link>
     <description>Cada publicación de QA-lab URL Review: consejos, revisiones reales de sitios y clips cortos.</description>
     <language>es</language>
-    <lastBuildDate>Wed, 11 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-es.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-es.html</link></image>
+    <item>
+      <title>808ball16.com: 53. El punto débil: nombres de botones.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-11/01-u-808ball16-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-11/01-u-808ball16-com-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>National</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los botones deben tener texto discernible.
+
+La lección para cualquier equipo: Dale a cada botón texto o un aria-label, para que un lector de pantalla pueda anunciarlo.
+
+Un análisis automatizado de páginas públicas el 10 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-808ball16-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-808ball16-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #JavaScript #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" length="232254" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>EAFIT 75, UdeA 53. La seguridad es la mayor diferencia.</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11b/02-medellin-universities-es.html</link>
+      <guid isPermaLink="false">compare-2026-11b/02-medellin-universities-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparativa</category>
+      <category>Local</category>
+      <description>EAFIT lidera en seguridad, 77 a 16, en SEO, 72 a 34, y en GEO, 86 a 56. La UdeA responde con velocidad, 68 a 58, y accesibilidad, 78 a 76. La analítica está pareja, 85 a 82.
+
+Lección: Una gran diferencia suele empezar en un área débil. Busca tu puntuación más baja por área y corrígela primero.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=medellin-universities
+
+#WebQuality #SoftwareTesting #Automation #QA #HigherEd #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" length="238599" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Simula el daltonismo en dos clics.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/11-vision-es.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/11-vision-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Truco</category>
+      <category>A11y</category>
+      <description>Truco de 30 segundos: Simula el daltonismo en dos clics.
+
+Chrome DevTools puede simular visión borrosa, contraste reducido y cuatro tipos de deficiencia de la visión del color, directamente en tu página.
+
+Pruébalo ya: Revisa cada mensaje de error, gráfico y enlace. Si el color es la única señal, añade texto, un icono o un subrayado.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=vision
+
+#Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mito: las meta keywords aún ayudan a posicionar.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-es.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mito vs. realidad</category>
+      <category>SEO</category>
+      <description>Mito vs. realidad: Mito: las meta keywords aún ayudan a posicionar.
+
+Google dijo en 2009 que no usa la meta etiqueta keywords en el ranking web. Eso sí, la etiqueta muestra a tu competencia las palabras que buscas posicionar.
+
+Compruébalo: Busca name=&quot;keywords&quot; en tus plantillas. Quítala y escribe en su lugar una description real para cada página clave.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
+
+#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Las portadas del W3C comparten un mismo título.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/04-w3c-es.html</link>
+      <guid isPermaLink="false">runs-100/04-w3c-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>HSTS con preload, un lang en cada página y páginas rápidas para visitantes reales. Pero las homes en inglés, japonés y chino se titulan solo &quot;W3C&quot;, y la descripción en japonés dice &quot;Homepage&quot;.
+
+La lección para cualquier equipo: Traduce el título y la descripción junto con la página. Cada versión de idioma debería decir qué es, en su idioma.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=w3c
+
+#SEO #i18n #Multilingual #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" length="248631" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La UNESCO tiene llms.txt, pero no HSTS.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/05-unesco-es.html</link>
+      <guid isPermaLink="false">runs-100/05-unesco-es</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>La UNESCO publica un llms.txt para herramientas de IA, define una política de seguridad de contenido y limita el framing a sí misma. Pero ninguna página analizada envía Strict-Transport-Security, y http:// pasa a https con un 302 temporal.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de un año o más, y haz que el salto de http a https sea un 301.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=unesco
+
+#WebSecurity #HSTS #HTTPS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg" length="245312" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/05-unesco.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>daniladigital.com.ar: 70. El punto débil: HSTS.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/08-u-daniladigital-com-ar-es.html</link>
@@ -853,99 +964,6 @@ Vía Search Engine Journal, por Roger Montti, 2026-10-30.
 
 https://www.searchenginejournal.com/googles-q3-earnings-call-casts-shadow-over-classic-search/595082/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/10/google-q3-search-782.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Cómo verificar el robot de Google en los registros del servidor antes de diagnosticar una falla de rastreo</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-c-es.html</link>
-      <guid isPermaLink="false">pick/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-c-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Para verificar el robot de Google en los registros del servidor, comience con la IP de origen real registrada en el borde. Combinalo...
-
-Vía DEV, de Uriel Bitton, 2026-11-03.
-
-https://dev.to/urielbitton/how-to-verify-googlebot-in-server-logs-before-diagnosing-a-crawl-failure-5ail</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx4rgif2w1crjp8uzpwra.png" medium="image"/>
-    </item>
-    <item>
-      <title>Barrido nocturno: 1604 sitios en 122 países, del 2 de noviembre al 8 de noviembre</title>
-      <link>https://carlosandmunoz.com/social/pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8-es.html</link>
-      <guid isPermaLink="false">pick/nightly-sweep-1604-sites-in-122-countries-nov-2-to-nov-8-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Field sweep</category>
-      <description>Nuestro barrido nocturno revisó 1604 sitios web públicos en 122 países la semana pasada (del 2 de noviembre al 8 de noviembre).
-
-Lo que surgió con más frecuencia entre los problemas principales de cada sitio:
-• Texto con muy poco contraste de color: 64% de sitios
-• Sin encabezado HSTS: 54% de sitios
-• Campos de formulario sin etiqueta: 47% de sitios
-
-La mayoría de estas son pequeñas correcciones. Vea un caso completo y su solución en nuestro informe de muestra:
-https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-09
-
-¿Ya hiciste una reseña? Su informe se vuelve a abrir gratis durante 7 días.
-
-https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-09</description>
-      <enclosure url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg" length="121646" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-09.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Reversión optimista de la interfaz de usuario: Deje que los probadores de demostraciones públicas vean un cambio fallido</title>
-      <link>https://carlosandmunoz.com/social/pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change--es.html</link>
-      <guid isPermaLink="false">pick/optimistic-ui-rollback-let-public-demo-testers-see-a-change--es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>Para probar la reversión optimista de la interfaz de usuario en una demostración pública de SaaS, muestre un cambio de interfaz inmediato,...
-
-Vía DEV, de Uriel Bitton, 2026-11-07.
-
-https://dev.to/urielbitton/optimistic-ui-rollback-let-public-demo-testers-see-a-change-fail-4m6f</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F8mwqy1c05vljgh0sad4g.png" medium="image"/>
-    </item>
-    <item>
-      <title>Las capturas de pantalla de Playwright fullPage devuelven una ventana gráfica cuando la página se desplaza dentro de un contenedor</title>
-      <link>https://carlosandmunoz.com/social/pick/playwright-fullpage-screenshots-return-one-viewport-when-the-es.html</link>
-      <guid isPermaLink="false">pick/playwright-fullpage-screenshots-return-one-viewport-when-the-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>fullPage mide sólo el documento. Dos correcciones para el desplazamiento de los shells de las aplicaciones, lo que cada una hace con 100vh y las listas con ventanas, y una página de 200,000 px que se mantuvo.
-
-Vía DEV, por CurlShot, 2026-11-07.
-
-https://dev.to/curlshot/playwright-fullpage-screenshots-return-one-viewport-when-the-page-scrolls-inside-a-container-2nm5</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F50as02zc960eyijh1sg5.png" medium="image"/>
-    </item>
-    <item>
-      <title>rangomyseo/habilidades: Habilidades de agente para SEO: planificar, crear, publicar y mantener un sitio web con RankMySEO, Search Console y GA4.</title>
-      <link>https://carlosandmunoz.com/social/pick/rankmyseo-skills-agent-skills-for-seo-plan-build-publish-and-es.html</link>
-      <guid isPermaLink="false">pick/rankmyseo-skills-agent-skills-for-seo-plan-build-publish-and-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Habilidades de agente para SEO: planificar, crear, publicar y mantener un sitio web con RankMySEO, Search Console y GA4.
-
-Vía GitHub, por rankingmyseo, 2026-10-23.
-
-https://github.com/rankmyseo/skills</description>
-      <media:content url="https://opengraph.githubassets.com/1/rankmyseo/skills" medium="image"/>
-    </item>
-    <item>
-      <title>HTML semántico y accesibilidad: lo que aprendí y arreglé</title>
-      <link>https://carlosandmunoz.com/social/pick/semantic-html-accessibility-what-i-learned-and-fixed-es.html</link>
-      <guid isPermaLink="false">pick/semantic-html-accessibility-what-i-learned-and-fixed-es</guid>
-      <pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Accessibility</category>
-      <description>Introducción Cuando comencé a aprender desarrollo web a través del programa IYF Season 12, aprendí...
-
-Vía DEV, de Jaja juliana, 2026-11-07.
-
-https://dev.to/magdalenewanyeki/semantic-html-accessibility-what-i-learned-and-fixed-5ln</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flu1rkab6g8uvvuiuc5ev.png" medium="image"/>
     </item>
   </channel>
 </rss>
