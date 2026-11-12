@@ -1,6 +1,83 @@
 {
  "runs": [
   {
+   "at": "2026-11-12T18:17:53.351Z",
+   "run": {
+    "id": 43234615704,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/43234615704"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1822,
+   "scored": 1822,
+   "failed": 0,
+   "below": 1264,
+   "avg": {
+    "mobile": 85,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-12",
+    "files": [
+     "assets/profile-280.jpg",
+     "index.html",
+     "data/pagespeed/compressed.json"
+    ],
+    "fixes": [
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 7 images or frames that start below 1.5 screens on phone and desktop."
+     },
+     {
+      "page": "assets/profile-280.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/profile-280.jpg from 21 KB to 11 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 69,
+       "after": 67,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 95,
+       "after": 95,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "5 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-11T17:14:05.804Z",
    "run": {
     "id": 43026441365,
