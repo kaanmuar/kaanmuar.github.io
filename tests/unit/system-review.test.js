@@ -49,7 +49,8 @@ test("run reads the newest finished run per workflow on main and names the faili
       { id: 2, name: "Pages", conclusion: "failure", updated_at: "2026-11-03T14:11:00Z", html_url: "https://github.com/r/2" },
       { id: 1, name: "Pages", conclusion: "success", updated_at: "2026-11-03T07:41:00Z" },
       { id: 3, name: "Lint", conclusion: "success", updated_at: "2026-11-03T03:52:00Z" },
-      { id: 4, name: "Buffer handoff (once)", conclusion: "failure", updated_at: "2026-10-26T15:52:00Z" }
+      { id: 4, name: "Buffer handoff (once)", conclusion: "failure", updated_at: "2026-10-26T15:52:00Z" },
+      { id: 5, name: "npm_and_yarn in /. for glob - Update #1678068137", event: "dynamic", conclusion: "failure", updated_at: "2026-11-03T14:05:00Z" }
     ] },
     "/actions/runs/2/jobs?filter=latest": { jobs: [{ id: 9, conclusion: "failure", steps: [{ name: "Build", conclusion: "success" }, { name: "No forbidden paths, every local link resolves", conclusion: "failure" }] }] },
     "/actions/jobs/9/logs": "broken: social/pick/a-es.html -> /social/pick/b-es.html\n##[error]Process completed with exit code 1.",

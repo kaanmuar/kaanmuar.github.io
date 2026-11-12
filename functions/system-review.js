@@ -78,7 +78,9 @@ async function run({ fetch, token, now }) {
 
   const runs = await get("/actions/runs?branch=main&status=completed&per_page=100");
   const newest = new Map();
-  (runs.workflow_runs || []).forEach((r) => { if (!["cancelled", "skipped"].includes(r.conclusion) && !newest.has(r.name)) newest.set(r.name, r); });
+  // Dependabot's update runs (event "dynamic") each carry their own name, so no later run ever replaces a failed one;
+  // its alert counts below stand for them.
+  (runs.workflow_runs || []).forEach((r) => { if (r.event !== "dynamic" && !["cancelled", "skipped"].includes(r.conclusion) && !newest.has(r.name)) newest.set(r.name, r); });
   const failing = Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion) && now - Date.parse(r.updated_at) < 2 * DAY);
   for (const r of failing.slice(0, MAX_LOGS)) {
     let cause = "failed";
