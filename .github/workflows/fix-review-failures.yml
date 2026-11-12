@@ -5,7 +5,9 @@ name: Daily fix of failed URL reviews
 # the triage and the plan check without changing anything.
 # Secrets:
 #   FIX_REVIEW_TOKEN        fine-grained token of kaanmuar for this repo (contents, pull requests, issues: read and write). Its pushes
-#                           start CI, which the built-in token's do not.
+#                           start CI, which the built-in token's do not. Checkout uses it when set, and secrets.GITHUB_TOKEN when it
+#                           is empty (#2530): an empty token input is "not supplied" and actions/checkout stops before this job can
+#                           report the missing secret.
 #   CURSOR_API_KEY          for cursor-agent
 #   QA_LAB_APP_ID, QA_LAB_APP_PEM   the qa-lab-agents app (client ID, private key), for board moves (scripts/gh-app-token.js)
 #   FIREBASE_SERVICE_ACCOUNT        key of a service account that may deploy the review functions
@@ -42,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.FIX_REVIEW_TOKEN }}
+          token: ${{ secrets.FIX_REVIEW_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
