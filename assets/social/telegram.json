@@ -67,6 +67,17 @@
     "checked": "2026-11-11T17:56:12.123Z"
    }
   ],
+  "auto-2026-10-22/13-u-atlassian-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "61",
+    "at": "2026-11-12T22:28:26.218Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/61",
+    "checked": "2026-11-12T22:28:31.004Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -318,6 +329,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/54",
     "checked": "2026-11-12T00:39:41.880Z"
+   }
+  ],
+  "evergreen-2026-11/18-myth-keywords": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "62",
+    "at": "2026-11-12T22:28:31.004Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/62",
+    "checked": "2026-11-12T22:28:35.212Z"
    }
   ],
   "live/2026-11-04": [
@@ -580,6 +602,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/51",
     "checked": "2026-11-11T17:56:06.124Z"
+   }
+  ],
+  "tips-2026-10/17-robots-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "60",
+    "at": "2026-11-12T22:28:25.299Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/60",
+    "checked": "2026-11-12T22:28:26.218Z"
    }
   ]
  }

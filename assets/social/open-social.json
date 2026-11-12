@@ -152,6 +152,17 @@
     "checked": "2026-11-11T17:52:38.585Z"
    }
   ],
+  "auto-2026-10-22/13-u-atlassian-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n25jbaunhw2f",
+    "at": "2026-11-12T22:26:30.398Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25jbaunhw2f",
+    "checked": "2026-11-12T22:26:45.101Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -816,6 +827,24 @@
     "checked": "2026-11-12T16:17:38.129Z"
    },
    {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18402797131202871",
+    "at": "2026-11-12T22:28:05.777Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4029069104454922249",
+    "checked": "2026-11-12T22:28:14.027Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17937208350409456",
+    "at": "2026-11-12T22:27:01.485Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DfqIJOujgNK/",
+    "checked": "2026-11-12T22:28:05.469Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18059731007652501",
@@ -1112,6 +1141,15 @@
     "checked": "2026-11-12T16:17:39.905Z"
    },
    {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18105778763527510",
+    "at": "2026-11-12T22:28:14.027Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4029069170473261726",
+    "checked": "2026-11-12T22:28:24.653Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18398661595161484",
@@ -1259,6 +1297,17 @@
     "result": "sent",
     "url": "https://www.threads.com/@qaurlreview/post/DfnyIC6kg5O",
     "checked": "2026-11-12T00:36:29.406Z"
+   }
+  ],
+  "evergreen-2026-11/18-myth-keywords": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n25jboyngz2b",
+    "at": "2026-11-12T22:26:45.101Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25jboyngz2b",
+    "checked": "2026-11-12T22:26:59.976Z"
    }
   ],
   "promo-social-hub-2026-10/01-one-page-en": [
@@ -1754,6 +1803,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n22jho4a4k2g",
     "checked": "2026-11-11T17:52:20.639Z"
+   }
+  ],
+  "tips-2026-10/17-robots-ai": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n25jatavp72k",
+    "at": "2026-11-12T22:26:28.694Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25jatavp72k",
+    "checked": "2026-11-12T22:26:30.398Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
