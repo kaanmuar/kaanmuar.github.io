@@ -1363,10 +1363,10 @@
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-13T18:30:45.283Z",
+    "at": "2026-11-13T21:10:57.494Z",
     "result": "failed",
     "error": "no feed image media/social-posts/launch-2026-10/es/a11y-story.jpg",
-    "checked": "2026-11-13T18:30:45.283Z"
+    "checked": "2026-11-13T21:10:57.696Z"
    },
    {
     "channel": "instagram",
@@ -1902,6 +1902,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25jatavp72k",
     "checked": "2026-11-12T22:26:30.398Z"
+   }
+  ],
+  "tips-2026-10/18-broken-links": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n27vimgsiq24",
+    "at": "2026-11-13T21:10:54.060Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n27vimgsiq24",
+    "checked": "2026-11-13T21:10:56.021Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [

@@ -670,6 +670,17 @@
     "url": "https://t.me/qalab_live/60",
     "checked": "2026-11-12T22:28:26.218Z"
    }
+  ],
+  "tips-2026-10/18-broken-links": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "68",
+    "at": "2026-11-13T21:10:58.284Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/68",
+    "checked": "2026-11-13T21:10:59.346Z"
+   }
   ]
  }
 }
