@@ -78,6 +78,17 @@
     "checked": "2026-11-12T22:28:31.004Z"
    }
   ],
+  "auto-2026-10-22/14-u-co-computrabajo-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "69",
+    "at": "2026-11-13T23:54:57.588Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/69",
+    "checked": "2026-11-13T23:55:04.015Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -274,6 +285,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/59",
     "checked": "2026-11-12T16:20:26.823Z"
+   }
+  ],
+  "compare-2026-11b/03-quiz-newspapers": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "70",
+    "at": "2026-11-13T23:55:04.015Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/70",
+    "checked": "2026-11-13T23:55:05.193Z"
    }
   ],
   "digest-2026-11-13/01-this-week": [

@@ -163,6 +163,44 @@
     "checked": "2026-11-12T22:26:45.101Z"
    }
   ],
+  "auto-2026-10-22/14-u-co-computrabajo-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2a6i2xadd2b",
+    "at": "2026-11-13T23:51:39.452Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2a6i2xadd2b",
+    "checked": "2026-11-13T23:51:41.348Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18080348468773513",
+    "at": "2026-11-13T23:54:47.508Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4029837514982761596",
+    "checked": "2026-11-13T23:54:56.911Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17933939421181628",
+    "at": "2026-11-13T23:53:03.458Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Dfs23bNjwCA/",
+    "checked": "2026-11-13T23:54:47.116Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18133412803786649",
+    "at": "2026-11-13T23:52:06.798Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Dfs2vIHjOG-",
+    "checked": "2026-11-13T23:53:02.747Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -1179,6 +1217,17 @@
     "checked": "2026-11-12T16:20:15.053Z"
    }
   ],
+  "compare-2026-11b/03-quiz-newspapers": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2a6irhyrt2b",
+    "at": "2026-11-13T23:51:41.349Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2a6irhyrt2b",
+    "checked": "2026-11-13T23:52:05.626Z"
+   }
+  ],
   "digest-2026-10-30/01-this-week": [
    {
     "channel": "bluesky",
@@ -1363,10 +1412,10 @@
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-13T21:10:57.494Z",
+    "at": "2026-11-13T23:54:47.332Z",
     "result": "failed",
     "error": "no feed image media/social-posts/launch-2026-10/es/a11y-story.jpg",
-    "checked": "2026-11-13T21:10:57.696Z"
+    "checked": "2026-11-13T23:54:47.508Z"
    },
    {
     "channel": "instagram",
