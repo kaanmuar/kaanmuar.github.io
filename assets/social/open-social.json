@@ -1150,6 +1150,15 @@
     "checked": "2026-11-12T22:28:24.653Z"
    },
    {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18221715934358593",
+    "at": "2026-11-13T02:53:33.712Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DfqmoygHJ4T/",
+    "checked": "2026-11-13T02:54:35.498Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18398661595161484",
@@ -1428,6 +1437,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3mzyim3yn7x2c",
     "checked": "2026-11-10T22:31:38.703Z"
+   }
+  ],
+  "promo-social-hub-2026-10/31-one-page-de": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n25y6cuvxu2q",
+    "at": "2026-11-13T02:53:17.931Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25y6cuvxu2q",
+    "checked": "2026-11-13T02:53:32.418Z"
    }
   ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
