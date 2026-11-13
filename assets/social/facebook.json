@@ -885,6 +885,16 @@
     "checked": "2026-11-12T22:11:46.104Z"
    }
   ],
+  "auto-2026-11-13/01-u-sliit-lk": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2258998125042885",
+    "at": "2026-11-19T20:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-13T11:27:13.682Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -1023,8 +1033,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122108172363532027",
     "at": "2026-11-12T23:00:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-12T22:11:46.105Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122108172363532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-13T11:27:04.570Z"
    }
   ],
   "compare-2026-11b/03-quiz-newspapers": [
