@@ -35,6 +35,10 @@
   "text": "⟦1⟧ líderes en SEO, Accesibilidad; ⟦2⟧ lidera en GEO, Análisis, Seguridad, Rendimiento.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Security; ⟦4⟧ leads in Performance.": {
+  "text": "⟦1⟧ líderes en SEO, Accesibilidad; ⟦2⟧ lidera en GEO; ⟦3⟧ lidera en Análisis, Seguridad; ⟦4⟧ lidera en Rendimiento.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
   "text": "⟦1⟧ líderes en SEO, análisis, accesibilidad; ⟦2⟧ lidera en GEO, Seguridad, Rendimiento.",
   "machine": true
@@ -204,6 +208,10 @@
  "A ⟦1⟧ PageSpeed score failed Core Web Vitals.": "Una puntuación de PageSpeed de ⟦1⟧ no superó las Core Web Vitals.",
  "A ⟦1⟧ passed.": "Una de ⟦1⟧ las superó.",
  "A ⟦1⟧ there means crawlers lose your map.": "Un ⟦1⟧ ahí significa que los rastreadores pierden tu mapa.",
+ "A ⟦1⟧-screenshot Playwright benchmark: browser per job vs one browser with a context per job, state leakage, and the memory cost of a forgotten ⟦2⟧().": {
+  "text": "Un punto de referencia de Playwright con una captura de pantalla de ⟦1⟧: navegador por trabajo versus un navegador con un contexto por trabajo, pérdida de estado y el costo de memoria de un ⟦2⟧() olvidado.",
+  "machine": true
+ },
  "A ~⟦1⟧-line Python script that runs PageSpeed Insights for a list of URLs with concurrency, retries and quota handling, separates lab data from real-user CrUX data (LCP, INP, CLS) and writes one CSV.": {
   "text": "Un script Python de ~⟦1⟧ línea que ejecuta PageSpeed ​​Insights para obtener una lista de URL con simultaneidad, reintentos y manejo de cuotas, separa los datos de laboratorio de los datos CrUX del usuario real (LCP, INP, CLS) y escribe un CSV.",
   "machine": true
@@ -236,6 +244,10 @@
  "A declared language, a sitemap named in ⟦1⟧, and robots rules that keep the GPTBot and Google-Extended training bots out.": "Un idioma declarado, un sitemap indicado en ⟦1⟧ y reglas de robots que dejan fuera a los bots de entrenamiento GPTBot y Google-Extended.",
  "A DMARC record tells receiving servers what to do with mail that claims your domain but fails authentication.": "Un registro DMARC indica a los servidores receptores qué hacer con el correo que dice venir de tu dominio pero no pasa la autenticación.",
  "A faster site can still lose overall.": "Un sitio más rápido aún puede perder en el total.",
+ "A few years ago (three years at most), one of the biggest challenges QA Engineers faced was: how do...": {
+  "text": "Hace unos años (tres años como máximo), uno de los mayores desafíos que enfrentaban los ingenieros de control de calidad era: ¿cómo...",
+  "machine": true
+ },
  "A few years ago, creating automated tests was one of the biggest bottlenecks in software...": {
   "text": "Hace unos años, la creación de pruebas automatizadas era uno de los mayores cuellos de botella del software...",
   "machine": true
@@ -548,6 +560,10 @@
  "Before your next automation sprint, write ten cases in plain language.": "Antes de tu próximo sprint de automatización, escribe diez casos en lenguaje llano.",
  "Bello's JSON-LD names the page, not the city.": "El JSON-LD de Bello nombra la página, no la ciudad.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha que te cuesta es la que un competidor ya ha cerrado.",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that…": {
+  "text": "Compare los sitios con los que sus visitantes lo comparan, no con una puntuación perfecta: la brecha que...",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha…",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the…": {
   "text": "Compare los sitios con los que sus visitantes lo comparan, no con una puntuación perfecta: el...",
@@ -818,6 +834,10 @@
   "machine": true
  },
  "But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.": "Pero Referrer-Policy: unsafe-url envía la URL completa, consulta incluida, a cada sitio enlazado.",
+ "But scripts fingerprint the browser before the visitor chooses.": {
+  "text": "Pero los scripts toman huellas dactilares del navegador antes de que el visitante elija.",
+  "machine": true
+ },
  "But several links on the home page return ⟦1⟧, among them the giro directo page, the national contact point, and emergencies.": "Pero varios enlaces de la home devuelven ⟦1⟧, entre ellos la página de giro directo, el punto nacional de contacto y emergencias.",
  "But Strict-Transport-Security sets max-age to ⟦1⟧ days, and http:// reaches https through a temporary ⟦2⟧.": "Pero Strict-Transport-Security fija max-age en ⟦1⟧ días, y http:// llega a https con un ⟦2⟧ temporal.",
  "But Strict-Transport-Security sets max-age=⟦1⟧, about ⟦2⟧ minutes, so browsers forget the https-only rule almost as soon as they learn it.": "Pero Strict-Transport-Security fija max-age=⟦1⟧, unos ⟦2⟧ minutos, así que los navegadores olvidan la regla de solo https casi en cuanto la aprenden.",
@@ -1152,6 +1172,10 @@
   "machine": true
  },
  "Delete the UA snippet and keep GA4.": "Borra el snippet de UA y quédate con GA4.",
+ "Deploying a Content Delivery Network (CDN) to distribute your site's assets across fast, globally distributed edge servers closer to users can be a major upgrade for any growing site: it lowers visitor latency and shields your origin server (the backend source of truth holding your original content) from heavy traffic.": {
+  "text": "Implementar una red de entrega de contenido (CDN) para distribuir los activos de su sitio a través de servidores perimetrales rápidos y distribuidos globalmente más cerca de los usuarios puede ser una mejora importante para cualquier sitio en crecimiento: reduce la latencia de los visitantes y protege su servidor de origen (la fuente de verdad de backend que contiene su contenido original) del tráfico intenso.",
+  "machine": true
+ },
  "Deque has been recognized as a Leader in the ⟦1⟧ Gartner® Magic Quadrant™ for Digital Accessibility!": "¡Deque fue reconocida como Líder en el Gartner® Magic Quadrant™ de ⟦1⟧ para Accesibilidad Digital!",
  "Deque named a Leader in the ⟦1⟧ Gartner® Magic Quadrant™ for Digital Accessibility": "Deque, nombrada Líder en el Gartner® Magic Quadrant™ de ⟦1⟧ para Accesibilidad Digital",
  "Deque tested the built-in voice control on macOS, iOS, Android and Windows before turning the rule on.": "Deque probó el control por voz integrado de macOS, iOS, Android y Windows antes de activar la regla.",
@@ -1168,6 +1192,10 @@
  },
  "Descriptions and share cards on every page analyzed, a NewsMediaOrganization entity, and alt text on every image.": "Descripciones y tarjetas para compartir en cada página analizada, una entidad NewsMediaOrganization y texto alt en cada imagen.",
  "Descriptions and share cards on every page analyzed, Consent Mode that starts in denied, and every link opened answered.": "Descripciones y tarjetas para compartir en cada página analizada, Consent Mode que empieza en denied y todos los enlaces abiertos respondieron.",
+ "Detecting Flaky Tests and Finding Their Root Causes with Strands Agents and Gemini": {
+  "text": "Detección de pruebas inestables y búsqueda de sus causas fundamentales con Strands Agents y Gemini",
+  "machine": true
+ },
  "Día de Muertos card:": "Tarjeta de Día de Muertos:",
  "DIAN's home page says it's in English.": "La portada de la DIAN dice que está en inglés.",
  "Dii Pooler shows how to audit where tracking stops, compare GA4 with backend records, and report search visibility, tracked behavior and verified outcomes separately, with the measurement limits stated first.": "Dii Pooler muestra cómo auditar dónde se corta el seguimiento, comparar GA4 con los registros del backend e informar por separado de la visibilidad en búsqueda, el comportamiento medido y los resultados verificados, con los límites de la medición por delante.",
@@ -1271,6 +1299,10 @@
  "Every page has a title, and model-training crawlers are blocked by choice.": "Cada página tiene título, y los rastreadores de entrenamiento de modelos están bloqueados a propósito.",
  "Every post in this series introduces you to one of the people quietly holding up the Cypress community, including where they started, what they believe about testing, and what they've figured out along the way.": "Cada publicación de esta serie te presenta a una de las personas que sostienen discretamente a la comunidad de Cypress, incluido dónde empezaron, qué piensan sobre el testing y qué descubrieron en el camino.",
  "Every redirect in it wastes crawl.": "Cada redirección que contiene desperdicia rastreo.",
+ "Every small product I ship ends up needing one of two things: an Open Graph image, or a PDF of some...": {
+  "text": "Cada producto pequeño que envío termina necesitando una de dos cosas: una imagen de Open Graph o un PDF de algún...",
+  "machine": true
+ },
  "Every source is linked on our social hub.": "Cada fuente está enlazada en nuestro hub social.",
  "Every year the same thing happens.": "Cada año pasa lo mismo.",
  "Exact versions make it easy to match known flaws.": "Las versiones exactas facilitan cruzarlas con fallos conocidos.",
@@ -1306,6 +1338,10 @@
  "Find the code your page never runs.": "Encuentra el código que tu página nunca ejecuta.",
  "Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.": "Encuentra el elemento Largest Contentful Paint de tu portada y sírvelo primero: precarga, tamaño, compresión.",
  "Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.": "Encuentra el toque más lento de tu página, a menudo un menú o un filtro, y divide la tarea larga que hay detrás.",
+ "Find the tag behind each host and hold it until consent, like a tracking cookie.": {
+  "text": "Busque la etiqueta detrás de cada host y manténgala hasta que dé su consentimiento, como una cookie de seguimiento.",
+  "machine": true
+ },
  "Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.": "Encuentra tu elemento Largest Contentful Paint, cárgalo pronto, dale tamaño y nunca le pongas lazy-load.",
  "Find your lowest area score and fix that first.": "Busca tu puntuación más baja por área y corrígela primero.",
  "Fire it on success, not on click.": "Dispáralo al completarse, no al hacer clic.",
@@ -1421,6 +1457,10 @@
   "machine": true
  },
  "Google AI Mode:": "AI Mode de Google:",
+ "Google analyzed millions of Nano Banana prompts and found how businesses are using it for marketing.": {
+  "text": "Google analizó millones de mensajes de Nano Banana y descubrió cómo las empresas lo utilizan para marketing.",
+  "machine": true
+ },
  "Google clarifies how server-side redirects influence ranking signals and canonicalization.": {
   "text": "Google aclara cómo las redirecciones del lado del servidor influyen en las señales de clasificación y la canonicalización.",
   "machine": true
@@ -1428,6 +1468,10 @@
  "Google crawls both and, when the content matches, keeps one.": "Google rastrea las dos y, si el contenido coincide, se queda con una.",
  "Google Crawls Raw And Encoded Bracket URLs Separately via ⟦1⟧, ⟦2⟧": {
   "text": "Google rastrea las URL de corchetes codificadas y sin procesar por separado mediante ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
+ "Google Discovers Unexpected Patterns In AI Image Generation via ⟦1⟧, ⟦2⟧": {
+  "text": "Google descubre patrones inesperados en la generación de imágenes de IA a través de ⟦1⟧, ⟦2⟧",
   "machine": true
  },
  "Google Explains ⟦1⟧s, ⟦2⟧ Limits & Bracket URLs – SEO Pulse via ⟦3⟧, ⟦4⟧": {
@@ -1577,6 +1621,14 @@
  "Horror headers, Security card.": "Cabeceras de terror, tarjeta de seguridad.",
  "Horror headers, SEO card.": "Cabeceras de terror, tarjeta de SEO.",
  "How a public-page review works, step by step: ⟦1⟧": "Cómo funciona una revisión de páginas públicas, paso a paso: ⟦1⟧",
+ "How authoring tools can transform web accessibility": {
+  "text": "Cómo las herramientas de creación pueden transformar la accesibilidad web",
+  "machine": true
+ },
+ "How authoring tools can transform web accessibility, W3C WAI Director Shawn Lawton Henry covers how authoring tools can help make vast amounts of content more accessible with less effort.": {
+  "text": "Cómo las herramientas de creación pueden transformar la accesibilidad web, Shawn Lawton Henry, director de W3C WAI, explica cómo las herramientas de creación pueden ayudar a que grandes cantidades de contenido sean más accesibles con menos esfuerzo.",
+  "machine": true
+ },
  "How Can I Tell If My Images Are Optimized For Multimodal Search? – Ask an SEO via ⟦1⟧, ⟦2⟧": "¿Cómo sé si mis imágenes están optimizadas para la búsqueda multimodal? – Ask an SEO vía ⟦1⟧, ⟦2⟧",
  "How Do We Move Forward if the SERP Is Generative?": "¿Cómo avanzamos si la SERP es generativa?",
  "How I use the browser as my agent's eyes, and why every PR now ships with screenshots.": "Cómo uso el navegador como los ojos de mi agente y por qué ahora cada PR incluye capturas de pantalla.",
@@ -1697,6 +1749,10 @@
   "text": "Creé una plataforma de blogs Markdown y HTML sin formato con puntuación ⟦1⟧ en PageSpeed",
   "machine": true
  },
+ "I got tired of babysitting Playwright, so I turned it into a small render API": {
+  "text": "Me cansé de cuidar a Playwright, así que lo convertí en una pequeña API de renderizado.",
+  "machine": true
+ },
  "I matched ⟦1⟧ users across two Datos panels to compare how each user searched with Google and LLMs and understand how we need to track prompts differently than keywords.": "Emparejé a ⟦1⟧ usuarios de dos paneles de Datos para comparar cómo buscaba cada uno en Google y en los LLMs, y entender cómo debemos hacer seguimiento de los prompts de forma distinta a las palabras clave.",
  "I started with a …": {
   "text": "Empecé con un…",
@@ -1725,6 +1781,14 @@
   "machine": true
  },
  "If colour is the only signal, add text, an icon or an underline.": "Si el color es la única señal, añade texto, un icono o un subrayado.",
+ "If it is fraud or bot protection, name it in the privacy notice.": {
+  "text": "Si se trata de protección contra fraude o bot, indíquelo en el aviso de privacidad.",
+  "machine": true
+ },
+ "If it is fraud or bot protection…": {
+  "text": "Si se trata de fraude o protección contra bots...",
+  "machine": true
+ },
  "If it is missing, add it at your host or CDN.": "Si falta, añádela en tu hosting o CDN.",
  "If the CDN ever serves anything else, the browser refuses to run it.": "Si la CDN llega a servir otra cosa, el navegador se niega a ejecutarla.",
  "If they are missing there, Google may not see them either.": "Si no aparecen ahí, puede que Google tampoco los vea.",
@@ -1747,6 +1811,10 @@
  "In my many posts about Google Tag, I&rsquo;ve often lamented the fact that while any given Google Tag is essentially a wrapper for an underlying Google Tag Manager container, for some inexplicable reason Google Tag Manager containers themselves did not have the capabilities of Google Tags ( and vice…": "En mis muchas publicaciones sobre Google Tag, a menudo he lamentado que, aunque cualquier Google Tag es básicamente un envoltorio de un contenedor de Google Tag Manager subyacente, por alguna razón inexplicable los propios contenedores de Google Tag Manager no tenían las capacidades de las Google Tags ( y vice…",
  "In October, our Live Reports followed the internal links of ⟦1⟧ public sites.": "En octubre, nuestros Live Reports siguieron los enlaces internos de ⟦1⟧ sitios públicos.",
  "In the ⟦1⟧ of every variant.": "En el ⟦1⟧ de cada variante.",
+ "In the W3C blog post The multiplier effect:": {
+  "text": "En la publicación del blog del W3C El efecto multiplicador:",
+  "machine": true
+ },
  "In this post, I’m going to discuss why accuracy matters for digital accessibility in an era of evolving global standards and increased regulatory scrutiny.": {
   "text": "En esta publicación, analizaré por qué la precisión es importante para la accesibilidad digital en una era de estándares globales en evolución y un mayor escrutinio regulatorio.",
   "machine": true
@@ -1778,6 +1846,10 @@
   "text": "irraz/vulnerador-ai:",
   "machine": true
  },
+ "Is prompt tracking draining your budget?": {
+  "text": "¿El seguimiento rápido está agotando su presupuesto?",
+  "machine": true
+ },
  "Is Your Agency Measuring the Wrong Thing For ⟦1⟧?": {
   "text": "¿Su agencia está midiendo lo incorrecto para ⟦1⟧?",
   "machine": true
@@ -1791,6 +1863,14 @@
   "machine": true
  },
  "ISA's home page has no h1 and no main.": "La portada de ISA no tiene h1 ni main.",
+ "It analyzes your target site, evaluates search signals, and produces an actionable, prioritized roadmap directly inside Claude.": {
+  "text": "Analiza su sitio de destino, evalúa las señales de búsqueda y produce una hoja de ruta priorizada y procesable directamente dentro de Claude.",
+  "machine": true
+ },
+ "It analyzes your target site, evaluates search signals, and…": {
+  "text": "Analiza su sitio de destino, evalúa las señales de búsqueda y...",
+  "machine": true
+ },
  "It blocks clickjacking and replaces X-Frame-Options.": "Bloquea el clickjacking y sustituye a X-Frame-Options.",
  "It cannot tell whether alt text makes sense or whether a screen reader user can finish the task.": "No puede saber si el texto alternativo tiene sentido ni si alguien con lector de pantalla puede terminar la tarea.",
  "It defines CSS properties and an API that start an animation from a user action, such as a click or a key press, or when an element enters a range of a timeline, such as scrolling into view.": "Define propiedades CSS y una API que inician una animación con una acción del usuario, como un clic o una tecla, o cuando un elemento entra en un rango de una línea de tiempo, por ejemplo al aparecer en pantalla con el desplazamiento.",
@@ -1864,6 +1944,10 @@
  "Le Monde answers with analytics, ⟦1⟧ to ⟦2⟧, security, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "Le Monde responde con analítica, ⟦1⟧ a ⟦2⟧, seguridad, ⟦3⟧ a ⟦4⟧, y GEO, ⟦5⟧ a ⟦6⟧.",
  "Le Monde has a CSP that allows any https.": "Le Monde tiene una CSP que permite cualquier https.",
  "Lead each title with the page topic, then the institution, so results stand apart.": "Empieza cada título con el tema de la página y luego la institución, para que los resultados se distingan.",
+ "Learn a lean strategy to cut bloated prompts, track AI visibility smarter, and focus on what drives brand growth.": {
+  "text": "Aprenda una estrategia eficiente para reducir las indicaciones excesivas, realizar un seguimiento de la visibilidad de la IA de forma más inteligente y centrarse en lo que impulsa el crecimiento de la marca.",
+  "machine": true
+ },
  "Learn an easy ⟦1⟧-step workflow to track AI visibility and optimize your content using Moz Pro’s AI Research toolkit.": {
   "text": "Aprenda un flujo de trabajo sencillo de ⟦1⟧ paso para realizar un seguimiento de la visibilidad de la IA y optimizar su contenido utilizando el kit de herramientas de investigación de IA de Moz Pro.",
   "machine": true
@@ -1926,6 +2010,10 @@
  "Lonely Planet's home is ⟦1⟧ MB of HTML.": "La portada de Lonely Planet pesa ⟦1⟧ MB de HTML.",
  "Look at the server before the front end.": "Revisa el servidor antes que el front end.",
  "Low-vision visitors rely on zoom.": "Los visitantes con baja visión dependen del zoom.",
+ "lowdevco/claude-seo:": {
+  "text": "lowdevco/claude-seo:",
+  "machine": true
+ },
  "Lowercase, no spaces, one naming sheet.": "Minúsculas, sin espacios, una sola hoja de nombres.",
  "LoyaltyobsidianOcean2704/ai-resocket-test-architect:": {
   "text": "LoyaltyobsidianOcean2704/ai-resocket-test-architect:",
@@ -2029,6 +2117,10 @@
  "Move inline scripts and styles into cached files, and trim long lists.": "Pasa los scripts y estilos inline a archivos cacheados y recorta las listas largas.",
  "Move what inflates the HTML, like inline data or repeated menus, into cached files.": "Pasa lo que infla el HTML, como datos inline o menús repetidos, a archivos cacheados.",
  "Movilidad Bogotá's sitemap says default.": "El sitemap de Movilidad Bogotá dice default.",
+ "Moving to a CDN without overwhelming your origin (or blocking Googlebot)": {
+  "text": "Pasar a una CDN sin abrumar su origen (o bloquear el robot de Google)",
+  "machine": true
+ },
  "Movistar's headers have a value mix-up.": "Las cabeceras de Movistar tienen valores cruzados.",
  "Moz & Profound Partner to Connect SEO and AI Visibility": {
   "text": "Moz & Profound se asocia para conectar la visibilidad de SEO y IA",
@@ -2136,6 +2228,10 @@
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧, requested through QA-lab URL Review.": "Un análisis automatizado de páginas públicas el ⟦1⟧ oct. ⟦2⟧, solicitado a través de QA-lab URL Review.",
  "One automated analysis of public pages on ⟦1⟧ Oct ⟦2⟧.": "Un análisis automatizado de páginas públicas el ⟦1⟧ oct. ⟦2⟧.",
  "One character can void the entire block.": "Un carácter puede invalidar el bloque entero.",
+ "One Chromium per screenshot, or one shared browser?": {
+  "text": "¿Un Chromium por captura de pantalla o un navegador compartido?",
+  "machine": true
+ },
  "One h1 per page, naming what the page is.": "Un h1 por página, que nombre qué es la página.",
  "One h1 per page, saying what the page is.": "Un h1 por página, que diga qué es la página.",
  "One header stops browsers running a file as the wrong type.": "Una cabecera evita que los navegadores ejecuten un archivo como el tipo equivocado.",
@@ -2509,6 +2605,10 @@
   "machine": true
  },
  "Scores hidden until tomorrow.": "Puntuaciones ocultas hasta mañana.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO ⟦20⟧,…": {
+  "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO ⟦19⟧, GEO ⟦20⟧,…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…": {
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO ⟦19⟧, GEO…",
   "machine": true
@@ -2950,6 +3050,10 @@
  "The Linux Foundation never states a language.": "La Linux Foundation nunca declara un idioma.",
  "The missing CSP: anything can crawl in.": "La CSP que falta: cualquier cosa puede colarse.",
  "The most common analytics finding is a tag that fires before the visitor chooses.": "El hallazgo de analítica más común es una etiqueta que se dispara antes de que el visitante elija.",
+ "The multiplier effect:": {
+  "text": "El efecto multiplicador:",
+  "machine": true
+ },
  "The New Organic Growth Stack:": {
   "text": "La nueva pila de crecimiento orgánico:",
   "machine": true
@@ -3020,6 +3124,10 @@
  },
  "The post Google Crawls Raw And Encoded Bracket URLs Separately appeared first on Search Engine Journal .": {
   "text": "La publicación Google rastrea las URL entre corchetes sin procesar y codificadas por separado apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "The post Google Discovers Unexpected Patterns In AI Image Generation appeared first on Search Engine Journal .": {
+  "text": "La publicación Google descubre patrones inesperados en la generación de imágenes con IA apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
  "The post Google Explains ⟦1⟧s, ⟦2⟧ Limits & Bracket URLs – SEO Pulse appeared first on Search Engine Journal .": {
@@ -3164,6 +3272,10 @@
   "machine": true
  },
  "This builds on our long history of providing website owners with clear controls, including through…": "Esto se basa en nuestra larga trayectoria ofreciendo controles claros a los propietarios de sitios web, incluso mediante…",
+ "This is a Claude Code skill for comprehensive website analysis, audits, technical SEO, and AI search optimization.": {
+  "text": "Esta es una habilidad de Claude Code para análisis integral de sitios web, auditorías, SEO técnico y optimización de búsqueda con IA.",
+  "machine": true
+ },
  "This W3C paper from the Strategy Team is intended to foster discussion in the technical community at TPAC — the most important W3C community event of the year — about how the W3C technical agenda for the web needs to evolve based on the rise of AI agents.": {
   "text": "Este documento del W3C del Equipo de Estrategia tiene como objetivo fomentar el debate en la comunidad técnica en TPAC, el evento comunitario del W3C más importante del año, sobre cómo la agenda técnica del W3C para la web debe evolucionar en función del aumento de los agentes de IA.",
   "machine": true
@@ -3200,6 +3312,10 @@
  "Time to first byte is a floor for everything else.": "El tiempo hasta el primer byte es el suelo de todo lo demás.",
  "Time your server in one line.": "Mide tu servidor en una línea.",
  "Time your server in one line. curl can report when the first byte of the page arrived. ⟦1⟧ suggests a Time to First Byte of ⟦2⟧ seconds or less for most sites.": "Mide tu servidor en una línea. curl puede indicar cuándo llegó el primer byte de la página. ⟦1⟧ sugiere un Time to First Byte de ⟦2⟧ segundos o menos para la mayoría de los sitios.",
+ "Time, memory and leaks measured in Playwright": {
+  "text": "Tiempo, memoria y fugas medidas en Dramaturgia",
+  "machine": true
+ },
  "TL;DR:": "TL;DR:",
  "TLS.": "TLS.",
  "To test optimistic UI rollback in a public SaaS demo, show an immediate interface change,...": {
@@ -3318,6 +3434,10 @@
   "text": "Vía DEV, por Ali Farhat, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by Alicia Marianne Gonçalves, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, de Alicia Marianne Gonçalves, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Alina Shah, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Alina Shah, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3404,6 +3524,10 @@
   "text": "Vía DEV, por Vadym Liubyvyi, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by Zakaria Tebani, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Zakaria Tebani, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via GitHub, by AI-Marketing-Hub, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por AI-Marketing-Hub, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by alpinjolala, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por alpinjolala, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -3422,6 +3546,10 @@
  "Via GitHub, by iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by irraz, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por irraz, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via GitHub, by lowdevco, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por lowdevco, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via GitHub, by LoyaltyobsidianOcean2704, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -3461,6 +3589,10 @@
  "Via iPullRank, by Garrett Sussman, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía iPullRank, por Garrett Sussman, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via iPullRank, by Mike King, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía iPullRank, de Mike King, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via Moz, by Crystal Carter, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Moz, de Crystal Carter, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via Moz, by Dii Pooler, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -3548,6 +3680,10 @@
   "machine": true
  },
  "Via Simo Ahava, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía Simo Ahava, ⟦1⟧-⟦2⟧-⟦3⟧.",
+ "Via W3C WAI, by W3C Web Accessibility Initiative (WAI), ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "A través de W3C WAI, por la Iniciativa de Accesibilidad Web (WAI) del W3C, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via W3C, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "A través de W3C, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3596,6 +3732,10 @@
  },
  "What came up most often among each site's top issues:": {
   "text": "Lo que surgió con más frecuencia entre los problemas principales de cada sitio:",
+  "machine": true
+ },
+ "What Is Prompt Tracking? [Tips and Workflows To Do It on a Budget]": {
+  "text": "¿Qué es el seguimiento rápido? [Consejos y flujos de trabajo para hacerlo con un presupuesto]",
   "machine": true
  },
  "What it lacks is a content security policy: none of the pages analyzed sends one.": "Lo que le falta es una política de seguridad de contenido: ninguna de las páginas analizadas envía una.",

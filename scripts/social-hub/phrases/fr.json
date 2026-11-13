@@ -31,6 +31,10 @@
   "text": "⟦1⟧ leads en SEO, Accessibilité ; ⟦2⟧ leads en GEO, Analytics, Sécurité, Performance.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Accessibility; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Analytics, Security; ⟦4⟧ leads in Performance.": {
+  "text": "⟦1⟧ leads en SEO, Accessibilité ; ⟦2⟧ leads en GEO ; ⟦3⟧ leads en Analytics, Sécurité ; ⟦4⟧ mène en Performance.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics, Accessibility; ⟦2⟧ leads in GEO, Security, Performance.": {
   "text": "⟦1⟧ leads en SEO, Analytics, Accessibilité ; ⟦2⟧ leads en GEO, Sécurité, Performance.",
   "machine": true
@@ -394,6 +398,10 @@
  "Before your next automation sprint, write ten cases in plain language.": "Avant votre prochain sprint d’automatisation, écrivez dix cas en langage clair.",
  "Bello's JSON-LD names the page, not the city.": "Le JSON-LD de Bello nomme la page, pas la ville.",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.": "Comparez-vous aux sites auxquels vos visiteurs vous comparent, pas à un score parfait : l’écart qui vous coûte, c’est celui qu’un concurrent a déjà comblé.",
+ "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that…": {
+  "text": "Comparez-vous aux sites avec lesquels vos visiteurs vous comparent, et non à un score parfait : l'écart qui…",
+  "machine": true
+ },
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap…": "Comparez-vous aux sites auxquels vos visiteurs vous comparent, pas à un score parfait : l’écart…",
  "Benchmark against the sites your visitors compare you with, not against a perfect score: the…": {
   "text": "Comparez-vous aux sites avec lesquels vos visiteurs vous comparent, et non à un score parfait : le…",
@@ -628,6 +636,10 @@
   "machine": true
  },
  "But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.": "Mais Referrer-Policy: unsafe-url envoie l’URL complète, paramètres compris, à chaque site lié.",
+ "But scripts fingerprint the browser before the visitor chooses.": {
+  "text": "Mais les scripts empreintent le navigateur avant que le visiteur ne fasse son choix.",
+  "machine": true
+ },
  "But several links on the home page return ⟦1⟧, among them the giro directo page, the national contact point, and emergencies.": "Mais plusieurs liens de l’accueil renvoient ⟦1⟧, dont la page giro directo, le point de contact national et les urgences.",
  "But Strict-Transport-Security sets max-age to ⟦1⟧ days, and http:// reaches https through a temporary ⟦2⟧.": "Mais Strict-Transport-Security fixe max-age à ⟦1⟧ jours, et http:// passe à https via une ⟦2⟧ temporaire.",
  "But Strict-Transport-Security sets max-age=⟦1⟧, about ⟦2⟧ minutes, so browsers forget the https-only rule almost as soon as they learn it.": "Mais Strict-Transport-Security fixe max-age=⟦1⟧, environ ⟦2⟧ minutes : les navigateurs oublient la règle https presque aussitôt apprise.",
@@ -1031,6 +1043,10 @@
  "Find the code your page never runs.": "Trouvez le code que votre page n'exécute jamais.",
  "Find the Largest Contentful Paint element on your home page and serve it first: preload, size, compress.": "Trouvez l’élément Largest Contentful Paint de votre page d’accueil et servez-le en premier : preload, taille, compression.",
  "Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.": "Trouvez le toucher le plus lent de votre page, souvent un menu ou un filtre, et découpez la longue tâche qui se cache derrière.",
+ "Find the tag behind each host and hold it until consent, like a tracking cookie.": {
+  "text": "Trouvez la balise derrière chaque hôte et conservez-la jusqu'au consentement, comme un cookie de suivi.",
+  "machine": true
+ },
  "Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.": "Trouvez votre élément Largest Contentful Paint, chargez-le tôt, donnez-lui une taille, et ne le chargez jamais en lazy-load.",
  "Find your lowest area score and fix that first.": "Trouvez votre score le plus bas par domaine et corrigez-le en premier.",
  "Fire it on success, not on click.": "Déclenchez-le sur le succès, pas sur le clic.",
@@ -1251,6 +1267,14 @@
  "IDRD's Referrer-Policy is unsafe-url.": "La Referrer-Policy de l’IDRD est unsafe-url.",
  "IETF writes the RFCs, but no ⟦1⟧.": "L’IETF écrit les RFC, mais pas de ⟦1⟧.",
  "If colour is the only signal, add text, an icon or an underline.": "Si la couleur est le seul signal, ajoutez un texte, une icône ou un soulignement.",
+ "If it is fraud or bot protection, name it in the privacy notice.": {
+  "text": "S'il s'agit d'une protection contre la fraude ou les robots, nommez-le dans l'avis de confidentialité.",
+  "machine": true
+ },
+ "If it is fraud or bot protection…": {
+  "text": "S’il s’agit de fraude ou de protection contre les robots…",
+  "machine": true
+ },
  "If it is missing, add it at your host or CDN.": "S’il manque, ajoutez-le chez votre hébergeur ou votre CDN.",
  "If the CDN ever serves anything else, the browser refuses to run it.": "Si le CDN sert autre chose, le navigateur refuse de l'exécuter.",
  "If they are missing there, Google may not see them either.": "S'ils n'y sont pas, Google risque de ne pas les voir non plus.",
@@ -1803,6 +1827,10 @@
   "machine": true
  },
  "Scores hidden until tomorrow.": "Scores masqués jusqu’à demain.",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO ⟦20⟧,…": {
+  "text": "Scores côte à côte : ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sécurité ⟦6⟧, A11y ⟦7⟧, Vitesse ⟦8⟧ ; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sécurité ⟦14⟧, A11y ⟦15⟧, Vitesse ⟦16⟧ ; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO ⟦20⟧,…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…": {
   "text": "Scores côte à côte : ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sécurité ⟦6⟧, A11y ⟦7⟧, Vitesse ⟦8⟧ ; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sécurité ⟦14⟧, A11y ⟦15⟧, Vitesse ⟦16⟧ ; ⟦17⟧ Score ⟦18⟧, SEO ⟦19⟧, GEO…",
   "machine": true

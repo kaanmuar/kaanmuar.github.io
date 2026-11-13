@@ -1,5 +1,5 @@
 {
- "since": "2026-11-12T11:01:02.318Z",
+ "since": "2026-11-13T11:01:08.649Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -140,13 +140,16 @@
   "made-in-china.com": "2026-11-12",
   "pneusgom.re": "2026-11-12",
   "vs:sosfanta.com": "2026-11-12",
-  "vs:dermoeczanem.com": "2026-11-12"
+  "vs:dermoeczanem.com": "2026-11-12",
+  "sliit.lk": "2026-11-13",
+  "hsbc.bm": "2026-11-13",
+  "vs:pte.hu": "2026-11-13"
  },
  "recent": [
+  "an-fingerprint",
+  "sec-hsts",
   "sec-hsts",
   "sec-http",
-  "seo-title-missing",
-  "a11y-labels",
-  "ax-button-name"
+  "seo-title-missing"
  ]
 }

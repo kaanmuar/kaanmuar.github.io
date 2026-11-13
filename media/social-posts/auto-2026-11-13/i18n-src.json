@@ -1,0 +1,82 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-sliit-lk": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "sliit.lk: 50.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 12 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "sliit.lk · 20 pages analyzed · 12 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 12 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-sliit-lk&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-sliit-lk\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #Vulnerability #CyberSecurity #QA #HSTS #HTTPS #Programming #LearnOnYouTube #QualityAssurance #InfoSec #TestAutomation #QAlab"
+   }
+  },
+  "u-hsbc-bm": {
+   "lang": "it",
+   "strings": {
+    "title.0": "hsbc.bm: 75.",
+    "title.1": "*The gap: measurement.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But scripts fingerprint the browser before the visitor chooses.",
+    "action": "Find the tag behind each host and hold it until consent, like a tracking cookie. If it is fraud or bot protection, name it in the privacy notice.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 13 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "hsbc.bm · 20 pages analyzed · 13 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But scripts fingerprint the browser before the visitor chooses.\n\nLesson: Find the tag behind each host and hold it until consent, like a tracking cookie. If it is fraud or bot protection, name it in the privacy notice.\n\nOne automated analysis of public pages on 13 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-hsbc-bm&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-hsbc-bm\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Analytics #Outage #Programming #QA #WebDev #Coding #MarTech #QAEngineer #DigitalAnalytics #SDET #WebDesign #QAlab"
+   }
+  },
+  "vs-pte-hu": {
+   "lang": "en",
+   "strings": {
+    "live": "u-pte-hu",
+    "title.0": "4 natural competitors.",
+    "title.1": "*unideb.hu leads: 61.*",
+    "body": "elte.hu leads in SEO, Accessibility; pte.hu leads in GEO; unideb.hu leads in Analytics, Security; bme.hu leads in Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 13 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "pte.hu",
+    "visual.rows.1.0": "elte.hu",
+    "visual.rows.2.0": "unideb.hu",
+    "visual.rows.3.0": "bme.hu",
+    "visual.note": "Natural competitors found on the open web · 13 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "elte.hu leads in SEO, Accessibility; pte.hu leads in GEO; unideb.hu leads in Analytics, Security; bme.hu leads in Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 13 Nov 2026 of pte.hu, elte.hu, unideb.hu, bme.hu, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-pte-hu&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-pte-hu\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #SoftwareTesting #Outage #QA #WebPerf #Coding #Programming #SEOTips #SiteSpeed #SDET #DigitalMarketing #QAlab"
+   }
+  }
+ }
+}
