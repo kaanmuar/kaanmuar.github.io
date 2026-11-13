@@ -177,6 +177,17 @@
     "checked": "2026-11-09T00:52:19.073Z"
    }
   ],
+  "auto-2026-11-06/01-u-usehelios-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "66",
+    "at": "2026-11-13T18:30:47.327Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/66",
+    "checked": "2026-11-13T18:30:53.373Z"
+   }
+  ],
   "auto-2026-11-06/06-u-kra-co-kr": [
    {
     "channel": "telegram",
@@ -265,6 +276,17 @@
     "checked": "2026-11-12T16:20:26.823Z"
    }
   ],
+  "digest-2026-11-13/01-this-week": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "67",
+    "at": "2026-11-13T18:30:53.373Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/67",
+    "checked": "2026-11-13T18:30:58.663Z"
+   }
+  ],
   "evergreen-2026-11/02-myth-lighthouse": [
    {
     "channel": "telegram",
@@ -340,6 +362,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/62",
     "checked": "2026-11-12T22:28:35.212Z"
+   }
+  ],
+  "launch-2026-10/es/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "65",
+    "at": "2026-11-13T18:30:45.974Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/65",
+    "checked": "2026-11-13T18:30:47.326Z"
    }
   ],
   "live/2026-11-04": [

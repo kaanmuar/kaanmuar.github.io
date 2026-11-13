@@ -664,6 +664,17 @@
     "checked": "2026-11-09T00:52:08.972Z"
    }
   ],
+  "auto-2026-11-06/01-u-usehelios-ai": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n27mj3ej7p2b",
+    "at": "2026-11-13T18:29:50.860Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n27mj3ej7p2b",
+    "checked": "2026-11-13T18:30:08.489Z"
+   }
+  ],
   "auto-2026-11-06/06-u-kra-co-kr": [
    {
     "channel": "bluesky",
@@ -1188,6 +1199,26 @@
     "checked": "2026-10-31T02:24:06.151Z"
    }
   ],
+  "digest-2026-11-13/01-this-week": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n27mj5n42l24",
+    "at": "2026-11-13T18:30:08.489Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n27mj5n42l24",
+    "checked": "2026-11-13T18:30:10.244Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18099242618691786",
+    "at": "2026-11-13T18:30:22.690Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfsR1wVFXMQ",
+    "checked": "2026-11-13T18:30:32.573Z"
+   }
+  ],
   "evergreen-2026-11/02-myth-lighthouse": [
    {
     "channel": "bluesky",
@@ -1317,6 +1348,43 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25jboyngz2b",
     "checked": "2026-11-12T22:26:59.976Z"
+   }
+  ],
+  "launch-2026-10/es/a11y": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n27mikzmgq2p",
+    "at": "2026-11-13T18:29:49.012Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n27mikzmgq2p",
+    "checked": "2026-11-13T18:29:50.860Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "at": "2026-11-13T18:30:45.283Z",
+    "result": "failed",
+    "error": "no feed image media/social-posts/launch-2026-10/es/a11y-story.jpg",
+    "checked": "2026-11-13T18:30:45.283Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18101381348210432",
+    "at": "2026-11-13T18:30:33.421Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfsR3HWjDfq/",
+    "checked": "2026-11-13T18:30:45.001Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18403720039200535",
+    "at": "2026-11-13T18:30:11.466Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfsR0bBFdvy",
+    "checked": "2026-11-13T18:30:22.690Z"
    }
   ],
   "promo-social-hub-2026-10/01-one-page-en": [
