@@ -896,6 +896,26 @@
     "checked": "2026-11-13T21:54:33.580Z"
    }
   ],
+  "auto-2026-11-14/01-u-actualite-cd": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2542252212927159",
+    "at": "2026-11-20T21:50:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-14T11:25:22.857Z"
+   }
+  ],
+  "auto-2026-11-14/04-vs-sinarharian-com-my": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122110212381532027",
+    "at": "2026-11-15T19:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-14T11:25:25.983Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -1045,8 +1065,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122108172411532027",
     "at": "2026-11-13T23:45:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-13T21:54:33.581Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122108172411532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-14T11:25:11.383Z"
    }
   ],
   "compare-2026-11b/04-newspapers": [
@@ -1076,8 +1097,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122108172537532027",
     "at": "2026-11-13T22:21:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-13T21:54:33.581Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/122094628539532027/posts/122108172537532027",
+    "checked": "2026-11-14T11:25:11.383Z"
    }
   ],
   "evergreen-2026-11/01-ttfb-curl": [
@@ -1376,8 +1398,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094629199532027",
     "at": "2026-11-14T01:10:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-13T21:54:33.582Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094629199532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-14T11:25:11.383Z"
    }
   ],
   "promo-social-hub-2026-10/35-follow-es": [

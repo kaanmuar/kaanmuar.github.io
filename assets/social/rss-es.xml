@@ -481,6 +481,76 @@ Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm
       <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/a11y-portrait.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La boleta de Interop 2027 de Adrian Roselli clasifica los lugares en los que los autores siguen equivocándose</title>
+      <link>https://carlosandmunoz.com/social/pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author-es.html</link>
+      <guid isPermaLink="false">pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author-es</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Standards</category>
+      <description>Adrian Roselli ha publicado sus quince selecciones clasificadas para Interop 2027, lideradas por `ariaNotify()`, el atributo HTML `focusgroup` y Shadow DOM `referenceTarget`, con un motivo de accesibilidad adjunto a cada uno. La votación cierra el 19 de noviembre de 2026.
+
+Vía DEV, por Leo, 2026-11-11.
+
+https://news.html.to/roselli-interop-2027-accessibility-ballot/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx1ununhkkqgxxlp31lg3.png" medium="image"/>
+    </item>
+    <item>
+      <title>Errores de compra de IA: Qué solucionar para ayudar a los compradores a elegir sus productos</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your--es.html</link>
+      <guid isPermaLink="false">pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your--es</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Explore el futuro del comercio minorista con compras mediante IA. Comprenda cómo la IA afecta la visibilidad del producto y la toma de decisiones de los consumidores. La publicación Errores de compra de IA: Qué solucionar para ayudar a los compradores a elegir sus productos apareció por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Cody Slingerland, 2026-11-12.
+
+https://www.searchenginejournal.com/fix-ai-shopping-errors-writesonic-spa/595790/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/writesonic-partner-stories-featured-1600x832-887.png" medium="image"/>
+    </item>
+    <item>
+      <title>Creé un escáner WCAG 2.2 AA gratuito que escribe un informe que un cliente puede leer</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl-es.html</link>
+      <guid isPermaLink="false">pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl-es</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Accessibility</category>
+      <description>Ejecuto AccessLens. Es un escáner en el que pegas una URL: carga esa página de forma realmente sin cabeza...
+
+Vía DEV, por Chris Clow, 2026-11-12.
+
+https://dev.to/chris_clow_04d2c038f345cc/i-built-a-free-wcag-22-aa-scanner-that-writes-a-report-a-client-can-read-3968</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F5iz8qbkqdbsrqak2puf2.png" medium="image"/>
+    </item>
+    <item>
+      <title>El tráfico disponible se está reduciendo y qué canal lo llena importa menos de lo que pensamos a través de @sejournal, @DuaneForrester</title>
+      <link>https://carlosandmunoz.com/social/pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat-es.html</link>
+      <guid isPermaLink="false">pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat-es</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Para las empresas que dependen del tráfico, la visita fue sólo un paso hacia la venta. Los agentes ahora terminan ese trabajo y el trabajo comienza con la oferta. La publicación La reserva de tráfico se está reduciendo y qué canal lo llena importa menos de lo que pensamos apareció por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Duane Forrester, 2026-11-12.
+
+https://www.searchenginejournal.com/the-traffic-pool-is-shrinking-and-which-channel-fills-it-matters-less-than-we-think/596346/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-traffic-pool-527.png" medium="image"/>
+    </item>
+    <item>
+      <title>Las visitas al millón de sitios web principales cayeron 12%, los datos muestran a través de @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se-es.html</link>
+      <guid isPermaLink="false">pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se-es</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Los datos muestran que las visitas a los millones de sitios web más importantes del mundo disminuyeron desde un pico anterior, y las visitas a sitios fuera del top 100 apenas cambiaron. La publicación Las visitas al millón de sitios web principales cayeron 12%, los datos muestran apareció por primera vez en Search Engine Journal.
+
+A través de Search Engine Journal, por Matt G. Sur, 2026-11-12.
+
+https://www.searchenginejournal.com/visits-to-the-top-million-websites-fell-12-data-shows/597085/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/9e28404b-6124-44e3-a880-98e7c62cf229-889.jpeg" medium="image"/>
+    </item>
+    <item>
       <title>El filtro de fecha de UNICEF no tiene etiqueta.</title>
       <link>https://carlosandmunoz.com/social/runs-100/06-unicef-es.html</link>
       <guid isPermaLink="false">runs-100/06-unicef-es</guid>
@@ -864,107 +934,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #GEO #ChatGPT #DevOps #QA #AISearch #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/02-u-careeronestop-org.jpg" length="242750" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/02-u-careeronestop-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>motorsport-total.com: 74. El punto débil: enmarcado.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/01-u-motorsport-total-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/01-u-motorsport-total-com-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>National</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
-
-La lección para cualquier equipo: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
-
-Un análisis automatizado de páginas públicas el 10 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-motorsport-total-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-motorsport-total-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #Automation #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg" length="239912" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>meutimao.com.br: 64. La brecha: banderas de cookies.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/02-u-meutimao-com-br-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/02-u-meutimao-com-br-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>National</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 11 las cookies se envían sin Secure y 3 las cookies de sesión son legibles mediante scripts.
-
-La lección para cualquier equipo: Configure Secure, HttpOnly y SameSite en cada cookie que los scripts no necesiten leer.
-
-Un análisis automatizado de páginas públicas el 10 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-meutimao-com-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-meutimao-com-br
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #Automation #QA #Cookies #QAlab
-
-https://www.youtube.com/shorts/080bazpPyM4</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" length="243312" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>EAFIT o UdeA: ¿qué sitio universitario obtuvo más puntos?</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11b/01-quiz-medellin-universities-es.html</link>
-      <guid isPermaLink="false">compare-2026-11b/01-quiz-medellin-universities-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pregunta</category>
-      <category>Local</category>
-      <description>Dos universidades de Medellín, EAFIT y la Universidad de Antioquia, 20 páginas públicas cada una, analizadas con la misma revisión el mismo día de octubre de 2026.
-
-Tu apuesta: Haz tu apuesta. La respuesta, con las seis puntuaciones por área, sale mañana.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-medellin-universities
-
-#WebQuality #DevOps #SoftwareTesting #QA #Quiz #QAlab
-
-https://www.youtube.com/shorts/IuyAgA1qTQk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" length="241108" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>INP: qué tan rápido responde la página a un toque.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/09-inp-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glosario</category>
-      <category>Perf</category>
-      <description>Palabra del día: INP: qué tan rápido responde la página a un toque.
-
-Interaction to Next Paint mide el retraso entre un clic, un toque o una tecla y el siguiente fotograma en pantalla. Reemplazó a First Input Delay como Core Web Vital en marzo de 2024.
-
-Encuéntralo: Encuentra el toque más lento de tu página, a menudo un menú o un filtro, y divide la tarea larga que hay detrás.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
-
-#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" length="230316" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>La revisión de accesibilidad de 5 minutos.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/14-a11y-check-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/14-a11y-check-es</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Buena práctica</category>
-      <category>A11y</category>
-      <description>Checklist: La revisión de accesibilidad de 5 minutos.
-
-Cinco comprobaciones que cualquiera puede hacer sin herramientas especiales. Cada una corresponde a un criterio de conformidad de WCAG 2.2, así que un fallo es fácil de reportar.
-
-Úsala: Haz las cinco en tu página de inicio y en tu formulario más usado. Reporta cada fallo con el número de su criterio.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=a11y-check
-
-#Accessibility #DevOps #QA #WCAG #SoftwareEngineering #QAlab
-
-https://www.youtube.com/shorts/bw6fd3xnauM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" length="224449" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
