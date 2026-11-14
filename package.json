@@ -51,7 +51,6 @@
     "@wdio/mocha-framework": "^10.1.0",
     "@wdio/spec-reporter": "^10.1.0",
     "appium": "^3.9.0",
-    "appium-chromium-driver": "^3.2.0",
     "axe-core": "^4.14.0",
     "codeceptjs": "^4.2.2",
     "css-select": "^5.2.2",
@@ -74,6 +73,13 @@
   "overrides": {
     "cypress-axe": {
       "cypress": "$cypress"
+    },
+    "minimatch": "11.0.4",
+    "js-beautify": {
+      "glob": "13.0.6"
+    },
+    "test-exclude": {
+      "glob": "13.0.6"
     }
   }
 }
