@@ -1,6 +1,386 @@
 {
  "runs": [
   {
+   "at": "2026-11-14T17:12:35.412Z",
+   "run": {
+    "id": 43595964133,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/43595964133"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 1982,
+   "scored": 1982,
+   "failed": 0,
+   "below": 1062,
+   "avg": {
+    "mobile": 88,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-14",
+    "files": [
+     "assets/frameworks/behave.png",
+     "assets/profile-280.jpg",
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "qa-lab.html",
+     "qa-review-de.html",
+     "qa-review-es.html",
+     "qa-review-fr.html",
+     "qa-review-it.html",
+     "qa-review-pt.html",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "qa-review.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/promo-social-hub-2026-10/04-one-page-fr.html",
+     "social/promo-social-hub-2026-10/09-copy-caption-de.html",
+     "social/promo-social-hub-2026-10/14-clips-de.html",
+     "social/promo-social-hub-2026-10/15-clips-fr.html",
+     "social/promo-social-hub-2026-10/16-six-languages-de.html",
+     "social/promo-social-hub-2026-10/19-six-languages-fr.html",
+     "social/promo-social-hub-2026-10/21-follow-fr.html",
+     "social/promo-social-hub-2026-10/24-follow-de.html"
+    ],
+    "fixes": [
+     {
+      "page": "qa-review-fr.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-pt.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-de.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-lab.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "qa-review-social-pt.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "assets/profile-280.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/profile-280.jpg from 21 KB to 11 KB."
+     },
+     {
+      "page": "assets/frameworks/behave.png",
+      "kind": "image",
+      "detail": "Compressed assets/frameworks/behave.png from 9 KB to 7 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "qa-review-fr.html",
+      "mobile": {
+       "before": 60,
+       "after": 60,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 77,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-fr.html"
+     },
+     {
+      "file": "qa-review-pt.html",
+      "mobile": {
+       "before": 61,
+       "after": 60,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 70,
+       "after": 70,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-pt.html"
+     },
+     {
+      "file": "qa-review-de.html",
+      "mobile": {
+       "before": 44,
+       "after": 45,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 86,
+       "after": 86,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-de.html"
+     },
+     {
+      "file": "qa-review.html",
+      "mobile": {
+       "before": 60,
+       "after": 60,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 77,
+       "after": 87,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review.html"
+     },
+     {
+      "file": "qa-lab.html",
+      "mobile": {
+       "before": 73,
+       "after": 70,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-lab.html"
+     },
+     {
+      "file": "qa-review-social-pt.html",
+      "mobile": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-pt.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on qa-review-fr.html (desktop 86 → 77), qa-lab.html (mobile 73 → 70).",
+     "drops": 2,
+     "rises": 1,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-14",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "assets/social/rss-de.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "qa-review-social-de.html",
+     "qa-review-social-es.html",
+     "qa-review-social-fr.html",
+     "qa-review-social-it.html",
+     "qa-review-social-pt.html",
+     "qa-review-social.html",
+     "sitemap-social.xml",
+     "social/launch-2026-10/de/a11y.html",
+     "social/launch-2026-10/de/exports.html",
+     "social/launch-2026-10/de/first-read.html",
+     "social/launch-2026-10/de/frameworks.html",
+     "social/launch-2026-10/de/inherited.html",
+     "social/launch-2026-10/de/layers.html",
+     "social/launch-2026-10/de/performance.html",
+     "social/launch-2026-10/de/release.html",
+     "social/launch-2026-10/de/security.html",
+     "social/launch-2026-10/de/talking.html",
+     "social/launch-2026-10/fr/a11y.html",
+     "social/launch-2026-10/fr/exports.html",
+     "social/launch-2026-10/fr/first-read.html",
+     "social/launch-2026-10/fr/frameworks.html",
+     "social/launch-2026-10/fr/inherited.html",
+     "social/launch-2026-10/fr/layers.html",
+     "social/launch-2026-10/fr/performance.html",
+     "social/launch-2026-10/fr/release.html",
+     "social/launch-2026-10/fr/security.html",
+     "social/launch-2026-10/fr/talking.html",
+     "social/promo-social-hub-2026-10/04-one-page-fr.html",
+     "social/promo-social-hub-2026-10/09-copy-caption-de.html",
+     "social/promo-social-hub-2026-10/14-clips-de.html",
+     "social/promo-social-hub-2026-10/15-clips-fr.html",
+     "social/promo-social-hub-2026-10/16-six-languages-de.html",
+     "social/promo-social-hub-2026-10/19-six-languages-fr.html",
+     "social/promo-social-hub-2026-10/21-follow-fr.html",
+     "social/promo-social-hub-2026-10/24-follow-de.html",
+     "social/promo-social-hub-2026-10/26-real-reviews-it.html",
+     "social/promo-social-hub-2026-10/29-real-reviews-de.html",
+     "social/promo-social-hub-2026-10/31-one-page-de.html",
+     "social/promo-social-hub-2026-10/32-copy-caption-fr.html",
+     "social/runs-100/100-bucaramanga-de.html",
+     "social/runs-100/100-bucaramanga-es.html",
+     "social/runs-100/100-bucaramanga-fr.html",
+     "social/runs-100/100-bucaramanga-it.html",
+     "social/runs-100/100-bucaramanga-pt.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "qa-review-social-pt.html",
+      "mobile": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 82,
+       "after": 82,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-pt.html"
+     },
+     {
+      "file": "social/auto-2026-11-08/03-vs-aktia-fi-pt.html",
+      "mobile": {
+       "before": 100,
+       "after": 91,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 97,
+       "after": 97,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-11-08/03-vs-aktia-fi-pt.html"
+     },
+     {
+      "file": "social/auto-2026-11-09/03-vs-tide-forecast-com-pt.html",
+      "mobile": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-11-09/03-vs-tide-forecast-com-pt.html"
+     },
+     {
+      "file": "social/pick/cypress-ambassador-spotlight-kevin-korenhof-fr.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-kevin-korenhof-fr.html"
+     },
+     {
+      "file": "social/pick/three-ways-to-spend-q4-budget-on-ai-search-and-prove-it-work-de.html",
+      "mobile": {
+       "before": 67,
+       "after": 67,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 94,
+       "after": 94,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/three-ways-to-spend-q4-budget-on-ai-search-and-prove-it-work-de.html"
+     },
+     {
+      "file": "social/pick/three-ways-to-spend-q4-budget-on-ai-search-and-prove-it-work-fr.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 94,
+       "after": 94,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/three-ways-to-spend-q4-budget-on-ai-search-and-prove-it-work-fr.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "Score fell on social/auto-2026-11-08/03-vs-aktia-fi-pt.html (mobile 100 → 91).",
+     "drops": 1,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-13T18:03:05.130Z",
    "run": {
     "id": 43434964941,
