@@ -2324,6 +2324,40 @@ test("an https copy of an http:// redirect that refuses the review or is slow is
   assert.equal((await core.probeRead("https://gone.example.com/")).httpRedirect, "http://gone.example.com/old");
 });
 
+test("an http redirect that points at a later https path is read there (#2875)", async (t) => {
+  // sweep-GCric9N6ijtga8cagENg on mitsubishielectric.com: https apex 302s to https www, which 302s to
+  // http://www.mitsubishielectric.com/. That http address 301s to http://www.mitsubishielectric.com/en/index.html,
+  // and https://www.mitsubishielectric.com/en/index.html 301s to https://www.mitsubishielectric.com/en/ (200, the global site).
+  // The review used to stop when https of the first http address redirected back to it.
+  const home = "https://electric.example.com/";
+  const page = "https://www.electric.example.com/en/";
+  t.after(fakeNetwork({
+    [home]: { status: 302, headers: { location: "https://www.electric.example.com/" } },
+    "https://www.electric.example.com/": { status: 302, headers: { location: "http://www.electric.example.com/" } },
+    "http://www.electric.example.com/": { status: 301, headers: { location: "http://www.electric.example.com/en/index.html" } },
+    "https://www.electric.example.com/en/index.html": { status: 301, headers: { location: page } },
+    [page]: { status: 200, headers: { "content-type": "text/html" }, body: HTML },
+    "https://other.example.com/": { status: 302, headers: { location: "http://other.example.com/" } },
+    "http://other.example.com/": { status: 301, headers: { location: "http://elsewhere.example.com/" } },
+    "https://elsewhere.example.com/": { status: 200, headers: { "content-type": "text/html" }, body: HTML },
+    "https://plain.example.com/": { status: 302, headers: { location: "http://plain.example.com/welcome" } },
+    "https://plain.example.com/welcome": { status: 302, headers: { location: "http://plain.example.com/welcome" } },
+    "http://plain.example.com/welcome": { status: 200, headers: { "content-type": "text/html" }, body: HTML }
+  }));
+  const lines = [];
+  const read = await core.fetchPublic(home, null, (line) => lines.push(line));
+  assert.deepEqual([read.status, read.url], [200, page]);
+  assert.ok(lines.includes("The site redirected to http://www.electric.example.com/en/index.html, an http:// address. Requesting the same address over https, as Chrome does."));
+  const probe = await core.probeRead(home);
+  assert.deepEqual([probe.status, probe.httpRedirect, probe.html], [200, undefined, true]);
+  assert.equal(failures.diagnose({ cause: { id: "http-redirect" } }, { dns: {}, plain: probe }).cleared, true);
+
+  const other = await core.fetchPublic("https://other.example.com/").then(() => null, (caught) => caught);
+  assert.equal(other.message, "The site redirected to http://other.example.com/, an http:// address, and the same address over https gave no page. The review only follows https.");
+  const plain = await core.fetchPublic("https://plain.example.com/").then(() => null, (caught) => caught);
+  assert.equal(plain.message, "The site redirected to http://plain.example.com/welcome, an http:// address, and the same address over https gave no page. The review only follows https.");
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());
