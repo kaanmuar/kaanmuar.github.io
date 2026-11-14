@@ -63,6 +63,10 @@
   "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit, Barrierefreiheit; ⟦2⟧ führt in Analytics; ⟦3⟧ führt in der Leistung.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics, Performance; ⟦3⟧ leads in Accessibility. ⟦4⟧ leads in none of the six areas.": {
+  "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit; ⟦2⟧ führend in Analytics, Performance; ⟦3⟧ führt in der Barrierefreiheit. ⟦4⟧ führt in keinem der sechs Bereiche.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Accessibility, Performance.": {
   "text": "⟦1⟧ führt in den Bereichen SEO, GEO, Sicherheit; ⟦2⟧ führt in Analytics; ⟦3⟧ führt in den Bereichen Zugänglichkeit und Leistung.",
   "machine": true
@@ -101,6 +105,10 @@
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ führt bei SEO; ⟦2⟧ führt bei GEO und Sicherheit; ⟦3⟧ führt bei Analytics, Barrierefreiheit und Performance.",
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Performance; ⟦4⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ führend in SEO; ⟦2⟧ führt in GEO, Sicherheit; ⟦3⟧ führend in Analytics, Performance; ⟦4⟧ führt in der Barrierefreiheit.",
+  "machine": true
+ },
  "⟦1⟧ leads security, ⟦2⟧ to ⟦3⟧, and analytics, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ führt bei Sicherheit, ⟦2⟧ zu ⟦3⟧, und bei Analytics, ⟦4⟧ zu ⟦5⟧.",
  "⟦1⟧ lets AI answer bots like OAI-SearchBot and PerplexityBot in while blocking the training bots GPTBot, CCBot, and Google-Extended.": "⟦1⟧ lässt KI-Antwort-Bots wie OAI-SearchBot und PerplexityBot herein und sperrt die Trainings-Bots GPTBot, CCBot und Google-Extended.",
  "⟦1⟧ lists ⟦2⟧ links but names no entity.": "⟦1⟧ listet ⟦2⟧ Links, nennt aber keine Entität.",
@@ -1836,6 +1844,10 @@
   "machine": true
  },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Die Werte im direkten Vergleich: ⟦1⟧ Gesamtwert ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Tempo ⟦8⟧; ⟦9⟧ Gesamtwert ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Tempo ⟦16⟧; ⟦17⟧ Gesamtwert ⟦18⟧, SEO…",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧,…": {
+  "text": "Bewertungen nebeneinander: ⟦1⟧ Bewertung ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analyse ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Geschwindigkeit ⟦8⟧; ⟦9⟧ Punktzahl ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analyse ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Geschwindigkeit ⟦16⟧; ⟦17⟧ Punktzahl ⟦18⟧,…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
   "text": "Bewertungen nebeneinander: ⟦1⟧ Bewertung ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analyse ⟦5⟧, Sicherheit ⟦6⟧, A11y ⟦7⟧, Geschwindigkeit ⟦8⟧; ⟦9⟧ Punktzahl ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analyse ⟦13⟧, Sicherheit ⟦14⟧, A11y ⟦15⟧, Geschwindigkeit ⟦16⟧; ⟦17⟧ Punktzahl…",
   "machine": true

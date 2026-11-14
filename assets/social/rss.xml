@@ -393,7 +393,9 @@ Your guess: Make your guess. The answer, with all six area scores, comes out tom
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-newspapers
 
-#WebQuality #AI #DevOps #QA #Quiz #QAlab</description>
+#WebQuality #AI #DevOps #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/y_EmhX1_RYo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" length="251297" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -430,7 +432,9 @@ By Will Creedle, Deque: https://www.deque.com/blog/how-to-choose-the-right-vpat-
 
 Every digest, tip and site review on our social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=weekly-digest&amp;utm_content=digest-2026-11-13
 
-#WebDev #Programming #QA #Accessibility #SEO #QAlab</description>
+#WebDev #Programming #QA #Accessibility #SEO #QAlab
+
+https://www.youtube.com/shorts/3LEjpxQ2BYw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" length="233234" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -452,6 +456,76 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #WebPerformance #SoftwareTesting #DevOps #QA #CoreWebVitals #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg" length="234159" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Adrian Roselli's Interop 2027 ballot ranks the places authors keep getting it wrong</title>
+      <link>https://carlosandmunoz.com/social/pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author.html</link>
+      <guid isPermaLink="false">pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Standards</category>
+      <description>Adrian Roselli has published his fifteen ranked picks for Interop 2027, led by `ariaNotify()`, the HTML `focusgroup` attribute and Shadow DOM `referenceTarget`, with an accessibility reason attached to each. Voting closes on 19 November 2026.
+
+Via DEV, by Leo, 2026-11-11.
+
+https://news.html.to/roselli-interop-2027-accessibility-ballot/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx1ununhkkqgxxlp31lg3.png" medium="image"/>
+    </item>
+    <item>
+      <title>AI Shopping Errors: What To Fix To Help Shoppers Choose Your Products</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your-.html</link>
+      <guid isPermaLink="false">pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your-</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Explore the future of retail with AI shopping. Understand how AI affects product visibility and decision-making for consumers. The post AI Shopping Errors: What To Fix To Help Shoppers Choose Your Products appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Cody Slingerland, 2026-11-12.
+
+https://www.searchenginejournal.com/fix-ai-shopping-errors-writesonic-spa/595790/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/writesonic-partner-stories-featured-1600x832-887.png" medium="image"/>
+    </item>
+    <item>
+      <title>I built a free WCAG 2.2 AA scanner that writes a report a client can read</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl.html</link>
+      <guid isPermaLink="false">pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>I run AccessLens. It's a scanner you paste one URL into: it loads that page in a real headless...
+
+Via DEV, by Chris Clow, 2026-11-12.
+
+https://dev.to/chris_clow_04d2c038f345cc/i-built-a-free-wcag-22-aa-scanner-that-writes-a-report-a-client-can-read-3968</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F5iz8qbkqdbsrqak2puf2.png" medium="image"/>
+    </item>
+    <item>
+      <title>The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think via @sejournal, @DuaneForrester</title>
+      <link>https://carlosandmunoz.com/social/pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat.html</link>
+      <guid isPermaLink="false">pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>For traffic-dependent businesses, the visit was only a step toward the sale. Agents now finish that job, and the work starts with the offer. The post The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Duane Forrester, 2026-11-12.
+
+https://www.searchenginejournal.com/the-traffic-pool-is-shrinking-and-which-channel-fills-it-matters-less-than-we-think/596346/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-traffic-pool-527.png" medium="image"/>
+    </item>
+    <item>
+      <title>Visits To The Top Million Websites Fell 12%, Data Shows via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se.html</link>
+      <guid isPermaLink="false">pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Data shows visits to the world's top million websites declined from an earlier peak, visits going to sites outside the top 100 barely changed. The post Visits To The Top Million Websites Fell 12%, Data Shows appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-12.
+
+https://www.searchenginejournal.com/visits-to-the-top-million-websites-fell-12-data-shows/597085/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/9e28404b-6124-44e3-a880-98e7c62cf229-889.jpeg" medium="image"/>
     </item>
     <item>
       <title>Six languages. Pick yours.</title>
@@ -854,107 +928,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #GEO #ChatGPT #DevOps #QA #AISearch #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/02-u-careeronestop-org.jpg" length="242750" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/02-u-careeronestop-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>motorsport-total.com: 74. The gap: framing.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/01-u-motorsport-total-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/01-u-motorsport-total-com</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
-
-The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
-
-One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-motorsport-total-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-motorsport-total-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #Automation #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg" length="239912" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/01-u-motorsport-total-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>meutimao.com.br: 64. The gap: cookie flags.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/02-u-meutimao-com-br.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/02-u-meutimao-com-br</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 11 cookies are sent without Secure, and 3 session cookies are readable by scripts.
-
-The lesson for every team: Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.
-
-One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-meutimao-com-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-meutimao-com-br
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #Automation #QA #Cookies #QAlab
-
-https://www.youtube.com/shorts/080bazpPyM4</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" length="243312" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/02-u-meutimao-com-br.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>EAFIT or UdeA: which university site scored higher?</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11b/01-quiz-medellin-universities.html</link>
-      <guid isPermaLink="false">compare-2026-11b/01-quiz-medellin-universities</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Quiz</category>
-      <category>Local</category>
-      <description>Two Medellín universities, EAFIT and the Universidad de Antioquia, 20 public pages each, analyzed by the same review on the same day in October 2026.
-
-Your guess: Make your guess. The answer, with all six area scores, comes out tomorrow.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-medellin-universities
-
-#WebQuality #DevOps #SoftwareTesting #QA #Quiz #QAlab
-
-https://www.youtube.com/shorts/IuyAgA1qTQk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" length="241108" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>INP: how fast the page answers a tap.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/09-inp</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glossary</category>
-      <category>Perf</category>
-      <description>Word of the day: INP: how fast the page answers a tap.
-
-Interaction to Next Paint measures the delay from a click, tap or key press to the next frame on screen. It replaced First Input Delay as a Core Web Vital in March 2024.
-
-Spot it: Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
-
-#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" length="230316" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The 5-minute accessibility check.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/14-a11y-check.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/14-a11y-check</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Best practice</category>
-      <category>A11y</category>
-      <description>Checklist: The 5-minute accessibility check.
-
-Five checks anyone can run with no special tools. Each one maps to a WCAG 2.2 success criterion, so a failure is easy to file.
-
-Use it: Run all five on your home page and your busiest form. File each failure with its criterion number.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=a11y-check
-
-#Accessibility #DevOps #QA #WCAG #SoftwareEngineering #QAlab
-
-https://www.youtube.com/shorts/bw6fd3xnauM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" length="224449" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/14-a11y-check.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

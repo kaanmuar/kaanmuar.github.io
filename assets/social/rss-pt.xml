@@ -393,7 +393,9 @@ Seu palpite: Dê seu palpite. A resposta, com as notas das seis áreas, sai aman
 
 Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-newspapers
 
-#WebQuality #AI #DevOps #QA #Quiz #QAlab</description>
+#WebQuality #AI #DevOps #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/y_EmhX1_RYo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" length="251297" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -430,7 +432,9 @@ Por Will Creedle, Deque: https://www.deque.com/blog/how-to-choose-the-right-vpat
 
 Todos os resumos, dicas e análises de sites no nosso hub social: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=weekly-digest&amp;utm_content=digest-2026-11-13
 
-#WebDev #Programming #QA #Accessibility #SEO #QAlab</description>
+#WebDev #Programming #QA #Accessibility #SEO #QAlab
+
+https://www.youtube.com/shorts/3LEjpxQ2BYw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" length="233234" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -864,6 +868,23 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/03-mdn.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Escreva a lista de testes antes do código de teste.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/16-list-first-pt.html</link>
+      <guid isPermaLink="false">tips-2026-10/16-list-first-pt</guid>
+      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Dica</category>
+      <category>QA</category>
+      <description>Escolher um framework é a segunda pergunta. A primeira é o que esta página faz e o que uma pessoa real tentaria nela.
+
+Experimente hoje: Antes da sua próxima sprint de automação, escreva dez casos em linguagem simples. Depois escolha a ferramenta.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=list-first
+
+#QA #TestAutomation #SoftwareTesting #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" length="217381" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/16-list-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>unn.edu.ng versus uniport.edu.ng. unn.edu.ng leads: 55.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-02/08-vs-unn-edu-ng-pt.html</link>
       <guid isPermaLink="false">auto-2026-11-02/08-vs-unn-edu-ng-pt</guid>
@@ -982,26 +1003,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #QA #WebPerf #WebDevelopment #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/03-vs-saatvesaat-com-tr.jpg" length="260781" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-07/feed/03-vs-saatvesaat-com-tr.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>choice-route.com: 74. A lacuna: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-08/02-u-choice-route-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-08/02-u-choice-route-com-pt</guid>
-      <pubDate>Tue, 10 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>National</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas o HSTS não é enviado.
-
-A lição para toda equipe: Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.
-
-Uma análise automatizada de páginas públicas em 8 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-choice-route-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-choice-route-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #Automation #CyberSecurity #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/02-u-choice-route-com.jpg" length="229406" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-08/feed/02-u-choice-route-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

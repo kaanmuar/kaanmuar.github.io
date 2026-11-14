@@ -1,0 +1,108 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-actualite-cd": {
+   "lang": "it",
+   "strings": {
+    "title.0": "actualite.cd: 48.",
+    "title.1": "*The gap: link names.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.",
+    "action": "Give every link text that says where it goes. An icon alone needs an aria-label.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 13 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "actualite.cd · 20 pages analyzed · 13 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.\n\nLesson: Give every link text that says where it goes. An icon alone needs an aria-label.\n\nOne automated analysis of public pages on 13 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-actualite-cd\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #JavaScript #WebDev #QA #A11y #LearnOnYouTube #TechTips #InclusiveDesign #Testing #DigitalAccessibility #Programming #QAlab"
+   }
+  },
+  "u-circajewels-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "circajewels.com: 60.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 14 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "circajewels.com · 20 pages analyzed · 14 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-circajewels-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-circajewels-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #AI #SoftwareTesting #QA #Forms #A11y #Programming #LearnOnYouTube #QualityAssurance #WCAG #TestAutomation #QAlab"
+   }
+  },
+  "vs-foreca-com": {
+   "lang": "es",
+   "strings": {
+    "live": "u-foreca-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*tomorrow.io leads: 69.*",
+    "body": "tomorrow.io leads in SEO, GEO, Security; fastweather.com leads in Analytics, Performance; weather.com leads in Accessibility. foreca.com leads in none of the six areas.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 14 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "foreca.com",
+    "visual.rows.1.0": "tomorrow.io",
+    "visual.rows.2.0": "fastweather.com",
+    "visual.rows.3.0": "weather.com",
+    "visual.note": "Natural competitors found on the open web · 14 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "tomorrow.io leads in SEO, GEO, Security; fastweather.com leads in Analytics, Performance; weather.com leads in Accessibility. foreca.com leads in none of the six areas.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 14 Nov 2026 of foreca.com, tomorrow.io, fastweather.com, weather.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-foreca-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-foreca-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #AI #SoftwareTesting #QA #WebPerf #Programming #LearnOnYouTube #CoreWebVitals #QualityAssurance #TechnicalSEO #PageSpeed #QAlab"
+   }
+  },
+  "vs-sinarharian-com-my": {
+   "lang": "pt",
+   "strings": {
+    "live": "u-sinarharian-com-my",
+    "title.0": "4 natural competitors.",
+    "title.1": "*astroawani.com leads: 51.*",
+    "body": "bharian.com.my leads in SEO; astroawani.com leads in GEO, Security; sinarharian.com.my leads in Analytics, Performance; hmetro.com.my leads in Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 14 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "sinarharian.com.my",
+    "visual.rows.1.0": "bharian.com.my",
+    "visual.rows.2.0": "astroawani.com",
+    "visual.rows.3.0": "hmetro.com.my",
+    "visual.note": "Natural competitors found on the open web · 14 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "bharian.com.my leads in SEO; astroawani.com leads in GEO, Security; sinarharian.com.my leads in Analytics, Performance; hmetro.com.my leads in Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 14 Nov 2026 of sinarharian.com.my, bharian.com.my, astroawani.com, hmetro.com.my, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-sinarharian-com-my&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-sinarharian-com-my\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #SoftwareTesting #WebPerformance #QA #WebPerf #Programming #LearnOnYouTube #DigitalMarketing #GoogleSearch #CoreWebVitals #QualityAssurance #QAlab"
+   }
+  }
+ }
+}

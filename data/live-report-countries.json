@@ -1475,6 +1475,19 @@
    ],
    "at": "2026-11-09"
   },
+  "berlitz.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "schema.org addressCountry US (legal/contact page)",
+    "address names US",
+    "address names US (legal/contact page)"
+   ],
+   "at": "2026-11-14"
+  },
   "bestnycelectricianmanhattan.com": {
    "country": "US",
    "scope": "country",
@@ -5202,6 +5215,16 @@
    ],
    "at": "2026-11-09"
   },
+  "epkasa.com": {
+   "country": "DO",
+   "scope": "country",
+   "confidence": 0.85,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry DO"
+   ],
+   "at": "2026-11-14"
+  },
   "epssura.com": {
    "country": "CO",
    "scope": "country",
@@ -7026,6 +7049,19 @@
    ],
    "at": "2026-11-10"
   },
+  "icbidiomas.com": {
+   "country": "CL",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CL",
+    "phone +56 9 5997 6182",
+    "address names CL",
+    "written in es, spoken in CL"
+   ],
+   "at": "2026-11-14"
+  },
   "icmed.ro": {
    "country": "RO",
    "scope": "country",
@@ -8024,6 +8060,18 @@
     "phone +4917621613385 (legal/contact page)"
    ],
    "at": "2026-11-10"
+  },
+  "konta.com": {
+   "country": "MX",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry MX",
+    "phone +52 (55) 7005 5271",
+    "written in es, spoken in MX"
+   ],
+   "at": "2026-11-14"
   },
   "konyalisaat.com.tr": {
    "country": "TR",
@@ -9919,6 +9967,19 @@
    ],
    "at": "2026-11-09"
   },
+  "nr1.md": {
+   "country": "MD",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +373(60)090029 (legal/contact page)",
+    "address names MD",
+    "address names MD (legal/contact page)",
+    "in the CrUX top sites of MD only"
+   ],
+   "at": "2026-11-14"
+  },
   "nselection.rs": {
    "country": "RS",
    "scope": "country",
@@ -11594,6 +11655,18 @@
    ],
    "at": "2026-11-09"
   },
+  "qualtrics.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "phone +1-385-585-4560",
+    "written in en, spoken in US"
+   ],
+   "at": "2026-11-14"
+  },
   "queenselectricianco.com": {
    "country": "US",
    "scope": "country",
@@ -12280,6 +12353,19 @@
    ],
    "at": "2026-11-09"
   },
+  "ryr.ueniweb.com": {
+   "country": "CL",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CL",
+    "phone +56993402993",
+    "phone +56993402993 (legal/contact page)",
+    "address names CL (legal/contact page)"
+   ],
+   "at": "2026-11-14"
+  },
   "saatvesaat.com.tr": {
    "country": "TR",
    "scope": "country",
@@ -12872,6 +12958,18 @@
     "written in en, spoken in IE"
    ],
    "at": "2026-11-09"
+  },
+  "shinegd.com": {
+   "country": "QA",
+   "scope": "country",
+   "confidence": 0.85,
+   "by": "signals",
+   "evidence": [
+    "phone +97466990661 (legal/contact page)",
+    "address names QA (legal/contact page)",
+    "in the CrUX top sites of QA only"
+   ],
+   "at": "2026-11-14"
   },
   "shineorthodental.be": {
    "country": "BE",
@@ -15315,6 +15413,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "usg.edu": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    ".edu is a US-only ending",
+    "address names US",
+    "address names US (legal/contact page)",
+    "in the CrUX top sites of US only"
+   ],
+   "at": "2026-11-14"
   },
   "ussurmedia.ru": {
    "country": "RU",

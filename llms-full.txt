@@ -39,7 +39,7 @@ Carlos A. Muñoz, Bogotá, Colombia, is responsible for the service and its reco
 - [How it works, a guided tour](https://carlosandmunoz.com/qa-review-guide.html): who it helps, the six steps, how to read the six scores, and what a review never does
 - [Facts](https://carlosandmunoz.com/qa-review.html#service-facts)
 - [Sample report, the review of automationexercise.com, a public site built for practicing test automation](https://carlosandmunoz.com/qa-review.html?sample=1)
-- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 3218 real public sites analyzed by the review, with new requested reviews added daily, tagged by sector, scope (worldwide, national, regional, local), country, and test type, view and share only
+- [Live reports](https://carlosandmunoz.com/qa-review.html#live-reports): 3382 real public sites analyzed by the review, with new requested reviews added daily, tagged by sector, scope (worldwide, national, regional, local), country, and test type, view and share only
 - [Social](https://carlosandmunoz.com/qa-review-social.html): every tip, site review and clip posted on YouTube, TikTok, LinkedIn, X and Facebook, in one feed, with captions to copy and images to download; also in [Spanish](https://carlosandmunoz.com/qa-review-social-es.html), [Portuguese](https://carlosandmunoz.com/qa-review-social-pt.html), [German](https://carlosandmunoz.com/qa-review-social-de.html), [French](https://carlosandmunoz.com/qa-review-social-fr.html) and [Italian](https://carlosandmunoz.com/qa-review-social-it.html), and as [JSON](https://carlosandmunoz.com/assets/social/feed.json), each post has its own page under https://carlosandmunoz.com/social/ (in the language it is written in), an [RSS feed](https://carlosandmunoz.com/assets/social/rss.xml) per language (rss-es.xml, rss-pt.xml, rss-de.xml, rss-fr.xml, rss-it.xml) and a [sitemap](https://carlosandmunoz.com/sitemap-social.xml) of post images and clips
 - [Privacy and disclaimers](https://carlosandmunoz.com/qa-review-legal.html): what is stored, for how long, who receives it, and how to ask for a copy or deletion
 - Languages: English, Spanish, Portuguese, German, French, Italian.
@@ -249,7 +249,7 @@ One public address. Six scores. A list your team can start from on Monday.
 
 ## Live reports (https://carlosandmunoz.com/qa-review.html#live-reports)
 
-As of 2026-11-13, the series holds 3218 public sites in 27 sectors, analyzed by QA-lab URL Review since 2026-10-19 (up to 100 pages each); new requested reviews are added in a daily batch. Average overall score 65; area averages: SEO 67, GEO 85, Analytics 68, Security 47, Accessibility 59, Performance 67. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
+As of 2026-11-14, the series holds 3382 public sites in 27 sectors, analyzed by QA-lab URL Review since 2026-10-19 (up to 100 pages each); new requested reviews are added in a daily batch. Average overall score 65; area averages: SEO 67, GEO 85, Analytics 67, Security 46, Accessibility 58, Performance 67. Reports are view and share only; each link opens one report with its six area scores and findings. A score is a snapshot of one public analysis, not a certification.
 
 Site | Sector | Scope | Place | Analyzed | Overall | Report
 sevielectro.com |  | National | EC | 2026-11-07 | 96 | https://carlosandmunoz.com/qa-review.html?live=u-sevielectro-com
@@ -373,6 +373,7 @@ React | Developer docs | Worldwide | Worldwide | 2026-10-19 | 83 | https://carlo
 Suomi.fi | Government | National | Helsinki, FI | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=suomifi
 TypeScript | Developer docs | Worldwide | Worldwide | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=typescript
 World Meteorological Organization | Environment & climate | Worldwide | Geneva, CH | 2026-10-21 | 83 | https://carlosandmunoz.com/qa-review.html?live=wmo
+ahrefstop.com |  | National | National | 2026-11-14 | 83 | https://carlosandmunoz.com/qa-review.html?live=u-ahrefstop-com
 as-klimatechnik.ch |  | National | CH | 2026-11-09 | 83 | https://carlosandmunoz.com/qa-review.html?live=u-as-klimatechnik-ch
 asalelectrical.com.au |  | National | AU | 2026-11-08 | 83 | https://carlosandmunoz.com/qa-review.html?live=u-asalelectrical-com-au
 autocarejersey.com |  | National | JE | 2026-10-29 | 83 | https://carlosandmunoz.com/qa-review.html?live=u-autocarejersey-com
@@ -468,12 +469,14 @@ electricistasantiago.cl |  | National | CL | 2026-11-07 | 81 | https://carlosand
 fontanerosenmadrid.eu |  | National | ES | 2026-11-05 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-fontanerosenmadrid-eu
 klempner-maier-berlin.de |  | National | DE | 2026-11-06 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-klempner-maier-berlin-de
 nippodents.com.br |  | National | BR | 2026-11-04 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-nippodents-com-br
+oceanpacifics.cl |  | National | CL | 2026-11-14 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-oceanpacifics-cl
 odontologianl.com |  | National | UY | 2026-11-04 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-odontologianl-com
 onepagelove.com |  | Requested | DE | 2026-10-24 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-onepagelove-com
 payex.com |  | National | SE | 2026-11-06 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-payex-com
 plomeriaenbogota.com |  | National | National | 2026-11-05 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-plomeriaenbogota-com
 powerelectricnyinc.com |  | National | National | 2026-11-08 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-powerelectricnyinc-com
 regalitolindo.cl |  | National | CL | 2026-11-13 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-regalitolindo-cl
+romspedia.com |  | National | National | 2026-11-14 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-romspedia-com
 tamiltvserial.com |  | National | National | 2026-10-26 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-tamiltvserial-com
 transportstyrelsen.se |  | National | SE | 2026-10-30 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-transportstyrelsen-se
 umn.edu |  | National | US | 2026-10-30 | 81 | https://carlosandmunoz.com/qa-review.html?live=u-umn-edu
@@ -502,6 +505,7 @@ fotoscaserasx.com |  | National | National | 2026-10-29 | 80 | https://carlosand
 gastontrossero.com |  | National | PY | 2026-11-04 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-gastontrossero-com
 gdtabogados.com |  | National | AR | 2026-11-12 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-gdtabogados-com
 kinderpluszahnarzt.berlin |  | National | DE | 2026-11-05 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-kinderpluszahnarzt-berlin
+mestizorestaurant.cl |  | National | CL | 2026-11-14 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-mestizorestaurant-cl
 mi-negocio906.webnode.es |  | National | ES | 2026-11-07 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-mi-negocio906-webnode-es
 nordea.fi |  | National | FI | 2026-11-08 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-nordea-fi
 oneworld | Airline | Worldwide | New York, US | 2026-10-21 | 80 | https://carlosandmunoz.com/qa-review.html?live=oneworld
@@ -515,6 +519,7 @@ semitec.at |  | National | AT | 2026-11-09 | 80 | https://carlosandmunoz.com/qa-
 servimaninst.com |  | National | CL | 2026-11-09 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-servimaninst-com
 smilesexperiencepa.com |  | National | PA | 2026-11-04 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-smilesexperiencepa-com
 sothebysrealty.ca |  | National | CA | 2026-11-03 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-sothebysrealty-ca
+stb.com.mk |  | National | MK | 2026-11-14 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-stb-com-mk
 tgramsearch.com |  | National | RU | 2026-10-28 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-tgramsearch-com
 todoobra.com.ar |  | National | AR | 2026-11-12 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-todoobra-com-ar
 vnet-services.com |  | National | AT | 2026-11-11 | 80 | https://carlosandmunoz.com/qa-review.html?live=u-vnet-services-com
@@ -577,6 +582,8 @@ mencotronic.com |  | National | GT | 2026-11-07 | 79 | https://carlosandmunoz.co
 merakiplomeria.com |  | National | MX | 2026-11-05 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-merakiplomeria-com
 newyorker.com |  | National | National | 2026-11-09 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-newyorker-com
 nibo.com.br |  | National | BR | 2026-10-24 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-nibo-com-br
+nu-bay.com |  | National | National | 2026-11-14 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-nu-bay-com
+papelaria.cl |  | National | CL | 2026-11-14 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-papelaria-cl
 plumberdublin15.ie |  | National | IE | 2026-11-07 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-plumberdublin15-ie
 plumberondial.com |  | National | CA | 2026-11-07 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-plumberondial-com
 ruvo.com |  | Requested | BR | 2026-11-05 | 79 | https://carlosandmunoz.com/qa-review.html?live=u-ruvo-com
@@ -619,6 +626,7 @@ euronews.com |  | National | FR | 2026-10-30 | 78 | https://carlosandmunoz.com/q
 fft.fr |  | National | FR | 2026-11-02 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-fft-fr
 fontanerodeguardia.com |  | National | National | 2026-11-05 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-fontanerodeguardia-com
 friomania.com |  | National | National | 2026-11-09 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-friomania-com
+globalratings.com |  | National | National | 2026-11-14 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-globalratings-com
 gls-group.com |  | National | National | 2026-10-30 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-gls-group-com
 gorenje.com |  | National | SI | 2026-10-26 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-gorenje-com
 gsb.stanford.edu |  | National | US | 2026-11-03 | 78 | https://carlosandmunoz.com/qa-review.html?live=u-gsb-stanford-edu
@@ -731,6 +739,7 @@ sweezy-cursors.com |  | National | National | 2026-11-08 | 77 | https://carlosan
 termiaires.com.co |  | National | CO | 2026-11-07 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-termiaires-com-co
 timeout.pt |  | National | PT | 2026-11-07 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-timeout-pt
 usecollarai.com |  | National | US | 2026-10-26 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-usecollarai-com
+usvotersabroad.org |  | National | National | 2026-11-14 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-usvotersabroad-org
 vattenfall.nl |  | National | NL | 2026-11-09 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-vattenfall-nl
 vitoria-gasteiz.org |  | National | ES | 2026-10-26 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-vitoria-gasteiz-org
 vobi.com.br |  | Requested | BR | 2026-11-03 | 77 | https://carlosandmunoz.com/qa-review.html?live=u-vobi-com-br
@@ -752,6 +761,7 @@ aadepma.com |  | National | PA | 2026-11-09 | 76 | https://carlosandmunoz.com/qa
 bankofguam.com |  | National | GU | 2026-10-29 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-bankofguam-com
 benettiyachts.com |  | National | IT | 2026-11-03 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-benettiyachts-com
 carlospeluqueria.com |  | National | National | 2026-11-12 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-carlospeluqueria-com
+chipe-libre.cl |  | National | CL | 2026-11-14 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-chipe-libre-cl
 climagar.com |  | National | ES | 2026-11-08 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-climagar-com
 coat.com.sv |  | National | SV | 2026-11-04 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-coat-com-sv
 cricfyapk.io |  | National | IN | 2026-10-28 | 76 | https://carlosandmunoz.com/qa-review.html?live=u-cricfyapk-io
@@ -850,6 +860,7 @@ eosantiago.cl |  | National | CL | 2026-11-04 | 75 | https://carlosandmunoz.com/
 essecimpianti.it |  | National | IT | 2026-11-08 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-essecimpianti-it
 euda.com.ar |  | National | AR | 2026-11-11 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-euda-com-ar
 fco.tal.net |  | National | GB | 2026-11-09 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-fco-tal-net
+felleskjopet.no |  | National | NO | 2026-11-14 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-felleskjopet-no
 fontaneriayelectricidad.wordpress.com |  | National | National | 2026-11-06 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-fontaneriayelectricidad-wordpress-com
 fontanerochamartin.com |  | National | ES | 2026-11-05 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-fontanerochamartin-com
 halloweencostumes.com |  | National | US | 2026-10-27 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-halloweencostumes-com
@@ -870,10 +881,12 @@ pelhambaydiscounthardware.com |  | National | National | 2026-11-10 | 75 | https
 plomeroquito24h.com |  | National | EC | 2026-11-05 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-plomeroquito24h-com
 plomerosenlared.com |  | National | DO | 2026-11-06 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-plomerosenlared-com
 powerball.com |  | National | National | 2026-10-27 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-powerball-com
+qualtrics.com |  | National | US | 2026-11-14 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-qualtrics-com
 radio-hrvatska.com |  | National | HR | 2026-11-03 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-radio-hrvatska-com
 riteil.is |  | National | IS | 2026-10-31 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-riteil-is
 sana-tec.de |  | National | DE | 2026-11-09 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-sana-tec-de
 savemyexams.com |  | National | GB | 2026-11-04 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-savemyexams-com
+seaflight.tech |  | National | National | 2026-11-13 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-seaflight-tech
 smokva.com |  | National | HR | 2026-10-29 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-smokva-com
 sonaca.com |  | National | BE | 2026-11-03 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-sonaca-com
 sossolucioneselectricas.wordpress.com |  | National | National | 2026-11-07 | 75 | https://carlosandmunoz.com/qa-review.html?live=u-sossolucioneselectricas-wordpress-com
@@ -924,7 +937,10 @@ bagnaracentroodontologico.com |  | National | VE | 2026-11-04 | 74 | https://car
 basketusa.com |  | National | National | 2026-11-10 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-basketusa-com
 berlin-klempner.com |  | National | DE | 2026-11-06 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-berlin-klempner-com
 bestsexpositions.com |  | National | National | 2026-11-07 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-bestsexpositions-com
+bitomat.com |  | National | National | 2026-11-14 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-bitomat-com
+bluestacks.com |  | National | National | 2026-11-14 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-bluestacks-com
 carzrental.com |  | National | National | 2026-11-11 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-carzrental-com
+centrolareina.cl |  | National | CL | 2026-11-14 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-centrolareina-cl
 choice-route.com |  | National | National | 2026-11-08 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-choice-route-com
 cisco.com |  | National | National | 2026-11-09 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-cisco-com
 cityplumberslondon.co.uk |  | National | GB | 2026-11-07 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-cityplumberslondon-co-uk
@@ -934,7 +950,6 @@ climartex.com |  | National | AR | 2026-11-08 | 74 | https://carlosandmunoz.com/
 codexa.com.br |  | National | BR | 2026-11-06 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-codexa-com-br
 contadorensuba.co |  | National | CO | 2026-11-10 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-contadorensuba-co
 danbolig.dk |  | National | DK | 2026-10-28 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-danbolig-dk
-dhs.gov |  | National | US | 2026-11-02 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-dhs-gov
 dr-cerny.at |  | National | AT | 2026-11-05 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-dr-cerny-at
 dublinplumbingandgas.com |  | National | IE | 2026-11-07 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-dublinplumbingandgas-com
 electricistaquito.com |  | National | EC | 2026-11-07 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-electricistaquito-com
@@ -946,8 +961,10 @@ enterogermina.com |  | National | National | 2026-11-01 | 74 | https://carlosand
 epa.gov.co |  | Requested | CO | 2026-10-27 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-epa-gov-co
 esgotecnica.com.br |  | National | BR | 2026-11-06 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-esgotecnica-com-br
 farsonsdirect.com |  | National | MT | 2026-11-01 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-farsonsdirect-com
+fashionspark.com |  | National | National | 2026-11-14 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-fashionspark-com
 fes-kita.de |  | National | DE | 2026-11-03 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-fes-kita-de
 fitforfun.de |  | National | DE | 2026-11-11 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-fitforfun-de
+fr.mappy.com |  | National | National | 2026-11-14 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-fr-mappy-com
 gasista.net.ar |  | National | AR | 2026-11-05 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-gasista-net-ar
 harcourtdentalclinic.ie |  | National | IE | 2026-11-05 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-harcourtdentalclinic-ie
 hauptstadt-elektriker.de |  | National | DE | 2026-11-08 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-hauptstadt-elektriker-de
@@ -958,6 +975,7 @@ justice.gouv.fr |  | National | FR | 2026-11-06 | 74 | https://carlosandmunoz.co
 jysk.at |  | National | AT | 2026-10-27 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-jysk-at
 karakas-gebaudetechnik.ch |  | National | CH | 2026-11-06 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-karakas-gebaudetechnik-ch
 kingsviewdentaltoronto.com |  | National | National | 2026-11-05 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-kingsviewdentaltoronto-com
+konta.com |  | National | MX | 2026-11-13 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-konta-com
 kooralivr.info |  | National | National | 2026-11-07 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-kooralivr-info
 lewagon.com |  | National | FR | 2026-11-03 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-lewagon-com
 lubotek-klima.de |  | National | DE | 2026-11-09 | 74 | https://carlosandmunoz.com/qa-review.html?live=u-lubotek-klima-de
@@ -1060,7 +1078,6 @@ motorsport-magazin.com |  | National | National | 2026-11-11 | 73 | https://carl
 movinglake.com |  | Requested | US | 2026-11-03 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-movinglake-com
 movoto.com |  | National | US | 2026-11-05 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-movoto-com
 myfunmax.com |  | National | National | 2026-11-03 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-myfunmax-com
-noaa.gov |  | National | US | 2026-11-07 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-noaa-gov
 ontime-electric.ca |  | National | CA | 2026-11-08 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-ontime-electric-ca
 orkaled.com |  | National | ES | 2026-11-07 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-orkaled-com
 ortodonciamadrid.net |  | National | ES | 2026-11-04 | 73 | https://carlosandmunoz.com/qa-review.html?live=u-ortodonciamadrid-net
@@ -1099,6 +1116,7 @@ Secretaría de Salud de Bogotá | Public health | Local | Bogotá, CO | 2026-10-
 TransMilenio | Transit & mobility | Local | Bogotá, CO | 2026-10-19 | 72 | https://carlosandmunoz.com/qa-review.html?live=transmilenio
 UAESP | Energy & utilities | Local | Bogotá, CO | 2026-10-21 | 72 | https://carlosandmunoz.com/qa-review.html?live=uaesp
 agendaweb.org |  | National | National | 2026-10-29 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-agendaweb-org
+aijabogados.cl |  | National | CL | 2026-11-14 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
 airhelp.com |  | Requested | DE | 2026-11-03 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-airhelp-com
 aliss.hn |  | National | HN | 2026-11-07 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-aliss-hn
 almadeviajante.com |  | National | National | 2026-11-12 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-almadeviajante-com
@@ -1129,6 +1147,7 @@ dentalcdmx.com |  | National | MX | 2026-11-04 | 72 | https://carlosandmunoz.com
 dentalcityguatemala.com |  | National | GT | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-dentalcityguatemala-com
 dentistasporchile.cl |  | National | CL | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-dentistasporchile-cl
 descubriendoargentina.com |  | National | National | 2026-11-09 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-descubriendoargentina-com
+dhs.gov |  | National | US | 2026-11-14 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-dhs-gov
 dracamilapimentadentista.com.br |  | National | BR | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-dracamilapimentadentista-com-br
 dublindental.ie |  | National | IE | 2026-11-05 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-dublindental-ie
 electricien-paris-18-artisan-bernard-sylvestre.fr |  | National | FR | 2026-11-06 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-electricien-paris-18-artisan-bernard-sylvestre-fr
@@ -1155,11 +1174,13 @@ mapfre.com.mx |  | National | MX | 2026-10-24 | 72 | https://carlosandmunoz.com/
 marketplacia.com |  | National | National | 2026-11-13 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-marketplacia-com
 martinezrososrl.com.uy |  | National | UY | 2026-11-06 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-martinezrososrl-com-uy
 maxeletricista24horas.com |  | National | National | 2026-11-08 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-maxeletricista24horas-com
+miraldrive.tn |  | National | TN | 2026-11-14 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-miraldrive-tn
 motorz.tn |  | National | TN | 2026-10-27 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-motorz-tn
 mundoperfecto.net |  | National | National | 2026-10-24 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-mundoperfecto-net
 mymovieboxproapp.com |  | National | National | 2026-10-29 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-mymovieboxproapp-com
 mynextderma.com |  | National | MX | 2026-11-03 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-mynextderma-com
 naijatape.com |  | National | National | 2026-10-25 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-naijatape-com
+noaa.gov |  | National | US | 2026-11-14 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-noaa-gov
 odontologamariamarin.com |  | National | CO | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-odontologamariamarin-com
 odontologia247.com |  | National | National | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-odontologia247-com
 pertelodonto.com.br |  | National | BR | 2026-11-04 | 72 | https://carlosandmunoz.com/qa-review.html?live=u-pertelodonto-com-br
@@ -1259,7 +1280,9 @@ noshorts.com |  | National | US | 2026-11-08 | 71 | https://carlosandmunoz.com/q
 odontoplusclinic.com |  | National | SV | 2026-11-04 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-odontoplusclinic-com
 odverorodriguez.com |  | National | CO | 2026-11-04 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-odverorodriguez-com
 parkviewdentaltoronto.com |  | National | CA | 2026-11-05 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-parkviewdentaltoronto-com
+parsur.cl |  | National | CL | 2026-11-14 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-parsur-cl
 patricksoluciones.es |  | National | ES | 2026-11-07 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-patricksoluciones-es
+pensionsmyndigheten.se |  | National | SE | 2026-11-14 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-pensionsmyndigheten-se
 peppaquiz.com |  | National | National | 2026-11-01 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-peppaquiz-com
 perfectasonrisa.com |  | National | GT | 2026-11-08 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-perfectasonrisa-com
 pertel.pe |  | National | PE | 2026-11-09 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-pertel-pe
@@ -1279,6 +1302,7 @@ shrmha.com |  | National | National | 2026-10-25 | 71 | https://carlosandmunoz.c
 sistecredito.com |  | National | CO | 2026-10-29 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-sistecredito-com
 sliwn.com |  | National | National | 2026-11-01 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-sliwn-com
 soccertvhdlive.com |  | National | National | 2026-11-05 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-soccertvhdlive-com
+summertimesaga.com |  | National | National | 2026-11-14 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-summertimesaga-com
 tauskaelte.at |  | National | AT | 2026-11-09 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-tauskaelte-at
 transportesejecutivos.com |  | National | National | 2026-11-10 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-transportesejecutivos-com
 tributi.com |  | Requested | CO | 2026-11-03 | 71 | https://carlosandmunoz.com/qa-review.html?live=u-tributi-com
@@ -1330,6 +1354,7 @@ friosistemasdeguatemala.com |  | National | GT | 2026-11-09 | 70 | https://carlo
 fugasyobstrucciones.co |  | National | CO | 2026-11-05 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-fugasyobstrucciones-co
 gasfitero.pe |  | National | PE | 2026-11-05 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-gasfitero-pe
 gruaselsalvador.com |  | National | SV | 2026-11-06 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-gruaselsalvador-com
+grupoinsurex.cl |  | National | CL | 2026-11-14 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-grupoinsurex-cl
 guerrastribales.es |  | National | ES | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-guerrastribales-es
 hannahops.com |  | National | National | 2026-11-10 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-hannahops-com
 hje.org.uk |  | National | GB | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-hje-org-uk
@@ -1361,11 +1386,13 @@ plomerobuenosaires.com |  | National | AR | 2026-11-05 | 70 | https://carlosandm
 porscheinterauto.at |  | National | AT | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-porscheinterauto-at
 postermywall.com |  | National | National | 2026-10-25 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-postermywall-com
 primatips.com |  | National | National | 2026-11-04 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-primatips-com
+quiz4success.com |  | National | National | 2026-11-14 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-quiz4success-com
 reifenleader.at |  | National | AT | 2026-11-13 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-reifenleader-at
 remax.co.za |  | National | ZA | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-remax-co-za
 rituals.com |  | National | National | 2026-11-06 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-rituals-com
 rossmann.com.tr |  | National | TR | 2026-11-04 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-rossmann-com-tr
 sanitariosjimenez.com |  | National | National | 2026-11-06 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-sanitariosjimenez-com
+sanvalentineventos.cl |  | National | CL | 2026-11-14 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-sanvalentineventos-cl
 seolocalarg.com |  | National | AR | 2026-11-11 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-seolocalarg-com
 seriouseats.com |  | National | US | 2026-10-25 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-seriouseats-com
 servi-madrid24.com |  | National | ES | 2026-11-07 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-servi-madrid24-com
@@ -1385,8 +1412,10 @@ tempo.pt |  | National | PT | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-re
 thaixtale.net |  | National | TH | 2026-10-26 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-thaixtale-net
 therichmonddentalcentre.com |  | National | CA | 2026-11-05 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-therichmonddentalcentre-com
 totaldentalemergencia24horas.com |  | National | EC | 2026-11-04 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-totaldentalemergencia24horas-com
+toursvip.cl |  | National | CL | 2026-11-14 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-toursvip-cl
 toyotanigeria.com |  | National | NG | 2026-11-03 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-toyotanigeria-com
 tradersunion.com |  | National | National | 2026-10-27 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-tradersunion-com
+transportesmontero.cl |  | National | CL | 2026-11-14 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-transportesmontero-cl
 tupperware.com |  | National | US | 2026-11-05 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-tupperware-com
 tv2.dk |  | National | DK | 2026-11-12 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-tv2-dk
 umk.edu.my |  | National | MY | 2026-11-04 | 70 | https://carlosandmunoz.com/qa-review.html?live=u-umk-edu-my
@@ -1458,10 +1487,12 @@ hbs.edu |  | National | US | 2026-11-03 | 69 | https://carlosandmunoz.com/qa-rev
 hotelmarbella.com.ar |  | National | AR | 2026-11-11 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-hotelmarbella-com-ar
 hymnary.org |  | National | US | 2026-11-09 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-hymnary-org
 icbc.com.ar |  | National | AR | 2026-11-11 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-icbc-com-ar
+inmonex.cl |  | National | CL | 2026-11-14 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-inmonex-cl
 installateur-bm.at |  | National | AT | 2026-11-06 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-installateur-bm-at
 jatechnomarinepr.com |  | National | National | 2026-11-11 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-jatechnomarinepr-com
 joetheplumberbrooklyn.com |  | National | National | 2026-11-06 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-joetheplumberbrooklyn-com
 klempner24.com |  | National | DE | 2026-11-06 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-klempner24-com
+laauteria.cl |  | National | CL | 2026-11-14 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-laauteria-cl
 lascanasrestaurant.com |  | National | AR | 2026-11-11 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-lascanasrestaurant-com
 lidl.at |  | National | AT | 2026-11-03 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-lidl-at
 livepriceofgold.com |  | National | GB | 2026-11-09 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-livepriceofgold-com
@@ -1492,6 +1523,8 @@ tecniacabadosgutierrez.com.co |  | National | CO | 2026-11-10 | 69 | https://car
 tecnico.electricista-caracas.org |  | National | VE | 2026-11-07 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-tecnico-electricista-caracas-org
 tecnoland.com.ar |  | National | AR | 2026-11-12 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-tecnoland-com-ar
 thedublinplumber.com |  | National | IE | 2026-11-07 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-thedublinplumber-com
+tiendatyc.cl |  | National | CL | 2026-11-14 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-tiendatyc-cl
+tomorrow.io |  | National | National | 2026-11-14 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-tomorrow-io
 topplumbernyc.com |  | National | National | 2026-11-06 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-topplumbernyc-com
 travelvans.com.ar |  | National | AR | 2026-11-12 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-travelvans-com-ar
 twinsfun.com |  | National | National | 2026-10-31 | 69 | https://carlosandmunoz.com/qa-review.html?live=u-twinsfun-com
@@ -1602,6 +1635,7 @@ toutlevin.com |  | National | FR | 2026-10-30 | 68 | https://carlosandmunoz.com/
 udemedellin.edu.co |  | National | CO | 2026-10-26 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-udemedellin-edu-co
 um.edu.ar |  | National | AR | 2026-11-05 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-um-edu-ar
 usccb.org |  | National | US | 2026-11-07 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-usccb-org
+velascoabogadosycia.cl |  | National | CL | 2026-11-14 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-velascoabogadosycia-cl
 vicentenews.com |  | National | AO | 2026-11-01 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-vicentenews-com
 wahedsex.com |  | National | National | 2026-10-30 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-wahedsex-com
 wimpolestreetdental.clinic |  | National | GB | 2026-11-05 | 68 | https://carlosandmunoz.com/qa-review.html?live=u-wimpolestreetdental-clinic
@@ -1613,6 +1647,7 @@ zahnboutique.ch |  | National | CH | 2026-11-05 | 68 | https://carlosandmunoz.co
 Alcaldía de Montería | Government | Local | Montería, CO | 2026-10-21 | 67 | https://carlosandmunoz.com/qa-review.html?live=monteria
 abc.com.py |  | National | PY | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-abc-com-py
 abstract.cl |  | National | CL | 2026-11-13 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-abstract-cl
+afel.cl |  | National | CL | 2026-11-14 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-afel-cl
 arteyclima.es |  | National | ES | 2026-11-08 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-arteyclima-es
 asegurus.com |  | National | AR | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-asegurus-com
 athensmagazine.gr |  | National | GR | 2026-11-10 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-athensmagazine-gr
@@ -1655,8 +1690,10 @@ handypayhaiti.com |  | National | National | 2026-11-13 | 67 | https://carlosand
 helloplumbing.com.au |  | National | AU | 2026-11-07 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-helloplumbing-com-au
 hidroplomerolopez.com |  | National | MX | 2026-11-05 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-hidroplomerolopez-com
 hornybank.com |  | National | National | 2026-11-01 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-hornybank-com
+humanitairehub.com |  | National | National | 2026-11-14 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-humanitairehub-com
 idraulicovicinoameroma.it |  | National | IT | 2026-11-06 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-idraulicovicinoameroma-it
 intway.com.ar |  | National | AR | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-intway-com-ar
+isamit.cl |  | National | CL | 2026-11-14 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-isamit-cl
 ispgaya.pt |  | Requested | PT | 2026-11-04 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-ispgaya-pt
 italmarket.com.ar |  | National | AR | 2026-11-12 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-italmarket-com-ar
 jamaica-gleaner.com |  | National | National | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-jamaica-gleaner-com
@@ -1677,6 +1714,8 @@ mourjan.com |  | National | National | 2026-11-12 | 67 | https://carlosandmunoz.
 movierulez2.com |  | National | National | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-movierulez2-com
 mqm.az |  | National | AZ | 2026-11-10 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-mqm-az
 newcollege.ac.uk |  | National | GB | 2026-11-12 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-newcollege-ac-uk
+numera.cl |  | National | CL | 2026-11-13 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-numera-cl
+offers1st.com |  | National | National | 2026-11-14 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-offers1st-com
 panaderiadonna.com |  | National | AR | 2026-11-13 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-panaderiadonna-com
 pisowifipause.ph |  | National | PH | 2026-11-09 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-pisowifipause-ph
 plomerosaguastop.com |  | National | CO | 2026-11-05 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-plomerosaguastop-com
@@ -1714,6 +1753,7 @@ verywellhealth.com |  | National | US | 2026-10-27 | 67 | https://carlosandmunoz
 waldencase.com |  | National | National | 2026-11-12 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-waldencase-com
 web360.com |  | National | AR | 2026-11-11 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-web360-com
 zervix.net |  | National | DO | 2026-11-06 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-zervix-net
+zurich.cl |  | National | CL | 2026-11-14 | 67 | https://carlosandmunoz.com/qa-review.html?live=u-zurich-cl
 African Union | International organizations | Regional | Addis Ababa, ET | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=africanunion
 CARICOM | International organizations | Regional | Georgetown, GY | 2026-10-21 | 66 | https://carlosandmunoz.com/qa-review.html?live=caricom
 CERN | Space & science | Worldwide | Geneva, CH | 2026-10-19 | 66 | https://carlosandmunoz.com/qa-review.html?live=cern
@@ -1737,12 +1777,16 @@ ardennes-etape.be |  | National | BE | 2026-11-03 | 66 | https://carlosandmunoz.
 asielec.es |  | National | ES | 2026-11-07 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-asielec-es
 atclimatizacion.com |  | National | National | 2026-11-09 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-atclimatizacion-com
 bas.com.ar |  | National | AR | 2026-11-11 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-bas-com-ar
+berlitz.com |  | National | US | 2026-11-14 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-berlitz-com
+brunofritsch.cl |  | National | CL | 2026-11-14 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-brunofritsch-cl
 buenosairesfreewalks.com |  | National | National | 2026-11-11 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-buenosairesfreewalks-com
 canalizadordelisboa.pt |  | National | PT | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-canalizadordelisboa-pt
 capitoldentistry.ca |  | National | CA | 2026-11-05 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-capitoldentistry-ca
+cartpanda.com |  | National | National | 2026-11-13 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-cartpanda-com
 casacourses.com |  | National | MA | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-casacourses-com
 cbddental.com.au |  | National | AU | 2026-11-05 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-cbddental-com-au
 ces.edu.co |  | National | CO | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-ces-edu-co
+checkeados.cl |  | National | CL | 2026-11-14 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-checkeados-cl
 checkpoint.com |  | National | National | 2026-11-09 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-checkpoint-com
 chestertons.com |  | National | National | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-chestertons-com
 combismargua.com |  | National | AR | 2026-11-12 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-combismargua-com
@@ -1800,6 +1844,7 @@ plomeriaexperta.com.gt |  | National | GT | 2026-11-06 | 66 | https://carlosandm
 plomeriapanama.com |  | National | PA | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-plomeriapanama-com
 plomeriasilverio.com.do |  | National | DO | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-plomeriasilverio-com-do
 plomeriayconstruccionmyproject.com |  | National | National | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-plomeriayconstruccionmyproject-com
+rentcenter.cl |  | National | CL | 2026-11-14 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-rentcenter-cl
 rippling.com |  | National | US | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-rippling-com
 sanitariabuceo.com |  | National | National | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-sanitariabuceo-com
 seat.es |  | National | ES | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-seat-es
@@ -1822,6 +1867,7 @@ uber.com |  | Requested | Requested | 2026-10-21 | 66 | https://carlosandmunoz.c
 unblockrvpn.com |  | National | National | 2026-10-29 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-unblockrvpn-com
 utas.edu.gh |  | National | GH | 2026-10-28 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-utas-edu-gh
 uzhits.net |  | National | National | 2026-11-12 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-uzhits-net
+vandaaginside.nl |  | National | NL | 2026-11-14 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-vandaaginside-nl
 vesely-drak.cz |  | National | CZ | 2026-11-05 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-vesely-drak-cz
 vetmeduni.ac.at |  | National | AT | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-vetmeduni-ac-at
 viabcp.com |  | National | PE | 2026-11-06 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-viabcp-com
@@ -1829,6 +1875,7 @@ vineurology.com |  | National | VI | 2026-11-07 | 66 | https://carlosandmunoz.co
 volkswagen.at |  | National | AT | 2026-11-03 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-volkswagen-at
 x365.ai |  | National | National | 2026-11-07 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-x365-ai
 xelapan.com |  | National | GT | 2026-11-02 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-xelapan-com
+xepelin.com.mx |  | National | MX | 2026-11-13 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-xepelin-com-mx
 zeb.be |  | National | BE | 2026-11-12 | 66 | https://carlosandmunoz.com/qa-review.html?live=u-zeb-be
 209nycdental.com |  | National | US | 2026-11-05 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-209nycdental-com
 7brew.com |  | National | National | 2026-11-11 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-7brew-com
@@ -1843,6 +1890,7 @@ alliedmarine.com |  | National | US | 2026-11-03 | 65 | https://carlosandmunoz.c
 allservicecyc.com |  | National | National | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-allservicecyc-com
 althompson.com |  | National | KY | 2026-11-06 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-althompson-com
 armultiservicios.com.sv |  | National | SV | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-armultiservicios-com-sv
+aru.ac.tz |  | National | TZ | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-aru-ac-tz
 automotoressur.com.ar |  | National | AR | 2026-11-12 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-automotoressur-com-ar
 bakecaincontrii.com |  | National | IT | 2026-11-07 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-bakecaincontrii-com
 bidatabridge.com |  | National | National | 2026-11-10 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-bidatabridge-com
@@ -1875,6 +1923,7 @@ elektro-bognar.at |  | National | AT | 2026-11-08 | 65 | https://carlosandmunoz.
 elektronotdienst.berlin |  | National | DE | 2026-11-08 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-elektronotdienst-berlin
 eoloair.com |  | National | CO | 2026-11-08 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-eoloair-com
 ermengol.ad |  | National | AD | 2026-11-05 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-ermengol-ad
+espacioabierto.cl |  | National | CL | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-espacioabierto-cl
 estudioroldan.ar |  | National | AR | 2026-11-13 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-estudioroldan-ar
 filinvestland.com |  | National | PH | 2026-11-03 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-filinvestland-com
 fontanerourgenciamadrid.com |  | National | ES | 2026-11-05 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-fontanerourgenciamadrid-com
@@ -1886,6 +1935,7 @@ hetushu.com |  | National | National | 2026-10-31 | 65 | https://carlosandmunoz.
 inelechn.net |  | National | National | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-inelechn-net
 installateur-service-wien.at |  | National | AT | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-installateur-service-wien-at
 institutodeimplantologia.pt |  | National | PT | 2026-11-05 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-institutodeimplantologia-pt
+institutoe-learning.cl |  | National | CL | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-institutoe-learning-cl
 itsmanual.com |  | National | GB | 2026-11-03 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-itsmanual-com
 iziway.cm |  | National | CM | 2026-11-10 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-iziway-cm
 jfsolucionesonline.com |  | National | ES | 2026-11-05 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-jfsolucionesonline-com
@@ -1914,6 +1964,8 @@ ppsspp.org |  | National | National | 2026-11-03 | 65 | https://carlosandmunoz.c
 profinancez.com |  | National | National | 2026-11-13 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-profinancez-com
 proximityplumbing.com.au |  | National | AU | 2026-11-07 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-proximityplumbing-com-au
 quick.com.co |  | National | CO | 2026-11-10 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-quick-com-co
+reale.cl |  | National | CL | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-reale-cl
+recursolegalabogados.cl |  | National | CL | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-recursolegalabogados-cl
 reparacionautorizadojml.com |  | National | PE | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-reparacionautorizadojml-com
 reptonalbarsha.org |  | National | AE | 2026-11-03 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-reptonalbarsha-org
 reverselookup.com |  | National | National | 2026-11-01 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-reverselookup-com
@@ -1937,6 +1989,7 @@ tiptop-installateur.at |  | National | AT | 2026-11-06 | 65 | https://carlosandm
 trueserviceplumbing.ca |  | National | CA | 2026-11-07 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-trueserviceplumbing-ca
 vanluies.be |  | National | BE | 2026-11-06 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-vanluies-be
 webinhood.com.br |  | National | BR | 2026-10-26 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-webinhood-com-br
+woorden.org |  | National | National | 2026-11-14 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-woorden-org
 xlxx2.com |  | National | National | 2026-11-06 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-xlxx2-com
 yammireceitas.com |  | National | BR | 2026-11-03 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-yammireceitas-com
 ysscores.com |  | National | SA | 2026-11-09 | 65 | https://carlosandmunoz.com/qa-review.html?live=u-ysscores-com
@@ -1969,7 +2022,9 @@ cemaco.com |  | National | GT | 2026-11-12 | 64 | https://carlosandmunoz.com/qa-
 chariow.com |  | National | National | 2026-11-07 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-chariow-com
 chotigolpobd.com |  | National | National | 2026-11-10 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-chotigolpobd-com
 climaproyectos.com.mx |  | National | MX | 2026-11-08 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-climaproyectos-com-mx
+clinicasantamaria.cl |  | National | CL | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-clinicasantamaria-cl
 colombia.com |  | Requested | CO | 2026-10-23 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-colombia-com
+confuturo.cl |  | National | CL | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-confuturo-cl
 crocowatch.ge |  | National | GE | 2026-11-13 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-crocowatch-ge
 crowdstrike.com |  | National | National | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-crowdstrike-com
 d7dentalclinic.ie |  | National | IE | 2026-11-05 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-d7dentalclinic-ie
@@ -1978,11 +2033,14 @@ daytona.com.py |  | National | PY | 2026-11-09 | 64 | https://carlosandmunoz.com
 decameron.com |  | National | CO | 2026-11-06 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-decameron-com
 dentalaguilaec.com |  | National | EC | 2026-11-04 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-dentalaguilaec-com
 dentalisima.com |  | National | MX | 2026-11-04 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-dentalisima-com
+diken.com.tr |  | National | TR | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-diken-com-tr
 doctoranytime.be |  | National | BE | 2026-11-05 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-doctoranytime-be
 dominicanewsonline.com |  | National | DM | 2026-10-25 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-dominicanewsonline-com
+eaglercraft.com |  | National | National | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-eaglercraft-com
 eautech.be |  | National | BE | 2026-11-06 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-eautech-be
 elektro-mc.ch |  | National | CH | 2026-11-08 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-elektro-mc-ch
 elfontanero-cr.com |  | National | National | 2026-11-06 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-elfontanero-cr-com
+escueladeidiomasalameda.cl |  | National | CL | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-escueladeidiomasalameda-cl
 etablissements-laroche.fr |  | National | FR | 2026-11-08 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-etablissements-laroche-fr
 fantasticsolutionsgroup.com |  | National | CR | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-fantasticsolutionsgroup-com
 fundacionirsa.org.ar |  | National | AR | 2026-11-13 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-fundacionirsa-org-ar
@@ -1999,9 +2057,11 @@ ingelectricista.com |  | National | PE | 2026-11-07 | 64 | https://carlosandmuno
 instaclaim.lk |  | National | LK | 2026-11-06 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-instaclaim-lk
 javsiam.net |  | National | National | 2026-11-08 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-javsiam-net
 jd-sports.com.au |  | National | AU | 2026-11-02 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-jd-sports-com-au
+journaldugeek.com |  | National | National | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-journaldugeek-com
 joyn.de |  | National | DE | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-joyn-de
 kaelte-fio.ch |  | National | CH | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-kaelte-fio-ch
 kbr.com |  | National | National | 2026-11-13 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-kbr-com
+lacabrerachile.cl |  | National | CL | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-lacabrerachile-cl
 lapesetagourmet.com |  | National | National | 2026-11-10 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-lapesetagourmet-com
 lectrix.cl |  | National | CL | 2026-11-07 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-lectrix-cl
 letrot.com |  | National | FR | 2026-10-25 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-letrot-com
@@ -2015,6 +2075,7 @@ medidental.pt |  | National | PT | 2026-11-05 | 64 | https://carlosandmunoz.com/
 megamaq.com |  | National | National | 2026-11-12 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-megamaq-com
 megaxh.com |  | National | National | 2026-10-27 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-megaxh-com
 meutimao.com.br |  | National | BR | 2026-11-10 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-meutimao-com-br
+mitie.com |  | National | National | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-mitie-com
 mrfrio.com.pa |  | National | PA | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-mrfrio-com-pa
 mtb.com |  | National | US | 2026-10-26 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-mtb-com
 nexu.mx |  | National | MX | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-nexu-mx
@@ -2028,6 +2089,7 @@ pagalo.pe |  | National | PE | 2026-10-28 | 64 | https://carlosandmunoz.com/qa-r
 parkdentalcare.co.uk |  | National | GB | 2026-11-03 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-parkdentalcare-co-uk
 peppagame.com |  | National | National | 2026-11-04 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-peppagame-com
 pinayot.com |  | National | National | 2026-10-29 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-pinayot-com
+poema.pf |  | National | PF | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-poema-pf
 portaldozacarias.com.br |  | National | BR | 2026-10-30 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-portaldozacarias-com-br
 princessyachts.com |  | National | National | 2026-11-03 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-princessyachts-com
 pritzens.com |  | National | DE | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-pritzens-com
@@ -2038,6 +2100,8 @@ sanitariosexpress.com.ni |  | National | NI | 2026-11-06 | 64 | https://carlosan
 shipjetpack.com |  | National | VG | 2026-11-04 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-shipjetpack-com
 shootxxx.com |  | National | National | 2026-11-08 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-shootxxx-com
 smilecafeny.com |  | National | US | 2026-11-05 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-smilecafeny-com
+snkrdunk.com |  | National | National | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-snkrdunk-com
+soccervital.com |  | National | National | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-soccervital-com
 studiosmilesnyc.com |  | National | US | 2026-11-05 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-studiosmilesnyc-com
 sxmislandtime.com |  | National | SX | 2026-11-07 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-sxmislandtime-com
 sylviapark.com |  | National | NZ | 2026-11-09 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-sylviapark-com
@@ -2047,6 +2111,7 @@ theleela.com |  | National | IN | 2026-11-03 | 64 | https://carlosandmunoz.com/q
 trovagas.com |  | National | MZ | 2026-10-27 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-trovagas-com
 typedeal.com |  | National | National | 2026-11-01 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-typedeal-com
 unab.edu.co |  | National | CO | 2026-11-03 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-unab-edu-co
+usg.edu |  | National | US | 2026-11-14 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-usg-edu
 viacred.com.ar |  | National | AR | 2026-11-11 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-viacred-com-ar
 vidikids.com |  | National | National | 2026-11-06 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-vidikids-com
 vodafone.cz |  | National | CZ | 2026-10-31 | 64 | https://carlosandmunoz.com/qa-review.html?live=u-vodafone-cz
@@ -2063,17 +2128,21 @@ agmarketing.cl |  | National | CL | 2026-11-13 | 63 | https://carlosandmunoz.com
 aic.ac.nz |  | National | NZ | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-aic-ac-nz
 aiconfort.com |  | National | National | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-aiconfort-com
 aireclimat.com |  | National | National | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-aireclimat-com
+alemaq.cl |  | National | CL | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-alemaq-cl
 apotheke-adhoc.de |  | National | DE | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-apotheke-adhoc-de
 arabhotx.com |  | National | National | 2026-10-29 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-arabhotx-com
 arcodental.com |  | National | CR | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-arcodental-com
 arquitecturayconcreto.com |  | National | National | 2026-11-10 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-arquitecturayconcreto-com
 artisanplombierparis.fr |  | National | FR | 2026-11-06 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-artisanplombierparis-fr
+azorafly.com |  | National | National | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-azorafly-com
 bechtle.com |  | National | National | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-bechtle-com
 bonddental.co.uk |  | National | GB | 2026-11-05 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-bonddental-co-uk
 boursesqma.com |  | National | National | 2026-11-12 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-boursesqma-com
 brazzerssurvey.com |  | National | National | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-brazzerssurvey-com
 buenosairesinmob.com.ar |  | National | AR | 2026-11-11 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-buenosairesinmob-com-ar
+caasimada.net |  | National | National | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-caasimada-net
 canaltech.com.br |  | National | BR | 2026-11-07 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-canaltech-com-br
+casagh.cl |  | National | CL | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-casagh-cl
 cbaruba.org |  | National | AW | 2026-10-25 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-cbaruba-org
 ccp3.dfgateway.com |  | National | National | 2026-10-25 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-ccp3-dfgateway-com
 century-properties.com |  | National | PH | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-century-properties-com
@@ -2105,6 +2174,7 @@ honda.com |  | Requested | Requested | 2026-10-22 | 63 | https://carlosandmunoz.
 houselec.be |  | National | BE | 2026-11-08 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-houselec-be
 hurtigruten.com |  | National | National | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-hurtigruten-com
 installateur-graf.at |  | National | AT | 2026-11-06 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-installateur-graf-at
+invica.cl |  | National | CL | 2026-11-13 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-invica-cl
 jelliscraig.com.au |  | National | AU | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-jelliscraig-com-au
 jn.fo |  | National | FO | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-jn-fo
 jrarcondicionados.com.br |  | National | BR | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-jrarcondicionados-com-br
@@ -2132,13 +2202,16 @@ pkelectricnyc.com |  | National | US | 2026-11-08 | 63 | https://carlosandmunoz.
 portaventuraworld.com |  | National | ES | 2026-11-07 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-portaventuraworld-com
 preasapanama.com |  | National | National | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-preasapanama-com
 prodentaldublin.ie |  | National | IE | 2026-11-05 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-prodentaldublin-ie
+publicosylegales.cl |  | National | CL | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-publicosylegales-cl
 puzzel.com |  | National | NO | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-puzzel-com
 q-dental.es |  | National | ES | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-q-dental-es
 regionalstudies.com.pk |  | National | PK | 2026-11-06 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-regionalstudies-com-pk
 renault.es |  | National | ES | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-renault-es
+roosevelt.cl |  | National | CL | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-roosevelt-cl
 rpsdubai.com |  | National | AE | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-rpsdubai-com
 rsoficial.com |  | National | VE | 2026-10-28 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-rsoficial-com
 saopaulodentalstudio.com.br |  | National | BR | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-saopaulodentalstudio-com-br
+shinegd.com |  | National | QA | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-shinegd-com
 skynewsarabia.com |  | National | National | 2026-11-08 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-skynewsarabia-com
 spmtelecom.com |  | National | PM | 2026-11-06 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-spmtelecom-com
 summervgame.com |  | National | National | 2026-10-25 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-summervgame-com
@@ -2150,14 +2223,17 @@ thedentist.net.au |  | National | AU | 2026-11-05 | 63 | https://carlosandmunoz.
 tiffanyproduction.ba |  | National | BA | 2026-10-25 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-tiffanyproduction-ba
 tlar.com.br |  | National | BR | 2026-11-09 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-tlar-com-br
 tlscontact.com |  | National | National | 2026-10-31 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-tlscontact-com
+tv.lv |  | National | LV | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-tv-lv
 uanl.mx |  | National | MX | 2026-11-05 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-uanl-mx
 ui1.es |  | National | ES | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-ui1-es
 umag.cl |  | National | CL | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-umag-cl
 uniminuto.edu |  | Requested | CO | 2026-10-21 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-uniminuto-edu
+united.business |  | National | National | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-united-business
 unitedyacht.com |  | National | National | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-unitedyacht-com
 upiig.ipn.mx |  | National | MX | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-upiig-ipn-mx
 veterinariapanda.com.ar |  | National | AR | 2026-11-13 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-veterinariapanda-com-ar
 vinmec.com |  | National | VN | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-vinmec-com
+weather.com |  | National | National | 2026-11-14 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-weather-com
 winkworth.co.uk |  | National | GB | 2026-11-03 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-winkworth-co-uk
 xhvid.com |  | National | National | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-xhvid-com
 y-jesus.org |  | National | National | 2026-11-04 | 63 | https://carlosandmunoz.com/qa-review.html?live=u-y-jesus-org
@@ -2168,6 +2244,7 @@ Organization of American States | International organizations | Regional | Washi
 accounts.eservices.gov.ss |  | National | SS | 2026-11-04 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-accounts-eservices-gov-ss
 almeshkah.net |  | National | National | 2026-10-30 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-almeshkah-net
 asianetnews.com |  | National | IN | 2026-11-01 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-asianetnews-com
+cambiodenombreabogados.cl |  | National | CL | 2026-11-14 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-cambiodenombreabogados-cl
 centre-dentaire-paris-15-montparnasse-medident.fr |  | National | FR | 2026-11-05 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-centre-dentaire-paris-15-montparnasse-medident-fr
 cerrajerosyelectricistaselcountrybogota.com |  | National | CO | 2026-11-07 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-cerrajerosyelectricistaselcountrybogota-com
 chevening.org |  | National | GB | 2026-11-05 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-chevening-org
@@ -2196,6 +2273,7 @@ emergencydentistsydney.com.au |  | National | AU | 2026-11-05 | 62 | https://car
 enkasa.pe |  | National | PE | 2026-11-08 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-enkasa-pe
 epidomastegasis.gr |  | National | GR | 2026-10-25 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-epidomastegasis-gr
 evo-elektriker.de |  | National | DE | 2026-11-08 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-evo-elektriker-de
+farmadon.com.ve |  | National | VE | 2026-11-14 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-farmadon-com-ve
 fijiairways.com |  | National | FJ | 2026-11-02 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-fijiairways-com
 find247hub.com |  | National | National | 2026-11-13 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-find247hub-com
 freedomdental.ie |  | National | IE | 2026-11-05 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-freedomdental-ie
@@ -2208,6 +2286,7 @@ hicomm.bg |  | National | BG | 2026-11-02 | 62 | https://carlosandmunoz.com/qa-r
 homemuebles.com.co |  | National | CO | 2026-11-10 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-homemuebles-com-co
 hotienergietec.at |  | National | AT | 2026-11-09 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-hotienergietec-at
 howrse.de |  | National | DE | 2026-11-03 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-howrse-de
+icbidiomas.com |  | National | CL | 2026-11-14 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-icbidiomas-com
 idme.ac.sz |  | National | SZ | 2026-11-07 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-idme-ac-sz
 idmji.org |  | Requested | CO | 2026-10-24 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-idmji-org
 ig.com.br |  | National | BR | 2026-11-04 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-ig-com-br
@@ -2235,6 +2314,7 @@ rpbw.com |  | National | National | 2026-11-09 | 62 | https://carlosandmunoz.com
 sandrapoveda.com |  | National | CO | 2026-11-04 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-sandrapoveda-com
 santafe2026.ar |  | National | AR | 2026-11-13 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-santafe2026-ar
 santiagoinnova.com |  | National | National | 2026-11-13 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-santiagoinnova-com
+simpleflying.com |  | National | National | 2026-11-14 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-simpleflying-com
 solayre.com.ni |  | National | NI | 2026-11-09 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-solayre-com-ni
 sonriacr.com |  | National | CR | 2026-11-04 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-sonriacr-com
 squaredle.app |  | National | National | 2026-10-30 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-squaredle-app
@@ -2249,12 +2329,14 @@ unlu.edu.ar |  | National | AR | 2026-11-06 | 62 | https://carlosandmunoz.com/qa
 viber.com |  | National | National | 2026-11-08 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-viber-com
 weidlich-shk.de |  | National | DE | 2026-11-06 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-weidlich-shk-de
 wholebodieswholeminds.com |  | National | National | 2026-11-06 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-wholebodieswholeminds-com
+wolfenson.cl |  | National | CL | 2026-11-14 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-wolfenson-cl
 wubook.net |  | National | IT | 2026-11-11 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-wubook-net
 zoshibre.com.pe |  | National | PE | 2026-11-07 | 62 | https://carlosandmunoz.com/qa-review.html?live=u-zoshibre-com-pe
 24ora.com |  | National | AW | 2026-11-07 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-24ora-com
 aass.sm |  | National | SM | 2026-11-07 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-aass-sm
 abogadosdiazyasociados.com |  | National | National | 2026-11-12 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-abogadosdiazyasociados-com
 abogadosinternacional.com |  | National | National | 2026-11-12 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-abogadosinternacional-com
+acs.edu.au |  | National | AU | 2026-11-13 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-acs-edu-au
 airesi.myshopify.com |  | National | National | 2026-11-09 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-airesi-myshopify-com
 anep.edu.uy |  | National | UY | 2026-11-03 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-anep-edu-uy
 aol.de |  | National | DE | 2026-11-11 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-aol-de
@@ -2265,6 +2347,7 @@ cabinet.salyk.kg |  | National | KG | 2026-11-13 | 61 | https://carlosandmunoz.c
 capfin.co.za |  | National | ZA | 2026-11-04 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-capfin-co-za
 casalindashop.com |  | National | CU | 2026-10-28 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-casalindashop-com
 cerrocred.com.ar |  | National | AR | 2026-11-11 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-cerrocred-com-ar
+chita.cl |  | National | CL | 2026-11-13 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-chita-cl
 citadental.com |  | National | ES | 2026-11-04 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-citadental-com
 cityelectro.ch |  | National | CH | 2026-11-08 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-cityelectro-ch
 clima-power.com |  | National | EC | 2026-11-09 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-clima-power-com
@@ -2286,6 +2369,7 @@ education-rca.com |  | National | CF | 2026-11-02 | 61 | https://carlosandmunoz.
 eia.edu.co |  | National | CO | 2026-11-03 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-eia-edu-co
 electricista-la-paz.ueniweb.com |  | National | MX | 2026-11-07 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-electricista-la-paz-ueniweb-com
 electricistapanama.com |  | National | PA | 2026-11-07 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-electricistapanama-com
+electronicaibarra.cl |  | National | CL | 2026-11-14 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-electronicaibarra-cl
 elektro-czigler.at |  | National | AT | 2026-11-08 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-elektro-czigler-at
 es.kiosko.net |  | National | National | 2026-11-10 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-es-kiosko-net
 estudiokohon.com |  | National | AR | 2026-11-12 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-estudiokohon-com
@@ -2350,6 +2434,7 @@ tplinkcloud.com |  | National | National | 2026-11-05 | 61 | https://carlosandmu
 tuscelularesbaratos.com |  | National | National | 2026-11-10 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-tuscelularesbaratos-com
 ucn.edu.co |  | National | CO | 2026-11-03 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-ucn-edu-co
 unideb.hu |  | National | HU | 2026-11-13 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-unideb-hu
+visualcapitalist.com |  | National | National | 2026-11-14 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-visualcapitalist-com
 zahnarzthietzing.com |  | National | AT | 2026-11-05 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-zahnarzthietzing-com
 zahnfair.ch |  | National | CH | 2026-11-05 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-zahnfair-ch
 zjbradio.com |  | National | MS | 2026-10-29 | 61 | https://carlosandmunoz.com/qa-review.html?live=u-zjbradio-com
@@ -2371,6 +2456,7 @@ castedduonline.it |  | National | IT | 2026-11-06 | 60 | https://carlosandmunoz.
 cengage.com |  | National | US | 2026-11-05 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-cengage-com
 chapingo.mx |  | National | MX | 2026-11-06 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-chapingo-mx
 cibc.com |  | National | CA | 2026-11-04 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-cibc-com
+circajewels.com |  | National | National | 2026-11-14 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-circajewels-com
 ciudad-muebles.com.ar |  | National | AR | 2026-11-12 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-ciudad-muebles-com-ar
 climaideal.com |  | National | CR | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-climaideal-com
 climasano.cl |  | National | CL | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-climasano-cl
@@ -2415,6 +2501,7 @@ jmproclima.cl |  | National | CL | 2026-11-09 | 60 | https://carlosandmunoz.com/
 kingedwardvii.co.uk |  | National | GB | 2026-11-03 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-kingedwardvii-co-uk
 knackvideos.com |  | National | National | 2026-11-10 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-knackvideos-com
 lanacion.com.ar |  | National | AR | 2026-11-12 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-lanacion-com-ar
+largroup.cl |  | National | CL | 2026-11-13 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-largroup-cl
 lubera.com |  | National | National | 2026-11-06 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-lubera-com
 maynoothuniversity.ie |  | National | IE | 2026-11-12 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-maynoothuniversity-ie
 membean.com |  | National | US | 2026-11-02 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-membean-com
@@ -2429,6 +2516,7 @@ plumbertoyourdoor.ca |  | National | CA | 2026-11-07 | 60 | https://carlosandmun
 pngegg.com |  | National | National | 2026-11-01 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-pngegg-com
 protegelar.pt |  | National | PT | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-protegelar-pt
 qwickbirr.com |  | National | National | 2026-11-03 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-qwickbirr-com
+radioatlantique.com |  | National | National | 2026-11-14 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-radioatlantique-com
 realestatecaribe.com |  | National | CW | 2026-11-08 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-realestatecaribe-com
 refriamerica.com |  | National | VE | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-refriamerica-com
 remax-diamondrealty-guam.com |  | National | GU | 2026-10-31 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-remax-diamondrealty-guam-com
@@ -2456,6 +2544,7 @@ tuenlinea.com |  | National | National | 2026-11-11 | 60 | https://carlosandmuno
 tuttlepublishing.com |  | National | National | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-tuttlepublishing-com
 u99.micro7878.com |  | National | National | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-u99-micro7878-com
 uca.es |  | National | ES | 2026-11-03 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-uca-es
+um.es |  | National | ES | 2026-11-13 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-um-es
 uniphar.ie |  | National | IE | 2026-10-26 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-uniphar-ie
 vipgameshub.com |  | National | National | 2026-10-29 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-vipgameshub-com
 webtoonempire-bl.com |  | National | National | 2026-11-09 | 60 | https://carlosandmunoz.com/qa-review.html?live=u-webtoonempire-bl-com
@@ -2468,6 +2557,7 @@ arena.ch |  | National | CH | 2026-11-11 | 59 | https://carlosandmunoz.com/qa-re
 ashforddentalpr.com |  | National | PR | 2026-11-04 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-ashforddentalpr-com
 be10x.com |  | National | IN | 2026-11-10 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-be10x-com
 benattiodontologia.com.br |  | National | BR | 2026-11-04 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-benattiodontologia-com-br
+catcocos.com |  | National | National | 2026-11-14 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-catcocos-com
 ced24horas.com |  | National | CO | 2026-11-04 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-ced24horas-com
 centralbank.org.bb |  | National | BB | 2026-11-05 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-centralbank-org-bb
 chileanrentacar.cl |  | National | CL | 2026-11-13 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-chileanrentacar-cl
@@ -2484,6 +2574,7 @@ dexa-contas.com |  | National | National | 2026-11-10 | 59 | https://carlosandmu
 discountbank.co.il |  | National | IL | 2026-10-31 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-discountbank-co-il
 domoticus.com.bo |  | National | BO | 2026-11-09 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-domoticus-com-bo
 dracik.sk |  | National | SK | 2026-11-09 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-dracik-sk
+ebogdbank.com |  | National | National | 2026-11-14 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-ebogdbank-com
 ecoair.solutions |  | National | CR | 2026-11-09 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-ecoair-solutions
 emergencyelectriciansdublin.ie |  | National | IE | 2026-11-08 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-emergencyelectriciansdublin-ie
 empirekeeway.com |  | National | National | 2026-11-12 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-empirekeeway-com
@@ -2502,6 +2593,7 @@ homemart.bg |  | National | BG | 2026-11-05 | 59 | https://carlosandmunoz.com/qa
 hotbot.com |  | National | National | 2026-11-07 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-hotbot-com
 ilumel.com |  | National | National | 2026-11-13 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-ilumel-com
 intelaf.com |  | National | GT | 2026-10-29 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-intelaf-com
+jobsicle.mv |  | National | MV | 2026-11-14 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-jobsicle-mv
 kayak.com |  | National | National | 2026-11-11 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-kayak-com
 kings.edu.au |  | National | AU | 2026-11-03 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-kings-edu-au
 kita-zion.de |  | National | DE | 2026-11-03 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-kita-zion-de
@@ -2516,6 +2608,7 @@ moraelectricsolutions.com |  | National | VE | 2026-11-07 | 59 | https://carlosa
 mspbs.gov.py |  | National | PY | 2026-11-03 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-mspbs-gov-py
 mytbas.com |  | National | AS | 2026-10-30 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-mytbas-com
 nogginbank.com |  | National | National | 2026-11-08 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-nogginbank-com
+nostalgic.cl |  | National | CL | 2026-11-14 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-nostalgic-cl
 odldentalclinic.com |  | National | GB | 2026-11-05 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-odldentalclinic-com
 oriongeek.com |  | National | CO | 2026-11-07 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-oriongeek-com
 pareto.com.ar |  | National | AR | 2026-11-11 | 59 | https://carlosandmunoz.com/qa-review.html?live=u-pareto-com-ar
@@ -2555,6 +2648,7 @@ actieveinversionesbolivia.com |  | National | BO | 2026-10-27 | 58 | https://car
 admission.coeportal.edu.gh |  | National | GH | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-admission-coeportal-edu-gh
 ads.climaproyecto.com.mx |  | National | MX | 2026-11-08 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-ads-climaproyecto-com-mx
 alison.com |  | National | IE | 2026-11-02 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-alison-com
+aninakuhinja.si |  | National | SI | 2026-11-14 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-aninakuhinja-si
 arabxforum.com |  | National | National | 2026-10-31 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-arabxforum-com
 athlokinisi.com.cy |  | National | CY | 2026-10-28 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-athlokinisi-com-cy
 auca.kg |  | National | KG | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-auca-kg
@@ -2589,11 +2683,13 @@ fluxitsoft.com |  | National | National | 2026-11-11 | 58 | https://carlosandmun
 flysolomons.com |  | National | National | 2026-11-12 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-flysolomons-com
 fundasparacelulares.com.ar |  | National | AR | 2026-11-12 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-fundasparacelulares-com-ar
 galiciaseguros.com.ar |  | National | AR | 2026-11-11 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-galiciaseguros-com-ar
+gamrentals.com |  | National | National | 2026-11-14 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-gamrentals-com
 gk-lueftung.ch |  | National | CH | 2026-11-09 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-gk-lueftung-ch
 gooscell.com.ar |  | National | AR | 2026-11-12 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-gooscell-com-ar
 heizoel24.de |  | National | DE | 2026-11-08 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-heizoel24-de
 hostalprovidencia.com |  | National | CL | 2026-11-13 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-hostalprovidencia-com
 jlservicesa.blogspot.com |  | National | National | 2026-11-06 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-jlservicesa-blogspot-com
+kantotflix.ph |  | National | PH | 2026-11-14 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-kantotflix-ph
 knightfrank.ie |  | National | IE | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-knightfrank-ie
 lagaceta.com.ar |  | National | AR | 2026-11-12 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-lagaceta-com-ar
 langhamhotels.com |  | National | National | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-langhamhotels-com
@@ -2625,6 +2721,7 @@ remax.ca |  | National | CA | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-re
 roho.com.ar |  | National | AR | 2026-11-12 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-roho-com-ar
 rotorooter.com |  | National | US | 2026-11-06 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-rotorooter-com
 rouxresto.com |  | National | National | 2026-11-11 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-rouxresto-com
+segurossantacruz.cl |  | National | CL | 2026-11-14 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-segurossantacruz-cl
 sixt.cl |  | National | CL | 2026-11-13 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-sixt-cl
 sofitasa.com |  | National | VE | 2026-11-03 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-sofitasa-com
 sostrenegrene.is |  | National | National | 2026-11-13 | 58 | https://carlosandmunoz.com/qa-review.html?live=u-sostrenegrene-is
@@ -2712,6 +2809,7 @@ publictransport.com.mt |  | National | MT | 2026-11-09 | 57 | https://carlosandm
 ramboll.com |  | National | National | 2026-11-09 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-ramboll-com
 rawson.co.za |  | National | ZA | 2026-11-03 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-rawson-co-za
 rhelectric.cl |  | National | CL | 2026-11-07 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-rhelectric-cl
+ryr.ueniweb.com |  | National | CL | 2026-11-14 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-ryr-ueniweb-com
 salnarsydiaz.com |  | National | GT | 2026-11-07 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-salnarsydiaz-com
 seeff.com |  | National | ZA | 2026-11-03 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-seeff-com
 serebii.net |  | National | National | 2026-11-12 | 57 | https://carlosandmunoz.com/qa-review.html?live=u-serebii-net
@@ -2768,16 +2866,20 @@ grandking.com.ar |  | National | AR | 2026-11-11 | 56 | https://carlosandmunoz.c
 healthygym.info |  | National | CO | 2026-11-10 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-healthygym-info
 hl718.com |  | National | CN | 2026-11-02 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-hl718-com
 implantesyortodoncia.com.uy |  | National | UY | 2026-11-04 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-implantesyortodoncia-com-uy
+indianschoolsohar.com |  | National | National | 2026-11-14 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-indianschoolsohar-com
 intecsoft.com.ar |  | National | AR | 2026-11-11 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-intecsoft-com-ar
 itc.edu.py |  | National | PY | 2026-11-07 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-itc-edu-py
 kawarji.com |  | National | TN | 2026-11-09 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-kawarji-com
 kita-st-franziskus.de |  | National | DE | 2026-11-03 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-kita-st-franziskus-de
+kiwiblog.co.nz |  | National | NZ | 2026-11-14 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-kiwiblog-co-nz
 klident.com |  | National | National | 2026-11-04 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-klident-com
 leaders.jo |  | National | JO | 2026-11-08 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-leaders-jo
+mcrental.cl |  | National | CL | 2026-11-14 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-mcrental-cl
 midtowndental.ca |  | National | CA | 2026-11-05 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-midtowndental-ca
 milifeghana.com |  | National | GH | 2026-11-05 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-milifeghana-com
 mim.gov.it |  | National | IT | 2026-11-02 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-mim-gov-it
 mirror.co.uk |  | National | GB | 2026-11-03 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-mirror-co-uk
+movicenter.cl |  | National | CL | 2026-11-14 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-movicenter-cl
 navymwrdiegogarcia.com |  | National | National | 2026-11-11 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-navymwrdiegogarcia-com
 netgogroup.com |  | National | HN | 2026-11-07 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-netgogroup-com
 nice.com |  | Requested | Requested | 2026-10-22 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-nice-com
@@ -2808,12 +2910,14 @@ uader.edu.ar |  | National | AR | 2026-11-03 | 56 | https://carlosandmunoz.com/q
 ufmg.br |  | National | BR | 2026-11-09 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-ufmg-br
 umich.mx |  | National | MX | 2026-11-05 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-umich-mx
 unica.edu.mx |  | National | MX | 2026-11-03 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-unica-edu-mx
+unifap.br |  | National | BR | 2026-11-13 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-unifap-br
 vgtravel.com.ar |  | National | AR | 2026-11-12 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-vgtravel-com-ar
 viajemos.tur.ar |  | National | AR | 2026-11-11 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-viajemos-tur-ar
 vini.pf |  | National | PF | 2026-11-04 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-vini-pf
 visidarbi.lv |  | National | LV | 2026-11-01 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-visidarbi-lv
 xn--sanitr-notdienst-berlin-brandenburg-96c.de |  | National | DE | 2026-11-06 | 56 | https://carlosandmunoz.com/qa-review.html?live=u-xn-sanitr-notdienst-berlin-brandenburg-96c-de
 Gobernación de Risaralda | Government | Regional | Pereira, CO | 2026-10-21 | 55 | https://carlosandmunoz.com/qa-review.html?live=risaralda
+anc.ua |  | National | UA | 2026-11-14 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-anc-ua
 arconstrucciones.com |  | National | National | 2026-11-10 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-arconstrucciones-com
 artedentalmvd.com |  | National | UY | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-artedentalmvd-com
 augsburger-allgemeine.de |  | National | DE | 2026-10-28 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-augsburger-allgemeine-de
@@ -2828,6 +2932,7 @@ chopo.com.mx |  | National | MX | 2026-11-12 | 55 | https://carlosandmunoz.com/q
 climar.com.sv |  | National | SV | 2026-11-09 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-climar-com-sv
 clinicadentalenguatemala.com |  | National | GT | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-clinicadentalenguatemala-com
 clinicarobledomartin.com |  | National | ES | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-clinicarobledomartin-com
+codicefiscaleonline.com |  | National | National | 2026-11-14 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-codicefiscaleonline-com
 coldwellbanker.es |  | National | ES | 2026-11-03 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-coldwellbanker-es
 colosseumdental.co.uk |  | National | GB | 2026-11-03 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-colosseumdental-co-uk
 coran-en-ligne.com |  | National | FR | 2026-10-29 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-coran-en-ligne-com
@@ -2841,6 +2946,7 @@ etenis.sk |  | National | SK | 2026-11-01 | 55 | https://carlosandmunoz.com/qa-r
 featuredsavings.com |  | National | National | 2026-10-27 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-featuredsavings-com
 fintechlab.la |  | National | National | 2026-11-13 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-fintechlab-la
 flexibility.com.ar |  | National | AR | 2026-11-11 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-flexibility-com-ar
+flf.lu |  | National | LU | 2026-11-14 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-flf-lu
 gamerzng.com |  | National | National | 2026-11-06 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-gamerzng-com
 gelinaodontologa.com |  | National | UY | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-gelinaodontologa-com
 gobiernodecanarias.org |  | National | ES | 2026-10-28 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-gobiernodecanarias-org
@@ -2873,6 +2979,7 @@ q.com |  | National | National | 2026-11-09 | 55 | https://carlosandmunoz.com/qa
 questionsconnect.com |  | National | National | 2026-10-28 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-questionsconnect-com
 realdent.com.mx |  | National | MX | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-realdent-com-mx
 reale-gourmet.com |  | National | AR | 2026-11-12 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-reale-gourmet-com
+remax-exclusive.cl |  | National | CL | 2026-11-13 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-remax-exclusive-cl
 resurtidora.mx |  | National | MX | 2026-11-08 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-resurtidora-mx
 rus.com.ar |  | National | AR | 2026-11-11 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-rus-com-ar
 saime.gob.ve |  | National | VE | 2026-11-01 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-saime-gob-ve
@@ -2884,6 +2991,7 @@ stbarthcommuter.com |  | National | BL | 2026-10-25 | 55 | https://carlosandmuno
 tawzeefportal.com |  | National | National | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-tawzeefportal-com
 uahurtado.cl |  | National | CL | 2026-11-03 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-uahurtado-cl
 ulb.be |  | National | BE | 2026-11-04 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-ulb-be
+umsa.edu.mx |  | National | MX | 2026-11-13 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-umsa-edu-mx
 unach.mx |  | National | MX | 2026-11-10 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-unach-mx
 unn.edu.ng |  | National | NG | 2026-11-01 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-unn-edu-ng
 victoriapalace.com.ar |  | National | AR | 2026-11-12 | 55 | https://carlosandmunoz.com/qa-review.html?live=u-victoriapalace-com-ar
@@ -2898,9 +3006,11 @@ belgranohome.com.ar |  | National | AR | 2026-11-12 | 54 | https://carlosandmuno
 bogothai.com |  | National | National | 2026-11-10 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-bogothai-com
 btolat.com |  | National | National | 2026-11-08 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-btolat-com
 c21.ca |  | National | CA | 2026-11-03 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-c21-ca
+clinicabupasantiago.cl |  | National | CL | 2026-11-14 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-clinicabupasantiago-cl
 cosud.com |  | National | National | 2026-11-12 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-cosud-com
 creditop.com.py |  | National | PY | 2026-10-28 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-creditop-com-py
 dental99.com.au |  | National | AU | 2026-11-05 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-dental99-com-au
+derco.cl |  | National | CL | 2026-11-14 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-derco-cl
 distribuidoraspeed.com |  | National | National | 2026-11-06 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-distribuidoraspeed-com
 dominos.gi |  | National | GI | 2026-10-28 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-dominos-gi
 douglas.ch |  | National | CH | 2026-11-03 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-douglas-ch
@@ -2935,6 +3045,7 @@ nammilk.com |  | National | NA | 2026-11-04 | 54 | https://carlosandmunoz.com/qa
 natur.gl |  | National | GL | 2026-11-08 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-natur-gl
 neodentis.com |  | National | PE | 2026-11-04 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-neodentis-com
 notebookcheck.com |  | National | National | 2026-11-12 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-notebookcheck-com
+nr1.md |  | National | MD | 2026-11-14 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-nr1-md
 payspace.com |  | National | National | 2026-11-10 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-payspace-com
 pj.poder-judicial.go.cr |  | National | CR | 2026-11-12 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-pj-poder-judicial-go-cr
 plomerelectric.com |  | National | PA | 2026-11-06 | 54 | https://carlosandmunoz.com/qa-review.html?live=u-plomerelectric-com
@@ -2970,6 +3081,7 @@ credisoluciones.cl |  | National | CL | 2026-11-13 | 53 | https://carlosandmunoz
 cronista.com |  | National | National | 2026-11-12 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-cronista-com
 doctoralia.pe |  | National | PE | 2026-11-05 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-doctoralia-pe
 drainkingplumbers.ca |  | National | CA | 2026-11-07 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-drainkingplumbers-ca
+eiii.cl |  | National | CL | 2026-11-13 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-eiii-cl
 elizade.net |  | National | NG | 2026-11-03 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-elizade-net
 erevir.sk |  | National | SK | 2026-11-12 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-erevir-sk
 europris.no |  | National | NO | 2026-11-11 | 53 | https://carlosandmunoz.com/qa-review.html?live=u-europris-no
@@ -3025,6 +3137,7 @@ bidx1.com |  | National | National | 2026-11-13 | 52 | https://carlosandmunoz.co
 bmw-wien.at |  | National | AT | 2026-11-03 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-bmw-wien-at
 branhamtabernacle.org |  | National | US | 2026-11-02 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-branhamtabernacle-org
 bullerbrewingco.com |  | National | National | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-bullerbrewingco-com
+cambiosorion.cl |  | National | CL | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-cambiosorion-cl
 chip.cz |  | National | CZ | 2026-11-13 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-chip-cz
 cng.edu |  | Requested | CO | 2026-10-25 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-cng-edu
 crescentschool.org |  | National | CA | 2026-11-03 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-crescentschool-org
@@ -3034,9 +3147,13 @@ dentalsmileslondon.co.uk |  | National | GB | 2026-11-05 | 52 | https://carlosan
 directory-saintbarth.com |  | National | National | 2026-11-10 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-directory-saintbarth-com
 dwsba.com.ar |  | National | AR | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-dwsba-com-ar
 elheraldo.hn |  | National | HN | 2026-11-13 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-elheraldo-hn
+epkasa.com |  | National | DO | 2026-11-13 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-epkasa-com
 expertdentalnyc.com |  | National | National | 2026-11-05 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-expertdentalnyc-com
+fastweather.com |  | National | National | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-fastweather-com
 fcbureau.co.zw |  | National | ZW | 2026-11-07 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-fcbureau-co-zw
+foreca.com |  | National | National | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-foreca-com
 friovital.com |  | National | CO | 2026-11-08 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-friovital-com
+funaab.edu.ng |  | National | NG | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-funaab-edu-ng
 genit.com.ar |  | National | AR | 2026-11-11 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-genit-com-ar
 givamblog.com |  | National | BR | 2026-10-28 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-givamblog-com
 gmdc.ae |  | National | AE | 2026-11-07 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-gmdc-ae
@@ -3047,6 +3164,7 @@ idum.uz |  | National | UZ | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-rev
 instalairesas.com.co |  | National | CO | 2026-11-08 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-instalairesas-com-co
 jalgpall.ee |  | National | EE | 2026-11-10 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-jalgpall-ee
 katalozi.net |  | National | National | 2026-11-13 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-katalozi-net
+legalmente.cl |  | National | CL | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-legalmente-cl
 leveinard.com |  | National | FR | 2026-10-29 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-leveinard-com
 model-driving.com |  | National | SA | 2026-11-01 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-model-driving-com
 msdmanuals.com |  | National | National | 2026-10-25 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-msdmanuals-com
@@ -3059,14 +3177,19 @@ qcell.sl |  | National | SL | 2026-11-04 | 52 | https://carlosandmunoz.com/qa-re
 redbysfr.yt |  | National | YT | 2026-11-02 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-redbysfr-yt
 rosariologistica.com |  | National | National | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-rosariologistica-com
 rtdeliveries.net |  | National | LB | 2026-11-03 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-rtdeliveries-net
+salacondell.cl |  | National | CL | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-salacondell-cl
 skccu.com |  | National | National | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-skccu-com
+soccervista.com |  | National | National | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-soccervista-com
 temple.com.ar |  | National | AR | 2026-11-12 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-temple-com-ar
 texaswaiter.com |  | National | National | 2026-10-25 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-texaswaiter-com
 tvgelive.gq |  | National | GQ | 2026-11-08 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-tvgelive-gq
 universodentistas.cl |  | National | CL | 2026-11-04 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-universodentistas-cl
+vizortube.com |  | National | National | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-vizortube-com
+vkd.tj |  | National | TJ | 2026-11-14 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-vkd-tj
 yotesalvo.com |  | National | PE | 2026-11-07 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-yotesalvo-com
 zoomhebdo.com |  | National | National | 2026-11-10 | 52 | https://carlosandmunoz.com/qa-review.html?live=u-zoomhebdo-com
 allysstar.co.tz |  | National | TZ | 2026-11-12 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-allysstar-co-tz
+astroawani.com |  | National | National | 2026-11-14 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-astroawani-com
 bgr.com.ec |  | National | EC | 2026-11-04 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-bgr-com-ec
 careers.gg |  | National | GG | 2026-10-31 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-careers-gg
 cerdas.com |  | National | ES | 2026-11-01 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-cerdas-com
@@ -3074,11 +3197,13 @@ chery.com.ec |  | National | EC | 2026-11-08 | 51 | https://carlosandmunoz.com/q
 cic.pt |  | National | PT | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-cic-pt
 climersa.com |  | National | National | 2026-11-09 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-climersa-com
 clinicaciro.es |  | National | ES | 2026-11-04 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-clinicaciro-es
+clinicaunionmedica.com |  | National | National | 2026-11-14 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-clinicaunionmedica-com
 coolingsolutions.com.do |  | National | DO | 2026-11-09 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-coolingsolutions-com-do
 dataprolinks.net |  | National | LB | 2026-11-08 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-dataprolinks-net
 delifood-stbarth.com |  | National | National | 2026-11-07 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-delifood-stbarth-com
 dentalogic.do |  | National | DO | 2026-11-04 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-dentalogic-do
 dng.ie |  | National | IE | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-dng-ie
+eldespertador.cl |  | National | CL | 2026-11-14 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-eldespertador-cl
 eldominico.edu.do |  | National | DO | 2026-11-07 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-eldominico-edu-do
 etstur.com |  | National | TR | 2026-11-12 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-etstur-com
 flexfintech.com.ar |  | National | AR | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-flexfintech-com-ar
@@ -3086,9 +3211,11 @@ forceturfvip.net |  | National | National | 2026-11-03 | 51 | https://carlosandm
 francoistuchel.com |  | National | National | 2026-11-12 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-francoistuchel-com
 freedomboatclub.com |  | National | US | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-freedomboatclub-com
 gilmar.es |  | National | ES | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-gilmar-es
+giratorio.cl |  | National | CL | 2026-11-14 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-giratorio-cl
 goldshin.am |  | National | AM | 2026-11-05 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-goldshin-am
 huinid.com |  | National | National | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-huinid-com
 intl.garena.com |  | National | National | 2026-10-26 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-intl-garena-com
+investchile.gob.cl |  | National | CL | 2026-11-13 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-investchile-gob-cl
 jobrapide.org |  | National | National | 2026-11-09 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-jobrapide-org
 kaunoklinikos.lt |  | National | LT | 2026-11-01 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-kaunoklinikos-lt
 lagencia.cl |  | National | CL | 2026-11-13 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-lagencia-cl
@@ -3098,6 +3225,7 @@ lis.gov.lr |  | National | LR | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-
 lovechuka.com |  | National | National | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-lovechuka-com
 marinaestrella.com |  | National | ES | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-marinaestrella-com
 maxiscoot.com |  | National | National | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-maxiscoot-com
+multirental.cl |  | National | CL | 2026-11-14 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-multirental-cl
 mycar.lu |  | National | LU | 2026-11-01 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-mycar-lu
 obam45.com |  | National | National | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-obam45-com
 one15marina.com |  | National | SG | 2026-11-03 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-one15marina-com
@@ -3109,6 +3237,7 @@ rozkladzik.pl |  | National | PL | 2026-10-27 | 51 | https://carlosandmunoz.com/
 salcc.edu.lc |  | National | LC | 2026-11-13 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-salcc-edu-lc
 secrethostess.com |  | National | National | 2026-11-02 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-secrethostess-com
 seeu.edu.mk |  | National | MK | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-seeu-edu-mk
+sento.cl |  | National | CL | 2026-11-13 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-sento-cl
 sinalei.com |  | National | WS | 2026-10-30 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-sinalei-com
 sistemasventilacion.blogspot.com |  | National | MX | 2026-11-08 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-sistemasventilacion-blogspot-com
 smilelabny.com |  | National | US | 2026-11-05 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-smilelabny-com
@@ -3125,7 +3254,9 @@ vigaire.com |  | National | DO | 2026-11-09 | 51 | https://carlosandmunoz.com/qa
 wanuncios.com |  | National | ES | 2026-10-29 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-wanuncios-com
 willyweather.com.au |  | National | AU | 2026-11-11 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-willyweather-com-au
 zte.com.cn |  | National | CN | 2026-11-09 | 51 | https://carlosandmunoz.com/qa-review.html?live=u-zte-com-cn
+afc.cl |  | National | CL | 2026-11-14 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-afc-cl
 auchan.pt |  | National | PT | 2026-11-03 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-auchan-pt
+bancoripley.cl |  | National | CL | 2026-11-13 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-bancoripley-cl
 berlin-klimatechnik.de |  | National | DE | 2026-11-09 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-berlin-klimatechnik-de
 bienert-gmbh.de |  | National | DE | 2026-11-09 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-bienert-gmbh-de
 boardwalkaruba.com |  | National | AW | 2026-11-05 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-boardwalkaruba-com
@@ -3138,6 +3269,7 @@ conad.it |  | National | IT | 2026-11-03 | 50 | https://carlosandmunoz.com/qa-re
 dangote.com |  | National | NG | 2026-11-03 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-dangote-com
 dentistas24h.com |  | National | BR | 2026-11-04 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-dentistas24h-com
 domain.com.au |  | National | AU | 2026-10-26 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-domain-com-au
+fastour.cl |  | National | CL | 2026-11-14 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-fastour-cl
 friorojas.cl |  | National | CL | 2026-11-09 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-friorojas-cl
 gitana.lt |  | National | LT | 2026-11-03 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-gitana-lt
 gonzalezfrea.com.ar |  | National | AR | 2026-11-12 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-gonzalezfrea-com-ar
@@ -3176,6 +3308,7 @@ ww2.ufps.edu.co |  | National | CO | 2026-11-03 | 50 | https://carlosandmunoz.co
 zahncity.ch |  | National | CH | 2026-11-05 | 50 | https://carlosandmunoz.com/qa-review.html?live=u-zahncity-ch
 aarsleff.com |  | National | National | 2026-11-09 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-aarsleff-com
 abbahoteles.com |  | National | ES | 2026-11-13 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-abbahoteles-com
+ag.gov.tt |  | National | TT | 2026-11-14 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-ag-gov-tt
 asianhospital.com |  | National | PH | 2026-11-03 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-asianhospital-com
 bongacams.com |  | National | National | 2026-10-28 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-bongacams-com
 chedraui.com.mx |  | National | MX | 2026-11-03 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-chedraui-com-mx
@@ -3189,6 +3322,7 @@ dentalemergencyservices.ca |  | National | CA | 2026-11-05 | 49 | https://carlos
 dentymed.fr |  | National | FR | 2026-11-05 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-dentymed-fr
 doctorheldertorres.com |  | National | NI | 2026-11-04 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-doctorheldertorres-com
 doutorverde.com |  | National | PT | 2026-11-05 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-doutorverde-com
+elmostrador.cl |  | National | CL | 2026-11-14 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-elmostrador-cl
 fragranticarabia.com |  | National | National | 2026-10-29 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-fragranticarabia-com
 getmeru.com |  | National | National | 2026-11-03 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-getmeru-com
 gruposwats.com |  | National | ES | 2026-11-02 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-gruposwats-com
@@ -3218,14 +3352,20 @@ uc.cl |  | National | CL | 2026-11-10 | 49 | https://carlosandmunoz.com/qa-revie
 unillanos.edu.co |  | Requested | CO | 2026-11-04 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-unillanos-edu-co
 universidadean.edu.co |  | National | CO | 2026-11-03 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-universidadean-edu-co
 usbmed.edu.co |  | Requested | CO | 2026-11-04 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-usbmed-edu-co
+uvtab.go.ug |  | National | UG | 2026-11-14 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-uvtab-go-ug
 vegasinsider.com |  | National | US | 2026-11-01 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-vegasinsider-com
 visitsvalbard.com |  | National | SJ | 2026-10-30 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-visitsvalbard-com
 webex.com |  | National | National | 2026-11-12 | 49 | https://carlosandmunoz.com/qa-review.html?live=u-webex-com
+actualite.cd |  | National | National | 2026-11-13 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd
+bharian.com.my |  | National | MY | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-bharian-com-my
 clinicasancamilo.org.ar |  | National | AR | 2026-11-11 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-clinicasancamilo-org-ar
 dac.com.uy |  | National | UY | 2026-11-02 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-dac-com-uy
 defense-arab.com |  | National | National | 2026-11-12 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-defense-arab-com
 esppra.co.sz |  | National | SZ | 2026-11-01 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-esppra-co-sz
 fakaza.com |  | National | ZA | 2026-11-02 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-fakaza-com
+fluyez.com |  | National | National | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-fluyez-com
+geradovana.lt |  | National | LT | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-geradovana-lt
+globaldata.pt |  | National | PT | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-globaldata-pt
 ih-buenosaires.com |  | National | National | 2026-11-12 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-ih-buenosaires-com
 jetblue.com |  | National | US | 2026-11-08 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-jetblue-com
 lesoirdalgerie.com |  | National | DZ | 2026-10-25 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-lesoirdalgerie-com
@@ -3233,15 +3373,18 @@ localiza.com |  | National | National | 2026-11-11 | 48 | https://carlosandmunoz
 logistica-central.com.ar |  | National | AR | 2026-11-12 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-logistica-central-com-ar
 meteofrance.pm |  | National | PM | 2026-11-01 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-meteofrance-pm
 moph.gov.af |  | National | AF | 2026-10-25 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-moph-gov-af
+norteamericano.cl |  | National | CL | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-norteamericano-cl
 oceancaboverde.com |  | National | CV | 2026-11-08 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-oceancaboverde-com
 otpbanka.me |  | National | ME | 2026-11-06 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-otpbanka-me
 pcbolsa.com |  | National | ES | 2026-11-04 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-pcbolsa-com
 plomerobogota.com.co |  | National | CO | 2026-11-05 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-plomerobogota-com-co
 portobellodental.ie |  | National | IE | 2026-11-05 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-portobellodental-ie
 rentarlowcost.com |  | National | National | 2026-11-11 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-rentarlowcost-com
+saray.tm |  | National | TM | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-saray-tm
 sisvaa.com |  | National | EC | 2026-11-09 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-sisvaa-com
 strange.com.ar |  | National | AR | 2026-11-12 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-strange-com-ar
 t1x2.net |  | National | RS | 2026-11-01 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-t1x2-net
+taxi-boat-noumea.nc |  | National | NC | 2026-11-14 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-taxi-boat-noumea-nc
 tjclimatizacao.com.br |  | National | BR | 2026-11-09 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-tjclimatizacao-com-br
 todoelectroofertas.cl |  | National | CL | 2026-11-13 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-todoelectroofertas-cl
 togofirst.com |  | National | TG | 2026-11-04 | 48 | https://carlosandmunoz.com/qa-review.html?live=u-togofirst-com
@@ -3284,6 +3427,8 @@ aeofmiami.com |  | National | National | 2026-10-28 | 46 | https://carlosandmuno
 airgreenland.gl |  | National | GL | 2026-10-28 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-airgreenland-gl
 aiyellow.com |  | National | National | 2026-11-06 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-aiyellow-com
 atbuenosaires.com |  | National | National | 2026-11-11 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-atbuenosaires-com
+auto360.cl |  | National | CL | 2026-11-14 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-auto360-cl
+bobrental.com |  | National | National | 2026-11-14 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-bobrental-com
 calderasgaspromin.com |  | National | ES | 2026-11-08 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-calderasgaspromin-com
 cmi.edu |  | National | National | 2026-11-03 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-cmi-edu
 dac.ge |  | National | GE | 2026-11-08 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-dac-ge
@@ -3291,6 +3436,7 @@ dental-argentina.com.ar |  | National | AR | 2026-11-11 | 46 | https://carlosand
 dentistasmadridcentro.com |  | National | ES | 2026-11-04 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-dentistasmadridcentro-com
 dimitrio.com.ar |  | National | AR | 2026-11-11 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-dimitrio-com-ar
 econorent.cl |  | National | CL | 2026-11-13 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-econorent-cl
+education.sn |  | National | SN | 2026-11-14 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-education-sn
 eltallerdelpelo.com |  | National | CO | 2026-11-10 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-eltallerdelpelo-com
 geenstijl.nl |  | National | NL | 2026-11-11 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-geenstijl-nl
 grupopopular.com |  | National | DO | 2026-11-03 | 46 | https://carlosandmunoz.com/qa-review.html?live=u-grupopopular-com
@@ -3347,12 +3493,15 @@ quicklaunch.io |  | National | US | 2026-10-26 | 45 | https://carlosandmunoz.com
 rakbank.ae |  | National | AE | 2026-11-12 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-rakbank-ae
 scholarshipsads.com |  | National | National | 2026-11-02 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-scholarshipsads-com
 sherryfitz.ie |  | National | IE | 2026-11-03 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-sherryfitz-ie
+sinarharian.com.my |  | National | MY | 2026-11-14 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-sinarharian-com-my
 soorban.com |  | National | National | 2026-11-12 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-soorban-com
 starbucks.co.jp |  | National | JP | 2026-11-03 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-starbucks-co-jp
+unl.edu.ar |  | National | AR | 2026-11-13 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-unl-edu-ar
 unsta.edu.ar |  | National | AR | 2026-11-05 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-unsta-edu-ar
 windiescricket.com |  | National | National | 2026-10-28 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-windiescricket-com
 yellow.co.nz |  | National | NZ | 2026-10-27 | 45 | https://carlosandmunoz.com/qa-review.html?live=u-yellow-co-nz
 centroodontologicopaitilla.com |  | National | PA | 2026-11-04 | 44 | https://carlosandmunoz.com/qa-review.html?live=u-centroodontologicopaitilla-com
+diariodesantiago.es |  | National | ES | 2026-11-14 | 44 | https://carlosandmunoz.com/qa-review.html?live=u-diariodesantiago-es
 edreams.pe |  | National | PE | 2026-11-02 | 44 | https://carlosandmunoz.com/qa-review.html?live=u-edreams-pe
 empresasguinea.com |  | National | National | 2026-11-10 | 44 | https://carlosandmunoz.com/qa-review.html?live=u-empresasguinea-com
 endodentalcare.com |  | National | National | 2026-11-04 | 44 | https://carlosandmunoz.com/qa-review.html?live=u-endodentalcare-com
@@ -3373,6 +3522,8 @@ wefix.london |  | National | GB | 2026-11-07 | 44 | https://carlosandmunoz.com/q
 arspa.com.co |  | National | CO | 2026-11-10 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-arspa-com-co
 bancociudad.com.ar |  | National | AR | 2026-11-11 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-bancociudad-com-ar
 bna.com.ar |  | National | AR | 2026-11-11 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-bna-com-ar
+clinicalascondes.cl |  | National | CL | 2026-11-14 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-clinicalascondes-cl
+cooperativa.cl |  | National | CL | 2026-11-14 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-cooperativa-cl
 corporacionmercantil.com.py |  | National | PY | 2026-11-01 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-corporacionmercantil-com-py
 equibase.com |  | National | National | 2026-11-01 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-equibase-com
 gazetatema.net |  | National | National | 2026-11-04 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-gazetatema-net
@@ -3387,17 +3538,22 @@ poops.pl.ua |  | National | UA | 2026-11-12 | 43 | https://carlosandmunoz.com/qa
 prisma23.ru |  | National | RU | 2026-11-04 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-prisma23-ru
 riorise.com |  | National | National | 2026-11-01 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-riorise-com
 smileconcepts.com.au |  | National | AU | 2026-11-05 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-smileconcepts-com-au
+virtualbusiness.cl |  | National | CL | 2026-11-13 | 43 | https://carlosandmunoz.com/qa-review.html?live=u-virtualbusiness-cl
 arcomaquinarias.com |  | National | National | 2026-11-12 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-arcomaquinarias-com
+bci.cl |  | National | CL | 2026-11-13 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-bci-cl
 clinicadentaloterosenin.es |  | National | ES | 2026-11-04 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-clinicadentaloterosenin-es
 conservatoriodeltolima.edu.co |  | Requested | CO | 2026-11-06 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-conservatoriodeltolima-edu-co
 cruisemapper.com |  | National | National | 2026-11-12 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-cruisemapper-com
 cytonn.com |  | National | National | 2026-11-09 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-cytonn-com
 espaciom.com |  | National | National | 2026-11-13 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-espaciom-com
 farmaciauniversal.com |  | National | National | 2026-11-12 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-farmaciauniversal-com
+hmetro.com.my |  | National | MY | 2026-11-14 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-hmetro-com-my
 jacquieetmichel.net |  | National | National | 2026-11-11 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-jacquieetmichel-net
 jetcraft.com |  | National | US | 2026-11-03 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-jetcraft-com
+learnacademy.cl |  | National | CL | 2026-11-14 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-learnacademy-cl
 pandatur.md |  | National | MD | 2026-11-09 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-pandatur-md
 pasteleriaflorida.com.co |  | National | CO | 2026-11-11 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-pasteleriaflorida-com-co
+police.gov.rw |  | National | RW | 2026-11-14 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-police-gov-rw
 rezlive.com |  | National | National | 2026-10-30 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-rezlive-com
 santaisabel.com.ar |  | National | AR | 2026-11-11 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-santaisabel-com-ar
 solucionesac.com.gt |  | National | GT | 2026-11-09 | 42 | https://carlosandmunoz.com/qa-review.html?live=u-solucionesac-com-gt
@@ -3411,6 +3567,7 @@ airportassist.com |  | National | US | 2026-11-07 | 41 | https://carlosandmunoz.
 aoxx69.app |  | National | National | 2026-11-09 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-aoxx69-app
 arflina.com |  | National | CO | 2026-11-10 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-arflina-com
 carsearchdirect.com |  | National | National | 2026-11-05 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-carsearchdirect-com
+compumarket.com.py |  | National | PY | 2026-11-14 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-compumarket-com-py
 credobank.ge |  | National | GE | 2026-11-03 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-credobank-ge
 electrofrioni.com |  | National | National | 2026-11-09 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-electrofrioni-com
 falklandislands.com |  | National | FK | 2026-11-03 | 41 | https://carlosandmunoz.com/qa-review.html?live=u-falklandislands-com
@@ -3440,19 +3597,24 @@ canalplus-caledonie.com |  | National | NC | 2026-10-27 | 39 | https://carlosand
 conceptoensistemas.com.ar |  | National | AR | 2026-11-11 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-conceptoensistemas-com-ar
 fae.edu |  | National | BR | 2026-11-06 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-fae-edu
 issta.co.il |  | National | IL | 2026-11-03 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-issta-co-il
+livejasmin.com |  | National | National | 2026-11-14 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-livejasmin-com
 manas.edu.kg |  | National | KG | 2026-10-31 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-manas-edu-kg
 nh-collection.com |  | National | National | 2026-11-13 | 39 | https://carlosandmunoz.com/qa-review.html?live=u-nh-collection-com
 almacenestropigas.com.gt |  | National | GT | 2026-11-07 | 38 | https://carlosandmunoz.com/qa-review.html?live=u-almacenestropigas-com-gt
 coleccion.aw |  | National | AW | 2026-11-10 | 38 | https://carlosandmunoz.com/qa-review.html?live=u-coleccion-aw
+falabella.com |  | National | National | 2026-11-14 | 38 | https://carlosandmunoz.com/qa-review.html?live=u-falabella-com
 pneusgom.re |  | National | RE | 2026-11-12 | 38 | https://carlosandmunoz.com/qa-review.html?live=u-pneusgom-re
 soytufarmacia.net |  | National | National | 2026-11-12 | 38 | https://carlosandmunoz.com/qa-review.html?live=u-soytufarmacia-net
 44sex.com |  | National | National | 2026-11-04 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-44sex-com
+casaroyal.cl |  | National | CL | 2026-11-14 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-casaroyal-cl
 lapsi.al |  | National | AL | 2026-10-28 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-lapsi-al
 microelectronicash.com |  | National | National | 2026-11-11 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-microelectronicash-com
 ut.edu.co |  | National | CO | 2026-10-31 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-ut-edu-co
 xvlivecams.com |  | National | National | 2026-11-03 | 37 | https://carlosandmunoz.com/qa-review.html?live=u-xvlivecams-com
 minfin.am |  | National | AM | 2026-11-02 | 36 | https://carlosandmunoz.com/qa-review.html?live=u-minfin-am
 supersoco.ky |  | National | KY | 2026-11-13 | 36 | https://carlosandmunoz.com/qa-review.html?live=u-supersoco-ky
+tricot.cl |  | National | CL | 2026-11-14 | 36 | https://carlosandmunoz.com/qa-review.html?live=u-tricot-cl
+airarabia.com |  | National | National | 2026-11-14 | 35 | https://carlosandmunoz.com/qa-review.html?live=u-airarabia-com
 amway.com.vn |  | National | VN | 2026-11-09 | 35 | https://carlosandmunoz.com/qa-review.html?live=u-amway-com-vn
 oshsu.kg |  | National | KG | 2026-11-11 | 35 | https://carlosandmunoz.com/qa-review.html?live=u-oshsu-kg
 turismoparadiso.com.ar |  | National | AR | 2026-11-11 | 35 | https://carlosandmunoz.com/qa-review.html?live=u-turismoparadiso-com-ar
@@ -3461,7 +3623,9 @@ hotelestequendama.com.co |  | Requested | CO | 2026-10-26 | 34 | https://carlosa
 krasnoeibeloe.ru |  | National | RU | 2026-11-01 | 34 | https://carlosandmunoz.com/qa-review.html?live=u-krasnoeibeloe-ru
 terangasgambia.com |  | National | GM | 2026-10-31 | 34 | https://carlosandmunoz.com/qa-review.html?live=u-terangasgambia-com
 tienda.rimmel.com.ar |  | National | AR | 2026-11-11 | 34 | https://carlosandmunoz.com/qa-review.html?live=u-tienda-rimmel-com-ar
+upsa.es |  | National | ES | 2026-11-13 | 34 | https://carlosandmunoz.com/qa-review.html?live=u-upsa-es
 abc.gob.ar |  | National | AR | 2026-11-11 | 33 | https://carlosandmunoz.com/qa-review.html?live=u-abc-gob-ar
+clinicaalemana.cl |  | National | CL | 2026-11-14 | 33 | https://carlosandmunoz.com/qa-review.html?live=u-clinicaalemana-cl
 eep.com.co |  | Requested | CO | 2026-10-27 | 33 | https://carlosandmunoz.com/qa-review.html?live=u-eep-com-co
 elmundodelmueble.com |  | National | National | 2026-11-12 | 33 | https://carlosandmunoz.com/qa-review.html?live=u-elmundodelmueble-com
 thun.com |  | National | National | 2026-11-13 | 32 | https://carlosandmunoz.com/qa-review.html?live=u-thun-com

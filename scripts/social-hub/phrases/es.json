@@ -67,6 +67,10 @@
   "text": "⟦1⟧ líderes en SEO, GEO, Seguridad, Accesibilidad; ⟦2⟧ clientes potenciales en Analytics; ⟦3⟧ lidera en Rendimiento.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics, Performance; ⟦3⟧ leads in Accessibility. ⟦4⟧ leads in none of the six areas.": {
+  "text": "⟦1⟧ líderes en SEO, GEO, Seguridad; ⟦2⟧ líderes en análisis y rendimiento; ⟦3⟧ lidera en Accesibilidad. ⟦4⟧ lidera en ninguna de las seis áreas.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, GEO, Security; ⟦2⟧ leads in Analytics; ⟦3⟧ leads in Accessibility, Performance.": {
   "text": "⟦1⟧ líderes en SEO, GEO, Seguridad; ⟦2⟧ clientes potenciales en Analytics; ⟦3⟧ lidera en Accesibilidad, Rendimiento.",
   "machine": true
@@ -105,6 +109,10 @@
   "machine": true
  },
  "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Accessibility, Performance.": "⟦1⟧ lidera en SEO; ⟦2⟧ lidera en GEO y Seguridad; ⟦3⟧ lidera en Analítica, Accesibilidad y Rendimiento.",
+ "⟦1⟧ leads in SEO; ⟦2⟧ leads in GEO, Security; ⟦3⟧ leads in Analytics, Performance; ⟦4⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ clientes potenciales en SEO; ⟦2⟧ lidera en GEO, Seguridad; ⟦3⟧ líderes en análisis y rendimiento; ⟦4⟧ lidera en Accesibilidad.",
+  "machine": true
+ },
  "⟦1⟧ leads security, ⟦2⟧ to ⟦3⟧, and analytics, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ lidera en seguridad, ⟦2⟧ a ⟦3⟧, y en analítica, ⟦4⟧ a ⟦5⟧.",
  "⟦1⟧ lets AI answer bots like OAI-SearchBot and PerplexityBot in while blocking the training bots GPTBot, CCBot, and Google-Extended.": "⟦1⟧ deja entrar a bots de respuestas de IA como OAI-SearchBot y PerplexityBot y bloquea a los bots de entrenamiento GPTBot, CCBot y Google-Extended.",
  "⟦1⟧ lists ⟦2⟧ links but names no entity.": "⟦1⟧ lista ⟦2⟧ enlaces, pero no nombra ninguna entidad.",
@@ -390,6 +398,14 @@
  "Add the page's purpose to its title, in its own language.": "Añade el propósito de la página a su título, en su propio idioma.",
  "Add url, plus a search action if you have one, to each language's WebSite block.": "Añade url, y una acción de búsqueda si la tienes, al bloque WebSite de cada idioma.",
  "Add WebSite and Organization blocks with sameAs links to GitHub and social profiles.": "Añade bloques WebSite y Organization con enlaces sameAs a GitHub y a tus perfiles sociales.",
+ "Adrian Roselli has published his fifteen ranked picks for Interop ⟦1⟧, led by ⟦2⟧, the HTML ⟦3⟧ attribute and Shadow DOM ⟦4⟧, with an accessibility reason attached to each.": {
+  "text": "Adrian Roselli ha publicado sus quince selecciones clasificadas para Interop ⟦1⟧, lideradas por ⟦2⟧, el atributo HTML ⟦3⟧ y Shadow DOM ⟦4⟧, con un motivo de accesibilidad adjunto a cada uno.",
+  "machine": true
+ },
+ "Adrian Roselli's Interop ⟦1⟧ ballot ranks the places authors keep getting it wrong": {
+  "text": "La boleta de Interop ⟦1⟧ de Adrian Roselli clasifica los lugares en los que los autores siguen equivocándose",
+  "machine": true
+ },
  "African Union titles run to ⟦1⟧ characters.": "Los títulos de la Unión Africana llegan a ⟦1⟧ caracteres.",
  "After a stricter consent policy, GA4 organic sessions fell ⟦1⟧ in four weeks while Search Console clicks rose ⟦2⟧.": "Tras una política de consentimiento más estricta, las sesiones orgánicas en GA4 cayeron un ⟦1⟧ en cuatro semanas, mientras los clics en Search Console subieron un ⟦2⟧.",
  "After reviewing DMARC reports, move to p=quarantine and then p=reject, so forged mail is blocked.": "Tras revisar los informes DMARC, pasa a p=quarantine y luego a p=reject, para bloquear el correo falsificado.",
@@ -404,6 +420,10 @@
  },
  "Agent Skills that convert a WordPress site (or any live site) into a static Astro site with URL, SEO, content and pixel parity, then take it through launch.": {
   "text": "Habilidades de agente que convierten un sitio de WordPress (o cualquier sitio en vivo) en un sitio Astro estático con URL, SEO, contenido y paridad de píxeles, y luego lo llevan al lanzamiento.",
+  "machine": true
+ },
+ "Agents now finish that job, and the work starts with the offer.": {
+  "text": "Los agentes ahora terminan ese trabajo y el trabajo comienza con la oferta.",
   "machine": true
  },
  "AI answers cite what they can parse.": "Las respuestas con IA citan lo que pueden interpretar.",
@@ -434,6 +454,10 @@
  "AI search reads your HTML, not your app.": "La búsqueda con IA lee tu HTML, no tu app.",
  "AI Search Summaries Are Changing Why People Click, Not Ending Organic Discovery": {
   "text": "Los resúmenes de búsqueda de IA están cambiando el motivo por el que las personas hacen clic, no poniendo fin al descubrimiento orgánico",
+  "machine": true
+ },
+ "AI Shopping Errors:": {
+  "text": "Errores de compra de IA:",
   "machine": true
  },
  "AI systems may recognize a brand, its founder, or its past achievements without recommending that...": {
@@ -1127,6 +1151,10 @@
  "DANE's viewport caps zoom at ⟦1⟧x.": "El viewport del DANE limita el zoom a ⟦1⟧x.",
  "dansugc/reverse-engineer-marketing:": "dansugc/reverse-engineer-marketing:",
  "Darpan Shah": "Darpan Shah",
+ "Data shows visits to the world's top million websites declined from an earlier peak, visits going to sites outside the top ⟦1⟧ barely changed.": {
+  "text": "Los datos muestran que las visitas a los millones de sitios web más importantes del mundo disminuyeron desde un pico anterior, y las visitas a sitios fuera del top ⟦1⟧ apenas cambiaron.",
+  "machine": true
+ },
  "Davivienda ⟦1⟧, Bancolombia ⟦2⟧.": "Davivienda ⟦1⟧, Bancolombia ⟦2⟧.",
  "Davivienda or Bancolombia: which bank's site scored higher?": "Davivienda o Bancolombia: ¿el sitio de qué banco obtuvo más puntos?",
  "Davivienda scores ⟦1⟧ for accessibility, Bancolombia ⟦2⟧.": "Davivienda saca ⟦1⟧ en accesibilidad, Bancolombia ⟦2⟧.",
@@ -1315,6 +1343,10 @@
   "text": "Explicar qué rastrearás, cómo gobernarás el contenido y qué aceptan las partes interesadas es la parte más difícil.",
   "machine": true
  },
+ "Explore the future of retail with AI shopping.": {
+  "text": "Explore el futuro del comercio minorista con compras mediante IA.",
+  "machine": true
+ },
  "Fact:": "Realidad:",
  "Facts in the HTML (pass): ⟦1⟧What we do⟦2⟧, ⟦3⟧Who it is for…⟦4⟧.": "Datos en el HTML (aprobado): ⟦1⟧Qué hacemos⟦2⟧, ⟦3⟧Para quién es…⟦4⟧.",
  "Falabella's home declares no language.": "La portada de Falabella no declara idioma.",
@@ -1366,6 +1398,10 @@
  "Follow the rule guide at…": "Sigue la guía de la regla en…",
  "Follow your old links to their final address.": "Sigue tus enlaces antiguos hasta su dirección final.",
  "Followertustuff/anomalith-steam-deck-small-text-accessibility:": "Followertustuff/anomalith-steam-deck-small-text-accessibility:",
+ "For traffic-dependent businesses, the visit was only a step toward the sale.": {
+  "text": "Para las empresas que dependen del tráfico, la visita fue sólo un paso hacia la venta.",
+  "machine": true
+ },
  "Forms, Required fields, errors, success (pass); Links, Every link answers ⟦1⟧ or ⟦2⟧xx (pass); Accessibility, Labels, contrast, keyboard (pass); Headers, HSTS, CSP, nosniff (warning); Consent, Nothing fires before a choice (warning).": "Formularios, campos obligatorios, errores, éxito (aprobado); Enlaces, cada enlace responde ⟦1⟧ o ⟦2⟧xx (aprobado); Accesibilidad, etiquetas, contraste, teclado (aprobado); Cabeceras, HSTS, CSP, nosniff (aviso); Consentimiento, nada se dispara antes de elegir (aviso).",
  "Founding Member tickets open today.": "Hoy salen a la venta las entradas de miembro fundador.",
  "Four headers close most of that gap:": "Cuatro cabeceras cierran casi toda esa brecha:",
@@ -1745,6 +1781,10 @@
  "HTTP/⟦1⟧ ⟦2⟧, content-type: text/html.": "HTTP/⟦1⟧ ⟦2⟧, content-type: text/html.",
  "HTTPS encrypts the trip between the browser and the server.": "HTTPS cifra el trayecto entre el navegador y el servidor.",
  "I build websites for law firms, so in September I ran ⟦1⟧ well-known US law firm homepages through...": "Creo sitios web para firmas de abogados, así que en septiembre pasé ⟦1⟧ páginas de inicio de firmas de abogados conocidas de EE. UU. por...",
+ "I built a free WCAG ⟦1⟧ AA scanner that writes a report a client can read": {
+  "text": "Creé un escáner WCAG ⟦1⟧ AA gratuito que escribe un informe que un cliente puede leer",
+  "machine": true
+ },
  "I built a Markdown and raw HTML blog platform scoring ⟦1⟧ on PageSpeed": {
   "text": "Creé una plataforma de blogs Markdown y HTML sin formato con puntuación ⟦1⟧ en PageSpeed",
   "machine": true
@@ -1754,6 +1794,10 @@
   "machine": true
  },
  "I matched ⟦1⟧ users across two Datos panels to compare how each user searched with Google and LLMs and understand how we need to track prompts differently than keywords.": "Emparejé a ⟦1⟧ usuarios de dos paneles de Datos para comparar cómo buscaba cada uno en Google y en los LLMs, y entender cómo debemos hacer seguimiento de los prompts de forma distinta a las palabras clave.",
+ "I run AccessLens.": {
+  "text": "Ejecuto AccessLens.",
+  "machine": true
+ },
  "I started with a …": {
   "text": "Empecé con un…",
   "machine": true
@@ -1894,6 +1938,10 @@
  "It takes one line of configuration on most hosts.": "En la mayoría de hostings basta una línea de configuración.",
  "It tells browsers to use https before the request leaves.": "Indica a los navegadores que usen https antes de que salga la petición.",
  "It tells search which address to rank when several reach it.": "Le dice al buscador qué dirección posicionar cuando varias llevan a la misma página.",
+ "It's a scanner you paste one URL into: it loads that page in a real headless...": {
+  "text": "Es un escáner en el que pegas una URL: carga esa página de forma realmente sin cabeza...",
+  "machine": true
+ },
  "It’s no longer just an experiment.": "Ya no es solo un experimento.",
  "It's often the first click for visitors from abroad.": "Suele ser el primer clic de quien visita desde el extranjero.",
  "It's the page most people start from.": "Es la página desde la que empieza la mayoría.",
@@ -2614,6 +2662,10 @@
   "machine": true
  },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧, SEO…": "Puntuaciones comparadas: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analítica ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analítica ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧, SEO…",
+ "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score ⟦18⟧,…": {
+  "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación ⟦18⟧,…",
+  "machine": true
+ },
  "Scores side by side: ⟦1⟧ Score ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Analytics ⟦5⟧, Security ⟦6⟧, A11y ⟦7⟧, Speed ⟦8⟧; ⟦9⟧ Score ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Analytics ⟦13⟧, Security ⟦14⟧, A11y ⟦15⟧, Speed ⟦16⟧; ⟦17⟧ Score…": {
   "text": "Puntuaciones una al lado de la otra: ⟦1⟧ Puntuación ⟦2⟧, SEO ⟦3⟧, GEO ⟦4⟧, Análisis ⟦5⟧, Seguridad ⟦6⟧, A11y ⟦7⟧, Velocidad ⟦8⟧; ⟦9⟧ Puntuación ⟦10⟧, SEO ⟦11⟧, GEO ⟦12⟧, Análisis ⟦13⟧, Seguridad ⟦14⟧, A11y ⟦15⟧, Velocidad ⟦16⟧; ⟦17⟧ Puntuación…",
   "machine": true
@@ -3086,6 +3138,10 @@
   "text": "La publicación La IA conoce su marca: rara vez lo coloca en la lista corta apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
+ "The post AI Shopping Errors:": {
+  "text": "La publicación Errores de compra de IA:",
+  "machine": true
+ },
  "The post AI Visibility vs.": {
   "text": "La publicación Visibilidad de la IA vs.",
   "machine": true
@@ -3214,8 +3270,16 @@
   "text": "El post La nueva pila de crecimiento orgánico:",
   "machine": true
  },
+ "The post The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think appeared first on Search Engine Journal .": {
+  "text": "La publicación La reserva de tráfico se está reduciendo y qué canal lo llena importa menos de lo que pensamos apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
  "The post Tripadvisor Says SEO Will Still Weigh On Growth In ⟦1⟧ appeared first on Search Engine Journal .": {
   "text": "La publicación Tripadvisor dice que el SEO seguirá influyendo en el crecimiento en ⟦1⟧ apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "The post Visits To The Top Million Websites Fell ⟦1⟧, Data Shows appeared first on Search Engine Journal .": {
+  "text": "La publicación Las visitas al millón de sitios web principales cayeron ⟦1⟧, los datos muestran apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
  "The post What Search Console Can Still Tell You When Indexing Data Lags appeared first on Search Engine Journal .": "La entrada Lo que Search Console aún puede decirte cuando los datos de indexación se retrasan apareció primero en Search Engine Journal .",
@@ -3232,6 +3296,10 @@
  "The tag does show your competitors the words you are targeting.": "Eso sí, la etiqueta muestra a tu competencia las palabras que buscas posicionar.",
  "The top half is real-user data from the Chrome UX Report over the last ⟦1⟧ days.": "La mitad de arriba son datos de usuarios reales del Chrome UX Report de los últimos ⟦1⟧ días.",
  "The total hides where each one is strong.": "El total esconde dónde es fuerte cada uno.",
+ "The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think via ⟦1⟧, ⟦2⟧": {
+  "text": "El tráfico disponible se está reduciendo y qué canal lo llena importa menos de lo que pensamos a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
  "The UN home page never says its language.": "La portada de la ONU nunca indica su idioma.",
  "The usual answer was ⟦1⟧ Not Found.": "La respuesta habitual fue ⟦1⟧ Not Found.",
  "The Verifiable Credentials Working Group has published a series of W3C Working Group Note Drafts for threat models.": "El Verifiable Credentials Working Group publicó una serie de borradores de notas de grupo de trabajo del W3C sobre modelos de amenazas.",
@@ -3370,6 +3438,10 @@
  "UdeA answers with speed, ⟦1⟧ to ⟦2⟧, and accessibility, ⟦3⟧ to ⟦4⟧.": "La UdeA responde con velocidad, ⟦1⟧ a ⟦2⟧, y accesibilidad, ⟦3⟧ a ⟦4⟧.",
  "UdeA's pages skip security headers.": "Las páginas de la UdeA omiten cabeceras de seguridad.",
  "UN Women: complete, but heavy pages.": "ONU Mujeres: completa, pero con páginas pesadas.",
+ "Understand how AI affects product visibility and decision-making for consumers.": {
+  "text": "Comprenda cómo la IA afecta la visibilidad del producto y la toma de decisiones de los consumidores.",
+  "machine": true
+ },
  "UNESCO has ⟦1⟧, but no HSTS.": "La UNESCO tiene ⟦1⟧, pero no HSTS.",
  "UNESCO publishes an ⟦1⟧ for AI tools, sets a content security policy, and limits framing to itself.": "La UNESCO publica un ⟦1⟧ para herramientas de IA, define una política de seguridad de contenido y limita el framing a sí misma.",
  "Uniandes skips a link in its TLS chain.": "Uniandes omite un eslabón de su cadena TLS.",
@@ -3455,6 +3527,10 @@
   "machine": true
  },
  "Via DEV, by Chirag Aggarwal, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Chirag Aggarwal, ⟦1⟧-⟦2⟧-⟦3⟧.",
+ "Via DEV, by Chris Clow, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Chris Clow, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Craig Morten, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, de Craig Morten, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3497,6 +3573,10 @@
   "machine": true
  },
  "Via DEV, by Legal Web Agency, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Legal Web Agency, ⟦1⟧-⟦2⟧-⟦3⟧.",
+ "Via DEV, by Leo, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Leo, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Ling Chen, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Ling Chen, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3620,6 +3700,10 @@
   "text": "Vía Search Engine Journal, de Chris Green, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via Search Engine Journal, by Cody Slingerland, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Search Engine Journal, de Cody Slingerland, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via Search Engine Journal, by Duane Forrester, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía Search Engine Journal, de Duane Forrester, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3705,8 +3789,16 @@
  "Villavicencio loads ⟦1⟧ scripts before paint.": "Villavicencio carga ⟦1⟧ scripts antes de pintar.",
  "Visit Bogotá responds slowly to taps.": "Visit Bogotá responde lento a los toques.",
  "Visitors still wait.": "Los visitantes siguen esperando.",
+ "Visits To The Top Million Websites Fell ⟦1⟧, Data Shows via ⟦2⟧, ⟦3⟧": {
+  "text": "Las visitas al millón de sitios web principales cayeron ⟦1⟧, los datos muestran a través de ⟦2⟧, ⟦3⟧",
+  "machine": true
+ },
  "Visual QA CLI for AI-built frontends that renders pages, finds design and accessibility issues, and writes agent-ready fix prompts.": "CLI de QA visual para frontends creados con IA que renderiza páginas, detecta problemas de diseño y accesibilidad, y redacta prompts de corrección listos para agentes.",
  "VoiceOver on a Mac, NVDA on Windows.": "VoiceOver en Mac, NVDA en Windows.",
+ "Voting closes on ⟦1⟧ November ⟦2⟧.": {
+  "text": "La votación cierra el ⟦1⟧ de noviembre de ⟦2⟧.",
+  "machine": true
+ },
  "W3C and the State of the Web in the AI Era": {
   "text": "El W3C y el estado de la Web en la era de la IA",
   "machine": true
@@ -3751,6 +3843,14 @@
  },
  "What To Bury & What Still Wins via ⟦1⟧, ⟦2⟧": {
   "text": "Qué enterrar y qué aún gana a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
+ "What To Fix To Help Shoppers Choose Your Products": {
+  "text": "Qué solucionar para ayudar a los compradores a elegir sus productos",
+  "machine": true
+ },
+ "What To Fix To Help Shoppers Choose Your Products appeared first on Search Engine Journal .": {
+  "text": "Qué solucionar para ayudar a los compradores a elegir sus productos apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
  "What Ziff Davis’ Jonathan Berthold Tests First": "Lo primero que prueba Jonathan Berthold, de Ziff Davis",
