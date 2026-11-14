@@ -751,6 +751,17 @@
     "checked": "2026-11-10T00:12:27.986Z"
    }
   ],
+  "auto-2026-11-07/01-u-servicesaustralia-gov-au": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2clvgl65m2p",
+    "at": "2026-11-14T22:56:52.001Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2clvgl65m2p",
+    "checked": "2026-11-14T22:57:08.220Z"
+   }
+  ],
   "auto-2026-11-08/04-vs-beebom-com": [
    {
     "channel": "bluesky",
@@ -2006,6 +2017,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n27vimgsiq24",
     "checked": "2026-11-13T21:10:56.021Z"
+   }
+  ],
+  "tips-2026-10/19-measure-action": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2clvtfrsw2x",
+    "at": "2026-11-14T22:57:08.220Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2clvtfrsw2x",
+    "checked": "2026-11-14T22:57:21.636Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
