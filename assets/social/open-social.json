@@ -1228,6 +1228,17 @@
     "checked": "2026-11-13T23:52:05.626Z"
    }
   ],
+  "compare-2026-11b/04-newspapers": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2c67cqi742f",
+    "at": "2026-11-14T18:51:36.963Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2c67cqi742f",
+    "checked": "2026-11-14T18:52:07.296Z"
+   }
+  ],
   "digest-2026-10-30/01-this-week": [
    {
     "channel": "bluesky",
@@ -1565,6 +1576,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n25y6cuvxu2q",
     "checked": "2026-11-13T02:53:32.418Z"
+   }
+  ],
+  "promo-social-hub-2026-10/32-copy-caption-fr": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2c66fwgdm2f",
+    "at": "2026-11-14T18:51:09.168Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2c66fwgdm2f",
+    "checked": "2026-11-14T18:51:36.963Z"
    }
   ],
   "runs-2026-10/01-govuk": [

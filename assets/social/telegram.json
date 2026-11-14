@@ -298,6 +298,17 @@
     "checked": "2026-11-13T23:55:05.193Z"
    }
   ],
+  "compare-2026-11b/04-newspapers": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "75",
+    "at": "2026-11-14T18:52:17.346Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/75",
+    "checked": "2026-11-14T18:52:23.388Z"
+   }
+  ],
   "digest-2026-11-13/01-this-week": [
    {
     "channel": "telegram",
@@ -582,6 +593,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/63",
     "checked": "2026-11-13T02:54:41.447Z"
+   }
+  ],
+  "promo-social-hub-2026-10/32-copy-caption-fr": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "74",
+    "at": "2026-11-14T18:52:09.123Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/74",
+    "checked": "2026-11-14T18:52:17.346Z"
    }
   ],
   "runs-2026-10/01-govuk": [
