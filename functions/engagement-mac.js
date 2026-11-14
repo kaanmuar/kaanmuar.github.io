@@ -130,13 +130,20 @@ async function studentLeads(deps, groups, posts, comments) {
     error: [found.error, read.error, met.error].concat(read.errors || [], met.errors || []).filter(Boolean).slice(0, 3).join("; ") };
 }
 
-/** The push when networks the Mac's last run had signed in read as signed out (#3163), once per sign-out. */
-function signedOutPush(lost, errors) {
+/** The push when networks the Mac's last run had signed in read as signed out (#3163), once per sign-out.
+ *  tried: networks whose kept session the agent already put back (#3436). Those ask for a sign-in; the rest still name restore-sessions. */
+function signedOutPush(lost, errors, tried) {
   const name = (k) => (E.NETWORKS[k] || {}).name || k;
+  const done = new Set((tried || []).filter((k) => lost.includes(k)));
+  const open = lost.filter((k) => !done.has(k));
+  const stuck = lost.filter((k) => done.has(k));
+  const parts = [];
+  if (open.length) parts.push("node scripts/engagement-browser/agent.js restore-sessions " + open.join(",") + ", else agent.js login " + open.join(","));
+  if (stuck.length) parts.push("the agent already put the last session back and it did not hold. Sign in: node scripts/engagement-browser/agent.js login " + stuck.join(","));
   return {
     kind: "alerts",
     title: "Engagement agent signed out of " + lost.map(name).join(", "),
-    body: "On the Mac: node scripts/engagement-browser/agent.js restore-sessions " + lost.join(",") + ", else agent.js login " + lost.join(","),
+    body: "On the Mac: " + parts.join(" "),
     lines: lost.map((k) => clip(name(k) + ": " + (errors[k] || "Not signed in."), 120)),
     tab: "products:engagement",
     tag: "jarvis-engagement-signed-out"
@@ -171,6 +178,7 @@ async function ingest(deps, body) {
   const before = ((await macRef(db).get()).data() || {}).signedIn || {};
   const signedIn = netMap(b.signedIn, (v) => v === true);
   const lost = BROWSER.filter((k) => before[k] === true && signedIn[k] === false);
+  const tried = (Array.isArray(b.triedRestore) ? b.triedRestore : []).map((k) => clip(k, 40)).filter((k) => BROWSER.includes(k) && lost.includes(k));
   const students = await studentLeads(deps, b.groups, posts, comments);
   await macRef(db).set({
     at: new Date(now).toISOString(), read, errors, signedIn, accounts: netMap(b.accounts, (v) => clip(v, 120)),
@@ -178,7 +186,7 @@ async function ingest(deps, body) {
     reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students
   }, { merge: true });
   await J.clearCache(db);
-  if (lost.length && deps.push) await deps.push(signedOutPush(lost, errors)).catch(() => null);
+  if (lost.length && deps.push) await deps.push(signedOutPush(lost, errors, tried)).catch(() => null);
   return {
     ok: true, lost, read: posts.length, fresh: r.fresh, engaged: r.engaged, drafted: r.drafted, aiError: r.aiError || rep.aiError || chains.aiError || "", chained: chains.chained || 0,
     reports: { read: sitePosts.length, matched: rep.matched, drafted: rep.drafted }, groups, students

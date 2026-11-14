@@ -34,8 +34,11 @@
  * Open these profiles only through this script. A Chrome started any other way (open -a "Google Chrome" --user-data-dir,
  * a plain chromium launch) cannot read the cookies Playwright's Chrome encrypted and drops every session but Telegram's
  * (#3163). For a check Playwright's Chrome cannot pass, sign in in a throwaway profile and bring the sessions in with
- * import. A check or run that sees networks signed in keeps a copy of the profile's cookies; Jarvis pushes when one
- * signs out, and restore-sessions brings back its last copy.
+ * import. A check or run that sees networks signed in keeps a copy of the profile's cookies and, on a profile of
+ * that network's own, its local storage (Telegram signs in there). A signed-in check that misses looks at the home
+ * page once more. A run that still sees one signed out puts that copy back and reads the network again before it
+ * tells Jarvis (#3436). Jarvis pushes only when the copy does not hold, and then it asks for a sign-in.
+ * restore-sessions does the same put-back on its own.
  */
 const fs = require("fs");
 const os = require("os");
@@ -43,7 +46,8 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const VERSION = "1.9.0";
+const VERSION = "1.10.0";
+const STUCK = " The last kept session did not sign it back in.";
 const PROJECT = "carlosm-interactive-cv";
 const ENDPOINT = "https://us-central1-" + PROJECT + ".cloudfunctions.net/jarvis";
 const LABEL = "com.kaanmuar.engagementbrowser";
@@ -157,8 +161,8 @@ async function shot(page, name) {
   return file;
 }
 
-/** { who, why }: who is the account the agent acts as, or "" with why it will not act there. */
-async function signedIn(page, k) {
+/** One look at who is signed in. A slow home page reads as signed out, so the caller looks twice before it believes that. */
+async function signedInOnce(page, k) {
   const net = NETWORKS[k];
   await page.goto(net.home, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => null);
   await pause(2000, 4000);
@@ -167,6 +171,14 @@ async function signedIn(page, k) {
   if (!who) return { who: "", why: "Not signed in in the agent's Chrome." };
   if (net.account && who.toLowerCase().replace(/^@/, "") !== net.account) return { who: "", why: "Signed in as " + who + ", not our @" + net.account + "." };
   return { who, why: "" };
+}
+
+/** { who, why }: who is the account the agent acts as, or "" with why it will not act there. */
+async function signedIn(page, k) {
+  const first = await signedInOnce(page, k);
+  if (first.who || first.why !== "Not signed in in the agent's Chrome.") return first;
+  log(NETWORKS[k].name + ": the signed-in check missed; opening home once more.");
+  return signedInOnce(page, k);
 }
 
 // --- pair ----------------------------------------------------------------------------------------------------------
@@ -259,34 +271,49 @@ function keepSessions(profile, signed) {
   } catch (error) { log("Keeping sessions: " + String(error.message || error).slice(0, 160)); }
 }
 
+/** One kept copy's cookies for network k, read by Playwright so they can be added to another profile. */
+async function cookiesFrom(copy, k) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "qalab-sessions-"));
+  try {
+    fs.mkdirSync(path.join(tmp, "Default"));
+    ["Cookies", "Cookies-journal"].filter((f) => fs.existsSync(path.join(copy.dir, f))).forEach((f) => fs.copyFileSync(path.join(copy.dir, f), path.join(tmp, "Default", f)));
+    if (fs.existsSync(path.join(copy.dir, "Local State"))) fs.copyFileSync(path.join(copy.dir, "Local State"), path.join(tmp, "Local State"));
+    const { ctx } = await launch(true, tmp);
+    try { return (await ctx.cookies()).filter((c) => P.cookieOf(c.domain, k)); } finally { await ctx.close(); }
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/** Each named network's newest kept cookies back into its profile. The caller holds the profile locks. Networks that got cookies. */
+async function putSessions(units, nets) {
+  const back = [];
+  for (const u of units) {
+    const want = u.nets.filter((k) => nets.includes(k));
+    if (!want.length) continue;
+    if (chromeHas(u.profile)) { want.forEach((k) => log(NETWORKS[k].name + ": its Chrome is open, so the kept session stays where it is.")); continue; }
+    const list = [];
+    for (const k of want) {
+      const copy = P.sessionFor(sessionsOf(u.profile), k);
+      if (!copy) { log(NETWORKS[k].name + ": no kept session; sign in: node scripts/engagement-browser/agent.js login " + k); continue; }
+      const got = await cookiesFrom(copy, k);
+      list.push(...got);
+      log(NETWORKS[k].name + ": " + got.length + " cookies from " + copy.at);
+      let stores = 0;
+      if (path.basename(u.profile) === k) stores = P.putStores(u.profile, copy.dir);
+      if (stores) log(NETWORKS[k].name + ": put " + stores + " stores back from " + copy.at);
+      if (got.length || stores) back.push(k);
+    }
+    if (!list.length) continue;
+    const { ctx } = await launch(true, u.profile);
+    try { await ctx.addCookies(list); } finally { await ctx.close(); }
+  }
+  return back;
+}
+
 /** Each network's newest kept cookies back into its profile through Playwright, so other networks keep theirs. */
 async function restoreSessions(nets, parallel) {
   const owned = [];
-  const back = [];
-  try {
-    for (const u of claim(nets, owned)) {
-      const list = [];
-      for (const k of u.nets) {
-        const copy = P.sessionFor(sessionsOf(u.profile), k);
-        if (!copy) { log(NETWORKS[k].name + ": no kept session; sign in: node scripts/engagement-browser/agent.js login " + k); continue; }
-        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "qalab-sessions-"));
-        try {
-          fs.mkdirSync(path.join(tmp, "Default"));
-          ["Cookies", "Cookies-journal"].filter((f) => fs.existsSync(path.join(copy.dir, f))).forEach((f) => fs.copyFileSync(path.join(copy.dir, f), path.join(tmp, "Default", f)));
-          if (fs.existsSync(path.join(copy.dir, "Local State"))) fs.copyFileSync(path.join(copy.dir, "Local State"), path.join(tmp, "Local State"));
-          const { ctx } = await launch(true, tmp);
-          let got = [];
-          try { got = (await ctx.cookies()).filter((c) => P.cookieOf(c.domain, k)); } finally { await ctx.close(); }
-          list.push(...got);
-          log(NETWORKS[k].name + ": " + got.length + " cookies from " + copy.at);
-          if (got.length) back.push(k);
-        } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
-      }
-      if (!list.length) continue;
-      const { ctx } = await launch(true, u.profile);
-      try { await ctx.addCookies(list); } finally { await ctx.close(); }
-    }
-  } finally { release(owned); }
+  let back = [];
+  try { back = await putSessions(claim(nets, owned), nets); } finally { release(owned); }
   if (back.length) await check(back, false, parallel);
 }
 
@@ -492,7 +519,23 @@ async function run(opts) {
     mine.filter((k) => c.blocked[k]).forEach((k) => { seen.errors[k] = "Held until " + c.blocked[k] + " after a check."; seen.signedIn[k] = true; });
     const toRead = units.map((u) => ({ profile: u.profile, nets: u.nets.filter((k) => !c.blocked[k]) })).filter((u) => u.nets.length);
     await inProfiles(toRead, (page, k) => readNet(page, k, order[k]), (k, why) => { seen.errors[k] = seen.errors[k] || why; });
-    const took = await api("engagement-mac-ingest", Object.assign({}, seen, { blocked: c.blocked, agent: VERSION }));
+    const triedRestore = P.restoreList(seen.signedIn, (k) => {
+      const u = units.find((x) => x.nets.includes(k));
+      return !!(u && P.sessionFor(sessionsOf(u.profile), k));
+    });
+    if (triedRestore.length) {
+      log("Signed out of " + names(triedRestore) + "; putting the last kept sessions back.");
+      const back = await putSessions(units, triedRestore);
+      const again = units.map((u) => ({ profile: u.profile, nets: u.nets.filter((k) => back.includes(k)) })).filter((u) => u.nets.length);
+      await inProfiles(again, async (page, k) => {
+        await readNet(page, k, order[k]);
+        if (seen.signedIn[k]) netLog(k)(NETWORKS[k].name + ": signed back in from its kept session.");
+      }, (k, why) => { seen.errors[k] = why; seen.signedIn[k] = false; });
+      triedRestore.filter((k) => !seen.signedIn[k]).forEach((k) => {
+        if (!/did not sign it back/.test(seen.errors[k] || "")) seen.errors[k] = (seen.errors[k] || "Not signed in in the agent's Chrome.") + STUCK;
+      });
+    }
+    const took = await api("engagement-mac-ingest", Object.assign({}, seen, { blocked: c.blocked, agent: VERSION, triedRestore }));
     log("Jarvis took " + took.read + " posts: " + took.fresh + " new, " + took.engaged + " to engage, " + took.drafted + " replies drafted" + (took.aiError ? "; Gemini: " + took.aiError : "")
       + (took.chained ? "; " + took.chained + " new comments on our posts and replies" : "")
       + (took.groups && took.groups.groups ? "; groups: " + took.groups.groups + " in our field, " + took.groups.found + " new" : "")
@@ -509,8 +552,9 @@ async function run(opts) {
     tasks.forEach((t) => { byNet[t.network] = (byNet[t.network] || []).concat(t); });
     const toAct = units.map((u) => ({ profile: u.profile, nets: u.nets.filter((k) => byNet[k]) })).filter((u) => u.nets.length);
     await inProfiles(toAct, async (page, k) => { for (const t of byNet[k]) await actOne(page, t); }, (k, why) => byNet[k].forEach((t) => api("engagement-mac-result", { key: t.key, action: t.action, ok: false, retry: true, error: why }).catch((error) => log(error.message))));
-    const out = Object.keys(seen.signedIn).filter((k) => !seen.signedIn[k]).map((k) => NETWORKS[k].name);
-    await report(out.length ? "waiting" : "done", (out.length ? "Sign in to " + out.join(", ") + " in the agent's Chrome (agent.js login). " : "") + "Read " + took.read + " posts, did " + done + " tasks", out.length > 0);
+    const out = Object.keys(seen.signedIn).filter((k) => !seen.signedIn[k]);
+    const ask = out.length ? (out.some((k) => triedRestore.includes(k)) ? "Signed out of " + names(out) + " after the kept session; sign in with agent.js login. " : "Sign in to " + names(out) + " in the agent's Chrome (agent.js login). ") : "";
+    await report(out.length ? "waiting" : "done", ask + "Read " + took.read + " posts, did " + done + " tasks", out.length > 0);
   } catch (error) {
     await report("failed", String(error.message || error).slice(0, 150));
     throw error;

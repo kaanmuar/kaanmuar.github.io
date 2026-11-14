@@ -113,6 +113,9 @@ function cloneSkip(rel) {
 // --- kept sessions (#3163) ---------------------------------------------------------------------------------------------
 // A Chrome outside Playwright on a profile cannot read the agent's cookies (Playwright's mock keychain key) and drops
 // every session, so each profile's cookie store is copied while its networks read signed in, for restore-sessions.
+// Telegram's sign-in lives in local storage, not cookies (#3436), so those stores are copied too and put back only
+// into a profile of that network's own.
+const STORES = ["Local Storage", "IndexedDB", "Session Storage"];
 
 const SESSION_GAP = 6 * 3600000;
 const SESSION_KEEP = 8;
@@ -162,6 +165,10 @@ function saveSessions(profile, dir, nets, now, gapMs) {
   ["Default/Cookies", "Default/Cookies-journal", "Local State"].forEach((f) => {
     if (fs.existsSync(path.join(profile, f))) fs.copyFileSync(path.join(profile, f), path.join(out, path.basename(f)));
   });
+  STORES.forEach((name) => {
+    const src = path.join(profile, "Default", name);
+    if (fs.existsSync(src)) fs.cpSync(src, path.join(out, name), { recursive: true });
+  });
   fs.writeFileSync(path.join(out, "nets.json"), JSON.stringify({ at, nets }));
   pruneSessions(dir);
   return out;
@@ -170,4 +177,23 @@ function saveSessions(profile, dir, nets, now, gapMs) {
 /** The newest copy in which network k read signed in, or null. */
 const sessionFor = (dir, k) => sessionCopies(dir).find((c) => c.nets.includes(k)) || null;
 
-module.exports = { groups, held, lock, unlock, pool, parallelArg, mergeHeld, cloneSkip, alive, cookieOf, sessionCopies, saveSessions, pruneSessions, sessionFor, HOSTS, MAX_PARALLEL, DEFAULT_PARALLEL, SESSION_GAP, SESSION_KEEP };
+/** Networks that read signed out and still have a kept copy (`has(k)`). A run puts those back before it reports them. */
+function restoreList(signedIn, has) {
+  return Object.keys(signedIn || {}).filter((k) => signedIn[k] === false && has(k));
+}
+
+/** Puts a copy's Local Storage, IndexedDB and Session Storage into a profile. How many stores it put back. */
+function putStores(profile, copyDir) {
+  let n = 0;
+  STORES.forEach((name) => {
+    const src = path.join(copyDir, name);
+    if (!fs.existsSync(src)) return;
+    const to = path.join(profile, "Default", name);
+    fs.rmSync(to, { recursive: true, force: true });
+    fs.cpSync(src, to, { recursive: true });
+    n += 1;
+  });
+  return n;
+}
+
+module.exports = { groups, held, lock, unlock, pool, parallelArg, mergeHeld, cloneSkip, alive, cookieOf, sessionCopies, saveSessions, pruneSessions, sessionFor, restoreList, putStores, HOSTS, MAX_PARALLEL, DEFAULT_PARALLEL, SESSION_GAP, SESSION_KEEP };
