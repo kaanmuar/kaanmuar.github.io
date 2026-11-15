@@ -413,8 +413,13 @@ function fakeNetwork(routes) {
         // A route with timeout: true never ends; it sends its body, if any, then the socket times out.
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
+        if (route.reset) {
+          const error = new Error("socket hang up");
+          error.code = "ECONNRESET";
+          req.emit("error", error);
+          return;
+        }
         if (route.timeout && !route.body) return req.emit("timeout");
-        if (route.reset) return req.emit("error", Object.assign(new Error("aborted"), { code: "ECONNRESET" }));
         if (route.refused) return req.emit("error", Object.assign(new Error("connect ECONNREFUSED 93.184.216.34:443"), { code: "ECONNREFUSED" }));
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
@@ -1065,6 +1070,51 @@ test.describe("start page reads", () => {
     const refused = await review({ [BANK]: { timeout: true } }, async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: "<html><body>Access denied</body></html>" } })).catch((error) => error);
     assert.equal(refused.message, "The site's bot protection refused the review (status 403), in headless Chrome, after the plain request took too long.");
     assert.equal(failures.causeOf(refused.message).id, "bot-protection");
+  });
+
+  test("a plain read the site hangs up is read in headless Chrome, and in plain Chrome when the review tag is cut (#1967)", async () => {
+    // sweep-E2YINjaQ2NbQqYygkRJL on arti-elec.com: the plain read fails with "socket hang up" (ECONNRESET)
+    // after TCP 443 opens. Tagged headless Chrome is cut with net::ERR_HTTP2_PROTOCOL_ERROR. Plain Chrome
+    // loads status 200, title "Arti-élec: Urgence & Dépannage électrique 7/7, 24/24".
+    const failures = require("../../functions/url-review-failures");
+    const site = "https://arti-elec.com/";
+    const title = "Arti-élec: Urgence & Dépannage électrique 7/7, 24/24";
+    const html = HTML.replace(/shop\.example\.com/g, "arti-elec.com").replace("Example shop for garden tools", title);
+    const read = async (browse) => {
+      const restore = fakeNetwork({ [site]: { reset: true } });
+      const lines = [];
+      try {
+        return await core.reviewTarget(site, { log: (text) => lines.push(text), browse }).then((report) => ({ report, lines }));
+      } catch (error) {
+        error.lines = lines;
+        throw error;
+      } finally {
+        restore();
+      }
+    };
+    const jobs = [];
+    const { report, lines } = await read(async (job) => {
+      jobs.push(job);
+      return { ok: true, untagged: true, timing: { load: 3200 }, start: { status: 200, docStatus: 200, finalUrl: site, headers: STRONG_HEADERS, html, htmlCut: false } };
+    });
+    assert.deepEqual([jobs.length, jobs[0].html, jobs[0].url], [1, true, site]);
+    assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, title]);
+    assert.equal(report.browser.untagged, true);
+    assert.ok(lines.includes("The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."));
+    assert.ok(lines.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(report.insights.warnings.includes(insights.UNTAGGED_READ_NOTE));
+    assert.ok(!report.insights.warnings.includes(insights.SLOW_READ_NOTE));
+
+    const hung = await read(async () => ({ ok: false, error: "net::ERR_HTTP2_PROTOCOL_ERROR at https://arti-elec.com/" })).catch((error) => error);
+    assert.equal(hung.message, "The connection to the site failed (socket hang up), and headless Chrome could not open it either (net::ERR_HTTP2_PROTOCOL_ERROR at https://arti-elec.com/).");
+    assert.equal(failures.causeOf(hung.message).id, "connection");
+    assert.ok(hung.lines.includes("The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."));
+
+    const refused = await read(async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: site, headers: { "content-type": "text/html" }, html: "<html><body>Access denied</body></html>" } })).catch((error) => error);
+    assert.equal(refused.message, "The site's bot protection refused the review (status 403), in headless Chrome, after the connection to the site failed.");
+    assert.equal(failures.causeOf(refused.message).id, "bot-protection");
+
+    await assert.rejects(read(undefined), (error) => error.message === "socket hang up" && error.code === "ECONNRESET");
   });
 
   test("a server that leaves out its intermediate certificate is read after fetching it from the AIA address", async () => {
@@ -2148,6 +2198,30 @@ test("a finished report is stored without the shapes Firestore refuses, and the 
   const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://example.org/" }).value, report, {});
   assert.deepEqual(record.report.points, kept.points);
   assert.deepEqual(core.storable(record.report, []), record.report);
+});
+
+test("a finished report whose saved page is past Firestore's field limit is still saved (#1965)", () => {
+  // www.publico.pt's browser read kept 1,431,417 bytes of HTML. A nested string past 1,048,487 bytes is
+  // "Property report contains an invalid nested entity." The whole document also has to stay under 1 MiB.
+  const html = "<html>" + "x".repeat(1431417 - 13) + "</html>";
+  assert.equal(Buffer.byteLength(html), 1431417);
+  const report = {
+    id: "r-publico",
+    host: "www.publico.pt",
+    browser: { ok: true, start: { finalUrl: "https://www.publico.pt/", html, htmlCut: false } },
+    fine: { title: "PÚBLICO" }
+  };
+  const fixed = [];
+  const kept = core.storable(report, fixed);
+  assert.ok(Buffer.byteLength(kept.browser.start.html) <= 1048487);
+  assert.ok(JSON.stringify(kept).length <= 850000);
+  assert.equal(kept.browser.start.htmlCut, true);
+  assert.equal(kept.fine.title, "PÚBLICO");
+  assert.equal(report.browser.start.html.length, html.length);
+  assert.ok(fixed.some((line) => line.indexOf("report.browser.start.html") === 0));
+  const record = core.intakeRecord(core.validateIntake({ termsAccepted: true, termsVersion: core.TERMS_VERSION, name: "Ana Ruiz", email: "ana@example.org", reasonCode: "teaching", frameworks: ["Playwright"], url: "https://www.publico.pt/" }).value, report, {});
+  assert.ok(JSON.stringify(record).length <= 1048576);
+  assert.equal(record.report.fine.title, "PÚBLICO");
 });
 
 const failures = require("../../functions/url-review-failures");
