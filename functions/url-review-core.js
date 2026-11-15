@@ -3271,10 +3271,13 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
+    // arti-elec.com accepts TLS, then hangs up the review user agent (socket hang up, ECONNRESET).
+    // Headless Chrome with the review tag is cut (net::ERR_HTTP2_PROTOCOL_ERROR) and plain Chrome reads the page.
+    // Use #3514's plainReadDropped (reset/abort/hang-up) but keep #2869's reset messaging so the failure stays in the connection class.
     const dropped = plainReadDropped(error);
     const conn = plainConnectionFailed(error);
     if (!(oversized || /took too long/.test((error && error.message) || "") || dropped || conn) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : error.message === UNREACHABLE || conn ? "unreachable" : true;
+    slowFirst = oversized ? "headers" : dropped ? "reset" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -3306,6 +3309,8 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : slowFirst === "headers"
       ? HEADERS_TOO_LARGE + ". Waiting for headless Chrome to open the page."
+      : slowFirst === "reset"
+      ? "The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."
       : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
@@ -3322,10 +3327,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
       const status = (view && view.docStatus) || first.status;
       const guarded = (code) => [401, 403, 429].includes(code);
+      const hung = slowFirst === "headers" ? HEADERS_TOO_LARGE
+        : slowFirst === "unreachable" ? "The site accepted no connection to the plain request"
+        : slowFirst === "reset" ? "The connection to the site failed (socket hang up)"
+        : "The page took too long in the plain request";
       const where = slowFirst === "headers" ? "in headless Chrome, after " + HEADERS_TOO_LARGE.replace(/^The/, "the")
+        : slowFirst === "reset" ? "in headless Chrome, after the connection to the site failed"
         : slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? (slowFirst === "headers" ? HEADERS_TOO_LARGE : slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? hung + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -3348,7 +3358,7 @@ async function reviewTarget(rawUrl, hooks) {
     };
     firstChallenge = "";
     readInBrowser = browsed;
-    note(slowFirst && slowFirst !== "headers" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
+    note(slowFirst === true || slowFirst === "unreachable" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
   } else if (first.status >= 400) {
     const error = new Error(firstChallenge
       ? "The site answered with " + insights.botCheck(firstChallenge) + " (status " + first.status + ") instead of the page."
@@ -3461,7 +3471,7 @@ async function reviewTarget(rawUrl, hooks) {
     depth: 0,
     from: "",
     challenge: firstChallenge,
-    readInBrowser: readInBrowser ? (slowFirst && slowFirst !== "headers" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
+    readInBrowser: readInBrowser ? (slowFirst === true || slowFirst === "unreachable" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
     cut: !!first.truncated,
     slow: !!first.slow,
     renderedLinks: 0,
@@ -3811,12 +3821,26 @@ function stoppedReport(rawUrl, lines, host, scope) {
   };
 }
 
-// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
-// 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
-// It also refuses a whole document over 1,048,576 bytes. The screenshot trim uses this same character budget, which stays
-// under that limit with room for Firestore's own counting. www.efarma.com was saved at 1,190,959 bytes and refused.
+// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, a field nested past
+// 20 maps and arrays, and a string longer than one field ("Property report contains an invalid nested entity").
+// Page data can carry any of them, so they are rewritten. The whole report also has to stay under one document.
 const STORE_DEPTH = 20;
+const FIELD_BYTES = 1048487;
 const STORE_JSON = 850000;
+
+function cutToBytes(text, max) {
+  const value = String(text);
+  if (Buffer.byteLength(value) <= max) return value;
+  let lo = 0;
+  let hi = value.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (Buffer.byteLength(value.slice(0, mid)) <= max) lo = mid;
+    else hi = mid - 1;
+  }
+  if (lo > 0 && value.charCodeAt(lo - 1) >= 0xD800 && value.charCodeAt(lo - 1) <= 0xDBFF) lo -= 1;
+  return value.slice(0, lo);
+}
 
 function longestString(value) {
   let best = null;
@@ -3837,7 +3861,25 @@ function longestString(value) {
   return best;
 }
 
-function fitDocument(record, fixed) {
+// The screenshot trim uses the same 850,000 character budget. A page kept from headless Chrome can be larger than that on its own.
+function fitDocument(value, fixed) {
+  const sizeOf = () => JSON.stringify(value).length;
+  let size = sizeOf();
+  for (let guard = 0; size > STORE_JSON && guard < 6; guard += 1) {
+    const found = longestString(value);
+    if (!found || found.length < 2000) break;
+    const next = found.parent[found.key].slice(0, Math.max(0, found.length - (size - STORE_JSON) - 64));
+    if (next.length >= found.length) break;
+    found.parent[found.key] = next;
+    if (found.key === "html") found.parent.htmlCut = true;
+    fixed.push(found.path + " (kept " + next.length + " characters so the report fits in one Firestore document)");
+    size = sizeOf();
+  }
+  return value;
+}
+
+
+function fitRecordDocument(record, fixed) {
   if (!record || !record.report) return record;
   const sizeOf = () => JSON.stringify(record).length;
   let size = sizeOf();
@@ -3860,8 +3902,15 @@ function storable(value, fixed, at, depth) {
   const level = depth || 1;
   const path = at || "report";
   const plain = (item) => Array.isArray(item) || (!!item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype);
+  if (typeof value === "string") {
+    if (Buffer.byteLength(value) <= FIELD_BYTES) return value;
+    const kept = cutToBytes(value, FIELD_BYTES);
+    fixed.push(path + " (string of " + Buffer.byteLength(value) + " bytes, kept to " + Buffer.byteLength(kept) + ")");
+    return kept;
+  }
   if (!plain(value)) return value;
   const inner = (item, where) => {
+    if (typeof item === "string") return storable(item, fixed, where, level + 1);
     if (!plain(item)) return item;
     if (level >= STORE_DEPTH) {
       fixed.push(where + " (past " + STORE_DEPTH + " levels, kept as JSON)");
@@ -3882,7 +3931,7 @@ function storable(value, fixed, at, depth) {
     if (name !== key) fixed.push(path + "." + JSON.stringify(key) + " (renamed " + JSON.stringify(name) + ")");
     out[name] = inner(value[key], path + "." + name);
   });
-  return out;
+  return !at && !depth ? fitDocument(out, fixed) : out;
 }
 
 // The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
@@ -3955,7 +4004,7 @@ function intakeRecord(value, report, meta) {
     checks: checksSummary(report),
     report: kept
   };
-  fitDocument(record, fixed);
+  fitRecordDocument(record, fixed);
   if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
   return record;
 }
