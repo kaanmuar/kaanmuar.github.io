@@ -4,6 +4,7 @@ const path = require('path');
 const auth = require('../functions/url-review-auth');
 const offers = require('../functions/url-review-offers');
 const sample = require('../assets/qa-review-sample.json');
+const { fulfillSoftPreview, softThenUnlock } = require('./soft-gate');
 
 const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ANA = 'a'.repeat(64);
@@ -47,6 +48,7 @@ async function mock(page, store, answer) {
     if (url.pathname === '/checkout/quote') seen.quotes.push(Object.fromEntries(url.searchParams));
     if (url.pathname === '/review') seen.runs.push(body);
     if (url.pathname === '/checkout') seen.checkouts.push(body);
+    if (url.pathname === '/review/preview') return fulfillSoftPreview(route, cors);
     const given = answer(url.pathname, body, url.searchParams);
     if (given) return json(given[0], given[1]);
     return json(200, url.pathname === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
@@ -101,7 +103,7 @@ test.describe('Runs on a pass', () => {
     const seen = await openReview(page, ON_PASS);
     await keepFrameworks(page, ['Playwright', 'Cypress']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect.poll(() => seen.runs.length).toBe(1);
     await expect(page.locator('#run-total')).toBeHidden();
     expect(seen.quotes).toHaveLength(0);
@@ -114,7 +116,7 @@ test.describe('Runs on a pass', () => {
       : where === '/review' ? [402, { paymentRequired: true, purpose: 'new-run', priceUsd: 5, billing: 'pass', pass: 'freelancer', frameworks: body.frameworks, tools: [], pages: 20, depth: 2 }] : null));
     await keepFrameworks(page, FOUR);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     const box = page.locator('#run-total');
     await expect(box).toBeVisible();
     await expect(box.locator('#run-total-lines li')).toHaveText(['Pass run, 3 left after this one$0', 'Playwright$0', 'Cypress$0', 'Jest$0', 'Selenium$5', '20 pages$0', '2 links deep$0', 'Total$5', 'To pay$5']);
@@ -140,7 +142,7 @@ test.describe('The pass offered beside a paid total', () => {
     await openReview(page, { billing: 'run', free: false, percent: 10, pass: null, lastPlan: '', plans: PLANS }, (where) => (where === '/checkout/quote' ? [200, quote] : null));
     await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     const offer = page.locator('#run-total-offer');
     await expect(offer).toBeVisible();
     await expect(offer.locator('#run-total-offer-text')).toHaveText('Or 10 runs for 29 USD with the Freelancer pass, for 30 days.');
@@ -155,13 +157,13 @@ test.describe('The pass offered beside a paid total', () => {
     await openReview(page, { billing: 'run', free: false, percent: 10, pass: null, lastPlan: '', plans: PLANS }, (where) => (where === '/checkout/quote' ? [200, quote] : null));
     await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#run-total-offer-go')).toBeVisible();
     await page.evaluate(() => window.ReviewAuth.expire());
     await page.locator('#run-total-offer-go').click();
     await expect(page.locator('#run-total')).toBeHidden();
     await expect(page.locator('#form-status')).toHaveText('Sign in first. A pass belongs to the address you sign in with.');
-    await expect(page).toHaveURL(/\/qa-review\.html$/);
+    await expect(page).toHaveURL(/\/qa-review\.html(\?report=softpreview01)?$/);
   });
 
   test('a used-up pass offers the next plan up', async ({ page }) => {
@@ -169,7 +171,7 @@ test.describe('The pass offered beside a paid total', () => {
       (where) => (where === '/checkout/quote' ? [200, quote] : null));
     await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#fw-picker .price-tag')).toHaveCount(3);
     await expect(page.locator('#run-total-offer-text')).toHaveText('Your pass is used up or ended. Or 25 runs for 79 USD with the Team pass, for 30 days.');
     await expect(page.locator('#run-total-offer-go')).toHaveText('Get the Team pass');

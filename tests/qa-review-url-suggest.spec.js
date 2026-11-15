@@ -1,4 +1,5 @@
 const { test, expect } = require('./net-guard');
+const { fulfillSoftPreview } = require('./soft-gate');
 
 const ONLINE = ['www.google.com', 'carlosandmunoz.com', 'gooogle.com', 'www.nibo.com.br'];
 const SITEMAPS = {
@@ -22,6 +23,21 @@ async function open(page, lang = '') {
     const name = new URL(route.request().url()).searchParams.get('name');
     const body = ONLINE.includes(name) ? { Status: 0, Answer: [{ data: '203.0.113.7' }] } : { Status: 3 };
     route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+  });
+  // Soft-gate catch-all first; /paths must register after so it is not shadowed (last match wins).
+  await page.route('http://127.0.0.1:8768/**', async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    const path = url.pathname;
+    const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+    if (path === '/paths') {
+      const host = url.searchParams.get('host');
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify({ host, paths: SITEMAPS[host] || [] }) });
+    }
+    if (path === '/review/preview') return fulfillSoftPreview(route, cors);
+    if (path === '/standing') return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: '{"billing":"run","free":true,"percent":0,"softLeft":4,"softCap":5}' });
+    return route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: path === '/auth/providers' ? '{"providers":[{"id":"email"}]}' : '{"items":[]}' });
   });
   await page.route(/\/paths\?host=/, (route) => {
     const host = new URL(route.request().url()).searchParams.get('host');

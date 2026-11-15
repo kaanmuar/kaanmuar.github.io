@@ -1,6 +1,7 @@
 const { test, expect } = require('./net-guard');
 const auth = require('../functions/url-review-auth');
 const sample = require('../assets/qa-review-sample.json');
+const { fulfillSoftPreview, softThenUnlock, softPreviewFromHero } = require('./soft-gate');
 
 const ANA = 'a'.repeat(64);
 
@@ -84,6 +85,7 @@ async function signedIn(page) {
 }
 
 // Records each call to the local review service; /auth/session answers from `store` when there is one.
+// Soft gate (#3478): /review/preview returns a frosted sample; /standing is free so Unlock can queue /review.
 async function backend(page, store, { providers = [] } = {}) {
   const calls = [];
   await page.route('http://127.0.0.1:8768/**', async (route) => {
@@ -98,6 +100,13 @@ async function backend(page, store, { providers = [] } = {}) {
       return json(checked.ok ? 200 : checked.status, checked);
     }
     if (path === '/auth/providers') return json(200, { providers });
+    if (path === '/standing') return json(200, { billing: 'run', free: true, percent: 0, softLeft: 4, softCap: 5 });
+    if (path === '/review/preview') return fulfillSoftPreview(route, cors);
+    if (path === '/review') {
+      const lines = [{ type: 'log', text: 'Full crawl.' }, { type: 'done', report: Object.assign({}, sample.report, { id: 'fullcrawl01' }), frameworks: sample.frameworks || ['Playwright'], paid: false }];
+      return route.fulfill({ status: 200, contentType: 'application/x-ndjson', headers: cors, body: lines.map((line) => JSON.stringify(line)).join('\n') + '\n' });
+    }
+    if (path === '/review/open') return json(200, { report: Object.assign({}, sample.report, { id: 'cd34ef56ab12' }), frameworks: sample.frameworks || ['Playwright'], paid: false });
     return json(503, { error: 'not in this test' });
   });
   return calls;
@@ -139,26 +148,31 @@ test.describe('Terms on submit (#1090)', () => {
     await expect(page.locator('#gate')).toBeHidden();
   });
 
-  test('a review asks for the terms with its address kept, and runs once they are accepted', async ({ page }) => {
+  test('a review soft-previews first; Unlock asks for the terms with its address kept, then full-crawls', async ({ page }) => {
     await prime(page, { terms: false });
     const store = await signedIn(page);
-    await backend(page, store);
+    const calls = await backend(page, store);
     await page.goto('/qa-review.html');
     await page.locator('#name').fill('Ana');
     await page.locator('#url').fill('example.com/docs');
     await expect(page.locator('#review-btn')).toBeEnabled();
     await page.locator('#review-btn').click();
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#soft-unlock-btn')).toBeVisible();
+    expect(calls).toContain('/review/preview');
+    expect(calls).not.toContain('/review');
+
+    await page.locator('#soft-unlock-btn').click();
     await expect(page.locator('#gate')).toBeVisible();
     await expect(page.locator('#gate-waiting')).toHaveText('The review of example.com/docs starts as soon as you accept.');
     await expect(page.locator('.stage')).toHaveAttribute('inert', '');
-    await expect(page.locator('#form-status')).toHaveText('');
 
     await page.locator('#terms-all').check();
     await page.locator('#accept').click();
     await expect(page.locator('#gate')).toBeHidden();
     await expect(page.locator('.stage')).not.toHaveAttribute('inert', '');
     await expect(page.locator('#url')).toHaveValue('example.com/docs');
-    await expect(page.locator('#form-status')).not.toHaveText('');
+    await expect.poll(() => calls.includes('/review')).toBe(true);
     expect(await page.evaluate(() => sessionStorage.getItem('qa-review-terms'))).toBe(TERMS);
   });
 
@@ -172,21 +186,19 @@ test.describe('Terms on submit (#1090)', () => {
 });
 
 test.describe('A first review from the hero (#2756)', () => {
-  test('the hero takes the address and goes to sign-in, with the steps left named', async ({ page }) => {
+  test('the hero takes the address and soft-previews, with Unlock ready and no terms in the way', async ({ page }) => {
     await prime(page, { terms: false });
-    await backend(page);
+    const calls = await backend(page);
     await page.goto('/qa-review.html');
     await expect(page.locator('#stage-url')).toBeInViewport();
     await expect(page.locator('#share-open')).toBeHidden();
     await page.locator('#stage-url').fill('https://example.com/docs');
     await page.locator('#stage-start button[type="submit"]').click();
     await expect(page.locator('#url')).toHaveValue('example.com/docs');
-    await expect(page.locator('#sign-in-email')).toBeFocused();
     await expect(page.locator('#gate')).toBeHidden();
-    await expect(page.locator('#req-page')).toHaveClass(/done/);
-    await expect(page.locator('#review-needs button')).toHaveText(['2 You', '3 Why this review']);
-    await page.locator('#review-needs button[data-step="why"]').click();
-    await expect(page.locator('#reasons input[type="radio"]').first()).toBeFocused();
+    await expect(page.locator('#soft-unlock-btn')).toBeVisible();
+    await expect.poll(() => calls.includes('/review/preview')).toBe(true);
+    expect(calls).not.toContain('/review');
   });
 
   test('an empty hero field stays put', async ({ page }) => {
@@ -197,17 +209,23 @@ test.describe('A first review from the hero (#2756)', () => {
     await expect(page.locator('#stage-url')).toBeFocused();
   });
 
-  test('Review can be pressed signed out: the terms come first, then it asks to sign in', async ({ page }) => {
+  test('Review can be pressed signed out: soft preview first; Unlock asks for terms, then sign-in', async ({ page }) => {
     await prime(page, { terms: false });
     const calls = await backend(page);
     await page.goto('/qa-review.html');
     await page.locator('#url').fill('example.com');
     await expect(page.locator('#review-btn')).toBeEnabled();
     await page.locator('#review-btn').click();
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#soft-unlock-btn')).toBeVisible();
+    expect(calls).toContain('/review/preview');
+    expect(calls).not.toContain('/review');
+
+    await page.locator('#soft-unlock-btn').click();
     await expect(page.locator('#gate')).toBeVisible();
     await page.locator('#terms-all').check();
     await page.locator('#accept').click();
-    await expect(page.locator('#form-status')).toHaveText(/^Sign in above to run a review/);
+    await expect(page.locator('#form-status')).toHaveText(/^Sign in to unlock the full site audit/);
     await expect(page.locator('#sign-in-email')).toBeFocused();
     expect(calls).not.toContain('/review');
   });
@@ -248,17 +266,22 @@ test.describe('A first review from the hero (#2756)', () => {
     await expect(page.locator('#stage-sample-open')).toBeFocused();
   });
 
-  test('on a phone the terms open at the top, Accept comes into view once all are ticked, and Close stays on screen in a report', async ({ page }) => {
+  test('on a phone Unlock opens the terms at the top, Accept comes into view once all are ticked, and Close stays on screen in a report', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await prime(page, { terms: false });
     await backend(page);
     await page.goto('/qa-review.html');
     await page.locator('#url').fill('example.com');
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#gate-close')).toBeInViewport();
     await page.locator('#terms-all').check();
     await expect(page.locator('#accept')).toBeInViewport();
     await page.keyboard.press('Escape');
+    await expect(page.locator('#gate')).toBeHidden();
+    // Soft preview left the report open; close it, then open the sample like a first visit.
+    if (await page.locator('#dash-overlay').evaluate((el) => el.classList.contains('open'))) {
+      await page.locator('#dash-close').click();
+    }
     await page.locator('#stage-sample-open').click();
     await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
     await page.locator('#dash-overlay').evaluate((el) => { el.scrollTop = 3000; });
@@ -307,7 +330,7 @@ test.describe('The You step (#2769)', () => {
     const you = page.locator('#req-you');
     await expect(page.locator('#own-note')).toBeVisible();
     await expect(you).toHaveClass(/\bdone\b/);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#email-error')).toHaveText('Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership.');
     await expect(page.locator('#own-note')).toBeHidden();
     await expect(you).not.toHaveClass(/\bdone\b/);
@@ -330,7 +353,7 @@ test.describe('The You step (#2769)', () => {
     await page.locator('#url').fill('carlosandmunoz.com');
     await page.locator('#name').fill('Ana');
     await page.locator('#reasons input[value="own"]').check();
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#email-error')).not.toBeEmpty();
     await page.locator('#url').fill('example.com');
     await expect(page.locator('#email-error')).toBeEmpty();
@@ -347,7 +370,7 @@ test.describe('The You step (#2769)', () => {
     await page.locator('#url').fill('carlosandmunoz.com');
     await page.locator('#name').fill('Ana');
     await page.locator('#reasons input[value="own"]').check();
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#email-error')).toHaveText('Usa un correo del mismo dominio que el sitio. Eso muestra que el buzón está en ese host. No prueba la propiedad legal.');
     await expect(page.locator('#own-note')).toBeHidden();
   });
@@ -360,7 +383,7 @@ test.describe('The You step (#2769)', () => {
     await expect(page.locator('#sign-in-done')).toBeVisible();
     await page.locator('#url').fill('example.com');
     await page.locator('#name').fill('1');
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(page.locator('#name-error')).toHaveText('Enter your name.');
     await expect(page.locator('#req-you')).not.toHaveClass(/\bdone\b/);
     await page.locator('#name').fill('Ana');
@@ -847,21 +870,21 @@ test.describe('Form errors in the page language (#2837)', () => {
       });
       await page.goto(`/qa-review-${lang}.html`);
       await expect(page.locator('#sign-in-done')).toBeVisible();
-      await page.locator('#name').fill('1');
       await page.locator('#url').fill('exa mple.com');
-      await page.evaluate(() => document.querySelectorAll('input[name="fw"]:checked').forEach((box) => { box.checked = false; box.dispatchEvent(new Event('change', { bubbles: true })); }));
       await page.locator('#review-btn').click();
-      for (const [field, id] of [['name', 'nameNeeded'], ['url', 'urlNeeded'], ['frameworks', 'frameworksNeeded'], ['reason', 'reasonPick']]) {
-        await expect(page.locator('#' + field + '-error')).toHaveText(say(id));
-        await expect(page.locator('#' + field + '-error')).not.toHaveText(EN.word('fieldError', id));
-      }
+      await expect(page.locator('#form-status')).toHaveText(say('urlNeeded'));
+
+      // Soft gate (#3478): Unlock validates the You step; frameworks/reason are filled for the full crawl.
+      await page.locator('#name').fill('1');
+      await page.locator('#url').fill('example.com');
+      await softThenUnlock(page, expect);
+      await expect(page.locator('#name-error')).toHaveText(say('nameNeeded'));
+      await expect(page.locator('#name-error')).not.toHaveText(EN.word('fieldError', 'nameNeeded'));
       await expect(page.locator('#form-status')).toHaveText(say('nameNeeded'));
 
       await page.locator('#name').fill('Ana');
-      await page.locator('#url').fill('example.com');
-      await page.locator('#reasons input[value="release"]').check();
-      await page.evaluate(() => { const box = document.querySelector('input[name="fw"]'); box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true })); });
-      await page.locator('#review-btn').click();
+      // Unlock closed the soft-preview dash to show the name error; soft-run again then Unlock.
+      await softThenUnlock(page, expect);
       await expect(page.locator('#email-error')).toHaveText(say('mailDead'));
       await expect(page.locator('#url-error')).toHaveText(say('urlPrivate'));
       await expect(page.locator('#form-status')).toHaveText(say('mailDead'));

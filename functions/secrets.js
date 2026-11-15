@@ -33,8 +33,8 @@ const BY_FUNCTION = {
   // wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
   wordfenceFeed: list(["WORDFENCE_KEY"]),
   ownerReplies: list(MAIL, ["OWNER_REPLY_KEY"]),
-  reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY"]),
-  reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY"]),
+  reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY", "TURNSTILE_SECRET_KEY"]),
+  reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY", "TURNSTILE_SECRET_KEY"]),
   reviewBrowser: list(BROWSER),
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
   // fixRereview (#3102): the free re-review after a fix, then the before/after mail.

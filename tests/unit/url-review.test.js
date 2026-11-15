@@ -2147,6 +2147,33 @@ test("the review page sends the terms version the server takes as current", () =
   assert.equal(page, core.TERMS_VERSION);
 });
 
+test("soft preview intake needs only a public URL and refuses compare and private hosts (#3478)", () => {
+  const ok = core.validateSoftPreview({ url: "example.org/path", deviceId: "aabbccddeeff0011", lang: "en" });
+  assert.deepEqual(ok.errors, []);
+  assert.equal(ok.value.softPreview, true);
+  assert.equal(ok.value.pages, core.SOFT_PREVIEW_PAGES);
+  assert.equal(ok.value.url, "https://example.org/path");
+  assert.equal(ok.value.frameworks[0], "Playwright");
+  assert.ok(core.validateSoftPreview({ url: "example.org", compareWith: "abc" }).errors.some((e) => e.field === "url"));
+  assert.ok(core.validateSoftPreview({ url: "localhost" }).errors.some((e) => e.field === "url"));
+  assert.ok(core.validateSoftPreview({ url: "10.0.0.1" }).errors.some((e) => e.field === "url"));
+  assert.ok(core.validateSoftPreview({ url: "printer.local" }).errors.some((e) => e.field === "url"));
+});
+
+test("a soft preview record is unpaid, unlisted, and kept for seven days (#3478)", () => {
+  const value = core.validateSoftPreview({ url: "https://example.org/" }).value;
+  const before = Date.now();
+  const record = core.intakeRecord(value, { id: "soft1", status: "complete", host: "example.org" }, { deviceId: "aabbccddeeff0011", ip: "1.2.3.4" });
+  assert.equal(record.softPreview, true);
+  assert.equal(record.paid, false);
+  assert.equal(record.priceUsd, 0);
+  assert.equal(record.unlisted, true);
+  assert.equal(record.pages, 1);
+  assert.equal(record.email, "");
+  const retain = Date.parse(record.retainUntil) - before;
+  assert.ok(retain > 6.5 * 24 * 60 * 60 * 1000 && retain < 7.5 * 24 * 60 * 60 * 1000, String(retain));
+});
+
 test("payment rows are kept until January 1 of the sixth year after the payment", () => {
   assert.equal(core.paymentExpireAt("2026-10-22T12:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");
   assert.equal(core.paymentExpireAt("2026-01-01T00:00:00Z").toISOString(), "2032-01-01T00:00:00.000Z");

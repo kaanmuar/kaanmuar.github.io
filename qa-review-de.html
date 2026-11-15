@@ -1050,7 +1050,7 @@
         .unlock-offer[hidden] { display: none; }
         .offer-note { margin: 0 0 10px; color: var(--muted); }
         .offer-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-        .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); }
+        .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); text-align: left; font: inherit; cursor: pointer; width: 100%; }
         .offer b { font-size: 1.05rem; }
         .offer span { color: var(--muted); font-size: 14px; line-height: 1.45; }
         .offer:hover, .offer:focus-visible { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
@@ -1592,10 +1592,10 @@
                 <label class="stage-start-label" for="stage-url" lang="de" translate="no">Beginnen Sie mit der Adresse einer öffentlichen Seite</label>
                 <div class="stage-start-row">
                     <div class="stage-start-field"><div class="url-row notranslate" id="stage-url-field"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div></div>
-                    <button class="btn btn-primary" type="submit" lang="de" translate="no">Diese Seite prüfen</button>
+                    <button class="btn btn-primary" type="submit">Run</button>
                 </div>
                 <p class="field-error" id="stage-url-error"></p>
-                <p class="stage-start-note" lang="de" translate="no">Ihre erste Prüfung ist inklusive: bis zu 20 Seiten, zwei Links tief. Danach melden Sie sich auf diesem Gerät an und wählen einen Grund; der Bericht öffnet sich hier, wenn die Prüfung endet.</p>
+                <p class="stage-start-note">Paste a public https page and run. You get real scores and the top finding with no account. Sign in only when you unlock a full site audit.</p>
             </form>
             <ul class="facts">
                 <li><b>21</b><span lang="de" translate="no">Arten von Testfällen</span></li>
@@ -2109,6 +2109,17 @@
         <div class="actions">
             <button class="btn btn-ghost" id="run-pay-close" type="button" lang="de" translate="no">Schließen</button>
             <a class="btn btn-primary" id="go-pay" href="qa-review-pay-de.html?purpose=new-run" lang="de" translate="no">Zur Zahlung</a>
+        </div>
+    </div>
+</div>
+<div id="soft-turnstile" class="no-print" hidden aria-hidden="true"></div>
+<div id="soft-quota" class="gate no-print" hidden>
+    <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="soft-quota-title" tabindex="-1">
+        <h2 id="soft-quota-title">You've used today's free previews</h2>
+        <p class="muted" id="soft-quota-detail">Sign in for more free previews today.</p>
+        <div class="actions">
+            <button class="btn btn-ghost" id="soft-quota-close" type="button" lang="de" translate="no">Schließen</button>
+            <button class="btn btn-primary" id="soft-quota-signin" type="button" lang="de" translate="no">Anmelden</button>
         </div>
     </div>
 </div>

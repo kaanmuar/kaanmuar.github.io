@@ -1835,6 +1835,7 @@ async function mailComparison(notice) {
 }
 
 const urlReview = require("./url-review-core");
+const softQuota = require("./url-review-soft-quota");
 const lookalikes = require("./url-review-lookalikes");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
@@ -1842,6 +1843,11 @@ const reviewFailures = require("./url-review-failures");
 const reviewPromise = require("./url-review-promise");
 const reviewRescue = require("./url-review-rescue");
 const reviewPublish = require("./url-review-publish");
+
+function reviewClientIp(req) {
+  const forwarded = String((req.headers && (req.headers["x-forwarded-for"] || req.get && req.get("x-forwarded-for"))) || "").split(",")[0].trim();
+  return String(forwarded || req.ip || "").slice(0, 80);
+}
 
 // The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).
 function findPlaces() {
@@ -4732,10 +4738,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, body, { touch: false })) : { ok: false };
       const free = signedIn.ok ? await hasFreeRuns(signedIn.email) : false;
       const deviceId = String(body.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-      const ip = req.ip || "";
+      const ip = reviewClientIp(req);
       const rows = free ? [] : await reviewRowsFor(deviceId, ip);
       const standing = urlReview.standingFor(rows, { deviceId, ip });
       const passes = signedIn.ok && !free ? await passRowsFor(signedIn.email) : [];
+      const soft = await softQuota.peekSoftQuota(getFirestore(), { ip, email: signedIn.ok ? signedIn.email : "" });
       res.status(200).json({
         billing: standing.billing,
         free,
@@ -4743,7 +4750,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         compareUsd: urlReview.COMPARE_CENTS / 100,
         pass: reviewOffers.passView(reviewOffers.passFor(passes, signedIn.email, Date.now())),
         lastPlan: signedIn.ok ? reviewOffers.lastPassPlan(passes, signedIn.email) : "",
-        plans: reviewOffers.passPlans()
+        plans: reviewOffers.passPlans(),
+        softLeft: soft.left,
+        softCap: soft.cap,
+        softSignedIn: soft.signedIn
       });
     } catch (error) {
       console.error("Standing lookup failed:", error);
@@ -5215,6 +5225,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free, addons: data.addons || [], addonLayers: data.addonLayers || [] }, versus ? { versus } : {}));
     return;
   }
+  if (req.method === "POST" && pathName.endsWith("/review/preview")) {
+    await runSoftPreview(req, res);
+    return;
+  }
   if (req.method !== "POST") {
     res.status(405).json({ error: "Use POST." });
     return;
@@ -5291,6 +5305,128 @@ async function unlockCredit(creditId) {
     await getFirestore().collection("url_reviews").doc(creditId).update({ spentBy: FieldValue.delete(), spentAt: FieldValue.delete() });
   } catch (error) {
     console.error("Credit unlock failed:", error);
+  }
+}
+
+// Soft-gate 1-page preview (#3478): optional session for the 20/day bucket; IP for anon 5/day; Turnstile when secret is set.
+async function runSoftPreview(req, res) {
+  const body = req.body || {};
+  const intake = await urlReview.screenSoftPreview(body, req.headers);
+  if (!intake.ok) {
+    res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
+    return;
+  }
+  const deviceId = String(intake.value.deviceId || body.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const ip = reviewClientIp(req);
+  const signedIn = body.session
+    ? await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, body, { touch: false })).catch(() => ({ ok: false }))
+    : { ok: false };
+  const email = signedIn.ok ? signedIn.email : "";
+  const standing = await softQuota.peekSoftQuota(getFirestore(), { ip, email });
+  if (!standing.ok) {
+    res.status(429).json({
+      error: softQuota.quotaMessage(standing),
+      code: "soft-quota",
+      softLeft: 0,
+      softCap: standing.cap,
+      signIn: !standing.signedIn,
+      softPreview: true
+    });
+    return;
+  }
+  const secret = process.env.TURNSTILE_SECRET_KEY || "";
+  if (secret) {
+    const check = await formGuard.verifyTurnstile({
+      secret,
+      token: body.turnstileToken || body.token,
+      ip,
+      action: "soft-preview"
+    });
+    if (!check.ok) {
+      res.status(403).json({
+        error: check.reason === "unreachable" || check.reason === "config"
+          ? "The bot check could not run. Try again in a minute."
+          : "The bot check did not pass. Try again.",
+        code: "soft-turnstile",
+        needTurnstile: true,
+        softLeft: standing.left,
+        softCap: standing.cap,
+        softPreview: true
+      });
+      return;
+    }
+  }
+  const quota = await softQuota.takeSoftQuota(getFirestore(), { ip, email });
+  if (!quota.ok) {
+    res.status(429).json({
+      error: softQuota.quotaMessage(quota),
+      code: "soft-quota",
+      softLeft: 0,
+      softCap: quota.cap,
+      signIn: !quota.signedIn,
+      softPreview: true
+    });
+    return;
+  }
+  const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
+  let stopped = false;
+  res.on("close", () => {
+    if (!res.writableEnded) stopped = true;
+  });
+  res.status(200);
+  res.set("Content-Type", "application/x-ndjson; charset=utf-8");
+  const writeLine = (payload) => {
+    if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
+  };
+  try {
+    await rememberReview("soft-preview", {
+      runId,
+      requestedUrl: intake.value.url,
+      status: "running",
+      softPreview: true,
+      pages: urlReview.SOFT_PREVIEW_PAGES,
+      depth: urlReview.SOFT_PREVIEW_DEPTH
+    });
+    writeLine({ type: "log", text: "Soft preview of the pasted URL (1 page)." });
+    const report = await urlReview.reviewTarget(intake.value.url, {
+      softPreview: true,
+      log: (text) => writeLine({ type: "log", text }),
+      stopped: () => stopped,
+      asker: { reasonCode: "soft-preview", email: email || "" },
+      maxPages: urlReview.SOFT_PREVIEW_PAGES,
+      maxDepth: urlReview.SOFT_PREVIEW_DEPTH,
+      pageLang: intake.value.pageLang,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
+    });
+    if (email) intake.value.email = email;
+    const record = urlReview.intakeRecord(intake.value, report, {
+      ip,
+      deviceId,
+      userAgent: req.get("user-agent"),
+      acceptLanguage: req.get("accept-language")
+    });
+    writeLine({ type: "log", text: "Saving the soft preview." });
+    await getFirestore().collection("url_reviews").doc(report.id).set(record);
+    await rememberReview(record.status === "stopped" ? "stopped" : "soft-preview", record);
+    const shown = urlReview.previewReport(report);
+    writeLine({
+      type: "done",
+      report: shown,
+      frameworks: record.frameworks,
+      paid: false,
+      softPreview: true,
+      priceUsd: 0,
+      softLeft: quota.left,
+      softCap: quota.cap
+    });
+    res.end();
+  } catch (error) {
+    console.error("Soft preview failed:", error);
+    writeLine({ type: "error", error: error.message || "The preview failed." });
+    res.end();
   }
 }
 
@@ -5598,7 +5734,12 @@ exports.reviewRun = require("firebase-functions/v2/https").onRequest({
     res.status(204).send("");
     return;
   }
-  if (req.method !== "POST" || !String(req.path || "/").endsWith("/review")) {
+  const pathName = String(req.path || "/");
+  if (req.method === "POST" && pathName.endsWith("/review/preview")) {
+    await runSoftPreview(req, res);
+    return;
+  }
+  if (req.method !== "POST" || !pathName.endsWith("/review")) {
     res.status(405).json({ error: "Use POST /review." });
     return;
   }

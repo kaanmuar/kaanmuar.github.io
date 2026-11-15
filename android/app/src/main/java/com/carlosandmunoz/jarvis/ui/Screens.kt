@@ -220,7 +220,9 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
     if (product == "review") {
         PeoplePanel(s)
         LocalPanel(s)
-        TopList("Funnel", p.pairs("funnel"), 4, id = "review-funnel")
+        TopList("Funnel", p.pairs("funnel"), 4, id = "review-funnel", footer = {
+            Muted("Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.")
+        })
     }
 
     val series = p.obj("series")
