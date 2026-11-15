@@ -4566,6 +4566,14 @@ function frostAll(value) {
   return value;
 }
 
+// Shared and unpaid opens keep overall + six area scores (numbers) and one teaser finding in the clear (#3477):
+// its title, evidence and fix stay readable so a colleague sees why the score dropped. Everything else frosts.
+function teaserFinding(findings) {
+  const list = findings || [];
+  return list.filter((item) => item.verdict === "fail" || item.verdict === "risk")
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999))[0] || list[0] || null;
+}
+
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
@@ -4584,10 +4592,18 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
+  const teaser = teaserFinding(ins.findings);
+  const teaserId = teaser && (teaser.id || teaser.key);
+  const teaserKeep = teaser ? { title: teaser.title, evidence: teaser.evidence, fix: teaser.fix, msg: teaser.msg } : null;
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole
+  // except the teaser finding, which keeps evidence and fix so shared links still show the top gap (#3477).
   (ins.findings || []).forEach((item) => {
-    item.evidence = frostText(item.evidence);
-    item.fix = frostText(item.fix);
+    const isTeaser = teaserId && (item.id === teaserId || item.key === teaserId);
+    if (isTeaser) item.teaser = true;
+    else {
+      item.evidence = frostText(item.evidence);
+      item.fix = frostText(item.fix);
+    }
     if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
     else delete item.msg;
   });
@@ -4608,6 +4624,15 @@ function previewReport(report, options) {
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
+  if (teaserKeep && frosted.insights && frosted.insights.findings) {
+    const hit = frosted.insights.findings.find((item) => item.teaser);
+    if (hit) {
+      hit.title = teaserKeep.title;
+      hit.evidence = teaserKeep.evidence;
+      hit.fix = teaserKeep.fix;
+      if (teaserKeep.msg && teaserKeep.msg.title) hit.msg = { title: teaserKeep.msg.title };
+    }
+  }
   if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;
