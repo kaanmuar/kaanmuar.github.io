@@ -43,7 +43,7 @@ const PER_RUN = 4;
 const MAX_AGE_HOURS = 7 * 24;
 const LONG_LINK = 60;
 const CAMPAIGN = "report-reply";
-// "copy" is a profile campaign message (#2615) Carlos approved to paste on a network we cannot post to.
+// "copy" is a legacy profile-campaign status (#2615); Approve now sends (#3461), and the scout promotes old copies.
 const ANSWERED = ["waiting", "approved", "posted", "copy"];
 const SHORT = "https://qalabreview.com/";
 const CODES = { bluesky: "bsky", mastodon: "mast", youtube: "yt", x: "x", linkedin: "li", facebook: "fb", instagram: "ig", threads: "th", tiktok: "tt" };

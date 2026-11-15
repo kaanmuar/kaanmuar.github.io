@@ -85,7 +85,7 @@ test("a message that would not fit next to an untouched link is dropped, not cut
   assert.ok(R.fill(out.s, "https://qalabreview.com/es/r/tt/adonay.cl/bd56e3/hi-c2wq9hr7", "tiktok").includes("pública https://"));
 });
 
-test("a message is a waiting report reply with match profile: a card under their post, or a manual copy for the profile", () => {
+test("a message is a waiting report reply with match profile: a card under their post, or latest under their profile (#3461)", () => {
   const offer = { code: "HI-ABCD2345", percent: 50, days: 7 };
   const profile = { network: "bluesky", handle: "upb.edu.co", url: "https://bsky.app/profile/upb.edu.co" };
   const post = { network: "bluesky", id: "at://did:plc:x/app.bsky.feed.post/1", cid: "c", url: "https://bsky.app/profile/upb.edu.co/post/1", author: { handle: "upb.edu.co" }, text: "Open day!", lang: "es", createdAt: new Date(NOW).toISOString() };
@@ -93,18 +93,23 @@ test("a message is a waiting report reply with match profile: a card under their
   assert.equal(link, "https://qalabreview.com/es/r/bsky/upb.edu.co/abcdef/hi-abcd2345");
   const reply = P.doc({ key: "bluesky_1", network: "bluesky", mode: "reply", post, profile, target: SITE, touch: 1, tone: "cheer", lang: "es", offer }, "¡Qué buen open day! Revisamos su sitio {link}", link, NOW);
   assert.equal(reply.campaign, R.CAMPAIGN);
-  assert.deepEqual([reply.report.match, reply.report.format, reply.report.manual, reply.report.offer, reply.actions.reply.status], ["profile", "card", false, offer.code, "waiting"]);
+  assert.deepEqual([reply.report.match, reply.report.format, reply.report.latest, reply.report.offer, reply.actions.reply.status], ["profile", "card", false, offer.code, "waiting"]);
+  assert.equal(P.needsLatest(reply), false);
   assert.ok(reply.actions.reply.draft.endsWith(link));
   assert.equal(Card.wants(reply), true);
   const li = { network: "linkedin", handle: "upb", url: "https://linkedin.com/school/upb" };
-  const copy = P.doc({ key: "linkedin_1", network: "linkedin", mode: "copy", post: null, profile: li, target: SITE, touch: 3, tone: "question", lang: "es", offer }, "upb, ¿cómo cuidan la velocidad de su sitio? {link}", link, NOW);
-  assert.deepEqual([copy.id, copy.report.format, copy.report.manual, copy.report.profile], [li.url, "link", true, li.url]);
-  assert.equal(Card.wants(copy), false);
-  assert.equal(Date.parse(copy.actions.reply.expiresAt) - NOW, P.TTL);
+  const latest = P.doc({ key: "linkedin_1", network: "linkedin", mode: "latest", post: null, profile: li, target: SITE, touch: 3, tone: "question", lang: "es", offer }, "upb, ¿cómo cuidan la velocidad de su sitio? {link}", link, NOW);
+  assert.deepEqual([latest.id, latest.report.format, latest.report.latest, latest.report.profile], [li.url, "link", true, li.url]);
+  assert.equal(P.needsLatest(latest), true);
+  assert.equal(P.needsLatest({ report: { match: "profile", manual: true } }), true, "legacy manual docs still need a latest post");
+  assert.equal(Card.wants(latest), false);
+  assert.equal(Date.parse(latest.actions.reply.expiresAt) - NOW, P.TTL);
+  assert.equal(P.FRESH_DAYS, 365);
+  assert.ok(P.API_NETS.includes("youtube"));
 });
 
 test("the prompt asks for the touch's tone in the site's language and keeps the offer out of the first two touches", () => {
-  const text = P.prompt([{ key: "k", network: "x", mode: "copy", profile: { handle: "@UPBoficial" }, target: SITE, touch: 2, tone: "curious", lang: "es", offer: { percent: 50, days: 7 } }]);
+  const text = P.prompt([{ key: "k", network: "x", mode: "latest", profile: { handle: "@UPBoficial" }, target: SITE, touch: 2, tone: "curious", lang: "es", offer: { percent: 50, days: 7 } }]);
   assert.match(text, /Touch 2, curious[^\n]*No offer/);
   assert.match(text, /"handle":"@UPBoficial"/);
   assert.match(text, /"score":null/);
