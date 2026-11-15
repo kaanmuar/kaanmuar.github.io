@@ -89,6 +89,17 @@
     "checked": "2026-11-13T23:55:04.015Z"
    }
   ],
+  "auto-2026-10-22/15-u-nice-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "81",
+    "at": "2026-11-15T17:04:56.718Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/81",
+    "checked": "2026-11-15T17:05:02.173Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -263,6 +274,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/58",
     "checked": "2026-11-12T16:20:22.022Z"
+   }
+  ],
+  "auto-2026-11-14/04-vs-sinarharian-com-my": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "82",
+    "at": "2026-11-15T17:05:02.173Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/82",
+    "checked": "2026-11-15T17:05:06.281Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -660,6 +682,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/78",
     "checked": "2026-11-15T02:37:09.829Z"
+   }
+  ],
+  "runs-3/03-valle": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "80",
+    "at": "2026-11-15T17:04:54.933Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/80",
+    "checked": "2026-11-15T17:04:56.718Z"
    }
   ],
   "skits-friday-release/01-friday-release-en": [

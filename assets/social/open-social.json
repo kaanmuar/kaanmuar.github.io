@@ -201,6 +201,35 @@
     "checked": "2026-11-13T23:53:02.747Z"
    }
   ],
+  "auto-2026-10-22/15-u-nice-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2eijydufx2f",
+    "at": "2026-11-15T17:02:20.547Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2eijydufx2f",
+    "checked": "2026-11-15T17:02:21.988Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17966303571213186",
+    "at": "2026-11-15T17:04:37.515Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4031080623708854229",
+    "checked": "2026-11-15T17:04:47.404Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "17916649890473074",
+    "at": "2026-11-15T17:02:24.222Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfxRb7pk-Uq",
+    "checked": "2026-11-15T17:03:15.382Z"
+   }
+  ],
   "auto-2026-10-23/03-u-monsterenergy-com": [
    {
     "channel": "bluesky",
@@ -914,6 +943,35 @@
     "checked": "2026-11-12T16:18:58.636Z"
    }
   ],
+  "auto-2026-11-14/04-vs-sinarharian-com-my": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2eijznvy42k",
+    "at": "2026-11-15T17:02:21.988Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2eijznvy42k",
+    "checked": "2026-11-15T17:02:23.398Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18133035202760266",
+    "at": "2026-11-15T17:04:47.404Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4031080706798000404",
+    "checked": "2026-11-15T17:04:54.413Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18153788194514943",
+    "at": "2026-11-15T17:03:15.382Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DfxRkmpDvY0",
+    "checked": "2026-11-15T17:04:25.754Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -1458,6 +1516,25 @@
     "checked": "2026-11-13T18:30:22.690Z"
    }
   ],
+  "launch-2026-10/pt/a11y": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "at": "2026-11-15T17:04:54.413Z",
+    "result": "failed",
+    "error": "no feed image media/social-posts/launch-2026-10/pt/a11y-story.jpg",
+    "checked": "2026-11-15T17:04:54.414Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18646309828002910",
+    "at": "2026-11-15T17:04:28.401Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DfxRmaBIGcM/",
+    "checked": "2026-11-15T17:04:37.256Z"
+   }
+  ],
   "promo-social-hub-2026-10/01-one-page-en": [
    {
     "channel": "bluesky",
@@ -1631,6 +1708,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2cy6qy4oa2n",
     "checked": "2026-11-15T02:37:05.496Z"
+   }
+  ],
+  "runs-3/03-valle": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2eijx2wjp2o",
+    "at": "2026-11-15T17:02:18.373Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2eijx2wjp2o",
+    "checked": "2026-11-15T17:02:20.547Z"
    }
   ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
