@@ -3,7 +3,8 @@
 #   scripts/ticket-worktree.sh <branch> [--take]    e.g. fix/731-review-lang; prints the path to work in
 # A branch that already has a worktree gets that path back. A new branch starts from origin/main.
 # The worktree is locked to this chat (scripts/worktree-lock.sh, #2244): one another live chat holds is refused
-# and its holder named; --take takes it over.
+# and its holder named; --take takes it over. A new worktree also warns, on stderr, about open PRs and other worktrees
+# that already name the ticket or touch the files its issue names (scripts/open-work.js, #2969).
 set -euo pipefail
 take=
 for arg; do
@@ -34,6 +35,10 @@ else
 	git -C "$main" worktree add -q --no-track -b "$branch" "$dir" origin/main
 fi
 "$lock" claim "$dir"
+
+# Open PRs and worktrees that already name the ticket or touch the files its issue names (#2969): a warning only.
+n=$(sed -nE 's#^[^/]+/([0-9]+)(-.*)?$#\1#p' <<<"$branch")
+[ -z "$n" ] || node "$(dirname "$0")/open-work.js" ticket "$n" --branch "$branch" </dev/null >&2 || true
 
 # functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
 for deps in node_modules functions/node_modules functions/.env functions/.secret.local; do

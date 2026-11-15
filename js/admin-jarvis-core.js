@@ -17,11 +17,16 @@
         { key: 'business', name: 'Business', short: 'BIZ' },
         { key: 'outreach', name: 'Outreach', short: 'OUT' },
         { key: 'marketing', name: 'Marketing', short: 'MKT' },
+        { key: 'geo', name: 'Map', short: 'MAP' },
         { key: 'engagement', name: 'Engagement', short: 'ENG' },
         { key: 'traffic', name: 'Traffic', short: 'WEB' },
         { key: 'systems', name: 'Systems', short: 'SYS' },
-        { key: 'github', name: 'GitHub', short: 'GH' }
+        { key: 'github', name: 'GitHub', short: 'GH' },
+        { key: 'console', name: 'Console', short: 'LOG' }
     ];
+    // Jarvis > Console (#2810): the jarvis_log line sources and levels, lowest level first.
+    const LOG_SOURCES = ['jarvis', 'function', 'actions', 'mac', 'board', 'github', 'gemini', 'push', 'countdown'];
+    const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
     const ACTION_LABELS = {
         share_cv: 'Share', open_simulator: 'Open studio', open_qa_lab: 'Open lab', open_contact_widget: 'Contact',
         submit_message: 'Message', submit_rating: 'Rating', sim_run_sprint: 'Sprint start', sim_sprint_complete: 'Sprint finish',
@@ -404,11 +409,86 @@
         firestoreFreePct: { value: 80, label: 'Firestore free daily reads used: warn at (%)', min: 1, max: 1000 },
         outreachBouncePct: { value: 3, label: 'Outreach emails bounced: alert at (%)', min: 0.5, max: 50 },
         outreachWarmup: { value: 80, label: 'Mailbox warm-up score needed before campaigns send', min: 0, max: 100 },
-        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 }
+        outreachDeadlineDays: { value: 14, label: 'Outreach deadlines: remind this many days ahead', min: 1, max: 90 },
+        promiseHours: { value: 8, label: 'Promised review reports: warn with this many hours or fewer left', min: 1, max: 48 },
+        fixWaitDays: { value: 1, label: 'Paid fix requests waiting for work: warn after (days)', min: 0, max: 30 },
+        quotaPct: { value: 80, label: 'Review check quotas (Web Risk, URL Scanner) used: warn at (%)', min: 10, max: 100 }
     };
 
     // What Jarvis ranks on Brave when the owner has not set searches in Settings.
     const SEARCH_QUERIES = ['carlos andres munoz qa', 'carlosandmunoz', 'qa-lab url review', 'free website qa review', 'website qa audit online'];
+
+    // The repos the GitHub tab shows when Settings lists none (#2807): jarvis_settings/main github.repos, owner/name each.
+    const GITHUB_REPOS = ['kaanmuar/kaanmuar.github.io', 'kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota', 'kaanmuar/cursor-quota-releases'];
+    function githubRepos(list) {
+        const clean = Array.from(new Set((Array.isArray(list) ? list : []).map((r) => String(r || '').trim().replace(/^https:\/\/github\.com\//, '').replace(/\/+$/, '')).filter((r) => /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(r)))).slice(0, 20);
+        return clean.length ? clean : GITHUB_REPOS.slice();
+    }
+
+    // Section layout per tab (#2809): jarvis_settings/main layout[tab] = { order, hidden } of panel ids, saved by the web and the app.
+    // The app names a panel panelSlug(title); ids one side does not show keep their place when the other side saves.
+    const LAYOUT_TABS = PRODUCTS.map((p) => p.key);
+    const LAYOUT_ID = /^[a-z0-9][a-z0-9_.:-]{0,79}$/i;
+    const LAYOUT_MAX = 200;
+    function panelSlug(title) {
+        const slug = String(title || '').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '');
+        return slug || 'panel';
+    }
+    const layoutIds = (list) => Array.from(new Set((Array.isArray(list) ? list : []).filter((id) => typeof id === 'string' && LAYOUT_ID.test(id)))).slice(0, LAYOUT_MAX);
+    function cleanLayout(input) {
+        const out = {};
+        if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
+        LAYOUT_TABS.forEach((tab) => {
+            const t = input[tab];
+            if (!t || typeof t !== 'object' || Array.isArray(t)) return;
+            const order = layoutIds(t.order);
+            const hidden = layoutIds(t.hidden);
+            if (order.length || hidden.length) out[tab] = { order, hidden };
+        });
+        return out;
+    }
+    // base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is).
+    function layoutWeave(base, ref) {
+        const out = base.slice();
+        const placed = new Set(out);
+        ref.forEach((id, i) => {
+            if (placed.has(id)) return;
+            let at = 0;
+            for (let k = i - 1; k >= 0; k--) { const j = out.indexOf(ref[k]); if (j >= 0) { at = j + 1; break; } }
+            out.splice(at, 0, id);
+            placed.add(id);
+        });
+        return out;
+    }
+    // The panels a tab shows, in the saved order: new panels at their default place, saved ids no panel has any more ignored.
+    function applyLayout(defaultIds, layout) {
+        const ids = Array.from(new Set(Array.isArray(defaultIds) ? defaultIds : []));
+        const present = new Set(ids);
+        const l = layout || {};
+        const all = layoutWeave(layoutIds(l.order).filter((id) => present.has(id)), ids);
+        const hide = new Set(layoutIds(l.hidden));
+        return { all, order: all.filter((id) => !hide.has(id)), hidden: all.filter((id) => hide.has(id)) };
+    }
+    // One step up (-1) or down (1) past the next shown panel; hidden panels keep their place.
+    function layoutMove(all, hidden, id, step) {
+        const hide = new Set(hidden || []);
+        const seen = all.filter((x) => x === id || !hide.has(x));
+        const k = seen.indexOf(id) + step;
+        if (seen.indexOf(id) < 0 || k < 0 || k >= seen.length) return all.slice();
+        const out = all.filter((x) => x !== id);
+        const j = out.indexOf(seen[k]);
+        out.splice(step < 0 ? j : j + 1, 0, id);
+        return out;
+    }
+    // What to save after an edit: this side's order and hidden panels, with the ids it did not show (the other side's, or empty panels) kept.
+    function keepLayout(prev, all, hidden, shown) {
+        const p = prev || {};
+        const mine = new Set(shown || all);
+        return {
+            order: layoutWeave(layoutIds(all), layoutIds(p.order)).slice(0, LAYOUT_MAX),
+            hidden: layoutIds(layoutIds(p.hidden).filter((id) => !mine.has(id)).concat(layoutIds(hidden)))
+        };
+    }
 
     // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
     const CONNECTIONS = [
@@ -420,7 +500,9 @@
         { key: 'outreach', name: 'Outreach (sweep prospects, Instantly, 90-day plan)' }, { key: 'mailbox', name: 'ImprovMX (mail forwarding)' },
         { key: 'addresses', name: 'Email addresses (ImprovMX, Microsoft 365, Instantly, SendGrid)' },
         { key: 'pagespeed', name: 'Daily PageSpeed run (every page, its PRs)' },
-        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' }
+        { key: 'github-work', name: 'GitHub work (repos, CI, PRs, board, security)' },
+        { key: 'rescue', name: 'Review rescue (failures, re-runs, Mac, promises)' }, { key: 'fixes', name: 'Fix requests and packages' },
+        { key: 'checks', name: 'Review checks (quotas, Wordfence, outside lists)' }
     ];
 
     function connections(external, pending) {
@@ -447,6 +529,25 @@
             by[c] = (by[c] || 0) + 1;
         });
         return { total, campaigns: Object.keys(by).map((label) => ({ label, value: by[label] })).sort((a, b) => b.value - a.value) };
+    }
+
+    const SOCIAL = /linkedin|facebook|youtube|tiktok|instagram|threads|twitter|\bx\b|t\.co|buffer|reddit|telegram|\bt\.me\b/i;
+
+    /** Marketing's "when they come" grid: visits from a social network or an outreach link, by weekday and hour. */
+    function socialHeat(events) {
+        return heatmap((events || []).filter((r) => r.kind === 'visit' && (SOCIAL.test(openSource(r)) || /utm_source=outreach/i.test(String(r.query || '')))));
+    }
+
+    /** The overview's live feed (#2102): the newest events, opens and reviews of the range, newest first, as plain lines. */
+    function feed(rows, max) {
+        const r = rows || {};
+        const iso = (v) => { const d = toDate(v); return d ? d.toISOString() : ''; };
+        const product = (key) => (PRODUCTS.find((p) => p.key === key) || { name: key }).name;
+        return [].concat(
+            (r.events || []).slice(0, 40).map((x) => ({ at: iso(x.createdAt), text: `${product(x.site)}: ${x.kind === 'visit' ? 'visit from ' + openSource(x) : actionTitle(x)}` })),
+            (r.opens || []).slice(0, 20).map((x) => ({ at: iso(x.createdAt), text: `URL Review: open from ${openSource(x)}` })),
+            (r.reviews || []).slice(0, 20).map((x) => ({ at: iso(x.createdAt), text: `URL Review: ${x.paid ? 'paid ' : ''}review of ${String(x.requestedUrl || x.url || '').replace(/^https?:\/\//, '').slice(0, 50)} (${x.status || '…'})` }))
+        ).filter((x) => x.at).sort((a, b) => b.at.localeCompare(a.at)).slice(0, max || 18);
     }
 
     function thresholds(saved) {
@@ -565,11 +666,145 @@
             worktrees: worktrees.filter((w) => w && w.path && w.prState === 'merged' && !w.alive && w.dirty === false).map((w) => Object.assign({ dir: String(w.path).split('/').pop() }, w)),
             mainBroken: mainBroken.filter((m) => m && m.sha),
             flaky: ((ci.flaky || {}).workflows || []).filter((w) => w && w.name && w.runs >= 5 && w.pct >= 10),
-            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category))
+            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category)),
+            // #3489: critical/high Dependabot and code scanning, and every secret alert — Jarvis files a Backlog bug for each.
+            security: (() => {
+                const sec = x.security || {};
+                const out = [];
+                const severe = (sev) => /^(critical|high)$/i.test(String(sev || ''));
+                [['dependabot', 'dependabot'], ['codeScanning', 'codeScanning']].forEach(([kind]) => {
+                    const block = sec[kind];
+                    if (!block || block.ok === false) return;
+                    (block.items || []).filter((i) => i && i.number && severe(i.severity)).forEach((i) => out.push(Object.assign({ kind }, i)));
+                });
+                const secrets = sec.secrets;
+                if (secrets && secrets.ok !== false) {
+                    (secrets.items || []).filter((i) => i && i.number).forEach((i) => out.push(Object.assign({ kind: 'secrets', severity: i.severity || 'critical' }, i)));
+                }
+                return out;
+            })()
         };
     }
 
     // The instant briefing: rules over the summaries, most urgent first. Levels: alert, warn, good, info.
+    // Country dates (#2989): the settings Jarvis warns and reminds by, and the share of a campaign's leads that makes a holiday pause it.
+    const CALENDAR = { warnDays: 14, remindDays: 3, share: 50, horizon: 60 };
+    const dayDiff = (from, to) => Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / DAY);
+    const dayLabel = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+    const inDays = (n) => (n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`);
+    function calendarSettings(s) {
+        const d = s || {};
+        const warnDays = Math.min(CALENDAR.horizon, Math.max(1, Math.round(Number(d.warnDays)) || CALENDAR.warnDays));
+        const remind = Number.isFinite(Number(d.remindDays)) && d.remindDays !== null && d.remindDays !== '' ? Math.round(Number(d.remindDays)) : CALENDAR.remindDays;
+        return { autoPause: d.autoPause === true, warnDays, remindDays: Math.min(warnDays, Math.max(0, remind)) };
+    }
+    /** A country's sending campaigns with at least half their leads there (the geo row's camps, statuses from Marketing). */
+    function heldCampaigns(row, campaigns) {
+        const live = {};
+        (campaigns || []).forEach((c) => { if (c && c.id) live[c.id] = c.status; });
+        return ((row && row.camps) || []).filter((c) => Number(c.share) >= CALENDAR.share && /^(active|running subsequences)$/i.test(String(live[c.id] !== undefined ? live[c.id] : c.status || '')))
+            .map((c) => ({ id: c.id, name: c.name, share: Number(c.share) }));
+    }
+    /* The calendar's briefing lines: a holiday pause for each country whose campaigns would send into closed offices, the
+       pauses planned and running, and a themed campaign, routine or post ahead of a date, inside its warning window. */
+    function calendarLines(ext, now) {
+        const cal = ext.calendar;
+        if (!cal || cal.ok === false || !Array.isArray(cal.days)) return [];
+        const s = calendarSettings(cal.settings);
+        const today = zoneParts(toDate(now) || new Date()).day;
+        const rows = {};
+        ((ext.geo && ext.geo.ok !== false && ext.geo.countries) || []).forEach((r) => { rows[r.cc] = r; });
+        const mk = (ext.marketing && ext.marketing.campaigns && ext.marketing.campaigns.ok !== false && ext.marketing.campaigns.rows) || [];
+        const pauses = cal.pauses || [];
+        const taken = new Set(pauses.filter((p) => p.status === 'planned' || p.status === 'paused').map((p) => p.id));
+        const country = (cc) => (rows[cc] && rows[cc].name) || cc;
+        const lines = [];
+        let pausing = 0, themed = 0;
+        cal.days.forEach((d) => {
+            if (dayDiff(today, d.end || d.date) < 0) return;
+            const n = Math.max(0, dayDiff(today, d.date));
+            if (n > Math.min(CALENDAR.horizon, Math.max(s.warnDays, Number(d.lead) || 0))) return;
+            const level = n <= s.remindDays ? 'warn' : 'info';
+            if (d.kind === 'holiday') {
+                if (d.weekend) return;
+                (d.ccs || []).forEach((cc) => {
+                    const held = heldCampaigns(rows[cc], mk);
+                    if (!held.length || taken.has(cc + '-' + d.date) || pausing >= 6) return;
+                    pausing++;
+                    const name = (d.local && d.local[cc]) || d.name;
+                    const after = d.after && d.after[cc];
+                    lines.push({ level, product: 'geo', key: `calendar:pause:${cc}:${d.date}`, title: `Pause ${held.length === 1 ? held[0].name : held.length + ' campaigns'} in ${country(cc)} for ${name} (${dayLabel(d.date)})`,
+                        text: `${name} in ${country(cc)} on ${dayLabel(d.date)}, ${inDays(n)}: ${held.map((c) => `${c.name} (${c.share}% of its leads)`).join(', ')} would send into closed offices. Pause ${held.length === 1 ? 'it' : 'them'} that day${after ? ' and resume ' + dayLabel(after) : ''}.` });
+                });
+                return;
+            }
+            if (!d.do || themed >= 6) return;
+            themed++;
+            const where = d.all ? 'all target markets' : (d.ccs || []).slice(0, 3).map(country).join(', ') + ((d.ccs || []).length > 3 ? ` and ${d.ccs.length - 3} more` : '');
+            const span = d.end ? `${dayLabel(d.date)} to ${dayLabel(d.end)}` : dayLabel(d.date);
+            const prefix = d.do === 'post' ? 'calendar:post:' : d.do === 'routine' ? 'calendar:routine:' : 'calendar:campaign:';
+            lines.push({ level, product: 'geo', key: prefix + (d.ref || d.id) + ':' + d.date, title: `${d.name} ${inDays(n)}: ${String(d.action || '').replace(/\.$/, '')}`.slice(0, 140),
+                text: `${d.name} (${where}) ${d.ongoing ? 'is on until ' + dayLabel(d.end) : inDays(n) + ', ' + span}: ${d.action}` });
+        });
+        pauses.forEach((p) => {
+            const names = (p.campaigns || []).map((c) => c.name).join(', ');
+            if (p.status === 'planned') lines.push({ level: 'info', product: 'geo', key: `calendar:planned:${p.cc}:${p.date}`, text: `Planned: ${names} ${(p.campaigns || []).length === 1 ? 'pauses' : 'pause'} on ${dayLabel(p.date)} for ${p.name} in ${country(p.cc)} and ${(p.campaigns || []).length === 1 ? 'resumes' : 'resume'} ${dayLabel(p.resumeOn)}.` });
+            if (p.status === 'paused') {
+                const late = dayDiff(today, p.resumeOn) < 0;
+                lines.push({ level: late ? 'warn' : 'info', product: 'geo', key: `calendar:resume:${p.cc}:${p.date}`, title: `Resume ${names} after ${p.name} in ${country(p.cc)}`,
+                    text: late ? `${names} still paused after ${p.name} in ${country(p.cc)}; ${dayLabel(p.resumeOn)} was the day to resume.` : `${names} paused for ${p.name} in ${country(p.cc)}; resumes on its own ${dayLabel(p.resumeOn)}.` });
+            }
+        });
+        return lines;
+    }
+
+    // URL Review after a failure, fix requests and the newer checks (#3329): the lines the briefing, digest and weekly strategy carry.
+    function reviewOpsLines(ext, th) {
+        const out = [];
+        const add = (level, text, key) => out.push({ level, text, key });
+        const n = (x, one, many) => `${x} ${x === 1 ? one : many}`;
+        const r = ext.rescue;
+        if (r && r.ok !== false && r.promises) {
+            const risk = (r.openList || []).filter((p) => p.hoursLeft <= th.promiseHours);
+            if (risk.length) add(risk.some((p) => p.hoursLeft <= 2) ? 'alert' : 'warn', `${n(risk.length, 'promised report is', 'promised reports are')} near the ${r.deadlineHours}-hour deadline: ${risk.slice(0, 3).map((p) => `${p.host} (${p.hoursLeft <= 0 ? 'past due' : p.hoursLeft + ' h left'})`).join(', ')}.`, 'review:promise-risk');
+            const p = r.promises;
+            if (p.made) add('info', `${n(p.made, 'review', 'reviews')} promised by email in range: ${p.within48h} sent within ${r.deadlineHours} h, ${n(p.apologized, 'apology', 'apologies')}, ${p.open} still open; ${n(r.codes.redeemed, 'apology code', 'apology codes')} redeemed.`, 'review:promises');
+            const mac = r.rescues || {};
+            if (mac.macPending) add(mac.macPromised ? 'warn' : 'info', `${n(mac.macPending, 'rescue waits', 'rescues wait')} for the Mac${mac.macPromised ? ` (${mac.macPromised} promised)` : ''}; ${mac.macDone} read by the Mac in range.`, 'review:mac');
+        }
+        const f = ext.fixes;
+        if (f && f.ok !== false && f.waiting) {
+            const paid = (f.paidList || []).filter((x) => x.daysWaiting >= th.fixWaitDays || x.late);
+            if (paid.length) add(paid.some((x) => x.late) ? 'alert' : 'warn', `${n(paid.length, 'paid fix request waits', 'paid fix requests wait')} for work: ${paid.slice(0, 3).map((x) => `${x.host} ${x.package || 'quote'}${x.late ? ' (late)' : ` (${x.daysWaiting} d)`}`).join(', ')}.`, 'review:fix-paid');
+            if (f.waiting.quotes) add('warn', `${n(f.waiting.quotes, 'fix request waits', 'fix requests wait')} for a reply or a quote.`, 'review:fix-quote');
+            if (f.revenue && f.revenue.count) add('good', `Fix packages brought ${f.revenue.usd} USD in range (${n(f.revenue.count, 'payment', 'payments')}).`, 'review:fix-revenue');
+        }
+        const c = ext.checks;
+        if (c && c.ok !== false && c.quotas) {
+            c.quotas.filter((q) => q.cap && q.pct >= th.quotaPct).forEach((q) => add(q.pct >= 100 ? 'alert' : 'warn', `${q.label}: ${q.used} of ${q.cap} (${q.pct}%)${q.sweep !== undefined ? `, ${q.sweep} by sweeps` : ''}.`, 'review:quota:' + q.id));
+            const wf = c.wordfence || {};
+            if (!wf.stored) add(wf.state === 'down' ? 'warn' : 'info', `The Wordfence feed is not stored${wf.at ? ` (last attempt ${String(wf.at).slice(0, 10)}: ${wf.detail})` : ''}, so WordPress plugin versions are not checked.`, 'review:wordfence');
+            (c.sources || []).filter((x) => x.state === 'down' && x.key !== 'wordfence').forEach((x) => add('warn', `${x.name} is failing in reviews: ${x.detail}.`, 'review:source:' + x.key));
+            const hits = (c.families || []).filter((x) => x.hits);
+            if (hits.length) add(hits.some((x) => (x.id === 'phishing' || x.id === 'linked') && x.customerHits) ? 'warn' : 'info', `New checks in range: ${hits.map((x) => `${x.label} ${x.hits}`).join('; ')}.`, 'review:check-hits');
+        }
+        return out;
+    }
+
+    // The three review sources in a few hundred tokens, for Ask on the web and the server.
+    function reviewOpsAsk(e) {
+        const ok = (x) => x && x.ok !== false;
+        const r = (e || {}).rescue, f = (e || {}).fixes, c = (e || {}).checks;
+        return {
+            urlReviewAfterFailure: ok(r) && r.promises ? { failures: r.failures, reruns: { total: r.reruns.total, sent: r.reruns.sent, held: r.reruns.held }, rescues: r.rescues, aiDiagnoses: r.diagnoses, promises: r.promises, apologyCodes: r.codes,
+                promisesOpen: (r.openList || []).slice(0, 5).map((p) => p.host + ' ' + p.hoursLeft + ' h left') } : null,
+            urlReviewFixRequests: ok(f) && f.ways ? { byWay: f.ways, pipeline: f.pipeline, packageRevenue: f.revenue, freeRechecks: f.rechecks, rereviews: f.rereviews, waiting: f.waiting,
+                paidWaiting: (f.paidList || []).slice(0, 5).map((p) => p.host + ' ' + p.package + ' paid ' + p.daysWaiting + ' d ago' + (p.late ? ' (late)' : '')) } : null,
+            urlReviewNewChecks: ok(c) && c.families ? { countedSince: c.since, reviews: c.totals, hits: c.families.map((x) => x.label + ': ' + x.hits + ' of ' + x.checked), quotas: c.quotas.map((q) => q.label + ': ' + q.used + (q.cap ? ' of ' + q.cap : '')),
+                sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')), wordfenceStored: !!(c.wordfence && c.wordfence.stored) } : null
+        };
+    }
+
     function briefing(state) {
         const out = [];
         const add = (level, product, text, key) => out.push({ level, product, text, key: key || product + ':' + text.slice(0, 40) });
@@ -622,6 +857,7 @@
         const gh = ext.github;
         if (gh && gh.ok) {
             (gh.ci || []).filter((run) => run.conclusion && !['success', 'skipped', 'cancelled', 'neutral'].includes(run.conclusion)).forEach((run) => add('alert', 'systems', `CI "${run.name}" on main is ${run.conclusion}.`, 'ci:' + run.name));
+            (gh.prsStale || []).forEach((w) => add('warn', 'systems', `${plural(w.prs.length, 'open PR', 'open PRs')} failed "${w.workflow}" before main went green again; a re-run would test the old main.`, 'ci-prs:' + w.workflow));
             const waiting = gh.needsAgent || [];
             if (waiting.length) add('alert', 'systems', `${plural(waiting.length, 'URL review bug waits', 'URL review bugs wait')} for the daily fix agent, held back to stay inside the Cursor plan: ${waiting.slice(0, 5).map((bug) => '#' + bug.number).join(', ')}.`, 'github:needs-agent');
             if (gh.openBugs) add('info', 'systems', `${plural(gh.openBugs, 'open bug', 'open bugs')}; most in ${((gh.bugAreas || [])[0] || {}).label || 'none'}. ${plural((gh.merged || {}).total || 0, 'PR', 'PRs')} merged this week.`, 'github:bugs');
@@ -741,6 +977,10 @@
         if (social && social.ok) {
             if (social.failed > 0) add('warn', 'business', `${plural(social.failed, 'social post', 'social posts')} failed to publish in range.`, 'social:failed');
             else if (!social.sent) add('info', 'business', 'No social posts went out in range.', 'social:none');
+            if (social.assets && social.assets.missing && social.assets.missing.length) {
+                add('warn', 'business', `Auto batch ${social.assets.batch || ''} is missing carousel slides or LinkedIn PDF (${social.assets.missing.length}).`, 'social:assets-missing');
+            }
+            (social.needs || []).filter((n) => /carousel|LinkedIn PDF|document/i.test(n)).forEach((n, i) => add('warn', 'business', n, 'social:assets-need:' + i));
         }
         const safety = ext.safety;
         if (safety && safety.ok) (safety.checks || []).filter((c) => c.level === 'alert' || c.level === 'warn').forEach((c) => add(c.level, 'systems', `${c.name}: ${c.detail}`, 'safety:' + c.key));
@@ -805,6 +1045,15 @@
                 else if (links.visits > 0) add('info', 'outreach', `${plural(links.visits, 'visit', 'visits')} and ${plural(links.reviews, 'free review', 'free reviews')} came from qalabreview.com links.`, 'outreach:links-visits');
             }
         }
+        // 90-day targets (#2649): behind pace becomes a proposal; missed and quiet hand-logged ones stay lines.
+        const tg = ext.targets;
+        if (tg && tg.ok) {
+            (tg.targets || []).forEach((t) => {
+                if (t.status === 'behind') add('warn', 'outreach', `90-day target behind: ${t.label}, ${t.actual} of ${t.target} (about ${t.expected} by now); ${t.perWeek} a week from here.`, 'targets:behind:' + t.key);
+                else if (t.status === 'missed' && tg.day - tg.length <= 14) add('info', 'outreach', `90-day target missed: ${t.label}, ${t.actual} of ${t.target}.`, 'targets:missed:' + t.key);
+                else if (t.status === 'on-pace' && t.stale) add('info', 'outreach', `90-day target ${t.label}: nothing logged in 14 days; log it when one happens.`, 'targets:stale:' + t.key);
+            });
+        }
         // Email addresses (#2338): a line only for what the outreach and mailbox sources do not already say.
         const ad = ext.addresses;
         if (ad && ad.ok) {
@@ -819,8 +1068,10 @@
                 add(i.level, 'systems', i.text, 'addresses:' + i.key);
             });
         }
+        reviewOpsLines(ext, th).forEach((b) => add(b.level, 'review', b.text, b.key));
         const waiting = CONNECTIONS.reduce((n, c) => n + (((ext[c.key] || {}).needs) || []).length, 0);
         if (waiting) add('info', 'systems', `${plural(waiting, 'connection waits', 'connections wait')} for a one-time grant; see Systems > Connections.`, 'connections:needs');
+        calendarLines(ext, state.now).forEach((line) => out.push(line));
         (state.goals || []).forEach((g) => {
             if (g.status === 'done') add('good', g.product, `Goal met: ${g.label}, ${g.value} of ${g.target}.`, 'goal:' + g.key);
             else if (g.status === 'far-behind' && g.elapsed >= 25) add('warn', g.product, `Goal behind: ${g.label} is at ${g.value} of ${g.target} with ${g.elapsed}% of the time gone (pace ${g.projected}).`, 'goal:' + g.key);
@@ -855,7 +1106,15 @@
         { prefix: 'addresses:m365:', impact: 3, group: true, title: 'Fix the Microsoft 365 mailboxes', link: 'https://admin.microsoft.com/#/users' },
         { prefix: 'addresses:improvmx:', impact: 3, group: true, title: 'Fix the ImprovMX aliases', tab: 'systems' },
         { prefix: 'addresses:sendgrid:', impact: 3, title: 'Add an ImprovMX alias for the SendGrid sender', link: 'https://app.improvmx.com/' },
+        { prefix: 'review:promise-risk', impact: 5, title: 'Get the promised review reports out before the 48-hour deadline', tab: 'review' },
+        { prefix: 'review:fix-paid', impact: 5, title: 'Start the paid fix packages', tab: 'review' },
+        { prefix: 'review:fix-quote', impact: 4, title: 'Answer the fix requests that wait for a quote', tab: 'review' },
+        { prefix: 'review:quota:', impact: 3, group: true, title: 'Keep the review check quotas under their caps', tab: 'review' },
+        { prefix: 'review:wordfence', impact: 3, levels: ['warn'], title: 'Get the Wordfence feed stored so WordPress plugins are checked', tab: 'review' },
+        { prefix: 'review:source:', impact: 3, group: true, title: (n) => `Bring back ${n === 1 ? 'the review check source that fails' : n + ' review check sources that fail'}`, tab: 'review' },
+        { prefix: 'review:mac', impact: 3, levels: ['warn'], title: 'Let the Mac take the promised rescues waiting for it', tab: 'review' },
         { prefix: 'review:held', impact: 3, title: 'Re-run the held reviews', action: 'rerun-held', tab: 'systems' },
+        { prefix: 'ci-prs:', impact: 3, group: true, title: 'Close and reopen the PRs that failed on the old main', link: 'https://github.com/kaanmuar/kaanmuar.github.io/pulls' },
         { prefix: 'notices:failed', impact: 3, title: 'Re-send the owner notices that failed', action: 'resend-notices', tab: 'review' },
         { prefix: 'hub:stale', impact: 3, title: 'Publish the Social hub', action: 'publish-hub', tab: 'hub' },
         { prefix: 'money:refunds', impact: 3, title: 'Read why customers asked for refunds', tab: 'business' },
@@ -869,6 +1128,8 @@
         { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
         { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
         { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', click: 'retry-social', tab: 'hub' },
+        { prefix: 'social:assets-missing', impact: 3, title: 'Fix missing auto-batch carousel or LinkedIn PDF', click: 'social-post-now', tab: 'hub' },
+        { prefix: 'social:assets-need', impact: 3, title: 'Fix missing auto-batch carousel or LinkedIn PDF', click: 'social-post-now', tab: 'hub' },
         { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
         { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', click: 'resume-outreach', tab: 'outreach' },
         { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
@@ -881,6 +1142,7 @@
         { prefix: 'search:brave', impact: 2, title: 'Write for the searches where we are not in the top 100', tab: 'business' },
         { prefix: 'social:none', impact: 2, title: 'Schedule social posts', tab: 'hub' },
         { prefix: 'outreach:pace', impact: 2, title: 'Review more outreach prospects this week', tab: 'outreach' },
+        { prefix: 'targets:behind:', impact: 3, group: true, title: (n) => (n === 1 ? 'Catch up on a 90-day target' : `Catch up on ${n} 90-day targets`), tab: 'outreach' },
         { prefix: 'ga4:swing', impact: 2, levels: ['warn'], title: 'Find why GA4 sessions fell', tab: 'traffic' },
         { prefix: 'cv:swing', impact: 2, levels: ['warn'], title: 'Find why CV visits fell', tab: 'cv' },
         { prefix: 'studio:swing', impact: 2, levels: ['warn'], title: 'Find why QA Studio visits fell', tab: 'studio' },
@@ -904,11 +1166,17 @@
         { prefix: 'gh:repo-red:', impact: 2, group: true, title: 'Get CI green in the other repositories', tab: 'github' },
         { prefix: 'gh:score', impact: 2, levels: ['info'], title: 'Find why the GitHub score dropped', tab: 'github' },
         { prefix: 'gh:branch-merged', impact: 1, levels: ['info'], title: 'Delete the merged branches', click: 'gh-delete-branch', tab: 'github' },
-        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' }
+        { prefix: 'gh:worktree-merged:', impact: 1, levels: ['info'], group: true, title: 'Remove the merged worktrees', click: 'gh-remove-worktree', tab: 'github' },
+        // #2989: country dates. A pause today runs at once, a later one waits for the daily job; resume runs at once.
+        { prefix: 'calendar:pause:', impact: 3, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), click: 'calendar-pause', tab: 'geo' },
+        { prefix: 'calendar:resume:', impact: 3, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), click: 'calendar-resume', tab: 'geo' },
+        { prefix: 'calendar:campaign:', impact: 2, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'marketing' },
+        { prefix: 'calendar:routine:', impact: 2, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'marketing' },
+        { prefix: 'calendar:post:', impact: 1, levels: ['info', 'warn'], title: (i) => i.title || i.text.slice(0, 110), tab: 'hub' }
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
     // Actions a proposal offers as a button that only run on a click (#1977); gh-* (#2526) through action-run.
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent'];
+    const CLICK_ACTIONS = ['retry-social', 'social-post-now', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent', 'calendar-pause', 'calendar-resume'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -922,7 +1190,7 @@
             const row = out.get(key) || { key, product: item.product, impact: rule.impact, level: item.level, evidence: [], source: 'rules', action: rule.action || null, click: rule.click || null, tab: rule.tab || null, link: rule.link || null, rule };
             row.evidence.push(item.text);
             if (/^(job|scheduler):/.test(item.key)) (row.jobs = row.jobs || []).push(item.key.slice(item.key.indexOf(':') + 1));
-            if (item.key.startsWith('ci:')) (row.workflows = row.workflows || []).push(item.key.slice(3));
+            if (/^ci(-prs)?:/.test(item.key)) (row.workflows = row.workflows || []).push(item.key.slice(item.key.indexOf(':') + 1));
             if (item.key.startsWith('gh:flaky:')) (row.workflows = row.workflows || []).push(item.key.slice(9));
             if (item.level === 'alert') row.level = 'alert';
             row.item = row.item || item;
@@ -940,9 +1208,10 @@
 
     const RUN_LABELS = {
         'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
-        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
+        'retry-social': 'Retry failed posts', 'social-post-now': 'Post the queues now', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
         'gh-board-sync': 'Sync the board', 'gh-orphan-ticket': 'File the tickets', 'gh-update-pr': 'Update with main', 'gh-merge-pr': 'Merge', 'gh-revert': 'Open a revert PR',
-        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent'
+        'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent',
+        'calendar-pause': 'Pause over the holiday', 'calendar-resume': 'Resume now'
     };
 
     const pageSpeedPr = (key) => Number((/^pagespeed:pr:(\d+)$/.exec(key || '') || [])[1]) || 0;
@@ -965,6 +1234,7 @@
             return { action, label: RUN_LABELS[action] };
         }
         if (p.jobs && p.jobs.length) return { action: 'run-job', jobs: p.jobs.slice(0, 6), label: many(p.jobs, (j) => `Run ${j} again`, (n) => `Run ${n} jobs again`) };
+        if (p.workflows && p.workflows.length && p.key === 'ci-prs') return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: 'Close and reopen the PRs' };
         if (p.workflows && p.workflows.length) return { action: 'rerun-ci', workflows: p.workflows.slice(0, 6), label: many(p.workflows, (w) => `Re-run ${w}`, (n) => `Re-run ${n} workflows`) };
         return null;
     }
@@ -1026,6 +1296,12 @@
             fact('Workflow', tail); fact('Result', run.conclusion); fact('Commit', run.sha); fact('Finished', run.at);
             link('Open the run on GitHub', run.url || BRIEF_LINKS.github);
             act('rerun-ci', 'Re-run the failed jobs', { workflow: tail });
+        } else if (k.startsWith('ci-prs:')) {
+            const prs = (((ext.github || {}).prsStale || []).find((w) => w.workflow === tail) || {}).prs || [];
+            fact('Workflow', tail); fact('PRs that failed on the old main', prs.length);
+            fact('What the button does', 'Closes and reopens each PR, 3 seconds apart, so GitHub builds a fresh merge with today\'s main. At most 20 a click; PRs that conflict with main are skipped and listed.');
+            prs.slice(0, 8).forEach((pr) => link('#' + pr.number + ' ' + pr.title, pr.url));
+            act('rerun-ci', 'Close and reopen them', { workflow: tail });
         } else if (k === 'github:needs-agent') {
             const waiting = (ext.github || {}).needsAgent || [];
             fact('Waiting for an agent', waiting.length);
@@ -1191,7 +1467,7 @@
         const t = raw.toLowerCase().replace(/^(hey |ok |okay )?jarvis[,.!]?\s*/, '').trim();
         if (!t) return { type: 'none' };
         const range = t.match(/\b(?:last|past)?\s*(24 hours|today|7|14|30|90)\s*(?:days?)?\b|\ball time\b/);
-        if (/\ball time\b/.test(t)) return { type: 'range', value: 'all' };
+        if (/\b(all time|(?:last|past|a|1|one) year)\b/.test(t)) return { type: 'range', value: '365' };
         if (range && /\b(day|days|hours|today|range|last|past)\b/.test(t)) return { type: 'range', value: /24 hours|today/.test(range[1]) ? '1' : range[1] };
         if (/\b(print|pdf)\b/.test(t)) return { type: 'print', all: /\b(all|everything)\b/.test(t) };
         if (/\b(export|download)\b/.test(t)) return { type: 'export', format: /\bcsv\b/.test(t) ? 'csv' : /\b(png|image|picture)\b/.test(t) ? 'png' : 'json' };
@@ -1215,6 +1491,60 @@
             if (hit) return { type: 'go', product: hit[0] };
         }
         return { type: 'ask', question: raw };
+    }
+
+    // A section push (#2509): the sections to fetch. It carries the one-day versions, so on one day only those this
+    // page does not hold; on any other range the ones it names as moved.
+    function sectionsToFetch(msg, versions, range) {
+        const moved = String((msg && msg.sections) || '').split(',').filter(Boolean);
+        let pushed;
+        try { pushed = JSON.parse((msg && msg.versions) || '{}') || {}; } catch (error) { return moved; }
+        if (String((msg && msg.days) || '') !== String(range)) return moved;
+        const stale = Object.keys(pushed).filter((name) => !versions || !versions[name] || versions[name].v !== pushed[name]);
+        return stale.concat(moved.filter((name) => !(name in pushed)));
+    }
+
+    // Jarvis 2.0 sections (#2510, contract on #2507). The versions a kept snapshot sends as `since`, or null when it
+    // has none (an answer from before #2508), which means a full fetch.
+    function sectionSince(versions) {
+        if (!versions || typeof versions !== 'object') return null;
+        const since = {};
+        Object.keys(versions).forEach((name) => { if (versions[name] && versions[name].v) since[name] = versions[name].v; });
+        return Object.keys(since).length ? since : null;
+    }
+
+    // A delta answer applied to the kept full snapshot: each field replaced (null drops it), `external` merged by
+    // source, each source's checked time taken from `checked` (its section is not resent when only that moved), and
+    // the window moved with the build time when products did not change. Null when it cannot be applied: fetch it all.
+    function applySections(kept, answer) {
+        if (!kept || typeof kept !== 'object' || !answer || answer.delta !== true) return null;
+        if (!answer.sections || typeof answer.sections !== 'object' || !answer.versions || typeof answer.versions !== 'object') return null;
+        const out = Object.assign({}, kept, { external: Object.assign({}, kept.external) });
+        const put = (into, key, value) => { if (value === null) delete into[key]; else into[key] = value; };
+        Object.keys(answer.sections).forEach((name) => {
+            const payload = answer.sections[name] || {};
+            Object.keys(payload).forEach((key) => {
+                if (key === 'external') Object.keys(payload.external || {}).forEach((source) => put(out.external, source, payload.external[source]));
+                else put(out, key, payload[key]);
+            });
+        });
+        const checked = answer.checked || {};
+        Object.keys(checked).forEach((source) => {
+            const x = out.external[source];
+            if (x && typeof x === 'object' && x.cachedAt !== checked[source]) out.external[source] = Object.assign({}, x, { cachedAt: checked[source] });
+        });
+        if (Array.isArray(out.connections) && Object.keys(checked).length) {
+            out.connections = out.connections.map((c) => (c && c.key in checked && out.external[c.key] && c.at !== checked[c.key] ? Object.assign({}, c, { at: checked[c.key] }) : c));
+        }
+        const shift = Date.parse(answer.cachedAt) - Date.parse(kept.cachedAt);
+        if (!answer.sections.products && out.window && shift) {
+            const move = (iso) => (iso && Number.isFinite(Date.parse(iso)) ? new Date(Date.parse(iso) + shift).toISOString() : iso);
+            const w = out.window;
+            out.window = Object.assign({}, w, { start: move(w.start), end: move(w.end) }, w.prior ? { prior: Object.assign({}, w.prior, { start: move(w.prior.start), end: move(w.prior.end) }) } : {});
+        }
+        if (answer.cachedAt !== undefined) out.cachedAt = answer.cachedAt;
+        out.versions = Object.assign({}, kept.versions, answer.versions);
+        return out;
     }
 
     function windowFor(range, now) {
@@ -1464,6 +1794,9 @@
         const so = ok(e.social) && e.social.daily ? e.social : null;
         out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
             series: so ? { labels: so.daily.map((d) => d.date), values: so.daily.map((d) => num(d.posts)) } : { labels: [], values: [] } });
+        const geo = ok(e.geo) && e.geo.totals ? e.geo.totals : null;
+        out.push({ key: 'geo', name: 'Map', kpis: geo ? [kpi('Countries active', num(geo.countries)), kpi('Targets missing', num(geo.missing), undefined, { alert: num(geo.missing) > 0 }), kpi('Replies', num(geo.replies))] : [],
+            series: { labels: [], values: [] } });
         const eg = ok(e.engagement) && Array.isArray(e.engagement.daily) ? e.engagement : null;
         const t = (eg && eg.report && eg.report.totals) || {};
         out.push({ key: 'engagement', name: 'Engagement', kpis: eg ? [kpi('Posts read', num(t.read)), kpi('Candidates', num(t.candidates)), kpi('Replies drafted', num(t.drafted))] : [],
@@ -1497,7 +1830,18 @@
         return line ? line.slice(head.length).trim() : '';
     }
 
-    const api = { linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SEARCH_QUERIES, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor };
+    /* The console's filter, on the server (the log op) and in the page: sources = a list or "a,b" (empty is all),
+       level = the lowest level shown, q = words that must all appear in the line's text, source or ref. */
+    function logFilter(rows, f) {
+        const o = f || {};
+        const sources = (Array.isArray(o.sources) ? o.sources : String(o.sources || '').split(',')).map((s) => String(s).trim()).filter(Boolean);
+        const min = Math.max(0, LOG_LEVELS.indexOf(o.level));
+        const words = String(o.q || '').toLowerCase().split(/\s+/).filter(Boolean);
+        return (rows || []).filter((r) => r && (!sources.length || sources.includes(r.source)) && Math.max(0, LOG_LEVELS.indexOf(r.level)) >= min
+            && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
+    }
+
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

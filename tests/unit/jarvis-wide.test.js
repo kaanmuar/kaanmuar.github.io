@@ -109,13 +109,16 @@ test("the uptime strip covers 90 Bogota days, leaves days without checks empty a
   assert.deepEqual(core.uptimeStrip([], NOW).pct, null);
 });
 
-test("the product list carries the site products and outreach, marketing, engagement and GitHub from their sources", () => {
+test("the product list carries the site products and outreach, marketing, the map, engagement and GitHub from their sources", () => {
   const list = core.productList(PRODUCTS, {
     outreach: { ok: true, pipeline: { ok: true, reviews: 4, queued: 9, daily: [{ date: "2026-11-01", reviews: 4 }] }, instantly: { ok: false } },
     social: { ok: true, sent: 5, failed: 1, daily: [{ date: "2026-11-01", posts: 5 }] },
+    geo: { ok: true, totals: { countries: 12, missing: 3, replies: 7 } },
     engagement: { ok: true, daily: [{ day: "2026-11-01", read: 9 }], report: { totals: { read: 9, candidates: 2, drafted: 1 } } }
   });
-  assert.deepEqual(list.map((p) => p.key), ["inbox", "cv", "studio", "review", "outreach", "marketing", "engagement", "github"]);
+  assert.deepEqual(list.map((p) => p.key), ["inbox", "cv", "studio", "review", "outreach", "marketing", "geo", "engagement", "github"]);
+  assert.deepEqual(list.find((p) => p.key === "geo").kpis.map((k) => [k.label, k.value]), [["Countries active", 12], ["Targets missing", 3], ["Replies", 7]]);
+  assert.deepEqual(core.productList({}, {}).find((p) => p.key === "geo").kpis, []);
   assert.deepEqual(list.find((p) => p.key === "github").kpis, []);
   assert.deepEqual(list.find((p) => p.key === "outreach").kpis.map((k) => k.label), ["Reviewed", "Queued"]);
   assert.equal(list.find((p) => p.key === "marketing").kpis[1].alert, true);

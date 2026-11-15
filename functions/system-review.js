@@ -23,6 +23,8 @@ function causeOf(log) {
   if (memory) return "ran out of memory (" + clip(memory, 120) + "): raise the job's memory or read less at once";
   const limited = find(/\b429\b|rate limit|quota exceeded/i);
   if (limited) return "hit a rate limit (" + clip(limited, 120) + "): it should pass on the next run; if not, slow it down";
+  const stalled = find(/Timeout reached, aborting|Creating Pages deployment failed|Failed to create deployment/i);
+  if (stalled) return "the Pages deployment stalled on GitHub's side (" + clip(stalled.replace(/^##\[error\]/, ""), 100) + "), not in the commit: Jarvis starts Pages again on main's newest commit after the countdown";
   const timeout = find(/timed out|ETIMEDOUT|exceeded the maximum execution time/i);
   if (timeout) return "timed out (" + clip(timeout, 120) + ")";
   const end = lines.findIndex((l) => /##\[error\]/.test(l));

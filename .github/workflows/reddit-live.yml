@@ -62,13 +62,19 @@ jobs:
       - name: Build and upload
         if: steps.ready.outputs.go == '1'
         working-directory: reddit/live-reports
+        env:
+          REDDIT_ENGAGEMENT_TOKEN: ${{ secrets.REDDIT_ENGAGEMENT_TOKEN }}
         run: |
           mkdir -p ~/.devvit && printf '%s' "$DEVVIT_TOKEN" > ~/.devvit/token && chmod 600 ~/.devvit/token
           npm ci --no-audit --no-fund
+          # The replies Carlos approved and the app has not posted yet go with this version too (#2614).
+          bundled=0
+          if [ -n "$REDDIT_ENGAGEMENT_TOKEN" ]; then node ../../scripts/reddit-engagement.js sync && bundled=1 || echo "::warning::The approved Reddit replies were not bundled; the hourly sync uploads them."; fi
           node scripts/build.mjs | tee -a "$GITHUB_STEP_SUMMARY"
           # A dated version, so a manual upload in between never collides with the daily one.
           npx devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
           npx devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest
+          [ "$bundled" = 0 ] || node ../../scripts/reddit-engagement.js uploaded || true
 
   ledger:
     runs-on: ubuntu-latest

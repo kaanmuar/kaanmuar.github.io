@@ -1,0 +1,19 @@
+# Bugbot repo config (#3518). Read from the PR base branch.
+# Dashboard personal setting "Run only when mentioned" is still preferred for
+# true manual-only; this caps automatic runs to once per PR when auto is on.
+version: 1
+
+triggers:
+  drafts: false
+  frequency: oncePerPr
+
+review:
+  effort: default
+  incremental: true
+
+prSummary:
+  mode: disabled
+  riskScore: false
+
+autofix:
+  mode: disabled

@@ -2,10 +2,12 @@ package com.carlosandmunoz.jarvis
 
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.ui.ChannelMembers
+import com.carlosandmunoz.jarvis.ui.ChannelNumbers
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.util.Locale
 
 class SocialTest {
     private fun json(s: String) = JSON.parseToJsonElement(s) as JsonObject
@@ -16,6 +18,18 @@ class SocialTest {
         assertEquals(11, up?.change)
         assertEquals("8 members · -2 since 2026-10-30", ChannelMembers.members(json("""{"members":8,"change":-2,"from":{"date":"2026-10-30","members":10}}"""))?.text)
         assertEquals("25 members", ChannelMembers.members(json("""{"members":25,"change":null,"from":null}"""))?.text)
+    }
+
+    @Test fun channelNumbersListTheSummedCountsAboveZeroInOrder() {
+        val prev = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+        try {
+            assertEquals("1,200 views · 7 likes · 3 comments", ChannelNumbers.text(json("""{"comments":3,"likes":7,"views":1200,"impressions":0}""")))
+            assertNull(ChannelNumbers.text(json("{}")))
+            assertNull(ChannelNumbers.text(null))
+        } finally {
+            Locale.setDefault(prev)
+        }
     }
 
     @Test fun noTelegramCountShowsNoMembersLine() {

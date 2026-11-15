@@ -76,6 +76,18 @@
     }
   }
 
+  // A code the page was given (the inconclusive splash), so the next run and pay page carry it as a link would.
+  function keep(value) {
+    const next = String(value || "").trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,24}$/.test(next)) return false;
+    try {
+      sessionStorage.setItem(KEY, next);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function countDown(el, from, to) {
     const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const unit = "<small>USD</small>";
@@ -125,7 +137,7 @@
     const list = Number(deal && deal.listUsd);
     const usd = Number(deal && (deal.usd != null ? deal.usd : deal.priceUsd));
     if (!percent || !(list > usd)) {
-      host.hidden = true;
+      host.hidden = !(deal && deal.offer && window.ReviewOffer && window.ReviewOffer.note(host, deal.offer));
       return false;
     }
     addStyle();
@@ -160,5 +172,12 @@
     return true;
   }
 
-  window.ReviewDeal = { code, render, money };
+  window.ReviewDeal = { code, keep, render, money };
+
+  if (!document.querySelector("script[src*='qa-review-offer.js']")) {
+    const offer = document.createElement("script");
+    offer.src = "js/qa-review-offer.js?v=20261105a";
+    offer.defer = true;
+    document.head.appendChild(offer);
+  }
 })();

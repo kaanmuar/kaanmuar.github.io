@@ -212,7 +212,7 @@ test("Connect Mastodon registers the app, signs in, marks the account a bot; Con
   assert.match(ok.message, /QA-lab URL Review/);
   assert.equal(db.data.get("engagement_private/youtube").refresh, "1//r");
   const all = await A.connections(db);
-  assert.deepEqual(all.map((c) => c.connected), [false, true, true]);
+  assert.deepEqual(all.map((c) => c.connected), [false, true, true, false]);
   assert.equal(all.find((c) => c.network === "mastodon").bot, true);
   await A.disconnect(db, "youtube");
   assert.equal((await A.connections(db)).find((c) => c.network === "youtube").connected, false);
@@ -229,6 +229,30 @@ test("approving through Jarvis posts the reply and says where; a dry run still p
   await db.collection("engagement_posts").doc("x_aaaaaaaaaaaaaaaaaaaa").set({ network: "x", id: "1", seenAt: ago(1), author: {}, actions: { reply: { status: "waiting", draft: "Short and useful.", expiresAt: new Date(NOW + HOUR).toISOString() } } });
   const x = await J.decide(deps(db, net), { key: "x_aaaaaaaaaaaaaaaaaaaa", decision: "approve" }, "carlos");
   assert.match(x.message, /Mac's browser agent posts it on X on its next run/);
+  assert.equal(x.status, "approved");
+  await db.collection("engagement_posts").doc("linkedin_bbbbbbbbbbbbbbbbbbbb").set({
+    network: "linkedin", id: "https://linkedin.com/school/upb", url: "https://linkedin.com/school/upb", seenAt: ago(1),
+    author: { handle: "upb" }, campaign: "report-reply",
+    report: { match: "profile", host: "upb.edu.co", profile: "https://linkedin.com/school/upb", latest: true },
+    actions: { reply: { status: "waiting", draft: "upb, su revisión está lista.", expiresAt: new Date(NOW + HOUR).toISOString() } }
+  });
+  const profile = await J.decide(deps(db, net), { key: "linkedin_bbbbbbbbbbbbbbbbbbbb", decision: "approve" }, "carlos");
+  assert.equal(profile.status, "approved");
+  assert.notEqual(profile.status, "copy");
+  assert.match(profile.message, /under their latest post/);
+  assert.equal(db.data.get("engagement_posts/linkedin_bbbbbbbbbbbbbbbbbbbb").actions.reply.status, "approved");
+});
+
+test("old clipboard copies are promoted to approved so the next scout or Mac run posts them (#3461)", async () => {
+  const db = fakeDb();
+  await db.collection("engagement_posts").doc("x_cccccccccccccccccccc").set({
+    network: "x", id: "https://x.com/UPB", url: "https://x.com/UPB", campaign: "report-reply",
+    report: { match: "profile", manual: true, profile: "https://x.com/UPB" },
+    actions: { reply: { status: "copy", draft: "Hola UPB" } }
+  });
+  assert.equal(await J.promoteCopies(db, NOW), 1);
+  assert.equal(db.data.get("engagement_posts/x_cccccccccccccccccccc").actions.reply.status, "approved");
+  assert.equal(await J.promoteCopies(db, NOW), 0);
 });
 
 // --- Conversations (#2421): never answer twice, and pick up comments under our replies -------------------------
@@ -477,4 +501,12 @@ test("comments on our own posts and clips come from each network's notifications
   const yKey = E.keyOf("youtube", "UgyOwn");
   assert.equal((await J.decide(Object.assign({}, d, { now: NOW + 3 * HOUR }), { key: yKey, decision: "approve" }, "carlos")).status, "posted");
   assert.deepEqual(net.calls.find((c) => c.url.includes("youtube/v3/comments?part=snippet") && c.body).body.snippet, { parentId: "UgyOwn", textOriginal: "Yes, measure it in the field with CrUX." }, "the answer goes into the comment's thread on our video");
+});
+
+test("a video with comments turned off refuses only that reply; another 403 still stops the network", async () => {
+  const answer = (error) => async () => ({ ok: false, status: 403, text: async () => JSON.stringify({ error }) });
+  const off = await A.call(answer({ message: "The video identified by the videoId parameter has disabled comments.", errors: [{ reason: "commentsDisabled" }] }), "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", { json: {} }).catch((e) => e);
+  assert.equal(off.fatal, false);
+  const denied = await A.call(answer({ message: "Request had insufficient authentication scopes.", errors: [{ reason: "insufficientPermissions" }] }), "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", { json: {} }).catch((e) => e);
+  assert.equal(denied.fatal, true);
 });

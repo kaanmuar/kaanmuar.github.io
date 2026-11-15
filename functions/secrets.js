@@ -7,8 +7,8 @@ const MAIL = ["SENDGRID_API_KEY"];
 const GITHUB = ["GITHUB_APP_PRIVATE_KEY"];
 const BROWSER = ["BROWSER_KEY"];
 // What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk, Places (the Google Business Profile
-// check) and the web search.
-const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "PLACES_KEY", "BRAVE_SEARCH_KEY"];
+// check), the web search, and the phishing and malware lists (functions/url-review-threat-lists.js).
+const SCAN = ["BROWSER_KEY", "PAGESPEED_KEY", "CRUX_KEY", "WEBRISK_KEY", "PLACES_KEY", "BRAVE_SEARCH_KEY", "CLOUDFLARE_URLSCAN_TOKEN"];
 const SITE_TOKEN = ["REVIEW_VERIFY_KEY"];
 const PAY = ["STRIPE_SECRET_KEY", "PAYPAL_CLIENT_SECRET", "PAYPAL_SANDBOX_CLIENT_SECRET"];
 const GEMINI = ["GEMINI_API_KEY"];
@@ -25,21 +25,32 @@ const BY_FUNCTION = {
   booking: list(MAIL, ["TURNSTILE_SECRET_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
   mailWithGithub: list(MAIL, GITHUB),
   diagnoseReviewFailures: list(BROWSER),
-  rerunReviewFailures: list(MAIL, SCAN),
+  rerunReviewFailures: list(MAIL, SCAN, GEMINI),
   fileReviewFailureBugs: list(GITHUB),
   sweep: list(SCAN),
   // placesProspects (#2120): Places Text Search for local-business prospects.
   prospects: list(["PLACES_KEY"]),
+  // wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
+  wordfenceFeed: list(["WORDFENCE_KEY"]),
   ownerReplies: list(MAIL, ["OWNER_REPLY_KEY"]),
   reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY"]),
   reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY"]),
   reviewBrowser: list(BROWSER),
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
-  jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI),
-  jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI),
-  jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER),
+  // fixRereview (#3102): the free re-review after a fix, then the before/after mail.
+  fixRereview: list(MAIL, SCAN, SITE_TOKEN),
+  // The daily briefing builds the geo source and its history, which read the short-link clicks (#3281).
+  jarvisMail: list(MAIL, JARVIS_SOURCES, GEMINI, CLOUDFLARE),
+  // Both load the whole snapshot for the live push (#2509), so they hold every secret its sources read, like jarvis;
+  // a missing one would be cached as a failed source for every client.
+  jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
+  jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"]),
   // jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
   jarvisGithub: list(MAIL, GITHUB, GEMINI),
+  // jarvisGithubHook (#2548): the secret GitHub signs the repo's workflow_run webhook with.
+  jarvisGithubHook: list(["GITHUB_WEBHOOK_SECRET"]),
+  // jarvisLogPoll (#2810): the app token for the runs, issues and board moves it puts in Jarvis > Console.
+  jarvisLogPoll: list(GITHUB),
   // jarvisIndexCheck and jarvisIndexPush (#2480): Brave's site: search, and Brave's form through the review browser.
   jarvisIndex: list(["BRAVE_SEARCH_KEY"], BROWSER),
   // A Gmail app password for the inbox qa@carlosandmunoz.com forwards to (functions/tiktok-business-watch.js).

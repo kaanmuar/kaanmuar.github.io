@@ -1,0 +1,19 @@
+# .cursorignore — hard-block secrets and PII only (#3474).
+# Do NOT put package.json, lockfiles, firebase/cloudflare configs, fixtures,
+# media, or work-log.csv here (those stay readable; use .cursorindexingignore).
+
+# Cloudflare Workers & local env secrets
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!.env.example
+functions/.secret.local
+
+# Firebase / GCP credential dumps
+*service-account*.json
+*firebase-adminsdk*.json
+
+# Owner PII / private notes (not agent architecture)
+owner-notices-*.csv
+PubSap/

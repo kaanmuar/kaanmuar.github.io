@@ -107,7 +107,8 @@
         "instagram": "Comune di Bogotá: SEO 97.\n\nOgni pagina ha titolo e descrizione, la sitemap risponde, i dati strutturati si leggono senza errori e le card di condivisione sono complete. Il problema: ogni pagina invia dati a due proprietà GA4.\n\nLezione: Un sito, una proprietà GA4, un gtag.js. Se due team hanno bisogno dei dati, condividi l’accesso invece di aggiungere un tag.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Analytics #GA4 #SEO #QA #WebDev #QAlab",
         "facebook": "Comune di Bogotá: SEO 97.\n\nOgni pagina ha titolo e descrizione, la sitemap risponde, i dati strutturati si leggono senza errori e le card di condivisione sono complete. Il problema: ogni pagina invia dati a due proprietà GA4.\n\nLezione: Un sito, una proprietà GA4, un gtag.js. Se due team hanno bisogno dei dati, condividi l’accesso invece di aggiungere un tag.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=bogota\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "03-who": {
     "date": "2026-11-06",
@@ -327,7 +328,8 @@
         "instagram": "TransMilenio lascia che sia la ricerca a scrivere la sua presentazione.\n\nOgni pagina linkata risponde e i crawler AI sono i benvenuti. Ma nessuna delle 20 pagine analizzate ha una meta description, pagina iniziale inclusa, quindi lo snippet lo scrivono i motori di ricerca.\n\nLezione: Scrivi una descrizione di circa 150 caratteri per le tue dieci pagine più visitate, partendo dalla home page.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #MetaDescription #SERP #QA #WebDev #QAlab",
         "facebook": "TransMilenio lascia che sia la ricerca a scrivere la sua presentazione.\n\nOgni pagina linkata risponde e i crawler AI sono i benvenuti. Ma nessuna delle 20 pagine analizzate ha una meta description, pagina iniziale inclusa, quindi lo snippet lo scrivono i motori di ricerca.\n\nLezione: Scrivi una descrizione di circa 150 caratteri per le tue dieci pagine più visitate, partendo dalla home page.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-2026-10&utm_content=transmilenio\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "07-python": {
     "date": "2026-11-08",

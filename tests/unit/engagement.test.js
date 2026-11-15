@@ -16,7 +16,7 @@ const scored = (o) => { const p = post(o); return Object.assign({ key: E.keyOf(p
 test("settings fill defaults, clamp numbers and merge a patch", () => {
   const s = E.settings(null);
   assert.equal(s.paused, false);
-  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15 });
+  assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15, join: 2 });
   assert.ok(s.competitors.includes("semrush"));
   assert.equal(E.settings({ caps: { like: -4, reply: 9999 } }).caps.like, 0);
   assert.equal(E.settings({ caps: { reply: 9999 } }).caps.reply, 500);
@@ -26,6 +26,26 @@ test("settings fill defaults, clamp numbers and merge a patch", () => {
   assert.equal(next.caps.like, 60);
   assert.deepEqual(next.competitors, ["acme", "foo", "bar"]);
   assert.throws(() => E.settingsPatch(s, {}), /Nothing to change/);
+});
+
+test("a saved competitor list keeps its own names and picks up defaults added later, but not removed ones", () => {
+  const saved = E.settings({ competitors: ["Acme", "semrush", "moz"] });
+  assert.deepEqual(saved.competitors.slice(0, 3), ["acme", "semrush", "moz"]);
+  ["sucuri", "wordfence", "mxtoolbox", "detectify", "upguard"].forEach((name) => assert.ok(saved.competitors.includes(name), name));
+  assert.equal(new Set(saved.competitors).size, saved.competitors.length);
+
+  const posted = E.settingsPatch(saved, { competitors: saved.competitors.filter((c) => c !== "moz" && c !== "sucuri") });
+  assert.deepEqual(posted.competitorsDropped, ["moz", "sucuri"]);
+  const reread = E.settings(posted);
+  assert.ok(!reread.competitors.includes("moz") && !reread.competitors.includes("sucuri"));
+  assert.ok(reread.competitors.includes("acme") && reread.competitors.includes("wordfence"));
+  const post = (handle) => ({ author: { handle }, text: "hello", createdAt: new Date().toISOString() });
+  assert.notEqual(E.guard(post("Sucuri"), reread), "competitor");
+  assert.equal(E.guard(post("wordfence"), reread), "competitor");
+
+  const back = E.settings(E.settingsPatch(reread, { competitors: reread.competitors.concat("moz") }));
+  assert.ok(back.competitors.includes("moz"));
+  assert.deepEqual(back.competitorsDropped, ["sucuri"]);
 });
 
 test("relevance counts our field's keywords and hashtags, and nothing else", () => {
@@ -115,16 +135,41 @@ test("the default thresholds act on the posts a live run scores, not only on vir
   assert.equal(E.decide(quiet, null, c, {}, NOW, new Set()).verdict, "watch");
 });
 
-test("decide skips political, angry and promo posts, replies only in our six languages, and only reads trend networks", () => {
+test("decide skips political, angry and promo posts, replies only in the languages we search in, and only reads trend networks", () => {
   const c = E.settings(null);
   const p = scored({ text: "WCAG accessibility", metrics: { likes: 300, replies: 40, reposts: 60 } });
   assert.equal(E.decide(p, { political: true }, c, {}, NOW).skip, "political");
   assert.equal(E.decide(p, { sentiment: "angry" }, c, {}, NOW).skip, "angry");
   assert.equal(E.decide(p, { promo: true }, c, {}, NOW).skip, "promo");
-  const ja = E.decide(p, { worth: 0.9, reply: "それは良い", lang: "ja" }, c, {}, NOW);
-  assert.equal(ja.actions.reply, undefined);
-  assert.equal(ja.actions.like.status, "planned");
+  const th = E.decide(p, { worth: 0.9, reply: "เราทดสอบด้วยโปรแกรมอ่านหน้าจอ", lang: "th" }, c, {}, NOW);
+  assert.equal(th.actions.reply, undefined);
+  assert.equal(th.actions.like.status, "planned");
   assert.equal(E.decide(Object.assign({}, p, { network: "hn" }), null, c, {}, NOW).verdict, "trend");
+});
+
+test("a reply in a language Carlos may not read carries Gemini's English to the draft, the push and until an edit (#2630)", () => {
+  const p = scored({ id: "ja", text: "Playwright と WCAG のアクセシビリティテスト", metrics: { likes: 300, replies: 40, reposts: 60 } });
+  const en = scored({ id: "en", text: "WCAG accessibility" });
+  const out = E.parseAi(JSON.stringify([
+    { id: p.key, lang: "ja", worth: 0.9, reply: "私たちは同じ Playwright ジョブで axe を実行しています。", english: "We run axe in the same Playwright job — see https://x.com #a11y" },
+    { id: en.key, lang: "en", worth: 0.9, reply: "We run axe in the same Playwright job.", english: "We run axe in the same Playwright job." }
+  ]), [p, en]);
+  assert.equal(out[p.key].english, "We run axe in the same Playwright job, see");
+  assert.equal(out[en.key].english, "");
+  assert.ok(E.REPLY_LANGS.includes("ja") && E.REPLY_LANGS.includes("hi") && !E.REPLY_LANGS.includes("th"));
+  assert.match(E.aiPrompt([p]), /"english"/);
+  assert.match(E.chainPrompt([Object.assign({ parent: {} }, p)]), /ja, ko, zh/);
+  const d = E.decide(p, out[p.key], E.settings(null), {}, NOW, new Set());
+  assert.equal(d.actions.reply.status, "waiting");
+  assert.equal(d.actions.reply.lang, "ja");
+  assert.equal(d.actions.reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decide(en, out[en.key], E.settings(null), {}, NOW, new Set()).actions.reply.english, undefined);
+  const doc = Object.assign({ key: "mastodon_0123456789abcdef0123", seenAt: hoursAgo(1) }, p, { actions: d.actions });
+  assert.ok(E.replyPush(doc).lines.includes("In English: We run axe in the same Playwright job, see"));
+  assert.equal(E.decideReply(doc, "approve", "", "c", NOW).reply.english, "We run axe in the same Playwright job, see");
+  assert.equal(E.decideReply(doc, "edit", "私たちは CI で axe を実行します。", "c", NOW).reply.english, "");
+  const chain = E.chainDecide(Object.assign({}, p, { answered: false, liked: true }), { worth: 0.9, reply: "はい、そうです。ありがとう。", lang: "ja", english: "Yes, that's right. Thanks." }, E.settings(null), NOW);
+  assert.equal(chain.actions.reply.english, "Yes, that's right. Thanks.");
 });
 
 test("decideReply approves, takes an edit within the network's limit, dismisses, and refuses stale or decided replies", () => {
@@ -266,9 +311,12 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(src.stale, false);
   assert.ok(src.needs.some((n) => /Bluesky: paste an app password/.test(n)));
   assert.equal(src.live, false, "a dry run until Carlos turns it live");
-  assert.equal(src.accounts.length, 3);
+  assert.equal(src.accounts.length, 4);
+  assert.ok(src.needs.some((n) => /Telegram: paste the bot's token/.test(n)));
+  assert.ok(src.needs.some((n) => /Reddit sync has not run yet/.test(n)));
+  assert.match(src.networks.find((n) => n.network === "reddit").acts, /^Reddit app: replies under our subreddit's posts; waiting for the first sync/);
   assert.equal(src.networks.find((n) => n.network === "linkedin").reads, "Mac browser, not set up");
-  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads and TikTok wait for the Mac's browser agent/.test(n)));
+  assert.ok(src.needs.some((n) => /X, LinkedIn, Facebook, Instagram, Threads, TikTok, Telegram and Reddit wait for the Mac's browser agent/.test(n)));
 });
 
 test("our X, TikTok and Bluesky account @qalaburlreview counts as our own (#1991)", () => {

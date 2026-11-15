@@ -57,6 +57,8 @@ function campaignRows(campaigns, analytics, now, counts) {
     return Object.assign({ id: String(c.id || ""), name: String(c.name || "").slice(0, 80) }, parseName(c.name), {
       status: CAMPAIGN_STATUS[String(c.status)] || "status " + c.status,
       start: schedule.start_date || "",
+      created: String(c.timestamp_created || "").slice(0, 10),
+      updated: String(c.timestamp_updated || "").slice(0, 10),
       window: windowOf(schedule),
       dailyLimit: Number(c.daily_limit) || 0,
       steps: ((c.sequences || [])[0] || {}).steps ? c.sequences[0].steps.length : 0,
@@ -461,5 +463,5 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, instantly, needKey, TTL: 10 * 60 * 1000
 };

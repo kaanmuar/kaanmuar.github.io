@@ -8,12 +8,17 @@
    mail       the sending domain's MX, SPF, DKIM and DMARC
    links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect,
               and the report replies (#2465, #2471) per network and per post
+   people     the outreach ledger (outreach_people, #3136): people at each stage, in all and by kind
+   companies  site-dependency companies (#3139) per segment: found, reviewed, offered the trial, claimed, paid
+              (outreach_people, functions/company-prospects.js)
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
 const dayRows = require("./jarvis-days");
 const sweep = require("./url-review-sweep");
 const E = require("./engagement");
+const people = require("./outreach-people");
+const Companies = require("./company-prospects");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
@@ -74,6 +79,7 @@ function pipelineRows(queue, state, reviews, published, ctx) {
     segments: listOf(segments),
     avgScore: scores.length ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : null,
     withLiveReport: hosts.filter((h) => live.has(bare(h.host))).length,
+    reviewedHosts: reviewedHosts.size,
     reviewedWithLiveReport: Array.from(reviewedHosts).filter((h) => live.has(h)).length,
     daily
   };
@@ -119,7 +125,8 @@ function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview
   (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
   return Object.assign({
     campaigns: (campaigns || []).length,
-    status: listOf(status)
+    status: listOf(status),
+    openTracking: (campaigns || []).some((c) => c.open_tracking === true)
   }, mailCounts(overview), {
     prior: priorOverview ? mailCounts(priorOverview) : null,
     byCampaign: (perCampaign || []).filter((c) => (c.emails_sent_count || 0) > 0).map((c) => ({
@@ -212,10 +219,13 @@ const FUNNEL = [[1866, "Short links (Worker)"], [1867, "Landing in six languages
 
 // The utm_campaign values qalabreview/src/routes.js sets, by name.
 const CAMPAIGNS = {
-  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email", home: "qalabreview.com home",
+  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email",
+  "outreach-rivals": "Competitor email, sample report", home: "qalabreview.com home",
+  landing: "Landing home", "landing-universities": "Landing for universities", "landing-colleges": "Landing for technical training",
+  "landing-agencies": "Landing for agencies", "landing-startups": "Landing for startups",
   youtube: "YouTube short link", tiktok: "TikTok short link", linkedin: "LinkedIn short link", instagram: "Instagram short link", facebook: "Facebook short link",
   x: "X short link", qr: "QR code", "one-pager": "One-pager", lecture: "Lecture slides", webinar: "Webinar", signature: "Email signature", "business-card": "Business card",
-  "unknown-path": "Unknown path"
+  call: "Booking link", "unknown-path": "Unknown path"
 };
 const SOCIAL_REPLY = "social-reply-";
 const netName = (k) => (E.NETWORKS[k] || {}).name || k;
@@ -337,6 +347,7 @@ async function shortLinks(ctx, loggedP) {
   const live = worker.status === 200 && /User-agent/i.test(worker.body);
   const rows = linkRows(opens, reviews, ctx);
   rows.social.posts = socialPosts(rows.social.posts, docs);
+  rows.byVisitor = require("./jarvis-geo-clicks").visitorRows(opens, reviews, ctx, { linkTags, revenue: REVENUE, toMs });
   return Object.assign({ ok: true, live, workerStatus: worker.status, base: SHORT,
     channels: SHORT_PATHS.map(([path, label]) => ({ label, url: SHORT + "/" + path })),
     funnel: FUNNEL.map(([n, label]) => ({ label, url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/" + n })) },
@@ -380,7 +391,12 @@ async function outreach(ctx) {
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null), reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
     part("links", () => shortLinks(ctx, loggedP)),
+    part("companies", () => Companies.dashboard(ctx.db)),
     part("instantly", () => instantly(ctx)),
+    part("people", async () => {
+      const snap = await ctx.db.collection(people.COLLECTION).select("stage", "kind").limit(5000).get();
+      return Object.assign({ ok: true }, people.counts(snap.docs.map((d) => d.data())));
+    }),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();
       planDoc = snap.exists ? snap.data() : null;

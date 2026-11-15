@@ -7,7 +7,14 @@
                          queue; the week's draft campaigns; on Fridays, seasonal first-email drafts for Carlos
    leads      weekdays   rebuilds every open week's leads and fills what `missing` asks that a model can answer
    replies    weekdays   fetches, sorts and drafts answers to replies; blocks opt-outs and bounces; drafts what is left
-                         from yesterday, or from every day since --since
+                         from yesterday, or from every day since --since; forwards a copy of each A, B, G reply to
+                         students@ and each E, P reply to partners@ through Instantly, once per reply (#2927);
+                         --forward-dry (or OUTREACH_FORWARD_DRY=1) runs everything else and only lists the forwards
+   companies  weekdays   site-dependency companies (#3139) the outreach sweep reviewed: their published contacts and
+                         profiles into outreach_people, a domain-locked 2-day trial each, the week's companies file for
+                         Instantly (sequence T, findings in their language) and profile messages waiting for Carlos;
+                         COMPANIES_PER_DAY in all, capped per segment; --hosts <csv> (host,cc,sector) with --dry tries
+                         a list without Firestore
    holidays   every run  pauses campaigns on their countries' public holidays
    sync                  runs Jarvis > Marketing's queued commands and uploads the folder (scripts/jarvis-marketing-sync.js)
    The model is Workers AI through the pre-flight Worker (PREFLIGHT_TOKEN, PREFLIGHT_URL). A field the model is unsure
@@ -25,7 +32,8 @@ const FN = path.join(__dirname, "..", "functions");
 const CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(require("os").homedir(), ".cursor/preflight/config.json"), "utf8")); } catch { return {}; } })();
 const AI_URL = process.env.PREFLIGHT_URL || CFG.url || "https://preflight.carlosandmunoz.com";
 const BOOKING = "https://carlosandmunoz.com/book.html";
-const JOBS = ["prospects", "leads", "replies"];
+const JOBS = ["prospects", "leads", "replies", "companies"];
+const COMPANIES_PER_DAY = 30;
 const PER_SEGMENT = 10;
 const PER_DAY = 40;
 const SEGMENTS = ["university", "tvet", "agency", "startup"];
@@ -43,11 +51,19 @@ const CONTACT_LINK = /contact|contacto|contato|nosotros|about|equipo|team|quiene
 const ANSWER = new Set(["interested", "question", "not_now", "wrong_person"]);
 const CATEGORIES = ["interested", "question", "not_now", "wrong_person", "opt_out", "out_of_office", "bounce", "auto_reply"];
 const FILLABLE = new Set(["top_finding (translate)", "peer_1", "peer_2", "title", "month", "one_line_from_lecture_kit", "course_or_programme"]);
+// A copy of each reply goes to the audience's shared mailbox (#2927); the reply itself stays in Instantly, which stops
+// the sequence and feeds Jarvis. Sequences not listed (C, D, F, Peers H) are not forwarded.
+const FORWARD_TO = { A: "students@qalabreview.com", B: "students@qalabreview.com", G: "students@qalabreview.com", E: "partners@qalabreview.com", P: "partners@qalabreview.com" };
+const NO_FORWARD = new Set(["opt_out", "out_of_office", "bounce", "auto_reply"]);
+const FORWARDED = "tracker/replies-forwarded.json";
+const INSTANTLY = "https://api.instantly.ai/api/v2";
 
 let DIR = "";
 let DRY = false;
+let FORWARD_DRY = false;
 let SINCE = "";
 let WEEK = "";
+let HOSTS = "";
 const read = (rel, fallback = "") => { try { return fs.readFileSync(path.join(DIR, rel), "utf8"); } catch { return fallback; } };
 const write = (rel, text) => {
   if (DRY) return;
@@ -98,16 +114,19 @@ async function ai(system, prompt, { json = true, max = 800 } = {}) {
 }
 
 // --- Jarvis push --------------------------------------------------------------------------------------------------
-async function push(title, body) {
-  if (DRY || !process.env.GOOGLE_APPLICATION_CREDENTIALS) return console.log("push skipped: " + title + ": " + body);
+function firebase() {
   const fnRequire = Module.createRequire(path.join(FN, "index.js"));
   const { initializeApp, getApps } = fnRequire("firebase-admin/app");
   const { getFirestore } = fnRequire("firebase-admin/firestore");
-  const { getMessaging } = fnRequire("firebase-admin/messaging");
   if (!getApps().length) initializeApp({ projectId: PROJECT });
+  return { db: getFirestore(), messaging: () => fnRequire("firebase-admin/messaging").getMessaging() };
+}
+
+async function push(title, body) {
+  if (DRY || !process.env.GOOGLE_APPLICATION_CREDENTIALS) return console.log("push skipped: " + title + ": " + body);
+  const { db, messaging } = firebase();
   const jarvisPush = require("../functions/jarvis-push");
-  const db = getFirestore();
-  await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "outreach"),
+  await jarvisPush.send(messaging(), db, await jarvisPush.targets(db, "outreach"),
     { kind: "outreach", title, body, tab: "products:marketing", tag: "jarvis-outreach-weekly" });
 }
 
@@ -127,6 +146,56 @@ function addDnc(value, reason) {
   saveCsv("prospects/do-not-contact.csv", c);
 }
 
+/** The sequence letter of a campaign name such as "W1 A-es Europe" or "Peers H-en US", or "". */
+const sequenceOf = (campaign) => (String(campaign || "").match(/\b([A-Z])-([a-z]{2})\b/) || [])[1] || "";
+const forwardTarget = (campaign) => FORWARD_TO[sequenceOf(campaign)] || "";
+
+/** Replies to copy to a shared mailbox: sorted, not an auto-reply, bounce or opt-out, not forwarded before. */
+function forwardQueue(items, drafts, forwarded) {
+  const category = new Map(drafts.map((d) => [d.id, d.category]));
+  return items.filter((r) => r && r.id && r.to && category.has(r.id) && !NO_FORWARD.has(category.get(r.id)) && !forwarded[r.id] && forwardTarget(r.campaign))
+    .map((r) => ({ id: r.id, eaccount: r.to, to: forwardTarget(r.campaign), campaign: r.campaign, from: r.from, subject: r.subject }));
+}
+
+function instantlyKey() {
+  return process.env.INSTANTLY_API_KEY
+    || execFileSync("security", ["find-generic-password", "-a", "qalab", "-s", "instantly-api-key", "-w"], { encoding: "utf8" }).trim();
+}
+
+async function forwardReplies(perDay, log) {
+  const forwarded = readJson(FORWARDED, {});
+  const counts = {};
+  let failed = 0;
+  for (const { items, drafts } of perDay) {
+    for (const f of forwardQueue(items, drafts, forwarded)) {
+      if (DRY || FORWARD_DRY) {
+        log(`would forward ${f.id} (${f.campaign}) to ${f.to}`);
+        counts[f.to] = (counts[f.to] || 0) + 1;
+        continue;
+      }
+      const res = await fetch(INSTANTLY + "/emails/forward", {
+        method: "POST", headers: { authorization: "Bearer " + instantlyKey(), "content-type": "application/json" },
+        body: JSON.stringify({
+          reply_to_uuid: f.id, eaccount: f.eaccount, to_address_email_list: f.to, subject: "Fwd: " + String(f.subject || f.campaign).slice(0, 200),
+          body: { text: `Reply from ${f.from} to the campaign ${f.campaign}. It is also in Instantly: answer from ${f.eaccount} there, so the thread stays in the sequence.` },
+          include_original_body: true
+        }), signal: AbortSignal.timeout(60000)
+      }).catch((error) => ({ ok: false, status: 0, text: async () => error.message }));
+      if (!res.ok) {
+        log(`could not forward ${f.id} to ${f.to}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+        failed += 1;
+        continue;
+      }
+      forwarded[f.id] = { to: f.to, campaign: f.campaign, at: new Date().toISOString() };
+      write(FORWARDED, JSON.stringify(forwarded, null, 1));
+      counts[f.to] = (counts[f.to] || 0) + 1;
+    }
+  }
+  const line = [...Object.entries(counts).map(([to, n]) => `${n} to ${to}`), ...(failed ? [`${failed} not forwarded (retried next run)`] : [])].join(", ");
+  if (line) log(`${DRY || FORWARD_DRY ? "Would forward" : "Forwarded"} ${line}.`);
+  return line;
+}
+
 async function replies(log) {
   if (!DRY) log(tool("replies").trim());
   const signatures = JSON.parse(tool("signatures"));
@@ -135,11 +204,13 @@ async function replies(log) {
   const counts = {};
   const named = [];
   const days = [];
+  const perDay = [];
   for (let d = SINCE || utcDay(-1); d <= utcDay(); d = new Date(Date.parse(d) + 86400000).toISOString().slice(0, 10)) days.push(d);
   for (const day of days) {
     const items = readJson(`tracker/replies/${day}.json`, []);
     const draftsRel = `tracker/replies/${day}.drafts.json`;
     const drafts = readJson(draftsRel, []);
+    perDay.push({ items, drafts });
     const done = new Set(drafts.map((d) => d.id));
     const fresh = items.filter((r) => r && r.id && !done.has(r.id));
     if (!fresh.length) continue;
@@ -148,7 +219,7 @@ async function replies(log) {
     for (const r of fresh) {
       const from = String(r.from || "").toLowerCase();
       const lead = leads[from] || {};
-      const seq = (String(r.campaign).match(/\b([A-E])-([a-z]{2})\b/) || [])[1] || lead.sequence || "A";
+      const seq = sequenceOf(r.campaign) || lead.sequence || "A";
       const sender = seq === "D" ? "brand" : "carlos";
       let out;
       try {
@@ -187,10 +258,11 @@ async function replies(log) {
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   log(total ? Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ") : "No replies.");
+  const sent = await forwardReplies(perDay, log);
   if (!named.length && !counts.opt_out) return "";
   const parts = ["interested", "question", "not_now", "wrong_person"].filter((k) => counts[k]).map((k) => `${counts[k]} ${k.replace("_", " ")}`);
   if (counts.opt_out) parts.push(`${counts.opt_out} opted out (blocked)`);
-  return `${parts.join(", ")}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(", ")})` : ""}. Drafts are in Jarvis > Marketing.`;
+  return `${parts.join(", ")}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(", ")})` : ""}. Drafts are in Jarvis > Marketing.${sent ? ` Copies: ${sent}.` : ""}`;
 }
 
 // --- Leads --------------------------------------------------------------------------------------------------------
@@ -494,15 +566,147 @@ async function prospects(log) {
     + `${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
 }
 
+// --- Companies (#3139) --------------------------------------------------------------------------------------------
+const SD = require("../functions/site-dependency");
+const CC = require("../functions/company-contacts");
+const CP = require("../functions/company-prospects");
+const EP = require("../functions/engagement-profiles");
+const Send = require("../functions/outreach-send");
+
+/** The newest finished review of a queued host with its findings: { id, findings }, or null before the sweep got to it. */
+async function reviewOf(db, host) {
+  const snap = await db.collection("url_reviews").where("sweep.host", "==", host).limit(5).get();
+  const done = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()))
+    .filter((r) => r.report && r.report.insights && Array.isArray(r.report.insights.findings))
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
+  return done ? { id: done.id, findings: done.report.insights.findings } : null;
+}
+
+/** The findings in the row's language as short noun phrases, or the English ones when the model is unsure. */
+async function translateFindings(findings, lang, log) {
+  const en = findings.map((f) => f.title);
+  if (lang === "en") return en;
+  try {
+    const out = await ai(
+      "You translate website-review findings for a cold email into the given language as short noun phrases that keep the problem itself, plain words, no jargon, numbers kept. "
+      + 'Reply with JSON only: {"items": ["...", "..."]}, same order and count; an empty string where you are not sure.',
+      JSON.stringify({ lang, items: en }), { max: 300 });
+    return en.map((t, i) => String((out.items || [])[i] || "").trim().slice(0, 160) || t);
+  } catch (error) {
+    if (error.fatal) throw error;
+    log("translate: " + error.message);
+    return en;
+  }
+}
+
+async function companies(log) {
+  const week = WEEK || tool("week").trim();
+  const n = week.slice(1);
+  const rel = `prospects/week${n}-companies.csv`;
+  const used = usedHosts();
+  const live = !DRY || !HOSTS;
+  const db = live ? firebase().db : null;
+  const queue = HOSTS ? parseCsv(fs.readFileSync(HOSTS, "utf8")).rows : (((await db.collection("url_review_sweep").doc("outreach").get()).data() || {}).hosts || []);
+  const list = queue.filter((h) => h.host && SD.matchSector(h.sector))
+    .map((h) => Object.assign({}, h, { host: String(h.host), cc: String(h.cc || "").toLowerCase(), sector: SD.matchSector(h.sector) }))
+    .sort((a, b) => SD.sectorOf(b.sector).priority - SD.sectorOf(a.sector).priority);
+  const ledger = {};
+  if (db) {
+    for (let i = 0; i < list.length; i += 100) {
+      const refs = list.slice(i, i + 100).map((h) => db.collection("outreach_people").doc(CP.idOf(h.host)));
+      (await db.getAll(...refs)).forEach((s, k) => { if (s.exists) ledger[bare(list[i + k].host)] = s.data(); });
+    }
+  }
+  let found = 0;
+  for (const h of list.filter((x) => !ledger[bare(x.host)])) {
+    if (!DRY) await CP.record(db, CP.personOf(h, null, h.sector), "found");
+    ledger[bare(h.host)] = { stage: "found" };
+    found += 1;
+  }
+  const send = db && !DRY ? await Send.readSend(db, Date.now()) : null;
+  const paid = db ? (await db.collection("url_reviews").where("paid", "==", true).select("email").limit(3000).get()).docs.map((d) => String(d.data().email || "")).filter(Boolean) : [];
+  const perSector = {};
+  const why = {};
+  const rows = [];
+  const items = [];
+  const offered = [];
+  let checked = 0;
+  for (const h of list) {
+    if (offered.length >= COMPANIES_PER_DAY || checked >= COMPANIES_PER_DAY * 4) break;
+    const host = bare(h.host);
+    const led = ledger[host] || {};
+    if (CP.offeredYet(led) || (perSector[h.sector] || 0) >= SD.capOf(h.sector)) continue;
+    const review = db ? await reviewOf(db, h.host) : { id: "", findings: h.findings ? JSON.parse(h.findings) : [] };
+    if (!review) continue;
+    checked += 1;
+    const contacts = await CC.discover(fetch, h.host, { cc: h.cc, lang: LANG[h.cc] || "es" });
+    if (!contacts) { why["no-site"] = (why["no-site"] || 0) + 1; continue; }
+    const person = CP.personOf(h, contacts, h.sector);
+    if (!DRY && !led.reviewedAt) await CP.record(db, person, "", { note: "reviewed" }, { reviewedAt: new Date().toISOString(), reviewId: review.id });
+    const prof = db ? await db.collection(EP.COLLECTION).doc(host).get() : null;
+    const offer = CP.offerFor({
+      person: Object.assign({}, person, { stage: led.stage, offers: led.offers }), findings: review.findings, sector: h.sector,
+      dnc: used.has(host) || person.emails.some((e) => used.has(e.email)), paid: paid.some((e) => EP.sameDomain(e, host)),
+      profileCampaign: !!(prof && prof.exists && prof.data().code)
+    });
+    if (!offer.ok) { why[offer.why] = (why[offer.why] || 0) + 1; continue; }
+    perSector[h.sector] = (perSector[h.sector] || 0) + 1;
+    offered.push(host);
+    if (DRY) {
+      log(`  ${h.sector} ${host} ${offer.lang} ${offer.channels.join("+")} <${offer.email || "-"}> ${offer.socials.map((s) => s.network).join(",")} | ${offer.findings.map((f) => f.title).join(" | ")}`);
+      continue;
+    }
+    const trial = await CP.mint(db, person, offer);
+    if (offer.channels.includes("email")) {
+      const [finding_1, finding_2] = await translateFindings(offer.findings, offer.lang, log);
+      rows.push(CP.leadRow(h, person, offer, trial, { finding_1, finding_2, country: COUNTRY[person.country], approved: await CP.emailApproved(send, Date.now()) }));
+      used.add(offer.email);
+    }
+    if (offer.channels.includes("social")) items.push(...CP.socialItems(person, offer, trial).map((i) => Object.assign(i, { trialUrl: trial.url, led: prof && prof.exists ? prof.data() : null })));
+    await CP.record(db, person, "offered", { offers: [{ code: trial.code, kind: "company", url: trial.url }], note: "trial offered by " + offer.channels.join(" and ") },
+      { offeredAt: new Date().toISOString(), channels: offer.channels, findings: offer.findings });
+  }
+  let queued = 0;
+  let released = 0;
+  if (items.length && !DRY) {
+    const texts = EP.parse(await ai(EP.prompt(items), "Write the messages now.", { json: false, max: 1500 }).catch((error) => { if (error.fatal) throw error; log("social: " + error.message); return ""; }), items);
+    const batch = db.batch();
+    const byHost = {};
+    for (const i of items.filter((x) => texts[x.key])) {
+      const { trialUrl, led } = i;
+      delete i.trialUrl; delete i.led;
+      const doc = CP.socialDoc(i, texts[i.key], trialUrl, Date.now());
+      if (await CP.release(db, doc, send, Date.now())) released += 1;
+      batch.set(db.collection("engagement_posts").doc(i.key), doc);
+      (byHost[i.target.host] = byHost[i.target.host] || { led, profiles: i.profiles, code: i.offer.code, keys: [] }).keys.push(i.key);
+      queued += 1;
+    }
+    Object.entries(byHost).forEach(([host, x]) => batch.set(db.collection(EP.COLLECTION).doc(host), CP.profileLedger(x.led, host, x.profiles, x.code, x.keys, Date.now()), { merge: true }));
+    await batch.commit();
+  }
+  if (rows.length) {
+    append(rel, CP.LEAD_HEADER, rows);
+    if (!DRY) log(tool("campaigns", "--week", week).trim());
+  }
+  const skipped = Object.entries(why).map(([k, v]) => `${v} ${k}`).join(", ");
+  const segs = Object.entries(perSector).map(([k, v]) => `${v} ${k}`).join(", ");
+  const autoMail = rows.filter((r) => r.approved).length;
+  log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails (${autoMail} approved by the send switch), ${queued} profile messages (${released} sent on their own)${skipped ? "; skipped " + skipped : ""}`);
+  return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length - autoMail} emails to approve in Jarvis > Marketing, ${queued - released} profile messages waiting in Engagement${released ? `, ${released} sent on their own` : ""}.` : "";
+}
+
 // --- Main ---------------------------------------------------------------------------------------------------------
 async function main(argv) {
   const arg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ""; };
   const mode = argv[0];
   DIR = path.resolve(arg("--dir") || process.cwd());
   DRY = argv.includes("--dry");
+  FORWARD_DRY = argv.includes("--forward-dry") || process.env.OUTREACH_FORWARD_DRY === "1";
   SINCE = /^\d{4}-\d{2}-\d{2}$/.test(arg("--since")) ? arg("--since") : "";
   WEEK = /^W\d{1,2}$/.test(arg("--week")) ? arg("--week") : "";
-  if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|holidays|sync> --dir <outreach folder> [--dry]");
+  HOSTS = arg("--hosts") ? path.resolve(arg("--hosts")) : "";
+  if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|companies|holidays|sync> --dir <outreach folder> [--dry]");
+  if (HOSTS && !DRY) throw new Error("--hosts only runs with --dry.");
   if (mode === "holidays") return console.log(tool("holidays", ...(DRY ? ["--dry"] : [])).trim());
   if (mode === "sync") {
     return execFileSync("node", [path.join(__dirname, "jarvis-marketing-sync.js"), "--dir", DIR, "--state", path.join(DIR, "tracker"), ...(DRY ? ["--dry"] : [])], { stdio: "inherit" });
@@ -513,7 +717,7 @@ async function main(argv) {
   let notify = "";
   let failed = false;
   try {
-    notify = await { prospects, leads: leadsJob, replies }[mode](log);
+    notify = await { prospects, leads: leadsJob, replies, companies }[mode](log);
   } catch (error) {
     failed = true;
     log("error: " + String(error.message || error).split("\n")[0]);
@@ -528,4 +732,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai };
+module.exports = { emailsIn, openWeeks, bare, slotsFor, foundOn, siteFacts, ai, sequenceOf, forwardTarget, forwardQueue };

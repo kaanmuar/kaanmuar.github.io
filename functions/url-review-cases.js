@@ -46,8 +46,10 @@ function hostOf(origin) {
   try { return new URL(origin).host; } catch (error) { return String(origin || "").replace(/^https?:\/\//, "").replace(/\/.*$/, ""); }
 }
 
+// A finding page on another host (a subdomain in search results) comes as a full address and is shown as one (#3309).
 function siteLabel(host, path) {
   const clean = String(path || "/").split("#")[0];
+  if (/^https?:\/\//i.test(clean)) return clean.replace(/^https?:\/\//i, "").replace(/^([^/]+)\/$/, "$1");
   return host + (clean === "/" ? "" : clean);
 }
 

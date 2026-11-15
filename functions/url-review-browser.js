@@ -290,6 +290,8 @@ function normal(text) {
 
 function recorder(pageHttps, readLibraries) {
   const state = { phase: "before", vendors: {}, chats: {}, wires: new Map(), libs: new Map(), reads: [], errors: [], errorCount: 0, failed: [], failedCount: 0, mixed: [], requests: 0, bytes: 0, hosts: new Set(), canaries: [], typed: [] };
+  state.thirdParty = { scripts: new Set(), frames: new Set() };
+  const subFrame = (req) => { try { return !!req.frame().parentFrame(); } catch (error) { return false; } };
   const addLib = (row) => {
     const key = row.name + "@" + row.version;
     if (!state.libs.has(key) && state.libs.size < 20) state.libs.set(key, row);
@@ -349,6 +351,8 @@ function recorder(pageHttps, readLibraries) {
       if (pageHttps && url.protocol === "http:" && state.mixed.length < 6) state.mixed.push(shortUrl(raw));
       if (chatOf(url.hostname)) chatRow(state.phase, url.hostname).requests += 1;
       if (readLibraries && state.phase === "before" && req.resourceType() === "script") libraryFromUrl(raw).forEach(addLib);
+      if (req.resourceType() === "script" && state.thirdParty.scripts.size < 40) state.thirdParty.scripts.add(url.hostname);
+      else if (req.resourceType() === "document" && state.thirdParty.frames.size < 20 && subFrame(req)) state.thirdParty.frames.add(url.hostname);
       const name = vendorOf(url.hostname);
       if (!name) return;
       const row = vendorRow(state.phase, name);
@@ -599,6 +603,21 @@ async function settle(page) {
   try { await page.waitForNetworkIdle({ idleTime: 700, timeout: IDLE_MS }); } catch (error) { /* busy pages keep polling */ }
 }
 
+// A page that moves itself on after its load event (a script's locale or route redirect) destroys the context a read runs in;
+// the read waits for the next page to settle and runs again, up to twice.
+const NAVIGATED = /Execution context was destroyed|Cannot find context with specified id/i;
+async function steady(page, read, moved) {
+  for (let tries = 0; ; tries += 1) {
+    try {
+      return await read();
+    } catch (error) {
+      if (tries >= 2 || !NAVIGATED.test(String((error && error.message) || ""))) throw error;
+      if (typeof moved === "function") moved();
+      await settle(page);
+    }
+  }
+}
+
 async function prepare(context, ua, rec, viewport, acceptLanguage) {
   const page = await context.newPage();
   await page.setViewport(viewport);
@@ -660,8 +679,13 @@ async function open(page, url) {
     try {
       res = await page.goto(url, { waitUntil: "load" });
     } catch (error) {
+      const docReady = await page.evaluate(() => document.readyState !== "loading" && !!document.body).catch(() => false);
+      const timedOut = error && error.name === "TimeoutError";
+      const refused = timedOut && last && last.status() >= 400;
+      const stalledLoad = timedOut && last && docReady;
+      if (!refused && !stalledLoad) throw error;
       // A document that arrived and parsed, but whose load event waits on a stalled image or script, is read as it stands.
-      if (!last || (error && error.name) !== "TimeoutError" || !(await page.evaluate(() => document.readyState !== "loading" && !!document.body).catch(() => false))) throw error;
+      // A bot check that answers with an error status and never fires load is read the same way, so recovery can name the refusal.
       res = last;
       stalled = true;
     }
@@ -1634,9 +1658,10 @@ async function browse(job, log, onStart) {
     lap("load");
     if (first.stalled) say("The page's load event had not fired after " + NAV_MS / 1000 + " s, though its document had arrived. Reading the page as it stands.");
     say(pathOf(first.finalUrl) + " loaded with status " + first.status + " in " + Math.round(timing.load / 100) / 10 + " s, after " + rec.state.requests + " requests to " + rec.state.hosts.size + " hosts.");
-    const view = await rendered(page);
+    const reread = (read) => steady(page, read, () => say("The page moved on to " + pathOf(page.url()) + " after it loaded. Reading it again once it settles."));
+    const view = await reread(() => rendered(page));
     let dom = null;
-    try { dom = await domFacts(page); } catch (error) { dom = null; }
+    try { dom = await reread(() => domFacts(page)); } catch (error) { dom = null; }
     if (dom) {
       try { dom.legal = legalLinks(await legalAnchors(page), first.finalUrl); } catch (error) { /* the HTML read still has its links */ }
     }
@@ -1661,6 +1686,7 @@ async function browse(job, log, onStart) {
       requests: rec.state.requests,
       hosts: rec.state.hosts.size,
       bytes: rec.state.bytes,
+      thirdParty: { scripts: [...rec.state.thirdParty.scripts], frames: [...rec.state.thirdParty.frames] },
       dom
     };
     try { result.start.images = imageRows(await page.evaluate(imageProbe), images, vitals.lcpUrl); } catch (error) { /* the image checks stay unscored */ }
@@ -1690,7 +1716,7 @@ async function browse(job, log, onStart) {
     }
     lap("shot");
     say("Core Web Vitals in the lab: LCP " + result.start.vitals.lcp + " ms, CLS " + result.start.vitals.cls + ", TBT " + result.start.vitals.tbt + " ms. Took the desktop screenshot.");
-    const banner = await findBanner(page);
+    const banner = await reread(() => findBanner(page));
     const beforeCookies = await cookiesOf(coldContext, page, host);
     say(bannerSay(banner, beforeCookies));
     const consent = {
@@ -1912,4 +1938,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, steady, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };

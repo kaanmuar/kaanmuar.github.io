@@ -1,0 +1,76 @@
+# The Reddit side of the engagement routine (#2614). Every hour, the comments the Reddit app (reddit/live-reports)
+# logged under its r/QALabLiveReports posts go to Jarvis, which drafts answers for Carlos; the replies he approved go
+# back to the app in a new version, which posts them on its next 30-minute run (scripts/reddit-engagement.js,
+# functions/engagement-reddit.js). Reddit lets the app reach no server, so logs and uploads are the only way through.
+# Needs the DEVVIT_TOKEN and REDDIT_ENGAGEMENT_TOKEN secrets (node scripts/reddit-engagement.js pair) and the
+# REDDIT_SUBREDDIT variable.
+name: Reddit engagement
+
+on:
+  schedule:
+    - cron: '25 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: reddit-engagement
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DEVVIT_TOKEN: ${{ secrets.DEVVIT_TOKEN }}
+      REDDIT_ENGAGEMENT_TOKEN: ${{ secrets.REDDIT_ENGAGEMENT_TOKEN }}
+      REDDIT_SUBREDDIT: ${{ vars.REDDIT_SUBREDDIT }}
+    steps:
+      - name: Check the Reddit settings
+        id: ready
+        run: |
+          if [ -z "$DEVVIT_TOKEN" ] || [ -z "$REDDIT_ENGAGEMENT_TOKEN" ] || [ -z "$REDDIT_SUBREDDIT" ]; then
+            echo "::warning::Add the DEVVIT_TOKEN and REDDIT_ENGAGEMENT_TOKEN secrets (node scripts/reddit-engagement.js pair) and the REDDIT_SUBREDDIT variable."
+            echo "go=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.go == '1'
+        with:
+          ref: main
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ready.outputs.go == '1'
+        with:
+          node-version: '24'
+
+      - name: Send the app's comments to Jarvis
+        id: sync
+        if: steps.ready.outputs.go == '1'
+        run: |
+          set -o pipefail
+          mkdir -p ~/.devvit && printf '%s' "$DEVVIT_TOKEN" > ~/.devvit/token && chmod 600 ~/.devvit/token
+          cd reddit/live-reports
+          npm ci --no-audit --no-fund
+          # devvit refuses to run until the files devvit.json names exist.
+          node scripts/build.mjs > /dev/null
+          # devvit logs streams until stopped: two hours of lines come first, then it waits.
+          status=0
+          timeout 60 npx devvit logs "$REDDIT_SUBREDDIT" qalab-live-reports --since 2h --json > "$RUNNER_TEMP/reddit-logs.txt" || status=$?
+          [ "$status" = 0 ] || [ "$status" = 124 ] || { echo "::error::devvit logs failed ($status)"; exit 1; }
+          cd ../..
+          node scripts/reddit-engagement.js sync "$RUNNER_TEMP/reddit-logs.txt" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the approved replies
+        if: steps.sync.outputs.upload == 'true'
+        run: |
+          set -o pipefail
+          cd reddit/live-reports
+          node scripts/build.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          npx devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
+          npx devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest
+          cd ../..
+          node scripts/reddit-engagement.js uploaded | tee -a "$GITHUB_STEP_SUMMARY"

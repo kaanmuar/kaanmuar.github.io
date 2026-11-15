@@ -566,182 +566,182 @@ const RUNS = [
     tags: ["SEO", "Hreflang", "Fintech"]
   },
   {
-    id: "educacionbogota", report: "r100-educacionbogota", scope: "Local",
+    id: "educacionbogota", place: "Bogotá, Colombia", report: "r100-educacionbogota", scope: "Local",
     title: ["Educación Bogotá", "*has no robots.txt.*"],
     body: "One-year HSTS, nosniff, framing limited to its origin, a canonical, and a working /sitemap.xml. But /robots.txt returns 404, so crawlers are never told where that sitemap lives.",
     action: "Serve a robots.txt with a Sitemap: line. Two lines of text point every crawler to your map.",
     tags: ["SEO", "RobotsTxt", "Education"]
   },
   {
-    id: "movilidadbogota", report: "r100-movilidadbogota", scope: "Local",
+    id: "movilidadbogota", place: "Bogotá, Colombia", report: "r100-movilidadbogota", scope: "Local",
     title: ["Movilidad Bogotá's", "*sitemap says default.*"],
     body: "HSTS, nosniff, framing limited to its origin, a canonical, and GA4. But its sitemap lists URLs like http://default/ and http://default/en-gb, because the CMS never learned its public address.",
     action: "Set the CMS base URL to your public https address, then regenerate the sitemap.",
     tags: ["SEO", "Sitemap", "Mobility"]
   },
   {
-    id: "saludcapital", report: "r100-saludcapital", scope: "Local",
+    id: "saludcapital", place: "Bogotá, Colombia", report: "r100-saludcapital", scope: "Local",
     title: ["Salud Capital's home", "*has three canonicals.*"],
     body: "HSTS, nosniff, a strict Referrer-Policy, a content security policy, and a clear description. But the home page carries three canonical tags naming two different URLs, so search engines may ignore them all.",
     action: "Emit exactly one canonical per page. Check the template, CMS, and SEO plugins for copies.",
     tags: ["SEO", "Canonical", "PublicHealth"]
   },
   {
-    id: "metrobogota", report: "r100-metrobogota", scope: "Local",
+    id: "metrobogota", place: "Bogotá, Colombia", report: "r100-metrobogota", scope: "Local",
     title: ["Metro de Bogotá's HSTS", "*lasts 17 minutes.*"],
     body: "nosniff, GA4, a declared language, and a working sitemap. But Strict-Transport-Security sets max-age=1000, about 17 minutes, so browsers forget the https-only rule almost as soon as they learn it.",
     action: "Set HSTS max-age to at least one year (31536000) once https works everywhere.",
     tags: ["WebSecurity", "HSTS", "Mobility"]
   },
   {
-    id: "idrd", report: "r100-idrd", scope: "Local",
+    id: "idrd", place: "Bogotá, Colombia", report: "r100-idrd", scope: "Local",
     title: ["IDRD's Referrer-Policy", "*is unsafe-url.*"],
     body: "One-year HSTS, nosniff, framing limited to its origin, and a Permissions-Policy that turns off location, mic, and camera. But Referrer-Policy: unsafe-url sends the full URL, query included, to every site linked.",
     action: "Use strict-origin-when-cross-origin. Other sites then see only your domain, never paths or search terms.",
     tags: ["WebSecurity", "Privacy", "Sports"]
   },
   {
-    id: "idartes", report: "r100-idartes", scope: "Local",
+    id: "idartes", place: "Bogotá, Colombia", report: "r100-idartes", scope: "Local",
     title: ["Idartes' https root", "*redirects to http.*"],
     body: "nosniff, framing limited to its origin, a clear description, and a sitemap. But https://www.idartes.gov.co/ sends a 301 to http://www.idartes.gov.co/es, and the canonical also names the http address.",
     action: "Make every redirect and canonical use https. Search for http:// in your server config and templates.",
     tags: ["WebSecurity", "HTTPS", "Arts"]
   },
   {
-    id: "visitbogota", report: "r100-visitbogota", scope: "Local",
+    id: "visitbogota", place: "Bogotá, Colombia", report: "r100-visitbogota", scope: "Local",
     title: ["Visit Bogotá responds", "*slowly to taps.*"],
     body: "HSTS marked for preload, nosniff, a content security policy, a canonical, and a clear description. But real Chrome visitors wait 436 ms at the 75th percentile for the page to respond to a tap or click.",
     action: "Find long tasks in the Performance panel and split them. Keep INP under 200 ms.",
     tags: ["WebPerformance", "INP", "Tourism"]
   },
   {
-    id: "biblored", report: "r100-biblored", scope: "Local",
+    id: "biblored", place: "Bogotá, Colombia", report: "r100-biblored", scope: "Local",
     title: ["BibloRed answers", "*plain http with a 200.*"],
     body: "Two-year HSTS marked for preload, nosniff, framing limited to its origin, and a canonical. But http://www.biblored.gov.co/ serves the page with a 200 instead of redirecting, and browsers ignore HSTS sent over http.",
     action: "Redirect every http request to https with a 301. HSTS only counts when it arrives over https.",
     tags: ["WebSecurity", "HTTPS", "Libraries"]
   },
   {
-    id: "catastro", report: "r100-catastro", scope: "Local",
+    id: "catastro", place: "Bogotá, Colombia", report: "r100-catastro", scope: "Local",
     title: ["Catastro Bogotá has", "*no descriptions.*"],
     body: "HSTS, nosniff, framing limited to its origin, GA4 through Tag Manager, and a declared language. But none of the 20 pages analyzed has a meta description, so Google and AI answers write their own.",
     action: "Write a one-sentence description for each key page: what it offers and who it's for, under 155 characters.",
     tags: ["SEO", "MetaDescription", "GovTech"]
   },
   {
-    id: "jbb", report: "r100-jbb", scope: "Local",
+    id: "jbb", place: "Bogotá, Colombia", report: "r100-jbb", scope: "Local",
     title: ["The Botanic Garden", "*loads logos over http.*"],
     body: "A declared language, a canonical, a 301 from http to https, and a sitemap named in robots.txt. But every page analyzed loads its two logo images over http://, so browsers must upgrade or block them.",
     action: "Load every asset over https or as a relative URL. A search for src=\"http:// in your theme finds them.",
     tags: ["WebSecurity", "MixedContent", "Nature"]
   },
   {
-    id: "planetario", report: "r100-planetario", scope: "Local",
+    id: "planetario", place: "Bogotá, Colombia", report: "r100-planetario", scope: "Local",
     title: ["The Planetarium skips", "*a link in its TLS chain.*"],
     body: "nosniff, framing limited to its origin, a declared language, and a 301 from http to https. But the server leaves out the Sectigo intermediate certificate. Browsers patch it in; Node.js and API clients refuse.",
     action: "Install the full chain your certificate authority provides, then test with openssl s_client or SSL Labs.",
     tags: ["WebSecurity", "TLS", "Science"]
   },
   {
-    id: "antioquia", report: "r100-antioquia", scope: "Local",
+    id: "antioquia", place: "Medellín, Colombia", report: "r100-antioquia", scope: "Local",
     title: ["Antioquia's home", "*is titled \"Inicio\".*"],
     body: "HSTS marked for preload, a CSP from default-src 'self' with base-uri set, nosniff, and a strict Referrer-Policy. But the home page title is just \"Inicio\", which tells searchers nothing about the department.",
     action: "Put the organization's name in the home title, with what people come for. \"Home\" alone wastes the slot.",
     tags: ["SEO", "Titles", "GovTech"]
   },
   {
-    id: "medellin", report: "r100-medellin", scope: "Local",
+    id: "medellin", place: "Medellín, Colombia", report: "r100-medellin", scope: "Local",
     title: ["Medellín's portal", "*sends no HSTS.*"],
     body: "nosniff, framing limited to its origin, a canonical, a clear description, and two sitemaps named in robots.txt. But none of the 19 pages analyzed sends Strict-Transport-Security, so a first http visit can be intercepted.",
     action: "Send HSTS with a one-year max-age once every subdomain serves https.",
     tags: ["WebSecurity", "HSTS", "GovTech"]
   },
   {
-    id: "metromedellin", report: "r100-metromedellin", scope: "Local",
+    id: "metromedellin", place: "Medellín, Colombia", report: "r100-metromedellin", scope: "Local",
     title: ["Metro de Medellín", "*still runs a UA tag.*"],
     body: "HSTS marked for preload, a CSP from default-src 'self', nosniff, and Consent Mode defaults. But the home page still runs ga('create', 'UA-8498906-1'), which collects nothing since July 2024.",
     action: "Remove analytics.js UA calls. If you need numbers, send them to a GA4 property or another live tool.",
     tags: ["Analytics", "GA4", "Mobility"]
   },
   {
-    id: "epm", report: "r100-epm", scope: "Local",
+    id: "epm", place: "Medellín, Colombia", report: "r100-epm", scope: "Local",
     title: ["EPM's canonical", "*ends at a 404.*"],
     body: "Two-year HSTS marked for preload, a CSP from default-src 'self', nosniff, and a clear description. But the canonical is /content/epm/clientesyusuarios.html, an internal CMS path that redirects to a 404.",
     action: "Map CMS paths to public URLs. Open your canonical in a browser: it must answer 200.",
     tags: ["SEO", "Canonical", "Utilities"]
   },
   {
-    id: "udea", report: "r100-udea", scope: "Local",
+    id: "udea", place: "Medellín, Colombia", report: "r100-udea", scope: "Local",
     title: ["UdeA's pages", "*skip security headers.*"],
     body: "A declared language, a sitemap named in robots.txt, and robots rules that keep the GPTBot and Google-Extended training bots out. But pages send no HSTS, no nosniff, no frame protection, and only a report-only CSP.",
     action: "Start with HSTS, X-Content-Type-Options: nosniff, and frame-ancestors 'self'. Then enforce your CSP.",
     tags: ["WebSecurity", "Headers", "Education"]
   },
   {
-    id: "eafit", report: "r100-eafit", scope: "Local",
+    id: "eafit", place: "Medellín, Colombia", report: "r100-eafit", scope: "Local",
     title: ["EAFIT's pages", "*have no main landmark.*"],
     body: "HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, a canonical, and a clear description. But none of the 20 pages analyzed has a <main> element, so screen-reader users can't skip straight to the content.",
     action: "Wrap the primary content of every template in one <main> for skip links.",
     tags: ["Accessibility", "Landmarks", "Education"]
   },
   {
-    id: "cali", report: "r100-cali", scope: "Local",
+    id: "cali", place: "Cali, Colombia", report: "r100-cali", scope: "Local",
     title: ["Cali's robots.txt", "*names a missing sitemap.*"],
     body: "HSTS, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a canonical. But robots.txt points crawlers to https://www.cali.gov.co/sitemap.xml, and that address returns 404.",
     action: "Open every Sitemap: line in robots.txt after each release. A 404 there means crawlers lose your map.",
     tags: ["SEO", "Sitemap", "GovTech"]
   },
   {
-    id: "metrocali", report: "r100-metrocali", scope: "Local",
+    id: "metrocali", place: "Cali, Colombia", report: "r100-metrocali", scope: "Local",
     title: ["Metro Cali's home", "*describes an old notice.*"],
     body: "HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and a CSP. But the home page description is a single notice about a vehicle scrapping resolution, not what the system offers.",
     action: "Write a fixed home description about your service. Don't let the CMS fill it from the latest post.",
     tags: ["SEO", "MetaDescription", "Mobility"]
   },
   {
-    id: "univalle", report: "r100-univalle", scope: "Local",
+    id: "univalle", place: "Cali, Colombia", report: "r100-univalle", scope: "Local",
     title: ["Univalle's English link", "*returns a 404.*"],
     body: "nosniff, GA4, a declared language, and http that redirects to https. But the home page's English switch, /loader.php?…idioma=EN, returns 404, so international visitors hit an error on their first click.",
     action: "Test the language switcher in every release. It's often the first click for visitors from abroad.",
     tags: ["SEO", "BrokenLinks", "Education"]
   },
   {
-    id: "transcaribe", report: "r100-transcaribe", scope: "Local",
+    id: "transcaribe", place: "Cartagena, Colombia", report: "r100-transcaribe", scope: "Local",
     title: ["Transcaribe reorders", "*the keyboard path.*"],
     body: "A declared language, a canonical, a sitemap index in robots.txt, a 301 to https, and GA4. But 19 pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.",
     action: "Use tabindex=\"0\" or \"-1\" only. Fix focus order by ordering the HTML, not with positive numbers.",
     tags: ["Accessibility", "Keyboard", "Mobility"]
   },
   {
-    id: "bucaramanga", report: "r100-bucaramanga", scope: "Local",
+    id: "bucaramanga", place: "Bucaramanga, Colombia", report: "r100-bucaramanga", scope: "Local",
     title: ["Bucaramanga's home", "*has no title tag.*"],
     body: "HSTS marked for preload, nosniff, a strict Referrer-Policy, a Permissions-Policy, and framing limited to its origin. But 12 pages analyzed have no <title>, the home page included.",
     action: "Give every page a unique <title>. It's the tab label, the search result headline, and the share card text.",
     tags: ["SEO", "Titles", "GovTech"]
   },
   {
-    id: "metrolinea", report: "r100-metrolinea", scope: "Local",
+    id: "metrolinea", place: "Bucaramanga, Colombia", report: "r100-metrolinea", scope: "Local",
     title: ["Metrolínea's viewport", "*turns off zoom.*"],
     body: "nosniff, framing limited to its origin, a working sitemap, and a 301 from http to https. But the viewport sets maximum-scale=1 and user-scalable=no, which blocks pinch-zoom for riders who need larger text.",
     action: "Remove user-scalable=no and maximum-scale. Let readers zoom, and fix any layout that breaks.",
     tags: ["Accessibility", "Zoom", "Mobility"]
   },
   {
-    id: "pereira", report: "r100-pereira", scope: "Local",
+    id: "pereira", place: "Pereira, Colombia", report: "r100-pereira", scope: "Local",
     title: ["Pereira's feature policy", "*allows every origin.*"],
     body: "HSTS marked for preload, a CSP from default-src 'self', nosniff, and a strict Referrer-Policy. But Permissions-Policy grants camera, microphone, geolocation, and payment to every origin with =*.",
     action: "Default to camera=(), microphone=(), geolocation=(). Grant features only where needed.",
     tags: ["WebSecurity", "PermissionsPolicy", "GovTech"]
   },
   {
-    id: "manizales", report: "r100-manizales", scope: "Local",
+    id: "manizales", place: "Manizales, Colombia", report: "r100-manizales", scope: "Local",
     title: ["Manizales' visitors", "*wait 5.7 s to see it.*"],
     body: "A declared language, a canonical, a sitemap named in robots.txt, and a 301 to https. But real Chrome visitors wait 5.7 s at the 75th percentile for the largest content, and the HTML alone took 2.5 s.",
     action: "Start with the server: cache the HTML. Then preload the hero image and defer scripts that aren't needed.",
     tags: ["WebPerformance", "CoreWebVitals", "GovTech"]
   },
   {
-    id: "santamarta", report: "r100-santamarta", scope: "Local",
+    id: "santamarta", place: "Santa Marta, Colombia", report: "r100-santamarta", scope: "Local",
     title: ["Santa Marta still", "*runs a UA tag.*"],
     body: "HSTS, nosniff, a strict Referrer-Policy, framing limited to its origin, and GA4. But the home page still runs ga('create', 'UA-121052958-1'), and Universal Analytics stopped processing data by July 2024.",
     action: "Delete the UA snippet and keep GA4. One live tag is easier to trust than two half-dead ones.",

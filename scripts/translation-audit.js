@@ -6,6 +6,7 @@
  *
  *   node scripts/translation-audit.js                 # es pt de fr it, writes previews/translation-audit/
  *   node scripts/translation-audit.js es --raw        # Spanish only, glossary switched off (the "before" view)
+ *   node scripts/translation-audit.js --parallel 5    # languages side by side (AUDIT_PARALLEL, default 3; #3141)
  *
  * Needs the static server (python3 scripts/static-server.py 8642) and network
  * access to translate.googleapis.com.
@@ -15,10 +16,11 @@ const path = require("path");
 require("./playwright-sandbox");
 const { chromium } = require("@playwright/test");
 const Glossary = require("../js/site-glossary.js");
+const P = require("./engagement-browser/pool");
 
 const BASE = process.env.AUDIT_BASE_URL || "http://127.0.0.1:8642/";
 const OUT = path.join(__dirname, "..", "previews", "translation-audit");
-const args = process.argv.slice(2);
+const { n: PARALLEL, rest: args } = P.parallelArg(process.argv.slice(2), process.env, "AUDIT_PARALLEL");
 const raw = args.includes("--raw");
 const langs = args.filter((a) => !a.startsWith("--"));
 const LANGS = langs.length ? langs : ["es", "pt", "de", "fr", "it"];
@@ -73,8 +75,7 @@ async function harvest(page) {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch();
-  const summary = [];
-  for (const lang of LANGS) {
+  const audit = async (lang) => {
     const lines = ["# Translation audit · " + lang + (raw ? " · glossary off" : ""), "", "Generated " + new Date().toISOString() + " from " + BASE, ""];
     let langHits = 0;
     let langNodes = 0;
@@ -114,8 +115,11 @@ async function harvest(page) {
     }
     lines.splice(3, 0, "**" + langHits + " flagged** in " + langNodes + " translated strings.", "");
     fs.writeFileSync(path.join(OUT, lang + (raw ? "-raw" : "") + ".md"), lines.join("\n") + "\n");
-    summary.push(lang + ": " + langHits + " flagged / " + langNodes + " strings");
-  }
+    return lang + ": " + langHits + " flagged / " + langNodes + " strings";
+  };
+  const got = await P.pool(LANGS, PARALLEL, audit);
   await browser.close();
-  console.log(summary.join("\n"));
+  const failed = got.find((r) => !r.ok);
+  if (failed) throw failed.error;
+  console.log(got.map((r) => r.value).join("\n"));
 })().catch((error) => { console.error(error); process.exit(1); });

@@ -13,7 +13,7 @@
     "@devvit/web": "0.15.2",
     "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
-    "devvit": "0.15.2",
+    "devvit": "1.0.0",
     "esbuild": "0.28.2"
   },
   "engines": {

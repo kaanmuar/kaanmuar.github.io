@@ -5,34 +5,43 @@
    waiting, so the list stays a night or two ahead of the sweep.
 
    Only the host, country, segment and place ID are kept (Maps Platform terms: no names, addresses or phones).
-   State lives in url_review_sweep/places: { pos, lap, days: { date: { calls, errors, added } }, last }. */
+   State lives in url_review_sweep/places: { pos, lap, days: { date: { calls, errors, added } }, last }.
+
+   Segments (#3139) are the site-dependency sectors (site-dependency.js), highest priority first, then the local
+   trades below. A lap goes city rank by city rank and, within a rank, country by country through every segment, so a
+   night covers many segments; a segment searches as many city ranks as its priority earns (depthOf) and adds at most
+   capOf(segment) prospects a night. */
 const sweep = require("./url-review-sweep");
+const SD = require("./site-dependency");
 
 const PLACES_API = "https://places.googleapis.com/v1/places:searchText";
 const FIELDS = "places.id,places.websiteUri,places.businessStatus";
 const PER_DAY = 20;
 const BACKLOG = 96;
 const KEEP_DAYS = 14;
+const LOCAL_CAP = 4;
 
-// Segment -> the search term in each site language; the key is the sweep sector.
-const SEGMENTS = {
-  dentist: { en: "dentist", es: "dentista", pt: "dentista", de: "Zahnarzt", fr: "dentiste", it: "dentista" },
+// Local trades with no site-dependency sector: their site matters, but less than a booking or a checkout does.
+const LOCAL = {
   plumber: { en: "plumber", es: "plomero", pt: "encanador", de: "Klempner", fr: "plombier", it: "idraulico" },
   electrician: { en: "electrician", es: "electricista", pt: "eletricista", de: "Elektriker", fr: "électricien", it: "elettricista" },
   hvac: { en: "HVAC contractor", es: "aire acondicionado instalación", pt: "ar condicionado instalação", de: "Klimaanlagen Installateur", fr: "climatisation installateur", it: "climatizzatori installatore" },
-  clinic: { en: "medical clinic", es: "clínica médica", pt: "clínica médica", de: "Arztpraxis", fr: "clinique médicale", it: "clinica medica" },
-  physio: { en: "physiotherapist", es: "fisioterapeuta", pt: "fisioterapeuta", de: "Physiotherapie", fr: "kinésithérapeute", it: "fisioterapista" },
-  vet: { en: "veterinarian", es: "veterinaria", pt: "veterinário", de: "Tierarzt", fr: "vétérinaire", it: "veterinario" },
-  lawyer: { en: "law firm", es: "abogados", pt: "advogados", de: "Rechtsanwalt", fr: "avocat", it: "avvocato" },
   accountant: { en: "accountant", es: "contador", pt: "contabilidade", de: "Steuerberater", fr: "expert-comptable", it: "commercialista" },
-  restaurant: { en: "restaurant", es: "restaurante", pt: "restaurante", de: "Restaurant", fr: "restaurant", it: "ristorante" },
   bakery: { en: "bakery", es: "panadería", pt: "padaria", de: "Bäckerei", fr: "boulangerie", it: "panificio" },
-  cafe: { en: "cafe", es: "cafetería", pt: "cafeteria", de: "Café", fr: "café", it: "caffetteria" },
-  realestate: { en: "real estate agency", es: "inmobiliaria", pt: "imobiliária", de: "Immobilienmakler", fr: "agence immobilière", it: "agenzia immobiliare" },
-  salon: { en: "hair salon", es: "peluquería", pt: "salão de beleza", de: "Friseur", fr: "salon de coiffure", it: "parrucchiere" },
-  spa: { en: "day spa", es: "spa", pt: "spa", de: "Day Spa", fr: "spa", it: "centro benessere" },
-  gym: { en: "gym", es: "gimnasio", pt: "academia", de: "Fitnessstudio", fr: "salle de sport", it: "palestra" }
+  cafe: { en: "cafe", es: "cafetería", pt: "cafeteria", de: "Café", fr: "café", it: "caffetteria" }
 };
+
+// Segment -> the search term in each site language; the key is the sweep sector.
+const SEGMENTS = Object.assign({}, SD.placesTerms(), LOCAL);
+
+/** City ranks a segment searches: every rank from priority 85, three from 75, else two. */
+function depthOf(sector) {
+  const p = (SD.sectorOf(sector) || {}).priority || 0;
+  return p >= 85 ? Infinity : p >= 75 ? 3 : 2;
+}
+
+/** New prospects a segment may add in one night. */
+const capOf = (sector) => (SD.sectorOf(sector) ? SD.capOf(sector) : LOCAL_CAP);
 
 // The largest cities of the sweep's TIER1 markets, biggest first.
 const CITIES = {
@@ -75,17 +84,17 @@ const IN = { en: "in", es: "en", pt: "em", de: "in", fr: "à", it: "a" };
 // Social profiles, link pages, booking and delivery platforms: a listing there is not the business's own site.
 const PLATFORMS = /(^|\.)(facebook|instagram|linktr|wa|whatsapp|google|goo|youtube|tiktok|twitter|x|linkedin|yelp|tripadvisor|doctoralia|doctolib|jameda|booksy|fresha|treatwell|planity|ubereats|rappi|ifood|deliveroo|justeat|glovoapp|opentable|thefork|resy|zocdoc|healthgrades|houzz|angi|homeadvisor|thumbtack|idealista|fotocasa|zillow|realtor|rightmove|immobilienscout24|seloger|immobiliare|wixsite|business\.site|square|squareup|toasttab|beacons|carrd|bio)\.[a-z.]+$/i;
 
-// Every (country, city, segment) once, ordered so a lap starts with every country's biggest city in every segment.
+// Every (country, city, segment) a segment's depth reaches, once, ordered so a lap starts with every country's biggest
+// city in every segment.
 function slots() {
   const out = [];
   const segments = Object.keys(SEGMENTS);
   const depth = Math.max(...Object.values(CITIES).map((c) => c.length));
   for (let rank = 0; rank < depth; rank += 1) {
-    for (const sector of segments) {
-      for (const cc of sweep.TIER1) {
-        const city = (CITIES[cc] || [])[rank];
-        if (city) out.push({ cc, city, sector });
-      }
+    for (const cc of sweep.TIER1) {
+      const city = (CITIES[cc] || [])[rank];
+      if (!city) continue;
+      for (const sector of segments) if (rank < depthOf(sector)) out.push({ cc, city, sector });
     }
   }
   return out;
@@ -130,6 +139,7 @@ async function night({ state, known, waiting, day, search }) {
   const list = slots();
   const seen = new Set([...known].map(bare));
   const rows = [];
+  const added = {};
   let { pos, lap } = prev;
   let calls = 0;
   let errors = 0;
@@ -143,7 +153,10 @@ async function night({ state, known, waiting, day, search }) {
     if (!found || !found.ok) { errors += 1; lastError = (found && found.error) || "no answer"; if (errors >= 3) break; continue; }
     for (const place of found.places) {
       const row = prospectOf(place, slot);
-      if (row && !seen.has(bare(row.host))) { seen.add(bare(row.host)); rows.push(row); }
+      if (!row || seen.has(bare(row.host)) || (added[slot.sector] || 0) >= capOf(slot.sector)) continue;
+      seen.add(bare(row.host));
+      rows.push(row);
+      added[slot.sector] = (added[slot.sector] || 0) + 1;
     }
   }
   const days = Object.assign({}, prev.days, { [day]: { calls, errors, added: rows.length } });
@@ -152,4 +165,4 @@ async function night({ state, known, waiting, day, search }) {
   return { rows, state: { pos, lap, days, last }, calls, errors };
 }
 
-module.exports = { PER_DAY, BACKLOG, SEGMENTS, CITIES, slots, request, placesSearch, prospectOf, night };
+module.exports = { PER_DAY, BACKLOG, SEGMENTS, LOCAL, CITIES, slots, depthOf, capOf, request, placesSearch, prospectOf, night };

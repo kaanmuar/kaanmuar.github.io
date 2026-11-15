@@ -20,6 +20,8 @@ const ACTS = {
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
   engagement: ["approve", "edit", "dismiss"],
+  "engagement-dm": ["approve", "edit", "dismiss"],
+  "owner-tags": ["approve", "edit", "dismiss"],
   countdown: ["now", "cancel"],
   pagespeed: ["merge", "close"]
 };
@@ -134,10 +136,11 @@ function rerunMessage(done, deskUrl) {
   const held = count("held");
   const swept = count("swept");
   const failed = count("failed");
+  const sent = count("sent");
   return {
     kind: "desk",
     title: held ? plural(held, "re-run") + " held for you" : "URL review re-runs",
-    body: [held ? held + " held: send or drop each" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
+    body: [held ? held + " held: send or drop each" : "", sent ? sent + " sent as promised" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
     lines: list.slice(0, 6).map((row) => clip(row.status + " · " + (row.host || "?") + (row.name ? " for " + row.name : ""), 120)),
     tab: "products:review",
     tag: "jarvis-reruns",
@@ -224,11 +227,13 @@ function noticeMessage(n) {
   };
 }
 
-/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. */
+/** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. image is its card (#2248), which
+ * the phone shows big and the browser shows where it can; jarvis-social's pending() already made it https. */
 function socialMessage(p) {
   const id = clip(p && p.id, 40);
   if (!id) return null;
-  return {
+  const image = typeof p.image === "string" && /^https:\/\//.test(p.image) && p.image.length <= 1000 ? p.image : "";
+  return Object.assign({
     kind: "social",
     title: "Post this? " + clip(p.title, 100),
     body: clip([p.source, p.topic].filter(Boolean).join(" · ") + (p.summary ? ". " + p.summary : ""), 220),
@@ -237,7 +242,7 @@ function socialMessage(p) {
     tag: "jarvis-social-" + id,
     ref: "social:" + id,
     actions: [{ act: "approved", label: "Post" }, { act: "dismissed", label: "Skip" }]
-  };
+  }, image ? { image } : {});
 }
 
 /** Social proposals not pushed yet, best first, at most max. A first run only remembers what is there. */

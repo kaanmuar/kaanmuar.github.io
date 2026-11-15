@@ -2,6 +2,41 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const metrics = require("../../scripts/social-metrics");
 
+test("a Telegram post embed gives its views and its reactions as likes, in short counts", () => {
+  assert.deepEqual(metrics.telegramEmbed('<span class="tgme_widget_message_views">1.2K</span><span class="tgme_reaction"><i class="emoji"><b>👍</b></i>5</span><span class="tgme_reaction tgme_reaction_paid"><i class="emoji"><b>⭐</b></i>1,100</span>'), { views: 1200, likes: 1105 });
+  assert.deepEqual(metrics.telegramEmbed('<span class="tgme_widget_message_views">2</span>'), { views: 2 });
+  assert.equal(metrics.telegramEmbed('<div class="tgme_widget_message_error">Post not found</div>'), null);
+  assert.equal(metrics.shortCount("3.4M"), 3400000);
+});
+
+test("Telegram numbers ask only sent t.me posts of the last 60 days, and a post without a view count is reported, not zeroed", async () => {
+  const now = Date.parse("2026-11-05T12:00:00Z");
+  const book = { posts: {
+    "live/2026-11-04": [{ channel: "telegram", id: "3", at: "2026-11-04T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/3" }],
+    "live/2026-11-03": [{ channel: "telegram", id: "2", at: "2026-11-03T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/2" }],
+    "live/2026-08-01": [{ channel: "telegram", id: "1", at: "2026-08-01T18:38:14Z", result: "sent", url: "https://t.me/qalab_live/1" }],
+    "live/2026-11-02": [{ channel: "telegram", id: "9", at: "2026-11-02T18:38:14Z", result: "failed" }]
+  } };
+  const asked = [];
+  const request = async (url) => {
+    asked.push(url);
+    return url.includes("/3?") ? { ok: true, status: 200, text: async () => '<span class="tgme_widget_message_views">12</span>' } : { ok: false, status: 404, text: async () => "" };
+  };
+  const report = {};
+  const found = await metrics.telegramNumbers(book, request, now, report);
+  assert.deepEqual(asked.sort(), ["https://t.me/qalab_live/2?embed=1&mode=tme", "https://t.me/qalab_live/3?embed=1&mode=tme"]);
+  assert.deepEqual(found.map((f) => [f.post, f.channel, f.numbers]), [["live/2026-11-04", "telegram", { views: 12 }]]);
+  assert.deepEqual([report.asked, report.answered], [2, 1]);
+  assert.match(report.error, /qalab_live\/2 answered 404/);
+});
+
+test("Reddit numbers come from the ledger's numbers for its sent posts, the score as likes", () => {
+  const book = { posts: { "live/2026-11-04": [{ channel: "reddit", id: "t3_abc", at: "2026-11-04T16:20:03Z", result: "sent" }], "live/2026-11-03": [{ channel: "reddit", id: "t3_old", at: "2026-11-03T16:20:03Z", result: "sent" }] },
+    numbers: { t3_abc: { likes: 7, comments: 2, at: "2026-11-04T16:20:06Z" } } };
+  assert.deepEqual(metrics.redditNumbers(book).map((f) => [f.post, f.channel, f.numbers]), [["live/2026-11-04", "reddit", { likes: 7, comments: 2 }]]);
+  assert.deepEqual(metrics.redditNumbers({ posts: {} }), []);
+});
+
 test("Buffer's metrics become the hub's four counts, with reach for missing impressions and one count for likes and reactions", () => {
   assert.deepEqual(metrics.fromBuffer([
     { type: "reach", value: 120 }, { type: "views", value: 88.4 }, { type: "likes", value: 3 }, { type: "reactions", value: 5 },

@@ -5,11 +5,14 @@ const sweep = require("../../functions/url-review-sweep");
 
 const place = (id, websiteUri, businessStatus = "OPERATIONAL") => ({ id, websiteUri, businessStatus });
 
-test("a lap starts with every market's biggest city in every segment, and every city and segment comes round", () => {
+test("a lap starts with every market's biggest city in every segment, and every city comes round as deep as a segment's priority", () => {
   const list = prospects.slots();
   const segments = Object.keys(prospects.SEGMENTS);
-  assert.deepEqual(list.slice(0, 2), [{ cc: "es", city: "Madrid", sector: "dentist" }, { cc: "mx", city: "Ciudad de México", sector: "dentist" }]);
-  assert.equal(list.length, segments.length * Object.values(prospects.CITIES).flat().length);
+  assert.deepEqual(list.slice(0, 2), [{ cc: "es", city: "Madrid", sector: "ecommerce" }, { cc: "es", city: "Madrid", sector: "hotel" }]);
+  assert.deepEqual(list[segments.length], { cc: "mx", city: "Ciudad de México", sector: "ecommerce" });
+  const expected = Object.values(prospects.CITIES).flatMap((cities) => cities.map((_, rank) => segments.filter((s) => rank < prospects.depthOf(s)).length)).reduce((a, b) => a + b, 0);
+  assert.equal(list.length, expected);
+  assert.ok(list.some((s) => s.city === "Querétaro" && s.sector === "hotel") && !list.some((s) => s.city === "Querétaro" && s.sector === "plumber"), "only high-priority segments reach the fifth city");
   assert.ok(sweep.TIER1.every((cc) => prospects.CITIES[cc] && prospects.CITIES[cc].length >= 3), "every TIER1 market has 3+ cities");
   segments.forEach((s) => assert.deepEqual(Object.keys(prospects.SEGMENTS[s]).sort(), ["de", "en", "es", "fr", "it", "pt"]));
 });

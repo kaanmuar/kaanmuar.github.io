@@ -1,7 +1,7 @@
 "use strict";
 /*
- * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram)
- * and Telegram ledgers (the @qalab_live channel post of each Live Reports batch, #2549), the field-sweep
+ * Jarvis social hub (#1420): the queue per channel from the Buffer, Facebook, open-social (Bluesky, Mastodon, Threads, Instagram),
+ * Telegram and Reddit ledgers (each Live Reports batch, #2549, and the campaign posts, #2606), the field-sweep
  * proposals still waiting for a decision, approving or dismissing one in socialHub/live the way the hub
  * editor does, and starting the posting workflows now instead of at their nightly slot.
  */
@@ -10,20 +10,25 @@ const Admin = require("./social-hub-admin");
 const WORKFLOWS = [
   { file: "buffer-batch.yml", name: "Buffer", inputs: { mode: "retry" } },
   { file: "facebook-page.yml", name: "Facebook Page" },
-  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads and Instagram" },
+  { file: "open-social.yml", name: "Bluesky, Mastodon, Threads, Instagram and Telegram" },
   // The Reddit app's upload after each batch (#2549); the app posts in r/QALabLiveReports on its own daily task, and
-  // the same workflow's ledger job reads the app's logs into assets/social/reddit.json (#2571). Post now leaves it
-  // alone: watch only.
+  // the campaign posts bundled with the upload on its 30-minute task (#2606). The same workflow's ledger job reads the
+  // app's logs into assets/social/reddit.json (#2571). Post now leaves it alone: watch only.
   { file: "reddit-live.yml", name: "Reddit app (r/QALabLiveReports)", watch: true }
 ];
 
-// Channels that post once per Live Reports batch rather than per post, after the calendar channels.
+// Channels that also post once per Live Reports batch; the hub's CHANNELS lists them too since they take the campaign
+// posts (#2606), so a key here only keeps its row.
 const LIVE_CHANNELS = [["telegram", "Telegram"], ["reddit", "Reddit"]];
 
-/** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window. */
-function byChannel(books, now, since) {
+const NUMBERS = ["impressions", "views", "likes", "comments"];
+
+/** Every channel in calendar order, with what is scheduled next, what went out last and what failed in the window, and
+ * the summed numbers (metrics.json posts, #2602) of the posts it sent in the window. */
+function byChannel(books, now, since, metrics) {
   const rows = {};
-  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null }; });
+  const posts = (metrics && metrics.posts) || {};
+  Admin.CHANNELS.concat(LIVE_CHANNELS).forEach(([key, name]) => { rows[key] = { channel: key, name, scheduled: 0, sent: 0, failed: 0, next: [], last: null, numbers: {} }; });
   books.forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((r) => {
@@ -35,6 +40,8 @@ function byChannel(books, now, since) {
           row.next.push({ at: r.at, post });
         } else if (at >= since && r.result === "sent") {
           row.sent += 1;
+          const got = (posts[post] || {})[r.channel] || {};
+          NUMBERS.forEach((k) => { if (Number(got[k]) > 0) row.numbers[k] = (row.numbers[k] || 0) + Number(got[k]); });
           if (!row.last || at > Date.parse(row.last.at)) row.last = { at: r.at, post, url: r.url || "" };
         } else if (at >= since && r.result === "failed") row.failed += 1;
       });
@@ -47,12 +54,27 @@ function state(doc) {
   try { return Admin.clean(JSON.parse((doc && doc.json) || "{}")); } catch (error) { return Admin.empty(); }
 }
 
+const SITE = "https://carlosandmunoz.com/";
+
+/** A proposal's card image as an https URL the page, the app and a push can each load (#2248); the sweep round-up's
+ * card is site-relative. Anything else (http, data:, unparsable) is "": the proposal shows without a card. */
+function cardImage(image) {
+  const src = String(image || "").trim();
+  if (!src || src.length > 1000) return "";
+  try {
+    const url = new URL(src, SITE);
+    return url.protocol === "https:" ? url.href : "";
+  } catch (error) {
+    return "";
+  }
+}
+
 /** Undecided proposals, best first. */
 function pending(proposals, live, limit) {
   return Admin.pendingProposals(proposals, live)
     .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0))
     .slice(0, limit || 12)
-    .map((p) => ({ id: p.id, title: p.title, url: p.url, source: p.source, author: p.author || "", date: p.date || "", topic: p.topic || "", lang: p.lang || "en", summary: String(p.summary || "").slice(0, 400), why: p.why || "", image: p.image || "", score: p.score }));
+    .map((p) => ({ id: p.id, title: p.title, url: p.url, source: p.source, author: p.author || "", date: p.date || "", topic: p.topic || "", lang: p.lang || "en", summary: String(p.summary || "").slice(0, 400), why: p.why || "", image: cardImage(p.image), score: p.score }));
 }
 
 /** The next socialHub/live state: dismissed records the decision; approved also adds the hub item, as the editor's Add form does. */
@@ -118,4 +140,4 @@ function redditMembers(book, since, now) {
   return Object.assign(inRange(r, since), { need: old ? "Reddit members: showing the count from " + String(r.at || "").slice(0, 10) + ", more than two days old. " + REDDIT_SETUP : "" });
 }
 
-module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers, redditMembers };
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, cardImage, pending, decide, telegramMembers, redditMembers };

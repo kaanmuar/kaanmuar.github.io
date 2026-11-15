@@ -13,12 +13,13 @@
   const NETS = ["linkedin", "x", "instagram", "facebook", "tiktok", "youtube"];
   const LANGS = ["en", "es", "pt", "de", "fr", "it"];
   // Calendar channels in the order a post goes out. Facebook goes through the Graph API, Bluesky, Mastodon, Threads
-  // and Instagram straight to their APIs (scripts/open-social-queue.js), the rest through Buffer.
-  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["bluesky", "Bluesky"], ["mastodon", "Mastodon"], ["threads", "Threads"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"]];
+  // and Instagram straight to their APIs (scripts/open-social-queue.js), Telegram through its bot and Reddit through
+  // the Reddit app (reddit/live-reports, #2606), the rest through Buffer.
+  const CHANNELS = [["linkedin", "LinkedIn"], ["x", "X"], ["bluesky", "Bluesky"], ["mastodon", "Mastodon"], ["threads", "Threads"], ["instagram", "Instagram"], ["instagram-story", "Story"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"], ["telegram", "Telegram"], ["reddit", "Reddit"]];
   // The networks open-social-queue.js posts to, which leaves a slot it missed by more than 12 hours. Bluesky,
-  // Mastodon and Threads have no calendar slot of their own: they post the X caption at the x slot.
-  const DIRECT = { bluesky: "Bluesky API", mastodon: "Mastodon API", threads: "Threads API", instagram: "Instagram API", "instagram-story": "Instagram API" };
-  const AT_X = ["bluesky", "mastodon", "threads"];
+  // Mastodon, Threads, Telegram and Reddit have no calendar slot of their own: they post the X caption at the x slot.
+  const DIRECT = { bluesky: "Bluesky API", mastodon: "Mastodon API", threads: "Threads API", instagram: "Instagram API", "instagram-story": "Instagram API", telegram: "Telegram Bot API", reddit: "Reddit app" };
+  const AT_X = ["bluesky", "mastodon", "threads", "telegram", "reddit"];
   const DIRECT_MISSED_MS = 12 * 3600000;
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const HTTPS = /^https:\/\/[^\s<>"'`]+$/;

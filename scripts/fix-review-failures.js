@@ -160,12 +160,26 @@ function ciWait(pr) {
   try { return { ok: true, out: run("scripts/ci-wait.sh", [String(pr)], { timeout: 75 * 60000 }) }; } catch (error) { return { ok: false, out: String(error.stdout || error.message) }; }
 }
 
+// Two deploys at once can leave a function on older code (#3383), so wait until no other deploy runs on this machine.
+// The bracket keeps a shell whose own command line names the pattern from matching itself.
+const DEPLOY_BUSY = "firebase-tools [d]eploy";
+function deployIdle(busy, wait, limitMs) {
+  const started = Date.now();
+  while (busy()) {
+    if (Date.now() - started > limitMs) throw new Error("Another firebase-tools deploy is still running after " + Math.round(limitMs / 60000) + " minutes.");
+    wait();
+  }
+}
+const otherDeploy = () => spawnSync("pgrep", ["-f", DEPLOY_BUSY]).status === 0;
+const pause = () => spawnSync("sleep", ["30"]);
+
 function deploy() {
   for (const file of ["functions/.env", "functions/.secret.local"]) {
     const from = path.join(MAIN, file);
     if (fs.existsSync(from) && !fs.existsSync(path.join(ROOT, file))) fs.symlinkSync(from, path.join(ROOT, file));
   }
   run("npm", ["ci", "--prefix", "functions", "--no-audit", "--no-fund"], { timeout: 15 * 60000 });
+  deployIdle(otherDeploy, pause, 45 * 60000);
   run("npx", ["-y", "firebase-tools", "deploy", "--only", DEPLOY], { timeout: 30 * 60000 });
 }
 
@@ -259,4 +273,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { triage, siteComment, agentPrompt, planCheck, planAllows, odFloor, ciFailComment, MARK, USAGE };
+module.exports = { deployIdle, DEPLOY_BUSY, triage, siteComment, agentPrompt, planCheck, planAllows, odFloor, ciFailComment, MARK, USAGE };

@@ -43,6 +43,22 @@ test("a batch post goes into the ledger like Telegram's, under its batch key, an
   assert.deepEqual(book.members.history.map((p) => [p.date, p.members]), [["2026-11-03", 10], ["2026-11-04", 13]]);
 });
 
+test("a campaign post goes into the ledger under its <batch>/<slug> key, the launch set's <lang>/<topic> too", () => {
+  const book = ledger.empty();
+  assert.deepEqual(R.apply(book, [post({ key: "runs-3/01-ilo", id: "t3_c1" }), post({ key: "launch-2026-10/es/a11y", id: "t3_c2" }), post({ key: "../x", id: "t3_bad" })], NOW), ["launch-2026-10/es/a11y", "runs-3/01-ilo"]);
+  assert.equal(book.posts["runs-3/01-ilo"][0].id, "t3_c1");
+});
+
+test("the Reddit app posts the bundled campaign on its 30-minute task and logs each post with its key", () => {
+  const server = fs.readFileSync(path.join(ROOT, "reddit/live-reports/src/server/index.js"), "utf8");
+  assert.match(server, /import campaign from "\.\.\/\.\.\/dist\/campaign\.json"/);
+  assert.match(server, /reddit\.submitPost\(\{ title: item\.title, url: item\.url \}\)/);
+  assert.match(server, /await ledger\(post, item\.key\)/);
+  const app = JSON.parse(fs.readFileSync(path.join(ROOT, "reddit/live-reports/devvit.json"), "utf8"));
+  assert.deepEqual(app.scheduler.tasks.campaign, { endpoint: "/internal/scheduler/campaign", cron: "*/30 * * * *" });
+  assert.match(fs.readFileSync(path.join(ROOT, "reddit/live-reports/scripts/build.mjs"), "utf8"), /redditPosts\(Date\.now\(\), CAMPAIGN_AHEAD, ROOT\)/);
+});
+
 test("a post line without a batch key or id records only the member count", () => {
   const book = ledger.empty();
   assert.deepEqual(R.apply(book, [post({ key: "menu" }), post({ id: "" })], NOW), []);
@@ -85,11 +101,29 @@ test("merging two Reddit ledgers keeps both sides' posts and member points, the 
   assert.equal(a.members.history.length, 3);
 });
 
+test("the daily numbers line keeps each post's score and comments, a newer reading wins, and writing and merging keep them", () => {
+  const book = ledger.empty();
+  R.apply(book, R.parse([
+    line({ kind: "numbers", at: "2026-11-04T16:20:06.000Z", posts: [{ id: "t3_abc", score: 7, comments: 2 }, { id: "", score: 1 }, { id: "t3_neg", score: -3, comments: 0 }] }),
+    line({ kind: "numbers", at: "2026-11-03T16:20:06.000Z", posts: [{ id: "t3_abc", score: 1, comments: 0 }] })
+  ].join("\n")), NOW);
+  assert.deepEqual(book.numbers, { t3_abc: { likes: 7, comments: 2, at: "2026-11-04T16:20:06.000Z" }, t3_neg: { likes: 0, comments: 0, at: "2026-11-04T16:20:06.000Z" } });
+  const file = tmpFile();
+  ledger.write(file, book);
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, "utf8")).numbers.t3_abc, { likes: 7, comments: 2, at: "2026-11-04T16:20:06.000Z" });
+  const other = ledger.empty();
+  ledger.numbers(other, "t3_abc", { likes: 9, comments: 3 }, "2026-11-05T16:20:06.000Z");
+  ledger.merge(book, other);
+  assert.equal(book.numbers.t3_abc.likes, 9);
+});
+
 test("the Devvit app logs the lines the parser reads, and the ledger job and commit script use the ledger", () => {
   const server = fs.readFileSync(path.join(ROOT, "reddit/live-reports/src/server/index.js"), "utf8");
   assert.ok(server.includes('const LEDGER = "' + R.PREFIX + '"'));
   ["kind", "key", "id", "url", "posted", "subscribers"].forEach((f) => assert.match(server, new RegExp("\\b" + f + "\\b"), f));
   assert.match(server, /numberOfSubscribers/);
+  assert.match(server, /kind: "numbers"/);
+  assert.match(server, /score: post\.score, comments: post\.numberOfComments/);
   const wf = fs.readFileSync(path.join(ROOT, ".github/workflows/reddit-live.yml"), "utf8");
   assert.match(wf, /devvit logs "\$REDDIT_SUBREDDIT" qalab-live-reports --since 3d --json/);
   assert.match(wf, /node scripts\/reddit-ledger\.js/);

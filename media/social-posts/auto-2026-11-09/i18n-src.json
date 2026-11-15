@@ -1,0 +1,105 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-beatmastering-ir": {
+   "lang": "en",
+   "strings": {
+    "title.0": "beatmastering.ir: 64.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 52 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "beatmastering.ir · 20 pages analyzed · 8 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 52 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-beatmastering-ir&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-beatmastering-ir\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #DevOps #SoftwareTesting #QA #Forms #A11y #Coding #Programming #WCAG #TestAutomation #InclusiveDesign #QAlab"
+   }
+  },
+  "u-careeronestop-org": {
+   "lang": "es",
+   "strings": {
+    "title.0": "careeronestop.org: 67.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 9 AI answer or search crawlers are blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "careeronestop.org · 20 pages analyzed · 8 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 9 AI answer or search crawlers are blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-careeronestop-org&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-careeronestop-org\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#GEO #SRE #ChatGPT #QA #AISearch #RobotsTxt #TechTips #WebDevelopment #AIOverviews #DigitalMarketing #SDET #QAlab"
+   }
+  },
+  "vs-tide-forecast-com": {
+   "lang": "pt",
+   "strings": {
+    "live": "u-tide-forecast-com",
+    "title.0": "3 natural competitors.",
+    "title.1": "*tide-forecast.com leads: 67.*",
+    "body": "surf-forecast.com leads in SEO, GEO; tide-forecast.com leads in Analytics, Security; tides4fishing.com leads in Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 9 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "tide-forecast.com",
+    "visual.rows.1.0": "tides4fishing.com",
+    "visual.rows.2.0": "surf-forecast.com",
+    "visual.note": "Natural competitors found on the open web · 9 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "surf-forecast.com leads in SEO, GEO; tide-forecast.com leads in Analytics, Security; tides4fishing.com leads in Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 9 Nov 2026 of tide-forecast.com, tides4fishing.com, surf-forecast.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-tide-forecast-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-tide-forecast-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #WebPerformance #QA #WebPerf #LearnOnYouTube #TechTips #TechnicalSEO #PageSpeed #TestAutomation #SEOTips #QAlab"
+   }
+  },
+  "vs-strandbags-co-nz": {
+   "lang": "de",
+   "strings": {
+    "live": "u-strandbags-co-nz",
+    "title.0": "2 natural competitors.",
+    "title.1": "*sylviapark.com leads: 64.*",
+    "body": "sylviapark.com leads in SEO, Accessibility; strandbags.co.nz leads in GEO, Analytics, Security, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 9 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "strandbags.co.nz",
+    "visual.rows.1.0": "sylviapark.com",
+    "visual.note": "Natural competitors found on the open web · 9 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "sylviapark.com leads in SEO, Accessibility; strandbags.co.nz leads in GEO, Analytics, Security, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 9 Nov 2026 of strandbags.co.nz, sylviapark.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-strandbags-co-nz&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-strandbags-co-nz\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #SoftwareTesting #QA #WebPerf #LearnOnYouTube #TechTips #ContentMarketing #CoreWebVitals #QualityAssurance #PageSpeed #QAlab"
+   }
+  }
+ }
+}

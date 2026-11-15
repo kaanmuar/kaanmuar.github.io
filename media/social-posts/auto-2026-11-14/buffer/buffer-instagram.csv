@@ -1,0 +1,49 @@
+Text,Image URL,Tags,Posting Time
+"actualite.cd: 48. The gap: link names.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+Lesson: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 13 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg","","2026-11-15 15:45"
+"circajewels.com: 60. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #QA #Forms #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/02-u-circajewels-com.jpg","","2026-11-16 12:45"
+"4 natural competitors. tomorrow.io leads: 69.
+
+tomorrow.io leads in SEO, GEO, Security; fastweather.com leads in Analytics, Performance; weather.com leads in Accessibility. foreca.com leads in none of the six areas.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 14 Nov 2026 of foreca.com, tomorrow.io, fastweather.com, weather.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/03-vs-foreca-com.jpg","","2026-11-17 14:35"
+"4 natural competitors. astroawani.com leads: 51.
+
+bharian.com.my leads in SEO; astroawani.com leads in GEO, Security; sinarharian.com.my leads in Analytics, Performance; hmetro.com.my leads in Accessibility.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 14 Nov 2026 of sinarharian.com.my, bharian.com.my, astroawani.com, hmetro.com.my, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+Full report: link in bio.
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #WebPerformance #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg","","2026-11-18 12:05"

@@ -413,6 +413,8 @@ function fakeNetwork(routes) {
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
         if (route.timeout && !route.body) return req.emit("timeout");
+        if (route.reset) return req.emit("error", Object.assign(new Error("aborted"), { code: "ECONNRESET" }));
+        if (route.refused) return req.emit("error", Object.assign(new Error("connect ECONNREFUSED 93.184.216.34:443"), { code: "ECONNREFUSED" }));
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
         onResponse(res);
@@ -933,6 +935,36 @@ test.describe("start page reads", () => {
     await assert.rejects(review({ [BANK]: { timeout: true } }, async () => ({ ok: false, error: "the browser was busy" })), /^Error: The page took too long in the plain request, and headless Chrome could not open it either \(the browser was busy\)\.$/);
   });
 
+  test("a plain read the host reset before any page is tried in headless Chrome (#3375)", async () => {
+    const jobs = [];
+    const restore = fakeNetwork({ [BANK]: { reset: true } });
+    try {
+      const { report } = await review({ [BANK]: { reset: true } }, async (job) => {
+        jobs.push(job);
+        return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
+      });
+      assert.equal(jobs.length, 1);
+      assert.equal(report.pages[0].status, 200);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a host that refuses the plain connection is tried in headless Chrome before it is named down (#3374)", async () => {
+    const jobs = [];
+    const restore = fakeNetwork({ [BANK]: { refused: true } });
+    try {
+      const { report } = await review({ [BANK]: { refused: true } }, async (job) => {
+        jobs.push(job);
+        return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
+      });
+      assert.equal(jobs.length, 1);
+      assert.equal(report.pages[0].status, 200);
+    } finally {
+      restore();
+    }
+  });
+
   test("when headless Chrome is refused too, the error names the bot protection", async () => {
     const browse = async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: WAF.body } });
     await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain request and in headless Chrome\.$/);
@@ -1098,15 +1130,77 @@ test.describe("start page reads", () => {
     assert.equal(failures.causeOf(wrong.message).id, "tls");
   });
 
+  test("a chain whose next issuer is also missing is read by following that AIA address", async () => {
+    // Failed run sweep-x7N1BM5IjxViMWl814Fh on www.centredentairemeiser.com (#1176): the plain read
+    // fails with "unable to get local issuer certificate" (UNABLE_TO_GET_ISSUER_CERT_LOCALLY). The
+    // leaf's AIA certificate does not chain to a trusted root, and that certificate's own AIA one does.
+    // sweep-lAWQ61TuoGsq7jlHHpNN on www.vitacentro.com failed with "unable to get issuer certificate".
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const crypto = require("node:crypto");
+    const tlsLib = require("node:tls");
+    const httpsLib = require("node:https");
+    const pem = (name) => fs.readFileSync(path.join(__dirname, "fixtures", "tls-chain", name + ".pem"), "utf8");
+    const der = (name) => new crypto.X509Certificate(pem(name)).raw;
+    const host = "ye.example.com";
+    const site = "https://" + host + "/";
+    const mid = pem("ye-mid");
+    const top = pem("ye-top");
+    const restore = fakeNetwork({
+      [site]: { status: 200, headers: STRONG_HEADERS, body: HTML.replace(/shop\.example\.com/g, host) },
+      "http://certs.ca.example.org/ye1.crt": { status: 200, headers: { "content-type": "application/pkix-cert" }, body: der("ye-mid") },
+      "http://certs.ca.example.org/root-ye.crt": { status: 200, headers: { "content-type": "application/pkix-cert" }, body: der("ye-top") }
+    });
+    const fake = httpsLib.request;
+    const savedConnect = tlsLib.connect;
+    const cas = [];
+    httpsLib.request = (options, onResponse) => {
+      if (options.hostname !== host) return fake(options, onResponse);
+      const both = !!(options.ca && options.ca.includes(mid) && options.ca.includes(top));
+      cas.push(both);
+      if (both) return fake(options, onResponse);
+      const { EventEmitter } = require("node:events");
+      const req = new EventEmitter();
+      req.destroy = () => {};
+      req.end = () => setImmediate(() => req.emit("error", Object.assign(new Error("unable to get local issuer certificate"), { code: "UNABLE_TO_GET_ISSUER_CERT_LOCALLY" })));
+      return req;
+    };
+    tlsLib.connect = (options, onSecure) => {
+      const { EventEmitter } = require("node:events");
+      const socket = new EventEmitter();
+      assert.deepEqual([options.servername, options.port], [host, 443]);
+      socket.getPeerCertificate = () => ({ raw: der("ye-leaf") });
+      socket.destroy = () => {};
+      setImmediate(onSecure);
+      return socket;
+    };
+    const lines = [];
+    try {
+      const report = await core.reviewTarget(site, { log: (text) => lines.push(text), browse: async () => ({ ok: false }) });
+      assert.deepEqual([report.pages[0].status, report.pages[0].title], [200, "Example shop for garden tools"]);
+      assert.deepEqual(cas.slice(0, 2), [false, true]);
+      assert.ok(cas.slice(2).every(Boolean), "later requests carry both fetched certificates");
+      assert.ok(lines.includes("The server sent its certificate without the intermediate Review Test YE1, Review Test Root YE. Fetched it from http://certs.ca.example.org/ye1.crt, http://certs.ca.example.org/root-ye.crt, as browsers do, and verified the chain again."));
+      const chain = report.insights.findings.find((item) => item.key === "sec-tls-chain");
+      assert.deepEqual([chain.verdict, chain.severity], ["risk", "medium"]);
+      assert.match(chain.evidence, /without Review Test YE1, Review Test Root YE\. Browsers fetch/);
+    } finally {
+      httpsLib.request = fake;
+      tlsLib.connect = savedConnect;
+      restore();
+    }
+  });
+
   test("headless Chrome reads a page whose load event stalls once its document has arrived", async () => {
     // Re-run zyvKsDINcVhGirMeIupU on www.supersociedades.gov.co (#733): the document parses in about 12 s,
     // but an image or script never finishes, so the load event never fires and goto timed out at 20 s.
     const browser = require("../../functions/url-review-browser");
     const html = "<html><body><h1>Superintendencia</h1></body></html>";
-    const fakePage = ({ arrives, ready, error }) => {
+    const fakePage = ({ arrives, ready, error, status }) => {
       const listeners = [];
       const main = {};
-      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => 200, headers: () => ({ "content-type": "text/html" }), text: async () => html };
+      const code = status || 200;
+      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => code, headers: () => ({ "content-type": "text/html" }), text: async () => html };
       return {
         on: (name, fn) => listeners.push(fn),
         off: (name, fn) => listeners.splice(listeners.indexOf(fn), 1),
@@ -1125,6 +1219,8 @@ test.describe("start page reads", () => {
     await assert.rejects(browser.open(fakePage({ arrives: false, ready: true }), BANK), /^TimeoutError: Navigation timeout of 20000 ms exceeded$/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: false }), BANK), /Navigation timeout/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: true, error: "empty" }), BANK), /ERR_EMPTY_RESPONSE/);
+    const refused = await browser.open(fakePage({ arrives: true, ready: false, status: 403 }), BANK);
+    assert.deepEqual([refused.docStatus, refused.stalled], [403, true]);
   });
 
   test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
@@ -1885,6 +1981,22 @@ test.describe("publishing user reviews to Live Reports", () => {
     assert.equal(run.live.reason, "unlisted");
   });
 
+  test("the desk reads trimmed reviews and shows the same runs as from the full ones", () => {
+    const desk = require("../../functions/url-review-desk");
+    const names = ["wordpress", "excalidraw", "carlosandmunoz"];
+    const full = names.map((name, i) => {
+      const report = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "review-" + name + ".json"), "utf8"));
+      report.browser = { trace: "x".repeat(100000) };
+      return { id: "r" + i, status: "complete", email: "a@b.de", followUp: true, createdAt: "2026-11-0" + (i + 1) + "T10:00:00.000Z", log: Array.from({ length: 50 }, (_, n) => "line " + n), report };
+    });
+    full.push({ id: "p1", status: "paid-report", reportId: "r0", email: "a@b.de", paid: true, priceUsd: 9 });
+    const slim = full.map(desk.deskRecord);
+    assert.ok(JSON.stringify(slim).length < JSON.stringify(full).length / 4);
+    assert.deepEqual(slim[3], full[3]);
+    const view = (rows) => Object.assign(desk.snapshot(rows, desk.alertsFromHistory(rows), [], [], ["excalidraw.com"]), { at: "" });
+    assert.deepEqual(view(slim), view(full));
+  });
+
   test("an asker's opt-out, a test run, and a host Safe Browsing flags are held", () => {
     assert.equal(publish.heldReason(record("acme.de", { unlisted: true }), []), "asker-opted-out");
     assert.equal(publish.heldReason(record("acme.de", { unlisted: false }), []), "");
@@ -2192,6 +2304,9 @@ test("the daily probe checks the connection after a plain read that timed out, a
   assert.deepEqual([walled.now, walled.site], ["bot-protection", false]);
   const gone = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 404 } });
   assert.deepEqual([gone.now, gone.site], ["status", false]);
+  const cloudflare = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 522, words: 142 } });
+  assert.deepEqual([cloudflare.now, cloudflare.site], ["status", true]);
+  assert.ok(failures.siteSide({ error: { message: "The URL returned status 522, in headless Chrome, after the plain request took too long." }, cause: { id: "status" } }, "status"));
   const busy = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "the browser was busy" } });
   assert.deepEqual([busy.now, busy.site], ["timeout", false]);
   assert.match(busy.nowLabel, /, and headless Chrome did not finish \(the browser was busy\)$/);
@@ -2281,6 +2396,30 @@ test("a start page whose host cuts Chrome off for the review tag is loaded again
   assert.equal(tagCut(start, null), "");
 });
 
+test("a page that moves itself on after it loaded is read again once the next page settles, not failed as a browser that did not finish (#2268)", async () => {
+  const { steady } = require("../../functions/url-review-browser");
+  const destroyed = () => new Error("Execution context was destroyed, most likely because of a navigation.");
+  const page = { settled: 0, waitForNetworkIdle: async () => { page.settled += 1; } };
+  let calls = 0;
+  const moves = [];
+  const banner = await steady(page, async () => {
+    calls += 1;
+    if (calls === 1) throw destroyed();
+    return { found: true, name: "Cookiebot" };
+  }, () => moves.push(calls));
+  assert.deepEqual([banner, calls, moves, page.settled], [{ found: true, name: "Cookiebot" }, 2, [1], 1]);
+
+  let gone = 0;
+  const lost = new Error("Cannot find context with specified id");
+  await assert.rejects(steady(page, async () => { gone += 1; throw lost; }), lost);
+  assert.equal(gone, 3);
+
+  let other = 0;
+  await assert.rejects(steady(page, async () => { other += 1; throw new Error("Target closed"); }), /Target closed/);
+  assert.equal(other, 1);
+  assert.equal(await steady({}, async () => 7), 7);
+});
+
 test("an http:// redirect is read over https first, as Chrome does, and fails as an http:// redirect only when https gives no page (#1179)", async (t) => {
   t.after(fakeNetwork({
     "https://garena.example.com/": { status: 302, headers: { location: "http://intl.garena.example.com/" } },
@@ -2339,6 +2478,40 @@ test("an https copy of an http:// redirect that refuses the review or is slow is
   assert.equal((await core.probeRead("https://gone.example.com/")).httpRedirect, "http://gone.example.com/old");
 });
 
+test("an http redirect that points at a later https path is read there (#2875)", async (t) => {
+  // sweep-GCric9N6ijtga8cagENg on mitsubishielectric.com: https apex 302s to https www, which 302s to
+  // http://www.mitsubishielectric.com/. That http address 301s to http://www.mitsubishielectric.com/en/index.html,
+  // and https://www.mitsubishielectric.com/en/index.html 301s to https://www.mitsubishielectric.com/en/ (200, the global site).
+  // The review used to stop when https of the first http address redirected back to it.
+  const home = "https://electric.example.com/";
+  const page = "https://www.electric.example.com/en/";
+  t.after(fakeNetwork({
+    [home]: { status: 302, headers: { location: "https://www.electric.example.com/" } },
+    "https://www.electric.example.com/": { status: 302, headers: { location: "http://www.electric.example.com/" } },
+    "http://www.electric.example.com/": { status: 301, headers: { location: "http://www.electric.example.com/en/index.html" } },
+    "https://www.electric.example.com/en/index.html": { status: 301, headers: { location: page } },
+    [page]: { status: 200, headers: { "content-type": "text/html" }, body: HTML },
+    "https://other.example.com/": { status: 302, headers: { location: "http://other.example.com/" } },
+    "http://other.example.com/": { status: 301, headers: { location: "http://elsewhere.example.com/" } },
+    "https://elsewhere.example.com/": { status: 200, headers: { "content-type": "text/html" }, body: HTML },
+    "https://plain.example.com/": { status: 302, headers: { location: "http://plain.example.com/welcome" } },
+    "https://plain.example.com/welcome": { status: 302, headers: { location: "http://plain.example.com/welcome" } },
+    "http://plain.example.com/welcome": { status: 200, headers: { "content-type": "text/html" }, body: HTML }
+  }));
+  const lines = [];
+  const read = await core.fetchPublic(home, null, (line) => lines.push(line));
+  assert.deepEqual([read.status, read.url], [200, page]);
+  assert.ok(lines.includes("The site redirected to http://www.electric.example.com/en/index.html, an http:// address. Requesting the same address over https, as Chrome does."));
+  const probe = await core.probeRead(home);
+  assert.deepEqual([probe.status, probe.httpRedirect, probe.html], [200, undefined, true]);
+  assert.equal(failures.diagnose({ cause: { id: "http-redirect" } }, { dns: {}, plain: probe }).cleared, true);
+
+  const other = await core.fetchPublic("https://other.example.com/").then(() => null, (caught) => caught);
+  assert.equal(other.message, "The site redirected to http://other.example.com/, an http:// address, and the same address over https gave no page. The review only follows https.");
+  const plain = await core.fetchPublic("https://plain.example.com/").then(() => null, (caught) => caught);
+  assert.equal(plain.message, "The site redirected to http://plain.example.com/welcome, an http:// address, and the same address over https gave no page. The review only follows https.");
+});
+
 test("the connection check tells a port that opens from one that refuses", async () => {
   const net = require("node:net");
   const server = net.createServer((socket) => socket.end());
@@ -2391,19 +2564,22 @@ test("down hosts and confirmed 4xx pages stay on the desk without a bug; bot wal
   // hoe.com: a 402 in the plain request and in headless Chrome is site-side in a re-run too.
   const goneRerun = Object.assign({}, refusedRerun, { id: "r4", host: "hoe.com", error: { message: "The URL returned status 402, in the plain request and in headless Chrome." }, cause: { id: "status" } });
   const slowGone = Object.assign({}, refusedRerun, { id: "r5", host: "late.example.com", error: { message: "The URL returned status 404, in headless Chrome, after the plain request took too long." }, cause: { id: "status" } });
+  const slowOrigin = probed("2026-11-15T08:46:00Z", "The URL returned status 522, in headless Chrome, after the plain request took too long.", "latienda",
+    { dns, plain: slow, tcp: { open: true, ms: 28 }, browser: { ok: true, docStatus: 522, words: 142 } });
 
-  [missing, down, oldDown].forEach((row) => assert.equal(row.diagnosis.site, true, row.host));
+  [missing, down, oldDown, slowOrigin].forEach((row) => assert.equal(row.diagnosis.site, true, row.host));
   [walled, tarpit, ours].forEach((row) => assert.equal(row.diagnosis.site, false, row.host));
-  const bugs = failures.bugPlan([missing, walled, down, oldDown, tarpit, ours], [refusedRerun, slowRerun, brokenRerun, goneRerun, slowGone], []);
+  assert.ok(failures.siteSide(slowOrigin, "status"));
+  const bugs = failures.bugPlan([missing, walled, down, oldDown, tarpit, ours, slowOrigin], [refusedRerun, slowRerun, brokenRerun, goneRerun, slowGone], []);
   assert.deepEqual(bugs.map((bug) => [bug.key, bug.hosts]), [
     ["bot-protection-319", ["bancodebogota.com", "bot-protection.example.com"]],
     ["timeout", ["slow.example.com", "timeout.example.com", "www.hpe.com"]],
     ["browser-365", ["busy.example.com"]],
     ["status", ["late.example.com"]]
   ]);
-  const report = failures.periodFailures({ failures: [missing, walled, down, oldDown, tarpit, ours], previous: [], reruns: [], bugs: [], phrase: "yesterday" });
-  assert.equal(report.failed, 6);
-  assert.deepEqual(report.causes, { status: 1, "bot-protection": 1, down: 1, timeout: 3 });
+  const report = failures.periodFailures({ failures: [missing, walled, down, oldDown, tarpit, ours, slowOrigin], previous: [], reruns: [], bugs: [], phrase: "yesterday" });
+  assert.equal(report.failed, 7);
+  assert.deepEqual(report.causes, { status: 2, "bot-protection": 1, down: 1, timeout: 3 });
 });
 
 const failedAt = (at, extra) => Object.assign({
@@ -2643,9 +2819,12 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
   const wrongName = filed("2026-10-28T11:00:00Z", "tls", "Hostname/IP does not match certificate's altnames", { dns, plain: { hops: [], error: "x", code: "ERR_TLS_CERT_ALTNAME_INVALID" } });
   const noIntermediate = filed("2026-10-28T12:00:00Z", "tls", "unable to verify the first certificate", { dns, plain: { hops: [], error: "unable to verify the first certificate", code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" } });
   const originDown = filed("2026-10-28T10:00:00Z", "status", "The URL returned status 522.", { dns, plain: { hops: [], status: 522, html: true } });
+  const slowOrigin = filed("2026-11-15T08:46:00Z", "status", "The URL returned status 522, in headless Chrome, after the plain request took too long.",
+    { dns, plain: { hops: [], error: "The page took too long." }, tcp: { open: true, ms: 28 }, browser: { ok: true, docStatus: 522, words: 142 } });
   const wallRerun = { id: "x7", status: "failed", at: "2026-10-28T13:00:00Z", host: "walled.example.com", failureIds: [], error: { message: "The site's bot protection refused the review (status 403, an Imperva bot check), in the plain request and in headless Chrome." }, cause: { id: "bot-protection" }, lines: [] };
 
-  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown], [wallRerun], []);
+  assert.ok(failures.siteSide(slowOrigin, "status"));
+  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin], [wallRerun], []);
   const byKey = Object.fromEntries(bugs.map((bug) => [bug.key, bug]));
   const marker = (body) => JSON.parse(body.match(/<!-- review-triage (\{.*?\}) -->/)[1]);
 
@@ -3353,6 +3532,24 @@ test.describe("domain health", () => {
     }
   });
 
+  test("a review looks up the script hosts the site loads in Web Risk, and a listed one fails the report (#3090)", async () => {
+    const html = HTML.replace("</head>", "<script src=\"https://skim.testsafebrowsing.appspot.com/s/malware.js\"></script></head>");
+    const restore = fakeNetwork({ [URL_]: { status: 200, headers: STRONG_HEADERS, body: html } });
+    const asked = [];
+    try {
+      const report = await core.reviewTarget(URL_, {
+        browse: async () => ({ ok: false }),
+        webrisk: async (url) => { asked.push(url); return { ok: true, url, threats: /testsafebrowsing/.test(url) ? ["MALWARE"] : [] }; },
+        places: async () => null
+      });
+      assert.deepEqual(asked, [URL_, "https://skim.testsafebrowsing.appspot.com/"]);
+      assert.deepEqual([get(report.insights, "sec-linked-script").verdict, get(report.insights, "sec-linked-script").severity], ["fail", "critical"]);
+      assert.ok(report.log.some((line) => /read for 1 of 1 hosts the site loads or links to: skim\.testsafebrowsing\.appspot\.com \(MALWARE\) flagged/.test(line.text)));
+    } finally {
+      restore();
+    }
+  });
+
   test("a local business is checked against its Google Business Profile, and only the place ID is kept (#2067)", async () => {
     const ld = { "@context": "https://schema.org", "@type": "HardwareStore", name: "Example Garden Tools", telephone: "+1 415 555 0100", address: { "@type": "PostalAddress", streetAddress: "12 Garden Way", addressLocality: "Springfield" } };
     const html = HTML.replace("</head>", "<script type=\"application/ld+json\">" + JSON.stringify(ld) + "</script></head>");
@@ -3779,7 +3976,11 @@ test.describe("cases built from evidence and ranked by risk", () => {
       observed: { title: "Home", description: "A shop for coffee. Also " + secret + "." },
       log: [{ at: "16:00:01", text: "Opened the start page. Saw " + secret + "." }],
       pages: [{ path: "/admin", status: 200, title: "Admin" }],
-      insights: { findings: [{ id: "SEC-02", area: "Security", verdict: "fail", title: "HSTS is not sent", evidence: "Missing. " + secret }], geo: { note: "Read by four crawlers. " + secret } }
+      // Rank-1 teaser stays clear (#3477); the secret lives only in a lower finding and other sections.
+      insights: { findings: [
+        { id: "A11Y-01", area: "Accessibility", verdict: "fail", rank: 1, title: "Buttons need names", evidence: "Icon-only buttons have no accessible name.", fix: "Add aria-label text." },
+        { id: "SEC-02", area: "Security", verdict: "fail", rank: 2, title: "HSTS is not sent", evidence: "Missing. " + secret }
+      ], geo: { note: "Read by four crawlers. " + secret } }
     };
     const preview = core.previewReport(report);
     assert.ok(!JSON.stringify(preview).includes(secret));
@@ -3790,7 +3991,8 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(preview.insights.geo.note, /^Read by four crawlers\. /);
     assert.deepEqual([preview.id, preview.host, preview.finalUrl, preview.fetchedAt, preview.log[0].at, preview.pages[0].path, preview.observed.title],
       [report.id, report.host, report.finalUrl, report.fetchedAt, report.log[0].at, report.pages[0].path, report.observed.title]);
-    assert.deepEqual([preview.insights.findings[0].area, preview.insights.findings[0].verdict, preview.insights.findings[0].title], ["Security", "fail", "HSTS is not sent"]);
+    assert.deepEqual([preview.insights.findings[0].area, preview.insights.findings[0].verdict, preview.insights.findings[0].title], ["Accessibility", "fail", "Buttons need names"]);
+    assert.equal(preview.insights.findings[0].teaser, true);
     assert.deepEqual(core.previewReport(preview).statement, preview.statement, "frosting twice gives the same copy");
     assert.equal(report.statement.includes(secret), true, "the stored report is not changed");
   });
@@ -3815,6 +4017,31 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.equal(preview.compare, undefined);
     assert.ok(!JSON.stringify(preview).includes("asker.example"));
     assert.ok(report.compare, "the stored report is not changed");
+  });
+
+  test("shared preview keeps the top fail finding's evidence and fix in the clear (#3477)", () => {
+    const secret = "the admin panel answers on port 8443 without a password";
+    const report = {
+      insights: {
+        score: { overall: 53, areas: { Accessibility: { score: 14 } } },
+        findings: [
+          { id: "A11Y-01", key: "a11y-name", area: "Accessibility", verdict: "fail", rank: 1, title: "Buttons need names",
+            evidence: "Icon-only buttons have no accessible name on the start page.",
+            fix: "Add aria-label text that says what each button does." },
+          { id: "SEC-02", key: "sec-hsts", area: "Security", verdict: "fail", rank: 2, title: "HSTS is not sent",
+            evidence: "Missing. " + secret, fix: "Send Strict-Transport-Security." }
+        ]
+      }
+    };
+    const preview = core.previewReport(report);
+    const teaser = preview.insights.findings.find((item) => item.teaser);
+    const other = preview.insights.findings.find((item) => item.id === "SEC-02");
+    assert.equal(teaser.id, "A11Y-01");
+    assert.equal(teaser.evidence, report.insights.findings[0].evidence);
+    assert.equal(teaser.fix, report.insights.findings[0].fix);
+    assert.ok(!JSON.stringify(preview).includes(secret));
+    assert.ok(other.evidence.includes("\u2060") || other.fix.includes("\u2060"));
+    assert.equal(preview.insights.score.overall, 53);
   });
 });
 
@@ -3869,5 +4096,5 @@ test("technologies come from the site's own markup, not from words, prose attrib
   assert.deepEqual(names(prose).filter((name) => /Wix|Shopify|Squarespace|Webflow|Joomla|Svelte|Drupal|WordPress/.test(name)), []);
   const own = "<html><head><meta name=\"generator\" content=\"WordPress 6.6\"><!-- This is Squarespace. --><script>Shopify.theme = {\"name\":\"Dawn\"};</script></head><body>" +
     "<a href=\"/sites/default/files/menu.pdf\">Menu</a><a href=\"https://shop.example.com/wp-content/a.pdf\">A</a></body></html>";
-  assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "Squarespace", "WordPress"]);
+  assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "WordPress"], "a comment naming Squarespace is not its marker (#3312)");
 });

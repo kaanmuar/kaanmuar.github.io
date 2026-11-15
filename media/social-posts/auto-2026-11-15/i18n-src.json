@@ -1,0 +1,107 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-najserialy-io": {
+   "lang": "en",
+   "strings": {
+    "title.0": "najserialy.io: 73.",
+    "title.1": "*The gap: AI crawler access.*",
+    "body": "Every page has a title, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.",
+    "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 14 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "najserialy.io · 20 pages analyzed · 14 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.\n\nLesson: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.\n\nOne automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-najserialy-io\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#GEO #AI #SoftwareTesting #QA #AISearch #RobotsTxt #WebDevelopment #Coding #AnswerEngineOptimization #ContentMarketing #Testing #QAlab"
+   }
+  },
+  "u-sarhne-com": {
+   "lang": "es",
+   "strings": {
+    "title.0": "sarhne.com: 62.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 15 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "sarhne.com · 20 pages analyzed · 15 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 15 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-sarhne-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-sarhne-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #CyberSecurity #SoftwareTesting #QA #HSTS #HTTPS #Programming #LearnOnYouTube #QualityAssurance #InfoSec #TestAutomation #QAlab"
+   }
+  },
+  "vs-mccabespharmacy-com": {
+   "lang": "pt",
+   "strings": {
+    "live": "u-mccabespharmacy-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*healthwave.ie leads: 78.*",
+    "body": "healthwave.ie leads in SEO, Analytics, Security, Performance; inishpharmacy.com leads in GEO; mccabespharmacy.com leads in Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 15 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "mccabespharmacy.com",
+    "visual.rows.1.0": "healthwave.ie",
+    "visual.rows.2.0": "inishpharmacy.com",
+    "visual.rows.3.0": "onlinepharmacy.ie",
+    "visual.note": "Natural competitors found on the open web · 15 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "healthwave.ie leads in SEO, Analytics, Security, Performance; inishpharmacy.com leads in GEO; mccabespharmacy.com leads in Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 15 Nov 2026 of mccabespharmacy.com, healthwave.ie, inishpharmacy.com, onlinepharmacy.ie, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-mccabespharmacy-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-mccabespharmacy-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #DevOps #QA #WebPerf #WebDevelopment #Coding #TechnicalSEO #SiteSpeed #SDET #SEOTips #QAlab"
+   }
+  },
+  "vs-zefoy-com": {
+   "lang": "de",
+   "strings": {
+    "live": "u-zefoy-com",
+    "title.0": "3 natural competitors.",
+    "title.1": "*zefoy.com leads: 79.*",
+    "body": "zefoy.com leads in SEO, Analytics, Security, Performance; viplikes.net leads in GEO, Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 15 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "zefoy.com",
+    "visual.rows.1.0": "viplikes.net",
+    "visual.rows.2.0": "m-sns.net",
+    "visual.note": "Natural competitors found on the open web · 15 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "zefoy.com leads in SEO, Analytics, Security, Performance; viplikes.net leads in GEO, Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 15 Nov 2026 of zefoy.com, viplikes.net, m-sns.net, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-zefoy-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-zefoy-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #Automation #SoftwareTesting #QA #WebPerf #TechTips #WebDevelopment #SearchConsole #CoreWebVitals #QualityAssurance #ContentMarketing #QAlab"
+   }
+  }
+ }
+}

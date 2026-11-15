@@ -9,7 +9,8 @@
    scripts/build-social-hub.js writes them into the feed; auto-live-reports.yml runs this before it every day.
 
    Telegram's channel members come from the Bot API (getChatMemberCount, TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL, #2570),
-   one point a day, so Jarvis shows the count and its change over the selected range.
+   one point a day, so Jarvis shows the count and its change over the selected range. Telegram posts' views and reactions
+   come from each post's public embed, and Reddit posts' score and comments from reddit.json numbers (#2602).
 
    { version: 1, updatedAt: "<ISO>", posts: { "<batch>/<slug>": { "<network>": { impressions, views, likes, comments } } },
      pages: { "<Facebook Page profile>": { asked, answered, insights, error } or { skipped: "no FACEBOOK_PAGE_TOKEN..." } },
@@ -25,6 +26,8 @@ const { FACES } = require("./brand-kit/faces");
 
 const ROOT = path.resolve(__dirname, "..");
 const OUT = "assets/social/metrics.json";
+const TELEGRAM_LEDGER = "assets/social/telegram.json";
+const REDDIT_LEDGER = "assets/social/reddit.json";
 const GRAPH = "https://graph.facebook.com/" + (process.env.FACEBOOK_GRAPH_VERSION || "v23.0");
 const METRICS = ["impressions", "views", "likes", "comments"];
 const CHUNK = 20;
@@ -173,6 +176,57 @@ function telegramEntry(previous, read, at) {
   return entry;
 }
 
+// The Bot API has no read of a channel post's views, so they come from the post's public embed (t.me/<chat>/<id>?embed=1),
+// which also shows its reactions; likes is their sum (#2602). Posts older than RECENT_DAYS keep their last numbers.
+const RECENT_DAYS = 60;
+const TELEGRAM_POST = /^https:\/\/t\.me\/\w+\/\d+$/;
+
+function shortCount(text) {
+  const m = String(text || "").trim().match(/^([\d.,]+)\s*([KM])?$/i);
+  if (!m) return 0;
+  const n = Number(m[1].replace(/,/g, ""));
+  return Math.round(n * ({ k: 1e3, m: 1e6 }[String(m[2] || "").toLowerCase()] || 1));
+}
+
+function telegramEmbed(html) {
+  const views = String(html).match(/class="tgme_widget_message_views"[^>]*>([^<]*)</);
+  if (!views) return null;
+  const likes = [...String(html).matchAll(/class="tgme_reaction[^"]*"[\s\S]*?<\/i>\s*([\d.,]+[KM]?)/gi)].reduce((sum, m) => sum + shortCount(m[1]), 0);
+  return counts({ views: shortCount(views[1]), likes });
+}
+
+function recentEntries(book, channel, now) {
+  const list = [];
+  Object.entries(book.posts || {}).forEach(([post, entries]) => (entries || []).forEach((e) => {
+    if (e.channel === channel && e.result === "sent" && e.id && Date.parse(e.at || "") >= now - RECENT_DAYS * 24 * 3600000) list.push({ post, channel, id: e.id, url: e.url || "" });
+  }));
+  return list;
+}
+
+async function telegramNumbers(book, request, now, report = {}) {
+  const entries = recentEntries(book, "telegram", now).filter((e) => TELEGRAM_POST.test(e.url));
+  const found = [];
+  Object.assign(report, { asked: entries.length, answered: 0 });
+  for (const entry of entries) {
+    try {
+      const res = await request(entry.url + "?embed=1&mode=tme");
+      const numbers = res.ok ? telegramEmbed(await res.text()) : null;
+      if (!numbers) { if (!report.error) report.error = entry.url + " answered " + res.status + " without a view count"; continue; }
+      report.answered += 1;
+      found.push(Object.assign({}, entry, { numbers }));
+    } catch (error) {
+      if (!report.error) report.error = error.message;
+    }
+  }
+  return found;
+}
+
+// The Reddit app logs each batch post's score and comments, which scripts/reddit-ledger.js keeps in reddit.json numbers.
+function redditNumbers(book) {
+  const by = book.numbers || {};
+  return sentEntries(book, ["reddit"]).filter((e) => by[e.id]).map((e) => Object.assign({}, e, { numbers: counts({ likes: by[e.id].likes, comments: by[e.id].comments }) }));
+}
+
 // Fresh numbers replace a network's old ones; networks not asked this run keep theirs, and so do channels.
 function merge(previous, found, updatedAt, pages, channels) {
   const posts = JSON.parse(JSON.stringify(previous.posts || {}));
@@ -221,6 +275,12 @@ async function main() {
     found.push(...await facebookNumbers(entries, token, fetch, pages[profile]));
     notes.push(profile + ": " + pages[profile].answered + " of " + entries.length + " sent posts answered, " + pages[profile].insights + " with insights" + (pages[profile].error ? "; first refusal: " + pages[profile].error : ""));
   }
+  const tgPosts = {};
+  found.push(...await telegramNumbers(queues.read(TELEGRAM_LEDGER), fetch, Date.now(), tgPosts));
+  notes.push("Telegram posts: " + tgPosts.answered + " of " + tgPosts.asked + " from the last " + RECENT_DAYS + " days answered" + (tgPosts.error ? "; first refusal: " + tgPosts.error : ""));
+  const reddit = redditNumbers(queues.read(REDDIT_LEDGER));
+  found.push(...reddit);
+  notes.push("Reddit: " + reddit.length + " posts with numbers in " + REDDIT_LEDGER);
   const previous = read();
   const at = new Date().toISOString();
   const chat = process.env.TELEGRAM_CHANNEL || "";
@@ -239,4 +299,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, telegramMembers, telegramEntry, merge };
+module.exports = { METRICS, OUT, read, counts, fromBuffer, sentEntries, pageEntries, bufferNumbers, facebookNumbers, shortCount, telegramEmbed, telegramNumbers, redditNumbers, telegramMembers, telegramEntry, merge };
