@@ -4592,7 +4592,8 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  const teaser = teaserFinding(ins.findings);
+  // Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
+  const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
   const teaserId = teaser && (teaser.id || teaser.key);
   const teaserKeep = teaser ? { title: teaser.title, evidence: teaser.evidence, fix: teaser.fix, msg: teaser.msg } : null;
   // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole
