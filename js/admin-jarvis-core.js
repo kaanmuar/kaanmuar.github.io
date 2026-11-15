@@ -977,6 +977,10 @@
         if (social && social.ok) {
             if (social.failed > 0) add('warn', 'business', `${plural(social.failed, 'social post', 'social posts')} failed to publish in range.`, 'social:failed');
             else if (!social.sent) add('info', 'business', 'No social posts went out in range.', 'social:none');
+            if (social.assets && social.assets.missing && social.assets.missing.length) {
+                add('warn', 'business', `Auto batch ${social.assets.batch || ''} is missing carousel slides or LinkedIn PDF (${social.assets.missing.length}).`, 'social:assets-missing');
+            }
+            (social.needs || []).filter((n) => /carousel|LinkedIn PDF|document/i.test(n)).forEach((n, i) => add('warn', 'business', n, 'social:assets-need:' + i));
         }
         const safety = ext.safety;
         if (safety && safety.ok) (safety.checks || []).filter((c) => c.level === 'alert' || c.level === 'warn').forEach((c) => add(c.level, 'systems', `${c.name}: ${c.detail}`, 'safety:' + c.key));
@@ -1124,6 +1128,8 @@
         { prefix: 'platform:gemini', impact: 3, title: 'Fix the failing Gemini calls', tab: 'systems' },
         { prefix: 'platform:reads', impact: 3, title: 'Cut Firestore reads before the free quota runs out', tab: 'systems' },
         { prefix: 'social:failed', impact: 3, title: 'Re-post the social posts that failed', click: 'retry-social', tab: 'hub' },
+        { prefix: 'social:assets-missing', impact: 3, title: 'Fix missing auto-batch carousel or LinkedIn PDF', click: 'social-post-now', tab: 'hub' },
+        { prefix: 'social:assets-need', impact: 3, title: 'Fix missing auto-batch carousel or LinkedIn PDF', click: 'social-post-now', tab: 'hub' },
         { prefix: 'outreach:queue', impact: 3, title: 'Add the next outreach prospect list', tab: 'outreach' },
         { prefix: 'outreach:mailbox:', impact: 3, group: true, title: 'Turn the outreach mailboxes and warm-up back on', click: 'resume-outreach', tab: 'outreach' },
         { prefix: 'outreach:deadline:', impact: 3, levels: ['warn'], group: true, title: 'Get ready for the outreach deadline', tab: 'outreach' },
@@ -1170,7 +1176,7 @@
     ];
     const SAFE_ACTIONS = ['rerun-held', 'resend-notices', 'publish-hub'];
     // Actions a proposal offers as a button that only run on a click (#1977); gh-* (#2526) through action-run.
-    const CLICK_ACTIONS = ['retry-social', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent', 'calendar-pause', 'calendar-resume'];
+    const CLICK_ACTIONS = ['retry-social', 'social-post-now', 'resume-outreach', 'pause-outreach', 'gh-board-sync', 'gh-orphan-ticket', 'gh-update-pr', 'gh-merge-pr', 'gh-revert', 'gh-delete-branch', 'gh-close-issue', 'gh-remove-worktree', 'gh-agent', 'calendar-pause', 'calendar-resume'];
 
     function proposalRules(state, briefed) {
         const items = (briefed || briefing(state)).slice();
@@ -1202,7 +1208,7 @@
 
     const RUN_LABELS = {
         'rerun-held': 'Send held re-runs', 'resend-notices': 'Re-send failed notices', 'publish-hub': 'Publish the hub',
-        'retry-social': 'Retry failed posts', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
+        'retry-social': 'Retry failed posts', 'social-post-now': 'Post the queues now', 'resume-outreach': 'Resume mailboxes', 'pause-outreach': 'Pause outreach',
         'gh-board-sync': 'Sync the board', 'gh-orphan-ticket': 'File the tickets', 'gh-update-pr': 'Update with main', 'gh-merge-pr': 'Merge', 'gh-revert': 'Open a revert PR',
         'gh-delete-branch': 'Delete the branches', 'gh-close-issue': 'Close the issue', 'gh-remove-worktree': 'Remove the worktrees', 'gh-agent': 'Launch a fix agent',
         'calendar-pause': 'Pause over the holiday', 'calendar-resume': 'Resume now'

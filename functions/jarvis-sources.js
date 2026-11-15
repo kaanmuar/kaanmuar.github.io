@@ -463,6 +463,29 @@ async function social(ctx) {
   const rdMembers = jarvisSocial.redditMembers(reddit, since, ctx.now);
   if (rdMembers.need) needs.push(rdMembers.need);
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
+  // Auto-live batches ship feed/story/clip plus a 4-slide carousel and LinkedIn document PDF (#3485 / #3488).
+  // captions.json records carousel/document/assetsMissing after tips-studio render.
+  let assets = { batch: "", missing: [], expected: ["feed", "story", "clip", "carousel", "document"] };
+  for (let d = 0; d < 3; d += 1) {
+    const day = new Date(ctx.now - d * DAY).toISOString().slice(0, 10);
+    const batch = "auto-" + day;
+    try {
+      const caps = await getJson(ctx.fetch, ORIGIN + "/media/social-posts/" + batch + "/captions.json?t=" + Math.floor(ctx.now / HOUR), {}, batch + " captions");
+      const missing = [];
+      Object.keys(caps || {}).forEach((slug) => {
+        const cap = caps[slug] || {};
+        if (cap.hold) return;
+        if (typeof cap.carousel === "number" || cap.document != null || (cap.assetsMissing || []).length) {
+          (cap.assetsMissing || []).forEach((m) => missing.push(batch + "/" + slug + " " + m));
+          if (typeof cap.carousel === "number" && cap.carousel < 4) missing.push(batch + "/" + slug + " carousel");
+          if (cap.document === false) missing.push(batch + "/" + slug + " document");
+        }
+      });
+      assets = { batch, missing: [...new Set(missing)].slice(0, 12), expected: assets.expected };
+      if (assets.missing.length) needs.push("Auto batch " + batch + " is missing carousel slides or LinkedIn PDF on " + assets.missing.slice(0, 3).join(", ") + (assets.missing.length > 3 ? "…" : "") + ".");
+      break;
+    } catch (error) { /* no auto batch for that day yet */ }
+  }
   return {
     ok: !!(buffer || facebook),
     error: buffer || facebook ? "" : "The social ledgers could not be read from the site.",
@@ -478,6 +501,7 @@ async function social(ctx) {
     telegram: tgMembers,
     reddit: rdMembers,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
+    assets,
     needs
   };
 }

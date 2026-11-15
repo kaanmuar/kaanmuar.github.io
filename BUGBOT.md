@@ -1,6 +1,7 @@
 # Bugbot — kaanmuar.github.io / QA-lab
 
 Prefer Manual `@cursor review` (or Ready for Review) over every-push.
+Repo `.cursor/config/bugbot.yaml` sets `oncePerPr`, skips drafts, and disables autofix/PR summaries.
 Local on-demand review subagents remain the default; this file is for when Bugbot runs.
 
 ## Ignore & skip
