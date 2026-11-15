@@ -1,8 +1,5 @@
 package com.carlosandmunoz.jarvis.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +19,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -133,11 +129,11 @@ object Engagement {
         ).joinToString(" · ") + profileLine(r)
     }
 
-    /** The profile campaign's part (#2615): " · touch 2 of 4 (curious) · offer HI-… · approve copies it to paste by hand", or "". */
+    /** The profile campaign's part (#2615, #3461): " · touch 2 of 4 (curious) · offer HI-… · posts under their latest post on approval", or "". */
     fun profileLine(r: JsonObject): String {
         if (r.str("match") != "profile") return ""
         return " · touch ${fmt(r.num("touch"))} of 4 (${r.str("tone").orEmpty()}) · offer ${r.str("offer").orEmpty()} · " +
-            if (r.bool("manual") == true) "approve copies it to paste by hand" else "posts on approval"
+            if (r.bool("latest") == true || r.bool("manual") == true) "posts under their latest post on approval" else "posts on approval"
     }
 }
 
@@ -200,7 +196,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         if (kept.isEmpty()) Muted("None of the waiting replies is of this kind.")
         (if (all) kept else kept.take(Engagement.SHOWN)).forEach { p -> Draft(p, names, s, vm, ::ask) }
         if (kept.size > Engagement.SHOWN) TextButton({ all = !all }) { Text(if (all) "Show fewer" else "Show all ${kept.size}", color = J.cyan, fontSize = 13.sp) }
-        Muted("Approve sends your edit when you changed the text. An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991).")
+        Muted("Approve tells Jarvis to send it (never a clipboard paste). An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent. A profile message with no fresh post goes under their latest post of the last year (#3461).")
     }
 
     Panel("Scout", id = "engagement-status") {
@@ -349,7 +345,6 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
     var text by rememberSaveable(key) { mutableStateOf(draft) }
     var open by rememberSaveable("open:$key") { mutableStateOf(false) }
     val uri = LocalUriHandler.current
-    val context = LocalContext.current
     val busy = "eg:$key" in s.running
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -374,9 +369,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
             ActionButton("Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)
                 vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out ->
-                    val pasted = out.str("status") == "copy" && !out.str("text").isNullOrEmpty()
-                    if (pasted) (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("reply", out.str("text")))
-                    (out.str("message") ?: "Approved.") + if (pasted) " The text is on your clipboard." else ""
+                    out.str("message") ?: "Approved."
                 }
             }
             TextButton({ ask("dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {

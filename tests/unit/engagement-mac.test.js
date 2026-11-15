@@ -272,6 +272,29 @@ test("the Mac's result for an owner-tags comment is taken, so a posted comment i
   assert.equal((await db.collection("engagement_posts").doc(key).get()).data().actions.reply.status, "posted");
 });
 
+test("a profile-campaign latest reply is queued for the Mac to find their post of the last year (#3461)", async () => {
+  const db = fakeDb();
+  const key = "linkedin_dddddddddddddddddddd";
+  await db.collection("engagement_posts").doc(key).set({
+    network: "linkedin", id: "https://linkedin.com/school/upb", url: "https://linkedin.com/school/upb",
+    author: { handle: "upb" }, campaign: "report-reply",
+    report: { match: "profile", host: "upb.edu.co", profile: "https://linkedin.com/school/upb", latest: true },
+    actions: { reply: { status: "approved", draft: "upb, su revisión." } }
+  });
+  const q = await M.queue(deps(db), { networks: ["linkedin"] });
+  const t = q.tasks.find((x) => x.key === key);
+  assert.equal(t.latest, true);
+  assert.equal(t.url, "https://linkedin.com/school/upb");
+  assert.equal(t.id, "");
+  assert.equal(t.since, new Date(NOW - 365 * 24 * HOUR).toISOString());
+  const status = "https://www.linkedin.com/posts/upb-activity-1";
+  await M.result(deps(db), { key, action: "reply", ok: true, url: status, target: { id: "urn:li:1", url: status } });
+  const doc = db.data.get("engagement_posts/" + key);
+  assert.equal(doc.actions.reply.status, "posted");
+  assert.equal(doc.url, status);
+  assert.equal(doc.report.profile, "https://linkedin.com/school/upb");
+});
+
 test("owner tags on the Mac: menu mentions go with the comment, an owner reply finds the latest post on the profile, and the result keeps what came of both", async () => {
   const T = require("../../functions/owner-tags.js");
   const db = fakeDb();
