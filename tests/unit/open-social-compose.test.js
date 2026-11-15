@@ -86,6 +86,22 @@ test("Instagram: the voiced clip is a reel shared to the feed with the card as c
   assert.deepEqual(uses(c.instagram(Object.assign({}, base, { clip: { url: clip.url, lang: "en" } }))), ["image"]);
 });
 
+test("Instagram: audit slide carousels rank above reel when the batch rendered four stills (#3476)", () => {
+  const slides = [
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-01.jpg", alt: "Hook" },
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-02.jpg" },
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-03.jpg" },
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-04.jpg" }
+  ];
+  const [first, ...rest] = c.instagram(Object.assign({ clip, slides }, base));
+  assert.deepEqual(first.uses, ["carousel", "slides"]);
+  assert.equal(first.items.length, 4);
+  assert.equal(first.items[0].image_url, slides[0].url);
+  assert.equal(first.items[0].alt_text, "Hook");
+  assert.equal(first.params.media_type, "CAROUSEL");
+  assert.ok(rest.some((p) => p.uses[0] === "reel"));
+});
+
 test("a clip's aspect ratio is read from its first track header with a size, in either header version", () => {
   const tkhd = (version, width, height) => {
     const body = Buffer.alloc(4 + (version === 1 ? 32 : 20) + 16 + 36 + 8);

@@ -710,7 +710,8 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index";
+  // .finding-teaser is the top gap shared links keep in the clear (#3477); .case-sample is the whole top case.
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .finding-teaser, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -1954,10 +1955,10 @@
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, slotRoot ? undefined : 10);
     slot("fix-first").innerHTML = top.length
       ? '<p class="muted" data-note>' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
-        '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
+        '<li' + (item.teaser ? ' class="finding-teaser"' : "") + '><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
         "<strong>" + esc(said(item, "title")) + "</strong>" +
-        '<p class="meta-line">' + fadeText(said(item, "evidence"), paid) + "</p>" +
-        (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+        '<p class="meta-line">' + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+        (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
         '<p class="meta-line">' + esc(rc.t("effort", { effort: rc.word("effortWord", item.effort) })) + (item.count > 1 ? " · " + esc(rc.t("places", { n: item.count })) : "") + "</p></div></li>").join("") + "</ol>"
       : '<p class="muted">' + esc(rc.t("fixNone")) + "</p>";
   }
@@ -2407,9 +2408,9 @@
     slot("findings").innerHTML = Object.keys(AREA_NOTE).map((name) => {
       const items = all.filter((item) => item.area === name);
       return '<section class="finding-group is-folded" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="false"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
-        items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
-          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
-          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+        items.map((item) => '<details class="finding' + (item.teaser ? " finding-teaser" : "") + '" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
+          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
           ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
           ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") + "</details>").join("") + "</section>";
     }).join("");
@@ -2435,9 +2436,9 @@
     const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
     slot("findings").innerHTML = shown.length ? shown.map((item) =>
-      '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
-      "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
-      (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+      '<div class="finding' + (item.teaser ? " finding-teaser" : "") + '"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
+      "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+      (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
       (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") +
@@ -4215,7 +4216,7 @@
         lockedShared = !!body.locked;
         if (body.locked) {
           if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
-          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below, under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
+          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below: scores and the top finding stay readable; the rest sits under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
           if (window.ReviewAuth) ReviewAuth.focus();
           return;
         }
@@ -4235,7 +4236,7 @@
         render(body);
         showSharedCompare(body);
         const until = new Date(body.reopenUntil || "");
-        if (!body.paid && !isNaN(until)) setStatus("Your report of " + (body.host || (body.report && body.report.host) || "this site") + " is below, under the frost. Opening it again is free until " + until.toISOString().slice(0, 10) + ". Unlock it to read it in full.", false);
+        if (!body.paid && !isNaN(until)) setStatus("Your report of " + (body.host || (body.report && body.report.host) || "this site") + " is below: scores and the top finding stay readable; the rest sits under the frost. Opening it again is free until " + until.toISOString().slice(0, 10) + ". Unlock it to read it in full.", false);
       } catch (error) {
         setStatus(error.message, true);
       }

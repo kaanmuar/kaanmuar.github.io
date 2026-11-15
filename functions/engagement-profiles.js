@@ -1,16 +1,19 @@
 "use strict";
 /*
- * Profile campaign (#2615): the company behind each public Live Report hears about its report on its own social
+ * Profile campaign (#2615, #3461): the company behind each public Live Report hears about its report on its own social
  * profiles, with its mini report card or link and a first-payment offer locked to its domain (url-review-domain-offer.js).
  *
  * Each scout run takes PER_RUN Live Reports in turn whose company is due, reads the site's homepage for its profiles
  * (profile links and schema.org sameAs, one per network), and has Gemini write one message per profile in the site's
- * language, in the tone of the touch (TONES). Every message waits for Carlos in Jarvis like every report reply:
+ * language, in the tone of the touch (TONES). Every message waits for Carlos in Jarvis like every report reply; Approve
+ * sends it (never a clipboard paste):
  *
- *   reply   Bluesky and Mastodon (API_NETS) when the profile has an original post from the last FRESH_DAYS: a reply
- *           under it with the card, posted by engagement-act.js on approval
- *   copy    everywhere else, and API_NETS profiles with no fresh post: a message that names the profile, which approval
- *           turns "copy" for Carlos to paste on the network; neither poster picks it up
+ *   reply    Bluesky, Mastodon and YouTube (API_NETS) when the profile has an original post from the last FRESH_DAYS
+ *            (a year): a reply under it with the card, posted by engagement-act.js on approval
+ *   latest   everywhere else, and API_NETS profiles with no post in that year: a message that names the profile; on
+ *            approval Jarvis finds the profile's latest own post of the last year and posts under it (API at once;
+ *            X, LinkedIn, Meta and TikTok on the Mac's next run). report.latest is true; older docs may still carry
+ *            report.manual from when Approve copied the text for Carlos to paste
  *
  *   cadence one touch (all of a site's profiles) a WEEK at most, TOUCHES in all, and none in a week the site had a report
  *           reply, an owner notice or a cold email; never once the domain paid or asked not to be contacted
@@ -20,20 +23,21 @@
  *
  * Stored posts carry campaign "report-reply" and report.match "profile", so the card, the Engagement tab, the counters,
  * re-runs and the 30-day hold on owner notices and cold email treat them as report replies; report also holds
- * { touch, tone, offer, profile, manual }.
+ * { touch, tone, offer, profile, latest }.
  */
 const E = require("./engagement");
 const R = require("./engagement-reports");
+const Sources = require("./engagement-sources");
 
 const DAY = 24 * 3600000;
 const WEEK = 7 * DAY;
 const TOUCHES = 4;
 const PER_RUN = 3;
-const FRESH_DAYS = 45;
+const FRESH_DAYS = 365;
 const TTL = DAY;
 const MATCH = "profile";
 const COLLECTION = "engagement_profiles";
-const API_NETS = ["bluesky", "mastodon"];
+const API_NETS = ["bluesky", "mastodon", "youtube"];
 const TONES = ["cheer", "curious", "question", "last"];
 const NETS = ["bluesky", "mastodon", "x", "linkedin", "facebook", "instagram", "threads", "youtube", "tiktok"];
 
@@ -153,7 +157,7 @@ function prompt(items) {
   return [
     "You help Carlos & Munoz (carlosandmunoz.com) tell an organisation, on its own social profile, that a free public report of its website is live: QA-lab URL Review checks a site's SEO, GEO (AI search), accessibility, performance, analytics and security.",
     "For each item return one JSON object in a JSON array, same order: {\"id\": same id, \"text\": the message, or \"\" when nothing honest and welcome can be said}.",
-    "mode \"reply\" is a reply under the organisation's own post (post): open on what the post says, and return \"\" when the post is about politics, elections, war, a tragedy, a death, a crisis or a fight. mode \"copy\" is a message to the profile: start with handle.",
+    "mode \"reply\" is a reply under the organisation's own post (post): open on what the post says, and return \"\" when the post is about politics, elections, war, a tragedy, a death, a crisis or a fight. mode \"latest\" is a message to the profile (we post it under their newest post later): start with handle.",
     TONE_RULES.cheer, TONE_RULES.curious, TONE_RULES.question, TONE_RULES.last,
     ...(items.some((p) => p.tone === "trial") ? [TONE_RULES.trial] : []),
     "Rules: write in lang (en, es, pt, de, fr or it). First person plural, warm, specific, one or two short sentences. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number and never call the site bad, slow, broken or unsafe. Say only what site says; no made-up findings. End with {link} exactly once. " + ORG_REGISTER,
@@ -188,10 +192,87 @@ function parse(text, items) {
   return out;
 }
 
+/** Whether Approve (or the Mac / scout) must find the profile's latest post before posting (#3461). */
+function needsLatest(doc) {
+  const r = (doc && doc.report) || {};
+  return r.match === MATCH && !!(r.latest || r.manual);
+}
+
+/** A profile's recent posts as engagement-sources maps them: Bluesky, Mastodon and YouTube through their public APIs, [] elsewhere. */
+async function profilePosts(f, p) {
+  const get = async (url) => {
+    const res = await f(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(url.split("/")[2] + " answered " + res.status);
+    return res.json();
+  };
+  const text = async (url) => {
+    const res = await f(url, { headers: { accept: "text/html,application/atom+xml", "user-agent": "Mozilla/5.0 (compatible; QA-lab URL Review; +https://carlosandmunoz.com/qa-review.html)" }, signal: AbortSignal.timeout(12000) });
+    if (!res.ok) throw new Error(url.split("/")[2] + " answered " + res.status);
+    return String(await res.text());
+  };
+  if (p.network === "bluesky") {
+    const got = await get("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?filter=posts_no_replies&limit=10&actor=" + encodeURIComponent(p.handle));
+    return (got.feed || []).filter((x) => x && x.post && !x.reason).map((x) => Sources.blueskyPost(x.post));
+  }
+  if (p.network === "mastodon") {
+    const [user, host] = p.handle.split("@");
+    const acct = await get("https://" + host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(user));
+    const list = await get("https://" + host + "/api/v1/accounts/" + encodeURIComponent(acct.id) + "/statuses?exclude_replies=true&exclude_reblogs=true&limit=10");
+    return (Array.isArray(list) ? list : []).map(Sources.mastodonPost);
+  }
+  if (p.network === "youtube") {
+    let channel = String(p.handle || "").startsWith("UC") && String(p.handle).length === 24 ? p.handle : "";
+    if (!channel) {
+      const handle = String(p.handle || "").replace(/^@/, "");
+      const html = await text("https://www.youtube.com/@" + encodeURIComponent(handle));
+      channel = (html.match(/"(?:externalId|channelId)":"(UC[\w-]{22})"/) || [])[1] || "";
+    }
+    if (!channel) return [];
+    const xml = await text("https://www.youtube.com/feeds/videos.xml?channel_id=" + channel);
+    return Array.from(String(xml).matchAll(/<entry>[\s\S]*?<\/entry>/g)).map((m) => {
+      const entry = m[0];
+      const id = (entry.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/) || [])[1];
+      const at = (entry.match(/<published>([^<]+)<\/published>/) || [])[1];
+      if (!id || !at) return null;
+      return {
+        network: "youtube", id, url: "https://www.youtube.com/watch?v=" + id, author: { handle: p.handle, id: channel },
+        text: (entry.match(/<title>([^<]*)<\/title>/) || [])[1] || "", lang: "", createdAt: at, isReply: false
+      };
+    }).filter(Boolean);
+  }
+  return [];
+}
+
+/**
+ * Bind a profile-campaign "latest" doc to the account's newest own post of the last FRESH_DAYS (#3461).
+ * Returns { doc, patch } or null when none.
+ */
+async function bindLatest(f, doc, now) {
+  if (!needsLatest(doc)) return { doc, patch: null };
+  const profile = { network: doc.network, handle: (doc.author || {}).handle || "", url: (doc.report || {}).profile || doc.url };
+  const calm = { maxAgeHours: FRESH_DAYS * 24 };
+  const post = latestOf(await profilePosts(f, profile), now, (p) => !E.guard(p, calm, now));
+  if (!post) return null;
+  const patch = {
+    id: post.id, url: post.url, thread: post.thread || post.id, text: post.text || "",
+    "report.profile": profile.url, "report.latest": true, "author.handle": (post.author || {}).handle || profile.handle
+  };
+  if (post.cid) patch.cid = post.cid;
+  if ((post.author || {}).id) patch["author.id"] = post.author.id;
+  return {
+    doc: Object.assign({}, doc, {
+      id: post.id, url: post.url, thread: post.thread || post.id, text: post.text || "", cid: post.cid || doc.cid,
+      author: Object.assign({}, doc.author, post.author || {}),
+      report: Object.assign({}, doc.report, { profile: profile.url, latest: true })
+    }),
+    patch
+  };
+}
+
 /** The engagement_posts document for one message, waiting for Carlos. */
 function doc(item, message, link, now) {
-  const manual = item.mode !== "reply";
-  const post = manual
+  const latest = item.mode !== "reply";
+  const post = latest
     ? { network: item.network, id: item.profile.url, url: item.profile.url, author: { handle: item.profile.handle, name: item.target.name || item.target.host }, text: "", lang: item.lang, createdAt: new Date(now).toISOString() }
     : item.post;
   const reply = { status: "waiting", kind: R.CAMPAIGN, draft: R.fill(message, link, item.network), lang: item.lang, expiresAt: new Date(now + TTL).toISOString() };
@@ -201,8 +282,8 @@ function doc(item, message, link, now) {
     campaign: R.CAMPAIGN,
     report: {
       host: t.host, id: t.id, name: t.name, score: t.score, shown: R.shown(t), weakest: t.weakest, match: MATCH, problem: "", niche: "", query: "",
-      format: !manual && R.CARD_NETS.includes(item.network) ? "card" : "link", link,
-      touch: item.touch, tone: item.tone, offer: item.offer.code, profile: item.profile.url, manual
+      format: !latest && R.CARD_NETS.includes(item.network) ? "card" : "link", link,
+      touch: item.touch, tone: item.tone, offer: item.offer.code, profile: item.profile.url, latest
     }
   });
 }
@@ -218,5 +299,5 @@ function ledgerPatch(led, host, profiles, code, touch, keys, now) {
 
 module.exports = {
   WEEK, TOUCHES, PER_RUN, FRESH_DAYS, TTL, MATCH, COLLECTION, API_NETS, TONES, NETS,
-  profileOf, profilesOf, due, toneOf, latestOf, sameDomain, linkFor, prompt, parse, doc, ledgerPatch
+  profileOf, profilesOf, due, toneOf, latestOf, sameDomain, linkFor, prompt, parse, needsLatest, profilePosts, bindLatest, doc, ledgerPatch
 };
