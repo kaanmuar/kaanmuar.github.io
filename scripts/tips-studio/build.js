@@ -49,6 +49,7 @@ require("../playwright-sandbox");
 const { chromium } = require("playwright");
 const brands = require("./brands");
 const assets = require("./site-assets");
+const { auditCarouselSlides } = require("./audit-carousel");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
@@ -378,6 +379,32 @@ async function renderStill(page, tip, fmt, index, total, file, ui, cat, extras) 
   await page.locator("#c").screenshot({ path: file, type: "jpeg", quality: 92 });
 }
 
+async function pdfFrom(browser, images, file) {
+  const html = "<!doctype html><html><head><style>@page{size:1080px 1350px;margin:0}html,body{margin:0}img{display:block;width:1080px;height:1350px;page-break-after:always}</style></head><body>" +
+    images.map((img) => '<img src="' + path.basename(img) + '">').join("") + "</body></html>";
+  const tmp = path.join(path.dirname(file), ".pdf-" + path.basename(file, ".pdf") + ".html");
+  fs.writeFileSync(tmp, html);
+  const page = await browser.newPage();
+  await page.goto("file://" + tmp);
+  await page.waitForFunction(() => Array.from(document.images).every((i) => i.complete));
+  await page.pdf({ path: file, width: "1080px", height: "1350px", printBackground: true });
+  await page.close();
+  fs.unlinkSync(tmp);
+}
+
+async function renderCarousel(page, browser, tip, index, total, slug, ui, extras) {
+  const slides = auditCarouselSlides(tip);
+  if (!slides) return null;
+  const files = [];
+  for (let i = 0; i < slides.length; i += 1) {
+    const out = path.join(OUT, "carousel", slug + "-" + String(i + 1).padStart(2, "0") + ".jpg");
+    await renderStill(page, slides[i], "feed", index, total, out, ui, null, extras);
+    files.push(out);
+  }
+  await pdfFrom(browser, files, path.join(OUT, "document", slug + ".pdf"));
+  return files;
+}
+
 // Each line is voiced first, so every scene knows how long it runs before a frame is drawn. A clip's lines are voiced
 // VOICE_JOBS at a time, all in the clip's one voice.
 const VOICE_JOBS = 3;
@@ -519,7 +546,7 @@ function rewriteCaptions(all, networks) {
   if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
   if (opts["captions-only"]) { rewriteCaptions(all, String(opts["captions-only"]).split(",")); return; }
   if (opts.rotate || !(opts["skip-video"] || opts["schedule-only"])) BED = findBed();
-  for (const dir of ["feed", "story", "clip", "cover"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+  for (const dir of ["feed", "story", "clip", "cover", "carousel", "document"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
@@ -573,6 +600,7 @@ function rewriteCaptions(all, networks) {
     const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
+    if (await renderCarousel(page, browser, tip, index, total, slug, ui, extras)) console.log("carousel", slug);
     const said = saids[n];
     const done = () => console.log("rendered", slug, said.voice.file);
     if (clips) await clips.render(tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras, saids[n + 1], done);

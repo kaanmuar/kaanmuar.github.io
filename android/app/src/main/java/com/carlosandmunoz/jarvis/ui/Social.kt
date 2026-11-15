@@ -108,7 +108,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches it when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(
