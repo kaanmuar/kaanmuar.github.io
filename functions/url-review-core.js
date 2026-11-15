@@ -193,6 +193,12 @@ const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
 
+// The plain read lost the connection before any page arrived (a reset, hang-up, or caller abort).
+function plainReadDropped(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNRESET|ECONNABORTED|ETIMEDOUT)$/.test(code) || /socket hang up|\baborted\b/i.test(message);
+}
 // The plain read failed before any page arrived because the host refused or rejected the route.
 function plainConnectionFailed(error) {
   const message = String((error && error.message) || "");
@@ -3172,8 +3178,9 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
+    const dropped = plainReadDropped(error);
     const conn = plainConnectionFailed(error);
-    if (!(oversized || /took too long/.test((error && error.message) || "") || conn) || typeof controls.browse !== "function") throw error;
+    if (!(oversized || /took too long/.test((error && error.message) || "") || dropped || conn) || typeof controls.browse !== "function") throw error;
     slowFirst = oversized ? "headers" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
