@@ -2230,10 +2230,13 @@
             _toggleAllAccordions(container, button) {
                 const translations = this._t();
                 const isExpanding = button.getAttribute('data-expanded-all') !== 'true';
+                // Toggle through the accordion helper, not header.click(): a synthetic click
+                // re-enters the document listener and, under load, can leave a toolkit section
+                // collapsed with its preview still covering the skill tags (#3044).
                 container.querySelectorAll('.accordion-header, .toolkit-header').forEach(headerBtn => {
                     const isCurrentlyExpanded = headerBtn.getAttribute('aria-expanded') === 'true';
                     if ((isExpanding && !isCurrentlyExpanded) || (!isExpanding && isCurrentlyExpanded)) {
-                        headerBtn.click();
+                        this._handleAccordionToggle(headerBtn, { quiet: true });
                     }
                 });
                 button.setAttribute('data-expanded-all', isExpanding ? 'true' : 'false');
