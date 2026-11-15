@@ -27,19 +27,32 @@ function softPreviewNdjson(overrides) {
 }
 
 function fulfillSoftPreview(route, cors, overrides) {
+  let asked = {};
+  try { asked = JSON.parse(route.request().postData() || "{}"); } catch (error) { asked = {}; }
+  const raw = String(asked.url || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+  const host = raw.split("/")[0] || "example.com";
+  const extra = Object.assign({
+    report: {
+      host,
+      requestedUrl: raw ? "https://" + raw.replace(/\/?$/, "/") : "https://example.com/"
+    }
+  }, overrides || {});
   return route.fulfill({
     status: 200,
     contentType: "application/x-ndjson",
     headers: cors,
-    body: softPreviewNdjson(overrides)
+    body: softPreviewNdjson(extra)
   });
 }
 
 // Soft gate: Review soft-runs; Unlock opens terms / sign-in / client checks / pricing / full crawl.
 async function softThenUnlock(page, expect) {
-  await page.locator("#review-btn").click();
-  await expect(page.locator("#soft-unlock-btn")).toBeVisible({ timeout: 20000 });
-  await page.locator("#soft-unlock-btn").click();
+  const unlock = page.locator("#soft-unlock-btn");
+  if (!(await unlock.isVisible().catch(() => false))) {
+    await page.locator("#review-btn").click();
+    await expect(unlock).toBeVisible({ timeout: 20000 });
+  }
+  await unlock.click();
 }
 
 async function softPreviewFromHero(page, expect, url) {

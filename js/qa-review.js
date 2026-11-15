@@ -1029,12 +1029,14 @@
     return ((current && current.report && current.report.tools) || []).map((item) => item.name).filter((name) => TOOLS.includes(name));
   }
 
-  function paintTools(report) {
+  function paintTools(report, opts) {
     const block = document.getElementById("tool-block");
     const list = document.getElementById("tools");
     if (!block || !list) return;
     const tools = (report.tools || []).filter((item) => TOOLS.includes(item.name));
     block.hidden = tools.length === 0;
+    // Soft preview must not tick tools into the Unlock crawl form (#3478).
+    if (opts && opts.softPreview) toolChoice = new Set();
     list.innerHTML = tools.map((item) => {
       const on = !toolChoice || toolChoice.has(item.name);
       return "<li><label><input type=\"checkbox\" name=\"tool\" value=\"" + esc(item.name) + "\"" + (on ? " checked" : "") + "> <strong>" + esc(item.name) + "</strong></label><p class=\"muted\">" + esc(item.why) + "</p></li>";
@@ -3105,7 +3107,10 @@
     paintInsights(report, paid, fixed);
     const offer = document.getElementById("unlock-offer");
     paintOffer(offer, !paid && !sample);
-    if (!paid && !sample) loadFullQuote().then((quote) => { if (quote && current === payload) paintOffer(offer, true); });
+    // Soft preview uses Unlock, not the paid reopen quote (#3478).
+    if (!paid && !sample && !payload.softPreview && !(report && report.softPreview)) {
+      loadFullQuote().then((quote) => { if (quote && current === payload) paintOffer(offer, true); });
+    }
     paintCompare(report, sample);
     paintRivals(report, sample);
     document.getElementById("report-statement").textContent = "";
@@ -3144,7 +3149,7 @@
       specialist.hidden = otherTools.length === 0;
       specialist.textContent = otherTools.length ? rc.t("specialistTools", { list: otherTools.join(", ") }) : "";
     }
-    paintTools(report);
+    paintTools(report, { softPreview: !!(payload.softPreview || report.softPreview) });
     // Cases are stored best-first, so an unpaid report shows the first one in full; a server preview marks the one it kept whole.
     const top = paid ? null : (report.cases || [])[0];
     const sampleCase = top && (!report.preview || top.sample) ? top : null;
@@ -3250,11 +3255,14 @@
     return donePayload;
   }
 
-  // Soft gate (#3478 / #43A+#45A): single-URL Review soft-runs for everyone; compare stays gated; full crawl waits on Unlock.
+  // Soft gate (#3478 / #43A+#45A): single-URL Review soft-runs for everyone (bypass intake HTML5 checks);
+  // compare stays gated and uses the normal submit path; full crawl waits on Unlock.
   reviewBtn.addEventListener("click", (event) => {
-    if (activeRun || signedIn() || !compareTarget) return;
-    event.preventDefault();
-    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+    if (activeRun) return;
+    if (!compareTarget) {
+      event.preventDefault();
+      reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+    }
   });
 
   reviewForm.addEventListener("submit", async (event) => {
@@ -3528,6 +3536,7 @@
     markFields(errors);
     if (errors.length) {
       softUnlockUrl = rawUrl;
+      closeDashboard();
       setStatus(errors[0].message, true);
       goToStep(errors[0].field === "frameworks" ? "cases" : errors[0].field === "url" ? "page" : "you");
       return;
@@ -3538,6 +3547,7 @@
       setStatus("Nothing was started or charged.", false);
       return;
     }
+    const confirmed = answer === true;
     if (activeRun) return;
     const runId = hexId();
     activeRun = runId;
@@ -3597,11 +3607,18 @@
         ReviewAuth.focus();
         setStatus(error.message, true);
       } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
-        openRunPay(error.body);
-        setStatus("Another review waits on payment.", true);
+        if (confirmed) location.href = payQuery("new-run", error.body);
+        else {
+          openRunPay(error.body);
+          setStatus("Another review waits on payment.", true);
+        }
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
+      } else if (error.body && error.body.code === "inconclusive") {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_inconclusive", "URL Review", error.body.error || "");
+        setStatus(rc.t("inconStatus", { hours: promiseHours(error.body) }), true);
+        showInconclusive(error.body);
       } else {
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
         setStatus(error.message || rc.word("fieldError", "reviewFailed"), true);
@@ -3634,7 +3651,7 @@
         '<button type="button" class="offer offer-full" data-offer="soft-unlock" id="soft-unlock-btn"><b>Unlock full site audit</b><span>Sign in and accept the terms to queue a full crawl of this URL.</span></button></div>';
       const unlock = document.getElementById("soft-unlock-btn");
       if (unlock) unlock.onclick = () => {
-        const raw = (report.requestedUrl || report.url || report.host || urlInput.value || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+        const raw = (urlInput.value || report.requestedUrl || report.url || report.host || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
         if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_unlock_start", "URL Review", report.host || raw);
         beginSoftUnlock(raw || report.host || "");
       };

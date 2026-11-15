@@ -144,8 +144,8 @@ test.describe('The total before a paid run', () => {
     expect(seen.quotes[0].deviceId).toMatch(/^[a-f0-9]{16}$/);
     await page.locator('#run-total-cancel').click();
     await expect(box).toBeHidden();
-    await expect(page.locator('#review-btn')).toBeFocused();
-    await softThenUnlock(page, expect);
+    await expect(page.locator('#soft-unlock-btn')).toBeFocused();
+    await page.locator('#soft-unlock-btn').click();
     await expect(box).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(box).toBeHidden();

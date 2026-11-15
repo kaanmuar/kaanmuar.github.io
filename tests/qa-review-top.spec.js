@@ -277,6 +277,11 @@ test.describe('A first review from the hero (#2756)', () => {
     await page.locator('#terms-all').check();
     await expect(page.locator('#accept')).toBeInViewport();
     await page.keyboard.press('Escape');
+    await expect(page.locator('#gate')).toBeHidden();
+    // Soft preview left the report open; close it, then open the sample like a first visit.
+    if (await page.locator('#dash-overlay').evaluate((el) => el.classList.contains('open'))) {
+      await page.locator('#dash-close').click();
+    }
     await page.locator('#stage-sample-open').click();
     await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
     await page.locator('#dash-overlay').evaluate((el) => { el.scrollTop = 3000; });
