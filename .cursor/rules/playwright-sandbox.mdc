@@ -4,6 +4,7 @@ globs: playwright.config.js,tests/**,scripts/**,simulador.html
 alwaysApply: false
 ---
 # Browsers run outside the sandbox
-- Chromium, the system Chrome and Playwright segfault on launch inside the Cursor sandbox (`CURSOR_SANDBOX=seatbelt`). Run `npx playwright test`, `scripts/*-studio/build.js`, `scripts/build-share-images.js`, `scripts/translation-audit.js` and any `chromium.launch()` with `required_permissions: ["all"]`.
-- Never run `npx playwright install` to fix "Executable doesn't exist": the browsers are in `~/Library/Caches/ms-playwright`. After a sandboxed command, the unsandboxed shell still carries the sandbox's empty `PLAYWRIGHT_BROWSERS_PATH`.
-- Scripts that launch a browser start with `require('./scripts/playwright-sandbox')` (adjust the path). It stops with this advice inside the sandbox and drops the stale path outside it. One-off commands: `node -r ./scripts/playwright-sandbox.js ...`.
+- Chromium, system Chrome and Playwright segfault inside the Cursor sandbox (`CURSOR_SANDBOX=seatbelt`). Run `npx playwright test`, `scripts/*-studio/build.js`, `scripts/build-share-images.js`, `scripts/translation-audit.js` and any `chromium.launch()` with `required_permissions: ["all"]`.
+- Never `npx playwright install` for "Executable doesn't exist"—browsers live in `~/Library/Caches/ms-playwright`. After a sandboxed command, the unsandboxed shell can still carry an empty `PLAYWRIGHT_BROWSERS_PATH`.
+- Scripts that launch a browser: `require('./scripts/playwright-sandbox')` (adjust path). It stops with this advice in-sandbox and clears the stale path outside. One-offs: `node -r ./scripts/playwright-sandbox.js ...`.
+- Agent-run Playwright: prefer `--reporter=dot --max-failures=1` so failing output stays short in chat context.
