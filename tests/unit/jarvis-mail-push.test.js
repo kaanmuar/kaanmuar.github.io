@@ -76,6 +76,9 @@ test("backup and ops failures go to alerts, ops only when a job failed", () => {
   const o = mailPush.opsMessage([{ job: "sweepReviews", why: "no successful run" }, { job: "buffer-sync", why: "last success 2026-10-20" }], ["sweepReviews", "buffer-sync"]);
   assert.equal(o.title, "2 scheduled jobs missed or failed");
   assert.equal(o.ref, "ops:sweepReviews,buffer-sync");
+  const mixed = mailPush.opsMessage([{ job: "sweepReviews", why: "x" }, { job: "Secret scanning", why: "1 new leaked secret" }], ["sweepReviews"], 1);
+  assert.equal(mixed.title, "2 problems need a look");
+  assert.equal(mailPush.opsMessage([{ job: "sweepReviews", why: "x" }], ["sweepReviews"], 1).title, "1 scheduled job missed or failed");
 });
 
 test("send passes ref and quiet, and a quiet push goes at normal priority", async () => {
@@ -88,6 +91,9 @@ test("send passes ref and quiet, and a quiet push goes at normal priority", asyn
   await jarvisPush.send(messaging, null, ["tok"], { kind: "inbox", title: "t", body: "b" });
   assert.equal(sent[1].data.quiet, undefined);
   assert.equal(sent[1].android.priority, "high");
+  assert.equal(sent[1].data.image, undefined);
+  await jarvisPush.send(messaging, null, ["tok"], mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "https://carlosandmunoz.com/a.jpg" }));
+  assert.equal(sent[2].data.image, "https://carlosandmunoz.com/a.jpg");
 });
 
 test("inbox and desk are kinds a device can turn off", () => {
@@ -141,6 +147,11 @@ test("outreach notices push one by one; social posts push once each, and a first
   assert.equal(s.kind, "social");
   assert.equal(s.ref, "social:14d11eaabbc6");
   assert.deepEqual(s.actions.map((a) => a.act), ["approved", "dismissed"]);
+  assert.equal(s.image, undefined);
+  const card = "https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-02.jpg";
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: card }).image, card);
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "assets/social/sweep-roundup/2026-11-02.jpg" }).image, undefined);
+  assert.equal(mailPush.socialMessage({ id: "675190976b59", title: "Round-up", image: "https://x.co/" + "a".repeat(1000) }).image, undefined);
 
   const pending = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }, { id: "e" }];
   assert.deepEqual(mailPush.socialDue(pending, null, 3), []);

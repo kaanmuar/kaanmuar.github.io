@@ -1,0 +1,368 @@
+{
+  "rescue": {
+    "ok": true,
+    "deadlineHours": 48,
+    "triesAtHours": [
+      0.5,
+      4,
+      12,
+      24,
+      40
+    ],
+    "apologyPercent": 20,
+    "failures": {
+      "total": 6,
+      "causes": [
+        {
+          "label": "A bot wall refused the read",
+          "value": 4
+        },
+        {
+          "label": "The site timed out",
+          "value": 2
+        }
+      ],
+      "promised": 3
+    },
+    "reruns": {
+      "total": 4,
+      "status": [
+        {
+          "label": "sent",
+          "value": 2
+        },
+        {
+          "label": "failed",
+          "value": 1
+        },
+        {
+          "label": "held",
+          "value": 1
+        }
+      ],
+      "sent": 2,
+      "held": 1,
+      "failed": 1
+    },
+    "rescues": {
+      "total": 4,
+      "status": [
+        {
+          "label": "rescued",
+          "value": 2
+        },
+        {
+          "label": "mac-wanted",
+          "value": 1
+        },
+        {
+          "label": "trying",
+          "value": 1
+        }
+      ],
+      "rescued": 2,
+      "exhausted": 0,
+      "siteSide": 0,
+      "macDone": 1,
+      "macTried": 1,
+      "macPending": 2,
+      "macPromised": 1
+    },
+    "diagnoses": {
+      "vertex": 2,
+      "studio": 1,
+      "rules": 1
+    },
+    "promises": {
+      "made": 3,
+      "open": 2,
+      "atRisk": 1,
+      "delivered": 1,
+      "within48h": 1,
+      "apologized": 1,
+      "ownRun": 0,
+      "held": 0
+    },
+    "codes": {
+      "sent": 3,
+      "redeemed": 1
+    },
+    "openList": [
+      {
+        "code": "SORRY-C",
+        "host": "dental-uno.mx",
+        "failedAt": "2026-11-08T20:00:00.000Z",
+        "state": "open",
+        "closedAt": "",
+        "tries": 4,
+        "hoursLeft": 5
+      },
+      {
+        "code": "SORRY-D",
+        "host": "taller-norte.cl",
+        "failedAt": "2026-11-10T12:00:00.000Z",
+        "state": "open",
+        "closedAt": "",
+        "tries": 1,
+        "hoursLeft": 45
+      }
+    ],
+    "macList": [
+      {
+        "host": "dental-uno.mx",
+        "failedAt": "2026-11-08T20:00:00.000Z",
+        "at": "",
+        "promised": true
+      },
+      {
+        "host": "clinica-sol.com",
+        "failedAt": "2026-11-10T10:00:00.000Z",
+        "at": "",
+        "promised": false
+      }
+    ]
+  },
+  "fixes": {
+    "ok": true,
+    "ways": {
+      "self": 1,
+      "quote": 2,
+      "package": 3,
+      "call": 1
+    },
+    "total": 7,
+    "pipeline": {
+      "new": 1,
+      "quoted": 1,
+      "accepted": 1,
+      "in-progress": 1,
+      "done": 0,
+      "re-reviewed": 1
+    },
+    "revenue": {
+      "usd": 257,
+      "count": 3,
+      "byPackage": [
+        {
+          "label": "security-headers",
+          "value": 99
+        },
+        {
+          "label": "email-dns",
+          "value": 89
+        },
+        {
+          "label": "tls-redirects",
+          "value": 69
+        }
+      ],
+      "providers": [
+        {
+          "label": "paypal",
+          "value": 3
+        }
+      ]
+    },
+    "rechecks": {
+      "total": 1,
+      "done": 1,
+      "failed": 0
+    },
+    "rereviews": {
+      "total": 1,
+      "fixed": 4
+    },
+    "waiting": {
+      "paid": 2,
+      "late": 1,
+      "quotes": 1,
+      "quoted": 1
+    },
+    "paidList": [
+      {
+        "id": "r1",
+        "host": "shop-andes.co",
+        "package": "security-headers",
+        "status": "accepted",
+        "priceUsd": 99,
+        "paidAt": "2026-11-04T19:00:00.000Z",
+        "deadline": "",
+        "daysWaiting": 5,
+        "due": "2026-11-09T19:00:00.000Z",
+        "late": true
+      },
+      {
+        "id": "r2",
+        "host": "clinica-sol.com",
+        "package": "email-dns",
+        "status": "in-progress",
+        "priceUsd": 89,
+        "paidAt": "2026-11-09T13:00:00.000Z",
+        "deadline": "",
+        "daysWaiting": 1,
+        "due": "2026-11-14T13:00:00.000Z",
+        "late": false
+      }
+    ],
+    "quoteList": [
+      {
+        "id": "r3",
+        "host": "hotel-mar.pt",
+        "kind": "quote",
+        "package": "",
+        "createdAt": "2026-11-09T19:00:00.000Z",
+        "daysWaiting": 0
+      }
+    ]
+  },
+  "checks": {
+    "ok": true,
+    "since": "2026-11-10",
+    "totals": {
+      "reviews": 4,
+      "counted": 4,
+      "withHits": 3
+    },
+    "families": [
+      {
+        "id": "phishing",
+        "label": "Phishing and malware lists",
+        "checked": 3,
+        "hits": 1,
+        "customerHits": 0,
+        "critical": 1,
+        "unchecked": 0
+      },
+      {
+        "id": "linked",
+        "label": "Linked hosts on Web Risk",
+        "checked": 2,
+        "hits": 1,
+        "customerHits": 0,
+        "critical": 1,
+        "unchecked": 0
+      },
+      {
+        "id": "hacked",
+        "label": "Hacked-site signs",
+        "checked": 4,
+        "hits": 1,
+        "customerHits": 0,
+        "critical": 1,
+        "unchecked": 1
+      },
+      {
+        "id": "lookalike",
+        "label": "Lookalike domains",
+        "checked": 1,
+        "hits": 1,
+        "customerHits": 1,
+        "critical": 0,
+        "unchecked": 0
+      },
+      {
+        "id": "exposed",
+        "label": "Exposed files",
+        "checked": 1,
+        "hits": 1,
+        "customerHits": 1,
+        "critical": 1,
+        "unchecked": 0
+      },
+      {
+        "id": "wordpress",
+        "label": "WordPress vulnerabilities",
+        "checked": 1,
+        "hits": 0,
+        "customerHits": 0,
+        "critical": 0,
+        "unchecked": 0
+      },
+      {
+        "id": "blocklist",
+        "label": "Spam and DNS blocklists",
+        "checked": 2,
+        "hits": 1,
+        "customerHits": 0,
+        "critical": 1,
+        "unchecked": 0
+      }
+    ],
+    "quotas": [
+      {
+        "id": "webrisk-day",
+        "label": "Web Risk linked hosts today",
+        "used": 2190,
+        "cap": 2581,
+        "pct": 84.9,
+        "customer": 940,
+        "sweep": 1250,
+        "sweepCap": 1290
+      },
+      {
+        "id": "webrisk-month",
+        "label": "Web Risk linked hosts this month",
+        "used": 41200,
+        "cap": 80000,
+        "pct": 51.5
+      },
+      {
+        "id": "urlscan-month",
+        "label": "Cloudflare URL Scanner scans this month",
+        "used": 184,
+        "cap": 5000,
+        "pct": 3.7,
+        "calls": 310
+      }
+    ],
+    "nearCap": [
+      "webrisk-day"
+    ],
+    "wordfence": {
+      "stored": false,
+      "state": "down",
+      "detail": "Wordfence answered 401",
+      "at": "2026-11-09T19:12:00.000Z"
+    },
+    "sources": [
+      {
+        "key": "webrisk",
+        "name": "Google Web Risk (linked hosts)",
+        "state": "ok",
+        "detail": "41,200 lookups this month"
+      },
+      {
+        "key": "cloudflare",
+        "name": "Cloudflare URL Scanner",
+        "state": "ok",
+        "detail": "310 calls this month",
+        "at": "2026-11-10T14:00:00.000Z"
+      },
+      {
+        "key": "phishstats",
+        "name": "PhishStats",
+        "state": "off",
+        "detail": "no key set"
+      },
+      {
+        "key": "urlhaus",
+        "name": "URLhaus",
+        "state": "off",
+        "detail": "no key set"
+      },
+      {
+        "key": "brave",
+        "name": "Brave Search (hacked-site signs)",
+        "state": "ok",
+        "detail": "1 of 4 reviews could not search"
+      },
+      {
+        "key": "wordfence",
+        "name": "Wordfence feed (WordPress)",
+        "state": "down",
+        "detail": "Wordfence answered 401",
+        "at": "2026-11-09T19:12:00.000Z"
+      }
+    ]
+  }
+}

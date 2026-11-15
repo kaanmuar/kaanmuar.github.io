@@ -27,6 +27,11 @@ function save(name, mail) {
 save("report-blurred", customerMail.reportMail(base, { stopUrl: "https://fn/notes/stop?t=1", attached: true }));
 save("report-open", customerMail.reportMail(Object.assign({}, base, { paid: true }), { stopUrl: "https://fn/notes/stop?t=1", attached: true }));
 save("report-rerun", customerMail.reportMail(Object.assign({}, base, { free: true, rerunOf: ["f1"], failedAt: "2026-10-20T10:00:00Z" }), { attached: true }));
+const promise = { email: "ana@example.com", lang: "en", host: report.host, url: "https://" + report.host + "/", coupon: "SORRY-ABCD2345", percent: 20, validUntil: "2027-01-18T15:04:00Z", failedAt: "2026-10-20T10:00:00Z", hours: 48 };
+save("report-promise", customerMail.reportMail(Object.assign({}, base, { free: true, rerunOf: ["f1"], failedAt: promise.failedAt }), { attached: true, promise }));
+save("report-promise-es", customerMail.reportMail(Object.assign({}, base, { lang: "es", free: true, rerunOf: ["f1"], failedAt: promise.failedAt }), { attached: true, promise }));
+save("promise-closed", customerMail.promiseClosedMail(promise, { stopUrl: "https://fn/notes/stop?t=1" }));
+save("promise-closed-de", customerMail.promiseClosedMail(Object.assign({}, promise, { lang: "de" }), { stopUrl: "https://fn/notes/stop?t=1" }));
 save("report-stopped", customerMail.reportMail(Object.assign({}, base, { status: "stopped" }), { attached: true }));
 save("report-noscore", customerMail.reportMail(noScore, { attached: false }));
 save("report-blurred-de", customerMail.reportMail(Object.assign({}, base, { lang: "de" }), { attached: true }));
@@ -73,7 +78,13 @@ save("period-daily", Object.assign({ subject: reviewMail.reportSubject("Daily", 
   rows: reviewMail.reportRows(summary, previous, "the day before", {
     failures: failures.rows,
     followUp: { notes: 2, stops: 1, notices: 5, unlisted: 1, replies: 1, redemptions: 0 },
-    sweep: 24
+    sweep: 24,
+    fixes: [
+      { package: "security-headers", priceUsd: 99, paidAt: at(17), paid: { priceUsd: 99 }, status: "accepted" },
+      { package: "", status: "quoted" },
+      { kind: "self", package: "", status: "done" }
+    ],
+    promises: [{ state: "delivered" }, { state: "open" }]
   }),
   body: [summary.body, failures.body].join("\n\n")
 })));

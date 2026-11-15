@@ -73,7 +73,7 @@ fun Proposals(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
         else -> "From the rules"
     }
     ConfirmAction(confirm) { confirm = null }
-    Panel("Proposals", trailing = { TextButton(onClick = { round++ }, enabled = !busy) { Text(if (busy) "Ranking…" else "Rank again", maxLines = 1, softWrap = false) } }) {
+    Panel("Proposals", id = "overview-proposals", trailing = { TextButton(onClick = { round++ }, enabled = !busy) { Text(if (busy) "Ranking…" else "Rank again", maxLines = 1, softWrap = false) } }) {
         Muted(note)
         if (list.isEmpty()) Muted(if (busy) "Reading the sources…" else "Nothing to propose right now.")
         list.forEachIndexed { i, p -> ProposalRow(i + 1, p, vm, open, { confirm = it }) { status -> mark(p, status) } }

@@ -51,6 +51,15 @@ class MarketingTest {
         assertEquals(Pair(emptyList<JsonObject>(), emptyList<JsonObject>()), Marketing.linkedinSplit(null))
     }
 
+    @Test fun linkedinLineReadsTheLabelledLineOfTheList() {
+        assertEquals("Hola Ana, vi el sitio.", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/ana","Note: Hola Ana, vi el sitio."]}"""), "Note"))
+        assertEquals("Hi Leo", Marketing.linkedinLine(json("""{"lines":["note:   Hi Leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"lines":["Profile: https://www.linkedin.com/in/leo"]}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(json("""{"name":"Eva"}"""), "Note"))
+        assertEquals("", Marketing.linkedinLine(null, "Note"))
+        assertEquals("confirm the role.", Marketing.linkedinLine(json("""{"lines":["Check first: confirm the role.","Note: Hi"]}"""), "Check first"))
+    }
+
     @Test fun repliesToAnswerHaveADraftAndNoAnswer() {
         assertEquals(listOf("a"), Marketing.repliesToAnswer(sync).map { it["id"].toString().trim('"') })
     }

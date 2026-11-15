@@ -1,6 +1,6 @@
 name: Pre-flight index
 # Keeps the pre-flight brain (#1970, workers/preflight) current: changed files on every push to main,
-# tickets updated in the last two days every night, everything on demand.
+# files changed and tickets updated in the last day or two every night, everything on demand.
 on:
   push:
     branches: [main]
@@ -29,15 +29,18 @@ jobs:
       PREFLIGHT_TOKEN: ${{ secrets.PREFLIGHT_TOKEN }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Changed files
         if: github.event_name == 'push'
         run: node scripts/preflight-index.js --changed "${{ github.event.before }}" "${{ github.sha }}"
+      - name: Files changed in the last day
+        if: github.event_name == 'schedule'
+        run: node scripts/preflight-index.js --changed "$(git rev-list -1 --before='26 hours ago' HEAD)" HEAD
       - name: Recent tickets
         if: github.event_name == 'schedule'
         run: node scripts/preflight-index.js --issues-since "$(date -u -d '2 days ago' +%FT%TZ)"

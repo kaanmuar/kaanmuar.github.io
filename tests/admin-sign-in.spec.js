@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 
 test.describe('admin sign-in', () => {
   test('offers email and password or an emailed link, and no Google', async ({ page }) => {

@@ -1,5 +1,8 @@
 package com.carlosandmunoz.jarvis.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +41,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.pairs
+import com.carlosandmunoz.jarvis.data.strings
 import com.carlosandmunoz.jarvis.data.str
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -66,6 +71,10 @@ object Marketing {
     /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
     fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
 
+    /** A labelled line under the person in the day's list, like "- Note: ..." (Send copies it) or "- Check first: ..." (#2479). */
+    fun linkedinLine(p: JsonObject?, label: String): String =
+        p?.get("lines").strings().map { it.trim() }.firstOrNull { it.startsWith("$label:", ignoreCase = true) }?.drop(label.length + 1)?.trim().orEmpty()
+
     fun repliesToAnswer(sync: JsonObject?) = sync.objs("replies").filter { it.str("sent").isNullOrEmpty() && !it.str("draft").isNullOrEmpty() }
 
     data class Countdown(val label: String, val date: String, val days: Long)
@@ -84,6 +93,10 @@ object Marketing {
     }
 
     fun inDays(n: Long) = when (n) { 0L -> "today"; 1L -> "tomorrow"; else -> "in $n days" }
+}
+
+private fun copyNote(context: Context, text: String) {
+    (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("LinkedIn note", text))
 }
 
 @Composable
@@ -114,14 +127,16 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     val liSent = liItems.count { it.bool("sent") == true }
     val todo = Marketing.repliesToAnswer(sy)
 
-    Approvals(s, vm)
+    Approvals(s, vm, id = "marketing-approvals")
+
+    TargetsPanel(s, vm, id = "marketing-targets")
 
     val counts = Marketing.countdowns(mk, plan, LocalDate.now())
-    if (counts.isNotEmpty()) Panel("Countdowns") {
+    if (counts.isNotEmpty()) Panel("Countdowns", id = "marketing-countdowns") {
         counts.take(5).forEach { c -> KeyRow("${c.label} · ${c.date}", Marketing.inDays(c.days), if (c.days <= 7) J.pink else if (c.days <= 14) J.amber else J.cyan) }
     }
 
-    Panel("Marketing") {
+    Panel("Marketing", id = "marketing-summary") {
         KpiPairs(listOf(
             KpiData("Social posts", fmt(so.num("sent")), alert = (so.num("failed") ?: 0.0) > 0),
             snap.obj("products").obj("hub").objs("kpis").firstOrNull()?.let(::kpiOf) ?: KpiData("Hub + post views", "—"),
@@ -141,7 +156,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         ))
     }
 
-    Panel("Marketing health") {
+    Panel("Marketing health", id = "marketing-health") {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             fun ratio(a: Double?, b: Double?) = if (a == null || b == null || b == 0.0) null else a / b * 100
             val accounts = mail.objs("accounts")
@@ -155,7 +170,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     }
 
     // --- The outreach sync (#1730, #1980)
-    Panel("Outreach sync") {
+    Panel("Outreach sync", id = "marketing-sync") {
         if (sy == null) { Muted(ext.obj("marketing-sync").str("error") ?: "Pull down to read the outreach folder."); return@Panel }
         KeyRow("Last sync", ago(sy.str("at")) ?: "never", if (sy.bool("stale") == true) J.pink else J.green)
         KeyRow("Waiting for the sync", fmt(sy.obj("commands").num("pending")))
@@ -169,7 +184,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     if (sy != null) {
         var picked by rememberSaveable { mutableStateOf<String?>(null) }
         val week = Marketing.openWeek(weeks, picked)
-        Panel("Leads to approve" + (week?.let { " · ${it.week}" } ?: "")) {
+        Panel("Leads to approve" + (week?.let { " · ${it.week}" } ?: ""), id = "marketing-leads") {
             if (week == null) { Muted("No leads files yet; the weekday leads job writes them."); return@Panel }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 weeks.forEach { w -> GlassChip("${w.week} · ${w.uploaded}/${w.total}", w.week == week.week) { picked = w.week } }
@@ -195,16 +210,17 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             Muted("With each outreach sync (at most once an hour) Jarvis translates top findings, re-runs the review of a site with no Live Report (twice at most) and approves complete leads. \"Needs you\" rows are the ones it cannot settle. Upload stays with you.")
         }
 
-        Panel("Replies" + if (todo.isNotEmpty()) " · ${todo.size} to answer" else "") {
+        Panel("Replies" + if (todo.isNotEmpty()) " · ${todo.size} to answer" else "", id = "marketing-replies") {
             val replies = sy.objs("replies")
             if (replies.isEmpty()) { Muted("No replies in the last 14 days" + (camps.str("firstStart")?.let { "; the first emails go out $it" } ?: "") + "."); return@Panel }
             replies.groupingBy { it.str("category")?.ifEmpty { null } ?: "not sorted" }.eachCount().entries.sortedByDescending { it.value }.forEach { (k, v) -> KeyRow(k, v.toString(), categoryColor(k)) }
             replies.forEach { r -> Reply(r, s, ::ask, vm) }
         }
 
-        Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: "")) {
+        Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""), id = "marketing-linkedin") {
             if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."); return@Panel }
             val uri = LocalUriHandler.current
+            val context = LocalContext.current
             GlowBar(liSent.toFloat() / liItems.size)
             Muted("$liSent of ${liItems.size} requests sent")
             val (toSend, sentRows) = Marketing.linkedinSplit(sy)
@@ -212,13 +228,25 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             val row: @Composable (JsonObject) -> Unit = { p ->
                 val name = p.str("name").orEmpty()
                 val sent = p.bool("sent") == true
+                val profile = p.str("profile")?.takeIf { it.startsWith("https://") }
+                val note = Marketing.linkedinLine(p, "Note")
+                val check = Marketing.linkedinLine(p, "Check first")
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
                         Muted(listOfNotNull(p.str("title"), p.str("org"), p.str("cc")).joinToString(" · "))
+                        if (!sent && check.isNotEmpty()) Text("Check first: $check", color = J.amber, fontSize = 12.sp)
+                        if (!sent && note.isNotEmpty()) Muted("Note: $note")
                     }
-                    p.str("profile")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
+                    if (sent) profile?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
+                    else if (!sent && profile != null) TextButton({
+                        if (note.isNotEmpty()) copyNote(context, note)
+                        uri.openUri(profile)
+                        command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to true)) {
+                            (if (note.isNotEmpty()) "Note copied: on LinkedIn tap Connect, Add a note, paste and Send." else "On LinkedIn tap Connect and Send.") + " $name is marked sent."
+                        }
+                    }, enabled = "mk:li:$name" !in s.running) { Text("Send", color = J.cyan, fontWeight = FontWeight.Medium, fontSize = 13.sp) }
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
                         Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)
                     }
@@ -235,7 +263,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             }
         }
 
-        Panel("Outreach jobs") {
+        Panel("Outreach jobs", id = "marketing-jobs") {
             sy.objs("jobs").forEach { j ->
                 val mode = j.str("mode").orEmpty()
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -250,7 +278,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
             sy.objs("paused").takeIf { it.isNotEmpty() }?.let { p -> Muted("Paused for public holidays: " + p.joinToString(", ") { it.str("name").orEmpty() }) }
         }
 
-        Panel("Do not contact") {
+        Panel("Do not contact", id = "marketing-dnc") {
             val list = sy.objs("dnc")
             KeyRow("Never contact", list.size.toString())
             list.takeLast(5).reversed().forEach { KeyRow(it.str("value").orEmpty(), it.str("at").orEmpty(), J.muted) }
@@ -270,7 +298,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
     }
 
     val sent = mk.obj("sent")?.takeIf { it.isOk() }
-    Panel("Cold emails sent" + (sent?.num("total")?.let { " · ${fmt(it)}" } ?: "")) {
+    Panel("Cold emails sent" + (sent?.num("total")?.let { " · ${fmt(it)}" } ?: ""), id = "marketing-sent") {
         if (sent == null) { Muted(mk.obj("sent").str("error") ?: ext.obj("marketing").str("error") ?: "Pull down to read what Instantly sent."); return@Panel }
         KpiPairs(listOf(KpiData("Sent", fmt(sent.num("total"))), KpiData("Opened", fmt(sent.num("opened"))), KpiData("Replied", fmt(sent.num("replied"))),
             KpiData("Bounced", fmt(sent.num("bounced")), alert = (sent.num("bounced") ?: 0.0) > 0)))
@@ -280,31 +308,31 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         Muted("Send again forwards the same email, with its original text, from the mailbox that sent it: to the same address, or to another contact at the organisation.")
     }
 
-    Panel("Campaigns (Instantly)" + (camps?.objs("rows")?.size?.let { " · $it" } ?: "")) {
+    Panel("Campaigns (Instantly)" + (camps?.objs("rows")?.size?.let { " · $it" } ?: ""), id = "marketing-campaigns") {
         if (camps == null) { Muted(mk.obj("campaigns").str("error") ?: ext.obj("marketing").str("error") ?: "Pull down to read the campaigns."); return@Panel }
         CampaignRows(camps, s, vm, ::ask)
     }
     if (camps != null) {
-        TopList("Campaigns by language", camps.pairs("byLang"))
-        TopList("Campaigns by region", camps.pairs("byRegion"))
-        TopList("Campaigns by status", camps.pairs("byStatus"))
+        TopList("Campaigns by language", camps.pairs("byLang"), id = "marketing-camp-lang")
+        TopList("Campaigns by region", camps.pairs("byRegion"), id = "marketing-camp-region")
+        TopList("Campaigns by status", camps.pairs("byStatus"), id = "marketing-camp-status")
     }
     if (pros != null) {
-        TopList("Prospects by country", pros.pairs("byCountry"))
-        TopList("Prospects by segment", pros.pairs("bySegment"))
+        TopList("Prospects by country", pros.pairs("byCountry"), id = "marketing-countries")
+        TopList("Prospects by segment", pros.pairs("bySegment"), id = "marketing-segments")
     }
-    if (notes != null) Panel("Follow-up notes to askers") {
+    if (notes != null) Panel("Follow-up notes to askers", id = "marketing-notes") {
         KpiPairs(listOf(KpiData("Sent", fmt(notes.num("sent"))), KpiData("People", fmt(notes.num("people"))),
             KpiData("Stopped", fmt(notes.num("stopped")), alert = (notes.num("sent") ?: 0.0) >= 10 && (notes.num("stopped") ?: 0.0) / (notes.num("sent") ?: 1.0) > 0.2)))
         BarChart(notes.objs("daily").map { it.num("sent") ?: 0.0 }, notes.objs("daily").map { it.str("date").orEmpty() }, J.amber)
     }
-    if (so != null) TopList("Posts by network", so.pairs("channels"))
-    if (gsc != null) Panel("Search (Google)") {
+    if (so != null) TopList("Posts by network", so.pairs("channels"), id = "marketing-networks")
+    if (gsc != null) Panel("Search (Google)", id = "marketing-seo") {
         KpiPairs(listOf(KpiData("Clicks", fmt(gsc.num("clicks"))), KpiData("Impressions", fmt(gsc.num("impressions"))), KpiData("Avg position", fmt(gsc.num("position")))))
         gsc.objs("queries").filter { (it.num("clicks") ?: 0.0) > 0 }.take(6).forEach { KeyRow(it.str("query").orEmpty(), fmt(it.num("clicks"))) }
     }
     val kpis = sy.objs("kpis")
-    if (kpis.isNotEmpty()) Panel("Weekly KPI tracker") {
+    if (kpis.isNotEmpty()) Panel("Weekly KPI tracker", id = "marketing-kpis") {
         kpis.takeLast(6).reversed().forEach { w ->
             KeyRow(w.str("week_start").orEmpty(), listOf("new_prospects" to "prospects", "emails_sent" to "emails", "positive_replies" to "positive", "calls" to "calls")
                 .mapNotNull { (k, label) -> w.str(k)?.takeIf { it.isNotEmpty() }?.let { "$it $label" } }.joinToString(" · ").ifEmpty { w.str("notes") ?: "—" })
@@ -484,7 +512,7 @@ private val SEGMENTS = listOf("university", "tvet", "agency", "startup", "compan
 
 @Composable
 private fun Deck(s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {
-    Panel("Command deck") {
+    Panel("Command deck", id = "marketing-deck") {
         var hosts by rememberSaveable { mutableStateOf("") }
         var cc by rememberSaveable { mutableStateOf("") }
         var segment by rememberSaveable { mutableStateOf(SEGMENTS[0]) }

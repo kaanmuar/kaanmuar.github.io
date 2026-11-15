@@ -1,6 +1,6 @@
 /*
- * Predicts the host on the URL Review "Public page" box and the report's
- * five competitor boxes, and checks it exists.
+ * Predicts the host on the URL Review "Public page" box, the hero's address box,
+ * and the report's five competitor boxes, and checks it exists.
  *
  * Suggestions come from assets/domains/ (built by scripts/build-domain-index.js):
  * about 100,000 of the most visited sites worldwide, sharded by the first two
@@ -202,6 +202,8 @@
     input.setAttribute("aria-describedby", hint.id);
 
     function render() {
+      // A field filled from elsewhere (the hero fills the request's) keeps its list shut until it has focus.
+      if (document.activeElement !== input) options = [];
       list.setAttribute("aria-label", mode === "path" ? book.pages : book.sites);
       list.replaceChildren(...options.map((option, index) => {
         const item = document.createElement("li");
@@ -357,6 +359,7 @@
   }
 
   attach("url", "url-field", "");
+  attach("stage-url", "stage-url-field", "hero-");
   attach("compare-url", "compare-url-field", "compare-");
   [2, 3, 4, 5].forEach((n) => attach("compare-url-" + n, "compare-url-" + n + "-field", "compare-"));
 })();

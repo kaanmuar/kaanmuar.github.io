@@ -212,7 +212,7 @@ function pointValues(external) {
   return {
     readiness: core.readiness(e),
     openBugs: e.github && e.github.ok ? e.github.openBugs : null,
-    braveTop20: brave ? brave.filter((q) => q.position !== null).length : null,
+    braveTop20: brave ? brave.filter((q) => q.position !== null && q.position <= 20).length : null,
     outreachWeek: pipe ? pipe.thisWeek : null
   };
 }

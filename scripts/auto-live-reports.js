@@ -19,6 +19,7 @@ const fs = require("fs");
 const path = require("path");
 const live = require("./build-live-reports");
 const { siteKind } = require("./tips-studio/site-assets");
+const { tldCountry } = require("./live-report-countries");
 
 const ROOT = path.resolve(__dirname, "..");
 const STATE = path.join(__dirname, "auto-live-reports.state.json");
@@ -87,6 +88,8 @@ const LESSONS = {
   "pf-blocking": ["blocking scripts", "Add defer to every script the first paint does not need.", ["WebPerformance", "PageWeight", "LCP"]],
   "pf-field": ["real-user speed", "Start with the largest image on the first screen: size it, compress it, and preload it.", ["WebPerformance", "CoreWebVitals", "LCP"]],
   "sec-safebrowsing": ["a Safe Browsing listing", "Watch the Security issues report in Search Console, clean the cause the day it appears, then request a review.", ["WebSecurity", "SafeBrowsing", "Malware"]],
+  "sec-linked-script": ["a listed script host", "Load scripts only from hosts you chose, name them in a Content-Security-Policy, and remove any you do not know the day it appears.", ["WebSecurity", "SafeBrowsing", "Magecart"]],
+  "sec-linked-risk": ["a listed linked host", "Check what the site embeds and links to after every plugin or theme update, and unlink any host Google lists.", ["WebSecurity", "SafeBrowsing", "Phishing"]],
   "sec-domain-expiry": ["domain renewal", "Turn on automatic renewal for every domain you own, and keep the card on file valid.", ["WebSecurity", "Domains", "DNS"]],
   "sec-domain-lock": ["the domain transfer lock", "Turn on the registrar's transfer lock, and two-factor sign-in for the registrar account.", ["WebSecurity", "Domains", "DNS"]],
   "sec-mta-sts": ["MTA-STS", "Publish an MTA-STS policy in testing mode, read the TLS-RPT reports, then switch it to enforce.", ["EmailSecurity", "MTASTS", "DNS"]],
@@ -129,9 +132,6 @@ const AREA_ACTIONS = {
   Performance: "Measure the start page on a phone after every release, and fix the largest cost first."
 };
 const AREA_TAGS = { SEO: ["SEO"], GEO: ["GEO", "AISearch"], Analytics: ["Analytics"], Security: ["WebSecurity"], Accessibility: ["Accessibility"], Performance: ["WebPerformance"] };
-const CC = { uk: "GB" };
-const SECOND_LEVEL = /^(gov|gob|com|edu|org|net|mil|ac|co)$/;
-
 function args() {
   const out = {};
   const argv = process.argv.slice(2);
@@ -145,16 +145,6 @@ function args() {
 }
 
 function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }
-
-// A country only when the address says so: .de, .gov.co, .com.mx. A bare .co or .io says nothing.
-function countryOf(host) {
-  const labels = bare(host).split(".");
-  const tld = labels[labels.length - 1];
-  const code = CC[tld] || tld.toUpperCase();
-  if (!live.REGIONS[code]) return "";
-  if (tld === "co" && !(labels.length >= 3 && SECOND_LEVEL.test(labels[labels.length - 2]))) return "";
-  return code;
-}
 
 function sentence(text) {
   const t = live.scrub(text, 160).replace(/[.…]+$/, "");
@@ -175,18 +165,32 @@ function copyFor(report, recent) {
   if (!gap) {
     return { key: "", title: [head, "*Nothing failed.*"], tags: ["QA", "WebDev", "SEO"],
       body: [sentence(good[0] && good[0].title), sentence(good[1] && good[1].title), "No check failed on the pages analyzed."].filter(Boolean).join(" "),
-      action: "Keep the review in your release checklist, so the next change keeps it that way." };
+      action: "Keep the review in your release checklist, so the next change keeps it that way.",
+      fixLines: ["// Nothing failed on the pages analyzed", "// Keep the review in your release checklist"] };
   }
   const lesson = LESSONS[gap.key];
   const strengths = good.map((g) => live.scrub(g.title, 90).replace(/\.$/, ""));
   const lead = strengths.length === 2 ? strengths[0] + ", and " + lower(strengths[1]) + "." : strengths.length ? strengths[0] + "." : "";
+  const action = lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.";
   return {
     key: gap.key,
     title: [head, "*The gap: " + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + ".*"],
     body: (lead ? lead + " But " + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
-    action: lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.",
-    tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3)
+    action,
+    tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3),
+    // Short lines for the carousel code slide (#3476); never paste URLs into the graphic.
+    fixLines: fixLinesFor(gap, action)
   };
+}
+
+function fixLinesFor(gap, action) {
+  const raw = String((gap && gap.fix) || "").trim();
+  if (raw && !/https?:\/\//i.test(raw) && raw.length <= 280) {
+    const lines = raw.split(/\n/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length) return lines.slice(0, 6);
+  }
+  const title = live.scrub((gap && gap.title) || "top finding", 48);
+  return ["// Gap: " + title, String(action || "").slice(0, 72)].filter(Boolean);
 }
 
 // The leader overall, and for each area which site leads it.
@@ -268,7 +272,8 @@ async function main() {
     const swept = source === "sweep" || source === "rivals" || source === "outreach";
     const scope = swept ? "National" : "Requested";
     const copy = copyFor(report, state.recent || []);
-    const country = countryOf(host);
+    // The address when it is sure (.de, .gov.co, .com.mx; never a bare .co or .io), else data/live-report-countries.json in build().
+    const country = tldCountry(host);
     const run = { id: "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60), data: report, scope,
       title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, meta: [host, "", "", "", country] };
     let built;
@@ -286,7 +291,8 @@ async function main() {
     const score = report.insights.score;
     batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope,
       fetchedAt: report.fetchedAt, pages: report.limits.pagesRead, overall: score.overall,
-      areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])) });
+      areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])),
+      fixLines: copy.fixLines || [] });
     state.posted = Object.assign(state.posted || {}, { [host]: today });
     if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
   }

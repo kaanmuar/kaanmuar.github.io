@@ -49,7 +49,7 @@ const COPY = {
       measured: "Every check was measured from the public response, not guessed.",
       counts: "{fail} fail · {risk} at risk · {pass} pass",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "Accessibility", Performance: "Performance" },
-      about: { SEO: "Indexing, sitemap, titles, structured data", GEO: "How AI answers can read and cite the site", Analytics: "Tags, consent, campaign tracking", Security: "Headers, TLS, DNS, exposure", Accessibility: "Markup, axe-core, and the phone layout", Performance: "Speed, weight, paint, and layout shift" }
+      about: { SEO: "Indexing, sitemap, titles, structured data", GEO: "How AI answers can read and cite the site", Analytics: "Tags, consent, campaign tracking", Security: "Headers, TLS, DNS, malware and phishing lists, signs of a hack", Accessibility: "Markup, axe-core, and the phone layout", Performance: "Speed, weight, paint, and layout shift" }
     },
     page: {
       claimTitle: "Claim the report of {host}",
@@ -107,7 +107,7 @@ const COPY = {
       measured: "Cada control se midió en la respuesta pública, no se adivinó.",
       counts: "{fail} fallan · {risk} en riesgo · {pass} pasan",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
-      about: { SEO: "Indexación, sitemap, títulos, datos estructurados", GEO: "Cómo las respuestas de IA leen y citan el sitio", Analytics: "Etiquetas, consentimiento, seguimiento de campañas", Security: "Cabeceras, TLS, DNS, exposición", Accessibility: "Marcado, axe-core y la vista en el teléfono", Performance: "Velocidad, peso, pintado y saltos de diseño" }
+      about: { SEO: "Indexación, sitemap, títulos, datos estructurados", GEO: "Cómo las respuestas de IA leen y citan el sitio", Analytics: "Etiquetas, consentimiento, seguimiento de campañas", Security: "Cabeceras, TLS, DNS, listas de malware y phishing, señales de hackeo", Accessibility: "Marcado, axe-core y la vista en el teléfono", Performance: "Velocidad, peso, pintado y saltos de diseño" }
     },
     page: {
       claimTitle: "Pedir el informe de {host}",
@@ -165,7 +165,7 @@ const COPY = {
       measured: "Cada verificação foi medida na resposta pública, sem suposições.",
       counts: "{fail} falham · {risk} em risco · {pass} passam",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
-      about: { SEO: "Indexação, sitemap, títulos, dados estruturados", GEO: "Como as respostas de IA leem e citam o site", Analytics: "Tags, consentimento, rastreamento de campanhas", Security: "Cabeçalhos, TLS, DNS, exposição", Accessibility: "Marcação, axe-core e o layout no celular", Performance: "Velocidade, peso, renderização e mudanças de layout" }
+      about: { SEO: "Indexação, sitemap, títulos, dados estruturados", GEO: "Como as respostas de IA leem e citam o site", Analytics: "Tags, consentimento, rastreamento de campanhas", Security: "Cabeçalhos, TLS, DNS, listas de malware e phishing, sinais de invasão", Accessibility: "Marcação, axe-core e o layout no celular", Performance: "Velocidade, peso, renderização e mudanças de layout" }
     },
     page: {
       claimTitle: "Pedir o relatório de {host}",
@@ -223,7 +223,7 @@ const COPY = {
       measured: "Jede Prüfung wurde an der öffentlichen Antwort gemessen, nicht geschätzt.",
       counts: "{fail} scheitern · {risk} gefährdet · {pass} bestanden",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
-      about: { SEO: "Indexierung, Sitemap, Titel, strukturierte Daten", GEO: "Wie KI-Antworten die Website lesen und zitieren", Analytics: "Tags, Einwilligung, Kampagnen-Tracking", Security: "Header, TLS, DNS, Angriffsfläche", Accessibility: "Markup, axe-core und die Ansicht am Handy", Performance: "Tempo, Gewicht, Rendering und Layout-Verschiebungen" }
+      about: { SEO: "Indexierung, Sitemap, Titel, strukturierte Daten", GEO: "Wie KI-Antworten die Website lesen und zitieren", Analytics: "Tags, Einwilligung, Kampagnen-Tracking", Security: "Header, TLS, DNS, Malware- und Phishing-Listen, Hinweise auf einen Hack", Accessibility: "Markup, axe-core und die Ansicht am Handy", Performance: "Tempo, Gewicht, Rendering und Layout-Verschiebungen" }
     },
     page: {
       claimTitle: "Bericht zu {host} anfordern",
@@ -281,7 +281,7 @@ const COPY = {
       measured: "Chaque contrôle a été mesuré sur la réponse publique, sans supposition.",
       counts: "{fail} échouent · {risk} à risque · {pass} réussis",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" },
-      about: { SEO: "Indexation, sitemap, titres, données structurées", GEO: "Comment les réponses d'IA lisent et citent le site", Analytics: "Balises, consentement, suivi des campagnes", Security: "En-têtes, TLS, DNS, exposition", Accessibility: "Balisage, axe-core et l'affichage sur téléphone", Performance: "Vitesse, poids, rendu et décalages de mise en page" }
+      about: { SEO: "Indexation, sitemap, titres, données structurées", GEO: "Comment les réponses d'IA lisent et citent le site", Analytics: "Balises, consentement, suivi des campagnes", Security: "En-têtes, TLS, DNS, listes de malware et de phishing, signes de piratage", Accessibility: "Balisage, axe-core et l'affichage sur téléphone", Performance: "Vitesse, poids, rendu et décalages de mise en page" }
     },
     page: {
       claimTitle: "Demander le rapport de {host}",
@@ -339,7 +339,7 @@ const COPY = {
       measured: "Ogni controllo è stato misurato sulla risposta pubblica, non indovinato.",
       counts: "{fail} falliscono · {risk} a rischio · {pass} superati",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
-      about: { SEO: "Indicizzazione, sitemap, titoli, dati strutturati", GEO: "Come le risposte dell'IA leggono e citano il sito", Analytics: "Tag, consenso, tracciamento delle campagne", Security: "Header, TLS, DNS, esposizione", Accessibility: "Markup, axe-core e il layout su telefono", Performance: "Velocità, peso, rendering e spostamenti del layout" }
+      about: { SEO: "Indicizzazione, sitemap, titoli, dati strutturati", GEO: "Come le risposte dell'IA leggono e citano il sito", Analytics: "Tag, consenso, tracciamento delle campagne", Security: "Header, TLS, DNS, liste di malware e phishing, segni di violazione", Accessibility: "Markup, axe-core e il layout su telefono", Performance: "Velocità, peso, rendering e spostamenti del layout" }
     },
     page: {
       claimTitle: "Chiedi il report di {host}",

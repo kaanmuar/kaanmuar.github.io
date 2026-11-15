@@ -55,11 +55,13 @@ function reviewMessage(kind, record) {
   };
 }
 
-/** Pending owner notices created since the last push, at most one push an hour. */
-function noticesDue(pending, lastAt, now) {
+/** Pending owner notices created since the last push, plus those held back then (waiting: their domains), at most one
+ * push an hour. */
+function noticesDue(pending, lastAt, now, waiting) {
   if (lastAt && now - Date.parse(lastAt) < NOTICES_EVERY_MS) return [];
   const since = lastAt ? Date.parse(lastAt) : 0;
-  return pending.filter((n) => n && n.status === "pending" && Date.parse(n.createdAt || 0) > since);
+  const held = new Set(waiting || []);
+  return pending.filter((n) => n && n.status === "pending" && (Date.parse(n.createdAt || 0) > since || held.has(n.domain)));
 }
 
 function noticesMessage(fresh, pendingTotal) {

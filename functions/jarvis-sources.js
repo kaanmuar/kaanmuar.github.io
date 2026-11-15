@@ -3,7 +3,7 @@
 
    money      paid URL reviews (Firestore url_reviews), PayPal disputes and transactions, Stripe mode
    email      SendGrid delivery, bounces, blocks, spam reports and opens
-   search     Brave rankings for the brand queries, Search Console clicks and queries
+   search     Brave rankings for the brand queries, Search Console clicks and queries, Brave index coverage (jarvis-index.js)
    social     posts per network from the published ledgers, YouTube views
    safety     Web Risk, SPF, DKIM, DMARC, MX, CAA, domain expiry (RDAP), TLS
    platform   real function failures (5xx, crash, timeout), executions, Gemini calls, Firestore reads and writes
@@ -13,9 +13,14 @@
    people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
    pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
    local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
+   rescue     failed reviews, re-runs, Mac rescues, AI diagnoses, 48-hour report promises and apology codes (jarvis-review-ops.js)
+   fixes      client fix requests by way and status, fix package revenue (PayPal) and free re-checks (jarvis-review-ops.js)
+   checks     the newer review checks' hits, their quotas, the Wordfence feed and each outside source's health (jarvis-review-ops.js)
+   geo        the Map tab's numbers per country, rolled up from the other sources' cached answers (jarvis-geo.js)
+   calendar   each target market's public holidays and special dates for the next 60 days, and holiday pauses (jarvis-calendar.js)
 
-   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github} and caches each source in
-   jarvis_cache through TTL. */
+   index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github, peer} and caches each
+   source in jarvis_cache through TTL; peer(op) is another source's cached answer. */
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DOMAIN = "carlosandmunoz.com";
@@ -27,17 +32,23 @@ const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/se
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, pagespeed: 10 * MINUTE };
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, rescue: 10 * MINUTE, fixes: 5 * MINUTE, checks: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE, targets: HOUR, geo: 15 * MINUTE, calendar: 6 * HOUR };
 const { SEARCH_QUERIES } = require("./jarvis-core");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisEngagement = require("./jarvis-engagement");
 const jarvisPeople = require("./jarvis-people");
 const jarvisLocal = require("./jarvis-local");
+const jarvisReviewOps = require("./jarvis-review-ops");
 const jarvisSocial = require("./jarvis-social");
 const jarvisPageSpeed = require("./jarvis-pagespeed");
 const mailHealth = require("./mail-health");
 const jarvisAddresses = require("./jarvis-addresses");
+const jarvisIndex = require("./jarvis-index");
+const jarvisGithub = require("./jarvis-github");
+const jarvisTargets = require("./jarvis-targets");
+const jarvisGeo = require("./jarvis-geo");
+const jarvisCalendar = require("./jarvis-calendar");
 const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
@@ -291,21 +302,60 @@ function hostOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
 }
 
+// Brave answers 20 results a call, up to offset 4. Page one is asked daily; offsets 1-4 only weekly per search,
+// since a search we are not in spends all five calls of the ~1,000 a month the URL reviews share.
+const BRAVE_PAGE = 20;
+const BRAVE_DEPTH = 100;
+const BRAVE_DEEP_EVERY = 7 * DAY;
+
 async function brave(ctx, queries) {
   const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
   if (!key) return { ok: false, error: "BRAVE_SEARCH_KEY is not set." };
+  const now = ctx.now || Date.now();
+  const ask = (q, page) => getJson(ctx.fetch, `https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
+  const ours = (results) => results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
+  const ref = ctx.db ? ctx.db.collection("jarvis_cache").doc("brave-deep") : null;
+  const snap = ref ? await ref.get().catch(() => null) : null;
+  const deep = (snap && snap.exists && snap.data().rows) || {};
+  const checked = {};
   const rows = [];
   for (const q of queries) {
+    let data;
     try {
-      const data = await getJson(ctx.fetch, "https://api.search.brave.com/res/v1/web/search?count=20&q=" + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
-      const results = ((data.web || {}).results || []);
-      const at = results.findIndex((r) => hostOf(r.url).endsWith(DOMAIN));
-      rows.push({ query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" });
+      data = await ask(q, 0);
     } catch (error) {
       rows.push({ query: q, position: null, error: clean(error) });
+      continue;
     }
+    const results = (data.web || {}).results || [];
+    const at = ours(results);
+    const row = { query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" };
+    if (row.position === null && results.length) {
+      const saved = deep[q];
+      if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
+        Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
+      } else {
+        try {
+          let seen = results.length;
+          for (let page = 1; page < BRAVE_DEPTH / BRAVE_PAGE && row.position === null && (data.query || {}).more_results_available !== false; page++) {
+            data = await ask(q, page);
+            const more = (data.web || {}).results || [];
+            const found = ours(more);
+            if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
+            if (!more.length) break;
+            seen += more.length;
+          }
+          checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
+          row.checkedAt = checked[q].at;
+        } catch (error) {
+          row.deepError = clean(error);
+        }
+      }
+    }
+    rows.push(row);
   }
-  return { ok: true, queries: rows };
+  if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
+  return { ok: true, depth: BRAVE_DEPTH, queries: rows };
 }
 
 async function searchConsole(ctx) {
@@ -345,24 +395,38 @@ async function searchConsole(ctx) {
 
 async function search(ctx) {
   const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-  const [ranks, gsc] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx)]);
-  return { ok: true, brave: ranks, console: gsc, needs: gsc.need ? [gsc.need] : [] };
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 
 // --- social ----------------------------------------------------------------------------------------------------
+
+// Facebook post numbers are read each morning by scripts/social-metrics.js in auto-live-reports.yml, which holds the
+// Page tokens as repo secrets; its pages entry says which Page was skipped or refused, and why. The same run records
+// the Telegram channel's members (channels.telegram), read by jarvisSocial.telegramMembers. The subreddit's members
+// are in the Reddit ledger itself (reddit.json members), read by jarvisSocial.redditMembers.
+function facebookNeeds(metrics) {
+  return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
+    if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
+    const said = [];
+    if (page.asked && page.answered < page.asked) said.push("the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? " (" + String(page.error).slice(0, 200) + ")" : ""));
+    if (page.asked && page.insights === 0) said.push("no post came back with views, so the Page token lacks read_insights");
+    return said.length ? profile + ": " + said.join("; ") + ". A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js." : "";
+  }).filter(Boolean);
+}
 
 async function social(ctx) {
   const since = ctx.now - ctx.days * DAY;
   const ledger = async (name) => {
     try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
   };
-  const [buffer, facebook, open, youtube] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("youtube")]);
+  const [buffer, facebook, open, telegram, reddit, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("telegram"), ledger("reddit"), ledger("youtube"), ledger("metrics")]);
   const channels = {};
   const results = {};
   const daily = {};
   const latest = [];
   const scheduled = { count: 0, next: "" };
-  [buffer, facebook, open].forEach((book) => {
+  [buffer, facebook, open, telegram, reddit].forEach((book) => {
     Object.keys((book && book.posts) || {}).forEach((post) => {
       (book.posts[post] || []).forEach((row) => {
         const at = Date.parse(row.at || "");
@@ -393,8 +457,35 @@ async function social(ctx) {
       views = videos.reduce((s, v) => s + (v.views || 0), 0);
     } catch (error) { needs.push("YouTube: " + clean(error)); }
   } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
-  if (!(ctx.env || {}).FACEBOOK_PAGE_TOKEN) needs.push("Facebook: copy FACEBOOK_PAGE_TOKEN from the GitHub secrets into functions/.env so Jarvis can read post reach.");
+  needs.push(...facebookNeeds(metrics));
+  const tgMembers = jarvisSocial.telegramMembers(metrics, since);
+  if (tgMembers.need) needs.push(tgMembers.need);
+  const rdMembers = jarvisSocial.redditMembers(reddit, since, ctx.now);
+  if (rdMembers.need) needs.push(rdMembers.need);
   const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
+  // Auto-live batches ship feed/story/clip plus a 4-slide carousel and LinkedIn document PDF (#3485 / #3488).
+  // captions.json records carousel/document/assetsMissing after tips-studio render.
+  let assets = { batch: "", missing: [], expected: ["feed", "story", "clip", "carousel", "document"] };
+  for (let d = 0; d < 3; d += 1) {
+    const day = new Date(ctx.now - d * DAY).toISOString().slice(0, 10);
+    const batch = "auto-" + day;
+    try {
+      const caps = await getJson(ctx.fetch, ORIGIN + "/media/social-posts/" + batch + "/captions.json?t=" + Math.floor(ctx.now / HOUR), {}, batch + " captions");
+      const missing = [];
+      Object.keys(caps || {}).forEach((slug) => {
+        const cap = caps[slug] || {};
+        if (cap.hold) return;
+        if (typeof cap.carousel === "number" || cap.document != null || (cap.assetsMissing || []).length) {
+          (cap.assetsMissing || []).forEach((m) => missing.push(batch + "/" + slug + " " + m));
+          if (typeof cap.carousel === "number" && cap.carousel < 4) missing.push(batch + "/" + slug + " carousel");
+          if (cap.document === false) missing.push(batch + "/" + slug + " document");
+        }
+      });
+      assets = { batch, missing: [...new Set(missing)].slice(0, 12), expected: assets.expected };
+      if (assets.missing.length) needs.push("Auto batch " + batch + " is missing carousel slides or LinkedIn PDF on " + assets.missing.slice(0, 3).join(", ") + (assets.missing.length > 3 ? "…" : "") + ".");
+      break;
+    } catch (error) { /* no auto batch for that day yet */ }
+  }
   return {
     ok: !!(buffer || facebook),
     error: buffer || facebook ? "" : "The social ledgers could not be read from the site.",
@@ -406,8 +497,11 @@ async function social(ctx) {
     daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
-    queue: jarvisSocial.byChannel([buffer, facebook, open], ctx.now, since),
+    queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since, metrics),
+    telegram: tgMembers,
+    reddit: rdMembers,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
+    assets,
     needs
   };
 }
@@ -536,10 +630,16 @@ async function costs(ctx, token) {
   const table = ((tables.tables || []).map((t) => t.tableReference.tableId).filter((id) => /^gcp_billing_export_v1_/.test(id)).sort()[0]) || "";
   if (!table) return { pending: true, note: "The billing export is on; Google writes the first rows within a day." };
   const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
-  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)), 2) AS net, ROUND(SUM(cost), 2) AS gross " +
-    "FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY) GROUP BY service, currency ORDER BY gross DESC LIMIT 15";
+  // ctx.month ("YYYY-MM", #3283): that invoice month instead of the last days, with the net in USD too.
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(ctx.month || "") ? ctx.month : "";
+  const credits = "IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)";
+  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(" + credits + "), 2) AS net, ROUND(SUM(cost), 2) AS gross" +
+    (month ? ", ROUND(SUM((cost + " + credits + ") / IFNULL(NULLIF(currency_conversion_rate, 0), 1)), 2) AS usd" : "") +
+    " FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE " + (month ? "invoice.month = '" + month.replace("-", "") + "'" : "usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY)") +
+    " GROUP BY service, currency ORDER BY gross DESC LIMIT " + (month ? 50 : 15);
   const data = await getJson(ctx.fetch, bq + "/queries", Object.assign({ method: "POST", body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth), "BigQuery");
-  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0 }));
+  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0, usd: Number(r.f[4] && r.f[4].v) || 0 }));
+  if (month) return { month, currency: (rows[0] || {}).currency || "", net: round(rows.reduce((s, r) => s + r.net, 0), 2), usd: round(rows.reduce((s, r) => s + r.usd, 0), 2), byService: rows.map((r) => ({ label: r.label, value: r.net })) };
   return {
     days,
     currency: (rows[0] || {}).currency || "",
@@ -569,7 +669,7 @@ async function platform(ctx) {
       return { executions: total, notOk, failures: failures.total, failureRate: total ? round((failures.total / total) * 100, 2) : 0, byFunction: failures.byFunction, kinds: failures.kinds, latest: failures.latest, capped: failures.capped };
     }),
     part("gemini", async () => {
-      const rows = await monitoring(ctx, token, 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"', { start: week, end, groupBy: ["metric.label.response_code_class", "resource.label.method"] });
+      const rows = await monitoring(ctx, token, 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service=one_of("generativelanguage.googleapis.com","aiplatform.googleapis.com")', { start: week, end, groupBy: ["metric.label.response_code_class", "resource.label.method"] });
       const byClass = {};
       const failedMethods = {};
       rows.forEach((r) => {
@@ -603,7 +703,7 @@ async function platform(ctx) {
   return out;
 }
 
-const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source };
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, rescue: jarvisReviewOps.rescueSource, fixes: jarvisReviewOps.fixesSource, checks: jarvisReviewOps.checksSource, "github-work": jarvisGithub.source, targets: jarvisTargets.source, geo: jarvisGeo.geo, calendar: jarvisCalendar.source };
 
 async function run(name, ctx) {
   const source = SOURCES[name];
@@ -615,4 +715,4 @@ async function run(name, ctx) {
   }
 }
 
-module.exports = { costs, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };
+module.exports = { costs, googleToken, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

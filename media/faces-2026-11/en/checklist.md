@@ -13,7 +13,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Bio (160):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: @qaurlreview
+  Is your site safe? We check deeper, fix it at a fixed price from $69, and you always hear back. EN·DE·FR·IT. Español/Português: @qaurlreview
   ```
 - [ ] Website:
   ```text
@@ -26,6 +26,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 ## YouTube: existing account, https://www.youtube.com/@qalaburlreview
 
 - [ ] Log in and check the account email is `qalaburlreview@carlosandmunoz.com`; change it in the account settings if not.
+- [ ] New for the live account (#2568): add Live Reports on Telegram (https://t.me/qalab_live) and r/QALabLiveReports (https://www.reddit.com/r/QALabLiveReports/) to Links (14), after the links it already has.
 - [ ] Verify the channel by phone (youtube.com/verify) so custom thumbnails and videos over 15 minutes work.
 - [ ] Name:
   ```text
@@ -37,16 +38,24 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Description (1000):
   ```text
-  One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.
+  QA-lab URL Review tells you whether your site is safe, and looks deeper than most checkers: phishing and malware lists, signs of a hacked site, lookalike domains and every host your pages load or link to. If something needs fixing, we fix it at a fixed price from $69, then re-review it for free. And you always hear back: if the first run can't finish, we keep trying and email your report — usually within 48 hours, with 20% off your next review if it takes longer.
+  
+  Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis ab 69 US$, und Sie hören immer von uns.
+  
+  Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe dès 69 US$, et vous avez toujours une réponse.
+  
+  Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso da 69 US$ e ti rispondiamo sempre.
   
   Live Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.
   
   En español y português: @qaurlreview
   ```
-- [ ] Links:
+- [ ] Links (14):
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=youtube&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.youtube.com/@qaurlreview
+  - Live Reports on Telegram: https://t.me/qalab_live (new: add it to the live account)
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/ (new: add it to the live account)
 - [ ] Contact email:
   ```text
   qalaburlreview@carlosandmunoz.com
@@ -66,7 +75,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Bio (80):
   ```text
-  One URL in, a QA review out. EN·DE·FR·IT. ES/PT: @qaurlreview
+  Is your site safe? We check, fix from $69. EN·DE·FR·IT. ES/PT: @qaurlreview
   ```
 - [ ] Website:
   ```text
@@ -78,18 +87,21 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 ## Reddit: existing account, https://www.reddit.com/user/qalaburlreview/
 
 - [ ] Log in and check the account email is `qalaburlreview@carlosandmunoz.com`; change it in the account settings if not.
+- [ ] New for the live account (#2568): add Live Reports on Telegram (https://t.me/qalab_live) and r/QALabLiveReports (https://www.reddit.com/r/QALabLiveReports/) to Social links (5), after the links it already has.
 - [ ] Display name:
   ```text
   QA-lab URL Review
   ```
 - [ ] About (200):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: u/qaurlreview
+  Is your site safe? We check deeper, fix it at a fixed price from $69, and you always hear back. EN·DE·FR·IT. Español/Português: u/qaurlreview
   ```
 - [ ] Social links (5):
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=reddit&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.reddit.com/user/qaurlreview/
+  - Live Reports on Telegram: https://t.me/qalab_live (new: add it to the live account)
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/ (new: add it to the live account)
 - [ ] Upload Avatar: `media/faces-2026-11/en/reddit/avatar-256.png`
 - [ ] Upload Banner; the copy stays in the middle third: `media/faces-2026-11/en/reddit/banner-1920x384.jpg`
 - [ ] Access: None: Reddit posts stay manual.
@@ -108,11 +120,17 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Intro (101):
   ```text
-  One URL in, a QA review out. EN·DE·FR·IT. ES/PT: fb.com/qaurlreview
+  Is your site safe? We check, fix from $69. EN·DE·FR·IT. ES/PT: fb.com/qaurlreview
   ```
 - [ ] About:
   ```text
-  One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.
+  QA-lab URL Review tells you whether your site is safe, and looks deeper than most checkers: phishing and malware lists, signs of a hacked site, lookalike domains and every host your pages load or link to. If something needs fixing, we fix it at a fixed price from $69, then re-review it for free. And you always hear back: if the first run can't finish, we keep trying and email your report — usually within 48 hours, with 20% off your next review if it takes longer.
+  
+  Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis ab 69 US$, und Sie hören immer von uns.
+  
+  Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe dès 69 US$, et vous avez toujours une réponse.
+  
+  Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso da 69 US$ e ti rispondiamo sempre.
   
   Live Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.
   
@@ -147,7 +165,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Bio (200):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: dev.to/qaurlreview
+  Is your site safe? We check deeper, fix it at a fixed price from $69, and you always hear back. EN·DE·FR·IT. Español/Português: dev.to/qaurlreview
   ```
 - [ ] Website:
   ```text
@@ -165,7 +183,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Description (256):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility and speed, with test cases for 20 frameworks. First review included. We post in English, Deutsch, Français and Italiano. Español y português: @qaurlreview.bsky.social
+  Is your site safe? We check deeper than most: phishing lists, hacked-site signs, lookalike domains, linked hosts. Fixed-price fixes from $69 with a free re-review, and you always hear back. EN·DE·FR·IT. Español y português: @qaurlreview.bsky.social
   ```
 - [ ] Upload Avatar: `media/faces-2026-11/en/bluesky/avatar-1000.jpg`
 - [ ] Upload Banner; the avatar covers the lower left: `media/faces-2026-11/en/bluesky/banner-3000x1000.jpg`
@@ -181,7 +199,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Bio (500):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility and speed, with test cases for 20 frameworks. First review included. We post in English, Deutsch, Français and Italiano. Español y português: @qaurlreview@mastodon.social
+  Is your site safe? We check deeper than most: phishing lists, hacked-site signs, lookalike domains, linked hosts. Fixed-price fixes from $69 with a free re-review, and you always hear back. EN·DE·FR·IT. Español y português: @qaurlreview@mastodon.social
   ```
 - [ ] Extra fields (4):
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=mastodon&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
@@ -202,12 +220,14 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Bio (150):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: @qaurlreview
+  Is your site safe? We check deeper, fix it at a fixed price from $69, and you always hear back. EN·DE·FR·IT. Español/Português: @qaurlreview
   ```
 - [ ] Links (5):
   - Website: https://carlosandmunoz.com/qalaburlreview.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - Social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=instagram&utm_medium=profile&utm_campaign=profile-link&utm_content=face-en
   - ES · PT: https://www.instagram.com/qaurlreview/
+  - Live Reports on Telegram: https://t.me/qalab_live
+  - r/QALabLiveReports: https://www.reddit.com/r/QALabLiveReports/
 - [ ] Highlight names:
   ```text
   Live Reports, Tips, Skits, Live runs, How it works
@@ -225,7 +245,7 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
 - [ ] Threads has no sign-up of its own: open the Threads app, log in with the face's Instagram (@`qalaburlreview`) and keep its handle.
 - [ ] Bio (150):
   ```text
-  One public URL in, a QA review out: SEO, AI search, analytics, security, accessibility, speed. EN·DE·FR·IT. Español/Português: @qaurlreview
+  Is your site safe? We check deeper, fix it at a fixed price from $69, and you always hear back. EN·DE·FR·IT. Español/Português: @qaurlreview
   ```
 - [ ] Link:
   ```text
@@ -247,11 +267,17 @@ Built by `node scripts/brand-kit/build.js --face en`; the contact sheet is `medi
   ```
 - [ ] Tagline (120):
   ```text
-  One URL in, a QA review out. EN·DE·FR·IT. ES/PT: linkedin.com/company/qaurlreview
+  Is your site safe? We check, fix from $69. EN·DE·FR·IT. ES/PT: linkedin.com/company/qaurlreview
   ```
 - [ ] Overview:
   ```text
-  One public URL in, a plain-language QA review out: SEO, AI search (GEO), analytics, security, accessibility and speed, scored page by page, with proposed test cases for 20 frameworks and exports to Jira, TestRail, Xray and Zephyr. Sign in with email or an account you have; the first review is included.
+  QA-lab URL Review tells you whether your site is safe, and looks deeper than most checkers: phishing and malware lists, signs of a hacked site, lookalike domains and every host your pages load or link to. If something needs fixing, we fix it at a fixed price from $69, then re-review it for free. And you always hear back: if the first run can't finish, we keep trying and email your report — usually within 48 hours, with 20% off your next review if it takes longer.
+  
+  Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis ab 69 US$, und Sie hören immer von uns.
+  
+  Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe dès 69 US$, et vous avez toujours une réponse.
+  
+  Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso da 69 US$ e ti rispondiamo sempre.
   
   Live Reports, tips, skits and live runs, posted in English, Deutsch, Français and Italiano.
   

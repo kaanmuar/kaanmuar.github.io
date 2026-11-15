@@ -81,6 +81,16 @@ function footerLine(face) {
     + faces.accounts(face).map((a) => "<a href=\"" + a.url + "\" rel=\"me noopener\">" + esc(a.name) + "</a>").join(" · ") + "</p>";
 }
 
+/** The brand's Live Reports channels as a footer line, after the faces' lines. */
+function channelsLine(label, href) {
+  return "<p><a href=\"" + href + "\">" + esc(label) + "</a>: "
+    + faces.CHANNELS.map((c) => "<a href=\"" + c.url + "\" rel=\"me noopener\">" + esc(c.name) + "</a>").join(" · ") + "</p>";
+}
+
+function channel(c) {
+  return "<li><a class=\"face-net\" href=\"" + c.url + "\" rel=\"me noopener\" data-net=\"" + c.net + "\"><b>" + esc(c.app) + "</b><small translate=\"no\">" + esc(c.mention) + "</small></a></li>";
+}
+
 function network(n, face, copy) {
   const name = esc(n.label || n.name);
   const mention = "<small translate=\"no\">" + esc(n.mention(face.handle)) + "</small>";
@@ -113,7 +123,7 @@ function jsonLd(face, url, copy) {
         email: face.email,
         logo: SITE + "assets/qa-review-mark-full.svg",
         knowsLanguage: face.langs,
-        sameAs: faces.accounts(face).map((a) => a.url),
+        sameAs: faces.accounts(face).concat(faces.CHANNELS).map((a) => a.url),
         parentOrganization: { "@type": "Organization", "@id": ORG, name: "QA-lab URL Review", url: SITE + "qa-review.html" }
       },
       {
@@ -149,7 +159,8 @@ function page(face) {
     .map(([code, f]) => "    <link rel=\"alternate\" hreflang=\"" + code + "\" href=\"" + SITE + f.site + "\">").join("\n");
   const ogAlt = "    <meta property=\"og:locale:alternate\" content=\"" + hub.LANGS[other.lang].locale + "\">";
   const json = JSON.stringify(jsonLd(face, url, copy), null, 1).replace(/</g, "\\u003c");
-  const nets = faces.ordered().sort((a, b) => b.exists[face.id] - a.exists[face.id]).map((n) => network(n, face, copy)).join("\n            ");
+  const [live, soon] = [true, false].map((on) => faces.ordered().filter((n) => !!n.exists[face.id] === on).map((n) => network(n, face, copy)));
+  const nets = live.concat(faces.CHANNELS.map(channel), soon).join("\n            ");
   const reviews = face.langs.map((code) =>
     "<li lang=\"" + code + "\"><a class=\"face-net face-lang\" href=\"" + reviewPage(code) + "\" hreflang=\"" + code + "\">"
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + hub.LANGS[code].flag + ".svg\" alt=\"\" width=\"22\" height=\"22\">"
@@ -261,6 +272,7 @@ ${more.map((text, i) => "        <p class=\"face-lede\" lang=\"" + face.langs[i 
 <footer class="hub-footer face-footer">
     <p class="face-footer-title">${esc(copy.accounts)}</p>
     ${Object.values(faces.FACES).map(footerLine).join("\n    ")}
+    ${channelsLine(ui.nav.live, "qa-review" + sfx + ".html#live-reports")}
     <p><a href="qa-review${sfx}.html">${esc(ui.nav.review)}</a> · <a href="qa-review-legal.html?lang=${lang}">${esc(ui.legal)}</a> · <a href="accessibility.html?lang=${lang}">${esc(ui.accessibility)}</a> · <a href="index.html">Carlos A. Muñoz, CV</a></p>
 </footer>
 <script type="module" src="js/fusion/boot.js?v=${version("js/fusion/boot.js")}"></script>
@@ -298,4 +310,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { COPY, page, footerLine, outputs };
+module.exports = { COPY, page, footerLine, channelsLine, outputs };

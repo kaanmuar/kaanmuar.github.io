@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "qalab-live-reports",
+  "post": {
+    "dir": "public",
+    "entrypoints": {
+      "default": { "entry": "splash.html", "height": "tall" },
+      "live": { "entry": "live.html" }
+    }
+  },
+  "server": { "dir": "dist/server", "entry": "index.cjs" },
+  "permissions": {
+    "redis": true,
+    "reddit": { "enable": true }
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Post the live reports",
+        "description": "A new interactive post with the ring of live reports.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post"
+      }
+    ]
+  },
+  "triggers": {
+    "onAppInstall": "/internal/on/app/install"
+  },
+  "scheduler": {
+    "tasks": {
+      "daily-batch": { "endpoint": "/internal/scheduler/daily", "cron": "20 16 * * *" },
+      "campaign": { "endpoint": "/internal/scheduler/campaign", "cron": "*/30 * * * *" }
+    }
+  }
+}

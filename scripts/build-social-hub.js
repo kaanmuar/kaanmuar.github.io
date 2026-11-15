@@ -29,7 +29,7 @@ const critical = require("./build-critical-css");
 const cspHashes = require("./build-csp-hashes");
 const queues = require("./social-ledger");
 const metrics = require("./social-metrics");
-const { FACE_PROFILES, PROFILES, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
+const { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 const { ORDER } = require("./brand-kit/faces");
 const i18n = require("./social-hub/i18n");
 
@@ -49,7 +49,9 @@ const SHARE_VERSION = "20261027";
 const RSS_MAX = 50;
 // Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
 const KINDS = Object.keys(COPY.en.kind);
-const TYPES = { news: "NewsArticle", trick: "HowTo", advice: "HowTo", quiz: "Quiz", skit: "VideoObject" };
+const TYPES = { news: "NewsArticle", trick: "HowTo", advice: "HowTo", quiz: "Quiz", skit: "VideoObject", live: "VideoObject" };
+// Kinds whose post is its clip, spoken in one language: skits (a take per language) and live show clips (#3173).
+const SPOKEN = new Set(["skit", "live"]);
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 const readJson = (file) => JSON.parse(read(file));
@@ -213,13 +215,13 @@ function expand(posts) {
 
 // One card per post on each language's page: the post in that language. The English page falls back to
 // the post as written; a localized page leaves out posts not yet in its language, such as a new pick the
-// translator refused. A skit is spoken in its take's language, so a page with no take in its language
-// leaves the skit out.
+// translator refused. A skit or live clip is spoken in its own language, so a page in another language
+// leaves it out.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
   posts.forEach((post) => {
-    if (post.kind === "skit" && post.lang !== lang) return;
+    if (SPOKEN.has(post.kind) && post.lang !== lang) return;
     const key = post.group || post.id;
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);
@@ -238,7 +240,7 @@ function pairQuizzes(posts) {
 }
 
 // Post ids a network has taken: queued or sent in either ledger. A translated variant counts through its base post.
-function queuedIds(books = [queues.read(queues.BUFFER), queues.read(queues.FACEBOOK), queues.read(queues.OPEN_SOCIAL)]) {
+function queuedIds(books = [queues.BUFFER, queues.FACEBOOK, queues.OPEN_SOCIAL, "assets/social/telegram.json", "assets/social/reddit.json"].map(queues.read)) {
   const ids = new Set();
   books.forEach((book) => Object.entries(book.posts).forEach(([id, list]) => {
     if (list.some((entry) => entry.result === "queued" || entry.result === "sent")) ids.add(id);
@@ -417,10 +419,10 @@ function clip(post) {
   };
 }
 
-// Every post is a SocialMediaPosting; news, tricks, best practices, quizzes and skits with a clip also take their own type.
+// Every post is a SocialMediaPosting; news, tricks, best practices, quizzes, and skits and live clips with a clip also take their own type.
 // A quiz carries its answer only once the answer post is out.
 function posting(post, full, answer) {
-  const type = TYPES[post.kind] && (post.kind !== "skit" || post.youtube) ? TYPES[post.kind] : null;
+  const type = TYPES[post.kind] && (!SPOKEN.has(post.kind) || post.youtube) ? TYPES[post.kind] : null;
   const item = {
     "@type": type ? ["SocialMediaPosting", type] : "SocialMediaPosting",
     "@id": card.permalink(post, post.lang, true),
@@ -525,7 +527,9 @@ function page(lang, posts, asOf) {
     + "<img src=\"https://hatscripts.github.io/circle-flags/flags/" + info.flag + ".svg\" alt=\"\" width=\"18\" height=\"18\">" + esc(info.native) + "</a>").join("");
   const follow = FACE_PROFILES.slice().sort((a, b) => b.langs.includes(lang) - a.langs.includes(lang)).map((face) =>
     "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"" + face.page + "\" translate=\"no\">@" + face.handle + " <small>" + face.langs.map((code) => code.toUpperCase()).join(" · ") + "</small></a>"
-    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("");
+    + face.profiles.map((profile) => "<a class=\"hub-follow-" + profile.net + "\" href=\"" + profile.url + "\" rel=\"me noopener\" data-net=\"" + profile.net + "\">" + esc(profile.name) + "</a>").join("") + "</p>").join("")
+    + "<p class=\"hub-face\"><a class=\"hub-face-page\" href=\"qa-review" + sfx + ".html#live-reports\">" + esc(copy.nav.live) + "</a>"
+    + CHANNELS.map((c) => "<a class=\"hub-follow-" + c.net + "\" href=\"" + c.url + "\" rel=\"me noopener\" data-net=\"" + c.net + "\">" + esc(c.name) + "</a>").join("") + "</p>";
   const kinds = ["all"].concat(visible.some((post) => post.trend) ? ["trending"] : [], KINDS.filter((kind) => visible.some((post) => post.kind === kind))).map((kind) =>
     "<button type=\"button\" class=\"hub-chip\" data-kind=\"" + kind + "\" aria-pressed=\"" + (kind === "all") + "\">" + esc(copy.kinds[kind]) + "</button>").join("");
   const option = (value, label) => "<option value=\"" + esc(value) + "\">" + esc(label) + "</option>";

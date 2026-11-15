@@ -36,6 +36,9 @@ concurrency:
   group: auto-live-reports
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   gate:
     runs-on: ubuntu-latest
@@ -88,7 +91,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
@@ -98,6 +101,15 @@ jobs:
           PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
           SINCE: ${{ inputs.since }}
         run: node scripts/auto-live-reports.js ${SINCE:+--since "$SINCE"}
+
+      # Signals only (no Gemini key here): sure countries go into data/live-report-countries.json and onto the
+      # cards; the unsure ones wait for a full run of the script, which queues them for Carlos in Jarvis (#2980).
+      # --decisions reads the countries he confirmed on the Jarvis Map tab and places every card of those sites (#3009).
+      - name: Place the new cards in their country
+        continue-on-error: true
+        env:
+          PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
+        run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions
 
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'
@@ -149,15 +161,22 @@ jobs:
           npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
 
-      - name: Read each sent post's numbers from Buffer and Facebook
+      - name: Read each sent post's numbers from Buffer and Facebook, and the Telegram channel's members
         # The hub sorts and labels cards by them (#1587); a network that fails keeps yesterday's numbers.
+        # Jarvis shows the Telegram member count and its change over the range (#2570).
         if: ${{ !inputs.dry_run }}
         continue-on-error: true
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
           FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
-        run: node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. The Telegram member count was not read today."
+          fi
+          node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Commit and publish the site
         id: commit
@@ -166,7 +185,7 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
+          git add assets/live-reports data/live-report-countries.json llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
           if [ -d "media/social-posts/$BATCH" ]; then
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"
@@ -178,6 +197,9 @@ jobs:
           # sentences go through Google's translator, then the hub is rebuilt with them (#1893).
           if node scripts/social-hub/translate-captions.js --picks --machine; then node scripts/build-social-hub.js --offline
           else echo "::warning::Google's translator refused; new picks keep the languages the phrasebooks cover."; fi
+          # Hub pages can bring Tailwind classes style.css lacks; this commit skips CI, so nothing else would catch it (#2552).
+          node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
+          git add -u -- style.css '*.html'
           git add assets/social qa-review-social*.html sitemap-social.xml social scripts/social-hub/phrases
           # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
           scripts/social-hub/guard-hub-lang.sh
@@ -199,6 +221,8 @@ jobs:
             git cherry-pick -X theirs "$DATA"
             python3 scripts/build-llms-full.py
             node scripts/build-social-hub.js --offline
+            node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
+            git add -u -- style.css '*.html'
             git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
             scripts/social-hub/guard-hub-lang.sh HEAD~1
             git diff --cached --quiet || git commit -q --amend --no-edit
@@ -245,6 +269,36 @@ jobs:
             exit 0
           fi
           node scripts/facebook-queue.js --batch "${{ steps.reports.outputs.batch }}"
+
+      - name: Post the batch to the Telegram channel
+        # One post per batch whose report links open in the Mini App (live.html, #2549).
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. Batch ${{ steps.reports.outputs.batch }} was not posted to Telegram."
+            exit 0
+          fi
+          node scripts/telegram-live.js post
+
+      - name: Edit the channel posts of withdrawn reports
+        # Rebuilds the last 60 days of channel posts from the reports just pushed (#2564).
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. The Telegram channel posts were not scrubbed."
+            exit 0
+          fi
+          node scripts/telegram-live.js scrub
 
       - name: Commit the Buffer and Facebook ledgers
         if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outcome == 'success' }}

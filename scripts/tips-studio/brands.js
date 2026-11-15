@@ -1,4 +1,4 @@
-/* Official marks for the products a post names and the networks it goes out on, drawn white on the brand's own
+/* Official marks for the products a post names and the networks to follow us on, drawn white on the brand's own
    colour. The SVGs in designs/brand-logos are Simple Icons (CC0, simple-icons 16.36); LinkedIn asked Simple Icons
    to drop its mark, so linkedin.svg is from 10.4, the last release that shipped it. A brand's guidelines still
    apply: show the mark as it is, never recoloured inside, never stretched. */
@@ -30,17 +30,20 @@ const BRANDS = [
   ["css", "CSS", "663399", /\bCSS\b/]
 ].map(([slug, name, hex, re]) => ({ slug, name, hex, re }));
 
-// Where the clips and posts go out, in the order the end card lists them; Threads, Bluesky and Mastodon through
-// scripts/open-social-queue.js.
+// Where to follow us, in the order the end card lists them. Clips and posts go out on the first nine; Threads, Bluesky
+// and Mastodon through scripts/open-social-queue.js. Telegram (@qalab_live) and Reddit (r/QALabLiveReports) carry
+// the daily Live Reports, not clips (#2549). Eleven marks fill the end card's row (frame.html .end .nets).
+// No one handle fits every network or face (en @qalaburlreview, es/pt @qaurlreview), so the card names only the
+// channels a viewer can't find from the clip's own poster (#2575).
 const NETWORKS = [["youtube", "YouTube", "FF0000"], ["tiktok", "TikTok", "000000"], ["instagram", "Instagram", "FF0069"],
   ["threads", "Threads", "000000"], ["linkedin", "LinkedIn", "0A66C2"], ["x", "X", "000000"], ["facebook", "Facebook", "0866FF"],
-  ["bluesky", "Bluesky", "1185FE"], ["mastodon", "Mastodon", "6364FF"]];
-const HANDLE = "@qalaburlreview";
+  ["bluesky", "Bluesky", "1185FE"], ["mastodon", "Mastodon", "6364FF"], ["telegram", "Telegram", "26A5E4", "@qalab_live"],
+  ["reddit", "Reddit", "FF4500", "r/QALabLiveReports"]];
 
 const paths = {};
-function mark(slug, name, hex) {
+function mark(slug, name, hex, channel) {
   if (!paths[slug]) paths[slug] = fs.readFileSync(path.join(DIR, slug + ".svg"), "utf8").match(/<path d="([^"]+)"/)[1];
-  return { slug, name, hex: "#" + hex, d: paths[slug] };
+  return { slug, name, hex: "#" + hex, d: paths[slug], ...(channel ? { channel } : {}) };
 }
 
 // The English copy is read, so a translated clip shows the same marks. A code line naming a header is not a brand.
@@ -56,6 +59,6 @@ function brandsIn(tip, most = 3) {
   return found;
 }
 
-function networks() { return NETWORKS.map(([slug, name, hex]) => mark(slug, name, hex)); }
+function networks() { return NETWORKS.map(([slug, name, hex, channel]) => mark(slug, name, hex, channel)); }
 
-module.exports = { brandsIn, networks, HANDLE };
+module.exports = { brandsIn, networks };

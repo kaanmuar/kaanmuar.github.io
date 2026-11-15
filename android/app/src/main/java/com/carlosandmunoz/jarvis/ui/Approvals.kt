@@ -73,12 +73,12 @@ internal fun noticeHeld(state: String?): String? = when (state) {
 
 /** Owner notices waiting for Send or Drop (#1420), ready ones first, one email to each address picked (#1975). */
 @Composable
-fun Approvals(s: UiState, vm: JarvisViewModel) {
+fun Approvals(s: UiState, vm: JarvisViewModel, id: String) {
     LaunchedEffect(Unit) { if (s.notices == null) vm.loadNotices() }
     val list = s.notices.objs("notices")
     val maxTries = s.notices.num("tries")?.toInt() ?: 3
     var confirm by remember { mutableStateOf<Pair<String, List<String>>?>(null) }
-    Panel("Approvals" + if (list.isNotEmpty()) " (${list.size})" else "") {
+    Panel("Approvals" + if (list.isNotEmpty()) " (${list.size})" else "", id = id) {
         when {
             s.notices == null -> Muted(if ("notices" in s.running) "Reading the owner notices waiting for you…" else "Pull down to load the owner notices.")
             list.isEmpty() -> Muted("No owner notices are waiting.")

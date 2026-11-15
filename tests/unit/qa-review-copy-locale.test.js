@@ -5,8 +5,9 @@ const path = require("node:path");
 const vm = require("node:vm");
 const Glossary = require("../../js/site-glossary.js");
 
-const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-benchmark", "qa-review-pay-copy", "qa-review-findings-copy"];
+const FILES = ["qa-review-report-copy", "qa-review-compare-copy", "qa-review-multi", "qa-review-benchmark", "qa-review-pay-copy", "qa-review-findings-copy", "qa-review-auth"];
 const LANGS = ["es", "pt", "de", "fr", "it"];
+const COMPARE_FUNCTIONS = ["startCompare", "compareDone", "openCompared", "compareStep", "showComparing", "paintCompareRows", "runComparePool", "runCompareRow", "endComparePool", "readStream"];
 // The glossary fixes machine translation; these catch the regional forms a person writing by hand slips into.
 const REGIONAL = {
   es: [/\bvosotros\b/i, /\bten[ée]is\b/i, /\bvuestr[oa]s?\b/i, /\bA[ñn]adir\b/i, /\bordenador/i],
@@ -44,6 +45,15 @@ for (const file of FILES) {
   });
 }
 
+test("the sample report's translated sentences are written in es-419 and pt-BR (#2937)", () => {
+  for (const lang of Object.keys(REGIONAL)) {
+    const book = JSON.parse(fs.readFileSync(path.join(__dirname, "../../scripts/qa-review-sample-copy/" + lang + ".json"), "utf8"));
+    for (const text of Object.values(book)) {
+      for (const pattern of REGIONAL[lang]) assert.ok(!pattern.test(text), "sample " + lang + " matches " + pattern + ": " + text);
+    }
+  }
+});
+
 test("the scripts ZIP README copy has every English key and slot, follows the glossary and the regional forms (#1401)", () => {
   const book = require("../../js/qa-review-scripts.js").README_COPY;
   const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(",");
@@ -72,6 +82,157 @@ test("the report copy has every English key, with the same slots, in each langua
       assert.equal(slots(book[key]), slots(text), lang + "." + key);
     }
   }
+});
+
+test("every reason on the form has a label in each page language, and the form code writes no English of its own (#2802)", () => {
+  const copy = copyOf("qa-review-report-copy");
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const ids = JSON.parse(source.match(/const REASONS = (\[[^\]]*\]);/)[1]);
+  const server = require("../../functions/url-review-core.js").REASONS.filter((item) => item.id !== "compare");
+  assert.deepEqual(ids, server.map((item) => item.id), "the form's reasons match the server's");
+  for (const item of server) assert.equal(copy.en.reason[item.id], item.label, "en.reason." + item.id);
+  for (const lang of LANGS) {
+    for (const id of ids) {
+      const text = copy[lang].reason[id];
+      assert.ok(text && text !== copy.en.reason[id], lang + ".reason." + id + " is missing or still English");
+    }
+  }
+  const body = (name) => {
+    const start = source.indexOf("function " + name + "(");
+    return source.slice(start, source.indexOf("\n  }\n", start));
+  };
+  for (const name of ["paintReasons", "syncSection", "scopeSummary", "clientErrors", ...COMPARE_FUNCTIONS]) {
+    const english = body(name).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"|"[A-Z][^"\n]*\."/g);
+    assert.equal(english, null, name + " writes English: " + english);
+  }
+  // The compare handlers outside those functions: the paid comparison's return and Stop (#3008).
+  for (const marker of ['restorePaid("compareRun"', 'getElementById("compare-stop").addEventListener']) {
+    const start = source.indexOf(marker);
+    assert.ok(start > 0, "no " + marker);
+    const english = source.slice(start, source.indexOf("\n  });", start)).match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"|"[A-Z][^"\n]*\."/g);
+    assert.equal(english, null, marker + " writes English: " + english);
+  }
+  const boxes = source.match(/getElementById\("compare-[\w-]+"\)\.textContent = "[^"]+"/g);
+  assert.equal(boxes, null, "a compare element is written in English: " + boxes);
+  const errors = body("clientErrors");
+  assert.equal(errors.match(/message: (?!say\()/g), null, "a form error does not read from the copy");
+  for (const [, id] of errors.matchAll(/say\("(\w+)"\)/g)) assert.ok(copy.en.fieldError[id], "clientErrors reads fieldError." + id + ", which the copy lacks");
+});
+
+test("every field error the server sends reads in each page language (#2837)", () => {
+  const copy = copyOf("qa-review-report-copy");
+  const core = fs.readFileSync(path.join(__dirname, "../../functions/url-review-core.js"), "utf8");
+  const sent = new Set();
+  // The compare box shows these verbatim when a competitor is refused or cannot be reached (#3008).
+  const compare = fs.readFileSync(path.join(__dirname, "../../functions/url-review-compare.js"), "utf8");
+  const sources = [[core, ["validateIntake", "screenIntake", "humanCheck", "preformatUrl", "normalizeUrl", "assertPublic", "fetchPublic", "requestDirect", "reviewTarget"]], [compare, ["baseProblem"]]];
+  for (const [file, names] of sources) {
+    for (const name of names) {
+      const start = file.search(new RegExp("function " + name + "\\("));
+      assert.ok(start >= 0, "no function " + name);
+      const text = file.slice(start, file.indexOf("\n}\n", start));
+      for (const [, message] of text.matchAll(/(?:fieldError\(errors, "\w+", (?:[\w.]+ \|\| )?|message: |new Error\(|return )"([A-Z][^"]+)"/g)) sent.add(message);
+    }
+  }
+  assert.ok(sent.size >= 31, "found only " + sent.size + " server field errors");
+  assert.ok(core.includes('"The URL returned status " + first.status + "."'), "the status error changed; update fieldError.urlStatus");
+  sent.add("The URL returned status 403.");
+  const english = Object.values(copy.en.fieldError);
+  for (const message of sent) assert.ok(english.includes(message) || /status 403/.test(message), "the server's field error has no copy: " + message);
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-report-copy.js"), "utf8");
+  for (const lang of LANGS) {
+    for (const [id, text] of Object.entries(copy.en.fieldError)) {
+      assert.ok(copy[lang].fieldError[id] && copy[lang].fieldError[id] !== text, lang + ".fieldError." + id + " is missing or still English");
+    }
+    const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+    vm.runInNewContext(source, sandbox);
+    const rc = sandbox.window.QAReviewReportCopy;
+    for (const message of sent) assert.notEqual(rc.field(message), message, lang + " shows the server's English: " + message);
+    assert.match(rc.field("The URL returned status 403."), /403/, lang + " drops the status");
+    assert.equal(rc.field("A sentence the copy does not know."), "A sentence the copy does not know.");
+  }
+});
+
+test("the compare box errors, the comparison status lines and the review-failed fallbacks read in each page language (#2886)", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  for (const english of ["has a space in it", "is the site of this report", "Enter the competitor's address", "Wait until the review that is running ends",
+    "The comparison waits on payment", "did not finish", "The review failed.", "The review ended without a report.", "The comparisons are done", "Did not finish"]) {
+    assert.ok(!source.includes(english), "qa-review.js still writes " + english);
+  }
+  const compare = copyOf("qa-review-compare-copy");
+  const report = copyOf("qa-review-report-copy");
+  for (const [, key] of source.matchAll(/cc\.t\("(\w+)"/g)) assert.ok(compare.en[key] != null || compare.en[key + "_one"] != null, "qa-review.js reads compare copy " + key + ", which it lacks");
+  for (const [, key] of source.matchAll(/rc\.word\("fieldError", "(\w+)"\)/g)) assert.ok(report.en.fieldError[key], "qa-review.js reads fieldError." + key + ", which the copy lacks");
+
+  const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(" ");
+  const en = strings(compare.en, "", {});
+  const own = Object.keys(en).filter((key) => /^(run|rowState\.)/.test(key));
+  assert.ok(own.length >= 29, "found only " + own.length + " comparison run strings");
+  for (const lang of LANGS) {
+    const book = strings(compare[lang], "", {});
+    for (const key of own) {
+      assert.ok(book[key] != null, lang + " is missing " + key);
+      assert.equal(slots(book[key]), slots(en[key]), lang + "." + key);
+      assert.notEqual(book[key], en[key], lang + "." + key + " is still English");
+    }
+  }
+
+  const load = (file, lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../js/" + file + ".js"), "utf8"), sandbox);
+    return sandbox.window;
+  };
+  for (const lang of LANGS) {
+    const { QAReviewCompareCopy: cc } = load("qa-review-compare-copy", lang);
+    const { QAReviewReportCopy: rc } = load("qa-review-report-copy", lang);
+    const lines = [cc.t("runSpace", { url: "a b.com" }), cc.t("runOwn", { url: "own.com" }), cc.t("runEmpty"), cc.t("runBusy"), cc.t("runPay"), cc.t("runPayRest"),
+      cc.t("runOneFailed", { url: "rival.com", reason: "R." }), cc.t("runReopenedOne", { url: "rival.com" }), cc.t("runReopened"), cc.t("runNotStarted", { n: 2, list: "x.com, y.com" }),
+      cc.rowState("failed"), cc.rowState("payment"), rc.field("The review failed."), rc.word("fieldError", "noReport")];
+    for (const text of lines) {
+      assert.ok(!/\b(the|address|competitor|review|payment|finish|was|were|Waits)\b/.test(text), lang + " reads English: " + text);
+      assert.ok(!/\{\w+\}/.test(text), lang + " leaves a slot unfilled: " + text);
+    }
+    assert.match(cc.t("runOneFailed", { url: "rival.com", reason: "R." }), /rival\.com.*R\./, lang + ".runOneFailed drops the address or the reason");
+    assert.equal(cc.rowState("unknown"), "unknown");
+  }
+  const { QAReviewCompareCopy: enCopy } = load("qa-review-compare-copy", "en");
+  assert.equal(enCopy.t("runNotStarted", { n: 1, list: "x.com" }), "Stopped: x.com was not started.");
+  assert.equal(enCopy.t("runComparingOne", { own: "a.com", rival: "b.com", step: enCopy.t("runStep", { n: 2, total: 3 }) }), "Comparing a.com with b.com (2 of 3).");
+});
+
+test("the sample report's notice and the cover's cases line read in the page language, not in English (#2935)", () => {
+  const review = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
+  const start = review.indexOf('const sampleNote = document.getElementById("sample-note")');
+  const notice = review.slice(start, review.indexOf("dash.classList.add(\"open\")", start));
+  assert.ok(start > 0 && notice.includes('rc.t("sampleNote"') && notice.includes('rc.t("sampleNoteUndated"'), "the sample notice does not read from the report copy");
+  assert.equal(notice.match(/"[^"\n]*[A-Za-z]{2,} [a-z]{2,}[^"\n]*"/g), null, "the sample notice writes English");
+  const cover = review.slice(review.indexOf('slot("report-cover").innerHTML'), review.indexOf('if (!slotRoot) document.getElementById("print-mark")'));
+  assert.ok(!cover.includes("report.statement"), "the cover prints the report's English statement");
+  assert.ok(cover.includes('"coverStatementStopped"') && cover.includes('"coverStatement"'), "the cover does not read its cases line from the report copy");
+
+  const source = fs.readFileSync(path.join(__dirname, "../../js/qa-review-report-copy.js"), "utf8");
+  const load = (lang) => {
+    const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+    vm.runInNewContext(source, sandbox);
+    return sandbox.window.QAReviewReportCopy;
+  };
+  const vars = { host: "HOST_SLOT", date: "DATE_SLOT" };
+  const keys = ["sampleNote", "sampleNoteUndated", "coverStatement", "coverStatementStopped"];
+  const en = load("en");
+  assert.match(en.t("sampleNote", vars), /^Sample report\. This is the review of HOST_SLOT from DATE_SLOT, /);
+  assert.equal(en.t("coverStatement"), "These cases are proposed from a public analysis. None of them were executed.");
+  for (const lang of LANGS) {
+    const rc = load(lang);
+    for (const key of keys) {
+      const text = rc.t(key, vars);
+      assert.notEqual(text, en.t(key, vars), lang + "." + key + " is still English");
+      assert.ok(!/\b(Sample report|the review of|None of them|was stopped|blurred|disclaimers)\b/.test(text), lang + "." + key + " reads English: " + text);
+      assert.ok(!/\{\w+\}/.test(text), lang + "." + key + " leaves a slot unfilled: " + text);
+    }
+    assert.match(rc.t("sampleNote", vars), /HOST_SLOT.*DATE_SLOT/, lang + ".sampleNote drops the host or the date");
+  }
+  assert.match(load("es").t("sampleNote", vars), /Ciérralo .* tu propia dirección\.$/, "es speaks to the reader as tú (#2909)");
+  assert.match(load("it").t("sampleNote", vars), /Chiudilo .* del tuo indirizzo\.$/, "it speaks to the reader as tu (#2909)");
 });
 
 test("the findings copy has every English finding template, with the same slots, in each language (#1297)", () => {

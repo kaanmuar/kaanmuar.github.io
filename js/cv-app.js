@@ -2415,7 +2415,7 @@
 
             _offerSharedDownload() {
                 const kind = (new URLSearchParams(window.location.search).get('download') || '').toLowerCase();
-                const run = {
+                const runs = {
                     pdf: () => this._exportAsPDF_jsPDF(),
                     jpg: () => this._exportAsJPG(),
                     jpeg: () => this._exportAsJPG(),
@@ -2424,8 +2424,9 @@
                     txt: () => this._exportAsText(),
                     text: () => this._exportAsText(),
                     json: () => this._exportAsJSON()
-                }[kind];
-                if (!run) return;
+                };
+                if (!Object.prototype.hasOwnProperty.call(runs, kind)) return;
+                const run = runs[kind];
                 this._trackEvent('export_cv', 'Export', 'link:' + kind);
                 run();
             },
@@ -3827,7 +3828,7 @@
             },
 
             _cleanLiveText(value, max) {
-                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+                return String(value ?? '').replace(/<[^>]*>/g, '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
             },
 
             _roleFromLive(role, fileExperiences) {
@@ -4573,8 +4574,10 @@
 
             prevTourStep() {
                 if (this.state.currentTourStep > 0) {
+                    this.state.tourGoingBack = true;
                     this.state.currentTourStep--;
                     this.showTourStep(this.state.currentTourStep);
+                    this.state.tourGoingBack = false;
                 }
             },
 
@@ -4717,9 +4720,11 @@
                     const selector = typeof step.element === 'function' ? step.element.call(this) : step.element;
                     const targetElement = document.querySelector(selector);
 
-                if (!targetElement) {
+                // Testimonials stay display:none until reviews load, so a target with no box is skipped like a missing one, in the direction of travel.
+                if (!targetElement || !targetElement.getClientRects().length) {
                     this.state.tourDemoReady = true;
-                    this.nextTourStep();
+                    if (this.state.tourGoingBack && stepIndex > 0) this.prevTourStep();
+                    else this.nextTourStep();
                     return;
                 }
 

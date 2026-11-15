@@ -6,7 +6,12 @@
    ImprovMX logs one entry per forward destination, so a mail to qa@ is two entries (Gmail and the webhook). A
    mail counts as forwarded when one of its entries was delivered, bounced when one ended in a bounce, and
    refused when ImprovMX turned it away. Refusals to addresses that are not aliases are expected (there is no
-   catch-all) and are only counted. A webhook destination carries the key in its URL, so it shows as "webhook". */
+   catch-all) and are only counted. A refusal that names a blocklist (Spamhaus and the like) for a sender that is
+   not ours is ImprovMX stopping spam: it counts as spam, not as a problem with the alias (#2364). Our own mail
+   refused that way stays a problem: SendGrid sent it from a blocklisted shared IP (mail-retry.js). A webhook
+   destination carries the key in its URL, so it shows as "webhook". */
+
+const { blocklistOf } = require("./mail-retry");
 
 const API = "https://api.improvmx.com/v4/";
 const DOMAIN = "carlosandmunoz.com";
@@ -20,6 +25,8 @@ const CANARY_WAIT_MS = 30 * MINUTE;
 const CANARY_STALE_MS = 26 * 60 * MINUTE;
 const CANARY_HISTORY = 14;
 const BOUNCES = ["soft-bounce", "hard-bounce", "bounced"];
+// Sender domains that are ours: the forwarding and outreach domains, and SendGrid's bounce domain.
+const OWN_SENDERS = [DOMAIN, "qalabreview.com", "sendgrid.net"];
 const TOKEN = /\bMail round trip ([a-f0-9]{12})\b/;
 
 const clip = (value, max) => {
@@ -49,6 +56,14 @@ function lastEvent(log) {
   return events[events.length - 1] || {};
 }
 
+const ownSender = (domain) => OWN_SENDERS.some((d) => domain === d || domain.endsWith("." + d));
+
+/** A refused mail that is spam stopped at the door: the refusal names a blocklist and the sender is not ours. */
+function spam(mail) {
+  const refused = mail.entries.filter((e) => e.outcome === "refused");
+  return !!mail.from && !ownSender(mail.from) && refused.some((e) => blocklistOf(e.event.message));
+}
+
 /** Per-alias counts and the problems (bounces and refusals to real aliases) from the mx log entries. */
 function tally(logs, aliases) {
   const real = new Set((aliases || []).map(lower));
@@ -63,11 +78,12 @@ function tally(logs, aliases) {
     mails.set(key, mail);
   });
   const rows = {};
-  const totals = { mails: 0, forwarded: 0, bounced: 0, refused: 0, unknown: 0, queued: 0 };
+  const totals = { mails: 0, forwarded: 0, bounced: 0, refused: 0, spam: 0, unknown: 0, queued: 0 };
   const problems = [];
   mails.forEach((mail) => {
     const outcomes = mail.entries.map((e) => e.outcome);
-    const state = outcomes.includes("refused") ? "refused" : outcomes.includes("bounced") ? "bounced" : outcomes.includes("delivered") ? "forwarded" : "queued";
+    const refused = outcomes.includes("refused");
+    const state = refused && spam(mail) ? "spam" : refused ? "refused" : outcomes.includes("bounced") ? "bounced" : outcomes.includes("delivered") ? "forwarded" : "queued";
     totals.mails += 1;
     if (!real.has(mail.alias)) {
       if (state === "refused") totals.unknown += 1;
@@ -75,7 +91,7 @@ function tally(logs, aliases) {
       return;
     }
     totals[state] += 1;
-    const row = rows[mail.alias] || (rows[mail.alias] = { alias: mail.alias, mails: 0, forwarded: 0, bounced: 0, refused: 0, queued: 0, last: "" });
+    const row = rows[mail.alias] || (rows[mail.alias] = { alias: mail.alias, mails: 0, forwarded: 0, bounced: 0, refused: 0, spam: 0, queued: 0, last: "" });
     row.mails += 1;
     row[state] += 1;
     if (String(mail.at || "") > row.last) row.last = mail.at;

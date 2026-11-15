@@ -2071,7 +2071,9 @@
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function formatWhen(ts) {
@@ -3997,7 +3999,7 @@
     selectedFrameworks() {
       const boxes = [...document.querySelectorAll('#fw-picker input')];
       if (!boxes.length) return readFrameworks();
-      return boxes.filter((box) => box.checked).map((box) => box.value);
+      return boxes.filter((box) => box.checked && ALL_FW.includes(box.value)).map((box) => box.value);
     },
 
     saveFrameworks() {

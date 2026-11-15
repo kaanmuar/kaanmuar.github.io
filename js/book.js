@@ -26,7 +26,8 @@
             picked: '{label}, {when}', name: 'Name', email: 'Email', company: 'Company or site (optional)', note: 'What would you like to talk about? (optional)',
             submit: 'Book the call', sending: 'Booking…', check: 'Complete the bot check above.', needName: 'Write your name.', needEmail: 'Check the email.',
             doneTitle: "You're booked", doneWhen: '{label}, {when}.', doneInvite: 'Google Calendar is sending the invite to your email. It has the Meet link and lets you add the call to your calendar.',
-            meet: 'Open the Meet link', other: 'Prefer email?', cv: 'Interactive CV', privacy: 'Privacy', site: 'Site: {host}'
+            meet: 'Open the Meet link', other: 'Prefer email?', cv: 'Interactive CV', privacy: 'Privacy', site: 'Site: {host}',
+            findings: 'Report findings to go through: {list}.'
         },
         es: {
             taken: 'Ese horario se acaba de ocupar. Elige otro.', limit: 'Ya tienes llamadas agendadas o lo intentaste muchas veces. Responde a tu invitación para mover una llamada.',
@@ -45,7 +46,8 @@
             picked: '{label}, {when}', name: 'Nombre', email: 'Correo', company: 'Empresa o sitio (opcional)', note: '¿De qué te gustaría hablar? (opcional)',
             submit: 'Agendar la llamada', sending: 'Agendando…', check: 'Completa la verificación de arriba.', needName: 'Escribe tu nombre.', needEmail: 'Revisa el correo.',
             doneTitle: 'Llamada agendada', doneWhen: '{label}, {when}.', doneInvite: 'Google Calendar te está enviando la invitación por correo. Trae el enlace de Meet y te deja añadir la llamada a tu calendario.',
-            meet: 'Abrir el enlace de Meet', other: '¿Prefieres escribir?', cv: 'CV interactivo', privacy: 'Privacidad', site: 'Sitio: {host}'
+            meet: 'Abrir el enlace de Meet', other: '¿Prefieres escribir?', cv: 'CV interactivo', privacy: 'Privacidad', site: 'Sitio: {host}',
+            findings: 'Hallazgos del informe para revisar: {list}.'
         },
         pt: {
             taken: 'Esse horário acabou de ser ocupado. Escolha outro.', limit: 'Você já tem conversas agendadas ou tentou muitas vezes. Responda ao convite para mudar uma conversa.',
@@ -64,7 +66,8 @@
             picked: '{label}, {when}', name: 'Nome', email: 'E-mail', company: 'Empresa ou site (opcional)', note: 'Sobre o que você gostaria de falar? (opcional)',
             submit: 'Agendar a conversa', sending: 'Agendando…', check: 'Conclua a verificação acima.', needName: 'Escreva o seu nome.', needEmail: 'Confira o e-mail.',
             doneTitle: 'Conversa agendada', doneWhen: '{label}, {when}.', doneInvite: 'O Google Agenda está enviando o convite para o seu e-mail. Ele traz o link do Meet e permite adicionar a conversa à sua agenda.',
-            meet: 'Abrir o link do Meet', other: 'Prefere e-mail?', cv: 'CV interativo', privacy: 'Privacidade', site: 'Site: {host}'
+            meet: 'Abrir o link do Meet', other: 'Prefere e-mail?', cv: 'CV interativo', privacy: 'Privacidade', site: 'Site: {host}',
+            findings: 'Achados do relatório para revisar: {list}.'
         },
         de: {
             taken: 'Diese Zeit wurde gerade vergeben. Wählen Sie eine andere.', limit: 'Sie haben bereits Gespräche gebucht oder es zu oft versucht. Antworten Sie auf Ihre Einladung, um ein Gespräch zu verschieben.',
@@ -83,7 +86,8 @@
             picked: '{label}, {when}', name: 'Name', email: 'E-Mail', company: 'Firma oder Website (optional)', note: 'Worüber möchten Sie sprechen? (optional)',
             submit: 'Gespräch buchen', sending: 'Wird gebucht…', check: 'Schließen Sie die Prüfung oben ab.', needName: 'Geben Sie Ihren Namen ein.', needEmail: 'Prüfen Sie die E-Mail-Adresse.',
             doneTitle: 'Gespräch gebucht', doneWhen: '{label}, {when}.', doneInvite: 'Google Kalender schickt Ihnen die Einladung per E-Mail. Sie enthält den Meet-Link, und Sie können das Gespräch in Ihren Kalender übernehmen.',
-            meet: 'Meet-Link öffnen', other: 'Lieber per E-Mail?', cv: 'Interaktiver Lebenslauf', privacy: 'Datenschutz', site: 'Website: {host}'
+            meet: 'Meet-Link öffnen', other: 'Lieber per E-Mail?', cv: 'Interaktiver Lebenslauf', privacy: 'Datenschutz', site: 'Website: {host}',
+            findings: 'Befunde aus dem Bericht, die wir besprechen: {list}.'
         },
         fr: {
             taken: 'Ce créneau vient d’être pris. Choisissez-en un autre.', limit: 'Vous avez déjà des appels réservés ou avez essayé trop souvent. Répondez à votre invitation pour déplacer un appel.',
@@ -102,7 +106,8 @@
             picked: '{label}, {when}', name: 'Nom', email: 'E-mail', company: 'Entreprise ou site (facultatif)', note: 'De quoi souhaitez-vous parler ? (facultatif)',
             submit: 'Réserver l’appel', sending: 'Réservation…', check: 'Terminez la vérification ci-dessus.', needName: 'Indiquez votre nom.', needEmail: 'Vérifiez l’e-mail.',
             doneTitle: 'Appel réservé', doneWhen: '{label}, {when}.', doneInvite: 'Google Agenda vous envoie l’invitation par e-mail. Elle contient le lien Meet et vous permet d’ajouter l’appel à votre agenda.',
-            meet: 'Ouvrir le lien Meet', other: 'Vous préférez écrire ?', cv: 'CV interactif', privacy: 'Confidentialité', site: 'Site : {host}'
+            meet: 'Ouvrir le lien Meet', other: 'Vous préférez écrire ?', cv: 'CV interactif', privacy: 'Confidentialité', site: 'Site : {host}',
+            findings: 'Constats du rapport à passer en revue : {list}.'
         },
         it: {
             taken: 'Quell’orario è appena stato preso. Scegline un altro.', limit: 'Hai già delle chiamate prenotate o hai provato troppe volte. Rispondi al tuo invito per spostare una chiamata.',
@@ -121,7 +126,8 @@
             picked: '{label}, {when}', name: 'Nome', email: 'Email', company: 'Azienda o sito (facoltativo)', note: 'Di cosa vorresti parlare? (facoltativo)',
             submit: 'Prenota la chiamata', sending: 'Prenotazione…', check: 'Completa la verifica qui sopra.', needName: 'Scrivi il tuo nome.', needEmail: 'Controlla l’email.',
             doneTitle: 'Chiamata prenotata', doneWhen: '{label}, {when}.', doneInvite: 'Google Calendar ti sta mandando l’invito per email. Contiene il link Meet e ti permette di aggiungere la chiamata al tuo calendario.',
-            meet: 'Apri il link Meet', other: 'Preferisci scrivere?', cv: 'CV interattivo', privacy: 'Privacy', site: 'Sito: {host}'
+            meet: 'Apri il link Meet', other: 'Preferisci scrivere?', cv: 'CV interattivo', privacy: 'Privacy', site: 'Sito: {host}',
+            findings: 'Risultati del report da esaminare: {list}.'
         }
     };
 
@@ -335,6 +341,8 @@
     $('book-form').addEventListener('submit', submit);
     const host = params.get('host');
     if (host && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) $('book-company').value = host;
+    const findings = String(params.get('findings') || '').split(',').map((id) => id.trim().toUpperCase()).filter((id) => /^[A-Z]{1,6}-\d{1,3}$/.test(id)).slice(0, 20);
+    if (findings.length && !$('book-note').value) $('book-note').value = fill(t().findings, { list: findings.join(', ') });
     paintCopy();
     load();
 })();

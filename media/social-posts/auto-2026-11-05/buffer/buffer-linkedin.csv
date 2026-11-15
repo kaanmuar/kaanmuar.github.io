@@ -1,0 +1,181 @@
+Text,Image URL,Tags,Posting Time
+"houm.com: 68. The gap: button names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-houm-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-houm-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #CSS #Programming #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/01-u-houm-com.jpg","","2026-11-06 07:30"
+"skydropx.com: 56. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-skydropx-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-skydropx-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/02-u-skydropx-com.jpg","","2026-11-07 08:10"
+"beau.to: 70. The gap: broken links.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But 2 internal links lead to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-beau-to&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-beau-to
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #QA #BrokenLinks #TechCommunity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/03-u-beau-to.jpg","","2026-11-08 08:00"
+"lexter.ai: 63. The gap: text contrast.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-lexter-ai&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-lexter-ai
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/04-u-lexter-ai.jpg","","2026-11-09 09:50"
+"okteto.com: 64. The gap: text contrast.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-okteto-com&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-okteto-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #AI #SoftwareTesting #QA #Contrast #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/05-u-okteto-com.jpg","","2026-11-10 07:40"
+"usbmed.edu.co: 49. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 12 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-usbmed-edu-co&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usbmed-edu-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #AI #SoftwareTesting #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/06-u-usbmed-edu-co.jpg","","2026-11-11 09:55"
+"uacm.edu.mx: 56. The gap: the sitemap host.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 3823 sitemap URLs point at another host or scheme.
+
+The lesson for every team: Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uacm-edu-mx&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uacm-edu-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #QA #Sitemap #RobotsTxt #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/07-u-uacm-edu-mx.jpg","","2026-11-12 07:45"
+"cetys.mx: 70. The gap: campaign tags.
+
+Every page has a title, and AI answer and search crawlers may read the start page. But redirects strip campaign parameters.
+
+The lesson for every team: Keep the query string on every redirect, so campaign tags reach the landing page.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-cetys-mx&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cetys-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Analytics #DevOps #SEO #QA #Measurement #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg","","2026-11-13 09:20"
+"ufrj.br: 74. The gap: button names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-ufrj-br&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ufrj-br
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #HTML #CSS #QA #A11y #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg","","2026-11-14 08:00"
+"usal.es: 51. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-usal-es&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-usal-es
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Vulnerability #SoftwareTesting #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/10-u-usal-es.jpg","","2026-11-15 09:40"
+"uah.edu: 57. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uah-edu&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-uah-edu
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #DevOps #QA #HSTS #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg","","2026-11-16 10:00"
+"newsandstar.co.uk: 58. The gap: AI crawler access.
+
+Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 9 AI answer or search crawlers are blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 5 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-newsandstar-co-uk&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-newsandstar-co-uk
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #DevOps #SEO #QA #AISearch #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/12-u-newsandstar-co-uk.jpg","","2026-11-17 07:30"
+"get-moment.com: 73. The gap: canonicals.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 16 pages name another URL as canonical.
+
+The lesson for every team: Point each page's canonical at itself, unless it really is a copy of another page.
+
+One automated analysis of public pages on 5 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-get-moment-com&utm_source=linkedin&utm_medium=social&utm_campaign=country-sweep&utm_content=u-get-moment-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #CSS #Programming #QA #Canonical #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/13-u-get-moment-com.jpg","","2026-11-18 09:00"
+"ugto.mx: 42. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 55 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-ugto-mx&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ugto-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/14-u-ugto-mx.jpg","","2026-11-19 08:05"
+"4 natural competitors. myarubaguide.com leads: 76.
+
+myarubaguide.com leads in SEO, GEO, Security, Accessibility; visitaruba.com leads in Analytics; airportaruba.com leads in Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 5 Nov 2026 of myarubaguide.com, visitaruba.com, boardwalkaruba.com, airportaruba.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-myarubaguide-com&utm_source=linkedin&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-myarubaguide-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #QA #WebPerf #TechCommunity #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg","","2026-11-20 09:05"

@@ -1,0 +1,133 @@
+Text,Image URL,Tags,Posting Time
+"portal.upb.edu.co: 72. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But form elements must have labels.
+
+Lesson: Give every input a visible label tied to it with for and id.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-portal-upb-edu-co&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-portal-upb-edu-co
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Playwright #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/01-u-portal-upb-edu-co.jpg","","2026-11-04 17:10"
+"iteso.mx: 47. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-iteso-mx&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-iteso-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/02-u-iteso-mx.jpg","","2026-11-05 15:50"
+"sp.senai.br: 60. The gap: link names.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+Lesson: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-sp-senai-br&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-sp-senai-br
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/03-u-sp-senai-br.jpg","","2026-11-06 13:30"
+"platzi.com: 66. The gap: list markup.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But <ul> and <ol> must only directly contain <li>, <script> or <template> elements.
+
+Lesson: Keep only li elements directly inside ul and ol.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-platzi-com&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-platzi-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/04-u-platzi-com.jpg","","2026-11-07 12:45"
+"hneu.edu.ua: 52. The gap: form labels.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 40 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 2 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-hneu-edu-ua&utm_source=facebook&utm_medium=social&utm_campaign=country-sweep&utm_content=u-hneu-edu-ua
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/05-u-hneu-edu-ua.jpg","","2026-11-08 14:55"
+"vitibet.com: 59. The gap: alt text.
+
+Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 2097 images have no alt attribute.
+
+Lesson: Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+One automated analysis of public pages on 2 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-vitibet-com&utm_source=facebook&utm_medium=social&utm_campaign=country-sweep&utm_content=u-vitibet-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Programming #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/06-u-vitibet-com.jpg","","2026-11-09 12:15"
+"webjuice.ie: 92. The gap: text contrast.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-webjuice-ie&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-webjuice-ie
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/07-u-webjuice-ie.jpg","","2026-11-10 13:55"
+"daniladigital.com.ar: 70. The gap: HSTS.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Lesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-daniladigital-com-ar&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-daniladigital-com-ar
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/08-u-daniladigital-com-ar.jpg","","2026-11-11 13:50"
+"udg.mx: 75. The gap: meta descriptions.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 pages have no meta description.
+
+Lesson: Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.
+
+One automated analysis of public pages on 2 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-udg-mx&utm_source=facebook&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-udg-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/09-u-udg-mx.jpg","","2026-11-12 13:45"
+"3 natural competitors. capetinhas.blog leads: 81.
+
+tubepussy.org leads in SEO; kabinedasnovinhas.com leads in GEO, Analytics; capetinhas.blog leads in Security, Accessibility, Performance.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 2 Nov 2026 of kabinedasnovinhas.com, tubepussy.org, capetinhas.blog, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-kabinedasnovinhas-com&utm_source=facebook&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-kabinedasnovinhas-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/10-vs-kabinedasnovinhas-com.jpg","","2026-11-13 16:50"
+"2 natural competitors. vivastreet.ie leads: 74.
+
+craigslist.org leads in SEO, Security; vivastreet.ie leads in GEO, Analytics, Accessibility, Performance.
+
+Lesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 2 Nov 2026 of vivastreet.ie, craigslist.org, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-vivastreet-ie&utm_source=facebook&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-vivastreet-ie
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #QA #WebPerf #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/11-vs-vivastreet-ie.jpg","","2026-11-14 15:05"

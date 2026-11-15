@@ -147,6 +147,42 @@
       ]
     },
     {
+      "network": "Reddit",
+      "where": "Community icon (r/QALabLiveReports): Mod Tools > Community appearance > Avatar",
+      "file": "media/brand-kit-2026-10/reddit/community-icon-256.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "network": "Reddit",
+      "where": "Community banner (r/QALabLiveReports): Mod Tools > Community appearance > Banner; the copy stays in the outlined band",
+      "file": "media/brand-kit-2026-10/reddit/community-banner-1920x384.jpg",
+      "size": [
+        1920,
+        384
+      ]
+    },
+    {
+      "network": "Telegram",
+      "where": "Channel photo (@qalab_live): Channel info > Edit > Set new photo",
+      "file": "media/brand-kit-2026-10/telegram/channel-640.jpg",
+      "size": [
+        640,
+        640
+      ]
+    },
+    {
+      "network": "Telegram",
+      "where": "Bot picture (@qalab_live_bot): /setuserpic in BotFather",
+      "file": "media/brand-kit-2026-10/telegram/bot-640.jpg",
+      "size": [
+        640,
+        640
+      ]
+    },
+    {
       "network": "Facebook",
       "where": "Profile picture",
       "file": "media/brand-kit-2026-10/facebook/avatar-720.jpg",

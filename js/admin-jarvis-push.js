@@ -110,5 +110,11 @@ export function createBrowserPush({ call, toast, esc }) {
         try { await setKind(kind, on); } catch (error) { toast('Not saved: ' + error.message, 6000); }
     }
 
-    return { supported, paint, handle, kindChanged };
+    /** This browser's push endpoint, or '' when notifications are off. */
+    async function endpoint() {
+        const sub = await subscription();
+        return sub && Notification.permission === 'granted' ? sub.endpoint : '';
+    }
+
+    return { supported, paint, handle, kindChanged, endpoint };
 }

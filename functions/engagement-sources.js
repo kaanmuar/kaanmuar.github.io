@@ -1,7 +1,7 @@
 "use strict";
 /*
  * Where the engagement scout reads (#1988). Each reader returns posts in one shape:
- *   { network, id, cid?, url, author: { handle, name, id, followers }, title?, text, lang, createdAt, isReply,
+ *   { network, id, cid?, thread?, url, author: { handle, name, id, followers }, title?, text, lang, createdAt, isReply,
  *     metrics: { likes, replies, reposts, views }, tags }
  * A reader without its key is skipped, and a failing one never stops the others. Queries rotate with the
  * half-hour slot so each run asks a little and the day covers every query.
@@ -59,7 +59,7 @@ function blueskyPost(p) {
   const r = p.record || {};
   const rkey = String(p.uri || "").split("/").pop();
   return {
-    network: "bluesky", id: p.uri, cid: p.cid, url: "https://bsky.app/profile/" + (a.handle || a.did) + "/post/" + rkey,
+    network: "bluesky", id: p.uri, cid: p.cid, thread: ((r.reply || {}).root || {}).uri || p.uri, url: "https://bsky.app/profile/" + (a.handle || a.did) + "/post/" + rkey,
     author: { handle: a.handle || "", name: a.displayName || a.handle || "", id: a.did || "", followers: 0 },
     text: String(r.text || ""), lang: (r.langs || [])[0] || "", createdAt: r.createdAt || p.indexedAt || "", isReply: !!r.reply,
     metrics: { likes: num(p.likeCount), replies: num(p.replyCount), reposts: num(p.repostCount) + num(p.quoteCount), views: 0 },
@@ -168,4 +168,64 @@ async function readAll(ctx) {
   return out;
 }
 
-module.exports = { readAll, readable, blueskySession, mastodonPost, blueskyPost, plain, pick, READERS, SLOT };
+/*
+ * Report replies (#2465): posts that name a site, by its domain or name, from the last SEARCH_DAYS. Bluesky searches
+ * as the scout's login; Mastodon's full-text search needs the connected account's token (MASTODON_SEARCH_URL and
+ * MASTODON_SEARCH_TOKEN); YouTube asks for one query every fourth slot, since a search costs 100 units.
+ * Each post carries the query that found it. Same return shape as readAll.
+ */
+const SEARCH_DAYS = 7;
+const SEARCHERS = [
+  ["bluesky", ["BLUESKY_HANDLE", "BLUESKY_APP_PASSWORD"], async (ctx, queries, since) => {
+    const session = await blueskySession(ctx);
+    const lists = await Promise.all(queries.map((q) => getJson(ctx.fetch,
+      session.service + "/xrpc/app.bsky.feed.searchPosts?sort=latest&limit=25&since=" + encodeURIComponent(since) + "&q=" + encodeURIComponent(q),
+      { headers: { Authorization: "Bearer " + session.token } }).then((l) => (l.posts || []).map((p) => Object.assign(blueskyPost(p), { query: q }))).catch(() => [])));
+    return lists.flat();
+  }],
+  ["mastodon", ["MASTODON_SEARCH_URL", "MASTODON_SEARCH_TOKEN"], async (ctx, queries, since) => {
+    const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/\/+$/, "");
+    const lists = await Promise.all(queries.map((q) => getJson(ctx.fetch, base + "/api/v2/search?type=statuses&resolve=false&limit=20&q=" + encodeURIComponent(q),
+      { headers: { Authorization: "Bearer " + ctx.env.MASTODON_SEARCH_TOKEN } }).then((l) => (l.statuses || []).filter((s) => !(s.account || {}).bot && String(s.created_at || "") >= since).map((s) => Object.assign(mastodonPost(s), { query: q }))).catch(() => [])));
+    return lists.flat();
+  }],
+  ["youtube", ["YOUTUBE_KEY"], async (ctx, queries, since) => {
+    if (ctx.slot % 4 !== 1 || !queries.length) return [];
+    const q = queries[0];
+    const key = encodeURIComponent(ctx.env.YOUTUBE_KEY);
+    const found = await getJson(ctx.fetch, "https://www.googleapis.com/youtube/v3/search?part=id&type=video&order=date&maxResults=10&publishedAfter=" + encodeURIComponent(since) + "&q=" + encodeURIComponent('"' + q + '"') + "&key=" + key);
+    const ids = (found.items || []).map((i) => i.id && i.id.videoId).filter(Boolean);
+    if (!ids.length) return [];
+    const vids = await getJson(ctx.fetch, "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=" + ids.join(",") + "&key=" + key);
+    return (vids.items || []).map((v) => {
+      const sn = v.snippet || {};
+      const st = v.statistics || {};
+      return {
+        network: "youtube", id: v.id, url: "https://www.youtube.com/watch?v=" + v.id, query: q,
+        author: { handle: sn.channelTitle || "", name: sn.channelTitle || "", id: sn.channelId || "", followers: 0 },
+        title: sn.title || "", text: String(sn.description || "").slice(0, 800), lang: sn.defaultAudioLanguage || sn.defaultLanguage || "", createdAt: sn.publishedAt || "", isReply: false,
+        metrics: { likes: num(st.likeCount), replies: num(st.commentCount), reposts: 0, views: num(st.viewCount) }, tags: (sn.tags || []).slice(0, 10)
+      };
+    });
+  }]
+];
+
+async function search(ctx, queries) {
+  const c = Object.assign({ slot: Math.floor(ctx.now / SLOT) }, ctx);
+  const since = new Date(c.now - SEARCH_DAYS * 24 * 3600000).toISOString();
+  const out = { posts: [], read: {}, errors: {}, skipped: [] };
+  if (!queries.length) return out;
+  await Promise.all(SEARCHERS.map(async ([network, needs, reader]) => {
+    if (!needs.every((k) => c.env && c.env[k])) { out.skipped.push(network); return; }
+    try {
+      const posts = (await reader(c, queries, since)).filter((p) => p && p.id && p.url);
+      out.read[network] = posts.length;
+      out.posts.push(...posts);
+    } catch (error) {
+      out.errors[network] = String((error && error.message) || error).slice(0, 200);
+    }
+  }));
+  return out;
+}
+
+module.exports = { readAll, readable, search, blueskySession, mastodonPost, blueskyPost, plain, pick, READERS, SEARCHERS, SLOT, SEARCH_DAYS };

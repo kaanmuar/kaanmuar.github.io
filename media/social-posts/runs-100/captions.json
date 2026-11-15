@@ -4342,7 +4342,8 @@
         "instagram": "Educación Bogotá non ha robots.txt.\n\nHSTS di un anno, nosniff, framing limitato alla propria origine, un canonical e un /sitemap.xml funzionante. Ma /robots.txt restituisce 404, quindi ai crawler non viene mai detto dove si trova quella sitemap.\n\nLezione: Servi un robots.txt con una riga Sitemap:. Due righe di testo indicano a ogni crawler la tua mappa.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #RobotsTxt #Education #QA #WebDev #QAlab",
         "facebook": "Educación Bogotá non ha robots.txt.\n\nHSTS di un anno, nosniff, framing limitato alla propria origine, un canonical e un /sitemap.xml funzionante. Ma /robots.txt restituisce 404, quindi ai crawler non viene mai detto dove si trova quella sitemap.\n\nLezione: Servi un robots.txt con una riga Sitemap:. Due righe di testo indicano a ogni crawler la tua mappa.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=educacionbogota\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "80-movilidadbogota": {
     "date": "2026-12-20",
@@ -4397,7 +4398,8 @@
         "instagram": "La sitemap di Movilidad Bogotá dice default.\n\nHSTS, nosniff, framing limitato alla propria origine, un canonical e GA4. Ma la sua sitemap elenca URL come http://default/ e http://default/en-gb, perché il CMS non ha mai saputo il proprio indirizzo pubblico.\n\nLezione: Imposta l’URL base del CMS sul tuo indirizzo https pubblico, poi rigenera la sitemap.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Sitemap #Mobility #QA #WebDev #QAlab",
         "facebook": "La sitemap di Movilidad Bogotá dice default.\n\nHSTS, nosniff, framing limitato alla propria origine, un canonical e GA4. Ma la sua sitemap elenca URL come http://default/ e http://default/en-gb, perché il CMS non ha mai saputo il proprio indirizzo pubblico.\n\nLezione: Imposta l’URL base del CMS sul tuo indirizzo https pubblico, poi rigenera la sitemap.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=movilidadbogota\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "81-saludcapital": {
     "date": "2026-12-20",
@@ -4452,7 +4454,8 @@
         "instagram": "La home di Salud Capital ha tre canonical.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una content security policy e una descrizione chiara. Ma la home page ha tre tag canonical che indicano due URL diversi, quindi i motori di ricerca potrebbero ignorarli tutti.\n\nLezione: Emetti esattamente un canonical per pagina. Cerca copie nel template, nel CMS e nei plugin SEO.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Canonical #PublicHealth #QA #WebDev #QAlab",
         "facebook": "La home di Salud Capital ha tre canonical.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una content security policy e una descrizione chiara. Ma la home page ha tre tag canonical che indicano due URL diversi, quindi i motori di ricerca potrebbero ignorarli tutti.\n\nLezione: Emetti esattamente un canonical per pagina. Cerca copie nel template, nel CMS e nei plugin SEO.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=saludcapital\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "82-metrobogota": {
     "date": "2026-12-21",
@@ -4507,7 +4510,8 @@
         "instagram": "L’HSTS di Metro de Bogotá dura 17 minuti.\n\nnosniff, GA4, lingua dichiarata e una sitemap funzionante. Ma Strict-Transport-Security imposta max-age=1000, circa 17 minuti, quindi i browser dimenticano la regola solo-https quasi appena la imparano.\n\nLezione: Imposta il max-age di HSTS ad almeno un anno (31536000) quando https funziona ovunque.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #HSTS #Mobility #QA #WebDev #QAlab",
         "facebook": "L’HSTS di Metro de Bogotá dura 17 minuti.\n\nnosniff, GA4, lingua dichiarata e una sitemap funzionante. Ma Strict-Transport-Security imposta max-age=1000, circa 17 minuti, quindi i browser dimenticano la regola solo-https quasi appena la imparano.\n\nLezione: Imposta il max-age di HSTS ad almeno un anno (31536000) quando https funziona ovunque.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrobogota\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "83-idrd": {
     "date": "2026-12-21",
@@ -4562,7 +4566,8 @@
         "instagram": "La Referrer-Policy dell’IDRD è unsafe-url.\n\nHSTS di un anno, nosniff, framing limitato alla propria origine e una Permissions-Policy che disattiva posizione, microfono e fotocamera. Ma Referrer-Policy: unsafe-url invia l’URL completo, query inclusa, a ogni sito linkato.\n\nLezione: Usa strict-origin-when-cross-origin. Così gli altri siti vedono solo il tuo dominio, mai percorsi o termini di ricerca.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #Privacy #Sports #QA #WebDev #QAlab",
         "facebook": "La Referrer-Policy dell’IDRD è unsafe-url.\n\nHSTS di un anno, nosniff, framing limitato alla propria origine e una Permissions-Policy che disattiva posizione, microfono e fotocamera. Ma Referrer-Policy: unsafe-url invia l’URL completo, query inclusa, a ogni sito linkato.\n\nLezione: Usa strict-origin-when-cross-origin. Così gli altri siti vedono solo il tuo dominio, mai percorsi o termini di ricerca.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idrd\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "84-idartes": {
     "date": "2026-12-22",
@@ -4617,7 +4622,8 @@
         "instagram": "La root https di Idartes reindirizza a http.\n\nnosniff, framing limitato alla propria origine, una descrizione chiara e una sitemap. Ma https://www.idartes.gov.co/ invia un 301 verso http://www.idartes.gov.co/es, e anche il canonical indica l’indirizzo http.\n\nLezione: Fai usare https a ogni redirect e canonical. Cerca http:// nella configurazione del server e nei template.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #HTTPS #Arts #QA #WebDev #QAlab",
         "facebook": "La root https di Idartes reindirizza a http.\n\nnosniff, framing limitato alla propria origine, una descrizione chiara e una sitemap. Ma https://www.idartes.gov.co/ invia un 301 verso http://www.idartes.gov.co/es, e anche il canonical indica l’indirizzo http.\n\nLezione: Fai usare https a ogni redirect e canonical. Cerca http:// nella configurazione del server e nei template.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=idartes\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "85-visitbogota": {
     "date": "2026-12-22",
@@ -4672,7 +4678,8 @@
         "instagram": "Visit Bogotá risponde lenta ai tap.\n\nHSTS pronto per il preload, nosniff, una content security policy, un canonical e una descrizione chiara. Ma i visitatori reali su Chrome aspettano 436 ms al 75° percentile perché la pagina risponda a un tap o un clic.\n\nLezione: Trova i long task nel pannello Performance e spezzali. Tieni l’INP sotto i 200 ms.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebPerformance #INP #Tourism #QA #WebDev #QAlab",
         "facebook": "Visit Bogotá risponde lenta ai tap.\n\nHSTS pronto per il preload, nosniff, una content security policy, un canonical e una descrizione chiara. Ma i visitatori reali su Chrome aspettano 436 ms al 75° percentile perché la pagina risponda a un tap o un clic.\n\nLezione: Trova i long task nel pannello Performance e spezzali. Tieni l’INP sotto i 200 ms.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=visitbogota\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "86-biblored": {
     "date": "2026-12-23",
@@ -4727,7 +4734,8 @@
         "instagram": "BibloRed risponde all’http in chiaro con un 200.\n\nHSTS di due anni pronto per il preload, nosniff, framing limitato alla propria origine e un canonical. Ma http://www.biblored.gov.co/ serve la pagina con un 200 invece di reindirizzare, e i browser ignorano l’HSTS inviato via http.\n\nLezione: Reindirizza ogni richiesta http a https con un 301. HSTS conta solo quando arriva via https.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #HTTPS #Libraries #QA #WebDev #QAlab",
         "facebook": "BibloRed risponde all’http in chiaro con un 200.\n\nHSTS di due anni pronto per il preload, nosniff, framing limitato alla propria origine e un canonical. Ma http://www.biblored.gov.co/ serve la pagina con un 200 invece di reindirizzare, e i browser ignorano l’HSTS inviato via http.\n\nLezione: Reindirizza ogni richiesta http a https con un 301. HSTS conta solo quando arriva via https.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=biblored\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "87-catastro": {
     "date": "2026-12-23",
@@ -4782,7 +4790,8 @@
         "instagram": "Catastro Bogotá non ha description.\n\nHSTS, nosniff, framing limitato alla propria origine, GA4 tramite Tag Manager e lingua dichiarata. Ma nessuna delle 20 pagine analizzate ha una meta description, quindi Google e le risposte AI se la scrivono da soli.\n\nLezione: Scrivi una descrizione di una frase per ogni pagina chiave: cosa offre e a chi è rivolta, sotto i 155 caratteri.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #MetaDescription #GovTech #QA #WebDev #QAlab",
         "facebook": "Catastro Bogotá non ha description.\n\nHSTS, nosniff, framing limitato alla propria origine, GA4 tramite Tag Manager e lingua dichiarata. Ma nessuna delle 20 pagine analizzate ha una meta description, quindi Google e le risposte AI se la scrivono da soli.\n\nLezione: Scrivi una descrizione di una frase per ogni pagina chiave: cosa offre e a chi è rivolta, sotto i 155 caratteri.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=catastro\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "88-jbb": {
     "date": "2026-12-24",
@@ -4837,7 +4846,8 @@
         "instagram": "L’Orto Botanico carica i loghi via http.\n\nLingua dichiarata, un canonical, un 301 da http a https e una sitemap indicata in robots.txt. Ma ogni pagina analizzata carica le due immagini del logo via http://,, quindi i browser devono aggiornarle o bloccarle.\n\nLezione: Carica ogni risorsa via https o come URL relativo. Cercando src=\"http:// nel tuo tema li trovi.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #MixedContent #Nature #QA #WebDev #QAlab",
         "facebook": "L’Orto Botanico carica i loghi via http.\n\nLingua dichiarata, un canonical, un 301 da http a https e una sitemap indicata in robots.txt. Ma ogni pagina analizzata carica le due immagini del logo via http://,, quindi i browser devono aggiornarle o bloccarle.\n\nLezione: Carica ogni risorsa via https o come URL relativo. Cercando src=\"http:// nel tuo tema li trovi.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=jbb\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "89-planetario": {
     "date": "2026-12-24",
@@ -4892,7 +4902,8 @@
         "instagram": "Il Planetario salta un anello della sua catena TLS.\n\nnosniff, framing limitato alla propria origine, lingua dichiarata e un 301 da http a https. Ma il server non invia il certificato intermedio Sectigo. I browser rimediano; Node.js e i client API rifiutano.\n\nLezione: Installa la catena completa fornita dalla tua certificate authority, poi testa con openssl s_client o SSL Labs.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #TLS #Science #QA #WebDev #QAlab",
         "facebook": "Il Planetario salta un anello della sua catena TLS.\n\nnosniff, framing limitato alla propria origine, lingua dichiarata e un 301 da http a https. Ma il server non invia il certificato intermedio Sectigo. I browser rimediano; Node.js e i client API rifiutano.\n\nLezione: Installa la catena completa fornita dalla tua certificate authority, poi testa con openssl s_client o SSL Labs.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=planetario\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bogotá, Colombia"
   },
   "90-antioquia": {
     "date": "2026-12-25",
@@ -4947,7 +4958,8 @@
         "instagram": "La home di Antioquia si intitola “Inicio”.\n\nHSTS pronto per il preload, una CSP da default-src 'self' con base-uri impostato, nosniff e una Referrer-Policy rigorosa. Ma il titolo della home page è solo \"Inicio\", che non dice nulla del dipartimento a chi cerca.\n\nLezione: Metti il nome dell’organizzazione nel titolo della home, insieme a ciò per cui la gente arriva. “Home” da solo spreca lo spazio.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Titles #GovTech #QA #WebDev #QAlab",
         "facebook": "La home di Antioquia si intitola “Inicio”.\n\nHSTS pronto per il preload, una CSP da default-src 'self' con base-uri impostato, nosniff e una Referrer-Policy rigorosa. Ma il titolo della home page è solo \"Inicio\", che non dice nulla del dipartimento a chi cerca.\n\nLezione: Metti il nome dell’organizzazione nel titolo della home, insieme a ciò per cui la gente arriva. “Home” da solo spreca lo spazio.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=antioquia\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "91-medellin": {
     "date": "2026-12-25",
@@ -5002,7 +5014,8 @@
         "instagram": "Il portale di Medellín non invia HSTS.\n\nnosniff, framing limitato alla propria origine, un canonical, una descrizione chiara e due sitemap indicate in robots.txt. Ma nessuna delle 19 pagine analizzate invia Strict-Transport-Security, quindi una prima visita in http può essere intercettata.\n\nLezione: Invia HSTS con un max-age di un anno quando ogni sottodominio serve https.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #HSTS #GovTech #QA #WebDev #QAlab",
         "facebook": "Il portale di Medellín non invia HSTS.\n\nnosniff, framing limitato alla propria origine, un canonical, una descrizione chiara e due sitemap indicate in robots.txt. Ma nessuna delle 19 pagine analizzate invia Strict-Transport-Security, quindi una prima visita in http può essere intercettata.\n\nLezione: Invia HSTS con un max-age di un anno quando ogni sottodominio serve https.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=medellin\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "92-metromedellin": {
     "date": "2026-12-26",
@@ -5057,7 +5070,8 @@
         "instagram": "Metro de Medellín usa ancora un tag UA.\n\nHSTS pronto per il preload, una CSP da default-src 'self', nosniff e default di Consent Mode. Ma la home page esegue ancora ga('create', 'UA-8498906-1'), che non raccoglie nulla da luglio 2024.\n\nLezione: Togli analytics.js chiamate UA. Se ti servono i numeri, mandali a una proprietà GA4 o a un altro strumento attivo.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Analytics #GA4 #Mobility #QA #WebDev #QAlab",
         "facebook": "Metro de Medellín usa ancora un tag UA.\n\nHSTS pronto per il preload, una CSP da default-src 'self', nosniff e default di Consent Mode. Ma la home page esegue ancora ga('create', 'UA-8498906-1'), che non raccoglie nulla da luglio 2024.\n\nLezione: Togli analytics.js chiamate UA. Se ti servono i numeri, mandali a una proprietà GA4 o a un altro strumento attivo.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metromedellin\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "93-epm": {
     "date": "2026-12-26",
@@ -5112,7 +5126,8 @@
         "instagram": "Il canonical di EPM finisce su un 404.\n\nHSTS di due anni pronto per il preload, una CSP da default-src 'self', nosniff e una descrizione chiara. Ma il canonical è /content/epm/clientesyusuarios.html, un percorso interno del CMS che reindirizza a un 404.\n\nLezione: Mappa i percorsi del CMS sugli URL pubblici. Apri il tuo canonical in un browser: deve rispondere 200.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Canonical #Utilities #QA #WebDev #QAlab",
         "facebook": "Il canonical di EPM finisce su un 404.\n\nHSTS di due anni pronto per il preload, una CSP da default-src 'self', nosniff e una descrizione chiara. Ma il canonical è /content/epm/clientesyusuarios.html, un percorso interno del CMS che reindirizza a un 404.\n\nLezione: Mappa i percorsi del CMS sugli URL pubblici. Apri il tuo canonical in un browser: deve rispondere 200.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=epm\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "94-udea": {
     "date": "2026-12-27",
@@ -5167,7 +5182,8 @@
         "instagram": "Le pagine di UdeA saltano gli header di sicurezza.\n\nLingua dichiarata, una sitemap indicata in robots.txt e regole robots che tengono fuori i bot di training GPTBot e Google-Extended. Ma le pagine non inviano HSTS, né nosniff, né protezione dal framing, e solo una CSP in report-only.\n\nLezione: Parti da HSTS, X-Content-Type-Options: nosniff e frame-ancestors 'self'. Poi applica la tua CSP.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #Headers #Education #QA #WebDev #QAlab",
         "facebook": "Le pagine di UdeA saltano gli header di sicurezza.\n\nLingua dichiarata, una sitemap indicata in robots.txt e regole robots che tengono fuori i bot di training GPTBot e Google-Extended. Ma le pagine non inviano HSTS, né nosniff, né protezione dal framing, e solo una CSP in report-only.\n\nLezione: Parti da HSTS, X-Content-Type-Options: nosniff e frame-ancestors 'self'. Poi applica la tua CSP.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=udea\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "95-eafit": {
     "date": "2026-12-27",
@@ -5222,7 +5238,8 @@
         "instagram": "Le pagine di EAFIT non hanno landmark main.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy, un canonical e una descrizione chiara. Ma nessuna delle 20 pagine analizzate ha un elemento <main>, quindi chi usa uno screen reader non può andare dritto al contenuto.\n\nLezione: Racchiudi il contenuto principale di ogni template in un solo <main> per gli skip link.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Accessibility #Landmarks #Education #QA #WebDev #QAlab",
         "facebook": "Le pagine di EAFIT non hanno landmark main.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy, un canonical e una descrizione chiara. Ma nessuna delle 20 pagine analizzate ha un elemento <main>, quindi chi usa uno screen reader non può andare dritto al contenuto.\n\nLezione: Racchiudi il contenuto principale di ogni template in un solo <main> per gli skip link.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=eafit\n\n#QAlab"
       }
-    }
+    },
+    "place": "Medellín, Colombia"
   },
   "96-cali": {
     "date": "2026-12-28",
@@ -5277,7 +5294,8 @@
         "instagram": "Il robots.txt di Cali indica una sitemap che non esiste.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e un canonical. Ma robots.txt indirizza i crawler a https://www.cali.gov.co/sitemap.xml, e quell’indirizzo restituisce 404.\n\nLezione: Apri ogni riga Sitemap: di robots.txt dopo ogni release. Un 404 lì significa che i crawler perdono la tua mappa.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Sitemap #GovTech #QA #WebDev #QAlab",
         "facebook": "Il robots.txt di Cali indica una sitemap che non esiste.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e un canonical. Ma robots.txt indirizza i crawler a https://www.cali.gov.co/sitemap.xml, e quell’indirizzo restituisce 404.\n\nLezione: Apri ogni riga Sitemap: di robots.txt dopo ogni release. Un 404 lì significa che i crawler perdono la tua mappa.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=cali\n\n#QAlab"
       }
-    }
+    },
+    "place": "Cali, Colombia"
   },
   "97-metrocali": {
     "date": "2026-12-28",
@@ -5332,7 +5350,8 @@
         "instagram": "La home di Metro Cali descrive un vecchio avviso.\n\nHSTS pronto per il preload, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e una CSP. Ma la descrizione della home page è un singolo avviso su una delibera di rottamazione veicoli, non ciò che offre il sistema.\n\nLezione: Scrivi una descrizione fissa della home che parli del tuo servizio. Non lasciare che il CMS la riempia con l’ultimo post.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #MetaDescription #Mobility #QA #WebDev #QAlab",
         "facebook": "La home di Metro Cali descrive un vecchio avviso.\n\nHSTS pronto per il preload, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e una CSP. Ma la descrizione della home page è un singolo avviso su una delibera di rottamazione veicoli, non ciò che offre il sistema.\n\nLezione: Scrivi una descrizione fissa della home che parli del tuo servizio. Non lasciare che il CMS la riempia con l’ultimo post.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrocali\n\n#QAlab"
       }
-    }
+    },
+    "place": "Cali, Colombia"
   },
   "98-univalle": {
     "date": "2026-12-29",
@@ -5387,7 +5406,8 @@
         "instagram": "Il link in inglese di Univalle restituisce un 404.\n\nnosniff, GA4, lingua dichiarata e http che reindirizza a https. Ma il selettore per l’inglese della home page, /loader.php?…idioma=EN, restituisce 404, quindi i visitatori internazionali trovano un errore al primo clic.\n\nLezione: Testa il selettore di lingua a ogni release. Spesso è il primo clic per chi arriva dall’estero.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #BrokenLinks #Education #QA #WebDev #QAlab",
         "facebook": "Il link in inglese di Univalle restituisce un 404.\n\nnosniff, GA4, lingua dichiarata e http che reindirizza a https. Ma il selettore per l’inglese della home page, /loader.php?…idioma=EN, restituisce 404, quindi i visitatori internazionali trovano un errore al primo clic.\n\nLezione: Testa il selettore di lingua a ogni release. Spesso è il primo clic per chi arriva dall’estero.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=univalle\n\n#QAlab"
       }
-    }
+    },
+    "place": "Cali, Colombia"
   },
   "99-transcaribe": {
     "date": "2026-12-29",
@@ -5442,7 +5462,8 @@
         "instagram": "Transcaribe riordina il percorso da tastiera.\n\nLingua dichiarata, un canonical, un sitemap index in robots.txt, un 301 verso https e GA4. Ma 19 pagine analizzate usano un tabindex positivo, che porta un elemento davanti a tutto il resto nell’ordine da tastiera.\n\nLezione: Usa solo tabindex=\"0\" o \"-1\". Correggi l’ordine del focus ordinando l’HTML, non con numeri positivi.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Accessibility #Keyboard #Mobility #QA #WebDev #QAlab",
         "facebook": "Transcaribe riordina il percorso da tastiera.\n\nLingua dichiarata, un canonical, un sitemap index in robots.txt, un 301 verso https e GA4. Ma 19 pagine analizzate usano un tabindex positivo, che porta un elemento davanti a tutto il resto nell’ordine da tastiera.\n\nLezione: Usa solo tabindex=\"0\" o \"-1\". Correggi l’ordine del focus ordinando l’HTML, non con numeri positivi.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=transcaribe\n\n#QAlab"
       }
-    }
+    },
+    "place": "Cartagena, Colombia"
   },
   "100-bucaramanga": {
     "date": "2026-12-30",
@@ -5497,7 +5518,8 @@
         "instagram": "La home di Bucaramanga non ha tag title.\n\nHSTS pronto per il preload, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e framing limitato alla propria origine. Ma 12 pagine analizzate non hanno <title>, home page inclusa.\n\nLezione: Dai a ogni pagina un <title> unico. È l’etichetta della scheda, il titolo nei risultati di ricerca e il testo della card di condivisione.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#SEO #Titles #GovTech #QA #WebDev #QAlab",
         "facebook": "La home di Bucaramanga non ha tag title.\n\nHSTS pronto per il preload, nosniff, una Referrer-Policy rigorosa, una Permissions-Policy e framing limitato alla propria origine. Ma 12 pagine analizzate non hanno <title>, home page inclusa.\n\nLezione: Dai a ogni pagina un <title> unico. È l’etichetta della scheda, il titolo nei risultati di ricerca e il testo della card di condivisione.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=bucaramanga\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bucaramanga, Colombia"
   },
   "101-metrolinea": {
     "date": "2026-12-30",
@@ -5552,7 +5574,8 @@
         "instagram": "Il viewport di Metrolínea disattiva lo zoom.\n\nnosniff, framing limitato alla propria origine, una sitemap funzionante e un 301 da http a https. Ma il viewport imposta maximum-scale=1 e user-scalable=no, che blocca lo zoom con due dita per i passeggeri che hanno bisogno di testo più grande.\n\nLezione: Togli user-scalable=no e maximum-scale. Lascia zoomare chi legge e sistema qualsiasi layout che si rompe.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Accessibility #Zoom #Mobility #QA #WebDev #QAlab",
         "facebook": "Il viewport di Metrolínea disattiva lo zoom.\n\nnosniff, framing limitato alla propria origine, una sitemap funzionante e un 301 da http a https. Ma il viewport imposta maximum-scale=1 e user-scalable=no, che blocca lo zoom con due dita per i passeggeri che hanno bisogno di testo più grande.\n\nLezione: Togli user-scalable=no e maximum-scale. Lascia zoomare chi legge e sistema qualsiasi layout che si rompe.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=metrolinea\n\n#QAlab"
       }
-    }
+    },
+    "place": "Bucaramanga, Colombia"
   },
   "102-pereira": {
     "date": "2026-12-31",
@@ -5607,7 +5630,8 @@
         "instagram": "La feature policy di Pereira consente ogni origine.\n\nHSTS pronto per il preload, una CSP da default-src 'self', nosniff e una Referrer-Policy rigorosa. Ma la Permissions-Policy concede fotocamera, microfono, geolocalizzazione e pagamenti a ogni origine con =*.\n\nLezione: Di default usa camera=(), microphone=(), geolocation=(). Concedi le funzionalità solo dove servono.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebSecurity #PermissionsPolicy #GovTech #QA #WebDev #QAlab",
         "facebook": "La feature policy di Pereira consente ogni origine.\n\nHSTS pronto per il preload, una CSP da default-src 'self', nosniff e una Referrer-Policy rigorosa. Ma la Permissions-Policy concede fotocamera, microfono, geolocalizzazione e pagamenti a ogni origine con =*.\n\nLezione: Di default usa camera=(), microphone=(), geolocation=(). Concedi le funzionalità solo dove servono.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=pereira\n\n#QAlab"
       }
-    }
+    },
+    "place": "Pereira, Colombia"
   },
   "103-manizales": {
     "date": "2026-12-31",
@@ -5662,7 +5686,8 @@
         "instagram": "Chi visita Manizales aspetta 5.7 s per vederla.\n\nLingua dichiarata, un canonical, una sitemap indicata in robots.txt e un 301 verso https. Ma i visitatori reali su Chrome aspettano 5.7 s al 75° percentile per il contenuto più grande, e il solo HTML ha impiegato 2.5 s.\n\nLezione: Parti dal server: metti in cache l’HTML. Poi fai il preload dell’immagine hero e rimanda gli script non necessari.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#WebPerformance #CoreWebVitals #GovTech #QA #WebDev #QAlab",
         "facebook": "Chi visita Manizales aspetta 5.7 s per vederla.\n\nLingua dichiarata, un canonical, una sitemap indicata in robots.txt e un 301 verso https. Ma i visitatori reali su Chrome aspettano 5.7 s al 75° percentile per il contenuto più grande, e il solo HTML ha impiegato 2.5 s.\n\nLezione: Parti dal server: metti in cache l’HTML. Poi fai il preload dell’immagine hero e rimanda gli script non necessari.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=manizales\n\n#QAlab"
       }
-    }
+    },
+    "place": "Manizales, Colombia"
   },
   "104-santamarta": {
     "date": "2027-01-01",
@@ -5717,6 +5742,7 @@
         "instagram": "Santa Marta usa ancora un tag UA.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, framing limitato alla propria origine e GA4. Ma la home page esegue ancora ga('create', 'UA-121052958-1'), e Universal Analytics ha smesso di elaborare dati entro luglio 2024.\n\nLezione: Elimina lo snippet UA e tieni GA4. Un tag vivo è più affidabile di due mezzi morti.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nGuida: link in bio.\n\n#Analytics #GA4 #Tourism #QA #WebDev #QAlab",
         "facebook": "Santa Marta usa ancora un tag UA.\n\nHSTS, nosniff, una Referrer-Policy rigorosa, framing limitato alla propria origine e GA4. Ma la home page esegue ancora ga('create', 'UA-121052958-1'), e Universal Analytics ha smesso di elaborare dati entro luglio 2024.\n\nLezione: Elimina lo snippet UA e tieni GA4. Un tag vivo è più affidabile di due mezzi morti.\n\nUn’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.\nhttps://carlosandmunoz.com/qa-review-guide.html?utm_source=facebook&utm_medium=social&utm_campaign=runs-100-2026-11&utm_content=santamarta\n\n#QAlab"
       }
-    }
+    },
+    "place": "Santa Marta, Colombia"
   }
 }

@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -22,8 +23,15 @@ import kotlin.coroutines.suspendCoroutine
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.Processes
+import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.Watch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Push alerts (#1416): channels, the FCM token handed to the jarvis function, and the notifications it sends. */
 object Push {
@@ -99,6 +107,31 @@ object Push {
         return NotificationCompat.Action.Builder(0, button.label, pi).build()
     }
 
+    /** A section push (#2509), data only: fetches just the sections the saved snapshots do not hold yet (#2510),
+        then redraws the widgets, the ongoing notification, the watch and the open app. */
+    fun sections(context: Context, data: Map<String, String>) {
+        val app = context.applicationContext as JarvisApp
+        if (!app.auth.signedIn) return
+        val named = data["sections"].orEmpty().split(",")
+        val patched = "processes" in named && runBlocking { withTimeoutOrNull(8_000) { processes(app) } } == true
+        val rest = if (patched) data + ("sections" to named.filter { it != "processes" }.joinToString(",")) else data
+        if (Home.pushStale(app, rest)) Home.refreshSections(context, rest)
+    }
+
+    /** A processes push (#2548): one read for the section, put into every kept snapshot and the screen on show, then the
+        status notification and the watch; the rest of the snapshot is left for its own push. */
+    suspend fun processes(app: JarvisApp): Boolean {
+        val out = runCatching { app.api.call("processes", 1) }.getOrNull() ?: return false
+        val p = out.obj("processes") ?: return false
+        listOf(1, 7, 30, 90, 365).forEach { d -> app.api.patchSaved("snapshot", d) { Processes.patch(it, p, out.obj("version")) } }
+        Processes.pushed.tryEmit(out)
+        val kept: suspend () -> JsonObject? = { app.api.saved("snapshot", 1)?.json }
+        runCatching { Ongoing.show(app, kept) }
+        runCatching { Watch.sync(app, kept) }
+        return true
+    }
+
+
     private fun allowed(context: Context) =
         Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
@@ -111,7 +144,7 @@ object Push {
         if (!allowed(context)) return
         val body = data["body"] ?: ""
         val lines = runCatching { (JSON.parseToJsonElement(data["lines"] ?: "[]") as JsonArray).map { (it as JsonPrimitive).content } }.getOrDefault(emptyList())
-        val n = builder(context, data, body, lines).setSilent(data["quiet"] == "1")
+        val n = builder(context, data, body, lines, CardImages.load(data["image"])).setSilent(data["quiet"] == "1")
         if (!data["ref"].isNullOrEmpty()) buttons(data).forEach { n.addAction(if (it.act == "open") openAction(context, data, it) else NotifyActions.action(context, data, it)) }
         data["code"]?.takeIf { kindOf(data) == CODES && it.isNotBlank() }?.let { n.addAction(CodeCopy.action(context, it, tagOf(data))).setTimeoutAfter(15 * 60 * 1000L) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
@@ -120,23 +153,29 @@ object Push {
     /** The same notification after a button: busy while it runs, then the outcome, with Retry when it failed. */
     fun result(context: Context, data: Map<String, String>, shown: String, retry: Button? = null, retryText: String? = null, busy: Boolean = false) {
         if (!allowed(context)) return
-        val n = builder(context, data, shown, emptyList()).setSilent(true).setOnlyAlertOnce(true)
+        val n = builder(context, data, shown, emptyList(), CardImages.cached(data["image"])).setSilent(true).setOnlyAlertOnce(true)
         if (busy) n.setProgress(0, 0, true).setOngoing(true).setAutoCancel(false)
         else if (retry == null) n.setTimeoutAfter(10 * 60 * 1000L)
         retry?.let { n.addAction(NotifyActions.action(context, data, it, retryText)) }
         NotificationManagerCompat.from(context).notify(tagOf(data), 1, n.build())
     }
 
-    private fun builder(context: Context, data: Map<String, String>, body: String, lines: List<String>): NotificationCompat.Builder {
+    /** picture is the push's card image (#2248): expanded it shows big, collapsed as the thumbnail; without one the text styles stand. */
+    private fun builder(context: Context, data: Map<String, String>, body: String, lines: List<String>, picture: Bitmap? = null): NotificationCompat.Builder {
         val kind = kindOf(data)
         val tag = tagOf(data)
         val open = openIntent(context, data["url"]?.takeIf { it.startsWith("https://") }, data["tab"])
-        val style = if (lines.size > 1) NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60)) else NotificationCompat.BigTextStyle().bigText(body)
+        val style = when {
+            picture != null -> NotificationCompat.BigPictureStyle().bigPicture(CardImages.forPush(picture)).bigLargeIcon(null as Bitmap?).setSummaryText(body)
+            lines.size > 1 -> NotificationCompat.InboxStyle().also { s -> lines.forEach(s::addLine) }.setSummaryText(body.take(60))
+            else -> NotificationCompat.BigTextStyle().bigText(body)
+        }
         return NotificationCompat.Builder(context, kind)
             .setSmallIcon(R.drawable.ic_stat_jarvis)
             .setColor(0xFF38E1FF.toInt())
             .setContentTitle(data["title"] ?: "Jarvis")
             .setContentText(body)
+            .setLargeIcon(picture)
             .setStyle(style)
             .setAutoCancel(true)
             .setCategory(if (kind == ALERTS) NotificationCompat.CATEGORY_ERROR else NotificationCompat.CATEGORY_STATUS)

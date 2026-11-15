@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.StopCircle
 import androidx.core.content.ContextCompat
 import android.text.format.DateUtils
@@ -18,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.compose.ui.platform.LocalContext
 import android.os.Build
 import com.carlosandmunoz.jarvis.home.GoalsWidgetReceiver
+import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.home.AlertsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.AskWidgetReceiver
 import com.carlosandmunoz.jarvis.home.MoneyWidgetReceiver
@@ -151,6 +153,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.strings
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -221,6 +224,7 @@ fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String
     LaunchedEffect(openTab) {
         openTab?.let { target ->
             val (name, chip) = target.split(':', limit = 2).let { it[0] to it.getOrNull(1) }
+            if (name == "ask") page = "ask"
             Tab.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }?.let { tab = it; page = "" }
             chip?.takeIf { c -> CHIPS.any { it.first == c } }?.let { product = it }
             tabOpened()
@@ -308,13 +312,20 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                     if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
                     }
-                    if (s.snapshot != null) Masonry(columns, Modifier.fillMaxWidth()) {
-                        when (shownTab) {
-                            Tab.Overview -> OverviewScreen(s, vm, open)
-                            Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
-                            Tab.Business -> BusinessScreen(s, vm)
-                            Tab.Traffic -> TrafficScreen(s)
-                            Tab.Systems -> SystemsScreen(s, vm)
+                    if (s.snapshot != null) {
+                        val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
+                        val saved = Layouts.read(s.snapshot, layoutTab)
+                        LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
+                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
+                            Masonry(columns, Modifier.fillMaxWidth()) {
+                                when (shownTab) {
+                                    Tab.Overview -> OverviewScreen(s, vm, open)
+                                    Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
+                                    Tab.Business -> BusinessScreen(s, vm)
+                                    Tab.Traffic -> TrafficScreen(s)
+                                    Tab.Systems -> SystemsScreen(s, vm)
+                                }
+                            }
                         }
                     }
                     Spacer(Modifier.height(24.dp))
@@ -416,12 +427,15 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.listen()
         else mic.launch(Manifest.permission.RECORD_AUDIO)
     }
+    val handsFree = handsFreeSwitch(vm)
     Row(modifier.imePadding()) {
         if (orb) Column(Modifier.width(168.dp).fillMaxHeight().clickable(remember { MutableInteractionSource() }, null) { if (s.heard.listening) vm.stopListening() else { vm.heardShown(); listen() } },
             verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             VoiceOrb(s.heard.level, s.heard.listening || s.speaking != null, 120.dp)
             Spacer(Modifier.height(6.dp))
-            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+            Text(if (s.heard.listening) "LISTENING" else if (s.speaking != null) "SPEAKING" else if (s.handsFree) "HANDS-FREE" else "TAP TO ASK", color = J.muted, fontFamily = Mono, fontSize = 10.sp, letterSpacing = 2.sp)
+            Spacer(Modifier.height(10.dp))
+            GlassChip("Hands-free", s.handsFree) { handsFree(!s.handsFree) }
         }
         Column(Modifier.weight(1f).fillMaxHeight()) {
             LazyColumn(Modifier.weight(1f), state = list) {
@@ -446,7 +460,8 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
                 }
             }
             HorizontalDivider(color = J.line)
-            s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            if (s.handsFree) Text("Hands-free: Jarvis listens, also with the screen off. Say \"stop\" to end.", color = J.cyan, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            else s.heard.error?.let { Text(it, color = J.amber, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
             AnimatedContent(s.heard.listening, label = "input") { listening ->
                 if (listening) Row(Modifier.padding(8.dp).fillMaxWidth().glass(radius = 14.dp, brackets = false).padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
@@ -456,11 +471,25 @@ private fun AskBody(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifi
                     TextButton(onClick = vm::stopListening) { Text("Stop", color = J.cyan) }
                 } else Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(q, { q = it }, placeholder = { Text("Ask about the ${RANGES.toMap()[s.days]} numbers") }, modifier = Modifier.weight(1f), maxLines = 4)
+                    if (q.isBlank()) IconButton(onClick = { handsFree(!s.handsFree) }) {
+                        Icon(Icons.Filled.RecordVoiceOver, if (s.handsFree) "Stop hands-free" else "Hands-free", tint = if (s.handsFree) J.cyan else J.muted)
+                    }
                     if (q.isBlank()) IconButton(onClick = { vm.heardShown(); listen() }) { Icon(Icons.Filled.Mic, "Ask by voice", tint = J.cyan) }
                     else IconButton(onClick = { vm.ask(q); q = "" }) { Icon(Icons.AutoMirrored.Filled.Send, "Ask") }
                 }
             }
         }
+    }
+}
+
+/** Turns hands-free on or off, asking for the microphone first. */
+@Composable
+private fun handsFreeSwitch(vm: JarvisViewModel): (Boolean) -> Unit {
+    val context = LocalContext.current
+    val mic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) vm.setHandsFree(true) }
+    return { on ->
+        if (!on || ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.setHandsFree(on)
+        else mic.launch(Manifest.permission.RECORD_AUDIO)
     }
 }
 
@@ -475,7 +504,8 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
     val settings = s.snapshot.obj("settings")
     var mail by remember(settings) { mutableStateOf(MAIL_LABELS.keys.associateWith { settings.obj("mail").bool(it) ?: false }) }
     var actions by remember(settings) { mutableStateOf(settings.obj("actions")) }
-    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions))) { "Saved." }
+    var calendar by remember(settings) { mutableStateOf(CalendarSettings.clean(settings.obj("calendar"))) }
+    fun save(base: JsonObject) = vm.market("settings", "settings-save", mapOf("settings" to edited(base, mail, actions, calendar))) { "Saved." }
     Scaffold(containerColor = Color.Transparent, topBar = {
         TopAppBar(modifier = Modifier.topFade(), title = { Text("Settings") }, navigationIcon = { IconButton(onClick = back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
@@ -517,13 +547,58 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
             }
+            if (settings != null) Panel("Country dates") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Pause campaigns over holidays on their own")
+                        Muted("Campaigns sending with at least half their leads in a country pause on its public holiday and resume the next business day, at the 07:40 (Bogotá) daily job. Logged under Actions and pushed. Off, Jarvis proposes it and you tap.")
+                    }
+                    Switch(calendar.autoPause, { on -> calendar = calendar.copy(autoPause = on); save(settings) }, enabled = "settings" !in s.running)
+                }
+                Muted("Warn this many days ahead")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CalendarSettings.WARN_CHOICES.forEach { d ->
+                        TextButton(onClick = { calendar = calendar.copy(warnDays = d, remindDays = minOf(calendar.remindDays, d)); save(settings) }, enabled = "settings" !in s.running) {
+                            Text("$d d", color = if (d == calendar.warnDays) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+                Muted("Remind this many days ahead")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CalendarSettings.REMIND_CHOICES.forEach { d ->
+                        TextButton(onClick = { calendar = calendar.copy(remindDays = minOf(d, calendar.warnDays)); save(settings) }, enabled = "settings" !in s.running) {
+                            Text("$d d", color = if (d == calendar.remindDays) J.cyan else J.muted, fontSize = 13.sp)
+                        }
+                    }
+                }
+                Muted("The Map tab lists the dates ahead per country. The web settings set any number from 1 to 60.")
+            }
+            Panel("Outreach costs") { GeoCostSettings(s, vm) }
+            if (settings != null) Panel("GitHub repos") {
+                var repos by remember(settings) { mutableStateOf(Github.cleanRepos(settings.obj("github")?.get("repos").strings()).joinToString("\n")) }
+                OutlinedTextField(repos, { repos = it }, label = { Text("Repos the GitHub tab shows, owner/name, one per line") }, minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth())
+                Muted("Up to 20. Left empty, the tab shows ${Github.REPOS.joinToString(", ")}. The web tab shows the same list.")
+                ActionButton("Save repos", "settings" in s.running) {
+                    vm.market("settings", "settings-save", mapOf("settings" to JsonObject(edited(settings, mail, actions, calendar) + ("github" to Github.reposJson(Github.cleanRepos(repos.lines())))))) { "Saved. GitHub reads the new list." }
+                }
+            }
             Panel("Push notifications") {
                 val context = LocalContext.current
                 val allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
                 if (!allowed) Text("Notifications are off for Jarvis on this phone.", color = J.amber, fontSize = 13.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("Readiness as a ring in the status bar, what needs you and today's money. Updates silently on each refresh.") }
+                    Column(Modifier.weight(1f)) { Text("Live status"); Muted("A card with readiness as a ring, connections and goals as bars, what needs you and today's money; the ring is also the status-bar icon. Updates silently on each refresh and comes back if swiped away. Turn it off here.") }
                     Switch(s.ongoing, vm::setOngoing)
+                }
+                if (s.ongoing) {
+                    Muted("Show in the notification")
+                    Ongoing.Part.entries.forEach { part ->
+                        Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { Text(part.label, fontSize = 14.sp); Muted(part.hint) }
+                            Switch(part in s.ongoingParts, { vm.setOngoingPart(part, it) })
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                 }
                 mapOf(
                     Push.ALERTS to ("Alerts" to "A threshold crossing from the hourly watch, at any hour."),
@@ -556,6 +631,11 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Speak answers"); Muted("Questions you ask by voice are answered aloud.") }
                     Switch(s.speak, vm::setSpeak)
+                }
+                val handsFree = handsFreeSwitch(vm)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Hands-free"); Muted("Jarvis keeps listening and answers aloud, also with the screen off, until you say \"stop\" or tap Stop in the notification.") }
+                    Switch(s.handsFree, handsFree)
                 }
                 val phone = java.util.Locale.getDefault().getDisplayLanguage(java.util.Locale.ENGLISH)
                 Text("Language")
@@ -640,9 +720,24 @@ private fun Devices(s: UiState) {
 }
 
 // Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
-private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?): JsonObject =
-    JsonObject(settings + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
-        (actions?.let { mapOf("actions" to it) } ?: emptyMap()))
+private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?, calendar: CalendarSettings): JsonObject =
+    JsonObject(settings - "layout" + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
+        (actions?.let { mapOf("actions" to it) } ?: emptyMap()) + ("calendar" to calendar.json()))
+
+/** Country dates (#2989) in jarvis_settings/main, cleaned as calendarSettings in js/admin-jarvis-core.js. */
+data class CalendarSettings(val autoPause: Boolean = false, val warnDays: Int = 14, val remindDays: Int = 3) {
+    fun json() = JsonObject(mapOf("autoPause" to JsonPrimitive(autoPause), "warnDays" to JsonPrimitive(warnDays), "remindDays" to JsonPrimitive(remindDays)))
+
+    companion object {
+        val WARN_CHOICES = listOf(7, 14, 21, 30)
+        val REMIND_CHOICES = listOf(1, 3, 5, 7)
+        fun clean(o: JsonObject?): CalendarSettings {
+            val warn = (o.num("warnDays")?.takeIf { it >= 1 }?.let { Math.round(it).toInt() } ?: 14).coerceIn(1, 60)
+            val remind = (o.num("remindDays")?.let { Math.round(it).toInt() } ?: 3).coerceIn(0, warn)
+            return CalendarSettings(o.bool("autoPause") == true, warn, remind)
+        }
+    }
+}
 
 private val COUNTDOWN_CHOICES = listOf(0.5, 1.0, 2.0, 4.0, 8.0)
 

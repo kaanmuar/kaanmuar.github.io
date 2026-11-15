@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /* Renders the QA-lab URL Review profile kit in the Fusion look: avatars, banners and covers for X, LinkedIn,
-   YouTube, TikTok, Instagram, Reddit and Facebook, plus a contact sheet of the whole kit.
+   YouTube, TikTok, Instagram, Reddit and Facebook, the Live Reports channels on Telegram and r/QALabLiveReports
+   (#2568), plus a contact sheet of the whole kit.
 
-     node scripts/brand-kit/build.js [--batch brand-kit-2026-10]
+     node scripts/brand-kit/build.js [--batch brand-kit-2026-10] [--missing]   # --missing: only files not there yet
      node scripts/brand-kit/build.js --face en|es [--batch faces-2026-11/en]
      node scripts/brand-kit/build.js --face en|es --text   # kit.json and checklist.md only, images untouched
 
@@ -29,6 +30,7 @@ const FACE = faceAt >= 0 ? faces.FACES[argv[faceAt + 1]] : null;
 if (faceAt >= 0 && !FACE) throw new Error("--face takes " + Object.keys(faces.FACES).join(" or "));
 const TEXT = argv.includes("--text");
 if (TEXT && !FACE) throw new Error("--text takes --face");
+const MISSING = argv.includes("--missing");
 const BATCH = batchAt >= 0 && argv[batchAt + 1] ? argv[batchAt + 1] : FACE ? "faces-2026-11/" + FACE.id : "brand-kit-2026-10";
 const OUT = path.join(ROOT, "media", BATCH);
 
@@ -39,6 +41,8 @@ const THEMES = [
   { id: "runs", label: "Live runs", icon: "runs", accent: "#6fe3b1" },
   { id: "guide", label: "How it works", icon: "guide", accent: "#b9a8ff" }
 ];
+
+const LIVE = { lines: ["Live Reports.", "*Real sites, real reviews.*"], langs: "EN · ES · PT · DE · FR · IT" };
 
 // circle: the network crops the picture to a circle. fx: where the Fusion pyramid stands (see scripts/fusion/stage.js).
 const KIT = [
@@ -54,6 +58,11 @@ const KIT = [
   ...THEMES.map((theme) => ({ network: "Instagram", file: "instagram/highlight-" + theme.id + ".jpg", w: 1080, h: 1920, kind: "highlight", theme, fx: { subject: [0, 0.3], zoom: 2.4, t: 9.5 }, circle: "highlight", where: "Highlight cover: " + theme.label })),
   { network: "Reddit", file: "reddit/avatar-256.png", w: 256, h: 256, kind: "avatar", circle: true, where: "Avatar (u/qalaburlreview)" },
   { network: "Reddit", file: "media/reddit/profile-2026-10/banner.jpg", w: 1920, h: 384, studio: "reddit-studio", safe: [640, 0, 640, 384], where: "Banner; the copy stays in the middle third" },
+  { network: "Reddit", file: "reddit/community-icon-256.png", w: 256, h: 256, kind: "avatar", circle: true, where: "Community icon (r/QALabLiveReports): Mod Tools > Community appearance > Avatar" },
+  // Reddit crops a community banner to an 8:1 band (uploads of at least 1072x128 on desktop, 1080x128 in the apps).
+  { network: "Reddit", file: "reddit/community-banner-1920x384.jpg", w: 1920, h: 384, kind: "strip", copy: LIVE, fx: { subject: [0, 0], zoom: 1.6 }, safe: [480, 77, 960, 230], where: "Community banner (r/QALabLiveReports): Mod Tools > Community appearance > Banner; the copy stays in the outlined band" },
+  { network: "Telegram", file: "telegram/channel-640.jpg", w: 640, h: 640, kind: "avatar", circle: true, where: "Channel photo (@qalab_live): Channel info > Edit > Set new photo" },
+  { network: "Telegram", file: "telegram/bot-640.jpg", w: 640, h: 640, kind: "avatar", circle: true, where: "Bot picture (@qalab_live_bot): /setuserpic in BotFather" },
   { network: "Facebook", file: "facebook/avatar-720.jpg", w: 720, h: 720, kind: "avatar", circle: true, where: "Profile picture" },
   { network: "Facebook", file: "media/facebook/page-2026-10/cover.jpg", w: 1640, h: 624, studio: "facebook-studio", safe: [265, 0, 1109, 624], where: "Cover photo; phones show only the outlined middle" }
 ];
@@ -74,10 +83,14 @@ function account(n) {
   const links = [["Website", site], ["Social hub", hub]]
     .concat(FACE.extra ? [[FACE.extra.label, faces.SITE + FACE.extra.page + faces.utm(n.id, FACE.id)]] : [])
     .concat([[otherLangs, n.profile(other.handle)]]);
+  const cap = (label) => Number(((label || "").match(/\((\d+)\)/) || [])[1]);
+  // When only one channel fits, the one on the network's own app stays.
+  const channels = (room) => faces.CHANNELS.filter((c) => c.app === n.name).concat(faces.CHANNELS.filter((c) => c.app !== n.name))
+    .slice(0, Math.max(room, 0)).sort((a, b) => faces.CHANNELS.indexOf(a) - faces.CHANNELS.indexOf(b)).map((c) => [c.label[FACE.id], c.url]);
   const value = (key, label) => {
     if (FACE.bios[key]) {
       const text = FACE.bios[key].replace("{other}", n.mention(other.handle));
-      const max = Number((label.match(/\((\d+)\)/) || [])[1]) || faces.LIMITS[key];
+      const max = cap(label) || faces.LIMITS[key];
       if (text.length > max) throw new Error(FACE.id + " " + n.name + " " + label + ": " + text.length + " characters, over " + max);
       return text;
     }
@@ -88,7 +101,7 @@ function account(n) {
     if (key === "handle") return n.profile(FACE.handle).replace(/\/$/, "").split("/").pop().replace(/^@/, "");
     if (key === "site") return site;
     if (key === "email") return FACE.email;
-    if (key === "links") return links.slice(0, 5);
+    if (key === "links") return links.slice(0, cap(label) || 5).concat(channels((cap(label) || 5) - links.length));
     if (key === "fields") return links.slice(0, 3).concat([FACE.extra ? [otherLangs, n.profile(other.handle)] : ["Email", FACE.email]]).slice(0, 4);
     if (key === "highlights") return THEMES.map((t) => FACE.highlights[t.id]).join(", ");
     return key;
@@ -108,8 +121,10 @@ function account(n) {
 
 function checklist(accounts) {
   const block = (v) => "\n  ```text\n  " + String(v).split("\n").join("\n  ") + "\n  ```";
-  const field = (f) => Array.isArray(f.value)
-    ? "- [ ] " + f.label + ":\n" + f.value.map(([label, url]) => "  - " + label + ": " + url).join("\n")
+  const live = new Set(faces.CHANNELS.map((c) => c.url));
+  const added = (a, f) => a.state === "exists" && Array.isArray(f.value) ? f.value.filter(([, url]) => live.has(url)) : [];
+  const field = (a, f) => Array.isArray(f.value)
+    ? "- [ ] " + f.label + ":\n" + f.value.map(([label, url]) => "  - " + label + ": " + url + (added(a, f).some((l) => l[1] === url) ? " (new: add it to the live account)" : "")).join("\n")
     : "- [ ] " + f.label + ":" + block(f.value);
   const other = faces.FACES[FACE.other];
   return [
@@ -123,8 +138,9 @@ function checklist(accounts) {
     "## " + a.network + ": " + (a.state === "new" ? "new account" : "existing account") + ", " + a.profile,
     "",
     ...(a.state === "new" ? [] : ["- [ ] Log in and check the account email is `" + a.email + "`; change it in the account settings if not."]),
+    ...a.fields.filter((f) => added(a, f).length).map((f) => "- [ ] New for the live account (#2568): add " + added(a, f).map(([label, url]) => label + " (" + url + ")").join(" and ") + " to " + f.label + ", after the links it already has."),
     ...a.steps.map((s) => "- [ ] " + s),
-    ...a.fields.map(field),
+    ...a.fields.map((f) => field(a, f)),
     ...a.images.map((i) => "- [ ] Upload " + i.where + ": `" + i.file + "`"),
     "- [ ] Access: " + a.access,
     ""
@@ -189,14 +205,15 @@ async function main() {
     console.log("wrote", path.relative(ROOT, path.join(OUT, "kit.json")), "and checklist.md");
     return;
   }
-  for (const studio of new Set(kit.filter((i) => i.studio).map((i) => i.studio))) execFileSync(process.execPath, [path.join(ROOT, "scripts", studio, "build.js")], { stdio: "inherit" });
+  const render = (item) => !MISSING || !fs.existsSync(filePath(item));
+  for (const studio of new Set(kit.filter((i) => i.studio && render(i)).map((i) => i.studio))) execFileSync(process.execPath, [path.join(ROOT, "scripts", studio, "build.js")], { stdio: "inherit" });
 
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await fusion.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
   await page.goto("file://" + path.join(__dirname, "frame.html"));
   const mark = { square: fusion.markUri(512, { square: true }), tile: fusion.markUri(512) };
-  for (const item of kit.filter(own)) {
+  for (const item of kit.filter(own).filter(render)) {
     if (FACE) {
       const bg = item.fx ? fusion.dataUri(await fusion.still(browser, Object.assign({ w: item.w, h: item.h, t: 6 }, item.fx))) : null;
       const p = item.scale ? await browser.newPage({ deviceScaleFactor: item.scale }) : page;
@@ -218,7 +235,7 @@ async function main() {
     }
     const bg = item.fx ? fusion.dataUri(await fusion.still(browser, Object.assign({ w: item.w, h: item.h, t: 6 }, item.fx))) : null;
     await page.setViewportSize({ width: item.w, height: item.h });
-    await page.evaluate((spec) => window.paint(spec), { kind: item.kind, w: item.w, h: item.h, bg, theme: item.theme, mark: item.kind === "watermark" ? mark.tile : mark.square });
+    await page.evaluate((spec) => window.paint(spec), { kind: item.kind, w: item.w, h: item.h, bg, theme: item.theme, safe: item.safe, copy: item.copy, mark: item.kind === "watermark" ? mark.tile : mark.square });
     await save(await page.locator("#c").screenshot({ omitBackground: item.kind === "watermark" }), item);
   }
 

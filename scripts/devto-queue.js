@@ -217,7 +217,7 @@ async function run(face, client, list, book, { live, now, gate }) {
   const mine = (e) => e.channel === CHANNEL && e.profile === client.profile && e.result === "sent" && e.at && bogotaDay(e.at) === today;
   let room = PER_DAY - Object.values(book.posts).flat().filter(mine).length;
   const recent = live ? await client.recent() : [];
-  const record = (a, entry) => ledger.record(book, a.key, Object.assign({ channel: CHANNEL, profile: client.profile, checked: new Date().toISOString() }, entry));
+  const record = (a, entry) => ledger.record(book, a.key, Object.assign({ channel: CHANNEL, profile: client.profile, checked: new Date(now).toISOString() }, entry));
   for (const a of todo) {
     if (room <= 0) { counts.waiting += 1; continue; }
     const there = onAccount(recent, a);

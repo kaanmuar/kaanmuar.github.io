@@ -41,6 +41,8 @@ media/social-posts/*/voiced/
 media/buffer-upload/
 # Gemini takes and product screen recordings for scripts/skits-studio
 media/skits/
+# Live studio recordings, clips, stills, voices and translation cache (scripts/live-studio)
+media/live-studio/
 
 # Owner notice run outcomes carry owners' email addresses
 owner-notices-*.csv
@@ -60,3 +62,10 @@ workers/preflight/.cloudflare/
 workers/preflight/dist/
 workers/outreach-cron/.cloudflare/
 workers/outreach-cron/dist/
+
+# Mini report card previews (#2466): node scripts/report-card-preview.js
+media/report-cards/
+# Trial DM card previews (#3137): node scripts/dm-card-preview.js
+media/dm-cards/
+
+.cursor/handoffs/

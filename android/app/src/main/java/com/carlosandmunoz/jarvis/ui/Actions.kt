@@ -52,10 +52,16 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "rerun-job" to "Re-run failed jobs", "refresh-stale" to "Refresh stale data", "rerun-reviews" to "Re-run reviews after a fix", "pause-outreach" to "Pause an outreach mailbox",
     "resume-outreach" to "Resume outreach mailboxes", "retry-social" to "Retry failed social posts", "ai-ask" to "Ask the AI what to fix", "ai-fix" to "Run fixes the AI picked",
     "pagespeed-merge" to "Merge PageSpeed fixes", "pagespeed-close" to "Close PageSpeed fixes", "pagespeed-run" to "Start the PageSpeed run", "merge-pr" to "Merge a green PR",
-    "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias")
+    "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
+    "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
+    "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
+    "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
+    "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging",
+    "calendar-pause" to "Pause campaigns over a holiday", "calendar-resume" to "Resume campaigns after a holiday")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
-/** Every action with a daily cap, for the used-today rows (#1977). */
-private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias")
+/** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
+private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign",
+    "gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-delete-branch", "gh-remove-worktree", "owner-tags-approve-verified", "owner-tags-block")
 
 /** The countdown (#1977): risky actions Jarvis queued, which run when their time ends unless cancelled. */
 object Countdowns {
@@ -109,12 +115,16 @@ fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal
     }
     vm.act(actionKey(action, job ?: workflow ?: pr?.toString()), "action-run", extra) { out ->
         if (action.startsWith("pagespeed-")) return@act out.str("note") ?: "Done."
+        if (action == "rerun-ci" || action.startsWith("calendar-")) out.str("note")?.let { return@act it }
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }
 }
 
 fun actionKey(action: String, target: String?) = "action:$action:${target ?: ""}"
+
+/** The confirm text of a briefing sheet's rerun-ci button (#2245): main red re-runs its jobs, main green refreshes the PRs. */
+fun rerunCiAsk(workflow: String?) = "re-run the failed jobs of \"$workflow\" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)"
 
 /** The PR number of a PageSpeed proposal or briefing line ("pagespeed:pr:<n>"), else null. */
 fun pageSpeedPr(key: String?): Int? = key?.let { Regex("^pagespeed:pr:(\\d+)$").find(it)?.groupValues?.get(1)?.toIntOrNull() }
@@ -129,9 +139,23 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "publish-hub" -> "publish the Social hub (run refreshSocialHubStats)"
     "retry-social" -> "start the social posting workflows again (Buffer re-queues the failed posts)"
     "resume-outreach" -> "resume the outreach mailboxes Jarvis paused that have been healthy for two hourly checks"
+    "calendar-pause" -> "pause the campaigns that mostly reach that country on its holiday, and resume them the next business day"
+    "calendar-resume" -> "resume the campaigns paused for the holiday now (a pause still planned is cancelled)"
     "pagespeed-merge" -> "merge PageSpeed fixes #$pr into main now (it goes to production)"
     "pagespeed-close" -> "close PageSpeed fixes #$pr without merging"
     "pagespeed-run" -> "start the daily PageSpeed run now (about two hours)"
+    "gh-board-sync" -> "move the drifted tickets on the Scrum board to the column their PRs say"
+    "gh-orphan-ticket" -> "file a ticket for PR #$pr and link it in a comment on the PR"
+    "gh-update-pr" -> "update PR #$pr with main (merge main into its branch)"
+    "gh-merge-pr" -> "squash-merge PR #$pr into main now (it goes to production)"
+    "gh-revert" -> "open a revert PR for the merge that broke main" + (job?.let { " ($it)" } ?: "")
+    "gh-delete-branch" -> if (job != null) "delete the merged branch $job" else "delete the merged branches"
+    "gh-close-issue" -> "close issue #$pr"
+    "gh-remove-worktree" -> "remove the merged worktree ${job ?: ""} on the Mac (the uploader does it, never forced)".replace("  ", " ")
+    "gh-agent" -> "launch a fix agent, Jarvis's worker or Cursor (it opens a PR)"
+    "gh-quarantine" -> "file a Backlog bug \"${job ?: ""}\" in area:ci, with links to its runs (Jarvis also does this on its own for flaky workflows)"
+    "gh-security-ticket" -> "file a Backlog bug for ${job ?: "the alert"} (Jarvis also does this on its own for critical/high alerts)"
+    "gh-dismiss-low" -> "dismiss ${pr ?: 0} low security alert${if (pr == 1) "" else "s"} on GitHub as a tolerable risk (code scanning ones as won't fix)"
     else -> "run ${job ?: "the job"} again"
 }
 
@@ -149,7 +173,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     ConfirmAction(confirm) { confirm = null }
     val v = view
     val off = v.obj("settings")?.bool("auto") == false
-    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions") {
+    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions", id = "systems-actions") {
         val hours = (v.obj("settings") ?: s.snapshot.obj("settings").obj("actions")).num("countdownHours") ?: Countdowns.HOURS
         val pending = Countdowns.pending(v, s.snapshot)
         Text("On the countdown (${Countdowns.hoursText(hours)})", color = J.text, fontSize = 14.sp)
@@ -164,7 +188,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
         }
         if (v == null) { Muted(error ?: "Reading the actions log…"); return@Panel }
         val caps = v.obj("settings").obj("caps")
-        AUTO_CAPS.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
+        AUTO_CAPS.filter { !it.startsWith("gh-") || caps.num(it) != null }.forEach { k -> KeyRow(ACTION_LABELS[k] ?: k, fmt(v.obj("used").num(k)) + " of " + fmt(caps.num(k)) + " today", if ((v.obj("used").num(k) ?: 0.0) >= (caps.num(k) ?: 0.0)) J.amber else J.text) }
         Muted("The AI acts alone at confidence " + "%.2f".format(java.util.Locale.ROOT, v.obj("settings").num("confidence") ?: 0.8) + " or more; other picks become proposals.")
         Muted("Risky ones wait ${Countdowns.hoursText(hours)} on the countdown, at any hour: mail to third parties, posts off schedule, merging a green PR or deploying, resuming outreach. At night, mail and posts then wait for 08:00-21:00 Bogotá. Refunds and deletes always wait for your tap.")
         val p = v.obj("pending")
@@ -232,6 +256,7 @@ object ProposalButtons {
 /** A proposal's run button through the action-run op, with its jobs or workflows; a tap runs it at once. */
 fun runProposal(vm: JarvisViewModel, b: JsonObject, proposal: String?) {
     vm.act("proposal-run:$proposal", "action-run", ProposalButtons.extra(b, proposal)) { out ->
+        out.str("note")?.let { return@act (b.str("label") ?: "Done") + ": " + it }
         (b.str("label") ?: "Done") + ": " + (out.str("ran")?.trimEnd('.') ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + "."
     }

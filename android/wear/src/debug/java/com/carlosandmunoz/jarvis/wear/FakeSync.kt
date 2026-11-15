@@ -6,7 +6,7 @@ import android.content.Intent
 import com.google.android.gms.wearable.DataMap
 
 /** Debug only: stands in for the phone on an unpaired emulator.
- *  adb shell am broadcast -n com.carlosandmunoz.jarvis.debug/com.carlosandmunoz.jarvis.wear.FakeSync --ef readiness 92 --ei warns 1 */
+ *  adb shell am broadcast -n com.carlosandmunoz.jarvis.debug/com.carlosandmunoz.jarvis.wear.FakeSync --ef readiness 92 --ei warns 1 --ei running 2 --ei needsYou 1 */
 class FakeSync : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val map = DataMap()
@@ -17,6 +17,8 @@ class FakeSync : BroadcastReceiver() {
             putDouble("readiness", intent.getFloatExtra("readiness", 92f).toDouble())
             putInt("alerts", alerts)
             putInt("warns", warns)
+            putInt("running", intent.getIntExtra("running", 0))
+            putInt("needsYou", intent.getIntExtra("needsYou", 0))
             putString("headline", intent.getStringExtra("headline") ?: if (alerts + warns == 0) "All clear" else "$alerts alerts · $warns warnings")
             putString("revenue", intent.getStringExtra("revenue") ?: "$184")
             putInt("sales", intent.getIntExtra("sales", 3))
