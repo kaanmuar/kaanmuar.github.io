@@ -963,6 +963,15 @@
     "checked": "2026-11-15T17:04:54.413Z"
    },
    {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18153544891554642",
+    "at": "2026-11-15T21:56:09.809Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Dfxy_mRiF39/",
+    "checked": "2026-11-15T21:57:01.878Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "18153788194514943",
@@ -1518,12 +1527,21 @@
   ],
   "launch-2026-10/pt/a11y": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2eywz5ltv2o",
+    "at": "2026-11-15T21:55:57.570Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2eywz5ltv2o",
+    "checked": "2026-11-15T21:55:58.917Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-15T17:04:54.413Z",
+    "at": "2026-11-15T21:57:02.030Z",
     "result": "failed",
     "error": "no feed image media/social-posts/launch-2026-10/pt/a11y-story.jpg",
-    "checked": "2026-11-15T17:04:54.414Z"
+    "checked": "2026-11-15T21:57:02.030Z"
    },
    {
     "channel": "instagram",
@@ -1533,6 +1551,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/p/DfxRmaBIGcM/",
     "checked": "2026-11-15T17:04:37.256Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18082635092721672",
+    "at": "2026-11-15T21:55:59.608Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Dfxy9igGN8c",
+    "checked": "2026-11-15T21:56:09.177Z"
    }
   ],
   "promo-social-hub-2026-10/01-one-page-en": [
