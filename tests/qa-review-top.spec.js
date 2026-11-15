@@ -883,7 +883,8 @@ test.describe('Form errors in the page language (#2837)', () => {
       await expect(page.locator('#form-status')).toHaveText(say('nameNeeded'));
 
       await page.locator('#name').fill('Ana');
-      await page.locator('#soft-unlock-btn').click();
+      // Unlock closed the soft-preview dash to show the name error; soft-run again then Unlock.
+      await softThenUnlock(page, expect);
       await expect(page.locator('#email-error')).toHaveText(say('mailDead'));
       await expect(page.locator('#url-error')).toHaveText(say('urlPrivate'));
       await expect(page.locator('#form-status')).toHaveText(say('mailDead'));
