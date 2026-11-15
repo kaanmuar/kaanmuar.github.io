@@ -27,6 +27,7 @@ const crypto = require("crypto");
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
 const Card = require("./report-card");
+const P = require("./engagement-profiles");
 
 const HOUR = 3600000;
 const CHAIN_DAYS = 7;
@@ -610,20 +611,31 @@ async function sendReply(deps, c, task) {
   const r = task.doc.actions.reply;
   const tries = (r.tries || 0) + 1;
   const at = new Date(deps.now).toISOString();
-  const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const had = (task.doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
+    let doc = task.doc;
+    if (P.needsLatest(doc)) {
+      const bound = await P.bindLatest(deps.fetch, doc, deps.now);
+      if (!bound) {
+        await task.ref.update({ "actions.reply.status": "failed", "actions.reply.at": at, "actions.reply.error": "No post of theirs in the last year on their profile.", "actions.reply.tries": tries, updatedAt: at });
+        await count(deps, doc.network, "failed");
+        return { status: "failed", error: "No post of theirs in the last year on their profile." };
+      }
+      await task.ref.update(Object.assign({}, bound.patch, { updatedAt: at }));
+      doc = bound.doc;
+    }
+    const d = Object.assign({ key: task.key }, doc);
+    const had = (doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
     if (had) {
       await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
-      await count(deps, task.doc.network, "already");
+      await count(deps, doc.network, "already");
       return { status: "replied", url: had.url || "" };
     }
-    const card = await drawCard(deps, task.doc);
-    const out = await c.reply(d, r.draft, r.lang || task.doc.lang, card.card);
+    const card = await drawCard(deps, doc);
+    const out = await c.reply(d, r.draft, r.lang || doc.lang, card.card);
     await task.ref.update(Object.assign({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at },
-      cardFields(task.doc, out.card === "attached", card.error || out.cardError)));
-    await count(deps, task.doc.network, "posted");
-    if (task.doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
+      cardFields(doc, out.card === "attached", card.error || out.cardError)));
+    await count(deps, doc.network, "posted");
+    if (doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
     return { status: "posted", url: out.url || "" };
   } catch (error) {
     const last = !error.fatal && tries >= MAX_TRIES;

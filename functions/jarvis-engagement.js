@@ -469,25 +469,8 @@ async function rerunPass(deps, conf) {
   return out;
 }
 
-/** A profile's recent posts as engagement-sources maps them: Bluesky and Mastodon through their public APIs, [] elsewhere. */
-async function profilePosts(f, p) {
-  const get = async (url) => {
-    const res = await f(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) });
-    if (!res.ok) throw new Error(url.split("/")[2] + " answered " + res.status);
-    return res.json();
-  };
-  if (p.network === "bluesky") {
-    const got = await get("https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?filter=posts_no_replies&limit=10&actor=" + encodeURIComponent(p.handle));
-    return (got.feed || []).filter((x) => x && x.post && !x.reason).map((x) => Sources.blueskyPost(x.post));
-  }
-  if (p.network === "mastodon") {
-    const [user, host] = p.handle.split("@");
-    const acct = await get("https://" + host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(user));
-    const list = await get("https://" + host + "/api/v1/accounts/" + encodeURIComponent(acct.id) + "/statuses?exclude_replies=true&exclude_reblogs=true&limit=10");
-    return (Array.isArray(list) ? list : []).map(Sources.mastodonPost);
-  }
-  return [];
-}
+/** A profile's recent posts (Bluesky, Mastodon, YouTube); see engagement-profiles.profilePosts. */
+const profilePosts = (f, p) => P.profilePosts(f, p);
 
 /** The site's homepage HTML, or "" when it does not answer with a page. */
 async function homepage(f, host) {
@@ -555,11 +538,11 @@ async function profilePass(deps, conf) {
       let post = null;
       if (P.API_NETS.includes(pr.network)) {
         const calm = Object.assign({}, conf, { maxAgeHours: P.FRESH_DAYS * 24 });
-        try { post = P.latestOf(await profilePosts(deps.fetch, pr), now, (p) => !E.guard(p, calm, now)); } catch (error) { out.errors[pr.network] = String(error.message || error).slice(0, 160); }
+        try { post = P.latestOf(await profilePosts(deps.fetch, pr), now, (x) => !E.guard(x, calm, now)); } catch (error) { out.errors[pr.network] = String(error.message || error).slice(0, 160); }
       }
       const lang = post && E.LANGS.includes(String(post.lang || "").slice(0, 2)) ? String(post.lang).slice(0, 2) : t.lang;
       items.push({
-        key: E.keyOf(pr.network, "profile:" + t.host + ":" + touch + ":" + (post ? post.id : pr.url)), network: pr.network, mode: post ? "reply" : "copy", post, profile: pr,
+        key: E.keyOf(pr.network, "profile:" + t.host + ":" + touch + ":" + (post ? post.id : pr.url)), network: pr.network, mode: post ? "reply" : "latest", post, profile: pr,
         target: t, touch, tone: P.toneOf(touch), lang, offer: { code, percent: Offer.PERCENT, days: Offer.WINDOW_DAYS }, profiles
       });
     }
@@ -609,6 +592,8 @@ async function scout(deps) {
 
   let acted = {};
   let actError = "";
+  let promoted = 0;
+  try { promoted = await promoteCopies(db, now); } catch (error) { /* next scout retries */ }
   try { acted = await Act.carryOut(deps, conf); } catch (error) { actError = String(error.message || error).slice(0, 200); }
   const sum = (k) => Object.values(acted).reduce((a, x) => a + (x[k] || 0), 0);
   let chains;
@@ -618,7 +603,7 @@ async function scout(deps) {
     at: new Date(now).toISOString(), ms: Date.now() - started, paused: conf.paused, live: conf.live, read: read.read, errors: read.errors, skipped: read.skipped,
     candidates: took.candidates, fresh: took.fresh, updated: took.updated, risen: took.risen, asked: took.asked, aiError: took.aiError,
     engaged: took.engaged, drafted: took.drafted, pushed: took.pushed, expired,
-    done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), acted, actError,
+    done: sum("done"), dry: sum("dry"), missed: sum("missed"), posted: sum("posted"), already: sum("already"), actFailed: sum("failed"), promoted, acted, actError,
     reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
     profiles: { checked: profiles.checked, sites: profiles.sites, profiles: profiles.profiles, drafted: profiles.drafted, pushed: profiles.pushed, aiError: profiles.aiError, errors: profiles.errors, error: profiles.error || "" },
     reruns: { changed: reruns.changed, drafted: reruns.drafted, pushed: reruns.pushed, again: reruns.again.map((t) => t.host), error: reruns.error || "" },
@@ -760,7 +745,21 @@ async function decideDm(deps, key, body, by) {
   return { key, status: "approved", message: (out.d.counter === "dm_edited" ? "Your version is approved" : "Approved") + "; the Mac's browser sends the DM on " + name + " on its next run, within today's DM cap." };
 }
 
-/** Approve, edit or dismiss a waiting reply, or a waiting DM (what: "dm"). */
+/**
+ * Profile-campaign messages Carlos already approved as a clipboard copy (#3461 → #2615): turn them into approved so
+ * the next scout (API) or Mac run posts them under the profile's latest post.
+ */
+async function promoteCopies(db, now) {
+  const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "copy").limit(50).get();
+  if (!snap.docs.length) return 0;
+  const at = new Date(now).toISOString();
+  const batch = db.batch();
+  snap.docs.forEach((d) => batch.update(d.ref, { "actions.reply.status": "approved", "actions.reply.promotedAt": at, updatedAt: at }));
+  await batch.commit();
+  return snap.docs.length;
+}
+
+/** Approve, edit or dismiss a waiting reply, or a waiting DM (what: "dm"). Approve always queues or sends; never copies to paste (#3461). */
 async function decide(deps, body, by) {
   const { db, now, inc } = deps;
   const key = String((body && (body.key || body.id)) || "");
@@ -772,20 +771,20 @@ async function decide(deps, body, by) {
     if (!snap.exists) throw new Error("That post is gone.");
     const doc = snap.data();
     const d = E.decideReply(doc, String(body.decision || ""), body.text, String(by || ""), now);
-    const copy = !!(doc.report && doc.report.manual) && d.reply.status === "approved";
-    if (copy) d.reply.status = "copy";
     tx.update(ref, { "actions.reply": d.reply, updatedAt: new Date(now).toISOString() });
-    return { network: doc.network, via: doc.via || "", invite: doc.campaign === R.CAMPAIGN, d, copy, profile: (doc.report || {}).profile || doc.url || "" };
+    return { network: doc.network, via: doc.via || "", invite: doc.campaign === R.CAMPAIGN, d, latest: P.needsLatest(doc), profile: (doc.report || {}).profile || doc.url || "" };
   });
   await db.collection("engagement_daily").doc(E.bogotaDay(now)).set(increments(Object.assign({ n: { [out.network]: { [out.d.counter]: 1 } }, decided: 1, decideMs: out.d.waited }, out.invite ? { report: { [out.d.counter]: 1 } } : {}), inc), { merge: true });
   const net = E.NETWORKS[out.network] || {};
   const name = net.name || out.network;
   if (out.d.counter === "dismissed") { await clearCache(db); return { key, status: "dismissed", message: "Dismissed." }; }
   const said = out.d.counter === "edited" ? "Your version is approved" : "Approved";
-  if (out.copy) { await clearCache(db); return { key, status: "copy", url: out.profile, text: out.d.reply.draft, message: said + "; paste it on " + name + " at " + out.profile + "." }; }
   const carrier = E.carrier(Object.assign({ network: out.network }, out.via ? { via: out.via } : {}));
   if (carrier === "devvit") { await clearCache(db); return { key, status: "approved", message: said + "; the Reddit app posts it with its next hourly upload, usually within two hours." }; }
-  if (carrier === "mac") { await clearCache(db); return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + " on its next run (every 30 minutes, 7:00 to 22:00)." }; }
+  if (carrier === "mac") {
+    await clearCache(db);
+    return { key, status: "approved", message: said + "; the Mac's browser agent posts it on " + name + (out.latest ? " under their latest post" : "") + " on its next run (every 30 minutes, 7:00 to 22:00)." };
+  }
   if ((await readSettings(db)).paused) { await clearCache(db); return { key, status: "approved", message: said + "; engagement is paused, so it goes out on " + name + " when you resume." }; }
   const sent = await Act.replyNow(deps, key).catch((error) => ({ status: "approved", error: error.message }));
   await clearCache(db);
@@ -933,4 +932,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, expire, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, expire, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, promoteCopies, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
