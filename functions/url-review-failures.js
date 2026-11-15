@@ -28,6 +28,7 @@ const FIXES = [
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
   { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
   { cause: "tls", at: "2026-11-06T07:45:04Z", ref: "#2744", label: "A certificate whose issuer is also missing is read by following each AIA address until a trusted root" },
+  { cause: "connection", at: "2026-11-09T07:48:08Z", ref: "#2869", label: "A site that hangs up the plain request is read in headless Chrome" },
   { cause: "browser", at: "2026-11-09T12:37:32Z", ref: "#2876", label: "A page that moves itself on after it loaded is read again once it settles" },
   { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
   { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
