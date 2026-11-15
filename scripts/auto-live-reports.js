@@ -165,18 +165,32 @@ function copyFor(report, recent) {
   if (!gap) {
     return { key: "", title: [head, "*Nothing failed.*"], tags: ["QA", "WebDev", "SEO"],
       body: [sentence(good[0] && good[0].title), sentence(good[1] && good[1].title), "No check failed on the pages analyzed."].filter(Boolean).join(" "),
-      action: "Keep the review in your release checklist, so the next change keeps it that way." };
+      action: "Keep the review in your release checklist, so the next change keeps it that way.",
+      fixLines: ["// Nothing failed on the pages analyzed", "// Keep the review in your release checklist"] };
   }
   const lesson = LESSONS[gap.key];
   const strengths = good.map((g) => live.scrub(g.title, 90).replace(/\.$/, ""));
   const lead = strengths.length === 2 ? strengths[0] + ", and " + lower(strengths[1]) + "." : strengths.length ? strengths[0] + "." : "";
+  const action = lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.";
   return {
     key: gap.key,
     title: [head, "*The gap: " + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + ".*"],
     body: (lead ? lead + " But " + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
-    action: lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.",
-    tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3)
+    action,
+    tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3),
+    // Short lines for the carousel code slide (#3476); never paste URLs into the graphic.
+    fixLines: fixLinesFor(gap, action)
   };
+}
+
+function fixLinesFor(gap, action) {
+  const raw = String((gap && gap.fix) || "").trim();
+  if (raw && !/https?:\/\//i.test(raw) && raw.length <= 280) {
+    const lines = raw.split(/\n/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length) return lines.slice(0, 6);
+  }
+  const title = live.scrub((gap && gap.title) || "top finding", 48);
+  return ["// Gap: " + title, String(action || "").slice(0, 72)].filter(Boolean);
 }
 
 // The leader overall, and for each area which site leads it.
@@ -277,7 +291,8 @@ async function main() {
     const score = report.insights.score;
     batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope,
       fetchedAt: report.fetchedAt, pages: report.limits.pagesRead, overall: score.overall,
-      areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])) });
+      areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])),
+      fixLines: copy.fixLines || [] });
     state.posted = Object.assign(state.posted || {}, { [host]: today });
     if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
   }
