@@ -153,8 +153,8 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "gh-close-issue" -> "close issue #$pr"
     "gh-remove-worktree" -> "remove the merged worktree ${job ?: ""} on the Mac (the uploader does it, never forced)".replace("  ", " ")
     "gh-agent" -> "launch a fix agent, Jarvis's worker or Cursor (it opens a PR)"
-    "gh-quarantine" -> "file a Backlog bug \"${job ?: ""}\" in area:ci, with links to its runs"
-    "gh-security-ticket" -> "file a Backlog bug for ${job ?: "the alert"}"
+    "gh-quarantine" -> "file a Backlog bug \"${job ?: ""}\" in area:ci, with links to its runs (Jarvis also does this on its own for flaky workflows)"
+    "gh-security-ticket" -> "file a Backlog bug for ${job ?: "the alert"} (Jarvis also does this on its own for critical/high alerts)"
     "gh-dismiss-low" -> "dismiss ${pr ?: 0} low security alert${if (pr == 1) "" else "s"} on GitHub as a tolerable risk (code scanning ones as won't fix)"
     else -> "run ${job ?: "the job"} again"
 }

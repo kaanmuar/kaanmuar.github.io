@@ -6504,7 +6504,8 @@ function jarvisAutoOps(settings, now, th) {
       return {
         jobs: Array.from(scheduler), workflows: (await out.failedCi().catch(() => [])).filter((r) => r.branch === "main").map((r) => r.name),
         github: { drift: t.drift.map((d) => d.number), orphans: t.orphans.map((p) => p.number), behind: t.behind.map((p) => p.number), green: t.green.map((p) => p.number),
-          mainBroken: t.mainBroken.map((m) => m.sha), merged: t.merged.map((b) => b.name).slice(0, 30), worktrees: t.worktrees.map((w) => w.path) }
+          mainBroken: t.mainBroken.map((m) => m.sha), merged: t.merged.map((b) => b.name).slice(0, 30), worktrees: t.worktrees.map((w) => w.path),
+          flaky: t.flaky.map((w) => w.name), security: t.security.map((a) => a.number) }
       };
     },
     githubWork: async () => (await jarvisExternal(["github-work"], 1))["github-work"] || null,
@@ -6912,6 +6913,24 @@ async function jarvisGithubDo(action, args, now) {
       a.alerts = ["dependabot", "codeScanning"].flatMap((kind) => ((sec[kind] || {}).items || []).filter((i) => i.severity === "low").map((i) => ({ kind, repo: i.repo, number: i.number })));
     }
     return jarvisGithubFix.dismissLow(ctx, a);
+  }
+  if (action === "gh-quarantine") {
+    if (!a.workflow) {
+      const flaky = (await jarvisGithubTargets()).flaky;
+      if (!flaky.length) return { ok: false, message: "No workflow is flaky enough to quarantine." };
+      a.workflow = flaky[0].name;
+      Object.assign(a, { pct: flaky[0].pct, runs: flaky[0].runs, path: flaky[0].path, links: flaky[0].links });
+    }
+    return jarvisGithubFix.quarantine(ctx, a);
+  }
+  if (action === "gh-security-ticket") {
+    if (!a.kind) {
+      const list = (await jarvisGithubTargets()).security;
+      const hit = a.number ? list.find((i) => i.number === a.number) : list[0];
+      if (!hit) return { ok: false, message: a.number ? "Alert #" + a.number + " is not open at critical/high (or as a secret) now." : "No critical or high security alert is open." };
+      Object.assign(a, hit, { pr: hit.pr && hit.pr.number ? hit.pr.number : a.pr });
+    }
+    return jarvisGithubFix.securityTicket(ctx, a);
   }
   if (JARVIS_GH_FIX[action]) return jarvisGithubFix[JARVIS_GH_FIX[action]](ctx, a);
   throw new Error("Unknown GitHub action.");
