@@ -47,6 +47,10 @@
   "text": "⟦1⟧ lidera em SEO, Analytics, Segurança, Desempenho; ⟦2⟧ lidera em GEO, Acessibilidade.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Analytics, Security, Performance; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ lidera em SEO, Analytics, Segurança, Desempenho; ⟦2⟧ leads em GEO; ⟦3⟧ lidera em Acessibilidade.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
   "text": "⟦1⟧ leads em SEO, Analytics; ⟦2⟧ lidera em GEO, Segurança, Acessibilidade, Desempenho.",
   "machine": true

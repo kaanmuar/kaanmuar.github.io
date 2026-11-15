@@ -204,6 +204,23 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La recherche IA lit votre HTML, pas votre app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-fr.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-fr</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Conseil</category>
+      <category>GEO</category>
+      <description>Beaucoup de moteurs de réponse n’exécutent pas JavaScript. Si vos informations clés n’apparaissent qu’après le chargement des scripts, elles risquent de n’être jamais lues ni citées.
+
+À essayer aujourd’hui : Affichez le code source de votre page d’accueil. Peut-on voir ce que vous vendez et pour qui, sans exécuter de scripts ?
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>2 concurrents naturels. vivastreet.ie est en tête : 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie-fr.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie-fr</guid>
@@ -356,7 +373,9 @@ La leçon : Deux totaux proches peuvent cacher des forces opposées. Comparez do
 
 Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=newspapers
 
-#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab</description>
+#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab
+
+https://www.youtube.com/shorts/eblouNqyjbo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" length="243773" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -985,25 +1004,6 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
 https://www.youtube.com/shorts/IuyAgA1qTQk</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" length="241108" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/01-quiz-medellin-universities.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>INP : la vitesse à laquelle la page répond à un toucher.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-fr.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/09-inp-fr</guid>
-      <pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glossaire</category>
-      <category>Perf</category>
-      <description>Mot du jour : INP : la vitesse à laquelle la page répond à un toucher.
-
-L'Interaction to Next Paint mesure le délai entre un clic, un toucher ou une touche et la prochaine image à l'écran. Il a remplacé le First Input Delay comme Core Web Vital en mars 2024.
-
-Repérez-le : Trouvez le toucher le plus lent de votre page, souvent un menu ou un filtre, et découpez la longue tâche qui se cache derrière.
-
-Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
-
-#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" length="230316" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

@@ -51,6 +51,10 @@
   "text": "⟦1⟧ líderes en SEO, análisis, seguridad, rendimiento; ⟦2⟧ lidera en GEO, Accesibilidad.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Analytics, Security, Performance; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ líderes en SEO, análisis, seguridad, rendimiento; ⟦2⟧ lidera en GEO; ⟦3⟧ lidera en Accesibilidad.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
   "text": "⟦1⟧ clientes potenciales en SEO, análisis; ⟦2⟧ lidera en GEO, Seguridad, Accesibilidad, Rendimiento.",
   "machine": true
@@ -134,6 +138,10 @@
  },
  "⟦1⟧ Playwright MCP calls in a month and almost none were tests.": "⟦1⟧ llamadas a Playwright MCP en un mes y casi ninguna eran pruebas.",
  "⟦1⟧ points AI crawlers to Markdown versions of pages, port ⟦2⟧ is closed, and the CSP starts at default-src 'self'.": "⟦1⟧ dirige a los rastreadores de IA a versiones en Markdown de las páginas, el puerto ⟦2⟧ está cerrado y la CSP parte de default-src 'self'.",
+ "⟦1⟧ Prompt Tracking Mistakes — Whiteboard Friday": {
+  "text": "⟦1⟧ Errores de seguimiento rápido: viernes de pizarra",
+  "machine": true
+ },
  "⟦1⟧ reads well.": "⟦1⟧ se lee bien.",
  "⟦1⟧ receives mail, but has no SPF.": "⟦1⟧ recibe correo, pero no tiene SPF.",
  "⟦1⟧ runs without descriptions.": "⟦1⟧ funciona sin descripciones.",
@@ -195,6 +203,10 @@
  },
  "• Text with too little color contrast:": {
   "text": "• Texto con muy poco contraste de color:",
+  "machine": true
+ },
+ "`If your team clicks Re-run failed jobs more than once a week, your end-to-end suite has stopped...": {
+  "text": "`Si su equipo hace clic en Volver a ejecutar trabajos fallidos más de una vez por semana, su suite de un extremo a otro se ha detenido...",
   "machine": true
  },
  "🎃 The cursed alt text:": "🎃 El texto alternativo maldito:",
@@ -432,6 +444,10 @@
  "AI answers use it to name the site.": "Las respuestas con IA lo usan para nombrar el sitio.",
  "AI answers use it to name you.": "Las respuestas con IA lo usan para nombrarte.",
  "AI answers use them to say who runs the site.": "Las respuestas con IA los usan para decir quién gestiona el sitio.",
+ "AI Bot Management:": {
+  "text": "Gestión de robots de IA:",
+  "machine": true
+ },
  "AI can check an ACR, not write it": "La IA puede revisar un ACR, no escribirlo",
  "AI crawler access.": "Acceso de rastreadores de IA.",
  "AI crawlers and slow phones read HTML first.": "Los rastreadores de IA y los móviles lentos leen primero el HTML.",
@@ -532,6 +548,10 @@
  "Any site can frame Harvard's pages.": "Cualquier sitio puede enmarcar las páginas de Harvard.",
  "Any site can frame it.": "Cualquier sitio puede enmarcarlo.",
  "Anyone can frame Metroplús pages.": "Cualquiera puede enmarcar las páginas de Metroplús.",
+ "Are you measuring AI visibility wrong?": {
+  "text": "¿Estás midiendo mal la visibilidad de la IA?",
+  "machine": true
+ },
  "ARIA roles.": {
   "text": "Roles ARIA.",
   "machine": true
@@ -625,6 +645,10 @@
  "Block training crawlers if you choose, but allow user-triggered agents.": "Bloquea los rastreadores de entrenamiento si quieres, pero permite los agentes que activa el usuario.",
  "Blocking a search crawler removes you from every product built on its index.": "Bloquear un rastreador de búsqueda te saca de todos los productos construidos sobre su índice.",
  "Blocking AI training and blocking AI answers are separate choices.": "Bloquear el entrenamiento de IA y bloquear las respuestas con IA son decisiones distintas.",
+ "Blocking an AI training crawler isn’t the same as blocking a retrieval bot.": {
+  "text": "Bloquear un rastreador de entrenamiento de IA no es lo mismo que bloquear un robot de recuperación.",
+  "machine": true
+ },
  "Blocking them by accident and allowing them on purpose are both one line.": "Bloquearlos por accidente y permitirlos a propósito es, en ambos casos, una sola línea.",
  "Bogotá ⟦1⟧, Medellín ⟦2⟧.": "Bogotá ⟦1⟧, Medellín ⟦2⟧.",
  "Bogotá city hall:": "Alcaldía de Bogotá:",
@@ -1136,6 +1160,10 @@
  "CVC runs two hosts with two canonicals.": "La CVC usa dos hosts con dos canonicals.",
  "Cypress ⟦1⟧ adds cy.getByRole(), a built-in query that finds elements by role and accessible name.": "Cypress ⟦1⟧ incorpora cy.getByRole(), una consulta integrada que encuentra elementos por rol y nombre accesible.",
  "Cypress Ambassador Spotlight:": "Ambassador Spotlight de Cypress:",
+ "Cypress runs each test in one tab, so flows that open a new tab or popup have been hard to test. ⟦1⟧/puppeteer ⟦2⟧ is now generally available, with a stable API, Puppeteer v24, and a new multi-tab testing guide.": {
+  "text": "Cypress ejecuta cada prueba en una pestaña, por lo que los flujos que abren una nueva pestaña o ventana emergente han sido difíciles de probar. ⟦1⟧/puppeteer ⟦2⟧ ahora está disponible de forma generalizada, con una API estable, Puppeteer v24 y una nueva guía de prueba de varias pestañas.",
+  "machine": true
+ },
  "CypressConf ⟦1⟧ is a wrap!": {
   "text": "¡CypressConf ⟦1⟧ es un resumen!",
   "machine": true
@@ -1274,6 +1302,10 @@
  "El País or Le Monde: which newspaper site scored higher?": "El País o Le Monde: ¿qué sitio de periódico obtuvo más puntos?",
  "El País sends no security headers.": "El País no envía cabeceras de seguridad.",
  "El Tiempo still loads a retired UA tag.": "El Tiempo aún carga una etiqueta UA retirada.",
+ "Eleven small UI changes compared against one baseline under five option sets: which ones pass, why a changed button colour passes and a changed digit fails.": {
+  "text": "Once pequeños cambios en la interfaz de usuario se comparan con una línea de base en cinco conjuntos de opciones: cuáles pasan, por qué se pasa un cambio de color de botón y por qué un dígito cambiado falla.",
+  "machine": true
+ },
  "Emit exactly one canonical per page.": "Emite exactamente un canonical por página.",
  "Emoji and Accessibility:": {
   "text": "Emoji y accesibilidad:",
@@ -1637,6 +1669,10 @@
   "text": "Aquí es donde está la verdadera oportunidad a través de ⟦1⟧, ⟦2⟧",
   "machine": true
  },
+ "Here’s why SEO needs deliberate bot policies, not block lists.": {
+  "text": "He aquí por qué el SEO necesita políticas de bots deliberadas, no listas de bloqueo.",
+  "machine": true
+ },
  "Here’s why that matters, and how to move off Cypress Testing Library.": "Te explicamos por qué es importante y cómo dejar Cypress Testing Library.",
  "Hermes brain, Kali + Playwright tools over MCP, ATT&CK as the Orient language.": {
   "text": "Cerebro de Hermes, herramientas Kali + Dramaturgo sobre MCP, ATT&CK como lenguaje de Oriente.",
@@ -1789,8 +1825,20 @@
   "text": "Creé una plataforma de blogs Markdown y HTML sin formato con puntuación ⟦1⟧ en PageSpeed",
   "machine": true
  },
+ "I built QAFind — a red Playwright build should mean a real bug": {
+  "text": "Construí QAFind: una compilación de Playwright roja debería significar un error real",
+  "machine": true
+ },
  "I got tired of babysitting Playwright, so I turned it into a small render API": {
   "text": "Me cansé de cuidar a Playwright, así que lo convertí en una pequeña API de renderizado.",
+  "machine": true
+ },
+ "I have a weird obsession with making stuff run faster, even when it seems practically impossible to...": {
+  "text": "Tengo una extraña obsesión con hacer que las cosas funcionen más rápido, incluso cuando parece prácticamente imposible...",
+  "machine": true
+ },
+ "I made Playwright ⟦1⟧x faster 🔥": {
+  "text": "Hice Dramaturgo ⟦1⟧x más rápido 🔥",
   "machine": true
  },
  "I matched ⟦1⟧ users across two Datos panels to compare how each user searched with Google and LLMs and understand how we need to track prompts differently than keywords.": "Emparejé a ⟦1⟧ usuarios de dos paneles de Datos para comparar cómo buscaba cada uno en Google y en los LLMs, y entender cómo debemos hacer seguimiento de los prompts de forma distinta a las palabras clave.",
@@ -2181,6 +2229,10 @@
  "Mozilla:": "Mozilla:",
  "MSC:": "MSC:",
  "MSF serves every page without HSTS.": "MSF sirve todas sus páginas sin HSTS.",
+ "Multi-tab testing in Cypress: ⟦1⟧/puppeteer ⟦2⟧ is generally available": {
+  "text": "Pruebas de pestañas múltiples en Cypress: ⟦1⟧/titiritero ⟦2⟧ está generalmente disponible",
+  "machine": true
+ },
  "My agent has two Playwrights": "Mi agente tiene dos Playwright",
  "myGov links through its CMS paths.": "myGov enlaza a través de sus rutas del CMS.",
  "Myth vs fact card.": "Tarjeta de mito vs. realidad.",
@@ -2762,6 +2814,10 @@
   "text": "Vea un caso completo y su solución en nuestro informe de muestra:",
   "machine": true
  },
+ "See what changed and how to upgrade from ⟦1⟧.x.": {
+  "text": "Vea qué cambió y cómo actualizar desde ⟦1⟧.x.",
+  "machine": true
+ },
  "See your page the way Googlebot does.": "Mira tu página como la ve Googlebot.",
  "Seeing a vertical jump in Search Console clicks?": {
   "text": "¿Ves un salto vertical en los clics de Search Console?",
@@ -3134,6 +3190,10 @@
   "text": "La publicación “F*** palabras clave” – Bueno, ¿con qué las estás reemplazando? apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
+ "The post AI Bot Management:": {
+  "text": "La publicación Gestión de bots de IA:",
+  "machine": true
+ },
  "The post AI Knows Your Brand – It Rarely Puts You On The Shortlist appeared first on Search Engine Journal .": {
   "text": "La publicación La IA conoce su marca: rara vez lo coloca en la lista corta apareció por primera vez en Search Engine Journal.",
   "machine": true
@@ -3396,6 +3456,10 @@
  },
  "Today, we're announcing our plans to support a shared AI training control in ⟦1⟧.": "Hoy anunciamos nuestros planes para admitir un control compartido de entrenamiento de IA en ⟦1⟧.",
  "Tolima's ⟦1⟧ shuts out AI answers.": "El ⟦1⟧ del Tolima deja fuera las respuestas con IA.",
+ "Tom Capper reveals the ⟦1⟧ biggest mistakes in AI prompt tracking and ⟦2⟧ creative ways to expand your list of prompts.": {
+  "text": "Tom Capper revela los ⟦1⟧ errores más grandes en el seguimiento de mensajes de IA y ⟦2⟧ formas creativas de ampliar su lista de mensajes.",
+  "machine": true
+ },
  "Training bots and answer bots are separate user-agents, so each can get its own rule.": "Los bots de entrenamiento y los de respuestas son user-agents distintos, así que cada uno puede tener su propia regla.",
  "Transcaribe reorders the keyboard path.": "Transcaribe altera el recorrido con teclado.",
  "Translate the title and description too, so each language version names itself.": "Traduce también el título y la descripción, para que cada versión de idioma se nombre a sí misma.",
@@ -3531,6 +3595,10 @@
   "text": "Vía DEV, por Chris Clow, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by codebeast, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por codebeast, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Craig Morten, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, de Craig Morten, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3562,6 +3630,10 @@
  },
  "Via DEV, by Kabir Hossain, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Kabir Hossain, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via DEV, by Kate Sai kishore, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Kate Sai kishore, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via DEV, by KindProxy, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -3832,6 +3904,10 @@
  },
  "What it lacks is a content security policy: none of the pages analyzed sends one.": "Lo que le falta es una política de seguridad de contenido: ninguna de las páginas analizadas envía una.",
  "What people see there is your real first impression.": "Lo que la gente ve ahí es tu verdadera primera impresión.",
+ "What Playwright's toHaveScreenshot() default lets through: threshold, maxDiffPixels and ratio tested on ⟦1⟧ changes": {
+  "text": "Lo que permite pasar el valor predeterminado toHaveScreenshot() de Playwright: umbral, maxDiffPixels y relación probada en ⟦1⟧ cambios",
+  "machine": true
+ },
  "What Playwright's waits guarantee before a screenshot: load, networkidle, ⟦1⟧ and lazy images, tested": {
   "text": "Lo que garantizan las esperas de Playwright antes de una captura de pantalla: carga, red inactiva, ⟦1⟧ e imágenes diferidas, probadas",
   "machine": true
@@ -3880,6 +3956,14 @@
  "Whether captions come from an automatic tool or a professional service, this article explains why evaluating the finished viewing experience is essential for people who rely on captions.": "Ya sea que los subtítulos provengan de una herramienta automática o de un servicio profesional, este artículo explica por qué evaluar la experiencia de visualización final es esencial para las personas que dependen de los subtítulos.",
  "WHO welcomes AI answer crawlers and its pages read well without JavaScript:": "La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript:",
  "WHO's fact sheets end in a stray semicolon.": "Las notas descriptivas de la OMS acaban en un punto y coma suelto.",
+ "Why SEOs Need More Than Block Lists appeared first on Search Engine Journal .": {
+  "text": "Por qué los SEO necesitan más que listas de bloqueo apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "Why SEOs Need More Than Block Lists via ⟦1⟧, ⟦2⟧": {
+  "text": "Por qué los SEO necesitan más que listas de bloqueo a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
  "Why we replaced a CRUD exercise with a real-work simulation, injected failures with MSW, and auto-graded submissions with E2E tests in CI.": "Por qué reemplazamos un ejercicio CRUD por una simulación de trabajo real, inyectamos fallos con MSW y calificamos automáticamente las entregas con pruebas E2E en CI.",
  "Why Your Org Isn’t Ready for a Platform-Only Approach to AI Search": {
   "text": "Por qué su organización no está preparada para un enfoque exclusivo de plataforma para la búsqueda con IA",

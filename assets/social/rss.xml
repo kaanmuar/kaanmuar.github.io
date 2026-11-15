@@ -204,6 +204,23 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>AI search reads your HTML, not your app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>GEO</category>
+      <description>Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
+
+Try this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>2 natural competitors. vivastreet.ie leads: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie</guid>
@@ -356,7 +373,9 @@ Lesson: Two close totals can hide opposite strengths. Compare area by area befor
 
 How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=newspapers
 
-#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab</description>
+#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab
+
+https://www.youtube.com/shorts/eblouNqyjbo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" length="243773" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -378,6 +397,90 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #EmailSecurity #Vulnerability #Phishing #QA #DMARC #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/15-dmarc.jpg" length="232637" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/15-dmarc.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>4 Prompt Tracking Mistakes — Whiteboard Friday</title>
+      <link>https://carlosandmunoz.com/social/pick/4-prompt-tracking-mistakes-whiteboard-friday.html</link>
+      <guid isPermaLink="false">pick/4-prompt-tracking-mistakes-whiteboard-friday</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Are you measuring AI visibility wrong? Tom Capper reveals the 4 biggest mistakes in AI prompt tracking and 4 creative ways to expand your list of prompts.
+
+Via Moz, by Tom Capper, 2026-11-13.
+
+https://moz.com/blog/prompt-tracking-mistakes-whiteboard-friday</description>
+      <media:content url="https://moz.com/images/blog/WBF/4-Prompt-Tracking-Mistakes/4-Prompt-Tracking-Mistakes-YT_Thumbnail.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1774531906&amp;s=1a802015398267b1dc571f163e960f2d" medium="image"/>
+    </item>
+    <item>
+      <title>AI Bot Management: Why SEOs Need More Than Block Lists via @sejournal, @chrisgreenseo</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se.html</link>
+      <guid isPermaLink="false">pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Blocking an AI training crawler isn’t the same as blocking a retrieval bot. Here’s why SEO needs deliberate bot policies, not block lists. The post AI Bot Management: Why SEOs Need More Than Block Lists appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Chris Green, 2026-11-13.
+
+https://www.searchenginejournal.com/ai-bot-management-why-seos-need-more-than-block-lists/597148/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/bot-management-410.png" medium="image"/>
+    </item>
+    <item>
+      <title>I built QAFind — a red Playwright build should mean a real bug</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug.html</link>
+      <guid isPermaLink="false">pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>`If your team clicks Re-run failed jobs more than once a week, your end-to-end suite has stopped...
+
+Via DEV, by Kate Sai kishore, 2026-11-11.
+
+https://dev.to/kate_saikishore_5d4d69ae/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-3hlm</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fbpyp6w7ld1z9vzswho6d.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>I made Playwright 3.5x faster 🔥</title>
+      <link>https://carlosandmunoz.com/social/pick/i-made-playwright-3-5x-faster.html</link>
+      <guid isPermaLink="false">pick/i-made-playwright-3-5x-faster</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>I have a weird obsession with making stuff run faster, even when it seems practically impossible to...
+
+Via DEV, by codebeast, 2026-11-13.
+
+https://dev.to/xcodebeast/i-made-playwright-35x-faster-d1f</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fr1dq79fbb060rw3y9cgs.gif" medium="image"/>
+    </item>
+    <item>
+      <title>Multi-tab testing in Cypress: @cypress/puppeteer 1.0 is generally available</title>
+      <link>https://carlosandmunoz.com/social/pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera.html</link>
+      <guid isPermaLink="false">pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>Cypress runs each test in one tab, so flows that open a new tab or popup have been hard to test. @cypress/puppeteer 1.0 is now generally available, with a stable API, Puppeteer v24, and a new multi-tab testing guide. See what changed and how to upgrade from 0.1.x.
+
+Via Cypress, by Jennifer Shehane, 2026-11-12.
+
+https://www.cypress.io/blog/cypress-puppeteer-ga/</description>
+      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/11/cypress-puppeteer-ga-header-1.png" medium="image"/>
+    </item>
+    <item>
+      <title>What Playwright's toHaveScreenshot() default lets through: threshold, maxDiffPixels and ratio tested on 11 changes</title>
+      <link>https://carlosandmunoz.com/social/pick/what-playwright-s-tohavescreenshot-default-lets-through-thre.html</link>
+      <guid isPermaLink="false">pick/what-playwright-s-tohavescreenshot-default-lets-through-thre</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>Eleven small UI changes compared against one baseline under five option sets: which ones pass, why a changed button colour passes and a changed digit fails.
+
+Via DEV, by CurlShot, 2026-11-13.
+
+https://dev.to/curlshot/what-playwrights-tohavescreenshot-default-lets-through-threshold-maxdiffpixels-and-ratio-3idp</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fyxiew8vomed8g9bwv5ue.png" medium="image"/>
     </item>
     <item>
       <title>The ICRC tests a CSP. Now it can enforce it.</title>
@@ -834,111 +937,6 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Myth: meta keywords still help you rank.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Myth vs fact</category>
-      <category>SEO</category>
-      <description>Myth vs fact: Myth: meta keywords still help you rank.
-
-Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.
-
-Check it: Search your templates for name=&quot;keywords&quot;. Remove it, and write a real description for each key page instead.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
-
-#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
-
-https://www.youtube.com/shorts/HipUbZf_TiA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Detecting Flaky Tests and Finding Their Root Causes with Strands Agents and Gemini</title>
-      <link>https://carlosandmunoz.com/social/pick/detecting-flaky-tests-and-finding-their-root-causes-with-str.html</link>
-      <guid isPermaLink="false">pick/detecting-flaky-tests-and-finding-their-root-causes-with-str</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>A few years ago (three years at most), one of the biggest challenges QA Engineers faced was: how do...
-
-Via DEV, by Alicia Marianne Gonçalves, 2026-11-10.
-
-https://dev.to/m4rri4nne/detecting-flaky-tests-and-finding-their-root-causes-with-strands-agents-and-gemini-4kan</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fo71gqwjons1kfrsun4y1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google Discovers Unexpected Patterns In AI Image Generation via @sejournal, @martinibuster</title>
-      <link>https://carlosandmunoz.com/social/pick/google-discovers-unexpected-patterns-in-ai-image-generation-.html</link>
-      <guid isPermaLink="false">pick/google-discovers-unexpected-patterns-in-ai-image-generation-</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Google analyzed millions of Nano Banana prompts and found how businesses are using it for marketing. The post Google Discovers Unexpected Patterns In AI Image Generation appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Roger Montti, 2026-11-11.
-
-https://www.searchenginejournal.com/google-discovers-unexpected-patterns-in-ai-image-generation/596745/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-nano-banana-314.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>I got tired of babysitting Playwright, so I turned it into a small render API</title>
-      <link>https://carlosandmunoz.com/social/pick/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a-.html</link>
-      <guid isPermaLink="false">pick/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a-</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Every small product I ship ends up needing one of two things: an Open Graph image, or a PDF of some...
-
-Via DEV, by Zakaria Tebani, 2026-11-11.
-
-https://dev.to/frameforge/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a-small-render-api-1da6</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Ffblixqi4xorpwn9z4b1r.png" medium="image"/>
-    </item>
-    <item>
-      <title>lowdevco/claude-seo: This is a Claude Code skill for comprehensive website analysis, audits, technical SEO, and AI search optimization. It analyzes your target site, evaluates search signals, and…</title>
-      <link>https://carlosandmunoz.com/social/pick/lowdevco-claude-seo-this-is-a-claude-code-skill-for-comprehe.html</link>
-      <guid isPermaLink="false">pick/lowdevco-claude-seo-this-is-a-claude-code-skill-for-comprehe</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>This is a Claude Code skill for comprehensive website analysis, audits, technical SEO, and AI search optimization. It analyzes your target site, evaluates search signals, and produces an actionable, prioritized roadmap directly inside Claude.
-
-Via GitHub, by lowdevco, 2026-11-09.
-
-https://github.com/lowdevco/claude-seo</description>
-      <media:content url="https://opengraph.githubassets.com/1/lowdevco/claude-seo" medium="image"/>
-    </item>
-    <item>
-      <title>Moving to a CDN without overwhelming your origin (or blocking Googlebot)</title>
-      <link>https://carlosandmunoz.com/social/pick/moving-to-a-cdn-without-overwhelming-your-origin-or-blocking.html</link>
-      <guid isPermaLink="false">pick/moving-to-a-cdn-without-overwhelming-your-origin-or-blocking</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Deploying a Content Delivery Network (CDN) to distribute your site's assets across fast, globally distributed edge servers closer to users can be a major upgrade for any growing site: it lowers visitor latency and shields your origin server (the backend source of truth holding your original content) from heavy traffic.
-
-Via Google Search Central, 2026-11-11.
-
-https://developers.google.com/search/blog/2026/11/crawling-cdn</description>
-      <media:content url="https://developers.google.com/static/search/blog/images/social-share-blog.png" medium="image"/>
-    </item>
-    <item>
-      <title>One Chromium per screenshot, or one shared browser? Time, memory and leaks measured in Playwright</title>
-      <link>https://carlosandmunoz.com/social/pick/one-chromium-per-screenshot-or-one-shared-browser-time-memor.html</link>
-      <guid isPermaLink="false">pick/one-chromium-per-screenshot-or-one-shared-browser-time-memor</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>A 24-screenshot Playwright benchmark: browser per job vs one browser with a context per job, state leakage, and the memory cost of a forgotten context.close().
-
-Via DEV, by CurlShot, 2026-11-11.
-
-https://dev.to/curlshot/one-chromium-per-screenshot-or-one-shared-browser-time-memory-and-leaks-measured-in-playwright-7g1</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fmb9j5dne7jmc29u5jq31.png" medium="image"/>
     </item>
   </channel>
 </rss>

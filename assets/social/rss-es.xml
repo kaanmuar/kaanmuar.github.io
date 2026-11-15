@@ -221,6 +221,23 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La búsqueda con IA lee tu HTML, no tu app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-es</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>GEO</category>
+      <description>Muchos motores de respuestas no ejecutan JavaScript. Si tus datos clave solo aparecen después de cargar los scripts, puede que nunca se lean ni se citen.
+
+Prueba esto hoy: Mira el código fuente de tu portada. ¿Se ve qué vendes y para quién, sin ejecutar scripts?
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>2 competidores naturales. vivastreet.ie va en cabeza: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie-es.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie-es</guid>
@@ -373,7 +390,9 @@ Lección: Dos totales parecidos pueden esconder fortalezas opuestas. Compara ár
 
 Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=newspapers
 
-#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab</description>
+#WebQuality #SoftwareTesting #SEO #QA #Media #QAlab
+
+https://www.youtube.com/shorts/eblouNqyjbo</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" length="243773" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/04-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -934,20 +953,6 @@ Vía GitHub, por lowdevco, 2026-11-09.
 
 https://github.com/lowdevco/claude-seo</description>
       <media:content url="https://opengraph.githubassets.com/1/lowdevco/claude-seo" medium="image"/>
-    </item>
-    <item>
-      <title>Pasar a una CDN sin abrumar su origen (o bloquear el robot de Google)</title>
-      <link>https://carlosandmunoz.com/social/pick/moving-to-a-cdn-without-overwhelming-your-origin-or-blocking-es.html</link>
-      <guid isPermaLink="false">pick/moving-to-a-cdn-without-overwhelming-your-origin-or-blocking-es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Implementar una red de entrega de contenido (CDN) para distribuir los activos de su sitio a través de servidores perimetrales rápidos y distribuidos globalmente más cerca de los usuarios puede ser una mejora importante para cualquier sitio en crecimiento: reduce la latencia de los visitantes y protege su servidor de origen (la fuente de verdad de backend que contiene su contenido original) del tráfico intenso.
-
-Vía Google Search Central, 2026-11-11.
-
-https://developers.google.com/search/blog/2026/11/crawling-cdn</description>
-      <media:content url="https://developers.google.com/static/search/blog/images/social-share-blog.png" medium="image"/>
     </item>
   </channel>
 </rss>

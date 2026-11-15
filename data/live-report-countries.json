@@ -649,6 +649,19 @@
    ],
    "at": "2026-11-09"
   },
+  "alquilerautoslima.net": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51998245195",
+    "phone +51998245195 (legal/contact page)"
+   ],
+   "at": "2026-11-15"
+  },
   "althompson.com": {
    "country": "KY",
    "scope": "country",
@@ -2166,6 +2179,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "celovendo.com": {
+   "country": "GT",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry GT",
+    "schema.org addressCountry GT (legal/contact page)",
+    "phone +50266265306",
+    "phone +50266265306 (legal/contact page)"
+   ],
+   "at": "2026-11-15"
   },
   "cemaco.com": {
    "country": "GT",
@@ -5166,6 +5192,19 @@
    ],
    "at": "2026-11-09"
   },
+  "enterprise.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "schema.org addressCountry US (legal/contact page)",
+    "address names US (legal/contact page)",
+    "phone +18552669289"
+   ],
+   "at": "2026-11-15"
+  },
   "entreprise-electricite.be": {
    "country": "BE",
    "scope": "country",
@@ -6967,6 +7006,19 @@
     "address names CL (legal/contact page)"
    ],
    "at": "2026-11-13"
+  },
+  "hotelmiramarperu.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +51 973 522 734",
+    "locale es-PE",
+    "prices in S/",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-15"
   },
   "houselec.be": {
    "country": "BE",
@@ -9615,6 +9667,19 @@
    ],
    "at": "2026-11-13"
   },
+  "myauktion.com": {
+   "country": "AT",
+   "scope": "country",
+   "confidence": 0.85,
+   "by": "signals",
+   "evidence": [
+    "Firmenbuch printed (legal/contact page)",
+    "RDAP registrant in AT",
+    "in the CrUX top sites of AT only",
+    "written in de, spoken in AT"
+   ],
+   "at": "2026-11-15"
+  },
   "mycar.lu": {
    "country": "LU",
    "scope": "country",
@@ -10505,6 +10570,19 @@
    ],
    "at": "2026-11-13"
   },
+  "pacificarperu.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "RUC (Peru) printed",
+    "RUC (Peru) printed (legal/contact page)",
+    "phone +51 1 340 4305",
+    "phone +51 1 340 4305 (legal/contact page)"
+   ],
+   "at": "2026-11-15"
+  },
   "paginasamarillas.com.gt": {
    "country": "GT",
    "scope": "country",
@@ -10808,6 +10886,19 @@
     "locale en-CA"
    ],
    "at": "2026-11-09"
+  },
+  "ph.fo": {
+   "country": "FO",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "phone +298 311 161",
+    "phone +298 311 161 (legal/contact page)",
+    "address names FO",
+    "address names FO (legal/contact page)"
+   ],
+   "at": "2026-11-15"
   },
   "philenews.com": {
    "country": "CY",
@@ -11643,6 +11734,19 @@
    ],
    "at": "2026-11-09"
   },
+  "qbellachama.com": {
+   "country": "CL",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CL",
+    "phone +56-9-7709-7332",
+    "Google Maps link in CL",
+    "written in es, spoken in CL"
+   ],
+   "at": "2026-11-15"
+  },
   "qcell.sl": {
    "country": "SL",
    "scope": "country",
@@ -11654,6 +11758,19 @@
     "in the CrUX top sites of SL only"
    ],
    "at": "2026-11-09"
+  },
+  "qphotels.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51 1 319-2929",
+    "phone +5113192900 (legal/contact page)",
+    "address names PE"
+   ],
+   "at": "2026-11-15"
   },
   "qualtrics.com": {
    "country": "US",
@@ -13392,6 +13509,19 @@
    ],
    "at": "2026-11-09"
   },
+  "softwareperu1.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "RUC (Peru) printed",
+    "phone +51973761847",
+    "address names PE"
+   ],
+   "at": "2026-11-15"
+  },
   "soldeinsa.com": {
    "country": "EC",
    "scope": "country",
@@ -14571,6 +14701,32 @@
     "locale de-DE"
    ],
    "at": "2026-11-09"
+  },
+  "tienda-online-5.ueniweb.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "address names PE (legal/contact page)",
+    "locale es-PE",
+    "locale es-PE (legal/contact page)"
+   ],
+   "at": "2026-11-15"
+  },
+  "tienda-online-8.ueniweb.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51954205496",
+    "phone +51954205496 (legal/contact page)",
+    "address names PE (legal/contact page)"
+   ],
+   "at": "2026-11-15"
   },
   "tiffanyproduction.ba": {
    "country": "BA",

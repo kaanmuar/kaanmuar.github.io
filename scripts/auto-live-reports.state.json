@@ -1,5 +1,5 @@
 {
- "since": "2026-11-14T11:00:59.440Z",
+ "since": "2026-11-15T11:01:21.410Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -147,13 +147,17 @@
   "actualite.cd": "2026-11-14",
   "circajewels.com": "2026-11-14",
   "vs:foreca.com": "2026-11-14",
-  "vs:sinarharian.com.my": "2026-11-14"
+  "vs:sinarharian.com.my": "2026-11-14",
+  "najserialy.io": "2026-11-15",
+  "sarhne.com": "2026-11-15",
+  "vs:mccabespharmacy.com": "2026-11-15",
+  "vs:zefoy.com": "2026-11-15"
  },
  "recent": [
+  "sec-hsts",
+  "geo-crawlers",
   "a11y-labels",
   "ax-link-name",
-  "an-fingerprint",
-  "sec-hsts",
-  "sec-hsts"
+  "an-fingerprint"
  ]
 }

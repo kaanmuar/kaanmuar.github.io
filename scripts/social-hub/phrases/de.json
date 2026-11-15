@@ -47,6 +47,10 @@
   "text": "⟦1⟧ führt in den Bereichen SEO, Analytics, Sicherheit, Leistung; ⟦2⟧ führt in GEO, Barrierefreiheit.",
   "machine": true
  },
+ "⟦1⟧ leads in SEO, Analytics, Security, Performance; ⟦2⟧ leads in GEO; ⟦3⟧ leads in Accessibility.": {
+  "text": "⟦1⟧ führt in SEO, Analytics, Sicherheit, Leistung; ⟦2⟧ führt in GEO; ⟦3⟧ führt in der Barrierefreiheit.",
+  "machine": true
+ },
  "⟦1⟧ leads in SEO, Analytics; ⟦2⟧ leads in GEO, Security, Accessibility, Performance.": {
   "text": "⟦1⟧ führt in SEO, Analytics; ⟦2⟧ führt in GEO, Sicherheit, Zugänglichkeit, Leistung.",
   "machine": true
