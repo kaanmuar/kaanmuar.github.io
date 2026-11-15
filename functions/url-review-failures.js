@@ -31,7 +31,8 @@ const FIXES = [
   { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
   { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
   { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" },
-  { cause: "browser", at: "2026-11-15T20:40:00Z", ref: "#3512", label: "A bot check that answers with an error status before its load event finishes is named as refused" }
+  { cause: "browser", at: "2026-11-15T20:40:00Z", ref: "#3512", label: "A bot check that answers with an error status before its load event finishes is named as refused" },
+  { cause: "status", at: "2026-11-15T21:15:00Z", ref: "#1178", label: "A 5xx that headless Chrome gets after the plain read took too long is the site's own answer, kept on the desk without a bug" }
 ];
 const fixKey = (fix) => fix.cause + " " + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -70,6 +71,8 @@ const READABLE = {
 const HOST_BROKE = /net::ERR_(?:CONNECTION_(?:RESET|CLOSED|REFUSED|TIMED_OUT)|HTTP2_PROTOCOL_ERROR|EMPTY_RESPONSE|TIMED_OUT|ADDRESS_UNREACHABLE)\b/;
 // The review's own error when the plain read and headless Chrome both got a 4xx that is not a bot wall (401, 403 and 429 are).
 const SITE_REFUSAL = /^The URL returned status (?!40[13]\b|429\b)4\d\d, in the plain (?:request|read) and in headless Chrome\./;
+// A 5xx in headless Chrome after a slow plain read, or in both reads, is the site's own state for every client.
+const SITE_ERROR = /^The URL returned status [5-9]\d{2}(?:, in headless Chrome, after the plain request took too long|, in the plain (?:request|read) and in headless Chrome)\./;
 
 function causeOf(message) {
   const text = String(message || "");
@@ -193,12 +196,13 @@ function stateOf(probe) {
 
 const guarded = (status) => [401, 403, 429].includes(status);
 
-// A real browser's refusal. Only an error page (a 4xx that is not a bot wall) that the plain read got too is the site's own answer;
+// A real browser's refusal. A 4xx that is not a bot wall in both reads, or any 5xx in headless Chrome, is the site's own answer;
 // `site` keeps it out of the failure bugs.
 function chromeRefused(browser, plain, lead) {
   const bot = !!plain.challenge || !!browser.challenge || guarded(browser.docStatus);
-  const both = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
-  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && both, label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
+  const both4xx = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
+  const error5xx = browser.docStatus >= 500;
+  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && (both4xx || error5xx), label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
 }
 
 function unreadState(run, plain) {
@@ -402,6 +406,7 @@ const SITE_SIDE = ["input", "dns", "down"];
 function siteSide(doc, cause) {
   if (SITE_SIDE.includes(cause)) return true;
   if (SITE_REFUSAL.test(String((doc.error && doc.error.message) || ""))) return true;
+  if (SITE_ERROR.test(String((doc.error && doc.error.message) || ""))) return true;
   return !!(doc.diagnosis && doc.diagnosis.site);
 }
 
@@ -420,7 +425,11 @@ function siteReason(lead) {
   const browser = probe.browser;
   if (lead.cause === "bot-protection" && (/\bin headless Chrome\b/.test(lead.message) || (browser && browser.ok && (!!browser.challenge || guarded(browser.docStatus))))) return "bot-wall";
   if (lead.cause === "tls" && SITE_CERT.test(lead.message + " " + (plain.error || "") + " " + (plain.code || ""))) return "cert";
-  if (lead.cause === "status" && plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+  if (lead.cause === "status") {
+    if (plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+    if (plain.error && browser && browser.ok && browser.docStatus >= 500) return "5xx";
+    if (SITE_ERROR.test(lead.message || "")) return "5xx";
+  }
   return "";
 }
 

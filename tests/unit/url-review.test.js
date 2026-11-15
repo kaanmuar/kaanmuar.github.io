@@ -2184,6 +2184,9 @@ test("the daily probe checks the connection after a plain read that timed out, a
   assert.deepEqual([walled.now, walled.site], ["bot-protection", false]);
   const gone = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 404 } });
   assert.deepEqual([gone.now, gone.site], ["status", false]);
+  const cloudflare = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: true, docStatus: 522, words: 142 } });
+  assert.deepEqual([cloudflare.now, cloudflare.site], ["status", true]);
+  assert.ok(failures.siteSide({ error: { message: "The URL returned status 522, in headless Chrome, after the plain request took too long." }, cause: { id: "status" } }, "status"));
   const busy = failures.diagnose(timeout, { dns: {}, plain: slow, tcp: { open: true, ms: 40 }, browser: { ok: false, error: "the browser was busy" } });
   assert.deepEqual([busy.now, busy.site], ["timeout", false]);
   assert.match(busy.nowLabel, /, and headless Chrome did not finish \(the browser was busy\)$/);
@@ -2379,19 +2382,22 @@ test("down hosts and confirmed 4xx pages stay on the desk without a bug; bot wal
   // hoe.com: a 402 in the plain request and in headless Chrome is site-side in a re-run too.
   const goneRerun = Object.assign({}, refusedRerun, { id: "r4", host: "hoe.com", error: { message: "The URL returned status 402, in the plain request and in headless Chrome." }, cause: { id: "status" } });
   const slowGone = Object.assign({}, refusedRerun, { id: "r5", host: "late.example.com", error: { message: "The URL returned status 404, in headless Chrome, after the plain request took too long." }, cause: { id: "status" } });
+  const slowOrigin = probed("2026-11-15T08:46:00Z", "The URL returned status 522, in headless Chrome, after the plain request took too long.", "latienda",
+    { dns, plain: slow, tcp: { open: true, ms: 28 }, browser: { ok: true, docStatus: 522, words: 142 } });
 
-  [missing, down, oldDown].forEach((row) => assert.equal(row.diagnosis.site, true, row.host));
+  [missing, down, oldDown, slowOrigin].forEach((row) => assert.equal(row.diagnosis.site, true, row.host));
   [walled, tarpit, ours].forEach((row) => assert.equal(row.diagnosis.site, false, row.host));
-  const bugs = failures.bugPlan([missing, walled, down, oldDown, tarpit, ours], [refusedRerun, slowRerun, brokenRerun, goneRerun, slowGone], []);
+  assert.ok(failures.siteSide(slowOrigin, "status"));
+  const bugs = failures.bugPlan([missing, walled, down, oldDown, tarpit, ours, slowOrigin], [refusedRerun, slowRerun, brokenRerun, goneRerun, slowGone], []);
   assert.deepEqual(bugs.map((bug) => [bug.key, bug.hosts]), [
     ["bot-protection-319", ["bancodebogota.com", "bot-protection.example.com"]],
     ["timeout", ["slow.example.com", "timeout.example.com", "www.hpe.com"]],
     ["browser-365", ["busy.example.com"]],
     ["status", ["late.example.com"]]
   ]);
-  const report = failures.periodFailures({ failures: [missing, walled, down, oldDown, tarpit, ours], previous: [], reruns: [], bugs: [], phrase: "yesterday" });
-  assert.equal(report.failed, 6);
-  assert.deepEqual(report.causes, { status: 1, "bot-protection": 1, down: 1, timeout: 3 });
+  const report = failures.periodFailures({ failures: [missing, walled, down, oldDown, tarpit, ours, slowOrigin], previous: [], reruns: [], bugs: [], phrase: "yesterday" });
+  assert.equal(report.failed, 7);
+  assert.deepEqual(report.causes, { status: 2, "bot-protection": 1, down: 1, timeout: 3 });
 });
 
 const failedAt = (at, extra) => Object.assign({
@@ -2631,9 +2637,12 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
   const wrongName = filed("2026-10-28T11:00:00Z", "tls", "Hostname/IP does not match certificate's altnames", { dns, plain: { hops: [], error: "x", code: "ERR_TLS_CERT_ALTNAME_INVALID" } });
   const noIntermediate = filed("2026-10-28T12:00:00Z", "tls", "unable to verify the first certificate", { dns, plain: { hops: [], error: "unable to verify the first certificate", code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE" } });
   const originDown = filed("2026-10-28T10:00:00Z", "status", "The URL returned status 522.", { dns, plain: { hops: [], status: 522, html: true } });
+  const slowOrigin = filed("2026-11-15T08:46:00Z", "status", "The URL returned status 522, in headless Chrome, after the plain request took too long.",
+    { dns, plain: { hops: [], error: "The page took too long." }, tcp: { open: true, ms: 28 }, browser: { ok: true, docStatus: 522, words: 142 } });
   const wallRerun = { id: "x7", status: "failed", at: "2026-10-28T13:00:00Z", host: "walled.example.com", failureIds: [], error: { message: "The site's bot protection refused the review (status 403, an Imperva bot check), in the plain request and in headless Chrome." }, cause: { id: "bot-protection" }, lines: [] };
 
-  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown], [wallRerun], []);
+  assert.ok(failures.siteSide(slowOrigin, "status"));
+  const bugs = failures.bugPlan([wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin], [wallRerun], []);
   const byKey = Object.fromEntries(bugs.map((bug) => [bug.key, bug]));
   const marker = (body) => JSON.parse(body.match(/<!-- review-triage (\{.*?\}) -->/)[1]);
 
