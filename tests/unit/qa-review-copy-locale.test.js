@@ -125,7 +125,7 @@ test("every field error the server sends reads in each page language (#2837)", (
   const sent = new Set();
   // The compare box shows these verbatim when a competitor is refused or cannot be reached (#3008).
   const compare = fs.readFileSync(path.join(__dirname, "../../functions/url-review-compare.js"), "utf8");
-  const sources = [[core, ["validateIntake", "screenIntake", "humanCheck", "preformatUrl", "normalizeUrl", "assertPublic", "fetchPublic", "requestDirect", "reviewTarget"]], [compare, ["baseProblem"]]];
+  const sources = [[core, ["validateIntake", "screenIntake", "humanCheck", "preformatUrl", "normalizeUrl", "assertPublic", "fetchPublic", "requestDirect", "requestAttempt", "reviewTarget"]], [compare, ["baseProblem"]]];
   for (const [file, names] of sources) {
     for (const name of names) {
       const start = file.search(new RegExp("function " + name + "\\("));

@@ -28,6 +28,7 @@ const FIXES = [
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
   { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
   { cause: "save", at: "2026-11-03T07:41:00Z", ref: "#2408", label: "A finished report whose saved page is past one Firestore field is shortened and saved" },
+  { cause: "unknown", at: "2026-11-05T08:17:37Z", ref: "#2604", label: "A folded response header is read, and a finished report over one Firestore document is shortened and saved" },
   { cause: "tls", at: "2026-11-06T07:45:04Z", ref: "#2744", label: "A certificate whose issuer is also missing is read by following each AIA address until a trusted root" },
   { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" },
   { cause: "connection", at: "2026-11-09T07:48:08Z", ref: "#2869", label: "A site that hangs up the plain request is read in headless Chrome" },

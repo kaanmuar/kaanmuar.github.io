@@ -89,7 +89,13 @@ test.describe('CV desktop', () => {
 
   test('filters experience by a skill tag', async ({ page }) => {
     await page.locator('#expand-all-toolkit').click();
-    await page.locator('.tech-tag[data-skill-name="Selenium"]').click();
+    const selenium = page.locator('.tech-tag[data-skill-name="Selenium"]');
+    const section = page.locator('.toolkit-section').filter({ has: selenium });
+    // Expand-all can leave a section closed under load; wait until its header is open and
+    // the collapsed preview is hidden so it cannot intercept the tag click (#3044).
+    await expect(section.locator('.toolkit-header')).toHaveAttribute('aria-expanded', 'true');
+    await expect(section.locator('.toolkit-preview')).toBeHidden();
+    await selenium.click();
     await expect(page.locator('.experience-item.filter-match')).not.toHaveCount(0);
     await expect(page.locator('.experience-item.filter-no-match')).not.toHaveCount(0);
   });
