@@ -163,7 +163,7 @@ test.describe('The pass offered beside a paid total', () => {
     await page.locator('#run-total-offer-go').click();
     await expect(page.locator('#run-total')).toBeHidden();
     await expect(page.locator('#form-status')).toHaveText('Sign in first. A pass belongs to the address you sign in with.');
-    await expect(page).toHaveURL(/\/qa-review\.html$/);
+    await expect(page).toHaveURL(/\/qa-review\.html(\?report=softpreview01)?$/);
   });
 
   test('a used-up pass offers the next plan up', async ({ page }) => {
