@@ -12,6 +12,8 @@
  * writes the public sample that qa-review.html opens before the disclaimers. It
  * needs the browser pass (CHROME_PATH and functions/node_modules), and the page
  * copy names the sample's host in every language (scripts/review_langs_copy.py).
+ * The es, pt, de, fr and it samples are built from it: translate the new
+ * sentences in scripts/qa-review-sample-copy/ and run scripts/build-sample-langs.js.
  */
 const fs = require("fs");
 const path = require("path");
@@ -60,6 +62,9 @@ async function main() {
       console.error("The sample needs the browser pass (" + ((report.browser && report.browser.error) || "set CHROME_PATH") + "). Nothing was written.");
       process.exit(1);
     }
+    // The sample page and every test that opens it load nothing from the reviewed site (#2955).
+    const google = report.insights && report.insights.previews && report.insights.previews.google;
+    if (google && google.icon) google.icon = await core.iconData(google.icon);
     fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
     console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
     return;

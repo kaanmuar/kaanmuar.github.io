@@ -49,7 +49,9 @@ const SHARE_VERSION = "20261027";
 const RSS_MAX = 50;
 // Post kinds in the order the filter chips list them; a batch's captions.json names its kind (scripts/tips-studio/build.js).
 const KINDS = Object.keys(COPY.en.kind);
-const TYPES = { news: "NewsArticle", trick: "HowTo", advice: "HowTo", quiz: "Quiz", skit: "VideoObject" };
+const TYPES = { news: "NewsArticle", trick: "HowTo", advice: "HowTo", quiz: "Quiz", skit: "VideoObject", live: "VideoObject" };
+// Kinds whose post is its clip, spoken in one language: skits (a take per language) and live show clips (#3173).
+const SPOKEN = new Set(["skit", "live"]);
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 const readJson = (file) => JSON.parse(read(file));
@@ -213,13 +215,13 @@ function expand(posts) {
 
 // One card per post on each language's page: the post in that language. The English page falls back to
 // the post as written; a localized page leaves out posts not yet in its language, such as a new pick the
-// translator refused. A skit is spoken in its take's language, so a page with no take in its language
-// leaves the skit out.
+// translator refused. A skit or live clip is spoken in its own language, so a page in another language
+// leaves it out.
 function forLang(posts, lang) {
   const best = new Map();
   const fit = (post) => (post.lang === lang ? 2 : post.lang === "en" ? 1 : 0);
   posts.forEach((post) => {
-    if (post.kind === "skit" && post.lang !== lang) return;
+    if (SPOKEN.has(post.kind) && post.lang !== lang) return;
     const key = post.group || post.id;
     const held = best.get(key);
     if (!held || fit(post) > fit(held)) best.set(key, post);
@@ -417,10 +419,10 @@ function clip(post) {
   };
 }
 
-// Every post is a SocialMediaPosting; news, tricks, best practices, quizzes and skits with a clip also take their own type.
+// Every post is a SocialMediaPosting; news, tricks, best practices, quizzes, and skits and live clips with a clip also take their own type.
 // A quiz carries its answer only once the answer post is out.
 function posting(post, full, answer) {
-  const type = TYPES[post.kind] && (post.kind !== "skit" || post.youtube) ? TYPES[post.kind] : null;
+  const type = TYPES[post.kind] && (!SPOKEN.has(post.kind) || post.youtube) ? TYPES[post.kind] : null;
   const item = {
     "@type": type ? ["SocialMediaPosting", type] : "SocialMediaPosting",
     "@id": card.permalink(post, post.lang, true),

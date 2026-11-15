@@ -252,6 +252,24 @@ test("a safe PageSpeed PR merges through its workflow from the countdown", async
   assert.equal(db.doc("jarvis_countdowns", row.id).result, "Merging #2210; Jarvis pushes the result.");
 });
 
+test("a held Pages re-run starts on main's newest commit when main moved during the countdown, else re-runs the run", async () => {
+  const db = fakeDb();
+  let head = "afacf24a3";
+  const dispatched = [];
+  const { ops: o, calls } = ops({ mainSha: async () => head, dispatch: async (path) => { dispatched.push(path); return {}; } });
+  const payload = { run: 42475710098, name: "Pages", sha: "afacf24a3", path: ".github/workflows/pages.yml" };
+  const same = (await queue(db, { action: "rerun-ci", target: "Pages #42475710098", payload }, MONDAY_20)).row;
+  await countdown.runDue({ db, now: MONDAY_20 + 2 * H, ops: o });
+  assert.deepEqual([calls.ci, dispatched], [[42475710098], []]);
+  assert.equal(db.doc("jarvis_countdowns", same.id).result, "Re-running the failed jobs of run 42475710098.");
+
+  head = "4b9538af2";
+  const moved = (await queue(db, { action: "rerun-ci", target: "Pages #42475710099", payload: Object.assign({}, payload, { run: 42475710099 }) }, MONDAY_20 + 3 * H)).row;
+  await countdown.runDue({ db, now: MONDAY_20 + 5 * H, ops: o });
+  assert.deepEqual([calls.ci, dispatched], [[42475710098], [".github/workflows/pages.yml"]]);
+  assert.equal(db.doc("jarvis_countdowns", moved.id).result, "Main moved past the failed commit during the countdown, so Pages started on main's newest commit.");
+});
+
 test("a green PR labelled jarvis-merge is merged after the countdown, at the commit it was green on", async () => {
   const db = fakeDb();
   const { ops: o, calls } = ops({ mergeCandidates: async () => [{ number: 2003, sha: "abc1234ff00", title: "Jarvis fixes failed jobs", url: "https://github.com/x/pull/2003" }] });

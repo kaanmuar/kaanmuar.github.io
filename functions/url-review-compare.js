@@ -11,6 +11,13 @@ const LIST_MAX = 12;
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
 // Checks that need typing into a field or opening the chat, which a competitor run never does.
 const ACTIVE_KEYS = ["sec-typed", "a11y-chat-focus", "a11y-chat-trap", "an-chat-privacy"];
+// Owner-only checks a competitor run skips as well: lookalike domains, and exposed files (sec-exposed-env, -git, ...).
+const OWNER_KEYS = ["sec-lookalike"];
+const OWNER_PREFIXES = ["sec-exposed"];
+
+function skippedOnRival(key) {
+  return ACTIVE_KEYS.includes(key) || OWNER_KEYS.includes(key) || OWNER_PREFIXES.some((prefix) => key === prefix || key.startsWith(prefix + "-"));
+}
 
 function bare(host) {
   return String(host || "").trim().toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
@@ -142,15 +149,32 @@ function trailOf(rows) {
     .slice(-8);
 }
 
-function compareSites(own, rival, extra) {
-  const mine = own && own.insights;
-  const theirs = rival && rival.insights;
-  if (!mine || !theirs || !mine.score || !theirs.score) return null;
+// The asker's review rescored on the checks a passive competitor run also got, so totals, indicators and area
+// scores do not count typed-field, chat, lookalike or exposed-file findings the competitor never had.
+function onSharedChecks(own) {
+  const findings = (own.insights && own.insights.findings) || [];
+  const kept = findings.filter((item) => !(item && item.key && skippedOnRival(item.key)));
+  if (kept.length === findings.length) return { own, skipped: 0 };
+  const { scoreFindings } = require("./url-review-insights");
+  const score = scoreFindings(kept);
+  const full = own.insights.score;
+  return {
+    own: Object.assign({}, own, { insights: Object.assign({}, own.insights, { findings: kept, score: Object.assign({}, full, score) }) }),
+    skipped: findings.length - kept.length
+  };
+}
+
+function compareSites(asker, rival, extra) {
+  if (!asker || !asker.insights || !asker.insights.score || !rival || !rival.insights || !rival.insights.score) return null;
+  const passive = !!(rival.limits && rival.limits.passive);
+  const view = passive ? onSharedChecks(asker) : { own: asker, skipped: 0 };
+  const own = view.own;
+  const mine = own.insights;
+  const theirs = rival.insights;
   const more = extra || {};
   const a = openProblems(mine);
   const b = openProblems(theirs);
-  const passive = !!(rival.limits && rival.limits.passive);
-  const ownOnly = onlyIn(a, b).filter((item) => !passive || !ACTIVE_KEYS.includes(item.key));
+  const ownOnly = onlyIn(a, b);
   const rivalOnly = onlyIn(b, a);
   const areas = AREAS.map((name) => areaRow(mine, theirs, name));
   const kpis = kpisOf(own, rival);
@@ -162,6 +186,9 @@ function compareSites(own, rival, extra) {
     ownAt: own.fetchedAt || "",
     rivalHost: rival.host || "",
     passive,
+    // Asker findings left out because the competitor run never got those checks, and the asker's score before that.
+    skipped: view.skipped,
+    ownFull: asker.insights.score.overall || 0,
     overall: { own: mine.score.overall || 0, rival: theirs.score.overall || 0 },
     areas,
     kpis,
@@ -239,4 +266,4 @@ function savedComparison(records, email, ids, isOpen) {
   return { base: { id: wanted[0], host, at: String(base.createdAt || "") }, list };
 }
 
-module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, SAVED_MAX, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf, savedComparison };
+module.exports = { AREAS, KPIS, LIST_MAX, LEVEL_GAP, ACTIVE_KEYS, SAVED_MAX, skippedOnRival, onSharedChecks, sameSite, cleanId, baseProblem, winnerOf, compareSites, compareLine, comparisonsOf, savedComparison };

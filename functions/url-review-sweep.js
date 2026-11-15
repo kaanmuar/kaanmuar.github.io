@@ -12,8 +12,9 @@
 const { suffixRegistrable } = require("./url-review-suffix");
 
 const PER_DAY = 96;
-// A tick (every 15 minutes, 24 a night) reviews up to PER_TICK sites one after another, and starts the next
-// only while a review stopped at REVIEW_MS still ends by TICK_MS, before the next tick and the TICK_SECONDS timeout.
+// A tick (every 15 minutes, 24 a night) reviews up to PER_TICK sites, up to its lane's concurrency budget at once
+// (#3166), and starts each only while a review stopped at REVIEW_MS still ends by TICK_MS, before the next tick
+// and the TICK_SECONDS timeout.
 const PER_TICK = 4;
 const REVIEW_MS = 240000;
 const TICK_MS = 840000;
@@ -190,6 +191,69 @@ function roomForReview(elapsedMs) {
   return elapsedMs + REVIEW_MS <= TICK_MS;
 }
 
+// Up to PER_TICK reviews, `slots` at a time. pick() and settle() run one at a time, in the order they are called, so
+// the state they share moves on and is written as in a one-by-one tick; only review() overlaps.
+// pick() answers { target } to start a review or { note } to start no more; room() says whether one still fits.
+// Returns the notes, a started review's at the position it was picked.
+async function runTick({ slots, room, pick, review, settle }) {
+  const width = Math.min(PER_TICK, Math.max(1, Math.floor(Number(slots)) || 1));
+  const notes = [];
+  let stop = false;
+  let started = 0;
+  let queue = Promise.resolve();
+  const serial = (step) => {
+    const run = queue.then(step);
+    queue = run.catch(() => {});
+    return run;
+  };
+  const worker = async () => {
+    while (!stop) {
+      const job = await serial(async () => {
+        if (stop || started >= PER_TICK || !room()) {
+          stop = true;
+          return null;
+        }
+        const pickRow = await pick();
+        if (!pickRow || !pickRow.target) {
+          stop = true;
+          if (pickRow && pickRow.note) notes.push(pickRow.note);
+          return null;
+        }
+        notes.push("");
+        started += 1;
+        return { target: pickRow.target, at: notes.length - 1 };
+      });
+      if (!job) return;
+      const result = await review(job.target);
+      notes[job.at] = await serial(() => settle(job.target, result));
+    }
+  };
+  const runs = await Promise.allSettled(Array.from({ length: width }, () => worker().catch((error) => {
+    stop = true;
+    throw error;
+  })));
+  const failed = runs.find((run) => run.status === "rejected");
+  if (failed) throw failed.reason;
+  return notes;
+}
+
+// The sweep waits out a busy review browser instead of reviewing without it, so people's reviews keep their room.
+const BUSY_TRIES = 3;
+const BUSY_WAIT_MS = 15000;
+
+function patientBrowse(browse, stopped, sleep) {
+  if (typeof browse !== "function") return browse;
+  const wait = sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  return async (...args) => {
+    for (let tries = 1; ; tries += 1) {
+      const res = await browse(...args);
+      const busy = res && res.ok === false && /busy/i.test(String(res.error || ""));
+      if (!busy || tries >= BUSY_TRIES || (stopped && stopped())) return res;
+      await wait(BUSY_WAIT_MS * tries);
+    }
+  };
+}
+
 // One night's tally against the cap, for the watchdog: a night that reviewed under half the cap is short.
 function night(state, day, cap) {
   const row = ((state || {}).days || {})[day] || {};
@@ -207,4 +271,4 @@ function totals(state, sinceDay) {
   return out;
 }
 
-module.exports = { laneStart, outreachView, PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, OUTREACH_PER_DAY, TIER1, BLOCKED, RESERVED, langOf, hostOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, nextOutreach, intake, doneOn, tally, totals };
+module.exports = { laneStart, outreachView, PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, runTick, patientBrowse, BUSY_TRIES, BUSY_WAIT_MS, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, OUTREACH_PER_DAY, TIER1, BLOCKED, RESERVED, langOf, hostOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, nextOutreach, intake, doneOn, tally, totals };

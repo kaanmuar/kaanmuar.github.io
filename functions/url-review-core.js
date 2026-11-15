@@ -12,14 +12,24 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
+const fixOffers = require("./url-review-fix-offers");
 const { fromUrl: libraryFromUrl } = require("./url-review-libraries");
+const threatLists = require("./url-review-threat-lists");
+const wordpress = require("./url-review-wordpress");
 const caseRank = require("./url-review-cases");
 const chatTalk = require("./url-review-chat-talk");
 const ownerProofs = require("./url-review-owner-proof");
+const exposedFiles = require("./url-review-exposed");
 const localProfile = require("./url-review-local");
+const mailAuth = require("./url-review-mail-auth");
+const blocklists = require("./url-review-blocklists");
 const { registrable, registryDomain } = require("./url-review-suffix");
+const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
+const hackSigns = require("./url-review-hack-signs");
+const watchCases = require("./url-review-watch");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-11-04b";
@@ -120,13 +130,14 @@ function priceMatches(usd) {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
   if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
   const extraCents = EXTRA_FRAMEWORK_USD * 100;
   for (let count = 0; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     if (scopes.indexOf(cents - count * extraCents) !== -1) return true;
   }
-  const lists = [CREDENTIALS_CENTS];
+  const lists = [CREDENTIALS_CENTS].concat(Object.keys(PASS_CENTS).map((id) => PASS_CENTS[id]));
   for (let count = 1; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     const base = unitCents(count);
     lists.push(base, base - FIXLIST_CENTS);
@@ -158,20 +169,55 @@ const FRAMEWORKS = BROWSER_FW.concat(MOBILE_FW, LOAD_FW);
 const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
 const LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
 const USER_AGENT = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
+// A rescue of a failed review (#3080) reads as a person's Chrome, as the browser already does for a host that cuts the tag off (#1182).
+// Every plain request inside reviewTarget(url, { readAs: "chrome" }) and probeRead(url, { readAs: "chrome" }) carries these headers.
+const READ_AS = new (require("async_hooks").AsyncLocalStorage)();
+const CHROME_HEADERS = {
+  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "accept-language": "en-US,en;q=0.9,es;q=0.8",
+  "sec-ch-ua": "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": "\"macOS\"",
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "none",
+  "sec-fetch-user": "?1",
+  "upgrade-insecure-requests": "1"
+};
+const readHeaders = () => READ_AS.getStore() === "chrome" ? Object.assign({}, CHROME_HEADERS) : { "user-agent": USER_AGENT, accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8" };
 const MAX_PAGES = 100;
 const MAX_DEPTH = 5;
 const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
+
+// The plain read lost the connection before any page arrived (a reset, hang-up, or caller abort).
+function plainReadDropped(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNRESET|ECONNABORTED|ETIMEDOUT)$/.test(code) || /socket hang up|\baborted\b/i.test(message);
+}
+// The plain read failed before any page arrived because the host refused or rejected the route.
+function plainConnectionFailed(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNREFUSED|EHOSTUNREACH|ENETUNREACH)$/.test(code)
+    || /^connect ECONNREFUSED|^connect EHOSTUNREACH|^connect ENETUNREACH/i.test(message);
+}
 // Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
 const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
 // Chrome follows up to 20 redirects. Sign-in portals chain six (sharepoint.com → office.com → … → microsoft.com).
 const MAX_REDIRECTS = 10;
-// A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
-// from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
+// A server that sends its certificate without the next issuer opens in browsers, which follow each AIA
+// address until a trusted root. Node does not. OpenSSL 3 reports that gap as "unable to verify the first
+// certificate", "unable to get local issuer certificate" or "unable to get issuer certificate".
+// The review fetches those issuers once per host and verifies again.
 const INTERMEDIATES = new Map();
+const CHAIN_GAP = new Set(["UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"]);
+const CHAIN_HOPS = 3;
 const ISSUER_MAX_BYTES = 20000;
 const ISSUER_TIMEOUT_MS = 5000;
 const TOTAL_MS = 170000;
@@ -201,7 +247,7 @@ const TECH = [
   ["SAP", "Platform", /sapui5|sap-ui-core|hana\.ondemand/i],
   ["ServiceNow", "Platform", /servicenow\.com|service-now\.com/i],
   ["Wix", "Site builder", /wix\.com|x-wix/i],
-  ["Squarespace", "Site builder", /squarespace/i],
+  ["Squarespace", "Site builder", /static1\.squarespace\.com|images\.squarespace-cdn\.com|Static\.SQUARESPACE_CONTEXT/i],
   ["Webflow", "Site builder", /webflow/i],
   ["Next.js", "Framework", /\/_next\/|__NEXT_DATA__/i],
   ["Nuxt", "Framework", /\/_nuxt\/|__NUXT__/i],
@@ -285,7 +331,7 @@ function mailboxMatchesHost(email, hostname) {
   return !!domain && !!site && registrable(domain) === site;
 }
 
-// Why the asker may talk to the host finally reviewed (the chat conversation, form testing), or "":
+// Why the asker may talk to the host finally reviewed (the chat conversation, form testing, exposed files), or "":
 // "own" for "I own this site" from a mailbox on the host's domain; "credentials" or "site" from the
 // unexpired url_review_owner_proofs rows the caller loaded for the signed-in email (url-review-owner-proof.js).
 // The "credentials" reason on its own proves nothing: it is a choice in a list.
@@ -550,6 +596,17 @@ function priceForFixList() {
   return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
+function priceForFix(packageId, host) {
+  const pkg = fixOffers.packageById(packageId);
+  if (!pkg) {
+    const error = new Error("That fix package is not offered. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  const usd = fixOffers.usdOf(pkg, Date.now());
+  return { usd, cents: usd * 100, count: 1, frameworks: [], layers: [], package: pkg.id, host: String(host || "").slice(0, 120) };
+}
+
 function normalizeLayers(list) {
   const source = Array.isArray(list) ? list : String(list || "").split(",");
   const seen = new Set();
@@ -788,6 +845,8 @@ function chargedUsd(options) {
       ? priceForPassExtras(options.passPlan, options)
     : purpose === "fixlist"
     ? priceForFixList()
+    : purpose === "fix"
+    ? priceForFix(options.fixPackage, options.fixHost)
     : purpose === "cases"
       ? priceForLayers(options.layers)
       : purpose === "credentials"
@@ -810,7 +869,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || purpose === "pass" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -1053,29 +1112,61 @@ async function issuerBytes(raw) {
 
 const commonName = (subject) => (String(subject || "").match(/^CN=(.+)$/m) || [])[1] || String(subject || "").split("\n")[0];
 
-async function missingIntermediate(hostname, pinned) {
-  const leaf = await serverLeaf(hostname, pinned);
-  const from = (String(leaf.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
-  if (!from) return null;
-  const issuer = new crypto.X509Certificate(await issuerBytes(from));
-  if (!issuer.ca || !leaf.checkIssued(issuer) || !leaf.verify(issuer.publicKey)) return null;
-  return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
+function issuedBy(child, parent) {
+  try {
+    return !!parent && parent.ca && child.checkIssued(parent) && child.verify(parent.publicKey);
+  } catch (error) {
+    return false;
+  }
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, cookie) {
+// Parsed once. A fetched issuer is done when a root already in the trust store signed it.
+let trustAnchors = null;
+function anchored(cert) {
+  if (!trustAnchors) {
+    trustAnchors = tls.rootCertificates.map((pem) => {
+      try { return new crypto.X509Certificate(pem); } catch (error) { return null; }
+    }).filter(Boolean);
+  }
+  return trustAnchors.some((root) => issuedBy(cert, root));
+}
+
+async function missingIntermediate(hostname, pinned) {
+  const leaf = await serverLeaf(hostname, pinned);
+  const extras = [];
+  let current = leaf;
+  for (let hop = 0; hop < CHAIN_HOPS; hop += 1) {
+    const from = (String(current.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
+    if (!from) break;
+    let issuer = null;
+    try { issuer = new crypto.X509Certificate(await issuerBytes(from)); } catch (error) { issuer = null; }
+    if (!issuedBy(current, issuer)) break;
+    extras.push({ pem: issuer.toString(), name: clean(commonName(issuer.subject), 120), from: clean(from, 200) });
+    if (anchored(issuer)) break;
+    current = issuer;
+  }
+  if (!extras.length) return null;
+  return {
+    pem: extras.map((row) => row.pem),
+    issuer: extras.map((row) => row.name).filter(Boolean).join(", "),
+    from: extras.map((row) => row.from).join(", ")
+  };
+}
+
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
   } catch (error) {
-    if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
+    if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
   }
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, cookie) {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1108,11 +1199,7 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, c
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
       maxHeaderSize: MAX_HEADER_BYTES,
-      headers: Object.assign({
-        "user-agent": USER_AGENT,
-        accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-        connection: "close"
-      }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}),
+      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: pinnedLookup(pinned)
     }, (res) => {
@@ -1236,12 +1323,45 @@ function cookieHeader(jar, url) {
 }
 
 // Chrome reads an http:// address over https first (HTTPS-Upgrades) and falls back to http only when https fails. The review
-// has no http fallback: it reads each http:// redirect over https once, and fails as an http:// redirect when that gets no page.
+// has no http fallback: it reads each http:// redirect over https once. When that https copy sends the review back to the
+// same http address, the next http hop's Location is tried over https too. The http body is never the page. It fails as an
+// http:// redirect when that gets no page.
 function httpsUpgrade(next, upgrades) {
   if (next.port || upgrades.includes(next.href)) return "";
   upgrades.push(next.href);
   next.protocol = "https:";
   return upgrades[upgrades.length - 1];
+}
+
+// One http hop's Location, only when it stays on the same host and names a different address. The body is discarded.
+async function httpNext(target, isStopped, acceptLanguage, agent) {
+  try {
+    const pinned = await assertPublic(target.hostname);
+    const res = await requestOnce(target, pinned, isStopped, false, acceptLanguage, agent);
+    const location = header(res.headers, "location");
+    if (![301, 302, 303, 307, 308].includes(res.status) || !location) return null;
+    const next = new URL(location, target);
+    if (next.username || next.password || next.port) return null;
+    if (next.protocol !== "http:" && next.protocol !== "https:") return null;
+    if (next.hostname !== target.hostname || next.href === target.href) return null;
+    return next;
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return null;
+  }
+}
+
+// The https address to request for an http:// redirect, or null when https has no page to read.
+async function httpsAfter(next, upgrades, isStopped, acceptLanguage, agent) {
+  const upgraded = httpsUpgrade(next, upgrades);
+  if (upgraded) return { url: next, upgraded };
+  if (!upgrades.includes(next.href)) return null;
+  const hopped = await httpNext(next, isStopped, acceptLanguage, agent);
+  if (!hopped) return null;
+  if (hopped.protocol === "https:") return { url: hopped, upgraded: "" };
+  const again = httpsUpgrade(hopped, upgrades);
+  if (!again) return null;
+  return { url: hopped, upgraded: again };
 }
 
 const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
@@ -1251,7 +1371,7 @@ const httpOnly = (href, tried) => new Error("The site redirected to " + clean(hr
 const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
 const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   const upgrades = [];
@@ -1275,7 +1395,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, cookieHeader(jar, current));
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent, cookieHeader(jar, current));
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
@@ -1289,9 +1409,12 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage)
         const next = new URL(location, current);
         upgraded = "";
         if (next.protocol === "http:") {
-          upgraded = httpsUpgrade(next, upgrades);
-          if (!upgraded) throw httpOnly(next.href, upgrades.includes(next.href));
-          if (onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          const step = await httpsAfter(next, upgrades, isStopped, acceptLanguage, agent);
+          if (!step) throw httpOnly(next.href, upgrades.includes(next.href));
+          upgraded = step.upgraded;
+          if (upgraded && onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          current = normalizeUrl(step.url.toString());
+          continue;
         }
         current = normalizeUrl(next.toString());
         continue;
@@ -1599,6 +1722,8 @@ function technologies(html, headers, pageUrl, generator) {
   if (header(headers, "x-vercel-id")) found.push({ name: "Vercel", group: "Host", evidence: "x-vercel-id response header." });
   if (header(headers, "x-nf-request-id")) found.push({ name: "Netlify", group: "Host", evidence: "Netlify response header." });
   const seen = new Set();
+  // A WordPress site that embeds Squarespace images does not run on Squarespace (#3312).
+  if (found.some((item) => item.name === "WordPress")) seen.add("squarespace");
   return found.filter((item) => {
     const key = item.name.toLowerCase();
     if (seen.has(key)) return false;
@@ -2014,6 +2139,7 @@ function inspect(html, headers, pageUrl) {
     textEmails: emailsInText(text, 5),
     legal: legalLinks(anchors, pageUrl),
     libraries,
+    wordpress: wordpress.fromHtml(html, pageUrl),
     piiLinks,
     sri: { cross: crossScripts.length, missing: sriMissing },
     resources: {
@@ -2456,8 +2582,8 @@ async function braveSearch(query, key) {
   const data = await searchJson("https://api.search.brave.com/res/v1/web/search?count=10&q=" + encodeURIComponent(query), {
     headers: { accept: "application/json", "x-subscription-token": key }
   });
-  return searchResults(data && data.web && data.web.results,
-    (row) => [row.title, row.url, [row.description].concat(row.extra_snippets || []).join(" ")]);
+  return data ? searchResults(data.web && data.web.results,
+    (row) => [row.title, row.url, [row.description].concat(row.extra_snippets || []).join(" ")]) : null;
 }
 
 // Free plan: 1,000 credits a month, one per basic search (https://app.tavily.com).
@@ -2467,17 +2593,28 @@ async function tavilySearch(query, key) {
     headers: { "content-type": "application/json", authorization: "Bearer " + key },
     body: JSON.stringify({ query, max_results: 10, search_depth: "basic" })
   });
-  return searchResults(data && data.results, (row) => [row.title, row.url, row.content]);
+  return data ? searchResults(data.results, (row) => [row.title, row.url, row.content]) : null;
 }
 
 // Web results as [{ title, url, description }]: Brave Search, then Tavily when Brave has no key, fails or
-// finds nothing. Without either key the web search is off and answers [].
-async function webSearch(query, keys = process.env) {
+// finds nothing. null when every search it tried failed (an error, a spent quota or a timeout), so a caller can
+// tell "not checked" from "nothing found" (#3156). Without either key the web search is off and answers [].
+async function webSearchOrNull(query, keys = process.env) {
+  let answered = !keys.BRAVE_SEARCH_KEY && !keys.TAVILY_API_KEY;
   if (keys.BRAVE_SEARCH_KEY) {
     const rows = await braveSearch(query, keys.BRAVE_SEARCH_KEY);
-    if (rows.length) return rows;
+    if (rows && rows.length) return rows;
+    if (rows) answered = true;
   }
-  return keys.TAVILY_API_KEY ? tavilySearch(query, keys.TAVILY_API_KEY) : [];
+  if (keys.TAVILY_API_KEY) {
+    const rows = await tavilySearch(query, keys.TAVILY_API_KEY);
+    if (rows) return rows;
+  }
+  return answered ? [] : null;
+}
+
+async function webSearch(query, keys = process.env) {
+  return (await webSearchOrNull(query, keys)) || [];
 }
 
 function lookupMentions(hostname) {
@@ -2935,7 +3072,11 @@ async function tcpCheck(raw, ms) {
   }
 }
 
-async function probeRead(raw) {
+function probeRead(raw, options) {
+  return (options || {}).readAs === "chrome" ? READ_AS.run("chrome", () => probeReadAs(raw)) : probeReadAs(raw);
+}
+
+async function probeReadAs(raw) {
   const started = Date.now();
   const hops = [];
   const took = () => Date.now() - started;
@@ -2949,7 +3090,7 @@ async function probeRead(raw) {
       const pinned = await assertPublic(current.hostname);
       let res;
       try {
-        res = await requestOnce(current, pinned, null, true, "", cookieHeader(jar, current));
+        res = await requestOnce(current, pinned, null, true, "", "", cookieHeader(jar, current));
       } catch (error) {
         if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
@@ -2960,8 +3101,14 @@ async function probeRead(raw) {
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         rememberCookies(jar, current, res.headers["set-cookie"]);
         const next = new URL(location, current);
-        upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
-        if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+        upgraded = "";
+        if (next.protocol === "http:") {
+          const step = await httpsAfter(next, upgrades, null, "", "");
+          if (!step) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+          upgraded = step.upgraded;
+          current = normalizeUrl(step.url.toString());
+          continue;
+        }
         current = normalizeUrl(next.toString());
         continue;
       }
@@ -3049,6 +3196,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const say = typeof note === "function" ? note : () => {};
   const checkRisk = lookups && typeof lookups.webrisk === "function" ? lookups.webrisk : null;
   const findPlaces = lookups && typeof lookups.places === "function" ? lookups.places : null;
+  const checkLists = lookups && typeof lookups.threatLists === "function" ? lookups.threatLists : threatLists.check;
   const done = (promise, line) => promise.then((value) => { say(line(value)); return value; });
   const origin = new URL(first.url);
   const allowed = (path) => !robotsGroups.length || robotsAllows(path, robotsGroups);
@@ -3074,7 +3222,10 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const localJob = findPlaces && lookups.inspect
     ? withTimeout(localProfile.lookup(lookups.inspect, origin.hostname, { places: findPlaces, reach }), 25000, null).catch(() => null)
     : Promise.resolve(null);
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local] = await Promise.all([
+  const lookalikeJob = lookups && typeof lookups.doh === "function"
+    ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
+    : Promise.resolve(undefined);
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -3093,10 +3244,17 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       ? "Plain http could not be read (" + res.error + ")."
       : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
     done(dnsFacts(origin.hostname).then(async (facts) => {
+      const auth = facts.spf || facts.dmarc ? withTimeout(mailAuth.readMailAuth(facts.domain, halt), 10000, null).catch(() => null) : null;
+      const dkim = facts.mx.length ? withTimeout(mailAuth.readDkim(facts.domain, { mx: facts.mx, spf: facts.spf }, halt), 9000, null).catch(() => null) : null;
+      const listed = blocklists.check(facts, origin.hostname);
       if (facts.mtaSts) facts.mtaStsPolicy = await withTimeout(mtaStsPolicy(facts.domain, halt), 8000, { error: "no answer in time" });
+      if (auth) facts.mailAuth = await auth;
+      if (dkim) facts.dkim = await dkim;
+      facts.blocklists = await listed;
+      say(blocklists.note(facts.blocklists));
       return facts;
     }).catch(() => null), (facts) => facts
-      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
+      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + (facts.dkim ? ", DKIM " + (facts.dkim.keys.length ? "at " + facts.dkim.keys.map((key) => key.selector).join(", ") : "at none of " + facts.dkim.probed + " common selectors") : "") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
         ", MTA-STS " + (facts.mtaSts ? (facts.mtaStsPolicy && facts.mtaStsPolicy.mode ? "in " + facts.mtaStsPolicy.mode + " mode" : "announced, policy unread") : "missing") + ", TLS-RPT " + (facts.tlsRpt ? "found" : "missing") + ", BIMI " + (facts.bimi ? "found" : "missing") +
         (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
       : "The DNS records could not be read."),
@@ -3117,13 +3275,22 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       else say("Google Maps has a Business Profile that " + (res.by === "website" ? "links to " + origin.hostname : "lists the site's phone") + " (place ID " + res.placeId + ")" +
         (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
       return res;
-    })
+    }),
+    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null)
   ]);
+  const lookalikeFound = await lookalikeJob;
+  if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
+    : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
+      : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null };
+  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
 }
 
 async function reviewTarget(rawUrl, hooks) {
+  if (hooks && hooks.readAs === "chrome" && READ_AS.getStore() !== "chrome") {
+    if (hooks.log) hooks.log("This rescue reads the site as a person's Chrome, without the review's name in its user agent.");
+    return READ_AS.run("chrome", () => reviewTarget(rawUrl, hooks));
+  }
   const controls = hooks || {};
   const lines = [];
   const note = (text) => {
@@ -3151,8 +3318,10 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
-    if (!(oversized || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : error.message === UNREACHABLE ? "unreachable" : true;
+    const dropped = plainReadDropped(error);
+    const conn = plainConnectionFailed(error);
+    if (!(oversized || /took too long/.test((error && error.message) || "") || dropped || conn) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -3269,9 +3438,20 @@ async function reviewTarget(rawUrl, hooks) {
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
+  const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, doh: passive ? null : controls.doh, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
   const browsePaths = (homeInspect.links || []).filter((url) => keep(url) && pagePath(url) !== pagePath(first.url) && !/\.(pdf|zip|jpe?g|png|gif|webp|svg|mp4|mp3|docx?|xlsx?)(\?|$)/i.test(url) && (!robots.length || robotsAllows(pagePath(url), robots))).slice(0, 2);
+  const hackPromise = stopped || firstChallenge ? Promise.resolve(null) : hackSigns.look({
+    url: first.url,
+    html: first.body,
+    site: { title: homeInspect.title, description: homeInspect.description, h1: homeInspect.h1, lang: homeInspect.lang, types: ((homeInspect.schema && homeInspect.schema.items) || []).reduce((all, item) => all.concat(item.types), []) },
+    paths: browsePaths,
+    links: homeInspect.links || [],
+    sitemap: sitemapPromise,
+    fetch: (url, agent) => fetchPublic(url, halt, null, false, acceptLanguage, agent),
+    search: controls.mentions === false || !(process.env.BRAVE_SEARCH_KEY || process.env.TAVILY_API_KEY) ? null : (query) => webSearchOrNull(query),
+    challenge: (res) => challengeOf(res.url, res.headers, res.body)
+  }).catch(() => null);
   if (canBrowse) note("Opening the start page in a headless browser alongside the analysis" + (browsePaths.length ? ", then " + browsePaths.map(pagePath).join(" and ") : "") + ".");
   let showStart = null;
   const renderedStart = new Promise((resolve) => { showStart = resolve; });
@@ -3282,6 +3462,18 @@ async function reviewTarget(rawUrl, hooks) {
       : Promise.resolve(null);
   browserPromise.then((done) => showStart(done && done.ok ? done.start : null), () => showStart(null));
   const proofPromise = stopped || passive || !controls.asker ? Promise.resolve(null) : proveOwner(controls.asker, origin.hostname).catch(() => null);
+  const exposedPromise = stopped || passive || !controls.asker ? Promise.resolve(null) : proofPromise.then((proof) => {
+    if (!proof || !proof.kind) return { locked: true };
+    if (halt()) return null;
+    const readCapped = async (url) => {
+      const target = new URL(url);
+      return exposedFiles.read(target, { lookup: pinnedLookup(await assertPublic(target.hostname)), agent: USER_AGENT });
+    };
+    return exposedFiles.probe(origin.origin, { get: readCapped, allowed: (path) => !robots.length || robotsAllows(path, robots), halt }).then((res) => {
+      note("Checked " + res.checked + " well-known paths for exposed files" + (res.found.length ? ": " + res.found.map((row) => row.path).join(", ") + " gave out content." : "; none gave out content."));
+      return res;
+    });
+  }).catch(() => null);
   const canTalk = !passive && !!controls.asker && typeof controls.browse === "function";
   const published = canTalk ? chatTalk.facts() : null;
   if (published) published.read(visibleText(first.body));
@@ -3472,11 +3664,22 @@ async function reviewTarget(rawUrl, hooks) {
   const tools = toolsForPage(homeInspect, (homeInspect && homeInspect.signals) || {}, technologiesFound.map((item) => item.name));
   note("Proposed " + cases.length + " test cases across " + Object.keys(caseRank.countLayers(cases)).length + " layers" + (robotsBlocked ? ". " + robotsBlocked + " linked page" + (robotsBlocked === 1 ? " was" : "s were") + " skipped for robots.txt" : "") + ".");
   const alerts = buildAlerts(first.body, homeInspect, pagePath(first.url));
+  const linkedPromise = stopped || typeof controls.webrisk !== "function" ? Promise.resolve(null) : linkedRisk.check(linkedRisk.collect(pages, browser, origin.hostname), controls.webrisk, { customer: controls.customer === true }).catch(() => null);
   const outboundPromise = stopped ? Promise.resolve(null) : checkOutbound(pages, halt, deadline - 15000).catch(() => null);
+  const wordpressPromise = stopped ? Promise.resolve(null) : withTimeout(wordpress.check(pages, {
+    read: (url) => !robots.length || robotsAllows(pagePath(url), robots) ? fetchExtra(url, halt, false, acceptLanguage) : null
+  }), Math.max(3000, deadline - 15000 - Date.now()), null).catch(() => null);
   let extras = {};
   if (!extrasSettled) note("Waiting for the background checks to finish.");
   try { extras = await extrasPromise; } catch (error) { extras = {}; }
+  extras.linkedRisk = await linkedPromise;
+  if (extras.linkedRisk && extras.linkedRisk.found) note(linkedRisk.note(extras.linkedRisk));
   extras.outbound = await outboundPromise;
+  extras.wordpress = await wordpressPromise;
+  if (extras.wordpress) note(wordpress.note(extras.wordpress));
+  extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
+  extras.hackSigns = await withTimeout(hackPromise, 5000, null);
+  if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
@@ -3533,6 +3736,13 @@ async function reviewTarget(rawUrl, hooks) {
     note("Ranked " + cases.length + " cases by risk on " + origin.hostname + ": " + top + " P1, " + cases.filter((item) => item.priority === "P2").length + " P2" + (top ? ". First: " + cases[0].id + " " + cases[0].title : "") + ".");
   } catch (error) {
     console.error("URL review case ranking failed:", error);
+  }
+  let watch = null;
+  try {
+    watch = watchCases.build((analysis && analysis.findings) || [], extras, { host: origin.hostname, base: origin.origin, browser: browser && browser.ok ? browser : null });
+    if (watch) note("Wrote " + watch.cases.length + " watch case" + (watch.cases.length === 1 ? "" : "s") + " for the open security, mail and accessibility findings: " + watch.cases.map((item) => item.id + " " + item.kind).join(", ") + ".");
+  } catch (error) {
+    console.error("URL review watch cases failed:", error);
   }
   const byLayer = caseRank.countLayers(cases);
   const reportId = crypto.randomBytes(9).toString("hex");
@@ -3619,6 +3829,7 @@ async function reviewTarget(rawUrl, hooks) {
       : "These cases are proposed from a public analysis. None of them were executed."
   };
   if (talked) result.chatTalk = talked;
+  if (watch) result.watch = watch;
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
@@ -3693,6 +3904,17 @@ function localSummary(report) {
   };
 }
 
+// The newer security checks' findings in a few bytes (#3329), so Jarvis counts hits per check without reading reports.
+const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist)/;
+function checksSummary(report) {
+  const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
+  const rows = findings.filter((f) => f && CHECK_KEYS.test(f.key || "")).map((f) => {
+    const title = f.msg && f.msg.title && f.msg.title.id ? String(f.msg.title.id) : "";
+    return Object.assign({ key: f.key, verdict: f.verdict || "", severity: f.severity || "" }, /\.unchecked\./.test(title) ? { unchecked: true } : {});
+  });
+  return rows.length ? rows.slice(0, 30) : null;
+}
+
 function intakeRecord(value, report, meta) {
   const now = Date.now();
   const fixed = [];
@@ -3737,6 +3959,7 @@ function intakeRecord(value, report, meta) {
     query: value.query || "",
     referrerHost: value.referrerHost || "",
     local: localSummary(report),
+    checks: checksSummary(report),
     report: kept
   };
 }
@@ -3846,6 +4069,10 @@ function productName(purpose, frameworks, scope) {
   if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
+  if (purpose === "fix") {
+    const pkg = fixOffers.packageById(scope && scope.package);
+    return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
+  }
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
   const fw = purpose === "cases" ? normalizeLayers(frameworks) : normalizeFrameworks(frameworks);
   const toolNames = purpose === "cases" ? [] : normalizeTools(scope && scope.tools);
@@ -4020,7 +4247,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -4495,6 +4722,14 @@ function frostAll(value) {
   return value;
 }
 
+// Shared and unpaid opens keep overall + six area scores (numbers) and one teaser finding in the clear (#3477):
+// its title, evidence and fix stay readable so a colleague sees why the score dropped. Everything else frosts.
+function teaserFinding(findings) {
+  const list = findings || [];
+  return list.filter((item) => item.verdict === "fail" || item.verdict === "risk")
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999))[0] || list[0] || null;
+}
+
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
@@ -4513,10 +4748,19 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
+  // Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
+  const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
+  const teaserId = teaser && (teaser.id || teaser.key);
+  const teaserKeep = teaser ? { title: teaser.title, evidence: teaser.evidence, fix: teaser.fix, msg: teaser.msg } : null;
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole
+  // except the teaser finding, which keeps evidence and fix so shared links still show the top gap (#3477).
   (ins.findings || []).forEach((item) => {
-    item.evidence = frostText(item.evidence);
-    item.fix = frostText(item.fix);
+    const isTeaser = teaserId && (item.id === teaserId || item.key === teaserId);
+    if (isTeaser) item.teaser = true;
+    else {
+      item.evidence = frostText(item.evidence);
+      item.fix = frostText(item.fix);
+    }
     if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
     else delete item.msg;
   });
@@ -4533,9 +4777,19 @@ function previewReport(report, options) {
       securityTxt: !!kit.securityTxt
     };
   }
+  if (copy.watch) copy.watch = watchCases.preview(copy.watch);
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
+  if (teaserKeep && frosted.insights && frosted.insights.findings) {
+    const hit = frosted.insights.findings.find((item) => item.teaser);
+    if (hit) {
+      hit.title = teaserKeep.title;
+      hit.evidence = teaserKeep.evidence;
+      hit.fix = teaserKeep.fix;
+      if (teaserKeep.msg && teaserKeep.msg.title) hit.msg = { title: teaserKeep.msg.title };
+    }
+  }
   if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;
@@ -4580,6 +4834,8 @@ module.exports = {
   priceFor,
   priceForReport,
   priceForFixList,
+  priceForFix,
+  productName,
   priceForLayers,
   priceForScope,
   priceForRun,
@@ -4636,6 +4892,7 @@ module.exports = {
   visibleText,
   fetchExtra,
   webSearch,
+  webSearchOrNull,
   parseMentions,
   humanCheck,
   createCheckout,
@@ -4653,6 +4910,7 @@ module.exports = {
   toolsForPage,
   intakeRecord,
   localSummary,
+  checksSummary,
   storable,
   analyzeHtml: inspect,
   challengeOf,

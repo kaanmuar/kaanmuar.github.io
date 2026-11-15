@@ -20,7 +20,10 @@ class JarvisMessaging : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        if (message.data["kind"] == "update") Updater.soon(this)
-        else if (message.data.isNotEmpty()) Push.show(this, message.data)
+        when {
+            message.data["kind"] == "update" -> Updater.soon(this)
+            message.data["kind"] == "sections" -> Push.sections(this, message.data)
+            message.data.isNotEmpty() -> Push.show(this, message.data)
+        }
     }
 }

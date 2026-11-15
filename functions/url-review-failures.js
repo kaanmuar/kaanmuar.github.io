@@ -27,7 +27,17 @@ const FIXES = [
   { cause: "http-redirect", at: "2026-10-25T12:50:11Z", ref: "#1194", label: "An http:// redirect is read over https first, as Chrome does" },
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
   { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
-  { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" }
+  { cause: "tls", at: "2026-11-06T07:45:04Z", ref: "#2744", label: "A certificate whose issuer is also missing is read by following each AIA address until a trusted root" },
+  { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" },
+  { cause: "browser", at: "2026-11-09T12:37:32Z", ref: "#2876", label: "A page that moves itself on after it loaded is read again once it settles" },
+  { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
+  { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
+  { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" },
+  { cause: "http-redirect", at: "2026-11-12T07:43:45Z", ref: "#3460", label: "An http redirect whose https copy points back at it is followed to the next path on that host" },
+  { cause: "browser", at: "2026-11-15T20:40:00Z", ref: "#3512", label: "A bot check that answers with an error status before its load event finishes is named as refused" },
+  { cause: "connection", at: "2026-11-15T20:40:00Z", ref: "#3513", label: "A plain read refused with ECONNREFUSED is tried in headless Chrome before it is named down" },
+  { cause: "timeout", at: "2026-11-15T20:40:00Z", ref: "#3514", label: "A plain read reset or aborted before any page is tried in headless Chrome" },
+  { cause: "status", at: "2026-11-15T21:15:00Z", ref: "#1178", label: "A 5xx that headless Chrome gets after the plain read took too long is the site's own answer, kept on the desk without a bug" }
 ];
 const fixKey = (fix) => fix.cause + " " + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -66,6 +76,8 @@ const READABLE = {
 const HOST_BROKE = /net::ERR_(?:CONNECTION_(?:RESET|CLOSED|REFUSED|TIMED_OUT)|HTTP2_PROTOCOL_ERROR|EMPTY_RESPONSE|TIMED_OUT|ADDRESS_UNREACHABLE)\b/;
 // The review's own error when the plain read and headless Chrome both got a 4xx that is not a bot wall (401, 403 and 429 are).
 const SITE_REFUSAL = /^The URL returned status (?!40[13]\b|429\b)4\d\d, in the plain (?:request|read) and in headless Chrome\./;
+// A 5xx in headless Chrome after a slow plain read, or in both reads, is the site's own state for every client.
+const SITE_ERROR = /^The URL returned status [5-9]\d{2}(?:, in headless Chrome, after the plain request took too long|, in the plain (?:request|read) and in headless Chrome)\./;
 
 function causeOf(message) {
   const text = String(message || "");
@@ -189,12 +201,13 @@ function stateOf(probe) {
 
 const guarded = (status) => [401, 403, 429].includes(status);
 
-// A real browser's refusal. Only an error page (a 4xx that is not a bot wall) that the plain read got too is the site's own answer;
+// A real browser's refusal. A 4xx that is not a bot wall in both reads, or any 5xx in headless Chrome, is the site's own answer;
 // `site` keeps it out of the failure bugs.
 function chromeRefused(browser, plain, lead) {
   const bot = !!plain.challenge || !!browser.challenge || guarded(browser.docStatus);
-  const both = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
-  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && both, label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
+  const both4xx = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
+  const error5xx = browser.docStatus >= 500;
+  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && (both4xx || error5xx), label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
 }
 
 function unreadState(run, plain) {
@@ -366,12 +379,14 @@ function sentRecord(doc, now) {
   });
 }
 
-const RERUN_LEAD = { held: "Held for you: ", swept: "Saved by the sweep: ", failed: "Failed again: " };
+const RERUN_LEAD = { held: "Held for you: ", swept: "Saved by the sweep: ", sent: "Sent to the asker, as promised: ", failed: "Failed again: " };
 
 // A sweep re-run has no asker: its report is saved like any sweep review and goes public through Live Reports.
+// A promised re-run (url-review-promise.js) may already be sent.
 function rerunMail(done) {
   const held = done.filter((row) => row.status === "held");
   const swept = done.filter((row) => row.status === "swept");
+  const sent = done.filter((row) => row.status === "sent");
   const failed = done.filter((row) => row.status === "failed");
   const blocks = done.map((row) => [
     (RERUN_LEAD[row.status] || RERUN_LEAD.failed) + row.host + " for " + (row.name || "an asker") + (row.email ? " <" + row.email + ">" : ""),
@@ -381,10 +396,10 @@ function rerunMail(done) {
       : "Report " + row.reportId + (row.reportStatus === "stopped" ? ", stopped before the last page" : "")
   ].join("\n"));
   return {
-    subject: "URL review re-runs: " + held.length + " held for you, " + (swept.length ? swept.length + " saved by the sweep, " : "") + failed.length + " failed again",
+    subject: "URL review re-runs: " + held.length + " held for you, " + (sent.length ? sent.length + " sent as promised, " : "") + (swept.length ? swept.length + " saved by the sweep, " : "") + failed.length + " failed again",
     intro: "Failed URL reviews were run again",
-    rows: [{ label: "Held for you", value: String(held.length) }].concat(swept.length ? [{ label: "Saved by the sweep", value: String(swept.length) }] : [], [{ label: "Failed again", value: String(failed.length) }]),
-    body: blocks.join("\n\n") + "\n\nNo asker was emailed. Send or drop each held report from the review desk."
+    rows: [{ label: "Held for you", value: String(held.length) }].concat(sent.length ? [{ label: "Sent as promised", value: String(sent.length) }] : [], swept.length ? [{ label: "Saved by the sweep", value: String(swept.length) }] : [], [{ label: "Failed again", value: String(failed.length) }]),
+    body: blocks.join("\n\n") + "\n\n" + (sent.length ? "Askers promised their report by email got it. No other asker was emailed." : "No asker was emailed.") + " Send or drop each held report from the review desk."
   };
 }
 
@@ -396,6 +411,7 @@ const SITE_SIDE = ["input", "dns", "down"];
 function siteSide(doc, cause) {
   if (SITE_SIDE.includes(cause)) return true;
   if (SITE_REFUSAL.test(String((doc.error && doc.error.message) || ""))) return true;
+  if (SITE_ERROR.test(String((doc.error && doc.error.message) || ""))) return true;
   return !!(doc.diagnosis && doc.diagnosis.site);
 }
 
@@ -414,7 +430,11 @@ function siteReason(lead) {
   const browser = probe.browser;
   if (lead.cause === "bot-protection" && (/\bin headless Chrome\b/.test(lead.message) || (browser && browser.ok && (!!browser.challenge || guarded(browser.docStatus))))) return "bot-wall";
   if (lead.cause === "tls" && SITE_CERT.test(lead.message + " " + (plain.error || "") + " " + (plain.code || ""))) return "cert";
-  if (lead.cause === "status" && plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+  if (lead.cause === "status") {
+    if (plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+    if (plain.error && browser && browser.ok && browser.docStatus >= 500) return "5xx";
+    if (SITE_ERROR.test(lead.message || "")) return "5xx";
+  }
   return "";
 }
 
@@ -476,6 +496,7 @@ function bugLead(row, source) {
     why: source === "rerun" && doc.trigger ? scrub(doc.trigger.label, 300) : "",
     failures: source === "rerun" ? (doc.failureIds || []).length : 0,
     probe: source === "failure" ? doc.probe || null : null,
+    rescue: rescueOf(doc).map((line) => scrub(line, 300)),
     lines: (Array.isArray(doc.lines) ? doc.lines : []).slice(-BUG_LOG_LINES).map((line) => scrub(line && line.text, 200).replace(/```/g, "'''"))
   };
 }
@@ -502,6 +523,9 @@ function probeLines(probe) {
   return out;
 }
 
+// The lines functions/url-review-rescue.js keeps on the failure: what its diagnosis concluded and what it tried.
+const rescueOf = (doc) => (doc && doc.rescue && Array.isArray(doc.rescue.lines) ? doc.rescue.lines : []).map((line) => clip(line, 300)).filter(Boolean);
+
 function bugTitle(cause, fix) {
   const label = labelOf(cause);
   const still = fix ? "still " : "";
@@ -522,10 +546,12 @@ function bugEvidence(rows) {
     ? "failed re-run `" + row.id + "` of " + plural(row.failures, "failure")
     : "failed run `" + row.id + "`") + " on " + (row.host || "an unknown host") + ": " + (row.message || "no error text") + (row.now ? " Now: " + row.now : "") + (row.why ? " Why it ran: " + row.why : "") + (row.site ? " Site's own state: " + SITE_REASONS[row.site] + "." : ""));
   const probed = rows.find((row) => row.probe);
+  const rescued = rows.find((row) => (row.rescue || []).length);
   const logged = rows.find((row) => row.lines.length);
   return [
     listed.join("\n") + (rows.length > BUG_ROWS ? "\n- and " + (rows.length - BUG_ROWS) + " more" : ""),
     probed ? "\n### Probe of the latest failure (" + probed.host + ")\n" + probeLines(probed.probe).map((line) => "- " + line).join("\n") : null,
+    rescued ? "\n### Rescue of " + rescued.host + " (#3080)\n" + rescued.rescue.map((line) => "- " + line).join("\n") : null,
     logged ? "\n### Last log lines of `" + logged.id + "`\n```\n" + logged.lines.join("\n") + "\n```" : null
   ].filter((part) => part !== null);
 }
@@ -559,11 +585,13 @@ function bugIssue(key, leads) {
 
 function bugLeads(failures, reruns) {
   const probes = new Map((Array.isArray(failures) ? failures : []).filter((row) => row && row.probe).map((row) => [row.id, row.probe]));
+  const rescues = new Map((Array.isArray(failures) ? failures : []).filter((row) => row && rescueOf(row).length).map((row) => [row.id, rescueOf(row).map((line) => scrubbed(line, 300))]));
   const classes = new Map();
   [[failures, "failure"], [reruns, "rerun"]].forEach(([rows, source]) => (Array.isArray(rows) ? rows : []).forEach((row) => {
     const lead = bugLead(row, source);
     if (!lead) return;
     if (source === "rerun") lead.probe = (row.failureIds || []).map((id) => probes.get(id)).find(Boolean) || null;
+    if (source === "rerun" && !lead.rescue.length) lead.rescue = (row.failureIds || []).map((id) => rescues.get(id)).find(Boolean) || [];
     lead.site = siteReason(lead);
     classes.set(lead.key, (classes.get(lead.key) || []).concat(lead));
   }));
@@ -603,7 +631,7 @@ function bugFollowUps(failures, reruns, bugs) {
 }
 
 // The fields of a failure the reports and the desk list read; the log stays behind.
-const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "lineCount", "timings.ms", "fromAlert", "source"];
+const SUMMARY_FIELDS = ["kind", "at", "url", "host", "name", "email", "cause", "error.message", "diagnosis", "diagnosedAt", "checks", "rerun", "rescue.status", "rescue.strategy", "rescue.blocker", "rescue.by", "lineCount", "timings.ms", "fromAlert", "source", "promise"];
 const RERUN_FIELDS = ["status", "at", "host", "name", "trigger", "cause", "error.message", "decidedAt"];
 const RERUN_STATES = [["held", "held for you"], ["swept", "saved by the sweep"], ["sent", "sent"], ["dropped", "dropped"], ["failed", "failed again"]];
 const REPORT_ROWS = 60;
@@ -710,9 +738,11 @@ function failureRow(row) {
     checks: Number(doc.checks) || 0,
     rerun: rerunState(doc),
     rerunId: doc.rerun && doc.rerun.id ? clip(doc.rerun.id, 40) : "",
+    rescue: doc.rescue && doc.rescue.status ? clip("rescue " + doc.rescue.status + (doc.rescue.strategy ? " with " + doc.rescue.strategy : "") + (doc.rescue.blocker ? " (" + (doc.rescue.by === "gemini" ? "Gemini" : "rules") + ": " + doc.rescue.blocker + ")" : ""), 200) : "",
     lineCount: Number(doc.lineCount) || 0,
     ms: Number(doc.timings && doc.timings.ms) || 0,
-    fromAlert: !!doc.fromAlert
+    fromAlert: !!doc.fromAlert,
+    promise: doc.promise ? { state: clip(doc.promise.state, 20), coupon: clip(doc.promise.coupon, 24), percent: Number(doc.promise.percent) || 0, at: clip(doc.promise.at, 40), closedAt: clip(doc.promise.closedAt, 40) } : null
   };
 }
 
@@ -726,6 +756,7 @@ function failureDetail(doc, rerun) {
     diagnosis: row.diagnosis || null,
     probe: row.probe || null,
     probeLines: row.probe ? probeLines(row.probe) : [],
+    rescueLines: rescueOf(row),
     lines: logLines(row.lines),
     linesCut: Number(row.linesCut) || 0,
     timings: row.timings || null,
@@ -744,8 +775,8 @@ function failureDetail(doc, rerun) {
 }
 
 module.exports = {
-  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
-  causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl,
+  KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, RERUN_FRAMEWORKS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
+  causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl, probeLines,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS
+  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide
 };

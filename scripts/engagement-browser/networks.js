@@ -15,7 +15,11 @@
  * adds task.extras (a GIF, a topic, a card image) where the composer has them and returns what came of each (#2710).
  * Telegram and Reddit (#2614) also have groups(page, query) => groups a topic search finds ({ network, id, name, url,
  * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
- * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups).
+ * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups). LinkedIn (#3138) has
+ * groups and join too, as Carlos's personal profile; its join and Reddit's return the group's rules and pending (asked).
+ * Both carry the student routine's approved drafts as Carlos (#3138): publish(page, task) posts task.title and
+ * task.draft in a group or task.sr, dm(page, task) messages task.to, and a LinkedIn reply with task.as "self" skips
+ * acting as the page.
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -39,7 +43,7 @@ const CHECK_EL = 'iframe[src*="captcha"], iframe[src*="arkose"], iframe[src*="re
 
 async function checked(page, net) {
   if (CHECK_URL.test(new URL(page.url()).pathname) || (net.check && net.check.test(page.url()))) throw new Refused(net.name + " sent us to a sign-in or check page (" + new URL(page.url()).pathname + ").");
-  if (await page.locator(CHECK_EL).count().catch(() => 0)) throw new Refused(net.name + " is showing a captcha.");
+  if (await page.locator(net.checkEl || CHECK_EL).count().catch(() => 0)) throw new Refused(net.name + " is showing a captcha.");
 }
 
 async function go(page, net, url) {
@@ -910,6 +914,29 @@ const LI_REACT = {
   insightful: ["Insightful", "Interesar"], funny: ["Funny", "Hacer gracia"]
 };
 const liReact = (names) => new RegExp("(^|\\s)(" + names.join("|") + ")$", "i");
+// Group search results and a group's page (#3138). Counts read "12K members", "1.234 miembros"; a group asking for
+// approval shows Requested once joined.
+const LI_MEMBERS = "const members = (t) => { const m = String(t || '').replace(/(\\d)[.,](?=\\d{3}\\b)/g, '$1').match(/([\\d.,]+\\s*[KkMm]?)\\s*(members|miembros|membros|Mitglieder|membres|membri)/i); return m ? num(m[1]) : 0; };";
+const LI_GROUP_CARDS = LI_MEMBERS + `
+  const seen = {};
+  return Array.from(document.querySelectorAll('main a[href*="/groups/"]')).map((a) => {
+    const id = (String(a.href).match(/\\/groups\\/(\\d{3,12})(?:\\/|$|\\?)/) || [])[1];
+    const name = String(a.innerText || '').split('\\n')[0].trim();
+    if (!id || !name || seen[id]) return null;
+    seen[id] = 1;
+    const card = a.closest('li') || a.parentElement;
+    const text = String((card && card.innerText) || '').replace(/\\s+/g, ' ').trim();
+    return { network: 'linkedin', id, name, url: 'https://www.linkedin.com/groups/' + id + '/', members: members(text), lang: '', about: text.replace(name, '').trim().slice(0, 400),
+      kind: 'group', member: /\\b(Joined|Unido|Membro|Mitglied|Membre|Iscritto)\\b/i.test(text), open: true };
+  }).filter(Boolean);`;
+const LI_GROUP_ABOUT = LI_MEMBERS + `
+  const main = document.querySelector('main') || document.body;
+  const heads = Array.from(main.querySelectorAll('h2, h3')).filter((h) => /^(About|Acerca|Sobre|Info|À propos|Informazioni|Rules|Group rules|Reglas|Regras|Regeln|Règles|Regole)/i.test(h.innerText.trim()));
+  const rules = heads.map((h) => String((h.closest('section') || h.parentElement).innerText || '')).join('\\n').trim() || String(main.innerText || '').slice(0, 2000);
+  return { members: members(main.innerText), rules: rules.replace(/[ \\t]+/g, ' ').slice(0, 2000) };`;
+const LI_START = /(Start a post|Comenzar una publicación|Crear publicación|Começar uma publicação|Beitrag beginnen|Commencer un post|Inizia un post)/i;
+const LI_JOIN = /^\s*(Join|Unirse|Participar|Entrar|Beitreten|Rejoindre|Iscriviti|Partecipa)\s*$/i;
+const LI_ASKED = /^\s*(Requested|Request sent|Solicitad[oa]|Pendiente|Solicitação enviada|Angefragt|Demandé|Demande envoyée|Richiesta inviata)\s*$/i;
 
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", queries: GENERAL,
@@ -1022,7 +1049,7 @@ const linkedin = {
   async reply(page, task) {
     const tags = (task.mentions || []).length ? await named(page, this, task.mentions, (m) => "https://www.linkedin.com/" + m.handle + "/") : null;
     const main = await this.post(page, task);
-    await this.asPage(page, main);
+    if (task.as !== "self") await this.asPage(page, main);
     const box = main.locator('[contenteditable="true"][aria-label*="coment" i], [contenteditable="true"][aria-label*="comment" i]');
     if (!(await visible(box, 4000))) await click(await need(main.locator('button[aria-label="Comentar"], button[aria-label="Comment"]'), "Comment"));
     let mentions = null;
@@ -1068,6 +1095,54 @@ const linkedin = {
     await click(await need(form.locator('button[data-view-name="comment-reply-post"]'), "Reply"));
     await sent(input, task.draft);
     return { url: task.url };
+  },
+  // Groups a keyword search finds (#3138), for joins (functions/engagement-joins.js). Only a member joins a group, not
+  // a company page: these run in Carlos's personal session, and the group's rules come back with the join.
+  async groups(page, q) {
+    await go(page, this, "https://www.linkedin.com/search/results/groups/?keywords=" + enc(q));
+    await pause(2500, 4500);
+    await scroll(page, 1);
+    return evaluate(page, LI_GROUP_CARDS);
+  },
+  async join(page, task) {
+    await go(page, this, "https://www.linkedin.com/groups/" + enc(task.id) + "/");
+    await pause(2500, 4000);
+    const main = page.locator("main").first();
+    if (!(await visible(main, 20000))) throw new Error("LinkedIn did not show the group.");
+    const about = await evaluate(page, LI_GROUP_ABOUT);
+    const join = main.getByRole("button", { name: LI_JOIN });
+    const asked = main.getByRole("button", { name: LI_ASKED });
+    if (await visible(asked, 1500)) return { already: false, pending: true, members: about.members, rules: about.rules };
+    if (!(await visible(join, 6000))) return { already: true, members: about.members, rules: about.rules };
+    await click(join.first());
+    await pause(2500, 4000);
+    if (await visible(asked, 6000)) return { pending: true, members: about.members, rules: about.rules };
+    await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
+    return { members: about.members, rules: about.rules };
+  },
+  // A student community post (#3138) in a group Carlos joined, as himself: title, a blank line, the body.
+  async publish(page, task) {
+    await go(page, this, task.url);
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: LI_START }).or(main.getByText(LI_START)), "Start a post"));
+    const dialog = page.locator('[role="dialog"]').filter({ has: page.locator('[contenteditable="true"]') }).last();
+    await type(page, await need(dialog.locator('[contenteditable="true"]'), "The post box"), [task.title, task.draft].filter(Boolean).join("\n\n"));
+    await click(await need(dialog.getByRole("button", { name: /^\s*(Post|Publicar|Publier|Posten|Veröffentlichen|Pubblica)\s*$/i }), "Post"));
+    await dialog.waitFor({ state: "hidden", timeout: 20000 }).catch(() => { throw new Error("LinkedIn did not take the post."); });
+    return { url: task.url };
+  },
+  // A student invite (#3138) from Carlos's profile: Message on theirs, typed and sent. Members outside his network
+  // without open messages have no Message button, so it fails rather than buy InMail.
+  async dm(page, task) {
+    await go(page, this, "https://www.linkedin.com/" + String(task.to).replace(/^\/+/, "") + "/");
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: /^\s*(Message|Enviar mensaje|Mensaje|Mensagem|Nachricht|Message privé|Messaggio)\b/i }), "Message"));
+    const form = page.locator(".msg-form, form").filter({ has: page.locator('[contenteditable="true"]') }).last();
+    const input = await need(form.locator('[contenteditable="true"]'), "The message box");
+    await type(page, input, task.draft);
+    await click(await need(form.getByRole("button", { name: /^\s*(Send|Enviar|Senden|Envoyer|Invia)\s*$/i }), "Send"));
+    await sent(input, task.draft);
+    return { url: page.url() };
   }
 };
 
@@ -1239,78 +1314,111 @@ const facebook = {
 };
 
 // --- Reddit (#2614) ------------------------------------------------------------------------------------------------
-// old.reddit.com as Carlos's account: its markup has stayed the same for years. Reads are its JSON listings, fetched in
-// the signed-in page after a page view; upvotes, comments and joins are clicks; follows and crossposts are the calls
-// Reddit's own buttons make, with the session's modhash.
-const RD = "https://old.reddit.com";
+// www.reddit.com as Carlos's account. old.reddit.com no longer takes this session (it sends every page to
+// /login?reason=lor2), and www's own JSON listings answer 403. What works is the API the site itself calls,
+// oauth.reddit.com with the session's token_v2 cookie, for listings, subreddit search, about pages, votes, comments,
+// subscriptions and crossposts. Post search, /api/info and /comments are blocked there too, so topic searches read
+// www's search page and our earlier comments are read off the post page.
+const RD = "https://www.reddit.com";
+const RD_API = "https://oauth.reddit.com";
 const RD_OWN = "qalablivereports";
 const RD_SUBS = ["QualityAssurance", "softwaretesting", "Playwright", "Cypress", "selenium", "TechSEO", "SEO", "bigseo", "accessibility", "webdev", "webperf", "GoogleAnalytics", "GoogleTagManager", "netsec"];
 
-async function rdJson(page, path) {
+// token_v2 is httpOnly and lasts a day; a www page view renews it.
+async function rdToken(page) {
   if (!page.url().startsWith(RD)) await go(page, reddit, RD + "/");
-  const out = await page.evaluate(async (p) => {
-    const r = await fetch(p, { credentials: "include", headers: { accept: "application/json" } });
-    return { status: r.status, body: r.ok ? await r.json().catch(() => null) : null };
-  }, path);
-  if (out.status === 429 || out.status === 403) throw new Refused("Reddit answered " + out.status + " to " + path.split("?")[0] + ".");
-  if (!out.body) throw new Error("Reddit answered " + out.status + " to " + path.split("?")[0] + ".");
+  const t = (await page.context().cookies(RD)).find((c) => c.name === "token_v2");
+  if (!t || !t.value) throw new Refused("Reddit is signed out in the agent's Chrome.");
+  return t.value;
+}
+
+async function rdApi(page, path, form) {
+  const token = await rdToken(page);
+  const out = await page.evaluate(async ({ url, token, form }) => {
+    const init = { headers: { authorization: "Bearer " + token } };
+    if (form) Object.assign(init, { method: "POST", body: new URLSearchParams(Object.assign({ api_type: "json" }, form)) });
+    try {
+      const r = await fetch(url, init);
+      return { status: r.status, body: await r.json().catch(() => null) };
+    } catch (error) { return { status: 0, body: null }; }
+  }, { url: RD_API + path, token, form: form || null });
+  const what = path.split("?")[0];
+  if (out.status === 401) throw new Refused("Reddit is signed out in the agent's Chrome.");
+  if (out.status === 429 || out.status === 403) throw new Refused("Reddit answered " + out.status + " to " + what + ".");
+  if (!out.body) throw new Error("Reddit answered " + (out.status || "nothing") + " to " + what + ".");
   return out.body;
 }
 
+const rdJson = (page, path) => rdApi(page, path);
+
 async function rdCall(page, path, form) {
-  const out = await page.evaluate(async ({ path, form }) => {
-    const me = await (await fetch("/api/me.json", { credentials: "include" })).json().catch(() => ({}));
-    const uh = (me.data || {}).modhash;
-    if (!uh) return { signedOut: true };
-    const r = await fetch(path, { method: "POST", credentials: "include", headers: { "X-Modhash": uh, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(Object.assign({ api_type: "json", uh }, form)) });
-    const j = await r.json().catch(() => ({}));
-    return { status: r.status, errors: ((j.json || {}).errors || []).map((e) => e.join(": ")), data: (j.json || {}).data || null };
-  }, { path, form });
-  if (out.signedOut) throw new Refused("Reddit is signed out in the agent's Chrome.");
-  if (out.status === 429 || out.errors.some((e) => /RATELIMIT/.test(e))) throw new Refused("Reddit rate-limited us: " + (out.errors[0] || out.status) + ".");
-  if (out.status !== 200 || out.errors.length) throw new Error("Reddit refused " + path + ": " + (out.errors[0] || out.status) + ".");
-  return out.data || {};
+  const j = (await rdApi(page, path, form)).json || {};
+  const errors = (j.errors || []).map((e) => e.join(": "));
+  if (errors.some((e) => /RATELIMIT/.test(e))) throw new Refused("Reddit rate-limited us: " + errors[0] + ".");
+  if (errors.length) throw new Error("Reddit refused " + path + ": " + errors[0] + ".");
+  return j.data || {};
 }
 
 const rdPosts = (listing) => (((listing || {}).data || {}).children || []).map((c) => c.data)
   .filter((d) => d && d.name && !d.over_18 && !d.stickied && !d.locked && !d.archived && d.author !== "[deleted]" && String(d.subreddit).toLowerCase() !== RD_OWN)
   .map((d) => ({
-    network: "reddit", id: d.name, url: "https://www.reddit.com" + d.permalink, author: { handle: d.author, name: d.author }, title: d.title || "", text: d.selftext || "", lang: "",
+    network: "reddit", id: d.name, url: RD + d.permalink, author: { handle: d.author, name: d.author }, title: d.title || "", text: d.selftext || "", lang: "",
     createdAt: new Date(d.created_utc * 1000).toISOString(), isReply: false, metrics: { likes: d.score || 0, replies: d.num_comments || 0, reposts: d.num_crossposts || 0, views: 0 },
     tags: d.link_flair_text ? [d.link_flair_text] : []
   }));
 
+// A result on www's search page: its tracking context carries the ids and names, the counter row the numbers.
+const RD_SEARCH = `
+  return Array.from(document.querySelectorAll('search-telemetry-tracker[data-testid="search-sdui-post"]')).map((u) => {
+    let ctx = {};
+    try { ctx = JSON.parse(u.getAttribute('data-faceplate-tracking-context') || '{}'); } catch (e) { /* no context */ }
+    const post = ctx.post || {}, sub = ctx.subreddit || {};
+    const link = u.querySelector('a[href*="/comments/"]');
+    const nums = Array.from(u.querySelectorAll('[data-testid="search-counter-row"] faceplate-number')).map((n) => Number(n.getAttribute('number')) || 0);
+    const time = u.querySelector('faceplate-timeago[ts]');
+    return { id: post.id || u.getAttribute('data-thingid') || '', title: post.title || '', nsfw: post.nsfw === true || sub.nsfw === true, author: (ctx.profile || {}).name || '',
+      sub: sub.name || '', href: link ? link.getAttribute('href') : '', ts: time ? time.getAttribute('ts') : '', likes: nums[0] || 0, replies: nums[1] || 0 };
+  });`;
+
 const reddit = {
   name: "Reddit", home: RD + "/", queries: GENERAL, places: RD_SUBS.map((s) => "r/" + s), sample: "test automation",
+  // Every www page carries reCAPTCHA's invisible anchor frame; only its challenge frame (bframe) is a check.
+  checkEl: 'iframe[src*="arkose"], iframe[src*="recaptcha"][src*="bframe"]',
   async signedIn(page) {
-    const me = await rdJson(page, "/api/me.json");
-    this.me = String((me.data || {}).name || "");
+    const me = await rdJson(page, "/api/v1/me").catch(() => ({}));
+    this.me = String(me.name || "");
     return this.me ? "u/" + this.me : "";
   },
-  // A topic search (top of the week), or "r/<name>": that subreddit's hot posts.
+  // A topic search (most relevant this week), or "r/<name>": that subreddit's hot posts.
   async read(page, q) {
-    const sub = /^r\//.test(q);
-    await go(page, this, RD + (sub ? "/" + q + "/" : "/search?sort=top&t=week&q=" + enc(q)));
-    await scroll(page, 1);
-    return rdPosts(await rdJson(page, sub ? "/" + q + "/hot.json?limit=40&raw_json=1" : "/search.json?q=" + enc(q) + "&sort=top&t=week&type=link&limit=40&raw_json=1"));
+    if (/^r\//.test(q)) {
+      await go(page, this, RD + "/" + q + "/");
+      await scroll(page, 1);
+      return rdPosts(await rdJson(page, "/" + q + "/hot?limit=40&raw_json=1"));
+    }
+    await go(page, this, RD + "/search/?q=" + enc(q) + "&type=posts&sort=relevance&t=week");
+    await scroll(page, 2);
+    return (await evaluate(page, RD_SEARCH)).filter((d) => /^t3_/.test(d.id) && d.href && !d.nsfw && d.author && String(d.sub).toLowerCase() !== RD_OWN).map((d) => ({
+      network: "reddit", id: d.id, url: RD + d.href, author: { handle: d.author, name: d.author }, title: d.title, text: "", lang: "",
+      createdAt: d.ts ? new Date(d.ts.replace(/\+0000$/, "Z")).toISOString() : "", isReply: false, metrics: { likes: d.likes, replies: d.replies, reposts: 0, views: 0 }, tags: []
+    }));
   },
   // Subreddits a topic search finds, for joins (functions/engagement-joins.js).
   async groups(page, q) {
-    const j = await rdJson(page, "/subreddits/search.json?q=" + enc(q) + "&limit=25&raw_json=1");
+    const j = await rdJson(page, "/subreddits/search?q=" + enc(q) + "&limit=25&raw_json=1");
     return ((j.data || {}).children || []).map((c) => c.data).filter((d) => d && d.display_name).map((d) => ({
-      network: "reddit", id: d.display_name, name: "r/" + d.display_name, url: "https://www.reddit.com/r/" + d.display_name + "/", members: d.subscribers || 0, lang: d.lang || "",
+      network: "reddit", id: d.display_name, name: "r/" + d.display_name, url: RD + "/r/" + d.display_name + "/", members: d.subscribers || 0, lang: d.lang || "",
       about: d.public_description || d.title || "", kind: "subreddit", member: d.user_is_subscriber === true, nsfw: d.over18 === true, open: d.subreddit_type === "public"
     }));
   },
   async post(page, task) {
     await go(page, this, RD + new URL(task.url).pathname);
-    return need(page.locator('#siteTable .thing[data-fullname="' + task.id + '"]'), "The post");
+    return need(page.locator('shreddit-post[id="' + task.id + '"]'), "The post");
   },
   async like(page, task) {
-    const art = await this.post(page, task);
-    if (await has(art.locator(".arrow.upmod"))) return {};
-    await click(art.locator(".midcol .arrow.up").first());
-    if (!(await visible(art.locator(".arrow.upmod"), 8000))) throw new Error("The upvote did not stick.");
+    await this.post(page, task);
+    await pause(1500, 4000);
+    await rdCall(page, "/api/vote", { id: task.id, dir: "1" });
     return {};
   },
   async follow(page, task) {
@@ -1325,28 +1433,45 @@ const reddit = {
     return { url: d.url || "" };
   },
   async replied(page, task) {
+    if (!this.me) await this.signedIn(page);
     await this.post(page, task);
-    const url = await page.locator('.commentarea .comment[data-author="' + this.me + '"]').first().getAttribute("data-permalink", { timeout: 3000 }).catch(() => "");
-    return this.me && url ? { url: "https://www.reddit.com" + url } : null;
+    await scroll(page, 1);
+    const url = this.me ? await page.locator('shreddit-comment[author="' + this.me + '"]').first().getAttribute("permalink", { timeout: 3000 }).catch(() => "") : "";
+    return url ? { url: RD + url } : null;
   },
   async reply(page, task) {
     await this.post(page, task);
-    const form = page.locator(".commentarea > form.usertext").first();
-    await type(page, await need(form.locator('textarea[name="text"]'), "The comment box"), task.draft);
-    await click(form.locator('button[type="submit"]').first());
-    const mine = page.locator('.commentarea .comment[data-author="' + this.me + '"]');
-    if (!(await visible(mine, 15000))) throw new Error("The comment did not post.");
-    return { url: "https://www.reddit.com" + (await mine.first().getAttribute("data-permalink").catch(() => "") || new URL(task.url).pathname) };
+    await pause(3000, 7000);
+    const d = await rdCall(page, "/api/comment", { thing_id: task.id, text: task.draft });
+    const c = (((d.things || [])[0] || {}).data) || {};
+    if (!c.id) throw new Error("The comment did not post.");
+    return { url: RD + (c.permalink || new URL(task.url).pathname) };
+  },
+  // A student community post (#3138), as Carlos: a text post in task.sr.
+  async publish(page, task) {
+    await go(page, this, RD + "/r/" + enc(task.sr) + "/");
+    await pause(3000, 7000);
+    const d = await rdCall(page, "/api/submit", { kind: "self", sr: task.sr, title: String(task.title || "").slice(0, 300), text: task.draft, sendreplies: "true", resubmit: "true" });
+    if (!d.url) throw new Error("The post did not go up.");
+    return { url: d.url };
+  },
+  // A student invite (#3138) as a private message.
+  async dm(page, task) {
+    await go(page, this, RD + "/user/" + enc(task.to) + "/");
+    await pause(2000, 5000);
+    await rdCall(page, "/api/compose", { to: task.to, subject: String(task.subject || "Your trial").slice(0, 100), text: task.draft });
+    return { url: RD + "/message/sent/" };
   },
   async join(page, task) {
     await go(page, this, RD + "/r/" + enc(task.id) + "/");
-    const before = (await rdJson(page, "/r/" + enc(task.id) + "/about.json")).data || {};
+    const before = (await rdJson(page, "/r/" + enc(task.id) + "/about?raw_json=1")).data || {};
     if (before.user_is_subscriber) return { already: true, members: before.subscribers || 0 };
-    await click(await need(page.locator(".side .fancy-toggle-button .option.add").filter({ visible: true }), "Join"));
+    await rdCall(page, "/api/subscribe", { action: "sub", sr_name: task.id, skip_initial_defaults: "true" });
     await pause(2000, 3500);
-    const after = (await rdJson(page, "/r/" + enc(task.id) + "/about.json")).data || {};
+    const after = (await rdJson(page, "/r/" + enc(task.id) + "/about?raw_json=1")).data || {};
     if (!after.user_is_subscriber) throw new Error("The join did not stick.");
-    return { members: after.subscribers || before.subscribers || 0 };
+    const rules = await rdJson(page, "/r/" + enc(task.id) + "/about/rules?raw_json=1").catch(() => ({}));
+    return { members: after.subscribers || before.subscribers || 0, rules: (rules.rules || []).map((r) => r.short_name + ": " + String(r.description || "").replace(/\s+/g, " ")).join("\n").slice(0, 2000) };
   }
 };
 
@@ -1495,4 +1620,8 @@ const telegram = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };
+const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit };
+// dm(page, task) on each network: a 2-day pass DM Carlos approved (#3137, dms.js).
+require("./dms").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused, rdCall });
+
+module.exports = { NETWORKS, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };

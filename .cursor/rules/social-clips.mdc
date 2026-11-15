@@ -1,6 +1,6 @@
 ---
 description: Social video clips always carry a six-language voice-over and the background bed: read before making, rendering or posting any clip, skit or share
-globs: scripts/tips-studio/**,scripts/skits-studio/**,scripts/social-inbox.js,media/**,.github/workflows/social*.yml,.github/workflows/buffer*.yml,.github/workflows/open-social*.yml,.github/workflows/facebook-page.yml
+globs: scripts/tips-studio/**,scripts/skits-studio/**,scripts/live-studio/**,scripts/social-inbox.js,media/**,.github/workflows/social*.yml,.github/workflows/buffer*.yml,.github/workflows/open-social*.yml,.github/workflows/facebook-page.yml
 alwaysApply: false
 ---
 # Social clips are never muted
@@ -12,4 +12,5 @@ alwaysApply: false
 - Don't render in a chat (#1981): `gh workflow run studio-render.yml -f kind=tips|skit -f name=<source or skit> [-f mode=rotate|captions] [-f ticket=<n>]` renders in Actions and opens a PR with clip links on the ticket; in a chat, send `render [tips|skit] <name> [--flags] [for #n]` and the pre-flight hook dispatches it without a model (#2056). A refused translator stops the render and opens a bug that says how to translate by agent. Skit takes go in the `skit-takes` release as `<skit>-<lang>.mp4`.
 - If Google's free translator rate-limits, fill `<batch>/i18n.json` by agent in `translate.py`'s format, then run `translate.py <batch> --seed`. Speak to the viewer as tú, você and tu, but Sie and vous: `translate.py` stops on the other register (#1731).
 - Exception, skits (#1041): Gemini (Veo) actors speak the scene in their own voices, so no edge-tts voice. Each skit is made in all six languages, one Gemini take per language, with captions in the take's language. Render through `scripts/skits-studio/build.js`: it lays the bed under the dialogue and fails on a clip whose peak is not above -30 dB.
+- Live studio (#3173): after a live, `node scripts/live-studio/publish.js <recording.mp4> [--dry-run]` cuts it, posts each episode's highlight in the recording's language (captions and cards in it), adds every clip to the `live-stock` release and `assets/social/live-stock.json`, and opens a studio/ PR; merging it queues the posts. An AI-voiced live keeps the six-language turn (`run.js` without `--lang`); one Carlos voiced (`--voice carlos`) is an owner share.
 - Exception, owner shares (#1420): a video Carlos shares from Jarvis (app or web) posts as-is, in the language he speaks in it, with captions in the language he wrote. No edge-tts voice and no six-language cycle. `scripts/social-inbox.js` (run by `social-inbox.yml`) lays it on a blurred 1080x1920 backdrop and fails on a clip whose peak is not above -30 dB.

@@ -371,6 +371,9 @@
   const DNS_OF = {
     "sec-spf": (row) => /^v=spf1/.test(row.value),
     "sec-dmarc": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-rua": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-sp": (row) => /^_dmarc\./.test(row.name),
+    "sec-dmarc-pct": (row) => /^_dmarc\./.test(row.name),
     "sec-caa": (row) => row.type === "CAA",
     "sec-tlsrpt": (row) => /^_smtp\._tls\./.test(row.name),
     "sec-mta-sts": (row) => /^_mta-sts\./.test(row.name)
@@ -1061,6 +1064,12 @@
       ask(fill(L().askWhy, { id }));
     }
 
+    async function fixFor(id) {
+      if (!payload || !(await open())) return;
+      const host = payload.report.host;
+      ask(fill(host ? L().askFixOn : L().askFix, { id, host }));
+    }
+
     function cardLink(id) {
       if (!payload) return "";
       const words = L();
@@ -1125,7 +1134,7 @@
       if (button) about(button.getAttribute("data-ask-about"));
     });
     if (root.ReviewAuth && root.ReviewAuth.onChange) root.ReviewAuth.onChange((on) => { if (!on) allowed.clear(); });
-    return { show, close, cardLink };
+    return { show, close, cardLink, fix: fixFor };
   }
 
   const api = { T, answer, suggestions, intentOf, idsIn, githubIssueUrl, issueFor: (report, id, options) => { const hit = lookup(report, id); return hit ? issueFor(report, hit, options || {}) : null; } };
@@ -1136,5 +1145,6 @@
     api.show = panel ? panel.show : () => {};
     api.close = panel ? panel.close : () => {};
     api.cardLink = panel ? panel.cardLink : () => "";
+    api.fix = panel ? panel.fix : () => {};
   }
 })(typeof window !== "undefined" ? window : globalThis);

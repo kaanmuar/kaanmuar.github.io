@@ -1,8 +1,5 @@
 package com.carlosandmunoz.jarvis.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +19,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,6 +55,12 @@ object Engagement {
         !approve -> "dismiss"
         typed.trim() != draft.trim() -> "edit"
         else -> "approve"
+    }
+
+    /** Gemini's English translation of a draft in another language (#2630); after an edit it describes the original. */
+    fun english(reply: JsonObject?, typed: String): String? {
+        val en = reply.str("english")?.trim()?.ifEmpty { null } ?: return null
+        return if (typed.trim() == reply.str("draft").orEmpty().trim()) "In English: $en" else "In English (the original draft): $en"
     }
 
     /** "like: planned · reply: waiting", or why the post was left alone. */
@@ -127,11 +129,11 @@ object Engagement {
         ).joinToString(" · ") + profileLine(r)
     }
 
-    /** The profile campaign's part (#2615): " · touch 2 of 4 (curious) · offer HI-… · approve copies it to paste by hand", or "". */
+    /** The profile campaign's part (#2615, #3461): " · touch 2 of 4 (curious) · offer HI-… · posts under their latest post on approval", or "". */
     fun profileLine(r: JsonObject): String {
         if (r.str("match") != "profile") return ""
         return " · touch ${fmt(r.num("touch"))} of 4 (${r.str("tone").orEmpty()}) · offer ${r.str("offer").orEmpty()} · " +
-            if (r.bool("manual") == true) "approve copies it to paste by hand" else "posts on approval"
+            if (r.bool("latest") == true || r.bool("manual") == true) "posts under their latest post on approval" else "posts on approval"
     }
 }
 
@@ -161,7 +163,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     var all by rememberSaveable { mutableStateOf(false) }
     var only by rememberSaveable { mutableStateOf("all") }
     fun ask(text: String, run: () -> Unit) { confirm = PendingAction(text, run) }
-    if (g == null) { Panel("Engagement") { Muted(ext.obj("engagement").str("error") ?: "Pull down to read the engagement scout.") }; return }
+    if (g == null) { Panel("Engagement", id = "engagement-wait") { Muted(ext.obj("engagement").str("error") ?: "Pull down to read the engagement scout.") }; return }
     val r = g.obj("report")
     val t = r.obj("totals")
     val waiting = g.objs("waiting")
@@ -171,7 +173,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     val names = g.objs("networks").associate { (it.str("network") ?: "") to (it.str("name") ?: "") }
     val uri = LocalUriHandler.current
 
-    Panel("Engagement") {
+    Panel("Engagement", id = "engagement-summary") {
         KpiPairs(listOf(
             KpiData("In our field", fmt(t.num("candidates"))),
             KpiData("Likes planned", fmt(t.num("like"))),
@@ -187,17 +189,17 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         ))
     }
 
-    Panel("Replies waiting for you" + if (waiting.isNotEmpty()) " · ${waiting.size}" else "") {
+    Panel("Replies waiting for you" + if (waiting.isNotEmpty()) " · ${waiting.size}" else "", id = "engagement-waiting") {
         if (waiting.isEmpty()) { Muted(if (paused) "Paused: no replies are drafted." else "No reply is waiting. Drafts arrive here and as a push when the scout finds a post worth answering."); return@Panel }
         OnlyFilter(only, waiting) { only = it }
         val kept = waiting.filter { Engagement.keep(it, only) }
         if (kept.isEmpty()) Muted("None of the waiting replies is of this kind.")
         (if (all) kept else kept.take(Engagement.SHOWN)).forEach { p -> Draft(p, names, s, vm, ::ask) }
         if (kept.size > Engagement.SHOWN) TextButton({ all = !all }) { Text(if (all) "Show fewer" else "Show all ${kept.size}", color = J.cyan, fontSize = 13.sp) }
-        Muted("Approve sends your edit when you changed the text. An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991).")
+        Muted("Approve tells Jarvis to send it (never a clipboard paste). An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent. A profile message with no fresh post goes under their latest post of the last year (#3461).")
     }
 
-    Panel("Scout") {
+    Panel("Scout", id = "engagement-status") {
         KeyRow("State", if (paused) "paused" else "running", if (paused) J.pink else J.green)
         KeyRow("Likes, reposts, follows", if (live) "live" else "dry run", if (live) J.green else J.amber)
         last?.let { KeyRow("Done last run", if (live) "${fmt(it.num("done"))} done · ${fmt(it.num("posted"))} replies posted" else "${fmt(it.num("dry"))} dry · ${fmt(it.num("posted"))} replies posted") }
@@ -224,7 +226,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
 
     Accounts(g, s, vm, ::ask)
 
-    Panel("Networks") {
+    Panel("Networks", id = "engagement-networks") {
         g.objs("networks").forEach { n ->
             val net = n.str("network").orEmpty()
             val reads = n.str("reads").orEmpty()
@@ -235,7 +237,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     }
 
     g.obj("joins")?.let { joins ->
-        Panel("Joins") {
+        Panel("Joins", id = "engagement-joins") {
             joins.obj("caps")?.keys?.forEach { net ->
                 KeyRow(net.replaceFirstChar { it.uppercase() }, "${fmt(g.obj("used").obj(net).num("join") ?: 0.0)} of ${fmt(joins.obj("caps").num(net))} today · ${fmt(joins.obj("found").num(net) ?: 0.0)} found to join")
             }
@@ -249,7 +251,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
     }
 
     val daily = g.objs("daily")
-    if (daily.isNotEmpty()) Panel("Per day") {
+    if (daily.isNotEmpty()) Panel("Per day", id = "engagement-daily") {
         Muted("Posts in our field")
         BarChart(daily.map { it.num("candidates") ?: 0.0 }, daily.map { it.str("day").orEmpty().takeLast(5) }, J.cyan)
         Muted("Replies drafted")
@@ -262,7 +264,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
 
     OwnerTagsPanel(g, s, vm, names, ::ask)
 
-    Panel("Top posts in our field") {
+    Panel("Top posts in our field", id = "engagement-posts") {
         val allPosts = g.objs("posts")
         if (allPosts.isEmpty()) { Muted("No posts from our field in this range yet."); return@Panel }
         OnlyFilter(only, allPosts) { only = it }
@@ -283,7 +285,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    Panel("Reply funnel") {
+    Panel("Reply funnel", id = "engagement-funnel") {
         KeyRow("Drafted", fmt(t.num("drafted")))
         KeyRow("Approved", fmt(t.num("approved")), J.green)
         KeyRow("Edited and approved", fmt(t.num("edited")), J.green)
@@ -292,14 +294,14 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         KeyRow("Posted", fmt(t.num("posted")))
         KeyRow("Average time to decide", r.num("avgDecideMin")?.let { "${fmt(it)} min" } ?: "—")
     }
-    TopList("Topics", r.pairs("topics"))
-    TopList("Languages", r.pairs("langs"))
-    TopList("Trending keywords", r.pairs("tags").map { it.first.replace('_', ' ') to it.second })
-    TopList("Left alone, and why", r.pairs("skips").map { it.first.replace('_', ' ') to it.second })
-    TopList("Authors seen most", r.pairs("authors"))
+    TopList("Topics", r.pairs("topics"), id = "engagement-topics")
+    TopList("Languages", r.pairs("langs"), id = "engagement-langs")
+    TopList("Trending keywords", r.pairs("tags").map { it.first.replace('_', ' ') to it.second }, id = "engagement-tags")
+    TopList("Left alone, and why", r.pairs("skips").map { it.first.replace('_', ' ') to it.second }, id = "engagement-skips")
+    TopList("Authors seen most", r.pairs("authors"), id = "engagement-authors")
 
     val approvedAll = g.objs("approved")
-    if (approvedAll.isNotEmpty()) Panel("Approved replies") {
+    if (approvedAll.isNotEmpty()) Panel("Approved replies", id = "engagement-approved") {
         OnlyFilter(only, approvedAll) { only = it }
         val approved = approvedAll.filter { Engagement.keep(it, only) }
         if (approved.isEmpty()) Muted("No approved reply of this kind.")
@@ -311,7 +313,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    Panel("Reports") {
+    Panel("Reports", id = "engagement-reports") {
         g.objs("reports").forEach { x ->
             val tot = x.obj("totals")
             KeyRow("${x.str("period")} · ${x.str("to")}", "${fmt(tot.num("candidates"))} posts · ${fmt(tot.num("drafted"))} drafts · ${x.num("approvalRate")?.let { "${fmt(it)}%" } ?: "—"}")
@@ -343,7 +345,6 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
     var text by rememberSaveable(key) { mutableStateOf(draft) }
     var open by rememberSaveable("open:$key") { mutableStateOf(false) }
     val uri = LocalUriHandler.current
-    val context = LocalContext.current
     val busy = "eg:$key" in s.running
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -363,13 +364,12 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         TextButton({ open = !open }) { Text(if (open) "Hide the $what" else "Show the $what", color = J.cyan, fontSize = 12.sp) }
         if (open) Text(p.str("text").orEmpty(), color = J.muted, fontSize = 12.sp)
         OutlinedTextField(text, { text = it.take(limit) }, label = { Text("Reply · ${text.length}/$limit") }, minLines = 3, modifier = Modifier.fillMaxWidth())
+        Engagement.english(reply, text)?.let { Text(it, color = J.muted, fontSize = 12.sp) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ActionButton("Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)
                 vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out ->
-                    val pasted = out.str("status") == "copy" && !out.str("text").isNullOrEmpty()
-                    if (pasted) (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("reply", out.str("text")))
-                    (out.str("message") ?: "Approved.") + if (pasted) " The text is on your clipboard." else ""
+                    out.str("message") ?: "Approved."
                 }
             }
             TextButton({ ask("dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {
@@ -385,7 +385,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
 @Composable
 private fun ReportReplies(r: JsonObject?, names: Map<String, String>, waiting: Int, only: String, pick: (String) -> Unit) {
     val iv = r.obj("invites")
-    Panel("Report replies") {
+    Panel("Report replies", id = "engagement-invites") {
         KeyRow("Sites looked for", fmt(iv.num("searched")))
         KeyRow("Posts naming a reviewed site", fmt(iv.num("matched")))
         KeyRow("Invites drafted", fmt(iv.num("drafted")))
@@ -405,7 +405,7 @@ private fun Accounts(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
     val uri = LocalUriHandler.current
     val accounts = g.objs("accounts")
     if (accounts.isEmpty()) return
-    Panel("Accounts") {
+    Panel("Accounts", id = "engagement-accounts") {
         accounts.forEach { a ->
             val net = a.str("network").orEmpty()
             val name = a.str("name").orEmpty()
@@ -451,7 +451,7 @@ private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
     val c = g.obj("settings")
     val caps = remember(c) { Engagement.CAPS.associateWith { a -> mutableStateOf(fmt(c.obj("caps").num(a) ?: 0.0)) } }
     var competitors by rememberSaveable(c.toString()) { mutableStateOf((c?.get("competitors") as? JsonArray)?.joinToString("\n") { (it as? JsonPrimitive)?.content.orEmpty() }.orEmpty()) }
-    Panel("Settings") {
+    Panel("Settings", id = "engagement-settings") {
         Muted("Daily caps per network")
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Engagement.ACTIONS.forEach { a ->

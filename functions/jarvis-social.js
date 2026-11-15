@@ -54,12 +54,27 @@ function state(doc) {
   try { return Admin.clean(JSON.parse((doc && doc.json) || "{}")); } catch (error) { return Admin.empty(); }
 }
 
+const SITE = "https://carlosandmunoz.com/";
+
+/** A proposal's card image as an https URL the page, the app and a push can each load (#2248); the sweep round-up's
+ * card is site-relative. Anything else (http, data:, unparsable) is "": the proposal shows without a card. */
+function cardImage(image) {
+  const src = String(image || "").trim();
+  if (!src || src.length > 1000) return "";
+  try {
+    const url = new URL(src, SITE);
+    return url.protocol === "https:" ? url.href : "";
+  } catch (error) {
+    return "";
+  }
+}
+
 /** Undecided proposals, best first. */
 function pending(proposals, live, limit) {
   return Admin.pendingProposals(proposals, live)
     .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0))
     .slice(0, limit || 12)
-    .map((p) => ({ id: p.id, title: p.title, url: p.url, source: p.source, author: p.author || "", date: p.date || "", topic: p.topic || "", lang: p.lang || "en", summary: String(p.summary || "").slice(0, 400), why: p.why || "", image: p.image || "", score: p.score }));
+    .map((p) => ({ id: p.id, title: p.title, url: p.url, source: p.source, author: p.author || "", date: p.date || "", topic: p.topic || "", lang: p.lang || "en", summary: String(p.summary || "").slice(0, 400), why: p.why || "", image: cardImage(p.image), score: p.score }));
 }
 
 /** The next socialHub/live state: dismissed records the decision; approved also adds the hub item, as the editor's Add form does. */
@@ -125,4 +140,4 @@ function redditMembers(book, since, now) {
   return Object.assign(inRange(r, since), { need: old ? "Reddit members: showing the count from " + String(r.at || "").slice(0, 10) + ", more than two days old. " + REDDIT_SETUP : "" });
 }
 
-module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, pending, decide, telegramMembers, redditMembers };
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, cardImage, pending, decide, telegramMembers, redditMembers };

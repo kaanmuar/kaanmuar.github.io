@@ -73,9 +73,9 @@ private fun copyText(context: Context, text: String) {
 private fun prim(v: Any) = when (v) { is Int -> JsonPrimitive(v); is Boolean -> JsonPrimitive(v); else -> JsonPrimitive(v.toString()) }
 
 @Composable
-fun TargetsPanel(s: UiState, vm: JarvisViewModel) {
+fun TargetsPanel(s: UiState, vm: JarvisViewModel, id: String) {
     val tg = s.snapshot.obj("external").obj("targets")
-    Panel("90-day targets") {
+    Panel("90-day targets", id = id) {
         if (tg == null || !tg.isOk()) { Muted(tg.str("error") ?: "Pull down to count the 90-day targets."); return@Panel }
         val day = tg.num("day") ?: 0.0
         val length = maxOf(1.0, tg.num("length") ?: 1.0)

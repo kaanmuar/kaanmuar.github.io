@@ -60,14 +60,17 @@ const val WIDE = "wide"
 /**
  * Panels in [columns] columns, each into the shortest so far. A child with Modifier.layoutId(WIDE) spans every column
  * and starts a new band below the tallest one. One column is the same layout, so opening Ask or unfolding keeps each panel's state.
+ * Inside a tab its panels take their slots in the tab's saved layout order, and hidden ones are left out (#2809).
  */
 @Composable
 fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val tab = LocalLayoutTab.current
+    val saved = LocalLayout.current
     Layout(content, modifier) { items, constraints ->
         val width = constraints.maxWidth
         val colW = width / columns.coerceAtLeast(1)
         val heights = IntArray(columns.coerceAtLeast(1))
-        val placed = items.map { m ->
+        val placed = arranged(items, tab, saved).map { m ->
             if (m.layoutId == WIDE) {
                 val top = heights.max()
                 val p = m.measure(Constraints(maxWidth = width))

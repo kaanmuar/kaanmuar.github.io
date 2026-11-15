@@ -101,6 +101,18 @@ function fixture() {
   return root;
 }
 
+test("a pinned post takes its lane's slot, or the middle of the widest free stretch when another batch's row sits next to it", () => {
+  const root = fixture();
+  const slot = cal.slotTime("2027-01-02", "linkedin", 4);
+  assert.equal(cal.freeSlot("2027-01-02", "linkedin", 4, "compare-b", root), slot);
+  const near = String(Math.floor((minutes(slot) + 5) / 60)).padStart(2, "0") + ":" + String((minutes(slot) + 5) % 60).padStart(2, "0");
+  fs.appendFileSync(path.join(root, "media/social-posts/runs-100/calendar.csv"), "2027-01-02," + near + ",linkedin,01-a,feed/01-a.jpg\n");
+  const moved = cal.freeSlot("2027-01-02", "linkedin", 4, "compare-b", root);
+  assert.notEqual(moved, slot);
+  assert.ok(Math.abs(minutes(moved) - minutes(near)) >= 10);
+  assert.equal(cal.freeSlot("2027-01-02", "linkedin", 4, "runs-100", root), slot, "its own batch's rows never move it");
+});
+
 test("writing a plan moves a post's calendar rows and hub date together", () => {
   const root = fixture();
   const { posts } = cal.load(root);

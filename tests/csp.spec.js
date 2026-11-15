@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 
 // script-src has no 'unsafe-inline': an inline script without its hash (scripts/build-csp-hashes.js), an inline
 // event handler or a javascript: URL is refused, and the page silently loses that behaviour.
