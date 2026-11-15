@@ -55,7 +55,9 @@
    gh-agent           Carlos's click: Jarvis's worker (#2957), or a Cursor cloud agent when he picks Cursor
    gh-worker          Jarvis's worker on its own, once per target: diagnoses (code, test, config) at the confidence bar and
                       URL review bugs labelled needs-agent; nothing while the month's AI budget is used
-   gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow or a security alert, on a click only (#2808)
+   gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow (pct >= 10 of >= 5 runs) or a critical/high
+                   Dependabot or code scanning alert (and every secret alert), once per workflow or alert (#3489); a click
+                   still runs them; Gemini may pick them too
    gh-dismiss-alert, gh-dismiss-low  dismiss security alerts; only on Carlos's click, never a Gemini pick (GH_CLICK_ONLY)
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
    after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once. Pages on main's newest commit
@@ -72,6 +74,7 @@ const jarvisLog = require("./jarvis-log");
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
+  "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
@@ -93,7 +96,8 @@ const GH_RISKY = ["gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch"
 const GH_CLICK_ONLY = ["gh-agent", "gh-dismiss-alert", "gh-dismiss-low"];
 // A Gemini pick's GitHub action: the catalog().github list its argument must be in, and the argument's name.
 const GH_PICKS = { "gh-board-sync": ["drift", "number"], "gh-orphan-ticket": ["orphans", "pr"], "gh-update-pr": ["behind", "pr"], "gh-merge-pr": ["green", "pr"],
-  "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"] };
+  "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"],
+  "gh-quarantine": ["flaky", "workflow"], "gh-security-ticket": ["security", "number"] };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const CONFIDENCE = 0.8;
@@ -115,6 +119,8 @@ const AI_CATALOG = {
   "gh-revert": "open a revert PR for the main commit that turned CI red; args { \"sha\": one of github.mainBroken }",
   "gh-delete-branch": "delete a merged branch; args { \"branch\": one of github.merged }",
   "gh-remove-worktree": "remove a merged local worktree through the Mac uploader; args { \"path\": one of github.worktrees }",
+  "gh-quarantine": "file a Backlog bug for a flaky workflow; args { \"workflow\": one of github.flaky }",
+  "gh-security-ticket": "file a Backlog bug for a critical/high security alert; args { \"number\": one of github.security }",
   "owner-tags-approve-verified": "approve suggested owner-tag accounts whose handle resolves or matches an owner's handle on another network; args {}"
 };
 const DAY = 24 * 60 * 60 * 1000;
@@ -550,7 +556,7 @@ async function autoRun({ db, now, settings, ops }) {
     try { g = await ops.githubWork(); } catch (error) { g = null; }
     if (g && g.ok !== false) {
       const t = core.githubTargets(g);
-      ["gh:drift:", "gh:orphan-pr:", "gh:pr-behind:", "gh:pr-green:", "gh:main-broken:", "gh:branch-merged", "gh:worktree-merged:"].forEach((h) => handled.add(h));
+      ["gh:drift:", "gh:orphan-pr:", "gh:pr-behind:", "gh:pr-green:", "gh:main-broken:", "gh:branch-merged", "gh:worktree-merged:", "gh:flaky:", "gh:security:"].forEach((h) => handled.add(h));
       for (const d of t.drift) {
         await once("gh-board-sync", "#" + d.number + " to " + d.should, text(d.why, 200) || "In " + d.column + ", should be in " + d.should + ".",
           () => ops.githubAct("gh-board-sync", { number: d.number, should: d.should, item: d.item }));
@@ -576,6 +582,22 @@ async function autoRun({ db, now, settings, ops }) {
       }
       for (const w of t.worktrees) {
         await later({ action: "gh-remove-worktree", target: w.dir, part: w.path, payload: { path: w.path }, why: w.branch + " is merged, clean and no chat holds it." });
+      }
+      // #3489: file Backlog bugs for flaky workflows and severe security alerts (once per target).
+      for (const w of t.flaky) {
+        await once("gh-quarantine", w.name, w.pct + "% of " + w.runs + " runs failed then passed on a re-run.",
+          () => ops.githubAct("gh-quarantine", { workflow: w.name, pct: w.pct, runs: w.runs, path: w.path, links: (w.links || []).slice(0, 10) }));
+      }
+      for (const a of t.security) {
+        const who = (a.kind === "dependabot" ? text(a.package, 60) : a.kind === "codeScanning" ? text(a.rule, 80) : text(a.type, 60) || "secret")
+          + " #" + a.number + (a.repo && a.repo !== "kaanmuar/kaanmuar.github.io" ? " in " + a.repo : "");
+        await once("gh-security-ticket", a.kind + ":" + (a.repo || "kaanmuar/kaanmuar.github.io") + "#" + a.number,
+          (a.severity || "unknown") + " " + a.kind + " alert: " + who + ".",
+          () => ops.githubAct("gh-security-ticket", {
+            kind: a.kind, repo: a.repo, number: a.number, severity: a.severity, package: a.package, manifest: a.manifest,
+            rule: a.rule, path: a.path, type: a.type, url: a.url, summary: a.summary, patched: a.patched,
+            pr: a.pr && a.pr.number ? a.pr.number : undefined
+          }));
       }
     }
   }

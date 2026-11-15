@@ -351,10 +351,19 @@ async function securityTicket(ctx, args) {
       : "Revoke the secret where it was issued, rotate it in Secret Manager and every service that uses it, then close the alert on GitHub as revoked.";
   const { issue, board } = await openBoardIssue(ctx, REPO, {
     title: (prefix + " (" + severity + ")").slice(0, 250), labels: ["bug", area],
-    body: ["Filed by Jarvis from the GitHub tab (#2808) for " + SECURITY_KINDS[kind] + " alert #" + n + " in " + repo + ": " + text(a.url, 300), a.summary ? text(a.summary, 400) : "", "Fix: " + fix].filter(Boolean).join("\n\n")
+    body: ["Filed by Jarvis from the GitHub tab (#2808, auto #3489) for " + SECURITY_KINDS[kind] + " alert #" + n + " in " + repo + ": " + text(a.url, 300), a.summary ? text(a.summary, 400) : "", "Fix: " + fix].filter(Boolean).join("\n\n")
   }, "Backlog");
+  // A Dependabot bump PR for a severe alert gets jarvis-merge so the hourly pass can squash-merge it after the countdown.
+  let labeled = "";
+  const prn = Number(a.pr) || (a.pr && a.pr.number) || 0;
+  if (kind === "dependabot" && prn > 0 && /^(critical|high)$/i.test(severity)) {
+    try {
+      await call(ctx, "/repos/" + REPO + "/issues/" + prn + "/labels", { method: "POST", body: { labels: [MERGE_LABEL] } });
+      labeled = " Labelled PR #" + prn + " " + MERGE_LABEL + " so Jarvis can merge it.";
+    } catch (error) { labeled = " Could not label PR #" + prn + " for merge: " + text(error.message, 80) + "."; }
+  }
   await jarvisLog.log(null, { source: "github", level: "info", ref: "issue:" + issue.number, url: issue.html_url, text: "Filed #" + issue.number + " for " + SECURITY_KINDS[kind] + " alert #" + n + " in " + repo.split("/").pop() + ": " + what });
-  return { ok: true, message: "Filed #" + issue.number + " (" + area + ") for " + SECURITY_KINDS[kind] + " alert #" + n + board + ".", url: issue.html_url, number: issue.number };
+  return { ok: true, message: "Filed #" + issue.number + " (" + area + ") for " + SECURITY_KINDS[kind] + " alert #" + n + board + "." + labeled, url: issue.html_url, number: issue.number };
 }
 
 /* Only on Carlos's click: { kind: dependabot | codeScanning, repo, number, reason, comment? }. Secret scanning is
