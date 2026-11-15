@@ -335,7 +335,8 @@ test.describe('The competitor comparison is drawn as charts', () => {
     const ask = await open(page, null, async (body) => {
       running += 1;
       most = Math.max(most, running);
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Hold each mock long enough that CI load can still observe three Running rows (#2446, #2271).
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       running -= 1;
       if (body.url === 'four.example') return JSON.stringify({ type: 'error', error: 'The site did not answer' }) + '\n';
       const report = records.find((row) => row.id === ids[body.url]).report;
@@ -362,11 +363,18 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await ask.locator('#compare-go').click();
     const rows = page.locator('#compare-rows li');
     await expect(rows).toHaveCount(5);
-    await expect(rows.filter({ hasText: 'Running' })).toHaveCount(3);
+    // Running is transient; record the peak while the first three are in flight instead of
+    // requiring the count to still be 3 on a later poll after the mocks finish (#2446, #2271).
+    let peakRunning = 0;
+    await expect.poll(async () => {
+      peakRunning = Math.max(peakRunning, await rows.filter({ hasText: 'Running' }).count());
+      return peakRunning;
+    }, { timeout: 5000 }).toBe(3);
     await expect(page.locator('#run-log .log-host').first()).toBeVisible();
     const overlay = page.locator('#multi-overlay');
     await expect(overlay).toHaveClass(/open/, { timeout: 20000 });
     expect(most).toBe(3);
+    expect(peakRunning).toBe(3);
     expect(saved).toHaveLength(1);
     expect(saved[0][0]).toBe(ID);
     expect(saved[0].slice(1).sort()).toEqual(['d1d1d1', 'd2d2d2', 'd3d3d3', 'd5d5d5']);
