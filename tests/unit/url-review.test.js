@@ -940,6 +940,21 @@ test.describe("start page reads", () => {
     await assert.rejects(review({ [BANK]: { timeout: true } }, async () => ({ ok: false, error: "the browser was busy" })), /^Error: The page took too long in the plain request, and headless Chrome could not open it either \(the browser was busy\)\.$/);
   });
 
+  test("a plain read the host reset before any page is tried in headless Chrome (#3375)", async () => {
+    const jobs = [];
+    const restore = fakeNetwork({ [BANK]: { reset: true } });
+    try {
+      const { report } = await review({ [BANK]: { reset: true } }, async (job) => {
+        jobs.push(job);
+        return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
+      });
+      assert.equal(jobs.length, 1);
+      assert.equal(report.pages[0].status, 200);
+    } finally {
+      restore();
+    }
+  });
+
   test("a host that refuses the plain connection is tried in headless Chrome before it is named down (#3374)", async () => {
     const jobs = [];
     const restore = fakeNetwork({ [BANK]: { refused: true } });

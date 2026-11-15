@@ -600,7 +600,18 @@ function rewriteCaptions(all, networks) {
     const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
-    if (await renderCarousel(page, browser, tip, index, total, slug, ui, extras)) console.log("carousel", slug);
+    const carouselFiles = await renderCarousel(page, browser, tip, index, total, slug, ui, extras);
+    if (carouselFiles) {
+      tip._carouselMeta = {
+        carousel: carouselFiles.length,
+        document: fs.existsSync(path.join(OUT, "document", slug + ".pdf")),
+        assetsMissing: [
+          ...(carouselFiles.length === 4 ? [] : ["carousel"]),
+          ...(fs.existsSync(path.join(OUT, "document", slug + ".pdf")) ? [] : ["document"])
+        ]
+      };
+      console.log("carousel", slug);
+    }
     const said = saids[n];
     const done = () => console.log("rendered", slug, said.voice.file);
     if (clips) await clips.render(tip, index, total, path.join(OUT, "clip", slug + ".mp4"), path.join(OUT, "cover", slug + ".jpg"), said, extras, saids[n + 1], done);
@@ -624,8 +635,19 @@ function rewriteCaptions(all, networks) {
     const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
     // The networks restrict adult and gambling sites, so a post about one is held even if its source let it through.
     const held = tip.hold || !!(EXTRAS.get(tip.id) || {}).sensitive;
+    let carouselMeta = tip._carouselMeta || null;
+    if (!carouselMeta && auditCarouselSlides(tip)) {
+      const slideCount = [1, 2, 3, 4].filter((i) => fs.existsSync(path.join(OUT, "carousel", slug + "-" + String(i).padStart(2, "0") + ".jpg"))).length;
+      const hasDoc = fs.existsSync(path.join(OUT, "document", slug + ".pdf"));
+      const missing = [];
+      if (slideCount !== 4) missing.push("carousel");
+      if (!hasDoc) missing.push("document");
+      carouselMeta = { carousel: slideCount, document: hasDoc, assetsMissing: missing };
+    }
+    const documentTitle = String(studio.plainTitle(tip) || "").slice(0, 58);
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap);
+      tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap,
+      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of held ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);

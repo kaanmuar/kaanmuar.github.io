@@ -193,6 +193,12 @@ const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
 
+// The plain read lost the connection before any page arrived (a reset, hang-up, or caller abort).
+function plainReadDropped(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNRESET|ECONNABORTED|ETIMEDOUT)$/.test(code) || /socket hang up|\baborted\b/i.test(message);
+}
 // The plain read failed before any page arrived because the host refused or rejected the route.
 function plainConnectionFailed(error) {
   const message = String((error && error.message) || "");
@@ -3174,10 +3180,11 @@ async function reviewTarget(rawUrl, hooks) {
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
     // arti-elec.com accepts TLS, then hangs up the review user agent (socket hang up, ECONNRESET).
     // Headless Chrome with the review tag is cut (net::ERR_HTTP2_PROTOCOL_ERROR) and plain Chrome reads the page.
-    const reset = !!error && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message || ""));
+    // Use #3514's plainReadDropped (reset/abort/hang-up) but keep #2869's reset messaging so the failure stays in the connection class.
+    const dropped = plainReadDropped(error);
     const conn = plainConnectionFailed(error);
-    if (!(oversized || reset || /took too long/.test((error && error.message) || "") || conn) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : reset ? "reset" : error.message === UNREACHABLE || conn ? "unreachable" : true;
+    if (!(oversized || /took too long/.test((error && error.message) || "") || dropped || conn) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : dropped ? "reset" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {

@@ -562,7 +562,7 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   };
   // A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
   const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
-    && { document: { url: base + "/document/" + slug + ".pdf", title: own("title"), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
+    && { document: { url: base + "/document/" + slug + ".pdf", title: String(cap.documentTitle || own("title")).slice(0, 58), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
   switch (channel.service) {
     case "linkedin": return [post("linkedin", linked(own("linkedin")), [document() || image("feed")])];
     case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
