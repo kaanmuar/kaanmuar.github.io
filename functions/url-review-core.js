@@ -3943,7 +3943,8 @@ function intakeRecord(value, report, meta) {
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
-    softPreview: softPreview || undefined,
+    // Soft-preview rows only; omit the key on full runs so Firestore never sees undefined.
+    ...(softPreview ? { softPreview: true } : {}),
     // The run credit this run consumed paid for it, so it opens this report and no other.
     paid: softPreview ? false : !!clean(meta.creditId, 40),
     creditId: softPreview ? "" : clean(meta.creditId, 40),

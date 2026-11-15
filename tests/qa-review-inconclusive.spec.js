@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const auth = require('../functions/url-review-auth');
 const reviewPromise = require('../functions/url-review-promise');
+const { fulfillSoftPreview, softThenUnlock } = require('./soft-gate');
 
 const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ANA = 'a'.repeat(64);
@@ -42,6 +43,7 @@ async function openReview(page, file, last) {
       seen.standing += 1;
       return json(200, { billing: 'run', free: true, percent: 0 });
     }
+    if (where === '/review/preview') return fulfillSoftPreview(route, cors);
     if (where === '/review') {
       seen.runs += 1;
       const lines = [{ type: 'log', text: 'Opening the start page.' }, last];
@@ -58,7 +60,7 @@ async function openReview(page, file, last) {
     document.querySelector('input[name="reasonCode"][value="teaching"]').checked = true;
     document.getElementById('url').value = 'example.com';
   });
-  await page.locator('#review-btn').click();
+  await softThenUnlock(page, expect);
   await expect.poll(() => seen.runs).toBe(1);
   return seen;
 }

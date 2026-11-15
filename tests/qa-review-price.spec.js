@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const auth = require('../functions/url-review-auth');
 const sample = require('../assets/qa-review-sample.json');
+const { fulfillSoftPreview, softThenUnlock } = require('./soft-gate');
 
 const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ANA = 'a'.repeat(64);
@@ -47,6 +48,7 @@ async function open(page, { standing, quote, review, query = '', file = '/qa-rev
       return json(200, quote);
     }
     if (url.pathname === '/review/open') return json(200, { report: Object.assign({}, sample.report, { id: ID }), frameworks: sample.frameworks, paid: true });
+    if (url.pathname === '/review/preview') return fulfillSoftPreview(route, cors);
     if (url.pathname === '/review') {
       seen.runs.push(body);
       return review ? review(body, json) : json(400, { error: 'No run in this test.' });
@@ -122,11 +124,11 @@ test.describe('The total before a paid run', () => {
     discount: [{ name: 'Playwright', n: 1, usd: 19 }, { name: 'Cypress', n: 2, usd: 5 }, { name: 'Jest', n: 3, usd: 5 }]
   };
 
-  test('Run shows the server total, and Cancel or Escape starts nothing and gives focus back', async ({ page }) => {
+  test('Unlock shows the server total, and Cancel or Escape starts nothing and gives focus back', async ({ page }) => {
     const seen = await open(page, { standing: RETURNING, quote });
     await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     const box = page.locator('#run-total');
     await expect(box).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'The total for this review' })).toBeVisible();
@@ -143,7 +145,7 @@ test.describe('The total before a paid run', () => {
     await page.locator('#run-total-cancel').click();
     await expect(box).toBeHidden();
     await expect(page.locator('#review-btn')).toBeFocused();
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect(box).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(box).toBeHidden();
@@ -159,7 +161,7 @@ test.describe('The total before a paid run', () => {
     });
     await keepFrameworks(page, ['Playwright', 'Cypress', 'Jest']);
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await page.locator('#run-total-pay').click();
     await page.waitForURL(/qa-review-pay\.html\?purpose=new-run/);
     expect(seen.runs).toHaveLength(1);
@@ -168,10 +170,10 @@ test.describe('The total before a paid run', () => {
     expect(asked.get('billing')).toBe('run');
   });
 
-  test('a free first run starts at once, with no total and no quote', async ({ page }) => {
+  test('a free first unlock starts at once, with no total and no quote', async ({ page }) => {
     const seen = await open(page, { standing: FIRST, quote });
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     await expect.poll(() => seen.runs.length).toBe(1);
     await expect(page.locator('#run-total')).toBeHidden();
     expect(seen.quotes).toHaveLength(0);
@@ -225,7 +227,7 @@ test.describe('The static price list is gone', () => {
     await page.locator('#req-cases > summary').click();
     await expect(page.getByRole('checkbox', { name: /Cypress.*suma 5 dólares estadounidenses/ })).toBeChecked();
     await fillRequest(page);
-    await page.locator('#review-btn').click();
+    await softThenUnlock(page, expect);
     const box = page.locator('#run-total');
     await expect(box.locator('#run-total-title')).toHaveText('El total de esta revisión');
     await expect(box.locator('#run-total-saved')).toHaveText('Se guarda en Tus revisiones durante 12 meses.');
