@@ -34,6 +34,7 @@ function fakeOps(over) {
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
+  "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 
 test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, caps stay within 0-100 and confidence within 0.5-1", () => {
@@ -397,6 +398,37 @@ test("an AI pick under the confidence setting is kept as a proposal", async () =
   await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: { actions: { confidence: 0.9 } }, ops });
   assert.deepEqual(calls.jobs, []);
   assert.match(calls.saved[0].reason, /confidence 0.85 under 0.9/);
+});
+
+test("flaky workflows and severe security alerts get Backlog tickets on the hourly pass (#3489)", async () => {
+  const db = fakeDb();
+  const acted = [];
+  const { ops } = autoOps({
+    githubWork: async () => ({
+      ok: true,
+      ci: { flaky: { workflows: [
+        { name: "E2E", pct: 12, runs: 40, path: ".github/workflows/e2e.yml", links: ["https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/1"] },
+        { name: "Quiet", pct: 5, runs: 40 }
+      ] } },
+      security: {
+        dependabot: { ok: true, items: [
+          { number: 258, severity: "high", package: "isomorphic-git", manifest: "reddit/live-reports/package-lock.json", repo: "kaanmuar/kaanmuar.github.io", pr: { number: 3026 } },
+          { number: 99, severity: "low", package: "lodash", repo: "kaanmuar/kaanmuar.github.io" }
+        ] },
+        codeScanning: { ok: true, items: [{ number: 7, severity: "high", rule: "js/xss", path: "js/x.js", repo: "kaanmuar/kaanmuar.github.io" }] },
+        secrets: { ok: true, items: [] }
+      },
+      board: {}, prs: { items: [] }, branches: { merged: [], worktrees: [] }
+    }),
+    githubAct: async (action, args) => { acted.push([action, args]); return { detail: action }; }
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(acted.map((a) => a[0]), ["gh-quarantine", "gh-security-ticket", "gh-security-ticket"]);
+  assert.equal(acted[0][1].workflow, "E2E");
+  assert.deepEqual(acted.slice(1).map((a) => [a[1].kind, a[1].number, a[1].pr]), [["dependabot", 258, 3026], ["codeScanning", 7, undefined]]);
+  assert.deepEqual(out.done.map((r) => r.action).filter((a) => a === "gh-quarantine" || a === "gh-security-ticket"), ["gh-quarantine", "gh-security-ticket", "gh-security-ticket"]);
+  await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.equal(acted.length, 3, "once per workflow and alert");
 });
 
 test("owner tags (#2660): verified suggestions are approved within the day's cap, the rest wait; the ownerTags job stays on the countdown", async () => {

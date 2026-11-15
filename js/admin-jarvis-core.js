@@ -666,7 +666,23 @@
             worktrees: worktrees.filter((w) => w && w.path && w.prState === 'merged' && !w.alive && w.dirty === false).map((w) => Object.assign({ dir: String(w.path).split('/').pop() }, w)),
             mainBroken: mainBroken.filter((m) => m && m.sha),
             flaky: ((ci.flaky || {}).workflows || []).filter((w) => w && w.name && w.runs >= 5 && w.pct >= 10),
-            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category))
+            diag: (ci.failing || []).filter((r) => r && r.id && r.diag && GH_CODE.includes(r.diag.category)),
+            // #3489: critical/high Dependabot and code scanning, and every secret alert — Jarvis files a Backlog bug for each.
+            security: (() => {
+                const sec = x.security || {};
+                const out = [];
+                const severe = (sev) => /^(critical|high)$/i.test(String(sev || ''));
+                [['dependabot', 'dependabot'], ['codeScanning', 'codeScanning']].forEach(([kind]) => {
+                    const block = sec[kind];
+                    if (!block || block.ok === false) return;
+                    (block.items || []).filter((i) => i && i.number && severe(i.severity)).forEach((i) => out.push(Object.assign({ kind }, i)));
+                });
+                const secrets = sec.secrets;
+                if (secrets && secrets.ok !== false) {
+                    (secrets.items || []).filter((i) => i && i.number).forEach((i) => out.push(Object.assign({ kind: 'secrets', severity: i.severity || 'critical' }, i)));
+                }
+                return out;
+            })()
         };
     }
 

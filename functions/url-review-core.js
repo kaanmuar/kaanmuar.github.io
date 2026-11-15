@@ -211,9 +211,13 @@ const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
 // Chrome follows up to 20 redirects. Sign-in portals chain six (sharepoint.com → office.com → … → microsoft.com).
 const MAX_REDIRECTS = 10;
-// A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
-// from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
+// A server that sends its certificate without the next issuer opens in browsers, which follow each AIA
+// address until a trusted root. Node does not. OpenSSL 3 reports that gap as "unable to verify the first
+// certificate", "unable to get local issuer certificate" or "unable to get issuer certificate".
+// The review fetches those issuers once per host and verifies again.
 const INTERMEDIATES = new Map();
+const CHAIN_GAP = new Set(["UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"]);
+const CHAIN_HOPS = 3;
 const ISSUER_MAX_BYTES = 20000;
 const ISSUER_TIMEOUT_MS = 5000;
 const TOTAL_MS = 170000;
@@ -1108,20 +1112,52 @@ async function issuerBytes(raw) {
 
 const commonName = (subject) => (String(subject || "").match(/^CN=(.+)$/m) || [])[1] || String(subject || "").split("\n")[0];
 
+function issuedBy(child, parent) {
+  try {
+    return !!parent && parent.ca && child.checkIssued(parent) && child.verify(parent.publicKey);
+  } catch (error) {
+    return false;
+  }
+}
+
+// Parsed once. A fetched issuer is done when a root already in the trust store signed it.
+let trustAnchors = null;
+function anchored(cert) {
+  if (!trustAnchors) {
+    trustAnchors = tls.rootCertificates.map((pem) => {
+      try { return new crypto.X509Certificate(pem); } catch (error) { return null; }
+    }).filter(Boolean);
+  }
+  return trustAnchors.some((root) => issuedBy(cert, root));
+}
+
 async function missingIntermediate(hostname, pinned) {
   const leaf = await serverLeaf(hostname, pinned);
-  const from = (String(leaf.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
-  if (!from) return null;
-  const issuer = new crypto.X509Certificate(await issuerBytes(from));
-  if (!issuer.ca || !leaf.checkIssued(issuer) || !leaf.verify(issuer.publicKey)) return null;
-  return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
+  const extras = [];
+  let current = leaf;
+  for (let hop = 0; hop < CHAIN_HOPS; hop += 1) {
+    const from = (String(current.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
+    if (!from) break;
+    let issuer = null;
+    try { issuer = new crypto.X509Certificate(await issuerBytes(from)); } catch (error) { issuer = null; }
+    if (!issuedBy(current, issuer)) break;
+    extras.push({ pem: issuer.toString(), name: clean(commonName(issuer.subject), 120), from: clean(from, 200) });
+    if (anchored(issuer)) break;
+    current = issuer;
+  }
+  if (!extras.length) return null;
+  return {
+    pem: extras.map((row) => row.pem),
+    issuer: extras.map((row) => row.name).filter(Boolean).join(", "),
+    from: extras.map((row) => row.from).join(", ")
+  };
 }
 
 async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent) {
   try {
     return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent);
   } catch (error) {
-    if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
+    if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
@@ -1229,12 +1265,45 @@ function headerOverflow(error) {
 }
 
 // Chrome reads an http:// address over https first (HTTPS-Upgrades) and falls back to http only when https fails. The review
-// has no http fallback: it reads each http:// redirect over https once, and fails as an http:// redirect when that gets no page.
+// has no http fallback: it reads each http:// redirect over https once. When that https copy sends the review back to the
+// same http address, the next http hop's Location is tried over https too. The http body is never the page. It fails as an
+// http:// redirect when that gets no page.
 function httpsUpgrade(next, upgrades) {
   if (next.port || upgrades.includes(next.href)) return "";
   upgrades.push(next.href);
   next.protocol = "https:";
   return upgrades[upgrades.length - 1];
+}
+
+// One http hop's Location, only when it stays on the same host and names a different address. The body is discarded.
+async function httpNext(target, isStopped, acceptLanguage, agent) {
+  try {
+    const pinned = await assertPublic(target.hostname);
+    const res = await requestOnce(target, pinned, isStopped, false, acceptLanguage, agent);
+    const location = header(res.headers, "location");
+    if (![301, 302, 303, 307, 308].includes(res.status) || !location) return null;
+    const next = new URL(location, target);
+    if (next.username || next.password || next.port) return null;
+    if (next.protocol !== "http:" && next.protocol !== "https:") return null;
+    if (next.hostname !== target.hostname || next.href === target.href) return null;
+    return next;
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return null;
+  }
+}
+
+// The https address to request for an http:// redirect, or null when https has no page to read.
+async function httpsAfter(next, upgrades, isStopped, acceptLanguage, agent) {
+  const upgraded = httpsUpgrade(next, upgrades);
+  if (upgraded) return { url: next, upgraded };
+  if (!upgrades.includes(next.href)) return null;
+  const hopped = await httpNext(next, isStopped, acceptLanguage, agent);
+  if (!hopped) return null;
+  if (hopped.protocol === "https:") return { url: hopped, upgraded: "" };
+  const again = httpsUpgrade(hopped, upgrades);
+  if (!again) return null;
+  return { url: hopped, upgraded: again };
 }
 
 const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
@@ -1280,9 +1349,12 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage,
         const next = new URL(location, current);
         upgraded = "";
         if (next.protocol === "http:") {
-          upgraded = httpsUpgrade(next, upgrades);
-          if (!upgraded) throw httpOnly(next.href, upgrades.includes(next.href));
-          if (onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          const step = await httpsAfter(next, upgrades, isStopped, acceptLanguage, agent);
+          if (!step) throw httpOnly(next.href, upgrades.includes(next.href));
+          upgraded = step.upgraded;
+          if (upgraded && onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          current = normalizeUrl(step.url.toString());
+          continue;
         }
         current = normalizeUrl(next.toString());
         continue;
@@ -2967,8 +3039,14 @@ async function probeReadAs(raw) {
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
         const next = new URL(location, current);
-        upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
-        if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+        upgraded = "";
+        if (next.protocol === "http:") {
+          const step = await httpsAfter(next, upgrades, null, "", "");
+          if (!step) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+          upgraded = step.upgraded;
+          current = normalizeUrl(step.url.toString());
+          continue;
+        }
         current = normalizeUrl(next.toString());
         continue;
       }

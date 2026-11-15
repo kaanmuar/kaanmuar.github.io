@@ -249,8 +249,9 @@ test("the hourly pass syncs the board and files orphan tickets at once, queues t
   const db = fakeDb();
   const { ops, acted } = fakeOps();
   const out = await actions.autoRun({ db, now: NOW, settings: {}, ops });
-  assert.deepEqual(acted.map((a) => a[0]), ["gh-board-sync", "gh-orphan-ticket"]);
+  assert.deepEqual(acted.map((a) => a[0]), ["gh-board-sync", "gh-orphan-ticket", "gh-quarantine"]);
   assert.deepEqual(acted[0][1], { number: 5, should: "QA", item: undefined });
+  assert.equal(acted[2][1].workflow, "Smoke");
   assert.deepEqual(out.queued.map((r) => [r.action, r.target, r.kind]).sort(), [
     ["gh-delete-branch", "1 merged branch", "repo"], ["gh-remove-worktree", "fix-1", "repo"], ["gh-revert", "def5678", "code"], ["gh-update-pr", "#13", "repo"]
   ]);
@@ -258,15 +259,15 @@ test("the hourly pass syncs the board and files orphan tickets at once, queues t
   assert.deepEqual(out.queued.find((r) => r.action === "gh-delete-branch").payload, { branches: ["fix/old"] });
   const msg = actions.pushMessage(out);
   assert.equal(msg.tab, "github");
-  assert.match(msg.title, /^Jarvis fixed: 2 GitHub issues/);
+  assert.match(msg.title, /^Jarvis fixed: 3 GitHub issues/);
 
   const again = await actions.autoRun({ db, now: NOW + 3600000, settings: {}, ops });
-  assert.equal(acted.length, 2);
+  assert.equal(acted.length, 3);
   assert.equal(again.queued.length, 0);
 
   const row = out.queued.find((r) => r.action === "gh-remove-worktree");
   const ran = await countdown.execute(row, ops, NOW);
-  assert.deepEqual(acted[2], ["gh-remove-worktree", { path: "/r/.worktrees/fix-1", target: "fix-1" }]);
+  assert.deepEqual(acted[3], ["gh-remove-worktree", { path: "/r/.worktrees/fix-1", target: "fix-1" }]);
   assert.equal(ran.detail, "did gh-remove-worktree");
   assert.equal(countdown.resultMessage(Object.assign({}, row, { status: "done", result: "ok" })).title, "Jarvis fixed: remove the merged worktree");
 });
@@ -417,20 +418,24 @@ test("quarantine files 'CI: <workflow> is flaky' as a Backlog bug in area:ci wit
 test("securityTicket files a Backlog bug whose area comes from the manifest path, with the fix spelled out (#2808)", async () => {
   fix._reset();
   const filed = [];
+  const labeled = [];
   const f = fakeFetch([
     ["GET", /\/issues\?state=open&labels=bug/, () => []],
     ["POST", R + "/issues", (url, body) => { filed.push(body); return { number: 2901, html_url: "https://github.com/i/2901" }; }],
     ["GET", R + "/issues/2901", () => ({ node_id: "I_2901" })],
-    ["POST", "/graphql", () => ({ data: { addProjectV2ItemById: { item: { id: "PVTI_x" } } } })]
+    ["POST", "/graphql", () => ({ data: { addProjectV2ItemById: { item: { id: "PVTI_x" } } } })],
+    ["POST", /\/issues\/\d+\/labels$/, (url, body) => { labeled.push({ url, body }); return []; }]
   ]);
-  const out = await fix.securityTicket(ctxOf(f), { kind: "dependabot", number: 4, severity: "high", package: "okhttp", manifest: "android/app/build.gradle", patched: "4.12.0", url: "https://github.com/dep/4" });
-  assert.match(out.message, /Filed #2901 \(area:android\)/);
+  const out = await fix.securityTicket(ctxOf(f), { kind: "dependabot", number: 4, severity: "high", package: "okhttp", manifest: "android/app/build.gradle", patched: "4.12.0", url: "https://github.com/dep/4", pr: 88 });
+  assert.match(out.message, /Filed #2901 \(area:android\).*Labelled PR #88 jarvis-merge/);
   assert.equal(filed[0].title, "Security: okhttp (android/app/build.gradle) (high)");
   assert.deepEqual(filed[0].labels, ["bug", "area:android"]);
   assert.match(filed[0].body, /Upgrade okhttp to 4\.12\.0 or later in android\/app\/build\.gradle/);
+  assert.deepEqual(labeled[0].body, { labels: ["jarvis-merge"] });
   await fix.securityTicket(ctxOf(f), { kind: "secrets", repo: "kaanmuar/cursor-quota", number: 2, type: "Google API Key", url: "u" });
   assert.deepEqual(filed[1].labels, ["bug", "area:devops"]);
   assert.match(filed[1].body, /Revoke the secret/);
+  assert.equal(labeled.length, 1, "only Dependabot high/critical with a PR is labelled");
   assert.deepEqual(["functions/package.json", ".github/workflows/e2e.yml", "package.json", "js/admin.js"].map((p) => fix.areaOfPath(p)), ["area:be", "area:ci", "area:tooling", "area:fe"]);
 });
 
@@ -463,4 +468,15 @@ test("dismissals and agents are click-only: never a Gemini pick, and every new G
   assert.equal(fix.actArgs("gh-quarantine", { target: "E2E" }).workflow, "E2E");
   assert.deepEqual(fix.actArgs("gh-dismiss-low", { alerts: [{ kind: "dependabot", number: "#3" }, { kind: "x" }] }).alerts, [{ kind: "dependabot", repo: undefined, number: 3 }]);
   assert.equal(fix.actArgs("gh-dismiss-low", { target: "all" }).alerts, null);
+});
+
+test("quarantine and security tickets are in the AI catalog and pickable from githubTargets (#3489)", () => {
+  const catalog = { jobs: [], workflows: [], github: { flaky: ["E2E"], security: [258] } };
+  assert.ok(actions.AI_CATALOG["gh-quarantine"]);
+  assert.ok(actions.AI_CATALOG["gh-security-ticket"]);
+  assert.equal(actions.pickOk({ action: "gh-quarantine", args: { workflow: "E2E" } }, catalog), true);
+  assert.equal(actions.pickOk({ action: "gh-security-ticket", args: { number: 258 } }, catalog), true);
+  assert.equal(actions.pickOk({ action: "gh-quarantine", args: { workflow: "Other" } }, catalog), false);
+  assert.ok(!actions.GH_CLICK_ONLY.includes("gh-quarantine"));
+  assert.ok(!actions.GH_CLICK_ONLY.includes("gh-security-ticket"));
 });

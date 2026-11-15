@@ -54,10 +54,49 @@ test("usageRows keeps the last 90 days, numbers tickets and leaves open work wit
 
 test("costFrom reads cents from quota-cache.json and prefers the personal on-demand limit", () => {
   const quota = { data: { billingCycleStart: "2026-11-01T00:00:00.000Z", individualUsage: { onDemand: { used: 12345, limit: 100000 } }, teamUsage: { onDemand: { used: 0, limit: 0 } } } };
-  assert.deepEqual(r.costFrom(quota), { cycleStart: "2026-11-01T00:00:00.000Z", onDemandUsd: 123.45, limitUsd: 1000 });
+  assert.deepEqual(r.costFrom(quota), {
+    cycleStart: "2026-11-01T00:00:00.000Z",
+    cycleEnd: null,
+    onDemandUsd: 123.45,
+    limitUsd: 1000,
+    planUsed: null,
+    planLimit: null,
+    planPercent: null,
+    source: "cursor-usage/quota-cache.json",
+  });
   const noLimit = { data: { billingCycleStart: "2026-11-01T00:00:00.000Z", individualUsage: { onDemand: { used: 0, limit: null } }, teamUsage: { onDemand: { used: 0, limit: 0 } } } };
-  assert.deepEqual(r.costFrom(noLimit), { cycleStart: "2026-11-01T00:00:00.000Z", onDemandUsd: 0, limitUsd: null });
-  assert.deepEqual(r.costFrom(null), { cycleStart: null, onDemandUsd: null, limitUsd: null });
+  assert.deepEqual(r.costFrom(noLimit), {
+    cycleStart: "2026-11-01T00:00:00.000Z",
+    cycleEnd: null,
+    onDemandUsd: 0,
+    limitUsd: null,
+    planUsed: null,
+    planLimit: null,
+    planPercent: null,
+    source: "cursor-usage/quota-cache.json",
+  });
+  assert.deepEqual(r.costFrom(null), {
+    cycleStart: null,
+    onDemandUsd: null,
+    limitUsd: null,
+    planUsed: null,
+    planLimit: null,
+    source: null,
+  });
+});
+
+test("costFrom prefers live CursorQuota/cache.json shape over legacy", () => {
+  const live = { planUsed: 144, planLimit: 55395, odUsed: 0, odLimit: 0, cycleEnd: "2026-11-22T19:58:25Z", perCent: 0 };
+  assert.deepEqual(r.costFrom(live), {
+    cycleStart: null,
+    cycleEnd: "2026-11-22T19:58:25Z",
+    onDemandUsd: 0,
+    limitUsd: null,
+    planUsed: 144,
+    planLimit: 55395,
+    planPercent: 0,
+    source: "CursorQuota/cache.json",
+  });
 });
 
 test("ticketCosts sums the events inside each work span per ticket; open rows count 12 hours, rows without a ticket none", () => {
