@@ -204,23 +204,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>AI search reads your HTML, not your app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>GEO</category>
-      <description>Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
-
-Try this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>2 natural competitors. vivastreet.ie leads: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie</guid>
@@ -937,6 +920,27 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Myth: meta keywords still help you rank.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Myth vs fact</category>
+      <category>SEO</category>
+      <description>Myth vs fact: Myth: meta keywords still help you rank.
+
+Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.
+
+Check it: Search your templates for name=&quot;keywords&quot;. Remove it, and write a real description for each key page instead.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
+
+#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
+
+https://www.youtube.com/shorts/HipUbZf_TiA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
