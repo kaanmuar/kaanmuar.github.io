@@ -414,6 +414,7 @@ function fakeNetwork(routes) {
         if (route.connecting) req.socket = { connecting: true };
         if (route.timeout && !route.body) return req.emit("timeout");
         if (route.reset) return req.emit("error", Object.assign(new Error("aborted"), { code: "ECONNRESET" }));
+        if (route.refused) return req.emit("error", Object.assign(new Error("connect ECONNREFUSED 93.184.216.34:443"), { code: "ECONNREFUSED" }));
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
         onResponse(res);
@@ -939,6 +940,21 @@ test.describe("start page reads", () => {
     const restore = fakeNetwork({ [BANK]: { reset: true } });
     try {
       const { report } = await review({ [BANK]: { reset: true } }, async (job) => {
+        jobs.push(job);
+        return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
+      });
+      assert.equal(jobs.length, 1);
+      assert.equal(report.pages[0].status, 200);
+    } finally {
+      restore();
+    }
+  });
+
+  test("a host that refuses the plain connection is tried in headless Chrome before it is named down (#3374)", async () => {
+    const jobs = [];
+    const restore = fakeNetwork({ [BANK]: { refused: true } });
+    try {
+      const { report } = await review({ [BANK]: { refused: true } }, async (job) => {
         jobs.push(job);
         return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
       });
