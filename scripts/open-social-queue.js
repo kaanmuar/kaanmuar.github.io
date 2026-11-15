@@ -133,7 +133,14 @@ function posts(batch, root = ROOT, network = "bluesky") {
       const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
       const answer = captions[slug].answer && captions[captions[slug].answer];
       const clip = { url: CLIPS + batch + "/" + slug + ".mp4", lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || "en" };
+      const slides = [];
+      for (let i = 1; i <= 10; i += 1) {
+        const rel = "carousel/" + slug + "-" + String(i).padStart(2, "0") + ".jpg";
+        if (!fs.existsSync(path.join(dir, rel))) break;
+        slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, alt: captions[slug].alt || captions[slug].title || "" });
+      }
       return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip },
+        slides.length >= 2 ? { slides } : {},
         quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
     });
 }
@@ -176,6 +183,7 @@ function extras(network, post, face, book) {
   const quiz = post.quiz && (book.posts[post.batch + "/" + post.quiz] || []).find((e) => e.channel === network && e.result === "sent" && e.id);
   return {
     cap: post.cap, clip: post.clip, quizCap: post.quizCap, answerCap: post.answerCap, quote: quiz ? quiz.id : "",
+    slides: post.slides || null,
     hub: hubUrl(post.batch, post.slug) + "?utm_source=" + network + "&utm_medium=social&utm_campaign=" + post.batch
   };
 }

@@ -192,6 +192,14 @@ const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
+
+// The plain read failed before any page arrived because the host refused or rejected the route.
+function plainConnectionFailed(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNREFUSED|EHOSTUNREACH|ENETUNREACH)$/.test(code)
+    || /^connect ECONNREFUSED|^connect EHOSTUNREACH|^connect ENETUNREACH/i.test(message);
+}
 // Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
 const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
@@ -3206,8 +3214,9 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
-    if (!(oversized || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : error.message === UNREACHABLE ? "unreachable" : true;
+    const conn = plainConnectionFailed(error);
+    if (!(oversized || /took too long/.test((error && error.message) || "") || conn) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -4608,6 +4617,14 @@ function frostAll(value) {
   return value;
 }
 
+// Shared and unpaid opens keep overall + six area scores (numbers) and one teaser finding in the clear (#3477):
+// its title, evidence and fix stay readable so a colleague sees why the score dropped. Everything else frosts.
+function teaserFinding(findings) {
+  const list = findings || [];
+  return list.filter((item) => item.verdict === "fail" || item.verdict === "risk")
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999))[0] || list[0] || null;
+}
+
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
@@ -4626,10 +4643,19 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
+  // Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
+  const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
+  const teaserId = teaser && (teaser.id || teaser.key);
+  const teaserKeep = teaser ? { title: teaser.title, evidence: teaser.evidence, fix: teaser.fix, msg: teaser.msg } : null;
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole
+  // except the teaser finding, which keeps evidence and fix so shared links still show the top gap (#3477).
   (ins.findings || []).forEach((item) => {
-    item.evidence = frostText(item.evidence);
-    item.fix = frostText(item.fix);
+    const isTeaser = teaserId && (item.id === teaserId || item.key === teaserId);
+    if (isTeaser) item.teaser = true;
+    else {
+      item.evidence = frostText(item.evidence);
+      item.fix = frostText(item.fix);
+    }
     if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
     else delete item.msg;
   });
@@ -4650,6 +4676,15 @@ function previewReport(report, options) {
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
   const frosted = frostAll(copy);
+  if (teaserKeep && frosted.insights && frosted.insights.findings) {
+    const hit = frosted.insights.findings.find((item) => item.teaser);
+    if (hit) {
+      hit.title = teaserKeep.title;
+      hit.evidence = teaserKeep.evidence;
+      hit.fix = teaserKeep.fix;
+      if (teaserKeep.msg && teaserKeep.msg.title) hit.msg = { title: teaserKeep.msg.title };
+    }
+  }
   if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;

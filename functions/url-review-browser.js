@@ -679,8 +679,13 @@ async function open(page, url) {
     try {
       res = await page.goto(url, { waitUntil: "load" });
     } catch (error) {
+      const docReady = await page.evaluate(() => document.readyState !== "loading" && !!document.body).catch(() => false);
+      const timedOut = error && error.name === "TimeoutError";
+      const refused = timedOut && last && last.status() >= 400;
+      const stalledLoad = timedOut && last && docReady;
+      if (!refused && !stalledLoad) throw error;
       // A document that arrived and parsed, but whose load event waits on a stalled image or script, is read as it stands.
-      if (!last || (error && error.name) !== "TimeoutError" || !(await page.evaluate(() => document.readyState !== "loading" && !!document.body).catch(() => false))) throw error;
+      // A bot check that answers with an error status and never fires load is read the same way, so recovery can name the refusal.
       res = last;
       stalled = true;
     }

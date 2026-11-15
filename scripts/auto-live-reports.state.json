@@ -1,5 +1,5 @@
 {
- "since": "2026-11-11T11:00:56.735Z",
+ "since": "2026-11-15T11:01:21.410Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -136,13 +136,28 @@
   "windrawwin.com": "2026-11-11",
   "habi.co": "2026-11-11",
   "vs:aol.de": "2026-11-11",
-  "vs:elimparcial.com": "2026-11-11"
+  "vs:elimparcial.com": "2026-11-11",
+  "made-in-china.com": "2026-11-12",
+  "pneusgom.re": "2026-11-12",
+  "vs:sosfanta.com": "2026-11-12",
+  "vs:dermoeczanem.com": "2026-11-12",
+  "sliit.lk": "2026-11-13",
+  "hsbc.bm": "2026-11-13",
+  "vs:pte.hu": "2026-11-13",
+  "actualite.cd": "2026-11-14",
+  "circajewels.com": "2026-11-14",
+  "vs:foreca.com": "2026-11-14",
+  "vs:sinarharian.com.my": "2026-11-14",
+  "najserialy.io": "2026-11-15",
+  "sarhne.com": "2026-11-15",
+  "vs:mccabespharmacy.com": "2026-11-15",
+  "vs:zefoy.com": "2026-11-15"
  },
  "recent": [
-  "seo-title-missing",
+  "sec-hsts",
+  "geo-crawlers",
   "a11y-labels",
-  "ax-button-name",
-  "sec-cookies",
-  "sec-frame"
+  "ax-link-name",
+  "an-fingerprint"
  ]
 }

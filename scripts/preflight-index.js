@@ -15,6 +15,37 @@ const WINDOW = 200;
 const MAX_WINDOWS = 60;
 const SOURCE = /\.(js|mjs|ts|html|css|kt|kts|py|sh|yml|yaml|mdc|md|rules)$/;
 const SKIP = /(^|\/)(node_modules|media|generated|dist|build|vendor|\.cloudflare|\.worktrees)\/|\.min\.|package-lock|^data\/|^reports\//;
+// Shared with Cursor native indexing (#3474): .cursorindexingignore patterns.
+function loadIndexingIgnore() {
+  const file = path.join(ROOT, ".cursorindexingignore");
+  if (!fs.existsSync(file)) return [];
+  return fs.readFileSync(file, "utf8").split("\n")
+    .map((line) => line.replace(/#.*$/, "").trim())
+    .filter(Boolean)
+    .map(patternToRegExp)
+    .filter(Boolean);
+}
+function patternToRegExp(pat) {
+  const normalized = pat.replace(/\\/g, "/").replace(/^\//, "");
+  if (!normalized) return null;
+  const dir = normalized.endsWith("/");
+  let body = dir ? normalized.slice(0, -1) : normalized;
+  let re = "";
+  for (let i = 0; i < body.length; ) {
+    if (body.startsWith("**/", i)) { re += "(.*/)?"; i += 3; continue; }
+    if (body[i] === "*") { re += "[^/]*"; i += 1; continue; }
+    if (body[i] === "?") { re += "[^/]"; i += 1; continue; }
+    re += body[i].replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    i += 1;
+  }
+  if (!body.includes("/")) re = `(^|/)${re}`;
+  else re = `^${re}`;
+  if (dir) re += "(/|$)";
+  else re += "$";
+  try { return new RegExp(re); } catch { return null; }
+}
+const INDEXING_IGNORE = loadIndexingIgnore();
+const skipFile = (f) => SKIP.test(f) || INDEXING_IGNORE.some((re) => re.test(f.replace(/\\/g, "/")));
 const cfg = (() => { try { return JSON.parse(fs.readFileSync(path.join(os.homedir(), ".cursor/preflight/config.json"), "utf8")); } catch { return {}; } })();
 const URL_ = process.env.PREFLIGHT_URL || cfg.url || "https://preflight.carlosandmunoz.com";
 const TOKEN = process.env.PREFLIGHT_TOKEN || cfg.token;
@@ -110,7 +141,7 @@ async function main() {
         else files.push(file);
       }
     }
-    for (const f of files.filter((f) => SOURCE.test(f) && !SKIP.test(f))) {
+    for (const f of files.filter((f) => SOURCE.test(f) && !skipFile(f))) {
       const fi = fileItems(f);
       items.push(...fi);
       if (mode === "--changed") deletes.push(...staleIds(f, fi.length));

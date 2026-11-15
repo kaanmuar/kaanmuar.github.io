@@ -413,6 +413,7 @@ function fakeNetwork(routes) {
         // With connecting: true as well, the host never accepted the TCP connection.
         if (route.connecting) req.socket = { connecting: true };
         if (route.timeout && !route.body) return req.emit("timeout");
+        if (route.refused) return req.emit("error", Object.assign(new Error("connect ECONNREFUSED 93.184.216.34:443"), { code: "ECONNREFUSED" }));
         const res = new EventEmitter();
         Object.assign(res, { statusCode: route.status, headers: route.headers || {}, socket: null });
         onResponse(res);
@@ -933,6 +934,21 @@ test.describe("start page reads", () => {
     await assert.rejects(review({ [BANK]: { timeout: true } }, async () => ({ ok: false, error: "the browser was busy" })), /^Error: The page took too long in the plain request, and headless Chrome could not open it either \(the browser was busy\)\.$/);
   });
 
+  test("a host that refuses the plain connection is tried in headless Chrome before it is named down (#3374)", async () => {
+    const jobs = [];
+    const restore = fakeNetwork({ [BANK]: { refused: true } });
+    try {
+      const { report } = await review({ [BANK]: { refused: true } }, async (job) => {
+        jobs.push(job);
+        return { ok: true, ms: 1200, timing: { load: 900 }, start: { status: 200, docStatus: 200, finalUrl: BANK, headers: STRONG_HEADERS, html: HTML } };
+      });
+      assert.equal(jobs.length, 1);
+      assert.equal(report.pages[0].status, 200);
+    } finally {
+      restore();
+    }
+  });
+
   test("when headless Chrome is refused too, the error names the bot protection", async () => {
     const browse = async () => ({ ok: true, start: { status: 403, docStatus: 403, finalUrl: BANK, headers: {}, html: WAF.body } });
     await assert.rejects(review({ [BANK]: WAF }, browse), /^Error: The site's bot protection refused the review \(status 403, an AWS WAF bot check\), in the plain request and in headless Chrome\.$/);
@@ -1103,10 +1119,11 @@ test.describe("start page reads", () => {
     // but an image or script never finishes, so the load event never fires and goto timed out at 20 s.
     const browser = require("../../functions/url-review-browser");
     const html = "<html><body><h1>Superintendencia</h1></body></html>";
-    const fakePage = ({ arrives, ready, error }) => {
+    const fakePage = ({ arrives, ready, error, status }) => {
       const listeners = [];
       const main = {};
-      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => 200, headers: () => ({ "content-type": "text/html" }), text: async () => html };
+      const code = status || 200;
+      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => code, headers: () => ({ "content-type": "text/html" }), text: async () => html };
       return {
         on: (name, fn) => listeners.push(fn),
         off: (name, fn) => listeners.splice(listeners.indexOf(fn), 1),
@@ -1125,6 +1142,8 @@ test.describe("start page reads", () => {
     await assert.rejects(browser.open(fakePage({ arrives: false, ready: true }), BANK), /^TimeoutError: Navigation timeout of 20000 ms exceeded$/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: false }), BANK), /Navigation timeout/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: true, error: "empty" }), BANK), /ERR_EMPTY_RESPONSE/);
+    const refused = await browser.open(fakePage({ arrives: true, ready: false, status: 403 }), BANK);
+    assert.deepEqual([refused.docStatus, refused.stalled], [403, true]);
   });
 
   test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
@@ -3816,7 +3835,11 @@ test.describe("cases built from evidence and ranked by risk", () => {
       observed: { title: "Home", description: "A shop for coffee. Also " + secret + "." },
       log: [{ at: "16:00:01", text: "Opened the start page. Saw " + secret + "." }],
       pages: [{ path: "/admin", status: 200, title: "Admin" }],
-      insights: { findings: [{ id: "SEC-02", area: "Security", verdict: "fail", title: "HSTS is not sent", evidence: "Missing. " + secret }], geo: { note: "Read by four crawlers. " + secret } }
+      // Rank-1 teaser stays clear (#3477); the secret lives only in a lower finding and other sections.
+      insights: { findings: [
+        { id: "A11Y-01", area: "Accessibility", verdict: "fail", rank: 1, title: "Buttons need names", evidence: "Icon-only buttons have no accessible name.", fix: "Add aria-label text." },
+        { id: "SEC-02", area: "Security", verdict: "fail", rank: 2, title: "HSTS is not sent", evidence: "Missing. " + secret }
+      ], geo: { note: "Read by four crawlers. " + secret } }
     };
     const preview = core.previewReport(report);
     assert.ok(!JSON.stringify(preview).includes(secret));
@@ -3827,7 +3850,8 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.match(preview.insights.geo.note, /^Read by four crawlers\. /);
     assert.deepEqual([preview.id, preview.host, preview.finalUrl, preview.fetchedAt, preview.log[0].at, preview.pages[0].path, preview.observed.title],
       [report.id, report.host, report.finalUrl, report.fetchedAt, report.log[0].at, report.pages[0].path, report.observed.title]);
-    assert.deepEqual([preview.insights.findings[0].area, preview.insights.findings[0].verdict, preview.insights.findings[0].title], ["Security", "fail", "HSTS is not sent"]);
+    assert.deepEqual([preview.insights.findings[0].area, preview.insights.findings[0].verdict, preview.insights.findings[0].title], ["Accessibility", "fail", "Buttons need names"]);
+    assert.equal(preview.insights.findings[0].teaser, true);
     assert.deepEqual(core.previewReport(preview).statement, preview.statement, "frosting twice gives the same copy");
     assert.equal(report.statement.includes(secret), true, "the stored report is not changed");
   });
@@ -3852,6 +3876,31 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.equal(preview.compare, undefined);
     assert.ok(!JSON.stringify(preview).includes("asker.example"));
     assert.ok(report.compare, "the stored report is not changed");
+  });
+
+  test("shared preview keeps the top fail finding's evidence and fix in the clear (#3477)", () => {
+    const secret = "the admin panel answers on port 8443 without a password";
+    const report = {
+      insights: {
+        score: { overall: 53, areas: { Accessibility: { score: 14 } } },
+        findings: [
+          { id: "A11Y-01", key: "a11y-name", area: "Accessibility", verdict: "fail", rank: 1, title: "Buttons need names",
+            evidence: "Icon-only buttons have no accessible name on the start page.",
+            fix: "Add aria-label text that says what each button does." },
+          { id: "SEC-02", key: "sec-hsts", area: "Security", verdict: "fail", rank: 2, title: "HSTS is not sent",
+            evidence: "Missing. " + secret, fix: "Send Strict-Transport-Security." }
+        ]
+      }
+    };
+    const preview = core.previewReport(report);
+    const teaser = preview.insights.findings.find((item) => item.teaser);
+    const other = preview.insights.findings.find((item) => item.id === "SEC-02");
+    assert.equal(teaser.id, "A11Y-01");
+    assert.equal(teaser.evidence, report.insights.findings[0].evidence);
+    assert.equal(teaser.fix, report.insights.findings[0].fix);
+    assert.ok(!JSON.stringify(preview).includes(secret));
+    assert.ok(other.evidence.includes("\u2060") || other.fix.includes("\u2060"));
+    assert.equal(preview.insights.score.overall, 53);
   });
 });
 
