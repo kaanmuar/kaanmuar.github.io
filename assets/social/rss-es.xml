@@ -416,6 +416,90 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/15-dmarc.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>4 Errores de seguimiento rápido: viernes de pizarra</title>
+      <link>https://carlosandmunoz.com/social/pick/4-prompt-tracking-mistakes-whiteboard-friday-es.html</link>
+      <guid isPermaLink="false">pick/4-prompt-tracking-mistakes-whiteboard-friday-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>¿Estás midiendo mal la visibilidad de la IA? Tom Capper revela los 4 errores más grandes en el seguimiento de mensajes de IA y 4 formas creativas de ampliar su lista de mensajes.
+
+Vía Moz, de Tom Capper, 2026-11-13.
+
+https://moz.com/blog/prompt-tracking-mistakes-whiteboard-friday</description>
+      <media:content url="https://moz.com/images/blog/WBF/4-Prompt-Tracking-Mistakes/4-Prompt-Tracking-Mistakes-YT_Thumbnail.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1774531906&amp;s=1a802015398267b1dc571f163e960f2d" medium="image"/>
+    </item>
+    <item>
+      <title>Gestión de robots de IA: Por qué los SEO necesitan más que listas de bloqueo a través de @sejournal, @chrisgreenseo</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se-es.html</link>
+      <guid isPermaLink="false">pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Bloquear un rastreador de entrenamiento de IA no es lo mismo que bloquear un robot de recuperación. He aquí por qué el SEO necesita políticas de bots deliberadas, no listas de bloqueo. La publicación Gestión de bots de IA: Por qué los SEO necesitan más que listas de bloqueo apareció por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Chris Green, 2026-11-13.
+
+https://www.searchenginejournal.com/ai-bot-management-why-seos-need-more-than-block-lists/597148/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/bot-management-410.png" medium="image"/>
+    </item>
+    <item>
+      <title>Construí QAFind: una compilación de Playwright roja debería significar un error real</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-es.html</link>
+      <guid isPermaLink="false">pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>`Si su equipo hace clic en Volver a ejecutar trabajos fallidos más de una vez por semana, su suite de un extremo a otro se ha detenido...
+
+Vía DEV, por Kate Sai kishore, 2026-11-11.
+
+https://dev.to/kate_saikishore_5d4d69ae/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-3hlm</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fbpyp6w7ld1z9vzswho6d.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Hice Dramaturgo 3.5x más rápido 🔥</title>
+      <link>https://carlosandmunoz.com/social/pick/i-made-playwright-3-5x-faster-es.html</link>
+      <guid isPermaLink="false">pick/i-made-playwright-3-5x-faster-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>Tengo una extraña obsesión con hacer que las cosas funcionen más rápido, incluso cuando parece prácticamente imposible...
+
+Vía DEV, por codebeast, 2026-11-13.
+
+https://dev.to/xcodebeast/i-made-playwright-35x-faster-d1f</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fr1dq79fbb060rw3y9cgs.gif" medium="image"/>
+    </item>
+    <item>
+      <title>Pruebas de pestañas múltiples en Cypress: @cypress/titiritero 1.0 está generalmente disponible</title>
+      <link>https://carlosandmunoz.com/social/pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera-es.html</link>
+      <guid isPermaLink="false">pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>Cypress ejecuta cada prueba en una pestaña, por lo que los flujos que abren una nueva pestaña o ventana emergente han sido difíciles de probar. @cypress/puppeteer 1.0 ahora está disponible de forma generalizada, con una API estable, Puppeteer v24 y una nueva guía de prueba de varias pestañas. Vea qué cambió y cómo actualizar desde 0.1.x.
+
+Vía Cypress, por Jennifer Shehane, 2026-11-12.
+
+https://www.cypress.io/blog/cypress-puppeteer-ga/</description>
+      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/11/cypress-puppeteer-ga-header-1.png" medium="image"/>
+    </item>
+    <item>
+      <title>Lo que permite pasar el valor predeterminado toHaveScreenshot() de Playwright: umbral, maxDiffPixels y relación probada en 11 cambios</title>
+      <link>https://carlosandmunoz.com/social/pick/what-playwright-s-tohavescreenshot-default-lets-through-thre-es.html</link>
+      <guid isPermaLink="false">pick/what-playwright-s-tohavescreenshot-default-lets-through-thre-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>Once pequeños cambios en la interfaz de usuario se comparan con una línea de base en cinco conjuntos de opciones: cuáles pasan, por qué se pasa un cambio de color de botón y por qué un dígito cambiado falla.
+
+Vía DEV, por CurlShot, 2026-11-13.
+
+https://dev.to/curlshot/what-playwrights-tohavescreenshot-default-lets-through-threshold-maxdiffpixels-and-ratio-3idp</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fyxiew8vomed8g9bwv5ue.png" medium="image"/>
+    </item>
+    <item>
       <title>El CICR prueba una CSP. Ahora puede aplicarla.</title>
       <link>https://carlosandmunoz.com/social/runs-100/08-icrc-es.html</link>
       <guid isPermaLink="false">runs-100/08-icrc-es</guid>
@@ -857,102 +941,6 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
 https://www.youtube.com/shorts/bNMphChRS6w</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" length="238599" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Simula el daltonismo en dos clics.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/11-vision-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/11-vision-es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Truco</category>
-      <category>A11y</category>
-      <description>Truco de 30 segundos: Simula el daltonismo en dos clics.
-
-Chrome DevTools puede simular visión borrosa, contraste reducido y cuatro tipos de deficiencia de la visión del color, directamente en tu página.
-
-Pruébalo ya: Revisa cada mensaje de error, gráfico y enlace. Si el color es la única señal, añade texto, un icono o un subrayado.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=vision
-
-#Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Mito: las meta keywords aún ayudan a posicionar.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-es.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Mito vs. realidad</category>
-      <category>SEO</category>
-      <description>Mito vs. realidad: Mito: las meta keywords aún ayudan a posicionar.
-
-Google dijo en 2009 que no usa la meta etiqueta keywords en el ranking web. Eso sí, la etiqueta muestra a tu competencia las palabras que buscas posicionar.
-
-Compruébalo: Busca name=&quot;keywords&quot; en tus plantillas. Quítala y escribe en su lugar una description real para cada página clave.
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
-
-#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
-
-https://www.youtube.com/shorts/HipUbZf_TiA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Detección de pruebas inestables y búsqueda de sus causas fundamentales con Strands Agents y Gemini</title>
-      <link>https://carlosandmunoz.com/social/pick/detecting-flaky-tests-and-finding-their-root-causes-with-str-es.html</link>
-      <guid isPermaLink="false">pick/detecting-flaky-tests-and-finding-their-root-causes-with-str-es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>Hace unos años (tres años como máximo), uno de los mayores desafíos que enfrentaban los ingenieros de control de calidad era: ¿cómo...
-
-Vía DEV, de Alicia Marianne Gonçalves, 2026-11-10.
-
-https://dev.to/m4rri4nne/detecting-flaky-tests-and-finding-their-root-causes-with-strands-agents-and-gemini-4kan</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fo71gqwjons1kfrsun4y1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google descubre patrones inesperados en la generación de imágenes de IA a través de @sejournal, @martinibuster</title>
-      <link>https://carlosandmunoz.com/social/pick/google-discovers-unexpected-patterns-in-ai-image-generation--es.html</link>
-      <guid isPermaLink="false">pick/google-discovers-unexpected-patterns-in-ai-image-generation--es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Google analizó millones de mensajes de Nano Banana y descubrió cómo las empresas lo utilizan para marketing. La publicación Google descubre patrones inesperados en la generación de imágenes con IA apareció por primera vez en Search Engine Journal.
-
-Vía Search Engine Journal, por Roger Montti, 2026-11-11.
-
-https://www.searchenginejournal.com/google-discovers-unexpected-patterns-in-ai-image-generation/596745/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-nano-banana-314.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Me cansé de cuidar a Playwright, así que lo convertí en una pequeña API de renderizado.</title>
-      <link>https://carlosandmunoz.com/social/pick/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a--es.html</link>
-      <guid isPermaLink="false">pick/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a--es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>Cada producto pequeño que envío termina necesitando una de dos cosas: una imagen de Open Graph o un PDF de algún...
-
-Vía DEV, por Zakaria Tebani, 2026-11-11.
-
-https://dev.to/frameforge/i-got-tired-of-babysitting-playwright-so-i-turned-it-into-a-small-render-api-1da6</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Ffblixqi4xorpwn9z4b1r.png" medium="image"/>
-    </item>
-    <item>
-      <title>lowdevco/claude-seo: Esta es una habilidad de Claude Code para análisis integral de sitios web, auditorías, SEO técnico y optimización de búsqueda con IA. Analiza su sitio de destino, evalúa las señales de búsqueda y...</title>
-      <link>https://carlosandmunoz.com/social/pick/lowdevco-claude-seo-this-is-a-claude-code-skill-for-comprehe-es.html</link>
-      <guid isPermaLink="false">pick/lowdevco-claude-seo-this-is-a-claude-code-skill-for-comprehe-es</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Esta es una habilidad de Claude Code para análisis integral de sitios web, auditorías, SEO técnico y optimización de búsqueda con IA. Analiza su sitio de destino, evalúa las señales de búsqueda y produce una hoja de ruta priorizada y procesable directamente dentro de Claude.
-
-Vía GitHub, por lowdevco, 2026-11-09.
-
-https://github.com/lowdevco/claude-seo</description>
-      <media:content url="https://opengraph.githubassets.com/1/lowdevco/claude-seo" medium="image"/>
     </item>
   </channel>
 </rss>

@@ -798,8 +798,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122106514035532027",
     "at": "2026-11-14T20:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-14T20:36:13.821Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1435928868713063/",
+    "checked": "2026-11-15T11:28:44.493Z"
    }
   ],
   "auto-2026-11-08/01-u-shortmake-com": [
@@ -914,6 +915,26 @@
     "at": "2026-11-15T19:25:00.000Z",
     "result": "queued",
     "checked": "2026-11-14T20:36:13.822Z"
+   }
+  ],
+  "auto-2026-11-15/01-u-najserialy-io": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1150080367614079",
+    "at": "2026-11-21T22:51:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-15T11:28:53.682Z"
+   }
+  ],
+  "auto-2026-11-15/03-vs-mccabespharmacy-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122110577919532027",
+    "at": "2026-11-16T19:33:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-15T11:28:55.560Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -1263,8 +1284,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094925599532027",
     "at": "2026-11-14T22:08:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-14T20:36:13.824Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094925599532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-15T11:28:44.493Z"
    }
   ],
   "evergreen-2026-11/16-skip-link": [
@@ -1518,8 +1540,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122093299413532027",
     "at": "2026-11-14T21:25:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-14T20:36:13.825Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122093299413532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-15T11:28:44.493Z"
    }
   ],
   "runs-100/10-amnesty": [
@@ -2130,8 +2153,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122095176951532027",
     "at": "2026-11-14T23:32:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-14T20:36:13.838Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122095176951532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-15T11:28:44.493Z"
    }
   ],
   "tips-2026-10/07-nosniff": [
@@ -2195,8 +2219,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122095177311532027",
     "at": "2026-11-14T20:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-14T20:36:13.838Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122095177311532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-15T11:28:44.493Z"
    }
   ],
   "tips-2026-10/13-consent-before": [
