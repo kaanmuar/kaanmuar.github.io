@@ -1103,10 +1103,11 @@ test.describe("start page reads", () => {
     // but an image or script never finishes, so the load event never fires and goto timed out at 20 s.
     const browser = require("../../functions/url-review-browser");
     const html = "<html><body><h1>Superintendencia</h1></body></html>";
-    const fakePage = ({ arrives, ready, error }) => {
+    const fakePage = ({ arrives, ready, error, status }) => {
       const listeners = [];
       const main = {};
-      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => 200, headers: () => ({ "content-type": "text/html" }), text: async () => html };
+      const code = status || 200;
+      const doc = { request: () => ({ isNavigationRequest: () => true }), frame: () => main, status: () => code, headers: () => ({ "content-type": "text/html" }), text: async () => html };
       return {
         on: (name, fn) => listeners.push(fn),
         off: (name, fn) => listeners.splice(listeners.indexOf(fn), 1),
@@ -1125,6 +1126,8 @@ test.describe("start page reads", () => {
     await assert.rejects(browser.open(fakePage({ arrives: false, ready: true }), BANK), /^TimeoutError: Navigation timeout of 20000 ms exceeded$/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: false }), BANK), /Navigation timeout/);
     await assert.rejects(browser.open(fakePage({ arrives: true, ready: true, error: "empty" }), BANK), /ERR_EMPTY_RESPONSE/);
+    const refused = await browser.open(fakePage({ arrives: true, ready: false, status: 403 }), BANK);
+    assert.deepEqual([refused.docStatus, refused.stalled], [403, true]);
   });
 
   test("an empty shell start page is crawled from the links headless Chrome rendered", async () => {
