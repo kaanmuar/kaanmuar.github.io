@@ -21,6 +21,9 @@ const DEFAULT_ROOT = "/Users/Apple/Documents/GitHub/kaanmuar.github.io";
 const ENDPOINT = "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis";
 const PAIR_CONFIG = path.join(os.homedir(), "Library/Application Support/QALab/engagement-browser/config.json");
 const USAGE_DIR = path.join(os.homedir(), "Library/Application Support/Cursor/AgentStores/cursor_agent_stores/u452212433/files/cursor-usage");
+/** Live CursorQuota app cache (#2012). Prefer over legacy agent-store quota-cache.json. */
+const LIVE_QUOTA_CACHE = process.env.CURSOR_QUOTA_CACHE || path.join(os.homedir(), "Library/Application Support/CursorQuota/cache.json");
+const LEGACY_QUOTA_CACHE = path.join(USAGE_DIR, "quota-cache.json");
 const RESULTS = path.join(os.homedir(), ".config/qa-lab/github-local-results.json");
 const LABEL = "com.carlosandmunoz.github-local";
 const PLIST = path.join(os.homedir(), "Library/LaunchAgents", LABEL + ".plist");
@@ -97,14 +100,58 @@ function usageRows(csvText, now) {
     .map((r) => ({ start: r.start_utc, end: r.end_utc || null, ticket: ticketOf(r.ticket), title: r.title || "", chat: r.chat_id || "" }));
 }
 
-/** quota-cache.json (cents, as quota.py reads it) -> { cycleStart, onDemandUsd, limitUsd }. */
+/**
+ * Prefer CursorQuota/cache.json (#2012 live), else legacy agent-store quota-cache.json.
+ * Live shape: { planUsed, planLimit, odUsed, odLimit, cycleEnd, at, ... } (plan dollars-ish units from app).
+ * Legacy shape: { data: { billingCycleStart, individualUsage.onDemand.{used,limit}, ... } } (cents).
+ * -> { cycleStart, onDemandUsd, limitUsd, planUsed, planLimit, source }.
+ */
 function costFrom(quotaJson) {
-  const d = (quotaJson && quotaJson.data) || {};
+  if (!quotaJson || typeof quotaJson !== "object") {
+    return { cycleStart: null, onDemandUsd: null, limitUsd: null, planUsed: null, planLimit: null, source: null };
+  }
+  // Live CursorQuota app cache
+  if (typeof quotaJson.planUsed === "number" || typeof quotaJson.planLimit === "number") {
+    const odUsed = typeof quotaJson.odUsed === "number" ? quotaJson.odUsed : null;
+    const odLimit = typeof quotaJson.odLimit === "number" ? quotaJson.odLimit : null;
+    return {
+      cycleStart: null,
+      cycleEnd: quotaJson.cycleEnd || null,
+      onDemandUsd: odUsed != null ? odUsed : null,
+      limitUsd: odLimit != null && odLimit > 0 ? odLimit : null,
+      planUsed: quotaJson.planUsed,
+      planLimit: quotaJson.planLimit,
+      planPercent: typeof quotaJson.perCent === "number" ? quotaJson.perCent : null,
+      source: "CursorQuota/cache.json",
+    };
+  }
+  // Legacy quota.py / usage-summary cache
+  const d = quotaJson.data || {};
   const mine = (d.individualUsage && d.individualUsage.onDemand) || {};
   const team = (d.teamUsage && d.teamUsage.onDemand) || {};
   const pick = (k) => (typeof mine[k] === "number" && mine[k] > 0 ? mine[k] : typeof team[k] === "number" && team[k] > 0 ? team[k] : null);
   const used = (mine.used || 0) + (team.used || 0);
-  return { cycleStart: d.billingCycleStart || null, onDemandUsd: d.individualUsage || d.teamUsage ? cents(used) : null, limitUsd: cents(pick("limit")) };
+  const plan = (d.individualUsage && d.individualUsage.plan) || {};
+  return {
+    cycleStart: d.billingCycleStart || null,
+    cycleEnd: d.billingCycleEnd || null,
+    onDemandUsd: d.individualUsage || d.teamUsage ? cents(used) : null,
+    limitUsd: cents(pick("limit")),
+    planUsed: typeof plan.used === "number" ? plan.used : null,
+    planLimit: typeof plan.limit === "number" ? plan.limit : null,
+    planPercent: typeof plan.totalPercentUsed === "number" ? plan.totalPercentUsed : null,
+    source: "cursor-usage/quota-cache.json",
+  };
+}
+
+/** Newest readable quota JSON: live CursorQuota first, legacy agent-store second. */
+function readQuotaJson() {
+  for (const file of [LIVE_QUOTA_CACHE, LEGACY_QUOTA_CACHE]) {
+    try {
+      if (fs.existsSync(file)) return { file, json: JSON.parse(fs.readFileSync(file, "utf8")) };
+    } catch (error) { /* try next */ }
+  }
+  return { file: null, json: null };
 }
 
 /** Cursor's usage-events CSV joined to the work log as report.py does: each event inside a work row's span counts for its ticket. */
@@ -182,7 +229,12 @@ function collect(root, now) {
   const safe = (name, fn, fallback) => { try { return fn(); } catch (error) { errors.push(name + ": " + String(error.message || error).split("\n")[0].slice(0, 200)); return fallback; } };
   const wts = safe("worktrees", () => worktrees(root, now), []);
   const usage = safe("usage", () => usageRows(fs.readFileSync(path.join(USAGE_DIR, "work-log.csv"), "utf8"), now), []);
-  const cost = safe("cost", () => costFrom(JSON.parse(fs.readFileSync(path.join(USAGE_DIR, "quota-cache.json"), "utf8"))), { cycleStart: null, onDemandUsd: null, limitUsd: null });
+  const cost = safe("cost", () => {
+    const { file, json } = readQuotaJson();
+    const out = costFrom(json);
+    if (file) out.quotaFile = path.basename(file);
+    return out;
+  }, { cycleStart: null, onDemandUsd: null, limitUsd: null, planUsed: null, planLimit: null, source: null });
   const events = newestEvents();
   cost.tickets = events ? safe("tickets", () => ticketCosts(fs.readFileSync(events, "utf8"), usage, now), []) : [];
   cost.eventsFile = events ? path.basename(events) : null;
