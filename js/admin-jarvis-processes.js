@@ -58,15 +58,19 @@ function rowHtml(r, now, esc) {
     return `<li class="jv-proc ${tone(r)}"><span class="jv-proc-dot" aria-hidden="true"></span><div class="jv-proc-main"><b>${name}</b><small>${detail}</small>${bar}${open}</div><time${since}>${esc(clock(r, now))}</time></li>`;
 }
 
-/** The panel body. compact: only what runs or waits, at most three, nothing when none. */
-export function processesHtml(p, now, esc, { compact = false } = {}) {
+// Finished rows shown before "All N", as in the app.
+export const RECENT = 8;
+
+/** The panel body. compact: only what runs or waits, at most three, nothing when none. all: every finished row. */
+export function processesHtml(p, now, esc, { compact = false, all = false } = {}) {
     if (!p) return '<p class="jv-empty">Waiting for the first processes from Jarvis…</p>';
     const act = active(p);
     const done = recent(p);
     if (compact) return act.length ? `<ul class="jv-procs">${act.slice(0, 3).map((r) => rowHtml(r, now, esc)).join('')}</ul>${act.length > 3 ? `<p class="jv-note">${act.length - 3} more on Systems.</p>` : ''}` : '';
     const sum = summary(p);
     const head = (sum ? `<p class="jv-proc-sum${active(p).some((r) => r.needsYou) ? ' is-needs' : ''}">${esc(sum)}</p>` : '') + (act.length ? `<ul class="jv-procs">${act.map((r) => rowHtml(r, now, esc)).join('')}</ul>` : '<p class="jv-note">Nothing running now. Jobs, workflows, deploys, reviews, Cube runs and agents show here as they start.</p>');
-    const tail = done.length ? `<h4 class="jv-proc-head">Last 24 hours</h4><ul class="jv-procs">${done.map((r) => rowHtml(r, now, esc)).join('')}</ul>` : '';
+    const more = done.length > RECENT ? `<button type="button" class="jv-btn small jv-proc-all" data-proc-all>${all ? 'Fewer' : 'All ' + done.length}</button>` : '';
+    const tail = done.length ? `<h4 class="jv-proc-head">Last 24 hours</h4><ul class="jv-procs">${done.slice(0, all ? done.length : RECENT).map((r) => rowHtml(r, now, esc)).join('')}</ul>${more}` : '';
     return head + tail;
 }
 

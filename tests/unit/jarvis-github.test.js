@@ -167,6 +167,28 @@ test("CI aggregates the pass rate, flaky runs and the failing list from the last
   assert.deepEqual([out.issues.subIssues.parents, out.issues.subIssues.done, out.issues.subIssues.total], [1, 1, 2]);
 });
 
+test("a pull_request run on refs/pull/<n>/head names PR n, though GitHub lists no pull_requests for it", async () => {
+  const out = await gh.source(ctx(fakeFetch({}, RUNS.concat([run(8, "CodeQL", 5, "refs/pull/2822/head", "failure", 1)]))));
+  assert.equal(out.ci.failing.find((f) => f.id === 8).pr, 2822);
+});
+
+test("an unreadable PR list is read once more, then the PR part says so instead of a spread TypeError", async () => {
+  const flaky = (bad) => {
+    const base = fakeFetch();
+    let left = bad;
+    return async (url, init) => {
+      const u = new URL(url);
+      if (u.pathname.endsWith("/pulls") && u.searchParams.get("state") === "open" && left-- > 0) return { ok: true, status: 200, json: async () => { throw new SyntaxError("Unexpected end of JSON input"); } };
+      return base(url, init);
+    };
+  };
+  const once = await gh.source(ctx(flaky(1)));
+  assert.deepEqual([once.prs.ok, once.prs.open], [true, 1]);
+  const twice = await gh.source(ctx(flaky(2)));
+  assert.equal(twice.prs.ok, false);
+  assert.match(twice.prs.error, /GitHub sent no list for repos\/kaanmuar\/kaanmuar\.github\.io\/pulls \(page 1\)/);
+});
+
 test("a diagnosis in jarvis_github_diag is attached to its failing run", async () => {
   const db = fakeDb([{ _c: "jarvis_github_diag", run: 4, workflow: "Tests", cause: "a flaky selector", category: "test", fix: "wait for it", confidence: 0.8, action: "gh-agent", prompt: "Fix it", at: at(1) }]);
   const out = await gh.source(ctx(fakeFetch(), db));

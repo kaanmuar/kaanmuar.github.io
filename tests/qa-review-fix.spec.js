@@ -1,0 +1,253 @@
+const path = require('path');
+const { test, expect } = require('./net-guard');
+const auth = require('../functions/url-review-auth');
+const fixOffers = require('../functions/url-review-fix-offers');
+const fixCheckout = require('../functions/url-review-fix-checkout');
+const fixRereview = require('../functions/url-review-fix-rereview');
+const sample = { frameworks: require('../functions/url-review-core').FRAMEWORKS, report: require('./unit/fixtures/review-carlosandmunoz.json') };
+
+const TERMS = require('fs').readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const ID = 'ab12cd34ef56';
+const ANA = 'a'.repeat(64);
+const HEADERS = fixOffers.packageById('security-headers');
+// Prices are read on a launch day and on the day after it, so the specs pass whatever the date (#3393).
+const LAUNCH_DAY = Date.parse('2026-11-12T12:00:00Z');
+const AFTER_LAUNCH = Date.parse('2026-12-11T05:00:00Z');
+// Phone screenshots for review: FIX_SHOTS=<dir> npx playwright test tests/qa-review-fix.spec.js
+const SHOTS = process.env.FIX_SHOTS || '';
+
+// The stub answers /review/fix/* with the real access rule and request record, so the page sees what the server decides.
+async function open(page, { lang = 'en', signedIn = true, query = '', at = LAUNCH_DAY } = {}) {
+  const store = auth.memoryStore();
+  const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
+  const me = Object.assign(await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA }), { email: 'ana@example.com', deviceKey: ANA });
+  const row = { email: 'ana@example.com', paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: ID }) };
+  const sent = [];
+  const checkouts = [];
+  let rechecked = false;
+  await page.addInitScript(({ version, me, lang, signedIn }) => {
+    try {
+      sessionStorage.setItem('qa-review-terms', version);
+      localStorage.setItem('hasSeenReviewTour', 'true');
+      localStorage.setItem('qa-review-analytics', 'necessary');
+      localStorage.setItem('cv-preferred-lang', lang);
+      if (signedIn) {
+        localStorage.setItem('qa-review-session', JSON.stringify({ session: me.session, email: me.email, provider: 'email' }));
+        localStorage.setItem('qa-review-device-key', JSON.stringify(me.deviceKey));
+      }
+    } catch (e) { /* storage is optional */ }
+  }, { version: TERMS, me, lang, signedIn });
+  await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
+  await page.route('http://127.0.0.1:8768/**', async (route) => {
+    const req = route.request();
+    const where = new URL(req.url()).pathname;
+    const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+    const body = req.postData() ? JSON.parse(req.postData()) : {};
+    const json = (status, data) => route.fulfill({ status, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
+    if (where === '/auth/session') {
+      const signed = await auth.checkSession(store, Object.assign({}, body, { deviceKey: ANA }));
+      return json(signed.ok ? 200 : signed.status, signed);
+    }
+    if (where === '/review/open') return json(200, { report: row.report, frameworks: row.frameworks, paid: true });
+    if (where === '/review/ask') {
+      const access = await auth.askAccess(store, body, row, false);
+      return json(access.ok ? 200 : access.status, access.ok ? { ok: true } : { error: access.error });
+    }
+    if (where === '/review/fix/offers') return json(200, { packages: fixOffers.publicPackages(at) });
+    if (where === '/review/fix/request') {
+      const access = await auth.askAccess(store, body, row, true);
+      if (!access.ok) return json(access.status, { error: access.error, code: access.code || '', signIn: !!access.signIn });
+      const record = fixOffers.requestRecord(body, row, access.email, at);
+      if (record.error) return json(400, { error: record.error });
+      sent.push(record);
+      return json(200, { ok: true, id: 'fix1', email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 });
+    }
+    if (where === '/checkout') {
+      checkouts.push(body);
+      return json(200, { url: 'http://127.0.0.1:8768/paypal-stub?token=5O190127TN364715T', id: '5O190127TN364715T', provider: 'paypal' });
+    }
+    if (where === '/paypal-stub') return route.fulfill({ status: 200, contentType: 'text/html', body: '<title>PayPal</title><h1>PayPal sandbox</h1>' });
+    if (where === '/review/fix/recheck') {
+      const access = await auth.askAccess(store, body, row, false);
+      if (!access.ok) return json(access.status, { error: access.error });
+      if (rechecked) return json(409, { error: 'used', code: 'used' });
+      rechecked = !fixRereview.selfRecord(row, access.email, body.lang, Date.now()).error;
+      return json(200, { ok: true, id: 'self-' + ID, email: access.email, status: 'done' });
+    }
+    return json(200, where === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
+  });
+  await page.goto((lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html') + '?report=' + ID + query);
+  await expect(page.locator('body')).toHaveClass(/paid-copy/);
+  sent.checkouts = checkouts;
+  return sent;
+}
+
+async function shot(target, name) {
+  if (SHOTS) await target.screenshot({ path: path.join(SHOTS, name) });
+}
+
+test.describe('Fix what the report found (#3082, #3102)', () => {
+  test('every open finding offers the fix and the request; a passing one does not', async ({ page }) => {
+    await open(page);
+    const card = page.locator('#findings .finding', { has: page.locator('.id', { hasText: /^F-01$/ }) });
+    await expect(card.locator('[data-fix-get="F-01"]')).toHaveText('Get the fix');
+    await expect(card.locator('[data-fix-request="F-01"]')).toHaveText('Fix this for me');
+    await page.locator('#finding-filters [data-verdict="pass"]').click();
+    await expect(page.locator('#findings .finding').first()).toBeVisible();
+    await expect(page.locator('#findings [data-fix-request]')).toHaveCount(0);
+  });
+
+  test('Get the fix opens Ask the report on that finding\'s fix', async ({ page }) => {
+    await open(page);
+    await page.locator('[data-fix-get="F-01"]').click();
+    await expect(page.locator('#ask-panel')).toBeVisible();
+    await expect(page.locator('#ask-log .ask-me').last()).toHaveText(/fix for F-01/);
+  });
+
+  test('the report ends with the four paths, the packages its findings call for, and a call with them', async ({ page }) => {
+    await open(page);
+    const panel = page.locator('#fix-offer');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.fix-path')).toHaveCount(4);
+    await expect(panel.locator('.fix-packs li')).toHaveCount(fixOffers.offersFor(sample.report.insights.findings).length);
+    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.usd + ' · about ' + HEADERS.days + ' working days List price US$' + HEADERS.listUsd);
+    await expect(panel.locator('[data-package="security-headers"] .fix-list')).toHaveCSS('text-decoration-line', 'line-through');
+    await expect(panel.locator('.fix-packs .fix-launch')).toHaveText(Array(await panel.locator('.fix-packs li').count()).fill('Launch price until Dec 10'));
+    const call = new URL(await panel.locator('[data-fix-call]').getAttribute('href'), 'https://carlosandmunoz.com/');
+    expect(call.searchParams.get('review')).toBe(ID);
+    expect(call.searchParams.get('findings')).toMatch(/^F-01,F-02,/);
+  });
+
+  test('Fix this for me opens the form on that finding and its package, and the request goes out', async ({ page }) => {
+    const sent = await open(page);
+    await page.locator('[data-fix-request="F-01"]').click();
+    const sheet = page.locator('#fix-sheet');
+    await expect(sheet).toBeVisible();
+    await expect(sheet.locator('input[value="F-01"]')).toBeChecked();
+    await expect(sheet.locator('input[value="F-02"]')).not.toBeChecked();
+    await expect(sheet.locator('select[name=package]')).toHaveValue('security-headers');
+    await expect(sheet.locator('.fix-price-note')).toContainText('US$' + HEADERS.usd);
+    await sheet.locator('select[name=package]').selectOption('');
+    await sheet.locator('textarea[name=access]').fill('Cloudflare Pages, repo on GitHub');
+    await sheet.locator('input[name=budget]').fill('300 USD');
+    await sheet.getByRole('button', { name: 'Send the request' }).click();
+    await expect(sheet).toContainText('We emailed a copy to ana@example.com');
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ kind: 'quote', package: '', budget: '300 USD', access: 'Cloudflare Pages, repo on GitHub', email: 'ana@example.com' });
+    expect(sent[0].findings.map((f) => f.id)).toEqual(['F-01']);
+  });
+
+  test('ordering a package checks every finding it covers, saves the request and opens PayPal for it', async ({ page }) => {
+    const sent = await open(page);
+    const dns = fixOffers.packageById('email-dns');
+    await page.locator('[data-fix-package="email-dns"]').click();
+    const sheet = page.locator('#fix-sheet');
+    await expect(sheet.locator('select[name=package]')).toHaveValue('email-dns');
+    await expect(sheet.locator('input[name=finding]:checked')).toHaveCount(2);
+    await expect(sheet.locator('.fix-price-note')).toContainText('You pay now with PayPal');
+    await sheet.getByRole('button', { name: 'Send and pay US$' + dns.usd }).click();
+    await page.waitForURL(/paypal-stub/);
+    expect(sent[0]).toMatchObject({ kind: 'package', package: 'email-dns', priceUsd: dns.usd });
+    expect(sent.checkouts).toHaveLength(1);
+    expect(sent.checkouts[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', fixId: 'fix1', reportId: ID, lang: 'en' });
+    expect(sent.checkouts[0].session).toBeTruthy();
+  });
+
+  test('a paid report offers one free re-check after the client fixes it themselves', async ({ page }) => {
+    await open(page);
+    const self = page.locator('#fix-offer [data-path="self"]');
+    await expect(self.locator('.fix-recheck')).toContainText('re-check this report once for free');
+    await self.locator('[data-fix-recheck]').click();
+    await expect(self.locator('.fix-recheck-msg')).toHaveText('We are reviewing the site again. The before/after arrives at ana@example.com in a few minutes.');
+    await expect(self.locator('[data-fix-recheck]')).toBeHidden();
+  });
+
+  test('back from PayPal, the report says the payment arrived and what happens next', async ({ page }) => {
+    await open(page, { query: '&fixPaid=1' });
+    await expect(page.locator('#fix-offer .fix-paid')).toHaveText(/^Payment received\. Carlos starts the fix within two working days/);
+  });
+
+  test('the pay page prices a fix package from the server, and a confirmed payment returns to the report', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
+    const confirmed = [];
+    await page.route('http://127.0.0.1:8768/**', async (route) => {
+      const req = route.request();
+      const where = new URL(req.url()).pathname;
+      const cors = { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'GET,POST' }, cors) });
+      const json = (data) => route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
+      if (where === '/checkout/quote') return json(Object.assign(fixCheckout.quote(new URL(req.url()).searchParams.get('package'), LAUNCH_DAY), { cop: HEADERS.usd * 4000, rate: 4000 }));
+      if (where === '/checkout/confirm') {
+        confirmed.push(JSON.parse(req.postData()));
+        return json({ paid: true, purpose: 'fix', priceUsd: HEADERS.usd, reference: 'abc', reportId: ID });
+      }
+      return json({ items: [] });
+    });
+    await page.addInitScript(() => { try { localStorage.setItem('qa-review-analytics', 'necessary'); } catch (e) { /* storage is optional */ } });
+    await page.goto('/qa-review-pay-es.html?purpose=fix&package=security-headers&fixId=fix1&reportId=' + ID);
+    await expect(page.locator('#pay-heading')).toHaveText('Un paquete de arreglo');
+    await expect(page.locator('#pay-item')).toHaveText(HEADERS.name.es);
+    await expect(page.locator('#pay-amount')).toHaveText(HEADERS.usd + ' USD');
+    await expect(page.locator('#pay-copy')).toContainText('revisamos el sitio de nuevo gratis');
+    await expect(page.locator('#charge')).toBeEnabled();
+    await shot(page, 'fix-pay-page-es.png');
+    await page.route('**/qa-review-es.html*', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>report</title>' }));
+    await page.goto('/qa-review-pay-es.html?purpose=fix&package=security-headers&fixId=fix1&reportId=' + ID + '&provider=paypal&result=success&reference=abc&token=5O190127TN364715T');
+    await page.waitForURL(/qa-review-es\.html\?report=ab12cd34ef56&fixPaid=1$/);
+    expect(confirmed[0]).toMatchObject({ purpose: 'fix', provider: 'paypal', sessionId: '5O190127TN364715T' });
+  });
+
+  test('after Dec 10 the cards show the list price, with no launch label and nothing struck through (#3393)', async ({ page }) => {
+    await open(page, { at: AFTER_LAUNCH });
+    const panel = page.locator('#fix-offer');
+    await expect(panel.locator('[data-package="security-headers"] .fix-price')).toHaveText('US$' + HEADERS.listUsd + ' · about ' + HEADERS.days + ' working days');
+    await expect(panel.locator('.fix-launch')).toHaveCount(0);
+    await expect(panel.locator('.fix-list')).toHaveCount(0);
+  });
+
+  test('on a phone each package carries the launch price label next to its price (#3326)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page);
+    const pack = page.locator('#fix-offer [data-package="security-headers"]');
+    await expect(pack.locator('.fix-launch')).toHaveText('Launch price until Dec 10');
+    const label = await pack.locator('.fix-launch').boundingBox();
+    expect(label.x + label.width).toBeLessThanOrEqual(390);
+    await page.locator('#fix-offer .fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await shot(page, 'fix-offer-packages-en.png');
+  });
+
+  test('on a phone the panel and the form fit the screen, in the page language', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, { lang: 'es' });
+    const panel = page.locator('#fix-offer');
+    await panel.scrollIntoViewIfNeeded();
+    await expect(panel.locator('h2')).toHaveText('¿Cómo quieres arreglarlos?');
+    const wide = await panel.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    expect(wide).toBe(false);
+    await panel.evaluate((el) => { el.scrollIntoView({ block: 'start' }); document.getElementById('dash-overlay').scrollBy(0, -80); });
+    await shot(page, 'fix-offer-panel-es.png');
+    await panel.locator('.fix-packs').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await expect(panel.locator('[data-package="security-headers"] .fix-launch')).toHaveText('Precio de lanzamiento hasta el 10 de dic.');
+    await shot(page, 'fix-offer-packages-es.png');
+    const card = page.locator('#findings .finding', { has: page.locator('.id', { hasText: /^F-01$/ }) });
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await shot(page, 'fix-finding-card-es.png');
+    await page.locator('[data-fix-request="F-01"]').click();
+    const sheet = page.locator('#fix-sheet');
+    await expect(sheet.locator('h2')).toHaveText('Pídenos que lo arreglemos');
+    const box = await sheet.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(390);
+    await sheet.locator('select[name=package]').selectOption('security-headers');
+    await expect(sheet.getByRole('button', { name: 'Enviar y pagar US$' + HEADERS.usd })).toBeVisible();
+    await shot(page, 'fix-request-form-es.png');
+    await sheet.locator('[data-fix-close]').click();
+    const self = panel.locator('[data-path="self"]');
+    await expect(self.locator('[data-fix-recheck]')).toHaveText('Revisar de nuevo gratis');
+    await self.locator('[data-fix-recheck]').click();
+    await expect(self.locator('.fix-recheck-msg')).toContainText('El antes y después llega a ana@example.com');
+    await self.evaluate((el) => { el.scrollIntoView({ block: 'start' }); document.getElementById('dash-overlay').scrollBy(0, -80); });
+    await shot(page, 'fix-recheck-es.png');
+  });
+});

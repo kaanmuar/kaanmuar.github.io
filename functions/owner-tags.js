@@ -41,6 +41,7 @@
 const crypto = require("crypto");
 const E = require("./engagement");
 const R = require("./engagement-reports");
+const Gemini = require("./gemini");
 
 const DAY = 24 * 3600000;
 const CAMPAIGN = "owner-tags";
@@ -414,7 +415,7 @@ async function explore(deps, report, state, out) {
       await ref.set({ host: report.host, name: report.name || report.host, discoveredAt: at, error: clip(error.message, 200) }, { merge: true });
     }
   }
-  if (!deps.env.GEMINI_API_KEY || out.suggested >= SUGGEST_PER_RUN || state.suggestedAt) return;
+  if (!Gemini.ready(deps.env) || out.suggested >= SUGGEST_PER_RUN || state.suggestedAt) return;
   out.suggested += 1;
   let list;
   try { list = parseSuggestions(await deps.gemini(suggestPrompt(report))); }

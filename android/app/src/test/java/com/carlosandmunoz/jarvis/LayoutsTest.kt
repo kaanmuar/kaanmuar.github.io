@@ -1,6 +1,7 @@
 package com.carlosandmunoz.jarvis
 
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.ui.Arrange
 import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.ui.Layouts.Saved
 import kotlinx.serialization.json.JsonNull
@@ -18,6 +19,43 @@ class LayoutsTest {
         assertEquals("open-bugs-by-area", Layouts.slug("Open bugs by area (12)"))
         assertEquals("google-maps-local-businesses", Layouts.slug("Google Maps: local businesses"))
         assertEquals("panel", Layouts.slug("· ·"))
+    }
+
+    // #2866: before the app used the web's ids it saved title slugs.
+    private val review = listOf("briefing", "review-summary", "review-funnel", "review-trend", "review-sources", "review-review-sources", "review-ops")
+    private val legacy = mapOf("Funnel" to "review-funnel", "Opens per day" to "review-trend", "URL Review" to "review-summary",
+        "Review Sources" to "review-review-sources", "Actions" to "review-ops").mapKeys { Layouts.slug(it.key) }
+
+    @Test fun oldSlugsReadAsTheirPanelsIds() {
+        val saved = Saved(listOf("opens-per-day", "funnel", "briefing"), listOf("actions"))
+        assertEquals(Saved(listOf("review-trend", "review-funnel", "briefing"), listOf("review-ops")), Layouts.alias(saved, review, legacy))
+        val l = Layouts.apply(review, Layouts.alias(saved, review, legacy))
+        assertEquals(listOf("review-ops"), l.hidden)
+        assertEquals(listOf("review-trend", "review-funnel", "briefing"), l.order.filter { it in listOf("review-trend", "review-funnel", "briefing") })
+    }
+
+    @Test fun anIdAPanelHasIsNeverRenamed() {
+        assertEquals(Saved(listOf("review-sources", "review-funnel", "gone-slug")), Layouts.alias(Saved(listOf("review-sources", "funnel", "review-funnel", "gone-slug")), review, legacy))
+        assertNull(Layouts.alias(null, review, legacy))
+        assertEquals(Saved(listOf("funnel")), Layouts.alias(Saved(listOf("funnel")), review, emptyMap()))
+    }
+
+    @Test fun theNextSaveWritesTheNewIds() {
+        val old = Layouts.alias(Saved(listOf("funnel", "opens-per-day"), listOf("actions")), review, legacy)
+        val all = Layouts.apply(review, old).all
+        assertEquals(Saved(all, listOf("review-ops")), Layouts.keep(old, all, listOf("review-ops"), review))
+    }
+
+    @Test fun panelsRecordTheSlugTheyWereSavedUnder() {
+        Arrange.defaults["review"] = review
+        Arrange.seen("review", "review-funnel", "Funnel")
+        Arrange.seen("review", "review-people", "Signed-in people · 4")
+        Arrange.seen("review", "briefing", "Briefing")
+        assertEquals(Saved(listOf("review-funnel", "briefing", "signed-in-people")), Arrange.aliased("review", Saved(listOf("funnel", "briefing", "signed-in-people"))))
+        Arrange.defaults["review"] = review + "review-people"
+        assertEquals(Saved(listOf("review-people")), Arrange.aliased("review", Saved(listOf("signed-in-people"))))
+        assertEquals(Saved(listOf("funnel")), Arrange.aliased("hub", Saved(listOf("funnel"))))
+        assertEquals("Funnel", Arrange.title("review", "review-funnel"))
     }
 
     @Test fun noLayoutIsTheDefault() {

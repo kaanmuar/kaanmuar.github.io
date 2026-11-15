@@ -63,7 +63,7 @@ fun ProcessesPanel(p: JsonObject?, modifier: Modifier = Modifier, compact: Boole
     LaunchedEffect(live, poll) { while (live && poll != null) { delay(60_000); poll() } }
     var all by remember { mutableStateOf(false) }
     val summary = Processes.summary(p)
-    Panel("Processes", modifier, key = if (compact) "Processes now" else "Processes", trailing = {
+    Panel("Processes", modifier, key = if (compact) "Processes now" else "Processes", id = if (compact) "overview-processes" else "systems-processes", trailing = {
         if (summary != null) Text(summary, fontFamily = Mono, fontSize = 12.sp, color = if (Processes.needsYou(p) > 0) J.amber else J.cyan, maxLines = 1)
     }) {
         if (p == null) { Muted("Waiting for the first processes from Jarvis…"); return@Panel }

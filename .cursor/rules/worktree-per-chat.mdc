@@ -6,7 +6,7 @@ alwaysApply: true
 # One worktree per chat
 Several chats work in this repo at once. A branch switch or commit in the shared checkout lands on another chat's ticket (#585, #624, #655).
 
-- Before the first edit for a ticket, run `scripts/ticket-worktree.sh <branch>` (for example `fix/731-review-lang`). Do every edit, test, commit and push in the path it prints, under `.worktrees/`.
+- Before the first edit for a ticket, run `scripts/ticket-worktree.sh <branch>` (for example `fix/731-review-lang`). Do every edit, test, commit and push in the path it prints, under `.worktrees/`. If it warns that an open PR or another worktree already names the ticket or touches its files, read that work before the first edit (#2969).
 - The worktree is locked to your chat (#2244). If the script, a commit or a push says another live chat holds it, leave it and tell Carlos; `--take` only when he says so. If pre-flight says a chat took yours over, stop working there.
 - In the main checkout, only read. Never `git switch`, `checkout`, `stash`, `reset`, `commit` or `pull` there: its branch and uncommitted files may belong to another chat.
 - Before every commit, check that `git branch --show-current` is the ticket's branch.

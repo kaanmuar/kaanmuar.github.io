@@ -80,6 +80,8 @@ data class UiState(
     val logCursor: String = "",
     val logError: String? = null,
     val ghRows: Map<String, GhResult> = emptyMap(),
+    /** GitHub > Jarvis's worker (#2958): the worker op's month spend and last tasks. */
+    val worker: JsonObject? = null,
 )
 
 class JarvisViewModel(app: Application) : AndroidViewModel(app) {
@@ -104,6 +106,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { handsFree.on.collect { on -> _state.update { it.copy(handsFree = on) } } }
         viewModelScope.launch { handsFree.turns.collect { c -> _state.update { it.copy(chat = answered(it.chat, c)) } } }
         viewModelScope.launch { speaker.speaking.collect { t -> _state.update { it.copy(speaking = t) } } }
+        viewModelScope.launch { api.snapshots.collect { (days, saved) -> if (fixture == null && _state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at) } } }
         // A processes push (#2548) lands on the screen in place, without a refresh.
         viewModelScope.launch { Processes.pushed.collect { out -> out.obj("processes")?.let { p -> _state.update { s -> s.copy(snapshot = s.snapshot?.let { Processes.patch(it, p, out.obj("version")) }) } } } }
     }
@@ -196,7 +199,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val days = _state.value.days
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
-            runCatching { api.fetch("snapshot", days) }
+            runCatching { api.snapshot(days) }
                 .onSuccess { saved ->
                     if (_state.value.days == days) _state.update { it.copy(snapshot = saved.json, savedAt = saved.at, loading = false) }
                     Home.redraw(jarvis)
@@ -424,6 +427,18 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
 
     fun toastShown() = _state.update { it.copy(toast = null) }
     fun say(text: String) = _state.update { it.copy(toast = text) }
+
+    /** Jarvis's worker (#2958): its AI spend this month against the cap and its last tasks; a fixture's "worker" stands in. */
+    fun loadWorker() {
+        if (fixture != null) { _state.update { it.copy(worker = _state.value.snapshot?.get("worker") as? JsonObject) }; return }
+        if (!auth.signedIn || "worker" in _state.value.running) return
+        _state.update { it.copy(running = it.running + "worker") }
+        viewModelScope.launch {
+            runCatching { api.call("worker", _state.value.days) }
+                .onSuccess { out -> _state.update { it.copy(running = it.running - "worker", worker = out) } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - "worker", worker = JsonObject(mapOf("error" to JsonPrimitive(e.message ?: "The worker did not load.")))) } }
+        }
+    }
 
     /** Owner notices waiting for Send or Drop (#1420). */
     fun loadNotices() {

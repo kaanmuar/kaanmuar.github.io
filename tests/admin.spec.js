@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const { AdminPage } = require('./AdminPage.js');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'kaanmuar@gmail.com';

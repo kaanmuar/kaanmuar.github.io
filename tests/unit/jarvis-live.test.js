@@ -196,13 +196,20 @@ test("the jarvis function pushes after the writes that drop a section and on the
   assert.match(src, /jarvisLivePush\("jarvisWatch"\)/);
 });
 
-test("the web page fetches on a section push only when it lacks a version or shows another range", () => {
+test("on a section push the web page fetches only the versions it lacks, or on another range the sections named", () => {
   const held = { goals: { v: "g1" }, processes: { v: "p1" } };
-  assert.equal(core.sectionsStale({ days: "1", versions: JSON.stringify({ goals: "g1", processes: "p1" }) }, held, "1"), false);
-  assert.equal(core.sectionsStale({ days: "1", versions: JSON.stringify({ goals: "g1", processes: "p2" }) }, held, "1"), true);
-  assert.equal(core.sectionsStale({ days: "1", versions: JSON.stringify({ goals: "g1" }) }, held, "30"), true);
-  assert.equal(core.sectionsStale({ days: "1", versions: "{" }, held, "1"), true);
-  assert.equal(core.sectionsStale({ days: "1", versions: JSON.stringify({ goals: "g1" }) }, null, "1"), true);
+  const msg = (versions, sections = "processes") => ({ days: "1", sections, versions: typeof versions === "string" ? versions : JSON.stringify(versions) });
+  assert.deepEqual(core.sectionsToFetch(msg({ goals: "g1", processes: "p1" }), held, "1"), []);
+  assert.deepEqual(core.sectionsToFetch(msg({ goals: "g1", processes: "p2" }), held, "1"), ["processes"]);
+  assert.deepEqual(core.sectionsToFetch(msg({ goals: "g1" }, "goals,approvals"), held, "30"), ["goals", "approvals"]);
+  assert.deepEqual(core.sectionsToFetch(msg("{"), held, "1"), ["processes"]);
+  assert.deepEqual(core.sectionsToFetch(msg({ goals: "g1" }, "goals"), null, "1"), ["goals"]);
+});
+
+test("a kept snapshot sends its versions as since, or nothing when it has none", () => {
+  assert.deepEqual(core.sectionSince({ goals: { v: "g1", at: "x" }, mail: { at: "x" } }), { goals: "g1" });
+  assert.equal(core.sectionSince(null), null);
+  assert.equal(core.sectionSince({}), null);
 });
 
 test("the service worker hands a section push to the open admin tabs and shows no notification", () => {

@@ -124,7 +124,7 @@ fun ConsoleScreen(s: UiState, vm: JarvisViewModel) {
     val tall = (LocalConfiguration.current.screenHeightDp * 0.62f).coerceIn(320f, 900f)
     LaunchedEffect(shown.size, paused) { if (!paused && shown.isNotEmpty()) list.scrollToItem(shown.lastIndex) }
 
-    Panel("Console", Modifier.layoutId(WIDE), trailing = {
+    Panel("Console", Modifier.layoutId(WIDE), id = "console-log", trailing = {
         Text(if (paused) "paused" + (if (waiting > 0) " · $waiting new" else "") else "live · 5 s", fontFamily = Mono, fontSize = 11.sp, color = if (paused) J.amber else J.green)
     }) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {

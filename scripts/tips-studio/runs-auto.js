@@ -56,7 +56,10 @@ const TIPS = RUNS.map((run) => {
       overall: run.overall,
       areas: AREAS.map(([key, label]) => [label, run.areas[key]]),
       note: run.host + " · " + run.pages + (run.pages === 1 ? " page analyzed · " : " pages analyzed · ") + analyzed
-    }
+    },
+    // Four-slide LinkedIn PDF + Instagram carousel from the same audit (#3476).
+    fixLines: run.fixLines || [],
+    carousel: run.kind === "rivals" ? false : true
   });
 });
 

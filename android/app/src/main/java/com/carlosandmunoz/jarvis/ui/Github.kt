@@ -31,6 +31,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -94,6 +95,44 @@ object Github {
         val rows = (count + fit - 1) / fit
         val per = (count + rows - 1) / rows
         return per to ((contentDp - (per - 1) * RING_GAP_DP) / per).coerceIn(RING_MIN_DP, RING_MAX_DP)
+    }
+
+    /** Jarvis's worker (#2958): the month's AI spend from the worker op, as the web meter shows it. */
+    data class Spend(val month: String, val usd: Double, val cap: Double, val warn: Double, val left: Double, val level: String, val runs: Int, val input: Long, val output: Long) {
+        val fraction: Float get() = if (cap > 0) (usd / cap).coerceIn(0.0, 1.0).toFloat() else 0f
+        val warnAt: Float get() = if (cap > 0) (warn / cap).coerceIn(0.0, 1.0).toFloat() else 0f
+    }
+
+    fun spend(worker: JsonObject?): Spend? {
+        val s = worker.obj("spend") ?: return null
+        val usd = s.num("usd") ?: return null
+        val cap = s.num("cap") ?: 40.0
+        val warn = s.num("warn") ?: 20.0
+        return Spend(s.str("month").orEmpty(), usd, cap, warn, s.num("left") ?: (cap - usd).coerceAtLeast(0.0),
+            s.str("level") ?: if (usd >= cap) "over" else if (usd >= warn) "warn" else "ok", s.num("runs")?.toInt() ?: 0, s.num("input")?.toLong() ?: 0, s.num("output")?.toLong() ?: 0)
+    }
+
+    fun usd(v: Double) = "$" + String.format(java.util.Locale.US, "%.2f", v)
+
+    /** The level J.level colours: green under the warning, amber past it, pink at the cap. */
+    fun spendTone(sp: Spend) = when (sp.level) { "over" -> "alert"; "warn" -> "warn"; else -> "good" }
+
+    fun spendLine(sp: Spend) = when (sp.level) {
+        "over" -> "The worker is stopped until next month. Fixes go to a Cursor agent on tap."
+        "warn" -> "Past the ${usd(sp.warn)} warning; the worker stops at ${usd(sp.cap)}."
+        else -> "${usd(sp.left)} left before the worker stops at ${usd(sp.cap)}."
+    }
+
+    /** A task row's model: Flash or Pro, and whether Pro took over from a failed Flash run. */
+    fun workerModel(t: JsonObject) = (if (t.str("tier") == "flash") "Flash" else "Pro") + (if (t.str("escalatedFrom") != null) " after Flash" else "")
+
+    /** A task row's state; a run that stopped on Gemini's request quota reads apart from a code failure (#3064). */
+    fun workerState(t: JsonObject) = (if (t.str("reason") == "quota") "Gemini quota" else if (t.str("state") == "nochange") "no change" else t.str("state") ?: "—") +
+        (if (t.str("escalatedTo") != null) " → Pro" else "")
+
+    fun workerLevel(state: String?, reason: String? = null) = when {
+        reason == "quota" -> "warn"
+        else -> when (state) { "done" -> "good"; "failed" -> "alert"; "queued", "running" -> "warn"; else -> null }
     }
 
     fun grade(v: Double?): String = when { v == null -> "—"; v >= 90 -> "A"; v >= 80 -> "B"; v >= 70 -> "C"; v >= 60 -> "D"; else -> "F" }
@@ -388,6 +427,15 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     fun ghAct(action: String, key: String, target: JsonElement, ask: String, extra: Map<String, JsonElement> = emptyMap()) = ask(ask) {
         vm.market("gh:$action:$key", "github-act", mapOf("action" to JsonPrimitive(action), "target" to target) + extra) { out -> out.str("message") ?: ((ACTION_LABELS[action] ?: action) + ": done.") }
     }
+    // The cards on screen, as the web sends them: without them the server reads its own, possibly older, drift.
+    fun syncBoard() {
+        val items = gh.obj("board").objs("drift").mapNotNull { d ->
+            val n = d.num("number")?.toInt() ?: return@mapNotNull null
+            val should = d.str("should") ?: return@mapNotNull null
+            JsonObject(mapOf("number" to JsonPrimitive(n), "should" to JsonPrimitive(should)))
+        }
+        ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null), if (items.isEmpty()) emptyMap() else mapOf("items" to JsonArray(items)))
+    }
     val uri = LocalUriHandler.current
     fun open(url: String?) { url?.let { runCatching { uri.openUri(it) } } }
     fun busy(key: String) = s.ghRows[key]?.state.let { it == "running" || it == "queued" }
@@ -412,17 +460,17 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     // Human steps first: permissions, installs, the uploader.
     val needs = gh?.get("needs").strings().filter { it.isNotBlank() }
-    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you", span) {
+    if (raw == null || gh == null || needs.isNotEmpty()) Panel("Needs you", span, id = "github-needs") {
         if (gh == null) Muted(raw?.str("error") ?: "Pull down to read GitHub.")
         needs.forEach { Text("• $it", color = J.amber, fontSize = 13.sp) }
         gh.obj("access").objs("missing").take(5).forEach { KeyRow(it.str("repo").orEmpty(), it.str("why").orEmpty(), J.amber) }
     }
 
     val brief = Github.briefing(snap)
-    if (brief.isNotEmpty()) Panel("Briefing") { brief.forEach { b -> BriefRow(b) { sheet = b } } }
+    if (brief.isNotEmpty()) Panel("Briefing", id = "briefing") { brief.forEach { b -> BriefRow(b) { sheet = b } } }
     sheet?.let { BriefSheet(it, s, vm, {}) { sheet = null } }
     val props = Github.proposals(snap)
-    if (props.isNotEmpty()) Panel("Proposals", key = "GitHub proposals") {
+    if (props.isNotEmpty()) Panel("Proposals", key = "GitHub proposals", id = "github-proposals") {
         props.forEach { p ->
             StatusRow(p.str("level"), p.str("title").orEmpty(), p.str("why"))
             ProposalActions(p, vm, { confirm = it }, {}) { status ->
@@ -430,6 +478,8 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
+    LaunchedEffect(Unit) { if (s.worker == null) vm.loadWorker() }
+    WorkerPanel(s, vm, span, ::ask, ::open)
     if (gh == null) { ConfirmAction(confirm) { confirm = null }; return }
 
     val score = gh.obj("score")
@@ -442,7 +492,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val dora = gh.obj("dora")
     val streaks = gh.obj("streaks")
 
-    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: ""), span) {
+    Panel("GitHub health" + (score.obj("overall").str("grade")?.let { " · $it" } ?: ""), span, id = "github-health") {
         val rings = listOf("overall" to score.obj("overall")) + listOf("ci", "prs", "board", "issues", "branches", "deploys", "security", "budget", "agents").mapNotNull { k -> areas.obj(k)?.let { k to it } }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val (per, size) = Github.ringGrid(maxWidth.value.toInt(), rings.size)
@@ -463,7 +513,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     // Every column across when it fits; on a cover screen a row that scrolls and stops on a column. A tap lists the column's cards.
     val stages = Github.stages(board, gh.objs("flow"))
     var flowOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    if (stages.isNotEmpty()) Panel("Process map", span) {
+    if (stages.isNotEmpty()) Panel("Process map", span, id = "github-flow") {
         val tap = { name: String -> flowOpen = Github.toggle(flowOpen, name) }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             if (Github.mapFits(maxWidth.value.toInt(), stages.size)) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -487,7 +537,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Tap a column to list its cards. Count and median age per column; arrows are the moves in the range." + if (stages.any { it.over }) " WIP is over the limit." else "")
     }
 
-    Panel("GitHub") {
+    Panel("GitHub", id = "github-summary") {
         KpiPairs(listOf(
             KpiData("CI pass rate", pct(ci.num("passRate")), alert = (Github.rate(ci.num("passRate")) ?: 100.0) < 80),
             KpiData("Open PRs", fmt(prs.num("open"))),
@@ -504,14 +554,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             if (badges.isNotEmpty()) " · " + badges.joinToString(" · ") else "")
     }
 
-    if (dora != null) Panel("DORA" + (dora.str("level")?.let { " · $it" } ?: "")) {
+    if (dora != null) Panel("DORA" + (dora.str("level")?.let { " · $it" } ?: ""), id = "github-dora") {
         DoraRow("Deploys per day", fmt(dora.obj("deployFreq").num("perDay"), 2), dora.obj("deployFreq").str("level"))
         DoraRow("Lead time", fmt(dora.obj("leadTimeH").num("median")) + " h", dora.obj("leadTimeH").str("level"))
         DoraRow("Change fail rate", pct(dora.obj("changeFail").num("pct")), dora.obj("changeFail").str("level"))
         DoraRow("Time to restore", fmt(dora.obj("mttrH").num("median")) + " h", dora.obj("mttrH").str("level"))
     }
 
-    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: "")) {
+    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci") {
         Github.down(ci)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Runs", fmt(ci.num("runs"))), KpiData("Failed", fmt(ci.num("failed")), alert = (ci.num("failed") ?: 0.0) > 0),
@@ -523,9 +573,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         BarChart(daily.map { it.num("runs") ?: 0.0 }, days, title = "Workflow runs per day", yLabel = "runs per day", unit = "runs", legend = "Runs")
         if (daily.size >= 2) Sparkline(daily.map { it.num("failed") ?: 0.0 }, J.pink, title = "Failed runs per day", unit = "runs", labels = days, legend = "Failed")
     }
-    TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10) { "%.0f%%".format(it) }
+    TopList("Workflows by pass rate", ci.objs("workflows").sortedBy { Github.rate(it.num("passRate")) ?: 0.0 }.map { (it.str("name").orEmpty() + if (it.bool("mainRed") == true) " · main red" else "") to (Github.rate(it.num("passRate")) ?: 0.0) }, 10, id = "github-workflows") { "%.0f%%".format(it) }
     val flaky = ci.obj("flaky").objs("workflows")
-    if (flaky.isNotEmpty()) Panel("Flaky workflows · ${flaky.size}") {
+    if (flaky.isNotEmpty()) Panel("Flaky workflows · ${flaky.size}", id = "github-flaky") {
         flaky.take(8).forEach { w ->
             val name = w.str("name").orEmpty()
             val n = w.obj("newest")
@@ -557,7 +607,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val failing = ci.objs("failing")
     val idOf = { r: JsonObject -> r.num("id")?.toLong()?.toString() ?: r.str("id").orEmpty() }
     val failRows = failing + pinned.filterKeys { k -> failing.none { idOf(it) == k } }.values
-    if (failRows.isNotEmpty()) Panel("Failing runs · ${failing.size}") {
+    if (failRows.isNotEmpty()) Panel("Failing runs · ${failing.size}", id = "github-failing") {
         failRows.take(12).forEach { r ->
             val id = idOf(r)
             val name = r.str("name").orEmpty()
@@ -578,7 +628,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Fix runs what the diagnosis suggests: a re-run or an update with main. A re-run shows its state here until it finishes; an agent always asks first.")
     }
 
-    Panel("Pull requests" + (prs.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
+    Panel("Pull requests" + (prs.num("open")?.let { " · ${fmt(it)} open" } ?: ""), id = "github-prs") {
         Github.down(prs)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Merge-ready", fmt(prs.num("mergeReady"))), KpiData("Behind main", fmt(prs.num("behind"))),
@@ -604,9 +654,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             Sparkline(daily.map { it.num("merged") ?: 0.0 }, J.green, title = "PRs merged per day", unit = "PRs", labels = days, legend = "Merged")
         }
     }
-    TopList("PR sizes", prs.pairs("sizes"), yLabel = "Size (lines: XS <10, S <50, M <250, L <1000)", unit = "open PRs")
+    TopList("PR sizes", prs.pairs("sizes"), yLabel = "Size (lines: XS <10, S <50, M <250, L <1000)", unit = "open PRs", id = "github-pr-sizes")
 
-    Panel("Board" + (board.num("cycleMedD")?.let { " · cycle ${fmt(it)} d" } ?: "")) {
+    Panel("Board" + (board.num("cycleMedD")?.let { " · cycle ${fmt(it)} d" } ?: ""), id = "github-board") {
         Github.down(board)?.let { Muted(it); return@Panel }
         val cols = board.objs("columns")
         val top = (cols.maxOfOrNull { it.num("count") ?: 0.0 } ?: 0.0).coerceAtLeast(1.0)
@@ -623,11 +673,11 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             Text("Drift · ${drift.size}", color = J.amber, fontSize = 13.sp)
             drift.take(8).forEach { d -> StatusRow("warn", "#${d.num("number")?.toInt()} ${d.str("title").orEmpty()}", "${d.str("column")} → ${d.str("should")} · ${d.str("why").orEmpty()}", d.str("url")) }
         }
-        ActionButton("Sync the board", running("gh-board-sync", "all")) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
+        ActionButton("Sync the board", running("gh-board-sync", "all")) { syncBoard() }
     }
 
     var issOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    Panel("Issues" + (issues.num("open")?.let { " · ${fmt(it)} open" } ?: "")) {
+    Panel("Issues" + (issues.num("open")?.let { " · ${fmt(it)} open" } ?: ""), id = "github-issues") {
         Github.down(issues)?.let { Muted(it); return@Panel }
         val sub = issues.obj("subIssues")
         val oldest = issues.objs("oldest")
@@ -645,14 +695,14 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         Muted("Tap a number to list its issues.")
     }
     var areaOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    TopList("Open bugs by area", issues.pairs("bugsByArea"), yLabel = "Area", unit = "open bugs", legend = "Open bugs", open = areaOpen, onRow = { areaOpen = Github.toggle(areaOpen, it) }, footer = {
+    TopList("Open bugs by area", issues.pairs("bugsByArea"), yLabel = "Area", unit = "open bugs", legend = "Open bugs", open = areaOpen, onRow = { areaOpen = Github.toggle(areaOpen, it) }, id = "github-bug-areas", footer = {
         areaOpen?.let { k -> DrillBody(Github.areaDrills(issues).firstOrNull { it.key == k }) { areaOpen = null } }
         Muted("Tap an area to list its bugs.")
     })
-    TopList("Issues by kind", issues.pairs("byKind"), yLabel = "Kind", unit = "open issues")
+    TopList("Issues by kind", issues.pairs("byKind"), yLabel = "Kind", unit = "open issues", id = "github-kinds")
 
     var brOpen by rememberSaveable { mutableStateOf<String?>(null) }
-    Panel("Branches" + (branches.num("total")?.let { " · ${fmt(it)}" } ?: "")) {
+    Panel("Branches" + (branches.num("total")?.let { " · ${fmt(it)}" } ?: ""), id = "github-branches") {
         Github.down(branches)?.let { Muted(it); return@Panel }
         val ahead = branches.objs("ahead")
         KpiPairs(listOf(KpiData("Branches", fmt(branches.num("total")), drill = "all"), KpiData("Stale", fmt(branches.num("stale")), alert = (branches.num("stale") ?: 0.0) > 0, drill = "stale"),
@@ -694,7 +744,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val deploys = gh.obj("deploys")
-    Panel("Deploys") {
+    Panel("Deploys", id = "github-deploys") {
         Github.down(deploys)?.let { Muted(it); return@Panel }
         deploys.objs("last").take(6).forEach { d -> StatusRow(if (d.str("conclusion") == "success") "good" else "alert", d.str("name").orEmpty(), listOfNotNull(d.str("conclusion"), ago(d.str("at")), d.str("sha")?.take(7)).joinToString(" · "), d.str("url")) }
         val daily = deploys.objs("daily")
@@ -706,7 +756,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val sec = gh.obj("security")
     val secScore = areas.obj("security")
     var dismiss by remember { mutableStateOf<Pair<String, JsonObject>?>(null) }
-    Panel("Security", span) {
+    Panel("Security", span, id = "github-security") {
         val rows = Github.severityRows(sec)
         val open = Github.ALERT_KINDS.sumOf { sec.obj(it.first)?.takeIf { x -> x.bool("ok") == true }.num("open") ?: 0.0 }
         KpiPairs(listOf(KpiData("Open alerts", fmt(open), alert = open > 0), KpiData("Critical", "${rows.sumOf { it.second[0] }}", alert = rows.any { it.second[0] > 0 }), KpiData("High", "${rows.sumOf { it.second[1] }}"),
@@ -743,7 +793,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     Github.ALERT_KINDS.forEach { (kind, label) ->
         val x = sec.obj(kind)?.takeIf { it.bool("ok") == true } ?: return@forEach
         val items = x.objs("items")
-        Panel("$label · ${fmt(x.num("open"))}") {
+        Panel("$label · ${fmt(x.num("open"))}", id = when (kind) { "dependabot" -> "github-dependabot"; "codeScanning" -> "github-code-scanning"; else -> "github-secrets" }) {
             KpiPairs(listOf(KpiData("Open", fmt(x.num("open")), alert = (x.num("open") ?: 0.0) > 0)) + Github.SEVERITIES.map { sv ->
                 val n = x.obj("bySeverity").num(sv) ?: 0.0
                 KpiData(sv.replaceFirstChar { it.uppercase() }, fmt(n), alert = sv in setOf("critical", "high") && n > 0)
@@ -790,7 +840,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val budget = gh.obj("budget")
-    Panel("API budget") {
+    Panel("API budget", id = "github-budget") {
         val gql = budget.obj("kaanmuar").obj("graphql")
         Row(verticalAlignment = Alignment.CenterVertically) {
             Ring(Github.left(gql), "GRAPHQL LEFT")
@@ -808,7 +858,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val agents = gh.obj("agents")
-    Panel("Agent work") {
+    Panel("Agent work", id = "github-agents") {
         val cost = agents.obj("cost")
         KpiPairs(listOf(KpiData("Hours", fmt(agents.objs("tickets").sumOf { it.num("hours") ?: 0.0 })), KpiData("On-demand", "$" + fmt(cost.num("onDemandUsd"), 2), cost.num("limitUsd")?.let { "of $" + fmt(it, 0) },
             alert = (cost.num("onDemandUsd") ?: 0.0) > (cost.num("limitUsd") ?: Double.MAX_VALUE) * 0.8)))
@@ -825,7 +875,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val android = gh.obj("android")
-    Panel("Android builds") {
+    Panel("Android builds", id = "github-android") {
         Github.down(android)?.let { Muted(it); return@Panel }
         KeyRow("Last build", listOfNotNull(android.obj("last").str("conclusion"), ago(android.obj("last").str("at"))).joinToString(" · ").ifEmpty { "—" }, if (android.obj("last").str("conclusion") == "success") J.green else J.pink, android.obj("last").str("url"))
         KeyRow("Builds · failed", fmt(android.num("builds")) + " · " + fmt(android.num("failed")))
@@ -833,7 +883,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val repos = gh.objs("repos")
-    if (repos.isNotEmpty()) Panel("Repos · ${repos.size}") {
+    if (repos.isNotEmpty()) Panel("Repos · ${repos.size}", id = "github-repos") {
         Muted("Showing " + Github.shownRepos(gh).joinToString(", ") + ". Edit the list in Settings › GitHub repos.")
         repos.forEach { r ->
             val red = r.obj("ci").str("conclusion").let { it != null && it != "success" }
@@ -843,7 +893,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     }
 
     val history = gh.objs("history")
-    if (history.size >= 2) Panel("Trend · ${history.size} days") {
+    if (history.size >= 2) Panel("Trend · ${history.size} days", id = "github-trend") {
         val days = history.map { it.str("day").orEmpty() }
         Sparkline(history.map { it.num("score") ?: 0.0 }, J.cyan, title = "Health score", unit = "of 100", labels = days, legend = "Score")
         Sparkline(history.map { Github.rate(it.num("passRate")) ?: 0.0 }, J.green, title = "CI pass rate", unit = "%", labels = days, legend = "Pass rate")
@@ -854,7 +904,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
 
     val ai = gh.obj("ai")
     val diags = ai.objs("diagnoses")
-    if (diags.isNotEmpty() || ai.obj("retro") != null) Panel("Jarvis diagnoses") {
+    if (diags.isNotEmpty() || ai.obj("retro") != null) Panel("Jarvis diagnoses", id = "github-ai") {
         diags.take(8).forEach { d ->
             val id = d.num("run")?.toLong()?.toString() ?: return@forEach
             val name = d.str("workflow").orEmpty()
@@ -869,10 +919,10 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         }
     }
 
-    Deck(s, vm, span, { agent = it }, ::ask) { ghAct("gh-board-sync", "all", JsonPrimitive("all"), askFor("gh-board-sync", null, null)) }
+    Deck(s, vm, span, { agent = it }, ::ask) { syncBoard() }
     Needs(raw)
     ConfirmAction(confirm) { confirm = null }
-    AgentDialog(agent, vm) { agent = null }
+    AgentDialog(agent, vm, Github.spend(s.worker)) { agent = null }
     DismissDialog(dismiss, vm) { dismiss = null }
 }
 
@@ -1015,35 +1065,100 @@ private fun DoraRow(label: String, value: String, level: String?) {
     }
 }
 
-/** Every agent launch asks, with the drafted prompt shown and editable. */
+/** Every agent launch asks, with the drafted prompt shown and editable: Jarvis's own worker (#2957), or a Cursor agent. */
+/** Jarvis's worker (#2958): the month's AI spend against its cap with the warning tick, and the last tasks; a stuck one goes to Cursor on tap. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) {
+private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask: (String, () -> Unit) -> Unit, open: (String?) -> Unit) {
+    val w = s.worker
+    val sp = Github.spend(w)
+    Panel(if (sp == null) "Jarvis's worker" else "Jarvis's worker · ${Github.usd(sp.usd)} of ${Github.usd(sp.cap)}", modifier, id = "github-worker") {
+        if (sp == null) { Muted(if (w == null || "worker" in s.running) "Reading the worker's spend…" else w.str("error") ?: "The worker op sent no spend."); return@Panel }
+        val tone = J.level(Github.spendTone(sp))
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Box(Modifier.padding(top = 3.dp).fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)).background(J.dim.copy(alpha = 0.22f))) {
+                Box(Modifier.fillMaxWidth(sp.fraction).fillMaxHeight().clip(RoundedCornerShape(6.dp)).background(tone))
+            }
+            Box(Modifier.padding(start = maxWidth * sp.warnAt - 1.dp).width(2.dp).height(18.dp).background(J.text))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("$0", "warn ${Github.usd(sp.warn)}", "cap ${Github.usd(sp.cap)}").forEach { Text(it.uppercase(), fontFamily = Mono, fontSize = 9.sp, letterSpacing = 1.sp, color = J.muted) }
+        }
+        Text(Github.spendLine(sp), fontSize = 13.sp, color = if (sp.level == "ok") J.muted else J.amber)
+        KeyRow("Spent · ${sp.month}", Github.usd(sp.usd), if (sp.level == "ok") J.text else tone)
+        KeyRow("Runs", sp.runs.toString())
+        KeyRow("Tokens in · out", "${fmt(sp.input.toDouble())} · ${fmt(sp.output.toDouble())}")
+        Caption("Last tasks")
+        val tasks = w.objs("tasks")
+        if (tasks.isEmpty()) Muted("No worker runs yet.")
+        tasks.take(10).forEach { t ->
+            val id = t.str("id").orEmpty()
+            val pr = t.num("pr")?.toInt()
+            StatusRow(Github.workerLevel(t.str("state"), t.str("reason")), t.str("title").orEmpty() + (pr?.let { " · #$it" } ?: ""),
+                listOfNotNull(Github.workerModel(t), Github.workerState(t), Github.usd(t.num("usd") ?: 0.0), ago(t.str("at")), t.str("error")?.takeIf { it.isNotBlank() }).joinToString(" · "), t.str("url"))
+            t.obj("cursor")?.let { c ->
+                Buttons {
+                    ActionButton("Hand to Cursor", s.ghRows["worker:$id"]?.state == "running") {
+                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it uses Cursor credit") {
+                            vm.ghRow("worker:$id", "github-agent", buildMap {
+                                put("engine", JsonPrimitive("cursor"))
+                                c.str("prompt")?.let { put("prompt", JsonPrimitive(it)) }
+                                c.str("branch")?.let { put("branch", JsonPrimitive(it)) }
+                                c.num("pr")?.let { put("pr", JsonPrimitive(it.toInt())) }
+                                c.str("name")?.let { put("name", JsonPrimitive(it)) }
+                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Cursor agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
+                        }
+                    }
+                }
+                RowResult(s.ghRows["worker:$id"])
+            }
+        }
+        Muted("Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. Prices are rounded up, so the meter overstates.")
+    }
+}
+
+@Composable
+private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, close: () -> Unit) {
     if (d == null) return
     var text by remember(d) { mutableStateOf(d.prompt) }
+    val ownRepo = d.repo == null || d.repo == "kaanmuar/kaanmuar.github.io"
+    val capped = sp?.level == "over"
+    val launch = { engine: String ->
+        val p = text.trim()
+        if (p.isNotEmpty()) {
+            vm.ghRow(d.key, "github-agent", buildMap {
+                put("prompt", JsonPrimitive(p))
+                put("engine", JsonPrimitive(engine))
+                d.branch?.let { put("branch", JsonPrimitive(it)) }
+                d.pr?.let { put("pr", JsonPrimitive(it)) }
+                d.repo?.let { put("repo", JsonPrimitive(it)) }
+                d.name?.let { put("name", JsonPrimitive(it)) }
+            }, "Launching the agent…") { out ->
+                if (engine == "worker") vm.loadWorker()
+                GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the agent")
+            }
+            close()
+        }
+    }
     AlertDialog(
         onDismissRequest = close,
-        title = { Text("Launch a Cursor fix agent?") },
+        title = { Text("Launch a fix agent?") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Muted(listOfNotNull(d.title, d.branch?.let { "branch $it" }, d.pr?.let { "PR #$it" }).joinToString(" · "))
                 OutlinedTextField(text, { text = it }, label = { Text("Prompt") }, minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth())
-                Muted("The agent works in the cloud and opens a PR; nothing merges without you.")
+                Muted(when {
+                    !ownRepo -> "A Cursor agent works in the cloud and opens a PR."
+                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor uses Cursor credit."
+                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor uses Cursor credit."
+                })
             }
         },
         confirmButton = {
-            TextButton({
-                val p = text.trim()
-                if (p.isNotEmpty()) {
-                    vm.ghRow(d.key, "github-agent", buildMap {
-                        put("prompt", JsonPrimitive(p))
-                        d.branch?.let { put("branch", JsonPrimitive(it)) }
-                        d.pr?.let { put("pr", JsonPrimitive(it)) }
-                        d.repo?.let { put("repo", JsonPrimitive(it)) }
-                        d.name?.let { put("name", JsonPrimitive(it)) }
-                    }, "Launching the agent…") { out -> GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
-                    close()
-                }
-            }) { Text("Launch", color = J.cyan) }
+            Row {
+                TextButton({ launch("cursor") }) { Text("Cursor", color = if (capped) J.cyan else J.muted) }
+                if (ownRepo && !capped) TextButton({ launch("worker") }) { Text("Jarvis worker", color = J.cyan) }
+            }
         },
         dismissButton = { TextButton(close) { Text("Cancel", color = J.muted) } }
     )
@@ -1052,10 +1167,10 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, close: () -> Unit) 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (AgentDraft) -> Unit, ask: (String, () -> Unit) -> Unit, sync: () -> Unit) {
-    Panel("Command deck", modifier) {
+    Panel("Command deck", modifier, id = "github-deck") {
         var task by rememberSaveable { mutableStateOf("") }
         var branch by rememberSaveable { mutableStateOf("") }
-        OutlinedTextField(task, { task = it }, label = { Text("Task for a Cursor agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(task, { task = it }, label = { Text("Task for an agent") }, minLines = 2, modifier = Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(branch, { branch = it.trim() }, label = { Text("Branch (optional)") }, singleLine = true, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(8.dp))

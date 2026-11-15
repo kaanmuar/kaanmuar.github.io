@@ -22,6 +22,16 @@ test("the sample's cases are ranked by risk, and its top case is a P1 or P2 that
   assert.deepEqual(sample.frameworks, core.FRAMEWORKS);
 });
 
+// The page shows the sample's search icon and screenshots as images, so they are inlined: tests stay off the network (#2955).
+test("each language's sample carries its search icon and screenshots inline", () => {
+  ["", ".es", ".pt", ".de", ".fr", ".it"].forEach((lang) => {
+    const file = "assets/qa-review-sample" + lang + ".json";
+    const report = JSON.parse(fs.readFileSync(path.join(ROOT, file), "utf8")).report;
+    const images = [report.insights.previews.google.icon].concat(Object.values(report.browser.shots || {}));
+    images.forEach((src) => assert.match(src, /^data:image\/(png|jpeg|gif|webp|svg\+xml|x-icon|vnd\.microsoft\.icon);base64,/, file + " inlines " + String(src).slice(0, 80)));
+  });
+});
+
 test("the review page, its languages and the guide name the site the sample reviewed", () => {
   const host = sample.report.host.replace(/^www\./, "");
   ["qa-review.html", "qa-review-de.html", "qa-review-es.html", "qa-review-fr.html", "qa-review-it.html", "qa-review-pt.html"].forEach((page) => {

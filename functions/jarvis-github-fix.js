@@ -47,6 +47,7 @@ const RATE_POINTS = 48;
 const QUEUE_ACTIONS = ["remove-worktree", "prune-branches"];
 const CURSOR_AGENTS = "https://api.cursor.com/v1/agents";
 const NO_CURSOR_KEY = "Add CURSOR_API_KEY to the functions secrets (Cursor Dashboard > API Keys).";
+const NO_CURSOR_CREDIT = "Cursor's team prepaid balance is used up, so no agent can start. Buy credits in the Cursor Dashboard > Billing, then try again.";
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -467,7 +468,7 @@ async function diagnose(ctx, args) {
   const repo = repoOf(a);
   const id = Number(a.run || a.target);
   if (!Number.isInteger(id) || id <= 0) throw new Error("Which run?");
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
   const { run, job, excerpt } = await failedLog(ctx, repo, id);
   if (!job) return { ok: false, message: "Run " + id + " has no failed job to read." };
   const facts = { repo, name: run.name, branch: run.head_branch, event: run.event, attempt: run.run_attempt, sha: run.head_sha };
@@ -517,15 +518,24 @@ async function launchAgent(ctx, args) {
   const prompt = block(String(a.prompt || "").trim(), 20000);
   if (prompt.length < 20) throw new Error("The agent needs a prompt.");
   const url = "https://github.com/" + repo;
-  const pr = Number(String(a.pr || "").replace(/^#/, ""));
-  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(a.branch, 200) || "main" }];
+  // A pull_request run (CodeQL's dynamic one) names refs/pull/<n>/head, which Cursor cannot start from.
+  const pullRef = /^refs\/pull\/(\d+)\/(?:head|merge)$/.exec(String(a.branch || ""));
+  const pr = Number(String(a.pr || "").replace(/^#/, "")) || (pullRef ? Number(pullRef[1]) : 0);
+  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(String(a.branch || "").replace(/^refs\/heads\//, ""), 200) || "main" }];
   const res = await ctx.fetch(CURSOR_AGENTS, {
     method: "POST",
     headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
     body: JSON.stringify({ name: text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : ""), prompt: { text: prompt }, repos, autoCreatePR: true })
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error("Cursor refused the agent (" + res.status + "): " + text(data.message || data.error || "", 200));
+  if (!res.ok) {
+    const e = data.error && typeof data.error === "object" ? data.error : { message: data.message || data.error, code: data.code };
+    if (e.code === "usage_limit_exceeded") {
+      await jarvisLog.log(null, { source: "github", level: "error", ref: "cursor:credit", text: "Cursor refused an agent: the team's prepaid balance is used up." }).catch(() => null);
+      throw new Error(NO_CURSOR_CREDIT);
+    }
+    throw new Error("Cursor refused the agent (" + res.status + "): " + text(e.message || e.code || "no detail", 200));
+  }
   const agent = data.agent || data;
   const id = String(agent.id || "");
   await jarvisLog.log(null, { source: "github", level: "info", ref: "agent:" + id, text: "Started Cursor agent " + id + " on " + repo.split("/").pop() + (pr > 0 ? " PR #" + pr : " " + (text(a.branch, 80) || "main")) + ": " + text(prompt, 160) });
@@ -544,7 +554,7 @@ function isoWeek(t) {
 
 /* args.summary: the source's compact numbers now (jarvis.js githubAsk). */
 async function retro(ctx, args) {
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
   const now = ctx.now || Date.now();
   const days = [];
   for (let i = 7; i >= 1; i -= 1) {
@@ -685,7 +695,7 @@ function actArgs(action, body) {
 }
 
 module.exports = {
-  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
+  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
   quarantine, securityTicket, dismissAlert, dismissLow, runStatus, clearCache, draftFlaky,
   diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf, areaOfPath,
   _reset: () => { statusOptions = null; }

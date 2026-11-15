@@ -49,8 +49,12 @@ const jarvisProcesses = require("./jarvis-processes");
 // A process row for Jarvis's live Processes panel (#2548); a failed report never stops the work it describes.
 const jarvisProcess = (rows) => jarvisProcesses.report(jarvisLiveDeps(), rows).catch((error) => console.error("Jarvis process report failed:", error));
 const jarvisLog = require("./jarvis-log");
+const Gemini = require("./gemini");
 const jarvisLogPoll = require("./jarvis-log-poll");
 jarvisLog.use(getFirestore);
+const linkedRisk = require("./url-review-linked-risk");
+linkedRisk.use(getFirestore, FieldValue);
+require("./url-review-threat-lists").use(getFirestore, FieldValue);
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -1149,7 +1153,7 @@ async function sendReviewPeriodReport(period) {
   const id = "review-" + period + "-" + window.label.replace(/[\s:]/g, "-");
   const startStamp = Timestamp.fromDate(window.start);
   const endStamp = Timestamp.fromDate(window.end);
-  const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns] = await Promise.all([
+  const [opens, allReviews, captures, alerts, pageEvents, failed, priorFailed, reruns, fixes] = await Promise.all([
     loadBound("url_review_opens", "createdAt", startStamp, endStamp),
     loadReviewRows(window.start.toISOString(), window.end.toISOString()),
     loadBound("url_review_captures", "at", window.start.toISOString(), window.end.toISOString()),
@@ -1157,7 +1161,11 @@ async function sendReviewPeriodReport(period) {
     loadEvents(window.start, window.end).then((rows) => rows.filter((row) => row.site === "review")),
     loadSummaries("url_review_failures", reviewFailures.SUMMARY_FIELDS, window.start, window.end),
     loadSummaries("url_review_failures", ["kind", "cause"], earlier.start, window.start),
-    loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end)
+    loadSummaries("url_review_reruns", reviewFailures.RERUN_FIELDS, window.start, window.end),
+    loadBound("url_review_fix_requests", "createdAt", window.start.toISOString(), window.end.toISOString()).catch((error) => {
+      console.error("Fix requests for the review report were not read:", error);
+      return [];
+    })
   ]);
   const reviews = askedFor(allReviews);
   if (period === "quarter" && !opens.length && !reviews.length && !captures.length && !alerts.length && !pageEvents.length) return null;
@@ -1233,7 +1241,9 @@ async function sendReviewPeriodReport(period) {
       rows: reviewMail.reportRows(summary, previous, earlier.phrase, {
         failures: quiet ? [] : failures.rows,
         followUp,
-        sweep: period === "quarter" ? null : allReviews.length - reviews.length
+        sweep: period === "quarter" ? null : allReviews.length - reviews.length,
+        fixes,
+        promises: failed.map((row) => row.promise).filter(Boolean)
       }),
       body: [summary.body, quiet ? "" : failures.body, pageBody].filter(Boolean).join("\n\n")
     });
@@ -1342,20 +1352,23 @@ async function rerunFailure(group) {
   try {
     log("Re-run of a failed review of " + group.url + ". " + group.trigger.label);
     if (group.source === "sweep") {
-      record = (await sweepReview(group.sweep, { log, stopped: () => Date.now() - startedAt > 240000 })).record;
+      record = (await sweepReview(group.sweep, { log, stopped: () => Date.now() - startedAt > 240000, readAs: group.readAs || "" })).record;
     } else {
       const report = await urlReview.reviewTarget(group.url, {
         log,
         stopped: () => Date.now() - startedAt > 240000,
+        readAs: group.readAs || "",
         maxPages: options.pages || undefined,
         maxDepth: options.depth || undefined,
         pageLang: options.pageLang || "",
         section: options.section === true,
         passive: !!(group.intake && group.intake.reasonCode === "compare"),
+        customer: true,
         browse: browseForReview,
         pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
         crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
         webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+        doh: lookalikes.doh,
         places: findPlaces()
       });
       record = urlReview.intakeRecord(Object.assign({}, group.intake, {
@@ -1373,10 +1386,145 @@ async function rerunFailure(group) {
     error = caught;
   }
   const doc = reviewFailures.rerunDoc(group, { record, error, lines, startedAt, endedAt: Date.now() });
+  if (group.promise) doc.promise = group.promise;
   await ref.set(doc);
   const mark = reviewFailures.rerunMark(ref.id, doc);
   await Promise.all(group.failureIds.map((id) => db.collection("url_review_failures").doc(id).update({ rerun: mark })));
+  return Object.assign({ id: ref.id }, doc);
+}
+
+// A finished re-run of a failure whose asker was promised the report goes to them, unless PROMISE_AUTO_SEND is off.
+async function keepPromise(doc) {
+  if (!doc.promise || doc.status !== "held") return doc;
+  const col = getFirestore().collection("url_review_failures");
+  if (reviewPromise.PROMISE_AUTO_SEND) {
+    const out = await releaseHeldRerun(doc.id, true, "promise");
+    if (out) return Object.assign({}, doc, { status: "sent" });
+  }
+  await Promise.all(doc.promise.ids.map((id) => col.doc(id).update({ "promise.state": "held" })));
   return doc;
+}
+
+async function sendPromiseApology(promise) {
+  const stopUrl = await stopLinkFor(promise.email, promise.lang);
+  return sendAskerMail(promise.email, customerMail.promiseClosedMail(promise, { stopUrl }), stopUrl, "url-review-promise");
+}
+
+const PROMISE_FIELDS = ["at", "url", "host", "name", "email", "options", "intake", "promise"];
+const openPromises = () => getFirestore().collection("url_review_failures").where("promise.state", "==", "open").select(...PROMISE_FIELDS).limit(300).get()
+  .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+const pendingPromises = () => getFirestore().collection("url_review_failures").where("promise.state", "in", reviewPromise.PENDING).select(...PROMISE_FIELDS, "rerun").limit(500).get()
+  .then((snap) => snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())));
+
+// Promises past PROMISE_DEADLINE_H without a report: the asker gets an apology, keeps the code, and hears the rescue goes on.
+async function closeExpiredPromises() {
+  const col = getFirestore().collection("url_review_failures");
+  const due = reviewPromise.apologiesDue(await openPromises(), Date.now());
+  let sent = 0;
+  for (const promise of due) {
+    try {
+      if (!(await sendPromiseApology(Object.assign({ stillDays: reviewPromise.PROMISE_GIVE_UP_DAYS }, promise)))) continue;
+      await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("apologized"))));
+      sent += 1;
+    } catch (error) {
+      console.error("Promise apology to " + promise.email + " failed:", error);
+    }
+  }
+  return sent;
+}
+
+// Owed reports a re-run finished since the last tick, by whatever path, sent once each: releaseHeldRerun moves the re-run
+// from held to sent in a transaction, so a second tick or a desk send finds nothing to send.
+async function deliverFinishedPromises() {
+  if (!reviewPromise.PROMISE_AUTO_SEND) return [];
+  const sent = [];
+  for (const due of reviewPromise.finishedDue(await pendingPromises(), Date.now())) {
+    try {
+      const out = await releaseHeldRerun(due.rerunId, true, "promise");
+      if (out && out.status === "sent") sent.push({ id: due.rerunId, status: "sent", host: due.host, reportId: out.reportId });
+    } catch (error) {
+      console.error("Finished promised report " + due.rerunId + " was not sent:", error);
+    }
+  }
+  return sent;
+}
+
+// Promises still without a report PROMISE_GIVE_UP_DAYS after the failure: the asker gets a last note and keeps the code,
+// and the rescue leaves the Mac's queue.
+async function giveUpPromises() {
+  const db = getFirestore();
+  const col = db.collection("url_review_failures");
+  let sent = 0;
+  for (const promise of reviewPromise.giveUpsDue(await pendingPromises(), Date.now())) {
+    try {
+      const stopUrl = await stopLinkFor(promise.email, promise.lang);
+      if (!(await sendAskerMail(promise.email, customerMail.promiseGivenUpMail(promise, { stopUrl }), stopUrl, "url-review-promise"))) continue;
+      await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("given-up"))));
+      const rescues = await db.collection("url_review_rescues").where("key", "==", promise.key).limit(3).get();
+      await Promise.all(rescues.docs.filter((doc) => ["mac-wanted", "trying"].includes(doc.data().status)).map((doc) => doc.ref.update({ status: "given-up", promised: false })));
+      sent += 1;
+    } catch (error) {
+      console.error("Last promise note to " + promise.email + " failed:", error);
+    }
+  }
+  return sent;
+}
+
+// The one step a promised review takes on each try: the rescue ladder of #3080, which hands back the report the Mac held,
+// a new re-run read as Chrome or on the other host name, or a failed stub while the Mac has it.
+async function rescuePromisedRun(group) {
+  return keepPromise(await reviewRescue.rescueGroup(rescueDeps(Date.now() + 300000), group));
+}
+
+// Every 15 minutes: open promises whose next try has come run again (RESCUES_PER_TICK at most), owed reports finished by any
+// path go out (late ones too), the ones past the deadline get the apology, and the ones past PROMISE_GIVE_UP_DAYS the last note.
+async function rescuePromisedReviews() {
+  const col = getFirestore().collection("url_review_failures");
+  const due = reviewPromise.rescuesDue(await openPromises(), Date.now());
+  const started = Date.now();
+  const done = [];
+  for (const group of due) {
+    if (Date.now() - started > 200000) break;
+    const triedAt = new Date().toISOString();
+    await Promise.all(group.failureIds.map((id) => col.doc(id).update({ "promise.tries": group.tries, "promise.triedAt": triedAt })));
+    try {
+      done.push(await rescuePromisedRun(group));
+    } catch (error) {
+      console.error("Promised re-run of " + group.url + " was not saved:", error);
+    }
+  }
+  const finished = await deliverFinishedPromises();
+  const apologies = await closeExpiredPromises();
+  const givenUp = await giveUpPromises();
+  const settledNow = done.filter((doc) => doc.status !== "failed").concat(finished);
+  if (settledNow.length) await pushOwner(jarvisMailPush.rerunMessage(settledNow, REVIEW_FN_URL + "/desk"));
+  return done.length + " promised re-runs (" + done.filter((doc) => doc.status === "sent").length + " sent), " + finished.length + " finished reports sent, " +
+    apologies + " apologies, " + givenUp + " given up";
+}
+
+exports.rescuePromisedReviews = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("rescuePromisedReviews"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1,
+  secrets: SECRETS.rerunReviewFailures
+}, () => track("rescuePromisedReviews", () => rescuePromisedReviews()));
+
+// What the rescue of failed reviews (#3080) runs on: the daily pass in rerunReviewFailures and each promised try above.
+function rescueDeps(until) {
+  return {
+    db: getFirestore(),
+    probeRead: urlReview.probeRead,
+    rerun: (group) => rerunFailure(group).catch((error) => {
+      console.error("Rescue re-run of " + group.url + " was not saved:", error);
+      return null;
+    }),
+    probeLines: reviewFailures.probeLines,
+    gemini: (evidence) => reviewRescue.diagnoseWithFallback(evidence, { fetch, key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }),
+    until,
+    log: (text) => console.log(text)
+  };
 }
 
 async function rerunReviewFailures() {
@@ -1391,19 +1539,28 @@ async function rerunReviewFailures() {
     snap.docs.forEach((doc) => reviewed.push(doc.data()));
   }
   const plan = reviewFailures.rerunPlan(rows, reviewed, 8);
+  plan.runs.concat(plan.skipped).forEach((group) => { group.promise = reviewPromise.groupPromise(group, rows); });
   const at = new Date().toISOString();
-  await Promise.all(plan.skipped.flatMap((group) => group.failureIds.map((id) => col.doc(id).update({ rerun: { at, status: "skipped", reason: group.skip } }))));
+  await Promise.all(plan.skipped.flatMap((group) => group.failureIds.map((id) => col.doc(id).update(Object.assign({ rerun: { at, status: "skipped", reason: group.skip } },
+    group.promise && group.promise.ids.includes(id) ? reviewPromise.settled("own-run") : {})))));
   const started = Date.now();
   const done = [];
   for (const group of plan.runs) {
     if (Date.now() - started > 1500000) break;
     try {
-      done.push(await rerunFailure(group));
+      done.push(await keepPromise(await rerunFailure(group)));
     } catch (error) {
       console.error("Re-run of " + group.url + " was not saved:", error);
     }
   }
   console.log("URL review re-runs: " + done.length + " of " + plan.runs.length + " ran, " + plan.skipped.length + " skipped.");
+  const fresh = (await col.where("at", ">=", since).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const rescued = await reviewRescue.runRescues(Object.assign(rescueDeps(started + 1650000), { rows: fresh })).catch((error) => {
+    console.error("URL review rescues failed:", error);
+    return { done: [], notes: [], planned: 0, ai: 0 };
+  });
+  console.log("URL review rescues: " + rescued.planned + " planned, " + rescued.ai + " Gemini diagnoses" + (rescued.notes.length ? ": " + rescued.notes.join("; ") : "") + ".");
+  done.push(...rescued.done);
   if (!done.length) return null;
   const mail = reviewFailures.rerunMail(done);
   await pushOwner(jarvisMailPush.rerunMessage(done, REVIEW_FN_URL + "/desk"));
@@ -1678,9 +1835,12 @@ async function mailComparison(notice) {
 }
 
 const urlReview = require("./url-review-core");
+const lookalikes = require("./url-review-lookalikes");
 const newsWire = require("./news-wire");
 const reviewDesk = require("./url-review-desk");
 const reviewFailures = require("./url-review-failures");
+const reviewPromise = require("./url-review-promise");
+const reviewRescue = require("./url-review-rescue");
 const reviewPublish = require("./url-review-publish");
 
 // The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).
@@ -1700,6 +1860,7 @@ function findPlaces() {
 
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
+const launchMail = require("./launch-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
@@ -1714,6 +1875,25 @@ const mailFace = require("./mail-face");
 const accountData = require("./url-review-account-data");
 const ownerProofs = require("./url-review-owner-proof");
 const domainOffer = require("./url-review-domain-offer");
+const outreachTrials = require("./outreach-trials");
+const outreachSend = require("./outreach-send");
+const fixRequests = require("./url-review-fix-requests");
+const fixCheckout = require("./url-review-fix-checkout");
+const fixRereview = require("./url-review-fix-rereview");
+const watchCases = require("./url-review-watch");
+const fixMail = require("./url-review-fix-mail");
+
+// A fix request opens for the account that ran the report, paid or not; the free re-check only on a paid report.
+function fixDeps() {
+  return {
+    db: getFirestore(),
+    access: (body, row) => reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, true),
+    paidAccess: (body, row) => reviewAuth.askAccess(reviewAuth.firestoreStore(getFirestore()), body, row, false),
+    mailOwner: (notice) => sendOwnerEmail(Object.assign({ to: REVIEW_ALERT_TO }, notice)),
+    mailCustomer: (lang, email, mail, category) => sendFaceMail(lang, email, mail, null, category),
+    deskUrl: REVIEW_FN_URL + "/desk"
+  };
+}
 
 async function ownerProofRows(email) {
   if (!ownerProofs.emailOf(email)) return [];
@@ -1856,12 +2036,28 @@ async function reportPdfFor(record, options) {
   return pdf ? { content: pdf, filename: page.filename, type: "application/pdf", disposition: "attachment" } : null;
 }
 
-async function mailReportToAsker(record) {
-  if (!record || !record.email || !record.report) return;
-  if (record.status !== "complete" && record.status !== "stopped") return;
+// `promise` is the inconclusive promise a re-run keeps, so the mail reminds the asker of their code. True once the mail went out.
+async function mailReportToAsker(record, promise) {
+  if (!record || !record.email || !record.report) return false;
+  if (record.status !== "complete" && record.status !== "stopped") return false;
   const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
-  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf });
-  await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise });
+  const sent = await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
+  if (sent) await mailFixableFollowup(record, stopUrl).catch((error) => console.error("Fixable follow-up failed:", error));
+  return sent;
+}
+
+// After a report whose findings a fix package covers, once per report, unless the address stopped follow-up notes.
+// Off until FIXABLE_FOLLOWUP_MAIL=on (#3393).
+async function mailFixableFollowup(record, stopUrl) {
+  if (!launchMail.fixableOn(process.env)) return false;
+  const mail = launchMail.fixableMail(record, { stopUrl });
+  if (!mail) return false;
+  const db = getFirestore();
+  const stopped = await db.collection("url_review_notes").where("email", "==", record.email).where("status", "==", "follow-stop").limit(1).get();
+  if (!stopped.empty) return false;
+  const claimed = await db.collection("url_review_fixable_mails").doc(String(record.id || "-")).create({ at: new Date().toISOString(), count: mail.count, expireAt: keepUntil() }).then(() => true, () => false);
+  return claimed ? sendAskerMail(record.email, mail, stopUrl, "url-review-fixable") : false;
 }
 
 // The period report counts report mails from this mark, so a report that never reached the asker shows there.
@@ -1870,6 +2066,7 @@ async function sendReportMail(id, send, pdf) {
   try {
     mark.sent = (await send()) === true;
     if (!mark.sent) mark.error = "mail is not configured";
+    return mark.sent;
   } catch (error) {
     mark.error = String((error && error.message) || "mail failed").slice(0, 200);
     throw error;
@@ -2090,6 +2287,22 @@ async function sendReviewNotes() {
 // Monday to Saturday at 10:00 Bogotá: Ley 2300 de 2023 keeps commercial contact off Sundays and outside daytime hours.
 exports.sendReviewNotes = scheduled(withMail, "sendReviewNotes", () => sendReviewNotes());
 
+// Ended outreach trials get their AFTER code (#3136); the note to the person goes out only with the follow-up notes' switch.
+async function outreachTrialsRun() {
+  const db = getFirestore();
+  return outreachTrials.endTrials(db, {
+    mail: async (row, note) => {
+      if (process.env.REVIEW_NOTES_LIVE !== "1" || !row.email) return false;
+      const stopped = await db.collection("url_review_notes").where("email", "==", row.email).where("status", "==", "follow-stop").limit(1).get();
+      if (!stopped.empty) return false;
+      const stopUrl = await stopLinkFor(row.email, note.lang);
+      return sendFaceMail(note.lang, row.email, outreachTrials.followupNote(note.lang, Object.assign({}, note.vars, { stop: stopUrl })), stopUrl, "url-review-trial-followup");
+    }
+  });
+}
+
+exports.outreachTrials = scheduled(withMail, "outreachTrials", () => outreachTrialsRun());
+
 // Claims one pending owner notice, sends it, and records the outcome. Shared by sendOwnerNotices and
 // scripts/owner-notice-send-all.js. Returns { outcome, reason, email, source, sourceUrl, sentAt }.
 async function sendQueuedNotice(ref, by) {
@@ -2140,7 +2353,23 @@ async function releaseHeldRerun(id, send, by) {
     tx.update(ref, { status: send ? "sent" : "dropped", decidedAt, by });
   });
   if (!doc) return null;
-  if (!send) return { status: "dropped" };
+  const failures = db.collection("url_review_failures");
+  const rows = await rerunFailures(doc);
+  const promise = reviewPromise.pendingPromise(rows, Date.now());
+  const settle = (fields) => Promise.all((promise ? promise.ids || [] : []).map((failureId) => failures.doc(failureId).update(fields)));
+  await Promise.all(rows.filter((row) => row.rerun && row.rerun.id === String(id)).map((row) => failures.doc(row.id).update({ "rerun.status": send ? "sent" : "dropped" })));
+  // A dropped promised re-run still owes the asker word: the apology, as when the window closes. One that already had it
+  // gets the last note when PROMISE_GIVE_UP_DAYS pass.
+  if (!send) {
+    if (promise && promise.state !== "apologized") {
+      try {
+        if (await sendPromiseApology(Object.assign({ hours: reviewPromise.PROMISE_DEADLINE_H }, promise))) await settle(reviewPromise.settled("given-up", { "promise.dropped": true }));
+      } catch (error) {
+        console.error("Promise apology after a drop failed:", error);
+      }
+    }
+    return { status: "dropped" };
+  }
   const record = reviewFailures.sentRecord(doc, decidedAt);
   await db.collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
@@ -2149,15 +2378,33 @@ async function releaseHeldRerun(id, send, by) {
   } catch (error) {
     console.error("Owner notice queue failed:", error);
   }
-  let mailed = true;
+  let mailed = false;
   try {
-    await mailReportToAsker(record);
+    mailed = await mailReportToAsker(record, promise);
+    if (!mailed) await ref.update({ mailError: "mail is not configured" });
   } catch (error) {
     mailed = false;
     console.error("Re-run mail to the asker failed:", error);
     await ref.update({ mailError: String((error && error.message) || "mail failed").slice(0, 200) });
   }
+  if (promise) {
+    await settle(mailed ? reviewPromise.settled(reviewPromise.reportState(promise), { "promise.reportId": record.id })
+      : promise.state === "apologized" ? { "promise.mailError": "the report mail failed" } : { "promise.state": "held" });
+  }
   return { status: "sent", reportId: record.id, mailed };
+}
+
+// A re-run's failures, and the others that share their promise's code, so the promise is read where it is kept: a Mac
+// rescue or a re-run from the desk saves the re-run without it, and a re-run's own copy may predate the apology.
+async function rerunFailures(doc) {
+  const col = getFirestore().collection("url_review_failures");
+  const ids = Array.from(new Set((doc.failureIds || []).concat((doc.promise && doc.promise.ids) || []).map(String))).slice(0, 40);
+  const rows = (await Promise.all(ids.map((id) => col.doc(id).get()))).filter((snap) => snap.exists).map((snap) => Object.assign({ id: snap.id }, snap.data()));
+  const coded = rows.find((row) => row.promise && row.promise.coupon);
+  if (!coded) return rows;
+  const same = await col.where("promise.coupon", "==", coded.promise.coupon).limit(40).get();
+  same.docs.forEach((snap) => { if (!ids.includes(snap.id)) rows.push(Object.assign({ id: snap.id }, snap.data())); });
+  return rows;
 }
 
 const NOTICE_TRIES = 3;
@@ -2203,7 +2450,7 @@ async function reviewedLately(host) {
   return snaps.some((snap) => snap.docs.some((doc) => String(doc.get("createdAt") || "") > since));
 }
 
-// Up to sweep.PER_TICK sites a tick, one after another, at night, without web search. SWEEP_LIVE=1 turns it on.
+// Up to sweep.PER_TICK sites a tick, sweepConcurrency at once, at night, without web search. SWEEP_LIVE=1 turns it on.
 async function sweepReviews() {
   if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
   const tickStarted = Date.now();
@@ -2211,7 +2458,7 @@ async function sweepReviews() {
   const ref = db.collection("url_review_sweep").doc("state");
   const day = new Date().toISOString().slice(0, 10);
   const cap = ops.budget("sweepPerDay", process.env);
-  let state = (await ref.get()).data() || {};
+  const state = (await ref.get()).data() || {};
   if (sweep.doneOn(state, day) >= cap) return "daily cap reached";
   const [index, unlisted] = await Promise.all([sweepJson("index.json"), unlistedHosts()]);
   const countries = Object.keys(index.countries || {}).filter((cc) => index.countries[cc] > 0);
@@ -2223,58 +2470,76 @@ async function sweepReviews() {
     const hosts = seeds.get(slot.cc);
     return { state: slot.state, target: hosts.length ? { host: hosts[slot.at % hosts.length], cc: slot.cc, month: index.month || "", rank: (slot.at % hosts.length) + 1 } : null };
   };
-  const notes = [];
-  for (let n = 0; n < sweep.PER_TICK; n += 1) {
-    if (sweep.doneOn(state, day) >= cap) {
-      notes.push("daily cap reached");
-      break;
+  const hold = { state, save: (moved) => ref.set(moved) };
+  const full = (at, running) => sweep.doneOn(at, day) + running >= cap;
+  return sweepTick(hold, { slots: ops.budget("sweepConcurrency", process.env), tickStarted, day, unlisted, next, full });
+}
+
+// One tick of a lane: the next sites from next(state) (the lap's, or the outreach lane's), `slots` reviews at once,
+// each tallied and saved as it ends. hold: { state, save(state) }. full(state, running) stops new picks at the cap.
+async function sweepTick(hold, { slots, tickStarted, day, unlisted, next, full }) {
+  const busy = new Set();
+  let dirty = false;
+  const notes = await sweep.runTick({
+    slots,
+    room: () => sweep.roomForReview(Date.now() - tickStarted),
+    pick: async () => {
+      if (full(hold.state, busy.size)) return { note: "daily cap reached" };
+      const pick = await sweepPick(hold.state, day, unlisted, next, busy);
+      hold.state = pick.state;
+      dirty = true;
+      if (!pick.target) return { note: "nothing to review" };
+      busy.add(reviewPublish.bare(pick.target.host));
+      return { target: pick.target };
+    },
+    review: (target) => sweepRun(target),
+    settle: async (target, run) => {
+      busy.delete(reviewPublish.bare(target.host));
+      hold.state = sweep.tally(hold.state, day, run.outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome: run.outcome, note: run.note }, run.reason ? { reason: run.reason } : {}));
+      await hold.save(hold.state);
+      dirty = false;
+      return run.note;
     }
-    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(state, day, unlisted, next);
-    state = tick.state;
-    await ref.set(state);
-    notes.push(tick.note);
-    if (!tick.reviewed) break;
-  }
+  });
+  if (dirty) await hold.save(hold.state);
   return notes.join("; ");
 }
 
-// The next site from next(state) (the lap's, or the outreach lane's), reviewed and tallied.
-// Returns the moved-on state, a note, and whether a review ran.
-async function sweepOne(state, day, unlisted, next) {
-  let target = null;
-  for (let tries = 0; tries < 8 && !target; tries += 1) {
+// The next site from next(state) that nobody reviewed lately and no review of this tick is on (busy: bare hosts).
+// Returns the moved-on state, with the skipped sites tallied, and the target or null.
+async function sweepPick(state, day, unlisted, next, busy) {
+  for (let tries = 0; tries < 8; tries += 1) {
     const pick = await next(state);
     if (!pick) break;
     state = pick.state;
     const candidate = pick.target;
     if (!candidate) continue;
     const bare = reviewPublish.bare(candidate.host);
-    if (!candidate.host || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
+    if (!candidate.host || busy.has(bare) || unlisted.some((u) => bare === u || bare.endsWith("." + u)) || await reviewedLately(candidate.host)) {
       state = sweep.tally(state, day, "skipped", Object.assign({}, candidate, { at: new Date().toISOString(), outcome: "skipped" }));
       continue;
     }
-    target = candidate;
+    return { state, target: candidate };
   }
-  if (!target) return { state, note: "nothing to review", reviewed: false };
+  return { state, target: null };
+}
+
+// One sweep review run to its outcome; a failure is logged and saved, never thrown.
+async function sweepRun(target) {
   const startedAt = Date.now();
   const lines = [];
   const log = (text) => { if (lines.length < 5000) lines.push({ t: Date.now() - startedAt, text }); };
-  let outcome = "done";
-  let note = "";
-  let reason = "";
+  const stopped = () => Date.now() - startedAt > sweep.REVIEW_MS;
   try {
-    const { record, report } = await sweepReview(target, { log, stopped: () => Date.now() - startedAt > sweep.REVIEW_MS });
-    note = target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages";
+    const { record, report } = await sweepReview(target, { log, stopped, browse: sweep.patientBrowse(browseForReview, stopped) });
+    return { outcome: "done", note: target.host + " (" + target.cc + ") " + record.status + ", " + ((report.limits && report.limits.pagesRead) || 0) + " pages" };
   } catch (error) {
-    outcome = "failed";
-    reason = String((error && error.message) || error).slice(0, 160);
-    note = target.host + " (" + target.cc + ") failed: " + reason;
+    const reason = String((error && error.message) || error).slice(0, 160);
+    const note = target.host + " (" + target.cc + ") failed: " + reason;
     console.error("Sweep review of " + note);
     await saveSweepFailure(target, error, lines, startedAt);
+    return { outcome: "failed", reason, note };
   }
-  state = sweep.tally(state, day, outcome, Object.assign({}, target, { at: new Date().toISOString(), outcome, note }, reason ? { reason } : {}));
-  return { state, note, reviewed: true };
 }
 
 // The outreach lane (#2363): prospects and peer-group sites from url_review_sweep/outreach, all day, apart from the
@@ -2286,19 +2551,11 @@ async function outreachSweep() {
   const day = new Date().toISOString().slice(0, 10);
   const cap = ops.budget("outreachPerDay", process.env);
   const [laneDoc, stateDoc, listDoc, unlisted] = await Promise.all([col.doc("lane").get(), col.doc("state").get(), col.doc("outreach").get(), unlistedHosts()]);
-  let lane = sweep.laneStart(laneDoc.data(), stateDoc.data());
+  const hold = { state: sweep.laneStart(laneDoc.data(), stateDoc.data()), save: (moved) => col.doc("lane").set(moved) };
   const list = (listDoc.data() || {}).hosts || [];
   const next = (at) => sweep.nextOutreach(at, list, day, cap);
-  const notes = [];
-  for (let n = 0; n < sweep.PER_TICK; n += 1) {
-    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
-    const tick = await sweepOne(lane, day, unlisted, next);
-    lane = tick.state;
-    await col.doc("lane").set(lane);
-    notes.push(tick.note);
-    if (!tick.reviewed) break;
-  }
-  return notes.join("; ");
+  const full = (at, running) => (Number((((at || {}).days || {})[day] || {}).outreach) || 0) + running >= cap;
+  return sweepTick(hold, { slots: ops.budget("outreachConcurrency", process.env), tickStarted, day, unlisted, next, full });
 }
 
 // One sweep review, saved like any other: its url_reviews row, the counts, and its queued owner notice.
@@ -2312,6 +2569,7 @@ async function sweepReview(target, controls) {
     pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
     crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
     webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+    doh: lookalikes.doh,
     places: findPlaces()
   }, controls));
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
@@ -2341,7 +2599,7 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("sweepReviews"),
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: sweep.TICK_SECONDS,
-  memory: "1GiB",
+  memory: "2GiB",
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
@@ -2350,7 +2608,7 @@ exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("outreachSweep"),
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: sweep.TICK_SECONDS,
-  memory: "1GiB",
+  memory: "2GiB",
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("outreachSweep", () => outreachSweep()));
@@ -2396,6 +2654,19 @@ exports.placesProspects = require("firebase-functions/v2/scheduler").onSchedule(
   maxInstances: 1,
   secrets: SECRETS.prospects
 }, () => track("placesProspects", () => placesProspects()));
+
+// The Wordfence vulnerability feed for the reviews' WordPress check (#3086); see functions/url-review-wordpress.js.
+exports.wordfenceFeed = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("wordfenceFeed"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1,
+  secrets: SECRETS.wordfenceFeed
+}, () => track("wordfenceFeed", async () => {
+  const out = await require("./url-review-wordpress").refreshFeed({ key: process.env.WORDFENCE_KEY });
+  return out.skipped ? "skipped: " + out.skipped : out.count + " records, " + out.slugs + " slugs stored";
+}));
 
 const rivals = require("./url-review-rivals");
 
@@ -2971,9 +3242,16 @@ async function returnPrice(priced, opts) {
   return reviewOffers.discountFor(cents, priced.count, { returns: reviewOffers.returnsBefore(rows, opts.before), coupon });
 }
 
-// purpose=pass&plan= prices a pass; pass=<plan> with a run's choices prices only what the run asks beyond that plan.
-// Neither takes a return step or a code. null for every other quote.
-async function quotePass(query) {
+// A pass takes no return step; a code whose purposes allow passes takes its percent off, down to half the price.
+async function passDeal(cents, code, email) {
+  const coupon = code ? await couponFor(code, "pass", "", email) : null;
+  return reviewOffers.discountFor(cents, 1, { coupon });
+}
+
+// purpose=pass&plan= prices a pass, with the code a pass takes when the buyer's address opens it (`email`);
+// pass=<plan> with a run's choices prices only what the run asks beyond that plan, with no return step and no code.
+// null for every other quote.
+async function quotePass(query, email) {
   const q = query || {};
   if (q.purpose === "pass") {
     const chosen = reviewOffers.knownPlan(String(q.plan || ""));
@@ -2982,8 +3260,9 @@ async function quotePass(query) {
       error.status = 400;
       throw error;
     }
-    const quote = await urlReview.copQuote(chosen.usd);
-    return { usd: chosen.usd, cop: quote.pesos, rate: quote.rate, count: 1, frameworks: [], tools: [], plan: chosen.id, pass: reviewOffers.passPlans().find((row) => row.id === chosen.id) };
+    const deal = await passDeal(Math.round(chosen.usd * 100), q.coupon, email);
+    const quote = await urlReview.copQuote(deal.usd);
+    return Object.assign({ usd: deal.usd, cop: quote.pesos, rate: quote.rate, count: 1, frameworks: [], tools: [], plan: chosen.id, pass: reviewOffers.passPlans().find((row) => row.id === chosen.id) }, dealFields(deal));
   }
   if (!q.pass) return null;
   const chosen = reviewOffers.knownPlan(String(q.pass));
@@ -3025,6 +3304,24 @@ async function mintReturnCoupon(note) {
   const code = "BACK-" + Array.from({ length: 8 }, () => alphabet[crypto.randomInt(alphabet.length)]).join("");
   await getFirestore().collection("url_review_coupons").doc(code).set(reviewOffers.returnCoupon(note));
   return code;
+}
+
+// The inconclusive promise of a failed run, with its apology code; a retry of the same address keeps the first failure's code.
+async function promiseFor(record) {
+  if (!reviewPromise.promised(record)) return null;
+  const db = getFirestore();
+  try {
+    const prior = await db.collection("url_review_failures").where("email", "==", record.email).where("promise.state", "==", "open").limit(20).get();
+    const open = reviewPromise.openPromiseFor(prior.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), record.url);
+    if (open) return reviewPromise.promiseOf(record, { code: open.coupon, percent: open.percent, validUntil: open.validUntil });
+    const code = reviewPromise.couponCode(crypto.randomInt);
+    const coupon = reviewPromise.apologyCoupon(record);
+    await db.collection("url_review_coupons").doc(code).create(coupon);
+    return reviewPromise.promiseOf(record, Object.assign({ code }, coupon));
+  } catch (error) {
+    console.error("Inconclusive promise failed:", error);
+    return null;
+  }
 }
 
 async function redeemCoupon(code, record) {
@@ -3192,7 +3489,7 @@ async function fulfillPayment(result, ctx) {
   }
   const open = claim.open;
   const paidBody = (purpose) => Object.assign({ paid: true, purpose, priceUsd: Number(open.priceUsd || result.amount) || 0, reference: result.reference, test: testRun },
-    purpose === "report" ? { reportId: String(open.reportId || "") } : {});
+    purpose === "report" || purpose === "fix" ? { reportId: String(open.reportId || "") } : {});
   if (claim.state !== "claimed") {
     const purpose = open.paidPurpose || reviewOffers.paidPurpose(open.purpose);
     return { code: 200, body: paidBody(purpose) };
@@ -3226,6 +3523,7 @@ async function fulfillPayment(result, ctx) {
     const owner = paidReport ? await getFirestore().collection("url_reviews").doc(paidReport).get() : null;
     const email = String((owner && owner.exists && owner.get("email")) || open.email || "").trim().toLowerCase();
     await redeemCoupon(open.coupon, { reference: result.reference, purpose: paidPurpose, reportId: paidReport, email, priceUsd: paidPrice, listUsd: open.listUsd || null, percent: open.percent || 0, test: testRun });
+    if (!testRun) await outreachTrials.afterPaid(getFirestore(), open.coupon).catch((error) => console.error("Ledger payment failed:", error));
   }
   if (paidPurpose === "report" && paidReport) {
     const runRef = getFirestore().collection("url_reviews").doc(paidReport);
@@ -3284,6 +3582,24 @@ async function fulfillPayment(result, ctx) {
       expireAt: urlReview.paymentExpireAt()
     }, await passRowsFor(passEmail));
     if (made) await rememberReview("pass-paid", Object.assign({ via }, made));
+  } else if (paidPurpose === "fix") {
+    const fixPaid = await fixCheckout.recordPayment(getFirestore(), open, {
+      provider: result.provider,
+      method: choice,
+      deviceId: payer,
+      sessionId: result.sessionId,
+      captureId,
+      payerEmail,
+      payerName,
+      reference: result.reference,
+      test: testRun,
+      priceUsd: paidPrice,
+      amount: result.amount,
+      currency: result.currency,
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    }, fixDeps());
+    await rememberReview("addon-paid", Object.assign({ id: paidReport, via }, fixPaid, { name: payerName, email: fixPaid.email || who.email }));
   } else if (reviewOffers.ADDONS.indexOf(paidPurpose) !== -1) {
     const runRef = paidReport ? getFirestore().collection("url_reviews").doc(paidReport) : null;
     const runSnap = runRef ? await runRef.get() : null;
@@ -3918,7 +4234,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     ["/desk/rerun", "rerun"],
     ["/desk/unlist", "unlist"],
     ["/desk/notice", "notice"],
-    ["/desk/proof", "proof"]
+    ["/desk/proof", "proof"],
+    ["/desk/fix", "fix"]
   ];
   const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
   const deskName = routed
@@ -3960,7 +4277,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         }
         return rows;
       };
-      const [records, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap] = await Promise.all([
+      const [records, alertSnap, freeSnap, noteSnap, rerunSnap, unlistedSnap, noticeSnap, proofSnap, fixRows] = await Promise.all([
         readRecords(),
         getFirestore().collection("url_review_alerts").limit(80).get(),
         getFirestore().collection("url_review_free_runs").limit(200).get(),
@@ -3968,7 +4285,11 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         getFirestore().collection("url_review_reruns").orderBy("at", "desc").limit(30).get(),
         getFirestore().collection("url_review_unlisted").get(),
         getFirestore().collection("url_review_owner_notices").where("status", "==", "pending").limit(100).get(),
-        getFirestore().collection(ownerProofs.COLLECTION).limit(200).get()
+        getFirestore().collection(ownerProofs.COLLECTION).limit(200).get(),
+        fixRequests.deskRows(getFirestore()).catch((error) => {
+          console.error("Fix requests read failed:", error);
+          return [];
+        })
       ]);
       const ownerProofList = proofSnap.docs.map((doc) => ownerProofs.publicRow(doc.id, doc.data() || {}))
         .sort((a, b) => String(b.at).localeCompare(String(a.at)));
@@ -3988,8 +4309,13 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         freeRuns,
         reruns,
         ownerNotices,
-        ownerProofs: ownerProofList
+        ownerProofs: ownerProofList,
+        fixRequests: fixRows
       }));
+      return;
+    }
+    if (deskName === "fix" && req.method === "POST") {
+      await fixRequests.deskUpdate(req, res, operator, fixDeps());
       return;
     }
     if (deskName === "proof" && req.method === "POST") {
@@ -4116,11 +4442,29 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(405).json({ error: "Use the desk sign-in." });
     return;
   }
-  if (req.method === "GET" && pathName.indexOf("/publishable") !== -1) {
+  const publishKeyOk = () => {
     const key = process.env.PUBLISH_KEY || "";
     const given = String(req.get("x-publish-key") || "");
-    const crypto = require("crypto");
-    if (!key || given.length !== key.length || !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))) {
+    return !!key && given.length === key.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key));
+  };
+  // The Live Report countries Carlos chose in Jarvis (#3009), for the daily job's scripts/live-report-countries.js --decisions.
+  if (req.method === "GET" && pathName.indexOf("/country-decisions") !== -1) {
+    if (!publishKeyOk()) {
+      res.status(403).json({ error: "Not allowed." });
+      return;
+    }
+    try {
+      const snap = await getFirestore().collection("jarvis_settings").doc("live_report_countries").get();
+      const data = snap.exists ? snap.data() : {};
+      res.status(200).json({ decisions: data.decisions || {}, skipped: data.skipped || {} });
+    } catch (error) {
+      console.error("Country decisions failed:", error);
+      res.status(503).json({ error: "The decisions are not available right now." });
+    }
+    return;
+  }
+  if (req.method === "GET" && pathName.indexOf("/publishable") !== -1) {
+    if (!publishKeyOk()) {
       res.status(403).json({ error: "Not allowed." });
       return;
     }
@@ -4309,6 +4653,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(204).send("");
     return;
   }
+  if (pathName.indexOf("/review/fix/") !== -1 && await fixRequests.route(req, res, pathName, fixDeps())) return;
   if (req.method === "POST" && pathName.endsWith("/review/ask")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
@@ -4412,11 +4757,43 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     res.status(note.offer ? 200 : 404).json(note.offer ? note : { error: "That offer was not found." });
     return;
   }
+  // An outreach trial link (#3136, ?trial=TRY-...): GET says what it is; POST { op: "trial-redeem", session } claims it.
+  if (/\/trial$/.test(pathName) && (req.method === "GET" || req.method === "POST")) {
+    try {
+      const db = getFirestore();
+      const body = req.body || {};
+      if (req.method === "GET" || body.op !== "trial-redeem") {
+        const trial = await outreachTrials.view(db, req.method === "GET" ? req.query.code : body.code);
+        res.status(trial ? 200 : 404).json(trial ? { trial } : { error: "That trial was not found." });
+        return;
+      }
+      const signedIn = body.session ? await reviewAuth.checkSession(reviewAuth.firestoreStore(db), Object.assign({}, body, { touch: false })).catch(() => null) : null;
+      if (!signedIn || !signedIn.ok) { res.status(401).json({ ok: false, why: "sign-in" }); return; }
+      const out = await outreachTrials.redeemTrial(db, {
+        code: body.code, email: signedIn.email, rows: await passRowsFor(signedIn.email), matches: urlReview.mailboxMatchesHost, expireAt: urlReview.paymentExpireAt()
+      });
+      res.status(out.ok ? 200 : 409).json(out);
+    } catch (error) {
+      console.error("Trial claim failed:", error);
+      res.status(502).json({ ok: false, why: "error" });
+    }
+    return;
+  }
   if (req.method === "GET" && pathName.indexOf("/checkout/quote") !== -1) {
     try {
       const passQuote = await quotePass(req.query);
       if (passQuote) {
         res.status(200).json(passQuote);
+        return;
+      }
+      if (req.query.purpose === "fix") {
+        const fixQuote = fixCheckout.quote(String(req.query.package || ""));
+        if (!fixQuote) {
+          res.status(400).json({ error: "That fix package is not offered." });
+          return;
+        }
+        const fixCop = await urlReview.copQuote(fixQuote.usd);
+        res.status(200).json(Object.assign(fixQuote, { cop: fixCop.pesos, rate: fixCop.rate }));
         return;
       }
       let priced = req.query.purpose === "fixlist"
@@ -4485,8 +4862,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     return;
   }
+  // A pass quote with a code: posted, so the sign-in that a per-address code is checked against stays out of the URL.
+  if (req.method === "POST" && pathName.indexOf("/checkout/quote") !== -1) {
+    try {
+      const body = req.body || {};
+      if (body.purpose !== "pass") {
+        res.status(400).json({ error: "Only a pass is quoted with a posted code." });
+        return;
+      }
+      const holder = body.coupon ? await offerHolder(body) : null;
+      res.status(200).json(await quotePass({ purpose: "pass", plan: body.plan, coupon: body.coupon }, holder && holder.email));
+    } catch (error) {
+      res.status(error.status || 502).json({ error: error.message || "The peso price could not be loaded." });
+    }
+    return;
+  }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
-    const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
     const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
@@ -4520,6 +4912,18 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       if (purpose === "fixlist" && !reportId) {
         res.status(400).json({ error: "A fix list belongs to one report. Open the report first. No charge was made." });
         return;
+      }
+      let fixPay = null;
+      if (purpose === "fix") {
+        const fixSnap = await getFirestore().collection(fixRereview.COLLECTION).doc(fixCheckout.cleanId(req.body.fixId) || "-").get();
+        const signed = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), Object.assign({}, req.body || {}, { touch: false })).catch(() => null);
+        fixPay = fixCheckout.payable(fixSnap.exists ? fixSnap.data() : null, signed && signed.ok ? signed.email : "", reportId);
+        if (!fixPay.ok) {
+          res.status(fixPay.status).json({ error: fixPay.error, signIn: !!fixPay.signIn });
+          return;
+        }
+        fixPay.fixId = fixSnap.id;
+        priced = urlReview.priceForFix(fixPay.package, fixPay.host);
       }
       if (purpose === "report" || purpose === "fixlist") {
         const reportSnap = await getFirestore().collection("url_reviews").doc(reportId).get();
@@ -4593,11 +4997,14 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
           deviceId,
           ip: req.ip || ""
         });
+      } else if (purpose === "pass") {
+        deal = await passDeal(priced.cents, req.body && req.body.coupon, passOwner);
       }
       const listUsd = priced.usd;
       if (deal && deal.percent) priced = Object.assign({}, priced, { usd: deal.usd });
       const base = reviewOrigin(req) + "/" + urlReview.payPage(req.body && req.body.lang) + "?purpose=" + purpose + "&provider=" + choice
-        + (purpose === "pass" ? "&plan=" + priced.plan : passPlan ? "&pass=" + passPlan.id : "");
+        + (purpose === "pass" ? "&plan=" + priced.plan : passPlan ? "&pass=" + passPlan.id : "")
+        + (fixPay ? "&fixId=" + fixPay.fixId + "&package=" + fixPay.package + "&reportId=" + reportId : "");
       const successUrl = choice === "stripe"
         ? base + "&result=success&session_id={CHECKOUT_SESSION_ID}"
         : base + "&result=success&reference=" + reference;
@@ -4620,6 +5027,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         alertCount: priced.alertCount,
         plan: priced.plan,
         passPlan,
+        fixPackage: fixPay ? fixPay.package : "",
+        fixHost: fixPay ? fixPay.host : "",
         priceUsd: priced.usd,
         listUsd,
         creditCents,
@@ -4649,6 +5058,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         competitors: priced.competitors || null,
         lang: String((req.body && req.body.lang) || "").slice(0, 2),
         ...(passOwner ? { email: passOwner, plan: priced.plan || "", passExtra: !!passPlan } : {}),
+        ...(fixPay ? { fixId: fixPay.fixId, fixPackage: fixPay.package } : {}),
         priceUsd: priced.usd,
         creditUsd: creditCents / 100,
         amount: session.amount,
@@ -5029,13 +5439,18 @@ async function runReview(req, res, placeOf) {
     if (payload.type === "log" && runLines.length < 5000) runLines.push({ t: Date.now() - runStarted, text: payload.text });
     if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
   };
+  // Answers the inconclusive promise the failure was saved with, or null.
   const saveRunLog = async (kind, error) => {
     try {
       const record = reviewFailures.failureRecord(Object.assign({}, intake.value, { kind, runId, error, lines: runLines, startedAt: runStarted, endedAt: Date.now() }));
+      const promise = kind === "failed" ? await promiseFor(record) : null;
+      if (promise) record.promise = promise;
       const col = getFirestore().collection("url_review_failures");
       await (runId ? col.doc(runId) : col.doc()).set(record);
+      return promise;
     } catch (saveError) {
       console.error("URL review log save failed:", saveError);
+      return null;
     }
   };
   try {
@@ -5063,10 +5478,12 @@ async function runReview(req, res, placeOf) {
       pageLang: intake.value.pageLang,
       section: intake.value.section,
       passive: !!intake.value.compareWith,
+      customer: true,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      doh: lookalikes.doh,
       places: findPlaces()
     });
     const record = urlReview.intakeRecord(intake.value, report, Object.assign({
@@ -5157,9 +5574,9 @@ async function runReview(req, res, placeOf) {
         console.error("Credit return failed:", returnError);
       }
     }
-    await saveRunLog("failed", error);
+    const promise = await saveRunLog("failed", error);
     await mailReviewedSites(ip, failed);
-    writeLine({ type: "error", error: error.message || "The review failed." });
+    writeLine(reviewPromise.errorLine(error.message, promise));
     res.end();
   } finally {
     if (stopTimer) clearInterval(stopTimer);
@@ -5272,7 +5689,8 @@ exports.reviewBrowser = require("firebase-functions/v2/https").onRequest({
   memory: "4GiB",
   cpu: 4,
   concurrency: 1,
-  maxInstances: 6,
+  // At least sweepConcurrency + outreachConcurrency in ops-schedule.js, with room for people's reviews.
+  maxInstances: 12,
   timeoutSeconds: 120,
   secrets: SECRETS.reviewBrowser,
   // Renders untrusted pages, so it runs as an account whose only grant is secretAccessor on BROWSER_KEY.
@@ -5342,6 +5760,11 @@ const socialHubAdmin = require("./social-hub-admin");
 const jarvisStudio = require("./jarvis-studio");
 const jarvisMarketing = require("./jarvis-marketing");
 const jarvisTargets = require("./jarvis-targets");
+const jarvisGeo = require("./jarvis-geo");
+const jarvisGeoTime = require("./jarvis-geo-time");
+const jarvisGeoActions = require("./jarvis-geo-actions");
+const jarvisGeoCost = require("./jarvis-geo-cost");
+const jarvisCalendar = require("./jarvis-calendar");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
@@ -5461,8 +5884,8 @@ async function jarvisNotifyAct(body, by) {
     return { message: out.status === "sent" ? "Sent to " + out.email + "." : "Skipped." };
   }
   if (type === "owner-tags") return ownerTags.decide(Object.assign(engagementDeps(), { now }), id, act, body.text, by);
-  if (type === "engagement") {
-    const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), { key: id, decision: act, text: body.text }, by);
+  if (type === "engagement" || type === "engagement-dm") {
+    const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), Object.assign({ key: id, decision: act, text: body.text }, type === "engagement-dm" ? { what: "dm" } : {}), by);
     return { message: out.message };
   }
   if (type === "countdown" && /^pagespeed-/.test(id)) {
@@ -5569,6 +5992,7 @@ const jarvisLive = require("./jarvis-live");
 const jarvisDigest = require("./jarvis-digest");
 const jarvisGithub = require("./jarvis-github");
 const jarvisGithubFix = require("./jarvis-github-fix");
+const jarvisWorker = require("./jarvis-worker");
 
 // A URL shared to the Jarvis app: the owner's own review, run like a sweep review and pushed to the phone that asked.
 exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.jarvisReviewRun }).firestore.document("jarvis_reviews/{id}").onCreate(async (snap) => {
@@ -5590,6 +6014,7 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
       pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
       crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
       webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+      doh: lookalikes.doh,
       places: findPlaces()
     });
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
@@ -5609,6 +6034,63 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const push = row.quiet === true ? null : await jarvisPush.send(getMessaging(), db, tokens, jarvisReview.failedMessage(row.url, reason)).catch(() => null);
     await snap.ref.update({ status: "failed", error: reason, push, doneAt: new Date().toISOString() });
     await desk("failed", { step: reason });
+  }
+});
+
+// The free re-review after a fix (#3102): the desk marking a request done, or the client's free re-check, queues it.
+exports.fixRereview = functions.runWith({ timeoutSeconds: 540, memory: "1GB", secrets: SECRETS.fixRereview }).firestore.document(fixRereview.COLLECTION + "/{id}").onWrite(async (change) => {
+  const before = change.before.exists ? change.before.data() : null;
+  const request = change.after.exists ? change.after.data() : null;
+  if (!fixRereview.due(before, request)) return;
+  const ref = change.after.ref;
+  const db = getFirestore();
+  let claimed = false;
+  await db.runTransaction(async (tx) => {
+    const now = (await tx.get(ref)).data() || {};
+    if (!now.rereview || now.rereview.status !== "queued" || now.rereview.at !== request.rereview.at) return;
+    tx.update(ref, { rereview: Object.assign({}, now.rereview, { status: "running", startedAt: new Date().toISOString() }) });
+    claimed = true;
+  });
+  if (!claimed) return;
+  const deps = fixDeps();
+  try {
+    const originalSnap = await db.collection("url_reviews").doc(String(request.reportId || "-")).get();
+    if (!originalSnap.exists) throw new Error("The report this fix belongs to is gone.");
+    const original = originalSnap.data() || {};
+    const goal = fixRereview.target(original);
+    if (!goal.url) throw new Error("The report has no address to review again.");
+    const startedAt = Date.now();
+    const report = await urlReview.reviewTarget(goal.url, {
+      log: () => {},
+      stopped: () => Date.now() - startedAt > 420000,
+      maxPages: goal.options.pages,
+      maxDepth: goal.options.depth,
+      pageLang: goal.options.pageLang,
+      section: goal.options.section,
+      asker: { reasonCode: original.reasonCode || "own", email: goal.email, proofs: await ownerProofRows(goal.email), siteToken: siteTokenFor(goal.email) },
+      customer: true,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+      places: findPlaces()
+    });
+    const record = fixRereview.rereviewRecord(urlReview.intakeRecord(Object.assign({}, goal.options, { url: goal.url, name: goal.name, email: goal.email, lang: goal.lang, reasonCode: original.reasonCode }), report, {}), original, change.after.id);
+    const result = fixRereview.beforeAfter(original.report, record.report, request.findings);
+    record.report = watchCases.withRegressions(record.report, watchCases.regressions(original.report, record.report, result));
+    await db.collection("url_reviews").doc(record.id).set(record);
+    await countReviewed(record.report);
+    await ref.update(fixRereview.finishedPatch(request, record.id, result));
+    const mailed = await Promise.allSettled([
+      deps.mailCustomer(request.lang, request.email, fixMail.afterMail(request, record.id, result), "url-review-fix-rereview"),
+      deps.mailOwner(fixRereview.ownerNotice(request, record.id, result, deps.deskUrl))
+    ]);
+    const failed = mailed.filter((out) => out.status === "rejected").map((out) => String((out.reason && out.reason.message) || out.reason).slice(0, 200));
+    if (failed.length) await ref.update({ mailError: failed.join("; ") });
+  } catch (error) {
+    console.error("Fix re-review of " + change.after.id + " failed:", error);
+    await ref.update(fixRereview.failedPatch(error));
+    await deps.mailOwner({ subject: "Fix re-review failed: " + (request.host || change.after.id), intro: "The free re-review did not finish. Run it again from the review desk.", rows: [{ label: "Error", value: String((error && error.message) || error).slice(0, 300) }], respondUrl: deps.deskUrl, buttonLabel: "Open the review desk" }).catch(() => {});
   }
 });
 
@@ -5659,7 +6141,7 @@ async function jarvisUsers() {
 }
 
 // Sources whose answer does not depend on the range share one cache entry across ranges.
-const JARVIS_DAYLESS = new Set(["marketing-sync", "targets"]);
+const JARVIS_DAYLESS = new Set(["marketing-sync", "targets", "calendar"]);
 
 async function jarvisSource(name, days) {
   const settings = await jarvis.readSettings(getFirestore());
@@ -5671,7 +6153,8 @@ async function jarvisSource(name, days) {
   } catch (error) { paypal = null; }
   return jarvisCached(name, JARVIS_DAYLESS.has(name) ? 0 : days, () => jarvisSources.run(name, {
     fetch, env: process.env, db: getFirestore(), now: Date.now(), days, settings, thresholds: jarvisCore.thresholds(settings.thresholds),
-    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: (scope) => githubApp.token(scope || "repo")
+    paypal, tls: jarvis.tlsDaysLeft, listUsers: jarvisUsers, github: (scope) => githubApp.token(scope || "repo"),
+    peer: (op) => { const ops = [op]; return op === name ? Promise.resolve(null) : jarvisExternal(ops, days).then((out) => out[op]); }
   }));
 }
 const JARVIS_REPORTS = { site: (period) => sendPeriodReport(period), review: (period) => sendReviewPeriodReport(period) };
@@ -5710,15 +6193,57 @@ async function jarvisExternal(ops, days) {
   return out;
 }
 
+// Country dates (#2989): the holiday pauses that start or end today and the dates-ahead push, on the daily briefing's run.
+async function jarvisCalendarDaily(db, settings) {
+  const now = Date.now();
+  const ext = await jarvisExternal(["calendar", "geo", "marketing"], 1);
+  if (!ext.calendar || ext.calendar.ok === false) return "calendar not loaded";
+  const out = await jarvisCalendar.runDaily(jarvisCalendarCtx(db, now, "jarvis"), {
+    today: jarvisCalendar.bogotaDay(now), settings: settings.calendar, calendar: ext.calendar, geo: ext.geo, campaigns: jarvisCampaignRows(ext.marketing), pauses: await jarvisCalendar.readPauses(db)
+  });
+  if (out.paused || out.resumed || out.expired) await jarvisCalendarFresh(db);
+  return out;
+}
+
+// Map next actions (#3115): Gemini ranks the 30-day rule set when it changes or a day on; a new answer drops the geo caches.
+async function jarvisGeoActionsRefresh() {
+  const db = getFirestore();
+  const geo = (await jarvisExternal(["geo"], 30)).geo;
+  const out = await jarvisGeoActions.refresh({ db, now: Date.now(), gemini: Gemini.ready(process.env) ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null }, geo);
+  if (out.saved) await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+  return "map actions " + out.note;
+}
+
+function jarvisCalendarCtx(db, now, by) {
+  const mctx = { fetch, env: process.env, now };
+  return {
+    db, now, by, ops: {
+      campaign: (id, action) => jarvisMarketing.campaignAct(mctx, { id, action }),
+      log: (entry) => jarvisActions.log(db, Object.assign({ mode: "click", by }, entry), Date.now()),
+      push: async (msg) => jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, msg.kind), msg).catch((error) => console.error("Jarvis calendar push failed:", error))
+    }
+  };
+}
+
+const jarvisCampaignRows = (mk) => (mk && mk.campaigns && mk.campaigns.ok !== false && mk.campaigns.rows) || [];
+
+// A pause or resume changes campaign statuses: the calendar, marketing, outreach and geo answers are read again.
+async function jarvisCalendarFresh(db) {
+  const ids = ["calendar-0"].concat([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "geo-" + d]));
+  await Promise.all(ids.map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+}
+
 async function jarvisDaily({ force }) {
   const db = getFirestore();
   const settings = await jarvis.readSettings(db);
+  const calendar = await jarvisCalendarDaily(db, settings).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
+  const geoHistory = await jarvisGeoHistory(db).catch((error) => "geo history failed: " + String(error.message || error).slice(0, 200));
   const phones = await jarvisPush.targets(db, "briefing");
-  if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return "off in settings";
+  if (!settings.mail.daily && !force && !(await jarvisPush.anyTargets(db, "briefing"))) return { off: "off in settings", calendar, geoHistory };
   const now = Date.now();
   const [{ products }, external, goalRows] = await Promise.all([
     jarvis.dailyProducts(db, { now }),
-    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach", "targets", "github-work"], 1),
+    jarvisExternal(["health", "jobs", "github", "uptime", "speed", "pagespeed", "ga4", "money", "email", "social", "safety", "platform", "search", "outreach", "targets", "github-work", "calendar", "geo", "marketing", "rescue", "fixes", "checks"], 1),
     jarvis.goals(db, settings, { now, sum: jarvisSum })
   ]);
   const items = jarvisCore.briefing({ products, external, thresholds: settings.thresholds, goals: goalRows });
@@ -5737,7 +6262,18 @@ async function jarvisDaily({ force }) {
   const top = ranked && ranked.proposals && ranked.proposals[0];
   if (top) await jarvisProposals.saveRun(db, top, now).catch((error) => console.error("Jarvis proposal run not saved:", error));
   const push = await jarvisPush.send(getMessaging(), db, phones, jarvisPush.briefingMessage({ items, aiText, dateLabel, top })).catch((error) => ({ error: String(error.message || error).slice(0, 200) }));
-  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length };
+  return { sent: sent !== false, push, items: items.length, goals: goalRows.length, gemini: !!aiText, proposals: proposalLines.length, calendar, geoHistory };
+}
+
+// The Map's daily history (#3109, jarvis-geo-time.js): yesterday's countries, Instantly's email days and GA4's days per country (backfilled once) and the dated replies.
+async function jarvisGeoHistory(db) {
+  const now = Date.now();
+  const ext = await jarvisExternal(["geo"], 1);
+  const mctx = { fetch, env: process.env, now };
+  const out = await jarvisGeoTime.record({ db, now, geo: ext.geo, instantly: process.env.INSTANTLY_API_KEY ? (path) => jarvisMarketing.instantly(mctx, path) : null,
+    clicks: (sql) => require("./jarvis-geo-clicks").query(fetch, process.env, sql), ga4Days: (from, to) => jarvis.ga4Days(fetch, from, to) });
+  await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+  return out;
 }
 
 // Rule proposals (or the page's own, as candidates) ranked by Gemini unless useGemini is off; Done and Dismissed ones stay out.
@@ -5751,7 +6287,7 @@ async function jarvisRanked({ state, items, days, candidates, snapshot, useGemin
   return Object.assign({}, out, { proposals: (out.proposals || []).map(jarvisProposals.withButtons) });
 }
 
-const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets"];
+const JARVIS_OPS = ["health", "jobs", "github", "uptime", "speed", "ga4", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "rescue", "fixes", "checks"];
 
 // Sunday 19:00 Bogotá: four weeks side by side, this week's proposals and Gemini's strategy for the next one.
 async function jarvisWeekly({ force }) {
@@ -5789,7 +6325,7 @@ async function jarvisWeekly({ force }) {
   return { sent: sent !== false, weeks: hist.weeks, proposals: proposals.length, gemini: !!aiText };
 }
 
-const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work"];
+const JARVIS_SNAPSHOT_OPS = ["health", "jobs", "github", "uptime", "speed", "pagespeed", "local", "rescue", "fixes", "checks", "ga4", "cloudflare", "money", "email", "mailbox", "social", "safety", "platform", "search", "outreach", "targets", "addresses", "marketing", "marketing-sync", "calls", "engagement", "people", "github-work", "geo", "calendar"];
 
 // Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore
 // itself. One builder per section, each kept until its TTL or the write that changes it (jarvis-snapshot.js, #2099).
@@ -5856,7 +6392,7 @@ async function jarvisLivePush(where) {
 }
 
 // The jarvis ops whose write drops a build section (jarvis-snapshot.js); each is followed by a live push.
-const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report"]);
+const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "geo-country-confirm", "geo-costs-save", "send-report"]);
 
 const jarvisLiveNote = (out) => "live push " + (out && out.pushed ? out.sections.join(",") : (out && out.reason) || "none");
 
@@ -5972,6 +6508,14 @@ function jarvisAutoOps(settings, now, th) {
       };
     },
     githubWork: async () => (await jarvisExternal(["github-work"], 1))["github-work"] || null,
+    workerCandidates: async (confidence) => {
+      const budget = await jarvisWorker.spend(db, now);
+      const github = (await jarvisExternal(["github"], 1)).github || null;
+      const failed = await out.failedCi().catch(() => null);
+      const failing = failed ? failed.filter((r) => r.branch === "main").map((r) => r.name) : null;
+      return { over: budget.over, cap: budget.cap, active: await jarvisWorker.active(db, now), tasks: await jarvisWorker.candidates(db, { now, confidence, github, failing }) };
+    },
+    workerRun: async (task) => ({ detail: (await jarvisWorker.dispatch(jarvisGithubCtx(now), task)).message }),
     githubAct: async (action, args) => {
       const res = await jarvisGithubDo(action, args, now);
       if (res.ok === false) throw new Error(res.message || "Nothing done.");
@@ -5982,7 +6526,7 @@ function jarvisAutoOps(settings, now, th) {
       reason: p.reason, at: new Date(now).toISOString(), until: new Date(now + 2 * 864e5).toISOString()
     }))).then((out) => jarvisSnap.drop(db, ["proposals"]).then(() => out))
   };
-  if (process.env.GEMINI_API_KEY) out.ask = (prompt) => jarvis.gemini(fetch, process.env, prompt, 800);
+  if (Gemini.ready(process.env)) out.ask = (prompt) => jarvis.gemini(fetch, process.env, prompt, 800);
   // What the countdown runs (#1977); each checks its rule again first.
   Object.assign(out, {
     mergeCandidates: jarvisMergeCandidates,
@@ -6275,6 +6819,14 @@ async function jarvisClickAction(body, by) {
     }
     return { action, done, failed, ran: targets.slice(0, 3).map((m) => m.email).join(", ") + (targets.length > 3 ? " and " + (targets.length - 3) + " more" : "") };
   }
+  if (action === "calendar-pause" || action === "calendar-resume") {
+    const ext = await jarvisExternal(["calendar", "geo", "marketing"], 30);
+    const ctx = jarvisCalendarCtx(db, now, by);
+    ctx.ops.log = (entry) => note(entry);
+    const out = await jarvisCalendar.clickAction(ctx, body, { calendar: ext.calendar, geo: ext.geo, campaigns: jarvisCampaignRows(ext.marketing) });
+    await jarvisCalendarFresh(db);
+    return out;
+  }
   throw new Error("Unknown action.");
 }
 
@@ -6282,7 +6834,7 @@ async function jarvisClickAction(body, by) {
 function jarvisGithubCtx(now) {
   return {
     fetch, env: process.env, db: getFirestore(), now, github: (scope) => githubApp.token(scope || "repo"),
-    gemini: process.env.GEMINI_API_KEY ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
+    gemini: Gemini.ready(process.env) ? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens) : null
   };
 }
 
@@ -6365,9 +6917,11 @@ async function jarvisGithubDo(action, args, now) {
   throw new Error("Unknown GitHub action.");
 }
 
-// A Cursor agent from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>).
+// The worker's newest tasks, for the worker op.
+/* A fix from a written prompt, a diagnosis's drafted one (gh:diag:<run>) or a PR's conflicts (gh:pr-conflict:<n>): Jarvis's
+   own worker (#2957), or a Cursor cloud agent when the click asks for engine "cursor". */
 async function jarvisGithubAgent(ctx, a) {
-  const key = String(a.key || "");
+  const key = String(a.key || a.proposal || "");
   let prompt = String(a.prompt || "").trim();
   let pr = ghNumber(a.pr);
   let branch = a.branch ? String(a.branch) : "";
@@ -6387,6 +6941,9 @@ async function jarvisGithubAgent(ctx, a) {
       + "run npm run test:review and node scripts/build-jarvis-core.js --check, and push the result to the PR branch. Say in a PR comment what each conflict was and how you resolved it.";
   }
   const name = a.name || (run ? "Jarvis fix: run " + run : pr ? "Jarvis fix: PR #" + pr : "Jarvis fix");
+  if (a.engine !== "cursor" && (!repo || repo === jarvisWorker.REPO)) {
+    return jarvisWorker.dispatch(ctx, { prompt, pr: pr || undefined, branch, title: name.replace(/^Jarvis fix: ?/, "Fix ") || name, key: key || (run ? "gh:diag:" + run : ""), by: a.by || "Carlos" });
+  }
   const out = await jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name });
   if (out.id) await jarvisProcess(jarvisProcesses.cloudAgentRow(out.id, "running", { name, url: out.url, step: "Cursor cloud agent" + (pr ? " on PR #" + pr : "") }));
   return out;
@@ -6408,7 +6965,8 @@ async function jarvisGithubAct(body, by) {
   try {
     const out = await jarvisGithubDo(action, body, now);
     await note(out.ok === false ? "failed" : "done", out.message);
-    return Object.assign({ action }, out);
+    // The phone app and the web panel read a refusal from `error`; these answers carry it in `message`.
+    return Object.assign({ action }, out, out.ok === false && !out.error ? { error: out.message || "Not done." } : {});
   } catch (error) {
     await note("failed", String(error.message || error));
     throw error;
@@ -6440,7 +6998,7 @@ async function jarvisGithubJob() {
   await step("days", () => jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {})));
   await step("backfill", () => jarvisGithub.backfill(Object.assign({}, ctx, { limit: 10 })));
   await step("diagnosed", async () => {
-    if (!ctx.gemini) return "none (no GEMINI_API_KEY)";
+    if (!ctx.gemini) return "none (no Gemini)";
     const start = jarvisCore.zoneParts(new Date(now)).day + "T05:00:00.000Z";
     const today = (await db.collection("jarvis_github_diag").where("at", ">=", start).limit(50).get()).size;
     const room = Math.min(3, 12 - today);
@@ -6496,7 +7054,7 @@ async function jarvisActionsView(now) {
   };
 }
 
-const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
+const JARVIS_LOGGED = { "run-job": (b) => b.job, unlist: (b) => b.host, "send-report": (b) => (b.kind || "review") + " " + (b.period || "daily"), "daily-now": () => "daily briefing", "weekly-now": () => "weekly strategy", "digest-now": () => "evening digest", "email-briefing": () => "briefing", review: (b) => b.url, "notify-act": (b) => String(b.act || "") + " " + String(b.ref || "").slice(0, 100), "rating-decide": (b) => String(b.decision || "") + " " + (Array.isArray(b.ids) ? b.ids.length + " ratings" : String(b.ids || "")), "brief-mark": (b) => String(b.status || "") + " " + String(b.key || "").slice(0, 100), "marketing-campaign": (b) => String(b.action || "") + " " + String(b.name || b.id || "").slice(0, 80), "marketing-block": (b) => String(b.value || "").slice(0, 100), "marketing-resend": (b) => String(b.to || b.id || "").slice(0, 100), "outreach-target": (b) => String(b.action || "") + " " + String(b.key || b.id || "").slice(0, 60), "geo-target": (b) => (b.on ? "target " : "drop ") + String(b.cc || "").slice(0, 2), "geo-costs-save": (b) => (Array.isArray(b.items) ? b.items.length : 0) + " monthly costs", "geo-country-confirm": (b) => (b.skip === true ? "skip " : String(b.cc || "").slice(0, 2).toUpperCase() + " ") + String(b.host || "").slice(0, 80), "marketing-queue": (b) => String(b.hosts || "").split(/[\n;]+/).filter(Boolean).length + " hosts", "marketing-command": (b) => String(b.action || "") + " " + String(b.email || b.week || b.value || b.name || b.job || b.id || "").slice(0, 100), "engagement-decide": (b) => String(b.decision || "") + " " + String(b.key || b.id || "").slice(0, 60), "engagement-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op" && k !== "days").join(", ").slice(0, 100), "outreach-send-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "engagement-connect": (b) => (b.disconnect ? "disconnect " : "connect ") + String(b.network || "").slice(0, 20), "engagement-report": (b) => String(b.period || "daily") + " engagement report", "owner-tags-run": () => "owner tags run", "owner-tags-settings": (b) => Object.keys(b.settings || b).filter((k) => k !== "op").join(", ").slice(0, 100), "owner-tags-decide": (b) => String(b.decision || "") + " " + String(b.report || "").slice(0, 60), "owner-tags-account": (b) => String(b.status || "approved") + " " + String(b.url || (b.network || "") + ":" + (b.handle || "")).slice(0, 100), "github-diagnose": (b) => "run " + String(b.run || "").slice(0, 20), "github-agent": (b) => (b.pr ? "PR #" + b.pr + " " : "") + String(b.key || b.run || b.prompt || "").slice(0, 100) };
 
 async function jarvisWatchRun() {
   const db = getFirestore();
@@ -6525,7 +7083,9 @@ async function jarvisWatchRun() {
 
 exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisMail }), "jarvisDailyBriefing", async () => {
   const out = await jarvisDaily({ force: false });
-  return typeof out === "string" ? out : (out.sent ? "sent" : "not sent") + ", " + out.items + " lines";
+  const cal = out.calendar && typeof out.calendar === "object" ? out.calendar : null;
+  const dates = cal ? (cal.error ? "; calendar failed: " + cal.error : "; calendar " + cal.paused + " paused, " + cal.resumed + " resumed, " + cal.reminded + " reminded") : "";
+  return (out.off || (out.sent ? "sent" : "not sent") + ", " + out.items + " lines") + dates + (out.geoHistory ? "; " + out.geoHistory : "");
 });
 
 // The evening digest (#1672): the last 24 hours of pushes, what still waits for a decision, and what ran.
@@ -6534,13 +7094,15 @@ async function jarvisEvening({ force }) {
   const settings = await jarvis.readSettings(db);
   if (!settings.mail.digest && !force) return "off in settings";
   const since = new Date(Date.now() - 24 * 3600000).toISOString();
-  const [pushes, actions, held, replies, notices, marks] = await Promise.all([
+  const [pushes, actions, held, replies, notices, marks, rescue, fixes] = await Promise.all([
     db.collection("jarvis_pushes").where("at", ">=", since).limit(500).get(),
     db.collection("jarvis_actions").where("at", ">=", since).limit(500).get(),
     jarvisHeld(),
     db.collection("url_review_owner_replies").where("status", "==", "waiting").limit(50).get(),
     db.collection("url_review_owner_notices").where("status", "==", "pending").limit(300).get(),
-    jarvisProposals.saved(db)
+    jarvisProposals.saved(db),
+    jarvisSource("rescue", 7).catch(() => null),
+    jarvisSource("fixes", 7).catch(() => null)
   ]);
   const mail = jarvisDigest.digestMail({
     pushes: pushes.docs.map((doc) => doc.data()),
@@ -6548,7 +7110,9 @@ async function jarvisEvening({ force }) {
     waiting: {
       reruns: held.map((h) => ({ host: h.data.host || h.id })),
       ownerReplies: replies.docs.map((doc) => ({ domain: doc.get("domain") || doc.get("from") })),
-      notices: notices.docs.map((doc) => ({ domain: doc.id }))
+      notices: notices.docs.map((doc) => ({ domain: doc.id })),
+      promises: (rescue && rescue.openList) || [],
+      fixes: (fixes && fixes.paidList) || []
     },
     marked: new Set(marks.map((row) => row.key))
   });
@@ -6572,14 +7136,19 @@ async function jarvisNoticesRun() {
   const [state, snap] = await Promise.all([ref.get(), db.collection("url_review_owner_notices").where("status", "==", "pending").get()]);
   const pending = snap.docs.map((d) => Object.assign({ domain: d.id }, d.data()));
   const now = Date.now();
-  const fresh = jarvisNotify.noticesDue(pending, state.exists ? state.data().lastAt : "", now);
-  if (!fresh.length) return pending.length + " pending, none new";
+  const last = state.exists ? state.data() : {};
+  const due = jarvisNotify.noticesDue(pending, last.lastAt || "", now, last.waiting);
+  if (!due.length) return pending.length + " pending, none new";
+  // Send is refused until the site's card is on Live Reports, so those notices wait for a later hour (#2893).
+  const index = await liveReportIndex().catch(() => null);
+  const fresh = due.filter((n) => index && ownerNotice.liveCard(index, n.host));
+  const waiting = due.filter((n) => !fresh.includes(n)).map((n) => n.domain);
   // One notification per notice with Send and Skip (#1670); past 6, the rest share one.
   let sent = 0;
   for (const n of fresh.slice(0, 6)) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisMailPush.noticeMessage(n))).sent;
   if (fresh.length > 6) sent += (await jarvisPush.send(getMessaging(), db, phones, jarvisNotify.noticesMessage(fresh.slice(6), pending.length))).sent;
-  await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length });
-  return fresh.length + " new notices, " + sent + " pushes";
+  await ref.set({ lastAt: new Date(now).toISOString(), pending: pending.length, waiting });
+  return fresh.length + " new notices, " + sent + " pushes" + (waiting.length ? ", " + waiting.length + " wait for Live Reports" : "");
 }
 
 // Every hour: the safe actions first (jarvis-actions.js), then the alert watch and the outreach notices push.
@@ -6618,9 +7187,10 @@ exports.jarvisWatch = scheduled(functions.runWith({ timeoutSeconds: 300, memory:
     .catch((error) => "mail retry failed: " + String(error.message || error).slice(0, 120));
   const pagespeed = await pageSpeedDeps("jarvis").then((deps) => jarvisPageSpeed.tick(deps)).catch((error) => "pagespeed failed: " + String(error.message || error).slice(0, 120));
   const agents = await jarvisProcesses.cloudAgents(jarvisLiveDeps(), { fetch, key: process.env.CURSOR_API_KEY }).catch((error) => "cloud agents failed: " + String(error.message || error).slice(0, 120));
+  const mapActions = await jarvisGeoActionsRefresh().catch((error) => "map actions failed: " + String(error.message || error).slice(0, 120));
   // With no app or page reading, this hourly load is what finds the sections that moved (#2509).
   const live = jarvisLiveNote(await jarvisLivePush("jarvisWatch"));
-  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + agents + "; " + live;
+  return watch + "; " + acts + "; " + notices + "; " + social + "; " + resent + "; " + pagespeed + "; " + up + "; " + agents + "; " + mapActions + "; " + live;
 });
 
 async function jarvisUptimeRun() {
@@ -6634,7 +7204,8 @@ exports.jarvisCountdowns = scheduled(functions.runWith({ timeoutSeconds: 300, me
 
 // Every minute (#2810): Actions runs, issues, PRs, board moves and the Cloud Functions log into Jarvis > Console.
 exports.jarvisLogPoll = scheduled(functions.runWith({ timeoutSeconds: 60, memory: "256MB", secrets: SECRETS.jarvisLogPoll }), "jarvisLogPoll",
-  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform") }));
+  () => jarvisLogPoll.poll({ fetch, db: getFirestore(), now: Date.now(), token: (scope) => githubApp.token(scope), googleToken: () => jarvis.googleToken(fetch, "https://www.googleapis.com/auth/cloud-platform"),
+    onRuns: (repo, runs) => (repo === BUG_REPO ? jarvisProcesses.settleRuns(jarvisLiveDeps(), runs, { isDeploy: jarvisGithub.isDeploy, jobFiles: GITHUB_JOB_FILES }) : Promise.resolve()) }));
 
 // Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
 exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);
@@ -6662,6 +7233,15 @@ exports.engagementMonthlyReport = scheduled(functions.runWith({ timeoutSeconds: 
 const ownerTagsDeps = () => Object.assign(engagementDeps(), { site: customerMail.SITE, gemini: (prompt) => jarvisEngagement.geminiJson(fetch, process.env, prompt) });
 exports.ownerTags = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "ownerTags",
   async () => ownerTags.runNote(await ownerTags.run(ownerTagsDeps())));
+
+// Daily at 10:45 (#3138): the student communities list in, and each active community's weekly value post drafted (sent by the Mac once approved).
+const studentOutreach = require("./student-outreach");
+exports.studentOutreach = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB" }), "studentOutreach",
+  async () => {
+    const deps = engagementDeps();
+    deps.sendMode = (kind) => outreachSend.sendMode(deps.db, { kind, now: deps.now });
+    return studentOutreach.runNote(await studentOutreach.run(deps));
+  });
 
 const tiktokWatch = require("./tiktok-business-watch");
 
@@ -6883,6 +7463,38 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     } catch (error) { res.status(error.status || 400).json({ ok: false, op: "github-local", error: String(error.message || error).slice(0, 300) }); }
     return;
   }
+  // The outreach routines (#3136) mint trials and keep the people ledger with the Mac's paired token.
+  if (Object.prototype.hasOwnProperty.call(outreachTrials.OPS, String((req.body || {}).op || ""))) {
+    try {
+      const db = getFirestore();
+      await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
+      res.json(Object.assign({ op: req.body.op }, await outreachTrials.handle({ db, now: Date.now() }, req.body)));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: req.body.op, error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
+  // When their drafts go out on their own (#3137): approval for the first days after launch, then daily caps.
+  if (Object.prototype.hasOwnProperty.call(outreachSend.OPS, String((req.body || {}).op || ""))) {
+    try {
+      const db = getFirestore();
+      await engagementMac.verify(db, String(req.get("x-mac-token") || ""));
+      res.json(Object.assign({ op: req.body.op }, await outreachSend.handle({ db, now: Date.now() }, req.body)));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: req.body.op, error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
+  // Jarvis's worker (jarvis-worker.yml, #2957) proves itself with its run's GitHub OIDC token.
+  if ((req.body || {}).op === "worker-report") {
+    try {
+      const out = await jarvisWorker.report(jarvisGithubCtx(Date.now()), req.body, String(req.get("x-worker-oidc") || ""));
+      if (out.state !== "running") await jarvisGithubFresh();
+      const budget = jarvisWorker.budgetMessage(out.crossed, out.monthUsd);
+      if (budget) {
+        const db = getFirestore();
+        await jarvisPush.send(getMessaging(), db, await jarvisPush.targets(db, "alerts"), budget).catch((error) => console.error("Jarvis budget push failed:", error));
+      }
+      res.json(Object.assign({ op: "worker-report" }, out));
+    } catch (error) { res.status(error.status || 400).json({ ok: false, op: "worker-report", error: String(error.message || error).slice(0, 300) }); }
+    return;
+  }
   // The Mac's agents (#2548): the engagement browser and Cursor's hooks report their state with the paired token.
   if ((req.body || {}).op === "process-report") {
     try {
@@ -6931,7 +7543,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
     else if (op === "settings-save") {
       out = await jarvis.saveSettings(getFirestore(), body.settings, operator);
       const cache = getFirestore().collection("jarvis_cache");
-      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["search-", "github-work-"].map((op) => cache.doc(op + d).delete().catch(() => null))).concat(jarvisSnap.drop(getFirestore(), ["settings", "external"])));
+      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["search-", "github-work-"].map((op) => cache.doc(op + d).delete().catch(() => null))).concat(cache.doc("calendar-0").delete().catch(() => null), jarvisSnap.drop(getFirestore(), ["settings", "external"])));
     }
     else if (op === "goals") out = { goals: await jarvis.goals(getFirestore(), await jarvis.readSettings(getFirestore()), { now, sum: jarvisSum }) };
     else if (op === "daily-now") out = await jarvisDaily({ force: true });
@@ -7018,7 +7630,26 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       const ctx = { fetch, env, now, githubToken: () => githubApp.token() };
       out = op === "marketing-campaign" ? await jarvisMarketing.campaignAct(ctx, body) : op === "marketing-block" ? await jarvisMarketing.block(ctx, body)
         : op === "marketing-command" ? await jarvisMarketing.command(ctx, db, body) : op === "marketing-resend" ? await jarvisMarketing.resend(ctx, db, body) : await jarvisMarketing.queueProspects(db, body, now);
-      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+      await Promise.all([1, 7, 30, 90, 365].flatMap((d) => ["marketing-" + d, "outreach-" + d, "marketing-sync-" + d, "geo-" + d]).map((id) => db.collection("jarvis_cache").doc(id).delete().catch(() => null)));
+    }
+    else if (op === "geo-target") {
+      const db = getFirestore();
+      out = await jarvisGeo.setTarget(db, body);
+      await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+    }
+    else if (op === "geo-costs") {
+      const saved = await jarvisGeoCost.read(getFirestore());
+      out = Object.assign({ ok: true }, saved, body.suggest === true ? await jarvisGeoCost.suggest({ fetch, env, db: getFirestore(), now: Date.now(), items: saved.items }) : {});
+    }
+    else if (op === "geo-costs-save") {
+      const db = getFirestore();
+      out = await jarvisGeoCost.save(db, body, operator, now);
+      await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
+    }
+    else if (op === "geo-country-confirm") {
+      const db = getFirestore();
+      out = await jarvisGeo.confirmCountry(db, body, now);
+      await Promise.all([1, 7, 30, 90, 365].map((d) => db.collection("jarvis_cache").doc("geo-" + d).delete().catch(() => null)).concat(jarvisSnap.drop(db, ["external"])));
     }
     else if (op === "outreach-target") {
       const db = getFirestore();
@@ -7026,6 +7657,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       await Promise.all([db.collection("jarvis_cache").doc("targets-0").delete().catch(() => null), jarvisSnap.drop(db, ["external"])]);
     }
     else if (op === "engagement-decide") out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
+    else if (op === "outreach-send-settings") out = await outreachSend.save(getFirestore(), body.settings || body, operator, now);
     else if (op === "engagement-settings") out = await jarvisEngagement.saveSettings(getFirestore(), body.settings || body, operator, now);
     else if (op === "engagement-connect") out = await jarvisEngagement.connect(Object.assign(engagementDeps(), { now }), body, BOOKING_REDIRECT);
     else if (op === "owner-tags-run" || op === "owner-tags-settings" || op === "owner-tags-decide" || op === "owner-tags-account") {
@@ -7053,6 +7685,8 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       if (out.done) await jarvisGithubFresh();
     }
     else if (op === "github-draft") out = await jarvisGithubFix.draftFlaky(jarvisGithubCtx(now), body);
+    else if (op === "worker-run") out = await jarvisWorker.dispatch(jarvisGithubCtx(now), Object.assign({}, body, { by: "Carlos" }));
+    else if (op === "worker") out = await jarvisWorker.view(getFirestore(), now);
     else if (jarvisSources.SOURCES[op]) {
       if (op === "github-work" && body.fresh === true) await getFirestore().collection("jarvis_cache").doc(op + "-" + (JARVIS_DAYLESS.has(op) ? 0 : days)).delete().catch(() => null);
       out = await jarvisSource(op, days);

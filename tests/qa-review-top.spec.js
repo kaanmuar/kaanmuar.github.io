@@ -1,5 +1,6 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const auth = require('../functions/url-review-auth');
+const sample = require('../assets/qa-review-sample.json');
 
 const ANA = 'a'.repeat(64);
 
@@ -451,13 +452,36 @@ test.describe('The tour and the sign-in box in the page language (#2768)', () =>
   });
 });
 
+// The site the sample reviewed, and every address the sample quotes: the page must not load any of them (#2955).
+const SAMPLE_HOST = sample.report.host.replace(/^www\./, '');
+const SAMPLE_URLS = new Set();
+(function quoted(value) {
+  if (typeof value === 'string') for (const [url] of value.matchAll(/https?:\/\/[^\s"'<>()]+/g)) SAMPLE_URLS.add(url);
+  else if (value && typeof value === 'object') Object.values(value).forEach(quoted);
+})(sample.report);
+const fromSample = (url) => url.hostname === SAMPLE_HOST || url.hostname.endsWith('.' + SAMPLE_HOST) || SAMPLE_URLS.has(url.href);
+
 test.describe('Report section index (#2770)', () => {
+  // Returns the requests the sample made to its own site or to an address it quotes, each one blocked.
   async function openSample(page, path = '/qa-review.html') {
+    const outside = [];
+    await page.route(fromSample, (route) => { outside.push(route.request().url()); return route.abort(); });
     await prime(page);
     await backend(page);
     await page.goto(path);
     await page.locator('#stage-sample-open').click();
     await expect(page.locator('#report-index')).toBeVisible();
+    return outside;
+  }
+
+  for (const lang of ['en', 'es', 'pt', 'de', 'fr', 'it']) {
+    test(`the ${lang} sample report loads nothing from the site it reviewed or from an address it quotes (#2955)`, async ({ page }) => {
+      const outside = await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      await page.evaluate(() => document.querySelectorAll('#dash-overlay img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; }));
+      await page.waitForFunction(() => [...document.querySelectorAll('#dash-overlay img')].every((img) => img.complete));
+      expect(outside).toEqual([]);
+      await expect(page.locator('#report .serp img')).toHaveAttribute('src', /^data:image\//);
+    });
   }
 
   // The groups of the sections on show, in reading order, each with the heading its entry jumps to.
@@ -473,6 +497,14 @@ test.describe('Report section index (#2770)', () => {
     return groups;
   });
   const indexEntries = (page) => page.locator('#report-index a').evaluateAll((links) => links.map((a) => ({ key: a.dataset.indexGroup, href: a.getAttribute('href'), names: a.title.split(' · ') })));
+
+  // On a phone a heading the index jumps to lands below the solid bar that holds Close (#2968).
+  const landsBelowBar = (page, name) => page.evaluate((title) => {
+    const dash = document.getElementById('dash-overlay');
+    const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === title).getBoundingClientRect().top;
+    const bar = parseFloat(getComputedStyle(dash, '::before').height);
+    return dash.classList.contains('bar-on') && bar >= document.getElementById('dash-close').getBoundingClientRect().bottom && top >= bar && top < 200;
+  }, name);
 
   test('the sample report groups the sections it shows into a short index, and an entry takes focus to the first heading of its group below the toolbar', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -502,6 +534,24 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report-index')).toBeHidden();
   });
 
+  test('Back to top right after a jump is not pulled back to the heading on a busy page (#2888)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openSample(page);
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await page.waitForFunction(() => {
+      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
+      return top >= document.querySelector('#dash-overlay .report-toolbar').getBoundingClientRect().bottom && top < 200;
+    }, null, { polling: 'raf' });
+    await page.evaluate(() => {
+      document.getElementById('dash-overlay').addEventListener('scroll', () => {
+        const end = performance.now() + 200;
+        while (performance.now() < end) { /* a long task between scroll frames, as on a loaded CI worker */ }
+      }, { once: true });
+      document.getElementById('report-top').click();
+    });
+    await expect.poll(() => page.locator('#dash-overlay').evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
   test('collapsed sections open when their group is chosen', async ({ page }) => {
     await openSample(page);
     await page.locator('#fold-all').click();
@@ -513,7 +563,7 @@ test.describe('Report section index (#2770)', () => {
     await expect(page.locator('#report h2', { hasText: 'Health score' }).locator('.fold-toggle')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below Close', async ({ page }) => {
+  test('on a phone the index scrolls sideways, its entries and filters are tappable, and a heading lands below the Close bar', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openSample(page);
     const list = await page.locator('#report-index-list').evaluate((el) => ({ rows: new Set([...el.children].map((li) => li.offsetTop)).size, scrolls: el.scrollWidth > el.clientWidth }));
@@ -524,11 +574,172 @@ test.describe('Report section index (#2770)', () => {
 
     await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
     await expect(page.locator('#report h2', { hasText: 'Security and email' }).locator('.fold-toggle')).toBeFocused();
-    await expect.poll(() => page.evaluate(() => {
-      const top = [...document.querySelectorAll('#report h2')].find((h) => h.textContent.trim() === 'Security and email').getBoundingClientRect().top;
-      return top >= document.getElementById('dash-close').getBoundingClientRect().bottom && top < 200;
-    })).toBe(true);
+    await expect.poll(() => landsBelowBar(page, 'Security and email')).toBe(true);
     await expect(page.locator('#report-top')).toBeInViewport();
+  });
+
+  test('the heading still lands below the Close bar when the report above it grows during the scroll on a busy page (#2938)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.evaluate(() => {
+      const dash = document.getElementById('dash-overlay');
+      dash.addEventListener('scroll', () => {
+        const grow = document.createElement('div');
+        grow.style.height = '1200px';
+        document.getElementById('site-graph').prepend(grow);
+        setTimeout(() => { const until = performance.now() + 300; while (performance.now() < until); });
+      }, { once: true, passive: true });
+    });
+    await page.locator('#report-index a', { hasText: 'Checks and fixes' }).click();
+    await expect.poll(() => landsBelowBar(page, 'Security and email')).toBe(true);
+  });
+
+  for (const [lang, close] of Object.entries({ en: 'Close', es: 'Cerrar', pt: 'Fechar', de: 'Schließen', fr: 'Fermer', it: 'Chiudi' })) {
+    test(`on a ${lang} phone the pinned Close clears the report title and its eyebrow at 320, 360 and 390px (#2940)`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 844 });
+      await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      await expect(page.getByRole('button', { name: close, exact: true })).toHaveAttribute('id', 'dash-close');
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await expect.poll(() => page.evaluate(() => document.fonts.ready.then(() => {
+          const close = document.getElementById('dash-close').getBoundingClientRect();
+          return ['#dash-title', '.report-brand .eyebrow'].filter((sel) => {
+            const box = document.querySelector(sel).getBoundingClientRect();
+            return box.left < close.right && close.left < box.right && box.top < close.bottom && close.top < box.bottom;
+          });
+        })), `${lang} at ${width}px`).toEqual([]);
+      }
+    });
+  }
+
+  // Text under the phone's solid bar, or under the sticky toolbar on wider screens, is hidden by it; text anywhere else
+  // must stay clear of Close and of Back to top (#2968).
+  const textUnderButtons = (page) => page.evaluate(() => {
+    const dash = document.getElementById('dash-overlay');
+    const modal = dash.querySelector('.dash-modal');
+    const toolbar = modal.querySelector('.report-toolbar');
+    const shown = (el) => el && !el.hidden && el.getClientRects().length ? el.getBoundingClientRect() : null;
+    const buttons = { close: shown(document.getElementById('dash-close')), top: shown(document.getElementById('report-top')) };
+    const bar = getComputedStyle(dash, '::before');
+    const sticky = getComputedStyle(toolbar).position === 'sticky' ? toolbar.getBoundingClientRect().bottom : 0;
+    const barBottom = bar.content === 'none' ? sticky : dash.classList.contains('bar-on') ? parseFloat(bar.height) : 0;
+    const hits = [];
+    const walker = document.createTreeWalker(modal, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const el = node.parentElement;
+      if (!node.textContent.trim() || el.closest('#dash-close, #report-top') || !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      let clip = { left: 0, top: el.closest('.report-toolbar') ? 0 : barBottom, right: innerWidth, bottom: innerHeight };
+      for (let up = el; up && up !== modal; up = up.parentElement) {
+        const style = getComputedStyle(up);
+        if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
+        const box = up.getBoundingClientRect();
+        clip = { left: Math.max(clip.left, box.left), top: Math.max(clip.top, box.top), right: Math.min(clip.right, box.right), bottom: Math.min(clip.bottom, box.bottom) };
+      }
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const line of range.getClientRects()) {
+        const seen = { left: Math.max(line.left, clip.left), top: Math.max(line.top, clip.top), right: Math.min(line.right, clip.right), bottom: Math.min(line.bottom, clip.bottom) };
+        if (seen.right - seen.left < 1 || seen.bottom - seen.top < 1) continue;
+        for (const [name, b] of Object.entries(buttons)) {
+          if (b && seen.left < b.right && b.left < seen.right && seen.top < b.bottom && b.top < seen.bottom) hits.push(name + ': ' + node.textContent.trim().slice(0, 40));
+        }
+      }
+    }
+    return hits;
+  });
+
+  for (const [lang, backTop] of Object.entries({ en: 'Back to top', es: 'Volver arriba', pt: 'Voltar ao topo', de: 'Nach oben', fr: 'Retour en haut', it: 'Torna su' })) {
+    test(`on a ${lang} phone no report text sits under Close or Back to top while scrolling at 320, 360 and 390px (#2968)`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 844 });
+      await openSample(page, lang === 'en' ? '/qa-review.html' : '/qa-review-' + lang + '.html');
+      const dash = page.locator('#dash-overlay');
+      for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.evaluate(() => document.fonts.ready);
+        const end = await dash.evaluate((el) => el.scrollHeight - el.clientHeight);
+        for (const at of [0, 30, 120, 600, 1500, 0.25, 0.5, 0.75, end - 300, end]) {
+          const top = at < 1 && at > 0 ? Math.round(end * at) : at;
+          await dash.evaluate((el, y) => el.scrollTo(0, y), top);
+          await expect.poll(() => textUnderButtons(page), `${lang} at ${width}px, scrolled to ${top}`).toEqual([]);
+        }
+        await expect(dash).toHaveClass(/\bbar-on\b/);
+        const back = page.getByRole('button', { name: backTop, exact: true });
+        await expect(back).toHaveAttribute('title', backTop);
+        const box = await back.boundingBox();
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        expect(box.x + box.width).toBeLessThanOrEqual(width);
+      }
+      await dash.evaluate((el) => el.scrollTo(0, 0));
+      await expect(dash).not.toHaveClass(/\bbar-on\b/);
+    });
+  }
+
+  test('on wider screens Back to top is the same round icon and covers no report text at 1024 and 1440px (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await openSample(page);
+    const dash = page.locator('#dash-overlay');
+    for (const width of [1024, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      const end = await dash.evaluate((el) => el.scrollHeight - el.clientHeight);
+      for (const top of [600, 1500, Math.round(end / 3), Math.round(end * 2 / 3), end]) {
+        await dash.evaluate((el, y) => el.scrollTo(0, y), top);
+        await expect.poll(() => textUnderButtons(page), `${width}px, scrolled to ${top}`).toEqual([]);
+      }
+      await expect(dash).not.toHaveClass(/\bbar-on\b/);
+      const box = await page.getByRole('button', { name: 'Back to top', exact: true }).boundingBox();
+      expect(box).toMatchObject({ width: 44, height: 44 });
+    }
+  });
+
+  test('on a phone the cover hostname fits its card and breaks only after a dot at 320, 360 and 390px (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await openSample(page, '/qa-review-es.html');
+    for (const width of [320, 360, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      const cover = await page.locator('#report-cover h2').evaluate((h2) => document.fonts.ready.then(() => ({
+        text: h2.textContent,
+        fits: h2.scrollWidth <= h2.clientWidth,
+        pieces: [...h2.childNodes].filter((node) => node.nodeType === 3).map((node) => {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          return range.getClientRects().length;
+        })
+      })));
+      expect(cover.text).toBe('automationexercise.com');
+      expect(cover, `${width}px`).toEqual({ text: 'automationexercise.com', fits: true, pieces: cover.pieces.map(() => 1) });
+    }
+  });
+
+  test('on a phone the Close bar matches the report sheet in the light and dark looks (#2968)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
+    await expect(page.locator('#dash-overlay')).toHaveClass(/\bbar-on\b/);
+    for (const dark of [false, true]) {
+      await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+      const looks = await page.locator('#dash-overlay').evaluate((el) => {
+        const bar = getComputedStyle(el, '::before');
+        return { bar: bar.backgroundColor, sheet: getComputedStyle(el.querySelector('.dash-modal')).backgroundColor, opacity: bar.opacity, edge: bar.borderBottomStyle };
+      });
+      expect(looks.bar, dark ? 'dark' : 'light').toBe(looks.sheet);
+      expect(looks).toMatchObject({ opacity: '1', edge: 'solid' });
+    }
+  });
+
+  test('the browser pass screenshots keep their space before they load (#2938)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSample(page);
+    const shots = await page.locator('#report .shots img').evaluateAll((imgs) => Promise.all(imgs.map(async (img) => {
+      const box = img.getBoundingClientRect();
+      const reserved = img.getAttribute('width') / img.getAttribute('height');
+      const shot = new Image();
+      shot.src = img.src;
+      await shot.decode();
+      return { set: reserved > 0, ratio: Math.abs(box.width / box.height - reserved) < 0.02 && Math.abs(shot.naturalWidth / shot.naturalHeight - reserved) < 0.02 };
+    })));
+    expect(shots.length).toBe(3);
+    expect(shots).toEqual(shots.map(() => ({ set: true, ratio: true })));
   });
 
   test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
@@ -571,4 +782,89 @@ test.describe('Report section index (#2770)', () => {
       expect(await indexEntries(page)).toEqual(await shownGroups(page));
     }
   });
+
+  test('on the Spanish and Italian pages the sample notice and the cover cases line read in that language (#2935)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const copy = {
+      es: [/^Informe de muestra\. Es la revisión de \S+ del \d+ de \w+ de \d{4}, .* Ciérralo /, 'Estos casos se proponen a partir de un análisis público. Ninguno se ejecutó.'],
+      it: [/^Report di esempio\. È la revisione di \S+ del \d+ \w+ \d{4}, .* Chiudilo /, 'Questi casi sono proposti a partire da un’analisi pubblica. Nessuno è stato eseguito.']
+    };
+    for (const [lang, [notice, statement]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#sample-note')).toHaveText(notice);
+      await expect(page.locator('#report-cover')).toContainText(statement);
+      await expect(page.locator('#report-cover')).not.toContainText('None of them were executed');
+    }
+  });
+
+  test('on the Spanish and Italian pages the case list, signals and log of the sample read in that language (#2937)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const copy = {
+      es: [/^Se identificaron \d+ casos /, /^Las primeras palabras de cada señal /, 'Los botones de automationexercise.com tienen un nombre accesible', 'Abriendo la primera página.'],
+      it: [/^Sono stati individuati \d+ casi /, /^Le prime parole di ogni segnale /, 'I pulsanti di automationexercise.com hanno un nome accessibile', 'Apertura della prima pagina.']
+    };
+    for (const [lang, [note, alarm, firstCase, logLine]] of Object.entries(copy)) {
+      await openSample(page, '/qa-review-' + lang + '.html');
+      await expect(page.locator('#case-note')).toHaveText(note);
+      await expect(page.locator('#alarm-note')).toHaveText(alarm);
+      await expect(page.locator('#cases')).toContainText(firstCase);
+      await expect(page.locator('#report-log')).toContainText(logLine);
+      for (const english of ['cases were identified', 'A later run would', 'Buttons on automationexercise.com']) {
+        await expect(page.locator('#dash-overlay')).not.toContainText(english);
+      }
+    }
+  });
+
+  test('a page whose sample file is missing opens the English sample (#2937)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route('**/assets/qa-review-sample.it.json', (route) => route.fulfill({ status: 404, body: '' }));
+    await openSample(page, '/qa-review-it.html');
+    await expect(page.locator('#cases')).toContainText('Buttons on automationexercise.com have an accessible name');
+    await expect(page.locator('#case-note')).toHaveText(/^Sono stati individuati \d+ casi /);
+  });
+});
+
+function reportCopy(lang) {
+  const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+  require('vm').runInNewContext(require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review-report-copy.js'), 'utf8'), sandbox);
+  return sandbox.window.QAReviewReportCopy;
+}
+
+test.describe('Form errors in the page language (#2837)', () => {
+  const EN = reportCopy('en');
+  for (const lang of ['es', 'pt', 'de', 'fr', 'it']) {
+    test(`the name, page and framework errors, and the server's field errors, read in ${lang}`, async ({ page }) => {
+      const rc = reportCopy(lang);
+      const say = (id) => rc.word('fieldError', id);
+      await prime(page);
+      const store = await signedIn(page);
+      await backend(page, store);
+      const sent = { error: EN.word('fieldError', 'mailDead'), fields: [{ field: 'email', message: EN.word('fieldError', 'mailDead') }, { field: 'url', message: EN.word('fieldError', 'urlPrivate') }] };
+      await page.route('http://127.0.0.1:8768/review', (route) => {
+        const cors = { 'access-control-allow-origin': route.request().headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': 'content-type' };
+        if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: Object.assign({ 'access-control-allow-methods': 'POST' }, cors) });
+        return route.fulfill({ status: 400, contentType: 'application/json', headers: cors, body: JSON.stringify(sent) });
+      });
+      await page.goto(`/qa-review-${lang}.html`);
+      await expect(page.locator('#sign-in-done')).toBeVisible();
+      await page.locator('#name').fill('1');
+      await page.locator('#url').fill('exa mple.com');
+      await page.evaluate(() => document.querySelectorAll('input[name="fw"]:checked').forEach((box) => { box.checked = false; box.dispatchEvent(new Event('change', { bubbles: true })); }));
+      await page.locator('#review-btn').click();
+      for (const [field, id] of [['name', 'nameNeeded'], ['url', 'urlNeeded'], ['frameworks', 'frameworksNeeded'], ['reason', 'reasonPick']]) {
+        await expect(page.locator('#' + field + '-error')).toHaveText(say(id));
+        await expect(page.locator('#' + field + '-error')).not.toHaveText(EN.word('fieldError', id));
+      }
+      await expect(page.locator('#form-status')).toHaveText(say('nameNeeded'));
+
+      await page.locator('#name').fill('Ana');
+      await page.locator('#url').fill('example.com');
+      await page.locator('#reasons input[value="release"]').check();
+      await page.evaluate(() => { const box = document.querySelector('input[name="fw"]'); box.checked = true; box.dispatchEvent(new Event('change', { bubbles: true })); });
+      await page.locator('#review-btn').click();
+      await expect(page.locator('#email-error')).toHaveText(say('mailDead'));
+      await expect(page.locator('#url-error')).toHaveText(say('urlPrivate'));
+      await expect(page.locator('#form-status')).toHaveText(say('mailDead'));
+    });
+  }
 });

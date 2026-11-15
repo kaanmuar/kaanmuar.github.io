@@ -6,7 +6,8 @@
 //            (and, hourly, scripts/fix-review-failures-sync.js)
 //   tool     postToolUse: hands the agent the context pack once per turn
 //   stop     stop: writes the handoff once the chat passes half its context
-//   pack     (background) builds the pack: local rule hints, referenced tickets, the Cloudflare brain
+//   pack     (background) builds the pack: local rule hints, referenced tickets, the Cloudflare brain, and open PRs
+//            or other worktrees on the same files (scripts/open-work.js, #2969)
 //   plan     `node .cursor/hooks/preflight.js plan "<prompt>"` prints the pack, for automations
 // Every failure fails open: the prompt goes through untouched.
 const fs = require("fs");
@@ -202,9 +203,12 @@ function onPrompt(input) {
   out({ continue: true });
 }
 
-async function buildPack(prompt, model) {
+async function buildPack(prompt, model, chat) {
   const kind = classify(prompt);
   const lines = [`Pre-flight (#1970): this is ${ADVICE[kind]}`];
+  const work = kind === "question" ? null : (() => { try { return require(path.join(ROOT, "scripts", "open-work.js")); } catch { return null; } })();
+  const warm = work ? work.withDeadline(Promise.all([work.warm(), work.trackedFiles()]), 8000, []) : null;
+  let likely = [];
   const budget = budgetLine();
   if (budget) lines.push(budget);
   const rules = RULE_HINTS.filter(([re]) => re.test(prompt)).map(([, r]) => r);
@@ -234,8 +238,21 @@ async function buildPack(prompt, model) {
       if (t) {
         if (t.plan?.length && (kind === "medium" || kind === "large")) lines.push("Draft plan from a cheap model (a starting point; the repo rules win):", ...t.plan.map((x, i) => `${i + 1}. ${x}`));
         if (t.files?.length) lines.push("Likely files, from the repo index (check these before searching wider):", ...t.files.map((f) => `- ${f.ref}${f.why ? `: ${f.why}` : ""}`));
+        likely = (t.files || []).map((f) => String(f.ref).replace(/#.*$/, ""));
         if (t.tickets?.length) lines.push("Related past tickets:", ...t.tickets.map((x) => `- #${x.ref} ${x.title}`));
         for (const r of t.rules || []) if (!rules.includes(r)) rules.push(r);
+      }
+    } catch {}
+  }
+  // Open PRs and other chats' worktrees on the same files (#2969); cached, time-boxed, silent on any failure.
+  if (work) {
+    try {
+      const [, tracked] = await warm;
+      if (tracked?.size) {
+        const files = [...new Set([...work.resolveFiles(prompt, tracked), ...likely.filter((f) => tracked.has(f))])].slice(0, 12);
+        const found = files.length ? await work.withDeadline(work.openWork(files, { chat, tickets: refs }), 4000, {}) : {};
+        const text = work.formatWork(found);
+        if (text) lines.push(text);
       }
     } catch {}
   }
@@ -245,7 +262,7 @@ async function buildPack(prompt, model) {
 
 async function onPack(id, generation, model) {
   const prompt = fs.readFileSync(file(`${id}.prompt`), "utf8");
-  const pack = await buildPack(prompt, model);
+  const pack = await buildPack(prompt, model, id);
   const s = convState(id);
   if (s.generation && generation && s.generation !== generation) return;
   s.pack = pack; saveConv(id, s);
@@ -287,7 +304,10 @@ function log(row) {
 async function main() {
   const [mode, ...args] = process.argv.slice(2);
   if (mode === "pack") return onPack(...args);
-  if (mode === "plan") return console.log(await buildPack(args.join(" ") || fs.readFileSync(0, "utf8"), process.env.PREFLIGHT_MODEL || ""));
+  if (mode === "plan") {
+    const pack = await buildPack(args.join(" ") || fs.readFileSync(0, "utf8"), process.env.PREFLIGHT_MODEL || "", process.env.CURSOR_CONVERSATION_ID);
+    return process.stdout.write(`${pack}\n`, () => process.exit(0));
+  }
   const raw = fs.readFileSync(0, "utf8");
   const input = raw ? JSON.parse(raw) : {};
   if (mode === "prompt") return onPrompt(input);

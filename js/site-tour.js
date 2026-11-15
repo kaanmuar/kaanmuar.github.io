@@ -195,6 +195,19 @@
     tip.style.bottom = Math.max(12, Math.round(window.innerHeight - (view.top + view.height) + 12)) + 'px';
   }
 
+  // The bottom of a sticky or fixed top bar, which would cover a target scrolled to the top.
+  function topCover(el) {
+    let bottom = 0;
+    document.querySelectorAll('body > header, .topbar').forEach((bar) => {
+      if (bar.contains(el)) return;
+      const pos = getComputedStyle(bar).position;
+      if (pos !== 'fixed' && pos !== 'sticky') return;
+      const rect = bar.getBoundingClientRect();
+      if (rect.top <= 1 && rect.bottom > bottom) bottom = rect.bottom;
+    });
+    return bottom;
+  }
+
   function clearOfTip(el) {
     const tip = $('site-tour-tooltip');
     if (!el || !tip || window.innerWidth >= 768) return;
@@ -204,7 +217,7 @@
     const view = viewportBox();
     const pad = 28;
     if (rect.width < 2 || tipRect.height < 2) return;
-    const clearTop = view.top + 12;
+    const clearTop = Math.max(view.top, topCover(el)) + 12;
     const clearBottom = tipRect.top - pad;
     let shift = 0;
     if (rect.bottom > clearBottom) shift = rect.bottom - clearBottom;
@@ -266,15 +279,25 @@
     clearHit();
     if (typeof step.prepare === 'function') step.prepare();
     const el = step.selector ? document.querySelector(step.selector) : null;
-    for (let fold = el && el.closest('details:not([open])'); fold; fold = fold.parentElement && fold.parentElement.closest('details:not([open])')) fold.open = true;
+    let unfolded = false;
+    for (let fold = el && el.closest('details:not([open])'); fold; fold = fold.parentElement && fold.parentElement.closest('details:not([open])')) {
+      fold.open = true;
+      unfolded = true;
+    }
     blurFields();
     pinTip();
     if (el) {
       hit = el;
       el.classList.add('site-tour-hit');
       const narrow = window.innerWidth < 768;
-      el.scrollIntoView({ block: narrow ? 'start' : 'center', inline: 'nearest', behavior: narrow ? 'auto' : 'smooth' });
-      if (narrow) setTimeout(() => clearOfTip(el), 420);
+      const reveal = () => {
+        if (hit !== el) return;
+        el.scrollIntoView({ block: narrow ? 'start' : 'center', inline: 'nearest', behavior: narrow ? 'auto' : 'smooth' });
+        if (narrow) setTimeout(() => clearOfTip(el), 420);
+      };
+      // A details opened just now grows over its CSS transition, so a scroll aimed at once lands short of the target.
+      if (unfolded) setTimeout(reveal, 460);
+      else reveal();
     }
     const ms = step.demoMs || 1400;
     requestAnimationFrame(() => {

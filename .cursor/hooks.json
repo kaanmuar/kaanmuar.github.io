@@ -2,15 +2,8 @@
   "version": 1,
   "hooks": {
     "sessionStart": [{ "command": "node .cursor/hooks/preflight.js session", "timeout": 5 }],
-    "beforeSubmitPrompt": [
-      { "command": "node .cursor/hooks/preflight.js prompt", "timeout": 20 },
-      { "command": "node .cursor/hooks/jarvis-process.js beforeSubmitPrompt", "timeout": 3 }
-    ],
-    "afterAgentResponse": [{ "command": "node .cursor/hooks/jarvis-process.js afterAgentResponse", "timeout": 3 }],
+    "beforeSubmitPrompt": [{ "command": "node .cursor/hooks/preflight.js prompt", "timeout": 20 }],
     "postToolUse": [{ "command": "node .cursor/hooks/preflight.js tool", "timeout": 3 }],
-    "stop": [
-      { "command": "node .cursor/hooks/preflight.js stop", "timeout": 5 },
-      { "command": "node .cursor/hooks/jarvis-process.js stop", "timeout": 3 }
-    ]
+    "stop": [{ "command": "node .cursor/hooks/preflight.js stop", "timeout": 5 }]
   }
 }

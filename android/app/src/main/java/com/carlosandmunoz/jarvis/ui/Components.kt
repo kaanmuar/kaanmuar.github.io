@@ -123,7 +123,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val turn by animateFloatAsState(if (folded) -90f else 0f, tween(200), label = "fold")
     val dense = LocalDense.current
     val tab = LocalLayoutTab.current
-    if (tab != null) Arrange.titles["$tab/$id"] = title
+    if (tab != null) Arrange.seen(tab, id, title)
     Column(
         Modifier.then(PanelIdElement(id)).then(modifier)
             .fillMaxWidth()
@@ -446,10 +446,10 @@ fun Dot(color: Color) = GlowDot(color, pulse = color == J.pink)
  */
 @Composable
 fun TopList(title: String, rows: List<Pair<String, Double>>, limit: Int = 8,
-            yLabel: String? = null, unit: String? = null, legend: String? = null, open: String? = null, onRow: ((String) -> Unit)? = null,
+            yLabel: String? = null, unit: String? = null, legend: String? = null, open: String? = null, onRow: ((String) -> Unit)? = null, id: String,
             footer: @Composable ColumnScope.() -> Unit = {}, format: (Double) -> String = { fmt(it) }) {
     if (rows.isEmpty()) return
-    Panel(title) {
+    Panel(title, id = id) {
         val max = rows.maxOf { it.second }.coerceAtLeast(1.0)
         if (yLabel != null || unit != null) Row {
             Text((yLabel ?: "").uppercase(), color = J.muted, fontFamily = Mono, fontSize = 10.sp, modifier = Modifier.weight(1f))
@@ -500,11 +500,11 @@ fun StatusRow(level: String?, title: String, detail: String? = null, url: String
 
 /** Weekday × hour grid of visits. */
 @Composable
-fun Heatmap(grid: List<List<Double>>, peak: String?, title: String = "When people come") {
+fun Heatmap(grid: List<List<Double>>, peak: String?, title: String = "When people come", id: String) {
     if (grid.isEmpty()) return
     val max = grid.flatten().maxOrNull()?.coerceAtLeast(1.0) ?: 1.0
     val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    Panel(title) {
+    Panel(title, id = id) {
         grid.forEachIndexed { d, row ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(days.getOrElse(d) { "" }, fontFamily = Mono, fontSize = 9.sp, color = J.dim, modifier = Modifier.width(30.dp))

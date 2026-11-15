@@ -3,7 +3,7 @@ description: Pre-flight gatekeeper pack and token-saving habits
 alwaysApply: true
 ---
 # Pre-flight (#1970)
-`.cursor/hooks/preflight.js` runs before every turn. It answers short scripted requests itself, writes a handoff once a chat passes half its context, and hands you a pack after your first tool call: the task size, the rules that apply, likely files from the repo index, and related tickets. Read the named rules, and check the named files before searching wider. Treat its draft plan as a starting point: the rules here win. Automations run `node .cursor/hooks/preflight.js plan "<prompt>"` first.
+`.cursor/hooks/preflight.js` runs before every turn. It answers short scripted requests itself, writes a handoff once a chat passes half its context, and hands you a pack after your first tool call: the task size, the rules that apply, likely files from the repo index, related tickets, and open PRs or other chats' worktrees on the same files. Read the named rules, and check the named files before searching wider. If "Open work on the same files" names a PR or worktree on what you are about to change, read it first and build on it, or tell Carlos, instead of rewriting the same code in parallel (#2969). Treat its draft plan as a starting point: the rules here win. Automations run `node .cursor/hooks/preflight.js plan "<prompt>"` first.
 
 ## Save tokens
 Every tool call re-reads the whole chat; cache reads are most of the bill.

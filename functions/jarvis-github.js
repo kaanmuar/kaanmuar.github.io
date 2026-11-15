@@ -119,8 +119,11 @@ function client(fetchImpl, token) {
   const pages = async (path, key, max, stop) => {
     const out = [];
     for (let page = 1; page <= max; page++) {
-      const data = await get(path + (path.includes("?") ? "&" : "?") + "page=" + page);
-      const rows = (key ? data[key] : data) || [];
+      const read = async () => { const data = await get(path + (path.includes("?") ? "&" : "?") + "page=" + page); return (key ? data[key] : data) || []; };
+      // An unreadable 200 body arrives as {} (call's json fallback): read the page once more.
+      let rows = await read();
+      if (!Array.isArray(rows)) rows = await read();
+      if (!Array.isArray(rows)) throw new Error("GitHub sent no list for " + path.split("?")[0] + " (page " + page + "); try again.");
       out.push(...rows);
       if (rows.length < 100 || (stop && stop(rows))) break;
     }
@@ -256,7 +259,8 @@ const diagOf = (d) => (d ? { cause: d.cause || "", category: d.category || "", f
 
 // --- parts --------------------------------------------------------------------------------------------------------
 
-const prOf = (run) => (run.pull_requests && run.pull_requests[0] && run.pull_requests[0].number) || null;
+// A pull_request run GitHub lists no pull_requests for (CodeQL's dynamic one) still names its PR in refs/pull/<n>/head.
+const prOf = (run) => (run.pull_requests && run.pull_requests[0] && run.pull_requests[0].number) || Number((/^refs\/pull\/(\d+)\//.exec(run.head_branch || "") || [])[1]) || null;
 
 // A workflow's failed runs on GitHub: its file's page when it has one, else the Actions search by name.
 function failuresUrl(name, path) {

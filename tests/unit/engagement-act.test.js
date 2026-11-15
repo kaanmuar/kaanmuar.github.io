@@ -229,6 +229,30 @@ test("approving through Jarvis posts the reply and says where; a dry run still p
   await db.collection("engagement_posts").doc("x_aaaaaaaaaaaaaaaaaaaa").set({ network: "x", id: "1", seenAt: ago(1), author: {}, actions: { reply: { status: "waiting", draft: "Short and useful.", expiresAt: new Date(NOW + HOUR).toISOString() } } });
   const x = await J.decide(deps(db, net), { key: "x_aaaaaaaaaaaaaaaaaaaa", decision: "approve" }, "carlos");
   assert.match(x.message, /Mac's browser agent posts it on X on its next run/);
+  assert.equal(x.status, "approved");
+  await db.collection("engagement_posts").doc("linkedin_bbbbbbbbbbbbbbbbbbbb").set({
+    network: "linkedin", id: "https://linkedin.com/school/upb", url: "https://linkedin.com/school/upb", seenAt: ago(1),
+    author: { handle: "upb" }, campaign: "report-reply",
+    report: { match: "profile", host: "upb.edu.co", profile: "https://linkedin.com/school/upb", latest: true },
+    actions: { reply: { status: "waiting", draft: "upb, su revisión está lista.", expiresAt: new Date(NOW + HOUR).toISOString() } }
+  });
+  const profile = await J.decide(deps(db, net), { key: "linkedin_bbbbbbbbbbbbbbbbbbbb", decision: "approve" }, "carlos");
+  assert.equal(profile.status, "approved");
+  assert.notEqual(profile.status, "copy");
+  assert.match(profile.message, /under their latest post/);
+  assert.equal(db.data.get("engagement_posts/linkedin_bbbbbbbbbbbbbbbbbbbb").actions.reply.status, "approved");
+});
+
+test("old clipboard copies are promoted to approved so the next scout or Mac run posts them (#3461)", async () => {
+  const db = fakeDb();
+  await db.collection("engagement_posts").doc("x_cccccccccccccccccccc").set({
+    network: "x", id: "https://x.com/UPB", url: "https://x.com/UPB", campaign: "report-reply",
+    report: { match: "profile", manual: true, profile: "https://x.com/UPB" },
+    actions: { reply: { status: "copy", draft: "Hola UPB" } }
+  });
+  assert.equal(await J.promoteCopies(db, NOW), 1);
+  assert.equal(db.data.get("engagement_posts/x_cccccccccccccccccccc").actions.reply.status, "approved");
+  assert.equal(await J.promoteCopies(db, NOW), 0);
 });
 
 // --- Conversations (#2421): never answer twice, and pick up comments under our replies -------------------------

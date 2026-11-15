@@ -5,7 +5,15 @@
    few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
-import * as Proc from "./admin-jarvis-processes.js?v=2548";
+import * as Proc from "./admin-jarvis-processes.js?v=2890";
+import * as Geo from "./admin-jarvis-geo.js?v=3282";
+import * as GeoFlow from "./admin-jarvis-geo-flow.js?v=3114";
+import * as GeoHeat from "./admin-jarvis-geo-heat.js?v=3112";
+import * as GeoTime from "./admin-jarvis-geo-time.js?v=3282";
+import * as GeoGa4 from "./admin-jarvis-geo-ga4.js?v=3282";
+import * as GeoActions from "./admin-jarvis-geo-actions.js?v=3115";
+import * as GeoClicks from "./admin-jarvis-geo-clicks.js?v=3281";
+import * as GeoCost from "./admin-jarvis-geo-cost.js?v=3283";
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -14,7 +22,7 @@ const LIVE_MS = 60 * 1000;
 const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
-const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'mail-codes'];
+const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'rescue', 'fixes', 'checks', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
@@ -436,7 +444,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const S = {
         product: 'overview', range: '30', mail: 'real', live: true, mounted: false, loading: false,
         products: null, outreach: null, feed: [], socialHeat: null, share: blankShare(), mkForm: {}, mkDrafts: {}, mkWeek: '', mkDone: false, egDrafts: {}, egAll: false, egOnly: 'all', reports: [],
-        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0,
+        external: {}, pending: {}, summaries: {}, settings: null, goals: [], brief: [], briefHidden: [], briefState: null, marks: [], showHidden: false, sheet: null, proposals: null, ai: '', aiAt: 0, updatedAt: 0, externalAt: 0, kept: null,
         panels: new Map(), voice: null, listening: false, timers: [], empties: [], pick: 'review', ghRows: {}, ghPolls: new Set(), layoutEdit: null
     };
     readHash();
@@ -562,13 +570,65 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     // --- data -------------------------------------------------------------------------------------------------
 
-    // One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app shares.
-    async function loadSnapshot() {
+    // The last snapshot per range, kept in this browser so the page opens at once (#2510). Sign-in codes are not
+    // kept, and neither is the mail version, so every fetch brings the mail section back.
+    const SNAP_KEY = 'jv-snapshot-';
+    function savedSnapshot(range) {
+        if (S.kept && S.kept.range === range) return S.kept.snap;
+        try {
+            const kept = JSON.parse(localStorage.getItem(SNAP_KEY + range) || 'null');
+            return kept && auth.currentUser && kept.uid === auth.currentUser.uid && kept.snap && kept.snap.products ? kept.snap : null;
+        } catch (error) { return null; }
+    }
+    function keepSnapshot(range, snap) {
+        S.kept = { range, snap };
+        const versions = Object.assign({}, snap.versions);
+        delete versions.mail;
+        const stored = Object.assign({}, snap, { versions });
+        delete stored.mailCodes;
+        try { localStorage.setItem(SNAP_KEY + range, JSON.stringify({ uid: auth.currentUser && auth.currentUser.uid, snap: stored })); } catch (error) {
+            try { localStorage.removeItem(SNAP_KEY + range); } catch (e) { /* private mode: this visit only */ }
+        }
+    }
+    function forgetSnapshots() {
+        S.kept = null;
+        try { Object.keys(localStorage).filter((k) => k.startsWith(SNAP_KEY)).forEach((k) => localStorage.removeItem(k)); } catch (error) { /* nothing kept */ }
+    }
+
+    // Opens on the snapshot this browser kept for the range, with its age, before the first fetch answers.
+    function openSaved() {
+        const snap = savedSnapshot(S.range);
+        if (!snap) return false;
+        useSnapshot(snap);
+        compute();
+        render();
+        return true;
+    }
+
+    /* One snapshot answer (#2102): the products, the feed and the external sources, from the server's cache the app
+       shares. With a kept copy it sends its versions as `since` and applies only the sections that changed (#2510);
+       `only` limits them to the ones a push named. An answer that cannot be applied means a full fetch. */
+    async function loadSnapshot(only) {
         SNAPSHOT_OPS.forEach((op) => { if (!S.external[op]) S.pending[op] = true; });
-        let snap;
+        const range = S.range;
+        const kept = savedSnapshot(range);
+        const since = kept && C.sectionSince(kept.versions);
         // With this browser's push endpoint the server knows the page is open and sends it section pushes (#2509).
-        try { snap = await call('snapshot', S.pushEndpoint ? { push: S.pushEndpoint } : undefined); } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
+        const push = S.pushEndpoint ? { push: S.pushEndpoint } : {};
+        let snap;
+        try {
+            const answer = await call('snapshot', Object.assign({}, push, since ? { since } : {}, since && only && only.length ? { only } : {}));
+            snap = answer && answer.delta ? C.applySections(kept, answer) : answer;
+            if (!snap && answer && answer.ok !== false) snap = await call('snapshot', push);
+            else if (!snap) snap = answer;
+        } finally { SNAPSHOT_OPS.forEach((op) => { S.pending[op] = false; }); }
         if (!snap || snap.ok === false || !snap.products) throw new Error((snap && snap.error) || 'no snapshot');
+        if (S.range !== range) return;
+        keepSnapshot(range, snap);
+        useSnapshot(snap);
+    }
+
+    function useSnapshot(snap) {
         S.versions = snap.versions || null;
         const date = (v) => (v ? new Date(v) : null);
         const w = snap.window || {};
@@ -595,32 +655,34 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     // Live processes (#2548): a processes push fetches the one-read processes op and redraws only that panel.
     async function loadProcesses() {
         const out = await call('processes').catch(() => null);
-        if (!out || out.ok === false || !out.processes) return;
+        if (!out || out.ok === false || !out.processes) return false;
         const before = Proc.active(S.processes).length;
         S.processes = out.processes;
         S.processesAt = Date.now();
         if (S.versions && out.version) S.versions = Object.assign({}, S.versions, { processes: out.version });
+        if (S.kept) keepSnapshot(S.kept.range, Object.assign({}, S.kept.snap, { processes: out.processes }, out.version ? { versions: Object.assign({}, S.kept.snap.versions, { processes: out.version }) } : {}));
         if (!before !== !Proc.active(S.processes).length) render();
         else paintProcesses();
+        return true;
     }
 
     function paintProcesses() {
-        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact' }); });
+        root.querySelectorAll('[data-processes]').forEach((el) => { el.innerHTML = Proc.processesHtml(S.processes, Date.now(), esc, { compact: el.dataset.processes === 'compact', all: S.processesAll }); });
     }
 
     function processesPanel(compact) {
-        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact });
+        const body = Proc.processesHtml(S.processes, Date.now(), esc, { compact, all: S.processesAll });
         if (compact && !body) return '';
         return panel(compact ? 'overview-processes' : 'systems-processes', 'Processes', `<div data-processes="${compact ? 'compact' : 'full'}">${body}</div>`,
             { wide: true, keep: true, data: (S.processes && S.processes.rows) || [] });
     }
 
-    // Live: a newer snapshot once the server's has aged out; the pulse counts the feed lines it adds.
-    async function loadNewer() {
+    // Live: a newer snapshot once the server's has aged out, or the sections a push named; the pulse counts the feed lines it adds.
+    async function loadNewer(only) {
         if (S.loading) return;
         const newest = (S.feed[0] || {}).at || '';
         S.loading = true;
-        try { await loadSnapshot(); } catch (error) { S.loading = false; return; }
+        try { await loadSnapshot(only); } catch (error) { S.loading = false; return; }
         S.loading = false;
         compute();
         render();
@@ -748,15 +810,19 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 platform: e.platform && e.platform.ok ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
                 outreach: e.outreach && e.outreach.ok ? {
                     pipeline: e.outreach.pipeline && e.outreach.pipeline.ok ? { queued: e.outreach.pipeline.queued, swept: e.outreach.pipeline.swept, reviews: e.outreach.pipeline.reviews, thisWeek: e.outreach.pipeline.thisWeek, withLiveReport: e.outreach.pipeline.withLiveReport, bySegment: e.outreach.pipeline.bySegment } : null,
+                    companies: e.outreach.companies && e.outreach.companies.ok ? { total: e.outreach.companies.total, bySegment: e.outreach.companies.rows.slice(0, 15) } : null,
                     instantly: e.outreach.instantly && e.outreach.instantly.ok ? { campaigns: e.outreach.instantly.status, sent: e.outreach.instantly.sent, rates: e.outreach.instantly.rates, replies: e.outreach.instantly.replies, interested: e.outreach.instantly.interested, meetings: e.outreach.instantly.meetings, warmup: (e.outreach.instantly.accounts || []).map((a) => a.score) } : null,
                     plan: e.outreach.plan && e.outreach.plan.ok !== false ? { day: e.outreach.plan.day, length: e.outreach.plan.length, phase: e.outreach.plan.phase, next: e.outreach.plan.next, weekly: e.outreach.plan.weekly, targets: e.outreach.plan.targets } : null,
                     visits: outreachSeen().total,
                     links: e.outreach.links && e.outreach.links.ok ? { live: e.outreach.links.live, visits: e.outreach.links.visits, reviews: e.outreach.links.reviews, paid: e.outreach.links.paid, usd: e.outreach.links.usd, byCampaign: e.outreach.links.byCampaign, topProspects: (e.outreach.links.prospects || []).slice(0, 10), reportReplies: e.outreach.links.social ? { visits: e.outreach.links.social.visits, reviews: e.outreach.links.social.reviews, paid: e.outreach.links.social.paid, usd: e.outreach.links.social.usd, networks: e.outreach.links.social.networks, topPosts: e.outreach.links.social.posts.slice(0, 10) } : null } : null
                 } : null,
                 targets: e.targets && e.targets.ok ? { day: e.targets.day, length: e.targets.length, targets: (e.targets.targets || []).map((t) => ({ label: t.label, actual: t.actual, target: t.target, status: t.status, perWeek: t.perWeek, how: t.how })) } : null,
+                mapPlanAndNextActions: GeoActions.askOf(e.geo),
+                mapCostAndReturn: GeoCost.askOf(e.geo),
                 engagement: e.engagement && e.engagement.ok && e.engagement.report ? { paused: e.engagement.paused, live: e.engagement.live, accounts: (e.engagement.accounts || []).map((a) => ({ network: a.network, connected: a.connected, account: a.account, error: a.error })), totals: e.engagement.report.totals, approvalRate: e.engagement.report.approvalRate, topics: e.engagement.report.topics, tags: e.engagement.report.tags.slice(0, 10), networks: e.engagement.report.networks, waiting: e.engagement.waiting.length, topPosts: e.engagement.posts.slice(0, 5).map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`), reportReplies: Object.assign({ waiting: e.engagement.waiting.filter((d) => d.campaign === 'report-reply').length }, e.engagement.report.invites), ownerTags: otAsk(e.engagement.ownerTags) } : null,
                 signedInPeople: e.people && e.people.ok ? e.people.totals : null,
                 googleMapsLocal: e.local && e.local.ok && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+                ...C.reviewOpsAsk(e),
                 waiting: C.connections(e).filter((c) => c.needs.length).map((c) => c.name + ': ' + c.needs.join(' '))
             }
         };
@@ -944,7 +1010,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
-        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a Cursor fix agent',
+        'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix',
         'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
         'owner-tags-approve-verified': 'approve verified owner-tag accounts', 'owner-tags-block': 'block accounts that asked us to stop tagging' };
     // Owner emails that also arrive as Jarvis pushes (#1672): off, they wait for the evening digest.
@@ -1066,6 +1132,73 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             wide: true,
             data: (g.sites || []).map((x) => ({ at: x.at, host: x.host, source: x.source, outreach: x.outreach, profile: x.profile, result: x.worst || 'ok', issues: x.issues.map((i) => i.key).join(' ') })),
             note: `Reviews whose start page looks like a local business are checked against their Google Business Profile (case SEO-05). Only finding keys are kept, never the profile's own data. Counted since ${esc(g.since)}; test runs are left out. ${fmt(t.callsToday || 0)} Places calls today.`
+        });
+    }
+
+    // URL Review > after a failure, fix requests and the newer checks (#3329): the rescue, fixes and checks sources.
+    const RO_STATE = { ok: 'c-fast', quiet: 'c-average', running: 'c-average', off: '', down: 'c-slow' };
+    const roChip = (state, text) => `<span class="jv-chip ${RO_STATE[state] || ''}">${esc(text || state)}</span>`;
+    const hoursLeft = (h) => (h <= 0 ? 'past due' : fmt(h) + ' h left');
+    function rescuePanel(h) {
+        const r = S.external.rescue;
+        if (!r || !r.ok || !r.promises) {
+            const body = h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : waiting('rescue', 'Reading failures, rescues and promises…');
+            return panel('review-failures', 'Failed reviews and rescue', body, { data: h && h.failures ? h.failures.latest : null });
+        }
+        const x = r.rescues, d = r.diagnoses, p = r.promises;
+        const head = stats([
+            { label: 'Failed reviews', value: r.failures.total }, { label: 'Re-runs', value: r.reruns.total }, { label: 'Re-runs sent', value: r.reruns.sent },
+            { label: 'Held on the desk', value: r.reruns.held, alert: r.reruns.held > 0 }, { label: 'Rescued', value: x.rescued }, { label: 'Read by the Mac', value: x.macDone },
+            { label: 'Waiting for the Mac', value: x.macPending, alert: x.macPromised > 0 }, { label: 'AI: Vertex AI', value: d.vertex }, { label: 'AI: AI Studio', value: d.studio }, { label: 'Rule diagnoses', value: d.rules }
+        ]);
+        const promised = stats([
+            { label: 'Promised by email', value: p.made }, { label: 'Open now', value: p.open }, { label: 'Near the deadline', value: p.atRisk, alert: p.atRisk > 0 },
+            { label: `Sent within ${r.deadlineHours} h`, value: p.within48h }, { label: 'Apologies sent', value: p.apologized }, { label: 'Still trying after the apology', value: p.stillTrying || 0 },
+            { label: 'Sent late', value: p.sentLate || 0 }, { label: `Given up after ${r.giveUpDays || 14} days`, value: p.givenUp || 0, alert: (p.givenUp || 0) > 0 }, { label: 'Apology codes sent', value: r.codes.sent }, { label: 'Codes redeemed', value: r.codes.redeemed }
+        ]);
+        const open = table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => esc(o.host)], ['Re-runs', (o) => fmt(o.tries) + ' of ' + r.triesAtHours.length], ['Deadline', (o) => roChip(o.hoursLeft <= 2 ? 'down' : o.hoursLeft <= 8 ? 'quiet' : 'ok', hoursLeft(o.hoursLeft))]], r.openList, 'No promised report is open.');
+        const mac = r.macList.length ? table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => `${esc(o.host)}${o.promised ? ' <span class="jv-chip c-average">promised</span>' : ''}`]], r.macList, '') : '';
+        const body = head + bars(r.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' }) + '<h4 class="jv-sub">Report promises</h4>' + promised + open + (mac ? '<h4 class="jv-sub">Waiting for the Mac</h4>' + mac : '');
+        return panel('review-failures', `Failed reviews and rescue · ${fmt(r.failures.total)}`, body, {
+            wide: true,
+            data: r.openList.map((o) => ({ failedAt: o.failedAt, host: o.host, code: o.code, tries: o.tries, hoursLeft: o.hoursLeft })),
+            note: `A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email, usually within ${r.deadlineHours} hours (re-runs at ${r.triesAtHours.join(', ')} h); past that, an apology with a ${r.apologyPercent}% code, and the rescue keeps trying: a report finished within ${r.giveUpDays || 14} days is sent late, otherwise a last note goes out.`
+        });
+    }
+
+    const FIX_WAYS = [['self', 'Fix it yourself'], ['quote', 'Quote'], ['package', 'Package'], ['call', 'Call']];
+    const FIX_STEPS = [['new', 'New'], ['quoted', 'Quoted'], ['accepted', 'Paid / accepted'], ['in-progress', 'In progress'], ['done', 'Done'], ['re-reviewed', 'Re-reviewed']];
+    function fixesPanel() {
+        const f = S.external.fixes;
+        if (!f || !f.ok || !f.ways) return panel('review-fixes', 'Fix requests', waiting('fixes', 'Reading fix requests…'), { wide: true });
+        const head = stats(FIX_WAYS.map(([k, label]) => ({ label, value: f.ways[k] || 0 })).concat([
+            { label: 'Package revenue (USD)', value: f.revenue.usd }, { label: 'Packages paid', value: f.revenue.count },
+            { label: 'Free re-checks', value: f.rechecks.total }, { label: 'Waiting for work', value: f.waiting.paid, alert: f.waiting.paid > 0 }
+        ]));
+        const pipe = `<ul class="jv-facts">${FIX_STEPS.map(([k, label]) => `<li>${esc(label)}: <b>${fmt(f.pipeline[k] || 0)}</b></li>`).join('')}</ul>`;
+        const paid = table([['Paid', (x) => esc(when(x.paidAt))], ['Site', (x) => esc(x.host)], ['Package', (x) => esc(x.package || 'quote')], ['USD', (x) => fmt(x.priceUsd)], ['Due', (x) => roChip(x.late ? 'down' : 'ok', x.due ? String(x.due).slice(0, 10) : '—')]], f.paidList, 'No paid fix request waits for work.');
+        const quotes = f.quoteList.length ? '<h4 class="jv-sub">Waiting for a reply or a quote</h4>' + table([['Sent', (x) => esc(when(x.createdAt))], ['Site', (x) => esc(x.host)], ['Way', (x) => esc(x.kind)], ['Days', (x) => fmt(x.daysWaiting)]], f.quoteList, '') : '';
+        const rev = f.revenue.byPackage.length ? bars(f.revenue.byPackage, { color: COLORS.green }) : '';
+        return panel('review-fixes', `Fix requests · ${fmt(f.total)}`, head + pipe + rev + '<h4 class="jv-sub">Paid, waiting for work</h4>' + paid + quotes, {
+            wide: true,
+            data: f.paidList.map((x) => ({ paidAt: x.paidAt, host: x.host, package: x.package, priceUsd: x.priceUsd, due: x.due, late: x.late })),
+            note: `From a report a client picks a way: fix it themselves (one free re-check on a paid report), ask for a quote, buy a fixed-price package (PayPal; coupons never apply) or book a call. Marking a fix done runs the free re-review and mails the before/after. Re-reviews in range: ${fmt(f.rereviews.total)} (${fmt(f.rereviews.fixed)} findings fixed). Quotes waiting for payment: ${fmt(f.waiting.quoted)}.`
+        });
+    }
+
+    function checksPanel() {
+        const c = S.external.checks;
+        if (!c || !c.ok || !c.families) return panel('review-checks', 'New checks: hits, quotas and sources', waiting('checks', 'Reading the new checks…'), { wide: true });
+        const t = c.totals;
+        const famDetail = (x) => [x.customerHits ? fmt(x.customerHits) + ' client' : '', x.critical ? fmt(x.critical) + ' high' : '', x.unchecked ? fmt(x.unchecked) + ' not checked' : ''].filter(Boolean).join(' · ');
+        const fam = table([['Check', (x) => esc(x.label)], ['Checked', (x) => fmt(x.checked)], ['Hits', (x) => fmt(x.hits)], ['Of those', (x) => esc(famDetail(x))]], c.families, 'No counted reviews yet.');
+        const quotas = table([['Quota', (x) => esc(x.label)], ['Used', (x) => fmt(x.used) + (x.cap ? ' of ' + fmt(x.cap) : '')], ['%', (x) => (x.pct === null ? '—' : roChip(x.pct >= 100 ? 'down' : x.pct >= 80 ? 'quiet' : 'ok', x.pct + '%'))],
+            ['Split', (x) => (x.sweep !== undefined ? `${fmt(x.customer)} clients · ${fmt(x.sweep)} sweeps (cap ${fmt(x.sweepCap)})` : x.calls !== undefined ? `${fmt(x.calls)} calls` : '')]], c.quotas, '');
+        const src = table([['Source', (x) => esc(x.name)], ['State', (x) => roChip(x.state)], ['Detail', (x) => esc(x.detail || '')], ['When', (x) => esc(x.at ? when(x.at) : '')]], c.sources, '');
+        return panel('review-checks', `New checks: hits, quotas and sources · ${fmt(t.withHits)}`, stats([{ label: 'Reviews in range', value: t.reviews }, { label: 'Counted', value: t.counted }, { label: 'With a hit', value: t.withHits }, { label: 'Wordfence feed', value: c.wordfence.stored ? 'stored' : 'not stored' }]) + fam + quotas + src, {
+            wide: true,
+            data: c.families.map((x) => ({ check: x.label, checked: x.checked, hits: x.hits, customerHits: x.customerHits, critical: x.critical, unchecked: x.unchecked })),
+            note: `Hits are counted from ${esc(c.since)}, when reviews started keeping a small summary of these checks; test runs are left out. A phishing-list or linked-script hit is critical and keeps the site off Live Reports. Web Risk keeps half of each day for client reviews; URL Scanner scans are public on Cloudflare Radar.`
         });
     }
 
@@ -1420,7 +1553,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const state = (r) => (r.status && r.status !== 'completed' ? `<span class="jv-chip c-average">${esc(r.status)}</span>` : r.conclusion ? `<span class="jv-chip ${r.conclusion === 'success' ? 'c-fast' : 'c-slow'}">${esc(r.conclusion)}</span>` : '—');
         const body = runs.length ? table([['Workflow', (r) => esc(r.name)], ['Last run', (r) => (r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(when(r.at))}</a>` : '—')], ['How', (r) => esc(r.event || '')], ['Result', state]], runs) : `<p class="jv-empty">${esc((R && R.error) || (R ? 'Set GITHUB_BUGS_TOKEN in Secret Manager to see the runs.' : 'Reading the workflow runs…'))}</p>`;
         return panel('hub-runs', 'Posting', body + `<div class="jv-actions"><button type="button" class="jv-btn" data-act="social-post-now"${S.pending['social-post-now'] ? ' disabled' : ''}>Post now</button></div>`,
-            { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.' });
+            { note: 'Post now runs the Buffer queue (the batches a spent daily limit held back) and the Facebook Page queue instead of waiting for their nightly slots. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches document/{slug}.pdf when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.' });
     }
 
     // A post proposal's card image (#2248), so the post is approved as it will look; a card that failed once stays a note.
@@ -1681,6 +1814,11 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             + table([['Channel', (c) => esc(c.label)], ['Link', (c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url.replace(/^https:\/\//, ''))}</a>`], ['', (c) => copyBtn(c.url)]], links.channels)
             + `<p class="jv-note">Funnel work: ${links.funnel.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.label)}</a>`).join(' · ')}</p>`
             : `<p class="jv-empty">${esc((ou.links && ou.links.error) || 'Not loaded.')}</p>`;
+        const firms = ou.companies && ou.companies.ok ? ou.companies : null;
+        const stageCols = [['Found', 'found'], ['Reviewed', 'reviewed'], ['Offered', 'offered'], ['Claimed', 'claimed'], ['Paid', 'paid']].map(([label, k]) => [label, (r) => fmt(r[k])]);
+        const firmsBody = firms ? kpis([['Found', 'found'], ['Reviewed', 'reviewed'], ['Offered the trial', 'offered'], ['Claimed', 'claimed'], ['Paid', 'paid']].map(([label, k]) => ({ label, value: firms.total[k] })))
+            + table([['Segment', (r) => esc(r.label)]].concat(stageCols), firms.rows, 'No site-dependency company found yet. The Places night adds them; the companies run offers the trial.')
+            : `<p class="jv-empty">${esc((ou.companies && ou.companies.error) || 'Not loaded.')}</p>`;
         const soc = links && links.social ? links.social : null;
         const counts = [['Clicks', (x) => fmt(x.visits)], ['Runs', (x) => fmt(x.reviews)], ['Paid', (x) => fmt(x.paid)], ['USD', (x) => fmt(x.usd)]];
         const socialBody = soc ? stats([{ label: 'Clicks', value: soc.visits }, { label: 'Free runs', value: soc.reviews }, { label: 'Paid unlocks', value: soc.paid }, { label: 'Revenue (USD)', value: soc.usd }])
@@ -1695,6 +1833,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('outreach-funnel', 'Weekly funnel against the plan', funnelBody, { data: funnel })}
             ${panel('outreach-targets', '90-day targets', targets, { wide: true, data: S.external.targets && S.external.targets.targets, note: 'Jarvis counts from the plan start and judges the pace; the marker shows how much of the 90 days has gone. Log what he cannot see.' })}
             ${panel('outreach-pipeline', 'Prospect pipeline (nightly sweep)', pipeBody, { data: pipe ? pipe.bySegment : [] })}
+            ${panel('outreach-companies', 'Company trials by segment', firmsBody, { wide: true, data: firms ? firms.rows : [], note: 'Companies whose business runs on their site: found by the Places night, reviewed by the sweep, offered the 2-day trial on their published contacts, then the after-trial discount. Each stage counts everyone who got that far.' })}
             ${panel('outreach-campaigns', 'Campaigns (Instantly)', campBody, { data: camps ? camps.rows : mail ? mail.byCampaign : [], note: camps ? 'Activate starts a campaign on its start date and sending window; nothing goes out to a campaign with no leads. Pause stops it at once.' : '' })}
             ${mail ? panel('outreach-mailboxes', 'Mailboxes and warm-up', boxBody, { data: mail.accounts }) : ''}
             ${panel('outreach-dns', `Sending domain${ou.mail && ou.mail.domain ? ' (' + esc(ou.mail.domain) + ')' : ''}`, dnsBody)}
@@ -2113,6 +2252,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
 
     function githubView() {
+        if (S.product === 'github' && !S.worker && !S.pending.worker) loadWorker();
         const g = S.external['github-work'];
         if (!g || g.ok === false) return `<div class="jv-grid">${briefPanel('github')}${panel('github-wait', 'GitHub', waiting('github-work', 'Reading GitHub: CI, PRs, the board, branches and agent work…'), { wide: true, keep: true })}</div>${needList(g)}`;
         const live = (x) => (x && x.ok !== false ? x : null);
@@ -2202,7 +2342,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const prBtns = (p) => [
             ['behind', 'blocked', 'unstable'].includes(p.state) ? ghBtn('Update with main', 'gh-update-pr', '#' + p.number, { pr: p.number }) : '',
             p.state === 'clean' && p.checks === 'pass' ? ghBtn('Merge', 'gh-merge-pr', '#' + p.number, { pr: p.number }, { cls: ' is-primary' }) : '',
-            p.state === 'dirty' ? `<button type="button" class="jv-btn small" data-gh-agent-pr="${esc(p.number)}">Resolve with a Cursor agent</button>` : '',
+            p.state === 'dirty' ? `<button type="button" class="jv-btn small" data-gh-agent-pr="${esc(p.number)}">Resolve with an agent</button>` : '',
             !p.ticket && p.state !== 'draft' ? ghBtn('File a ticket', 'gh-orphan-ticket', '#' + p.number, { pr: p.number }) : ''
         ].filter(Boolean).join('');
         const prBody = prs ? stats([{ label: 'Open', value: prs.open }, { label: 'Draft', value: prs.draft }, { label: 'Ready to merge', value: prs.mergeReady }, { label: 'Conflicts', value: prs.conflicts, alert: prs.conflicts > 0 }, { label: 'Behind main', value: prs.behind }, { label: 'Red checks', value: prs.red, alert: prs.red > 0 }, { label: 'Stale', value: prs.stale, alert: prs.stale > 0 }, { label: 'No ticket', value: prs.orphan, alert: prs.orphan > 0 }, { label: 'Lead time (median)', value: ghHours(prs.leadMedH) }, { label: 'Lead time (p90)', value: ghHours(prs.leadP90H) }])
@@ -2368,6 +2508,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const daily = (x) => (x ? x.labels.map((d, i) => Object.assign({ day: d }, ...x.series.map((s) => ({ [s.name]: s.values[i] })))) : null);
 
         return head + `<div class="jv-grid">${needsPanel}${briefPanel('github')}${proposalsPanel('github')}
+            ${workerPanel()}
             ${panel('github-flow', `Process map${board ? ` · WIP ${fmt(board.wip)} of ${fmt(board.wipLimit)}` : ''}`, flowBody, { wide: true, keep: !!board, data: board && (board.columns || []).map((c) => ({ column: c.name, count: c.count, ageMedD: c.ageMedD })), note: 'Tap a column to list its cards. Arrows are board moves in range, thicker for more; amber ones went backwards. Dev, QA and Stg glow amber when WIP is over its limit.' })}
             ${panel('github-dora', 'DORA', doraBody, { data: doraRows.map(([label, x]) => Object.assign({ metric: label }, x || {})), note: 'Elite: a deploy a day or more, changes live within a day, 5% or fewer fail, restored within an hour.' })}
             ${panel('github-xp', 'Streaks and level', xpBody, { data: st ? [st] : null, note: 'XP: merged PRs × 10, closed bugs × 5, green-main days × 3.' })}
@@ -2442,7 +2583,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (key) ghMark(key, 'running', ghCap(ACTION_LABELS[action] || action) + '…'); else toast('Asking Jarvis…', 30000);
         const out = await call('github-act', Object.assign({}, args, { action, target })).catch((error) => ({ ok: false, error: error.message }));
         b.disabled = false;
-        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + out.error;
+        const said = out.ok ? out.message || `${ghCap(ACTION_LABELS[action] || action)}: done.` : 'Not done: ' + (out.error || out.message);
         if (key) ghMark(key, out.ok ? 'done' : 'failed', said, out.ok && out.url ? { url: out.url, link: 'Open on GitHub' } : null);
         toast(said, 7000);
         await ghFresh();
@@ -2529,15 +2670,74 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             `Read the run log, find the root cause, fix it on ${c.branch}${c.pr ? ` (PR #${c.pr})` : ''}, run the affected tests and push.`].filter(Boolean).join('\n');
     }
 
-    // A Cursor cloud agent costs money and writes code: it asks every time, showing the drafted prompt.
+    // Jarvis's worker (#2958): the month's AI spend against its cap and the last tasks, from the worker op.
+    async function loadWorker() {
+        if (S.pending.worker) return;
+        S.pending.worker = true;
+        S.worker = await call('worker').catch((error) => ({ ok: false, error: error.message }));
+        S.pending.worker = false;
+        render();
+    }
+    const workerSpend = () => (S.worker && S.worker.spend) || null;
+    const workerTone = (sp) => (sp.level === 'over' ? COLORS.pink : sp.level === 'warn' ? COLORS.amber : COLORS.green);
+    const WORKER_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', nochange: '', failed: 'c-slow' };
+
+    function workerPanel() {
+        const w = S.worker, sp = workerSpend();
+        if (!w) return panel('github-worker', "Jarvis's worker", waiting('worker', "Reading the worker's spend…"), { wide: true, keep: true });
+        if (!sp) return panel('github-worker', "Jarvis's worker", `<p class="jv-note">${esc(w.error || 'The worker op sent no spend.')}</p>`, { wide: true, keep: true });
+        const pct = Math.min(100, (sp.usd / sp.cap) * 100);
+        const meter = `<div class="jv-worker-meter" role="meter" aria-valuemin="0" aria-valuemax="${sp.cap}" aria-valuenow="${sp.usd}" aria-label="AI spend this month" style="--c:${workerTone(sp)}">
+            <div class="jv-bar-track"><span class="jv-bar-fill" style="width:${pct.toFixed(1)}%"></span><i class="jv-worker-tick" style="left:${((sp.warn / sp.cap) * 100).toFixed(1)}%" title="Warning at $${sp.warn}"></i></div>
+            <div class="jv-worker-scale"><span>$0</span><span>warn $${sp.warn}</span><span>cap $${sp.cap}</span></div></div>`;
+        const said = sp.level === 'over' ? `The worker is stopped until next month. Fixes go to a Cursor agent on tap.`
+            : sp.level === 'warn' ? `Past the $${sp.warn} warning; the worker stops at $${sp.cap}.` : `$${sp.left.toFixed(2)} left before the worker stops at $${sp.cap}.`;
+        const kpis = stats([{ label: 'Spent · ' + sp.month, value: '$' + sp.usd.toFixed(2), alert: sp.level === 'over' }, { label: 'Runs', value: fmt(sp.runs) }, { label: 'Tokens in · out', value: `${fmt(sp.input)} · ${fmt(sp.output)}` }]);
+        const tasks = table([
+            ['Task', (t) => `${esc(t.title)}${t.pr ? ` ${ghLink(t.url, '#' + t.pr)}` : t.runUrl ? ` ${ghLink(t.runUrl, 'run')}` : ''}${t.error ? `<br><span class="jv-note">${esc(t.error)}</span>` : ''}`],
+            ['Model', (t) => `<span class="jv-chip">${esc(t.tier === 'flash' ? 'Flash' : 'Pro')}</span>${t.escalatedFrom ? '<span class="jv-note"> after Flash</span>' : ''}`],
+            ['State', (t) => (t.reason === 'quota' ? '<span class="jv-chip c-average" title="Gemini answered that its request quota is used; the code was not at fault.">Gemini quota</span>'
+                : `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>`) + (t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : '')],
+            ['Cost', (t) => '$' + Number(t.usd || 0).toFixed(2)],
+            ['When', (t) => esc(ghAgo(t.at))],
+            ['', (t) => (t.cursor ? `<button type="button" class="jv-btn small" data-worker-cursor="${esc(t.id)}">Hand to Cursor</button>${ghResult('worker:' + t.id)}` : '')]
+        ], w.tasks || [], 'No worker runs yet.');
+        return panel('github-worker', `Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`, meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + tasks,
+            { wide: true, keep: true, data: w.tasks, note: 'Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini\'s request quota waits twice, then moves to Flash. Prices are rounded up, so the meter overstates.' });
+    }
+
+    async function workerCursor(id) {
+        const t = ((S.worker && S.worker.tasks) || []).find((x) => x.id === id);
+        if (!t || !t.cursor) return;
+        const c = t.cursor;
+        if (!window.confirm(`Jarvis: hand "${t.title}" to a Cursor cloud agent? It uses Cursor credit and opens a PR when it is done.\n\n${c.prompt.length > 600 ? c.prompt.slice(0, 600) + '…' : c.prompt}`)) return;
+        ghMark('worker:' + id, 'running', 'Launching the Cursor agent…');
+        const out = await call('github-agent', Object.assign({}, c, { engine: 'cursor' })).catch((error) => ({ ok: false, error: error.message }));
+        ghMark('worker:' + id, out.ok ? 'launched' : 'failed', out.ok ? 'Cursor agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
+    }
+
+    // An agent costs money and writes code: it asks every time, showing the drafted prompt. Jarvis's own worker (#2957) first,
+    // unless its month's budget is used; other repos, or Cancel and then OK, go to a Cursor cloud agent.
     async function ghLaunch(key, body) {
         const shown = body.prompt.length > 600 ? body.prompt.slice(0, 600) + '…' : body.prompt;
-        if (!window.confirm(`Jarvis: launch a Cursor cloud agent on ${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}? It opens a PR when it is done.\n\n${shown}`)) return false;
+        const where = `${body.repo ? body.repo + ' ' : ''}${body.branch || 'main'}`;
+        const sp = workerSpend();
+        const thisMonth = sp ? ` This month: $${sp.usd.toFixed(2)} of $${sp.cap}.` : '';
+        let engine = 'worker';
+        if (body.repo && body.repo !== 'kaanmuar/kaanmuar.github.io') engine = 'cursor';
+        else if (sp && sp.level === 'over') engine = '';
+        else if (!window.confirm(`Jarvis: start its own worker on ${where}? It opens a PR when the tests pass.${thisMonth} Cancel to choose a Cursor agent instead.\n\n${shown}`)) engine = '';
+        if (engine === 'cursor' || !engine) {
+            const capped = sp && sp.level === 'over' && engine !== 'cursor' ? `Jarvis's worker is stopped: its AI budget for ${sp.month} is used.${thisMonth}\n\n` : '';
+            if (!window.confirm(`${capped}Jarvis: launch a Cursor cloud agent on ${where}? It uses Cursor credit and opens a PR when it is done.${engine || capped ? '\n\n' + shown : ''}`)) return false;
+            engine = 'cursor';
+        }
         ghMark(key, 'running', 'Launching the agent…');
-        const out = await call('github-agent', body).catch((error) => ({ ok: false, error: error.message }));
-        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
+        const out = await call('github-agent', Object.assign({}, body, { engine })).catch((error) => ({ ok: false, error: error.message }));
+        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: engine === 'worker' ? 'Open the worker runs' : 'Open the agent' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
         if (out.ok) ghFresh();
+        if (engine === 'worker') loadWorker();
         return true;
     }
 
@@ -2589,6 +2789,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         compute();
         render();
         loadExternal(['github', 'actions']);
+        loadWorker();
     }
 
     // The GitHub numbers Gemini sees when Carlos asks (#2526), trimmed to what answers "why is CI red" and the like.
@@ -2623,7 +2824,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const egReportLine = (d) => {
         const x = d.report;
         if (!egIsReport(d) || !x) return '';
-        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}${x.match === 'profile' ? ` · touch ${fmt(x.touch)} of 4 (${esc(x.tone || '')}) · offer ${esc(x.offer || '')} · ${x.manual ? 'approve copies it to paste by hand' : 'posts on approval'}${x.profile ? ` · <a href="${esc(x.profile)}" target="_blank" rel="noopener">profile ↗</a>` : ''}` : ''}</p>`;
+        return `<p class="jv-prop-why">Invites to the <strong>${esc(x.name || x.host)}</strong> report (${esc(x.host)}) · scores ${fmt(x.score)}${x.shown ? '' : ' (not named in the reply)'} · found by ${esc(x.match || '?')} · ${esc(x.format || 'link')}${x.link ? ` · <a href="${esc(x.link)}" target="_blank" rel="noopener">report link ↗</a>` : ''}${x.match === 'profile' ? ` · touch ${fmt(x.touch)} of 4 (${esc(x.tone || '')}) · offer ${esc(x.offer || '')} · ${x.latest || x.manual ? 'posts under their latest post on approval' : 'posts on approval'}${x.profile ? ` · <a href="${esc(x.profile)}" target="_blank" rel="noopener">profile ↗</a>` : ''}` : ''}</p>`;
     };
     const egFilter = (list) => `<div class="jv-actions"><div class="jv-seg" role="group" aria-label="Which replies">${EG_ONLY.map(([k, label]) => `<button type="button" data-eg-only="${k}" class="${S.egOnly === k ? 'on' : ''}" aria-pressed="${S.egOnly === k}">${label} · ${fmt(list.filter((d) => k === 'all' || (k === 'report') === egIsReport(d)).length)}</button>`).join('')}</div></div>`;
 
@@ -2703,6 +2904,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${d.chain ? `<p class="jv-prop-why">${esc(who(d))} commented on our ${d.chain.on === 'post' ? 'post' : 'reply'}${d.chain.ours ? `: “${esc(d.chain.ours)}”` : ''}</p>` : ''}
             <details><summary>${d.chain ? 'Show the comment' : 'Show the post'}</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
             <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
+            ${d.actions.reply.english ? `<p class="jv-prop-why jv-eg-english"><strong>In English${draftOf(d) === d.actions.reply.draft ? '' : ' (the original draft)'}:</strong> ${esc(d.actions.reply.english)}</p>` : ''}
             <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
             <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
             : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
@@ -2767,7 +2969,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Replies waiting', value: g.waiting.length, alert: g.waiting.length > 0 }, { label: 'Replies posted', value: t.posted, delta: `${fmt(t.approved + t.edited)} approved` },
             { label: 'Approval rate', value: r.approvalRate === null ? '—' : r.approvalRate + '%' }, { label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale }
         ]) + `<div class="jv-grid">${briefPanel('engagement')}
-            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve sends your edit when you changed the text. Drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac\'s browser agent (#1991).' })}
+            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve tells Jarvis to send it (never a clipboard paste). Your edit goes when you changed the text. A draft in a language other than English shows Gemini\'s English translation under it (#2630). Drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac\'s browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461).' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: 'The poster acts as these accounts. Connect signs in on the network\'s own page and comes back here; Mastodon is marked as a bot when it connects.' })}
             ${panel('engagement-joins', 'Joins', joinsBody, { wide: true, data: joins.log, note: 'Telegram channels and groups and subreddits in our field, found by topic searches in any language. One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.' })}
@@ -2803,8 +3005,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         delete S.egDrafts[key];
         g.waiting = g.waiting.filter((x) => x.key !== key);
         render();
-        if (out.status === 'copy' && out.text && navigator.clipboard) await navigator.clipboard.writeText(out.text).catch(() => null);
-        toast(out.message + (out.status === 'copy' ? ' The text is on your clipboard.' : ''), 7000);
+        toast(out.message || (decision === 'dismiss' ? 'Dismissed.' : 'Approved.'), 7000);
         loadExternal(['engagement']);
     }
 
@@ -2861,6 +3062,236 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         return out;
     }
 
+    function loadWorld() {
+        S.worldLoading = true;
+        fetch('assets/jarvis/world.json?v=2976').then((r) => (r.ok ? r.json() : null)).then((w) => { S.world = w; if (S.product === 'geo') render(); })
+            .catch(() => null).finally(() => { S.worldLoading = false; });
+    }
+
+    // The Map tab (#2976): campaigns, prospects, social replies and visitors per country, and where they are missing.
+    function geoView() {
+        const e = S.external;
+        const g = e.geo && e.geo.ok ? e.geo : null;
+        if (!S.world && !S.worldLoading) loadWorld();
+        if (!g) return panel('geo-map', 'World map', `<p class="jv-empty">${esc(S.pending.geo && !e.geo ? 'Reading the countries…' : (e.geo && e.geo.error) || 'Not loaded.')}</p>`, { wide: true });
+        const rows = g.countries || [];
+        const channel = S.geoChannel || 'all';
+        const metrics = Geo.metricsFor(channel);
+        const key = metrics.some((m) => m[0] === S.geoMetric) ? S.geoMetric : metrics[0][0];
+        const t = g.totals || {};
+        const sel = rows.find((r) => r.cc === S.geoCc);
+        const tv = S.geoTv = Object.assign(GeoTime.view(g, geoTimeState(), key), { key });
+        const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
+            <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
+        const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) + (GeoCost.KEYS.has(key) ? GeoCost.note(g, tv, esc) : '') : '<p class="jv-note">Drawing the map…</p>';
+        const clicksNote = key === 'clicks' && GeoClicks.note(g) ? `<p class="jv-note">${esc(GeoClicks.note(g))}</p>` : '';
+        const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
+        const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
+            [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
+            ...(tv.delta ? [['Change', (r) => GeoTime.arrow(tv.delta[r.cc], key)]] : []),
+            ['Sent · reply %', (r) => `${fmt(r.sent)}${r.replyRate === null ? '' : ' · ' + r.replyRate + '%'}${r.est ? ' <span class="jv-note" title="Split from campaigns that cover several countries">est.</span>' : ''}`],
+            ['Prospects left', (r) => fmt(r.left)], ['Gaps', (r) => r.gaps.map((k) => `<span class="jv-chip" style="border-color:${(Geo.GAPS[k] || [, ''])[1]}">${esc((Geo.GAPS[k] || [k])[0])}</span>`).join(' ')]], list, 'No country has this yet.');
+        const gapBody = (g.gaps || []).length ? `<ol class="jv-geo-gaps">${g.gaps.slice(0, 30).map((x) => `<li><i style="background:${(Geo.GAPS[x.kind] || [, '#5d7a8c'])[1]}"></i><button type="button" class="jv-link" data-geo-cc="${x.cc}">${esc(x.name)}</button> <span class="jv-note">${esc((Geo.GAPS[x.kind] || [x.kind])[0])}:</span> ${esc(x.text)}</li>`).join('')}</ol>` : '<p class="jv-empty">No country needs attention.</p>';
+        return `${(g.needs || []).length ? `<ul class="jv-needs">${g.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+        ${kpis([{ label: 'Countries we act in', value: t.countries || 0 }, { label: 'Target markets reached', value: `${fmt(t.targetsActive || 0)} of ${fmt(t.targets || 0)}`, delta: t.silent ? fmt(t.silent) + ' silent' : '' },
+            { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
+            { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
+        <div class="jv-grid">
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
+            ${geoDatesPanel(rows)}
+            ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
+            ${panel('geo-ranking', `Ranking · ${esc(Geo.labelOf(key === 'gaps' ? 'activity' : key))}`, rank(top.slice(0, 15)), { data: top.map((r) => ({ cc: r.cc, country: r.name, value: Geo.value(r, key === 'gaps' ? 'activity' : key) })) })}
+            ${panel('geo-bottom', 'Weakest reply rates', rank(rows.filter((r) => r.sent >= 50).sort((a, b) => a.replyRate - b.replyRate).slice(0, 8)), {})}
+            ${GeoCost.panels(g, tv, key, channel, { panel, esc, fmt })}
+            ${GeoHeat.panels(S, g, channel === 'cost' ? 'all' : channel, { panel, esc, fmt })}
+            ${geoFlowPanels(g, sel, channel === 'cost' ? 'all' : channel)}
+            ${geoConfirmPanel(g)}
+            ${GeoActions.panels(g, { panel, esc, fmt, dayLabel: C.dayLabel })}
+        </div>`;
+    }
+
+    // The time controls' state (#3109): a range to compare, a week to play, and value or change shading.
+    const geoTimeState = () => ({ span: S.geoSpan || 0, week: S.geoWeek === undefined ? null : S.geoWeek, shade: S.geoShade || 'value', playing: !!S.geoPlaying });
+
+    // The map with name labels sized for the width it is drawn at: 9 to 13 screen pixels, so a phone shows fewer of them (#2988).
+    function geoMap(rows, key, fills) {
+        const w = S.world;
+        if (!S.worldNames) {
+            const dn = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+            S.worldNames = {};
+            Object.keys(w.dots).forEach((cc) => { try { S.worldNames[cc] = dn ? dn.of(cc) : cc; } catch (error) { S.worldNames[cc] = cc; } });
+        }
+        const at = $('.jv-geo-wrap');
+        const k = ((at && at.clientWidth) || Math.min(root.clientWidth || 1000, 1100)) / w.w;
+        const labels = Geo.labels(w, rows, { selected: S.geoCc, min: 9 / k, max: 13 / k });
+        return Geo.mapSvg(w, rows, key, { selected: S.geoCc, names: S.worldNames, labels, fills }, esc);
+    }
+
+    // The card beside the pointer or the focused country: flag, name, light level and the key numbers.
+    function geoCard(el, x, y) {
+        const wrap = el.closest('.jv-geo-wrap');
+        const box = wrap && wrap.querySelector('.jv-geo-card');
+        if (!box) return;
+        const cc = el.dataset.geoCc;
+        const g = S.external.geo;
+        const tv = S.geoTv && S.geoTv.mode !== 'now' ? S.geoTv : null;
+        const r = ((tv ? tv.rows : g && g.countries) || []).find((c) => c.cc === cc);
+        box.innerHTML = Geo.card(r, esc, cc, (S.worldNames || {})[cc]) + (tv ? GeoTime.cardLine(tv, cc, tv.key, esc) : '');
+        box.hidden = false;
+        const at = wrap.getBoundingClientRect();
+        if (x === undefined) { const b = el.getBoundingClientRect(); x = b.left + b.width / 2; y = b.top + b.height / 2; }
+        const left = x - at.left + 14;
+        const top = y - at.top + 14;
+        box.style.left = `${Math.max(4, left + box.offsetWidth > at.width ? left - box.offsetWidth - 28 : left)}px`;
+        box.style.top = `${Math.max(4, top + box.offsetHeight > at.height ? top - box.offsetHeight - 28 : top)}px`;
+    }
+    function geoCardOff(wrap) { const box = wrap && wrap.querySelector('.jv-geo-card'); if (box) box.hidden = true; }
+
+    // #3114: the campaign timeline and the channel flow (admin-jarvis-geo-flow.js), following the picked country and the channel.
+    function geoFlowPanels(g, sel, channel) {
+        const f = GeoFlow.sections(g, { esc, fmt, button: campaignButton, chip: campStatusChip, mk: ((S.external.marketing || {}).campaigns || {}).rows, cc: sel ? sel.cc : '', name: sel && sel.name,
+            channel, group: S.geoTlGroup, camp: S.geoCamp, width: ($('.jv-geo-wrap') || {}).clientWidth || Math.min(root.clientWidth || 1000, 1100) });
+        const opts = (x) => ({ wide: true, keep: true, note: x.note, data: x.data });
+        return (f.timeline ? panel('geo-timeline', f.timeline.title, f.timeline.body, opts(f.timeline)) : '') + (f.flow ? panel('geo-flow', f.flow.title, f.flow.body, opts(f.flow)) : '');
+    }
+
+    // The country sheet under the map: its numbers, funnel, campaigns with Pause or Activate, and a queue form for it.
+    function geoCountry(r) {
+        const mk = S.external.marketing && S.external.marketing.ok && S.external.marketing.campaigns && S.external.marketing.campaigns.ok !== false ? S.external.marketing.campaigns.rows || [] : [];
+        const camps = r.camps.map((c) => Object.assign({}, c, mk.find((m) => m.id === c.id) || {}));
+        const steps = [{ label: 'Prospects', value: r.prospects }, { label: 'Leads', value: r.leads }, { label: 'Contacted', value: r.contacted || 0 }, { label: 'Replied', value: r.replies }, { label: 'Interested', value: r.interested }];
+        return `<div class="jv-actions"><button type="button" class="jv-btn small" data-geo-target="${r.target ? 'off' : 'on'}" data-cc="${r.cc}">${r.target ? 'Drop as target market' : 'Make a target market'}</button>
+            <button type="button" class="jv-btn small" data-go="marketing">Open Marketing</button><button type="button" class="jv-btn small" data-geo-cc="">Close</button></div>
+            <p class="jv-note">${r.target ? 'Target market' : 'Not a target market'}${r.langs.length ? ' · speaks ' + esc(r.langs.join(', ')) : ''}${r.gaps.length ? ' · ' + r.gaps.map((k) => esc((Geo.GAPS[k] || [k])[0])).join(', ') : ''}</p>
+            ${kpis([{ label: 'Emails sent · opened', value: `${fmt(r.sent)} · ${fmt(r.opened)}` }, { label: 'Reply rate', value: r.replyRate === null ? '—' : r.replyRate + '%' }, { label: 'Answered · positive', value: `${fmt(r.answered)} · ${fmt(r.positive)}` },
+                { label: 'Prospects · left', value: `${fmt(r.prospects)} · ${fmt(r.left)}` }, { label: 'Reviewed · score', value: `${fmt(r.reviewed)}${r.score === null ? '' : ' · ' + r.score}` },
+                { label: 'Social replies', value: r.social }, ...GeoGa4.kpis(r), { label: 'Link visits · paid', value: `${fmt(r.visits)} · $${fmt(r.usd)}` }])}
+            ${GeoTime.sheet(S.external.geo, r.cc, geoTimeState(), esc)}
+            ${GeoClicks.sheet(r, { esc, fmt })}
+            ${GeoCost.sheet(S.external.geo, r.cc, S.geoTv, esc)}
+            ${r.sent || r.prospects ? funnel(steps) : ''}
+            ${r.sectors.length ? bars(r.sectors, { title: 'Prospects by segment', unit: 'prospects' }) : ''}
+            ${geoCountryDates(r, camps)}
+            ${camps.length ? table([['Campaign', (c) => `${esc(c.name)}${c.share < 100 ? ` <span class="jv-note">${c.share}% of it here</span>` : ''}`], ['Status', (c) => campStatusChip(c.status)], ['', (c) => campaignButton(c)]], camps) : '<p class="jv-note">No campaign reaches this country yet.</p>'}
+            <form class="jv-mk-form" data-mk-queue><textarea name="hosts" rows="2" placeholder="Prospect sites for ${esc(r.name)}, one per line: host, segment" aria-label="Prospects to queue for ${esc(r.name)}"></textarea>
+                <div class="jv-inline"><input type="hidden" name="cc" value="${r.cc.toLowerCase()}"><select name="sector" aria-label="Default segment" data-menu-ready="1">${MK_SEGMENTS.map((s) => `<option value="${s}">${s}</option>`).join('')}</select><button type="submit" class="jv-btn">Queue for the sweep</button></div></form>`;
+    }
+
+    // Country dates (#2989): the calendar source's next 60 days for the target markets, with days counted from today.
+    function calendarDays() {
+        const cal = S.external.calendar;
+        if (!cal || cal.ok === false || !Array.isArray(cal.days)) return null;
+        const today = C.zoneParts(new Date()).day;
+        return { cal, today, days: cal.days.map((d) => Object.assign({}, d, { daysAway: C.dayDiff(today, d.date) })).filter((d) => C.dayDiff(today, d.end || d.date) >= 0) };
+    }
+
+    const dateChip = (kind) => `<span class="jv-chip jv-date-kind" style="border-color:${(Geo.DATE_KINDS[kind] || [, ''])[1]}">${esc((Geo.DATE_KINDS[kind] || [kind])[0])}</span>`;
+    const dateWhen = (d) => `${esc(C.dayLabel(d.date))}${d.end ? ' to ' + esc(C.dayLabel(d.end)) : ''} · ${d.daysAway <= 0 ? (d.end ? 'on now' : 'today') : d.daysAway === 1 ? 'tomorrow' : 'in ' + d.daysAway + ' days'}`;
+
+    // A holiday's Pause button for a country whose running campaigns have at least half their leads there, and Resume for a pause.
+    function calendarButtons(cc, d, camps) {
+        const cal = S.external.calendar || {};
+        const open = (cal.pauses || []).find((p) => p.cc === cc && p.date === d.date && (p.status === 'planned' || p.status === 'paused'));
+        if (open) return `<button type="button" class="jv-btn small" data-cal-act="${open.status === 'paused' ? 'resume' : 'cancel'}" data-cc="${cc}" data-date="${d.date}" data-name="${esc(d.name)}">${open.status === 'paused' ? 'Resume now' : 'Paused on the day · cancel'}</button>`;
+        if (d.kind !== 'holiday' || d.weekend) return '';
+        const held = C.heldCampaigns({ camps }, camps);
+        return held.length ? `<button type="button" class="jv-btn small" data-cal-act="pause" data-cc="${cc}" data-date="${d.date}" data-name="${esc(d.name)}" title="${esc(held.map((c) => c.name).join(', '))}">Pause ${held.length === 1 ? esc(held[0].name) : held.length + ' campaigns'} that day</button>` : '';
+    }
+
+    function geoDatesPanel(rows) {
+        const c = calendarDays();
+        const e = S.external.calendar;
+        if (!c) return panel('geo-dates', 'Upcoming dates', `<p class="jv-empty">${esc(S.pending.calendar && !e ? 'Reading the calendar…' : (e && e.error) || 'Not loaded.')}</p>`, { keep: true });
+        const names = {};
+        rows.forEach((r) => { names[r.cc] = r.name; });
+        const where = (d) => (d.all ? 'All target markets' : (d.ccs || []).map((cc) => `<button type="button" class="jv-link" data-geo-cc="${cc}">${esc((d.local && d.local[cc]) && d.local[cc] !== d.name ? `${names[cc] || cc} (${d.local[cc]})` : names[cc] || cc)}</button>`).join(', '));
+        const groups = [];
+        c.days.forEach((d) => { const last = groups[groups.length - 1]; if (last && last.date === d.date) last.items.push(d); else groups.push({ date: d.date, items: [d] }); });
+        const body = groups.length ? `<ol class="jv-dates">${groups.map((g) => `<li><h4>${dateWhen(g.items[0]).replace(/ to .*? ·/, ' ·')}</h4><ul>${g.items.map((d) => `<li>${dateChip(d.kind)} <b>${esc(d.name)}</b>${d.end ? ` <span class="jv-note">to ${esc(C.dayLabel(d.end))}</span>` : ''}${d.weekend ? ' <span class="jv-note">weekend</span>' : ''} · ${where(d)}
+                <div class="jv-note">${esc(d.why || '')}${d.action ? ' ' + esc(d.action) : ''}${d.source ? ` <a href="${esc(d.source)}" target="_blank" rel="noopener">Source</a>` : ''}</div></li>`).join('')}</ul></li>`).join('')}</ol>` : '<p class="jv-empty">No dates in the next 60 days.</p>';
+        const kinds = Object.keys(Geo.DATE_KINDS).map((k) => [k, c.days.filter((d) => d.kind === k).length]).filter((x) => x[1]);
+        const s = C.calendarSettings(c.cal.settings);
+        const note = `Public holidays from Nager.Date; seasons, academic terms, fiscal years, rules and events from Jarvis's list. Jarvis warns ${s.warnDays} days ahead and reminds ${s.remindDays} days ahead; auto-pause over holidays is ${s.autoPause ? 'on' : 'off'} (Settings).`;
+        return panel('geo-dates', `Upcoming dates · ${fmt(c.days.length)}`, `${(c.cal.notes || []).length ? `<ul class="jv-needs">${c.cal.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+            <p class="jv-note">${kinds.map(([k, n]) => `${dateChip(k)} ${n}`).join(' ')}</p>${body}`, { keep: true, note, data: c.days.map((d) => ({ date: d.date, end: d.end || '', kind: d.kind, name: d.name, countries: d.all ? 'ALL' : (d.ccs || []).join(' '), action: d.action || '' })) });
+    }
+
+    function geoCountryDates(r, camps) {
+        const c = calendarDays();
+        if (!c) return '';
+        const list = c.days.filter((d) => (d.ccs || []).includes(r.cc)).slice(0, 8);
+        return `<h4 class="jv-sub">Upcoming dates</h4>${list.length ? `<ul class="jv-dates-country">${list.map((d) => `<li>${dateChip(d.kind)} <b>${esc((d.local && d.local[r.cc]) || d.name)}</b> <span class="jv-note">${dateWhen(d)}${d.after && d.after[r.cc] ? ' · resume ' + esc(C.dayLabel(d.after[r.cc])) : ''}</span> ${calendarButtons(r.cc, d, camps)}
+            <div class="jv-note">${esc(d.action || d.why || '')}</div></li>`).join('')}</ul>` : `<p class="jv-note">No dates for ${esc(r.name)} in the next 60 days.</p>`}`;
+    }
+
+    // Pause a country's campaigns over a holiday (today at once, a later day by the daily job), resume them, or cancel a planned pause.
+    async function calendarAct(t) {
+        const { calAct: act, cc, date, name } = t.dataset;
+        const ask = act === 'pause' ? `pause the campaigns that mostly reach ${cc} on ${C.dayLabel(date)} for ${name}, and resume them the next business day`
+            : act === 'resume' ? `resume the campaigns paused in ${cc} for ${name} now` : `cancel the planned pause in ${cc} for ${name}`;
+        if (!confirmRun(ask)) return;
+        t.disabled = true;
+        const out = await call('action-run', { action: act === 'pause' ? 'calendar-pause' : 'calendar-resume', proposal: `calendar:${act === 'pause' ? 'pause' : 'resume'}:${cc}:${date}` }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? out.note || 'Done.' : 'Not done: ' + out.error, 8000);
+        loadExternal(['calendar', 'marketing', 'geo', 'actions']);
+    }
+
+    async function geoTarget(t) {
+        const on = t.dataset.geoTarget === 'on';
+        const cc = t.dataset.cc;
+        if (!confirmRun(`${on ? 'make' : 'drop'} ${cc} ${on ? 'a' : 'as a'} target market`)) return;
+        t.disabled = true;
+        const out = await call('geo-target', { cc, on }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? `${cc} is ${on ? 'now' : 'no longer'} a target market (${out.targets} in all).` : 'Not saved: ' + out.error, 6000);
+        loadExternal(['geo']);
+    }
+
+    // Live Reports the country finder was unsure of (#3009). An answer reaches the pages with the next daily Live Reports run.
+    function geoConfirmPanel(g) {
+        const rows = g.confirm || [];
+        const t = g.totals || {};
+        const total = t.confirm || rows.length;
+        const item = (r) => {
+            const host = esc(r.host);
+            const guess = r.cc ? `<b>${esc(r.name || r.cc)}</b> <span class="jv-note">${r.cc === 'WW' ? '' : esc(r.cc) + ' · '}${Math.round((r.confidence || 0) * 100)}% sure</span>` : '<span class="jv-note">no guess</span>';
+            return `<li data-geo-confirm-row="${host}">
+                <div>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${host}</a>` : host} <span class="jv-note">${fmt(r.reports)} report${r.reports === 1 ? '' : 's'}</span></div>
+                <div>Guess: ${guess}</div>
+                ${(r.evidence || []).length ? `<p class="jv-note">${r.evidence.map(esc).join(' · ')}</p>` : ''}
+                <div class="jv-actions">${r.cc ? `<button type="button" class="jv-btn small" data-geo-confirm="yes" data-cc="${esc(r.cc)}">Confirm</button>` : ''}
+                    <input type="text" maxlength="2" placeholder="CC" aria-label="Another country for ${host}" autocomplete="off" spellcheck="false"><button type="button" class="jv-btn small" data-geo-confirm="change">Change</button>
+                    ${r.cc === 'WW' ? '' : '<button type="button" class="jv-btn small" data-geo-confirm="ww">Worldwide</button>'}<button type="button" class="jv-btn small" data-geo-confirm="skip">Skip</button></div></li>`;
+        };
+        const body = rows.length ? `<ol class="jv-geo-confirm">${rows.map(item).join('')}</ol>` : '<p class="jv-empty">No Live Report is waiting for a country.</p>';
+        return panel('geo-confirm', `Live Report countries to confirm · ${fmt(total)}${t.confirmed ? ` · ${fmt(t.confirmed)} confirmed` : ''}`, body, {
+            wide: true,
+            note: `${rows.length < total ? `The ${fmt(rows.length)} with the most reports. ` : ''}Change takes a two-letter code, or WW for worldwide. Skip leaves the site without a country and out of this list.`,
+            data: rows.map((r) => ({ host: r.host, guess: r.cc, country: r.name, confidence: r.confidence, reports: r.reports, report: r.url }))
+        });
+    }
+
+    async function geoConfirmAct(t) {
+        const row = t.closest('[data-geo-confirm-row]');
+        const host = row.dataset.geoConfirmRow;
+        const kind = t.dataset.geoConfirm;
+        const input = row.querySelector('input');
+        const cc = kind === 'yes' ? t.dataset.cc : kind === 'ww' ? 'WW' : kind === 'change' ? input.value.trim().toUpperCase() : '';
+        if (kind === 'change' && !/^[A-Z]{2}$/.test(cc)) { toast('Type a two-letter country code, like CO, or WW for worldwide.', 5000); input.focus(); return; }
+        if (kind === 'skip' && !confirmRun(`skip ${host}: it stays without a country and leaves this list`)) return;
+        const controls = row.querySelectorAll('button, input');
+        controls.forEach((c) => { c.disabled = true; });
+        const out = await call('geo-country-confirm', kind === 'skip' ? { host, skip: true } : { host, cc }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { controls.forEach((c) => { c.disabled = false; }); toast('Not saved: ' + out.error, 6000); return; }
+        const g = S.external.geo;
+        const totals = g.totals || {};
+        g.confirm = (g.confirm || []).filter((r) => r.host !== host);
+        g.totals = Object.assign({}, totals, { confirm: Math.max(0, (totals.confirm || 1) - 1), confirmed: (totals.confirmed || 0) + (out.skipped ? 0 : 1) });
+        toast(out.skipped ? `${host} skipped.` : `${host}: ${out.name}. The next daily Live Reports run updates its pages.`, 5000);
+        render();
+        if (!g.confirm.length && g.totals.confirm) loadExternal(['geo']);
+    }
+
     async function campaignAct(t) {
         const { mkCampaign: action, id, name, leads, start } = t.dataset;
         const ask = action === 'pause' ? `pause ${name} now` : `activate ${name}${Number(leads) ? '' : ' (it has no leads yet, so nothing sends until leads are uploaded)'}${start ? ', sending from ' + start : ''}`;
@@ -2868,7 +3299,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         t.disabled = true;
         const out = await call('marketing-campaign', { id, action, name }).catch((error) => ({ ok: false, error: error.message }));
         toast(out.ok ? `${out.name || name} is ${out.status}.` : 'Not done: ' + out.error, 6000);
-        loadExternal(['marketing', 'outreach']);
+        loadExternal(['marketing', 'outreach', 'geo']);
     }
 
     async function resendAct(t) {
@@ -3097,6 +3528,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (p.key === 'systems') { const r = C.readiness(e); main = { label: 'Readiness', value: r === null ? '—' : r + '%' }; }
             if (p.key === 'outreach' && e.outreach && e.outreach.pipeline && e.outreach.pipeline.ok) { main = vsBefore('Prospects reviewed', e.outreach.pipeline.reviews, e.outreach.pipeline.priorReviews); series = e.outreach.pipeline.daily.map((x) => x.reviews); }
             if (p.key === 'marketing') { main = { label: 'Marketing visits', value: socialVisits().reduce((n, r) => n + r.value, 0) + outreachSeen().total }; series = e.social && e.social.ok ? e.social.daily.map((x) => x.posts) : []; }
+            if (p.key === 'geo' && e.geo && e.geo.ok && e.geo.totals) main = { label: 'Countries we act in', value: e.geo.totals.countries, delta: e.geo.totals.missing + ' need attention' };
             if (p.key === 'github' && e['github-work'] && e['github-work'].ok !== false) { const g = e['github-work']; const pass = g.ci && g.ci.ok !== false ? g.ci.passRate : null; main = { label: 'Grade · CI pass rate', value: `${(g.score && g.score.overall && g.score.overall.grade) || '—'} · ${pass === null || pass === undefined ? '—' : pass + '%'}` }; series = (g.history || []).map((x) => x.passRate || 0); }
             if (p.key === 'business' && e.money && e.money.ok) { const d = C.delta(e.money.revenue.usd, e.money.prior.usd); main = { label: 'Revenue (USD)', value: e.money.revenue.usd, delta: d.text, dir: d.dir }; series = e.money.daily.map((x) => x.usd); }
             const alerts = S.brief.filter((b) => inTab(b, p.key) && (b.level === 'alert' || b.level === 'warn')).length;
@@ -3137,10 +3569,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${listPanel('review', 'frameworks', 'Frameworks', r.lists.frameworks, { color: COLORS.violet })}${listPanel('review', 'actions', 'Clicks on the review pages', r.lists.actions, { color: COLORS.amber })}
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
-            ${panel('review-failures', 'Failed runs', h && h.failures ? `<p class="jv-big">${fmt(h.failures.total)}</p>${bars(h.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' })}` : `<p class="jv-empty">${S.pending.health ? 'Asking the server…' : 'Not loaded.'}</p>`, { data: h && h.failures ? h.failures.latest : null })}
+            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}
             ${panel('review-alerts', 'Alerts', table([['When', (a) => esc(when(a.at))], ['Kind', (a) => esc(a.kind)], ['What', (a) => esc(a.title)]], reviewAlerts(), 'No alerts in range.'), { wide: true, data: reviewAlerts().map((a) => ({ at: a.at, kind: a.kind, title: a.title, url: a.url, priceUsd: a.priceUsd })) })}
             ${panel('review-reports', 'Mailed reports', table([['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))], ['Opens', (x) => fmt(x.opens || 0)], ['Reviews', (x) => fmt(x.reviews || 0)], ['Paid', (x) => fmt(x.paidUsd || 0) + ' USD']], S.reports, 'No mailed reports yet.'), { data: S.reports.map((x) => ({ period: x.period, label: x.label, opens: x.opens, reviews: x.reviews, paidUsd: x.paidUsd })) })}
-            ${panel('review-actions', 'Actions', `<div class="jv-actions">
+            ${panel('review-ops', 'Actions', `<div class="jv-actions">
                 <a class="jv-btn" href="${DESK}" target="_blank" rel="noopener">Review desk</a><a class="jv-btn" href="${DESK}/failures" target="_blank" rel="noopener">Failed runs</a>
                 <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button>
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
@@ -3161,6 +3593,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.business = businessView() + take();
         out.outreach = outreachView() + take();
         out.marketing = marketingView() + take();
+        out.geo = geoView() + take();
         out.github = githubView() + take();
         out.engagement = engagementView() + take();
         out.console = '';
@@ -3834,7 +4267,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     function draftSettings() {
         const s = S.settings || {};
         return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(), github: { repos: C.githubRepos(s.github && s.github.repos) },
-            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS } };
+            actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS },
+            calendar: C.calendarSettings(s.calendar) };
     }
 
     function goalEditor(g, i) {
@@ -3862,12 +4296,17 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <div class="jv-th-grid">${Object.keys(MOVED_MAIL).map((k) => `<label class="jv-check"><input type="checkbox" name="m-${k}"${d.mail[k] ? ' checked' : ''}> ${esc(MOVED_MAIL[k])}</label>`).join('')}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-act="daily-now">Send today's briefing now</button><button type="button" class="jv-btn" data-act="weekly-now">Send the weekly strategy now</button><button type="button" class="jv-btn" data-act="digest-now">Send the evening digest now</button></div></section>
             <section data-bp-section></section>
+            <section data-geo-costs></section>
             <section data-voice-section>${voiceSection()}</section>
             <section data-devices-section>${devicesSection()}</section>
             <section><h4>Actions</h4>
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label><label class="jv-field">Countdown before a risky action, hours (0.25-24)<input type="number" name="a-countdown" min="0.25" max="24" step="0.25" value="${esc(d.actions.countdownHours)}"></label></div>
               <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails; warm-up that is off is turned back on first, and a missing canary, postmaster or abuse alias is restored. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
+            <section><h4>Country dates</h4>
+              <label class="jv-check"><input type="checkbox" name="c-auto"${d.calendar.autoPause ? ' checked' : ''}> Pause a country's campaigns over its public holidays on their own, and resume them the next business day</label>
+              <div class="jv-th-grid"><label class="jv-field">Warn this many days ahead<input type="number" name="c-warn" min="1" max="60" step="1" value="${esc(d.calendar.warnDays)}"></label><label class="jv-field">Remind this many days ahead<input type="number" name="c-remind" min="0" max="60" step="1" value="${esc(d.calendar.remindDays)}"></label></div>
+              <p class="jv-note">Only campaigns sending with at least ${C.CALENDAR.share}% of their leads in that country pause. The daily job at 07:40 (Bogotá) pauses and resumes them, logs it under Actions and pushes you. Off, Jarvis proposes the pause and you tap it. Holidays come from Nager.Date; the rest from Jarvis's list of country dates.</p></section>
             <section><h4>Goals</h4><div class="jv-goal-list">${d.goals.map(goalEditor).join('') || '<p class="jv-note">No goals yet. Add one: a product, what to count, the period, and the target.</p>'}</div>
               <div class="jv-actions"><button type="button" class="jv-btn" data-goal-add>Add a goal</button></div>
               <p class="jv-note">Goals count every row on the server (tests included) over the current Bogotá day, week (from Monday) or month.</p></section>
@@ -3879,6 +4318,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <p class="jv-note">Left empty, the tab shows the four shown. The app shows the same list; a repo the qa-lab-agents app cannot see is listed under Needs you.</p></section>
             <footer><span class="jv-note">${S.settings && S.settings.updatedAt ? 'Saved ' + esc(when(S.settings.updatedAt)) : 'Using the defaults'}</span><button type="button" class="jv-btn" data-settings-close>Cancel</button><button type="submit" class="jv-btn is-primary">Save</button></footer>`;
         bp.paint($('[data-bp-section]'));
+        GeoCost.paintSettings($('[data-geo-costs]'), { call, esc, toast, S, reload: () => loadExternal(['geo']) });
     }
 
     /** #2068: this browser as Jarvis reads it, and every phone and browser seen in the last 30 days, as in the app's Settings. */
@@ -3976,15 +4416,15 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
 
     if (bp.supported) navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.jarvisPush) pushCard(event.data.jarvisPush);
-        // A section changed on the server (#2509): fetch again unless this page already holds those versions.
-        // Applying only the changed sections is #2510.
+        // A section changed on the server (#2509): fetch only the sections this page does not hold yet (#2510).
         if (event.data && event.data.jarvisSections && S.live && S.mounted && !document.hidden) onSections(event.data.jarvisSections);
     });
     if (bp.supported) bp.endpoint().then((e) => { S.pushEndpoint = e || ''; }).catch(() => null);
 
     async function onSections(msg) {
-        if (String(msg.sections || '').split(',').includes('processes')) await loadProcesses();
-        if (C.sectionsStale(msg, S.versions, S.range)) loadNewer();
+        const processes = String(msg.sections || '').split(',').includes('processes') && await loadProcesses();
+        const only = C.sectionsToFetch(msg, S.versions, S.range).filter((name) => !(processes && name === 'processes'));
+        if (only.length) loadNewer(only);
     }
 
     function readSettings() {
@@ -4000,7 +4440,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const github = { repos: C.githubRepos(String(val('s-repos').value || '').split('\n')) };
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
             Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github,
-            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) } };
+            actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) },
+            calendar: C.calendarSettings({ autoPause: !!val('c-auto').checked, warnDays: Number(val('c-warn').value), remindDays: Number(val('c-remind').value) }) };
     }
 
     function openSettings() {
@@ -4027,7 +4468,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         toast('Saved. Jarvis is recounting the goals.');
         compute();
         render();
-        loadExternal(reposChanged ? ['goals', 'github-work'] : ['goals']);
+        loadExternal(reposChanged ? ['goals', 'github-work', 'calendar'] : ['goals', 'calendar']);
     }
 
     async function dailyNow() {
@@ -4064,7 +4505,18 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     root.addEventListener('pointerout', (event) => {
         const fig = event.pointerType === 'mouse' && event.target.closest && event.target.closest('.jv-chart');
         if (fig && !fig.contains(event.relatedTarget)) chartTipOff(fig);
+        const map = event.target.closest && event.target.closest('.jv-geo-wrap');
+        if (map && !map.contains(event.relatedTarget)) geoCardOff(map);
     });
+    root.addEventListener('pointermove', (event) => {
+        if (event.pointerType !== 'mouse') return;
+        const c = event.target.closest && event.target.closest('.jv-geo-c');
+        if (c) geoCard(c, event.clientX, event.clientY); else if (event.target.closest && event.target.closest('.jv-geo-wrap')) geoCardOff(event.target.closest('.jv-geo-wrap'));
+    });
+    S.geoWeek = null;
+    GeoTime.bind(root, S, () => GeoTime.patch($('[data-view="geo"]'), geoView()), render);
+    root.addEventListener('focusin', (event) => { if (event.target.matches && event.target.matches('.jv-geo-c')) geoCard(event.target); });
+    root.addEventListener('focusout', (event) => { if (event.target.matches && event.target.matches('.jv-geo-c')) geoCardOff(event.target.closest('.jv-geo-wrap')); });
     root.addEventListener('toggle', (event) => {
         const d = event.target;
         if (d.dataset && d.dataset.person) { if (d.open) openPeople.add(d.dataset.person); else openPeople.delete(d.dataset.person); }
@@ -4081,7 +4533,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (hit) { chartTip(hit); return; }
         const opener = event.target.closest('[data-drill-open]');
         if (opener && root.contains(opener)) { drillToggle(opener); return; }
-        const t = event.target.closest('button, a, li[data-hit], li[data-brief]');
+        const t = event.target.closest('button, a, li[data-hit], li[data-brief], .jv-geo-c');
         if (!t || !root.contains(t)) return;
         if (t.dataset.conDock !== undefined) { dock(!docked); return; }
         if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
@@ -4090,6 +4542,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.closest('[data-con]')) return;
         if (t.dataset.fold !== undefined) { fold(t.dataset.fold, !folded.has(t.dataset.fold)); return; }
         if (t.dataset.foldAll !== undefined) { foldAll(t.dataset.foldAll === '1'); return; }
+        if (t.dataset.procAll !== undefined) { S.processesAll = !S.processesAll; paintProcesses(); return; }
         if (t.dataset.hit !== undefined) { choose(Number(t.dataset.hit)); return; }
         if (t.dataset.brief !== undefined) { openSheet(t.dataset.brief); return; }
         if (t.dataset.briefHidden !== undefined) { S.showHidden = !S.showHidden; render(); return; }
@@ -4114,6 +4567,15 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
+        if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+        if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
+        if (t.dataset.geoCamp !== undefined) { event.preventDefault(); S.geoCamp = S.geoCamp === t.dataset.geoCamp ? '' : t.dataset.geoCamp; render(); const at = S.geoCamp && $('[data-geo-camp-sheet]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+        if (t.dataset.geoTlGroup) { S.geoTlGroup = t.dataset.geoTlGroup; render(); return; }
+        if (t.dataset.geoHeat || t.dataset.geoSector) { GeoHeat.pick(S, t.dataset); render(); return; }
+        if (t.dataset.geoTarget) { geoTarget(t); return; }
+        if (t.dataset.geoConfirm) { geoConfirmAct(t); return; }
+        if (t.dataset.geoNext) { GeoActions.act(t, { call, toast, confirmRun, loadExternal, $ }); return; }
+        if (t.dataset.calAct) { calendarAct(t); return; }
         if (t.dataset.mkCampaign) { campaignAct(t); return; }
         if (t.dataset.mkResend) { resendAct(t); return; }
         if (t.dataset.liSend) { liSend(t); return; }
@@ -4123,6 +4585,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.ghAct) { ghAct(t); return; }
         if (t.dataset.ghDiagnose !== undefined) { ghDiagnose(t.dataset.ghDiagnose); return; }
         if (t.dataset.ghAgent || t.dataset.ghAgentPr) { ghAgent(t); return; }
+        if (t.dataset.workerCursor) { workerCursor(t.dataset.workerCursor); return; }
         if (t.dataset.ghFix) { ghFix(t.dataset.ghFix); return; }
         if (t.dataset.ghFlakyAgent) { ghFlakyAgent(t.dataset.ghFlakyAgent); return; }
         if (t.dataset.ghSecAgent) { ghSecAgent(t.dataset.ghSecAgent); return; }
@@ -4196,6 +4659,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     root.addEventListener('change', (event) => {
         if (event.target.dataset.shareFile !== undefined) { S.share.file = event.target.files[0] || null; render(); return; }
         if (event.target.dataset.mkField) { S.mkForm[event.target.dataset.mkField] = event.target.value; return; }
+        if (event.target.dataset.geoMetric !== undefined) { S.geoMetric = event.target.value; render(); return; }
         if (event.target.dataset.bpKind) { bp.kindChanged(event.target.dataset.bpKind, event.target.checked); return; }
         if (event.target.dataset.noticePick !== undefined || event.target.dataset.noticeAll !== undefined) { pickNotice(event.target); return; }
         if (event.target.dataset.voiceLang !== undefined) { saveVoice({ lang: event.target.value || null }); return; }
@@ -4222,7 +4686,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (!lines || !confirmRun(`queue ${lines.split(/[\n;]+/).filter(Boolean).length} prospect site(s) for the nightly sweep`)) return;
             const out = await call('marketing-queue', { hosts: lines, cc: form.cc.value.trim(), sector: form.sector.value }).catch((error) => ({ ok: false, error: error.message }));
             toast(out.ok ? `Queued ${out.added}${out.already ? ', ' + out.already + ' already on the list' : ''}${out.skipped.length ? ', ' + out.skipped.length + ' left out (' + out.skipped.slice(0, 2).map((x) => x.line + ': ' + x.why).join('; ') + ')' : ''}.` : 'Not queued: ' + out.error, 7000);
-            if (out.ok) { S.mkForm.hosts = ''; form.hosts.value = ''; loadExternal(['marketing', 'outreach']); }
+            if (out.ok) { S.mkForm.hosts = ''; form.hosts.value = ''; loadExternal(['marketing', 'outreach', 'geo']); }
         } else if (form.dataset.mkReview !== undefined) {
             const url = form.url.value.trim();
             if (!url || !confirmRun(`review ${url} now`)) return;
@@ -4307,6 +4771,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
     document.addEventListener('keydown', onKey);
     root.addEventListener('keydown', (event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('.jv-geo-c')) { event.preventDefault(); event.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
+        if (event.key === 'Enter' && event.target.matches && event.target.matches('[data-geo-confirm-row] input')) { event.preventDefault(); event.target.closest('[data-geo-confirm-row]').querySelector('[data-geo-confirm="change"]').click(); return; }
         const handle = event.target.closest && event.target.closest('[data-lay="drag"]');
         if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
         event.preventDefault();
@@ -4346,12 +4812,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     return {
         show() {
             greet();
-            if (!S.mounted) { S.mounted = true; refresh(); } else { compute(); render(); }
+            if (!S.mounted) { S.mounted = true; openSaved(); refresh(); } else { compute(); render(); }
             writeHash();
             openLink(new URLSearchParams(window.location.search));
         },
         open(search) { openLink(new URLSearchParams(search)); },
         inboxChanged() { if (S.mounted) { compute(); render(); } },
+        forget: forgetSnapshots,
         state: S,
         run,
         destroy() {
