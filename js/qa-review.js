@@ -64,11 +64,64 @@
   let compareTarget = null;
   // How this browser's next run is billed, from the server's /standing: { billing: "run" | "scope", free, percent, pass, lastPlan,
   // plans }, where pass is the signed-in address's open pass (plan, runsLeft, paidUntil, its limits) or null; null while unknown.
+  // softLeft / softCap: soft-gate free preview remaining (#3478).
   let standing = null;
   let standingKey = null;
   let pricing = false;
+  let softLeft = null;
+  let softCap = 5;
+  const TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "1x00000000000000000000AA" : "0x4AAAAAAFoMHSvmRtt1Z3Lz";
+  let turnstileReady = null;
+  let softTurnstileId = null;
   const COMPARE_KEY = "qa-review-compare";
   const fileUses = {};
+
+  function loadTurnstile() {
+    if (!turnstileReady) {
+      turnstileReady = new Promise((resolve, reject) => {
+        if (window.turnstile) return resolve(window.turnstile);
+        const script = document.createElement("script");
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("Turnstile did not start")));
+        script.onerror = () => reject(new Error("Turnstile did not load"));
+        document.head.appendChild(script);
+      }).catch((error) => { turnstileReady = null; throw error; });
+    }
+    return turnstileReady;
+  }
+
+  async function softTurnstileToken(visible) {
+    // Local API skips Siteverify; production needs a token when TURNSTILE_SECRET_KEY is bound.
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return "";
+    const api = await loadTurnstile();
+    const box = document.getElementById("soft-turnstile");
+    if (!box) return "";
+    box.hidden = !visible;
+    if (softTurnstileId != null) {
+      try { api.reset(softTurnstileId); } catch (error) { softTurnstileId = null; }
+    }
+    if (softTurnstileId == null) {
+      softTurnstileId = api.render(box, {
+        sitekey: TURNSTILE_SITEKEY,
+        action: "soft-preview",
+        appearance: visible ? "always" : "interaction-only",
+        size: visible ? "normal" : "flexible"
+      });
+    }
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const tick = () => {
+        try {
+          const token = api.getResponse(softTurnstileId);
+          if (token) return resolve(token);
+        } catch (error) { /* still warming */ }
+        if (Date.now() - started > 20000) return reject(new Error("The bot check timed out."));
+        setTimeout(tick, 200);
+      };
+      tick();
+    });
+  }
 
   function endpoint() {
     const host = location.hostname;
@@ -112,11 +165,14 @@
     return !!(window.ReviewAuth && ReviewAuth.signedIn());
   }
 
-  // Review stays pressable while signed out: pressing it asks for the terms, then says to sign in.
+  // Soft gate (#3478): Review stays pressable while signed out and soft-runs the pasted URL.
+  // softUnlockUrl: pending Unlock → full crawl after terms + OAuth (#48A).
+  let softUnlockUrl = "";
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
       const name = document.getElementById("name");
       if (on && name && !name.value.trim() && ReviewAuth.who().name) name.value = ReviewAuth.who().name;
+      if (on && softUnlockUrl) continueSoftUnlock();
     });
   }
 
@@ -435,8 +491,7 @@
     urlInput.dispatchEvent(new Event("input"));
   }
 
-  // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
-  // It takes the same address as the request's field, and the two stay in step.
+  // Soft gate (#3478): hero URL + Run starts the anonymous 1-page preview; OAuth/terms wait for unlock.
   const stageStart = document.getElementById("stage-start");
   const stageUrl = document.getElementById("stage-url");
   const stageError = document.getElementById("stage-url-error");
@@ -453,6 +508,141 @@
     });
     urlInput.addEventListener("input", () => { if (stageUrl.value !== urlInput.value) stageUrl.value = urlInput.value; });
   }
+
+  function softPreviewBody(url, runId, turnstileToken) {
+    return JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, {
+      url,
+      deviceId: deviceId(),
+      runId,
+      openedAt: openedAt,
+      company: (document.getElementById("hp-note") || { value: "" }).value,
+      lang: document.documentElement.lang || "en",
+      pageLang: selectedPageLang(),
+      landing: window.QaConsent && QaConsent.landing ? QaConsent.landing() : null,
+      turnstileToken: turnstileToken || ""
+    }));
+  }
+
+  function paintSoftRunLabels() {
+    const label = softLeft == null ? "Run" : ("Run · " + softLeft + " left");
+    if (reviewBtn && !activeRun) {
+      const base = reviewBtn.getAttribute("data-soft-label") || "Review";
+      reviewBtn.textContent = softLeft == null ? base : ("Run · " + softLeft + " left");
+      if (!reviewBtn.getAttribute("data-soft-label")) reviewBtn.setAttribute("data-soft-label", base);
+    }
+    const heroBtn = stageStart && stageStart.querySelector('button[type="submit"]');
+    if (heroBtn && !activeRun) heroBtn.textContent = label;
+  }
+
+  function openSoftQuota(body) {
+    const box = document.getElementById("soft-quota");
+    if (!box) {
+      setStatus((body && body.error) || "You've used today's free previews. Sign in for more.", true);
+      return;
+    }
+    const detail = document.getElementById("soft-quota-detail");
+    if (detail) detail.textContent = (body && body.error) || "You've used today's free previews. Sign in for more.";
+    const signed = !!(body && (body.softSignedIn || body.signIn === false));
+    const sign = document.getElementById("soft-quota-signin");
+    if (sign) sign.hidden = signed;
+    box.hidden = false;
+    document.body.classList.add("gate-open");
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_quota_hit", "URL Review", signed ? "signed-in" : "anon");
+  }
+
+  function closeSoftQuota() {
+    const box = document.getElementById("soft-quota");
+    if (box) box.hidden = true;
+    document.body.classList.remove("gate-open");
+  }
+  const softQuotaClose = document.getElementById("soft-quota-close");
+  const softQuotaSignin = document.getElementById("soft-quota-signin");
+  if (softQuotaClose) softQuotaClose.addEventListener("click", closeSoftQuota);
+  if (softQuotaSignin) softQuotaSignin.addEventListener("click", () => {
+    closeSoftQuota();
+    if (window.ReviewAuth) ReviewAuth.focus();
+    document.getElementById("intake").scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+
+  async function runSoftPreview(rawUrl, opts) {
+    if (activeRun) return;
+    const options = opts || {};
+    const runId = hexId();
+    activeRun = runId;
+    reviewBtn.disabled = true;
+    stopBtn.disabled = true;
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.start({ host: rawUrl, pages: 1 });
+    setStatus("Previewing the pasted page…", false);
+    appendLog("Soft preview: reading only the pasted URL.");
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_run", "URL Review", signedIn() ? "signed-in" : "anon");
+    try {
+      let token = "";
+      try { token = await softTurnstileToken(!!options.visibleTurnstile); } catch (error) { token = ""; }
+      const res = await fetch(runEndpoint() + "/review/preview", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: softPreviewBody(rawUrl, runId, token)
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        if (errBody.code === "soft-quota") {
+          softLeft = 0;
+          softCap = Number(errBody.softCap) || softCap;
+          paintSoftRunLabels();
+          openSoftQuota(errBody);
+          throw Object.assign(new Error(errBody.error || "Soft preview quota reached."), { softQuota: true });
+        }
+        if (errBody.code === "soft-turnstile" && !options.visibleTurnstile) {
+          activeRun = "";
+          reviewBtn.disabled = false;
+          stopBtn.disabled = true;
+          runLog.classList.remove("is-live");
+          if (window.ReviewProgress) ReviewProgress.reset();
+          return runSoftPreview(rawUrl, { visibleTurnstile: true });
+        }
+        throw Object.assign(new Error(errBody.error || rc.word("fieldError", "reviewFailed")), { body: errBody });
+      }
+      stopBtn.disabled = false;
+      const payload = await readStream(res);
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
+      layer = "All";
+      payload.softPreview = true;
+      payload.paid = false;
+      if (payload.softLeft != null) softLeft = Number(payload.softLeft);
+      if (payload.softCap != null) softCap = Number(payload.softCap);
+      paintSoftRunLabels();
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_preview_shown", "URL Review", payload.report && payload.report.host);
+      render(payload);
+      if (payload.report.id) {
+        try {
+          const next = location.pathname + "?report=" + encodeURIComponent(payload.report.id);
+          if (location.pathname + location.search !== next) history.replaceState(null, "", next);
+        } catch (error) { /* share link still works from the Share control */ }
+      }
+      const stopped = payload.report.status === "stopped";
+      if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
+      setStatus(stopped
+        ? "Preview stopped. Scores below use what was read before the stop."
+        : "Preview ready: scores and the top finding stay readable. Unlock for a full site audit.", false);
+      dash.scrollTop = 0;
+    } catch (error) {
+      if (window.ReviewProgress) ReviewProgress.reset();
+      if (!error.softQuota && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_error", "URL Review", "soft-preview");
+      if (!error.softQuota) setStatus(error.message || (window.QAReviewReportCopy ? QAReviewReportCopy.word("fieldError", "reviewFailed") : "The preview failed. Try another public URL."), true);
+    } finally {
+      activeRun = "";
+      reviewBtn.disabled = false;
+      stopBtn.disabled = true;
+      runLog.classList.remove("is-live");
+      paintSteps();
+      paintSoftRunLabels();
+    }
+  }
+
   if (stageStart) stageStart.addEventListener("submit", (event) => {
     event.preventDefault();
     const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
@@ -465,12 +655,7 @@
     urlInput.value = value;
     urlInput.dispatchEvent(new Event("input", { bubbles: true }));
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
-    const next = reviewForm.querySelector('.req-group:not(.done):not([data-step="page"])');
-    if (next) goToStep(next.dataset.step);
-    else {
-      document.getElementById("intake").scrollIntoView({ block: "end", behavior: "smooth" });
-      reviewBtn.focus({ preventScroll: true });
-    }
+    runSoftPreview(value);
   });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
@@ -3065,9 +3250,9 @@
     return donePayload;
   }
 
-  // Signed out, sign-in is the step to point at, before the browser's own required-field bubbles on the rest.
+  // Soft gate (#3478 / #43A+#45A): single-URL Review soft-runs for everyone; compare stays gated; full crawl waits on Unlock.
   reviewBtn.addEventListener("click", (event) => {
-    if (activeRun || signedIn()) return;
+    if (activeRun || signedIn() || !compareTarget) return;
     event.preventDefault();
     reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
   });
@@ -3075,14 +3260,25 @@
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (activeRun) return;
-    if (!termsOk) {
-      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), compareTarget ? [compareTarget.url].concat(compareTarget.queue || []) : urlInput.value.trim());
+    if (!compareTarget) {
+      const value = urlInput.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+      if (!value || /\s/.test(value)) {
+        setStatus(window.QAReviewReportCopy ? QAReviewReportCopy.word("fieldError", "urlNeeded") : "Enter a public page after https://.", true);
+        urlInput.focus();
+        return;
+      }
+      if (stageUrl && stageUrl.value !== value) stageUrl.value = value;
+      await runSoftPreview(value);
       return;
     }
     if (!signedIn()) {
-      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "compare");
       setStatus(rc.t("signInToRun"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
+      return;
+    }
+    if (!termsOk) {
+      askTerms(() => reviewForm.dispatchEvent(new Event("submit", { cancelable: true })), [compareTarget.url].concat(compareTarget.queue || []));
       return;
     }
     const compare = compareTarget;
@@ -3271,7 +3467,156 @@
     return fullQuotes[key];
   }
 
-  // The two ways to read the rest of an unpaid report, each with its price.
+  // Soft unlock (#3478 / #48A): terms + OAuth, then today's POST /review on the same URL (new report id, #49A).
+  function prepareUnlockIntake(rawUrl) {
+    const value = String(rawUrl || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (value) {
+      urlInput.value = value;
+      urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+      if (stageUrl) stageUrl.value = value;
+    }
+    const who = window.ReviewAuth && ReviewAuth.signedIn() ? ReviewAuth.who() : { name: "", email: "" };
+    const name = document.getElementById("name");
+    if (name && !name.value.trim()) name.value = who.name || who.email || "";
+    const email = document.getElementById("email");
+    if (email && !email.value.trim()) email.value = who.email || "";
+    if (!reasonCode()) {
+      const teaching = reviewForm.querySelector('input[name="reasonCode"][value="teaching"]');
+      if (teaching) {
+        teaching.checked = true;
+        teaching.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+    if (!selectedFrameworks().length) {
+      const playwright = reviewForm.querySelector('input[name="fw"][value="Playwright"]');
+      if (playwright) playwright.checked = true;
+    }
+    paintSteps();
+  }
+
+  function beginSoftUnlock(rawUrl) {
+    softUnlockUrl = String(rawUrl || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!softUnlockUrl) {
+      setStatus("Paste a public URL before unlocking.", true);
+      return;
+    }
+    continueSoftUnlock();
+  }
+
+  function continueSoftUnlock() {
+    if (!softUnlockUrl) return;
+    if (!termsOk) {
+      askTerms(() => continueSoftUnlock(), softUnlockUrl);
+      return;
+    }
+    if (!signedIn()) {
+      setStatus("Sign in to unlock the full site audit.", true);
+      if (window.ReviewAuth) ReviewAuth.focus();
+      document.getElementById("intake").scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
+    const target = softUnlockUrl;
+    softUnlockUrl = "";
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_unlock_ok", "URL Review", target);
+    runFullCrawl(target);
+  }
+
+  async function runFullCrawl(rawUrl) {
+    if (activeRun) return;
+    prepareUnlockIntake(rawUrl);
+    const errors = clientErrors();
+    markFields(errors);
+    if (errors.length) {
+      softUnlockUrl = rawUrl;
+      setStatus(errors[0].message, true);
+      goToStep(errors[0].field === "frameworks" ? "cases" : errors[0].field === "url" ? "page" : "you");
+      return;
+    }
+    if (pricing) return;
+    const answer = await confirmRun();
+    if (answer === false) {
+      setStatus("Nothing was started or charged.", false);
+      return;
+    }
+    if (activeRun) return;
+    const runId = hexId();
+    activeRun = runId;
+    reviewBtn.disabled = true;
+    stopBtn.disabled = true;
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.start({ host: rawUrl, pages: selectedPages() });
+    setStatus("Unlocking: starting the full site audit…", false);
+    appendLog("Full crawl queued after soft unlock.");
+    if (window.SiteAnalytics) {
+      SiteAnalytics.trackEvent("full_crawl_queued", "URL Review", rawUrl);
+      SiteAnalytics.trackEvent("qa_review_start", "URL Review", reasonCode());
+    }
+    fetch(endpoint() + "/place", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ runId: runId })
+    }).catch(() => {});
+    try {
+      const res = await fetch(runEndpoint() + "/review", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: reviewBody(null, rawUrl, runId)
+      });
+      stopBtn.disabled = false;
+      const payload = await readStream(res);
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
+      layer = "All";
+      payload.reasonCode = reasonCode();
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report && payload.report.host);
+      try { sessionStorage.removeItem(RUN_PAID_KEY); } catch (storageError) { /* nothing was kept */ }
+      render(payload);
+      if (payload.report.id) {
+        try {
+          const next = location.pathname + "?report=" + encodeURIComponent(payload.report.id);
+          if (location.pathname + location.search !== next) history.replaceState(null, "", next);
+        } catch (error) { /* share still works from the Share control */ }
+      }
+      loadStanding();
+      const stopped = payload.report.status === "stopped";
+      if (window.ReviewProgress) ReviewProgress.finish(stopped ? "stopped" : "ready");
+      setStatus(stopped ? "Stopped. The report uses the pages analyzed before the stop." : "Full audit ready. Cases are proposed, not run.", false);
+      dash.scrollTop = 0;
+    } catch (error) {
+      if (error.fields) markFields(error.fields);
+      if (window.ReviewProgress) {
+        if (error.paymentRequired || (error.body && error.body.signIn) || error.fields) ReviewProgress.reset();
+        else ReviewProgress.fail();
+      }
+      if (error.body && error.body.signIn) {
+        softUnlockUrl = rawUrl;
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "unlock");
+        ReviewAuth.expire(error.message);
+        ReviewAuth.focus();
+        setStatus(error.message, true);
+      } else if (error.paymentRequired && error.body && error.body.purpose === "new-run") {
+        openRunPay(error.body);
+        setStatus("Another review waits on payment.", true);
+      } else if (error.paymentRequired) {
+        openPay(error.body || {});
+        setStatus("Opening this report again waits on payment.", true);
+      } else {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
+        setStatus(error.message || rc.word("fieldError", "reviewFailed"), true);
+      }
+    } finally {
+      activeRun = "";
+      reviewBtn.disabled = false;
+      stopBtn.disabled = true;
+      runLog.classList.remove("is-live");
+      paintSteps();
+      paintSoftRunLabels();
+    }
+  }
+
+  // Soft-gate unlock (#3478 / #29B), or the two paid ways to read an unpaid stored report.
   function paintOffer(host, show) {
     if (!host) return;
     const report = current && current.report;
@@ -3280,11 +3625,22 @@
       host.textContent = "";
       return;
     }
-    const fixed = hasFixList(report.id);
     if (!rc.english) {
       host.setAttribute("lang", rc.lang);
       host.setAttribute("translate", "no");
     }
+    if (current.softPreview || report.softPreview) {
+      host.innerHTML = '<div class="offer-row">' +
+        '<button type="button" class="offer offer-full" data-offer="soft-unlock" id="soft-unlock-btn"><b>Unlock full site audit</b><span>Sign in and accept the terms to queue a full crawl of this URL.</span></button></div>';
+      const unlock = document.getElementById("soft-unlock-btn");
+      if (unlock) unlock.onclick = () => {
+        const raw = (report.requestedUrl || report.url || report.host || urlInput.value || "").replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("soft_unlock_start", "URL Review", report.host || raw);
+        beginSoftUnlock(raw || report.host || "");
+      };
+      return;
+    }
+    const fixed = hasFixList(report.id);
     host.innerHTML = (fixed ? '<p class="offer-note">' + esc(rc.t("offerFixOpen")) + "</p>" : "") +
       '<div class="offer-row">' +
       (fixed ? "" : '<a class="offer" data-offer="fixlist" href="' + esc(payPage() + "?purpose=fixlist&reportId=" + encodeURIComponent(report.id)) + '"><b>' + esc(rc.t("offerFix", { usd: FIXLIST_USD })) + "</b><span>" + esc(rc.t("offerFixBody")) + "</span></a>") +
@@ -3374,10 +3730,13 @@
         lastPlan: body.lastPlan || "",
         plans: Array.isArray(body.plans) ? body.plans : []
       } : null;
+      if (res.ok && body.softLeft != null) softLeft = Number(body.softLeft);
+      if (res.ok && body.softCap != null) softCap = Number(body.softCap);
     } catch (error) {
       standing = null;
     }
     paintTags();
+    paintSoftRunLabels();
   }
 
   // Asked once on load and again when the sign-in changes, never on a click.

@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const core = require("../functions/url-review-core");
+const softQuota = require("../functions/url-review-soft-quota");
 const newsWire = require("../functions/news-wire");
 const desk = require("../functions/url-review-desk");
 const offers = require("../functions/url-review-offers");
@@ -19,6 +20,7 @@ const oauth = require("../functions/url-review-oauth");
 const fixOffers = require("../functions/url-review-fix-offers");
 const fixCheckout = require("../functions/url-review-fix-checkout");
 const fixRereview = require("../functions/url-review-fix-rereview");
+const localSoftQuota = softQuota.memoryStore();
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
 function loadEnvFile(name) {
@@ -684,6 +686,7 @@ const server = http.createServer(async (req, res) => {
     const records = readStore();
     const standing = core.standingFor(records, { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
     const email = await sessionEmail(standingBody);
+    const soft = await localSoftQuota.peek({ ip: clientIp(req), email: email || "" });
     // This server has no free accounts and charges no return step, so it reports neither.
     sendJson(res, 200, {
       billing: standing.billing,
@@ -692,7 +695,10 @@ const server = http.createServer(async (req, res) => {
       compareUsd: core.COMPARE_CENTS / 100,
       pass: email ? offers.passView(offers.passFor(records, email)) : null,
       lastPlan: email ? offers.lastPassPlan(records, email) : "",
-      plans: offers.passPlans()
+      plans: offers.passPlans(),
+      softLeft: soft.left,
+      softCap: soft.cap,
+      softSignedIn: soft.signedIn
     }, origin, deviceHint);
     return;
   }
@@ -988,6 +994,89 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
     } catch (error) {
       sendJson(res, error.status || 502, { paid: false, error: error.message || "The payment could not be confirmed." }, origin, deviceId);
+    }
+    return;
+  }
+  if (req.method === "POST" && url.pathname === "/review/preview") {
+    let body = {};
+    try {
+      body = await readBody(req);
+    } catch (error) {
+      sendJson(res, error.status || 400, { error: error.message }, origin, deviceHint);
+      return;
+    }
+    const deviceId = deviceFrom(req, body);
+    const intake = await core.screenSoftPreview(body, req.headers);
+    if (!intake.ok) {
+      sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
+      return;
+    }
+    const ip = clientIp(req);
+    const email = (await sessionEmail(body)) || "";
+    const standing = await localSoftQuota.peek({ ip, email });
+    if (!standing.ok) {
+      sendJson(res, 429, {
+        error: softQuota.quotaMessage(standing),
+        code: "soft-quota",
+        softLeft: 0,
+        softCap: standing.cap,
+        signIn: !standing.signedIn,
+        softPreview: true
+      }, origin, deviceId);
+      return;
+    }
+    const quota = await localSoftQuota.take({ ip, email });
+    if (!quota.ok) {
+      sendJson(res, 429, {
+        error: softQuota.quotaMessage(quota),
+        code: "soft-quota",
+        softLeft: 0,
+        softCap: quota.cap,
+        signIn: !quota.signedIn,
+        softPreview: true
+      }, origin, deviceId);
+      return;
+    }
+    const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
+    const run = { stopped: false };
+    runs.set(runId, run);
+    res.on("close", () => {
+      if (!res.writableEnded) run.stopped = true;
+    });
+    startStream(res, origin, deviceId);
+    try {
+      if (email) intake.value.email = email;
+      const report = await core.reviewTarget(intake.value.url, {
+        softPreview: true,
+        log: (text) => line(res, { type: "log", text }),
+        stopped: () => run.stopped,
+        asker: { reasonCode: "soft-preview", email: email || "" },
+        maxPages: core.SOFT_PREVIEW_PAGES,
+        maxDepth: core.SOFT_PREVIEW_DEPTH,
+        pageLang: intake.value.pageLang,
+        browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
+        pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+        crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
+      });
+      const record = core.intakeRecord(intake.value, report, {
+        ip,
+        deviceId,
+        userAgent: req.headers["user-agent"],
+        acceptLanguage: req.headers["accept-language"],
+        country: "",
+        region: "",
+        city: ""
+      });
+      writeRecord(record);
+      const shown = core.previewReport(report);
+      line(res, { type: "done", report: shown, frameworks: record.frameworks, paid: false, softPreview: true, priceUsd: 0, softLeft: quota.left, softCap: quota.cap });
+      res.end();
+    } catch (error) {
+      line(res, { type: "error", error: error.message || "The preview failed." });
+      res.end();
+    } finally {
+      runs.delete(runId);
     }
     return;
   }

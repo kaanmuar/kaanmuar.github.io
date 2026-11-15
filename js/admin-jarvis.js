@@ -3560,7 +3560,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.review = kpis(r.kpis) + `<div class="jv-grid">${briefPanel('review')}${goalsPanel('review')}
             ${peoplePanel()}
             ${localPanel()}
-            ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel })}
+            ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel, note: 'Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.' })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
             ${speedCard('review')}${gaCard('review')}

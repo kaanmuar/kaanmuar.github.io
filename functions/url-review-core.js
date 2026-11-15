@@ -94,6 +94,11 @@ const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
 const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
 const INCLUDED_PAGES = 20;
 const INCLUDED_DEPTH = 2;
+// Soft-gate free preview: exact pasted URL only (#3478 / #12B), shorter wall clock (#35A).
+const SOFT_PREVIEW_PAGES = 1;
+const SOFT_PREVIEW_DEPTH = INCLUDED_DEPTH;
+const SOFT_PREVIEW_MS = 90000;
+const SOFT_PREVIEW_RETAIN_MS = 7 * 24 * 60 * 60 * 1000;
 const PAGE_LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
 
@@ -524,6 +529,60 @@ async function screenIntake(body, headers, options) {
       error: "The client email domain does not accept mail.",
       fields: [{ field: "clientEmail", message: "The client email domain does not accept mail." }]
     };
+  }
+  return { ok: true, value: intake.value };
+}
+
+// Soft-gate free preview (#3478): URL only, no OAuth/terms/name. Private hosts already fail in preformatUrl.
+function validateSoftPreview(body) {
+  const src = body || {};
+  const errors = [];
+  if (src.compareWith) fieldError(errors, "url", "Compare stays gated. Paste one public URL for a free preview.");
+  let target = null;
+  try {
+    target = preformatUrl(src.url);
+  } catch (error) {
+    fieldError(errors, "url", error.message || "Enter a public https URL.");
+  }
+  const landing = landingSource(src.landing);
+  return {
+    errors,
+    value: !errors.length && target ? {
+      name: "",
+      email: "",
+      reason: "Soft preview",
+      reasonCode: "soft-preview",
+      frameworks: ["Playwright"],
+      tools: [],
+      pages: SOFT_PREVIEW_PAGES,
+      depth: SOFT_PREVIEW_DEPTH,
+      url: target.toString(),
+      softPreview: true,
+      termsVersion: "",
+      deviceId: clean(src.deviceId, 80),
+      lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
+      pageLang: normalizePageLang(src.pageLang),
+      section: false,
+      followUp: false,
+      unlisted: true,
+      compareWith: "",
+      query: landing.query,
+      referrerHost: landing.referrerHost
+    } : null
+  };
+}
+
+async function screenSoftPreview(body, headers) {
+  const intake = validateSoftPreview(body);
+  if (intake.errors.length) {
+    return { ok: false, status: 400, error: intake.errors[0].message, fields: intake.errors };
+  }
+  const human = humanCheck(body, headers);
+  if (!human.ok) return { ok: false, status: 403, error: human.message, fields: [] };
+  try {
+    await assertPublic(new URL(intake.value.url).hostname);
+  } catch (error) {
+    return { ok: false, status: 400, error: error.message || "That address is not a public website.", fields: [{ field: "url", message: error.message || "That address is not a public website." }] };
   }
   return { ok: true, value: intake.value };
 }
@@ -3236,11 +3295,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (controls.log) controls.log(text);
   };
   const halt = () => !!(controls.stopped && controls.stopped());
-  const chosen = normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH };
+  const softPreview = controls.softPreview === true;
+  const chosen = softPreview
+    ? { pages: SOFT_PREVIEW_PAGES, depth: SOFT_PREVIEW_DEPTH }
+    : (normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH });
   const acceptLanguage = normalizePageLang(controls.pageLang);
   const begun = Date.now();
-  let deadline = begun + budgetMs(chosen.pages);
+  let deadline = begun + (softPreview ? SOFT_PREVIEW_MS : budgetMs(chosen.pages));
   note("Checking that the address is public https.");
+  if (softPreview) note("Soft preview: this run reads only the pasted URL (1 page), then frosts the rest.");
   note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
   // A competitor's site gets passive checks only; the browser refuses typing and opening the chat as well.
   const passive = controls.passive === true;
@@ -3855,33 +3918,36 @@ function checksSummary(report) {
 
 function intakeRecord(value, report, meta) {
   const now = Date.now();
+  const softPreview = !!(value && value.softPreview);
+  const retainMs = softPreview ? SOFT_PREVIEW_RETAIN_MS : RETAIN_MS;
   const fixed = [];
   const kept = storable(report, fixed);
   if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
   return {
     id: report.id,
     createdAt: new Date(now).toISOString(),
-    retainUntil: new Date(now + RETAIN_MS).toISOString(),
-    expireAt: new Date(now + RETAIN_MS),
-    termsVersion: value.termsVersion || TERMS_VERSION,
-    name: value.name,
-    email: value.email,
-    reason: value.reason,
+    retainUntil: new Date(now + retainMs).toISOString(),
+    expireAt: new Date(now + retainMs),
+    termsVersion: softPreview ? "" : (value.termsVersion || TERMS_VERSION),
+    name: value.name || "",
+    email: value.email || "",
+    reason: value.reason || "",
     reasonCode: value.reasonCode || "",
     clientName: value.clientName || "",
     clientEmail: value.clientEmail || "",
     clientUrl: value.clientUrl || "",
     ownership: value.ownership || "",
     frameworks: value.frameworks,
-    pages: value.pages || INCLUDED_PAGES,
-    depth: value.depth || INCLUDED_DEPTH,
+    pages: softPreview ? SOFT_PREVIEW_PAGES : (value.pages || INCLUDED_PAGES),
+    depth: softPreview ? SOFT_PREVIEW_DEPTH : (value.depth || INCLUDED_DEPTH),
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
+    softPreview: softPreview || undefined,
     // The run credit this run consumed paid for it, so it opens this report and no other.
-    paid: !!clean(meta.creditId, 40),
-    creditId: clean(meta.creditId, 40),
-    priceUsd: priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
+    paid: softPreview ? false : !!clean(meta.creditId, 40),
+    creditId: softPreview ? "" : clean(meta.creditId, 40),
+    priceUsd: softPreview ? 0 : priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
     ip: clean(meta.ip, 80),
     userAgent: clean(meta.userAgent, 300),
     acceptLanguage: clean(meta.acceptLanguage, 120),
@@ -3892,7 +3958,7 @@ function intakeRecord(value, report, meta) {
     pageLang: value.pageLang || "",
     section: value.section === true,
     followUp: value.followUp === true,
-    unlisted: value.unlisted === true,
+    unlisted: softPreview ? true : value.unlisted === true,
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
@@ -4804,6 +4870,10 @@ module.exports = {
   DEPTH_CHOICES,
   INCLUDED_PAGES,
   INCLUDED_DEPTH,
+  SOFT_PREVIEW_PAGES,
+  SOFT_PREVIEW_DEPTH,
+  SOFT_PREVIEW_MS,
+  SOFT_PREVIEW_RETAIN_MS,
   LAYERS,
   REASONS,
   FRAMEWORKS,
@@ -4815,8 +4885,10 @@ module.exports = {
   paymentExpireAt,
   preformatUrl,
   validateIntake,
+  validateSoftPreview,
   landingSource,
   screenIntake,
+  screenSoftPreview,
   emailCanReceive,
   mailboxMatchesHost,
   ownerProof,
