@@ -34,7 +34,7 @@ function fakeOps(over) {
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
-  "owner-tags-approve-verified": 20, "owner-tags-block": 10 };
+  "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 
 test("settings: actions are on with the default caps and confidence 0.8 unless saved otherwise, caps stay within 0-100 and confidence within 0.5-1", () => {
   assert.deepEqual(actions.cleanSettings(), { auto: true, caps: DEFAULT_CAPS, confidence: 0.8, countdownHours: 2 });
@@ -192,12 +192,48 @@ test("failed CI is re-run once, only on main or a Jarvis branch and only on its 
   assert.deepEqual(calls.reruns, [1, 4, 5, 6]);
 });
 
+test("a failed PR run on a Jarvis branch is closed and reopened once per main commit, never re-run (#2245)", async () => {
+  const db = fakeDb();
+  const refreshed = [];
+  let main = "aaa1111", runId = 20;
+  const { ops, calls } = autoOps({
+    failedCi: async () => [
+      { id: runId, name: "E2E and Visual Tests", branch: "jarvis/fix-cache", attempt: 1, event: "pull_request", pr: 301, main },
+      { id: 30, name: "E2E and Visual Tests", branch: "fix/123-other-chat", attempt: 1, event: "pull_request", pr: 302, main }
+    ],
+    refreshPr: async (n) => { refreshed.push(n); return { number: n, refreshed: true }; }
+  });
+  const first = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.deepEqual(refreshed, [301]);
+  assert.deepEqual(calls.reruns, []);
+  assert.match(first.done[0].detail, /Closed and reopened #301 for a fresh merge with main aaa1111/);
+  runId = 21;
+  await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: {}, ops });
+  assert.deepEqual(refreshed, [301], "the reopened PR failed again on the same main");
+  main = "bbb2222";
+  await actions.autoRun({ db, now: MONDAY_10 + 7200000, settings: {}, ops });
+  assert.deepEqual(refreshed, [301, 301], "main moved");
+});
+
+test("a PR that conflicts with main is logged as failed, not closed (#2245)", async () => {
+  const db = fakeDb();
+  const { ops } = autoOps({
+    failedCi: async () => [{ id: 40, name: "Lint Code", branch: "pagespeed/safe-2026-10-26", attempt: 1, event: "pull_request", pr: 303, main: "ccc3333" }],
+    refreshPr: async (n) => ({ number: n, skipped: "conflicts" })
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
+  assert.equal(out.done.length, 0);
+  const row = db.added.find((r) => r.action === "rerun-ci");
+  assert.equal(row.status, "failed");
+  assert.match(row.detail, /#303 was not reopened: conflicts/);
+});
+
 test("a push run on main that main has moved past starts again on main, and a scheduled one is re-run as before", async () => {
   const db = fakeDb();
   const dispatched = [];
   const { ops, calls } = autoOps({
     failedCi: async () => [
-      { id: 11, name: "Pages", branch: "main", attempt: 1, sha: "old", event: "workflow_dispatch", path: ".github/workflows/pages.yml" },
+      { id: 11, name: "Live reports from user reviews", branch: "main", attempt: 1, sha: "old", event: "workflow_dispatch", path: ".github/workflows/auto-live-reports.yml" },
       { id: 12, name: "Tests", branch: "main", attempt: 1, sha: "new", event: "push", path: ".github/workflows/tests.yml" },
       { id: 13, name: "Bluesky and Mastodon", branch: "main", attempt: 1, sha: "old", event: "schedule", path: ".github/workflows/open-social.yml" }
     ],
@@ -206,13 +242,33 @@ test("a push run on main that main has moved past starts again on main, and a sc
   });
   const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
   assert.deepEqual(calls.reruns, [12]);
-  const pages = out.queued.find((r) => r.target === "Pages #11");
-  assert.equal(pages.payload.workflow, ".github/workflows/pages.yml");
-  assert.match(pages.why, /moved past the commit that failed/);
+  const live = out.queued.find((r) => r.target === "Live reports from user reviews #11");
+  assert.equal(live.payload.workflow, ".github/workflows/auto-live-reports.yml");
+  assert.match(live.why, /moved past the commit that failed/);
   assert.ok(out.queued.some((r) => r.target === "Bluesky and Mastodon #13" && !r.payload.workflow), "a risky scheduled run keeps its re-run");
-  const res = await countdown.execute(pages, ops, MONDAY_10);
-  assert.deepEqual(dispatched, [".github/workflows/pages.yml"]);
-  assert.match(res.detail, /^Started Pages on main's newest commit/);
+  const res = await countdown.execute(live, ops, MONDAY_10);
+  assert.deepEqual(dispatched, [".github/workflows/auto-live-reports.yml"]);
+  assert.match(res.detail, /^Started Live reports from user reviews on main's newest commit/);
+});
+
+test("Pages on main's newest commit runs again at once; other risky runs go on the countdown with their commit (#2893)", async () => {
+  const dispatched = [];
+  const run = (id, name, sha, path) => ({ id, name, branch: "main", attempt: 1, sha, event: "push", path });
+  const autoAt = (failed) => autoOps({ failedCi: async () => failed, mainSha: async () => "head", dispatch: async (p) => { dispatched.push(p); } });
+
+  const atHead = autoAt([run(21, "Pages", "head", ".github/workflows/pages.yml"), run(22, "Live reports from user reviews", "head", ".github/workflows/auto-live-reports.yml")]);
+  const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops: atHead.ops });
+  assert.deepEqual(atHead.calls.reruns, [21]);
+  assert.ok(!out.queued.some((r) => r.target === "Pages #21"));
+  assert.deepEqual(out.queued.find((r) => r.target === "Live reports from user reviews #22").payload, { run: 22, name: "Live reports from user reviews", sha: "head", path: ".github/workflows/auto-live-reports.yml" });
+
+  const behind = autoAt([run(23, "Pages", "old", ".github/workflows/pages.yml")]);
+  const moved = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops: behind.ops });
+  assert.deepEqual([dispatched, behind.calls.reruns, moved.queued.length], [[".github/workflows/pages.yml"], [], 0]);
+
+  const scheduled = autoAt([Object.assign(run(24, "Pages", "old", ".github/workflows/pages.yml"), { event: "schedule" })]);
+  const old = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops: scheduled.ops });
+  assert.ok(old.queued.some((r) => r.target === "Pages #24"), "re-running an older commit would publish it over main, so it waits");
 });
 
 test("every branch the PageSpeed routine creates is one Jarvis re-runs CI on", () => {

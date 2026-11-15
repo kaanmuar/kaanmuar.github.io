@@ -4,6 +4,8 @@
   const SHOWN_KEY = "qa-review-shown";
   const REOPEN_FREE_MS = 7 * 24 * 60 * 60 * 1000;
   const SAMPLE_URL = "assets/qa-review-sample.json";
+  // scripts/build-sample-langs.js writes assets/qa-review-sample.<lang>.json for each of these.
+  const SAMPLE_LANGS = ["es", "pt", "de", "fr", "it"];
   const TERMS_VERSION = "2026-11-04b";
   const PAGE_CHOICES = [20, 40, 60, 80, 100];
   const DEPTH_CHOICES = [2, 3, 4, 5];
@@ -39,21 +41,8 @@
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
   const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
-  const REASONS = [
-    { id: "own", label: "I own this site and want a test plan" },
-    { id: "client", label: "A client asked me to propose coverage before a release" },
-    { id: "redesign", label: "I am comparing this page with a redesign" },
-    { id: "release", label: "I need a case list before a release" },
-    { id: "tech", label: "I want the public technologies named" },
-    { id: "a11y", label: "I am preparing an accessibility review" },
-    { id: "security", label: "I am preparing a review of the public security headers" },
-    { id: "performance", label: "I need a performance and load case list" },
-    { id: "teaching", label: "I am teaching or learning how a page could be tested" },
-    { id: "allowed", label: "I am checking a page I am allowed to review" },
-    { id: "verify", label: "I want QA-lab to run a verification" },
-    { id: "credentials", label: "I have a username and password for this site" },
-    { id: "other", label: "Other" }
-  ];
+  // Each id needs a reason.<id> label in every language of js/qa-review-report-copy.js.
+  const REASONS = ["own", "client", "redesign", "release", "tech", "a11y", "security", "performance", "teaching", "allowed", "verify", "credentials", "other"];
   const gate = document.getElementById("gate");
   const app = document.getElementById("review-app");
   const termsForm = document.getElementById("terms-form");
@@ -123,9 +112,11 @@
     return !!(window.ReviewAuth && ReviewAuth.signedIn());
   }
 
+  // Review stays pressable while signed out: pressing it asks for the terms, then says to sign in.
   if (window.ReviewAuth) {
     ReviewAuth.onChange((on) => {
-      if (!activeRun) reviewBtn.disabled = !on;
+      const name = document.getElementById("name");
+      if (on && name && !name.value.trim() && ReviewAuth.who().name) name.value = ReviewAuth.who().name;
     });
   }
 
@@ -140,7 +131,7 @@
     reasonBox.disabled = true;
     syncSection();
     stopBtn.disabled = true;
-    reviewBtn.disabled = !signedIn();
+    reviewBtn.disabled = false;
   }
 
   // The terms are asked for when an address is sent or someone signs in; what asked goes on once they are accepted.
@@ -157,7 +148,8 @@
     gate.hidden = false;
     gate.classList.remove("is-leaving");
     document.body.classList.add("gate-open");
-    gate.querySelector(".gate-card").focus();
+    gate.scrollTop = 0;
+    gate.querySelector(".gate-card").focus({ preventScroll: true });
   }
 
   function closeGate() {
@@ -247,28 +239,38 @@
     else if (!sectionTouched) box.checked = true;
     box.disabled = !path;
     if (!path) box.checked = false;
-    if (note) note.textContent = !path
-      ? "Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site."
-      : box.checked
-        ? "Later pages stay under " + path + "."
-        : "Later pages can follow links outside " + path + ".";
+    const copy = window.QAReviewReportCopy;
+    if (note) note.textContent = copy.t(!path ? "sectionNone" : box.checked ? "sectionStay" : "sectionLeave", { path });
+  }
+
+  function pageLangName(lang) {
+    const copy = window.QAReviewReportCopy;
+    if (copy.english || typeof Intl.DisplayNames !== "function") return PAGE_LANG_LABEL[lang] || lang;
+    return new Intl.DisplayNames([copy.lang], { type: "language" }).of(lang) || lang;
   }
 
   function scopeSummary() {
+    const copy = window.QAReviewReportCopy;
     const lang = selectedPageLang();
-    const parts = [selectedPages() + " pages", selectedDepth() + " deep", lang ? PAGE_LANG_LABEL[lang] || lang : "site language"];
-    if (document.getElementById("stay-section").checked) parts.push("this section");
+    const parts = [copy.t("scopePages", { n: selectedPages() }), copy.t("scopeDepth", { n: selectedDepth() }), lang ? pageLangName(lang) : copy.t("scopeSite")];
+    if (document.getElementById("stay-section").checked) parts.push(copy.t("scopeSection"));
     return parts.join(", ");
   }
 
   function paintReasons() {
+    const copy = window.QAReviewReportCopy;
     const box = document.getElementById("reasons");
     const legend = box.querySelector("legend");
     box.innerHTML = "";
     box.appendChild(legend);
-    REASONS.forEach((item) => {
+    REASONS.forEach((id) => {
       const label = document.createElement("label");
-      label.innerHTML = '<input type="radio" name="reasonCode" value="' + item.id + '" disabled> ' + item.label;
+      label.innerHTML = '<input type="radio" name="reasonCode" value="' + id + '" disabled> ';
+      label.appendChild(document.createTextNode(copy.word("reason", id)));
+      if (!copy.english) {
+        label.lang = copy.lang;
+        label.setAttribute("translate", "no");
+      }
       box.appendChild(label);
     });
   }
@@ -295,6 +297,8 @@
     else if (termsAll) termsAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
     accept.disabled = boxes.some((box) => !box.checked);
     paintTermGroups();
+    // On a phone Accept sits below the cards; once everything is ticked it comes into view.
+    if (!accept.disabled) accept.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
   paintTermGroups();
   termsForm.addEventListener("submit", (event) => {
@@ -314,15 +318,22 @@
     reasonBox.required = other;
     if (!other) clearField("reason");
     document.getElementById("client-box").hidden = code !== "client";
-    document.getElementById("own-note").hidden = code !== "own";
     document.getElementById("verify-note").hidden = code !== "verify";
     document.getElementById("credential-note").hidden = code !== "credentials";
     if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_reason", "URL Review", code);
   }
   document.getElementById("reasons").addEventListener("change", syncReasonExtras);
+  function dropFixedErrors() {
+    const shown = [...reviewForm.querySelectorAll(".field-error[data-local]")];
+    if (!shown.length) return;
+    const still = new Set(clientErrors().map((item) => item.field));
+    shown.forEach((error) => { if (!still.has(error.dataset.field)) clearField(error.dataset.field); });
+  }
   function paintSteps() {
+    dropFixedErrors();
     const code = reasonCode();
     const names = selectedFrameworks();
+    document.getElementById("own-note").hidden = code !== "own" || !!document.getElementById("email-error").textContent;
     const done = {
       you: signedIn() && !!document.getElementById("name").value.trim(),
       why: !!code && (code !== "other" || !!reasonBox.value.trim()),
@@ -330,16 +341,57 @@
       cases: names.length > 0,
       scope: !!reviewForm.querySelector('input[name="pages"]:checked') && !!reviewForm.querySelector('input[name="depth"]:checked')
     };
+    const missing = [];
     reviewForm.querySelectorAll(".req-group").forEach((group, i) => {
-      const ok = !!done[group.dataset.step];
+      const flagged = [...group.querySelectorAll(".field-error")].some((error) => error.textContent.trim() && !error.closest("[hidden]"));
+      const ok = !!done[group.dataset.step] && !flagged;
       group.classList.toggle("done", ok);
       group.querySelector(".tg-count").textContent = ok ? "✓" : String(i + 1);
+      if (!ok) missing.push(group);
     });
+    paintNeeds(missing);
     const meta = reviewForm.querySelector("#req-cases .rg-meta");
     if (meta) meta.textContent = names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "");
     const scopeMeta = reviewForm.querySelector("#req-scope .rg-meta");
     if (scopeMeta) scopeMeta.textContent = scopeSummary();
   }
+  // The steps still open before Review, each a button to its step, labelled with the step's own title.
+  function paintNeeds(groups) {
+    const box = document.getElementById("review-needs");
+    if (!box || !window.QAReviewReportCopy) return;
+    box.hidden = !groups.length;
+    if (!groups.length) return;
+    const parts = QAReviewReportCopy.t("reviewNeeds").split("{steps}");
+    box.textContent = parts[0];
+    groups.forEach((group) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.step = group.dataset.step;
+      button.textContent = (Array.from(group.parentNode.querySelectorAll(".req-group")).indexOf(group) + 1) + " " + group.querySelector(".tg-title").textContent;
+      box.appendChild(button);
+    });
+    box.appendChild(document.createTextNode(parts[1] || ""));
+  }
+
+  function goToStep(step) {
+    const group = reviewForm.querySelector('.req-group[data-step="' + step + '"]');
+    if (!group) return;
+    group.open = true;
+    if (step === "you" && !signedIn() && window.ReviewAuth) {
+      ReviewAuth.focus();
+      return;
+    }
+    const target = [...group.querySelectorAll("input:not([type=hidden]), textarea")].find((el) => !el.disabled && !el.readOnly && el.offsetParent && !(el.type === "radio" && reviewForm.querySelector('input[name="' + el.name + '"]:checked')) && !(el.type !== "radio" && el.type !== "checkbox" && el.value.trim()));
+    group.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  const needsBox = document.getElementById("review-needs");
+  if (needsBox) needsBox.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-step]");
+    if (button) goToStep(button.dataset.step);
+  });
+
   reviewForm.addEventListener("input", paintSteps);
   reviewForm.addEventListener("change", paintSteps);
   reviewForm.addEventListener("invalid", (event) => openStepOf(event.target), true);
@@ -382,6 +434,44 @@
     urlInput.value = prefill;
     urlInput.dispatchEvent(new Event("input"));
   }
+
+  // The hero's address field fills the request's, then goes to the first step still open, sign-in for most visitors.
+  // It takes the same address as the request's field, and the two stay in step.
+  const stageStart = document.getElementById("stage-start");
+  const stageUrl = document.getElementById("stage-url");
+  const stageError = document.getElementById("stage-url-error");
+  function stageInvalid(message) {
+    stageError.textContent = message;
+    document.getElementById("stage-url-field").classList.toggle("invalid", !!message);
+  }
+  if (stageUrl && urlInput.value) stageUrl.value = urlInput.value;
+  if (stageUrl) {
+    stageUrl.addEventListener("input", () => {
+      const next = stageUrl.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");
+      if (next !== stageUrl.value) stageUrl.value = next;
+      stageInvalid("");
+    });
+    urlInput.addEventListener("input", () => { if (stageUrl.value !== urlInput.value) stageUrl.value = urlInput.value; });
+  }
+  if (stageStart) stageStart.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = stageUrl.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value || /\s/.test(value)) {
+      stageInvalid(window.QAReviewReportCopy ? QAReviewReportCopy.word("fieldError", "urlNeeded") : "Enter a public page after https://.");
+      stageUrl.focus();
+      return;
+    }
+    stageInvalid("");
+    urlInput.value = value;
+    urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hero_start", "URL Review", signedIn() ? "signed-in" : "signed-out");
+    const next = reviewForm.querySelector('.req-group:not(.done):not([data-step="page"])');
+    if (next) goToStep(next.dataset.step);
+    else {
+      document.getElementById("intake").scrollIntoView({ block: "end", behavior: "smooth" });
+      reviewBtn.focus({ preventScroll: true });
+    }
+  });
 
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
@@ -459,7 +549,10 @@
 
   function clearField(name) {
     const error = document.getElementById(name + "-error");
-    if (error) error.textContent = "";
+    if (error) {
+      error.textContent = "";
+      delete error.dataset.local;
+    }
     const input = fieldInput(name);
     if (input) input.classList.remove("invalid");
     if (name === "url") document.getElementById("url-field").classList.remove("invalid");
@@ -472,7 +565,11 @@
     ["name", "email", "reason", "url", "frameworks", "clientName", "clientEmail", "clientUrl"].forEach(clearField);
     (errors || []).forEach((item) => {
       const error = document.getElementById(item.field + "-error");
-      if (error && !error.textContent) error.textContent = item.message;
+      if (error && !error.textContent) {
+        error.textContent = item.message;
+        error.dataset.field = item.field;
+        if (item.local) error.dataset.local = "";
+      }
       const input = fieldInput(item.field);
       if (input) input.classList.add("invalid");
       if (item.field === "url") document.getElementById("url-field").classList.add("invalid");
@@ -481,6 +578,7 @@
       if (item.field === "frameworks") document.getElementById("fw-picker").classList.add("invalid");
       openStepOf(error);
     });
+    paintSteps();
   }
 
   function openStepOf(el) {
@@ -495,17 +593,18 @@
     const code = reasonCode();
     const reason = reasonBox.value.trim();
     const host = urlInput.value.trim();
-    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: "Enter your name." });
-    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: "Enter a valid email." });
-    if (!REASONS.some((item) => item.id === code)) errors.push({ field: "reason", message: "Choose a reason." });
-    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: "Write the reason in a sentence." });
+    const say = (id) => window.QAReviewReportCopy.word("fieldError", id);
+    if (name.length < 2 || !/\p{L}/u.test(name)) errors.push({ field: "name", message: say("nameNeeded") });
+    if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(email) || email.includes("..")) errors.push({ field: "email", message: say("emailNeeded") });
+    if (!REASONS.includes(code)) errors.push({ field: "reason", message: say("reasonPick") });
+    if (code === "other" && reason.length < 8) errors.push({ field: "reason", message: say("reasonWrite") });
     if (code === "client") {
       const clientName = document.getElementById("client-name").value.trim();
       const clientEmail = document.getElementById("client-email").value.trim();
       const clientHost = document.getElementById("client-url").value.trim();
-      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: "Enter the client's name." });
-      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: "Enter the client's email." });
-      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: "Enter the client's website." });
+      if (clientName.length < 2 || !/\p{L}/u.test(clientName)) errors.push({ field: "clientName", message: say("clientNameNeeded") });
+      if (!/^[a-z0-9._%+\-]+@[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\.[a-z]{2,}$/i.test(clientEmail) || clientEmail.includes("..")) errors.push({ field: "clientEmail", message: say("clientEmailNeeded") });
+      if (!clientHost || /\s/.test(clientHost)) errors.push({ field: "clientUrl", message: say("clientUrlNeeded") });
     }
     if (code === "own" && email.indexOf("@") !== -1 && host) {
       const mailHost = email.split("@")[1].replace(/^www\./, "");
@@ -513,12 +612,12 @@
       const mailRoot = mailHost.split(".").slice(-2).join(".");
       const siteRoot = siteHost.split(".").slice(-2).join(".");
       if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-        errors.push({ field: "email", message: "Use an email at the same domain as the site. That shows the mailbox is on that host. It does not prove legal ownership." });
+        errors.push({ field: "email", message: say("ownMailDomain") });
       }
     }
-    if (!host || /\s/.test(host)) errors.push({ field: "url", message: "Enter a public page after https://." });
-    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: "Choose at least one framework for the proposed cases." });
-    return errors;
+    if (!host || /\s/.test(host)) errors.push({ field: "url", message: say("urlNeeded") });
+    if (!selectedFrameworks().length) errors.push({ field: "frameworks", message: say("frameworksNeeded") });
+    return errors.map((item) => Object.assign(item, { local: true }));
   }
 
   function fwLogo(name) {
@@ -611,7 +710,8 @@
   }
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample";
+  // .finding-teaser is the top gap shared links keep in the clear (#3477); .case-sample is the whole top case.
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .finding-teaser, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -677,11 +777,14 @@
     root.normalize();
   }
 
+  function cveLinks(text) {
+    return esc(text).replace(/\bCVE-\d{4}-\d{4,7}\b/g, (id) => '<a class="notranslate" translate="no" href="https://www.cve.org/CVERecord?id=' + id + '" target="_blank" rel="noopener noreferrer">' + id + "</a>");
+  }
   function fadeText(text, paid) {
     const raw = String(text || "");
-    if (paid) return esc(raw);
+    if (paid) return cveLinks(raw);
     const cut = fadeCut(raw);
-    if (cut >= raw.length) return esc(raw);
+    if (cut >= raw.length) return cveLinks(raw);
     const parts = raw.slice(cut).split(/(\s+)/);
     let seen = 0;
     const total = parts.filter((part) => /\S/.test(part)).length || 1;
@@ -691,7 +794,7 @@
       const blur = (0.35 + (seen / total) * 7.6).toFixed(2);
       return '<span class="case-fade" style="--fade:' + blur + 'px">' + esc(part) + "</span>";
     }).join("");
-    return '<span class="fade-line">' + esc(raw.slice(0, cut)) + faded + "</span>";
+    return '<span class="fade-line">' + cveLinks(raw.slice(0, cut)) + faded + "</span>";
   }
 
   function addonPaid(name, id) {
@@ -761,15 +864,11 @@
     const alerts = report.alerts || [];
     if (!box || !list) return;
     box.hidden = alerts.length === 0;
-    slot("alarm-note").textContent = alerts.length
-      ? (open
-        ? "The full wording is open because this section is paid. These lines are still not proof of a break-in."
-        : "The first words of each signal stay visible. The rest stays blurred until the full report is paid. These lines are what the public response showed. They are not proof that someone broke in.")
-      : "";
+    slot("alarm-note").textContent = alerts.length ? rc.t(open ? "alarmNoteOpen" : "alarmNote") : "";
     const opener = slot("alarm-open");
     if (opener) opener.hidden = open || alerts.length === 0;
     list.innerHTML = alerts.map((item) =>
-      "<li><span class=\"alarm-kicker\">" + esc(item.level) + " · " + esc(item.id) + "</span><strong>" + fadeText(item.title, open) + "</strong><p>" + fadeText(item.detail, open) + "</p></li>"
+      "<li><span class=\"alarm-kicker\">" + esc(rc.word("alertLevel", item.level, item.level)) + " · " + esc(item.id) + "</span><strong>" + fadeText(item.title, open) + "</strong><p>" + fadeText(item.detail, open) + "</p></li>"
     ).join("");
   }
 
@@ -778,8 +877,8 @@
     if (!list) return;
     const mentions = report.mentions || [];
     list.innerHTML = mentions.length
-      ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(item.tone || "Mention") + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
-      : "<li class=\"muted\">No public write-up was retrieved on this pass.</li>";
+      ? mentions.map((item) => "<li><span class=\"mention-tone\">" + esc(rc.word("mentionTone", item.tone || "Mention")) + "</span> <a href=\"" + esc(item.href) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" + esc(item.title) + "</a></li>").join("")
+      : "<li class=\"muted\">" + esc(rc.t("mentionsNone")) + "</li>";
   }
 
   // The walkthrough call (#1971): book.html with this report, in the page language.
@@ -861,9 +960,9 @@
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + esc(report.host || rc.t("dashTitle")) + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
-      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(report.statement || "") + "</p></div>";
+      '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
   }
 
@@ -945,7 +1044,7 @@
   function verdictBadge(verdict, severity) {
     if (!verdict) return '<span class="badge">' + esc(rc.t("caseProposed")) + "</span>";
     return '<span class="badge v-' + esc(verdict) + '">' + esc(VERDICT_LABEL[verdict] || verdict) + "</span>" +
-      (severity && severity !== "info" ? '<span class="badge">' + esc(severity) + "</span>" : "");
+      (severity && severity !== "info" ? '<span class="badge">' + esc(rc.word("severity", severity)) + "</span>" : "");
   }
 
   function setInsightsVisible(on) {
@@ -1342,21 +1441,21 @@
     const urls = [];
     for (const url of Array.isArray(only) ? only : compareUrls()) {
       if (/\s/.test(url)) {
-        error.textContent = "Check the address " + url + ": it has a space in it.";
+        error.textContent = cc.t("runSpace", { url });
         return;
       }
       if (siteKey(url) === own) {
-        error.textContent = url + " is the site of this report. Enter a competitor's address.";
+        error.textContent = cc.t("runOwn", { url });
         return;
       }
       if (!urls.some((seen) => siteKey(seen) === siteKey(url))) urls.push(url);
     }
     if (!urls.length) {
-      error.textContent = "Enter the competitor's address.";
+      error.textContent = cc.t("runEmpty");
       return;
     }
     if (activeRun) {
-      error.textContent = "Wait until the review that is running ends.";
+      error.textContent = cc.t("runBusy");
       return;
     }
     if (pricing) return;
@@ -1404,9 +1503,8 @@
 
   function compareDone(compare, tail) {
     const failed = compare.failed || [];
-    const host = (compare.report && compare.report.host) || "your site";
-    return "The comparisons are done. Your report of " + host + " lists each one under Next to a competitor." +
-      (failed.length ? " These did not finish: " + failed.join(", ") + "." : "") + tail;
+    const host = (compare.report && compare.report.host) || cc.t("runYourSite");
+    return [cc.t("runDone", { host }), failed.length ? cc.t("runNotDone", { list: failed.join(", ") }) : "", tail].filter(Boolean).join(" ");
   }
 
   // compare.done: the competitor reviews that finished. Two or more open with the report as one
@@ -1418,7 +1516,7 @@
     if (ids.length < 3 || !window.QAReviewMulti) return;
     const id = await QAReviewMulti.save(ids, "review", null);
     if (!id) {
-      setStatus(compareDone(compare, " Open your report of " + ((compare.report && compare.report.host) || "your site") + " and press Open the full comparison report to see them side by side."), true);
+      setStatus(compareDone(compare, cc.t("runOpenAll", { host: (compare.report && compare.report.host) || cc.t("runYourSite") })), true);
       return;
     }
     history.pushState(null, "", location.pathname + "?report=" + encodeURIComponent(compare.id) + "&comparison=" + encodeURIComponent(id));
@@ -1428,7 +1526,7 @@
 
   function compareStep(compare) {
     const total = compare.total || 1;
-    return total > 1 ? " (" + (total - (compare.queue || []).length) + " of " + total + ")" : "";
+    return total > 1 ? cc.t("runStep", { n: total - (compare.queue || []).length, total }) : "";
   }
 
   // Natural competitors (functions/url-review-rivals.js): the reader picks any or many, and each one with
@@ -1614,14 +1712,14 @@
   }
 
   function showComparing(compare) {
-    const own = (compare.report && compare.report.host) || "your site";
+    const own = (compare.report && compare.report.host) || cc.t("runYourSite");
     const many = (compare.queue || []).length + 1;
     document.getElementById("compare-run-text").textContent = many > 1
-      ? "Comparing " + own + " with " + many + " competitors, up to " + COMPARE_AT_ONCE + " at a time."
-      : "Comparing " + own + " with " + compare.url + compareStep(compare) + ".";
+      ? cc.t("runComparingMany", { own, n: many, at: COMPARE_AT_ONCE })
+      : cc.t("runComparingOne", { own, rival: compare.url, step: compareStep(compare) });
     document.getElementById("compare-running-text").textContent = many > 1
-      ? "The comparison with " + many + " competitors is running. Stop keeps the pages already checked and does not start the ones still waiting."
-      : "The comparison with " + compare.url + compareStep(compare) + " is running. Stop keeps the pages already checked.";
+      ? cc.t("runRunningMany", { n: many })
+      : cc.t("runRunningOne", { rival: compare.url, step: compareStep(compare) });
     const run = document.getElementById("compare-run");
     run.hidden = false;
     document.getElementById("compare-running").hidden = false;
@@ -1643,7 +1741,6 @@
   }
 
   const COMPARE_AT_ONCE = 3;
-  const ROW_STATE = { waiting: "Waiting", running: "Running", done: "Ready", stopped: "Stopped", failed: "Did not finish", payment: "Waits on payment" };
   let comparePool = null;
 
   function paintCompareRows(pool) {
@@ -1658,9 +1755,9 @@
     }
     list.hidden = !pool;
     if (!pool) return;
-    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(ROW_STATE[row.state]) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
+    list.innerHTML = pool.rows.map((row) => '<li data-state="' + row.state + '"><b translate="no">' + esc(row.url) + "</b> <span>" + esc(cc.rowState(row.state)) + (row.note ? " · " + esc(row.note) : "") + "</span></li>").join("");
     const ready = pool.rows.filter((row) => row.state === "done").length;
-    document.getElementById("compare-running-text").textContent = "The comparison is running: " + ready + " of " + pool.rows.length + " competitors ready. Stop keeps the pages already checked and does not start the ones still waiting.";
+    document.getElementById("compare-running-text").textContent = cc.t("runPool", { ready, total: pool.rows.length });
   }
 
   // The competitors of one comparison run side by side, up to three at a time, each its own review of the
@@ -1679,7 +1776,7 @@
     runLog.innerHTML = "";
     runLog.classList.add("is-live");
     if (window.ReviewProgress) ReviewProgress.reset();
-    setStatus("Reviewing " + rows.length + " competitors, up to " + COMPARE_AT_ONCE + " at a time.", false);
+    setStatus(cc.t("runReviewing", { n: rows.length, at: COMPARE_AT_ONCE }), false);
     let next = 0;
     const worker = async () => {
       while (next < rows.length && !pool.stopping && !pool.payment && !pool.signIn) await runCompareRow(compare, pool, rows[next++]);
@@ -1691,7 +1788,7 @@
       activeRun = "";
       comparePool = null;
       hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
     endComparePool(compare, pool, confirmed);
@@ -1715,7 +1812,7 @@
         body: reviewBody(compare, row.url, row.runId)
       });
       const payload = await readStream(res, row.url);
-      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
       payload.reasonCode = "compare";
       row.payload = payload;
       row.state = payload.report.status === "stopped" ? "stopped" : "done";
@@ -1730,8 +1827,8 @@
       } else {
         const field = (error.fields || []).find((item) => item.field === "url");
         row.state = "failed";
-        row.note = ((field && field.message) || error.message || "The review failed.").replace(/([^.!?])\s*$/, "$1.");
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", row.note);
+        row.note = ((field && field.message) || error.message || rc.word("fieldError", "reviewFailed")).replace(/([^.!?])\s*$/, "$1.");
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || row.note);
       }
     }
     paintCompareRows(pool);
@@ -1765,19 +1862,19 @@
       const due = Object.assign({}, pool.payment, { compareWith: compare.id, competitors: confirmed ? pending.length : 1 });
       if (confirmed) location.href = payQuery("new-run", due);
       else openRunPay(due);
-      setStatus("The comparison waits on payment: 9 USD for each competitor still to run.", true);
+      setStatus(cc.t("runPayRest"), true);
       return;
     }
     try { sessionStorage.removeItem(COMPARE_KEY); } catch (storageError) { /* nothing was kept */ }
-    const notStarted = pool.stopping && pending.length ? " Stopped: " + pending.join(", ") + (pending.length === 1 ? " was" : " were") + " not started." : "";
+    const notStarted = pool.stopping && pending.length ? cc.t("runNotStarted", { n: pending.length, list: pending.join(", ") }) : "";
     if (ran.done.length) {
       setStatus(compareDone(ran, notStarted), !!ran.failed.length);
       openCompared(ran, Object.fromEntries(rows.filter((row) => row.state === "failed").map((row) => [row.url, row.note])));
       return;
     }
     const why = rows.filter((row) => row.note).map((row) => row.url + ": " + row.note).join(" ");
-    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), "None of the competitor reviews finished. " + why)) {
-      setStatus("The comparison did not finish. Your report is open again.", true);
+    if (!last && reopenCompare(Object.assign({}, compare, { url: rows[0].url, queue: rows.slice(1).map((row) => row.url) }), (cc.t("runNoneFinished") + " " + why).trim())) {
+      setStatus(cc.t("runReopened"), true);
       return;
     }
     setStatus(compareDone(ran, notStarted), true);
@@ -1858,10 +1955,10 @@
     const top = (ins.findings || []).filter((item) => item.rank).slice(0, slotRoot ? undefined : 10);
     slot("fix-first").innerHTML = top.length
       ? '<p class="muted" data-note>' + esc(rc.t("fixIntro")) + '</p><ol class="fix-list">' + top.map((item) =>
-        '<li><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
+        '<li' + (item.teaser ? ' class="finding-teaser"' : "") + '><span class="fix-rank">' + item.rank + "</span><div>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span>" +
         "<strong>" + esc(said(item, "title")) + "</strong>" +
-        '<p class="meta-line">' + fadeText(said(item, "evidence"), paid) + "</p>" +
-        (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+        '<p class="meta-line">' + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+        (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
         '<p class="meta-line">' + esc(rc.t("effort", { effort: rc.word("effortWord", item.effort) })) + (item.count > 1 ? " · " + esc(rc.t("places", { n: item.count })) : "") + "</p></div></li>").join("") + "</ol>"
       : '<p class="muted">' + esc(rc.t("fixNone")) + "</p>";
   }
@@ -2016,9 +2113,9 @@
     host.innerHTML =
       '<div class="checks-grid" style="margin-bottom:12px">' + tiles.map(([label, state, text]) => '<div class="check-tile ' + state + '"><b>' + esc(label) + "</b>" + esc(text) + "</div>").join("") + "</div>" + speed + (gauges && report.pagespeed && report.pagespeed.field ? '<h3 class="speed-title">' + esc(rc.t("oneLab")) + "</h3>" : "") + gauges +
       (shots.desktop || shots.mobile ? '<div class="shots' + (shotCount === 3 ? " shots-3" : "") + '">' +
-        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
-        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
-        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
+        (shots.desktop ? '<figure><img src="' + esc(shots.desktop) + '" alt="' + esc(rc.t("altDesktop")) + '" width="640" height="400" loading="lazy"><figcaption>' + esc(rc.t("capDesktop")) + "</figcaption></figure>" : "<div></div>") +
+        (shots.tablet ? '<figure><img src="' + esc(shots.tablet) + '" alt="' + esc(rc.t("altTablet")) + '" width="384" height="512" loading="lazy"><figcaption>' + esc(rc.t("capTablet")) + "</figcaption></figure>" : "") +
+        (shots.mobile ? '<figure><img src="' + esc(shots.mobile) + '" alt="' + esc(rc.t("altPhone")) + '" width="390" height="844" loading="lazy"><figcaption>' + esc(rc.t("capPhone")) + "</figcaption></figure>" : "") + "</div>" : "") +
       '<div class="split"><article class="card" data-part="tracking"><h3>' + esc(rc.t("trackingTitle")) + '</h3><p class="muted">' + bannerLine + ' <span data-note>' + esc(rc.t("pingsNote")) + "</span></p>" +
       '<table class="mini-table"><thead><tr><th>' + esc(rc.t("thTool")) + "</th><th>" + esc(rc.t("tileBefore")) + "</th><th>" + esc(rc.t("tileAfter")) + "</th></tr></thead><tbody>" + consentRows + "</tbody></table></article>" +
       '<article class="card" data-part="text"><h3>' + esc(rc.t("textTitle")) + '</h3><p class="muted" data-note>' + esc(rc.t("textNote")) + "</p>" +
@@ -2311,9 +2408,9 @@
     slot("findings").innerHTML = Object.keys(AREA_NOTE).map((name) => {
       const items = all.filter((item) => item.area === name);
       return '<section class="finding-group is-folded" data-group="' + esc(name) + '"><h3 class="group-head"><button type="button" class="group-toggle" aria-expanded="false"><span>' + esc(cc.area(name)) + '</span> <span class="group-count">' + items.length + "</span></button></h3>" +
-        items.map((item) => '<details class="finding" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
-          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
-          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+        items.map((item) => '<details class="finding' + (item.teaser ? " finding-teaser" : "") + '" data-verdict="' + esc(item.verdict || "") + '" data-severity="' + esc(item.severity || "") + '"><summary><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) +
+          "<strong>" + esc(said(item, "title")) + "</strong></summary><p class=\"muted\">" + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+          (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
           ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
           ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") + "</details>").join("") + "</section>";
     }).join("");
@@ -2339,12 +2436,13 @@
     const shown = all.filter((item) => (filter.area === "All" || item.area === filter.area) &&
       (filter.verdict === "all" || (filter.verdict === "open" ? (item.verdict === "fail" || item.verdict === "risk") : item.verdict === filter.verdict)));
     slot("findings").innerHTML = shown.length ? shown.map((item) =>
-      '<div class="finding"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
-      "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid) + "</p>" +
-      (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid) + "</p>" : "") +
+      '<div class="finding' + (item.teaser ? " finding-teaser" : "") + '"><div><span class="id">' + esc(item.id) + "</span>" + verdictBadge(item.verdict, item.severity) + '<span class="badge">' + esc(cc.area(item.area)) + "</span></div>" +
+      "<strong>" + esc(said(item, "title")) + "</strong><p class=\"muted\">" + fadeText(said(item, "evidence"), paid || item.teaser) + "</p>" +
+      (item.fix ? '<p class="fix-line">' + fadeText(said(item, "fix"), paid || item.teaser) + "</p>" : "") +
       ((item.pages || []).length ? '<p class="meta-line notranslate" translate="no">' + moreList(item.pages, " · ") + "</p>" : "") +
       ((item.cases || []).length ? '<p class="meta-line">' + esc(rc.t("testCases", { list: item.cases.join(", ") })) + "</p>" : "") +
-      (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") + "</div>").join("")
+      (!slotRoot && window.QAReviewAsk && QAReviewAsk.cardLink ? QAReviewAsk.cardLink(item.id) : "") +
+      (!slotRoot && window.QAReviewFix ? QAReviewFix.cardLinks(item) : "") + "</div>").join("")
       : '<p class="muted">' + esc(rc.t("noMatch")) + "</p>";
   }
 
@@ -2432,9 +2530,10 @@
     button.append(label, icon);
     heading.appendChild(button);
     heading.classList.add("fold-head");
+    if (!heading.id) heading.id = "report-section-" + n;
     panel.setAttribute("aria-labelledby", button.id);
     button.addEventListener("click", () => setFold(folds[n - 1], panel.hidden));
-    folds.push({ button, panel });
+    folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
   }
 
   function setFold(item, open) {
@@ -2466,7 +2565,8 @@
     const visuals = document.getElementById("report-visuals");
     if (!report || !visuals) return;
     const glance = document.createElement("h2");
-    glance.textContent = "At a glance";
+    glance.textContent = rc.t("glance");
+    glance.dataset.indexGroup = "glance";
     report.insertBefore(glance, visuals);
     const direct = [...report.children].filter((node) => node.tagName === "H2");
     fold(glance, [visuals]);
@@ -2500,6 +2600,146 @@
 
   setupFolds();
 
+  const reportIndex = document.getElementById("report-index");
+  const reportTop = document.getElementById("report-top");
+
+  function scrollBehavior() {
+    return matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  }
+
+  // The sticky toolbar wraps to more rows on narrower screens and in a paid report, so the headings' scroll margin reads its height.
+  function measureBar() {
+    const bar = dash.querySelector(".report-toolbar");
+    if (bar) dash.style.setProperty("--report-bar", bar.offsetHeight + parseFloat(getComputedStyle(dash).paddingTop) + (parseFloat(getComputedStyle(bar).top) || 0) + "px");
+  }
+
+  // On phones Close is pinned over the toolbar (#2796), so the brand keeps clear of it; its width depends on the language (#2940).
+  const dashClose = document.getElementById("dash-close");
+  const dashBar = dash.querySelector(".report-toolbar");
+  if (dashClose && dashBar && window.ResizeObserver) {
+    const roomForClose = new ResizeObserver(() => {
+      const pinned = getComputedStyle(dashClose).position === "fixed";
+      const room = pinned ? Math.ceil(dashBar.getBoundingClientRect().right - dashClose.getBoundingClientRect().left) : 0;
+      dash.style.setProperty("--close-room", Math.max(0, room) + "px");
+      paintCloseBar();
+    });
+    roomForClose.observe(dashClose);
+    roomForClose.observe(dashBar);
+  }
+
+  // On phones the report below the toolbar scrolls under a solid bar behind the pinned Close; it shows once that content reaches it (#2968).
+  function paintCloseBar() {
+    if (!dashBar) return;
+    const bar = getComputedStyle(dash, "::before");
+    const next = dashBar.getBoundingClientRect().bottom + parseFloat(getComputedStyle(dashBar).marginBottom);
+    dash.classList.toggle("bar-on", bar.content !== "none" && next < parseFloat(bar.height));
+  }
+
+  const TAKEOVER = ["wheel", "touchstart", "keydown", "pointerdown"];
+  let stopKeeping = () => {};
+
+  // Content above a section can still change size during a smooth scroll and push its heading away, so once the scroll
+  // ends the heading is put back in place (at most twice) unless the reader has taken over the scroll. A busy main thread
+  // holds scroll events back for longer than any quiet spell, so where scrollend exists only it marks the end (#2938).
+  // Back to top and the next jump also end it: a screen reader's click comes with no pointer or key event (#2888).
+  function keepInPlace(heading) {
+    stopKeeping();
+    const ends = "onscrollend" in window;
+    const start = dash.scrollTop;
+    let timer = 0;
+    let tries = 2;
+    const off = () => heading.getBoundingClientRect().top - parseFloat(getComputedStyle(heading).scrollMarginTop);
+    const stop = () => {
+      clearTimeout(timer);
+      TAKEOVER.forEach((type) => dash.removeEventListener(type, stop));
+      dash.removeEventListener("scroll", onScroll);
+      dash.removeEventListener("scrollend", settle);
+      if (stopKeeping === stop) stopKeeping = () => {};
+    };
+    stopKeeping = stop;
+    const settle = () => {
+      clearTimeout(timer);
+      if (Math.abs(off()) <= 2 || !tries--) return stop();
+      heading.scrollIntoView({ block: "start" });
+      timer = setTimeout(stop, 500);
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      if (!ends) timer = setTimeout(settle, 160);
+    };
+    TAKEOVER.forEach((type) => dash.addEventListener(type, stop, { passive: true }));
+    dash.addEventListener("scroll", onScroll, { passive: true });
+    if (ends) dash.addEventListener("scrollend", settle);
+    timer = setTimeout(() => { if (!ends || dash.scrollTop === start) settle(); }, 160);
+  }
+
+  function jumpTo(item) {
+    if (item.panel.hidden) setFold(item, true);
+    measureBar();
+    const heading = item.button.parentElement;
+    item.button.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+    keepInPlace(heading);
+  }
+
+  function paintTop() {
+    if (reportTop && reportIndex) reportTop.hidden = !dash.classList.contains("open") || reportIndex.hidden || reportIndex.getBoundingClientRect().bottom > 0;
+  }
+
+  const sectionName = (item) => item.button.firstChild.textContent.trim();
+
+  // Lists the groups of sections this report shows; it reads layout, so it runs once render() has opened the overlay.
+  function paintIndex() {
+    if (!reportIndex) return;
+    const shown = folds.filter((item) => item.button.getClientRects().length > 0)
+      .sort((a, b) => (a.button.compareDocumentPosition(b.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    const groups = new Map();
+    shown.forEach((item) => {
+      if (!groups.has(item.group)) groups.set(item.group, []);
+      groups.get(item.group).push(item);
+    });
+    document.getElementById("report-index-list").replaceChildren(...[...groups].map(([key, items]) => {
+      const link = document.createElement("a");
+      link.href = "#" + items[0].button.parentElement.id;
+      link.textContent = rc.word("indexGroups", key, sectionName(items[0]));
+      link.title = items.map(sectionName).join(" · ");
+      link.dataset.indexGroup = key;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        items.forEach((item) => { if (item.panel.hidden) setFold(item, true); });
+        jumpTo(items[0]);
+      });
+      const row = document.createElement("li");
+      row.appendChild(link);
+      return row;
+    }));
+    reportIndex.hidden = !shown.length;
+    measureBar();
+    paintTop();
+    paintCloseBar();
+  }
+
+  let framed = false;
+  dash.addEventListener("scroll", () => {
+    if (framed) return;
+    framed = true;
+    requestAnimationFrame(() => {
+      framed = false;
+      paintTop();
+      paintCloseBar();
+    });
+  }, { passive: true });
+
+  if (reportIndex && reportTop) {
+    reportTop.title = rc.t("backTop");
+    reportTop.addEventListener("click", () => {
+      stopKeeping();
+      const first = reportIndex.querySelector("a");
+      if (first) first.focus({ preventScroll: true });
+      dash.scrollTo({ top: 0, behavior: scrollBehavior() });
+    });
+  }
+
   const reportRoot = document.getElementById("report");
   if (reportRoot) new MutationObserver(() => fadeSections(reportRoot)).observe(reportRoot, { childList: true, subtree: true });
 
@@ -2526,19 +2766,21 @@
     const max = Math.max.apply(null, layers.map((pair) => pair[1]).concat([1]));
     slot("layers").innerHTML = layers.length ? layers.map(([name, count]) =>
       '<div class="bar-row"><span>' + esc(layerName(name)) + '</span><div class="bar"><i style="width:' + Math.round(count / max * 100) + '%"></i></div><span>' + count + "</span></div>"
-    ).join("") : '<p class="muted">No layer counts were saved.</p>';
+    ).join("") : '<p class="muted">' + esc(rc.t("factsNoLayers")) + "</p>";
     const tech = slot("tech");
     const technologies = report.technologies || [];
     tech.innerHTML = technologies.length
       ? technologies.map((item) => '<span class="pill"><b>' + esc(item.name) + "</b> " + esc(rc.word("techGroup", item.group, item.group)) + "</span>").join("")
-      : '<span class="muted">No known technology marker was found in the HTML or headers.</span>';
+      : '<span class="muted">' + esc(rc.t("factsNoTech")) + "</span>";
     const obs = report.observed || {};
     const limits = report.limits || {};
     const asked = "pageLang" in limits
-      ? (limits.pageLang ? "Requested in " + (PAGE_LANG_LABEL[limits.pageLang] || limits.pageLang) + ". " : "Requested in the site's own language. ") + (limits.section ? "Stayed under " + limits.section + ". " : "")
+      ? [limits.pageLang ? rc.t("askedLang", { lang: pageLangName(limits.pageLang) }) : rc.t("askedOwn"), limits.section ? rc.t("askedSection", { section: limits.section }) : ""].filter(Boolean).join(" ") + " "
       : "";
-    slot("observed").innerHTML = "<p><b>" + esc(obs.title || "No title") + "</b></p><p class=\"muted\">" + esc(obs.description || "No meta description.") + "</p><p>Language " + esc(obs.lang || "not set") + " · " + ((obs.h1 || []).length) + " h1 · " + (obs.forms || 0) + " forms · " + (obs.images || 0) + " images, " + (obs.missingAlt || 0) + " without alt · " + (obs.scripts || 0) + " scripts · " + (obs.bytes || 0) + " bytes</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
-      (limits.timedOut ? '<p class="muted">The time budget ended after ' + (limits.pagesRead || (report.pages || []).length) + " of up to " + (limits.maxPages || "?") + ' pages, usually because the site answered slowly. If pages that matter were left out, write to <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> with the report link and Carlos will look at a rerun.</p>' : "");
+    const facts = rc.t("observedLine", { lang: obs.lang || rc.t("observedLangUnset"), h1: (obs.h1 || []).length, forms: obs.forms || 0, images: obs.images || 0, noAlt: obs.missingAlt || 0, scripts: obs.scripts || 0, bytes: obs.bytes || 0 });
+    const timedOut = rc.t("observedTimedOut", { read: limits.pagesRead || (report.pages || []).length, max: limits.maxPages || "?" });
+    slot("observed").innerHTML = "<p><b>" + esc(obs.title || rc.t("observedNoTitle")) + "</b></p><p class=\"muted\">" + esc(obs.description || rc.t("observedNoDescription")) + "</p><p>" + esc(facts) + "</p><p class=\"muted\">" + esc(asked) + esc(limits.robotsNote || "") + "</p>" +
+      (limits.timedOut ? '<p class="muted">' + esc(timedOut).replace("{email}", '<a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a>') + "</p>" : "");
     const pages = report.pages || [];
     const found = foundCount(limits);
     const foundNote = slot("pages-found");
@@ -2546,17 +2788,17 @@
       const read = limits.pagesRead || pages.length;
       foundNote.hidden = !found;
       foundNote.textContent = found
-        ? found + " page" + (found === "1" ? " was" : "s were") + " found on " + (report.host || "the site") + " in the links of the pages analyzed and its sitemap. This review analyzed " + read + " of them" +
-          (limits.maxPages ? ", up to " + limits.maxPages + " pages and " + (limits.maxDepth || "?") + " links deep" : "") + "."
+        ? rc.t("pagesFound", { n: Number(limits.pagesFound), count: found, host: report.host || rc.t("theSite") }) + " " +
+          (limits.maxPages ? rc.t("pagesFoundReadCap", { read, max: limits.maxPages, depth: limits.maxDepth || "?" }) : rc.t("pagesFoundRead", { read }))
         : "";
     }
     slot("pages").innerHTML = pages.length ? pages.map((page) =>
       "<tr><td>" + esc(page.path) + "</td><td>" + esc(page.status || page.error || "—") + "</td><td>" + esc(page.ms) + "</td><td>" + esc(page.title) + "</td></tr>"
-    ).join("") : '<tr><td colspan="4">No page was saved.</td></tr>';
+    ).join("") : '<tr><td colspan="4">' + esc(rc.t("factsNoPages")) + "</td></tr>";
     const savedLog = report.log || [];
     slot("report-log").innerHTML = savedLog.length ? savedLog.map((line) =>
       "<li><time>" + esc(line.at || "") + "</time>" + esc(line.text || "") + "</li>"
-    ).join("") : '<li>No log line was saved.</li>';
+    ).join("") : "<li>" + esc(rc.t("factsNoLog")) + "</li>";
     return layers;
   }
 
@@ -2656,6 +2898,7 @@
     liveId = report.id;
     if (!sample) remember(report.id);
     if (window.QAReviewAsk) QAReviewAsk.show(payload);
+    if (window.QAReviewFix) QAReviewFix.show(payload, { title: (item) => said(item, "title") });
     const fixed = !sample && fixListOpen(report.id);
     document.body.classList.toggle("fix-open", fixed && !payload.paid);
     applyCopyMode(!!payload.paid);
@@ -2665,7 +2908,9 @@
     sampleNote.hidden = !sample;
     if (sample) {
       const when = new Date(report.fetchedAt);
-      sampleNote.textContent = "Sample report. This is the review of " + report.host + (isNaN(when) ? "" : " from " + when.toISOString().slice(0, 10)) + ", shown the way an unpaid report is: the top case is shown in full as a sample; the opening of every other line is readable and the rest stays blurred in every section. Close it to read the disclaimers and review your own address.";
+      sampleNote.textContent = isNaN(when)
+        ? rc.t("sampleNoteUndated", { host: report.host })
+        : rc.t("sampleNote", { host: report.host, date: when.toLocaleDateString(rc.lang, { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }) });
     }
     dash.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -2686,7 +2931,7 @@
     paintCall(report, sample);
     const names = ["All"].concat(layers.map((pair) => pair[0]));
     document.getElementById("layer-filters").innerHTML = names.map((name) =>
-      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? name : layerName(name)) + "</button>"
+      '<button type="button" data-layer="' + esc(name) + '"' + (name === layer ? ' class="on"' : "") + ">" + esc(name === "All" ? rc.t("allAreas") : layerName(name)) + "</button>"
     ).join("");
     document.getElementById("layer-filters").onclick = (event) => {
       const button = event.target.closest("button");
@@ -2698,11 +2943,9 @@
     const shown = (report.cases || []).filter((item) => (layer === "All" || item.layer === layer) && item.fw.some((fw) => picked.has(fw)));
     const urgent = ["P1", "P2"].map((level) => shown.filter((item) => item.priority === level).length);
     const ranked = shown.some((item) => item.priority)
-      ? " Ranked by risk: " + urgent[0] + " P1 and " + urgent[1] + " P2 come first, backed by what the review saw on " + (report.host || "the site") + "."
+      ? " " + rc.t("caseRanked", { p1: urgent[0], p2: urgent[1], host: report.host || rc.t("theSite") })
       : "";
-    document.getElementById("case-note").textContent = (paid
-      ? shown.length + " cases for the selected frameworks. The full wording is open because this copy is paid."
-      : shown.length + " cases were identified across the tools, languages, and technologies in this review. The top case is shown in full as a sample. The opening of every other line stays visible, here and in every section. The rest stays blurred until the report is paid.") + ranked;
+    document.getElementById("case-note").textContent = rc.t(paid ? "caseNotePaid" : "caseNote", { n: shown.length }) + ranked;
     const extras = [];
     (report.cases || []).forEach((item) => {
       (item.also || []).forEach((name) => {
@@ -2714,9 +2957,7 @@
     const otherTools = extras.filter((name) => !listed.has(name));
     if (specialist) {
       specialist.hidden = otherTools.length === 0;
-      specialist.textContent = otherTools.length
-        ? "Also named where the page matches: " + otherTools.join(", ") + ". They are not launched."
-        : "";
+      specialist.textContent = otherTools.length ? rc.t("specialistTools", { list: otherTools.join(", ") }) : "";
     }
     paintTools(report);
     // Cases are stored best-first, so an unpaid report shows the first one in full; a server preview marks the one it kept whole.
@@ -2725,8 +2966,9 @@
     document.getElementById("cases").innerHTML = shown.map((item) => {
       const extra = (item.also || []).filter(Boolean);
       const tools = item.fw.filter((fw) => picked.has(fw)).map(fwName).concat(extra.map(fwName)).join("");
-      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="Risk ' + esc(item.risk) + ' of 100">' + esc(item.priority) + "</span>" : "";
-      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">Pages: ' + esc(item.pages.slice(0, 6).join(", ") + (item.pages.length > 6 ? " and " + (item.pages.length - 6) + " more" : "")) + "</p>" : "";
+      const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="' + esc(rc.t("caseRisk", { risk: item.risk })) + '">' + esc(item.priority) + "</span>" : "";
+      const firstPages = item.pages && item.pages.slice(0, 6).join(", ");
+      const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">' + esc(rc.t("casePages", { list: item.pages.length > 6 ? rc.t("casePagesMore", { list: firstPages, more: item.pages.length - 6 }) : firstPages })) + "</p>" : "";
       const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
       const title = fc.line(item.msg && item.msg.title, item.title);
       const why = fc.line(item.msg && item.msg.why, item.why);
@@ -2735,10 +2977,29 @@
           sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
       }
       return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
-    }).join("") || '<p class="muted">No proposed case matches this filter.</p>';
+    }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
+    paintWatch(report, paid);
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
+    paintIndex();
+  }
+
+  // The Cases card's watch subsection (#3391): retests for the newer checks, fix regressions and their scripts.
+  function paintWatch(report, paid) {
+    const box = document.getElementById("watch-cases");
+    if (!box) return;
+    const markup = window.QAReviewWatch ? QAReviewWatch.html(report, { lang: document.documentElement.lang, paid, fade: (text) => fadeText(text, paid), line: (msg, fallback) => fc.line(msg, fallback) }) : "";
+    box.innerHTML = markup;
+    box.hidden = !markup;
+    const button = document.getElementById("watch-download");
+    if (!button) return;
+    button.onclick = () => {
+      const files = QAReviewWatch.files(report, { lang: document.documentElement.lang, scripts: window.QAReviewScripts });
+      if (!files.length || !window.QAReviewScripts) return;
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_watch_scripts", "URL Review", String(files.length));
+      download("qa-lab-watch-" + (report.id || "report") + ".zip", QAReviewScripts.zip(files, "qa-lab-watch-" + (report.id || "report")), "application/zip");
+    };
   }
 
   function reviewBody(compare, url, runId) {
@@ -2777,8 +3038,8 @@
     const type = res.headers.get("content-type") || "";
     if (type.indexOf("application/json") !== -1 || !res.ok) {
       const body = await res.json();
-      const error = new Error(body.error || "The review failed.");
-      error.fields = body.fields;
+      const error = new Error(rc.field(body.error) || rc.word("fieldError", "reviewFailed"));
+      error.fields = body.fields && body.fields.map((item) => Object.assign({}, item, { message: rc.field(item.message) }));
       error.paymentRequired = !!body.paymentRequired;
       error.body = body;
       throw error;
@@ -2797,12 +3058,19 @@
         if (!part.trim()) return;
         const msg = JSON.parse(part);
         if (msg.type === "log") appendLog(msg.text, host);
-        if (msg.type === "error") throw new Error(msg.error || "The review failed.");
+        if (msg.type === "error") throw Object.assign(new Error(rc.field(msg.error) || rc.word("fieldError", "reviewFailed")), { body: msg });
         if (msg.type === "done") donePayload = msg;
       });
     }
     return donePayload;
   }
+
+  // Signed out, sign-in is the step to point at, before the browser's own required-field bubbles on the rest.
+  reviewBtn.addEventListener("click", (event) => {
+    if (activeRun || signedIn()) return;
+    event.preventDefault();
+    reviewForm.dispatchEvent(new Event("submit", { cancelable: true }));
+  });
 
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -2813,7 +3081,7 @@
     }
     if (!signedIn()) {
       if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_sign_in_needed", "URL Review", "client");
-      setStatus("Sign in above to run a review. The review runs on the device where you sign in.", true);
+      setStatus(rc.t("signInToRun"), true);
       if (window.ReviewAuth) ReviewAuth.focus();
       return;
     }
@@ -2872,7 +3140,7 @@
       stopBtn.disabled = false;
       document.getElementById("compare-stop").disabled = false;
       const payload = await readStream(res);
-      if (!payload || !payload.report) throw new Error("The review ended without a report.");
+      if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
       layer = "All";
       payload.reasonCode = compare ? "compare" : reasonCode();
       if (compare) {
@@ -2911,19 +3179,23 @@
         const due = compare ? Object.assign({}, error.body, { compareWith: compare.id, competitors: confirmed ? compare.total || 1 : 1 }) : error.body;
         if (confirmed) location.href = payQuery("new-run", due);
         else openRunPay(due);
-        setStatus(compare ? "The comparison waits on payment: 9 USD for each competitor." : "Another review waits on payment.", true);
+        setStatus(compare ? cc.t("runPay") : "Another review waits on payment.", true);
       } else if (error.paymentRequired) {
         openPay(error.body || {});
         setStatus("Opening this report again waits on payment.", true);
+      } else if (!compare && error.body && error.body.code === "inconclusive") {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_inconclusive", "URL Review", error.body.error || "");
+        setStatus(rc.t("inconStatus", { hours: promiseHours(error.body) }), true);
+        showInconclusive(error.body);
       } else {
-        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", error.message || "");
-        const reason = (rivalField && rivalField.message) || error.message || "The review failed.";
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", (error.body && error.body.error) || error.message || "");
+        const reason = (rivalField && rivalField.message) || error.message || rc.word("fieldError", "reviewFailed");
         if (compare && (compare.done || []).length) {
           const ran = Object.assign({}, compare, { failed: (compare.failed || []).concat(compare.url) });
           setStatus(compareDone(ran, ""), true);
           openCompared(ran, { [compare.url]: reason.replace(/([^.!?])\s*$/, "$1.") });
-        } else if (compare && reopenCompare(compare, "The review of " + compare.url + " did not finish: " + reason.replace(/([^.!?])\s*$/, "$1.") + " Check the address or enter another competitor.")) {
-          setStatus("The comparison with " + compare.url + " did not finish. Your report is open again.", true);
+        } else if (compare && reopenCompare(compare, cc.t("runOneFailed", { url: compare.url, reason: reason.replace(/([^.!?])\s*$/, "$1.") }))) {
+          setStatus(cc.t("runReopenedOne", { url: compare.url }), true);
         } else {
           setStatus(reason, true);
         }
@@ -2932,7 +3204,7 @@
       runLog.classList.remove("is-live");
       activeRun = "";
       if (compare) hideComparing();
-      reviewBtn.disabled = !signedIn();
+      reviewBtn.disabled = false;
       stopBtn.disabled = true;
     }
   });
@@ -3197,6 +3469,7 @@
   compareInputs().forEach((input) => input.addEventListener("input", paintCompareTags));
   if (window.ReviewAuth) ReviewAuth.onChange(refreshStanding);
   else refreshStanding();
+  window.addEventListener("qa-review-pass-changed", loadStanding);
 
   const totalBox = document.getElementById("run-total");
   let totalReturn = null;
@@ -3287,6 +3560,93 @@
     if (event.key !== "Tab") return;
     const offerGo = document.getElementById("run-total-offer");
     const stops = (offerGo.hidden ? [] : [document.getElementById("run-total-offer-go")]).concat([document.getElementById("run-total-cancel"), document.getElementById("run-total-pay")]);
+    event.preventDefault();
+    stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
+  });
+
+  const inconBox = document.getElementById("inconclusive");
+  let inconBehind = [];
+  // The same deadline as PROMISE_DEADLINE_H in functions/url-review-promise.js (a unit test holds them together);
+  // the stream's inconclusive line also sends it as `hours`.
+  const PROMISE_HOURS = 48;
+  const promiseHours = (body) => Number(body && body.hours) || PROMISE_HOURS;
+  document.querySelectorAll("[data-promise-hours]").forEach((node) => { node.textContent = String(PROMISE_HOURS); });
+
+  // A failure the server could not settle now: it promised the report by email and sent a code for the trouble.
+  function showInconclusive(body) {
+    const card = inconBox.querySelector(".pay-card");
+    if (!rc.english) {
+      card.setAttribute("lang", rc.lang);
+      card.setAttribute("translate", "no");
+    }
+    const email = String(body.email || "");
+    const code = String(body.coupon || "");
+    const percent = Number(body.percent) || 0;
+    const hours = promiseHours(body);
+    document.getElementById("incon-eyebrow").textContent = rc.t("inconEyebrow");
+    document.getElementById("incon-title").textContent = rc.t("inconTitle");
+    document.getElementById("incon-lead").textContent = rc.t("inconLead");
+    const mail = document.getElementById("incon-mail");
+    if (email) {
+      const parts = rc.t("inconMail", { hours }).split("{email}");
+      mail.replaceChildren(parts[0], Object.assign(document.createElement("b"), { textContent: email }), parts[1] || "");
+    } else {
+      mail.textContent = rc.t("inconMailNone", { hours });
+    }
+    inconBox.querySelector(".incon-deal").hidden = !code;
+    document.getElementById("incon-percent").textContent = new Intl.NumberFormat(rc.lang, { style: "percent" }).format(percent / 100);
+    document.getElementById("incon-code-note").textContent = rc.t("inconCode", { percent });
+    document.getElementById("incon-code").textContent = code;
+    document.getElementById("incon-copy").textContent = rc.t("inconCopy");
+    const kept = !!code && !!window.ReviewDeal && ReviewDeal.keep(code);
+    const applied = document.getElementById("incon-applied");
+    applied.hidden = !kept;
+    applied.textContent = kept ? rc.t("inconApplied") : "";
+    document.getElementById("incon-note").textContent = "";
+    document.getElementById("incon-close").textContent = rc.t("inconClose");
+    document.getElementById("incon-x").setAttribute("aria-label", rc.t("inconClose"));
+    inconBehind = [...document.body.children].filter((el) => el !== inconBox && !el.inert && !el.matches("script, .cookie-note"));
+    inconBehind.forEach((el) => { el.inert = true; });
+    inconBox.hidden = false;
+    document.body.classList.add("gate-open");
+    document.getElementById(code ? "incon-copy" : "incon-close").focus();
+    if (code && window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_shown", "URL Review", String(percent));
+  }
+
+  function closeInconclusive() {
+    if (inconBox.hidden) return;
+    inconBox.hidden = true;
+    inconBehind.forEach((el) => { el.inert = false; });
+    inconBehind = [];
+    document.body.classList.remove("gate-open");
+    reviewBtn.focus({ preventScroll: true });
+  }
+
+  document.getElementById("incon-close").addEventListener("click", closeInconclusive);
+  document.getElementById("incon-x").addEventListener("click", closeInconclusive);
+  document.getElementById("incon-copy").addEventListener("click", async () => {
+    const code = document.getElementById("incon-code");
+    const note = document.getElementById("incon-note");
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      note.textContent = rc.t("inconCopied");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_copy", "URL Review", "copied");
+    } catch (error) {
+      window.getSelection().selectAllChildren(code);
+      note.textContent = rc.t("inconCopyFailed");
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_apology_copy", "URL Review", "selected");
+    }
+  });
+  inconBox.addEventListener("click", (event) => { if (event.target === inconBox) closeInconclusive(); });
+  inconBox.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeInconclusive();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const stops = ["incon-x", "incon-copy", "incon-close"].map((id) => document.getElementById(id)).filter((el) => el.offsetParent !== null);
     event.preventDefault();
     stops[(stops.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + stops.length) % stops.length].focus();
   });
@@ -3383,6 +3743,9 @@
     return showTotal(rc.t("totalCompareTitle"), lines.concat(sumLines(quote)));
   }
 
+  // The button that opened the sample: it is disabled while the sample loads, so focus has left it by then.
+  let dashOpener = null;
+
   function closeDashboard() {
     dash.classList.remove("open");
     document.body.style.overflow = "";
@@ -3397,12 +3760,15 @@
   async function openSample(button) {
     if (button) button.disabled = true;
     try {
-      const res = await fetch(SAMPLE_URL, { cache: "no-cache" });
+      const own = SAMPLE_LANGS.indexOf(rc.lang) !== -1 ? SAMPLE_URL.replace(/\.json$/, "." + rc.lang + ".json") : "";
+      let res = own ? await fetch(own, { cache: "no-cache" }).catch(() => null) : null;
+      if (!res || !res.ok) res = await fetch(SAMPLE_URL, { cache: "no-cache" });
       if (!res.ok) throw new Error("status " + res.status);
       const body = await res.json();
+      dashOpener = button || null;
       render({ report: body.report, frameworks: body.frameworks, paid: false, sample: true });
     } catch (error) {
-      if (button) button.textContent = "The sample could not be opened";
+      if (button) button.textContent = rc.t("sampleOpenFailed");
     } finally {
       if (button) button.disabled = false;
     }
@@ -3420,6 +3786,31 @@
   document.getElementById("dash-close").addEventListener("click", closeDashboard);
   dash.addEventListener("click", (event) => {
     if (event.target === dash) closeDashboard();
+  });
+  // The report opens from several places; focus goes into it on open, unless a field or a control in the report already
+  // holds it (the sign-in box, the competitor's address), and back on close.
+  let dashReturn = null;
+  new MutationObserver(() => {
+    const open = dash.classList.contains("open");
+    if (open && !dashReturn) {
+      const before = document.activeElement;
+      dashReturn = dashOpener || before || document.body;
+      dashOpener = null;
+      setTimeout(() => {
+        const now = document.activeElement;
+        const loose = !now || now === document.body || (now === before && now.tagName === "BUTTON" && !dash.contains(now));
+        if (dash.classList.contains("open") && loose) dash.querySelector(".dash-modal").focus({ preventScroll: true });
+      }, 0);
+    } else if (!open && dashReturn) {
+      if (dashReturn.isConnected && dashReturn !== document.body) dashReturn.focus({ preventScroll: true });
+      dashReturn = null;
+    }
+  }).observe(dash, { attributes: true, attributeFilter: ["class"] });
+  dash.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || event.defaultPrevented || !dash.classList.contains("open")) return;
+    if (!event.target.closest(".dash-modal") || event.target.closest("#ask-panel")) return;
+    if (document.querySelector(".gate:not([hidden])")) return;
+    closeDashboard();
   });
   document.getElementById("pay-close").addEventListener("click", () => { payBox.hidden = true; });
   document.getElementById("run-pay-close").addEventListener("click", () => { runPay.hidden = true; });
@@ -3733,33 +4124,36 @@
   }
 
   function reviewTour() {
+    const copy = (key) => window.QAReviewReportCopy.word("tour", key);
+    const step = (selector, key, demoMs) => ({ selector, title: copy(key)[0], body: copy(key)[1], demoMs });
     const steps = [];
-    if (!gate.hidden) {
-      steps.push({ selector: "#terms-form", title: "The disclaimers", body: "Every control stays off until each box is checked. The disclaimers name the local, national, and international rules. One completed review, a stop, and a single showing of the report are part of that text.", demoMs: 1800 });
-    }
+    if (!gate.hidden) steps.push(step("#terms-form", "terms", 1800));
     const counts = document.getElementById("reviews-fact");
-    if (counts && !counts.hidden) {
-      steps.push({ selector: "ul.facts", title: "You are not the first", body: "These two numbers count up live: pages read and reviews run by everyone so far. Only a review that really read a page adds to them.", demoMs: 1500 });
-    }
+    if (counts && !counts.hidden) steps.push(step("ul.facts", "counts", 1500));
     steps.push(
-      { selector: "#sign-in", title: "Sign in", body: "Sign in with email or an account you already have. The review runs only on the device where you sign in.", demoMs: 1500 },
-      { selector: "#name", title: "Who is asking", body: "Your name is stored with the review. Your email comes from the sign-in. Changing the name does not open a second completed review.", demoMs: 1500 },
-      { selector: "#reasons", title: "Why this review", body: "Pick a reason. Asking for a QA-lab verification shows how to get in touch. Other opens the box underneath so you can write your own in a sentence.", demoMs: 1600 },
-      { selector: "#url-field", title: "The page", body: "Start typing and the box helps. It suggests well-known sites, says \"Did you mean…?\" when a host does not exist, and after a / it offers real pages from the site's sitemap. https:// is already in front, so the review always asks for a public secure page.", demoMs: 1800 },
-      { selector: "#fw-picker", title: "Frameworks", body: "Pick the tools your team works with. Each proposed case is written for them, and the case export carries a starting script for each one. Nothing is launched against your site.", demoMs: 1600 },
-      { selector: "#req-scope", title: "Pages to review", body: "Only care about the docs? Type example.com/docs and Stay in this section keeps later pages under that path. Pick how many pages, how many links deep, and the language to ask the site for. The included first review is 20 pages and 2 links deep. A bigger one shows its price before it starts.", demoMs: 1800 },
-      { selector: "#review-btn", title: "Start the review", body: "Review checks the fields first. Then it analyzes public pages on that host and writes a line for each step.", demoMs: 1500 },
-      { selector: "#run-log", title: "The log", body: "Grab a coffee and watch. A meter walks through connecting, the pages, the browser pass, the cases, the speed checks, and the score, and each line shows up the moment it happens. A slow site gets a \"Still working\" note instead of silence.", demoMs: 1800 },
-      { selector: "#stop-btn", title: "Stop", body: "Changed your mind? Stop ends the analysis, the pages already saved stay in the report, and the record says it was stopped. Only your sign-in on this device can stop your run.", demoMs: 1600 },
-      { selector: "#report-once", title: "The log beside the questions", body: "Each line is a step in the analysis. When the analysis finishes, the report dashboard opens with the download, print, and share actions. Its cases come first by risk, and each one names the real page it saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Ask the report", body: "In a paid report, ask \"Why is F-01 rated this way?\" and the answer comes only from this review, with the fix, a Playwright case, or a GitHub or Jira issue ready to paste. It never guesses past what the review saw.", demoMs: 1800 },
-      { selector: "#report-once", title: "Next to a competitor", body: "Curious how the shop next door does? Compare in the report runs the same public checks on their site and puts the six scores side by side, with what only one of you has. Each competitor is 9 USD.", demoMs: 1800 },
-      { selector: "#report-once", title: "A word with your chatbot", body: "On a site you have shown is yours, the review chats with its chat widget: pricing, asking for a human, a refund, and two tricks a bot should refuse. At most six messages in one minute, with a made-up email and phone.", demoMs: 1800 },
-      { selector: ".topbar a[href='qa-review-account.html']", title: "Your reviews", body: "Every run you start waits here. Search them, open several at once, download them, delete them, or verify a site you own with a DNS record or a homepage tag.", demoMs: 1600 },
-      { selector: "#langWrap", title: "Language", body: "A language chosen here is the language on the CV, the studio, the lab, and this review. The same choice sticks when you move between them.", demoMs: 1500 },
-      { selector: "#tour-start-btn", title: "Open this tour again", body: "This walkthrough stays closed after the first visit. How this review works brings it back whenever you want it.", demoMs: 1500 }
+      step("#sign-in", "signIn", 1500),
+      step("#name", "name", 1500),
+      step("#reasons", "reasons", 1600),
+      step("#url-field", "url", 1800),
+      step("#fw-picker", "frameworks", 1600),
+      step("#req-scope", "scope", 1800),
+      step("#review-btn", "start", 1500),
+      step("#run-log", "log", 1800),
+      step("#stop-btn", "stop", 1600),
+      step("#log-next", "promise", 1800),
+      step("#report-once", "report", 1800),
+      step("#service-facts", "checks", 2000),
+      step("#report-once", "fix", 2000),
+      step("#report-once", "ask", 1800),
+      step("#report-once", "compare", 1800),
+      step("#report-once", "chatbot", 1800),
+      step(".topbar a[href='qa-review-account.html']", "account", 1600),
+      step("#langWrap", "lang", 1500),
+      step("#tour-start-btn", "again", 1500)
     );
-    return { name: "URL review", key: "hasSeenReviewTour", steps: steps };
+    const labels = {};
+    ["back", "close", "next", "finish", "step", "progress", "wait"].forEach((key) => { labels[key] = copy(key); });
+    return { name: "URL review", key: "hasSeenReviewTour", labels: labels, steps: steps };
   }
 
   function bootLanguageAndTour() {
@@ -3768,7 +4162,7 @@
     if (tourButton) tourButton.addEventListener("click", () => {
       if (window.SiteTour) SiteTour.start(reviewTour());
     });
-    if (window.SiteTour && !new URLSearchParams(location.search).get("report")) SiteTour.autoStart(reviewTour());
+    // No auto-start: on a first visit it scrolled away from the hero's address field and covered the consent buttons on phones.
   }
 
   bootLanguageAndTour();
@@ -3822,7 +4216,7 @@
         lockedShared = !!body.locked;
         if (body.locked) {
           if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
-          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below, under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
+          setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below: scores and the top finding stay readable; the rest sits under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
           if (window.ReviewAuth) ReviewAuth.focus();
           return;
         }
@@ -3842,7 +4236,7 @@
         render(body);
         showSharedCompare(body);
         const until = new Date(body.reopenUntil || "");
-        if (!body.paid && !isNaN(until)) setStatus("Your report of " + (body.host || (body.report && body.report.host) || "this site") + " is below, under the frost. Opening it again is free until " + until.toISOString().slice(0, 10) + ". Unlock it to read it in full.", false);
+        if (!body.paid && !isNaN(until)) setStatus("Your report of " + (body.host || (body.report && body.report.host) || "this site") + " is below: scores and the top finding stay readable; the rest sits under the frost. Opening it again is free until " + until.toISOString().slice(0, 10) + ". Unlock it to read it in full.", false);
       } catch (error) {
         setStatus(error.message, true);
       }
@@ -4172,7 +4566,7 @@
   restorePaid("compareRun", COMPARE_KEY, () => {
     const saved = savedCompare();
     const left = saved ? (saved.queue || []).length : 0;
-    if (saved) setStatus("The comparison with " + saved.url + " is paid. Press Compare in the report to run it" + (left ? " and the other " + (left === 1 ? "competitor" : left + " competitors") + " after it" : "") + ".", false);
+    if (saved) setStatus(left ? cc.t("runPaidMore", { url: saved.url, n: left }) : cc.t("runPaid", { url: saved.url }), false);
   });
   document.getElementById("compare-go").addEventListener("click", startCompare);
   document.getElementById("compare-add").addEventListener("click", () => {
@@ -4192,7 +4586,7 @@
   document.getElementById("compare-stop").addEventListener("click", (event) => {
     if (!activeRun || stopBtn.disabled) return;
     event.currentTarget.disabled = true;
-    document.getElementById("compare-running-text").textContent = "Stopping. The comparison uses the pages already checked.";
+    document.getElementById("compare-running-text").textContent = cc.t("runStopping");
     stopBtn.click();
   });
   compareInputs().forEach((compareInput) => {

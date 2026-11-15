@@ -542,8 +542,8 @@ function xReplies(cap, text, english, linkedin) {
   return out;
 }
 
-// YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, the rest.
-const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23" };
+// YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, live show clips (Science & Technology), the rest.
+const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23", live: "28" };
 
 // One channel, one slug: the post inputs, each with its calendar slot (none when this network takes nothing
 // from the batch). Each post keeps its calendar slot; the queues already hold months of imported posts, so
@@ -562,7 +562,7 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   };
   // A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
   const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
-    && { document: { url: base + "/document/" + slug + ".pdf", title: own("title"), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
+    && { document: { url: base + "/document/" + slug + ".pdf", title: String(cap.documentTitle || own("title")).slice(0, 58), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
   switch (channel.service) {
     case "linkedin": return [post("linkedin", linked(own("linkedin")), [document() || image("feed")])];
     case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];

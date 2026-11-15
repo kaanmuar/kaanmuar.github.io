@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const auth = require('../functions/url-review-auth');
 const compare = require('../functions/url-review-compare');
 const multi = require('../functions/url-review-multi');
@@ -167,6 +167,53 @@ test.describe('The competitor comparison is drawn as charts', () => {
     await expect(log.filter({ hasText: 'Informe guardado. Enviando una copia a ana@example.com.' })).toHaveAttribute('lang', 'es');
     await expect(log.filter({ hasText: /Looking for|Emailing/ })).toHaveCount(0);
   });
+
+  for (const [lang, own, empty, failed, reopened] of [
+    ['es', 'es el sitio de este informe', 'Escribe la dirección del competidor.', 'La revisión de rival.example no terminó: La revisión falló.', 'La comparación con rival.example no terminó.'],
+    ['pt', 'é o site deste relatório', 'Digite o endereço do concorrente.', 'A revisão de rival.example não terminou: A revisão falhou.', 'A comparação com rival.example não terminou.'],
+    ['de', 'ist die Website dieses Berichts', 'Geben Sie die Adresse des Mitbewerbers ein.', 'Die Prüfung von rival.example wurde nicht abgeschlossen: Die Prüfung ist fehlgeschlagen.', 'Der Vergleich mit rival.example wurde nicht abgeschlossen.'],
+    ['fr', 'est le site de ce rapport', 'Saisissez l’adresse du concurrent.', 'L’analyse de rival.example n’est pas allée au bout : L’analyse a échoué.', 'La comparaison avec rival.example n’est pas allée au bout.'],
+    ['it', 'è il sito di questo report', 'Scrivi l’indirizzo del concorrente.', 'La revisione di rival.example non è finita: La revisione non è riuscita.', 'Il confronto con rival.example non è finito.']
+  ]) {
+    test(`on the ${lang} page the compare box errors and a failed competitor read in ${lang}, not English (#2886)`, async ({ page }) => {
+      const ask = await open(page, null, () => JSON.stringify({ type: 'error', error: 'The review failed.' }) + '\n', `/qa-review-${lang}.html`);
+      await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+      await ask.locator('#compare-url').fill(sample.report.host);
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText(own);
+      await ask.locator('#compare-url').fill('');
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toHaveText(empty);
+      await ask.locator('#compare-url').fill('rival.example');
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText(failed);
+      await expect(page.locator('#form-status')).toContainText(reopened);
+      await expect(page.locator('#compare-error')).not.toContainText(/did not finish|The review failed|competitor/);
+    });
+  }
+
+  for (const [lang, unresolved, same] of [
+    ['es', 'El nombre del host no se pudo resolver.', 'Es el mismo sitio.'],
+    ['pt', 'O nome do host não foi resolvido.', 'É o mesmo site.'],
+    ['de', 'Der Hostname ließ sich nicht auflösen.', 'Das ist dieselbe Website.'],
+    ['fr', 'Le nom d’hôte n’a pas pu être résolu.', 'C’est le même site.'],
+    ['it', 'Il nome host non è stato risolto.', 'È lo stesso sito.']
+  ]) {
+    test(`on the ${lang} page a competitor the server cannot reach or refuses reads in ${lang}, not the server's English (#3008)`, async ({ page }) => {
+      let answer = JSON.stringify({ type: 'error', error: 'The host name did not resolve.' }) + '\n';
+      const ask = await open(page, null, () => answer, `/qa-review-${lang}.html`);
+      await page.evaluate(() => { document.getElementById('name').value = 'Ana Pérez'; });
+      await ask.locator('#compare-url').fill('rival.example');
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText('rival.example');
+      await expect(page.locator('#compare-error')).toContainText(unresolved);
+      await expect(page.locator('#compare-error')).not.toContainText('did not resolve');
+      answer = { error: "That is the same site. Enter a competitor's address.", compare: true };
+      await ask.locator('#compare-go').click();
+      await expect(page.locator('#compare-error')).toContainText(same);
+      await expect(page.locator('#compare-error')).not.toContainText('same site');
+    });
+  }
 
   test('while a comparison runs, the log leads back to the report and the report says it is running', async ({ page }) => {
     let answer;

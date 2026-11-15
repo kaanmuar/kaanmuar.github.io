@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const { CVPage } = require('./CVPage.js');
 const { forceGlancePair, prepareCV, waitForCVApp } = require('./helpers.js');
 
@@ -69,6 +69,17 @@ test.describe('CV desktop', () => {
     await page.locator('#languages-heading').click({ force: true });
     await expect(page.locator('html')).not.toHaveClass(/topic-focus/);
     await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('sections reveal without moving, so an early click lands on what it aimed at', async ({ page }) => {
+    const hiddenTransforms = await page.evaluate(() => [...document.querySelectorAll('.animate-on-scroll')].map((el) => {
+      el.classList.remove('is-visible');
+      const transform = getComputedStyle(el).transform;
+      el.classList.add('is-visible');
+      return transform;
+    }));
+    expect(hiddenTransforms.length).toBeGreaterThan(0);
+    expect([...new Set(hiddenTransforms)]).toEqual(['none']);
   });
 
   test('tour includes competencies after glance', async ({ page }) => {

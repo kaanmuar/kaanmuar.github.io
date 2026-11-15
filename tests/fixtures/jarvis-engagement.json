@@ -262,8 +262,9 @@
     },
     "reply": {
      "status": "waiting",
-     "draft": "We run axe in the same Playwright job.",
-     "lang": "en",
+     "draft": "Corremos axe en el mismo job de Playwright.",
+     "lang": "es",
+     "english": "We run axe in the same Playwright job.",
      "expiresAt": "2026-11-02T06:30:00.000Z"
     }
    },

@@ -296,6 +296,151 @@ test("96 a night: 24 ticks of up to 4 reviews, each tick done before the next, t
   assert.deepEqual([started(100000), started(150000), started(sweep.REVIEW_MS)], [4, 4, 3]);
 });
 
+// A lane's tick over `hosts`, each review taking ms[host]: tallies and saves as functions/index.js sweepTick does.
+async function laneTick(hosts, { slots, ms = {}, room = () => true, cap = Infinity }) {
+  const day = "2026-11-09";
+  const log = { saves: [], picks: [], live: 0, peak: 0, settling: 0, overlap: false };
+  const hold = { state: { cursor: 0 } };
+  const busy = new Set();
+  const started = Date.now();
+  const notes = await sweep.runTick({
+    slots,
+    room,
+    pick: async () => {
+      if (sweep.doneOn(hold.state, day) + busy.size >= cap) return { note: "daily cap reached" };
+      const host = hosts[hold.state.cursor];
+      if (!host) return { note: "nothing to review" };
+      hold.state = Object.assign({}, hold.state, { cursor: hold.state.cursor + 1 });
+      log.picks.push(host);
+      busy.add(host);
+      return { target: { host, cc: "co" } };
+    },
+    review: async (target) => {
+      log.live += 1;
+      log.peak = Math.max(log.peak, log.live);
+      await new Promise((resolve) => setTimeout(resolve, ms[target.host] || 20));
+      log.live -= 1;
+      return { outcome: target.host.startsWith("bad") ? "failed" : "done", note: target.host + " reviewed" };
+    },
+    settle: async (target, run) => {
+      log.overlap = log.overlap || log.settling > 0;
+      log.settling += 1;
+      busy.delete(target.host);
+      hold.state = sweep.tally(hold.state, day, run.outcome, { host: target.host, reason: "x" });
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      log.saves.push(JSON.parse(JSON.stringify(hold.state)));
+      log.settling -= 1;
+      return run.note;
+    }
+  });
+  return Object.assign(log, { notes, state: hold.state, day, elapsed: Date.now() - started });
+}
+
+test("a tick runs its reviews at once, up to the lane's concurrency, and keeps notes in pick order (#3166)", async () => {
+  const hosts = ["a.co", "bad.co", "c.co", "d.co", "e.co"];
+  const out = await laneTick(hosts, { slots: 4, ms: { "a.co": 60, "bad.co": 10, "c.co": 40, "d.co": 20 } });
+  assert.equal(out.peak, 4);
+  assert.deepEqual(out.picks, hosts.slice(0, sweep.PER_TICK), "never past PER_TICK, and in the lap's order");
+  assert.deepEqual(out.notes, ["a.co reviewed", "bad.co reviewed", "c.co reviewed", "d.co reviewed"]);
+  assert.equal(out.overlap, false, "ledger writes never overlap");
+  assert.equal(out.saves.length, 4);
+  assert.deepEqual(out.saves.map((s) => sweep.doneOn(s, out.day)), [1, 2, 3, 4], "each save holds every tally before it");
+  assert.equal(out.state.last.host, "a.co", "last is the review that ended last");
+  assert.deepEqual(sweep.night(out.state, out.day, 96), { done: 3, failed: 1, skipped: 0, short: true });
+  assert.equal(out.state.cursor, 4);
+});
+
+test("four 100 ms reviews take one review's time at concurrency 4 and four at concurrency 1 (#3166)", async () => {
+  const hosts = ["a.co", "b.co", "c.co", "d.co"];
+  const ms = Object.fromEntries(hosts.map((h) => [h, 100]));
+  const one = await laneTick(hosts, { slots: 1, ms });
+  const four = await laneTick(hosts, { slots: 4, ms });
+  assert.equal(one.peak, 1);
+  assert.ok(one.elapsed >= 400, "one by one: " + one.elapsed + " ms");
+  assert.ok(four.elapsed < 250, "at once: " + four.elapsed + " ms");
+  assert.deepEqual(four.notes, one.notes);
+  assert.deepEqual(four.state.days, one.state.days);
+});
+
+test("a tick starts no review past the cap, the room left or the end of the list (#3166)", async () => {
+  const hosts = ["a.co", "b.co", "c.co", "d.co"];
+  const capped = await laneTick(hosts, { slots: 4, cap: 2 });
+  assert.deepEqual(capped.picks, ["a.co", "b.co"], "in-flight reviews count against the cap");
+  assert.equal(capped.notes[2], "daily cap reached");
+  let rooms = 0;
+  const late = await laneTick(hosts, { slots: 4, room: () => (rooms += 1) <= 3 });
+  assert.equal(late.picks.length, 3);
+  const short = await laneTick(["a.co"], { slots: 4 });
+  assert.deepEqual(short.notes, ["a.co reviewed", "nothing to review"]);
+  for (const slots of [0, -2, "x", 9]) {
+    const out = await laneTick(hosts, { slots });
+    assert.equal(out.peak, slots === 9 ? sweep.PER_TICK : 1, "slots " + slots);
+  }
+});
+
+test("a failed ledger write stops new reviews, lets running ones end, and fails the tick (#3166)", async () => {
+  let reviews = 0;
+  let running = 0;
+  let saves = 0;
+  await assert.rejects(sweep.runTick({
+    slots: 2,
+    room: () => true,
+    pick: async () => ({ target: { host: "h" + reviews } }),
+    review: async () => {
+      reviews += 1;
+      running += 1;
+      await new Promise((resolve) => setTimeout(resolve, reviews === 1 ? 5 : 30));
+      running -= 1;
+      return { outcome: "done", note: "" };
+    },
+    settle: async () => {
+      saves += 1;
+      if (saves === 1) throw new Error("Firestore is down");
+      return "";
+    }
+  }), /Firestore is down/);
+  assert.equal(reviews, 2);
+  assert.equal(running, 0, "the second review ended before the tick failed");
+  assert.equal(saves, 2);
+});
+
+test("a sweep review waits out a busy review browser, then reviews without it (#3166)", async () => {
+  const waits = [];
+  const sleep = async (ms) => { waits.push(ms); };
+  let calls = 0;
+  const answers = [{ ok: false, error: "the browser was busy" }, { ok: false, error: "the browser was busy" }, { ok: true, pages: [] }];
+  const browse = sweep.patientBrowse(async (job) => { assert.equal(job.url, "https://a.co/"); return answers[calls++]; }, () => false, sleep);
+  assert.deepEqual(await browse({ url: "https://a.co/" }), { ok: true, pages: [] });
+  assert.deepEqual(waits, [sweep.BUSY_WAIT_MS, 2 * sweep.BUSY_WAIT_MS]);
+  calls = 0;
+  waits.length = 0;
+  const always = sweep.patientBrowse(async () => { calls += 1; return answers[0]; }, () => false, sleep);
+  assert.deepEqual(await always({}), answers[0]);
+  assert.equal(calls, sweep.BUSY_TRIES);
+  calls = 0;
+  const late = sweep.patientBrowse(async () => { calls += 1; return answers[0]; }, () => true, sleep);
+  await late({});
+  assert.equal(calls, 1, "a review past its stop does not wait");
+  calls = 0;
+  const broken = sweep.patientBrowse(async () => { calls += 1; return { ok: false, error: "status 500" }; }, () => false, sleep);
+  await broken({});
+  assert.equal(calls, 1, "only a busy browser is waited for");
+  assert.equal(sweep.patientBrowse(undefined), undefined);
+  assert.ok(sweep.BUSY_WAIT_MS * (sweep.BUSY_TRIES - 1) * sweep.BUSY_TRIES / 2 < sweep.REVIEW_MS / 2, "the waits leave the review most of its time");
+});
+
+test("both lanes' concurrency fits the review browser with room for people, and the env can lower it (#3166)", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const source = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
+  const browser = source.match(/exports\.reviewBrowser = [\s\S]*?maxInstances: (\d+)/);
+  const lanes = ops.budget("sweepConcurrency", {}) + ops.budget("outreachConcurrency", {});
+  assert.deepEqual([ops.budget("sweepConcurrency", {}), ops.budget("outreachConcurrency", {})], [sweep.PER_TICK, sweep.PER_TICK]);
+  assert.ok(Number(browser[1]) >= lanes + 3, "a person's 3-way comparison still finds browsers");
+  assert.equal(ops.budget("sweepConcurrency", { SWEEP_CONCURRENCY: "1" }), 1);
+  assert.equal(ops.budget("outreachConcurrency", { OUTREACH_CONCURRENCY: "2" }), 2);
+});
+
 test("the watchdog flags a night that reviewed under half the cap (#1099)", () => {
   let state = {};
   for (let i = 0; i < 40; i += 1) state = sweep.tally(state, "2026-10-25", i % 10 ? "done" : "failed", { host: "h" + i + ".co" });

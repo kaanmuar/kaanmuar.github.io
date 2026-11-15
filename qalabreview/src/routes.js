@@ -1,9 +1,9 @@
 /* Routes for qalabreview.com, the outreach domain (#1864, #1866). Every link lands on carlosandmunoz.com;
    checkout, accounts and product mail never live on the sending domain. */
+import { AUDIENCES, ORIGIN, renderLanding } from "./landing.js";
 
 export const SITE = "https://carlosandmunoz.com";
 export const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-export const DEFAULT_CALL = "mailto:carlos@qalabreview.com?subject=" + encodeURIComponent("A call about my URL Review");
 
 // Short paths printed on clips, one-pagers, slides and profiles. The value is the utm_campaign Jarvis groups by.
 export const CHANNELS = {
@@ -42,19 +42,45 @@ function landing(lang, tags, extra) {
   return SITE + "/" + page(lang) + "?" + q.toString();
 }
 
-/* Returns { status, location } or { status, body, type }. `findReport(bareHost)` resolves to a Live Report
+// The booking page (#1971) stands in for Microsoft Bookings (#1424); CALL_URL overrides it. book.js reads host
+// into the company field and sends utm_campaign as the booking's ref.
+function booking(lang, host) {
+  const q = new URLSearchParams({ utm_source: "qalabreview", utm_medium: "email", utm_campaign: "call" });
+  if (host) q.set("utm_content", host);
+  q.set("type", host ? "walkthrough" : "intro");
+  q.set("lang", lang);
+  if (host) q.set("host", host);
+  return SITE + "/book.html?" + q.toString();
+}
+
+function sitemap() {
+  const urls = LANGS.flatMap((l) => ["", ...AUDIENCES].map((a) => "<url><loc>" + ORIGIN + "/" + l + (a ? "/" + a : "") + "</loc></url>"));
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls.join("") + "</urlset>\n";
+}
+
+/* Returns { status, location } or { status, body, type, cache }. `findReport(bareHost)` resolves to a Live Report
    card ({ id }) or null. */
 export async function route(url, { acceptLanguage = "", findReport = async () => null, callUrl = "" } = {}) {
   const decode = (p) => { try { return decodeURIComponent(p); } catch (error) { return p; } };
   const parts = url.pathname.split("/").filter(Boolean).map((p) => decode(p).toLowerCase());
-  let lang = "";
-  if (parts.length && LANGS.includes(parts[0])) lang = parts.shift();
-  lang = lang || langFrom(acceptLanguage);
+  const pathLang = parts.length && LANGS.includes(parts[0]) ? parts.shift() : "";
+  const lang = pathLang || langFrom(acceptLanguage);
   const [first = "", ...rest] = parts;
 
-  if (first === "robots.txt") return { status: 200, type: "text/plain", body: "User-agent: *\nAllow: /\n" };
-  if (first === "call") return { status: 302, location: callUrl || DEFAULT_CALL };
-  if (!first) return { status: 302, location: landing(lang, { utm_campaign: "home", utm_medium: "web" }) };
+  if (first === "robots.txt") return { status: 200, type: "text/plain", body: "User-agent: *\nAllow: /\nSitemap: " + ORIGIN + "/sitemap.xml\n" };
+  if (first === "sitemap.xml") return { status: 200, type: "application/xml", body: sitemap() };
+  if (first === "favicon.ico") return { status: 302, location: SITE + "/assets/qa-review-favicon.ico" };
+  if (first === "call" && rest.length <= 1 && (!rest.length || HOST.test(bare(rest[0])))) {
+    return { status: 302, location: callUrl || booking(lang, rest.length ? bare(rest[0]) : "") };
+  }
+
+  // The landing (#1867): /<lang> and /<lang>/<audience>. Without a language in the path, the browser's picks one.
+  if ((!first || AUDIENCES.includes(first)) && !rest.length) {
+    if (!pathLang) return { status: 302, location: ORIGIN + "/" + lang + (first ? "/" + first : "") + url.search };
+    const tags = { utm_campaign: first ? "landing-" + first : "landing", utm_medium: "web" };
+    const link = (p, extra) => SITE + "/" + p + "?" + new URLSearchParams(Object.assign({ utm_source: "qalabreview" }, tags, extra)).toString();
+    return { status: 200, type: "text/html", cache: "public, max-age=300", body: renderLanding(lang, first, { link, review: landing(lang, tags) }) };
+  }
   if (CHANNELS[first] && !rest.length) return { status: 302, location: landing(lang, { utm_campaign: CHANNELS[first], utm_medium: first }) };
 
   // A peer group's comparison (#2363): /<lang>/peers/<group id>/<the reader's token>, both lowercase hex.
@@ -78,6 +104,10 @@ export async function route(url, { acceptLanguage = "", findReport = async () =>
     const card = await findReport(host).catch(() => null);
     if (card && card.id) return { status: 302, location: landing(lang, tags, { live: card.id }) };
     return { status: 302, location: landing(lang, Object.assign(tags, { utm_campaign: "outreach-new" }), { url: host }) };
+  }
+  // Sequence F, the competitors of URL Review askers (#2158): the sample report, with their own site typed in.
+  if (HOST.test(host) && rest.length === 1 && rest[0] === "sample") {
+    return { status: 302, location: landing(lang, { utm_campaign: "outreach-rivals", utm_content: host, utm_medium: "email" }, { sample: "1", url: host }) };
   }
   return { status: 302, location: landing(lang, { utm_campaign: "unknown-path", utm_medium: "web" }) };
 }

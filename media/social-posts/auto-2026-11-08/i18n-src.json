@@ -1,0 +1,107 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-shortmake-com": {
+   "lang": "it",
+   "strings": {
+    "title.0": "shortmake.com: 72.",
+    "title.1": "*The gap: outdated libraries.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But next.js 16.1.6 has known flaws.",
+    "action": "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "shortmake.com · 10 pages analyzed · 8 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But next.js 16.1.6 has known flaws.\n\nLesson: Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.\n\nOne automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-shortmake-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-shortmake-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #Programming #CyberSecurity #QA #Dependencies #JavaScript #WebDevelopment #Coding #WebDev #QualityAssurance #InfoSec #QAlab"
+   }
+  },
+  "u-choice-route-com": {
+   "lang": "en",
+   "strings": {
+    "title.0": "choice-route.com: 74.",
+    "title.1": "*The gap: HSTS.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+    "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "choice-route.com · 3 pages analyzed · 8 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.\n\nLesson: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.\n\nOne automated analysis of public pages on 8 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-choice-route-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-choice-route-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#WebSecurity #SoftwareTesting #Automation #QA #HSTS #HTTPS #WebDevelopment #Coding #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "vs-aktia-fi": {
+   "lang": "es",
+   "strings": {
+    "live": "u-aktia-fi",
+    "title.0": "4 natural competitors.",
+    "title.1": "*nordea.fi leads: 80.*",
+    "body": "nordea.fi leads in SEO, Accessibility; aktia.fi leads in GEO, Analytics, Performance; s-pankki.fi leads in Security.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "aktia.fi",
+    "visual.rows.1.0": "s-pankki.fi",
+    "visual.rows.2.0": "nordea.fi",
+    "visual.rows.3.0": "op.fi",
+    "visual.note": "Natural competitors found on the open web · 8 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "nordea.fi leads in SEO, Accessibility; aktia.fi leads in GEO, Analytics, Performance; s-pankki.fi leads in Security.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 8 Nov 2026 of aktia.fi, s-pankki.fi, nordea.fi, op.fi, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-aktia-fi&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-aktia-fi\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #QA #WebPerf #Programming #LearnOnYouTube #GoogleSearch #SiteSpeed #SDET #SearchConsole #SoftwareTesting #QAlab"
+   }
+  },
+  "vs-beebom-com": {
+   "lang": "pt",
+   "strings": {
+    "live": "u-beebom-com",
+    "title.0": "3 natural competitors.",
+    "title.1": "*beebom.com leads: 87.*",
+    "body": "xda-developers.com leads in SEO; beebom.com leads in GEO, Security, Accessibility, Performance; destructoid.com leads in Analytics.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 8 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "beebom.com",
+    "visual.rows.1.0": "destructoid.com",
+    "visual.rows.2.0": "xda-developers.com",
+    "visual.note": "Natural competitors found on the open web · 8 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "xda-developers.com leads in SEO; beebom.com leads in GEO, Security, Accessibility, Performance; destructoid.com leads in Analytics.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 8 Nov 2026 of beebom.com, destructoid.com, xda-developers.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-beebom-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-beebom-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SoftwareTesting #QA #WebPerf #Programming #LearnOnYouTube #ContentMarketing #CoreWebVitals #QualityAssurance #PageSpeed #QAlab"
+   }
+  }
+ }
+}

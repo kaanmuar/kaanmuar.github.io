@@ -1,10 +1,10 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const fs = require('fs');
 const sample = require('../assets/qa-review-sample.json');
 
 const TERMS = fs.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
 const ID = 'bl12cd34ef56';
-const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample';
+const CLEAR = 'h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-pick, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, #report-index';
 
 async function openUnpaid(page, extra) {
   await page.addInitScript((version) => {

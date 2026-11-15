@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./net-guard');
 const { openCV } = require('./helpers.js');
 
 test.describe('Smoke and assets', () => {

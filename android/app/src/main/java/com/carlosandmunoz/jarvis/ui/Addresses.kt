@@ -52,7 +52,7 @@ fun domainChecks(domain: JsonObject?): String = domain.objs("checks").joinToStri
 
 @Composable
 fun EmailAddresses(a: JsonObject?) {
-    Panel("Email addresses", trailing = { Text(a.obj("counts").num("addresses")?.let { fmt(it) } ?: "", fontFamily = Mono, color = J.muted) }) {
+    Panel("Email addresses", id = "systems-addresses", trailing = { Text(a.obj("counts").num("addresses")?.let { fmt(it) } ?: "", fontFamily = Mono, color = J.muted) }) {
         if (a == null) { Muted("Email addresses are not in this snapshot."); return@Panel }
         if (a.bool("ok") == false) { Muted(a.str("error") ?: "Could not read the email addresses."); return@Panel }
         Needs(a)

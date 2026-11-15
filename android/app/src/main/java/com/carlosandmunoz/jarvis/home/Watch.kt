@@ -2,6 +2,7 @@ package com.carlosandmunoz.jarvis.home
 
 import android.content.Context
 import com.carlosandmunoz.jarvis.JarvisApp
+import com.carlosandmunoz.jarvis.data.Processes
 import com.carlosandmunoz.jarvis.data.at
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.isOk
@@ -21,6 +22,7 @@ object Watch {
     data class Summary(
         val readiness: Double?, val alerts: Int, val warns: Int, val headline: String,
         val revenue: String, val sales: Int, val top: String?, val at: Long,
+        val running: Int = 0, val needsYou: Int = 0,
     )
 
     fun summary(snap: JsonObject, today: JsonObject?, at: Long): Summary {
@@ -30,7 +32,7 @@ object Watch {
         val top = snap.objs("briefing").sortedBy { if (it.str("level") == "alert") 0 else 1 }
             .firstOrNull { it.str("level") == "alert" || it.str("level") == "warn" }?.str("text")
         return Summary(s.readiness, s.alerts, s.warns, s.headline, if (usd == null) "—" else "$" + fmt(usd, 0),
-            money.at("revenue").num("count")?.toInt() ?: 0, top, at)
+            money.at("revenue").num("count")?.toInt() ?: 0, top, at, Processes.running(snap.obj("processes")), Processes.needsYou(snap.obj("processes")))
     }
 
     /** No-op without a connected watch, so phones without one never pay for the extra one-day snapshot. */
@@ -52,6 +54,8 @@ object Watch {
                 putString("revenue", s.revenue)
                 putInt("sales", s.sales)
                 putString("top", s.top ?: "")
+                putInt("running", s.running)
+                putInt("needsYou", s.needsYou)
                 putLong("at", s.at)
             }
         }

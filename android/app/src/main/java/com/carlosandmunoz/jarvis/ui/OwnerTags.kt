@@ -101,7 +101,7 @@ private fun body(vararg pairs: Pair<String, Any>): Map<String, JsonElement> =
 @OptIn(ExperimentalLayoutApi::class)
 fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<String, String>, ask: (String, () -> Unit) -> Unit) {
     val o = g.obj("ownerTags")
-    if (o == null) { Panel("Owner tags") { Muted("Owner tags did not answer; pull down in a minute.") }; return }
+    if (o == null) { Panel("Owner tags", id = "engagement-owner-tags") { Muted("Owner tags did not answer; pull down in a minute.") }; return }
     val state = OwnerTags.state(o)
     val paused = state == "paused"
     val live = state == "live"
@@ -109,7 +109,7 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
     val counts = o.obj("accounts")
     val net = { k: String? -> names[k]?.ifEmpty { null } ?: k.orEmpty() }
 
-    Panel("Owner tags · $state") {
+    Panel("Owner tags · $state", id = "engagement-owner-tags") {
         KeyRow("State", state, if (paused) J.pink else if (live) J.green else J.amber)
         KeyRow("Last run", ago(last.str("at")) ?: "never")
         if (last != null) {
@@ -141,7 +141,7 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
         Muted("Daily at 10:15. Comments tag each reviewed site's owners and the approved accounts around them under our posts; owners also get one reply under their latest Bluesky, Mastodon or YouTube post. Jarvis approves alone the suggestions whose handle resolves or matches an owner's, and blocks anyone who answers asking us to stop.")
     }
 
-    Panel("Owner tag accounts") {
+    Panel("Owner tag accounts", id = "engagement-owner-accounts") {
         val list = o.objs("list")
         if (list.isEmpty()) Muted("No accounts yet. The daily run reads each reviewed site's profile links and asks Gemini for the accounts around it.")
         OwnerTags.ORDER.forEach { status ->
@@ -191,7 +191,7 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
         }
     }
 
-    Panel("Owner tags comments") {
+    Panel("Owner tags comments", id = "engagement-owner-comments") {
         val comments = o.objs("comments")
         if (comments.isEmpty()) Muted("No owner-tags comment yet. In a dry run nothing is queued; Go live queues them on the next run.")
         comments.take(20).forEach { c ->

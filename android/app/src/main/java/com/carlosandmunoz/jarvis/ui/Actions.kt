@@ -55,7 +55,9 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
     "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
     "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
-    "gh-agent" to "Launch a Cursor fix agent", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging")
+    "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
+    "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging",
+    "calendar-pause" to "Pause campaigns over a holiday", "calendar-resume" to "Resume campaigns after a holiday")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")
 /** Every action with a daily cap, for the used-today rows (#1977); the GitHub ones (#2526) show once the server caps them. */
 private val AUTO_CAPS = CAPS + listOf("rerun-job", "rerun-ci", "refresh-stale", "rerun-reviews", "ai-fix", "retry-social", "resume-outreach", "merge-pr", "enable-warmup", "restore-alias", "launch-campaign",
@@ -113,12 +115,16 @@ fun runAction(vm: JarvisViewModel, action: String, job: String? = null, proposal
     }
     vm.act(actionKey(action, job ?: workflow ?: pr?.toString()), "action-run", extra) { out ->
         if (action.startsWith("pagespeed-")) return@act out.str("note") ?: "Done."
+        if (action == "rerun-ci" || action.startsWith("calendar-")) out.str("note")?.let { return@act it }
         (ACTION_LABELS[action] ?: action) + ": " + (out.str("ran")?.let { "$it started" } ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + (out.num("left")?.takeIf { it > 0 }?.let { ", ${fmt(it)} left" } ?: "") + "."
     }
 }
 
 fun actionKey(action: String, target: String?) = "action:$action:${target ?: ""}"
+
+/** The confirm text of a briefing sheet's rerun-ci button (#2245): main red re-runs its jobs, main green refreshes the PRs. */
+fun rerunCiAsk(workflow: String?) = "re-run the failed jobs of \"$workflow\" on main, or, when main is green, close and reopen the PRs that failed it on the old main (3 seconds apart, at most 20, conflicting PRs skipped)"
 
 /** The PR number of a PageSpeed proposal or briefing line ("pagespeed:pr:<n>"), else null. */
 fun pageSpeedPr(key: String?): Int? = key?.let { Regex("^pagespeed:pr:(\\d+)$").find(it)?.groupValues?.get(1)?.toIntOrNull() }
@@ -133,6 +139,8 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "publish-hub" -> "publish the Social hub (run refreshSocialHubStats)"
     "retry-social" -> "start the social posting workflows again (Buffer re-queues the failed posts)"
     "resume-outreach" -> "resume the outreach mailboxes Jarvis paused that have been healthy for two hourly checks"
+    "calendar-pause" -> "pause the campaigns that mostly reach that country on its holiday, and resume them the next business day"
+    "calendar-resume" -> "resume the campaigns paused for the holiday now (a pause still planned is cancelled)"
     "pagespeed-merge" -> "merge PageSpeed fixes #$pr into main now (it goes to production)"
     "pagespeed-close" -> "close PageSpeed fixes #$pr without merging"
     "pagespeed-run" -> "start the daily PageSpeed run now (about two hours)"
@@ -144,7 +152,10 @@ fun askFor(action: String, job: String?, pending: JsonObject?, pr: Int? = null):
     "gh-delete-branch" -> if (job != null) "delete the merged branch $job" else "delete the merged branches"
     "gh-close-issue" -> "close issue #$pr"
     "gh-remove-worktree" -> "remove the merged worktree ${job ?: ""} on the Mac (the uploader does it, never forced)".replace("  ", " ")
-    "gh-agent" -> "launch a Cursor cloud agent to fix it (it opens a PR)"
+    "gh-agent" -> "launch a fix agent, Jarvis's worker or Cursor (it opens a PR)"
+    "gh-quarantine" -> "file a Backlog bug \"${job ?: ""}\" in area:ci, with links to its runs"
+    "gh-security-ticket" -> "file a Backlog bug for ${job ?: "the alert"}"
+    "gh-dismiss-low" -> "dismiss ${pr ?: 0} low security alert${if (pr == 1) "" else "s"} on GitHub as a tolerable risk (code scanning ones as won't fix)"
     else -> "run ${job ?: "the job"} again"
 }
 
@@ -162,7 +173,7 @@ fun JarvisActions(s: UiState, vm: JarvisViewModel) {
     ConfirmAction(confirm) { confirm = null }
     val v = view
     val off = v.obj("settings")?.bool("auto") == false
-    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions") {
+    Panel(if (off) "Jarvis actions (automatic off)" else "Jarvis actions", key = "Jarvis actions", id = "systems-actions") {
         val hours = (v.obj("settings") ?: s.snapshot.obj("settings").obj("actions")).num("countdownHours") ?: Countdowns.HOURS
         val pending = Countdowns.pending(v, s.snapshot)
         Text("On the countdown (${Countdowns.hoursText(hours)})", color = J.text, fontSize = 14.sp)
@@ -245,6 +256,7 @@ object ProposalButtons {
 /** A proposal's run button through the action-run op, with its jobs or workflows; a tap runs it at once. */
 fun runProposal(vm: JarvisViewModel, b: JsonObject, proposal: String?) {
     vm.act("proposal-run:$proposal", "action-run", ProposalButtons.extra(b, proposal)) { out ->
+        out.str("note")?.let { return@act (b.str("label") ?: "Done") + ": " + it }
         (b.str("label") ?: "Done") + ": " + (out.str("ran")?.trimEnd('.') ?: (fmt(out.num("done")) + " done")) +
             (out.num("failed")?.takeIf { it > 0 }?.let { ", ${fmt(it)} failed" } ?: "") + "."
     }

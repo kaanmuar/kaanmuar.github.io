@@ -352,15 +352,29 @@ const META = {
   wien: ["Stadt Wien", "government", "city", "Vienna", "AT"]
 };
 
-const REGIONS = {
-  CO: "Latin America", CL: "Latin America", MX: "Latin America", AR: "Latin America", PE: "Latin America", EC: "Latin America", BR: "Latin America", UY: "Latin America", HN: "Latin America",
-  US: "North America", CA: "North America",
-  GB: "Europe", FR: "Europe", DE: "Europe", NL: "Europe", ES: "Europe", IT: "Europe", CH: "Europe", EE: "Europe", FI: "Europe", AT: "Europe", MC: "Europe",
-  AU: "Asia-Pacific", NZ: "Asia-Pacific", SG: "Asia-Pacific", MY: "Asia-Pacific",
-  KE: "Africa", ET: "Africa",
-  GY: "Caribbean", BB: "Caribbean",
-  QA: "Middle East"
+// Every ISO country a site can come from, by the region filter it lands in.
+const REGION_CODES = {
+  "Latin America": "AR BO BR BZ CL CO CR CU DO EC FK GF GT HN MX NI PA PE PR PY SR SV UY VE",
+  "North America": "BM CA GL PM US",
+  Europe: "AD AL AM AT AX AZ BA BE BG BY CH CY CZ DE DK EE ES FI FO FR GB GE GG GI GR HR HU IE IM IS IT JE LI LT LU LV MC MD ME MK MT NL NO PL PT RO RS RU SE SI SJ SK SM TR UA VA XK",
+  "Asia-Pacific": "AF AS AU BD BN BT CC CK CN CX FJ FM GU HK ID IN IO JP KG KH KI KP KR KZ LA LK MH MM MN MO MP MV MY NC NF NP NR NU NZ PF PG PH PK PN PW SB SG TH TJ TK TL TM TO TV TW UZ VN VU WF WS",
+  Africa: "AO BF BI BJ BW CD CF CG CI CM CV DJ DZ EG EH ER ET GA GH GM GN GQ GW KE KM LR LS LY MA MG ML MR MU MW MZ NA NE NG RE RW SC SD SH SL SN SO SS ST SZ TD TG TN TZ UG YT ZA ZM ZW",
+  Caribbean: "AG AI AW BB BL BQ BS CW DM GD GP GY HT JM KN KY LC MF MQ MS SX TC TT VC VG VI",
+  "Middle East": "AE BH IL IQ IR JO KW LB OM PS QA SA SY YE"
 };
+const REGIONS = {};
+Object.entries(REGION_CODES).forEach(([region, codes]) => codes.split(" ").forEach((code) => { REGIONS[code] = region; }));
+
+// Countries found for sites the run copy does not place (scripts/live-report-countries.js, #2980).
+const COUNTRIES_FILE = path.join(ROOT, "data/live-report-countries.json");
+let countryFile = null;
+function countryOverride(host) {
+  if (!countryFile) {
+    try { countryFile = JSON.parse(fs.readFileSync(COUNTRIES_FILE, "utf8")).hosts || {}; } catch (error) { countryFile = {}; }
+  }
+  const hit = countryFile[String(host || "").toLowerCase().replace(/^www\./, "")];
+  return hit && hit.scope === "country" && REGIONS[hit.country] ? hit.country : "";
+}
 
 // Headline tags from the run copy, folded into the test types a reader can filter on.
 const FOCUS = {
@@ -550,7 +564,8 @@ function build(run, series) {
   const ins = report.insights || {};
   const score = ins.score;
   const meta = META[run.id] || run.meta || [report.host, "", "", "", ""];
-  const [name, sector, org, city, country] = meta;
+  const [name, sector, org, city] = meta;
+  const country = meta[4] || (META[run.id] ? "" : countryOverride(report.host));
   const psi = report.pagespeed || {};
   const geo = ins.geo || {};
   const sec = ins.security || {};
@@ -692,6 +707,20 @@ function existingItems(keep) {
   return items;
 }
 
+// Places a published item in a country without rebuilding it from its report.
+function setCountry(item, country) {
+  const region = REGIONS[country] || "Global";
+  [item.card, item.detail].forEach((target) => {
+    const city = target.city || "";
+    const place = { g: "place", k: country || "global", t: (city ? city + ", " : "") + (country || "Global") };
+    const tags = (target.tags || []).filter((t) => t.g !== "region").map((t) => t.g === "place" ? place : t);
+    if (!tags.some((t) => t.g === "place")) tags.push(place);
+    if (REGIONS[country]) tags.splice(tags.findIndex((t) => t.g === "place") + 1, 0, { g: "region", k: region, t: region });
+    Object.assign(target, { country, region, flag: flag(country), tags });
+  });
+  return item;
+}
+
 function writeAll(items) {
   ranks(items);
   fs.mkdirSync(OUT, { recursive: true });
@@ -755,4 +784,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, loadRuns, build, existingItems, writeAll, scrub, msgOf };
+module.exports = { AREAS, REGIONS, REPORTS, RUN_FILES, COUNTRIES_FILE, loadRuns, build, existingItems, writeAll, setCountry, scrub, msgOf };

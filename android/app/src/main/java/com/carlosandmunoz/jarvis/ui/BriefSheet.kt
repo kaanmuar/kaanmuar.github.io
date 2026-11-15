@@ -156,14 +156,14 @@ fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String)
                         val runKey = actionKey(id, job ?: workflow ?: pr?.toString())
                         ActionButton(a.str("label") ?: id, runKey in s.running) {
                             val prompt = a.str("prompt")?.takeIf { id == "gh-agent" && it.isNotBlank() }
-                            val ask = if (id == "rerun-ci") "re-run the failed jobs of \"$workflow\" on main" else askFor(id, job, null, pr) + (prompt?.let { " with this prompt:\n\n" + Github.clip(it) } ?: "")
+                            val ask = if (id == "rerun-ci") rerunCiAsk(workflow) else askFor(id, job, null, pr) + (prompt?.let { " with this prompt:\n\n" + Github.clip(it) } ?: "")
                             confirm = PendingAction(ask) {
                                 if (prompt == null) runAction(vm, id, job, key, workflow, pr)
                                 else vm.market(runKey, "github-agent", buildMap {
                                     put("prompt", JsonPrimitive(prompt))
                                     a.str("branch")?.let { put("branch", JsonPrimitive(it)) }
                                     pr?.let { put("pr", JsonPrimitive(it)) }
-                                }) { out -> "Cursor agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
+                                }) { out -> "Agent launched" + (out.str("url")?.let { ": $it" } ?: ".") }
                             }
                         }
                     }

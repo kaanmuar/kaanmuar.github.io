@@ -1,10 +1,18 @@
 "use strict";
 
 const { URL } = require("url");
+const linkedRisk = require("./url-review-linked-risk");
 const libraries = require("./url-review-libraries");
+const threatLists = require("./url-review-threat-lists");
+const wordpress = require("./url-review-wordpress");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
+const { mailAuthChecks, dmarcRepair, dmarcPolicy, dkimChecks, dkimState } = require("./url-review-mail-auth");
+const blocklists = require("./url-review-blocklists");
+const exposedFiles = require("./url-review-exposed");
+const lookalikes = require("./url-review-lookalikes");
+const hackSigns = require("./url-review-hack-signs");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -274,6 +282,39 @@ function grade(score) {
   if (score >= 70) return "C";
   if (score >= 55) return "D";
   return "F";
+}
+
+// Area scores, the overall score and the verdict and severity counts of a list of findings. compareSites rescores the
+// asker's findings with this on the checks a passive competitor run also got.
+function scoreFindings(findings) {
+  const areas = {};
+  AREAS.forEach((area) => {
+    const mine = findings.filter((item) => item.area === area);
+    let score = 100;
+    let lowRisk = 0;
+    mine.forEach((item) => {
+      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
+      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
+      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
+    });
+    score -= Math.min(LOW_RISK_CAP, lowRisk);
+    score = Math.max(0, Math.min(100, score));
+    areas[area] = {
+      score,
+      grade: grade(score),
+      fail: mine.filter((item) => item.verdict === "fail").length,
+      risk: mine.filter((item) => item.verdict === "risk").length,
+      pass: mine.filter((item) => item.verdict === "pass").length,
+      person: mine.filter((item) => item.verdict === "person").length
+    };
+  });
+  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
+  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
+  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
+  findings.forEach((item) => { if (totals[item.verdict] != null) totals[item.verdict] += 1; });
+  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach((item) => { if ((item.verdict === "fail" || item.verdict === "risk") && severities[item.severity] != null) severities[item.severity] += 1; });
+  return { overall, grade: grade(overall), areas, totals, severities };
 }
 
 function hostingHint(technologies, headers) {
@@ -728,6 +769,7 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
       say("sec-safebrowsing.fix"), { effort: "days", cases: ["SEC-11"] });
     else add("Security", "pass", "info", "sec-safebrowsing", say("sec-safebrowsing.pass.title"), say("sec-safebrowsing.pass.evidence", { url: sb.url }), "", { cases: ["SEC-11"] });
   }
+  threatLists.addFindings(extras.threatLists, add);
   const dom = extras.domain;
   if (dom && dom.read) {
     const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, "") : "";
@@ -1497,6 +1539,7 @@ function analyze(input) {
 
   // Security
   libraryChecks({ read, browsed, origin }, add);
+  wordpress.checks(extras.wordpress, add);
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
   const headerRows = read.map((page) => {
@@ -1647,20 +1690,28 @@ function analyze(input) {
     // A lookup that timed out says nothing about the record, so it gets no finding either way.
     const mailRead = dnsRead("spf") && dnsRead("mx");
     const domain = dnsInfo.domain;
+    const enforced = /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc));
+    const mailAuth = mailAuthChecks(dnsInfo, dnsRead, add);
+    if (dnsRead("mx")) dkimChecks(dnsInfo, add);
     if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", say("sec-spf.missing.title"), say("sec-spf.missing.evidence", { domain }), say("sec-spf.missing.fix"), { effort: "minutes" });
     if (mailRead && !sendsMail && !dnsInfo.spf) {
-      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
+      if (dnsInfo.nullMx && enforced) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
       else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", say("sec-spf.nullNoSpf.title"), say("sec-spf.nullNoSpf.evidence", { domain }), say("sec-spf.nullNoSpf.fix"), { effort: "minutes" });
       else add("Security", "risk", "low", "sec-spf", say("sec-spf.none.title"), say("sec-spf.none.evidence", { domain }), say("sec-spf.none.fix"), { effort: "minutes" });
     }
     if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", say("sec-dmarc.title"), say("sec-dmarc.evidence", { domain }), say("sec-dmarc.fix"), { effort: "minutes" });
-    else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
-    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
-    if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
+    else if (dnsInfo.dmarc && !enforced) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
+    else if (dnsInfo.dmarc && !mailAuth.dmarcBroken) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
+    if (dnsInfo.spf && sendsMail && mailAuth.spf !== "fail") add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", say("sec-caa.title"), say("sec-caa.evidence", { domain }), say("sec-caa.fix"), { effort: "minutes" });
     if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
+  linkedRisk.findings(extras.linkedRisk, add);
   domainChecks(extras, dnsInfo, dnsRead, add);
+  blocklists.report(dnsInfo && dnsInfo.blocklists, add);
+  exposedFiles.checks(extras.exposed, add);
+  lookalikes.checks(extras.lookalikes, add, say);
+  hackSigns.findings(extras.hackSigns, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, say("sec-leak.fix"), { effort: "hours" });
   });
@@ -1767,33 +1818,7 @@ function analyze(input) {
   const ordered = actionable.concat(findings.filter((item) => item.verdict === "person"), findings.filter((item) => item.verdict === "pass"));
   ordered.forEach((item, index) => { item.id = "F-" + String(index + 1).padStart(2, "0"); });
 
-  const areas = {};
-  AREAS.forEach((area) => {
-    const mine = findings.filter((item) => item.area === area);
-    let score = 100;
-    let lowRisk = 0;
-    mine.forEach((item) => {
-      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
-      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
-      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
-    });
-    score -= Math.min(LOW_RISK_CAP, lowRisk);
-    score = Math.max(0, Math.min(100, score));
-    areas[area] = {
-      score,
-      grade: grade(score),
-      fail: mine.filter((item) => item.verdict === "fail").length,
-      risk: mine.filter((item) => item.verdict === "risk").length,
-      pass: mine.filter((item) => item.verdict === "pass").length,
-      person: mine.filter((item) => item.verdict === "person").length
-    };
-  });
-  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
-  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
-  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
-  findings.forEach((item) => { totals[item.verdict] += 1; });
-  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
-  actionable.forEach((item) => { if (severities[item.severity] != null) severities[item.severity] += 1; });
+  const { areas, overall, totals, severities } = scoreFindings(findings);
   const top = actionable[0];
   const summary = warnings.join(" ") + (warnings.length ? " " : "") + host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
     plural(totals.fail, "check fails", "checks fail") + " now, " + plural(totals.risk, "is", "are") + " at risk, and " + totals.pass + " pass." +
@@ -1867,12 +1892,13 @@ function analyze(input) {
       { label: "Cross-Origin-Opener-Policy", state: findingState("sec-coop") },
       { label: "TLS certificate", state: tls && tls.validTo ? (tls.daysLeft < 14 ? "fail" : tls.daysLeft < 30 ? "risk" : "pass") : "unknown" },
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
-      { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
-      { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
+      { label: "SPF", state: dnsRead("spf") ? (findings.some((item) => /^sec-spf-/.test(item.key) && item.verdict === "fail") ? "fail" : dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
+      { label: "DMARC", state: dnsRead("dmarc") ? (findings.some((item) => item.key === "sec-dmarc-multiple") ? "fail" : dnsInfo.dmarc && /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) ? "pass" : "risk") : "unknown" },
       { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" },
       { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
       { label: "Domain expiry", state: findingState("sec-domain-expiry") }
     ].concat(dnsRead("mx") && (dnsInfo.mx || []).length ? [
+      { label: "DKIM", state: dkimState(findings) },
       { label: "MTA-STS", state: findingState("sec-mta-sts") },
       { label: "TLS-RPT", state: findingState("sec-tlsrpt") }
     ] : []).concat([["Front-end libraries", "sec-libraries"], ["Privacy notice", "an-privacy"], ["Imprint", "an-imprint"], ["Accessibility statement", "a11y-statement"]]
@@ -1880,7 +1906,7 @@ function analyze(input) {
       .map(([label, key]) => findingState(key) === "person" ? { label, state: "unknown", person: true } : { label, state: findingState(key) })),
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
     domain: extras.domain && extras.domain.read ? { domain: extras.domain.domain, expires: extras.domain.expires, daysLeft: extras.domain.daysLeft, registrar: extras.domain.registrar, locked: extras.domain.locked } : null,
-    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "") } : null,
+    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) } : null,
     pages: headerRows.slice(0, 40)
   };
   const chatSeen = browsed && browsed.chat && (browsed.chat.found || []).length ? browsed.chat : null;
@@ -2001,6 +2027,7 @@ function fixKit(ctx) {
     const unread = ctx.dnsInfo.unread || [];
     if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
     if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
+    else if (ctx.dnsInfo.dmarc && dmarcRepair(ctx.dnsInfo.dmarc, domain)) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: dmarcRepair(ctx.dnsInfo.dmarc, domain) });
     if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
     if (mail && !ctx.dnsInfo.tlsRpt && !unread.includes("tlsrpt") && !unread.includes("mx")) dnsRecords.push({ name: "_smtp._tls." + domain, type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@" + domain });
     if (mail && !ctx.dnsInfo.mtaSts && !unread.includes("mta-sts") && !unread.includes("mx")) dnsRecords.push({ name: "_mta-sts." + domain, type: "TXT", value: "v=STSv1; id=" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "01" });
@@ -2066,4 +2093,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
+module.exports = { analyze, scoreFindings, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };

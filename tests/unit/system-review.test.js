@@ -10,6 +10,9 @@ test("the cause of a failed job is read from its log, with the fix", () => {
   const pages = ["2026-11-03T14:11:00.4081938Z broken: social/pick/a-es.html -> /social/pick/b-es.html", "2026-11-03T14:11:00.4083246Z broken: social/pick/a-es.html -> /social/pick/c-es.html", "##[error]Process completed with exit code 1."].join("\n");
   assert.match(review.causeOf(pages), /^2 links point to pages that do not exist \(social\/pick\/a-es\.html -> \/social\/pick\/b-es\.html\): build the missing pages/);
   assert.match(review.causeOf("Memory limit of 256 MiB exceeded with 286 MiB used."), /^ran out of memory/);
+  const stalled = ["2026-11-09T12:58:40Z Current status: syncing_files", "2026-11-09T12:58:50Z Current status: ", "2026-11-09T12:58:50Z ##[error]Timeout reached, aborting!", "Canceling Pages deployment..."].join("\n");
+  assert.match(review.causeOf(stalled), /^the Pages deployment stalled on GitHub's side \(Timeout reached, aborting!\), not in the commit/);
+  assert.match(review.causeOf("##[error]Creating Pages deployment failed"), /^the Pages deployment stalled/);
   assert.equal(review.causeOf("npm ci\nError: Cannot find module 'x'\n##[error]Process completed with exit code 1."), "failed: Error: Cannot find module 'x'");
   assert.equal(review.causeOf(""), "failed with no readable cause in its log");
 });

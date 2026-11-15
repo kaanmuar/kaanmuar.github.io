@@ -20,12 +20,14 @@
  * the reply turns "replied" with a link to ours and is not sent. A report reply (#2465) carries its mini report card
  * (report-card.js, #2466); when the card cannot be drawn or uploaded, the reply goes as text with its link and
  * actions.reply.card says "text", with cardError saying why. pendingChains reads the comments under the replies
- * we posted in the last CHAIN_DAYS, each reply at most once per CHAIN_EVERY, for jarvis-engagement to like and answer.
+ * we posted in the last CHAIN_DAYS, or until chainUntil while the person there is active (#3137), each reply at most
+ * once per CHAIN_EVERY, for jarvis-engagement to like and answer.
  */
 const crypto = require("crypto");
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
 const Card = require("./report-card");
+const P = require("./engagement-profiles");
 
 const HOUR = 3600000;
 const CHAIN_DAYS = 7;
@@ -609,20 +611,31 @@ async function sendReply(deps, c, task) {
   const r = task.doc.actions.reply;
   const tries = (r.tries || 0) + 1;
   const at = new Date(deps.now).toISOString();
-  const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const had = (task.doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
+    let doc = task.doc;
+    if (P.needsLatest(doc)) {
+      const bound = await P.bindLatest(deps.fetch, doc, deps.now);
+      if (!bound) {
+        await task.ref.update({ "actions.reply.status": "failed", "actions.reply.at": at, "actions.reply.error": "No post of theirs in the last year on their profile.", "actions.reply.tries": tries, updatedAt: at });
+        await count(deps, doc.network, "failed");
+        return { status: "failed", error: "No post of theirs in the last year on their profile." };
+      }
+      await task.ref.update(Object.assign({}, bound.patch, { updatedAt: at }));
+      doc = bound.doc;
+    }
+    const d = Object.assign({ key: task.key }, doc);
+    const had = (doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
     if (had) {
       await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
-      await count(deps, task.doc.network, "already");
+      await count(deps, doc.network, "already");
       return { status: "replied", url: had.url || "" };
     }
-    const card = await drawCard(deps, task.doc);
-    const out = await c.reply(d, r.draft, r.lang || task.doc.lang, card.card);
+    const card = await drawCard(deps, doc);
+    const out = await c.reply(d, r.draft, r.lang || doc.lang, card.card);
     await task.ref.update(Object.assign({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at },
-      cardFields(task.doc, out.card === "attached", card.error || out.cardError)));
-    await count(deps, task.doc.network, "posted");
-    if (task.doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
+      cardFields(doc, out.card === "attached", card.error || out.cardError)));
+    await count(deps, doc.network, "posted");
+    if (doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
     return { status: "posted", url: out.url || "" };
   } catch (error) {
     const last = !error.fatal && tries >= MAX_TRIES;
@@ -732,7 +745,7 @@ async function pendingChains(deps) {
   const recheck = new Date(now - CHAIN_EVERY).toISOString();
   const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(300).get();
   const posted = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
-    .filter((t) => API.includes(t.doc.network) && String(t.doc.actions.reply.postedAt || "") >= since && String(t.doc.chainAt || "") < recheck)
+    .filter((t) => API.includes(t.doc.network) && (String(t.doc.actions.reply.postedAt || "") >= since || String(t.doc.chainUntil || "") > at) && String(t.doc.chainAt || "") < recheck)
     .sort((a, b) => String(b.doc.actions.reply.postedAt).localeCompare(String(a.doc.actions.reply.postedAt)));
   const out = { found: [], checked: 0, errors: {} };
   if (!posted.length) return out;

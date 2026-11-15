@@ -1,0 +1,126 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-808ball16-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "808ball16.com: 53.",
+    "title.1": "*The gap: button names.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.",
+    "action": "Give every button text or an aria-label, so a screen reader can announce it.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 10 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "808ball16.com · 9 pages analyzed · 10 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.\n\nLesson: Give every button text or an aria-label, so a screen reader can announce it.\n\nOne automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-808ball16-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-808ball16-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #Programming #JavaScript #QA #A11y #WebDev #LearnOnYouTube #TechTips #DigitalAccessibility #QAEngineer #UXDesign #QAlab"
+   }
+  },
+  "u-windrawwin-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "windrawwin.com: 77.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 4 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 10 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "windrawwin.com · 20 pages analyzed · 10 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 4 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-windrawwin-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-windrawwin-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #Automation #Programming #QA #Forms #A11y #LearnOnYouTube #SoftwareTesting #QualityAssurance #WCAG #TestAutomation #QAlab"
+   }
+  },
+  "u-habi-co": {
+   "lang": "fr",
+   "strings": {
+    "title.0": "habi.co: 29.",
+    "title.1": "*The gap: page titles.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 4 pages have no title.",
+    "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 10 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "habi.co · 28 pages analyzed · 10 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 4 pages have no title.\n\nLesson: Give every page a unique title of about 60 characters: the page first, the site second.\n\nOne automated analysis of public pages on 10 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-habi-co&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-habi-co\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#SEO #DevOps #QA #Titles #SERP #TechTips #WebDevelopment #GoogleSearch #QualityAssurance #SearchConsole #TestAutomation #QAlab"
+   }
+  },
+  "vs-aol-de": {
+   "lang": "it",
+   "strings": {
+    "live": "u-aol-de",
+    "title.0": "aol.de vs fitforfun.de.",
+    "title.1": "*fitforfun.de leads: 74.*",
+    "body": "aol.de leads in SEO, GEO; fitforfun.de leads in Analytics, Security, Accessibility, Performance.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 11 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "aol.de",
+    "visual.rows.1.0": "fitforfun.de",
+    "visual.note": "Natural competitors found on the open web · 11 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "aol.de leads in SEO, GEO; fitforfun.de leads in Analytics, Security, Accessibility, Performance.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 11 Nov 2026 of aol.de, fitforfun.de, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-aol-de&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-aol-de\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #SoftwareTesting #Automation #QA #WebPerf #LearnOnYouTube #TechTips #ContentMarketing #Lighthouse #QAEngineer #SiteSpeed #QAlab"
+   }
+  },
+  "vs-elimparcial-com": {
+   "lang": "en",
+   "strings": {
+    "live": "u-elimparcial-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*zetatijuana.com leads: 72.*",
+    "body": "milenio.com leads in SEO; movierulez2.com leads in GEO, Analytics, Accessibility; zetatijuana.com leads in Security, Performance. elimparcial.com leads in none of the six areas.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 11 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "elimparcial.com",
+    "visual.rows.1.0": "milenio.com",
+    "visual.rows.2.0": "zetatijuana.com",
+    "visual.rows.3.0": "movierulez2.com",
+    "visual.note": "Natural competitors found on the open web · 11 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "milenio.com leads in SEO; movierulez2.com leads in GEO, Analytics, Accessibility; zetatijuana.com leads in Security, Performance. elimparcial.com leads in none of the six areas.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 11 Nov 2026 of elimparcial.com, milenio.com, zetatijuana.com, movierulez2.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-elimparcial-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-elimparcial-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #DevOps #SoftwareTesting #QA #WebPerf #Coding #Programming #TechnicalSEO #CoreWebVitals #QualityAssurance #SEOTips #QAlab"
+   }
+  }
+ }
+}
