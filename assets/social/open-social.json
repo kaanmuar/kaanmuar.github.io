@@ -1622,6 +1622,17 @@
     "checked": "2026-11-14T06:10:56.268Z"
    }
   ],
+  "runs-3/02-policiaco": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2cy6qy4oa2n",
+    "at": "2026-11-15T02:37:03.515Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2cy6qy4oa2n",
+    "checked": "2026-11-15T02:37:05.496Z"
+   }
+  ],
   "series-dia-de-muertos-2026-11/01-ofrenda": [
    {
     "channel": "bluesky",
