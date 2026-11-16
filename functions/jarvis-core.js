@@ -331,8 +331,22 @@
         const avg = now.length ? Math.round((starSum / now.length) * 10) / 10 : null;
         const avgNps = npsN ? Math.round((npsSum / npsN) * 10) / 10 : null;
         const score = npsN ? Math.round(((npsBuckets.promoter - npsBuckets.detractor) / npsN) * 100) : null;
+        const quoteReady = (row) => {
+            if (!row || !row.quoteOk) return false;
+            const comment = String(row.comment || '').trim();
+            if (comment.length < 24) return false;
+            const s = Math.min(5, Math.max(0, Number(row.rating) || 0));
+            if (s < 4) return false;
+            const nps = Number(row.nps);
+            if (Number.isFinite(nps) && nps >= 0 && nps <= 10 && nps < 8) return false;
+            return true;
+        };
+        const quotes = now.filter(quoteReady).slice().sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0)).slice(0, 8).map((row) => ({
+            id: row.id, host: row.host || '', rating: row.rating, nps: row.nps,
+            quote: String(row.comment || '').slice(0, 200), at: row.createdAt || ''
+        }));
         return {
-            totals: { answers: now.length, prior: prior.length, avg, avgNps, nps: score, quoteOk, low },
+            totals: { answers: now.length, prior: prior.length, avg, avgNps, nps: score, quoteOk, low, quotes: quotes.length },
             stars,
             npsBuckets,
             kpis: [
@@ -341,8 +355,11 @@
                 kpi('Avg NPS', avgNps === null ? '—' : avgNps + '/10', undefined, { raw: avgNps }),
                 kpi('NPS score', score === null ? '—' : score, undefined, { raw: score }),
                 kpi('Quote ok', quoteOk, undefined),
+                kpi('Quote-ready', quotes.length, undefined),
                 kpi('Low', low, undefined, { alert: low > 0 })
             ],
+            series: dailySeries(now, window.start, window.end, () => true),
+            quotes,
             recent: now.slice().sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0)).slice(0, 8).map((row) => ({
                 id: row.id, host: row.host || '', rating: row.rating, nps: row.nps, quoteOk: !!row.quoteOk, low: !!row.low,
                 comment: String(row.comment || '').slice(0, 160), at: row.createdAt || ''
