@@ -940,6 +940,26 @@
     "checked": "2026-11-16T00:10:44.474Z"
    }
   ],
+  "auto-2026-11-16/01-u-notino-de": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1772226700928507",
+    "at": "2026-11-22T17:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-16T11:48:31.765Z"
+   }
+  ],
+  "auto-2026-11-16/02-u-predictz-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "122110938981532027",
+    "at": "2026-11-17T20:31:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-16T11:48:34.599Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "facebook",
@@ -1436,8 +1456,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094629253532027",
     "at": "2026-11-16T00:55:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-16T00:10:44.477Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094629253532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-16T11:48:22.141Z"
    }
   ],
   "promo-social-hub-2026-10/36-real-reviews-pt": [
