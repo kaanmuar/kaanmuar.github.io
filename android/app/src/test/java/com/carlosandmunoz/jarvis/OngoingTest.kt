@@ -2,6 +2,7 @@ package com.carlosandmunoz.jarvis
 
 import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.StatusSlot
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,16 +38,37 @@ class OngoingTest {
     @Test fun leavesOutThePartsTurnedOff() {
         val week = json("""{"readiness":71.6,"briefing":[{"level":"alert","text":"Checkout is down"}],
             "external":{"money":{"ok":true,"revenue":{"usd":38,"count":2}}}}""")
-        val c = Ongoing.content(week, null, 0L, 3, setOf(Ongoing.Part.APPROVALS, Ongoing.Part.MONEY))
+        val c = Ongoing.content(week, null, 0L, 3, setOf(Ongoing.Part.APPROVALS, Ongoing.Part.MONEY), emptyList())
         assertEquals("3 approvals waiting", c.title)
         assertEquals(listOf("Today $38 · 2 sales"), c.lines)
         assertNull(c.chip)
         assertFalse(c.urgent)
         assertTrue(c.waiting)
         assertFalse(c.ring || c.bar || c.live)
-        assertEquals("Jarvis", Ongoing.content(week, null, 0L, 0, emptySet()).title)
+        assertEquals("Jarvis", Ongoing.content(week, null, 0L, 0, emptySet(), emptyList()).title)
         assertEquals(Ongoing.Part.ALL - Ongoing.Part.CHIP, Ongoing.Part.of(null))
-        assertEquals(setOf(Ongoing.Part.BAR), Ongoing.Part.of("bar,gone"))
+        assertEquals(emptySet<Ongoing.Part>(), Ongoing.Part.of("bar,gone"))
+    }
+
+    @Test fun slotsMigrateFromOldBarToggleAndEncode() {
+        assertEquals(StatusSlot.DEFAULT, StatusSlot.fromParts(null, null))
+        assertEquals(
+            listOf(StatusSlot("connections", StatusSlot.Kind.BAR), StatusSlot("targets", StatusSlot.Kind.BAR), StatusSlot("goals", StatusSlot.Kind.BAR)),
+            StatusSlot.fromParts(null, "bar,gone"),
+        )
+        assertEquals(
+            listOf(StatusSlot("readiness", StatusSlot.Kind.RING), StatusSlot("uptime", StatusSlot.Kind.RING)),
+            StatusSlot.fromParts(null, "readiness,alerts"),
+        )
+        assertEquals(
+            listOf(StatusSlot("connections", StatusSlot.Kind.BAR, "Online"), StatusSlot("goals", StatusSlot.Kind.RING)),
+            StatusSlot.decode("bar:connections:Online,ring:goals"),
+        )
+        assertEquals("bar:connections:Online,ring:goals", StatusSlot.encode(StatusSlot.decode("bar:connections:Online,ring:goals")!!))
+        assertEquals(
+            listOf(StatusSlot("connections", StatusSlot.Kind.BAR), StatusSlot("goals", StatusSlot.Kind.BAR)),
+            StatusSlot.fromParts(null, "connections,goals,money"),
+        )
     }
 
     @Test fun chipShowsApprovalsThenReadiness() {
@@ -72,9 +94,25 @@ class OngoingTest {
         assertEquals("1 alert · 1 approval waiting", c.counts)
         assertNull(card.note)
         assertFalse(c.live)
-        val bare = Ongoing.content(snap, null, 0L, 0, setOf(Ongoing.Part.MONEY)).card!!
+        val bare = Ongoing.content(snap, null, 0L, 0, setOf(Ongoing.Part.MONEY), emptyList()).card!!
         assertTrue(bare.rings.isEmpty())
         assertTrue(bare.bars.isEmpty())
+    }
+
+    @Test fun editorCanReorderOmitAndRelabelBars() {
+        val snap = json("""{"readiness":88,
+            "connections":[{"state":"ok"},{"state":"down"}],
+            "goals":[{"label":"Reviews sold","value":12,"target":40,"pct":30,"status":"behind"},{"label":"Signups","value":90,"target":100,"pct":90,"status":"on-track"}],
+            "external":{"targets":{"targets":[{"key":"b","label":"Calls booked","actual":2,"target":10,"status":"behind"}]}}}""")
+        val slots = listOf(
+            StatusSlot("goals", StatusSlot.Kind.BAR, "Pipeline"),
+            StatusSlot("connections", StatusSlot.Kind.BAR),
+            StatusSlot("readiness", StatusSlot.Kind.RING, "Health"),
+        )
+        val card = Ongoing.content(snap, null, 0L, 0, Ongoing.Part.DEFAULT, slots).card!!
+        assertEquals(listOf("Health" to 88), card.rings.map { it.label to it.pct })
+        assertEquals(listOf("Pipeline", "Signups", "Connections"), card.bars.map { it.label })
+        assertEquals(listOf("12 of 40", "90 of 100", "1 of 2 online"), card.bars.map { it.value })
     }
 
     @Test fun collapsedCardKeepsWhatNeedsYou() {
