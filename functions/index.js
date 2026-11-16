@@ -317,6 +317,37 @@ exports.notifyOwnerOnRating = withMail.firestore
     return null;
   });
 
+// URL Review CSAT (#3556). Push always; owner email rides reviewEvents. Low scores include a draft reply.
+exports.notifyOwnerOnReviewCsat = withMail.firestore
+  .document("url_review_csat/{csatId}")
+  .onCreate(async (snap) => {
+    const data = snap.data() || {};
+    const score = Math.min(5, Math.max(0, Number(data.rating) || 0));
+    const nps = Number.isFinite(Number(data.nps)) ? Math.min(10, Math.max(0, Number(data.nps))) : null;
+    const host = clip(data.host, 120) || "URL Review";
+    const low = data.low === true || score <= 2 || (nps != null && nps <= 6);
+    try {
+      if (await mailOn("reviewEvents")) await sendOwnerEmail({
+        to: REVIEW_ALERT_TO,
+        subject: (low ? "Low CSAT — " : "URL Review CSAT — ") + score + "/5" + (nps != null ? " · NPS " + nps : "") + " · " + host,
+        intro: low ? "Low feedback on a URL review — draft reply below" : "New feedback on a URL review",
+        rows: [
+          { label: "Site", value: host },
+          { label: "Email", value: clip(data.email, 120) },
+          { label: "Run", value: score + " out of 5" },
+          { label: "NPS", value: nps != null ? String(nps) + " out of 10" : "—" },
+          { label: "Quote ok", value: data.quoteOk ? "yes" : "no" },
+          { label: "Report", value: clip(data.reviewId, 80) }
+        ],
+        body: [clipBlock(data.comment, 2000) || "(no comment)", data.draftReply ? "\n\nDraft reply:\n" + clipBlock(data.draftReply, 2000) : ""].join("")
+      });
+    } catch (error) {
+      console.error("Owner CSAT notification failed:", error);
+    }
+    await pushOwner(jarvisMailPush.csatMessage(snap.id, data));
+    return null;
+  });
+
 exports.notifyOwnerOnVisit = withMail.firestore
   .document("visits/{visitId}")
   .onCreate(async () => null);
@@ -1938,6 +1969,27 @@ async function stopLinkFor(email, lang) {
   return REVIEW_FN_URL + "/notes/stop?t=" + token;
 }
 
+// One-time CSAT link for a finished report (#3556).
+async function csatLinkFor(record) {
+  const email = String((record && record.email) || "").trim().toLowerCase();
+  const reviewId = String((record && record.id) || "").trim();
+  if (!email || !reviewId) return "";
+  const token = crypto.randomBytes(16).toString("hex");
+  let host = String((record && record.host) || "").trim();
+  if (!host && record && record.url) {
+    try { host = new URL(record.url).hostname; } catch (error) { host = ""; }
+  }
+  await getFirestore().collection("url_review_csat_links").doc(token).set({
+    email,
+    reviewId,
+    host,
+    lang: customerMail.langOf(record && record.lang),
+    createdAt: new Date().toISOString(),
+    expireAt: keepUntil()
+  });
+  return REVIEW_FN_URL + "/csat?t=" + token;
+}
+
 async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
   const from = prepareMail();
   if (!from) return false;
@@ -2046,8 +2098,12 @@ async function reportPdfFor(record, options) {
 async function mailReportToAsker(record, promise) {
   if (!record || !record.email || !record.report) return false;
   if (record.status !== "complete" && record.status !== "stopped") return false;
-  const [stopUrl, pdf] = await Promise.all([stopLinkFor(record.email, record.lang), reportPdfFor(record)]);
-  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise });
+  const [stopUrl, pdf, csatUrl] = await Promise.all([
+    stopLinkFor(record.email, record.lang),
+    reportPdfFor(record),
+    csatLinkFor(record)
+  ]);
+  const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise, csatUrl });
   const sent = await sendReportMail(record.id, () => sendAskerMail(record.email, mail, stopUrl, "url-review-report", pdf ? [pdf] : []), !!pdf);
   if (sent) await mailFixableFollowup(record, stopUrl).catch((error) => console.error("Fixable follow-up failed:", error));
   return sent;
@@ -2292,6 +2348,54 @@ async function sendReviewNotes() {
 
 // Monday to Saturday at 10:00 Bogotá: Ley 2300 de 2023 keeps commercial contact off Sundays and outside daytime hours.
 exports.sendReviewNotes = scheduled(withMail, "sendReviewNotes", () => sendReviewNotes());
+
+// 24–48h after a report mail, nudge for CSAT if they have not answered (#3556). Same daytime window as notes.
+async function sendCsatReminders() {
+  const csat = require("./url-review-csat");
+  const db = getFirestore();
+  const window = csat.remindWindow(new Date());
+  const snap = await db.collection("url_reviews")
+    .where("mail.sent", "==", true)
+    .where("mail.at", ">=", window.after)
+    .where("mail.at", "<=", window.before)
+    .limit(40)
+    .get();
+  let sent = 0;
+  for (const doc of snap.docs) {
+    const record = Object.assign({ id: doc.id }, doc.data() || {});
+    if (!record.email || record.csatRemindedAt) continue;
+    if (record.status !== "complete" && record.status !== "stopped") continue;
+    const stopped = await db.collection("url_review_notes").where("email", "==", record.email).where("status", "==", "follow-stop").limit(1).get();
+    if (!stopped.empty) continue;
+    const prior = await db.collection("url_review_csat").where("reviewId", "==", doc.id).limit(1).get();
+    if (!prior.empty) {
+      await doc.ref.set({ csatRemindedAt: new Date().toISOString(), csatSkipped: "answered" }, { merge: true });
+      continue;
+    }
+    const [stopUrl, csatUrl] = await Promise.all([stopLinkFor(record.email, record.lang), csatLinkFor(record)]);
+    if (!csatUrl) continue;
+    let host = String(record.host || "").trim();
+    if (!host && record.url) {
+      try { host = new URL(record.url).hostname; } catch (error) { host = ""; }
+    }
+    const parts = csat.remindMail(record.lang, host || "your site", csatUrl);
+    const t = customerMail.COPY[customerMail.langOf(record.lang)];
+    const mail = {
+      lang: parts.lang,
+      subject: parts.subject,
+      text: parts.text + "\n\n" + customerMail.footerText(t, customerMail.fill(t.why, { host: host || "your site" }), { stopUrl }),
+      html: customerMail.shell(parts.lang, parts.subject, parts.html, customerMail.footerHtml(t, customerMail.fill(t.why, { host: host || "your site" }), { stopUrl }))
+    };
+    const ok = await sendAskerMail(record.email, mail, stopUrl, "url-review-csat-remind");
+    if (ok) {
+      sent += 1;
+      await doc.ref.set({ csatRemindedAt: new Date().toISOString() }, { merge: true });
+    }
+  }
+  return { sent, scanned: snap.size };
+}
+
+exports.sendCsatReminders = scheduled(withMail, "sendCsatReminders", () => sendCsatReminders());
 
 // Ended outreach trials get their AFTER code (#3136); the note to the person goes out only with the follow-up notes' switch.
 async function outreachTrialsRun() {
@@ -4697,6 +4801,116 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     });
     await rememberReview("follow-stop", { status: "follow-stop", email: link.email });
     res.status(200).send(customerMail.stopPage(link.lang, "done", link.email));
+    return;
+  }
+  if (pathName.indexOf("/csat/session") !== -1) {
+    // Signed-in report page submit (#3556).
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "POST only." });
+      return;
+    }
+    try {
+      const csat = require("./url-review-csat");
+      const db = getFirestore();
+      const body = req.body || {};
+      const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(db), Object.assign({}, body, { touch: false }));
+      if (!signedIn || !signedIn.email) {
+        res.status(401).json({ error: "Sign in to rate this review." });
+        return;
+      }
+      const reviewId = String(body.reportId || body.reviewId || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 40);
+      if (!reviewId) {
+        res.status(400).json({ error: "Missing report." });
+        return;
+      }
+      const reviewSnap = await db.collection("url_reviews").doc(reviewId).get();
+      const review = reviewSnap.exists ? reviewSnap.data() : null;
+      if (!review || String(review.email || "").toLowerCase() !== String(signedIn.email).toLowerCase()) {
+        res.status(403).json({ error: "Only the account that ran this review can rate it." });
+        return;
+      }
+      const submitted = csat.readSubmit(body);
+      if (!csat.isComplete(submitted)) {
+        res.status(400).json({ error: "Pick a run rating (1–5) and an NPS (0–10)." });
+        return;
+      }
+      const prior = await db.collection("url_review_csat").where("reviewId", "==", reviewId).limit(1).get();
+      if (!prior.empty) {
+        res.status(200).json({ ok: true, already: true });
+        return;
+      }
+      let host = String(review.host || "").trim();
+      if (!host && review.url) {
+        try { host = new URL(review.url).hostname; } catch (error) { host = ""; }
+      }
+      const row = csat.recordFrom(submitted, {
+        reviewId, email: signedIn.email, host, lang: review.lang || body.lang, via: "session"
+      });
+      const ref = await db.collection("url_review_csat").add(row);
+      const urls = csat.thanksUrls(row.lang, host, reviewId);
+      res.status(200).json({ ok: true, id: ref.id, low: row.low, bookUrl: urls.bookUrl, rerunUrl: urls.rerunUrl });
+    } catch (error) {
+      console.error("CSAT session failed:", error);
+      res.status(500).json({ error: "Feedback did not save. Try again in a moment." });
+    }
+    return;
+  }
+  if (pathName.indexOf("/csat") !== -1) {
+    res.set("X-Robots-Tag", "noindex");
+    res.set("Content-Type", "text/html; charset=utf-8");
+    const csat = require("./url-review-csat");
+    const token = String(req.query.t || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const db = getFirestore();
+    const linkRef = token.length === 32 ? db.collection("url_review_csat_links").doc(token) : null;
+    const linkSnap = linkRef ? await linkRef.get() : null;
+    const link = linkSnap && linkSnap.exists ? linkSnap.data() : null;
+    if (!link || !link.email || !link.reviewId) {
+      res.status(404).send(csat.csatPage("en", "gone"));
+      return;
+    }
+    const lang = csat.langOf(link.lang);
+    const host = String(link.host || "").trim() || "your site";
+    const urls = csat.thanksUrls(lang, host, link.reviewId);
+    if (link.usedAt) {
+      res.status(200).send(csat.csatPage(lang, "used", { host }));
+      return;
+    }
+    const preset = csat.parseRating(req.query.rating);
+    if (req.method !== "POST") {
+      res.status(200).send(csat.csatPage(lang, "ask", { host, rating: preset || undefined }));
+      return;
+    }
+    let form = req.body && typeof req.body === "object" ? req.body : {};
+    if ((!form.rating && form.nps == null && !form.comment) && req.rawBody && req.rawBody.length && req.rawBody.length < 2e5) {
+      try {
+        const params = new URLSearchParams(String(req.rawBody));
+        form = { rating: params.get("rating"), nps: params.get("nps"), comment: params.get("comment"), quote: params.get("quote") };
+      } catch (error) { /* keep form */ }
+    }
+    const submitted = csat.readSubmit(form);
+    if (!csat.isComplete(submitted)) {
+      res.status(400).send(csat.csatPage(lang, "bad", {
+        host, rating: submitted.rating || preset || undefined, nps: submitted.nps >= 0 ? submitted.nps : undefined,
+        comment: submitted.comment, quoteOk: submitted.quoteOk
+      }));
+      return;
+    }
+    const claimed = await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(linkRef);
+      const row = fresh.exists ? fresh.data() : null;
+      if (!row || row.usedAt) return false;
+      tx.set(linkRef, { usedAt: new Date().toISOString(), rating: submitted.rating, nps: submitted.nps }, { merge: true });
+      return true;
+    });
+    if (!claimed) {
+      res.status(200).send(csat.csatPage(lang, "used", { host }));
+      return;
+    }
+    const saved = csat.recordFrom(submitted, {
+      reviewId: link.reviewId, email: link.email, host, lang, via: "email-link"
+    });
+    await db.collection("url_review_csat").add(saved);
+    res.status(200).send(csat.csatPage(lang, "thanks", Object.assign({ host, low: saved.low }, urls)));
     return;
   }
   if (pathName.indexOf("/owner") !== -1) {

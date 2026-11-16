@@ -20,6 +20,7 @@ const path = require("path");
 const live = require("./build-live-reports");
 const { siteKind } = require("./tips-studio/site-assets");
 const { tldCountry } = require("./live-report-countries");
+const QAReviewScripts = require("../js/qa-review-scripts");
 
 const ROOT = path.resolve(__dirname, "..");
 const STATE = path.join(__dirname, "auto-live-reports.state.json");
@@ -163,7 +164,7 @@ function copyFor(report, recent) {
   const name = bare(report.host);
   const head = name.length <= 22 ? name + ": {overall}." : "Scored {overall} of 100.";
   if (!gap) {
-    return { key: "", title: [head, "*Nothing failed.*"], tags: ["QA", "WebDev", "SEO"],
+    return { key: "", caseId: "", title: [head, "*Nothing failed.*"], tags: ["QA", "WebDev", "SEO"],
       body: [sentence(good[0] && good[0].title), sentence(good[1] && good[1].title), "No check failed on the pages analyzed."].filter(Boolean).join(" "),
       action: "Keep the review in your release checklist, so the next change keeps it that way.",
       fixLines: ["// Nothing failed on the pages analyzed", "// Keep the review in your release checklist"] };
@@ -172,15 +173,43 @@ function copyFor(report, recent) {
   const strengths = good.map((g) => live.scrub(g.title, 90).replace(/\.$/, ""));
   const lead = strengths.length === 2 ? strengths[0] + ", and " + lower(strengths[1]) + "." : strengths.length ? strengths[0] + "." : "";
   const action = lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.";
+  const fromCase = caseFix(report, gap);
   return {
     key: gap.key,
+    caseId: fromCase.caseId || "",
     title: [head, "*The gap: " + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + ".*"],
     body: (lead ? lead + " But " + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
     action,
     tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3),
-    // Short lines for the carousel code slide (#3476); never paste URLs into the graphic.
-    fixLines: fixLinesFor(gap, action)
+    // Prefer real case id + Playwright (#3550); fall back to lesson / fix prose. Never paste URLs into the graphic.
+    fixLines: fromCase.fixLines || fixLinesFor(gap, action)
   };
+}
+
+/** Rank-1 finding → case id + short Playwright lines for carousel Slide 3 (#3550). */
+function caseFix(report, gap) {
+  const caseId = String(((gap && gap.cases) || [])[0] || "");
+  if (!caseId) return { caseId: "", fixLines: null };
+  const item = ((report && report.cases) || []).find((c) => String(c.id) === caseId);
+  if (!item) return { caseId, fixLines: ["// " + caseId, String((gap && gap.fix) || gap.title || "").slice(0, 72)].filter(Boolean) };
+  try {
+    const snip = (QAReviewScripts.snippets(report, item, ["Playwright"]) || [])[0];
+    const lines = playwrightCarouselLines(caseId, snip && snip.code, item);
+    return { caseId, fixLines: lines };
+  } catch (error) {
+    return { caseId, fixLines: ["// " + caseId, live.scrub(item.title || gap.title || "", 56)].filter(Boolean) };
+  }
+}
+
+function playwrightCarouselLines(caseId, code, item) {
+  const head = "// " + caseId + (item && item.title ? ": " + live.scrub(item.title, 40) : "");
+  if (!code) return [head, "// Proposed Playwright assertion from the review"].filter(Boolean);
+  const body = String(code).split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => /^\s*(await\s+)?expect\(|^\s*await\s+page\.|^\s*const\s+\w+\s*=\s*page\./.test(line))
+    .map((line) => line.replace(/^\s+/, "").slice(0, 88));
+  if (body.length) return [head].concat(body.slice(0, 5));
+  return [head, "// expect(…) — open the report for the full Playwright sample"];
 }
 
 function fixLinesFor(gap, action) {
@@ -292,7 +321,7 @@ async function main() {
     batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope,
       fetchedAt: report.fetchedAt, pages: report.limits.pagesRead, overall: score.overall,
       areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])),
-      fixLines: copy.fixLines || [] });
+      fixLines: copy.fixLines || [], caseId: copy.caseId || "" });
     state.posted = Object.assign(state.posted || {}, { [host]: today });
     if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
   }
@@ -328,4 +357,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { fetchPublishable, mergePages, PAGE };
+module.exports = { fetchPublishable, mergePages, PAGE, copyFor, caseFix, fixLinesFor, playwrightCarouselLines };

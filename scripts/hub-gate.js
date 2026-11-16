@@ -37,6 +37,54 @@ function withHubLink(text, { batch, slug, network }) {
   return kept.replace(/…$/u, "") + "…" + tail;
 }
 
+// First-comment UTM on LinkedIn / Instagram / Facebook (#3551): body stays link-throttle-safe; comment carries the tagged URL + drop-URL CTA.
+const FIRST_COMMENT_NETS = new Set(["linkedin", "instagram", "facebook"]);
+const DROP_URL = {
+  en: "Drop a public URL in the comments and I'll run a QA-lab sweep on the top ones.",
+  es: "Deja una URL pública en los comentarios y haré un barrido QA-lab de las primeras.",
+  pt: "Deixe uma URL pública nos comentários e eu faço um varredura QA-lab nas primeiras.",
+  de: "Schreib eine öffentliche URL in die Kommentare — ich prüfe die ersten mit QA-lab.",
+  fr: "Laissez une URL publique en commentaire : je lancerai un balayage QA-lab sur les premières.",
+  it: "Lascia un URL pubblico nei commenti e farò uno sweep QA-lab sui primi."
+};
+
+function stripUtms(text) {
+  return String(text || "")
+    .replace(/([?&])utm_[^=\s&#]*=[^&\s#]*/gi, "$1")
+    .replace(/\?&+/g, "?")
+    .replace(/[?&]+(#|$)/g, "$1")
+    .replace(/&&+/g, "&");
+}
+
+function withUtms(url, network, batch, slug) {
+  const base = stripUtms(String(url || "").trim()).replace(/[?&]$/, "");
+  if (!/^https?:\/\//i.test(base)) return "";
+  const join = base.includes("?") ? "&" : "?";
+  const campaign = batch || "social";
+  const content = slug ? "&utm_content=" + encodeURIComponent(slug) : "";
+  return base + join + "utm_source=" + network + "&utm_medium=social&utm_campaign=" + encodeURIComponent(campaign) + content;
+}
+
+function dropUrlLine(lang) {
+  return DROP_URL[lang] || DROP_URL.en;
+}
+
+/** For LI/IG/FB: strip UTMs from the body and put drop-URL + tagged primary (or hub) link in firstComment. Other nets keep withHubLink. */
+function prepareCaption({ text, network, batch, slug, lang }) {
+  const net = network === "twitter" ? "x" : network;
+  if (!FIRST_COMMENT_NETS.has(net)) {
+    return { text: withHubLink(text, { batch, slug, network: net }), firstComment: null };
+  }
+  const original = String(text || "").trim();
+  const body = stripUtms(original);
+  const urls = [...original.matchAll(/https?:\/\/[^\s)]+/gi)].map((m) => m[0]);
+  const primary = urls.find((u) => /qa-review|\/social\//i.test(u)) || urls[0] || "";
+  const tagged = primary
+    ? withUtms(primary, net, batch, slug)
+    : withUtms(hubUrl(batch, slug), net, batch, slug);
+  return { text: body, firstComment: dropUrlLine(lang) + "\n\n" + tagged };
+}
+
 // calendar.csv and the hub both count days on Bogotá wall-clock time (UTC-5, no daylight saving).
 function bogotaDay(when) {
   return new Date(new Date(when).getTime() - 5 * 3600e3).toISOString().slice(0, 10);
@@ -77,4 +125,7 @@ function createGate({ fetchImpl = fetch, root = ROOT } = {}) {
   };
 }
 
-module.exports = { SITE, LIMITS, LINK, hubUrl, withHubLink, bogotaDay, hubDates, reason, createGate };
+module.exports = {
+  SITE, LIMITS, LINK, hubUrl, withHubLink, bogotaDay, hubDates, reason, createGate,
+  FIRST_COMMENT_NETS, DROP_URL, stripUtms, withUtms, dropUrlLine, prepareCaption
+};

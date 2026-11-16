@@ -3169,10 +3169,92 @@
       return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
     paintWatch(report, paid);
+    paintCsat(report, sample);
     const link = location.origin + location.pathname + "?report=" + encodeURIComponent(report.id);
     document.getElementById("share-link").textContent = link;
     protectNames(dash);
     paintIndex();
+  }
+
+  // Post-report CSAT on the live dashboard for the signed-in asker (#3556).
+  function paintCsat(report, sample) {
+    const box = document.getElementById("report-csat");
+    if (!box) return;
+    if (sample || !report || !report.id) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    const key = "qa-review-csat:" + report.id;
+    try {
+      if (sessionStorage.getItem(key) === "1") {
+        box.hidden = false;
+        box.innerHTML = "<h2 id=\"report-csat-title\">" + esc(rc.t("csatThanks")) + "</h2>";
+        return;
+      }
+    } catch (error) { /* paint the form */ }
+    const pick = (name, values) => values.map((n) =>
+      "<label><input type=\"radio\" name=\"" + name + "\" value=\"" + n + "\" required><span>" + n + "</span></label>"
+    ).join("");
+    box.hidden = false;
+    box.innerHTML =
+      "<h2 id=\"report-csat-title\">" + esc(rc.t("csatTitle")) + "</h2>" +
+      "<p class=\"csat-lead\">" + esc(rc.t("csatLead")) + "</p>" +
+      "<form id=\"report-csat-form\">" +
+      "<fieldset><legend>" + esc(rc.t("csatStars")) + "</legend><div class=\"csat-picks\">" + pick("rating", [1, 2, 3, 4, 5]) + "</div></fieldset>" +
+      "<fieldset><legend>" + esc(rc.t("csatNps")) + "</legend><div class=\"csat-picks\">" + pick("nps", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) + "</div></fieldset>" +
+      "<label for=\"report-csat-comment\">" + esc(rc.t("csatComment")) + "</label>" +
+      "<textarea id=\"report-csat-comment\" name=\"comment\" maxlength=\"2000\"></textarea>" +
+      "<label class=\"csat-quote\"><input type=\"checkbox\" name=\"quote\" value=\"on\">" + esc(rc.t("csatQuote")) + "</label>" +
+      "<button type=\"submit\" class=\"btn btn-primary\">" + esc(rc.t("csatSubmit")) + "</button>" +
+      "<p class=\"csat-msg\" id=\"report-csat-msg\" role=\"status\"></p></form>";
+    const form = document.getElementById("report-csat-form");
+    const msg = document.getElementById("report-csat-msg");
+    form.onsubmit = async (event) => {
+      event.preventDefault();
+      if (!window.ReviewAuth || !ReviewAuth.signedIn()) {
+        msg.textContent = rc.t("csatSignIn");
+        msg.classList.add("bad");
+        if (window.ReviewAuth) ReviewAuth.focus();
+        return;
+      }
+      const data = new FormData(form);
+      const rating = Number(data.get("rating"));
+      const nps = Number(data.get("nps"));
+      if (!(rating >= 1 && rating <= 5) || !(nps >= 0 && nps <= 10)) {
+        msg.textContent = rc.t("csatBad");
+        msg.classList.add("bad");
+        return;
+      }
+      msg.textContent = "";
+      msg.classList.remove("bad");
+      try {
+        const res = await fetch(endpoint() + "/csat/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({
+            reportId: report.id,
+            rating,
+            nps,
+            comment: String(data.get("comment") || "").trim(),
+            quote: data.get("quote") === "on",
+            lang: document.documentElement.lang
+          }, ReviewAuth.proof()))
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || rc.t("csatError"));
+        try { sessionStorage.setItem(key, "1"); } catch (storageError) { /* thanks still shows */ }
+        const low = !!body.low;
+        box.innerHTML = "<h2 id=\"report-csat-title\">" + esc(rc.t("csatThanks")) + "</h2>" +
+          (low ? "<p class=\"csat-lead\">" + esc(rc.t("csatThanksLow")) + "</p><div class=\"csat-actions\">" +
+            (body.bookUrl ? "<a class=\"btn btn-primary\" href=\"" + esc(body.bookUrl) + "\">" + esc(rc.t("csatBook")) + "</a>" : "") +
+            (body.rerunUrl ? "<a class=\"btn btn-ghost\" href=\"" + esc(body.rerunUrl) + "\">" + esc(rc.t("csatRerun")) + "</a>" : "") +
+            "</div>" : "");
+      } catch (error) {
+        msg.textContent = error.message || rc.t("csatError");
+        msg.classList.add("bad");
+      }
+    };
   }
 
   // The Cases card's watch subsection (#3391): retests for the newer checks, fix regressions and their scripts.
