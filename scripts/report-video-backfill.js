@@ -375,13 +375,11 @@ async function applyRows(targets, { live, root = ROOT, windows = 1 } = {}) {
   if (live && targets.some((t) => t.channel === "linkedin")) {
     call = budget({ windows, gql: bufferGql, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), now: Date.now() });
   }
-  const openBook = () => {
-    const file = ledger.OPEN_SOCIAL;
-    if (!books["open-social"]._live) {
-      books["open-social"] = ledger.read(file);
-      books["open-social"]._live = true;
-    }
-    return books["open-social"];
+  const openLedgers = {};
+  const openBook = (network) => {
+    const file = openSocial.LEDGERS[network] || ledger.OPEN_SOCIAL;
+    if (!openLedgers[file]) openLedgers[file] = Object.assign(ledger.read(file), { _file: file, _dirty: false });
+    return openLedgers[file];
   };
   for (const row of targets) {
     const label = row.action + " " + row.channel + " " + row.post;
