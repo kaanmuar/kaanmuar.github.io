@@ -18,7 +18,7 @@ function ofPost({ batch, slug, clipLang }, files) {
 
 // What open-social and the Facebook Page pass to their composers: the clip when captions.json or voiced.json names its language.
 function fromBatch(batch, slug, cap, voicedMap) {
-  const lang = (voicedMap && voicedMap[slug] && voicedMap[slug].lang) || (cap && cap.lang) || null;
+  const lang = (voicedMap && voicedMap[slug] && voicedMap[slug].lang) || (cap && (cap.clipLang || cap.lang)) || null;
   if (!lang) return null;
   return { url: releaseUrl(batch, slug), lang };
 }
