@@ -39,7 +39,7 @@
 const fs = require("fs");
 const path = require("path");
 const ledger = require("./social-ledger");
-const { createGate, withHubLink, LIMITS, LINK } = require("./hub-gate");
+const { createGate, withHubLink, prepareCaption, LIMITS, LINK } = require("./hub-gate");
 const faceRoute = require("./face-route");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -439,7 +439,14 @@ function translated(name, slot, face, service, root = ROOT) {
   const cap = key && fs.existsSync(file) && JSON.parse(fs.readFileSync(file, "utf8"))[slug];
   if (!cap || faceRoute.captionFor(cap, key, face) === cap[key]) return null;
   const text = faceRoute.captionFor(cap, key, face);
-  return slot === "instagram-story" ? text : withHubLink(text, { batch, slug, network: service === "twitter" ? "x" : service });
+  if (slot === "instagram-story") return text;
+  const network = service === "twitter" ? "x" : service;
+  const prepared = prepareCaption({
+    text, network, batch, slug,
+    lang: faceRoute.postLang(batch, slug, cap, slot) || "en"
+  });
+  // Reroute only rewrites the post body; firstComment is set on create via inputsFor (#3551).
+  return prepared.text;
 }
 
 async function reroute(dry, max) {
@@ -553,8 +560,13 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
   const soon = new Date(Date.now() + 20 * 60e3).toISOString();
-  const linked = (text) => withHubLink(text, { batch, slug, network: channel.service === "twitter" ? "x" : channel.service });
+  const networkOf = (service) => (service === "twitter" ? "x" : service);
+  const linked = (text) => withHubLink(text, { batch, slug, network: networkOf(channel.service) });
   const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
+  const prepared = (slot, text) => prepareCaption({
+    text, network: networkOf(channel.service), batch, slug,
+    lang: faceRoute.postLang(batch, slug, cap, slot) || "en"
+  });
   const post = (slot, text, assets, metadata) => {
     const at = when[slug + "|" + slot];
     return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
@@ -564,12 +576,21 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
     && { document: { url: base + "/document/" + slug + ".pdf", title: String(cap.documentTitle || own("title")).slice(0, 58), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
   switch (channel.service) {
-    case "linkedin": return [post("linkedin", linked(own("linkedin")), [document() || image("feed")])];
-    case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
-    case "instagram": return [
-      post("instagram", linked(own("instagram")), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
-      post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
-    ];
+    case "linkedin": {
+      const p = prepared("linkedin", own("linkedin"));
+      return [post("linkedin", p.text, [document() || image("feed")], p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
+    }
+    case "facebook": {
+      const p = prepared("facebook", own("facebook"));
+      return [post("facebook", p.text, [image("feed")], { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
+    }
+    case "instagram": {
+      const p = prepared("instagram", own("instagram"));
+      return [
+        post("instagram", p.text, [image("feed")], { instagram: Object.assign({ type: "post", shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}) }),
+        post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
+      ];
+    }
     case "twitter": {
       const text = linked(own("x"));
       const replies = xReplies(cap, text, own("x") === cap.x, own("linkedin"));

@@ -69,6 +69,11 @@ function link(platform, run) {
   return SITE + "/qa-review.html?live=" + (run.live || run.id) + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=" + campaign + "&utm_content=" + run.id;
 }
 
+/** Live-report URL without UTMs for LI/IG/FB bodies; Buffer prepareCaption moves tagged URL into firstComment (#3551). */
+function bareLive(run) {
+  return SITE + "/qa-review.html?live=" + (run.live || run.id);
+}
+
 function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
 
 function captions(run) {
@@ -77,15 +82,16 @@ function captions(run) {
     : run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
   const fair = (run.scope === "Versus" ? "Automated analyses of public pages on " : "One automated analysis of public pages on ") + run.analyzed + how + " A starting point, not a verdict.";
   const own = ownLine(run.lang || "en");
+  const live = bareLive(run);
   return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + link("linkedin", run), "", own, "", tagLine(run, "linkedin")].join("\n"),
+    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + live, "", own, "", tagLine(run, "linkedin")].join("\n"),
     x: xPost(head + "\n\n" + run.action, link("x", run), tagLine(run, "x")),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: link in bio.", "", own, "", tagLine(run, "instagram")].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, link("facebook", run), "", own, "", tagLine(run, "facebook")].join("\n"),
+    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: " + live, "", own, "", tagLine(run, "instagram")].join("\n"),
+    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, live, "", own, "", tagLine(run, "facebook")].join("\n"),
     tiktok: head + " " + run.action + " " + own + " " + tagLine(run, "tiktok"),
     youtubeTitle: (head + " #Shorts").slice(0, 100),
     youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", (CATS[run.scope] || CATS.Requested).series + " · QA-lab URL Review", "", tagLine(run, "youtube")].join("\n")
   };
 }
 
-module.exports = { SITE, GUIDE, CATS, TIPS, OWN_LINE, captions, link, plainTitle };
+module.exports = { SITE, GUIDE, CATS, TIPS, OWN_LINE, captions, link, bareLive, plainTitle };

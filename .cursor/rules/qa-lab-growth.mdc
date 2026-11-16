@@ -34,8 +34,8 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 ## Slide 3 + first-comment locks (#3550 / #3551)
 - **Case source:** prefer rank-1 finding’s real case id + its Playwright sample from the report; fall back to mapped lesson id + canned assertion when the report has no case/snippet.
 - **DOM crop:** real finding crop when the publish pipeline exposes one; otherwise omit (no fake red-box mock). Full-page `browser.shots` alone are not enough for Slide 3.
-- **First comment:** hub/guide UTM + “drop a URL” CTA, with per-network wording variants.
-- **Captions:** when first-comment is set, strip UTMs from the post body (link-free on LI/X/IG/FB).
+- **First comment:** Buffer LI/IG/FB via `prepareCaption` (#3551). Link target by kind: audit → live report; tips/evergreen → hub/guide; try-it → soft-gate `qa-review` (OWN_LINE). Drop-URL CTA in the post’s six languages (`DROP_URL` in `hub-gate.js`).
+- **Captions:** when first-comment is set, strip UTMs from the LI/IG/FB body; X/TikTok/YT keep UTMs in-body.
 
 ## When teaching Jarvis
 Hub panel notes (web + Android) and Ask `VOICE` in `functions/jarvis.js` carry these locks. Keep them in sync when decisions change.
