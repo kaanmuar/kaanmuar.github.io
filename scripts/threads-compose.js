@@ -8,8 +8,10 @@
    - the answer to a quiz: quotes the quiz, with the scores on its first line behind a spoiler;
    - the weekly digest: a text post with the long caption as a text attachment linked to its hub page;
    - a post whose caption names its place (Local runs): that place's location tag (threads_location_tagging).
+   - a us-vs-them battle post (#3627): the card, then short text replies for each beat (cap.steps).
 
    Not used: music and stickers (no API). */
+const battleFormats = require('./battle-formats');
 const BRAND_TAGS = new Set(['qalab']);
 const TAG = /#([\p{L}\p{N}_]+)/gu;
 const HASHTAG_LINE = /^\s*(?:#[\p{L}\p{N}_]+\s*)+$/u;
@@ -139,6 +141,14 @@ function plans({ text, url, alt, lang, topic, location, cap = {}, quote, clip, l
 				own.text_entities = JSON.stringify(spoiler);
 				ownUses.push('spoiler');
 			}
+		}
+		const battleReplies = battleFormats.threadsBattleReplies(cap);
+		if (battleReplies) {
+			out.push({
+				uses: ['image'].concat(uses, ['battle-thread']),
+				params: Object.assign({ text }, image, extra),
+				reply: battleReplies,
+			});
 		}
 		if (clip && clip.lang === lang) {
 			out.push({

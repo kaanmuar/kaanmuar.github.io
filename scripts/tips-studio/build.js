@@ -378,6 +378,9 @@ function hubFields(tip, slugOf) {
 	if (steps) out.steps = steps;
 	if (tip.term) out.term = tip.term;
 	if (tip.place) out.place = tip.place;
+	// Extra battle formats (#3627): vs-tool carousel / us-vs-them thread (not channel-split).
+	if (tip.battleFormat) out.battleFormat = tip.battleFormat;
+	if (tip.vsRival) out.vsRival = tip.vsRival;
 	return out;
 }
 
@@ -405,6 +408,8 @@ const KEEP_KEYS = new Set([
 	'url',
 	'date',
 	'edition',
+	'battleFormat',
+	'vsRival',
 ]);
 function strings(node, at, out) {
 	if (typeof node === 'string') {

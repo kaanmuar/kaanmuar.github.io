@@ -316,7 +316,8 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
                         val saved = Layouts.read(s.snapshot, layoutTab)
                         LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
-                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
+                        val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
+                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved, LocalChartPrefs provides chartPrefs) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
                                     Tab.Overview -> OverviewScreen(s, vm, open)
@@ -547,6 +548,34 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
             }
+            if (settings != null) {
+                var charts by remember(settings) { mutableStateOf(ChartPrefs.clean(settings.obj("charts"))) }
+                fun saveCharts() = vm.market("settings", "settings-save", mapOf("settings" to chartsPayload(settings, charts))) { "Chart settings saved." }
+                Panel("Charts") {
+                    Muted("Grid, fill and default height are shared with Admin › Statistics.")
+                    Text("Grid")
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("micro" to "Micro", "major" to "Major", "off" to "Off").forEach { (k, label) ->
+                            TextButton(onClick = { charts = charts.copy(grid = k); saveCharts() }, enabled = "settings" !in s.running) {
+                                Text(label, color = if (charts.grid == k) J.cyan else J.muted, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) { Text("Fill under lines"); Muted("Area and spark charts.") }
+                        Switch(charts.fill, { on -> charts = charts.copy(fill = on); saveCharts() }, enabled = "settings" !in s.running)
+                    }
+                    Text("Default plot height")
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("s" to "Short", "m" to "Medium", "l" to "Tall").forEach { (k, label) ->
+                            TextButton(onClick = { charts = charts.copy(height = k); saveCharts() }, enabled = "settings" !in s.running) {
+                                Text(label, color = if (charts.height == k) J.cyan else J.muted, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    Muted("Each chart panel’s ↕ button stretches that panel (1–3); saved in the section layout.")
+                }
+            }
             if (settings != null) Panel("Country dates") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -723,6 +752,9 @@ private fun Devices(s: UiState) {
 }
 
 // Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
+private fun chartsPayload(settings: JsonObject, charts: ChartPrefs.Prefs): JsonObject =
+    JsonObject(settings - "layout" + ("charts" to JsonObject(mapOf("grid" to JsonPrimitive(charts.grid), "fill" to JsonPrimitive(charts.fill), "height" to JsonPrimitive(charts.height)))))
+
 private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?, calendar: CalendarSettings): JsonObject =
     JsonObject(settings - "layout" + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
         (actions?.let { mapOf("actions" to it) } ?: emptyMap()) + ("calendar" to calendar.json()))

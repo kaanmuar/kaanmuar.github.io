@@ -1001,6 +1001,44 @@
     "checked": "2026-11-15T17:04:25.754Z"
    }
   ],
+  "auto-2026-11-15/03-vs-mccabespharmacy-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2hcvuqi542t",
+    "at": "2026-11-16T19:59:01.947Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2hcvuqi542t",
+    "checked": "2026-11-16T19:59:38.183Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17891609901476157",
+    "at": "2026-11-16T20:02:08.742Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4031894749237715647",
+    "checked": "2026-11-16T20:02:17.443Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17972171222965032",
+    "at": "2026-11-16T20:01:23.691Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Df0Kpg3DhNm/",
+    "checked": "2026-11-16T20:02:08.564Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18230024560331804",
+    "at": "2026-11-16T20:00:26.384Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Df0KnQBgcTZ",
+    "checked": "2026-11-16T20:01:22.774Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -1735,6 +1773,28 @@
     "checked": "2026-11-14T14:49:05.223Z"
    }
   ],
+  "runs-2026-10/02-bogota": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2hcwlptqc2f",
+    "at": "2026-11-16T19:59:38.183Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2hcwlptqc2f",
+    "checked": "2026-11-16T20:00:02.418Z"
+   }
+  ],
+  "runs-2026-10/03-who": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2hcxamddo2d",
+    "at": "2026-11-16T20:00:02.418Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2hcxamddo2d",
+    "checked": "2026-11-16T20:00:25.123Z"
+   }
+  ],
   "runs-3/01-ilo": [
    {
     "channel": "bluesky",
@@ -2185,6 +2245,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2fghmii3e2t",
     "checked": "2026-11-16T01:57:54.686Z"
+   }
+  ],
+  "tips-2026-10/21-canonical": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2hcuryncj2f",
+    "at": "2026-11-16T19:58:46.445Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2hcuryncj2f",
+    "checked": "2026-11-16T19:59:01.947Z"
    }
   ],
   "tips-horror-headers-2026-10/01-missing-csp": [
