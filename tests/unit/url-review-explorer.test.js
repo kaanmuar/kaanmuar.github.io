@@ -26,9 +26,12 @@ test("URL Review landing mounts the #3429 hero", () => {
   assert.doesNotMatch(html, /class="stage"[^>]*data-fx[^>]*data-fx-mode="0"/);
 });
 
-test("hero scene module exports situational controls", async () => {
-  const mod = await import("../../js/url-review-hero/scene.js");
-  assert.equal(mod.LOOP_SEC, 10);
-  assert.deepEqual(mod.LAYER_KEYS, ["card", "shield", "orbit", "report"]);
-  assert.ok(mod.LANGS.includes("en") && mod.LANGS.includes("de"));
+test("hero scene module exports situational controls", () => {
+  // Assert from source text: url-review-unit does not npm-install three, so scene.js cannot be imported here.
+  const src = fs.readFileSync(path.join(ROOT, "js/url-review-hero/scene.js"), "utf8");
+  assert.match(src, /export const LOOP_SEC = 10/);
+  assert.match(src, /export const LAYER_KEYS = \["card", "shield", "orbit", "report"\]/);
+  assert.match(src, /export const LANGS = \["en", "de", "es", "fr", "it", "pt"\]/);
+  const map = JSON.parse(fs.readFileSync(path.join(ROOT, "js/url-review-hero/importmap.json"), "utf8"));
+  assert.match(map.imports.three, /^\/vendor\/three\//);
 });
