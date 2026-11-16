@@ -454,6 +454,27 @@ test("section layout: saved order first, new panels at their default place, gone
   assert.equal(core.panelSlug("· ·"), "panel");
 });
 
+test("panel size multipliers are cleaned and kept with stretch (#3611)", () => {
+  assert.deepEqual(core.clampSize({ h: 1.555, w: 0.2 }), { h: 1.56, w: 0.5 });
+  assert.deepEqual(core.clampSize({ h: 9, w: "x" }), { h: 3, w: 1 });
+  assert.deepEqual(core.cleanSize({ "geo-map": { h: 1.5, w: 1 }, a: { h: 1, w: 1 }, "bad id!": { h: 2, w: 1 } }),
+    { "geo-map": { h: 1.5, w: 1 } });
+  assert.equal(core.cleanSize({ a: { h: 1, w: 1 } }), undefined);
+  assert.equal(core.sizeSpan(1.4, false), 2);
+  assert.equal(core.sizeSpan(1.9, false), 3);
+  assert.equal(core.sizeSpan(1, true), 3);
+  assert.deepEqual(core.cleanLayout({
+    geo: { order: ["geo-map"], size: { "geo-map": { h: 1.25, w: 1.5 }, "bad id!": { h: 4 } }, stretch: { "geo-map": 2, bad: 9 } }
+  }), { geo: { order: ["geo-map"], hidden: [], size: { "geo-map": { h: 1.25, w: 1.5 } }, stretch: { "geo-map": 2 } } });
+  const kept = core.keepLayout(
+    { order: ["geo-map", "web-x"], hidden: [], size: { "geo-map": { h: 1.4, w: 1 }, "web-x": { h: 2, w: 1 } }, stretch: { "geo-map": 3, "web-x": 2 } },
+    ["geo-map"], [], ["geo-map"]
+  );
+  assert.deepEqual(kept.size, { "geo-map": { h: 1.4, w: 1 } });
+  assert.deepEqual(kept.stretch, { "geo-map": 3 });
+  assert.ok(kept.order.includes("web-x"));
+});
+
 test("server: the layout is cleaned, saved one tab at a time, kept by a settings save and read back in the settings (#2809)", async () => {
   assert.deepEqual(core.cleanLayout({ review: { order: ["review-funnel", "review-funnel", 7, "<b>", "x".repeat(81)], hidden: ["review-heat"] }, nope: { order: ["a"] }, cv: { order: [] }, hub: "x" }),
     { review: { order: ["review-funnel"], hidden: ["review-heat"] } });

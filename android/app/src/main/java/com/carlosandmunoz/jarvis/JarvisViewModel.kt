@@ -14,6 +14,7 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
+import com.carlosandmunoz.jarvis.ui.Arrange
 import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
@@ -325,6 +326,15 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 .onFailure { e -> fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") } }
             told()
         }
+    }
+
+    /** Continuous panel size (#3611): updates layout[tab].size[id] and keeps order/hidden/stretch. */
+    fun savePanelSize(tab: String, id: String, size: Layouts.Size) {
+        val shown = Arrange.defaults[tab].orEmpty()
+        val before = Layouts.read(_state.value.snapshot, tab)
+        val next = Layouts.withSize(before, id, size, shown.ifEmpty { listOf(id) })
+        val cleaned = if (next.order.isEmpty() && next.hidden.isEmpty() && next.size.isEmpty() && next.stretch.isEmpty()) null else next
+        saveLayout(tab, cleaned)
     }
 
     /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the outreach sync. */

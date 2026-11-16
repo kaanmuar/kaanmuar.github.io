@@ -316,7 +316,11 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
                         val saved = Layouts.read(s.snapshot, layoutTab)
                         LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
-                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
+                        CompositionLocalProvider(
+                            LocalLayoutTab provides layoutTab,
+                            LocalLayout provides saved,
+                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) }
+                        ) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
                                     Tab.Overview -> OverviewScreen(s, vm, open)
