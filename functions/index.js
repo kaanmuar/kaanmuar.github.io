@@ -7212,6 +7212,8 @@ function jarvisAutoOps(settings, now, th) {
       return { resumed, left };
     },
     launchCampaigns: (ids) => jarvisMarketing.launch(ctx, ids),
+    coldResendCandidates: process.env.INSTANTLY_API_KEY ? (limit) => jarvisMarketing.listColdResendCandidates(ctx, db, { now, limit }) : null,
+    resendCold: (ids) => jarvisMarketing.resendCold(ctx, db, ids),
     ownerTagsApprovable: () => ownerTags.autoApprovable(db),
     ownerTagsApprove: async (ids) => { const res = await ownerTags.approveMany({ db, now }, ids, "jarvis"); await jarvisEngagement.clearCache(db); return { detail: res.message, count: res.count }; },
     ownerTagsStops: () => ownerTags.stopRequests(db),
