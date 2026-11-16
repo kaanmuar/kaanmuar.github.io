@@ -222,11 +222,14 @@ function hubFields(tip, slugOf) {
   if (steps) out.steps = steps;
   if (tip.term) out.term = tip.term;
   if (tip.place) out.place = tip.place;
+  // Extra battle formats (#3627): vs-tool carousel / us-vs-them thread (not channel-split).
+  if (tip.battleFormat) out.battleFormat = tip.battleFormat;
+  if (tip.vsRival) out.vsRival = tip.vsRival;
   return out;
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "place", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition"]);
+const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "place", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition", "battleFormat", "vsRival"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
