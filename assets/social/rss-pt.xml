@@ -224,24 +224,6 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>As fichas da OMS terminam com um ponto e vírgula perdido.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-pt.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-pt</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Worldwide</category>
-      <description>A OMS acolhe crawlers de resposta de IA e suas páginas se leem bem sem JavaScript: GEO 91. Mas o JSON-LD das fichas informativas termina em &quot;};&quot;, e um parser rígido descarta o bloco inteiro.
-
-A lição para toda equipe: Passe cada bloco JSON-LD por um validador de JSON antes do release. Um caractere pode anular o bloco inteiro.
-
-Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
-Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. A lacuna: o host do mapa do site.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-pt.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-pt</guid>
@@ -458,23 +440,6 @@ Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-gu
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>A busca com IA lê seu HTML, não seu app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-pt.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-pt</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Dica</category>
-      <category>GEO</category>
-      <description>Muitos motores de resposta não executam JavaScript. Se seus fatos principais só aparecem depois que os scripts carregam, eles podem nunca ser lidos ou citados.
-
-Experimente hoje: Veja o código-fonte da sua página inicial. Dá para ver o que você vende e para quem, sem rodar scripts?
-
-Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 concorrentes naturais. vivastreet.ie lidera: 74.</title>
@@ -1003,6 +968,46 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
 https://www.youtube.com/shorts/bNMphChRS6w</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" length="238599" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Simule o daltonismo em dois cliques.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/11-vision-pt.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/11-vision-pt</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Truque</category>
+      <category>A11y</category>
+      <description>Truque de 30 segundos: Simule o daltonismo em dois cliques.
+
+O Chrome DevTools pode simular visão embaçada, contraste reduzido e quatro tipos de deficiência na visão de cores, direto na sua página.
+
+Teste agora: Confira cada mensagem de erro, gráfico e link. Se a cor for o único sinal, adicione texto, um ícone ou um sublinhado.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=vision
+
+#Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mito: as meta keywords ainda ajudam no ranqueamento.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-pt.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-pt</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mito ou verdade</category>
+      <category>SEO</category>
+      <description>Mito ou verdade: Mito: as meta keywords ainda ajudam no ranqueamento.
+
+O Google disse em 2009 que não usa a meta tag keywords no ranqueamento da web. Mas a tag mostra aos concorrentes as palavras que você quer ranquear.
+
+Confira: Procure name=&quot;keywords&quot; nos seus templates. Remova e escreva uma description de verdade para cada página-chave.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
+
+#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
+
+https://www.youtube.com/shorts/HipUbZf_TiA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

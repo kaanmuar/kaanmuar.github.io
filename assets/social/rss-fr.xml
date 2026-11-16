@@ -224,24 +224,6 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Les fiches de l’OMS finissent par un point-virgule égaré.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-fr.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-fr</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Worldwide</category>
-      <description>L’OMS accueille les crawlers de réponse IA et ses pages se lisent bien sans JavaScript : GEO 91. Mais le JSON-LD de ses fiches d’information se termine par « }; », et un parseur strict rejette tout le bloc.
-
-La leçon pour chaque équipe : Passez chaque bloc JSON-LD dans un validateur JSON avant la mise en production. Un seul caractère peut invalider tout le bloc.
-
-Une analyse automatisée des pages publiques, le 19 oct. 2026. Un point de départ, pas un verdict.
-Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. La lacune : l’hébergeur du plan du site.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-fr.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-fr</guid>
@@ -437,23 +419,6 @@ Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-r
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>La recherche IA lit votre HTML, pas votre app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-fr.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-fr</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Conseil</category>
-      <category>GEO</category>
-      <description>Beaucoup de moteurs de réponse n’exécutent pas JavaScript. Si vos informations clés n’apparaissent qu’après le chargement des scripts, elles risquent de n’être jamais lues ni citées.
-
-À essayer aujourd’hui : Affichez le code source de votre page d’accueil. Peut-on voir ce que vous vendez et pour qui, sans exécuter de scripts ?
-
-Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 concurrents naturels. vivastreet.ie est en tête : 74.</title>
@@ -1001,6 +966,45 @@ Comment se déroule la revue d’une page publique, étape par étape : https://
 #Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Mythe : les meta keywords aident encore au classement.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-fr.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-fr</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Mythe ou réalité</category>
+      <category>SEO</category>
+      <description>Mythe ou réalité : Mythe : les meta keywords aident encore au classement.
+
+Google a déclaré en 2009 qu'il n'utilise pas la balise meta keywords pour le classement web. La balise montre en revanche à vos concurrents les mots que vous visez.
+
+Vérifiez : Cherchez name=&quot;keywords&quot; dans vos modèles. Supprimez-la et rédigez plutôt une vraie description pour chaque page clé.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
+
+#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
+
+https://www.youtube.com/shorts/HipUbZf_TiA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Les pages d’accueil du W3C partagent un seul titre.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/04-w3c-fr.html</link>
+      <guid isPermaLink="false">runs-100/04-w3c-fr</guid>
+      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Worldwide</category>
+      <description>HSTS préchargé, un lang sur chaque page et des pages rapides pour les vrais visiteurs. Mais les accueils anglais, japonais et chinois s’intitulent tous simplement « W3C », et la description japonaise dit « Homepage ».
+
+La leçon pour chaque équipe : Traduisez le titre et la description avec la page. Chaque version linguistique doit dire ce qu’elle est, dans sa langue.
+
+Une analyse automatisée des pages publiques, le 19 oct. 2026. Un point de départ, pas un verdict.
+Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=w3c
+
+#SEO #i18n #Multilingual #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" length="248631" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

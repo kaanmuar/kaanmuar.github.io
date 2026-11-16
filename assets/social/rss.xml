@@ -224,24 +224,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>WHO's fact sheets end in a stray semicolon.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
-
-The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. The gap: the sitemap host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk</guid>
@@ -663,23 +645,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>AI search reads your HTML, not your app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tip</category>
-      <category>GEO</category>
-      <description>Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
-
-Try this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>2 natural competitors. vivastreet.ie leads: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie</guid>
@@ -884,6 +849,34 @@ Via Search Engine Journal, by Chris Green, 2026-11-13.
 
 https://www.searchenginejournal.com/ai-bot-management-why-seos-need-more-than-block-lists/597148/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/bot-management-410.png" medium="image"/>
+    </item>
+    <item>
+      <title>I built QAFind — a red Playwright build should mean a real bug</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug.html</link>
+      <guid isPermaLink="false">pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>`If your team clicks Re-run failed jobs more than once a week, your end-to-end suite has stopped...
+
+Via DEV, by Kate Sai kishore, 2026-11-11.
+
+https://dev.to/kate_saikishore_5d4d69ae/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-3hlm</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fbpyp6w7ld1z9vzswho6d.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>I made Playwright 3.5x faster 🔥</title>
+      <link>https://carlosandmunoz.com/social/pick/i-made-playwright-3-5x-faster.html</link>
+      <guid isPermaLink="false">pick/i-made-playwright-3-5x-faster</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>I have a weird obsession with making stuff run faster, even when it seems practically impossible to...
+
+Via DEV, by codebeast, 2026-11-13.
+
+https://dev.to/xcodebeast/i-made-playwright-35x-faster-d1f</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fr1dq79fbb060rw3y9cgs.gif" medium="image"/>
     </item>
   </channel>
 </rss>

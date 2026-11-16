@@ -224,24 +224,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Las notas descriptivas de la OMS acaban en un punto y coma suelto.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-es</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Worldwide</category>
-      <description>La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript: GEO 91. Pero el JSON-LD de sus fichas termina en &quot;};&quot;, y un parser estricto descarta el bloque entero.
-
-La lección para cualquier equipo: Pasa cada bloque JSON-LD por un validador JSON antes del lanzamiento. Un carácter puede invalidar el bloque entero.
-
-Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
-Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. La brecha: el host del mapa del sitio.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-es.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-es</guid>
@@ -680,23 +662,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>La búsqueda con IA lee tu HTML, no tu app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consejo</category>
-      <category>GEO</category>
-      <description>Muchos motores de respuestas no ejecutan JavaScript. Si tus datos clave solo aparecen después de cargar los scripts, puede que nunca se lean ni se citen.
-
-Prueba esto hoy: Mira el código fuente de tu portada. ¿Se ve qué vendes y para quién, sin ejecutar scripts?
-
-Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>2 competidores naturales. vivastreet.ie va en cabeza: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie-es.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie-es</guid>
@@ -887,6 +852,34 @@ Vía Moz, de Tom Capper, 2026-11-13.
 
 https://moz.com/blog/prompt-tracking-mistakes-whiteboard-friday</description>
       <media:content url="https://moz.com/images/blog/WBF/4-Prompt-Tracking-Mistakes/4-Prompt-Tracking-Mistakes-YT_Thumbnail.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1774531906&amp;s=1a802015398267b1dc571f163e960f2d" medium="image"/>
+    </item>
+    <item>
+      <title>Gestión de robots de IA: Por qué los SEO necesitan más que listas de bloqueo a través de @sejournal, @chrisgreenseo</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se-es.html</link>
+      <guid isPermaLink="false">pick/ai-bot-management-why-seos-need-more-than-block-lists-via-se-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>SEO</category>
+      <description>Bloquear un rastreador de entrenamiento de IA no es lo mismo que bloquear un robot de recuperación. He aquí por qué el SEO necesita políticas de bots deliberadas, no listas de bloqueo. La publicación Gestión de bots de IA: Por qué los SEO necesitan más que listas de bloqueo apareció por primera vez en Search Engine Journal.
+
+Vía Search Engine Journal, de Chris Green, 2026-11-13.
+
+https://www.searchenginejournal.com/ai-bot-management-why-seos-need-more-than-block-lists/597148/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/bot-management-410.png" medium="image"/>
+    </item>
+    <item>
+      <title>Construí QAFind: una compilación de Playwright roja debería significar un error real</title>
+      <link>https://carlosandmunoz.com/social/pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-es.html</link>
+      <guid isPermaLink="false">pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-es</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Testing</category>
+      <description>`Si su equipo hace clic en Volver a ejecutar trabajos fallidos más de una vez por semana, su suite de un extremo a otro se ha detenido...
+
+Vía DEV, por Kate Sai kishore, 2026-11-11.
+
+https://dev.to/kate_saikishore_5d4d69ae/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-3hlm</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fbpyp6w7ld1z9vzswho6d.jpg" medium="image"/>
     </item>
   </channel>
 </rss>
