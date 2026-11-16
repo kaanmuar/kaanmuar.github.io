@@ -38,4 +38,8 @@ test("every root page's hreflang alternates are separate files, and the cluster 
   assert.deepEqual(off, []);
   const sitemap = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
   assert.ok(!sitemap.includes("?lang="), "sitemap.xml lists a ?lang= alternate");
+  assert.ok(sitemap.includes("https://carlosandmunoz.com/llms.txt"), "sitemap lists /llms.txt for answer engines");
+  assert.ok(sitemap.includes("https://carlosandmunoz.com/llms-full.txt"), "sitemap lists /llms-full.txt");
+  const home = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  assert.match(home, /rel="describedby"[^>]*href="https:\/\/carlosandmunoz\.com\/llms\.txt"/);
 });

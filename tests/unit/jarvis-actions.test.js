@@ -33,6 +33,7 @@ function fakeOps(over) {
 }
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  "resend-cold": 5,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
   "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
@@ -475,6 +476,25 @@ test("owner tags (#2660): a confident AI pick approves the verified suggestions"
   const out = await actions.autoRun({ db: fakeDb(), now: MONDAY_10, settings: {}, ops });
   assert.ok(out.done.some((r) => r.action === "ai-fix" && r.target === "owner-tags-approve-verified"));
   assert.deepEqual(approved, [[]]);
+});
+
+test("unopened cold emails queue one batch on the countdown up to the resend-cold cap (#3566)", async () => {
+  const db = fakeDb();
+  const cands = [
+    { id: "e1", to: "a@uni.edu", org: "Uni A", subject: "Hi" },
+    { id: "e2", to: "b@uni.edu", org: "Uni B", subject: "Hey" },
+    { id: "e3", to: "c@uni.edu", org: "Uni C", subject: "Ho" }
+  ];
+  const { ops } = autoOps({
+    coldResendCandidates: async (limit) => cands.slice(0, limit),
+    resendCold: async () => ({ launched: [], left: [] })
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: { actions: { caps: { "resend-cold": 2 } } }, ops });
+  assert.equal(out.queued.length, 1, "one batch, not one per email");
+  assert.deepEqual(out.queued.map((r) => [r.action, r.kind, r.count, r.payload.items.map((i) => i.id)]), [["resend-cold", "email", 2, ["e1", "e2"]]]);
+  assert.match(out.queued[0].why, /Unopened after 2 days/);
+  const again = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: { actions: { caps: { "resend-cold": 2 } } }, ops });
+  assert.equal(again.queued.length, 0, "the cap counts what is already on the countdown");
 });
 
 test("index.js wires the owner-tags actions into the hourly pass, and Run now answers with the run's note (#2660)", () => {
