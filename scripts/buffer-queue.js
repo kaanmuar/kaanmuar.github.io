@@ -20,6 +20,9 @@
    images are served by the site, so the script waits until the first one answers 200 (the Pages
    deploy). Clips come from CLIP_BASE (the batch's GitHub release). Each post is scheduled at its
    calendar.csv time (mode customScheduled). Paused channels are skipped.
+   When captions.json (or voiced.json) names a clip language, LinkedIn, Facebook, Instagram feed and X
+   get the release mp4 instead of the feed JPG (#3603 / #3589); TikTok and YouTube already did. Instagram
+   Stories stay a still. A LinkedIn document PDF still wins over video when the batch rendered one.
    Every post, queued or failed, goes into the ledger assets/social/buffer.json (scripts/social-ledger.js),
    and each run first asks Buffer whether the queued ones whose time has passed were sent. A post the ledger
    already has queued or sent on a profile is not queued there again.
@@ -41,10 +44,17 @@ const path = require("path");
 const ledger = require("./social-ledger");
 const { createGate, withHubLink, prepareCaption, LIMITS, LINK } = require("./hub-gate");
 const faceRoute = require("./face-route");
+const socialClip = require("./social-clip");
 
 const ROOT = path.resolve(__dirname, "..");
 const API = "https://api.buffer.com";
 const SITE = process.env.SITE || "https://carlosandmunoz.com";
+
+function voicedMap(batch) {
+  const file = path.join(ROOT, "media/social-posts", batch, "voiced.json");
+  if (!batch || !fs.existsSync(file)) return null;
+  try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (_) { return null; }
+}
 
 function args() {
   const out = {};
@@ -559,6 +569,8 @@ const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", sk
 function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
+  // Prefer the release clip when the batch voiced this slug (#3603); else the feed still.
+  const feedOrClip = () => (clipBase && socialClip.fromBatch(batch, slug, cap, voicedMap(batch)) ? video() : image("feed"));
   const soon = new Date(Date.now() + 20 * 60e3).toISOString();
   const networkOf = (service) => (service === "twitter" ? "x" : service);
   const linked = (text) => withHubLink(text, { batch, slug, network: networkOf(channel.service) });
@@ -578,24 +590,27 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   switch (channel.service) {
     case "linkedin": {
       const p = prepared("linkedin", own("linkedin"));
-      return [post("linkedin", p.text, [document() || image("feed")], p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
+      return [post("linkedin", p.text, [document() || feedOrClip()], p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
     }
     case "facebook": {
       const p = prepared("facebook", own("facebook"));
-      return [post("facebook", p.text, [image("feed")], { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
+      return [post("facebook", p.text, [feedOrClip()], { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
     }
     case "instagram": {
       const p = prepared("instagram", own("instagram"));
+      const feed = feedOrClip();
+      const igType = feed.video ? "reel" : "post";
       return [
-        post("instagram", p.text, [image("feed")], { instagram: Object.assign({ type: "post", shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}) }),
+        post("instagram", p.text, [feed], { instagram: Object.assign({ type: igType, shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}) }),
         post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
       ];
     }
     case "twitter": {
       const text = linked(own("x"));
       const replies = xReplies(cap, text, own("x") === cap.x, own("linkedin"));
-      const thread = [{ text, assets: [image("feed")] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
-      return [post("x", text, [image("feed")], replies.length ? { twitter: { thread } } : null)];
+      const media = feedOrClip();
+      const thread = [{ text, assets: [media] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
+      return [post("x", text, [media], replies.length ? { twitter: { thread } } : null)];
     }
     case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
     case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || "28" } })] : [];

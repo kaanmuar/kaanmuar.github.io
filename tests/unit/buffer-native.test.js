@@ -53,9 +53,29 @@ test("a translated X post carries no English steps, and a compare quiz stays one
   assert.equal(make("twitter", "compare-2026-11", "01-quiz-berlin-vienna", quiz)[0].input.metadata, undefined);
 });
 
-test("YouTube files each track in its category; LinkedIn posts the feed card until the batch renders a document", () => {
+test("YouTube files each track in its category; LinkedIn keeps the feed card when there is no voiced clip", () => {
   const category = (kind) => make("youtube", "b", "s", { kind, youtube: "Yt.", youtubeTitle: "T" })[0].input.metadata.youtube.categoryId;
   assert.deepEqual(["trick", "myth", "term", "advice", "skit", "news", "quiz", undefined].map(category), ["27", "27", "27", "27", "23", "28", "28", "28"]);
-  const [{ input }] = make("linkedin", "evergreen-2026-11", "07-pre-release", captions("evergreen-2026-11")["07-pre-release"]);
+  const bare = Object.assign({}, captions("evergreen-2026-11")["07-pre-release"]);
+  delete bare.lang;
+  delete bare.clipLang;
+  const [{ input }] = make("linkedin", "evergreen-2026-11", "07-pre-release", bare);
   assert.deepEqual(Object.keys(input.assets[0]), ["image"]);
+});
+
+test("LinkedIn, Facebook, Instagram and X use the release clip when clipLang is set (#3603)", () => {
+  const cap = Object.assign({}, captions("evergreen-2026-11")["07-pre-release"], { clipLang: "en" });
+  const batch = "evergreen-2026-11";
+  const slug = "07-pre-release";
+  const [{ input: li }] = make("linkedin", batch, slug, cap);
+  assert.deepEqual(li.assets[0], { video: { url: "https://clips/07-pre-release.mp4", metadata: { thumbnailOffset: 0 } } });
+  const [{ input: fb }] = make("facebook", batch, slug, cap);
+  assert.deepEqual(Object.keys(fb.assets[0]), ["video"]);
+  const [igFeed, igStory] = make("instagram", batch, slug, cap);
+  assert.equal(igFeed.input.metadata.instagram.type, "reel");
+  assert.deepEqual(Object.keys(igFeed.input.assets[0]), ["video"]);
+  assert.deepEqual(Object.keys(igStory.input.assets[0]), ["image"]);
+  const [{ input: x }] = make("twitter", batch, slug, cap);
+  assert.deepEqual(Object.keys(x.assets[0]), ["video"]);
+  assert.deepEqual(Object.keys(thread(x)[0].assets[0]), ["video"]);
 });
