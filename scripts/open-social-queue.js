@@ -492,7 +492,7 @@ function mastodon(env = process.env) {
           return sent({ id: status.id, url: status.url, uses: ["carousel", "slides"] }, plainer);
         } catch (error) {
           refused = error;
-          plainer.push({ uses: ["carousel", "slides"], error: error.message || String(error) });
+          plainer.push(refusal({ uses: ["carousel", "slides"] }, error));
           console.log("Mastodon could not add carousel, slides - " + error.message);
         }
       }
