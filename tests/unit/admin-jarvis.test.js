@@ -454,6 +454,15 @@ test("section layout: saved order first, new panels at their default place, gone
   assert.equal(core.panelSlug("· ·"), "panel");
 });
 
+test("chart prefs and layout stretch are cleaned (#3569)", () => {
+  assert.deepEqual(core.cleanCharts({ grid: "nope", fill: false, height: "x" }), { grid: "micro", fill: false, height: "m" });
+  assert.deepEqual(core.cleanCharts({ grid: "off", height: "l" }), { grid: "off", fill: true, height: "l" });
+  assert.deepEqual(core.cleanLayout({ github: { order: ["github-ci"], hidden: [], stretch: { "github-ci": 2, bad: 9, x: "y" } } }),
+    { github: { order: ["github-ci"], hidden: [], stretch: { "github-ci": 2 } } });
+  const kept = core.keepLayout({ order: ["a", "b"], hidden: ["c"], stretch: { a: 3, c: 2, gone: 1 } }, ["a", "b"], ["c"], ["a", "b"]);
+  assert.deepEqual(kept.stretch, { a: 3 });
+});
+
 test("server: the layout is cleaned, saved one tab at a time, kept by a settings save and read back in the settings (#2809)", async () => {
   assert.deepEqual(core.cleanLayout({ review: { order: ["review-funnel", "review-funnel", 7, "<b>", "x".repeat(81)], hidden: ["review-heat"] }, nope: { order: ["a"] }, cv: { order: [] }, hub: "x" }),
     { review: { order: ["review-funnel"], hidden: ["review-heat"] } });
@@ -826,7 +835,7 @@ test("admin.html loads the Jarvis files with a version that changes with their c
   const want = require("crypto").createHash("sha1").update(Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))))).digest("hex").slice(0, 10);
   const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
   const seen = Array.from(html.matchAll(/admin-jarvis(?:-core)?\.(?:css|js)\?v=([^"]+)"/g)).map((m) => m[1]);
-  assert.equal(seen.length, 5);
+  assert.equal(seen.length, 6);
   assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html, then run node scripts/build-csp-hashes.js (the module import is an inline script)");
 });
 
