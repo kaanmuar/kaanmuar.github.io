@@ -12,7 +12,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -28,6 +31,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.graphics.TransformOrigin
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -127,37 +134,137 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val turn by animateFloatAsState(if (folded) -90f else 0f, tween(200), label = "fold")
     val dense = LocalDense.current
     val tab = LocalLayoutTab.current
+    val saved = LocalLayout.current
+    val saveSize = LocalSavePanelSize.current
     val stretch = if (charts) LocalLayout.current?.stretch?.get(id) ?: 1 else 1
     if (tab != null) Arrange.seen(tab, id, title)
-    Column(
+    val stored = saved?.size?.get(id) ?: Layouts.Size()
+    var live by remember(id, stored) { mutableStateOf(stored) }
+    LaunchedEffect(stored) { live = stored }
+    // Pinch has no drag-end; debounce a save when the live size settles away from the stored one.
+    LaunchedEffect(live, saveSize) {
+        if (saveSize == null || live == stored) return@LaunchedEffect
+        delay(450)
+        if (live != stored) saveSize(id, live)
+    }
+    val editing = Arrange.movable(tab, id)
+    Box(
         Modifier.then(PanelIdElement(id)).then(modifier)
             .fillMaxWidth()
             .padding(horizontal = if (dense) 7.dp else 14.dp, vertical = if (dense) 5.dp else 8.dp)
             .reveal()
             .glass()
             .animateContentSize(tween(320, easing = FastOutSlowInEasing))
-            .padding(horizontal = if (dense) 11.dp else 16.dp, vertical = if (dense) 10.dp else 14.dp),
-        verticalArrangement = Arrangement.spacedBy(if (dense) 8.dp else 10.dp)
+            .then(
+                if (folded || editing || saveSize == null) Modifier
+                else Modifier.pointerInput(id, live) {
+                    detectTransformGestures { _, _, zoom, _ ->
+                        if (zoom == 1f) return@detectTransformGestures
+                        live = Layouts.clampSize(live.h * zoom, live.w * (1f + (zoom - 1f) * 0.5f))
+                    }
+                }
+            )
     ) {
-        Row(
-            Modifier.clickable(onClickLabel = if (folded) "Expand" else "Collapse") { Folds.set(key, !folded) },
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (dense) 11.dp else 16.dp, vertical = if (dense) 10.dp else 14.dp)
+                .then(
+                    if (live.h == 1f) Modifier
+                    else Modifier.layout { measurable, constraints ->
+                        val p = measurable.measure(constraints)
+                        val h = (p.height * live.h).roundToInt().coerceAtLeast(1)
+                        layout(p.width, h) {
+                            p.placeWithLayer(0, 0) {
+                                scaleY = live.h
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            }
+                        }
+                    }
+                ),
+            verticalArrangement = Arrangement.spacedBy(if (dense) 8.dp else 10.dp)
         ) {
-            CubeGlyph()
-            Spacer(Modifier.width(8.dp))
-            Text(title.uppercase(), color = J.cyan, fontFamily = Mono, fontSize = 12.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold,
-                style = LocalTextStyle.current.copy(shadow = Shadow(J.cyan.copy(alpha = 0.6f), blurRadius = 12f)))
-            Spacer(Modifier.width(6.dp))
-            Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
-            Spacer(Modifier.width(8.dp))
-            Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
-            if (charts && onChartStretch != null) {
-                TextButton(onClick = onChartStretch, modifier = Modifier.heightIn(min = 40.dp)) { Text("↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
+            Row(
+                Modifier.clickable(onClickLabel = if (folded) "Expand" else "Collapse") { Folds.set(key, !folded) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CubeGlyph()
+                Spacer(Modifier.width(8.dp))
+                Text(title.uppercase(), color = J.cyan, fontFamily = Mono, fontSize = 12.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold,
+                    style = LocalTextStyle.current.copy(shadow = Shadow(J.cyan.copy(alpha = 0.6f), blurRadius = 12f)))
+                Spacer(Modifier.width(6.dp))
+                Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
+                Spacer(Modifier.width(8.dp))
+                Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
+                if (charts && onChartStretch != null) {
+                    TextButton(onClick = onChartStretch, modifier = Modifier.heightIn(min = 40.dp)) { Text("↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
+                }
+                trailing?.let { Spacer(Modifier.width(8.dp)); it() }
             }
-            trailing?.let { Spacer(Modifier.width(8.dp)); it() }
+            if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
+            if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch) { content() }
         }
-        if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
-        if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch) { content() }
+        if (!folded && !editing && saveSize != null) {
+            val edge = 14.dp
+            val commit = { saveSize(id, live) }
+            // North / south → height; east / west → width (press-drag on edges, same as web).
+            Box(
+                Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = commit,
+                            onDragCancel = commit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h - drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                            }
+                        )
+                    }
+                    .background(J.cyan.copy(alpha = 0.08f))
+            )
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = commit,
+                            onDragCancel = commit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h + drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                            }
+                        )
+                    }
+                    .background(J.cyan.copy(alpha = 0.08f))
+            )
+            Box(
+                Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = commit,
+                            onDragCancel = commit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h, live.w - drag.x / size.width.coerceAtLeast(1).toFloat())
+                            }
+                        )
+                    }
+                    .background(J.cyan.copy(alpha = 0.08f))
+            )
+            Box(
+                Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = commit,
+                            onDragCancel = commit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h, live.w + drag.x / size.width.coerceAtLeast(1).toFloat())
+                            }
+                        )
+                    }
+                    .background(J.cyan.copy(alpha = 0.08f))
+            )
+        }
     }
 }
 

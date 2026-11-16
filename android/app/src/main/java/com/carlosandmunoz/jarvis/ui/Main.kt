@@ -317,7 +317,12 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         val saved = Layouts.read(s.snapshot, layoutTab)
                         LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
                         val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
-                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved, LocalChartPrefs provides chartPrefs) {
+                        CompositionLocalProvider(
+                            LocalLayoutTab provides layoutTab,
+                            LocalLayout provides saved,
+                            LocalChartPrefs provides chartPrefs,
+                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) }
+                        ) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
                                     Tab.Overview -> OverviewScreen(s, vm, open)
