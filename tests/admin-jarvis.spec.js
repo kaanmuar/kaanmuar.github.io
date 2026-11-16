@@ -1515,7 +1515,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(field).toHaveValue('kaanmuar/kaanmuar.github.io\nkaanmuar/qa-lab-outreach\nkaanmuar/cursor-quota\nkaanmuar/cursor-quota-releases');
     await field.fill('kaanmuar/qa-lab-outreach\nhttps://github.com/kaanmuar/cursor-quota\nnot a repo');
     await page.locator('.jv-settings button[type="submit"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'settings-save').map((c) => c.body.settings.github)).toEqual([{ repos: ['kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota'] }]);
+    await expect.poll(() => calls.filter((c) => c.op === 'settings-save' && c.body.settings).map((c) => c.body.settings.github)).toEqual([{ repos: ['kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota'] }]);
     await expect.poll(() => calls.filter((c) => c.op === 'github-work').length).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
