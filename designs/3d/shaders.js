@@ -168,9 +168,7 @@ vec3 dust(vec2 p, float t){
 	return c;
 }
 `;
-const prism =
-	PYR_LIB +
-	/* glsl */ `
+const prism = PYR_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -343,9 +341,7 @@ vec3 hexBokeh(vec2 f, float r, float b, vec3 tint, out float a){
 	float fringe = (1. - smoothstep(-b*.4, b*1.6, d - b*.6)) - a;
 	return tint*(.16 + rim*.32) + CORAL*max(fringe, 0.)*.35;
 }`;
-const rack =
-	BOKEH_LIB +
-	/* glsl */ `
+const rack = BOKEH_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -412,9 +408,7 @@ vec3 sky(vec2 p, float t){
 	if(h21(sid) > .992) c += PEARL*(1. - smoothstep(0.,.15,length(fract(sg) - .5)))*(.4 + .4*sin(t*2. + h21(sid)*90.));
 	return c;
 }`;
-const aurora =
-	SKY_LIB +
-	/* glsl */ `
+const aurora = SKY_LIB + /* glsl */ `
 void main(){
 	vec2 p = frameP();
 	float t = tm();
@@ -499,11 +493,7 @@ void main(){
 // 6. Fusion: all five in one shot. The Prism Core pyramid and beam stand on the Tidal Scan dot floor, whose scan is now a ring
 // that rolls out from under the pyramid; Aurora Glass curtains fill the sky; seven Crystal Lattice bipyramids, one per palette
 // colour, orbit the mark; Rack Focus crystals hang behind and in front, pulling focus.
-const fusion =
-	PYR_LIB +
-	SKY_LIB +
-	BOKEH_LIB +
-	/* glsl */ `
+const fusion = PYR_LIB + SKY_LIB + BOKEH_LIB + /* glsl */ `
 const float RING = 1.45;
 vec3 ot(float k){ k = mod(k, 7.); return k < 1. ? TEAL : k < 2. ? GOLD : k < 3. ? CYAN : k < 4. ? MINT : k < 5. ? VIOLET : k < 6. ? TEAL : CORAL; }
 float orbit(vec3 p, out float id, out vec3 lo){

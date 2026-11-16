@@ -5,35 +5,31 @@ const { assertStaticServer } = require('../../scripts/static-server-check');
 const PORT = Number(process.env.TEST_PORT || 8765);
 
 function portOpen(port) {
-	return new Promise((resolve) => {
-		const socket = net.connect({ port, host: '127.0.0.1' }, () => {
-			socket.end();
-			resolve(true);
-		});
-		socket.on('error', () => resolve(false));
-	});
+  return new Promise((resolve) => {
+    const socket = net.connect({ port, host: '127.0.0.1' }, () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.on('error', () => resolve(false));
+  });
 }
 
 async function ensureServer() {
-	if (await portOpen(PORT)) return assertStaticServer(PORT);
-	const child = spawn(
-		'python3',
-		[require('path').join(__dirname, '..', '..', 'scripts', 'static-server.py'), String(PORT)],
-		{
-			cwd: require('path').join(__dirname, '..', '..'),
-			stdio: 'ignore',
-			detached: true,
-		}
-	);
-	child.unref();
-	const start = Date.now();
-	while (Date.now() - start < 8000) {
-		if (await portOpen(PORT)) return;
-		await new Promise((resolve) => setTimeout(resolve, 150));
-	}
-	throw new Error('Static server did not open on ' + PORT);
+  if (await portOpen(PORT)) return assertStaticServer(PORT);
+  const child = spawn('python3', [require('path').join(__dirname, '..', '..', 'scripts', 'static-server.py'), String(PORT)], {
+    cwd: require('path').join(__dirname, '..', '..'),
+    stdio: 'ignore',
+    detached: true
+  });
+  child.unref();
+  const start = Date.now();
+  while (Date.now() - start < 8000) {
+    if (await portOpen(PORT)) return;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  throw new Error('Static server did not open on ' + PORT);
 }
 
 const FROM_ENV = /^https?:\/\//i.test(process.env.BASE_URL || '') ? process.env.BASE_URL.replace(/\/$/, '') : '';
 
-module.exports = { ensureServer, PORT, BASE: FROM_ENV || 'http://127.0.0.1:' + PORT };
+module.exports = { ensureServer, PORT, BASE: FROM_ENV || ('http://127.0.0.1:' + PORT) };

@@ -3,8 +3,8 @@
  * Prices come from the server quote; this file only shows them and remembers the code from the link.
  */
 (function () {
-	const KEY = 'qa-review-coupon';
-	const STYLE = `
+  const KEY = "qa-review-coupon";
+  const STYLE = `
 .deal { perspective: 1100px; margin: 6px 0 14px; }
 .deal-ticket { --rx: 7deg; --ry: -9deg; position: relative; transform-style: preserve-3d; transform: rotateX(var(--rx)) rotateY(var(--ry)); border-radius: 22px; padding: 22px 22px 18px 112px; color: #f8fafc; background: linear-gradient(125deg, #0b1220 0%, #0f3b4a 46%, #0e7490 78%, #14b8a6 100%); box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 30px 60px -18px rgba(8,14,18,.65), 0 12px 24px -12px rgba(14,116,144,.55); -webkit-mask: radial-gradient(circle 13px at 96px 0, transparent 98%, #000) top/100% 51% no-repeat, radial-gradient(circle 13px at 96px 100%, transparent 98%, #000) bottom/100% 51% no-repeat; mask: radial-gradient(circle 13px at 96px 0, transparent 98%, #000) top/100% 51% no-repeat, radial-gradient(circle 13px at 96px 100%, transparent 98%, #000) bottom/100% 51% no-repeat; animation: deal-in 1.1s cubic-bezier(.2,.9,.25,1.15) both, deal-float 6s ease-in-out 1.2s infinite; transition: transform .25s ease-out; }
 .deal-ticket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(from 210deg at 70% 30%, rgba(255,0,170,.0), rgba(0,255,214,.28), rgba(255,214,0,.22), rgba(140,82,255,.28), rgba(255,0,170,0)); mix-blend-mode: color-dodge; opacity: .55; background-size: 180% 180%; animation: deal-foil 7s linear infinite; pointer-events: none; }
@@ -35,191 +35,149 @@
 @media (prefers-reduced-motion: reduce) { .deal-ticket, .deal-ticket::before, .deal-ticket::after, .deal-spark { animation: none !important; } .deal-was::after { animation: none; transform: rotate(-9deg) scaleX(1); } .deal-ticket { transform: none; } }
 `;
 
-	const COPY = {
-		en: {
-			label: 'Return price: {usd} USD instead of {list} USD',
-			eyebrow: 'Welcome back',
-			applied: 'Your return price is already applied.',
-			earned: 'Coming back pays. This price is yours.',
-			keep: 'You keep {usd} USD.',
-		},
-		es: {
-			label: 'Precio de regreso: {usd} USD en lugar de {list} USD',
-			eyebrow: 'Qué bueno verte de nuevo',
-			applied: 'Tu precio de regreso ya está aplicado.',
-			earned: 'Volver tiene premio. Este precio es tuyo.',
-			keep: 'Te ahorras {usd} USD.',
-		},
-		pt: {
-			label: 'Preço de retorno: {usd} USD em vez de {list} USD',
-			eyebrow: 'Que bom ver você de novo',
-			applied: 'Seu preço de retorno já está aplicado.',
-			earned: 'Voltar vale a pena. Este preço é seu.',
-			keep: 'Você economiza {usd} USD.',
-		},
-		de: {
-			label: 'Rückkehrpreis: {usd} USD statt {list} USD',
-			eyebrow: 'Willkommen zurück',
-			applied: 'Ihr Rückkehrpreis ist bereits angewendet.',
-			earned: 'Wiederkommen lohnt sich. Dieser Preis gilt für Sie.',
-			keep: 'Sie sparen {usd} USD.',
-		},
-		fr: {
-			label: 'Prix de retour : {usd} USD au lieu de {list} USD',
-			eyebrow: 'Bon retour',
-			applied: 'Votre prix de retour est déjà appliqué.',
-			earned: 'Revenir est récompensé. Ce prix est pour vous.',
-			keep: 'Vous économisez {usd} USD.',
-		},
-		it: {
-			label: 'Prezzo di ritorno: {usd} USD invece di {list} USD',
-			eyebrow: 'Bentornato',
-			applied: 'Il tuo prezzo di ritorno è già applicato.',
-			earned: 'Tornare conviene. Questo prezzo è tuo.',
-			keep: 'Risparmi {usd} USD.',
-		},
-	};
+  const COPY = {
+    en: { label: "Return price: {usd} USD instead of {list} USD", eyebrow: "Welcome back", applied: "Your return price is already applied.", earned: "Coming back pays. This price is yours.", keep: "You keep {usd} USD." },
+    es: { label: "Precio de regreso: {usd} USD en lugar de {list} USD", eyebrow: "Qué bueno verte de nuevo", applied: "Tu precio de regreso ya está aplicado.", earned: "Volver tiene premio. Este precio es tuyo.", keep: "Te ahorras {usd} USD." },
+    pt: { label: "Preço de retorno: {usd} USD em vez de {list} USD", eyebrow: "Que bom ver você de novo", applied: "Seu preço de retorno já está aplicado.", earned: "Voltar vale a pena. Este preço é seu.", keep: "Você economiza {usd} USD." },
+    de: { label: "Rückkehrpreis: {usd} USD statt {list} USD", eyebrow: "Willkommen zurück", applied: "Ihr Rückkehrpreis ist bereits angewendet.", earned: "Wiederkommen lohnt sich. Dieser Preis gilt für Sie.", keep: "Sie sparen {usd} USD." },
+    fr: { label: "Prix de retour : {usd} USD au lieu de {list} USD", eyebrow: "Bon retour", applied: "Votre prix de retour est déjà appliqué.", earned: "Revenir est récompensé. Ce prix est pour vous.", keep: "Vous économisez {usd} USD." },
+    it: { label: "Prezzo di ritorno: {usd} USD invece di {list} USD", eyebrow: "Bentornato", applied: "Il tuo prezzo di ritorno è già applicato.", earned: "Tornare conviene. Questo prezzo è tuo.", keep: "Risparmi {usd} USD." }
+  };
 
-	function copy() {
-		const lang = String(document.documentElement.lang || 'en')
-			.slice(0, 2)
-			.toLowerCase();
-		return COPY[lang] ? { lang, text: COPY[lang] } : { lang: 'en', text: COPY.en };
-	}
+  function copy() {
+    const lang = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
+    return COPY[lang] ? { lang, text: COPY[lang] } : { lang: "en", text: COPY.en };
+  }
 
-	function fill(text, vars) {
-		return text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] != null ? vars[name] : match));
-	}
+  function fill(text, vars) {
+    return text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] != null ? vars[name] : match));
+  }
 
-	function money(value) {
-		const dollars = Math.round(Number(value) * 100) / 100;
-		return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
-	}
+  function money(value) {
+    const dollars = Math.round(Number(value) * 100) / 100;
+    return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
+  }
 
-	function addStyle() {
-		if (document.getElementById('deal-style')) return;
-		const style = document.createElement('style');
-		style.id = 'deal-style';
-		style.textContent = STYLE;
-		document.head.appendChild(style);
-	}
+  function addStyle() {
+    if (document.getElementById("deal-style")) return;
+    const style = document.createElement("style");
+    style.id = "deal-style";
+    style.textContent = STYLE;
+    document.head.appendChild(style);
+  }
 
-	function code() {
-		const fromLink = String(new URLSearchParams(location.search).get('coupon') || '')
-			.trim()
-			.toUpperCase();
-		try {
-			if (/^[A-Z0-9-]{4,24}$/.test(fromLink)) sessionStorage.setItem(KEY, fromLink);
-			return sessionStorage.getItem(KEY) || '';
-		} catch (error) {
-			return /^[A-Z0-9-]{4,24}$/.test(fromLink) ? fromLink : '';
-		}
-	}
+  function code() {
+    const fromLink = String(new URLSearchParams(location.search).get("coupon") || "").trim().toUpperCase();
+    try {
+      if (/^[A-Z0-9-]{4,24}$/.test(fromLink)) sessionStorage.setItem(KEY, fromLink);
+      return sessionStorage.getItem(KEY) || "";
+    } catch (error) {
+      return /^[A-Z0-9-]{4,24}$/.test(fromLink) ? fromLink : "";
+    }
+  }
 
-	// A code the page was given (the inconclusive splash), so the next run and pay page carry it as a link would.
-	function keep(value) {
-		const next = String(value || '')
-			.trim()
-			.toUpperCase();
-		if (!/^[A-Z0-9-]{4,24}$/.test(next)) return false;
-		try {
-			sessionStorage.setItem(KEY, next);
-			return true;
-		} catch (error) {
-			return false;
-		}
-	}
+  // A code the page was given (the inconclusive splash), so the next run and pay page carry it as a link would.
+  function keep(value) {
+    const next = String(value || "").trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,24}$/.test(next)) return false;
+    try {
+      sessionStorage.setItem(KEY, next);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
 
-	function countDown(el, from, to) {
-		const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const unit = '<small>USD</small>';
-		if (still) {
-			el.innerHTML = money(to) + unit;
-			return;
-		}
-		const start = performance.now() + 700;
-		const length = 900;
-		el.innerHTML = money(from) + unit;
-		function step(now) {
-			const t = Math.min(1, Math.max(0, (now - start) / length));
-			const eased = 1 - Math.pow(1 - t, 3);
-			el.innerHTML = money(from + (to - from) * eased) + unit;
-			if (t < 1) requestAnimationFrame(step);
-		}
-		requestAnimationFrame(step);
-	}
+  function countDown(el, from, to) {
+    const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const unit = "<small>USD</small>";
+    if (still) {
+      el.innerHTML = money(to) + unit;
+      return;
+    }
+    const start = performance.now() + 700;
+    const length = 900;
+    el.innerHTML = money(from) + unit;
+    function step(now) {
+      const t = Math.min(1, Math.max(0, (now - start) / length));
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.innerHTML = money(from + (to - from) * eased) + unit;
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
 
-	function tilt(ticket) {
-		ticket.addEventListener('pointermove', (event) => {
-			if (event.pointerType !== 'mouse') return;
-			const box = ticket.getBoundingClientRect();
-			const x = (event.clientX - box.left) / box.width - 0.5;
-			const y = (event.clientY - box.top) / box.height - 0.5;
-			ticket.classList.add('tilting');
-			ticket.style.setProperty('--ry', (x * 22).toFixed(1) + 'deg');
-			ticket.style.setProperty('--rx', (-y * 16).toFixed(1) + 'deg');
-		});
-		ticket.addEventListener('pointerleave', () => {
-			ticket.style.setProperty('--ry', '-9deg');
-			ticket.style.setProperty('--rx', '7deg');
-		});
-	}
+  function tilt(ticket) {
+    ticket.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+      const box = ticket.getBoundingClientRect();
+      const x = (event.clientX - box.left) / box.width - 0.5;
+      const y = (event.clientY - box.top) / box.height - 0.5;
+      ticket.classList.add("tilting");
+      ticket.style.setProperty("--ry", (x * 22).toFixed(1) + "deg");
+      ticket.style.setProperty("--rx", (-y * 16).toFixed(1) + "deg");
+    });
+    ticket.addEventListener("pointerleave", () => {
+      ticket.style.setProperty("--ry", "-9deg");
+      ticket.style.setProperty("--rx", "7deg");
+    });
+  }
 
-	function node(tag, className, text) {
-		const el = document.createElement(tag);
-		if (className) el.className = className;
-		if (text != null) el.textContent = text;
-		return el;
-	}
+  function node(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    return el;
+  }
 
-	function render(host, deal) {
-		if (!host) return false;
-		host.textContent = '';
-		const percent = Math.round(Number(deal && deal.percent) || 0);
-		const list = Number(deal && deal.listUsd);
-		const usd = Number(deal && (deal.usd != null ? deal.usd : deal.priceUsd));
-		if (!percent || !(list > usd)) {
-			host.hidden = !(deal && deal.offer && window.ReviewOffer && window.ReviewOffer.note(host, deal.offer));
-			return false;
-		}
-		addStyle();
-		const { lang, text } = copy();
-		const wrap = node('div', 'deal');
-		// Hand-translated copy must not be machine-translated again as if it were English.
-		if (lang !== 'en') wrap.setAttribute('translate', 'no');
-		const ticket = node('div', 'deal-ticket');
-		ticket.setAttribute('role', 'group');
-		ticket.setAttribute('aria-label', fill(text.label, { usd: money(usd), list: money(list) }));
-		const stub = node('div', 'deal-stub');
-		stub.appendChild(node('span', 'deal-off', '−' + percent + '%'));
-		ticket.appendChild(stub);
-		ticket.appendChild(node('p', 'deal-eyebrow', text.eyebrow));
-		ticket.appendChild(node('p', 'deal-title', deal.coupon ? text.applied : text.earned));
-		const prices = node('div', 'deal-prices');
-		const was = node('s', 'deal-was', money(list) + ' USD');
-		const now = node('b', 'deal-now');
-		prices.appendChild(was);
-		prices.appendChild(now);
-		ticket.appendChild(prices);
-		const foot = node('div', 'deal-foot');
-		if (deal.coupon) foot.appendChild(node('span', 'deal-code notranslate', '✓ ' + deal.coupon));
-		foot.appendChild(node('span', '', fill(text.keep, { usd: money(list - usd) })));
-		ticket.appendChild(foot);
-		for (let index = 0; index < 3; index += 1) ticket.appendChild(node('i', 'deal-spark'));
-		wrap.appendChild(ticket);
-		host.appendChild(wrap);
-		host.hidden = false;
-		countDown(now, list, usd);
-		tilt(ticket);
-		return true;
-	}
+  function render(host, deal) {
+    if (!host) return false;
+    host.textContent = "";
+    const percent = Math.round(Number(deal && deal.percent) || 0);
+    const list = Number(deal && deal.listUsd);
+    const usd = Number(deal && (deal.usd != null ? deal.usd : deal.priceUsd));
+    if (!percent || !(list > usd)) {
+      host.hidden = !(deal && deal.offer && window.ReviewOffer && window.ReviewOffer.note(host, deal.offer));
+      return false;
+    }
+    addStyle();
+    const { lang, text } = copy();
+    const wrap = node("div", "deal");
+    // Hand-translated copy must not be machine-translated again as if it were English.
+    if (lang !== "en") wrap.setAttribute("translate", "no");
+    const ticket = node("div", "deal-ticket");
+    ticket.setAttribute("role", "group");
+    ticket.setAttribute("aria-label", fill(text.label, { usd: money(usd), list: money(list) }));
+    const stub = node("div", "deal-stub");
+    stub.appendChild(node("span", "deal-off", "−" + percent + "%"));
+    ticket.appendChild(stub);
+    ticket.appendChild(node("p", "deal-eyebrow", text.eyebrow));
+    ticket.appendChild(node("p", "deal-title", deal.coupon ? text.applied : text.earned));
+    const prices = node("div", "deal-prices");
+    const was = node("s", "deal-was", money(list) + " USD");
+    const now = node("b", "deal-now");
+    prices.appendChild(was);
+    prices.appendChild(now);
+    ticket.appendChild(prices);
+    const foot = node("div", "deal-foot");
+    if (deal.coupon) foot.appendChild(node("span", "deal-code notranslate", "✓ " + deal.coupon));
+    foot.appendChild(node("span", "", fill(text.keep, { usd: money(list - usd) })));
+    ticket.appendChild(foot);
+    for (let index = 0; index < 3; index += 1) ticket.appendChild(node("i", "deal-spark"));
+    wrap.appendChild(ticket);
+    host.appendChild(wrap);
+    host.hidden = false;
+    countDown(now, list, usd);
+    tilt(ticket);
+    return true;
+  }
 
-	window.ReviewDeal = { code, keep, render, money };
+  window.ReviewDeal = { code, keep, render, money };
 
-	if (!document.querySelector("script[src*='qa-review-offer.js']")) {
-		const offer = document.createElement('script');
-		offer.src = 'js/qa-review-offer.js?v=20261105a';
-		offer.defer = true;
-		document.head.appendChild(offer);
-	}
+  if (!document.querySelector("script[src*='qa-review-offer.js']")) {
+    const offer = document.createElement("script");
+    offer.src = "js/qa-review-offer.js?v=20261105a";
+    offer.defer = true;
+    document.head.appendChild(offer);
+  }
 })();

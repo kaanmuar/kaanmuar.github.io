@@ -4,10 +4,10 @@
 const NOT_STARTED = new Set(['queued', 'waiting', 'pending', 'requested']);
 
 function classifyRun(status) {
-	if (status === 'completed') return 'complete';
-	if (NOT_STARTED.has(status)) return 'not_started';
-	if (status === 'in_progress') return 'active';
-	return 'unknown';
+  if (status === 'completed') return 'complete';
+  if (NOT_STARTED.has(status)) return 'not_started';
+  if (status === 'in_progress') return 'active';
+  return 'unknown';
 }
 
 module.exports = { classifyRun, NOT_STARTED };

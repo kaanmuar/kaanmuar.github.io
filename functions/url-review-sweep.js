@@ -9,7 +9,7 @@
    State lives in Firestore url_review_sweep/state: { lap, pos, cursor: { cc: n }, days: { date: {done, failed, skipped, failures} }, last }.
    A failed review is also saved to url_review_failures (source "sweep"), so the daily diagnosis and re-runs pick it up. */
 
-const { suffixRegistrable } = require('./url-review-suffix');
+const { suffixRegistrable } = require("./url-review-suffix");
 
 const PER_DAY = 96;
 // A tick (every 15 minutes, 24 a night) reviews up to PER_TICK sites, up to its lane's concurrency budget at once
@@ -31,110 +31,35 @@ const OUTREACH_PER_DAY = 384;
 
 // Markets of the six site languages come round twice per lap.
 const TIER1 = [
-	'es',
-	'mx',
-	'co',
-	'ar',
-	'cl',
-	'pe',
-	'ec',
-	've',
-	'uy',
-	'py',
-	'bo',
-	'cr',
-	'pa',
-	'do',
-	'gt',
-	'hn',
-	'sv',
-	'ni',
-	'pr',
-	'br',
-	'pt',
-	'de',
-	'at',
-	'ch',
-	'fr',
-	'be',
-	'it',
-	'us',
-	'gb',
-	'ie',
-	'ca',
-	'au',
+  "es", "mx", "co", "ar", "cl", "pe", "ec", "ve", "uy", "py", "bo", "cr", "pa", "do", "gt", "hn", "sv", "ni", "pr",
+  "br", "pt", "de", "at", "ch", "fr", "be", "it", "us", "gb", "ie", "ca", "au"
 ];
 const LANG = {
-	es: [
-		'es',
-		'mx',
-		'co',
-		'ar',
-		'cl',
-		'pe',
-		'ec',
-		've',
-		'uy',
-		'py',
-		'bo',
-		'cr',
-		'pa',
-		'do',
-		'gt',
-		'hn',
-		'sv',
-		'ni',
-		'pr',
-		'cu',
-		'gq',
-	],
-	pt: ['br', 'pt', 'ao', 'mz', 'cv', 'gw', 'st', 'tl'],
-	de: ['de', 'at', 'ch', 'li', 'lu'],
-	fr: [
-		'fr',
-		'be',
-		'mc',
-		'sn',
-		'ci',
-		'cm',
-		'ml',
-		'bf',
-		'ne',
-		'tg',
-		'bj',
-		'ga',
-		'cg',
-		'cd',
-		'mg',
-		'ht',
-		're',
-		'gp',
-		'mq',
-		'nc',
-		'pf',
-	],
-	it: ['it', 'sm', 'va'],
+  es: ["es", "mx", "co", "ar", "cl", "pe", "ec", "ve", "uy", "py", "bo", "cr", "pa", "do", "gt", "hn", "sv", "ni", "pr", "cu", "gq"],
+  pt: ["br", "pt", "ao", "mz", "cv", "gw", "st", "tl"],
+  de: ["de", "at", "ch", "li", "lu"],
+  fr: ["fr", "be", "mc", "sn", "ci", "cm", "ml", "bf", "ne", "tg", "bj", "ga", "cg", "cd", "mg", "ht", "re", "gp", "mq", "nc", "pf"],
+  it: ["it", "sm", "va"]
 };
 
-const BLOCKED =
-	/porn|xxx|xvideo|xnxx|hentai|onlyfans|escort|casino|poker|gambl|torrent|chaturbate|stripchat|camsoda|camgirl|cuevana|pelis|manga|anime|lotter|loteri|bingo|jackpot|bovada|apuesta|xbet|betway|sportybet|bet9ja|betking|intim|flirt|dating|rusdate|swinger|erotic|adult|(^|[.-])(sex|bet|bets|nude|slots?|chance)/i;
+const BLOCKED = /porn|xxx|xvideo|xnxx|hentai|onlyfans|escort|casino|poker|gambl|torrent|chaturbate|stripchat|camsoda|camgirl|cuevana|pelis|manga|anime|lotter|loteri|bingo|jackpot|bovada|apuesta|xbet|betway|sportybet|bet9ja|betking|intim|flirt|dating|rusdate|swinger|erotic|adult|(^|[.-])(sex|bet|bets|nude|slots?|chance)/i;
 const RESERVED = /(^|\.)(localhost|local|test|invalid|example|internal|onion)$/i;
 // Besides the country's own ending, the generic ones a national business or institution uses.
-const GENERIC_TLDS = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'io', 'app', 'dev', 'ai'];
-const CC_TLD = { gb: 'uk' };
+const GENERIC_TLDS = ["com", "org", "net", "edu", "gov", "mil", "int", "io", "app", "dev", "ai"];
+const CC_TLD = { gb: "uk" };
 
 function langOf(cc) {
-	const code = String(cc || '').toLowerCase();
-	return Object.keys(LANG).find((lang) => LANG[lang].includes(code)) || 'en';
+  const code = String(cc || "").toLowerCase();
+  return Object.keys(LANG).find((lang) => LANG[lang].includes(code)) || "en";
 }
 
 function hostOf(origin) {
-	try {
-		const url = new URL(origin);
-		return url.protocol === 'https:' && !url.port ? url.hostname.toLowerCase() : '';
-	} catch (error) {
-		return '';
-	}
+  try {
+    const url = new URL(origin);
+    return url.protocol === "https:" && !url.port ? url.hostname.toLowerCase() : "";
+  } catch (error) {
+    return "";
+  }
 }
 
 // rows: [[origin, rank]] in rank order; globalDomains: registrable domains in the global top list.
@@ -142,151 +67,128 @@ function hostOf(origin) {
 // host when the list has one, else the bare domain, since app., login. and campus. hosts sit behind a
 // sign-in, else the domain's most visited host when the bare domain does not resolve.
 async function seedHosts(rows, globalDomains, registrable, limit, cc, resolves) {
-	const own = CC_TLD[cc] || cc;
-	const max = limit || PER_COUNTRY;
-	const byDomain = new Map();
-	for (const [origin] of rows) {
-		const host = hostOf(origin);
-		if (!host || /^\d+(\.\d+){3}$/.test(host) || RESERVED.test(host) || BLOCKED.test(host)) continue;
-		const domain = registrable(host);
-		const tld = domain.split('.').pop();
-		if (!domain || globalDomains.has(domain) || !(tld === own || GENERIC_TLDS.includes(tld))) continue;
-		const plain = host === domain || host === 'www.' + domain;
-		const seen = byDomain.get(domain);
-		if (!seen) byDomain.set(domain, { hosts: plain ? [host] : [domain, host], plain });
-		else if (plain && !seen.plain) Object.assign(seen, { hosts: [host], plain });
-	}
-	const seeds = [...byDomain.values()];
-	const out = [];
-	for (let at = 0; at < seeds.length && out.length < max; ) {
-		const batch = seeds.slice(at, at + max - out.length);
-		at += batch.length;
-		const picked = await Promise.all(
-			batch.map(async (seed) => {
-				for (const host of seed.hosts) if (!resolves || (await resolves(host))) return host;
-				return '';
-			})
-		);
-		out.push(...picked.filter(Boolean));
-	}
-	return out;
+  const own = CC_TLD[cc] || cc;
+  const max = limit || PER_COUNTRY;
+  const byDomain = new Map();
+  for (const [origin] of rows) {
+    const host = hostOf(origin);
+    if (!host || /^\d+(\.\d+){3}$/.test(host) || RESERVED.test(host) || BLOCKED.test(host)) continue;
+    const domain = registrable(host);
+    const tld = domain.split(".").pop();
+    if (!domain || globalDomains.has(domain) || !(tld === own || GENERIC_TLDS.includes(tld))) continue;
+    const plain = host === domain || host === "www." + domain;
+    const seen = byDomain.get(domain);
+    if (!seen) byDomain.set(domain, { hosts: plain ? [host] : [domain, host], plain });
+    else if (plain && !seen.plain) Object.assign(seen, { hosts: [host], plain });
+  }
+  const seeds = [...byDomain.values()];
+  const out = [];
+  for (let at = 0; at < seeds.length && out.length < max;) {
+    const batch = seeds.slice(at, at + max - out.length);
+    at += batch.length;
+    const picked = await Promise.all(batch.map(async (seed) => {
+      for (const host of seed.hosts) if (!resolves || await resolves(host)) return host;
+      return "";
+    }));
+    out.push(...picked.filter(Boolean));
+  }
+  return out;
 }
 
 // One lap: the tier-one countries, half the rest, the tier-one countries again, the other half.
 function lapOrder(countries) {
-	const all = [...new Set(countries.map((cc) => String(cc).toLowerCase()))].sort();
-	const first = all.filter((cc) => TIER1.includes(cc));
-	const rest = all.filter((cc) => !TIER1.includes(cc));
-	const half = Math.ceil(rest.length / 2);
-	return first.concat(rest.slice(0, half), first, rest.slice(half));
+  const all = [...new Set(countries.map((cc) => String(cc).toLowerCase()))].sort();
+  const first = all.filter((cc) => TIER1.includes(cc));
+  const rest = all.filter((cc) => !TIER1.includes(cc));
+  const half = Math.ceil(rest.length / 2);
+  return first.concat(rest.slice(0, half), first, rest.slice(half));
 }
 
 // The next country and its seed position; the returned state has both moved on.
 function nextSlot(state, countries) {
-	const prev = state || {};
-	let lap = Array.isArray(prev.lap) && prev.lap.length ? prev.lap.filter((cc) => countries.includes(cc)) : [];
-	let pos = Number(prev.pos) || 0;
-	if (!lap.length || pos >= lap.length) {
-		lap = lapOrder(countries);
-		pos = 0;
-	}
-	const cc = lap[pos];
-	const cursor = Object.assign({}, prev.cursor);
-	const at = cursor[cc] || 0;
-	cursor[cc] = at + 1;
-	return { cc, at, state: Object.assign({}, prev, { lap, pos: pos + 1, cursor }) };
+  const prev = state || {};
+  let lap = Array.isArray(prev.lap) && prev.lap.length ? prev.lap.filter((cc) => countries.includes(cc)) : [];
+  let pos = Number(prev.pos) || 0;
+  if (!lap.length || pos >= lap.length) {
+    lap = lapOrder(countries);
+    pos = 0;
+  }
+  const cc = lap[pos];
+  const cursor = Object.assign({}, prev.cursor);
+  const at = cursor[cc] || 0;
+  cursor[cc] = at + 1;
+  return { cc, at, state: Object.assign({}, prev, { lap, pos: pos + 1, cursor }) };
 }
 
 // The next outreach prospect and the moved-on state, or null once the list is done or tonight's share is used.
 // The list only grows (the script appends), so a cursor is enough to never review a prospect twice.
 function nextOutreach(state, list, day, cap) {
-	const prev = state || {};
-	const rows = Array.isArray(list) ? list : [];
-	const at = Number(prev.outreachAt) || 0;
-	const today = (prev.days || {})[day] || {};
-	if (at >= rows.length || (today.outreach || 0) >= (cap || OUTREACH_PER_DAY)) return null;
-	const row = rows[at] || {};
-	const target = {
-		host: String(row.host || ''),
-		cc: String(row.cc || '').toLowerCase(),
-		month: '',
-		rank: 0,
-		outreach: true,
-		sector: String(row.sector || ''),
-	};
-	return { target, state: Object.assign({}, prev, { outreachAt: at + 1 }) };
+  const prev = state || {};
+  const rows = Array.isArray(list) ? list : [];
+  const at = Number(prev.outreachAt) || 0;
+  const today = (prev.days || {})[day] || {};
+  if (at >= rows.length || (today.outreach || 0) >= (cap || OUTREACH_PER_DAY)) return null;
+  const row = rows[at] || {};
+  const target = { host: String(row.host || ""), cc: String(row.cc || "").toLowerCase(), month: "", rank: 0, outreach: true, sector: String(row.sector || "") };
+  return { target, state: Object.assign({}, prev, { outreachAt: at + 1 }) };
 }
 
 // The lane's state; on its first tick it starts where the shared sweep left the outreach list.
 function laneStart(lane, state) {
-	const out = Object.assign({}, lane);
-	if (out.outreachAt === undefined) out.outreachAt = Number((state || {}).outreachAt) || 0;
-	return out;
+  const out = Object.assign({}, lane);
+  if (out.outreachAt === undefined) out.outreachAt = Number((state || {}).outreachAt) || 0;
+  return out;
 }
 
 // One view of outreach progress over both documents: the lane's cursor (else the old shared one) and each day's
 // outreach reviews from both, for Jarvis, the Places prospects and scripts/sweep-outreach.js.
 function outreachView(state, lane) {
-	const own = lane && lane.outreachAt !== undefined;
-	const days = {};
-	[state, lane].forEach((doc) =>
-		Object.entries((doc && doc.days) || {}).forEach(([day, row]) => {
-			days[day] = Object.assign({}, days[day], {
-				outreach: ((days[day] || {}).outreach || 0) + (Number(row.outreach) || 0),
-			});
-		})
-	);
-	return { outreachAt: Number(own ? lane.outreachAt : (state || {}).outreachAt) || 0, days };
+  const own = lane && lane.outreachAt !== undefined;
+  const days = {};
+  [state, lane].forEach((doc) => Object.entries((doc && doc.days) || {}).forEach(([day, row]) => {
+    days[day] = Object.assign({}, days[day], { outreach: ((days[day] || {}).outreach || 0) + (Number(row.outreach) || 0) });
+  }));
+  return { outreachAt: Number(own ? lane.outreachAt : (state || {}).outreachAt) || 0, days };
 }
 
 // The intake intakeRecord prices and stores; a run is priced per framework, so it names the default one.
 function intake(target) {
-	const where = String(target.cc || '').toUpperCase();
-	return {
-		url: 'https://' + target.host + '/',
-		name: target.outreach ? 'Outreach sweep' : 'Country sweep',
-		email: '',
-		reason: target.outreach
-			? 'Outreach sweep: a ' + (target.sector || 'prospect') + ' site in ' + where
-			: 'Country sweep: one of the most visited sites in ' + where + ' (CrUX ' + target.month + ')',
-		reasonCode: 'sweep',
-		frameworks: ['Playwright'],
-		lang: langOf(target.cc),
-	};
+  const where = String(target.cc || "").toUpperCase();
+  return {
+    url: "https://" + target.host + "/",
+    name: target.outreach ? "Outreach sweep" : "Country sweep",
+    email: "",
+    reason: target.outreach
+      ? "Outreach sweep: a " + (target.sector || "prospect") + " site in " + where
+      : "Country sweep: one of the most visited sites in " + where + " (CrUX " + target.month + ")",
+    reasonCode: "sweep",
+    frameworks: ["Playwright"],
+    lang: langOf(target.cc)
+  };
 }
 
 function doneOn(state, day) {
-	const today = ((state || {}).days || {})[day] || {};
-	return (today.done || 0) + (today.failed || 0);
+  const today = ((state || {}).days || {})[day] || {};
+  return (today.done || 0) + (today.failed || 0);
 }
 
 // A failed tick also lands in today's `failures` (host, country, reason), the newest FAILS_KEPT.
 function tally(state, day, outcome, last) {
-	const days = Object.assign({}, (state || {}).days);
-	const today = Object.assign({ done: 0, failed: 0, skipped: 0 }, days[day]);
-	today[outcome] = (today[outcome] || 0) + 1;
-	if (last && last.outreach && outcome !== 'skipped') today.outreach = (today.outreach || 0) + 1;
-	if (outcome === 'failed') {
-		const row = last || {};
-		today.failures = (today.failures || [])
-			.concat({
-				host: row.host || '',
-				cc: row.cc || '',
-				at: row.at || '',
-				reason: String(row.reason || '').slice(0, 160),
-			})
-			.slice(-FAILS_KEPT);
-	}
-	days[day] = today;
-	Object.keys(days)
-		.sort()
-		.slice(0, -KEEP_DAYS)
-		.forEach((old) => delete days[old]);
-	return Object.assign({}, state, { days, last });
+  const days = Object.assign({}, (state || {}).days);
+  const today = Object.assign({ done: 0, failed: 0, skipped: 0 }, days[day]);
+  today[outcome] = (today[outcome] || 0) + 1;
+  if (last && last.outreach && outcome !== "skipped") today.outreach = (today.outreach || 0) + 1;
+  if (outcome === "failed") {
+    const row = last || {};
+    today.failures = (today.failures || []).concat({ host: row.host || "", cc: row.cc || "", at: row.at || "", reason: String(row.reason || "").slice(0, 160) }).slice(-FAILS_KEPT);
+  }
+  days[day] = today;
+  Object.keys(days).sort().slice(0, -KEEP_DAYS).forEach((old) => delete days[old]);
+  return Object.assign({}, state, { days, last });
 }
 
 function roomForReview(elapsedMs) {
-	return elapsedMs + REVIEW_MS <= TICK_MS;
+  return elapsedMs + REVIEW_MS <= TICK_MS;
 }
 
 // Up to PER_TICK reviews, `slots` at a time. pick() and settle() run one at a time, in the order they are called, so
@@ -294,49 +196,45 @@ function roomForReview(elapsedMs) {
 // pick() answers { target } to start a review or { note } to start no more; room() says whether one still fits.
 // Returns the notes, a started review's at the position it was picked.
 async function runTick({ slots, room, pick, review, settle }) {
-	const width = Math.min(PER_TICK, Math.max(1, Math.floor(Number(slots)) || 1));
-	const notes = [];
-	let stop = false;
-	let started = 0;
-	let queue = Promise.resolve();
-	const serial = (step) => {
-		const run = queue.then(step);
-		queue = run.catch(() => {});
-		return run;
-	};
-	const worker = async () => {
-		while (!stop) {
-			const job = await serial(async () => {
-				if (stop || started >= PER_TICK || !room()) {
-					stop = true;
-					return null;
-				}
-				const pickRow = await pick();
-				if (!pickRow || !pickRow.target) {
-					stop = true;
-					if (pickRow && pickRow.note) notes.push(pickRow.note);
-					return null;
-				}
-				notes.push('');
-				started += 1;
-				return { target: pickRow.target, at: notes.length - 1 };
-			});
-			if (!job) return;
-			const result = await review(job.target);
-			notes[job.at] = await serial(() => settle(job.target, result));
-		}
-	};
-	const runs = await Promise.allSettled(
-		Array.from({ length: width }, () =>
-			worker().catch((error) => {
-				stop = true;
-				throw error;
-			})
-		)
-	);
-	const failed = runs.find((run) => run.status === 'rejected');
-	if (failed) throw failed.reason;
-	return notes;
+  const width = Math.min(PER_TICK, Math.max(1, Math.floor(Number(slots)) || 1));
+  const notes = [];
+  let stop = false;
+  let started = 0;
+  let queue = Promise.resolve();
+  const serial = (step) => {
+    const run = queue.then(step);
+    queue = run.catch(() => {});
+    return run;
+  };
+  const worker = async () => {
+    while (!stop) {
+      const job = await serial(async () => {
+        if (stop || started >= PER_TICK || !room()) {
+          stop = true;
+          return null;
+        }
+        const pickRow = await pick();
+        if (!pickRow || !pickRow.target) {
+          stop = true;
+          if (pickRow && pickRow.note) notes.push(pickRow.note);
+          return null;
+        }
+        notes.push("");
+        started += 1;
+        return { target: pickRow.target, at: notes.length - 1 };
+      });
+      if (!job) return;
+      const result = await review(job.target);
+      notes[job.at] = await serial(() => settle(job.target, result));
+    }
+  };
+  const runs = await Promise.allSettled(Array.from({ length: width }, () => worker().catch((error) => {
+    stop = true;
+    throw error;
+  })));
+  const failed = runs.find((run) => run.status === "rejected");
+  if (failed) throw failed.reason;
+  return notes;
 }
 
 // The sweep waits out a busy review browser instead of reviewing without it, so people's reviews keep their room.
@@ -344,67 +242,33 @@ const BUSY_TRIES = 3;
 const BUSY_WAIT_MS = 15000;
 
 function patientBrowse(browse, stopped, sleep) {
-	if (typeof browse !== 'function') return browse;
-	const wait = sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
-	return async (...args) => {
-		for (let tries = 1; ; tries += 1) {
-			const res = await browse(...args);
-			const busy = res && res.ok === false && /busy/i.test(String(res.error || ''));
-			if (!busy || tries >= BUSY_TRIES || (stopped && stopped())) return res;
-			await wait(BUSY_WAIT_MS * tries);
-		}
-	};
+  if (typeof browse !== "function") return browse;
+  const wait = sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  return async (...args) => {
+    for (let tries = 1; ; tries += 1) {
+      const res = await browse(...args);
+      const busy = res && res.ok === false && /busy/i.test(String(res.error || ""));
+      if (!busy || tries >= BUSY_TRIES || (stopped && stopped())) return res;
+      await wait(BUSY_WAIT_MS * tries);
+    }
+  };
 }
 
 // One night's tally against the cap, for the watchdog: a night that reviewed under half the cap is short.
 function night(state, day, cap) {
-	const row = ((state || {}).days || {})[day] || {};
-	const out = { done: row.done || 0, failed: row.failed || 0, skipped: row.skipped || 0 };
-	return Object.assign(out, { short: out.done + out.failed < cap / 2 });
+  const row = ((state || {}).days || {})[day] || {};
+  const out = { done: row.done || 0, failed: row.failed || 0, skipped: row.skipped || 0 };
+  return Object.assign(out, { short: out.done + out.failed < cap / 2 });
 }
 
 // Totals over the days kept in state, for the ops digest.
 function totals(state, sinceDay) {
-	const out = { done: 0, failed: 0, skipped: 0 };
-	Object.entries((state || {}).days || {}).forEach(([day, row]) => {
-		if (day < sinceDay) return;
-		Object.keys(out).forEach((key) => {
-			out[key] += row[key] || 0;
-		});
-	});
-	return out;
+  const out = { done: 0, failed: 0, skipped: 0 };
+  Object.entries((state || {}).days || {}).forEach(([day, row]) => {
+    if (day < sinceDay) return;
+    Object.keys(out).forEach((key) => { out[key] += row[key] || 0; });
+  });
+  return out;
 }
 
-module.exports = {
-	laneStart,
-	outreachView,
-	PER_DAY,
-	PER_TICK,
-	REVIEW_MS,
-	TICK_MS,
-	TICK_SECONDS,
-	roomForReview,
-	runTick,
-	patientBrowse,
-	BUSY_TRIES,
-	BUSY_WAIT_MS,
-	night,
-	REVISIT_DAYS,
-	PER_COUNTRY,
-	GLOBAL_RANK,
-	OUTREACH_PER_DAY,
-	TIER1,
-	BLOCKED,
-	RESERVED,
-	langOf,
-	hostOf,
-	suffixRegistrable,
-	seedHosts,
-	lapOrder,
-	nextSlot,
-	nextOutreach,
-	intake,
-	doneOn,
-	tally,
-	totals,
-};
+module.exports = { laneStart, outreachView, PER_DAY, PER_TICK, REVIEW_MS, TICK_MS, TICK_SECONDS, roomForReview, runTick, patientBrowse, BUSY_TRIES, BUSY_WAIT_MS, night, REVISIT_DAYS, PER_COUNTRY, GLOBAL_RANK, OUTREACH_PER_DAY, TIER1, BLOCKED, RESERVED, langOf, hostOf, suffixRegistrable, seedHosts, lapOrder, nextSlot, nextOutreach, intake, doneOn, tally, totals };

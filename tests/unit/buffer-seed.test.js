@@ -1,214 +1,102 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { batchIndex, matchPost, staleScheduled, duplicateScheduled } = require('../../scripts/buffer-queue');
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { batchIndex, matchPost, staleScheduled, duplicateScheduled } = require("../../scripts/buffer-queue");
 
 function posts() {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), 'buffer-seed-'));
-	const write = (file, text) => {
-		fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-		fs.writeFileSync(path.join(root, file), text);
-	};
-	write(
-		'tips/captions.json',
-		JSON.stringify({
-			'01-hsts': { linkedin: 'One header.\n\n180 days', tiktok: 'One header. Run curl' },
-			'02-alt': { linkedin: 'Alt text' },
-		})
-	);
-	write(
-		'tips/calendar.csv',
-		'Date,Time,Channel,Post,Asset\n2026-10-26,17:55,youtube,01-hsts,clip/01-hsts.mp4\n2026-10-27,17:55,youtube,02-alt,clip/02-alt.mp4\n2026-10-27,08:00,x,02-alt,feed/02-alt.jpg\n'
-	);
-	write('runs/captions.json', JSON.stringify({ '01-ilo': { linkedin: 'ilo.org' } }));
-	write('runs/calendar.csv', 'Date,Time,Channel,Post,Asset\n2026-10-27,08:00,x,01-ilo,feed/01-ilo.jpg\n');
-	write(
-		'launch/calendar.csv',
-		'Date,Time,Channel,Post,Asset\n2026-10-19,13:30,youtube,es/talking,es/talking-reel.mp4\n2026-10-26,18:00,tiktok,en/a11y,en/a11y-reel.mp4\n2026-10-26,18:00,tiktok,es/a11y,es/a11y-reel.mp4\n'
-	);
-	write(
-		'launch/es/talking-captions.json',
-		JSON.stringify({ linkedin: 'Alguien preguntó', youtube: 'Alguien preguntó si el sitio funciona' })
-	);
-	write(
-		'launch/en/a11y-captions.json',
-		JSON.stringify({
-			tiktok: 'Someone asked whether the site works with a keyboard and a screen reader. Where would you even start?',
-		})
-	);
-	write(
-		'launch/es/a11y-captions.json',
-		JSON.stringify({
-			tiktok: 'Alguien preguntó si el sitio funciona con teclado y lector de pantalla. ¿Por dónde empezarías?',
-		})
-	);
-	write(
-		'promo/captions.json',
-		JSON.stringify({
-			'01-en': { x: 'QA-lab URL Review reads a public page and describes it back to you, one' },
-			'02-en': { x: 'QA-lab URL Review reads a public page and describes it back to you, two' },
-		})
-	);
-	return batchIndex(root);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "buffer-seed-"));
+  const write = (file, text) => {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), text);
+  };
+  write("tips/captions.json", JSON.stringify({ "01-hsts": { linkedin: "One header.\n\n180 days", tiktok: "One header. Run curl" }, "02-alt": { linkedin: "Alt text" } }));
+  write("tips/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-26,17:55,youtube,01-hsts,clip/01-hsts.mp4\n2026-10-27,17:55,youtube,02-alt,clip/02-alt.mp4\n2026-10-27,08:00,x,02-alt,feed/02-alt.jpg\n");
+  write("runs/captions.json", JSON.stringify({ "01-ilo": { linkedin: "ilo.org" } }));
+  write("runs/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-27,08:00,x,01-ilo,feed/01-ilo.jpg\n");
+  write("launch/calendar.csv", "Date,Time,Channel,Post,Asset\n2026-10-19,13:30,youtube,es/talking,es/talking-reel.mp4\n2026-10-26,18:00,tiktok,en/a11y,en/a11y-reel.mp4\n2026-10-26,18:00,tiktok,es/a11y,es/a11y-reel.mp4\n");
+  write("launch/es/talking-captions.json", JSON.stringify({ linkedin: "Alguien preguntó", youtube: "Alguien preguntó si el sitio funciona" }));
+  write("launch/en/a11y-captions.json", JSON.stringify({ tiktok: "Someone asked whether the site works with a keyboard and a screen reader. Where would you even start?" }));
+  write("launch/es/a11y-captions.json", JSON.stringify({ tiktok: "Alguien preguntó si el sitio funciona con teclado y lector de pantalla. ¿Por dónde empezarías?" }));
+  write("promo/captions.json", JSON.stringify({ "01-en": { x: "QA-lab URL Review reads a public page and describes it back to you, one" }, "02-en": { x: "QA-lab URL Review reads a public page and describes it back to you, two" } }));
+  return batchIndex(root);
 }
 
-test('a Buffer post matches its batch post by image or clip address, wherever it is served from', () => {
-	const index = posts();
-	assert.strictEqual(
-		matchPost(index, { assets: [{ source: 'https://carlosandmunoz.com/media/social-posts/tips/feed/02-alt.jpg' }] }),
-		'tips/02-alt'
-	);
-	assert.strictEqual(
-		matchPost(index, { assets: [{ source: 'https://github.com/o/r/releases/download/tips/01-hsts.mp4?x=1' }] }),
-		'tips/01-hsts'
-	);
+test("a Buffer post matches its batch post by image or clip address, wherever it is served from", () => {
+  const index = posts();
+  assert.strictEqual(matchPost(index, { assets: [{ source: "https://carlosandmunoz.com/media/social-posts/tips/feed/02-alt.jpg" }] }), "tips/02-alt");
+  assert.strictEqual(matchPost(index, { assets: [{ source: "https://github.com/o/r/releases/download/tips/01-hsts.mp4?x=1" }] }), "tips/01-hsts");
 });
 
 test("then by caption, spacing aside, including the launch set's captions per language", () => {
-	const index = posts();
-	assert.strictEqual(matchPost(index, { text: 'One header.  180 days' }), 'tips/01-hsts');
-	assert.strictEqual(matchPost(index, { text: 'Alguien preguntó si el sitio funciona' }), 'launch/es/talking');
+  const index = posts();
+  assert.strictEqual(matchPost(index, { text: "One header.  180 days" }), "tips/01-hsts");
+  assert.strictEqual(matchPost(index, { text: "Alguien preguntó si el sitio funciona" }), "launch/es/talking");
 });
 
-test('then by its calendar slot, which is Bogotá time, unless two posts share it', () => {
-	const index = posts();
-	const voiced = {
-		text: 'Un solo encabezado.',
-		assets: [{ source: 'https://buffer-media-uploads.s3.amazonaws.com/uploads/x.mp4' }],
-	};
-	assert.strictEqual(
-		matchPost(index, Object.assign({ dueAt: '2026-10-26T22:55:00.000Z' }, voiced), 'youtube'),
-		'tips/01-hsts'
-	);
-	assert.strictEqual(matchPost(index, Object.assign({ dueAt: '2026-10-26T22:55:00.000Z' }, voiced), 'tiktok'), null);
-	assert.strictEqual(matchPost(index, { text: '?', dueAt: '2026-10-27T13:00:00.000Z' }, 'x'), null);
-	assert.strictEqual(
-		matchPost(index, { text: '?', dueAt: '2026-10-19T18:30:00.000Z' }, 'youtube'),
-		'launch/es/talking'
-	);
-	assert.strictEqual(matchPost(index, { text: 'nothing like it' }, 'linkedin'), null);
-	assert.strictEqual(
-		matchPost(
-			index,
-			Object.assign({ dueAt: '2026-10-26T22:55:00.000Z' }, voiced),
-			'youtube',
-			(name) => name === 'tips/01-hsts'
-		),
-		null
-	);
-	assert.strictEqual(
-		matchPost(index, { text: 'One header. Run curl' }, 'tiktok', () => true),
-		'tips/01-hsts'
-	);
+test("then by its calendar slot, which is Bogotá time, unless two posts share it", () => {
+  const index = posts();
+  const voiced = { text: "Un solo encabezado.", assets: [{ source: "https://buffer-media-uploads.s3.amazonaws.com/uploads/x.mp4" }] };
+  assert.strictEqual(matchPost(index, Object.assign({ dueAt: "2026-10-26T22:55:00.000Z" }, voiced), "youtube"), "tips/01-hsts");
+  assert.strictEqual(matchPost(index, Object.assign({ dueAt: "2026-10-26T22:55:00.000Z" }, voiced), "tiktok"), null);
+  assert.strictEqual(matchPost(index, { text: "?", dueAt: "2026-10-27T13:00:00.000Z" }, "x"), null);
+  assert.strictEqual(matchPost(index, { text: "?", dueAt: "2026-10-19T18:30:00.000Z" }, "youtube"), "launch/es/talking");
+  assert.strictEqual(matchPost(index, { text: "nothing like it" }, "linkedin"), null);
+  assert.strictEqual(matchPost(index, Object.assign({ dueAt: "2026-10-26T22:55:00.000Z" }, voiced), "youtube", (name) => name === "tips/01-hsts"), null);
+  assert.strictEqual(matchPost(index, { text: "One header. Run curl" }, "tiktok", () => true), "tips/01-hsts");
 });
 
-test('a sent caption edited after it was written matches by its opening words, unless two posts open the same way', () => {
-	const index = posts();
-	const tiktok = {
-		status: 'sent',
-		text: 'Someone asked whether the site works with a keyboard and a screen reader. Where would you even start? First review included',
-		sentAt: '2026-10-19T03:40:52.000Z',
-	};
-	assert.strictEqual(matchPost(index, tiktok, 'tiktok'), 'launch/en/a11y');
-	assert.strictEqual(
-		matchPost(index, Object.assign({}, tiktok, { status: 'scheduled', dueAt: '2026-10-26T23:00:00.000Z' }), 'tiktok'),
-		null,
-		'a scheduled one is stale, and the six languages share the slot'
-	);
-	assert.strictEqual(
-		matchPost(
-			index,
-			{ status: 'sent', text: 'QA-lab URL Review reads a public page and describes it back to you. This film' },
-			'x'
-		),
-		null
-	);
+test("a sent caption edited after it was written matches by its opening words, unless two posts open the same way", () => {
+  const index = posts();
+  const tiktok = { status: "sent", text: "Someone asked whether the site works with a keyboard and a screen reader. Where would you even start? First review included", sentAt: "2026-10-19T03:40:52.000Z" };
+  assert.strictEqual(matchPost(index, tiktok, "tiktok"), "launch/en/a11y");
+  assert.strictEqual(matchPost(index, Object.assign({}, tiktok, { status: "scheduled", dueAt: "2026-10-26T23:00:00.000Z" }), "tiktok"), null, "a scheduled one is stale, and the six languages share the slot");
+  assert.strictEqual(matchPost(index, { status: "sent", text: "QA-lab URL Review reads a public page and describes it back to you. This film" }, "x"), null);
 });
 
-test('a sent caption edited after it was written matches by its opening words, unless two posts open the same way', () => {
-	const index = posts();
-	const tiktok = {
-		status: 'sent',
-		text: 'Someone asked whether the site works with a keyboard and a screen reader. Where would you even start? First review included',
-		sentAt: '2026-10-19T03:40:52.000Z',
-	};
-	assert.strictEqual(matchPost(index, tiktok, 'tiktok'), 'launch/en/a11y');
-	assert.strictEqual(
-		matchPost(index, Object.assign({}, tiktok, { status: 'scheduled', dueAt: '2026-10-26T23:00:00.000Z' }), 'tiktok'),
-		null,
-		'a scheduled one is stale, and the six languages share the slot'
-	);
-	assert.strictEqual(
-		matchPost(
-			index,
-			{ status: 'sent', text: 'QA-lab URL Review reads a public page and describes it back to you. This film' },
-			'x'
-		),
-		null
-	);
+test("a sent caption edited after it was written matches by its opening words, unless two posts open the same way", () => {
+  const index = posts();
+  const tiktok = { status: "sent", text: "Someone asked whether the site works with a keyboard and a screen reader. Where would you even start? First review included", sentAt: "2026-10-19T03:40:52.000Z" };
+  assert.strictEqual(matchPost(index, tiktok, "tiktok"), "launch/en/a11y");
+  assert.strictEqual(matchPost(index, Object.assign({}, tiktok, { status: "scheduled", dueAt: "2026-10-26T23:00:00.000Z" }), "tiktok"), null, "a scheduled one is stale, and the six languages share the slot");
+  assert.strictEqual(matchPost(index, { status: "sent", text: "QA-lab URL Review reads a public page and describes it back to you. This film" }, "x"), null);
 });
 
-test('--delete-unmatched picks only scheduled posts still to come that match no batch post and no ledger entry', () => {
-	const index = posts();
-	const now = Date.parse('2026-10-25T05:00:00.000Z');
-	const item = (id, node, slot = 'tiktok') => ({
-		slot,
-		profile: slot + ' (x)',
-		node: Object.assign(
-			{ id, status: 'scheduled', dueAt: '2026-10-27T23:00:00.000Z', text: 'Stale launch post' },
-			node
-		),
-	});
-	const items = [
-		item('stale'),
-		item('matched', { text: 'One header. Run curl' }),
-		item('sent', { status: 'sent', sentAt: '2026-10-27T23:00:00.000Z' }),
-		item('past', { dueAt: '2026-10-24T23:00:00.000Z' }),
-		item('undated', { dueAt: null }),
-		item('slotted', { dueAt: '2026-10-26T22:55:00.000Z' }, 'youtube'),
-		item('ledgered'),
-		item('claimed', { dueAt: '2026-10-27T22:55:00.000Z' }, 'youtube'),
-	];
-	const book = {
-		posts: {
-			'tips/02-alt': [
-				{ channel: 'tiktok', profile: 'tiktok (x)', id: 'ledgered', result: 'queued' },
-				{ channel: 'youtube', profile: 'youtube (x)', id: 'other', result: 'queued' },
-			],
-		},
-	};
-	assert.deepStrictEqual(
-		staleScheduled(index, items, book, now).map((i) => i.node.id),
-		['stale', 'claimed']
-	);
+test("--delete-unmatched picks only scheduled posts still to come that match no batch post and no ledger entry", () => {
+  const index = posts();
+  const now = Date.parse("2026-10-25T05:00:00.000Z");
+  const item = (id, node, slot = "tiktok") => ({ slot, profile: slot + " (x)", node: Object.assign({ id, status: "scheduled", dueAt: "2026-10-27T23:00:00.000Z", text: "Stale launch post" }, node) });
+  const items = [
+    item("stale"),
+    item("matched", { text: "One header. Run curl" }),
+    item("sent", { status: "sent", sentAt: "2026-10-27T23:00:00.000Z" }),
+    item("past", { dueAt: "2026-10-24T23:00:00.000Z" }),
+    item("undated", { dueAt: null }),
+    item("slotted", { dueAt: "2026-10-26T22:55:00.000Z" }, "youtube"),
+    item("ledgered"),
+    item("claimed", { dueAt: "2026-10-27T22:55:00.000Z" }, "youtube")
+  ];
+  const book = { posts: {
+    "tips/02-alt": [{ channel: "tiktok", profile: "tiktok (x)", id: "ledgered", result: "queued" }, { channel: "youtube", profile: "youtube (x)", id: "other", result: "queued" }]
+  } };
+  assert.deepStrictEqual(staleScheduled(index, items, book, now).map((i) => i.node.id), ["stale", "claimed"]);
 });
 
-test('--delete-duplicates keeps the first scheduled copy of a batch post on each profile and picks the later ones (#2160)', () => {
-	const index = posts();
-	const now = Date.parse('2026-10-25T05:00:00.000Z');
-	const clip = 'https://github.com/o/r/releases/download/tips/01-hsts.mp4';
-	const item = (id, profile, node) => ({
-		slot: profile.split(' ')[0],
-		profile,
-		node: Object.assign(
-			{ id, status: 'scheduled', dueAt: '2026-10-27T23:00:00.000Z', assets: [{ source: clip }] },
-			node
-		),
-	});
-	const items = [
-		item('6ae82454aaaa', 'tiktok (q)'),
-		item('6ae81c2fbbbb', 'tiktok (q)'),
-		item('6ae81c30cccc', 'youtube (q)'),
-		item('6ae82455dddd', 'youtube (q)'),
-		item('6ae82456eeee', 'youtube (q)', { dueAt: '2026-10-25T05:10:00.000Z' }),
-		item('6ae82457ffff', 'youtube (q)', { status: 'sent' }),
-		item('6ae81c31aaaa', 'linkedin (q)', { assets: [], text: 'Alt text' }),
-		item('6ae82458bbbb', 'linkedin (q)', { assets: [], text: 'nothing like it' }),
-	];
-	assert.deepStrictEqual(
-		duplicateScheduled(index, items, now).map((i) => i.node.id),
-		['6ae82454aaaa', '6ae82455dddd']
-	);
+test("--delete-duplicates keeps the first scheduled copy of a batch post on each profile and picks the later ones (#2160)", () => {
+  const index = posts();
+  const now = Date.parse("2026-10-25T05:00:00.000Z");
+  const clip = "https://github.com/o/r/releases/download/tips/01-hsts.mp4";
+  const item = (id, profile, node) => ({ slot: profile.split(" ")[0], profile, node: Object.assign({ id, status: "scheduled", dueAt: "2026-10-27T23:00:00.000Z", assets: [{ source: clip }] }, node) });
+  const items = [
+    item("6ae82454aaaa", "tiktok (q)"),
+    item("6ae81c2fbbbb", "tiktok (q)"),
+    item("6ae81c30cccc", "youtube (q)"),
+    item("6ae82455dddd", "youtube (q)"),
+    item("6ae82456eeee", "youtube (q)", { dueAt: "2026-10-25T05:10:00.000Z" }),
+    item("6ae82457ffff", "youtube (q)", { status: "sent" }),
+    item("6ae81c31aaaa", "linkedin (q)", { assets: [], text: "Alt text" }),
+    item("6ae82458bbbb", "linkedin (q)", { assets: [], text: "nothing like it" })
+  ];
+  assert.deepStrictEqual(duplicateScheduled(index, items, now).map((i) => i.node.id), ["6ae82454aaaa", "6ae82455dddd"]);
 });

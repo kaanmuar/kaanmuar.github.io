@@ -1,16 +1,14 @@
 /* The qalabreview.com landing (#1867): a home and one page per audience in six languages, static HTML from the Worker.
    Every button leaves for carlosandmunoz.com through `link`, which adds the utm tags Jarvis counts. */
-import { LABELS, SEGMENTS } from './copy.js';
+import { LABELS, SEGMENTS } from "./copy.js";
 
-export const ORIGIN = 'https://qalabreview.com';
+export const ORIGIN = "https://qalabreview.com";
 export const AUDIENCES = Object.keys(SEGMENTS);
-const ASSETS = 'https://carlosandmunoz.com/assets/';
+const ASSETS = "https://carlosandmunoz.com/assets/";
 
-const esc = (s) =>
-	String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const path = (lang, audience) => '/' + [lang, audience].filter(Boolean).join('/');
-const list = (items, cls) =>
-	`<ul${cls ? ` class="${cls}"` : ''}>${items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>`;
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const path = (lang, audience) => "/" + [lang, audience].filter(Boolean).join("/");
+const list = (items, cls) => `<ul${cls ? ` class="${cls}"` : ""}>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
 const CSS = `
 :root{color-scheme:dark;--bg:#10161d;--panel:rgba(22,29,38,.72);--line:#2a3440;--text:#e8eef2;--muted:#a9b4bf;--cyan:#4db3bb;--em:#7ef6fb}
@@ -52,54 +50,39 @@ h2{margin:0 0 .6rem;font:400 1.6rem/1.15 "Instrument Serif",Georgia,serif}
 footer{margin-top:3rem;padding:1.5rem 0 2.5rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
 footer nav{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;margin-bottom:1rem}
 @media (min-width:48rem){.cols{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:repeat(3,1fr)}}
-`.replace(/\n/g, '');
+`.replace(/\n/g, "");
 
 function extraLinks(text, link) {
-	return text
-		.split(' · ')
-		.map((part) => {
-			const m = part.match(/^(.*?)\s*:\s*carlosandmunoz\.com\/(\S+)$/);
-			return m ? `<a href="${esc(link(m[2]))}">${esc(m[1])}</a>` : esc(part);
-		})
-		.join(' · ');
+  return text.split(" · ").map((part) => {
+    const m = part.match(/^(.*?)\s*:\s*carlosandmunoz\.com\/(\S+)$/);
+    return m ? `<a href="${esc(link(m[2]))}">${esc(m[1])}</a>` : esc(part);
+  }).join(" · ");
 }
 
 /* `link(page, extra)` returns a tagged carlosandmunoz.com address; `review` is the free review page for `lang`. */
 export function renderLanding(lang, audience, { link, review }) {
-	const L = LABELS[lang];
-	const seg = audience ? SEGMENTS[audience][lang] : null;
-	const canonical = ORIGIN + path(lang, audience);
-	const title = seg ? `${seg.kicker} · QA-lab URL Review` : `QA-lab URL Review: ${L.hero.join(' ')}`;
-	const description = seg ? seg.sub : SEGMENTS.universities[lang].sub;
-	const call = link('book.html', { type: 'intro', lang });
-	const alternates =
-		Object.keys(LABELS)
-			.map((l) => `<link rel="alternate" hreflang="${l}" href="${ORIGIN + path(l, audience)}">`)
-			.join('') + `<link rel="alternate" hreflang="x-default" href="${ORIGIN + (audience ? '/' + audience : '/')}">`;
-	const langs = Object.keys(LABELS)
-		.map(
-			(l) =>
-				`<a href="${path(l, audience)}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="page"' : ''}>${l.toUpperCase()}</a>`
-		)
-		.join('');
-	const h1 = seg ? esc(seg.headline) : `${esc(L.hero[0])} <em>${esc(L.hero[1])}</em> ${esc(L.hero[2])}`;
-	const facts =
-		audience === 'colleges'
-			? `<p><strong>${esc(L.labFree)}</strong></p><p>${esc(L.labHonest)}</p><p>${esc(L.free)}</p>`
-			: `<p><strong>${esc(L.free)}</strong>. ${esc(L.prices)}.</p><p>${esc(L.reopen)}</p>`;
-	const body = seg
-		? `<section class="cols">${seg.cols.map(([h, items]) => `<div class="panel"><h2>${esc(h)}</h2>${list(items)}</div>`).join('')}</section>
+  const L = LABELS[lang];
+  const seg = audience ? SEGMENTS[audience][lang] : null;
+  const canonical = ORIGIN + path(lang, audience);
+  const title = seg ? `${seg.kicker} · QA-lab URL Review` : `QA-lab URL Review: ${L.hero.join(" ")}`;
+  const description = seg ? seg.sub : SEGMENTS.universities[lang].sub;
+  const call = link("book.html", { type: "intro", lang });
+  const alternates = Object.keys(LABELS).map((l) => `<link rel="alternate" hreflang="${l}" href="${ORIGIN + path(l, audience)}">`).join("")
+    + `<link rel="alternate" hreflang="x-default" href="${ORIGIN + (audience ? "/" + audience : "/")}">`;
+  const langs = Object.keys(LABELS).map((l) => `<a href="${path(l, audience)}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="page"' : ""}>${l.toUpperCase()}</a>`).join("");
+  const h1 = seg ? esc(seg.headline) : `${esc(L.hero[0])} <em>${esc(L.hero[1])}</em> ${esc(L.hero[2])}`;
+  const facts = audience === "colleges"
+    ? `<p><strong>${esc(L.labFree)}</strong></p><p>${esc(L.labHonest)}</p><p>${esc(L.free)}</p>`
+    : `<p><strong>${esc(L.free)}</strong>. ${esc(L.prices)}.</p><p>${esc(L.reopen)}</p>`;
+  const body = seg
+    ? `<section class="cols">${seg.cols.map(([h, items]) => `<div class="panel"><h2>${esc(h)}</h2>${list(items)}</div>`).join("")}</section>
 <p class="extra">${extraLinks(seg.extra, link)}</p>`
-		: `<section><h2>${esc(L.who)}</h2><ul class="cards">${AUDIENCES.map((a) => `<li><a href="${path(lang, a)}"><span>${esc(L.names[a])}</span>${esc(SEGMENTS[a][lang].headline)}</a></li>`).join('')}</ul></section>`;
-	const others = audience
-		? `<nav aria-label="${esc(L.others)}"><a href="${path(lang)}">QA-lab URL Review</a>${AUDIENCES.filter(
-				(a) => a !== audience
-			)
-				.map((a) => `<a href="${path(lang, a)}">${esc(L.names[a])}</a>`)
-				.join('')}</nav>`
-		: '';
+    : `<section><h2>${esc(L.who)}</h2><ul class="cards">${AUDIENCES.map((a) => `<li><a href="${path(lang, a)}"><span>${esc(L.names[a])}</span>${esc(SEGMENTS[a][lang].headline)}</a></li>`).join("")}</ul></section>`;
+  const others = audience
+    ? `<nav aria-label="${esc(L.others)}"><a href="${path(lang)}">QA-lab URL Review</a>${AUDIENCES.filter((a) => a !== audience).map((a) => `<a href="${path(lang, a)}">${esc(L.names[a])}</a>`).join("")}</nav>`
+    : "";
 
-	return `<!doctype html>
+  return `<!doctype html>
 <html lang="${lang}">
 <head>
 <meta charset="utf-8">
@@ -111,7 +94,7 @@ ${alternates}
 <meta name="theme-color" content="#071116">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QA-lab URL Review">
-<meta property="og:title" content="${esc(seg ? seg.headline : L.hero.join(' '))}">
+<meta property="og:title" content="${esc(seg ? seg.headline : L.hero.join(" "))}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${canonical}">
 <meta property="og:image" content="${ASSETS}share/qa-review.jpg?v=20261027">
@@ -131,14 +114,14 @@ ${alternates}
 </header>
 <main>
 <section>
-<p class="eyebrow">${esc(seg ? seg.kicker : 'QA-lab URL Review')}</p>
+<p class="eyebrow">${esc(seg ? seg.kicker : "QA-lab URL Review")}</p>
 <h1>${h1}</h1>
 <p class="lede">${esc(description)}</p>
 <div class="actions"><a class="btn" href="${esc(review)}">${esc(L.cta)}</a><a href="${esc(call)}">${esc(L.call)}</a></div>
-${list(L.areas, 'areas')}
+${list(L.areas, "areas")}
 </section>
 <div class="panel">${facts}</div>
-<ol class="steps">${(audience === 'colleges' ? L.labSteps : L.steps).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+<ol class="steps">${(audience === "colleges" ? L.labSteps : L.steps).map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
 ${body}
 <p class="actions"><a class="btn" href="${esc(review)}">${esc(L.cta)}</a></p>
 </main>

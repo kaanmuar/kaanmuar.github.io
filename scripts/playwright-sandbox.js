@@ -13,16 +13,14 @@
  *   require('./scripts/playwright-sandbox');
  */
 if (process.env.CURSOR_SANDBOX === 'seatbelt') {
-	console.error(
-		[
-			'Playwright cannot launch a browser inside the Cursor agent sandbox: Chromium segfaults on start.',
-			'Re-run this command outside the sandbox (required_permissions: ["all"]).',
-			'Do not run `npx playwright install`: the browsers are already in ~/Library/Caches/ms-playwright.',
-		].join('\n')
-	);
-	process.exit(1);
+  console.error([
+    'Playwright cannot launch a browser inside the Cursor agent sandbox: Chromium segfaults on start.',
+    'Re-run this command outside the sandbox (required_permissions: ["all"]).',
+    'Do not run `npx playwright install`: the browsers are already in ~/Library/Caches/ms-playwright.'
+  ].join('\n'));
+  process.exit(1);
 }
 
 if ((process.env.PLAYWRIGHT_BROWSERS_PATH || '').includes('cursor-sandbox-cache')) {
-	delete process.env.PLAYWRIGHT_BROWSERS_PATH;
+  delete process.env.PLAYWRIGHT_BROWSERS_PATH;
 }

@@ -1,403 +1,348 @@
 /**
  * Owner view of URL-review runs. Summaries only: no page HTML.
  */
-const offers = require('./url-review-offers');
-const publish = require('./url-review-publish');
-const fixOffers = require('./url-review-fix-offers');
-const reviewPromise = require('./url-review-promise');
+const offers = require("./url-review-offers");
+const publish = require("./url-review-publish");
+const fixOffers = require("./url-review-fix-offers");
+const reviewPromise = require("./url-review-promise");
 
 const HELD_WORDS = {
-	'not-complete': 'the review did not complete',
-	'not-public': 'the address is not a public host',
-	'own-or-test': 'our own or a reserved host',
-	'test-run': 'a sandbox test run',
-	'asker-opted-out': "the asker ticked don't publish",
-	unlisted: 'the owner asked to be left out',
-	'safe-browsing-flagged': "Google's Safe Browsing lists flag the site or a script it loads",
-	'threat-listed': 'URLhaus, PhishStats or Cloudflare lists the site as phishing or malware',
-	'exposed-files': 'the site serves exposed files such as .git, .env or backups',
-	'no-score': 'the review has no score',
-	'timed-out': 'the review ran out of time',
-	'too-few-pages': 'fewer than ' + publish.MIN_PAGES + ' pages were analyzed',
-	'start-page-blocked': 'the start page was blocked or failed',
-	'javascript-shell': 'the site is an empty JavaScript shell',
+  "not-complete": "the review did not complete",
+  "not-public": "the address is not a public host",
+  "own-or-test": "our own or a reserved host",
+  "test-run": "a sandbox test run",
+  "asker-opted-out": "the asker ticked don't publish",
+  unlisted: "the owner asked to be left out",
+  "safe-browsing-flagged": "Google's Safe Browsing lists flag the site or a script it loads",
+  "threat-listed": "URLhaus, PhishStats or Cloudflare lists the site as phishing or malware",
+  "exposed-files": "the site serves exposed files such as .git, .env or backups",
+  "no-score": "the review has no score",
+  "timed-out": "the review ran out of time",
+  "too-few-pages": "fewer than " + publish.MIN_PAGES + " pages were analyzed",
+  "start-page-blocked": "the start page was blocked or failed",
+  "javascript-shell": "the site is an empty JavaScript shell"
 };
 
 function liveState(row, unlisted) {
-	if (!row.report || (row.status !== 'complete' && row.status !== 'stopped')) return null;
-	const reason = publish.heldReason(row, unlisted);
-	return { listed: !reason, reason, why: HELD_WORDS[reason] || reason };
+  if (!row.report || (row.status !== "complete" && row.status !== "stopped")) return null;
+  const reason = publish.heldReason(row, unlisted);
+  return { listed: !reason, reason, why: HELD_WORDS[reason] || reason };
 }
 
 function clip(value, max) {
-	const text = String(value == null ? '' : value)
-		.replace(/\s+/g, ' ')
-		.trim();
-	if (!text) return '';
-	return text.length > max ? text.slice(0, max - 1) + '…' : text;
+  const text = String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
 }
 
 function hostFrom(value) {
-	try {
-		return new URL(String(value || '')).hostname;
-	} catch (error) {
-		return '';
-	}
+  try { return new URL(String(value || "")).hostname; } catch (error) { return ""; }
 }
 
 function whenOf(row) {
-	return row.createdAt || row.at || (row.report && row.report.fetchedAt) || '';
+  return row.createdAt || row.at || (row.report && row.report.fetchedAt) || "";
 }
 
 function addressOf(row) {
-	return row.requestedUrl || row.url || (row.report && (row.report.finalUrl || row.report.host)) || '';
+  return row.requestedUrl || row.url || (row.report && (row.report.finalUrl || row.report.host)) || "";
 }
 
 function kindFor(row) {
-	const status = String((row && row.status) || '');
-	if (status === 'complete') return 'report';
-	if (status === 'stopped') return 'stopped';
-	if (status === 'paid-report') return 'paid';
-	if (status === 'run-credit') return 'run-paid';
-	if (status === 'paid-addon') return 'addon-paid';
-	if (status === 'checkout-open') return 'checkout';
-	if (status === 'blocked') return 'blocked';
-	if (status === 'payment-due') return 'payment-due';
-	if (status === 'capture') return 'capture';
-	if (status === 'run-credit-used') return 'credit';
-	if (status === 'monthly-pass') return row.paid === true ? 'pass-paid' : 'monthly';
-	if (status === 'follow-stop') return 'follow-stop';
-	if (status === 'running') return 'started';
-	if (status === 'failed') return 'failed';
-	return '';
+  const status = String((row && row.status) || "");
+  if (status === "complete") return "report";
+  if (status === "stopped") return "stopped";
+  if (status === "paid-report") return "paid";
+  if (status === "run-credit") return "run-paid";
+  if (status === "paid-addon") return "addon-paid";
+  if (status === "checkout-open") return "checkout";
+  if (status === "blocked") return "blocked";
+  if (status === "payment-due") return "payment-due";
+  if (status === "capture") return "capture";
+  if (status === "run-credit-used") return "credit";
+  if (status === "monthly-pass") return row.paid === true ? "pass-paid" : "monthly";
+  if (status === "follow-stop") return "follow-stop";
+  if (status === "running") return "started";
+  if (status === "failed") return "failed";
+  return "";
 }
 
 const TITLES = {
-	started: 'A review is running',
-	report: 'A review finished and a report was generated',
-	stopped: 'A review stopped and a partial report was kept',
-	paid: 'A report was paid',
-	'run-paid': 'A later run was paid',
-	'addon-paid': 'A case export, signals, or a signed-in run was paid',
-	checkout: 'A checkout was opened',
-	blocked: 'A review was refused',
-	'payment-due': 'A review is waiting on payment',
-	capture: 'A report was copied or printed',
-	credit: 'A paid run credit was used',
-	failed: 'A review failed',
-	monthly: 'A 30-day pass was granted on this machine. It opens the reports run on it. No charge was made.',
-	'pass-paid': 'A 30-day pass was bought',
-	'follow-stop': 'Follow-up notes were stopped',
-	'payment-unmatched': 'PayPal took a payment that matches no open checkout. Nothing was unlocked.',
-	'payment-refunded': 'A payment was refunded or reversed on PayPal',
-	'payment-disputed': 'A buyer opened or updated a PayPal dispute',
-	'credit-returned': 'A paid run failed and its credit was given back',
+  started: "A review is running",
+  report: "A review finished and a report was generated",
+  stopped: "A review stopped and a partial report was kept",
+  paid: "A report was paid",
+  "run-paid": "A later run was paid",
+  "addon-paid": "A case export, signals, or a signed-in run was paid",
+  checkout: "A checkout was opened",
+  blocked: "A review was refused",
+  "payment-due": "A review is waiting on payment",
+  capture: "A report was copied or printed",
+  credit: "A paid run credit was used",
+  failed: "A review failed",
+  monthly: "A 30-day pass was granted on this machine. It opens the reports run on it. No charge was made.",
+  "pass-paid": "A 30-day pass was bought",
+  "follow-stop": "Follow-up notes were stopped",
+  "payment-unmatched": "PayPal took a payment that matches no open checkout. Nothing was unlocked.",
+  "payment-refunded": "A payment was refunded or reversed on PayPal",
+  "payment-disputed": "A buyer opened or updated a PayPal dispute",
+  "credit-returned": "A paid run failed and its credit was given back"
 };
 
 function rowsFor(source) {
-	const report = source.report || {};
-	const counts = report.counts || {};
-	const items = [];
-	const add = (label, value) => {
-		const text = clip(value, 180);
-		if (text) items.push({ label, value: text });
-	};
-	add('Who', source.name);
-	add('Email', source.email);
-	add('Address', addressOf(source));
-	add('Status', source.status);
-	add('Reason', source.reason);
-	add('Frameworks', Array.isArray(source.frameworks) ? source.frameworks.join(', ') : '');
-	add('Pages', source.pages);
-	add('Depth', source.depth);
-	add('Cases', counts.cases);
-	add('Signals', Array.isArray(report.alerts) ? report.alerts.length : '');
-	add('Price', source.priceUsd != null && source.priceUsd !== '' ? String(source.priceUsd) + ' USD' : '');
-	add(
-		'Pass',
-		source.status === 'monthly-pass'
-			? [
-					source.plan,
-					source.paidUntil ? 'until ' + String(source.paidUntil).slice(0, 10) : '',
-					source.runs ? source.runs + ' runs' : '',
-				]
-					.filter(Boolean)
-					.join(' · ')
-			: source.passPlan
-	);
-	add('Paid', source.paid === true ? 'Yes' : '');
-	add('Mode', source.test === true ? 'Test, PayPal sandbox. No real money moved.' : '');
-	add('Purpose', source.purpose);
-	add('Capture', source.kind);
-	add('PayPal order', source.sessionId);
-	add('PayPal payer', source.payerEmail && source.payerEmail !== source.email ? source.payerEmail : '');
-	add('Recorded by', source.via);
-	add('Refunded', source.refundedUsd ? String(source.refundedUsd) + ' USD' : '');
-	add('Dispute', source.disputeStatus ? [source.disputeStatus, source.disputeOutcome].filter(Boolean).join(', ') : '');
-	return items;
+  const report = source.report || {};
+  const counts = report.counts || {};
+  const items = [];
+  const add = (label, value) => {
+    const text = clip(value, 180);
+    if (text) items.push({ label, value: text });
+  };
+  add("Who", source.name);
+  add("Email", source.email);
+  add("Address", addressOf(source));
+  add("Status", source.status);
+  add("Reason", source.reason);
+  add("Frameworks", Array.isArray(source.frameworks) ? source.frameworks.join(", ") : "");
+  add("Pages", source.pages);
+  add("Depth", source.depth);
+  add("Cases", counts.cases);
+  add("Signals", Array.isArray(report.alerts) ? report.alerts.length : "");
+  add("Price", source.priceUsd != null && source.priceUsd !== "" ? String(source.priceUsd) + " USD" : "");
+  add("Pass", source.status === "monthly-pass" ? [source.plan, source.paidUntil ? "until " + String(source.paidUntil).slice(0, 10) : "", source.runs ? source.runs + " runs" : ""].filter(Boolean).join(" · ") : source.passPlan);
+  add("Paid", source.paid === true ? "Yes" : "");
+  add("Mode", source.test === true ? "Test, PayPal sandbox. No real money moved." : "");
+  add("Purpose", source.purpose);
+  add("Capture", source.kind);
+  add("PayPal order", source.sessionId);
+  add("PayPal payer", source.payerEmail && source.payerEmail !== source.email ? source.payerEmail : "");
+  add("Recorded by", source.via);
+  add("Refunded", source.refundedUsd ? String(source.refundedUsd) + " USD" : "");
+  add("Dispute", source.disputeStatus ? [source.disputeStatus, source.disputeOutcome].filter(Boolean).join(", ") : "");
+  return items;
 }
 
 function alertFrom(kind, source) {
-	const key = TITLES[kind] ? kind : kindFor(source) || 'report';
-	const title = (source && source.test === true ? 'Test · ' : '') + (TITLES[key] || 'A review event');
-	const rows = rowsFor(source || {});
-	const at = whenOf(source || {}) || new Date().toISOString();
-	return {
-		id: String((source && (source.alertId || source.runId || source.id)) || ''),
-		at,
-		kind: key,
-		title,
-		subject: clip('QA-lab · ' + title, 140),
-		detail: rows.map((row) => row.label + ': ' + row.value).join('\n'),
-		rows,
-		runId: clip((source && (source.runId || source.id || source.reportId)) || '', 40),
-		url: clip(addressOf(source || {}), 300),
-		name: clip((source && source.name) || '', 120),
-		email: clip((source && source.email) || '', 120),
-		status: clip((source && source.status) || key, 40),
-		priceUsd: source && source.priceUsd != null ? source.priceUsd : null,
-		paid: !!(source && source.paid),
-	};
+  const key = TITLES[kind] ? kind : (kindFor(source) || "report");
+  const title = (source && source.test === true ? "Test · " : "") + (TITLES[key] || "A review event");
+  const rows = rowsFor(source || {});
+  const at = whenOf(source || {}) || new Date().toISOString();
+  return {
+    id: String((source && (source.alertId || source.runId || source.id)) || "") ,
+    at,
+    kind: key,
+    title,
+    subject: clip("QA-lab · " + title, 140),
+    detail: rows.map((row) => row.label + ": " + row.value).join("\n"),
+    rows,
+    runId: clip((source && (source.runId || source.id || source.reportId)) || "", 40),
+    url: clip(addressOf(source || {}), 300),
+    name: clip((source && source.name) || "", 120),
+    email: clip((source && source.email) || "", 120),
+    status: clip((source && source.status) || key, 40),
+    priceUsd: source && source.priceUsd != null ? source.priceUsd : null,
+    paid: !!(source && source.paid)
+  };
 }
 
 function alertsFromHistory(records) {
-	return (records || [])
-		.map((row) => {
-			const kind = kindFor(row);
-			if (!kind || kind === 'started') return null;
-			const note = alertFrom(kind, row);
-			note.id = clip(row.id || '', 40);
-			note.at = whenOf(row);
-			return note;
-		})
-		.filter(Boolean);
+  return (records || []).map((row) => {
+    const kind = kindFor(row);
+    if (!kind || kind === "started") return null;
+    const note = alertFrom(kind, row);
+    note.id = clip(row.id || "", 40);
+    note.at = whenOf(row);
+    return note;
+  }).filter(Boolean);
 }
 
 function summary(row, index, unlisted) {
-	const report = row.report || {};
-	const counts = report.counts || {};
-	const alerts = Array.isArray(report.alerts) ? report.alerts : [];
-	const tools = Array.isArray(report.tools) ? report.tools : [];
-	const cases = Array.isArray(report.cases) ? report.cases : [];
-	const pages = Array.isArray(report.pages) ? report.pages : [];
-	const technologies = Array.isArray(report.technologies) ? report.technologies : [];
-	const parent = index.get(row.id) || index.get(row.reportId) || null;
-	const url = addressOf(row) || (parent ? addressOf(parent) : '');
-	return {
-		id: clip(row.id || row.reportId || '', 40),
-		at: whenOf(row),
-		status: clip(row.status || '', 40),
-		kind: kindFor(row),
-		name: clip(row.name || (parent && parent.name) || '', 120),
-		email: clip(row.email || (parent && parent.email) || '', 160),
-		reason: clip(row.reason || '', 240),
-		reasonCode: clip(row.reasonCode || '', 40),
-		url: clip(url, 300),
-		host: clip(report.host || hostFrom(url) || (parent && parent.report && parent.report.host) || '', 120),
-		pages: row.pages || (report.limits && report.limits.maxPages) || null,
-		depth: row.depth || (report.limits && report.limits.maxDepth) || null,
-		pageCount: counts.pages != null ? counts.pages : pages.length,
-		caseCount: counts.cases != null ? counts.cases : cases.length,
-		layers: counts.byLayer || {},
-		signalCount: alerts.length,
-		signals: alerts
-			.slice(0, 8)
-			.map((item) => ({ id: clip(item.id, 12), level: clip(item.level, 20), title: clip(item.title, 120) })),
-		toolCount: tools.length,
-		tools: tools.slice(0, 8).map((item) => clip(item.name || item, 40)),
-		frameworks: Array.isArray(row.frameworks) ? row.frameworks.slice(0, 8).map((item) => clip(item, 40)) : [],
-		technologies: technologies
-			.slice(0, 8)
-			.map((item) => clip(item.name || '', 40))
-			.filter(Boolean),
-		priceUsd: row.priceUsd != null ? row.priceUsd : null,
-		paid: row.paid === true,
-		test: row.test === true,
-		free: row.free === true,
-		provider: clip(row.provider || '', 20),
-		signInProvider: clip(row.signInProvider || '', 40),
-		purpose: clip(row.purpose || '', 20),
-		capture: clip(row.kind || '', 20),
-		country: clip(row.country || '', 8),
-		city: clip(row.city || '', 80),
-		language: offers.languageOf(row.acceptLanguage, row.country),
-		followUp: row.followUp === true,
-		clientName: clip(row.clientName || '', 120),
-		clientEmail: clip(row.clientEmail || '', 160),
-		clientUrl: clip(row.clientUrl || '', 300),
-		ownership: clip(row.ownership || '', 40),
-		userAgent: clip(row.userAgent || '', 180),
-		termsVersion: clip(row.termsVersion || '', 20),
-		statement: clip(report.statement || '', 280),
-		title: clip(report.observed && report.observed.title, 180),
-		description: clip(report.observed && report.observed.description, 240),
-		forms: report.observed ? report.observed.forms : null,
-		images: report.observed ? report.observed.images : null,
-		missingAlt: report.observed ? report.observed.missingAlt : null,
-		mentions: (Array.isArray(report.mentions) ? report.mentions : []).slice(0, 4).map((item) => ({
-			title: clip(item.title, 140),
-			tone: clip(item.tone, 20),
-			href: clip(item.href, 180),
-		})),
-		mark: clip(report.signature && report.signature.mark, 40),
-		deviceId: clip(row.deviceId || '', 32),
-		ip: clip(row.ip || '', 80),
-		retainUntil: clip(row.retainUntil || '', 40),
-		live: liveState(row, unlisted),
-		paidUntil: clip(row.paidUntil || '', 40),
-		localPass: row.localPass === true,
-		paths: pages.slice(0, 20).map((page) => ({
-			path: clip(page.path || page.url || '', 160),
-			status: page.status,
-			ms: page.ms,
-		})),
-		cases: cases.slice(0, 40).map((item) => ({
-			id: clip(item.id, 16),
-			layer: clip(item.layer, 40),
-			title: clip(item.title, 140),
-		})),
-		log: (Array.isArray(row.log) ? row.log : report.log || [])
-			.slice(-20)
-			.map((line) => clip(line && line.text ? line.text : line, 220)),
-	};
+  const report = row.report || {};
+  const counts = report.counts || {};
+  const alerts = Array.isArray(report.alerts) ? report.alerts : [];
+  const tools = Array.isArray(report.tools) ? report.tools : [];
+  const cases = Array.isArray(report.cases) ? report.cases : [];
+  const pages = Array.isArray(report.pages) ? report.pages : [];
+  const technologies = Array.isArray(report.technologies) ? report.technologies : [];
+  const parent = index.get(row.id) || index.get(row.reportId) || null;
+  const url = addressOf(row) || (parent ? addressOf(parent) : "");
+  return {
+    id: clip(row.id || row.reportId || "", 40),
+    at: whenOf(row),
+    status: clip(row.status || "", 40),
+    kind: kindFor(row),
+    name: clip(row.name || (parent && parent.name) || "", 120),
+    email: clip(row.email || (parent && parent.email) || "", 160),
+    reason: clip(row.reason || "", 240),
+    reasonCode: clip(row.reasonCode || "", 40),
+    url: clip(url, 300),
+    host: clip((report.host) || hostFrom(url) || (parent && parent.report && parent.report.host) || "", 120),
+    pages: row.pages || (report.limits && report.limits.maxPages) || null,
+    depth: row.depth || (report.limits && report.limits.maxDepth) || null,
+    pageCount: counts.pages != null ? counts.pages : pages.length,
+    caseCount: counts.cases != null ? counts.cases : cases.length,
+    layers: counts.byLayer || {},
+    signalCount: alerts.length,
+    signals: alerts.slice(0, 8).map((item) => ({ id: clip(item.id, 12), level: clip(item.level, 20), title: clip(item.title, 120) })),
+    toolCount: tools.length,
+    tools: tools.slice(0, 8).map((item) => clip(item.name || item, 40)),
+    frameworks: Array.isArray(row.frameworks) ? row.frameworks.slice(0, 8).map((item) => clip(item, 40)) : [],
+    technologies: technologies.slice(0, 8).map((item) => clip(item.name || "", 40)).filter(Boolean),
+    priceUsd: row.priceUsd != null ? row.priceUsd : null,
+    paid: row.paid === true,
+    test: row.test === true,
+    free: row.free === true,
+    provider: clip(row.provider || "", 20),
+    signInProvider: clip(row.signInProvider || "", 40),
+    purpose: clip(row.purpose || "", 20),
+    capture: clip(row.kind || "", 20),
+    country: clip(row.country || "", 8),
+    city: clip(row.city || "", 80),
+    language: offers.languageOf(row.acceptLanguage, row.country),
+    followUp: row.followUp === true,
+    clientName: clip(row.clientName || "", 120),
+    clientEmail: clip(row.clientEmail || "", 160),
+    clientUrl: clip(row.clientUrl || "", 300),
+    ownership: clip(row.ownership || "", 40),
+    userAgent: clip(row.userAgent || "", 180),
+    termsVersion: clip(row.termsVersion || "", 20),
+    statement: clip(report.statement || "", 280),
+    title: clip(report.observed && report.observed.title, 180),
+    description: clip(report.observed && report.observed.description, 240),
+    forms: report.observed ? report.observed.forms : null,
+    images: report.observed ? report.observed.images : null,
+    missingAlt: report.observed ? report.observed.missingAlt : null,
+    mentions: (Array.isArray(report.mentions) ? report.mentions : []).slice(0, 4).map((item) => ({
+      title: clip(item.title, 140),
+      tone: clip(item.tone, 20),
+      href: clip(item.href, 180)
+    })),
+    mark: clip(report.signature && report.signature.mark, 40),
+    deviceId: clip(row.deviceId || "", 32),
+    ip: clip(row.ip || "", 80),
+    retainUntil: clip(row.retainUntil || "", 40),
+    live: liveState(row, unlisted),
+    paidUntil: clip(row.paidUntil || "", 40),
+    localPass: row.localPass === true,
+    paths: pages.slice(0, 20).map((page) => ({
+      path: clip(page.path || page.url || "", 160),
+      status: page.status,
+      ms: page.ms
+    })),
+    cases: cases.slice(0, 40).map((item) => ({
+      id: clip(item.id, 16),
+      layer: clip(item.layer, 40),
+      title: clip(item.title, 140)
+    })),
+    log: (Array.isArray(row.log) ? row.log : (report.log || [])).slice(-20).map((line) => clip(line && line.text ? line.text : line, 220))
+  };
 }
 
 // A stored review runs to hundreds of KB and /desk/data reads 400 of them, more than the function's memory.
 // Each row keeps only what summary(), alertsFromHistory(), offers.queue() and publish.heldReason() read.
 function deskRecord(row) {
-	const report = row && row.report;
-	if (!report || typeof report !== 'object') return row;
-	const list = (value) => (Array.isArray(value) ? value : []);
-	const insights = report.insights || {};
-	const slim = {
-		host: report.host,
-		status: report.status,
-		preview: report.preview,
-		finalUrl: report.finalUrl,
-		fetchedAt: report.fetchedAt,
-		counts: report.counts,
-		limits: report.limits,
-		statement: report.statement,
-		signature: report.signature ? { mark: report.signature.mark } : undefined,
-		observed: report.observed
-			? {
-					title: report.observed.title,
-					description: report.observed.description,
-					forms: report.observed.forms,
-					images: report.observed.images,
-					missingAlt: report.observed.missingAlt,
-				}
-			: undefined,
-		insights: {
-			score: insights.score,
-			findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict })),
-		},
-		alerts: Array.isArray(report.alerts)
-			? report.alerts.map((item) => ({ id: item && item.id, level: item && item.level, title: item && item.title }))
-			: undefined,
-		tools: list(report.tools).map((item) => (item && typeof item === 'object' ? { name: item.name } : item)),
-		technologies: list(report.technologies)
-			.slice(0, 8)
-			.map((item) => ({ name: item && item.name })),
-		mentions: list(report.mentions).slice(0, 4),
-		pages: list(report.pages).map((page) => ({
-			path: page && page.path,
-			url: page && page.url,
-			status: page && page.status,
-			ms: page && page.ms,
-			challenge: page && page.challenge,
-			error: page && page.error,
-		})),
-		cases: list(report.cases)
-			.slice(0, report.counts && report.counts.cases != null ? 40 : undefined)
-			.map((item) => ({ id: item && item.id, layer: item && item.layer, title: item && item.title })),
-		log: list(report.log).slice(-20),
-	};
-	return Object.assign({}, row, { report: slim, log: Array.isArray(row.log) ? row.log.slice(-20) : row.log });
+  const report = row && row.report;
+  if (!report || typeof report !== "object") return row;
+  const list = (value) => (Array.isArray(value) ? value : []);
+  const insights = report.insights || {};
+  const slim = {
+    host: report.host,
+    status: report.status,
+    preview: report.preview,
+    finalUrl: report.finalUrl,
+    fetchedAt: report.fetchedAt,
+    counts: report.counts,
+    limits: report.limits,
+    statement: report.statement,
+    signature: report.signature ? { mark: report.signature.mark } : undefined,
+    observed: report.observed ? {
+      title: report.observed.title,
+      description: report.observed.description,
+      forms: report.observed.forms,
+      images: report.observed.images,
+      missingAlt: report.observed.missingAlt
+    } : undefined,
+    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict })) },
+    alerts: Array.isArray(report.alerts) ? report.alerts.map((item) => ({ id: item && item.id, level: item && item.level, title: item && item.title })) : undefined,
+    tools: list(report.tools).map((item) => (item && typeof item === "object" ? { name: item.name } : item)),
+    technologies: list(report.technologies).slice(0, 8).map((item) => ({ name: item && item.name })),
+    mentions: list(report.mentions).slice(0, 4),
+    pages: list(report.pages).map((page) => ({ path: page && page.path, url: page && page.url, status: page && page.status, ms: page && page.ms, challenge: page && page.challenge, error: page && page.error })),
+    cases: list(report.cases).slice(0, report.counts && report.counts.cases != null ? 40 : undefined).map((item) => ({ id: item && item.id, layer: item && item.layer, title: item && item.title })),
+    log: list(report.log).slice(-20)
+  };
+  return Object.assign({}, row, { report: slim, log: Array.isArray(row.log) ? row.log.slice(-20) : row.log });
 }
 
 function snapshot(records, alerts, active, noteRows, unlisted) {
-	const list = Array.isArray(records) ? records : [];
-	const index = new Map();
-	list.forEach((row) => {
-		if (row && row.id && row.report) index.set(row.id, row);
-	});
-	const runs = list
-		.map((row) => summary(row || {}, index, unlisted || []))
-		.sort((a, b) => String(b.at).localeCompare(String(a.at)));
-	const notes = (Array.isArray(alerts) ? alerts : [])
-		.slice()
-		.sort((a, b) => String(b.at).localeCompare(String(a.at)))
-		.slice(0, 80);
-	// A report paid after its run has its own payment row, and a run paid through a credit has its credit row;
-	// either way the run counts once, through that row.
-	const reportPaid = new Set(
-		list.filter((row) => row && row.status === 'paid-report' && row.reportId).map((row) => row.reportId)
-	);
-	const creditPaid = new Set(list.filter((row) => row && row.report && row.creditId).map((row) => row.id));
-	const settled = (row) =>
-		!row.free &&
-		(row.status === 'paid-report' ||
-			row.status === 'run-credit' ||
-			(row.paid && !reportPaid.has(row.id) && !creditPaid.has(row.id)));
-	const tally = {
-		runs: runs.length,
-		running: (active || []).length,
-		reports: runs.filter((row) => row.status === 'complete' || row.status === 'stopped').length,
-		paid: runs.filter((row) => !row.test && settled(row)).length,
-		test: runs.filter((row) => row.test && settled(row)).length,
-		free: runs.filter((row) => row.free).length,
-		waiting: runs.filter((row) => row.status === 'payment-due').length,
-		refused: runs.filter((row) => row.status === 'blocked').length,
-		checkout: runs.filter((row) => row.status === 'checkout-open').length,
-		captures: runs.filter((row) => row.status === 'capture').length,
-	};
-	return {
-		at: new Date().toISOString(),
-		tally,
-		active: (active || []).map((row) => ({
-			runId: clip(row.runId, 40),
-			at: row.at || '',
-			name: clip(row.name, 120),
-			email: clip(row.email, 160),
-			url: clip(row.url, 300),
-		})),
-		alerts: notes.map((note) => ({
-			id: clip(note.id, 40),
-			at: note.at || '',
-			kind: clip(note.kind, 20),
-			title: clip(note.title, 140),
-			detail: clip(note.detail, 500),
-			url: clip(note.url, 300),
-			name: clip(note.name, 120),
-			status: clip(note.status, 40),
-		})),
-		offers: offers.catalog(),
-		followUps: offers.queue(list.concat(Array.isArray(noteRows) ? noteRows : [])).slice(0, 40),
-		runs,
-	};
+  const list = Array.isArray(records) ? records : [];
+  const index = new Map();
+  list.forEach((row) => {
+    if (row && row.id && row.report) index.set(row.id, row);
+  });
+  const runs = list.map((row) => summary(row || {}, index, unlisted || [])).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const notes = (Array.isArray(alerts) ? alerts : []).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80);
+  // A report paid after its run has its own payment row, and a run paid through a credit has its credit row;
+  // either way the run counts once, through that row.
+  const reportPaid = new Set(list.filter((row) => row && row.status === "paid-report" && row.reportId).map((row) => row.reportId));
+  const creditPaid = new Set(list.filter((row) => row && row.report && row.creditId).map((row) => row.id));
+  const settled = (row) => !row.free && (row.status === "paid-report" || row.status === "run-credit" || (row.paid && !reportPaid.has(row.id) && !creditPaid.has(row.id)));
+  const tally = {
+    runs: runs.length,
+    running: (active || []).length,
+    reports: runs.filter((row) => row.status === "complete" || row.status === "stopped").length,
+    paid: runs.filter((row) => !row.test && settled(row)).length,
+    test: runs.filter((row) => row.test && settled(row)).length,
+    free: runs.filter((row) => row.free).length,
+    waiting: runs.filter((row) => row.status === "payment-due").length,
+    refused: runs.filter((row) => row.status === "blocked").length,
+    checkout: runs.filter((row) => row.status === "checkout-open").length,
+    captures: runs.filter((row) => row.status === "capture").length
+  };
+  return {
+    at: new Date().toISOString(),
+    tally,
+    active: (active || []).map((row) => ({
+      runId: clip(row.runId, 40),
+      at: row.at || "",
+      name: clip(row.name, 120),
+      email: clip(row.email, 160),
+      url: clip(row.url, 300)
+    })),
+    alerts: notes.map((note) => ({
+      id: clip(note.id, 40),
+      at: note.at || "",
+      kind: clip(note.kind, 20),
+      title: clip(note.title, 140),
+      detail: clip(note.detail, 500),
+      url: clip(note.url, 300),
+      name: clip(note.name, 120),
+      status: clip(note.status, 40)
+    })),
+    offers: offers.catalog(),
+    followUps: offers.queue(list.concat(Array.isArray(noteRows) ? noteRows : [])).slice(0, 40),
+    runs
+  };
 }
 
 function rerunRows(docs) {
-	return (Array.isArray(docs) ? docs : []).map((row) => ({
-		id: clip(row.id, 40),
-		at: row.at || '',
-		status: clip(row.status, 20),
-		url: clip(row.url, 300),
-		host: clip(row.host, 120),
-		name: clip(row.name, 120),
-		email: clip(row.email, 160),
-		why: clip(row.trigger && row.trigger.label, 300),
-		failures: Array.isArray(row.failureIds) ? row.failureIds.length : 0,
-		reportStatus: clip(row.reportStatus, 20),
-		error: clip(row.error && row.error.message, 600),
-		decidedAt: row.decidedAt || '',
-		by: clip(row.by, 160),
-		mailError: clip(row.mailError, 200),
-		promise: row.promise ? reviewPromise.deskLabel(Object.assign({}, row.promise, { state: 'open' })) : '',
-		run: row.record ? summary(row.record, new Map()) : null,
-		log: (Array.isArray(row.lines) ? row.lines : []).slice(-30).map((line) => clip(line && line.text, 220)),
-	}));
+  return (Array.isArray(docs) ? docs : []).map((row) => ({
+    id: clip(row.id, 40),
+    at: row.at || "",
+    status: clip(row.status, 20),
+    url: clip(row.url, 300),
+    host: clip(row.host, 120),
+    name: clip(row.name, 120),
+    email: clip(row.email, 160),
+    why: clip(row.trigger && row.trigger.label, 300),
+    failures: Array.isArray(row.failureIds) ? row.failureIds.length : 0,
+    reportStatus: clip(row.reportStatus, 20),
+    error: clip(row.error && row.error.message, 600),
+    decidedAt: row.decidedAt || "",
+    by: clip(row.by, 160),
+    mailError: clip(row.mailError, 200),
+    promise: row.promise ? reviewPromise.deskLabel(Object.assign({}, row.promise, { state: "open" })) : "",
+    run: row.record ? summary(row.record, new Map()) : null,
+    log: (Array.isArray(row.lines) ? row.lines : []).slice(-30).map((line) => clip(line && line.text, 220))
+  }));
 }
 
 const STYLE = `
@@ -1619,54 +1564,52 @@ ${SIGN_IN}
 </body>
 </html>`;
 
-const DESK_FIREBASE_KEY = 'AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w';
+const DESK_FIREBASE_KEY = "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w";
 
 function operatorEmail() {
-	return (process.env.DESK_GOOGLE_EMAIL || 'kaanmuar@gmail.com').trim().toLowerCase();
+  return (process.env.DESK_GOOGLE_EMAIL || "kaanmuar@gmail.com").trim().toLowerCase();
 }
 
 // Email-link sign-in issues "password" tokens too. Google is off the desk for now.
-const DESK_SIGN_IN = ['password', 'emailLink'];
+const DESK_SIGN_IN = ["password", "emailLink"];
 
 function tokenClaims(token) {
-	try {
-		return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
-	} catch (error) {
-		return null;
-	}
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+  } catch (error) {
+    return null;
+  }
 }
 
 async function verifyOperator(idToken) {
-	const token = String(idToken || '').trim();
-	if (token.length < 20 || token.length > 4000) return null;
-	const claims = tokenClaims(token);
-	const method = String((claims && claims.firebase && claims.firebase.sign_in_provider) || '');
-	if (!DESK_SIGN_IN.includes(method)) return null;
-	const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + DESK_FIREBASE_KEY, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ idToken: token }),
-	});
-	const body = await response.json().catch(() => ({}));
-	const user = body && Array.isArray(body.users) ? body.users[0] : null;
-	if (!user || user.emailVerified !== true || user.localId !== claims.sub) return null;
-	const known = (user.providerUserInfo || []).some((item) => item && item.providerId === 'password');
-	const email = String(user.email || '')
-		.trim()
-		.toLowerCase();
-	if (!known || email !== operatorEmail()) return null;
-	return email;
+  const token = String(idToken || "").trim();
+  if (token.length < 20 || token.length > 4000) return null;
+  const claims = tokenClaims(token);
+  const method = String((claims && claims.firebase && claims.firebase.sign_in_provider) || "");
+  if (!DESK_SIGN_IN.includes(method)) return null;
+  const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + DESK_FIREBASE_KEY, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ idToken: token })
+  });
+  const body = await response.json().catch(() => ({}));
+  const user = body && Array.isArray(body.users) ? body.users[0] : null;
+  if (!user || user.emailVerified !== true || user.localId !== claims.sub) return null;
+  const known = (user.providerUserInfo || []).some((item) => item && item.providerId === "password");
+  const email = String(user.email || "").trim().toLowerCase();
+  if (!known || email !== operatorEmail()) return null;
+  return email;
 }
 
 module.exports = {
-	kindFor,
-	liveState,
-	alertFrom,
-	alertsFromHistory,
-	snapshot,
-	rerunRows,
-	deskRecord,
-	verifyOperator,
-	PAGE,
-	FAILURES_PAGE,
+  kindFor,
+  liveState,
+  alertFrom,
+  alertsFromHistory,
+  snapshot,
+  rerunRows,
+  deskRecord,
+  verifyOperator,
+  PAGE,
+  FAILURES_PAGE
 };

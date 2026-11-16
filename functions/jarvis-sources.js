@@ -22,474 +22,284 @@
    index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github, peer} and caches each
    source in jarvis_cache through TTL; peer(op) is another source's cached answer. */
 
-const ORIGIN = 'https://carlosandmunoz.com';
-const DOMAIN = 'carlosandmunoz.com';
-const PROJECT = 'carlosm-interactive-cv';
-const BILLING_DATASET = 'jarvis_billing';
+const ORIGIN = "https://carlosandmunoz.com";
+const DOMAIN = "carlosandmunoz.com";
+const PROJECT = "carlosm-interactive-cv";
+const BILLING_DATASET = "jarvis_billing";
 const BLOCKLISTS = /\b(spamcop|spamhaus|barracuda|sorbs|uceprotect|spamrats|mailspike)\b/i;
 const LISTED = /\b(?:black|block) ?list(?:ed)?\b|\bRBL\b|\bDNSBL\b/i;
-const METADATA = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/';
+const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/";
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const TTL = {
-	money: 10 * MINUTE,
-	email: 30 * MINUTE,
-	search: 24 * HOUR,
-	social: HOUR,
-	safety: 6 * HOUR,
-	platform: 10 * MINUTE,
-	outreach: 30 * MINUTE,
-	mailbox: 10 * MINUTE,
-	addresses: 10 * MINUTE,
-	marketing: 10 * MINUTE,
-	'marketing-sync': MINUTE,
-	calls: 5 * MINUTE,
-	people: 5 * MINUTE,
-	engagement: 2 * MINUTE,
-	local: 10 * MINUTE,
-	rescue: 10 * MINUTE,
-	fixes: 5 * MINUTE,
-	checks: 10 * MINUTE,
-	pagespeed: 10 * MINUTE,
-	'github-work': 10 * MINUTE,
-	targets: HOUR,
-	geo: 15 * MINUTE,
-	calendar: 6 * HOUR,
-};
-const { SEARCH_QUERIES } = require('./jarvis-core');
-const jarvisOutreach = require('./jarvis-outreach');
-const jarvisMarketing = require('./jarvis-marketing');
-const jarvisEngagement = require('./jarvis-engagement');
-const jarvisPeople = require('./jarvis-people');
-const jarvisLocal = require('./jarvis-local');
-const jarvisReviewOps = require('./jarvis-review-ops');
-const jarvisSocial = require('./jarvis-social');
-const jarvisPageSpeed = require('./jarvis-pagespeed');
-const mailHealth = require('./mail-health');
-const jarvisAddresses = require('./jarvis-addresses');
-const jarvisIndex = require('./jarvis-index');
-const jarvisGithub = require('./jarvis-github');
-const jarvisTargets = require('./jarvis-targets');
-const jarvisGeo = require('./jarvis-geo');
-const jarvisCalendar = require('./jarvis-calendar');
-const booking = require('./booking');
+const TTL = { money: 10 * MINUTE, email: 30 * MINUTE, search: 24 * HOUR, social: HOUR, safety: 6 * HOUR, platform: 10 * MINUTE, outreach: 30 * MINUTE, mailbox: 10 * MINUTE, addresses: 10 * MINUTE, marketing: 10 * MINUTE, "marketing-sync": MINUTE, calls: 5 * MINUTE, people: 5 * MINUTE, engagement: 2 * MINUTE, local: 10 * MINUTE, rescue: 10 * MINUTE, fixes: 5 * MINUTE, checks: 10 * MINUTE, pagespeed: 10 * MINUTE, "github-work": 10 * MINUTE, targets: HOUR, geo: 15 * MINUTE, calendar: 6 * HOUR };
+const { SEARCH_QUERIES } = require("./jarvis-core");
+const jarvisOutreach = require("./jarvis-outreach");
+const jarvisMarketing = require("./jarvis-marketing");
+const jarvisEngagement = require("./jarvis-engagement");
+const jarvisPeople = require("./jarvis-people");
+const jarvisLocal = require("./jarvis-local");
+const jarvisReviewOps = require("./jarvis-review-ops");
+const jarvisSocial = require("./jarvis-social");
+const jarvisPageSpeed = require("./jarvis-pagespeed");
+const mailHealth = require("./mail-health");
+const jarvisAddresses = require("./jarvis-addresses");
+const jarvisIndex = require("./jarvis-index");
+const jarvisGithub = require("./jarvis-github");
+const jarvisTargets = require("./jarvis-targets");
+const jarvisGeo = require("./jarvis-geo");
+const jarvisCalendar = require("./jarvis-calendar");
+const booking = require("./booking");
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
 const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
 
 // Firestore's free daily quota resets at midnight Pacific time; this is that midnight for the day holding `now`.
 function pacificDayStart(now) {
-	const offset = (at) => {
-		const p = {};
-		new Intl.DateTimeFormat('en-US', {
-			timeZone: 'America/Los_Angeles',
-			hourCycle: 'h23',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit',
-		})
-			.formatToParts(new Date(at))
-			.forEach((x) => {
-				p[x.type] = Number(x.value);
-			});
-		return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - (at - (at % 1000));
-	};
-	const local = new Date(now + offset(now));
-	const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
-	return midnight - offset(midnight - offset(now));
+  const offset = (at) => {
+    const p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(at)).forEach((x) => { p[x.type] = Number(x.value); });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - (at - (at % 1000));
+  };
+  const local = new Date(now + offset(now));
+  const midnight = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return midnight - offset(midnight - offset(now));
 }
-const clean = (error) => String((error && error.message) || error || 'failed').slice(0, 200);
-const round = (n, places) => {
-	const f = Math.pow(10, places || 0);
-	return Math.round((Number(n) || 0) * f) / f;
-};
+const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
+const round = (n, places) => { const f = Math.pow(10, places || 0); return Math.round((Number(n) || 0) * f) / f; };
 
 function tally(map, key, by) {
-	const name = String(key || 'unknown').slice(0, 80);
-	map[name] = (map[name] || 0) + (by === undefined ? 1 : by);
-	return map;
+  const name = String(key || "unknown").slice(0, 80);
+  map[name] = (map[name] || 0) + (by === undefined ? 1 : by);
+  return map;
 }
 
 function listOf(map, limit) {
-	return Object.keys(map)
-		.map((label) => ({ label, value: round(map[label], 2) }))
-		.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
-		.slice(0, limit || 12);
+  return Object.keys(map).map((label) => ({ label, value: round(map[label], 2) })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label)).slice(0, limit || 12);
 }
 
 async function getJson(fetchImpl, url, options, label) {
-	const res = await fetchImpl(url, Object.assign({ signal: AbortSignal.timeout(15000) }, options || {}));
-	const data = await res.json().catch(() => ({}));
-	if (!res.ok) {
-		const error = new Error(
-			(label || 'request') +
-				' ' +
-				res.status +
-				': ' +
-				String(
-					(data.error && (data.error.message || data.error)) ||
-						data.message ||
-						(data.errors && data.errors[0] && data.errors[0].message) ||
-						'no answer'
-				).slice(0, 160)
-		);
-		error.status = res.status;
-		error.name = String(data.name || (data.error && data.error.status) || '');
-		throw error;
-	}
-	return data;
+  const res = await fetchImpl(url, Object.assign({ signal: AbortSignal.timeout(15000) }, options || {}));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const error = new Error((label || "request") + " " + res.status + ": " + String((data.error && (data.error.message || data.error)) || data.message || (data.errors && data.errors[0] && data.errors[0].message) || "no answer").slice(0, 160));
+    error.status = res.status;
+    error.name = String(data.name || (data.error && data.error.status) || "");
+    throw error;
+  }
+  return data;
 }
 
 async function googleToken(fetchImpl, scope) {
-	const res = await fetchImpl(METADATA + 'token?scopes=' + encodeURIComponent(scope), {
-		headers: { 'Metadata-Flavor': 'Google' },
-		signal: AbortSignal.timeout(10000),
-	});
-	if (!res.ok) throw new Error('No Google token (' + res.status + ')');
-	return (await res.json()).access_token;
+  const res = await fetchImpl(METADATA + "token?scopes=" + encodeURIComponent(scope), { headers: { "Metadata-Flavor": "Google" }, signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error("No Google token (" + res.status + ")");
+  return (await res.json()).access_token;
 }
 
 async function serviceAccount(fetchImpl) {
-	try {
-		const res = await fetchImpl(METADATA + 'email', {
-			headers: { 'Metadata-Flavor': 'Google' },
-			signal: AbortSignal.timeout(5000),
-		});
-		return res.ok ? (await res.text()).trim() : '';
-	} catch (error) {
-		return '';
-	}
+  try {
+    const res = await fetchImpl(METADATA + "email", { headers: { "Metadata-Flavor": "Google" }, signal: AbortSignal.timeout(5000) });
+    return res.ok ? (await res.text()).trim() : "";
+  } catch (error) { return ""; }
 }
 
 // --- money -----------------------------------------------------------------------------------------------------
 
 // Rows saved before payments recorded `test` and `provider` still carry the Stripe session or PayPal capture.
-const isTestPayment = (row) =>
-	row.test === true || row.paypalMode === 'sandbox' || /^cs_test_/.test(String(row.sessionId || ''));
-const providerOf = (row) =>
-	row.provider || (/^cs_/.test(String(row.sessionId || '')) ? 'stripe' : row.captureId ? 'paypal' : 'not recorded');
+const isTestPayment = (row) => row.test === true || row.paypalMode === "sandbox" || /^cs_test_/.test(String(row.sessionId || ""));
+const providerOf = (row) => row.provider || (/^cs_/.test(String(row.sessionId || "")) ? "stripe" : row.captureId ? "paypal" : "not recorded");
 
 function moneyRows(rows, { start, priorStart }) {
-	// A paid review run carries no price; the money sits on the purchase or credit row it used.
-	const now = { usd: 0, count: 0, runs: 0 };
-	const prior = { usd: 0, count: 0, runs: 0 };
-	const providers = {};
-	const purposes = {};
-	const daily = {};
-	let refunds = 0;
-	rows.forEach((row) => {
-		if (isTestPayment(row) || !row.paid) return;
-		const at = Date.parse(row.createdAt || '');
-		if (!Number.isFinite(at) || at < priorStart) return;
-		const usd = Number(row.priceUsd) || 0;
-		const bucket = at >= start ? now : prior;
-		if (!usd) {
-			bucket.runs += 1;
-			return;
-		}
-		bucket.usd += usd;
-		bucket.count += 1;
-		if (at < start) return;
-		tally(providers, providerOf(row), usd);
-		tally(
-			purposes,
-			row.purpose ||
-				(String(row.id || '').startsWith('credit-') || /credit/.test(row.status || '') ? 'credit' : 'review'),
-			usd
-		);
-		tally(daily, isoDay(at), usd);
-		refunds += Number(row.refundedUsd) || (/refunded/.test(row.status || '') ? usd : 0);
-	});
-	return {
-		revenue: {
-			usd: round(now.usd, 2),
-			count: now.count,
-			avgUsd: now.count ? round(now.usd / now.count, 2) : 0,
-			paidRuns: now.runs,
-		},
-		prior: { usd: round(prior.usd, 2), count: prior.count, paidRuns: prior.runs },
-		refundsUsd: round(refunds, 2),
-		byProvider: listOf(providers),
-		byPurpose: listOf(purposes),
-		daily: Object.keys(daily)
-			.sort()
-			.map((date) => ({ date, usd: round(daily[date], 2) })),
-	};
+  // A paid review run carries no price; the money sits on the purchase or credit row it used.
+  const now = { usd: 0, count: 0, runs: 0 };
+  const prior = { usd: 0, count: 0, runs: 0 };
+  const providers = {};
+  const purposes = {};
+  const daily = {};
+  let refunds = 0;
+  rows.forEach((row) => {
+    if (isTestPayment(row) || !row.paid) return;
+    const at = Date.parse(row.createdAt || "");
+    if (!Number.isFinite(at) || at < priorStart) return;
+    const usd = Number(row.priceUsd) || 0;
+    const bucket = at >= start ? now : prior;
+    if (!usd) {
+      bucket.runs += 1;
+      return;
+    }
+    bucket.usd += usd;
+    bucket.count += 1;
+    if (at < start) return;
+    tally(providers, providerOf(row), usd);
+    tally(purposes, row.purpose || (String(row.id || "").startsWith("credit-") || /credit/.test(row.status || "") ? "credit" : "review"), usd);
+    tally(daily, isoDay(at), usd);
+    refunds += Number(row.refundedUsd) || (/refunded/.test(row.status || "") ? usd : 0);
+  });
+  return {
+    revenue: { usd: round(now.usd, 2), count: now.count, avgUsd: now.count ? round(now.usd / now.count, 2) : 0, paidRuns: now.runs },
+    prior: { usd: round(prior.usd, 2), count: prior.count, paidRuns: prior.runs },
+    refundsUsd: round(refunds, 2),
+    byProvider: listOf(providers),
+    byPurpose: listOf(purposes),
+    daily: Object.keys(daily).sort().map((date) => ({ date, usd: round(daily[date], 2) }))
+  };
 }
 
 // Transaction search is a separate grant. Confirmed captures and orders already carry the fee breakdown.
 function paypalMoney(capture) {
-	const breakdown = (capture && capture.seller_receivable_breakdown) || {};
-	const amount = breakdown.gross_amount || (capture && capture.amount) || {};
-	const gross = Number(amount.value);
-	const fee = Math.abs(Number((breakdown.paypal_fee || {}).value) || 0);
-	const net = Number((breakdown.net_amount || {}).value);
-	if (String(amount.currency_code || 'USD') !== 'USD' || !Number.isFinite(gross) || gross <= 0) return null;
-	return { gross, fee, net: Number.isFinite(net) ? net : gross - fee };
+  const breakdown = (capture && capture.seller_receivable_breakdown) || {};
+  const amount = breakdown.gross_amount || (capture && capture.amount) || {};
+  const gross = Number(amount.value);
+  const fee = Math.abs(Number((breakdown.paypal_fee || {}).value) || 0);
+  const net = Number((breakdown.net_amount || {}).value);
+  if (String(amount.currency_code || "USD") !== "USD" || !Number.isFinite(gross) || gross <= 0) return null;
+  return { gross, fee, net: Number.isFinite(net) ? net : gross - fee };
 }
 
 function paypalBookIds(rows, start, end) {
-	const captures = [];
-	const orders = [];
-	(rows || []).forEach((row) => {
-		if (isTestPayment(row) || (providerOf(row) !== 'paypal' && row.method !== 'paypal')) return;
-		const at = Date.parse(row.createdAt || '');
-		if (!Number.isFinite(at) || at < start || at > end) return;
-		const capture = String(row.captureId || '');
-		const order = String(row.sessionId || '');
-		if (/^[A-Z0-9]{10,22}$/.test(capture)) {
-			if (captures.indexOf(capture) === -1) captures.push(capture);
-		} else if (/^[A-Z0-9]{10,22}$/.test(order) && orders.indexOf(order) === -1) orders.push(order);
-	});
-	return { captures: captures.slice(0, 40), orders: orders.slice(0, 40) };
+  const captures = [];
+  const orders = [];
+  (rows || []).forEach((row) => {
+    if (isTestPayment(row) || (providerOf(row) !== "paypal" && row.method !== "paypal")) return;
+    const at = Date.parse(row.createdAt || "");
+    if (!Number.isFinite(at) || at < start || at > end) return;
+    const capture = String(row.captureId || "");
+    const order = String(row.sessionId || "");
+    if (/^[A-Z0-9]{10,22}$/.test(capture)) { if (captures.indexOf(capture) === -1) captures.push(capture); }
+    else if (/^[A-Z0-9]{10,22}$/.test(order) && orders.indexOf(order) === -1) orders.push(order);
+  });
+  return { captures: captures.slice(0, 40), orders: orders.slice(0, 40) };
 }
 
 async function paypalFeesFromPayments(ctx, rows, { start, end }) {
-	const ids = paypalBookIds(rows, start, end);
-	const empty = { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: 'payments' };
-	if (!ctx.paypal || (!ids.captures.length && !ids.orders.length)) return empty;
-	let token;
-	try {
-		token = await ctx.paypal.token();
-	} catch (error) {
-		return null;
-	}
-	const host = 'https://' + ctx.paypal.host;
-	const auth = { headers: { Authorization: 'Bearer ' + token } };
-	let gross = 0,
-		fees = 0,
-		count = 0,
-		denied = false;
-	const load = async (url, read) => {
-		try {
-			const fee = paypalMoney(read(await getJson(ctx.fetch, url, auth, 'PayPal payment')));
-			if (!fee) return;
-			gross += fee.gross;
-			fees += fee.fee;
-			count += 1;
-		} catch (error) {
-			if (error.status === 403) denied = true;
-		}
-	};
-	for (const id of ids.captures) await load(host + '/v2/payments/captures/' + id, (body) => body);
-	for (const id of ids.orders)
-		await load(host + '/v2/checkout/orders/' + id, (body) => {
-			const unit = ((body && body.purchase_units) || [])[0] || {};
-			return ((unit.payments || {}).captures || [])[0] || null;
-		});
-	if (denied && count === 0) return null;
-	return {
-		count,
-		grossUsd: round(gross, 2),
-		feesUsd: round(fees, 2),
-		netUsd: round(gross - fees, 2),
-		source: 'payments',
-	};
+  const ids = paypalBookIds(rows, start, end);
+  const empty = { count: 0, grossUsd: 0, feesUsd: 0, netUsd: 0, source: "payments" };
+  if (!ctx.paypal || (!ids.captures.length && !ids.orders.length)) return empty;
+  let token;
+  try { token = await ctx.paypal.token(); } catch (error) { return null; }
+  const host = "https://" + ctx.paypal.host;
+  const auth = { headers: { Authorization: "Bearer " + token } };
+  let gross = 0, fees = 0, count = 0, denied = false;
+  const load = async (url, read) => {
+    try {
+      const fee = paypalMoney(read(await getJson(ctx.fetch, url, auth, "PayPal payment")));
+      if (!fee) return;
+      gross += fee.gross;
+      fees += fee.fee;
+      count += 1;
+    } catch (error) { if (error.status === 403) denied = true; }
+  };
+  for (const id of ids.captures) await load(host + "/v2/payments/captures/" + id, (body) => body);
+  for (const id of ids.orders) await load(host + "/v2/checkout/orders/" + id, (body) => {
+    const unit = ((body && body.purchase_units) || [])[0] || {};
+    return (((unit.payments || {}).captures) || [])[0] || null;
+  });
+  if (denied && count === 0) return null;
+  return { count, grossUsd: round(gross, 2), feesUsd: round(fees, 2), netUsd: round(gross - fees, 2), source: "payments" };
 }
 
 async function paypalPart(ctx, { start, end }) {
-	const out = { ok: false, disputesOpen: null, transactions: null, needs: [] };
-	if (!ctx.paypal) {
-		out.error = 'PayPal is not set up.';
-		return out;
-	}
-	let token;
-	try {
-		token = await ctx.paypal.token();
-	} catch (error) {
-		out.error = clean(error);
-		return out;
-	}
-	const host = 'https://' + ctx.paypal.host;
-	const auth = { headers: { Authorization: 'Bearer ' + token } };
-	try {
-		const disputes = await getJson(ctx.fetch, host + '/v1/customer/disputes?page_size=50', auth, 'PayPal disputes');
-		out.disputesOpen = (disputes.items || []).filter(
-			(d) => !['RESOLVED'].includes(String(d.status || '').toUpperCase())
-		).length;
-		out.ok = true;
-	} catch (error) {
-		out.error = clean(error);
-	}
-	try {
-		const from = new Date(Math.max(start, end - 31 * DAY + MINUTE)).toISOString().replace(/\.\d+Z$/, '-0000');
-		const to = new Date(end).toISOString().replace(/\.\d+Z$/, '-0000');
-		const data = await getJson(
-			ctx.fetch,
-			host +
-				'/v1/reporting/transactions?fields=transaction_info&page_size=500&start_date=' +
-				encodeURIComponent(from) +
-				'&end_date=' +
-				encodeURIComponent(to),
-			auth,
-			'PayPal transactions'
-		);
-		let gross = 0,
-			fees = 0,
-			count = 0;
-		(data.transaction_details || []).forEach((row) => {
-			const info = row.transaction_info || {};
-			const amount = Number((info.transaction_amount || {}).value) || 0;
-			if (amount <= 0) return;
-			gross += amount;
-			fees += Math.abs(Number((info.fee_amount || {}).value) || 0);
-			count += 1;
-		});
-		out.transactions = { count, grossUsd: round(gross, 2), feesUsd: round(fees, 2), netUsd: round(gross - fees, 2) };
-	} catch (error) {
-		if (error.status === 403 || /NOT_AUTHORIZED/i.test(error.name + error.message))
-			out.needs.push(
-				'PayPal: turn on Transaction search for the live app (developer.paypal.com > Apps & Credentials > the app > Features) so Jarvis can read fees and payouts.'
-			);
-		else out.transactionsError = clean(error);
-	}
-	return out;
+  const out = { ok: false, disputesOpen: null, transactions: null, needs: [] };
+  if (!ctx.paypal) { out.error = "PayPal is not set up."; return out; }
+  let token;
+  try { token = await ctx.paypal.token(); } catch (error) { out.error = clean(error); return out; }
+  const host = "https://" + ctx.paypal.host;
+  const auth = { headers: { Authorization: "Bearer " + token } };
+  try {
+    const disputes = await getJson(ctx.fetch, host + "/v1/customer/disputes?page_size=50", auth, "PayPal disputes");
+    out.disputesOpen = (disputes.items || []).filter((d) => !["RESOLVED"].includes(String(d.status || "").toUpperCase())).length;
+    out.ok = true;
+  } catch (error) { out.error = clean(error); }
+  try {
+    const from = new Date(Math.max(start, end - 31 * DAY + MINUTE)).toISOString().replace(/\.\d+Z$/, "-0000");
+    const to = new Date(end).toISOString().replace(/\.\d+Z$/, "-0000");
+    const data = await getJson(ctx.fetch, host + "/v1/reporting/transactions?fields=transaction_info&page_size=500&start_date=" + encodeURIComponent(from) + "&end_date=" + encodeURIComponent(to), auth, "PayPal transactions");
+    let gross = 0, fees = 0, count = 0;
+    (data.transaction_details || []).forEach((row) => {
+      const info = row.transaction_info || {};
+      const amount = Number((info.transaction_amount || {}).value) || 0;
+      if (amount <= 0) return;
+      gross += amount;
+      fees += Math.abs(Number((info.fee_amount || {}).value) || 0);
+      count += 1;
+    });
+    out.transactions = { count, grossUsd: round(gross, 2), feesUsd: round(fees, 2), netUsd: round(gross - fees, 2) };
+  } catch (error) {
+    if (error.status === 403 || /NOT_AUTHORIZED/i.test(error.name + error.message)) out.needs.push("PayPal: turn on Transaction search for the live app (developer.paypal.com > Apps & Credentials > the app > Features) so Jarvis can read fees and payouts.");
+    else out.transactionsError = clean(error);
+  }
+  return out;
 }
 
 async function money(ctx) {
-	const days = ctx.days;
-	const start = ctx.now - days * DAY;
-	const priorStart = ctx.now - 2 * days * DAY;
-	const snap = await ctx.db
-		.collection('url_reviews')
-		.where('paid', '==', true)
-		.where('createdAt', '>=', new Date(priorStart).toISOString())
-		.select(
-			'createdAt',
-			'paid',
-			'priceUsd',
-			'provider',
-			'purpose',
-			'refundedUsd',
-			'status',
-			'test',
-			'paypalMode',
-			'sessionId',
-			'captureId',
-			'method'
-		)
-		.limit(3000)
-		.get();
-	const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-	const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
-	out.paypal = await paypalPart(ctx, { start, end: ctx.now });
-	if (!out.paypal.transactions && out.paypal.needs.length) {
-		const fromPayments = await paypalFeesFromPayments(ctx, rows, { start, end: ctx.now });
-		if (fromPayments) {
-			out.paypal.transactions = fromPayments;
-			out.paypal.needs = [];
-		}
-	}
-	const stripe = String((ctx.env || {}).STRIPE_SECRET_KEY || '');
-	out.stripe = { mode: /^(sk|rk)_live_/.test(stripe) ? 'live' : /^(sk|rk)_test_/.test(stripe) ? 'test' : 'none' };
-	out.needs = out.paypal.needs.slice();
-	return out;
+  const days = ctx.days;
+  const start = ctx.now - days * DAY;
+  const priorStart = ctx.now - 2 * days * DAY;
+  const snap = await ctx.db.collection("url_reviews").where("paid", "==", true).where("createdAt", ">=", new Date(priorStart).toISOString())
+    .select("createdAt", "paid", "priceUsd", "provider", "purpose", "refundedUsd", "status", "test", "paypalMode", "sessionId", "captureId", "method").limit(3000).get();
+  const rows = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+  const out = Object.assign({ ok: true, days }, moneyRows(rows, { start, priorStart }));
+  out.paypal = await paypalPart(ctx, { start, end: ctx.now });
+  if (!out.paypal.transactions && out.paypal.needs.length) {
+    const fromPayments = await paypalFeesFromPayments(ctx, rows, { start, end: ctx.now });
+    if (fromPayments) {
+      out.paypal.transactions = fromPayments;
+      out.paypal.needs = [];
+    }
+  }
+  const stripe = String((ctx.env || {}).STRIPE_SECRET_KEY || "");
+  out.stripe = { mode: /^(sk|rk)_live_/.test(stripe) ? "live" : /^(sk|rk)_test_/.test(stripe) ? "test" : "none" };
+  out.needs = out.paypal.needs.slice();
+  return out;
 }
 
 // --- email -----------------------------------------------------------------------------------------------------
 
 async function email(ctx) {
-	const key = (ctx.env || {}).SENDGRID_API_KEY;
-	if (!key) return { ok: false, error: 'SENDGRID_API_KEY is not mounted on this function.', needs: [] };
-	const auth = { headers: { Authorization: 'Bearer ' + key } };
-	const base = 'https://api.sendgrid.com/v3/';
-	const since = ctx.now - ctx.days * DAY;
-	const stats = await getJson(
-		ctx.fetch,
-		base + 'stats?aggregated_by=day&start_date=' + isoDay(since),
-		auth,
-		'SendGrid stats'
-	);
-	const keys = [
-		'requests',
-		'processed',
-		'delivered',
-		'bounces',
-		'blocks',
-		'deferred',
-		'spam_reports',
-		'unsubscribes',
-		'opens',
-		'unique_opens',
-		'clicks',
-		'unique_clicks',
-		'invalid_emails',
-	];
-	const totals = keys.reduce((m, k) => {
-		m[k] = 0;
-		return m;
-	}, {});
-	const daily = (Array.isArray(stats) ? stats : []).map((day) => {
-		const m = ((day.stats || [])[0] || {}).metrics || {};
-		keys.forEach((k) => {
-			totals[k] += Number(m[k]) || 0;
-		});
-		return {
-			date: day.date,
-			processed: m.processed || 0,
-			delivered: m.delivered || 0,
-			bad: (m.bounces || 0) + (m.blocks || 0) + (m.spam_reports || 0),
-			opens: m.unique_opens || 0,
-		};
-	});
-	const pct = (a, b) => (b ? round((a / b) * 100, 1) : null);
-	const suppressed = async (kind) => {
-		try {
-			const rows = await getJson(
-				ctx.fetch,
-				base + 'suppression/' + kind + '?limit=200&start_time=' + Math.floor(since / 1000),
-				auth,
-				'SendGrid ' + kind
-			);
-			return (Array.isArray(rows) ? rows : []).map((r) => ({
-				domain: String(r.email || '').split('@')[1] || '',
-				reason: String(r.reason || r.status || '').slice(0, 120),
-				at: r.created ? new Date(r.created * 1000).toISOString() : '',
-			}));
-		} catch (error) {
-			return null;
-		}
-	};
-	const [bounces, blocks, spam] = await Promise.all([
-		suppressed('bounces'),
-		suppressed('blocks'),
-		suppressed('spam_reports'),
-	]);
-	const lists = {};
-	(blocks || []).concat(bounces || []).forEach((r) => {
-		const named = BLOCKLISTS.exec(r.reason);
-		if (named) tally(lists, named[1].toLowerCase());
-		else if (LISTED.test(r.reason)) tally(lists, 'unnamed blocklist');
-	});
-	return {
-		ok: true,
-		days: ctx.days,
-		totals,
-		rates: {
-			delivered: pct(totals.delivered, totals.processed),
-			bad: pct(totals.bounces + totals.blocks + totals.spam_reports, totals.processed),
-			opened: pct(totals.unique_opens, totals.delivered),
-			clicked: pct(totals.unique_clicks, totals.delivered),
-		},
-		daily,
-		suppressions: { bounces, blocks, spam },
-		blocklisted: listOf(lists),
-		needs: [],
-	};
+  const key = (ctx.env || {}).SENDGRID_API_KEY;
+  if (!key) return { ok: false, error: "SENDGRID_API_KEY is not mounted on this function.", needs: [] };
+  const auth = { headers: { Authorization: "Bearer " + key } };
+  const base = "https://api.sendgrid.com/v3/";
+  const since = ctx.now - ctx.days * DAY;
+  const stats = await getJson(ctx.fetch, base + "stats?aggregated_by=day&start_date=" + isoDay(since), auth, "SendGrid stats");
+  const keys = ["requests", "processed", "delivered", "bounces", "blocks", "deferred", "spam_reports", "unsubscribes", "opens", "unique_opens", "clicks", "unique_clicks", "invalid_emails"];
+  const totals = keys.reduce((m, k) => { m[k] = 0; return m; }, {});
+  const daily = (Array.isArray(stats) ? stats : []).map((day) => {
+    const m = ((day.stats || [])[0] || {}).metrics || {};
+    keys.forEach((k) => { totals[k] += Number(m[k]) || 0; });
+    return { date: day.date, processed: m.processed || 0, delivered: m.delivered || 0, bad: (m.bounces || 0) + (m.blocks || 0) + (m.spam_reports || 0), opens: m.unique_opens || 0 };
+  });
+  const pct = (a, b) => (b ? round((a / b) * 100, 1) : null);
+  const suppressed = async (kind) => {
+    try {
+      const rows = await getJson(ctx.fetch, base + "suppression/" + kind + "?limit=200&start_time=" + Math.floor(since / 1000), auth, "SendGrid " + kind);
+      return (Array.isArray(rows) ? rows : []).map((r) => ({ domain: String(r.email || "").split("@")[1] || "", reason: String(r.reason || r.status || "").slice(0, 120), at: r.created ? new Date(r.created * 1000).toISOString() : "" }));
+    } catch (error) { return null; }
+  };
+  const [bounces, blocks, spam] = await Promise.all([suppressed("bounces"), suppressed("blocks"), suppressed("spam_reports")]);
+  const lists = {};
+  (blocks || []).concat(bounces || []).forEach((r) => {
+    const named = BLOCKLISTS.exec(r.reason);
+    if (named) tally(lists, named[1].toLowerCase());
+    else if (LISTED.test(r.reason)) tally(lists, "unnamed blocklist");
+  });
+  return {
+    ok: true,
+    days: ctx.days,
+    totals,
+    rates: { delivered: pct(totals.delivered, totals.processed), bad: pct(totals.bounces + totals.blocks + totals.spam_reports, totals.processed), opened: pct(totals.unique_opens, totals.delivered), clicked: pct(totals.unique_clicks, totals.delivered) },
+    daily,
+    suppressions: { bounces, blocks, spam },
+    blocklisted: listOf(lists),
+    needs: []
+  };
 }
 
 // --- search ----------------------------------------------------------------------------------------------------
 
 function hostOf(url) {
-	try {
-		return new URL(url).hostname.replace(/^www\./, '');
-	} catch (error) {
-		return '';
-	}
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
 }
 
 // Brave answers 20 results a call, up to offset 4. Page one is asked daily; offsets 1-4 only weekly per search,
@@ -499,163 +309,94 @@ const BRAVE_DEPTH = 100;
 const BRAVE_DEEP_EVERY = 7 * DAY;
 
 async function brave(ctx, queries) {
-	const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
-	if (!key) return { ok: false, error: 'BRAVE_SEARCH_KEY is not set.' };
-	const now = ctx.now || Date.now();
-	const ask = (q, page) =>
-		getJson(
-			ctx.fetch,
-			`https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q),
-			{ headers: { 'X-Subscription-Token': key, Accept: 'application/json' } },
-			'Brave'
-		);
-	const ours = (results) =>
-		results.findIndex((r) => {
-			const host = hostOf(r.url);
-			return host === DOMAIN || host.endsWith('.' + DOMAIN);
-		});
-	const ref = ctx.db ? ctx.db.collection('jarvis_cache').doc('brave-deep') : null;
-	const snap = ref ? await ref.get().catch(() => null) : null;
-	const deep = (snap && snap.exists && snap.data().rows) || {};
-	const checked = {};
-	const rows = [];
-	for (const q of queries) {
-		let data;
-		try {
-			data = await ask(q, 0);
-		} catch (error) {
-			rows.push({ query: q, position: null, error: clean(error) });
-			continue;
-		}
-		const results = (data.web || {}).results || [];
-		const at = ours(results);
-		const row = {
-			query: q,
-			position: at >= 0 ? at + 1 : null,
-			url: at >= 0 ? results[at].url : '',
-			leader: results[0] ? hostOf(results[0].url) : '',
-		};
-		if (row.position === null && results.length) {
-			const saved = deep[q];
-			if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
-				Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
-			} else {
-				try {
-					let seen = results.length;
-					for (
-						let page = 1;
-						page < BRAVE_DEPTH / BRAVE_PAGE &&
-						row.position === null &&
-						(data.query || {}).more_results_available !== false;
-						page++
-					) {
-						data = await ask(q, page);
-						const more = (data.web || {}).results || [];
-						const found = ours(more);
-						if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
-						if (!more.length) break;
-						seen += more.length;
-					}
-					checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
-					row.checkedAt = checked[q].at;
-				} catch (error) {
-					row.deepError = clean(error);
-				}
-			}
-		}
-		rows.push(row);
-	}
-	if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
-	return { ok: true, depth: BRAVE_DEPTH, queries: rows };
+  const key = (ctx.env || {}).BRAVE_SEARCH_KEY;
+  if (!key) return { ok: false, error: "BRAVE_SEARCH_KEY is not set." };
+  const now = ctx.now || Date.now();
+  const ask = (q, page) => getJson(ctx.fetch, `https://api.search.brave.com/res/v1/web/search?count=${BRAVE_PAGE}&offset=${page}&q=` + encodeURIComponent(q), { headers: { "X-Subscription-Token": key, Accept: "application/json" } }, "Brave");
+  const ours = (results) => results.findIndex((r) => { const host = hostOf(r.url); return host === DOMAIN || host.endsWith("." + DOMAIN); });
+  const ref = ctx.db ? ctx.db.collection("jarvis_cache").doc("brave-deep") : null;
+  const snap = ref ? await ref.get().catch(() => null) : null;
+  const deep = (snap && snap.exists && snap.data().rows) || {};
+  const checked = {};
+  const rows = [];
+  for (const q of queries) {
+    let data;
+    try {
+      data = await ask(q, 0);
+    } catch (error) {
+      rows.push({ query: q, position: null, error: clean(error) });
+      continue;
+    }
+    const results = (data.web || {}).results || [];
+    const at = ours(results);
+    const row = { query: q, position: at >= 0 ? at + 1 : null, url: at >= 0 ? results[at].url : "", leader: results[0] ? hostOf(results[0].url) : "" };
+    if (row.position === null && results.length) {
+      const saved = deep[q];
+      if (saved && now - Date.parse(saved.at) < BRAVE_DEEP_EVERY) {
+        Object.assign(row, { position: saved.position, url: saved.url, checkedAt: saved.at });
+      } else {
+        try {
+          let seen = results.length;
+          for (let page = 1; page < BRAVE_DEPTH / BRAVE_PAGE && row.position === null && (data.query || {}).more_results_available !== false; page++) {
+            data = await ask(q, page);
+            const more = (data.web || {}).results || [];
+            const found = ours(more);
+            if (found >= 0) Object.assign(row, { position: seen + found + 1, url: more[found].url });
+            if (!more.length) break;
+            seen += more.length;
+          }
+          checked[q] = { position: row.position, url: row.url, at: new Date(now).toISOString() };
+          row.checkedAt = checked[q].at;
+        } catch (error) {
+          row.deepError = clean(error);
+        }
+      }
+    }
+    rows.push(row);
+  }
+  if (ref && Object.keys(checked).length) await ref.set({ rows: Object.assign({}, deep, checked) }).catch(() => null);
+  return { ok: true, depth: BRAVE_DEPTH, queries: rows };
 }
 
 async function searchConsole(ctx) {
-	const site = 'sc-domain:' + DOMAIN;
-	let token;
-	try {
-		token = await googleToken(ctx.fetch, 'https://www.googleapis.com/auth/webmasters.readonly');
-	} catch (error) {
-		return { ok: false, error: clean(error) };
-	}
-	const end = isoDay(ctx.now - 2 * DAY);
-	const start = isoDay(ctx.now - (ctx.days + 2) * DAY);
-	const url =
-		'https://searchconsole.googleapis.com/webmasters/v3/sites/' + encodeURIComponent(site) + '/searchAnalytics/query';
-	const post = (body) =>
-		getJson(
-			ctx.fetch,
-			url,
-			{
-				method: 'POST',
-				headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-				body: JSON.stringify(Object.assign({ startDate: start, endDate: end }, body)),
-			},
-			'Search Console'
-		);
-	try {
-		const [byDay, byQuery, byPage] = await Promise.all([
-			post({ dimensions: ['date'], rowLimit: 400 }),
-			post({ dimensions: ['query'], rowLimit: 15 }),
-			post({ dimensions: ['page'], rowLimit: 10 }),
-		]);
-		const rows = byDay.rows || [];
-		const sum = (k) => rows.reduce((s, r) => s + (Number(r[k]) || 0), 0);
-		const impressions = sum('impressions');
-		return {
-			ok: true,
-			clicks: sum('clicks'),
-			impressions,
-			ctr: impressions ? round((sum('clicks') / impressions) * 100, 2) : 0,
-			position: impressions ? round(rows.reduce((s, r) => s + r.position * r.impressions, 0) / impressions, 1) : null,
-			daily: rows.map((r) => ({ date: r.keys[0], clicks: r.clicks, impressions: r.impressions })),
-			queries: (byQuery.rows || []).map((r) => ({
-				query: r.keys[0],
-				clicks: r.clicks,
-				impressions: r.impressions,
-				position: round(r.position, 1),
-			})),
-			pages: (byPage.rows || []).map((r) => ({
-				page: r.keys[0].replace(ORIGIN, '') || '/',
-				clicks: r.clicks,
-				impressions: r.impressions,
-			})),
-		};
-	} catch (error) {
-		if (
-			error.status === 403 &&
-			/SERVICE_DISABLED|has not been used|is disabled/i.test(error.name + ' ' + error.message)
-		) {
-			return {
-				ok: false,
-				error: 'The Search Console API is turned off for this project.',
-				need: 'Search Console: in the Cloud console open APIs & Services > Library > Google Search Console API and click Enable (or run: gcloud services enable searchconsole.googleapis.com).',
-			};
-		}
-		if (error.status === 403 || error.status === 401) {
-			const sa = await serviceAccount(ctx.fetch);
-			return {
-				ok: false,
-				error: 'No access to ' + site + '.',
-				need:
-					'Search Console: Settings > Users and permissions > Add user ' +
-					(sa || 'the functions service account') +
-					' with Restricted permission for ' +
-					site +
-					'.',
-			};
-		}
-		return { ok: false, error: clean(error) };
-	}
+  const site = "sc-domain:" + DOMAIN;
+  let token;
+  try { token = await googleToken(ctx.fetch, "https://www.googleapis.com/auth/webmasters.readonly"); } catch (error) { return { ok: false, error: clean(error) }; }
+  const end = isoDay(ctx.now - 2 * DAY);
+  const start = isoDay(ctx.now - (ctx.days + 2) * DAY);
+  const url = "https://searchconsole.googleapis.com/webmasters/v3/sites/" + encodeURIComponent(site) + "/searchAnalytics/query";
+  const post = (body) => getJson(ctx.fetch, url, { method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ startDate: start, endDate: end }, body)) }, "Search Console");
+  try {
+    const [byDay, byQuery, byPage] = await Promise.all([post({ dimensions: ["date"], rowLimit: 400 }), post({ dimensions: ["query"], rowLimit: 15 }), post({ dimensions: ["page"], rowLimit: 10 })]);
+    const rows = byDay.rows || [];
+    const sum = (k) => rows.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+    const impressions = sum("impressions");
+    return {
+      ok: true,
+      clicks: sum("clicks"),
+      impressions,
+      ctr: impressions ? round((sum("clicks") / impressions) * 100, 2) : 0,
+      position: impressions ? round(rows.reduce((s, r) => s + r.position * r.impressions, 0) / impressions, 1) : null,
+      daily: rows.map((r) => ({ date: r.keys[0], clicks: r.clicks, impressions: r.impressions })),
+      queries: (byQuery.rows || []).map((r) => ({ query: r.keys[0], clicks: r.clicks, impressions: r.impressions, position: round(r.position, 1) })),
+      pages: (byPage.rows || []).map((r) => ({ page: r.keys[0].replace(ORIGIN, "") || "/", clicks: r.clicks, impressions: r.impressions }))
+    };
+  } catch (error) {
+    if (error.status === 403 && /SERVICE_DISABLED|has not been used|is disabled/i.test(error.name + " " + error.message)) {
+      return { ok: false, error: "The Search Console API is turned off for this project.", need: "Search Console: in the Cloud console open APIs & Services > Library > Google Search Console API and click Enable (or run: gcloud services enable searchconsole.googleapis.com)." };
+    }
+    if (error.status === 403 || error.status === 401) {
+      const sa = await serviceAccount(ctx.fetch);
+      return { ok: false, error: "No access to " + site + ".", need: "Search Console: Settings > Users and permissions > Add user " + (sa || "the functions service account") + " with Restricted permission for " + site + "." };
+    }
+    return { ok: false, error: clean(error) };
+  }
 }
 
 async function search(ctx) {
-	const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
-	const [ranks, gsc, index] = await Promise.all([
-		brave(ctx, queries.slice(0, 8)),
-		searchConsole(ctx),
-		jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) })),
-	]);
-	return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
+  const queries = ((ctx.settings || {}).searchQueries || []).length ? ctx.settings.searchQueries : SEARCH_QUERIES;
+  const [ranks, gsc, index] = await Promise.all([brave(ctx, queries.slice(0, 8)), searchConsole(ctx), jarvisIndex.read(ctx).catch((error) => ({ ok: false, error: clean(error) }))]);
+  return { ok: true, brave: ranks, console: gsc, index, needs: gsc.need ? [gsc.need] : [] };
 }
 
 // --- social ----------------------------------------------------------------------------------------------------
@@ -665,671 +406,313 @@ async function search(ctx) {
 // the Telegram channel's members (channels.telegram), read by jarvisSocial.telegramMembers. The subreddit's members
 // are in the Reddit ledger itself (reddit.json members), read by jarvisSocial.redditMembers.
 function facebookNeeds(metrics) {
-	return Object.entries((metrics && metrics.pages) || {})
-		.map(([profile, page]) => {
-			if (page.skipped)
-				return (
-					profile +
-					': the daily social numbers skipped it (' +
-					page.skipped +
-					' repo secret). Steps are at the top of scripts/meta-token.js.'
-				);
-			const said = [];
-			if (page.asked && page.answered < page.asked)
-				said.push(
-					'the Graph API answered ' +
-						(page.answered || 0) +
-						' of ' +
-						page.asked +
-						' sent posts in the daily social numbers' +
-						(page.error ? ' (' + String(page.error).slice(0, 200) + ')' : '')
-				);
-			if (page.asked && page.insights === 0)
-				said.push('no post came back with views, so the Page token lacks read_insights');
-			return said.length
-				? profile +
-						': ' +
-						said.join('; ') +
-						'. A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js.'
-				: '';
-		})
-		.filter(Boolean);
+  return Object.entries((metrics && metrics.pages) || {}).map(([profile, page]) => {
+    if (page.skipped) return profile + ": the daily social numbers skipped it (" + page.skipped + " repo secret). Steps are at the top of scripts/meta-token.js.";
+    const said = [];
+    if (page.asked && page.answered < page.asked) said.push("the Graph API answered " + (page.answered || 0) + " of " + page.asked + " sent posts in the daily social numbers" + (page.error ? " (" + String(page.error).slice(0, 200) + ")" : ""));
+    if (page.asked && page.insights === 0) said.push("no post came back with views, so the Page token lacks read_insights");
+    return said.length ? profile + ": " + said.join("; ") + ". A new token with read_insights and pages_read_user_content fixes it; steps are at the top of scripts/meta-token.js." : "";
+  }).filter(Boolean);
 }
 
 async function social(ctx) {
-	const since = ctx.now - ctx.days * DAY;
-	const ledger = async (name) => {
-		try {
-			return await getJson(
-				ctx.fetch,
-				ORIGIN + '/assets/social/' + name + '.json?t=' + Math.floor(ctx.now / HOUR),
-				{},
-				name + ' ledger'
-			);
-		} catch (error) {
-			return null;
-		}
-	};
-	const [buffer, facebook, open, telegram, reddit, youtube, metrics] = await Promise.all([
-		ledger('buffer'),
-		ledger('facebook'),
-		ledger('open-social'),
-		ledger('telegram'),
-		ledger('reddit'),
-		ledger('youtube'),
-		ledger('metrics'),
-	]);
-	const channels = {};
-	const results = {};
-	const daily = {};
-	const latest = [];
-	const scheduled = { count: 0, next: '' };
-	[buffer, facebook, open, telegram, reddit].forEach((book) => {
-		Object.keys((book && book.posts) || {}).forEach((post) => {
-			(book.posts[post] || []).forEach((row) => {
-				const at = Date.parse(row.at || '');
-				if (!Number.isFinite(at) || at < since) return;
-				if (at > ctx.now) {
-					scheduled.count += 1;
-					if (!scheduled.next || at < Date.parse(scheduled.next)) scheduled.next = row.at;
-					return;
-				}
-				const key = (row.channel || 'other') + ':' + (row.result || 'unknown');
-				tally(results, key);
-				if (row.result === 'sent') {
-					tally(channels, row.channel || 'other');
-					tally(daily, isoDay(at));
-				}
-				latest.push({ at: row.at, channel: row.channel, result: row.result, post, url: row.url || '' });
-			});
-		});
-	});
-	const videos = Object.keys((youtube && youtube.videos) || {}).map((id) => Object.assign({ id }, youtube.videos[id]));
-	const needs = [];
-	let views = null;
-	const key = (ctx.env || {}).YOUTUBE_KEY;
-	if (key && videos.length) {
-		try {
-			const ids = videos
-				.slice(0, 50)
-				.map((v) => v.id)
-				.join(',');
-			const data = await getJson(
-				ctx.fetch,
-				'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' + ids + '&key=' + key,
-				{},
-				'YouTube'
-			);
-			const stats = {};
-			(data.items || []).forEach((item) => {
-				stats[item.id] = item.statistics || {};
-			});
-			videos.forEach((v) => {
-				const s = stats[v.id] || {};
-				v.views = Number(s.viewCount) || 0;
-				v.likes = Number(s.likeCount) || 0;
-				v.comments = Number(s.commentCount) || 0;
-			});
-			views = videos.reduce((s, v) => s + (v.views || 0), 0);
-		} catch (error) {
-			needs.push('YouTube: ' + clean(error));
-		}
-	} else if (!key)
-		needs.push('YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.');
-	needs.push(...facebookNeeds(metrics));
-	const tgMembers = jarvisSocial.telegramMembers(metrics, since);
-	if (tgMembers.need) needs.push(tgMembers.need);
-	const rdMembers = jarvisSocial.redditMembers(reddit, since, ctx.now);
-	if (rdMembers.need) needs.push(rdMembers.need);
-	const failed = Object.keys(results)
-		.filter((k) => /:failed$/.test(k))
-		.reduce((s, k) => s + results[k], 0);
-	// Auto-live batches ship feed/story/clip plus a 4-slide carousel and LinkedIn document PDF (#3485 / #3488).
-	// captions.json records carousel/document/assetsMissing after tips-studio render.
-	let assets = { batch: '', missing: [], expected: ['feed', 'story', 'clip', 'carousel', 'document'] };
-	for (let d = 0; d < 3; d += 1) {
-		const day = new Date(ctx.now - d * DAY).toISOString().slice(0, 10);
-		const batch = 'auto-' + day;
-		try {
-			const caps = await getJson(
-				ctx.fetch,
-				ORIGIN + '/media/social-posts/' + batch + '/captions.json?t=' + Math.floor(ctx.now / HOUR),
-				{},
-				batch + ' captions'
-			);
-			const missing = [];
-			Object.keys(caps || {}).forEach((slug) => {
-				const cap = caps[slug] || {};
-				if (cap.hold) return;
-				if (typeof cap.carousel === 'number' || cap.document != null || (cap.assetsMissing || []).length) {
-					(cap.assetsMissing || []).forEach((m) => missing.push(batch + '/' + slug + ' ' + m));
-					if (typeof cap.carousel === 'number' && cap.carousel < 4) missing.push(batch + '/' + slug + ' carousel');
-					if (cap.document === false) missing.push(batch + '/' + slug + ' document');
-				}
-			});
-			assets = { batch, missing: [...new Set(missing)].slice(0, 12), expected: assets.expected };
-			if (assets.missing.length)
-				needs.push(
-					'Auto batch ' +
-						batch +
-						' is missing carousel slides or LinkedIn PDF on ' +
-						assets.missing.slice(0, 3).join(', ') +
-						(assets.missing.length > 3 ? '…' : '') +
-						'.'
-				);
-			break;
-		} catch (error) {
-			/* no auto batch for that day yet */
-		}
-	}
-	return {
-		ok: !!(buffer || facebook),
-		error: buffer || facebook ? '' : 'The social ledgers could not be read from the site.',
-		days: ctx.days,
-		sent: Object.keys(channels).reduce((s, k) => s + channels[k], 0),
-		failed,
-		channels: listOf(channels),
-		results: listOf(results, 24),
-		daily: Object.keys(daily)
-			.sort()
-			.map((date) => ({ date, posts: daily[date] })),
-		latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
-		scheduled,
-		queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since, metrics),
-		telegram: tgMembers,
-		reddit: rdMembers,
-		youtube: {
-			videos: videos
-				.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0))
-				.slice(0, 10),
-			views,
-		},
-		assets,
-		needs,
-	};
+  const since = ctx.now - ctx.days * DAY;
+  const ledger = async (name) => {
+    try { return await getJson(ctx.fetch, ORIGIN + "/assets/social/" + name + ".json?t=" + Math.floor(ctx.now / HOUR), {}, name + " ledger"); } catch (error) { return null; }
+  };
+  const [buffer, facebook, open, telegram, reddit, youtube, metrics] = await Promise.all([ledger("buffer"), ledger("facebook"), ledger("open-social"), ledger("telegram"), ledger("reddit"), ledger("youtube"), ledger("metrics")]);
+  const channels = {};
+  const results = {};
+  const daily = {};
+  const latest = [];
+  const scheduled = { count: 0, next: "" };
+  [buffer, facebook, open, telegram, reddit].forEach((book) => {
+    Object.keys((book && book.posts) || {}).forEach((post) => {
+      (book.posts[post] || []).forEach((row) => {
+        const at = Date.parse(row.at || "");
+        if (!Number.isFinite(at) || at < since) return;
+        if (at > ctx.now) {
+          scheduled.count += 1;
+          if (!scheduled.next || at < Date.parse(scheduled.next)) scheduled.next = row.at;
+          return;
+        }
+        const key = (row.channel || "other") + ":" + (row.result || "unknown");
+        tally(results, key);
+        if (row.result === "sent") { tally(channels, row.channel || "other"); tally(daily, isoDay(at)); }
+        latest.push({ at: row.at, channel: row.channel, result: row.result, post, url: row.url || "" });
+      });
+    });
+  });
+  const videos = Object.keys((youtube && youtube.videos) || {}).map((id) => Object.assign({ id }, youtube.videos[id]));
+  const needs = [];
+  let views = null;
+  const key = (ctx.env || {}).YOUTUBE_KEY;
+  if (key && videos.length) {
+    try {
+      const ids = videos.slice(0, 50).map((v) => v.id).join(",");
+      const data = await getJson(ctx.fetch, "https://www.googleapis.com/youtube/v3/videos?part=statistics&id=" + ids + "&key=" + key, {}, "YouTube");
+      const stats = {};
+      (data.items || []).forEach((item) => { stats[item.id] = item.statistics || {}; });
+      videos.forEach((v) => { const s = stats[v.id] || {}; v.views = Number(s.viewCount) || 0; v.likes = Number(s.likeCount) || 0; v.comments = Number(s.commentCount) || 0; });
+      views = videos.reduce((s, v) => s + (v.views || 0), 0);
+    } catch (error) { needs.push("YouTube: " + clean(error)); }
+  } else if (!key) needs.push("YouTube: set YOUTUBE_KEY (an API key limited to the YouTube Data API v3) in Secret Manager.");
+  needs.push(...facebookNeeds(metrics));
+  const tgMembers = jarvisSocial.telegramMembers(metrics, since);
+  if (tgMembers.need) needs.push(tgMembers.need);
+  const rdMembers = jarvisSocial.redditMembers(reddit, since, ctx.now);
+  if (rdMembers.need) needs.push(rdMembers.need);
+  const failed = Object.keys(results).filter((k) => /:failed$/.test(k)).reduce((s, k) => s + results[k], 0);
+  // Auto-live batches ship feed/story/clip plus a 4-slide carousel and LinkedIn document PDF (#3485 / #3488).
+  // captions.json records carousel/document/assetsMissing after tips-studio render.
+  let assets = { batch: "", missing: [], expected: ["feed", "story", "clip", "carousel", "document"] };
+  for (let d = 0; d < 3; d += 1) {
+    const day = new Date(ctx.now - d * DAY).toISOString().slice(0, 10);
+    const batch = "auto-" + day;
+    try {
+      const caps = await getJson(ctx.fetch, ORIGIN + "/media/social-posts/" + batch + "/captions.json?t=" + Math.floor(ctx.now / HOUR), {}, batch + " captions");
+      const missing = [];
+      Object.keys(caps || {}).forEach((slug) => {
+        const cap = caps[slug] || {};
+        if (cap.hold) return;
+        if (typeof cap.carousel === "number" || cap.document != null || (cap.assetsMissing || []).length) {
+          (cap.assetsMissing || []).forEach((m) => missing.push(batch + "/" + slug + " " + m));
+          if (typeof cap.carousel === "number" && cap.carousel < 4) missing.push(batch + "/" + slug + " carousel");
+          if (cap.document === false) missing.push(batch + "/" + slug + " document");
+        }
+      });
+      assets = { batch, missing: [...new Set(missing)].slice(0, 12), expected: assets.expected };
+      if (assets.missing.length) needs.push("Auto batch " + batch + " is missing carousel slides or LinkedIn PDF on " + assets.missing.slice(0, 3).join(", ") + (assets.missing.length > 3 ? "…" : "") + ".");
+      break;
+    } catch (error) { /* no auto batch for that day yet */ }
+  }
+  return {
+    ok: !!(buffer || facebook),
+    error: buffer || facebook ? "" : "The social ledgers could not be read from the site.",
+    days: ctx.days,
+    sent: Object.keys(channels).reduce((s, k) => s + channels[k], 0),
+    failed,
+    channels: listOf(channels),
+    results: listOf(results, 24),
+    daily: Object.keys(daily).sort().map((date) => ({ date, posts: daily[date] })),
+    latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
+    scheduled,
+    queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since, metrics),
+    telegram: tgMembers,
+    reddit: rdMembers,
+    youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },
+    assets,
+    needs
+  };
 }
 
 // --- safety ----------------------------------------------------------------------------------------------------
 
 async function dns(ctx, name, type) {
-	const data = await getJson(
-		ctx.fetch,
-		'https://dns.google/resolve?name=' + encodeURIComponent(name) + '&type=' + type,
-		{},
-		'DNS'
-	);
-	return (data.Answer || [])
-		.filter((a) => a.type === { TXT: 16, MX: 15, CNAME: 5, CAA: 257 }[type])
-		.map((a) =>
-			String(a.data || '')
-				.replace(/^"|"$/g, '')
-				.replace(/" "/g, '')
-		);
+  const data = await getJson(ctx.fetch, "https://dns.google/resolve?name=" + encodeURIComponent(name) + "&type=" + type, {}, "DNS");
+  return (data.Answer || []).filter((a) => a.type === { TXT: 16, MX: 15, CNAME: 5, CAA: 257 }[type]).map((a) => String(a.data || "").replace(/^"|"$/g, "").replace(/" "/g, ""));
 }
 
 function dmarcPolicy(record) {
-	const tag = (k) => ((new RegExp('(?:^|;)\\s*' + k + '=([^;]+)', 'i').exec(record) || [])[1] || '').trim();
-	return { p: tag('p').toLowerCase(), pct: tag('pct') ? Number(tag('pct')) : 100, rua: !!tag('rua') };
+  const tag = (k) => ((new RegExp("(?:^|;)\\s*" + k + "=([^;]+)", "i").exec(record) || [])[1] || "").trim();
+  return { p: tag("p").toLowerCase(), pct: tag("pct") ? Number(tag("pct")) : 100, rua: !!tag("rua") };
 }
 
 async function safety(ctx) {
-	const checks = [];
-	const add = (name, level, detail, key) =>
-		checks.push({
-			name,
-			level,
-			ok: level === 'good' || level === 'info',
-			detail,
-			key: key || name.toLowerCase().replace(/\W+/g, '-'),
-		});
-	const step = async (name, run) => {
-		try {
-			await run();
-		} catch (error) {
-			add(name, 'warn', 'Could not check: ' + clean(error));
-		}
-	};
-	await Promise.all([
-		step('Web Risk', async () => {
-			const key = (ctx.env || {}).WEBRISK_KEY;
-			if (!key) {
-				add('Web Risk', 'info', 'WEBRISK_KEY is not set.');
-				return;
-			}
-			const data = await getJson(
-				ctx.fetch,
-				'https://webrisk.googleapis.com/v1/uris:search?threatTypes=MALWARE&threatTypes=SOCIAL_ENGINEERING&threatTypes=UNWANTED_SOFTWARE&uri=' +
-					encodeURIComponent(ORIGIN + '/') +
-					'&key=' +
-					key,
-				{},
-				'Web Risk'
-			);
-			if (data.threat)
-				add(
-					'Web Risk',
-					'alert',
-					'Google lists ' + DOMAIN + ' as ' + (data.threat.threatTypes || []).join(', ') + '.',
-					'webrisk'
-				);
-			else add('Web Risk', 'good', "Not on Google's malware or phishing lists.", 'webrisk');
-		}),
-		step('SPF', async () => {
-			const spf = (await dns(ctx, DOMAIN, 'TXT')).filter((r) => /^v=spf1/i.test(r));
-			if (!spf.length)
-				add('SPF', 'alert', 'No SPF record: mail from ' + DOMAIN + ' can be spoofed and lands in spam.', 'spf');
-			else if (spf.length > 1) add('SPF', 'alert', 'Two SPF records; receivers treat that as no SPF.', 'spf');
-			else
-				add(
-					'SPF',
-					/sendgrid\.net/.test(spf[0]) ? 'good' : 'warn',
-					spf[0].slice(0, 120) + (/sendgrid\.net/.test(spf[0]) ? '' : ' (SendGrid is not included)'),
-					'spf'
-				);
-		}),
-		step('DMARC', async () => {
-			const rec = (await dns(ctx, '_dmarc.' + DOMAIN, 'TXT')).find((r) => /^v=DMARC1/i.test(r));
-			if (!rec) {
-				add('DMARC', 'alert', 'No DMARC record.', 'dmarc');
-				return;
-			}
-			const d = dmarcPolicy(rec);
-			if (d.p === 'none') add('DMARC', 'warn', 'DMARC is monitor-only (p=none).', 'dmarc');
-			else if (d.pct < 100)
-				add('DMARC', 'info', 'DMARC p=' + d.p + ' applies to ' + d.pct + '% of failing mail.', 'dmarc');
-			else add('DMARC', 'good', 'DMARC p=' + d.p + ' on all mail' + (d.rua ? ', with reports.' : '.'), 'dmarc');
-		}),
-		step('DKIM', async () => {
-			const [s1, s2] = await Promise.all([
-				dns(ctx, 's1._domainkey.' + DOMAIN, 'CNAME'),
-				dns(ctx, 's2._domainkey.' + DOMAIN, 'CNAME'),
-			]);
-			if (s1.length && s2.length) add('DKIM', 'good', 'SendGrid signing keys s1 and s2 are published.', 'dkim');
-			else add('DKIM', 'warn', 'SendGrid DKIM key ' + (s1.length ? 's2' : 's1') + ' is missing.', 'dkim');
-		}),
-		step('MX', async () => {
-			const mx = await dns(ctx, DOMAIN, 'MX');
-			add(
-				'MX',
-				mx.length ? 'good' : 'alert',
-				mx.length ? mx.join(', ').slice(0, 120) : 'No MX record: replies to ' + DOMAIN + ' addresses bounce.',
-				'mx'
-			);
-		}),
-		step('CAA', async () => {
-			const caa = await dns(ctx, DOMAIN, 'CAA');
-			add(
-				'CAA',
-				'info',
-				caa.length
-					? 'Certificates limited to ' +
-							Array.from(new Set(caa.map((r) => (/issue(?:wild)? "([^;"]+)/.exec(r) || [])[1]).filter(Boolean))).join(
-								', '
-							) +
-							'.'
-					: 'No CAA record: any authority may issue certificates.',
-				'caa'
-			);
-		}),
-		step('Domain', async () => {
-			const data = await getJson(
-				ctx.fetch,
-				'https://rdap.verisign.com/com/v1/domain/' + DOMAIN,
-				{ headers: { Accept: 'application/rdap+json' } },
-				'RDAP'
-			);
-			const exp = (data.events || []).find((e) => e.eventAction === 'expiration');
-			if (!exp) {
-				add('Domain', 'warn', 'The registry did not give an expiry date.', 'domain');
-				return;
-			}
-			const left = Math.floor((Date.parse(exp.eventDate) - ctx.now) / DAY);
-			const min = (ctx.thresholds || {}).domainDays || 30;
-			add(
-				'Domain',
-				left < min ? 'alert' : 'good',
-				DOMAIN + ' expires ' + exp.eventDate.slice(0, 10) + ' (' + left + ' days).',
-				'domain'
-			);
-		}),
-		step('TLS', async () => {
-			const left = ctx.tls ? await ctx.tls(DOMAIN, ctx.now) : null;
-			if (left === null || left === undefined) add('TLS', 'warn', 'Could not read the certificate.', 'tls-cert');
-			else
-				add(
-					'TLS',
-					left < ((ctx.thresholds || {}).tlsDays || 21) ? 'alert' : 'good',
-					'Certificate valid for ' + left + ' more days.',
-					'tls-cert'
-				);
-		}),
-	]);
-	const order = { alert: 0, warn: 1, info: 2, good: 3 };
-	checks.sort((a, b) => order[a.level] - order[b.level] || a.name.localeCompare(b.name));
-	return {
-		ok: true,
-		checks,
-		score: Math.round((checks.filter((c) => c.ok).length / Math.max(1, checks.length)) * 100),
-		needs: [],
-	};
+  const checks = [];
+  const add = (name, level, detail, key) => checks.push({ name, level, ok: level === "good" || level === "info", detail, key: key || name.toLowerCase().replace(/\W+/g, "-") });
+  const step = async (name, run) => { try { await run(); } catch (error) { add(name, "warn", "Could not check: " + clean(error)); } };
+  await Promise.all([
+    step("Web Risk", async () => {
+      const key = (ctx.env || {}).WEBRISK_KEY;
+      if (!key) { add("Web Risk", "info", "WEBRISK_KEY is not set."); return; }
+      const data = await getJson(ctx.fetch, "https://webrisk.googleapis.com/v1/uris:search?threatTypes=MALWARE&threatTypes=SOCIAL_ENGINEERING&threatTypes=UNWANTED_SOFTWARE&uri=" + encodeURIComponent(ORIGIN + "/") + "&key=" + key, {}, "Web Risk");
+      if (data.threat) add("Web Risk", "alert", "Google lists " + DOMAIN + " as " + (data.threat.threatTypes || []).join(", ") + ".", "webrisk");
+      else add("Web Risk", "good", "Not on Google's malware or phishing lists.", "webrisk");
+    }),
+    step("SPF", async () => {
+      const spf = (await dns(ctx, DOMAIN, "TXT")).filter((r) => /^v=spf1/i.test(r));
+      if (!spf.length) add("SPF", "alert", "No SPF record: mail from " + DOMAIN + " can be spoofed and lands in spam.", "spf");
+      else if (spf.length > 1) add("SPF", "alert", "Two SPF records; receivers treat that as no SPF.", "spf");
+      else add("SPF", /sendgrid\.net/.test(spf[0]) ? "good" : "warn", spf[0].slice(0, 120) + (/sendgrid\.net/.test(spf[0]) ? "" : " (SendGrid is not included)"), "spf");
+    }),
+    step("DMARC", async () => {
+      const rec = (await dns(ctx, "_dmarc." + DOMAIN, "TXT")).find((r) => /^v=DMARC1/i.test(r));
+      if (!rec) { add("DMARC", "alert", "No DMARC record.", "dmarc"); return; }
+      const d = dmarcPolicy(rec);
+      if (d.p === "none") add("DMARC", "warn", "DMARC is monitor-only (p=none).", "dmarc");
+      else if (d.pct < 100) add("DMARC", "info", "DMARC p=" + d.p + " applies to " + d.pct + "% of failing mail.", "dmarc");
+      else add("DMARC", "good", "DMARC p=" + d.p + " on all mail" + (d.rua ? ", with reports." : "."), "dmarc");
+    }),
+    step("DKIM", async () => {
+      const [s1, s2] = await Promise.all([dns(ctx, "s1._domainkey." + DOMAIN, "CNAME"), dns(ctx, "s2._domainkey." + DOMAIN, "CNAME")]);
+      if (s1.length && s2.length) add("DKIM", "good", "SendGrid signing keys s1 and s2 are published.", "dkim");
+      else add("DKIM", "warn", "SendGrid DKIM key " + (s1.length ? "s2" : "s1") + " is missing.", "dkim");
+    }),
+    step("MX", async () => {
+      const mx = await dns(ctx, DOMAIN, "MX");
+      add("MX", mx.length ? "good" : "alert", mx.length ? mx.join(", ").slice(0, 120) : "No MX record: replies to " + DOMAIN + " addresses bounce.", "mx");
+    }),
+    step("CAA", async () => {
+      const caa = await dns(ctx, DOMAIN, "CAA");
+      add("CAA", "info", caa.length ? "Certificates limited to " + Array.from(new Set(caa.map((r) => (/issue(?:wild)? "([^;"]+)/.exec(r) || [])[1]).filter(Boolean))).join(", ") + "." : "No CAA record: any authority may issue certificates.", "caa");
+    }),
+    step("Domain", async () => {
+      const data = await getJson(ctx.fetch, "https://rdap.verisign.com/com/v1/domain/" + DOMAIN, { headers: { Accept: "application/rdap+json" } }, "RDAP");
+      const exp = (data.events || []).find((e) => e.eventAction === "expiration");
+      if (!exp) { add("Domain", "warn", "The registry did not give an expiry date.", "domain"); return; }
+      const left = Math.floor((Date.parse(exp.eventDate) - ctx.now) / DAY);
+      const min = (ctx.thresholds || {}).domainDays || 30;
+      add("Domain", left < min ? "alert" : "good", DOMAIN + " expires " + exp.eventDate.slice(0, 10) + " (" + left + " days).", "domain");
+    }),
+    step("TLS", async () => {
+      const left = ctx.tls ? await ctx.tls(DOMAIN, ctx.now) : null;
+      if (left === null || left === undefined) add("TLS", "warn", "Could not read the certificate.", "tls-cert");
+      else add("TLS", left < ((ctx.thresholds || {}).tlsDays || 21) ? "alert" : "good", "Certificate valid for " + left + " more days.", "tls-cert");
+    })
+  ]);
+  const order = { alert: 0, warn: 1, info: 2, good: 3 };
+  checks.sort((a, b) => order[a.level] - order[b.level] || a.name.localeCompare(b.name));
+  return { ok: true, checks, score: Math.round((checks.filter((c) => c.ok).length / Math.max(1, checks.length)) * 100), needs: [] };
 }
 
 // --- platform --------------------------------------------------------------------------------------------------
 
 async function monitoring(ctx, token, filter, { start, end, groupBy, period }) {
-	const params = new URLSearchParams({
-		filter,
-		'interval.startTime': new Date(start).toISOString(),
-		'interval.endTime': new Date(end).toISOString(),
-		'aggregation.alignmentPeriod': (period || Math.max(60, Math.round((end - start) / 1000))) + 's',
-		'aggregation.perSeriesAligner': 'ALIGN_SUM',
-		'aggregation.crossSeriesReducer': 'REDUCE_SUM',
-	});
-	(groupBy || []).forEach((g) => params.append('aggregation.groupByFields', g));
-	const data = await getJson(
-		ctx.fetch,
-		'https://monitoring.googleapis.com/v3/projects/' + PROJECT + '/timeSeries?' + params.toString(),
-		{ headers: { Authorization: 'Bearer ' + token } },
-		'Monitoring'
-	);
-	return (data.timeSeries || []).map((s) => ({
-		labels: Object.assign({}, (s.metric || {}).labels, (s.resource || {}).labels),
-		value: (s.points || []).reduce((sum, p) => sum + (Number(p.value.int64Value || p.value.doubleValue) || 0), 0),
-	}));
+  const params = new URLSearchParams({
+    filter,
+    "interval.startTime": new Date(start).toISOString(),
+    "interval.endTime": new Date(end).toISOString(),
+    "aggregation.alignmentPeriod": (period || Math.max(60, Math.round((end - start) / 1000))) + "s",
+    "aggregation.perSeriesAligner": "ALIGN_SUM",
+    "aggregation.crossSeriesReducer": "REDUCE_SUM"
+  });
+  (groupBy || []).forEach((g) => params.append("aggregation.groupByFields", g));
+  const data = await getJson(ctx.fetch, "https://monitoring.googleapis.com/v3/projects/" + PROJECT + "/timeSeries?" + params.toString(), { headers: { Authorization: "Bearer " + token } }, "Monitoring");
+  return (data.timeSeries || []).map((s) => ({
+    labels: Object.assign({}, (s.metric || {}).labels, (s.resource || {}).labels),
+    value: (s.points || []).reduce((sum, p) => sum + (Number(p.value.int64Value || p.value.doubleValue) || 0), 0)
+  }));
 }
 
 async function realFailures(ctx, token, start) {
-	const filter =
-		'resource.type="cloud_function" AND timestamp>="' +
-		new Date(start).toISOString() +
-		'" AND (textPayload:"finished with status: \'crash\'" OR textPayload:"finished with status: \'timeout\'" OR textPayload:"finished with status: \'error\'" OR textPayload:"finished with status code: 5" OR textPayload:"finished with status: \'connection error\'")';
-	const data = await getJson(
-		ctx.fetch,
-		'https://logging.googleapis.com/v2/entries:list',
-		{
-			method: 'POST',
-			headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				resourceNames: ['projects/' + PROJECT],
-				filter,
-				orderBy: 'timestamp desc',
-				pageSize: 1000,
-			}),
-		},
-		'Logging'
-	);
-	const byFunction = {};
-	const kinds = {};
-	const latest = [];
-	(data.entries || []).forEach((entry) => {
-		const fn = ((entry.resource || {}).labels || {}).function_name || 'unknown';
-		const text = String(entry.textPayload || '');
-		const kind = (/status code: (5\d\d)/.exec(text) || [])[1] || (/status: '([^']+)'/.exec(text) || [])[1] || 'error';
-		tally(byFunction, fn);
-		tally(kinds, kind);
-		if (latest.length < 10) latest.push({ at: entry.timestamp, fn, kind });
-	});
-	return {
-		total: (data.entries || []).length,
-		capped: !!data.nextPageToken,
-		byFunction: listOf(byFunction),
-		kinds: listOf(kinds),
-		latest,
-	};
+  const filter = 'resource.type="cloud_function" AND timestamp>="' + new Date(start).toISOString() + '" AND (textPayload:"finished with status: \'crash\'" OR textPayload:"finished with status: \'timeout\'" OR textPayload:"finished with status: \'error\'" OR textPayload:"finished with status code: 5" OR textPayload:"finished with status: \'connection error\'")';
+  const data = await getJson(ctx.fetch, "https://logging.googleapis.com/v2/entries:list", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ resourceNames: ["projects/" + PROJECT], filter, orderBy: "timestamp desc", pageSize: 1000 })
+  }, "Logging");
+  const byFunction = {};
+  const kinds = {};
+  const latest = [];
+  (data.entries || []).forEach((entry) => {
+    const fn = ((entry.resource || {}).labels || {}).function_name || "unknown";
+    const text = String(entry.textPayload || "");
+    const kind = (/status code: (5\d\d)/.exec(text) || [])[1] || (/status: '([^']+)'/.exec(text) || [])[1] || "error";
+    tally(byFunction, fn);
+    tally(kinds, kind);
+    if (latest.length < 10) latest.push({ at: entry.timestamp, fn, kind });
+  });
+  return { total: (data.entries || []).length, capped: !!data.nextPageToken, byFunction: listOf(byFunction), kinds: listOf(kinds), latest };
 }
 
 // Cloud Billing's standard usage cost export (Billing > Billing export) writes gcp_billing_export_v1_* into jarvis_billing.
 async function costs(ctx, token) {
-	const auth = { headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' } };
-	const bq = 'https://bigquery.googleapis.com/bigquery/v2/projects/' + PROJECT;
-	let tables;
-	try {
-		tables = await getJson(ctx.fetch, bq + '/datasets/' + BILLING_DATASET + '/tables', auth, 'BigQuery');
-	} catch (error) {
-		if (error.status === 404)
-			return {
-				need:
-					'Costs: in the Cloud console open Billing > Billing export and turn on the standard usage cost export to BigQuery (dataset ' +
-					BILLING_DATASET +
-					' in ' +
-					PROJECT +
-					').',
-			};
-		throw error;
-	}
-	const table =
-		(tables.tables || [])
-			.map((t) => t.tableReference.tableId)
-			.filter((id) => /^gcp_billing_export_v1_/.test(id))
-			.sort()[0] || '';
-	if (!table) return { pending: true, note: 'The billing export is on; Google writes the first rows within a day.' };
-	const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
-	// ctx.month ("YYYY-MM", #3283): that invoice month instead of the last days, with the net in USD too.
-	const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(ctx.month || '') ? ctx.month : '';
-	const credits = 'IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)';
-	const query =
-		'SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(' +
-		credits +
-		'), 2) AS net, ROUND(SUM(cost), 2) AS gross' +
-		(month ? ', ROUND(SUM((cost + ' + credits + ') / IFNULL(NULLIF(currency_conversion_rate, 0), 1)), 2) AS usd' : '') +
-		' FROM `' +
-		PROJECT +
-		'.' +
-		BILLING_DATASET +
-		'.' +
-		table +
-		'` WHERE ' +
-		(month
-			? "invoice.month = '" + month.replace('-', '') + "'"
-			: 'usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + days + ' DAY)') +
-		' GROUP BY service, currency ORDER BY gross DESC LIMIT ' +
-		(month ? 50 : 15);
-	const data = await getJson(
-		ctx.fetch,
-		bq + '/queries',
-		Object.assign({ method: 'POST', body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth),
-		'BigQuery'
-	);
-	const rows = (data.rows || []).map((r) => ({
-		label: r.f[0].v || 'other',
-		currency: r.f[1].v,
-		net: Number(r.f[2].v) || 0,
-		gross: Number(r.f[3].v) || 0,
-		usd: Number(r.f[4] && r.f[4].v) || 0,
-	}));
-	if (month)
-		return {
-			month,
-			currency: (rows[0] || {}).currency || '',
-			net: round(
-				rows.reduce((s, r) => s + r.net, 0),
-				2
-			),
-			usd: round(
-				rows.reduce((s, r) => s + r.usd, 0),
-				2
-			),
-			byService: rows.map((r) => ({ label: r.label, value: r.net })),
-		};
-	return {
-		days,
-		currency: (rows[0] || {}).currency || '',
-		net: round(
-			rows.reduce((s, r) => s + r.net, 0),
-			2
-		),
-		gross: round(
-			rows.reduce((s, r) => s + r.gross, 0),
-			2
-		),
-		byService: rows.map((r) => ({ label: r.label, value: r.net })),
-	};
+  const auth = { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } };
+  const bq = "https://bigquery.googleapis.com/bigquery/v2/projects/" + PROJECT;
+  let tables;
+  try {
+    tables = await getJson(ctx.fetch, bq + "/datasets/" + BILLING_DATASET + "/tables", auth, "BigQuery");
+  } catch (error) {
+    if (error.status === 404) return { need: "Costs: in the Cloud console open Billing > Billing export and turn on the standard usage cost export to BigQuery (dataset " + BILLING_DATASET + " in " + PROJECT + ")." };
+    throw error;
+  }
+  const table = ((tables.tables || []).map((t) => t.tableReference.tableId).filter((id) => /^gcp_billing_export_v1_/.test(id)).sort()[0]) || "";
+  if (!table) return { pending: true, note: "The billing export is on; Google writes the first rows within a day." };
+  const days = Math.min(Math.max(Number(ctx.days) || 30, 1), 90);
+  // ctx.month ("YYYY-MM", #3283): that invoice month instead of the last days, with the net in USD too.
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(ctx.month || "") ? ctx.month : "";
+  const credits = "IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c), 0)";
+  const query = "SELECT service.description AS service, currency, ROUND(SUM(cost) + SUM(" + credits + "), 2) AS net, ROUND(SUM(cost), 2) AS gross" +
+    (month ? ", ROUND(SUM((cost + " + credits + ") / IFNULL(NULLIF(currency_conversion_rate, 0), 1)), 2) AS usd" : "") +
+    " FROM `" + PROJECT + "." + BILLING_DATASET + "." + table + "` WHERE " + (month ? "invoice.month = '" + month.replace("-", "") + "'" : "usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL " + days + " DAY)") +
+    " GROUP BY service, currency ORDER BY gross DESC LIMIT " + (month ? 50 : 15);
+  const data = await getJson(ctx.fetch, bq + "/queries", Object.assign({ method: "POST", body: JSON.stringify({ query, useLegacySql: false, timeoutMs: 20000 }) }, auth), "BigQuery");
+  const rows = (data.rows || []).map((r) => ({ label: r.f[0].v || "other", currency: r.f[1].v, net: Number(r.f[2].v) || 0, gross: Number(r.f[3].v) || 0, usd: Number(r.f[4] && r.f[4].v) || 0 }));
+  if (month) return { month, currency: (rows[0] || {}).currency || "", net: round(rows.reduce((s, r) => s + r.net, 0), 2), usd: round(rows.reduce((s, r) => s + r.usd, 0), 2), byService: rows.map((r) => ({ label: r.label, value: r.net })) };
+  return {
+    days,
+    currency: (rows[0] || {}).currency || "",
+    net: round(rows.reduce((s, r) => s + r.net, 0), 2),
+    gross: round(rows.reduce((s, r) => s + r.gross, 0), 2),
+    byService: rows.map((r) => ({ label: r.label, value: r.net }))
+  };
 }
 
 async function platform(ctx) {
-	const needs = [];
-	const out = { ok: true, needs };
-	let token;
-	try {
-		token = await googleToken(ctx.fetch, 'https://www.googleapis.com/auth/cloud-platform');
-	} catch (error) {
-		return { ok: false, error: clean(error), needs };
-	}
-	const end = ctx.now;
-	const day = end - DAY;
-	const week = end - 7 * DAY;
-	const part = async (name, run) => {
-		try {
-			out[name] = await run();
-		} catch (error) {
-			out[name] = { error: clean(error) };
-		}
-	};
-	await Promise.all([
-		part('functions', async () => {
-			const [runs, failures] = await Promise.all([
-				monitoring(ctx, token, 'metric.type="cloudfunctions.googleapis.com/function/execution_count"', {
-					start: day,
-					end,
-					groupBy: ['metric.label.status'],
-				}),
-				realFailures(ctx, token, day),
-			]);
-			const total = runs.reduce((s, r) => s + r.value, 0);
-			const notOk = runs.filter((r) => r.labels.status !== 'ok').reduce((s, r) => s + r.value, 0);
-			return {
-				executions: total,
-				notOk,
-				failures: failures.total,
-				failureRate: total ? round((failures.total / total) * 100, 2) : 0,
-				byFunction: failures.byFunction,
-				kinds: failures.kinds,
-				latest: failures.latest,
-				capped: failures.capped,
-			};
-		}),
-		part('gemini', async () => {
-			const rows = await monitoring(
-				ctx,
-				token,
-				'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service=one_of("generativelanguage.googleapis.com","aiplatform.googleapis.com")',
-				{ start: week, end, groupBy: ['metric.label.response_code_class', 'resource.label.method'] }
-			);
-			const byClass = {};
-			const failedMethods = {};
-			rows.forEach((r) => {
-				tally(byClass, r.labels.response_code_class || 'unknown', r.value);
-				if (!/^2/.test(r.labels.response_code_class || ''))
-					tally(
-						failedMethods,
-						String(r.labels.method || '')
-							.split('.')
-							.pop(),
-						r.value
-					);
-			});
-			const total = rows.reduce((s, r) => s + r.value, 0);
-			const ok = byClass['2xx'] || 0;
-			return {
-				days: 7,
-				requests: total,
-				ok,
-				errorRate: total ? round(((total - ok) / total) * 100, 1) : 0,
-				byClass: listOf(byClass),
-				failedMethods: listOf(failedMethods),
-			};
-		}),
-		part('firestore', async () => {
-			const kinds = { reads: 'read_count', writes: 'write_count', deletes: 'delete_count' };
-			const start = pacificDayStart(end);
-			const usage = { since: new Date(start).toISOString() };
-			await Promise.all(
-				Object.keys(kinds).map(async (k) => {
-					const rows = await monitoring(
-						ctx,
-						token,
-						'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"',
-						{ start, end }
-					);
-					usage[k] = rows.reduce((s, r) => s + r.value, 0);
-				})
-			);
-			Object.keys(FIRESTORE_FREE).forEach((k) => {
-				usage[k + 'FreePct'] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1);
-			});
-			return usage;
-		}),
-		part('costs', async () => costs(ctx, token)),
-		part('users', async () => {
-			if (!ctx.listUsers) return null;
-			const users = await ctx.listUsers();
-			const since = end - ctx.days * DAY;
-			return {
-				total: users.length,
-				newInRange: users.filter((u) => Date.parse(u.created || 0) >= since).length,
-				activeInRange: users.filter((u) => Date.parse(u.lastSignIn || 0) >= since).length,
-			};
-		}),
-	]);
-	if (out.costs && out.costs.need) needs.push(out.costs.need);
-	return out;
+  const needs = [];
+  const out = { ok: true, needs };
+  let token;
+  try { token = await googleToken(ctx.fetch, "https://www.googleapis.com/auth/cloud-platform"); } catch (error) { return { ok: false, error: clean(error), needs }; }
+  const end = ctx.now;
+  const day = end - DAY;
+  const week = end - 7 * DAY;
+  const part = async (name, run) => { try { out[name] = await run(); } catch (error) { out[name] = { error: clean(error) }; } };
+  await Promise.all([
+    part("functions", async () => {
+      const [runs, failures] = await Promise.all([
+        monitoring(ctx, token, 'metric.type="cloudfunctions.googleapis.com/function/execution_count"', { start: day, end, groupBy: ["metric.label.status"] }),
+        realFailures(ctx, token, day)
+      ]);
+      const total = runs.reduce((s, r) => s + r.value, 0);
+      const notOk = runs.filter((r) => r.labels.status !== "ok").reduce((s, r) => s + r.value, 0);
+      return { executions: total, notOk, failures: failures.total, failureRate: total ? round((failures.total / total) * 100, 2) : 0, byFunction: failures.byFunction, kinds: failures.kinds, latest: failures.latest, capped: failures.capped };
+    }),
+    part("gemini", async () => {
+      const rows = await monitoring(ctx, token, 'metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service=one_of("generativelanguage.googleapis.com","aiplatform.googleapis.com")', { start: week, end, groupBy: ["metric.label.response_code_class", "resource.label.method"] });
+      const byClass = {};
+      const failedMethods = {};
+      rows.forEach((r) => {
+        tally(byClass, r.labels.response_code_class || "unknown", r.value);
+        if (!/^2/.test(r.labels.response_code_class || "")) tally(failedMethods, String(r.labels.method || "").split(".").pop(), r.value);
+      });
+      const total = rows.reduce((s, r) => s + r.value, 0);
+      const ok = byClass["2xx"] || 0;
+      return { days: 7, requests: total, ok, errorRate: total ? round(((total - ok) / total) * 100, 1) : 0, byClass: listOf(byClass), failedMethods: listOf(failedMethods) };
+    }),
+    part("firestore", async () => {
+      const kinds = { reads: "read_count", writes: "write_count", deletes: "delete_count" };
+      const start = pacificDayStart(end);
+      const usage = { since: new Date(start).toISOString() };
+      await Promise.all(Object.keys(kinds).map(async (k) => {
+        const rows = await monitoring(ctx, token, 'metric.type="firestore.googleapis.com/document/' + kinds[k] + '"', { start, end });
+        usage[k] = rows.reduce((s, r) => s + r.value, 0);
+      }));
+      Object.keys(FIRESTORE_FREE).forEach((k) => { usage[k + "FreePct"] = round((usage[k] / FIRESTORE_FREE[k]) * 100, 1); });
+      return usage;
+    }),
+    part("costs", async () => costs(ctx, token)),
+    part("users", async () => {
+      if (!ctx.listUsers) return null;
+      const users = await ctx.listUsers();
+      const since = end - ctx.days * DAY;
+      return { total: users.length, newInRange: users.filter((u) => Date.parse(u.created || 0) >= since).length, activeInRange: users.filter((u) => Date.parse(u.lastSignIn || 0) >= since).length };
+    })
+  ]);
+  if (out.costs && out.costs.need) needs.push(out.costs.need);
+  return out;
 }
 
-const SOURCES = {
-	money,
-	email,
-	search,
-	social,
-	safety,
-	platform,
-	outreach: jarvisOutreach.outreach,
-	mailbox: mailHealth.mailbox,
-	addresses: jarvisAddresses.source,
-	marketing: jarvisMarketing.marketing,
-	'marketing-sync': jarvisMarketing.syncSource,
-	calls: booking.callsSource,
-	engagement: jarvisEngagement.source,
-	people: jarvisPeople.source,
-	pagespeed: jarvisPageSpeed.source,
-	local: jarvisLocal.source,
-	rescue: jarvisReviewOps.rescueSource,
-	fixes: jarvisReviewOps.fixesSource,
-	checks: jarvisReviewOps.checksSource,
-	'github-work': jarvisGithub.source,
-	targets: jarvisTargets.source,
-	geo: jarvisGeo.geo,
-	calendar: jarvisCalendar.source,
-};
+const SOURCES = { money, email, search, social, safety, platform, outreach: jarvisOutreach.outreach, mailbox: mailHealth.mailbox, addresses: jarvisAddresses.source, marketing: jarvisMarketing.marketing, "marketing-sync": jarvisMarketing.syncSource, calls: booking.callsSource, engagement: jarvisEngagement.source, people: jarvisPeople.source, pagespeed: jarvisPageSpeed.source, local: jarvisLocal.source, rescue: jarvisReviewOps.rescueSource, fixes: jarvisReviewOps.fixesSource, checks: jarvisReviewOps.checksSource, "github-work": jarvisGithub.source, targets: jarvisTargets.source, geo: jarvisGeo.geo, calendar: jarvisCalendar.source };
 
 async function run(name, ctx) {
-	const source = SOURCES[name];
-	if (!source) throw new Error('Unknown source.');
-	try {
-		return await source(ctx);
-	} catch (error) {
-		return { ok: false, error: clean(error), needs: [] };
-	}
+  const source = SOURCES[name];
+  if (!source) throw new Error("Unknown source.");
+  try {
+    return await source(ctx);
+  } catch (error) {
+    return { ok: false, error: clean(error), needs: [] };
+  }
 }
 
-module.exports = {
-	costs,
-	googleToken,
-	SOURCES,
-	TTL,
-	SEARCH_QUERIES,
-	run,
-	money,
-	moneyRows,
-	email,
-	search,
-	brave,
-	searchConsole,
-	social,
-	safety,
-	dmarcPolicy,
-	platform,
-	pacificDayStart,
-	monitoring,
-	realFailures,
-	hostOf,
-};
+module.exports = { costs, googleToken, SOURCES, TTL, SEARCH_QUERIES, run, money, moneyRows, email, search, brave, searchConsole, social, safety, dmarcPolicy, platform, pacificDayStart, monitoring, realFailures, hostOf };

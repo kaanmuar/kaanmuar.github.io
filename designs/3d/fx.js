@@ -8,27 +8,19 @@ void main(){ gl_Position = vec4(a, 0.0, 1.0); }`;
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const pointer = { x: 0, y: 0, active: 0 };
-addEventListener(
-	'pointermove',
-	(e) => {
-		pointer.x = (e.clientX / innerWidth) * 2 - 1;
-		pointer.y = -((e.clientY / innerHeight) * 2 - 1);
-		pointer.active = 1;
-	},
-	{ passive: true }
-);
+addEventListener('pointermove', (e) => {
+	pointer.x = (e.clientX / innerWidth) * 2 - 1;
+	pointer.y = -((e.clientY / innerHeight) * 2 - 1);
+	pointer.active = 1;
+}, { passive: true });
 
 // Rack Focus pulls focus between three planes; the page's viewfinder readout reads the same value.
 export function focusAt(t, my = 0) {
 	const stops = [1.6, 0.85, 4.2];
-	const seg = 3.2,
-		k = t / seg,
-		i = Math.floor(k),
-		f = k - i;
+	const seg = 3.2, k = t / seg, i = Math.floor(k), f = k - i;
 	const e = f < 0.62 ? 0 : (f - 0.62) / 0.38;
 	const s = e * e * (3 - 2 * e);
-	const a = stops[((i % 3) + 3) % 3],
-		b = stops[(((i + 1) % 3) + 3) % 3];
+	const a = stops[((i % 3) + 3) % 3], b = stops[(((i + 1) % 3) + 3) % 3];
 	return a + (b - a) * s + my * 0.6;
 }
 
@@ -36,25 +28,14 @@ function compile(gl, type, src) {
 	const s = gl.createShader(type);
 	gl.shaderSource(s, src);
 	gl.compileShader(s);
-	if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
-		throw new Error(
-			gl.getShaderInfoLog(s) +
-				'\n' +
-				src
-					.split('\n')
-					.map((l, i) => `${i + 1}: ${l}`)
-					.join('\n')
-		);
+	if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) + '\n' + src.split('\n').map((l, i) => `${i + 1}: ${l}`).join('\n'));
 	return s;
 }
 
 function program(gl, name) {
 	const p = gl.createProgram();
 	gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, VERT));
-	gl.attachShader(
-		p,
-		compile(gl, gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${COMMON}\n${SHADERS[name]}`)
-	);
+	gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, `#version 300 es\nprecision highp float;\n${COMMON}\n${SHADERS[name]}`));
 	gl.bindAttribLocation(p, 0, 'a');
 	gl.linkProgram(p);
 	if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
@@ -62,12 +43,7 @@ function program(gl, name) {
 }
 
 function setup(canvas, name, preserve = false) {
-	const gl = canvas.getContext('webgl2', {
-		antialias: false,
-		alpha: false,
-		preserveDrawingBuffer: preserve,
-		powerPreference: 'high-performance',
-	});
+	const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: preserve, powerPreference: 'high-performance' });
 	if (!gl) return null;
 	const prog = program(gl, name);
 	const buf = gl.createBuffer();
@@ -77,8 +53,7 @@ function setup(canvas, name, preserve = false) {
 	gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 	gl.useProgram(prog);
 	const u = {};
-	for (const k of ['uRes', 'uTime', 'uMouse', 'uMode', 'uSubject', 'uZoom', 'uFocus'])
-		u[k] = gl.getUniformLocation(prog, k);
+	for (const k of ['uRes', 'uTime', 'uMouse', 'uMode', 'uSubject', 'uZoom', 'uFocus']) u[k] = gl.getUniformLocation(prog, k);
 	return { gl, u };
 }
 
@@ -102,11 +77,7 @@ export function mount(canvas, name, opts = {}) {
 		canvas.closest('[data-fx]')?.classList.add('fx-fallback');
 		return null;
 	}
-	let scale = Math.min(devicePixelRatio || 1, 1.5),
-		visible = true,
-		raf = 0,
-		last = 0,
-		slow = 0;
+	let scale = Math.min(devicePixelRatio || 1, 1.5), visible = true, raf = 0, last = 0, slow = 0;
 	const mouse = { x: 0, y: 0 };
 	const t0 = performance.now() - o.start * 1000;
 
@@ -129,26 +100,14 @@ export function mount(canvas, name, opts = {}) {
 		last = now;
 		if (dt > 0 && dt < 200) {
 			slow = dt > 26 ? slow + 1 : Math.max(0, slow - 1);
-			if (slow > 20 && scale > 0.45) {
-				scale *= 0.85;
-				slow = 0;
-				size();
-			}
+			if (slow > 20 && scale > 0.45) { scale *= 0.85; slow = 0; size(); }
 		}
 		if (visible && !reduceMotion.matches) raf = requestAnimationFrame(frame);
 	}
 
-	const kick = () => {
-		if (!raf) raf = requestAnimationFrame(frame);
-	};
-	new ResizeObserver(() => {
-		size();
-		kick();
-	}).observe(canvas);
-	new IntersectionObserver(([e]) => {
-		visible = e.isIntersecting;
-		if (visible) kick();
-	}).observe(canvas);
+	const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+	new ResizeObserver(() => { size(); kick(); }).observe(canvas);
+	new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) kick(); }).observe(canvas);
 	reduceMotion.addEventListener('change', kick);
 	size();
 	kick();
