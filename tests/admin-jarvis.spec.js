@@ -95,6 +95,7 @@ const EXTERNAL = {
     canary: { state: 'ok', sentAt: '2026-10-27T14:10:00Z', receivedAt: '2026-10-27T14:10:38Z', seconds: 38, history: [] }, needs: [] },
   'mail-codes': { ok: true, codes: [{ service: 'tiktok', label: 'TikTok', code: '739201', link: '', alias: 'tiktok', from: 'TikTok <no-reply@account.tiktok.com>', subject: 'Your TikTok verification code', trusted: true, at: '2026-10-27T17:00:00Z' }] },
   'share-list': { ok: true, items: [{ id: 'old1', kind: 'image', caption: 'Launch day', title: 'Launch day photo', status: 'posted', at: '2026-10-24T15:00:00Z', url: 'https://github.com/' }] },
+  'csat-testimonials': { ok: true, items: [] },
   'share-draft': { ok: true, id: 'new1', kind: 'image', draft: { lang: 'en', kind: 'tip', title: 'Check SSL', alt: 'A card', linkedin: 'LinkedIn draft', x: 'X draft', facebook: 'Facebook draft', instagram: 'Instagram draft' }, note: '' },
   'share-queue': { ok: true, id: 'new1', note: 'Queued. The hub page goes live first.' },
   'social-post-now': { ok: true, started: ['Buffer', 'Facebook Page'], note: 'Started Buffer and Facebook Page.' },
@@ -349,7 +350,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(page.locator('link[rel="icon"][data-jv-icon]')).toHaveAttribute('href', /^data:image\/png;base64,/);
     await expect(page).toHaveTitle(/^\(\d+\) \d+% · CV Admin Panel/);
     // #2102: one snapshot, the app's cached answer, instead of the range's raw rows and a call per source.
-    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['snapshot', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'proposals', 'brief-marks']));
+    await expect.poll(() => new Set(calls.map((c) => c.op))).toEqual(new Set(['snapshot', 'actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'csat-testimonials', 'proposals', 'brief-marks']));
     expect(calls.filter((c) => c.op === 'snapshot')).toHaveLength(1);
     expect((await page.evaluate(() => window.__reads || [])).filter((name) => JARVIS_ROWS.includes(name))).toEqual([]);
     expect(calls.every((c) => c.auth === 'Bearer owner-token')).toBe(true);
