@@ -50,6 +50,7 @@ const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
 const threadsCompose = require('./threads-compose');
 const compose = require('./open-social-compose');
+const socialClip = require('./social-clip');
 const { FACES } = require('./brand-kit/faces');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -171,10 +172,7 @@ function posts(batch, root = ROOT, network = 'bluesky') {
 			const asset = when[slug].asset || 'feed/' + slug + '.jpg';
 			const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
 			const answer = captions[slug].answer && captions[captions[slug].answer];
-			const clip = {
-				url: CLIPS + batch + '/' + slug + '.mp4',
-				lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || 'en',
-			};
+			const clip = socialClip.fromBatch(batch, slug, captions[slug], clips);
 			const slides = [];
 			for (let i = 1; i <= 10; i += 1) {
 				const rel = 'carousel/' + slug + '-' + String(i).padStart(2, '0') + '.jpg';
@@ -192,7 +190,7 @@ function posts(batch, root = ROOT, network = 'bluesky') {
 					at: when[slug].at,
 					image: path.join(dir, asset),
 					url: SITE + '/media/social-posts/' + batch + '/' + asset,
-					clip,
+					clip: clip || undefined,
 				},
 				slides.length >= 2 ? { slides } : {},
 				quiz ? { quiz, quizCap: captions[quiz] } : {},
@@ -970,7 +968,8 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
 			const hub = await gate(post.batch, post.slug, post.cap, new Date(now).toISOString());
 			const f = faceFor(post);
 			const text = caption(post, network, f);
-			const lang = faceRoute.captionLang(post.cap, key, f);
+			const captionLang = faceRoute.captionLang(post.cap, key, f);
+			const lang = socialClip.mediaLang(post.clip, captionLang);
 			const uses = PLANS[network]
 				? PLANS[network](
 						Object.assign({ text, url: post.url, alt: '', lang }, extras(network, post, f, book))
@@ -1025,6 +1024,7 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
 		try {
 			const f = faceFor(post);
 			const more = extras(network, post, f, book);
+			const captionLang = faceRoute.captionLang(post.cap, key, f);
 			const r = await client.post(
 				Object.assign(
 					{
@@ -1032,7 +1032,7 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
 						image: post.image,
 						url: post.url,
 						alt: post.cap.alt || post.cap.title || '',
-						lang: faceRoute.captionLang(post.cap, key, f),
+						lang: socialClip.mediaLang(post.clip, captionLang),
 						key: name,
 					},
 					more

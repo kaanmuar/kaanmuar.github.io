@@ -46,6 +46,7 @@ const ledger = require('./social-ledger');
 const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
 const facebookCompose = require('./facebook-compose');
+const socialClip = require('./social-clip');
 const { FACES } = require('./brand-kit/faces');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -290,10 +291,7 @@ function posts(batch) {
 			slug,
 			cap: captions[slug],
 			at: when[slug] || 0,
-			clip: {
-				url: CLIPS + batch + '/' + slug + '.mp4',
-				lang: (clips[slug] && clips[slug].lang) || captions[slug].lang || 'en',
-			},
+			clip: socialClip.fromBatch(batch, slug, captions[slug], clips) || undefined,
 		}));
 }
 
@@ -311,7 +309,8 @@ async function released(url) {
 
 // The scripts/facebook-compose.js plans of one post, richest first.
 async function compose(post, caption, due, face) {
-	const lang = faceRoute.captionLang(post.cap, 'facebook', face);
+	const captionLang = faceRoute.captionLang(post.cap, 'facebook', face);
+	const lang = socialClip.mediaLang(post.clip, captionLang);
 	const clip = post.clip && post.clip.lang === lang ? await released(post.clip.url) : '';
 	return facebookCompose.plans({
 		caption,

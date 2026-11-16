@@ -61,7 +61,7 @@
 
   function matches(post) {
     if (state.kind === "trending" ? !post.trend : state.kind !== "all" && post.kind !== state.kind) return false;
-    if (state.media === "video" ? !post.youtube : state.media === "image" && post.youtube) return false;
+    if (state.media === "video" ? !(post.youtube || post.clip) : state.media === "image" && (post.youtube || post.clip)) return false;
     if (state.net !== "all" && !(post.nets || []).includes(state.net)) return false;
     if (state.report && !post.report) return false;
     if (!inRange(post.date)) return false;
