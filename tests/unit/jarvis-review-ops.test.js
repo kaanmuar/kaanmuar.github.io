@@ -158,10 +158,19 @@ test("the briefing names promises at risk, paid fix work, quotas near the cap, a
   assert.ok(proposals.includes("Keep the review check quotas under their caps"));
 });
 
-test("Ask carries the three review sources, and the evening digest lists promises and paid fix work that wait", () => {
+test("Ask carries the three review sources, the finished-report re-run, and the evening digest lists promises and paid fix work that wait", () => {
   const view = ops.ask({ rescue: { ok: true, failures: { total: 3 }, reruns: { total: 1, sent: 1, held: 0 }, rescues: {}, diagnoses: { vertex: 1 }, promises: { made: 1 }, codes: { sent: 1 }, openList: [{ host: "a.com", hoursLeft: 5 }] }, fixes: { ok: false }, checks: null });
   assert.deepEqual(view.urlReviewAfterFailure.promisesOpen, ["a.com 5 h left"]);
   assert.equal(view.urlReviewFixRequests, null);
+  assert.equal(view.urlReviewPastRerun.status, "not-started");
+  assert.equal(view.urlReviewPastRerun.perDay, 96);
+  assert.equal(view.urlReviewPastRerun.uses, 2);
+  assert.equal(view.urlReviewPastRerun.coldNoticesPerDay, 15);
+  assert.match(view.urlReviewPastRerun.line, /one mail goes out after the new report is ready/i);
+  const running = ops.rescueSummary({ failures: [], rescues: [], macWaiting: [], reruns: [], coupons: [], open: [], past: { status: "running", hosts: 40, reviewed: 3, mailed: 1, skipped: 2 } }, range);
+  assert.equal(running.pastRerun.status, "running");
+  assert.equal(running.pastRerun.reviewed, 3);
+  assert.equal(running.pastRerun.mailed, 1);
   const lines = digest.waitingLines({ promises: [{ host: "a.com", hoursLeft: 5 }], fixes: [{ host: "b.com", package: "email-dns", late: true }] });
   assert.deepEqual(lines.map((l) => l.label), ["1 promised report still open", "1 paid fix request waiting for work"]);
   assert.equal(lines[1].names, "b.com email-dns (late)");

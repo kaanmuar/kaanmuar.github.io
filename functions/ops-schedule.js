@@ -10,7 +10,8 @@ const TIME_ZONE = "America/Bogota";
 const H = 3600000;
 
 const JOBS = [
-  { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep sites (up to 4 a tick, each tick done in 15 minutes, capped per day)" },
+  { job: "sweepReviews", cron: "*/15 0-5 * * *", gap: 20, what: "Review the next country-sweep sites (up to 4 a tick, each tick done in 15 minutes, capped per day). The finished-report re-run (#3458) shares this day's cap: one new review per site, then one mail after the report" },
+  { job: "pastRerunReviews", cron: "*/15 6-23 * * *", gap: 20, what: "Finished-report re-run (#3458): one new review per past site (visitor, sweep, rival), sharing the sweep day's 96 cap; one follow-up mail with 50% (2 uses) only to addresses we already wrote to who did not opt out (PAST_RERUN_LIVE=1)" },
   { job: "outreachSweep", cron: "*/15 * * * *", gap: 20, what: "Review the next outreach prospects and peer-group sites, all day (up to 4 a tick, capped per day, no owner notices)" },
   { job: "placesProspects", cron: "30 23 * * *", gap: 26, what: "Find local-business prospects on Google Maps for tonight's outreach sweep (up to 20 Places searches, skipped while two nights are still queued)" },
   { job: "wordfenceFeed", cron: "45 22 * * *", gap: 26, what: "Download the Wordfence Intelligence vulnerability feed once and store its plugin, theme and core index for the reviews' WordPress check (#3086; skipped without WORDFENCE_KEY or when the stored index is under 20 hours old)" },
@@ -69,11 +70,11 @@ const JOBS = [
 
 // The quotas the schedule is sized to. Change a number here and in the env, not in the job.
 const BUDGETS = {
-  sweepPerDay: { env: "SWEEP_PER_DAY", value: 96, why: "24 night ticks x 4 reviews (#1099). Review browser: 4 vCPU x ~100 s a review, ~2,900 a month, well past the ~450 the free tier covers" },
+  sweepPerDay: { env: "SWEEP_PER_DAY", value: 96, why: "24 night ticks x 4 reviews (#1099). Review browser: 4 vCPU x ~100 s a review, ~2,900 a month, well past the ~450 the free tier covers. The finished-report re-run (#3458) shares this cap, one new review per site" },
   outreachPerDay: { env: "OUTREACH_PER_DAY", value: 384, why: "96 ticks x 4 reviews (#2363); the lane only spends what scripts/sweep-outreach.js and peer groups queue, ~$0.01 a review in the review browser" },
   sweepConcurrency: { env: "SWEEP_CONCURRENCY", value: 4, why: "Country-sweep reviews a tick runs at once (#3166), 1 to 4; each holds a review browser instance (reviewBrowser maxInstances 12: both lanes' 8 and a person's 3-way comparison)" },
   outreachConcurrency: { env: "OUTREACH_CONCURRENCY", value: 4, why: "Outreach-lane reviews a tick runs at once (#3166), 1 to 4; the per-day caps, not this, set the review browser bill" },
-  ownerNoticesPerDay: { env: "OWNER_NOTICES_PER_DAY", value: 15, why: "Cold mail to strangers: keep sender reputation while bounces are unknown" },
+  ownerNoticesPerDay: { env: "OWNER_NOTICES_PER_DAY", value: 15, why: "Cold mail to strangers: keep sender reputation while bounces are unknown. The finished-report re-run mail (#3458) is separate: one note after the new report, only to an address we already wrote to" },
   rivalsPerDay: { env: "RIVALS_PER_DAY", value: 4, why: "Up to 2 web searches and 3 passive reviews a site; 20 night ticks fit 4 sites" },
   webSearchPerMonth: { value: 2000, why: "Brave ~1,000 + Tavily 1,000 a month; the country sweep spends none, the rival sweep up to 8 a night" },
   sweepSocialPerBatch: { value: 2, why: "Buffer and Facebook queues stay led by requested reviews" }

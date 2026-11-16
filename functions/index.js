@@ -2438,6 +2438,7 @@ async function sendOwnerNotices() {
 exports.sendOwnerNotices = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.mail }), "sendOwnerNotices", () => sendOwnerNotices());
 
 const sweep = require("./url-review-sweep");
+const pastRerun = require("./url-review-rerun-past");
 
 async function sweepJson(name) {
   const res = await fetch(customerMail.SITE + "/assets/sweep/" + name, { cache: "no-store", signal: AbortSignal.timeout(10000) });
@@ -2618,6 +2619,143 @@ exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("outreachSweep", () => outreachSweep()));
+
+// Finished-report re-run (#3458): daytime ticks so the night country sweep keeps the browser first; both share
+// sweepPerDay via url_review_sweep/state. Off until PAST_RERUN_LIVE=1 and the campaign doc is status running.
+async function pastRerunReviews() {
+  if (process.env.SWEEP_LIVE !== "1") return "off: SWEEP_LIVE is not 1";
+  const db = getFirestore();
+  const campRef = pastRerun.campaignRef(db);
+  const sweepRef = db.collection("url_review_sweep").doc("state");
+  const day = new Date().toISOString().slice(0, 10);
+  const cap = ops.budget("sweepPerDay", process.env);
+  const [campSnap, sweepSnap, pendingSnap, stopNotes, ownerStops] = await Promise.all([
+    campRef.get(),
+    sweepRef.get(),
+    campRef.collection("hosts").where("state", "==", "pending").limit(40).get(),
+    db.collection("url_review_notes").where("status", "==", "follow-stop").select("email").limit(500).get(),
+    db.collection("url_review_owner_stops").select().limit(500).get()
+  ]);
+  const progress = campSnap.data() || {};
+  const opened = pastRerun.gate({ env: process.env, progress });
+  if (!opened.ok) return opened.why;
+  let sweepState = sweepSnap.data() || {};
+  let room = pastRerun.roomLeft(sweep.doneOn(sweepState, day), cap);
+  if (!room) return "daily cap reached";
+  if (pendingSnap.empty) return progress.hosts ? "queue empty" : "bootstrap needed";
+
+  const stops = new Set();
+  stopNotes.docs.forEach((doc) => { const e = pastRerun.emailOf(doc.get("email")); if (e) stops.add(e); });
+  ownerStops.docs.forEach((doc) => stops.add(String(doc.id).toLowerCase()));
+
+  const KIND_RANK = { visitor: 0, rival: 1, sweep: 2 };
+  const pending = pendingSnap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()))
+    .sort((a, b) => (KIND_RANK[a.kind] || 9) - (KIND_RANK[b.kind] || 9) || String(a.bare).localeCompare(String(b.bare)));
+
+  const tickStarted = Date.now();
+  const notes = [];
+  for (const entry of pending) {
+    if (room <= 0) break;
+    if (!sweep.roomForReview(Date.now() - tickStarted)) break;
+    const bare = pastRerun.bareOf(entry.bare || entry.host || entry.id);
+    if (!bare) continue;
+    const hostDoc = pastRerun.hostRef(db, bare);
+    const claimed = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(hostDoc);
+      if (!snap.exists || snap.get("state") !== "pending") return null;
+      tx.set(hostDoc, { state: "running", startedAt: new Date().toISOString() }, { merge: true });
+      return Object.assign({ bare }, snap.data(), { bare });
+    });
+    if (!claimed) continue;
+
+    const contacted = new Set([claimed.contacted === true ? pastRerun.emailOf(claimed.email) : ""].filter(Boolean));
+    if (claimed.contactedEmail) contacted.add(pastRerun.emailOf(claimed.contactedEmail));
+    const to = pastRerun.mailAddress(claimed, { stops, contacted: claimed.kind === "visitor" ? new Set([pastRerun.emailOf(claimed.email)]) : contacted });
+    let outcome = "skipped";
+    let reviewId = "";
+    let code = "";
+    let error = "";
+    try {
+      const value = {
+        url: "https://" + bare + "/",
+        name: "Past re-run",
+        email: to || "",
+        reason: "Finished-report re-run (#3458): new checks on a site that already had a report",
+        reasonCode: "rerun-past",
+        frameworks: ["Playwright"],
+        lang: claimed.lang || "en"
+      };
+      const report = await urlReview.reviewTarget(value.url, {
+        mentions: false,
+        browse: browseForReview,
+        pagespeed: process.env.PAGESPEED_KEY ? (page) => urlReview.pageSpeed(page, process.env.PAGESPEED_KEY) : undefined,
+        crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (page) => urlReview.cruxHistory(page, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+        webrisk: process.env.WEBRISK_KEY ? (page) => urlReview.webRisk(page, process.env.WEBRISK_KEY) : undefined,
+        doh: lookalikes.doh,
+        places: findPlaces()
+      });
+      const record = Object.assign(urlReview.intakeRecord(value, report, {}), {
+        source: "rerun-past",
+        pastRerun: { priorId: claimed.priorId || "", bare, kind: claimed.kind || "" }
+      });
+      await db.collection("url_reviews").doc(record.id).set(record);
+      await countReviewed(record.report);
+      reviewId = record.id;
+      outcome = "reviewed";
+      room -= 1;
+      sweepState = sweep.tally(sweepState, day, "done", { host: bare, at: new Date().toISOString(), outcome: "done", pastRerun: true });
+      await sweepRef.set(sweepState);
+
+      if (to && record.status === "complete") {
+        code = await pastRerun.mintFor(db, { email: to, host: bare }, Date.now());
+        const stopUrl = await stopLinkFor(to, record.lang);
+        const mail = pastRerun.mailFor(record, { code, stopUrl });
+        const sent = await sendAskerMail(to, mail, stopUrl, "url-review-rerun-past");
+        if (sent) {
+          outcome = "mailed";
+          await campRef.collection("sends").doc(pastRerun.hashOf(to)).set({
+            emailHash: pastRerun.hashOf(to),
+            code,
+            host: bare,
+            reviewId,
+            state: "sent",
+            at: new Date().toISOString()
+          }, { merge: true });
+        }
+      }
+    } catch (err) {
+      error = String((err && err.message) || err).slice(0, 160);
+      outcome = "failed";
+      room -= 1;
+      sweepState = sweep.tally(sweepState, day, "failed", { host: bare, at: new Date().toISOString(), outcome: "failed", reason: error, pastRerun: true });
+      await sweepRef.set(sweepState);
+      console.error("Past re-run of " + bare + " failed: " + error);
+    }
+
+    const nextProgress = pastRerun.progressAfter(progress, outcome === "failed" ? "failed" : outcome, Date.now());
+    Object.assign(progress, nextProgress);
+    await hostDoc.set({
+      state: outcome === "failed" ? "failed" : "done",
+      reviewId,
+      code: code || "",
+      mailedAt: outcome === "mailed" ? new Date().toISOString() : "",
+      error,
+      finishedAt: new Date().toISOString()
+    }, { merge: true });
+    await campRef.set(progress, { merge: true });
+    notes.push(bare + " " + outcome + (error ? " (" + error + ")" : ""));
+  }
+  return notes.join("; ") || "nothing to review";
+}
+
+exports.pastRerunReviews = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("pastRerunReviews"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: sweep.TICK_SECONDS,
+  memory: "2GiB",
+  maxInstances: 1,
+  secrets: SECRETS.pastRerunReviews
+}, () => track("pastRerunReviews", () => pastRerunReviews()));
 
 // Local-business prospects from Google Maps for tonight's sweep (#2120); see functions/url-review-prospects.js.
 async function placesProspects() {

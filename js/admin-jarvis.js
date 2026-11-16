@@ -1158,7 +1158,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         ]);
         const open = table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => esc(o.host)], ['Re-runs', (o) => fmt(o.tries) + ' of ' + r.triesAtHours.length], ['Deadline', (o) => roChip(o.hoursLeft <= 2 ? 'down' : o.hoursLeft <= 8 ? 'quiet' : 'ok', hoursLeft(o.hoursLeft))]], r.openList, 'No promised report is open.');
         const mac = r.macList.length ? table([['Failed', (o) => esc(when(o.failedAt))], ['Site', (o) => `${esc(o.host)}${o.promised ? ' <span class="jv-chip c-average">promised</span>' : ''}`]], r.macList, '') : '';
-        const body = head + bars(r.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' }) + '<h4 class="jv-sub">Report promises</h4>' + promised + open + (mac ? '<h4 class="jv-sub">Waiting for the Mac</h4>' + mac : '');
+        const past = r.pastRerun;
+        const pastBlock = past ? '<h4 class="jv-sub">Finished reports, run again · ' + esc(past.status) + '</h4>' + stats([
+            { label: 'Reviews a day', value: past.perDay }, { label: 'Reviewed', value: past.reviewed || 0 },
+            { label: 'Mails sent', value: past.mailed || 0 }, { label: 'Skipped', value: past.skipped || 0 },
+            { label: '50% uses', value: past.uses }
+        ]) + '<p class="jv-note">' + esc(past.line) + '</p>' : '';
+        const body = head + bars(r.failures.causes, { color: COLORS.pink, empty: 'No failures in range.' }) + '<h4 class="jv-sub">Report promises</h4>' + promised + open + (mac ? '<h4 class="jv-sub">Waiting for the Mac</h4>' + mac : '') + pastBlock;
         return panel('review-failures', `Failed reviews and rescue · ${fmt(r.failures.total)}`, body, {
             wide: true,
             data: r.openList.map((o) => ({ failedAt: o.failedAt, host: o.host, code: o.code, tries: o.tries, hoursLeft: o.hoursLeft })),
