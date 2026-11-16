@@ -126,7 +126,13 @@ const EXTERNAL = {
     replies: [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', at: '2026-10-25T12:00:00Z', from: 'dean@uni.edu.co', to: 'carlos@mail.qa-lab.co', subject: 'Re: Su sitio', campaign: 'W1 B-es Americas', text: 'Nos interesa', category: 'interested', summary: 'Wants the walkthrough', lang: 'es', draft: 'Hola, gracias', sent: '' }],
     linkedin: { date: '2026-10-26', items: [{ name: 'Ana Pérez', title: 'CIO', org: 'Uni Norte (UN)', cc: 'CO', sent: false, profile: 'https://www.linkedin.com/in/ana', lines: ['Profile: https://www.linkedin.com/in/ana', 'Check first: confirm the role.', 'Note: Hola Ana, vi el sitio de Uni Norte.'] },
       { name: 'Bea Gómez', title: 'CEO', org: 'Agencia Sur', cc: 'AR', sent: true, profile: 'https://www.linkedin.com/in/bea', lines: [] }] },
-    dnc: [], jobs: [{ mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'] }], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
+    dnc: [], jobs: [
+      { mode: 'prospects', at: '2026-10-26T11:00:00Z', notify: 'W1: 32 new prospects; 8 short of 40', failed: false, tail: ['done'], stats: { mode: 'prospects', actual: 32, target: 40, by_segment: { university: 10, tvet: 8, agency: 7, startup: 7 } } },
+      { mode: 'leads', at: '2026-10-26T12:00:00Z', notify: 'W1 leads ready: 2 complete', failed: false, tail: ['done'], stats: { mode: 'leads', complete: 2, waiting: 1, weeks: 1 } },
+      { mode: 'replies', at: '', notify: '', failed: false, tail: [], stats: null },
+      { mode: 'companies', at: '2026-10-26T14:00:00Z', notify: '12 companies offered the trial', failed: false, tail: ['done'], stats: { mode: 'companies', actual: 12, target: 30 } },
+      { mode: 'holidays', at: '2026-10-26T17:00:00Z', notify: 'no pauses today', failed: false, tail: ['done'], stats: { mode: 'holidays', paused: 0, resumed: 0 } }
+    ], paused: [], kpis: [{ week_start: '2026-10-26', notes: 'setup week' }],
     commands: { pending: 0, items: [] } },
   'marketing-command': { ok: true, queued: 'c1', action: 'approve', label: 'Approve ana@uni.edu.co (W1)' },
   engagement: require('./fixtures/jarvis-engagement.json'),
@@ -1857,6 +1863,8 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(leads).toContainText('Uni Oeste');
     await leads.locator('[data-mk-done="off"]').click();
     await expect(leads).not.toContainText('Uni Oeste');
+    await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('32 / 40');
+    await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('10 university');
     await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
     await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
     const cmds = () => calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);
