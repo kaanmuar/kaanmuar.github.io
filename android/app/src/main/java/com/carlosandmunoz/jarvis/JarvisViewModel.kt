@@ -14,6 +14,7 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
+import com.carlosandmunoz.jarvis.ui.Arrange
 import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
@@ -307,6 +308,16 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** One tab's section layout (#2809), shown at once and saved through settings-save; a failed save puts the old one back. */
+    /** Cycle a chart panel's stretch 1→2→3 (#3569), saved in layout.stretch like the web. */
+    fun cycleChartStretch(tab: String, id: String) {
+        val before = Layouts.read(_state.value.snapshot, tab) ?: Layouts.Saved()
+        val ids = Arrange.defaults[tab].orEmpty().ifEmpty { before.order }
+        val stretch = before.stretch.toMutableMap()
+        stretch[id] = ((stretch[id] ?: 1) % 3) + 1
+        val next = Layouts.keep(before, before.order.ifEmpty { ids }, before.hidden, ids).copy(stretch = Layouts.cleanStretch(stretch))
+        saveLayout(tab, next)
+    }
+
     fun saveLayout(tab: String, layout: Layouts.Saved?) {
         val before = Layouts.read(_state.value.snapshot, tab)
         _state.update { it.copy(snapshot = Layouts.patch(it.snapshot, tab, layout)) }

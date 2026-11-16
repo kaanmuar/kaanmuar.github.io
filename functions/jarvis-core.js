@@ -430,6 +430,28 @@
     const LAYOUT_TABS = PRODUCTS.map((p) => p.key);
     const LAYOUT_ID = /^[a-z0-9][a-z0-9_.:-]{0,79}$/i;
     const LAYOUT_MAX = 200;
+    const STRETCH_LEVELS = [1, 2, 3];
+    const CHART_HEIGHT_REM = { s: '11rem', m: '16rem', l: '22rem' };
+
+  // Shared chart prefs (#3569): grid background, area fill and default plot height, saved in jarvis_settings.
+    function cleanCharts(input) {
+        const d = input || {};
+        const grid = d.grid === 'off' || d.grid === 'major' || d.grid === 'micro' ? d.grid : 'micro';
+        const fill = d.fill !== false;
+        const height = d.height === 's' || d.height === 'm' || d.height === 'l' ? d.height : 'm';
+        return { grid, fill, height };
+    }
+    function chartPrefs(charts) { return cleanCharts(charts); }
+
+    function cleanStretch(map) {
+        if (!map || typeof map !== 'object' || Array.isArray(map)) return undefined;
+        const out = {};
+        Object.keys(map).forEach((id) => {
+            const n = Number(map[id]);
+            if (LAYOUT_ID.test(id) && STRETCH_LEVELS.includes(n)) out[id] = n;
+        });
+        return Object.keys(out).length ? out : undefined;
+    }
     function panelSlug(title) {
         const slug = String(title || '').split(' · ')[0].replace(/\s*\([^)]*\)\s*$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '');
         return slug || 'panel';
@@ -443,7 +465,12 @@
             if (!t || typeof t !== 'object' || Array.isArray(t)) return;
             const order = layoutIds(t.order);
             const hidden = layoutIds(t.hidden);
-            if (order.length || hidden.length) out[tab] = { order, hidden };
+            const stretch = cleanStretch(t.stretch);
+            if (order.length || hidden.length || stretch) {
+                const one = { order, hidden };
+                if (stretch) one.stretch = stretch;
+                out[tab] = one;
+            }
         });
         return out;
     }
@@ -484,10 +511,15 @@
     function keepLayout(prev, all, hidden, shown) {
         const p = prev || {};
         const mine = new Set(shown || all);
-        return {
+        const stretch = cleanStretch(p.stretch) || {};
+        const nextStretch = {};
+        Object.keys(stretch).forEach((id) => { if (mine.has(id)) nextStretch[id] = stretch[id]; });
+        const out = {
             order: layoutWeave(layoutIds(all), layoutIds(p.order)).slice(0, LAYOUT_MAX),
             hidden: layoutIds(layoutIds(p.hidden).filter((id) => !mine.has(id)).concat(layoutIds(hidden)))
         };
+        if (Object.keys(nextStretch).length) out.stretch = nextStretch;
+        return out;
     }
 
     // Every source Jarvis reads, for Systems > Connections. needs[] lists the one-time grants a source still waits for.
@@ -1842,7 +1874,7 @@
             && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
     }
 
-    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, cleanCharts, chartPrefs, CHART_HEIGHT_REM, STRETCH_LEVELS, cleanStretch, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);

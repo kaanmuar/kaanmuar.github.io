@@ -46,7 +46,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * (#2866, tests/unit/jarvis-panel-ids.test.js); before that the app saved title slugs, which [alias] still reads.
  */
 object Layouts {
-    data class Saved(val order: List<String> = emptyList(), val hidden: List<String> = emptyList())
+    data class Saved(val order: List<String> = emptyList(), val hidden: List<String> = emptyList(), val stretch: Map<String, Int> = emptyMap())
     data class Applied(val all: List<String>, val order: List<String>, val hidden: List<String>)
 
     private val ID = Regex("^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$")
@@ -87,7 +87,7 @@ object Layouts {
         if (layout == null || legacy.isEmpty()) return layout
         val have = present.toSet()
         fun map(list: List<String>) = list.map { id -> legacy[id]?.takeIf { id !in have && it in have } ?: id }.distinct()
-        return Saved(map(layout.order), map(layout.hidden))
+        return Saved(map(layout.order), map(layout.hidden), layout.stretch)
     }
 
     /** One step up (-1) or down (1) past the next shown panel; hidden panels keep their place. */
@@ -104,19 +104,35 @@ object Layouts {
     }
 
     /** What to save after an edit: this side's order and hidden panels, with the ids it did not show (the web's, or empty panels) kept. */
+    fun cleanStretch(map: Map<String, Int>?): Map<String, Int> {
+        return map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
+    }
+
     fun keep(prev: Saved?, all: List<String>, hidden: List<String>, shown: List<String>): Saved {
         val mine = shown.toSet()
-        return Saved(weave(ids(all), ids(prev?.order)).take(MAX), ids(ids(prev?.hidden).filter { it !in mine } + ids(hidden)))
+        val stretch = cleanStretch(prev?.stretch).filterKeys { it in mine }
+        return Saved(weave(ids(all), ids(prev?.order)).take(MAX), ids(ids(prev?.hidden).filter { it !in mine } + ids(hidden)), stretch)
     }
 
     fun read(snapshot: JsonObject?, tab: String): Saved? {
         val t = snapshot.obj("settings").obj("layout").obj(tab) ?: return null
         fun list(key: String) = (t[key] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
-        return Saved(ids(list("order")), ids(list("hidden")))
+        val stretchObj = t["stretch"] as? JsonObject
+        val stretch = stretchObj?.mapNotNull { (id, el) ->
+            val n = (el as? JsonPrimitive)?.content?.toIntOrNull()
+            if (ID.matches(id) && n != null && n in 1..3) id to n else null
+        }?.toMap().orEmpty()
+        return Saved(ids(list("order")), ids(list("hidden")), stretch)
     }
 
     fun json(layout: Saved?): JsonElement = layout?.let {
-        JsonObject(mapOf("order" to JsonArray(it.order.map(::JsonPrimitive)), "hidden" to JsonArray(it.hidden.map(::JsonPrimitive))))
+        val base = mutableMapOf<String, JsonElement>(
+            "order" to JsonArray(it.order.map(::JsonPrimitive)),
+            "hidden" to JsonArray(it.hidden.map(::JsonPrimitive))
+        )
+        val stretch = cleanStretch(it.stretch)
+        if (stretch.isNotEmpty()) base["stretch"] = JsonObject(stretch.mapValues { (_, n) -> JsonPrimitive(n) })
+        JsonObject(base)
     } ?: JsonNull
 
     /** The snapshot with one tab's layout replaced (null removes it), or with the whole layout from a settings-save reply. */

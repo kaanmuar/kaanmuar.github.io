@@ -454,6 +454,15 @@ test("section layout: saved order first, new panels at their default place, gone
   assert.equal(core.panelSlug("· ·"), "panel");
 });
 
+test("chart prefs and layout stretch are cleaned (#3569)", () => {
+  assert.deepEqual(core.cleanCharts({ grid: "nope", fill: false, height: "x" }), { grid: "micro", fill: false, height: "m" });
+  assert.deepEqual(core.cleanCharts({ grid: "off", height: "l" }), { grid: "off", fill: true, height: "l" });
+  assert.deepEqual(core.cleanLayout({ github: { order: ["github-ci"], hidden: [], stretch: { "github-ci": 2, bad: 9, x: "y" } } }),
+    { github: { order: ["github-ci"], hidden: [], stretch: { "github-ci": 2 } } });
+  const kept = core.keepLayout({ order: ["a", "b"], hidden: ["c"], stretch: { a: 3, c: 2, gone: 1 } }, ["a", "b"], ["c"], ["a", "b"]);
+  assert.deepEqual(kept.stretch, { a: 3 });
+});
+
 test("server: the layout is cleaned, saved one tab at a time, kept by a settings save and read back in the settings (#2809)", async () => {
   assert.deepEqual(core.cleanLayout({ review: { order: ["review-funnel", "review-funnel", 7, "<b>", "x".repeat(81)], hidden: ["review-heat"] }, nope: { order: ["a"] }, cv: { order: [] }, hub: "x" }),
     { review: { order: ["review-funnel"], hidden: ["review-heat"] } });

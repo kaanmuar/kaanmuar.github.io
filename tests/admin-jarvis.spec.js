@@ -1499,6 +1499,9 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(ci.locator('.jv-legend')).toContainText('4,880 runs in range');
     await ci.locator('.jv-hit').last().click();
     await expect(ci.locator('.jv-tip')).toHaveText('2026-11-03: Runs 2,480 runs · Failed 223 runs');
+    await expect(ci.locator('.jv-grid-dot').first()).toBeAttached();
+    await ci.locator('[data-chart-stretch="github-ci-trend"]').click();
+    await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('2');
     await expect(gh.locator('[data-panel-id="github-trend"] .jv-spark-axis').first()).toContainText('11-02');
     await expect(gh.locator('[data-panel-id="github-board"] .jv-bars-head')).toContainText('cards');
     await expect(gh.locator('[data-panel-id="github-board"] .jv-legend')).toContainText('Cards on the board');
