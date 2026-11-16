@@ -45,8 +45,7 @@ jobs:
             .cursor/hooks.json \
             .cursor/mcp.json \
             biome.json \
-            scripts/refresh-lab-lines.js \
-            package.json
+            scripts/refresh-lab-lines.js
 
   url-review-unit:
     runs-on: ubuntu-latest
