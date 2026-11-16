@@ -98,4 +98,29 @@ test("the Map says when GA4 counts no key events", () => {
   assert.match(ga.needs({ countryRows: [{ cc: "US", visitors: 9, keyEvents: 0, keyEventsPrior: 0 }], keyEvents: true })[0], /no key events/);
   assert.match(ga.needs({ countryRows: [], keyEvents: false })[0], /rejects key events/);
   assert.deepEqual(ga.needs({ countries: [] }), []);
+  assert.deepEqual(ga.needs({ countryRows: [{ cc: "US", visitors: 9, keyEvents: 2 }], keyEvents: true, keyEventFallback: "open_url_review" }), []);
+});
+
+test("when keyEvents are all zero, open_url_review eventCount fills them (#3667)", async () => {
+  const bodies = [];
+  const run = async (body) => {
+    bodies.push(body);
+    if (body.metrics.some((m) => m.name === "keyEvents")) {
+      return [r(["US", "United States", "date_range_0"], [100, 40, 90, 0]), r(["US", "United States", "date_range_1"], [50, 20, 45, 0])];
+    }
+    if (body.metrics.some((m) => m.name === "eventCount")) {
+      assert.equal(body.dimensionFilter.filter.stringFilter.value, "open_url_review");
+      return [r(["US", "United States", "date_range_0"], [7]), r(["CO", "Colombia", "date_range_0"], [2]), r(["US", "United States", "date_range_1"], [3])];
+    }
+    throw new Error("unexpected report");
+  };
+  const out = await ga.fetchCountries(run);
+  assert.equal(out.keyEvents, true);
+  assert.equal(out.keyEventFallback, "open_url_review");
+  const us = out.countryRows.find((x) => x.cc === "US");
+  assert.equal(us.keyEvents, 7);
+  assert.equal(us.keyEventsPrior, 3);
+  assert.equal(out.countryRows.find((x) => x.cc === "CO").keyEvents, 2);
+  assert.deepEqual(ga.needs(out), []);
+  assert.equal(bodies.length, 2);
 });

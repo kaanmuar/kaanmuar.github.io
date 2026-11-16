@@ -508,6 +508,7 @@ async function ga4(fetchImpl, { days }) {
     countries: geoGa4.top(countries.countryRows),
     countryRows: countries.countryRows,
     keyEvents: countries.keyEvents,
+    keyEventFallback: countries.keyEventFallback || "",
     sources: Object.entries(split(sources)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
     daily: daily.map((row) => ({ date: row.dims[0].replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: row.mets[0], users: row.mets[1] }))
   };

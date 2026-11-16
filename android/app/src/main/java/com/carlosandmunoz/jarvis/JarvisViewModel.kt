@@ -339,6 +339,15 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Continuous panel size (#3611): updates layout[tab].size[id] and keeps order/hidden/stretch. */
+    fun savePanelSize(tab: String, id: String, size: Layouts.Size) {
+        val shown = Arrange.defaults[tab].orEmpty()
+        val before = Layouts.read(_state.value.snapshot, tab)
+        val next = Layouts.withSize(before, id, size, shown.ifEmpty { listOf(id) })
+        val cleaned = if (next.order.isEmpty() && next.hidden.isEmpty() && next.size.isEmpty() && next.stretch.isEmpty()) null else next
+        saveLayout(tab, cleaned)
+    }
+
     /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the outreach sync. */
     fun market(key: String, op: String, extra: Map<String, JsonElement>, done: (JsonObject) -> String) {
         _state.update { it.copy(running = it.running + key) }
