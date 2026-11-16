@@ -87,7 +87,7 @@ test.describe('Accessibility', () => {
 
 const REVIEW_TERMS = fs
 	.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 
 function primeReview(page, { terms = true } = {}) {
 	return page.addInitScript(

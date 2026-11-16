@@ -9,7 +9,7 @@ const rival = require('./unit/fixtures/review-excalidraw.json');
 
 const TERMS = require('fs')
 	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ANA = 'a'.repeat(64);
 const EMAIL = 'ana@example.com';
 

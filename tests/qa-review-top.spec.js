@@ -13,7 +13,7 @@ const items = Array.from({ length: 6 }, (_, i) => ({
 
 const TERMS = require('fs')
 	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 
 async function prime(page, { terms = true } = {}) {
 	await page.addInitScript(

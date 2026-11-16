@@ -5,7 +5,7 @@ const auth = require('../functions/url-review-auth');
 const sample = require('../assets/qa-review-sample.json');
 const { fulfillSoftPreview, softThenUnlock } = require('./soft-gate');
 
-const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ANA = 'a'.repeat(64);
 const ID = 'pr12ce34ab56';
 const RETURNING = { billing: 'run', free: false, percent: 10 };

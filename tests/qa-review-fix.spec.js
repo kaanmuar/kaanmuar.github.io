@@ -11,7 +11,7 @@ const sample = {
 
 const TERMS = require('fs')
 	.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ID = 'ab12cd34ef56';
 const ANA = 'a'.repeat(64);
 const HEADERS = fixOffers.packageById('security-headers');

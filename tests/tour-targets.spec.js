@@ -5,7 +5,7 @@ const vm = require('vm');
 const { test, expect } = require('./net-guard');
 const { skipSiteTours, openCV } = require('./helpers.js');
 
-const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const SCREENS = { phone: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 const LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
 

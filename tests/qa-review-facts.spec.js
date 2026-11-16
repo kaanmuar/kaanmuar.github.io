@@ -3,7 +3,7 @@ const path = require('path');
 const { test, expect } = require('./net-guard');
 const reviewPromise = require('../functions/url-review-promise');
 
-const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const PHONE = { width: 390, height: 844 };
 // Phone screenshots for review: FACTS_SHOTS=<dir> npx playwright test tests/qa-review-facts.spec.js
 const SHOTS = process.env.FACTS_SHOTS || '';

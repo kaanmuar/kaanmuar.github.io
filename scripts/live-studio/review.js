@@ -163,7 +163,7 @@ function testKey() {
 
 function termsVersion() {
 	const core = fs.readFileSync(path.join(ROOT, 'functions/url-review-core.js'), 'utf8');
-	return (core.match(/const TERMS_VERSION = "([^"]+)"/) || [])[1] || '';
+	return (core.match(/const TERMS_VERSION = ['\"]([^'\"]+)['\"]/) || [])[1] || '';
 }
 
 // Runs the URL review on url and calls onLog with each line the run writes; resolves with its report.

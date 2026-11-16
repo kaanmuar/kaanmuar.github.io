@@ -7,7 +7,7 @@ const sample = {
 	report: require('./unit/fixtures/review-carlosandmunoz.json'),
 };
 
-const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ID = 'ab12cd34ef56';
 // Phone and desktop screenshots for review: WATCH_SHOTS=<dir> npx playwright test tests/qa-review-watch.spec.js
 const SHOTS = process.env.WATCH_SHOTS || '';

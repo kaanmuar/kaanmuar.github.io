@@ -3509,7 +3509,7 @@ test('the intake takes the current terms and the ones just before, and records w
 test('the review page sends the terms version the server takes as current', () => {
 	const page = fs
 		.readFileSync(path.join(__dirname, '../../js/qa-review.js'), 'utf8')
-		.match(/TERMS_VERSION = "([^"]+)"/)[1];
+		.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 	assert.equal(page, core.TERMS_VERSION);
 });
 

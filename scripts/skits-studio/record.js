@@ -31,7 +31,7 @@ const SIZE = { width: VIEW.width * SCALE, height: VIEW.height * SCALE };
 const API = /us-central1-carlosm-interactive-cv\.cloudfunctions\.net\//;
 const BLOCKED = /googletagmanager|google-analytics|ipwho\.is/;
 const DEVICE = 'd'.repeat(64);
-const TERMS = fs.readFileSync(path.join(ROOT, 'js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(ROOT, 'js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 
 function args() {
 	const out = { _: [] };

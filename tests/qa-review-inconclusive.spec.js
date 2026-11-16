@@ -5,7 +5,7 @@ const auth = require('../functions/url-review-auth');
 const reviewPromise = require('../functions/url-review-promise');
 const { fulfillSoftPreview, softThenUnlock } = require('./soft-gate');
 
-const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = fs.readFileSync(path.join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ANA = 'a'.repeat(64);
 const PHONE = { width: 390, height: 844 };
 const INCONCLUSIVE = reviewPromise.errorLine('Headless Chrome did not finish the page in time.', {

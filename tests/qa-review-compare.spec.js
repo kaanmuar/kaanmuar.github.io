@@ -7,7 +7,7 @@ const own = require('./unit/fixtures/review-wordpress.json');
 
 const TERMS = require('fs')
 	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const ID = 'cd34ef56ab12';
 const ANA = 'a'.repeat(64);
 const days = (start, step) =>

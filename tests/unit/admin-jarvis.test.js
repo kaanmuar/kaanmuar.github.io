@@ -571,7 +571,7 @@ test('admin mounts Jarvis in the stats pane and the endpoint stays owner-only', 
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	const block = index.slice(index.indexOf('exports.jarvis ='));
 	assert.match(block, /verifyOperator/);
-	assert.match(block, /Access-Control-Allow-Headers", "Content-Type, Authorization"/);
+	assert.match(block, /Access-Control-Allow-Headers['\"], ['\"]Content-Type, Authorization['\"]/);
 });
 
 // --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------

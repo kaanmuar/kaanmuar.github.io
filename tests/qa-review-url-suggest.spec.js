@@ -8,7 +8,7 @@ const SITEMAPS = {
 };
 const TERMS = require('fs')
 	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 
 async function open(page, lang = '') {
 	await page.addInitScript(

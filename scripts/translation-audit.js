@@ -26,7 +26,7 @@ const langs = args.filter((a) => !a.startsWith('--'));
 const LANGS = langs.length ? langs : ['es', 'pt', 'de', 'fr', 'it'];
 const TERMS = fs
 	.readFileSync(path.join(__dirname, '..', 'js', 'qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 const REVIEW_PAGE = {
 	es: 'qa-review-es.html',
 	pt: 'qa-review-pt.html',

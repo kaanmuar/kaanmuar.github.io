@@ -6,7 +6,7 @@ const sample = {
 };
 const TERMS = require('fs')
 	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-	.match(/TERMS_VERSION = "([^"]+)"/)[1];
+	.match(/TERMS_VERSION = ['\"]([^'\"]+)['\"]/)[1];
 
 async function prime(page, lang) {
 	await page.addInitScript(
