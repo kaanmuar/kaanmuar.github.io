@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-gkuSDlu4M6qHuDp9RYvPQTuATg1244M7HZXn7WgQw3w=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-gkuSDlu4M6qHuDp9RYvPQTuATg1244M7HZXn7WgQw3w=' 'sha256-jineBDmjBt81WPjXTP3GlHJ740C7ojpcHhfp2/uAlHw=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>QA-lab URL Review: SEO, GEO e casi di test da un URL</title>
     <meta name="description" content="Una pagina https valutata per SEO, GEO, analytics, sicurezza, accessibilità e velocità, controllata contro phishing, malware, blocklist e violazioni, con casi di test e correzioni.">
@@ -980,10 +980,13 @@
             color: var(--text); color-scheme: dark;
             background: radial-gradient(42% 70% at 76% 48%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(30% 45% at 90% 14%, rgba(185, 168, 255, .18), transparent 70%), radial-gradient(46% 36% at 72% 100%, rgba(226, 196, 138, .14), transparent 70%), #071116;
         }
-        .stage > .fx { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
-        .stage.fx-on > .fx { opacity: 1; }
+        .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+        .stage.fx-on > .fx, .stage.stage-hero-on > .stage-hero, .stage.stage-hero-still-on > .stage-hero-still { opacity: 1; }
+        .stage > .stage-hero canvas { display: block; width: 100% !important; height: 100% !important; }
+        .stage-hero-still { margin: 0; object-fit: cover; object-position: 72% center; filter: saturate(1.05); }
+        .stage-hero-still[hidden] { display: none; }
         .stage::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(7, 17, 22, .92) 0%, rgba(7, 17, 22, .78) max(300px, 30%), rgba(7, 17, 22, 0) max(640px, 58%)); }
-        .stage.fx-fallback::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
+        .stage.fx-fallback:not(.stage-hero-still-on)::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
         .stage-copy { position: relative; max-width: 640px; }
         .stage .display { color: #f4fafb; }
         .wire { overflow: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
@@ -1433,8 +1436,9 @@
             h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
             .stage { display: block; min-height: 0; padding: 236px 14px 20px; }
-            .stage > .fx { height: 420px; bottom: auto; }
-            .stage.fx-fallback::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
+            .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { height: 420px; bottom: auto; }
+            .stage-hero-still { object-position: center 28%; }
+            .stage.fx-fallback:not(.stage-hero-still-on)::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
             .stage::before { background: linear-gradient(180deg, rgba(7, 17, 22, 0) 150px, rgba(7, 17, 22, .82) 270px, #071116 420px); }
             .facts { gap: 10px; }
             .facts li { flex: 1 1 28%; min-width: 0; }
@@ -1599,9 +1603,13 @@
     <div class="wire-row" data-dir="ltr"><div class="wire-track"></div></div>
     <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
 </section>
-<section class="stage" data-fx data-fx-mode="0" data-fx-place="hero" aria-labelledby="studio-title">
-        <canvas class="fx" aria-hidden="true"></canvas>
-        <div class="stage-copy" data-fx-copy>
+<section class="stage" aria-labelledby="studio-title">
+        <picture id="review-hero-still" class="stage-hero-still" hidden>
+            <source srcset="assets/url-review-hero/hero-3d-en-safe.webp?v=3429a" type="image/webp">
+            <img src="assets/url-review-hero/hero-3d-en-safe.png?v=3429a" alt="" width="1920" height="1080" decoding="async" fetchpriority="low">
+        </picture>
+        <div id="review-hero-3d" class="stage-hero" aria-hidden="true"></div>
+        <div class="stage-copy">
             <p class="eyebrow" translate="no">QA-lab URL Review</p>
             <h1 id="studio-title" class="display" lang="it" translate="no">
                 <span>Trova perdite,</span>
@@ -1630,6 +1638,7 @@
                 <a class="live-jump" href="#live-reports" lang="it" translate="no">Vedi i report dal vivo di siti reali ↓</a>
                 <button class="stage-link" id="stage-sample-open" type="button" lang="it" translate="no">Vedi un report di esempio</button>
                 <a class="stage-link" id="stage-guide" href="qa-review-guide.html" lang="it" translate="no">Fai il tour di cinque minuti</a>
+                <a class="stage-link" id="stage-explorer" href="qa-review-explorer.html">Explore checks in 3D</a>
                 <a class="stage-link" id="stage-book" href="book.html?type=intro&amp;lang=it&amp;utm_source=qa-review&amp;utm_campaign=review-hero" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Review hero" lang="it" translate="no">Prenota una chiamata di 15 minuti</a>
             </div>
         </div>
@@ -2177,6 +2186,15 @@
 <script src="js/site-i18n.js?v=20261104a" defer></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
 <script src="js/site-tour.js?v=20261110-3332" defer></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/url-review-hero/landing-boot.js?v=3429a"></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
