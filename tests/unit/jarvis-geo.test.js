@@ -213,9 +213,42 @@ test("the geo source carries the confirm queue and its counts", async () => {
   const snap = (data) => ({ exists: !!data, data: () => data });
   const docs = { "jarvis_settings/live_report_countries": queueDoc() };
   const db = { collection: (c) => ({ doc: (id) => ({ get: async () => snap(docs[c + "/" + id] || null) }) }) };
-  const out = await geo.geo({ db, days: 7, fetch: async () => ({ json: async () => ({ reports: [] }) }) });
+  const out = await geo.geo({ db, days: 7, fetch: async () => ({ ok: true, json: async () => ({ reports: [] }) }) });
   assert.equal(out.ok, true);
+  assert.equal(out.cache, undefined, "a readable Live Reports index keeps the normal cache TTL");
   assert.deepEqual(out.confirm.map((r) => r.host), ["b.com", "d.com", "a.com", "c.com"]);
   assert.equal(out.totals.confirm, 4);
   assert.equal(out.totals.confirmed, 1);
+});
+
+test("readLiveIndex retries a brief miss and returns null only after every try fails (#3645)", async () => {
+  let n = 0;
+  const ok = await geo.readLiveIndex(async () => {
+    n += 1;
+    if (n < 3) return { ok: false, status: 502, json: async () => ({}) };
+    return { ok: true, json: async () => ({ reports: [{ host: "a.com", country: "CO" }] }) };
+  }, { wait: 0 });
+  assert.equal(n, 3);
+  assert.equal(ok.reports.length, 1);
+
+  n = 0;
+  const miss = await geo.readLiveIndex(async () => {
+    n += 1;
+    return { ok: false, status: 503, json: async () => ({}) };
+  }, { wait: 0, tries: 2 });
+  assert.equal(n, 2);
+  assert.equal(miss, null);
+});
+
+test("a Live Reports miss sets cache:false so jarvisCached does not keep the Need for 15 minutes (#3645)", async () => {
+  const snap = (data) => ({ exists: !!data, data: () => data });
+  const docs = { "jarvis_settings/live_report_countries": queueDoc() };
+  const db = { collection: (c) => ({ doc: (id) => ({ get: async () => snap(docs[c + "/" + id] || null) }) }) };
+  const out = await geo.geo({
+    db, days: 7, liveIndex: { wait: 0, tries: 2 },
+    fetch: async () => { throw new Error("down"); }
+  });
+  assert.equal(out.ok, true);
+  assert.equal(out.cache, false);
+  assert.ok(out.needs.some((n) => /Live Reports index could not be read/.test(n)));
 });
