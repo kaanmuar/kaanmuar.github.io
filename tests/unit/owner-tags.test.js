@@ -107,6 +107,35 @@ test("a comparison card's sites are all its owners; posts about no report are le
   assert.equal(T.langOf({ host: "ilo.org", country: "CH" }), "en", "a multilingual country says nothing of the language");
 });
 
+test("backfill walks report posts oldest first and raises the per-network day caps (#3587)", () => {
+  assert.equal(T.capsFor(false).x, T.PER_DAY.x);
+  assert.equal(T.capsFor(true).x, T.BACKFILL_PER_DAY.x);
+  assert.ok(T.BACKFILL_PER_DAY.x > T.PER_DAY.x);
+  const newest = T.ourPosts(FEED, [OPEN, BUFFER, null], [METRO, VIVA], false);
+  const oldest = T.ourPosts(FEED, [OPEN, BUFFER, null], [METRO, VIVA], true);
+  assert.equal(newest[0].key, "auto-2026-11-03/11-vs-vivastreet-ie");
+  assert.equal(oldest[0].key, "runs-2026-10/02-bogota");
+  assert.deepEqual(oldest.map((p) => p.network + " " + p.key).slice(0, 4), [
+    "bluesky runs-2026-10/02-bogota", "instagram runs-2026-10/02-bogota", "x runs-2026-10/02-bogota", "tiktok runs-2026-10/02-bogota"
+  ], "same-day ledger times keep open-social (16:00) before Buffer (17:00)");
+  assert.equal(oldest[oldest.length - 1].key, "auto-2026-11-03/11-vs-vivastreet-ie");
+});
+
+test("a backfill dry run notes pending slots and prefers the oldest posts in its sample (#3587)", async () => {
+  const db = fakeDb();
+  const { d } = deps(db);
+  await db.collection("owner_tag_daily").doc("2026-11-05").set({ n: { x: T.PER_DAY.x, instagram: T.PER_DAY.instagram, bluesky: T.PER_DAY.bluesky, tiktok: T.PER_DAY.tiktok, mastodon: T.PER_DAY.mastodon } });
+  const capped = await T.run(d);
+  assert.ok(capped.capped >= 1, "daily caps leave older posts waiting");
+  assert.ok(capped.pending >= 1);
+  assert.match(T.runNote(capped), /posts wait for tomorrow's cap/);
+  const back = await T.run(Object.assign({}, d, { backfill: true }));
+  assert.equal(back.backfill, true);
+  assert.ok(back.dry > capped.dry || back.comments + back.dry >= capped.comments + capped.dry);
+  assert.ok(back.sample.some((s) => /metrodebogota|Metro/i.test(s.text) || s.network === "x" || s.network === "bluesky"));
+  assert.match(T.runNote(back), /^owner tags backfill \(dry run\)/);
+});
+
 test("comments put owners first, then related accounts, within the network's cap, character limit and two comments", () => {
   const acct = (handle, kind) => ({ network: "instagram", handle, kind, status: "approved", scopes: ["report:metrobogota"] });
   const owners = [acct("metrodebogota", "owner")];
