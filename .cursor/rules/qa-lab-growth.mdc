@@ -33,7 +33,7 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 
 ## Slide 3 + first-comment locks (#3550 / #3551)
 - **Case source:** prefer rank-1 finding’s real case id + its Playwright sample from the report; fall back to mapped lesson id + canned assertion when the report has no case/snippet.
-- **DOM crop:** real review screenshot crop when available; otherwise omit the crop (no fake red-box mock).
+- **DOM crop:** real finding crop when the publish pipeline exposes one; otherwise omit (no fake red-box mock). Full-page `browser.shots` alone are not enough for Slide 3.
 - **First comment:** hub/guide UTM + “drop a URL” CTA, with per-network wording variants.
 - **Captions:** when first-comment is set, strip UTMs from the post body (link-free on LI/X/IG/FB).
 
