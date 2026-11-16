@@ -193,7 +193,7 @@ async function report(deps, input) {
 // --- rows from each source -------------------------------------------------------------------------------------
 
 const JOB_NAMES = {
-  opsWatchdog: "Daily system review", sweepReviews: "Country sweep", outreachSweep: "Outreach sweep", rivalSweep: "Rival sweep",
+  opsWatchdog: "Daily system review", sweepReviews: "Country sweep", pastRerunReviews: "Past-report re-run", outreachSweep: "Outreach sweep", rivalSweep: "Rival sweep",
   placesProspects: "Places prospects", engagementScout: "Engagement scout", ownerTags: "Owner tags", jarvisWatch: "Jarvis watch",
   jarvisGithub: "Jarvis GitHub", jarvisCountdowns: "Jarvis countdowns", jarvisDailyBriefing: "Daily briefing", jarvisEveningDigest: "Evening digest",
   rerunReviewFailures: "Re-run failed reviews", refreshSocialHubStats: "Social hub stats", dispatchFacebookQueue: "Facebook queue"

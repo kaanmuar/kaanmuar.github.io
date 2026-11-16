@@ -142,6 +142,18 @@ fun RescuePanel(s: UiState) {
             StatusRow(if (m.bool("promised") == true) "warn" else "info", m.str("host").orEmpty(), listOfNotNull(if (m.bool("promised") == true) "promised" else null, ago(m.str("failedAt"))).joinToString(" · "))
         }
         Muted("A review that fails on our side is diagnosed (rules, then Gemini on Vertex AI with AI Studio as fallback) and re-run with the read that fits; the last rung is Carlos's Mac in a real Chrome window, promised reviews first. Its asker gets the report by email, usually within $deadline hours; past that, an apology with a ${fmt(r.num("apologyPercent"))}% code, and the rescue keeps trying: a report finished within $giveUp days is sent late, otherwise a last note goes out.")
+        val past = r.obj("pastRerun")
+        if (past != null) {
+            Text("Finished reports, run again · ${past.str("status").orEmpty()}", color = J.amber, fontSize = 12.sp)
+            KpiPairs(listOf(
+                KpiData("Reviews a day", fmt(past.num("perDay"))),
+                KpiData("Reviewed", fmt(past.num("reviewed") ?: 0.0)),
+                KpiData("Mails sent", fmt(past.num("mailed") ?: 0.0)),
+                KpiData("Skipped", fmt(past.num("skipped") ?: 0.0)),
+                KpiData("50% uses", fmt(past.num("uses")))
+            ))
+            Muted(past.str("line").orEmpty())
+        }
     }
 }
 

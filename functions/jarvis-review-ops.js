@@ -2,8 +2,9 @@
    The web panels and the Android app read the same three sources:
 
    rescue   failed reviews by cause (url_review_failures), re-runs (url_review_reruns), rescues and the Mac's share
-            (url_review_rescues), the AI diagnoses by provider, the 48-hour report promises (promise.* on the failures)
-            and the SORRY- apology codes (url_review_coupons, source "inconclusive")
+            (url_review_rescues), the AI diagnoses by provider, the 48-hour report promises (promise.* on the failures),
+            the SORRY- apology codes (url_review_coupons, source "inconclusive"), and the finished-report re-run
+            (#3458): one new review per site, then one mail, at url_review_campaigns/rerun-past-2026
    fixes    the fix requests by way (url_review_fix_requests kind self, quote, package; walkthrough bookings with
             ref "fix"), the status pipeline, package revenue paid through PayPal and the free re-checks
    checks   hits per newer check (url_reviews.checks, written from 10 Nov 2026), the quotas they spend
@@ -12,6 +13,7 @@ const core = require("./jarvis-core");
 const linkedRisk = require("./url-review-linked-risk");
 const promise = require("./url-review-promise");
 const fixOffers = require("./url-review-fix-offers");
+const pastRerun = require("./url-review-rerun-past");
 
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
@@ -48,7 +50,7 @@ function promiseGroups(failures) {
   });
 }
 
-function rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open }, { now, days }) {
+function rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open, past }, { now, days }) {
   const start = now - days * DAY;
   const failed = (failures || []).filter((row) => row && row.kind !== "stopped" && ms(row.at) >= start);
   const causes = {};
@@ -110,7 +112,8 @@ function rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open },
     },
     codes: { sent: sorry.length, redeemed: sorry.filter((row) => (Number(row.uses) || 0) > 0).length },
     openList: openNow.slice(0, SHOWN),
-    macList: waiting.slice(0, SHOWN)
+    macList: waiting.slice(0, SHOWN),
+    pastRerun: pastRerun.describe(past)
   };
 }
 
@@ -119,15 +122,16 @@ async function rescueSource(ctx) {
   const days = ctx.days || 7;
   const since = new Date(now - days * DAY).toISOString();
   const read = (query) => query.get().then(rowsOf).catch(() => []);
-  const [failures, rescues, macWaiting, reruns, coupons, open] = await Promise.all([
+  const [failures, rescues, macWaiting, reruns, coupons, open, pastSnap] = await Promise.all([
     read(db.collection("url_review_failures").where("at", ">=", since).select("at", "kind", "host", "cause", "source", "promise").limit(3000)),
     read(db.collection("url_review_rescues").where("failedAt", ">=", since).select("at", "failedAt", "host", "status", "strategy", "promised", "diagnosis.by", "diagnosis.via", "attempts").limit(2000)),
     read(db.collection("url_review_rescues").where("status", "==", "mac-wanted").select("at", "failedAt", "host", "promised").limit(200)),
     read(db.collection("url_review_reruns").where("at", ">=", since).select("at", "status").limit(2000)),
     read(db.collection("url_review_coupons").where("createdAt", ">=", since).select("createdAt", "source", "uses").limit(2000)),
-    read(db.collection("url_review_failures").where("promise.state", "==", "open").select("at", "host", "promise").limit(300))
+    read(db.collection("url_review_failures").where("promise.state", "==", "open").select("at", "host", "promise").limit(300)),
+    db.collection(pastRerun.COLLECTION).doc(pastRerun.ID).get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null)
   ]);
-  return rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open }, { now, days });
+  return rescueSummary({ failures, rescues, macWaiting, reruns, coupons, open, past: pastSnap }, { now, days });
 }
 
 // --- fixes --------------------------------------------------------------------------------------------------
@@ -290,6 +294,11 @@ async function checksSource(ctx) {
 // --- Ask -----------------------------------------------------------------------------------------------------
 
 // The three sources in a few hundred tokens for Ask and the briefing's Gemini text (shared with the web page).
-const ask = (e) => core.reviewOpsAsk(e);
+const ask = (e) => {
+  const view = core.reviewOpsAsk(e);
+  const rescue = e && e.rescue;
+  view.urlReviewPastRerun = (rescue && rescue.pastRerun) || pastRerun.describe();
+  return view;
+};
 
-module.exports = { FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, checksSummary, checksSource, ask };
+module.exports = { FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, checksSummary, checksSource, ask, pastRerunLine: pastRerun.line };

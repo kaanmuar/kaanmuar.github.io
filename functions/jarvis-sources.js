@@ -13,7 +13,7 @@
    people     signed-in URL Review people, their runs, visits and time on the review pages (jarvis-people.js)
    pagespeed  the daily PageSpeed routine: every page's scores, its runs and its PRs (jarvis-pagespeed.js)
    local      the Google Maps Local check across URL reviews and the Places calls per day (jarvis-local.js)
-   rescue     failed reviews, re-runs, Mac rescues, AI diagnoses, 48-hour report promises and apology codes (jarvis-review-ops.js)
+   rescue     failed reviews, re-runs, Mac rescues, AI diagnoses, 48-hour report promises, apology codes, and the finished-report re-run (#3458) (jarvis-review-ops.js)
    fixes      client fix requests by way and status, fix package revenue (PayPal) and free re-checks (jarvis-review-ops.js)
    checks     the newer review checks' hits, their quotas, the Wordfence feed and each outside source's health (jarvis-review-ops.js)
    geo        the Map tab's numbers per country, rolled up from the other sources' cached answers (jarvis-geo.js)

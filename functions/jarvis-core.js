@@ -801,7 +801,8 @@
             urlReviewFixRequests: ok(f) && f.ways ? { byWay: f.ways, pipeline: f.pipeline, packageRevenue: f.revenue, freeRechecks: f.rechecks, rereviews: f.rereviews, waiting: f.waiting,
                 paidWaiting: (f.paidList || []).slice(0, 5).map((p) => p.host + ' ' + p.package + ' paid ' + p.daysWaiting + ' d ago' + (p.late ? ' (late)' : '')) } : null,
             urlReviewNewChecks: ok(c) && c.families ? { countedSince: c.since, reviews: c.totals, hits: c.families.map((x) => x.label + ': ' + x.hits + ' of ' + x.checked), quotas: c.quotas.map((q) => q.label + ': ' + q.used + (q.cap ? ' of ' + q.cap : '')),
-                sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')), wordfenceStored: !!(c.wordfence && c.wordfence.stored) } : null
+                sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')), wordfenceStored: !!(c.wordfence && c.wordfence.stored) } : null,
+            urlReviewPastRerun: ok(r) && r.pastRerun ? r.pastRerun : null
         };
     }
 
