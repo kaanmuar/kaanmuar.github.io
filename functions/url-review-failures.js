@@ -30,6 +30,7 @@ const FIXES = [
   { cause: "save", at: "2026-11-03T07:41:00Z", ref: "#2408", label: "A finished report whose saved page is past one Firestore field is shortened and saved" },
   { cause: "unknown", at: "2026-11-05T08:17:37Z", ref: "#2604", label: "A folded response header is read, and a finished report over one Firestore document is shortened and saved" },
   { cause: "tls", at: "2026-11-06T07:45:04Z", ref: "#2744", label: "A certificate whose issuer is also missing is read by following each AIA address until a trusted root" },
+  { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" },
   { cause: "connection", at: "2026-11-09T07:48:08Z", ref: "#2869", label: "A site that hangs up the plain request is read in headless Chrome" },
   { cause: "browser", at: "2026-11-09T12:37:32Z", ref: "#2876", label: "A page that moves itself on after it loaded is read again once it settles" },
   { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
