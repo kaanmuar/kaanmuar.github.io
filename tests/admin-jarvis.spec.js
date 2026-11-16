@@ -1605,7 +1605,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.run, c.body.branch])).toEqual([[901, 'main']]);
     expect(asked).toContain('Update the admin visual baseline on main');
     const launched = ai.locator('[data-gh-result="run:901"]');
-    await expect(launched).toContainText('Asked @cursor; it uses your weekly Cursor usage');
+    await expect(launched).toContainText('Agent launched; it opens a PR when it is done.');
     await expect(launched.locator('a')).toHaveAttribute('href', 'https://cursor.com/agents/bc-123');
     expect(errors).toEqual([]);
   });
