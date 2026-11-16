@@ -124,7 +124,7 @@ async function sites(deps) {
   const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
   const looseAll = R.looseQueries(look.sites);
   const loose = R.looseForMac(looseAll, deps.now);
-  const topics = Communities.withStudents(E.discoveryForRun(deps.now), 4);
+  const topics = Communities.withStudents(E.Regions.discoveryForRun(deps.now, null, conf), 4);
   return Object.assign({
     ok: true, paused: false,
     queries: look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)),

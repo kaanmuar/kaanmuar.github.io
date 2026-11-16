@@ -280,7 +280,7 @@ test("a scout run stores the field's posts, plans actions, pushes reply drafts, 
   assert.equal(run.fresh, 2, "the cat post is not in our field");
   assert.equal(run.drafted, 1, "the competitor's post gets no draft");
   assert.equal(pushed.length, 1);
-  assert.deepEqual(Object.keys(run.errors).sort(), ["devto", "hn", "lobsters"]);
+  assert.deepEqual(Object.keys(run.errors).sort(), ["devto", "hn", "lobsters", "qiita", "stackexchange", "zenn"]);
   const kept = Array.from(db.data.entries()).filter(([p]) => p.startsWith("engagement_posts/")).map(([, d]) => d);
   assert.equal(kept.find((d) => d.author.handle === "semrush@m.s").skip, "competitor");
   const day = db.data.get("engagement_daily/" + E.bogotaDay(NOW));

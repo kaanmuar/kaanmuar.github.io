@@ -60,7 +60,11 @@ const NETWORKS = {
   reddit: { name: "Reddit", acts: true, devvit: true, browser: true, limit: 1500, scale: 20, weight: 1, caps: { like: 20, repost: 2, follow: 5, reply: 3, join: 3 } },
   hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
   devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
-  lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 }
+  lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 },
+  qiita: { name: "Qiita", acts: false, scale: 15, weight: 0.9 },
+  stackexchange: { name: "Stack Exchange", acts: false, scale: 25, weight: 1 },
+  zenn: { name: "Zenn", acts: false, scale: 15, weight: 0.85 },
+  fieldsweep: { name: "Field sweep", acts: false, scale: 5, weight: 0.5 }
 };
 
 // Our field, as in scripts/field-sweep/sources.js, plus the web security and privacy a URL review checks.
@@ -72,7 +76,8 @@ const TOPICS = {
   Performance: ["web performance", "webperf", "core web vitals", "corewebvitals", "inp", "lcp", "cls", "page ?speed", "lighthouse", "load time", "time to first byte", "ttfb", "speculation rules"],
   Analytics: ["ga4", "google analytics", "tag manager", "gtm", "conversion tracking", "server-side tagging", "consent mode"],
   Security: ["security headers", "content security policy", "csp", "hsts", "owasp", "xss", "tls certificates?", "web security", "websecurity"],
-  Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"]
+  Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"],
+  Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "notice of award", "contract notice"]
 };
 // The same topics in other languages (#2614), so a post or group in any of them is in our field and the Mac's browser
 // searches in them too (DISCOVERY: every phrase per topic, discoveryForRun picks a budget per slot). Lowercase; regex like TOPICS.
@@ -151,11 +156,10 @@ const DISCOVERY_SLOT = 30 * 60 * 1000;
 const DISCOVERY_BUDGET = 12;
 const MASTODON_DISCOVERY_BUDGET = 3;
 
-function discoveryForRun(now, budget) {
-  const b = budget == null ? DISCOVERY_BUDGET : Math.max(0, Math.min(Number(budget) || 0, DISCOVERY.length));
-  if (!b) return [];
-  const slot = Math.floor((now || Date.now()) / DISCOVERY_SLOT);
-  return Array.from({ length: b }, (_, i) => DISCOVERY[(slot * b + i) % DISCOVERY.length]);
+const Regions = require("./engagement-regions");
+
+function discoveryForRun(now, budget, settings) {
+  return Regions.discoveryForRun(now, budget, settings || { discoveryPack: "auto" });
 }
 
 // As scripts/trending-tags.js: no post rides on news about deaths, wars, elections or layoffs. Words our field also
@@ -177,7 +181,8 @@ const DEFAULTS = {
   maxAgeHours: 48,
   perRun: 12,
   competitors: COMPETITORS,
-  own: ["carlosandmunoz", "qalabreview", "qalaburlreview", "qaurlreview", "qalab-url-review", "kaanmuar"]
+  own: ["carlosandmunoz", "qalabreview", "qalaburlreview", "qaurlreview", "qalab-url-review", "kaanmuar"],
+  discoveryPack: "auto"
 };
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
@@ -212,6 +217,7 @@ function settings(doc) {
     competitorsDropped: dropped,
     own: Array.isArray(d.own) ? lower(d.own).slice(0, 40) : DEFAULTS.own.slice(),
     trials: Trials.trialSettings(d.trials),
+    discoveryPack: (() => { const v = String(d.discoveryPack || DEFAULTS.discoveryPack).toLowerCase(); return v === "auto" || Regions.PACK_IDS.includes(v) ? v : "auto"; })(),
     updatedAt: clip(d.updatedAt, 30),
     by: clip(d.by, 120)
   };
@@ -224,6 +230,7 @@ function settingsPatch(current, body) {
   let changed = false;
   if (typeof b.paused === "boolean") { next.paused = b.paused; changed = true; }
   if (typeof b.live === "boolean") { next.live = b.live; changed = true; }
+  if (b.discoveryPack !== undefined) { next.discoveryPack = String(b.discoveryPack || "auto"); changed = true; }
   ["caps", "thresholds", "trials"].forEach((k) => { if (b[k] && typeof b[k] === "object") { next[k] = Object.assign({}, current[k], b[k]); changed = true; } });
   ["worth", "maxAgeHours", "perRun"].forEach((k) => { if (b[k] !== undefined) { next[k] = b[k]; changed = true; } });
   ["competitors", "own"].forEach((k) => {
@@ -302,6 +309,7 @@ const has = (hay, list) => list.find((w) => w && hay.includes(w)) || "";
 
 /** Why a post is left alone whatever it scores, or "". */
 function guard(post, conf, now) {
+  if (post.discoveryOnly || post.via === "field-sweep") return "discovery";
   const a = post.author || {};
   const who = [a.handle, a.name, a.url].map((s) => String(s || "").toLowerCase()).join(" ");
   const text = [post.title, post.text].join(" ");
@@ -497,7 +505,7 @@ function forAi(posts, conf, now) {
 /** The Firestore document for a new post (Firestore adds seenAt as a timestamp-free ISO string so ranges sort). */
 function postDoc(post, ai, decision, now) {
   const a = ai || {};
-  return Object.assign(post.via === "mac" ? { via: "mac" } : {}, {
+  return Object.assign(post.via ? { via: post.via } : {}, post.discoveryOnly ? { discoveryOnly: true } : {}, {
     network: post.network, id: clip(post.id, 300), thread: clip(post.thread || post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
     author: { handle: clip((post.author || {}).handle, 120), name: clip((post.author || {}).name, 120), id: clip((post.author || {}).id, 200), followers: num((post.author || {}).followers) },
     title: clip(post.title, 300), text: clip(post.text, 1200), lang: a.lang || lang2(post.lang), createdAt: clip(post.createdAt, 30), isReply: post.isReply === true,
@@ -755,7 +763,7 @@ function decideReply(doc, decision, text, by, now) {
 }
 
 module.exports = {
-  NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, Regions, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
   postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };

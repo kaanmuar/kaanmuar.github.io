@@ -2922,7 +2922,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (!p) return '';
             return `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}" title="${esc(p.label || '')}">${esc(metaTitles[k] || k)}</span>`;
         };
-        const metaBody = meta ? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(meta.at))}${meta.discovery && meta.discovery.topics ? ` · ${fmt(meta.discovery.topics)} topic searches this slot` : ''}${meta.needs && meta.needs.length ? '<br>' + esc(meta.needs.join(' · ')) : ''}</p>`
+        const packLine = (d) => d ? `Pack <strong>${esc(d.packName || d.pack || 'global')}</strong>${d.rotate ? ' (auto-rotates each slot)' : d.setting && d.setting !== 'auto' ? ' (pinned)' : ''} · ${fmt(d.topics)} searches · langs ${esc((d.langs || []).join(', '))}${meta.fieldSweep && meta.fieldSweep.count ? ` · field sweep ${fmt(meta.fieldSweep.count)}${meta.fieldSweep.tender ? ' (' + fmt(meta.fieldSweep.tender) + ' tender)' : ''}` : ''}` : '';
+        const metaBody = meta ? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(meta.at))}${meta.discovery ? ` · ${packLine(meta.discovery)}` : ''}${meta.needs && meta.needs.length ? '<br>' + esc(meta.needs.join(' · ')) : ''}</p>`
             : '<p class="jv-empty">The meta scout envelope appears after the next run.</p>';
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
@@ -2977,6 +2978,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <fieldset><legend>Score needed</legend>${['like', 'repost', 'follow', 'reply'].map((a) => num('th-' + a, c.thresholds[a], a, 0.5)).join('')}${num('worth', c.worth, 'Gemini worth for a reply (0-1)', 0.05)}${num('perRun', c.perRun, 'Posts Gemini reads a run')}${num('maxAgeHours', c.maxAgeHours, 'Oldest post (hours)')}</fieldset>
             <label>Competitors, never answered under (one per line)<textarea name="competitors" rows="4" data-keep="eg-competitors">${esc(c.competitors.join('\n'))}</textarea></label>
             <label>Our own handles, never engaged<textarea name="own" rows="2" data-keep="eg-own">${esc(c.own.join('\n'))}</textarea></label>
+            <label>Discovery region pack<select name="discoveryPack">${['auto', 'global', 'western', 'apac', 'europe', 'cis', 'mena', 'latam'].map((p) => `<option value="${p}"${(c.discoveryPack || 'auto') === p ? ' selected' : ''}>${p === 'auto' ? 'Auto (rotate by slot)' : p}</option>`).join('')}</select></label>
+            <span class="jv-note">Auto rotates global → APAC → Europe → Western → LatAm → CIS → MENA each half-hour slot so discovery is not stuck on Western English (#3613).</span>
             <div class="jv-actions"><button type="submit" class="jv-btn is-primary">Save settings</button>${c.updatedAt ? `<span class="jv-note">Saved ${esc(when(c.updatedAt))}</span>` : ''}</div></form>`;
         return kpis([
             { label: 'Posts in our field', value: t.candidates }, { label: 'Likes planned', value: t.like }, { label: 'Reposts planned', value: t.repost }, { label: 'Follows planned', value: t.follow },
@@ -4746,7 +4749,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             egSettings({
                 caps: Object.fromEntries(acts.concat('join').map((a) => [a, n('cap-' + a)])), thresholds: Object.fromEntries(acts.map((a) => [a, n('th-' + a)])),
                 worth: n('worth'), perRun: n('perRun'), maxAgeHours: n('maxAgeHours'),
-                competitors: form.elements.competitors.value.split('\n'), own: form.elements.own.value.split('\n')
+                competitors: form.elements.competitors.value.split('\n'), own: form.elements.own.value.split('\n'),
+                discoveryPack: String(form.elements.discoveryPack.value || 'auto')
             });
         } else if (form.dataset.unlist !== undefined) {
             const hostName = form.host.value.trim();

@@ -208,7 +208,11 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
                 val ok = p?.bool("ok") == true
                 StatusRow(if (ok) "good" else "alert", titles[k] ?: k, p?.str("label") ?: "—")
             }
-            meta.obj("discovery")?.num("topics")?.takeIf { it > 0 }?.let { KeyRow("Topic searches", fmt(it) + " this slot") }
+            meta.obj("discovery")?.let { d ->
+                KeyRow("Region pack", (d.str("packName") ?: d.str("pack") ?: "global") + if (d.bool("rotate") == true) " · auto" else " · pinned")
+                d.num("topics")?.takeIf { it > 0 }?.let { KeyRow("Topic searches", fmt(it) + " this slot") }
+            }
+            meta.obj("fieldSweep")?.num("count")?.takeIf { it > 0 }?.let { KeyRow("Field sweep", fmt(it) + " proposals" + (meta.obj("fieldSweep")?.num("tender")?.takeIf { t -> t > 0 }?.let { " · ${fmt(it)} tender" } ?: "")) }
             meta.str("at")?.let { KeyRow("Last envelope", ago(it) ?: it) }
             (meta.get("needs") as? kotlinx.serialization.json.JsonArray)?.strings()?.takeIf { it.isNotEmpty() }?.let { Muted(it.joinToString(" · ")) }
         }
@@ -485,6 +489,7 @@ private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 vm.market("eg:settings", "engagement-settings", mapOf("settings" to JsonObject(mapOf("caps" to capsJson, "competitors" to list)))) { "Settings saved." }
             }
         }
-        Muted("Score thresholds, Gemini's bar and our own handles are on the web tab.")
+        c?.str("discoveryPack")?.let { KeyRow("Discovery pack", if (it == "auto") "auto (rotates each slot)" else it) }
+        Muted("Score thresholds, Gemini's bar, region pack pin and our own handles are on the web tab.")
     }
 }

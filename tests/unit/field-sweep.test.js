@@ -24,6 +24,18 @@ const ATOM = `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://sear
 <content type="html">&lt;p&gt;New &lt;code&gt;toMatchAriaSnapshot&lt;/code&gt; options.&lt;/p&gt;</content>
 <media:thumbnail url="https://avatars.githubusercontent.com/u/1?v=4"/></entry></feed>`;
 
+test("regional and tender procurement sources are registered (#3613)", () => {
+  ["habr-webdev", "t3n-digital", "heise-developer", "coliss", "ted-eu", "uk-contracts-finder", "austender", "compras-colombia"].forEach((id) => {
+    const s = source(id);
+    assert.ok(s, id);
+    if (/ted|contracts|austender|compras/.test(id)) {
+      assert.equal(s.topic, "Procurement");
+      assert.equal(s.discoveryOnly, true);
+      assert.equal(s.strict, true);
+    }
+  });
+});
+
 test("parses RSS items with attribution, clean text and an image", () => {
   const items = sweep.parseFeed(RSS, source("google-search-central"));
   assert.equal(items.length, 1);

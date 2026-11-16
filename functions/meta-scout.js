@@ -78,9 +78,23 @@ async function run(deps) {
   const scoutRun = await J.scout(deps);
   const passes = await passStatus(deps, scoutRun);
   const needs = envelopeNeeds(passes, scoutRun, []);
+  const conf = await J.readSettings(deps.db);
+  const pack = E.Regions.packForRun(deps.now, conf);
+  const topics = E.Regions.discoveryForRun(deps.now, null, conf);
+  const fs = (scoutRun && scoutRun.fieldSweep) || {};
   const envelope = {
     at, ms: Date.now() - started, needs, passes, run: scoutRun,
-    discovery: { budget: E.DISCOVERY_BUDGET, topics: E.discoveryForRun(deps.now).length }
+    discovery: {
+      budget: E.DISCOVERY_BUDGET,
+      pack: pack.primary,
+      packName: (pack.pack && pack.pack.name) || pack.primary,
+      rotate: pack.rotate,
+      slot: pack.slot,
+      setting: conf.discoveryPack,
+      topics: topics.length,
+      langs: [...new Set(topics.map((t) => t.lang))].slice(0, 12)
+    },
+    fieldSweep: { count: fs.count || 0, tender: fs.tender || 0, at: fs.at || "" }
   };
   await deps.db.collection("engagement_meta_runs").doc(at).set(envelope);
   return envelope;

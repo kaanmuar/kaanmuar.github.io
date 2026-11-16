@@ -238,7 +238,7 @@ function rank(candidates, options) {
   const fresh = candidates.filter((item) => item && now - item.time <= MAX_AGE * DAY && item.time - now <= DAY).map((item) => {
     const source = sourceOf(item);
     const topic = relevance(item.title, item.summary);
-    return Object.assign({}, item, { type: source.type, weight: source.weight, topic, strict: !!source.strict, key: admin.canonUrl(item.url), tkey: titleKey(item.title) });
+    return Object.assign({}, item, { type: source.type, weight: source.weight, topic, strict: !!source.strict, discoveryOnly: !!source.discoveryOnly, key: admin.canonUrl(item.url), tkey: titleKey(item.title) });
   }).filter((item) => !item.strict || item.topic.inTitle);
   fresh.sort((a, b) => b.weight - a.weight || b.signal - a.signal);
 

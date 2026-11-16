@@ -28,7 +28,15 @@ const SOURCES = [
   { id: "martin-fowler", name: "Martin Fowler", type: "feed", url: "https://martinfowler.com/feed.atom", topic: "Testing", weight: 1, strict: true },
   { id: "hn", name: "Hacker News", type: "hn", queries: ["testing", "playwright", "accessibility", "SEO", "web performance", "Core Web Vitals", "Google Search", "analytics"], topic: "Testing", weight: 1, strict: true },
   { id: "devto", name: "DEV", type: "devto", tags: ["testing", "playwright", "a11y", "seo", "webperf"], topic: "Testing", weight: 0.8, strict: true },
-  { id: "github", name: "GitHub", type: "github", topics: ["testing", "playwright", "accessibility", "seo", "web-performance"], topic: "Testing", weight: 0.9, strict: true }
+  { id: "github", name: "GitHub", type: "github", topics: ["testing", "playwright", "accessibility", "seo", "web-performance"], topic: "Testing", weight: 0.9, strict: true },
+  { id: "habr-webdev", name: "Habr Web development", type: "feed", url: "https://habr.com/ru/rss/hub/webdev/all/?fl=ru", topic: "Testing", weight: 0.9, strict: true },
+  { id: "t3n-digital", name: "t3n", type: "feed", url: "https://t3n.de/news/feed/", topic: "Performance", weight: 0.7, strict: true },
+  { id: "heise-developer", name: "heise Developer", type: "feed", url: "https://www.heise.de/developer/rss/news-atom.xml", topic: "Testing", weight: 0.8, strict: true },
+  { id: "coliss", name: "Coliss", type: "feed", url: "https://coliss.com/feed/", topic: "Performance", weight: 0.85, strict: true },
+  { id: "ted-eu", name: "TED EU", type: "feed", url: "https://ted.europa.eu/en/rss/search?q=software&scope=3&scope=4", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
+  { id: "uk-contracts-finder", name: "UK Contracts Finder", type: "feed", url: "https://www.contractsfinder.service.gov.uk/applications/cms-feed", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
+  { id: "austender", name: "AusTender", type: "feed", url: "https://www.tenders.gov.au/public_data/rss/rss.xml", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
+  { id: "compras-colombia", name: "SECOP Colombia", type: "feed", url: "https://www.colombiacompra.gov.co/sites/cce_public/Lists/Licitaciones/AllItems.aspx?RSS=1", topic: "Procurement", weight: 0.3, strict: true, discoveryOnly: true }
 ];
 
 // Keywords per topic, matched as whole words in any case, plural too. A title hit counts double a summary hit.
@@ -39,7 +47,8 @@ const TOPICS = {
   Accessibility: ["accessibility", "a11y", "wcag", "aria", "screen reader", "accessible", "inclusive design", "color contrast", "keyboard navigation"],
   Performance: ["web performance", "core web vitals", "inp", "lcp", "cls", "page speed", "pagespeed", "lighthouse", "load time", "performance budget", "speculation rules"],
   Analytics: ["analytics", "ga4", "google tag manager", "tag manager", "server-side tagging", "consent mode", "measurement", "attribution"],
-  Standards: ["w3c", "whatwg", "html spec", "specification", "candidate recommendation", "working draft", "interop", "baseline"]
+  Standards: ["w3c", "whatwg", "html spec", "specification", "candidate recommendation", "working draft", "interop", "baseline"],
+  Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "contract notice", "licitación", "licitação", "contratación pública"]
 };
 
 // Never proposed, whatever the source: GitHub topic tags and DEV tags are open to anyone.

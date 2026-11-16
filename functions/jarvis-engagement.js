@@ -25,6 +25,7 @@ const Snapshot = require("./jarvis-snapshot");
 const jarvisLog = require("./jarvis-log");
 const Trials = require("./chain-trials");
 const Send = require("./outreach-send");
+const FieldSweep = require("./engagement-field-sweep");
 
 const Gemini = require("./gemini");
 
@@ -581,7 +582,15 @@ async function scout(deps) {
   const conf = await readSettings(db);
   const expired = await expire(deps).catch(() => 0);
   const creds = await Act.readCreds(db).catch(() => ({}));
-  const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now });
+  const site = (deps.site || env.SITE || "https://carlosandmunoz.com/").replace(/\/?$/, "/");
+  const [read, sweep] = await Promise.all([
+    Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now, settings: conf }),
+    FieldSweep.recentPosts(deps.fetch, site, now).catch(() => ({ posts: [], count: 0, tender: 0 }))
+  ]);
+  if (sweep.posts && sweep.posts.length) {
+    read.posts.push(...sweep.posts);
+    read.read.fieldsweep = (read.read.fieldsweep || 0) + sweep.posts.length;
+  }
   const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
   let reruns;
   try { reruns = await rerunPass(deps, conf); } catch (error) { reruns = { changed: 0, drafted: 0, pushed: 0, again: [], error: String(error.message || error).slice(0, 200) }; }
@@ -607,7 +616,8 @@ async function scout(deps) {
     reports: { searched: reports.searched, read: reports.read || 0, matched: reports.matched, drafted: reports.drafted, pushed: reports.pushed, aiError: reports.aiError, errors: reports.errors, error: reports.error || "" },
     profiles: { checked: profiles.checked, sites: profiles.sites, profiles: profiles.profiles, drafted: profiles.drafted, pushed: profiles.pushed, aiError: profiles.aiError, errors: profiles.errors, error: profiles.error || "" },
     reruns: { changed: reruns.changed, drafted: reruns.drafted, pushed: reruns.pushed, again: reruns.again.map((t) => t.host), error: reruns.error || "" },
-    chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors }
+    chains: { checked: chains.checked || 0, chained: chains.chained, liked: chains.liked, drafted: chains.drafted, pushed: chains.pushed, aiError: chains.aiError, errors: chains.errors },
+    fieldSweep: { count: sweep.count || 0, tender: sweep.tender || 0, at: sweep.at || "" }
   };
   await db.collection("engagement_runs").doc(run.at).set(run);
   await clearCache(db);
@@ -825,7 +835,8 @@ const STAGE = Object.assign(
   Object.fromEntries(Object.entries(E.NETWORKS).filter(([, n]) => n.browser).map(([k, n]) => [k, joinAnd((n.only || Object.keys(WORDS)).map((a) => WORDS[a]))])),
   {
     bluesky: "likes, reposts, follows and replies", mastodon: "likes, boosts, follows and replies", youtube: "likes, subscribes and comments",
-    telegram: "reactions and replies under our channel's posts", reddit: "replies under our subreddit's posts", hn: "trends only", devto: "trends only", lobsters: "trends only"
+    telegram: "reactions and replies under our channel's posts", reddit: "replies under our subreddit's posts", hn: "trends only", devto: "trends only", lobsters: "trends only",
+    qiita: "trends only", stackexchange: "trends only", zenn: "trends only", fieldsweep: "field sweep proposals, read only"
   }
 );
 const MAC_STALE = 2 * 3600000;
