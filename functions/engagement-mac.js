@@ -44,6 +44,10 @@
  *                                                                        2-day pass (#3137) is action "dm" with the
  *                                                                        person's profile as url, its draft and its
  *                                                                        card, within its outreach-send daily cap
+ *   engagement-mac-linkedin-queue { auto? }                             today's connection requests (up to 15); auto
+ *                                                                        includes unsent people on the list
+ *   engagement-mac-linkedin-result { key, date, name, outcome, ok, error, url }  one connect: marks sent in outreach,
+ *                                                                        pushes Carlos
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
  *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
@@ -73,6 +77,7 @@ const P = require("./engagement-profiles");
 const Trials = require("./chain-trials");
 const DmCard = require("./dm-card");
 const Send = require("./outreach-send");
+const LinkedIn = require("./engagement-linkedin");
 
 const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -445,7 +450,11 @@ async function result(deps, body) {
   return { ok: true, key, action, status };
 }
 
-const OPS = { "engagement-mac-sites": sites, "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result };
+const OPS = {
+  "engagement-mac-sites": sites, "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result,
+  "engagement-mac-linkedin-queue": (deps, body) => LinkedIn.macQueue(deps, body),
+  "engagement-mac-linkedin-result": (deps, body) => LinkedIn.macResult(deps, body)
+};
 
 /** The jarvis function's entry for the Mac: checks the token, then runs the op. */
 async function handle(deps, body, token) {

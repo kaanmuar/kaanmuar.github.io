@@ -15,6 +15,7 @@
    start date at most LAUNCH_DAYS away was made after the week's campaigns were activated and would never send. */
 
 const sweep = require("./url-review-sweep");
+const linkedin = require("./engagement-linkedin");
 
 const DAY = 24 * 60 * 60 * 1000;
 const INSTANTLY = "https://api.instantly.ai/api/v2/";
@@ -334,7 +335,7 @@ function syncRows(doc, commands, now) {
     at: at ? new Date(at).toISOString() : "", age: at ? now - at : null, stale: !at || now - at > STALE, running: !!d.running,
     leads: { weeks: arr(leads.weeks, 60), rows: arr(leads.rows, 800) },
     replies: arr((d.replies || {}).items, 80),
-    linkedin: { date: str((d.linkedin || {}).date, 10), items: arr((d.linkedin || {}).items, 80) },
+    linkedin: { date: str((d.linkedin || {}).date, 10), items: arr((d.linkedin || {}).items, 80).map((p) => (p ? Object.assign({}, p, { queue: str(p.queue, 12) }) : p)) },
     dnc: arr((d.dnc || {}).items, 400),
     jobs: arr(d.jobs, 10), paused: arr(d.paused, 40), kpis: arr((d.kpis || {}).weeks, 30),
     commands: { pending: items.filter((c) => c.status === "pending").length, items: items.slice(0, 30) }
@@ -346,7 +347,9 @@ async function syncSource(ctx) {
     ctx.db.collection("jarvis_settings").doc("marketing_sync").get(),
     ctx.db.collection("jarvis_commands").orderBy("createdAt", "desc").limit(60).get()
   ]);
-  const out = Object.assign({ ok: true, needs: [] }, syncRows(doc.exists ? doc.data() : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
+  const base = doc.exists ? doc.data() : null;
+  const li = base ? await linkedin.enrichLinkedin(ctx.db, base.linkedin) : { date: "", items: [] };
+  const out = Object.assign({ ok: true, needs: [] }, syncRows(base ? Object.assign({}, base, { linkedin: li }) : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
   if (!out.at) out.needs.push("Outreach sync: run the qa-lab-outreach Action's sync so the outreach folder reaches Jarvis.");
   else if (out.stale) out.needs.push("Outreach sync: last synced " + Math.round(out.age / 3600000) + " hours ago; check the qa-lab-outreach Action.");
   return out;
@@ -373,6 +376,14 @@ function commandOf(body) {
     if (!DATE.test(date) || !name) throw new Error("Give the LinkedIn list's date and the person's name.");
     const sent = b.sent !== false;
     return { action, args: { date, name, sent }, label: (sent ? "LinkedIn request sent: " : "LinkedIn request not sent: ") + name };
+  }
+  if (action === "linkedin-send") {
+    const date = str(b.date, 10);
+    const name = str(b.name, 120).trim();
+    const profile = str(b.profile, 500).trim();
+    if (!DATE.test(date) || !name) throw new Error("Give the LinkedIn list's date and the person's name.");
+    if (!/^https:\/\/(www\.)?linkedin\.com\//.test(profile)) throw new Error("Give the person's profile URL.");
+    return { action, args: { date, name, profile, note: str(b.note, 280), checkFirst: str(b.checkFirst, 200) }, label: "LinkedIn connect queued: " + name };
   }
   if (action === "dnc") {
     const value = str(b.value, 200).trim().toLowerCase();
@@ -450,6 +461,11 @@ async function command(ctx, db, body) {
   const now = new Date(ctx.now).toISOString();
   const add = (c) => db.collection("jarvis_commands").add({ kind: "marketing", action: c.action, args: c.args, label: c.label, status: "pending", createdAt: now })
     .then((ref) => ({ queued: ref.id, action: c.action, label: c.label }));
+  if (body && body.action === "linkedin-send") {
+    const c = commandOf(body);
+    const q = await linkedin.queueSend(db, c.args, ctx.now);
+    return Object.assign({ ok: true, action: c.action, label: c.label }, q);
+  }
   if (body && body.action === "reply") {
     const sent = await sendReply(ctx, db, body);
     return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent, syncing: await startSync(ctx) });
@@ -463,5 +479,5 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, instantly, needKey, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, instantly, needKey, startSync, TTL: 10 * 60 * 1000
 };

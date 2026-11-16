@@ -1623,5 +1623,7 @@ const telegram = {
 const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit };
 // dm(page, task) on each network: a 2-day pass DM Carlos approved (#3137, dms.js).
 require("./dms").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused, rdCall });
+// connect(page, task) on LinkedIn: the day's connection requests (#3576, linkedin-connect.js).
+require("./linkedin-connect").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused });
 
 module.exports = { NETWORKS, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };

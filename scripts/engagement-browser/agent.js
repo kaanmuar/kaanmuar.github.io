@@ -21,6 +21,7 @@
  *   node scripts/engagement-browser/agent.js login [network]    sign in (or clear a check) in that network's Chrome
  *   node scripts/engagement-browser/agent.js check [--read]     who it is signed in as, and what one search reads
  *   node scripts/engagement-browser/agent.js run [--force]      one run now (--force: outside the hours too)
+ *   node scripts/engagement-browser/agent.js connect [--manual] today's LinkedIn connects (up to 15; --manual: only Send-queued)
  *   node scripts/engagement-browser/agent.js clone-profiles [network] [--force]   a profile per network from the main one
  *   node scripts/engagement-browser/agent.js import <file>      sessions signed in elsewhere (Playwright cookies JSON)
  *   node scripts/engagement-browser/agent.js restore-sessions [network]   each network's last signed-in cookies back
@@ -523,6 +524,48 @@ async function run(opts) {
   }
 }
 
+// --- LinkedIn connects (#3576) ---------------------------------------------------------------------------------------
+
+async function connectLinkedin(opts) {
+  const owned = [];
+  const k = "linkedin";
+  if (!NETWORKS[k].connect) throw new Error("LinkedIn connect is not installed.");
+  if (!claim([k], owned).length) { log("LinkedIn is busy in another run or sign-in; skipped."); return; }
+  const started = new Date().toISOString();
+  const reportLi = (state, step) => api("process-report", { row: { id: "linkedin-connect", kind: "mac-agent", name: "LinkedIn connects", state, step, needsYou: false, startedAt: started, url: "https://carlosandmunoz.com/admin.html#stats/marketing" } })
+    .catch((error) => log("Processes: " + error.message));
+  try {
+    await reportLi("running", "Loading the LinkedIn queue");
+    const q = await api("engagement-mac-linkedin-queue", { auto: !(opts || {}).manual });
+    if (!q.tasks || !q.tasks.length) { await reportLi("done", "No LinkedIn connects to send (cap " + (q.cap || 15) + ")."); return; }
+    const { ctx, page } = await launch(true, profileOf(k));
+    try {
+      const who = await signedIn(page, k);
+      if (!who.who) throw new Error(who.why || "Not signed in to LinkedIn in the agent's Chrome.");
+      let done = 0;
+      for (let i = 0; i < q.tasks.length; i += 1) {
+        const t = q.tasks[i];
+        await reportLi("running", "Connecting with " + t.name + " (" + (i + 1) + "/" + q.tasks.length + ")");
+        let r;
+        try { r = await NETWORKS[k].connect(page, t); }
+        catch (error) {
+          if (error instanceof Refused) throw error;
+          r = { ok: false, outcome: "failed", error: String(error.message || error).slice(0, 200) };
+        }
+        const outcome = r.outcome || (r.ok ? "sent" : "failed");
+        await api("engagement-mac-linkedin-result", { key: t.key, date: t.date, name: t.name, ok: !!r.ok, outcome, url: r.url || "", error: r.error || "" });
+        netLog(k)("connect " + t.name + ": " + outcome + (r.error ? " (" + r.error + ")" : ""));
+        if (outcome === "sent" || outcome === "already") done += 1;
+        if (i < q.tasks.length - 1) await pause(45000, 90000);
+      }
+      await reportLi("done", "LinkedIn: " + done + " connected of " + q.tasks.length);
+    } finally { await ctx.close().catch(() => null); }
+  } catch (error) {
+    await reportLi("failed", String(error.message || error).slice(0, 150));
+    throw error;
+  } finally { release(owned); }
+}
+
 // --- install -----------------------------------------------------------------------------------------------------------
 
 function install(parallel) {
@@ -583,6 +626,7 @@ async function main() {
   if (cmd === "import") return importCookies(arg);
   if (cmd === "restore-sessions") return restoreSessions(pickNets(arg), parallel);
   if (cmd === "run") return run({ force: flag("--force"), only: arg, parallel });
+  if (cmd === "connect") return connectLinkedin({ manual: flag("--manual") });
   if (cmd === "clone-profiles") return cloneProfiles(pickNets(arg), flag("--force"), parallel);
   if (cmd === "install") return install(parallel);
   if (cmd === "uninstall") return uninstall();

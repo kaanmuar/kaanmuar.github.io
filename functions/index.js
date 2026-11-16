@@ -6279,6 +6279,7 @@ async function pageSpeedDeps(by) {
 function engagementDeps() {
   return {
     db: getFirestore(), fetch, env: process.env, now: Date.now(), inc: (n) => FieldValue.increment(n), push: pushOwner, keys: bookingKeys(),
+    githubToken: () => githubApp.token(),
     mail: (m) => sendOwnerEmail({ subject: m.subject, intro: m.intro, rows: m.rows, body: m.body, eyebrow: "Jarvis", respondUrl: jarvis.ADMIN_URL.replace(/#.*/, "#stats/engagement/7"), buttonLabel: "Open Engagement" })
   };
 }
