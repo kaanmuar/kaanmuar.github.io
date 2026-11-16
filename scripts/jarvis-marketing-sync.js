@@ -135,11 +135,9 @@ function linkedinFiles(dir) {
   return (fs.existsSync(folder) ? fs.readdirSync(folder) : []).filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f)).sort();
 }
 
-function linkedin(dir) {
-  const date = (linkedinFiles(dir).pop() || "").slice(0, 10);
-  if (!date) return { date: "", items: [] };
+function linkedinPeople(md) {
   const items = [];
-  read(path.join(dir, "linkedin", date + ".md"), "").split(/\r?\n/).forEach((line) => {
+  String(md || "").split(/\r?\n/).forEach((line) => {
     const h = linkedinHeading(line);
     if (h) { items.push(Object.assign(h, { profile: "", lines: [] })); return; }
     const last = items[items.length - 1];
@@ -148,7 +146,58 @@ function linkedin(dir) {
     if (url && !last.profile) last.profile = url[0];
     if (last.lines.length < 8) last.lines.push(line.slice(2).slice(0, 300));
   });
-  return { date, items: items.slice(0, 80) };
+  return items;
+}
+
+/** Profiles already written into any day's list (same rule as tools/linkedin-day.py). */
+function linkedinListed(dir) {
+  const listed = new Set();
+  linkedinFiles(dir).forEach((f) => {
+    const text = read(path.join(dir, "linkedin", f), "");
+    (text.match(/\((https:\/\/[^)\s]*linkedin\.com\/in\/[^)\s]+)\)/g) || []).forEach((m) => {
+      const u = /\((https:\/\/[^)\s]*linkedin\.com\/in\/[^)\s]+)\)/.exec(m);
+      if (u) listed.add(u[1]);
+    });
+  });
+  return listed;
+}
+
+/** Named prospects with a personal /in/ URL still not listed (#3564 / #3572). */
+function linkedinLeft(dir) {
+  const listed = linkedinListed(dir);
+  const folder = path.join(dir, "prospects");
+  if (!fs.existsSync(folder)) return 0;
+  let left = 0;
+  fs.readdirSync(folder).filter((f) => /^week.*\.csv$/.test(f)).forEach((f) => {
+    parseCsv(read(path.join(folder, f), "")).rows.forEach((r) => {
+      const url = String(r.linkedin_url || "").trim();
+      if (r.contact_name && String(r.contact_name).trim() && /linkedin\.com\/in\//.test(url) && !listed.has(url) && r.host) left++;
+    });
+  });
+  return left;
+}
+
+function linkedin(dir) {
+  const files = linkedinFiles(dir);
+  const date = (files[files.length - 1] || "").slice(0, 10);
+  if (!date) return { date: "", items: [], lastNonEmpty: "", emptyStreak: 0, left: 0, why: "no-file" };
+  const items = linkedinPeople(read(path.join(dir, "linkedin", date + ".md"), "")).slice(0, 80);
+  let lastNonEmpty = "";
+  let emptyStreak = 0;
+  for (let i = files.length - 1; i >= 0; i--) {
+    const day = files[i].slice(0, 10);
+    const n = linkedinPeople(read(path.join(dir, "linkedin", files[i]), "")).length;
+    if (n > 0) { lastNonEmpty = day; break; }
+    emptyStreak++;
+  }
+  const left = linkedinLeft(dir);
+  let why = "";
+  if (!items.length) {
+    why = left > 0
+      ? "today-empty-but-pool-has-" + left
+      : (lastNonEmpty ? "pool-exhausted-since-" + lastNonEmpty : "pool-exhausted");
+  }
+  return { date, items, lastNonEmpty, emptyStreak, left, why };
 }
 
 // Each working day from 07:00 local time (the Action sets TZ=America/Bogota), writes the day's LinkedIn list once; the tool skips people listed before.
@@ -403,4 +452,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS, SAVES, noteApplied, requeue };
+module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinPeople, linkedinListed, linkedinLeft, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS, SAVES, noteApplied, requeue };

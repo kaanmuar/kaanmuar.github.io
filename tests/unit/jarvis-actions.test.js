@@ -33,6 +33,7 @@ function fakeOps(over) {
 }
 
 const DEFAULT_CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  "resend-cold": 0,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
   "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };

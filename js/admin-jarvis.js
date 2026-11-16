@@ -2058,7 +2058,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 ['Since', sentWhat], ['', sentAct]], sent.rows, `No cold email has gone out yet${camps && camps.firstStart ? '; the first goes out ' + esc(camps.firstStart) : ''}.`);
         const li = sy ? sy.linkedin : null;
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
-        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.</p>'
+        const liEmptyWhy = (l) => {
+            if (!l || !l.date) return 'No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.';
+            if (l.left > 0) return `Today's list (${esc(l.date)}) has nobody left to send, but ${fmt(l.left)} named prospects with a personal LinkedIn still wait. The next sync should refill once their CSVs settle (#3564).`;
+            const since = l.lastNonEmpty ? ` Last people were on ${esc(l.lastNonEmpty)}` + (l.emptyStreak ? ` · ${fmt(l.emptyStreak)} empty working-day files since` : '') + '.' : '';
+            return `Today's list (${esc(l.date)}) is empty: every named prospect with a personal LinkedIn (/in/) was already listed.${since} Feed new contact_name + linkedin.com/in/ rows into the week prospect CSVs (week2 companies currently lack contact names) (#3564 / #3572).`;
+        };
+        const linkedinBody = !sy ? syWait : !li.items.length ? `<p class="jv-empty">${liEmptyWhy(li)}</p>`
             : (() => {
                 const liRow = (p) => {
                     const note = C.linkedinLine(p, 'Note');

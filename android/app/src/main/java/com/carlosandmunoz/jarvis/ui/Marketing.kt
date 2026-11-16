@@ -218,7 +218,22 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
 
         Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""), id = "marketing-linkedin") {
-            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."); return@Panel }
+            if (liItems.isEmpty()) {
+                val date = li.str("date").orEmpty()
+                val left = li.num("left")?.toInt() ?: 0
+                val last = li.str("lastNonEmpty").orEmpty()
+                val streak = li.num("emptyStreak")?.toInt() ?: 0
+                Muted(
+                    when {
+                        date.isEmpty() -> "No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."
+                        left > 0 -> "Today's list ($date) has nobody left to send, but $left named prospects with a personal LinkedIn still wait. The next sync should refill once their CSVs settle (#3564)."
+                        else -> "Today's list ($date) is empty: every named prospect with a personal LinkedIn (/in/) was already listed." +
+                            (if (last.isNotEmpty()) " Last people were on $last" + (if (streak > 0) " · $streak empty working-day files since" else "") + "." else "") +
+                            " Feed new contact_name + linkedin.com/in/ rows into the week prospect CSVs (week2 companies currently lack contact names) (#3564 / #3572)."
+                    }
+                )
+                return@Panel
+            }
             val uri = LocalUriHandler.current
             val context = LocalContext.current
             GlowBar(liSent.toFloat() / liItems.size)

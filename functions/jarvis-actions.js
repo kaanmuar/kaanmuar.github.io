@@ -73,6 +73,7 @@ const jarvisLog = require("./jarvis-log");
 
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  /* #3566: auto forward unopened cold step-1 after 48h; 0 until Carlos raises it */ "resend-cold": 0,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
   "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
@@ -81,6 +82,7 @@ const LABELS = {
   "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
   "merge-pr": "Merge a green PR", "index-submit": "Send missing pages to search engines", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
+  "resend-cold": "Re-send unopened cold emails",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
