@@ -45,6 +45,8 @@ const COMPARE_CENTS = 900;
 const MAX_COMPETITORS = 5;
 // One payment for 30 days, never renewed by itself; url-review-offers.js holds each plan's runs and limits.
 const PASS_CENTS = { freelancer: 2900, team: 7900, pro: 18900 };
+// Full Stack one-run / report unlocks (#3482): flat under à-la-carte (Starter list $34, Complete $149).
+const FULL_STACK_CENTS = { starter: 2900, complete: 9900 };
 
 // The full report: 19 USD for the first framework or tool, 5 USD for each one after it.
 function itemCents(index) {
@@ -138,6 +140,7 @@ function priceMatches(usd) {
   if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
+  if (Object.keys(FULL_STACK_CENTS).some((id) => FULL_STACK_CENTS[id] === cents)) return true;
   const extraCents = EXTRA_FRAMEWORK_USD * 100;
   for (let count = 0; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     if (scopes.indexOf(cents - count * extraCents) !== -1) return true;
@@ -172,6 +175,11 @@ const MOBILE_FW = ["Appium", "Maestro"];
 const LOAD_FW = ["JMeter", "Gatling", "k6"];
 const FRAMEWORKS = BROWSER_FW.concat(MOBILE_FW, LOAD_FW);
 const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+// Starter = Playwright + k6 + axe + Lighthouse; Complete = every framework + specialist tool (#3482 / Q29–31).
+const FULL_STACK_BUNDLES = {
+  starter: { id: "starter", name: "Starter Full Stack", frameworks: ["Playwright", "k6"], tools: ["axe-core", "Lighthouse"], cents: FULL_STACK_CENTS.starter },
+  complete: { id: "complete", name: "Complete Full Stack", frameworks: FRAMEWORKS.slice(), tools: SPECIALIST_TOOLS.slice(), cents: FULL_STACK_CENTS.complete }
+};
 const LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
 const USER_AGENT = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 // A rescue of a failed review (#3080) reads as a person's Chrome, as the browser already does for a host that cuts the tag off (#1182).
@@ -637,8 +645,66 @@ function priceFor(list, tools) {
   };
 }
 
+function normalizeBundle(id) {
+  const key = String(id || "").trim().toLowerCase();
+  return FULL_STACK_BUNDLES[key] || null;
+}
+
+function sameNameSet(left, right) {
+  const a = (left || []).slice().sort();
+  const b = (right || []).slice().sort();
+  return a.length === b.length && a.every((name, index) => name === b[index]);
+}
+
+// Flat Full Stack SKU (#3482). Contents must match the locked Starter / Complete sets.
+function priceForBundle(id) {
+  const bundle = normalizeBundle(id);
+  if (!bundle) {
+    const error = new Error("That Full Stack bundle is not offered. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  const frameworks = normalizeFrameworks(bundle.frameworks);
+  const tools = normalizeTools(bundle.tools);
+  const items = frameworks.concat(tools);
+  const listCents = unitCents(items.length);
+  return {
+    bundle: bundle.id,
+    bundleName: bundle.name,
+    frameworks,
+    tools,
+    count: items.length,
+    cents: bundle.cents,
+    usd: bundle.cents / 100,
+    listUsd: listCents / 100,
+    each: Math.round(bundle.cents / items.length) / 100,
+    discount: items.map((name, index) => ({ name, framework: name, n: index + 1, percent: 0, usd: itemCents(index + 1) / 100 }))
+  };
+}
+
+function bundleOf(frameworks, tools) {
+  const fw = normalizeFrameworks(frameworks);
+  const named = normalizeTools(tools);
+  return Object.keys(FULL_STACK_BUNDLES).map((id) => FULL_STACK_BUNDLES[id]).find((row) =>
+    sameNameSet(row.frameworks, fw) && sameNameSet(row.tools, named)
+  ) || null;
+}
+
 // The full unlock of one report, less a fix list already bought on it (creditCents comes from the run, never the asker).
-function priceForReport(list, tools, creditCents) {
+function priceForReport(list, tools, creditCents, options) {
+  const bundleId = options && options.bundle;
+  if (bundleId) {
+    const priced = priceForBundle(bundleId);
+    const credit = Math.round(Number(creditCents) || 0);
+    if (!credit) return priced;
+    if (credit !== FIXLIST_CENTS) {
+      const error = new Error("The credit on this charge is not a QA-lab credit. No charge was made.");
+      error.status = 400;
+      throw error;
+    }
+    const cents = priced.cents - credit;
+    return Object.assign({}, priced, { cents, usd: cents / 100, creditUsd: credit / 100 });
+  }
   const priced = priceFor(list, tools);
   const credit = Math.round(Number(creditCents) || 0);
   if (!credit) return priced;
@@ -774,6 +840,21 @@ function priceForRun(options) {
   if (src.compareWith) return priceForCompare(src);
   const scope = priceForScope(src.pages, src.depth);
   const billing = src.billing === "scope" ? "scope" : "run";
+  if (src.bundle && billing !== "scope") {
+    const priced = priceForBundle(src.bundle);
+    const cents = priced.cents + scope.cents;
+    return Object.assign({}, priced, {
+      billing,
+      pages: scope.pages,
+      depth: scope.depth,
+      frameworkUsd: priced.usd,
+      scopeUsd: scope.usd,
+      pageUsd: scope.pageUsd,
+      depthUsd: scope.depthUsd,
+      cents,
+      usd: cents / 100
+    });
+  }
   const frameworks = normalizeFrameworks(src.frameworks);
   const tools = normalizeTools(src.tools);
   if (!frameworks.length) {
@@ -914,7 +995,7 @@ function chargedUsd(options) {
           ? priceForAlerts(options.alertCount)
           : purpose === "new-run"
             ? priceForRun(options)
-            : priceForReport(options && options.frameworks, options && options.tools, options && options.creditCents);
+            : priceForReport(options && options.frameworks, options && options.tools, options && options.creditCents, options);
   const usd = Number(options && options.priceUsd);
   const list = options && options.listUsd != null ? Number(options.listUsd) : usd;
   if (Math.round(list * 100) !== priced.cents) {
@@ -4248,6 +4329,12 @@ function productName(purpose, frameworks, scope) {
     return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
   }
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
+  if (scope && scope.bundle) {
+    const bundle = normalizeBundle(scope.bundle);
+    const head = purpose === "report" ? "QA-lab URL Review full report" : "QA-lab URL Review run";
+    const size = purpose === "new-run" && scope.pages ? " · " + scope.pages + " pages, " + scope.depth + " links deep" : "";
+    return head + " · " + (bundle ? bundle.name : "Full Stack") + size;
+  }
   const fw = purpose === "cases" ? normalizeLayers(frameworks) : normalizeFrameworks(frameworks);
   const toolNames = purpose === "cases" ? [] : normalizeTools(scope && scope.tools);
   let names = fw.join(", ");
@@ -4998,6 +5085,8 @@ module.exports = {
   FIXLIST_CENTS,
   COMPARE_CENTS,
   PASS_CENTS,
+  FULL_STACK_CENTS,
+  FULL_STACK_BUNDLES,
   MAX_COMPETITORS,
   centsForIndex,
   scheduleCents,
@@ -5006,6 +5095,9 @@ module.exports = {
   floorCents,
   creditFor,
   priceFor,
+  priceForBundle,
+  bundleOf,
+  normalizeBundle,
   priceForReport,
   priceForFixList,
   priceForFix,

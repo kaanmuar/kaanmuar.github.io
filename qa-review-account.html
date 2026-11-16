@@ -499,6 +499,22 @@
     </div>
     <p id="file-status"></p>
     <div class="pass-card" id="pass-card" hidden></div>
+    <div class="pass-card" id="agency-card" hidden>
+      <h3>Agency branding</h3>
+      <p class="small muted">Team and Pro: logo and company name on PDF exports and shared report headers. A small “Report by QA-lab” line stays.</p>
+      <label for="agency-company">Company name</label>
+      <input id="agency-company" type="text" maxlength="80" autocomplete="organization" placeholder="Your agency">
+      <label for="agency-logo">Logo (PNG, JPEG, WebP or SVG)</label>
+      <input id="agency-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+      <p class="muted small" id="agency-logo-note"></p>
+      <div class="pass-actions">
+        <button type="button" class="btn btn-primary" id="agency-save">Save branding</button>
+        <button type="button" class="btn btn-ghost" id="agency-clear">Clear</button>
+        <button type="button" class="btn btn-ghost" id="agency-ci-mint">Create CI webhook</button>
+      </div>
+      <pre class="small" id="agency-ci-out" hidden></pre>
+      <p class="muted small" id="agency-msg" role="status"></p>
+    </div>
     <div class="saved-cmps" id="saved-cmps" hidden>
       <h3>Saved comparisons</h3>
       <ul id="saved-cmps-list"></ul>
@@ -801,11 +817,92 @@
         : opened ? "Paid reports are open. For the others, the top case and the opening of each line show, and the rest opens when that report is paid."
           : "The top case and the opening of each line show. The rest opens when that report is paid.";
     paintPass(data);
+    paintAgency(data);
     listEl.classList.remove("settled");
     render();
     listEl.classList.add("settled");
     fillCompare();
   }
+  let agencyLogoData = "";
+  function paintAgency(data) {
+    const box = document.getElementById("agency-card");
+    if (!box) return;
+    box.hidden = !data.agency;
+    if (!data.agency) return;
+    const brand = data.branding || {};
+    document.getElementById("agency-company").value = brand.companyName || "";
+    agencyLogoData = brand.logoDataUrl || "";
+    document.getElementById("agency-logo-note").textContent = agencyLogoData ? "A logo is saved on this account." : "No logo saved yet.";
+    const out = document.getElementById("agency-ci-out");
+    if (data.agencyCi && data.agencyCi.url) {
+      out.hidden = false;
+      out.textContent = "POST " + data.agencyCi.url + "\nHeader: X-QA-Lab-Signature: sha256=<hmac of raw body>\nBody: { \"url\": \"https://example.com\" }\nSecret is shown only when you create or rotate the webhook.";
+    }
+  }
+  document.getElementById("agency-logo").addEventListener("change", (event) => {
+    const file = event.target.files && event.target.files[0];
+    const note = document.getElementById("agency-logo-note");
+    const msg = document.getElementById("agency-msg");
+    msg.textContent = "";
+    if (!file) return;
+    if (file.size > 160000) {
+      note.textContent = "Pick a logo under about 160 KB.";
+      agencyLogoData = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      agencyLogoData = String(reader.result || "");
+      note.textContent = "Logo ready to save (“" + file.name + "”).";
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById("agency-save").addEventListener("click", async () => {
+    const msg = document.getElementById("agency-msg");
+    msg.textContent = "Saving…";
+    try {
+      const response = await account("/account/branding", {
+        companyName: document.getElementById("agency-company").value,
+        logoDataUrl: agencyLogoData
+      });
+      if (signedOut(response)) return;
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        msg.textContent = body.error || "Branding was not saved.";
+        return;
+      }
+      agencyLogoData = (body.branding && body.branding.logoDataUrl) || agencyLogoData;
+      msg.textContent = body.branding ? "Branding saved." : "Branding cleared.";
+    } catch (error) {
+      msg.textContent = "Branding was not saved.";
+    }
+  });
+  document.getElementById("agency-clear").addEventListener("click", async () => {
+    document.getElementById("agency-company").value = "";
+    agencyLogoData = "";
+    document.getElementById("agency-logo").value = "";
+    document.getElementById("agency-logo-note").textContent = "No logo saved yet.";
+    document.getElementById("agency-save").click();
+  });
+  document.getElementById("agency-ci-mint").addEventListener("click", async () => {
+    const msg = document.getElementById("agency-msg");
+    const out = document.getElementById("agency-ci-out");
+    msg.textContent = "Creating webhook…";
+    try {
+      const response = await account("/account/agency-ci", {});
+      if (signedOut(response)) return;
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        msg.textContent = body.error || "The webhook was not created.";
+        return;
+      }
+      out.hidden = false;
+      out.textContent = "POST " + body.agencyCi.url + "\nHeader: X-QA-Lab-Signature: sha256=<hmac>\nSecret (copy now): " + body.agencyCi.secret + "\nBody: { \"url\": \"https://example.com\" }";
+      msg.textContent = "Webhook created. Copy the secret now; it is not shown again.";
+    } catch (error) {
+      msg.textContent = "The webhook was not created.";
+    }
+  });
   function passLink(plan, label) {
     const link = node("a", label, "btn btn-ghost");
     link.href = "qa-review-pay.html?purpose=pass&plan=" + encodeURIComponent(plan.id);
