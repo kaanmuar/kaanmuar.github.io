@@ -5,9 +5,224 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 15 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 16 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>y-jesus.org: 63. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-04/12-u-y-jesus-org.html</link>
+      <guid isPermaLink="false">auto-2026-11-04/12-u-y-jesus-org</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 4 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-y-jesus-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-y-jesus-org
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/12-u-y-jesus-org.jpg" length="224037" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/12-u-y-jesus-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>uah.edu: 57. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-05/11-u-uah-edu.html</link>
+      <guid isPermaLink="false">auto-2026-11-05/11-u-uah-edu</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-uah-edu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uah-edu
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #DevOps #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg" length="221462" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>4 natural competitors. zetatijuana.com leads: 72.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-11/05-vs-elimparcial-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-11/05-vs-elimparcial-com</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Versus</category>
+      <description>milenio.com leads in SEO; movierulez2.com leads in GEO, Analytics, Accessibility; zetatijuana.com leads in Security, Performance. elimparcial.com leads in none of the six areas.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 11 Nov 2026 of elimparcial.com, milenio.com, zetatijuana.com, movierulez2.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-elimparcial-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-elimparcial-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #Automation #QA #WebPerf #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/05-vs-elimparcial-com.jpg" length="265999" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/05-vs-elimparcial-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>2 natural competitors. evdeeczane.com leads: 70.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-12/04-vs-dermoeczanem-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-12/04-vs-dermoeczanem-com</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Versus</category>
+      <description>evdeeczane.com leads in SEO, Analytics, Security, Performance; dermoeczanem.com leads in GEO, Accessibility.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 12 Nov 2026 of dermoeczanem.com, evdeeczane.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-dermoeczanem-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-dermoeczanem-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #WebPerformance #QA #WebPerf #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/04-vs-dermoeczanem-com.jpg" length="255213" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/04-vs-dermoeczanem-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>4 natural competitors. unideb.hu leads: 61.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-13/03-vs-pte-hu.html</link>
+      <guid isPermaLink="false">auto-2026-11-13/03-vs-pte-hu</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Versus</category>
+      <description>elte.hu leads in SEO, Accessibility; pte.hu leads in GEO; unideb.hu leads in Analytics, Security; bme.hu leads in Performance.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 13 Nov 2026 of pte.hu, elte.hu, unideb.hu, bme.hu, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-pte-hu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-pte-hu
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Outage #DevOps #QA #WebPerf #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/03-vs-pte-hu.jpg" length="257428" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/03-vs-pte-hu.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>circajewels.com: 60. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-14/02-u-circajewels-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-14/02-u-circajewels-com</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-circajewels-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-circajewels-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/02-u-circajewels-com.jpg" length="237512" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/02-u-circajewels-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>najserialy.io: 73. The gap: AI crawler access.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io.html</link>
+      <guid isPermaLink="false">auto-2026-11-15/01-u-najserialy-io</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every page has a title, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg" length="233933" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>4 natural competitors. healthwave.ie leads: 78.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-15/03-vs-mccabespharmacy-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-15/03-vs-mccabespharmacy-com</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Versus</category>
+      <description>healthwave.ie leads in SEO, Analytics, Security, Performance; inishpharmacy.com leads in GEO; mccabespharmacy.com leads in Accessibility.
+
+The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
+
+Automated analyses of public pages on 15 Nov 2026 of mccabespharmacy.com, healthwave.ie, inishpharmacy.com, onlinepharmacy.ie, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-mccabespharmacy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-mccabespharmacy-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #Automation #QA #WebPerf #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" length="266860" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Your Lighthouse score is not your visitors.</title>
+      <link>https://carlosandmunoz.com/social/evergreen-2026-11/17-field-vs-lab.html</link>
+      <guid isPermaLink="false">evergreen-2026-11/17-field-vs-lab</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Trick</category>
+      <category>Perf</category>
+      <description>30-second trick: Your Lighthouse score is not your visitors.
+
+PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.
+
+Try it now: Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals library.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=field-vs-lab
+
+#WebPerformance #SoftwareTesting #QA #CoreWebVitals #Lighthouse #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" length="230253" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Al Jazeera marks text for voice, blocks AI.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/12-aljazeera.html</link>
+      <guid isPermaLink="false">runs-100/12-aljazeera</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Its JSON-LD names a NewsMediaOrganization and marks speakable text for voice assistants. Yet robots.txt disallows ChatGPT-User and PerplexityBot, which fetch pages to cite them in AI answers. GEO: 64.
+
+The lesson for every team: Decide crawler by crawler. Training bots and answer bots are separate user-agents, so each can get its own rule.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=aljazeera
+
+#GEO #AISearch #News #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg" length="250791" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/12-aljazeera.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>DW blocks framing. It skips nosniff.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/13-dw.html</link>
+      <guid isPermaLink="false">runs-100/13-dw</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>frame-ancestors 'none' stops other sites from framing it, HSTS is on, and every page analyzed has a canonical. But X-Content-Type-Options is missing on all 20 pages analyzed, so browsers may guess file types.
+
+The lesson for every team: Send X-Content-Type-Options: nosniff on every response. One header stops browsers running a file as the wrong type.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=dw
+
+#WebSecurity #HTTPHeaders #News #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" length="248646" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>setec.mk: 61. The gap: the sitemap host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk.html</link>
@@ -751,196 +966,6 @@ Via DEV, by Leo, 2026-11-11.
 
 https://news.html.to/roselli-interop-2027-accessibility-ballot/</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx1ununhkkqgxxlp31lg3.png" medium="image"/>
-    </item>
-    <item>
-      <title>AI Shopping Errors: What To Fix To Help Shoppers Choose Your Products</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your-.html</link>
-      <guid isPermaLink="false">pick/ai-shopping-errors-what-to-fix-to-help-shoppers-choose-your-</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Explore the future of retail with AI shopping. Understand how AI affects product visibility and decision-making for consumers. The post AI Shopping Errors: What To Fix To Help Shoppers Choose Your Products appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Cody Slingerland, 2026-11-12.
-
-https://www.searchenginejournal.com/fix-ai-shopping-errors-writesonic-spa/595790/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/writesonic-partner-stories-featured-1600x832-887.png" medium="image"/>
-    </item>
-    <item>
-      <title>I built a free WCAG 2.2 AA scanner that writes a report a client can read</title>
-      <link>https://carlosandmunoz.com/social/pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl.html</link>
-      <guid isPermaLink="false">pick/i-built-a-free-wcag-2-2-aa-scanner-that-writes-a-report-a-cl</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>I run AccessLens. It's a scanner you paste one URL into: it loads that page in a real headless...
-
-Via DEV, by Chris Clow, 2026-11-12.
-
-https://dev.to/chris_clow_04d2c038f345cc/i-built-a-free-wcag-22-aa-scanner-that-writes-a-report-a-client-can-read-3968</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F5iz8qbkqdbsrqak2puf2.png" medium="image"/>
-    </item>
-    <item>
-      <title>The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think via @sejournal, @DuaneForrester</title>
-      <link>https://carlosandmunoz.com/social/pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat.html</link>
-      <guid isPermaLink="false">pick/the-traffic-pool-is-shrinking-and-which-channel-fills-it-mat</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>For traffic-dependent businesses, the visit was only a step toward the sale. Agents now finish that job, and the work starts with the offer. The post The Traffic Pool Is Shrinking, And Which Channel Fills It Matters Less Than We Think appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Duane Forrester, 2026-11-12.
-
-https://www.searchenginejournal.com/the-traffic-pool-is-shrinking-and-which-channel-fills-it-matters-less-than-we-think/596346/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-traffic-pool-527.png" medium="image"/>
-    </item>
-    <item>
-      <title>Visits To The Top Million Websites Fell 12%, Data Shows via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se.html</link>
-      <guid isPermaLink="false">pick/visits-to-the-top-million-websites-fell-12-data-shows-via-se</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Data shows visits to the world's top million websites declined from an earlier peak, visits going to sites outside the top 100 barely changed. The post Visits To The Top Million Websites Fell 12%, Data Shows appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-12.
-
-https://www.searchenginejournal.com/visits-to-the-top-million-websites-fell-12-data-shows/597085/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/9e28404b-6124-44e3-a880-98e7c62cf229-889.jpeg" medium="image"/>
-    </item>
-    <item>
-      <title>Six languages. Pick yours.</title>
-      <link>https://carlosandmunoz.com/social/promo-social-hub-2026-10/34-six-languages-en.html</link>
-      <guid isPermaLink="false">promo-social-hub-2026-10/34-six-languages-en</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Product</category>
-      <category>Social</category>
-      <description>The hub has a page in English, Spanish, Portuguese, German, French and Italian. Filter the feed by the language a post is written or spoken in.
-
-Try this: Switch the page to your language with the flags at the top.
-
-Every post, in one place: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=six-languages-en
-
-#Localization #SoftwareTesting #OpenSource #QA #SEO #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/34-six-languages-en.jpg" length="198442" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/34-six-languages-en.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>UNICEF's date filter has no label.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/06-unicef.html</link>
-      <guid isPermaLink="false">runs-100/06-unicef</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Preloaded HSTS, Organization JSON-LD, and five language versions linked to each other. But the search date filter on every page analyzed is named only by placeholder text, which vanishes as you type.
-
-The lesson for every team: Give every field a &lt;label&gt; or an aria-label. A placeholder is a hint, not a name, and it disappears on input.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=unicef
-
-#Accessibility #A11y #Forms #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/06-unicef.jpg" length="240605" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/06-unicef.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The World Bank: GEO 97.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/07-worldbank.html</link>
-      <guid isPermaLink="false">runs-100/07-worldbank</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Organization JSON-LD with a site search action, a sitemap, robots.txt open to every crawler, and two-year HSTS. What it lacks is a content security policy: none of the pages analyzed sends one.
-
-The lesson for every team: Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=worldbank
-
-#WebSecurity #CSP #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/07-worldbank.jpg" length="233780" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/07-worldbank.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>808ball16.com: 53. The gap: button names.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-11/01-u-808ball16-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-11/01-u-808ball16-com</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
-
-The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
-
-One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-808ball16-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-808ball16-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #JavaScript #OpenSource #QA #A11y #QAlab
-
-https://www.youtube.com/shorts/To3-xOUVowA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" length="232254" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/01-u-808ball16-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>EAFIT 75, UdeA 53. Security is the widest gap.</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11b/02-medellin-universities.html</link>
-      <guid isPermaLink="false">compare-2026-11b/02-medellin-universities</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Comparison</category>
-      <category>Local</category>
-      <description>EAFIT leads security, 77 to 16, SEO, 72 to 34, and GEO, 86 to 56. UdeA answers with speed, 68 to 58, and accessibility, 78 to 76. Analytics is close, 85 to 82.
-
-Lesson: A wide gap often starts in one weak area. Find your lowest area score and fix that first.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=medellin-universities
-
-#WebQuality #SoftwareTesting #Automation #QA #HigherEd #QAlab
-
-https://www.youtube.com/shorts/bNMphChRS6w</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" length="238599" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/02-medellin-universities.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Preview colour blindness in two clicks.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/11-vision.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/11-vision</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Trick</category>
-      <category>A11y</category>
-      <description>30-second trick: Preview colour blindness in two clicks.
-
-Chrome DevTools can simulate blurred vision, reduced contrast and four kinds of colour vision deficiency, right on your own page.
-
-Try it now: Check every error message, chart and link. If colour is the only signal, add text, an icon or an underline.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=vision
-
-#Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Myth: meta keywords still help you rank.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Myth vs fact</category>
-      <category>SEO</category>
-      <description>Myth vs fact: Myth: meta keywords still help you rank.
-
-Google said in 2009 that it does not use the keywords meta tag in web ranking. The tag does show your competitors the words you are targeting.
-
-Check it: Search your templates for name=&quot;keywords&quot;. Remove it, and write a real description for each key page instead.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
-
-#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
-
-https://www.youtube.com/shorts/HipUbZf_TiA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
