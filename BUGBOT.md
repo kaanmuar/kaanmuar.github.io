@@ -1,8 +1,8 @@
 # Bugbot — kaanmuar.github.io / QA-lab
 
-Prefer Manual `@cursor review` (or Ready for Review) over every-push.
+Repo switch for `kaanmuar/kaanmuar.github.io` is ON in Bugbot Manage (#3552). Team-level Bugbot may still show Off until Cursor unlocks team Enable; keep trigger Manual / Ready for Review (not every-push).
 Repo `.cursor/config/bugbot.yaml` sets `oncePerPr`, skips drafts, and disables autofix/PR summaries.
-Local on-demand review subagents remain the default; this file is for when Bugbot runs.
+Local on-demand review subagents remain the default for routine PRs; Bugbot is the GitHub-side safety net.
 
 ## Ignore & skip
 - Do not review `work-log.csv`, quota caches, or scrum/board chore-only diffs.
