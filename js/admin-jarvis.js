@@ -3089,11 +3089,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const tv = S.geoTv = Object.assign(GeoTime.view(g, geoTimeState(), key), { key });
         const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
             <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
+        const gts = geoTimeState();
+        const playing = !!gts.playing;
         const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) + (GeoCost.KEYS.has(key) ? GeoCost.note(g, tv, esc) : '') : '<p class="jv-note">Drawing the map…</p>';
         const clicksNote = key === 'clicks' && GeoClicks.note(g) ? `<p class="jv-note">${esc(GeoClicks.note(g))}</p>` : '';
         const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
+        const rk = key === 'gaps' ? 'activity' : key;
         const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
-            [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
+            [Geo.labelOf(rk), (r) => GeoTime.countCell(Geo.value(r, rk), rk, esc)],
             ...(tv.delta ? [['Change', (r) => GeoTime.arrow(tv.delta[r.cc], key)]] : []),
             ['Sent · reply %', (r) => `${fmt(r.sent)}${r.replyRate === null ? '' : ' · ' + r.replyRate + '%'}${r.est ? ' <span class="jv-note" title="Split from campaigns that cover several countries">est.</span>' : ''}`],
             ['Prospects left', (r) => fmt(r.left)], ['Gaps', (r) => r.gaps.map((k) => `<span class="jv-chip" style="border-color:${(Geo.GAPS[k] || [, ''])[1]}">${esc((Geo.GAPS[k] || [k])[0])}</span>`).join(' ')]], list, 'No country has this yet.');
@@ -3103,7 +3106,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
             { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
         <div class="jv-grid">
-            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap${playing ? ' is-playing' : ''}">${GeoTime.playStats(tv, key, playing, esc)}${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
             ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
@@ -3681,6 +3684,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
                 arrange(view, p.key);
+                if (p.key === 'geo') {
+                    view.classList.toggle('is-geo-playing', !!S.geoPlaying);
+                    GeoTime.tweenCounts(view);
+                }
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });

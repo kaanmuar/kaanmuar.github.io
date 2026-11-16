@@ -13,7 +13,9 @@ const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', '
 const WORSE_UP = new Set(['bounceRate', 'cost', ...GeoCost.LOWER]);
 const UP = [56, 225, 255];
 const DOWN = [255, 77, 141];
-const STEP_MS = 1400;
+export const STEP_MS = 2000;
+export const TWEEN_MS = 900;
+const STEP_REDUCE_MS = 1600;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const round1 = (n) => Math.round(n * 10) / 10;
@@ -143,6 +145,90 @@ export function legend(v, key, esc) {
 }
 const arrowText = (d, key) => (d ? `${d > 0 ? '+' : '−'}${key === 'usd' || Geo.unitOf(key) === '$' ? '$' : ''}${Math.abs(d).toLocaleString('en-US')}${Geo.unitOf(key) === '%' ? ' pts' : ''}` : '0');
 
+const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stepMs = () => (reducedMotion() ? STEP_REDUCE_MS : STEP_MS);
+const parseNum = (raw) => { const m = String(raw || '').match(/-?[\d,]*\.?\d+/); return m ? Number(m[0].replace(/,/g, '')) : null; };
+
+/** Totals and movers for the week playback side rail (pure; mirrored in GeoTime.kt). */
+export function playStatsData(tv, key) {
+    if (!tv || tv.mode !== 'week') return null;
+    const rows = tv.rows || [];
+    const withVal = rows.map((r) => ({ cc: r.cc, name: r.name, v: valueOf(r, key) })).filter((x) => x.v !== null && x.v !== undefined);
+    let total = null;
+    if (key === 'light') total = withVal.length;
+    else if (key === 'replyRate' || key === 'openRate' || key === 'bounceRate') {
+        let sent = 0;
+        let w = 0;
+        rows.forEach((r) => { const s = valueOf(r, 'sent'); const v = valueOf(r, key); if (s && v !== null) { sent += s; w += v * s; } });
+        total = sent ? round1(w / sent) : null;
+    } else if (GeoCost.KEYS.has(key)) total = Math.round(withVal.reduce((a, x) => a + x.v, 0) * 100) / 100;
+    else {
+        total = withVal.reduce((a, x) => a + x.v, 0);
+        total = key === 'usd' ? Math.round(total * 100) / 100 : Math.round(total);
+    }
+    const movers = Object.keys(tv.delta || {}).map((cc) => {
+        const d = tv.delta[cc];
+        if (d === null || d === undefined || !d) return null;
+        const row = rows.find((x) => x.cc === cc);
+        return row ? { cc, name: row.name, d, good: (d > 0) !== WORSE_UP.has(key) } : null;
+    }).filter(Boolean);
+    return {
+        total,
+        totalKey: key,
+        up: movers.filter((m) => m.good).sort((a, b) => b.d - a.d).slice(0, 3),
+        down: movers.filter((m) => !m.good).sort((a, b) => a.d - b.d).slice(0, 3),
+        upN: movers.filter((m) => m.d > 0).length,
+        downN: movers.filter((m) => m.d < 0).length,
+        label: tv.label
+    };
+}
+
+/** Side map statistics while Play is on: total for the frame, biggest rises and drops. */
+export function playStats(tv, key, playing, esc) {
+    if (!playing) return '';
+    const s = playStatsData(tv, key);
+    if (!s) return '';
+    const item = (m) => `<li><span class="jv-note">${esc(m.name)}</span> ${arrow(m.d, key)}</li>`;
+    const showTotal = s.total !== null && s.total !== undefined ? Geo.show(s.total, s.totalKey) : '—';
+    const list = (head, rows, empty) => (rows.length ? `<div><h4>${esc(head)}</h4><ol>${rows.map(item).join('')}</ol></div>` : `<div><h4>${esc(head)}</h4><p class="jv-note">${esc(empty)}</p></div>`);
+    const totalAttr = s.total !== null && s.total !== undefined ? ` data-count="${s.total}"` : '';
+    return `<aside class="jv-geo-play-stats jv-cost-sides" aria-label="Playback totals for this week"><div><h4>Total · ${esc(Geo.labelOf(key))}</h4><p class="jv-geo-play-total"><strong class="jv-geo-count" data-metric="${esc(key)}"${totalAttr}>${esc(showTotal)}</strong><span class="jv-note">${esc(s.upN)} up · ${esc(s.downN)} down vs last week</span></p></div>`
+        + `${list('Biggest rise', s.up, 'No country rose')}${list('Biggest drop', s.down, 'No country fell')}</aside>`;
+}
+
+/** Growing numbers on week change (mirrors Android CountUp in Depth.kt). */
+export function tweenCounts(root, ms = TWEEN_MS) {
+    if (!root || reducedMotion()) return;
+    const ease = (t) => 1 - (1 - t) ** 3;
+    root.querySelectorAll('.jv-geo-count[data-count]').forEach((el) => {
+        if (el._geoTween) cancelAnimationFrame(el._geoTween);
+        const to = Number(el.getAttribute('data-count'));
+        if (!Number.isFinite(to)) return;
+        let from = Number(el.getAttribute('data-count-from'));
+        if (!Number.isFinite(from)) from = parseNum(el.textContent);
+        if (!Number.isFinite(from)) from = to;
+        if (from === to) return;
+        const key = el.getAttribute('data-metric') || '';
+        const t0 = performance.now();
+        const tick = (now) => {
+            const t = Math.min(1, (now - t0) / ms);
+            const n = from + (to - from) * ease(t);
+            const show = key === 'light' ? String(Math.round(n)) : key && GeoCost.KEYS.has(key) ? GeoCost.show(n, key) : Geo.show(n, key || 'sent');
+            el.textContent = show;
+            if (t < 1) el._geoTween = requestAnimationFrame(tick);
+            else { el._geoTween = null; el.setAttribute('data-count-from', String(to)); }
+        };
+        el._geoTween = requestAnimationFrame(tick);
+    });
+}
+
+/** A ranking or stats cell that can tween between weeks. */
+export function countCell(value, key, esc) {
+    if (value === null || value === undefined) return esc('—');
+    const text = esc(Geo.show(value, key));
+    return `<span class="jv-geo-count" data-count="${value}" data-metric="${esc(key)}">${text}</span>`;
+}
+
 /** The range picker, change shading and week player, under the channel and metric filters. */
 export function controls(g, st, v, esc) {
     const time = g && g.time;
@@ -204,7 +290,7 @@ export function bind(root, S, paint, render) {
         if (S.geoWeek === null || S.geoWeek >= weeks() - 1) S.geoWeek = 0;
         S.geoPlaying = true;
         render();
-        timer = setInterval(step, STEP_MS);
+        timer = setInterval(step, stepMs());
     });
     root.addEventListener('input', (event) => {
         if (!event.target.matches || !event.target.matches('[data-geo-week]')) return;
@@ -223,14 +309,24 @@ export function bind(root, S, paint, render) {
 /** Swaps the map, its legend, the week label and the ranking from a fresh render of the tab, leaving the slider alone. */
 export function patch(view, html) {
     if (!view) return;
+    const saveCounts = (root) => {
+        root.querySelectorAll('.jv-geo-count[data-count]').forEach((el) => {
+            const from = parseNum(el.textContent);
+            if (Number.isFinite(from)) el.setAttribute('data-count-from', String(from));
+        });
+    };
+    saveCounts(view);
     const fresh = document.createElement('div');
     fresh.innerHTML = html;
     const swap = (sel, outer) => { const a = view.querySelector(sel); const b = fresh.querySelector(sel); if (a && b) { if (outer) a.outerHTML = b.outerHTML; else a.innerHTML = b.innerHTML; } };
+    const playing = !!fresh.querySelector('.jv-geo-wrap.is-playing');
+    view.classList.toggle('is-geo-playing', playing);
     const card = view.querySelector('.jv-geo-card');
     const wrap = view.querySelector('.jv-geo-wrap');
     const next = fresh.querySelector('.jv-geo-wrap');
     if (wrap && next) {
-        Array.from(wrap.children).forEach((el) => { if (el !== card) el.remove(); });
+        wrap.classList.toggle('is-playing', playing);
+        Array.from(wrap.children).forEach((el) => { if (el !== card && !el.classList.contains('jv-geo-play-stats')) el.remove(); });
         Array.from(next.children).forEach((el) => { if (!el.classList.contains('jv-geo-card')) wrap.insertBefore(el, card); });
     }
     ['.jv-geo-when', '[data-panel-id="geo-map"] header', '[data-geo-play]'].forEach((sel) => swap(sel));
@@ -240,4 +336,5 @@ export function patch(view, html) {
     const was = fresh.querySelector('[data-geo-week]');
     if (range && was && document.activeElement !== range) range.value = was.value;
     if (range && was) range.setAttribute('aria-valuetext', was.getAttribute('aria-valuetext'));
+    tweenCounts(view);
 }
