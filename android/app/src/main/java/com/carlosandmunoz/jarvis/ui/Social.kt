@@ -108,7 +108,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches it when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches it when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task. Growth (#3475): keep hashtag caps (IG 5 / LI 6 / X 2); put UTMs in the first comment where the network supports it; refuse a parallel Telegram /scan bot and 7s mute gauge loops; next carousel work is Slide 3 with case id + Playwright + DOM crop.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(
