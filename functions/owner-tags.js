@@ -31,6 +31,9 @@
  * result keeps which were linked and which stayed plain text, and the names the menu showed for accounts without one.
  * At most PER_DAY comments and replies a network a day; a blocked account is never tagged. settings.paused stops it;
  * until settings.live it only counts what it would post.
+ * Backfill (#3587): Jarvis owner-tags-run with { backfill: true } walks posts oldest-first and uses BACKFILL_PER_DAY
+ * caps so historical report posts catch up. The scheduled job stays on PER_DAY, newest first. out.pending counts
+ * post×network slots that still need a first comment after today's cap.
  *
  *   owner_tags/settings            { paused, live, updatedAt, by }
  *   owner_tags/last                the last run's note and counts, for Jarvis
@@ -66,6 +69,9 @@ const LATEST_NETS = ["x", "instagram", "threads", "facebook", "linkedin", "tikto
 const LATEST_PER_RUN = 6;
 const LATEST_RETRY_DAYS = 7;
 const PER_DAY = { bluesky: 20, mastodon: 20, youtube: 20, x: 6, instagram: 6, threads: 6, facebook: 6, linkedin: 6, tiktok: 6 };
+// One Jarvis backfill run may clear a large backlog; still capped so a mistaken live run cannot flood every network.
+const BACKFILL_PER_DAY = { bluesky: 80, mastodon: 80, youtube: 80, x: 40, instagram: 40, threads: 40, facebook: 40, linkedin: 40, tiktok: 40 };
+const capsFor = (backfill) => (backfill ? BACKFILL_PER_DAY : PER_DAY);
 const STATUSES = ["approved", "suggested", "rejected", "blocked"];
 const SCOPES = ["report", "city", "sector", "country"];
 const NET_CODES = { x: "x", twitter: "x", ig: "instagram", instagram: "instagram", bsky: "bluesky", bluesky: "bluesky", mast: "mastodon", mastodon: "mastodon",
@@ -196,8 +202,8 @@ function postIdOf(network, entry) {
   return url;
 }
 
-/** Our sent posts about reports, one per post and network, newest first: { key, network, id, url, at, reports, image }. */
-function ourPosts(feed, ledgers, live) {
+/** Our sent posts about reports, one per post and network: { key, network, id, url, at, reports, image }. Newest first unless backfill. */
+function ourPosts(feed, ledgers, live, backfill) {
   const entries = {};
   (ledgers || []).forEach((l) => Object.entries((l && l.posts) || {}).forEach(([k, list]) => { (entries[k] = entries[k] || []).push(...(Array.isArray(list) ? list : [])); }));
   const out = [];
@@ -215,7 +221,7 @@ function ourPosts(feed, ledgers, live) {
     }
     if (post.youtube && !seen.has("youtube")) out.push({ key: post.id, network: "youtube", id: post.youtube, url: "https://www.youtube.com/watch?v=" + post.youtube, at: post.date || "", reports, image: post.image || "" });
   }
-  return out.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  return out.sort((a, b) => backfill ? String(a.at).localeCompare(String(b.at)) : String(b.at).localeCompare(String(a.at)));
 }
 
 // --- Comments ---------------------------------------------------------------------------------------------------
@@ -469,18 +475,21 @@ async function latestPost(deps, a) {
 }
 
 /**
- * One daily pass. deps: { db, fetch, env, now, inc, push, site, gemini(prompt) }. Returns the counts it wrote to
- * owner_tags/last: { posts, comments, replies, dry, discovered, owners, suggested, pushed, capped, errors, sample }.
+ * One daily (or Jarvis) pass. deps: { db, fetch, env, now, inc, push, site, gemini(prompt), backfill? }.
+ * Returns the counts it wrote to owner_tags/last: { posts, comments, replies, dry, discovered, owners, suggested,
+ * pushed, capped, pending, backfill, errors, sample }.
  */
 async function run(deps) {
   const { db, now } = deps;
+  const backfill = deps.backfill === true;
+  const caps = capsFor(backfill);
   const conf = await readSettings(db);
-  const out = { at: new Date(now).toISOString(), live: conf.live, paused: conf.paused, posts: 0, comments: 0, replies: 0, dry: 0, discovered: 0, owners: 0, suggested: 0, pushed: 0, capped: 0, errors: [], sample: [] };
+  const out = { at: new Date(now).toISOString(), live: conf.live, paused: conf.paused, backfill, posts: 0, comments: 0, replies: 0, dry: 0, discovered: 0, owners: 0, suggested: 0, pushed: 0, capped: 0, pending: 0, errors: [], sample: [] };
   if (conf.paused) return finish(db, out);
   const asset = (file) => getJson(deps, deps.site + "/assets/" + file + "?t=" + now);
   const [feed, live, ...ledgers] = await Promise.all([asset("social/feed.json"), asset("live-reports/index.json"),
     ...["buffer.json", "facebook.json", "open-social.json"].map((f) => asset("social/" + f).catch((error) => { out.errors.push(error.message); return null; }))]);
-  const posts = ourPosts(feed, ledgers, (live && live.reports) || []);
+  const posts = ourPosts(feed, ledgers, (live && live.reports) || [], backfill);
   out.posts = posts.length;
   const cardUrl = (rel) => (rel ? deps.site + "/" + String(rel).replace(/^\//, "") : "");
   const cards = new Map();
@@ -516,13 +525,20 @@ async function run(deps) {
     await db.collection("engagement_posts").doc(key).set(Object.assign({ key }, doc));
     await dayRef.set({ n: { [doc.network]: deps.inc(1) } }, { merge: true });
   };
-  const room = (net) => (PER_DAY[net] || 0) - (used[net] || 0);
+  const room = (net) => (caps[net] || 0) - (used[net] || 0);
 
   for (const p of posts) {
     if (!MENTIONS[p.network]) continue;
     const had = byPost.get(p.key + "|" + p.network) || { count: 0, tagged: [] };
     const left = Math.min(COMMENTS_MAX - had.count, room(p.network));
-    if (left <= 0) { if (had.count < COMMENTS_MAX) out.capped += 1; continue; }
+    if (left <= 0) {
+      if (had.count < COMMENTS_MAX) {
+        out.capped += 1;
+        const { owners, related } = pick(usable, p.reports, p.network, had.tagged);
+        if (owners.length || related.length) out.pending += 1;
+      }
+      continue;
+    }
     const { owners, related } = pick(usable, p.reports, p.network, had.tagged);
     const relatedLeft = Math.max(0, RELATED_MAX - had.tagged.filter((id) => !ownerIds.has(id)).length);
     if (!owners.length && !(relatedLeft && related.length)) continue;
@@ -537,6 +553,7 @@ async function run(deps) {
       const tags = Object.assign({ kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) }, part === 0 && p.image ? { image: cardUrl(p.image) } : {});
       await add(key, engagementDoc(p, list[i].text, lang, Object.assign(tags, list[i].tags ? { menu: list[i].tags } : {}), now));
       out.comments += 1;
+      byPost.set(p.key + "|" + p.network, { count: part + 1, tagged: (had.tagged || []).concat(list[i].mentions) });
     }
   }
 
@@ -574,9 +591,11 @@ async function finish(db, out) {
 
 function runNote(out) {
   if (out.paused) return "owner tags paused";
-  return "owner tags" + (out.live ? "" : " (dry run)") + ": " + out.posts + " posts, " + out.comments + " comments, " + out.replies + " owner replies"
+  return "owner tags" + (out.backfill ? " backfill" : "") + (out.live ? "" : " (dry run)") + ": " + out.posts + " posts, " + out.comments + " comments, " + out.replies + " owner replies"
     + (out.live ? "" : ", " + out.dry + " would post") + "; " + out.discovered + " sites read, " + out.owners + " owner accounts, " + out.suggested + " suggestion runs, "
-    + out.pushed + " pushed" + (out.capped ? "; " + out.capped + " posts wait for tomorrow's cap" : "") + (out.aiError ? "; Gemini: " + out.aiError : "") + (out.errors.length ? "; " + out.errors.length + " errors" : "");
+    + out.pushed + " pushed" + (out.capped ? "; " + out.capped + " posts wait for " + (out.backfill ? "another backfill" : "tomorrow's cap") : "")
+    + (out.pending ? "; " + out.pending + " still pending" : "")
+    + (out.aiError ? "; Gemini: " + out.aiError : "") + (out.errors.length ? "; " + out.errors.length + " errors" : "");
 }
 
 /** A push button or Jarvis decision on a report's suggested accounts: approve, dismiss, or edit with the handles to keep or add. */
@@ -732,7 +751,7 @@ async function block(deps, target, why, by) {
 }
 
 module.exports = {
-  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
-  handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey,
+  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, BACKFILL_PER_DAY, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
+  handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey, capsFor,
   run, runNote, decide, account, status, readSettings, saveSettings, latestPost, autoApprovable, approveMany, isStop, stopRequests, block
 };

@@ -32,6 +32,7 @@ const metrics = require("./social-metrics");
 const { FACE_PROFILES, PROFILES, CHANNELS, CAPTIONS, LANGS, COPY } = require("./social-hub/copy");
 const { ORDER } = require("./brand-kit/faces");
 const i18n = require("./social-hub/i18n");
+const socialClip = require("./social-clip");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = card.SITE;
@@ -104,13 +105,16 @@ function batchPosts(files, reports) {
       const report = slug.replace(/^\d+-/, "");
       // The text captions are English unless the post was written in its own language (c.textLang);
       // c.lang is the language the clip was voiced in (TikTok and YouTube copy).
+      const clipLang = LANGS[c.lang] ? c.lang : null;
+      const clip = socialClip.ofPost({ batch, slug, clipLang }, files);
       posts.push({
         id: batch + "/" + slug,
         kind: KINDS.includes(c.kind) ? c.kind : batch.startsWith("tips") ? "tip" : batch.startsWith("promo") ? "launch" : "review",
         batch,
         date: c.date,
         lang: LANGS[c.textLang] ? c.textLang : "en",
-        clipLang: LANGS[c.lang] ? c.lang : null,
+        clipLang,
+        clip,
         cat: c.cat || "",
         title: cleanTitle(c.title),
         text: c.linkedin || c.facebook || c.x || c.tiktok || c.youtube || "",
@@ -145,13 +149,15 @@ function launchPosts(files) {
     const image = dir + "/" + lang + "/" + topic + "-portrait.jpg";
     if (!LANGS[lang] || !files.has(image) || !first[lang + "/" + topic]) return;
     const c = readJson(file);
+    const slug = lang + "/" + topic;
     posts.push({
-      id: LAUNCH + "/" + lang + "/" + topic,
+      id: LAUNCH + "/" + slug,
       kind: "launch",
       batch: LAUNCH,
       date: first[lang + "/" + topic],
       lang,
       clipLang: lang,
+      clip: socialClip.ofPost({ batch: LAUNCH, slug, clipLang: lang }, files),
       cat: "",
       title: cleanTitle(c.youtubeTitle) || firstLine(c.linkedin),
       text: c.linkedin || c.facebook || "",
@@ -396,7 +402,7 @@ function feedJson(posts, asOf) {
   const cards = posts.map((post) => ({
     id: post.id, kind: post.kind, date: post.date, lang: post.lang, clipLang: post.clipLang, cat: post.cat, title: post.title,
     text: post.text.length > TEXT_MAX ? post.text.slice(0, TEXT_MAX).replace(/\s+\S*$/, "") + "…" : post.text,
-    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, report: post.report, trend: post.trend,
+    image: post.image, thumb: post.thumb, alt: post.alt, youtube: post.youtube, clip: post.clip || undefined, report: post.report, trend: post.trend,
     nets: post.nets && post.nets.length ? post.nets : undefined, stats: post.stats || undefined,
     queued: post.date >= asOf && post.queued ? true : undefined, held: post.date >= asOf && post.held ? true : undefined
   }));
