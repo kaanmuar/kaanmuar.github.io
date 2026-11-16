@@ -140,7 +140,18 @@ function posts(batch, root = ROOT, network = "bluesky") {
         if (!fs.existsSync(path.join(dir, rel))) break;
         slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, alt: captions[slug].alt || captions[slug].title || "" });
       }
-      return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
+      // Compare channel-split (#3497): IG reveal uses quiz+reveal feed cards when no audit carousel exists.
+      const channelSplit = require("./compare-channel-split");
+      if (slides.length < 2 && network === "instagram" && quiz && channelSplit.usesPairCarousel("instagram", slug, captions)) {
+        const pair = channelSplit.pairSlides(SITE + "/media/social-posts/" + batch, slug, captions);
+        if (pair) pair.forEach((s) => slides.push({ url: s.url, alt: s.alt }));
+      }
+      const cap = Object.assign({}, captions[slug]);
+      if (quiz && channelSplit.SAME_CAROUSEL.has("instagram") && !channelSplit.isQuiz(cap)) {
+        const merged = channelSplit.mergedCaption("instagram", cap, captions[quiz]);
+        if (merged) cap.instagram = merged;
+      }
+      return Object.assign({ batch, slug, cap, at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
         slides.length >= 2 ? { slides } : {},
         quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
     });
