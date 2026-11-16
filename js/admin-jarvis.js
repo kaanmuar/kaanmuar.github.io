@@ -2,7 +2,7 @@
 
    Jarvis reads no Firestore (#2102). The products, the range's numbers and the external sources come from the jarvis
    function's snapshot op, the same cached answer the Android app reads (jarvisSnapshot in functions/index.js); the
-   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
+   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares, CSAT quote queue) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
@@ -23,7 +23,7 @@ const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
 const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'rescue', 'fixes', 'checks', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
-const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
+const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'csat-testimonials'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
 let G_CHART = window.JarvisCore.chartPrefs(null);
@@ -1121,7 +1121,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${sized.className}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}" data-size-h="${sized.sz.h}" data-size-w="${sized.sz.w}" style="${sized.style}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header><div class="jv-panel-body">${body}</div>${o.note ? `<p class="jv-note">${o.note}</p>` : ''}${resizeHandles()}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'csat-testimonial-decide': 'decide CSAT quotes', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
         'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix',
         'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
@@ -1667,7 +1667,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             : '';
         const quoteTable = quotes.length
             ? table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['Quote', (r) => esc(r.quote || '—')]], quotes, 'No quote-ready feedback yet.')
-            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> on save.</p>';
+            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> for approval below.</p>';
         const body = empty
             ? '<p class="jv-empty">No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).</p>'
             : kpis(c.kpis || []) + trend + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
@@ -1678,6 +1678,29 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             data: recent,
             note: 'Post-report CSAT (#3556). 7d recurrence nudge + re-mail remind reset (#3557). Testimonials queue on quote ok.'
         });
+    }
+
+    function csatTestimonialsPanel() {
+        const Q = S.external['csat-testimonials'];
+        if (!Q) return panel('review-csat-pending', 'CSAT quotes to approve', waiting('csat-testimonials', 'Reading pending CSAT quotes…'), { wide: true });
+        if (Q.ok === false) return panel('review-csat-pending', 'CSAT quotes to approve', `<p class="jv-empty">${esc(Q.error || 'Not loaded.')}</p>`, { wide: true });
+        const list = Q.items || [];
+        const items = list.map((row) => `<li class="jv-prop lv-info"><div class="jv-prop-body">
+            <p class="jv-prop-title"><strong>${esc(row.host || 'Site')}</strong> <span class="jv-chip">${fmt(row.rating)}/5</span>${row.nps != null ? ` <span class="jv-chip">NPS ${fmt(row.nps)}</span>` : ''}</p>
+            <p class="jv-prop-why">${esc(when(row.createdAt))}</p>
+            <p class="jv-prop-why">${esc(row.quote || '')}</p>
+            <div class="jv-prop-acts"><button type="button" data-csat-decide="approved" data-key="${esc(row.id)}">Approve</button><button type="button" data-csat-decide="dismissed" data-key="${esc(row.id)}">Dismiss</button></div></div></li>`).join('');
+        return panel('review-csat-pending', 'CSAT quotes to approve' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">Approve publishes the quote on the CV testimonials section and adds a Social hub pick for the next daily build. Nothing goes out until you approve here.</p>` +
+            (list.length ? `<ol class="jv-props">${items}</ol>` : '<p class="jv-empty">No CSAT quotes are waiting.</p>'), { wide: true });
+    }
+
+    async function decideCsatQuote(id, decision) {
+        const out = await call('csat-testimonial-decide', { id, decision }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { toast('Not saved: ' + out.error, 6000); return; }
+        const Q = S.external['csat-testimonials'];
+        if (Q && Q.items) Q.items = Q.items.filter((row) => row.id !== id);
+        render();
+        toast(decision === 'approved' ? 'Approved. CV testimonial + Social hub pick saved.' : 'Dismissed.', 3500);
     }
 
     function socialVelocityPanel() {
@@ -3775,6 +3798,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel, note: 'Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.' })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${csatPanel(r.csat)}
+            ${csatTestimonialsPanel()}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
             ${speedCard('review')}${gaCard('review')}
             ${listPanel('review', 'sources', 'Sources (opens)', r.lists.sources)}${listPanel('review', 'review-sources', 'Sources (reviews)', r.lists.reviewSources, { color: COLORS.green, empty: 'Reviews carry their source since 25 Oct 2026.' })}
@@ -4809,6 +4833,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
+        if (t.dataset.csatDecide) { decideCsatQuote(t.dataset.key, t.dataset.csatDecide); return; }
         if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
         if (t.dataset.geoCamp !== undefined) { event.preventDefault(); S.geoCamp = S.geoCamp === t.dataset.geoCamp ? '' : t.dataset.geoCamp; render(); const at = S.geoCamp && $('[data-geo-camp-sheet]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }

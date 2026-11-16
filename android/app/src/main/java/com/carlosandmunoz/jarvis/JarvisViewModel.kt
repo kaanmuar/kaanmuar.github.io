@@ -74,6 +74,7 @@ data class UiState(
     val notices: JsonObject? = null,
     val noticeErrors: Map<String, String> = emptyMap(),
     val proposals: List<JsonObject>? = null,
+    val csatQuotes: List<JsonObject>? = null,
     val runs: List<JsonObject>? = null,
     val shares: List<JsonObject>? = null,
     val devices: List<JsonObject>? = null,
@@ -508,6 +509,30 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { if (fixture == null) api.call("social-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
                 .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, proposals = s.proposals?.filter { it.str("id") != id },
                     toast = if (decision == "approved") "Approved. The next daily hub build publishes it." else "Dismissed.") } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** Pending URL Review CSAT quotes (#3557): approve → CV testimonial + Social hub pick. */
+    fun loadCsatQuotes() {
+        if (fixture != null) return
+        if (!auth.signedIn || "csat-quotes" in _state.value.running) return
+        _state.update { it.copy(running = it.running + "csat-quotes") }
+        viewModelScope.launch {
+            val items = runCatching { api.call("csat-testimonials", _state.value.days).objs("items") }
+            _state.update { it.copy(running = it.running - "csat-quotes", csatQuotes = items.getOrNull() ?: it.csatQuotes,
+                toast = items.exceptionOrNull()?.message?.let { m -> "CSAT quotes: $m" } ?: it.toast) }
+        }
+    }
+
+    fun decideCsatQuote(id: String, decision: String) {
+        val key = "csat:$id"
+        _state.update { it.copy(running = it.running + key) }
+        keep("Saving your decision") {
+            runCatching { if (fixture == null) api.call("csat-testimonial-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
+                .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, csatQuotes = s.csatQuotes?.filter { it.str("id") != id },
+                    toast = if (decision == "approved") "Approved. CV testimonial + hub pick saved." else "Dismissed.") } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
             told()
         }
