@@ -24,7 +24,7 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 ## Build order (Carlos 2026-11-16)
 1. Slide 3 = real case id + Playwright snippet + DOM crop (#3550).
 2. First-comment UTM on every network that supports it (#3551).
-3. White-label Agency PDF + Full Stack QA Bundle SKU + Agency CI webhook (one money ticket, #3482 scope).
+3. Money ticket (#3482): white-label PDF (logo + name) **and** co-brand soft-preview header; **two** Full Stack SKUs — Starter (Playwright + axe + Lighthouse + k6) and Complete (all frameworks + tools, flat); Agency CI webhook.
 4. Channel-split compare: two-day quiz→reveal on X/Telegram/Threads; same-carousel reveal on LinkedIn/IG (#3497).
 5. MCP after money: `/review/preview` **and** signed-in unlock/full (#3480).
 6. Light DOM-verified specs badge only — not live multi-framework runs (#3481).
