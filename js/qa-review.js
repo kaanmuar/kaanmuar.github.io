@@ -958,7 +958,7 @@
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
   // .finding-teaser is the top gap shared links keep in the clear (#3477); .case-sample is the whole top case.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .finding-teaser, #report-index";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .case-verified, .finding-teaser, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
@@ -1321,19 +1321,38 @@
       (top ? " " + top : "");
   }
 
-  function paintHealth(ins) {
+  // Paid/unlocked owned reports only — never soft preview or anonymous share (#3483 D3).
+  function runHistory(report, paid) {
+    if (!paid || !report || !report.history) return null;
+    if ((current && current.softPreview) || report.softPreview || report.preview) return null;
+    return report.history;
+  }
+
+  function deltaBadge(history) {
+    if (!history) return "";
+    const change = history.now - history.before;
+    const cls = change > 0 ? "up" : change < 0 ? "down" : "";
+    const signed = (change > 0 ? "+" : "") + change;
+    return '<span class="delta-badge" title="' + esc(rc.t("delta")) + '">' +
+      '<span class="delta ' + cls + '">' + signed + "</span>" +
+      '<span class="delta-count">' + esc(rc.t("deltaFixed", { n: history.fixedCount || 0 })) + "</span>" +
+      '<span class="delta-count">' + esc(rc.t("deltaNew", { n: history.freshCount || 0 })) + "</span></span>";
+  }
+
+  function paintHealth(ins, paid) {
     const score = ins.score || {};
     const value = score.overall || 0;
     const circumference = 2 * Math.PI * 80;
     const totals = score.totals || {};
     const areas = score.areas || {};
     const column = slotRoot;
+    const history = runHistory(current && current.report, paid);
     slot("health").innerHTML =
       '<article class="card"><div class="health">' +
       '<div class="ring" role="img" aria-label="' + esc(rc.t("ring", { n: value, g: score.grade || gradeOf(value) })) + '">' +
       '<svg viewBox="0 0 196 196"><circle class="ring-track" cx="98" cy="98" r="80"></circle><circle class="ring-value" cx="98" cy="98" r="80" stroke="' + scoreColor(value) + '" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + (circumference * (1 - value / 100)).toFixed(1) + '"></circle></svg>' +
       "<b>" + value + "<small>" + esc(rc.t("grade", { g: score.grade || gradeOf(value) })) + "</small></b></div>" +
-      '<div><p class="health-summary">' + esc(healthSummary(ins)).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p>" +
+      '<div><p class="health-summary">' + deltaBadge(history) + esc(healthSummary(ins)).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p>" +
       '<div class="verdict-chips">' + ["fail", "risk", "pass", "person"].map((key) =>
         '<span class="vchip v-' + key + '"><b>' + (totals[key] || 0) + "</b>" + esc(VERDICT_LABEL[key]) + "</span>").join("") + "</div>" +
       '<div class="verdict-chips" aria-label="' + esc(rc.t("sevAria")) + '">' + ["critical", "high", "medium", "low"].map((key) =>
@@ -1341,7 +1360,7 @@
       '<p class="meta-line" data-note>' + esc(rc.t("measured", { person: VERDICT_LABEL.person })) + "</p></div></div>" +
       '<div class="areas">' + Object.keys(AREA_NOTE).map((name) => {
         const area = areas[name] || { score: 0, grade: "F", fail: 0, risk: 0, pass: 0 };
-        const past = current && current.report && current.report.history && current.report.history.areas && current.report.history.areas[name];
+        const past = history && history.areas && history.areas[name];
         const moved = past ? area.score - past.before : 0;
         return '<button type="button" class="area" data-area="' + esc(name) + '"><div class="area-score"><span><b>' + area.score + "</b> " + esc(cc.area(name)) + (moved ? ' <span class="delta ' + (moved > 0 ? "up" : "down") + '" title="' + esc(rc.t("delta")) + '">' + (moved > 0 ? "+" : "") + moved + "</span>" : "") + '</span><span class="grade grade-' + esc(area.grade) + '">' + esc(area.grade) + "</span></div>" +
           '<div class="bar"><i style="width:' + area.score + "%;background:" + scoreColor(area.score) + '"></i></div>' +
@@ -1369,13 +1388,20 @@
 
   function historyBlock(history) {
     if (!history) return "";
-    const when = history.previousAt ? new Date(history.previousAt).toLocaleDateString() : "your last review";
+    const when = history.previousAt
+      ? new Date(history.previousAt).toLocaleDateString(rc.lang)
+      : rc.t("historyLastReview");
     const change = history.now - history.before;
-    const list = (rows, more) => rows.length ? "<ul>" + rows.slice(0, 5).map((title) => "<li>" + esc(title) + "</li>").join("") + "</ul>" + (more > 5 ? '<p class="meta-line">and ' + (more - 5) + " more</p>" : "") : '<p class="muted">None.</p>';
-    return '<div class="history"><p><strong>Since your review on ' + esc(when) + ":</strong> score " + history.before + " → " + history.now +
+    const list = (rows, more) => rows.length
+      ? "<ul>" + rows.slice(0, 5).map((title) => "<li>" + esc(title) + "</li>").join("") + "</ul>" +
+        (more > 5 ? '<p class="meta-line">' + esc(rc.t("historyMore", { n: more - 5 })) + "</p>" : "")
+      : '<p class="muted">' + esc(rc.t("none")) + "</p>";
+    return '<div class="history"><p><strong>' + esc(rc.t("historySince", { date: when })) + "</strong> " +
+      esc(rc.t("historyScore", { before: history.before, now: history.now })) +
       ' <span class="delta ' + (change > 0 ? "up" : change < 0 ? "down" : "") + '">' + (change > 0 ? "+" : "") + change + "</span>. " +
-      history.fixedCount + " fixed, " + history.freshCount + " new, " + history.still + " still open.</p>" +
-      '<div class="exec-cols history-cols"><div><h3>Fixed since then</h3>' + list(history.fixed, history.fixedCount) + "</div><div><h3>New since then</h3>" + list(history.fresh, history.freshCount) + "</div></div></div>";
+      esc(rc.t("historyCounts", { fixed: history.fixedCount, fresh: history.freshCount, still: history.still })) + "</p>" +
+      '<div class="exec-cols history-cols"><div><h3>' + esc(rc.t("historyFixedTitle")) + "</h3>" + list(history.fixed || [], history.fixedCount || 0) +
+      "</div><div><h3>" + esc(rc.t("historyNewTitle")) + "</h3>" + list(history.fresh || [], history.freshCount || 0) + "</div></div></div>";
   }
 
   const strong = (text) => "<strong>" + esc(text) + "</strong>";
@@ -2160,7 +2186,7 @@
     return true;
   }
 
-  function paintExec(report, ins) {
+  function paintExec(report, ins, paid) {
     const host = slot("exec");
     if (!host) return;
     const score = ins.score || {};
@@ -2182,7 +2208,7 @@
     const value = score.overall || 0;
     const letter = score.grade || gradeOf(value);
     host.innerHTML =
-      historyBlock(report.history) +
+      historyBlock(runHistory(report, paid)) +
       '<div class="exec-head"><span class="grade grade-' + esc(letter) + '">' + esc(letter) + "</span><p>" + esc(healthSummary(ins) || rc.t("outOf", { n: value })).replace(/\.(?=[^\s.])/g, ".<wbr>") + "</p></div>" +
       '<p class="meta-line">' + esc(rc.t("sevLine", { critical: sev.critical || 0, high: sev.high || 0, medium: sev.medium || 0, low: sev.low || 0 })) + " · " +
       esc(rc.t(found ? "readOf" : "read", { n: read, found: found })) + (report.browser && report.browser.ok ? " · " + esc(rc.t("headless")) : "") + "</p>" +
@@ -2745,8 +2771,8 @@
     const open = fixed === undefined ? paid : fixed;
     setInsightsVisible(!!ins);
     if (!ins) return;
-    paintExec(report, ins);
-    paintHealth(ins);
+    paintExec(report, ins, paid);
+    paintHealth(ins, paid);
     paintFixFirst(ins, open);
     paintBrowser(report);
     paintPreviews(ins);
@@ -3226,14 +3252,16 @@
       const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="' + esc(rc.t("caseRisk", { risk: item.risk })) + '">' + esc(item.priority) + "</span>" : "";
       const firstPages = item.pages && item.pages.slice(0, 6).join(", ");
       const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">' + esc(rc.t("casePages", { list: item.pages.length > 6 ? rc.t("casePagesMore", { list: firstPages, more: item.pages.length - 6 }) : firstPages })) + "</p>" : "";
-      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
+      const verified = report.verifiedPass && report.verifiedPass.exitCode === 0 && report.verifiedPass.caseId === item.id;
+      const verifiedBadge = verified ? '<span class="case-verified" title="' + esc(rc.t("caseVerifiedHint")) + '">' + esc(rc.t("caseVerified")) + "</span>" : "";
+      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span>" + verifiedBadge + "</div>";
       const title = fc.line(item.msg && item.msg.title, item.title);
       const why = fc.line(item.msg && item.msg.why, item.why);
       if (item === sampleCase) {
-        return '<article class="case case-sample">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
+        return '<article class="case case-sample' + (verified ? " is-verified" : "") + '">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
           sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
       }
-      return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      return '<article class="case' + (verified ? " is-verified" : "") + '">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
     paintWatch(report, paid);
     paintCsat(report, sample);

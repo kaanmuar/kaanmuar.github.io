@@ -16,6 +16,7 @@
     <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="https://carlosandmunoz.com/qa-review-pt.html">
     <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <link rel="describedby" type="text/plain" title="llms.txt" href="https://carlosandmunoz.com/llms.txt">
     <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
     <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
     <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
@@ -710,6 +711,9 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .delta-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); font-size: 12px; font-weight: 600; vertical-align: middle; }
+        .delta-badge .delta { font-size: 13px; }
+        .delta-badge .delta-count { color: var(--muted); font-weight: 600; }
         .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin: 10px 0 6px; }
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
         .compare-field { flex: 1 1 240px; min-width: 0; }
@@ -1204,7 +1208,9 @@
         .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .case-pages { font-size: 12px; overflow-wrap: anywhere; }
         .case-sample { margin: 6px 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
-        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); }
+        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .case-verified { display: inline-block; padding: 1px 7px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--green, #3fb950) 55%, var(--line)); color: var(--green, #3fb950); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; }
+        .case-sample.is-verified { border-left-color: var(--green, #3fb950); }
         .case-split { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; font-size: 14px; }
         .case-split dt { color: var(--muted); font-size: 12px; font-weight: 700; }
         .case-split dd { margin: 0; }
@@ -1506,6 +1512,7 @@
 <header class="topbar">
     <div class="brand"><a href="qa-review-pt.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <div class="actions">
+        <a class="btn btn-ghost" href="qa.html">QA Lab suite</a>
         <a class="btn btn-ghost" href="index.html">CV</a>
         <a class="btn btn-ghost" href="qa-lab.html" lang="pt" translate="no">Laboratório de regressão</a>
         <a class="btn btn-ghost" href="qa-review-account.html" lang="pt" translate="no">Suas revisões</a>
