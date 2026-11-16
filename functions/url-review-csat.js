@@ -22,6 +22,9 @@ const PAGE_FOR = {
 const LOW_STAR = 2;
 const REMIND_AFTER_MS = 24 * 60 * 60 * 1000;
 const REMIND_BEFORE_MS = 48 * 60 * 60 * 1000;
+/** Second nudge when the first remind did not land an answer (#3557). */
+const RECUR_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+const RECUR_BEFORE_MS = 8 * 24 * 60 * 60 * 1000;
 
 const COPY = {
   en: {
@@ -29,6 +32,8 @@ const COPY = {
     mailNote: "Rate the run (1–5) and how likely you are to recommend URL Review (0–10).",
     remindSubject: "Quick feedback on your review of {host}?",
     remindLead: "You opened the report for {host}. A 20-second rating helps us improve URL Review.",
+    recurSubject: "Last nudge — feedback on your review of {host}?",
+    recurLead: "We sent your report for {host} last week. If you have a spare minute, a quick rating still helps.",
     title: "How was this review?",
     lead: "Rate the review of {host}. Both scores and a short comment help.",
     stars: "This run (1–5)",
@@ -339,8 +344,30 @@ function remindWindow(now) {
   return { after: new Date(at - REMIND_BEFORE_MS).toISOString(), before: new Date(at - REMIND_AFTER_MS).toISOString() };
 }
 
+/** Report mail 7–8d ago, still no CSAT, after the first remind (#3557). */
+function recurWindow(now) {
+  const at = now instanceof Date ? now.getTime() : Number(now) || Date.now();
+  return { after: new Date(at - RECUR_BEFORE_MS).toISOString(), before: new Date(at - RECUR_AFTER_MS).toISOString() };
+}
+
+function recurMail(lang, host, csatUrl) {
+  const parts = remindMail(lang, host, csatUrl);
+  const code = langOf(lang);
+  const t = COPY[code];
+  const vars = { host: host || "your site" };
+  const lead = fill(t.recurLead || t.remindLead, vars);
+  const subject = fill(t.recurSubject || t.remindSubject, vars).slice(0, 140);
+  const ask = mailBlock(code, csatUrl);
+  return Object.assign(parts, {
+    subject,
+    text: [lead, "", ask.text].join("\n").slice(0, 8000),
+    html: "<tr><td style=\"padding:22px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:" + fusion.TEXT.body + ";\">" +
+      esc(lead) + "</td></tr>" + ask.html
+  });
+}
+
 module.exports = {
-  LANGS, COPY, LOW_STAR, REMIND_AFTER_MS, REMIND_BEFORE_MS,
+  LANGS, COPY, LOW_STAR, REMIND_AFTER_MS, REMIND_BEFORE_MS, RECUR_AFTER_MS, RECUR_BEFORE_MS,
   langOf, esc, fill, parseRating, parseNps, cleanComment, readSubmit, isComplete, isLow,
-  draftReply, csatPage, mailBlock, remindMail, thanksUrls, recordFrom, remindWindow
+  draftReply, csatPage, mailBlock, remindMail, recurMail, thanksUrls, recordFrom, remindWindow, recurWindow
 };

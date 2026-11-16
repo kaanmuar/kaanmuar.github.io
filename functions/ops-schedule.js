@@ -53,6 +53,7 @@ const JOBS = [
   { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision, by email only with its switch on; the evening digest lists them too" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
   { job: "sendCsatReminders", cron: "15 10 * * 1-6", gap: 50, what: "CSAT nudge 24–48h after a report mail when the asker has not rated yet (#3556)" },
+  { job: "sendCsatRecurrence", cron: "25 10 * * 2,4,6", gap: 50, what: "Second CSAT nudge ~7d after report mail when remind did not land an answer (#3557)" },
   { job: "outreachTrials", cron: "30 10 * * 1-6", gap: 50, what: "Outreach trials (#3136): each ended 2-day trial gets its AFTER- code and its person moves on in outreach_people; the note to them goes out with REVIEW_NOTES_LIVE=1" },
   { job: "sendOwnerNotices", cron: "0 11 * * 1-6", gap: 50, what: "Owner notices for sites now on Live Reports (OWNER_NOTICES_LIVE=1)" },
   { job: "dispatchFacebookQueue", cron: "7 11 * * *", gap: 26, what: "Start the Facebook queue workflow (GitHub fires its own slot hours late)" },
