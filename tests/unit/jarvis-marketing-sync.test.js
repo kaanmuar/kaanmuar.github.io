@@ -31,7 +31,9 @@ test("marketing sync (#1730): commands are checked before they reach the Mac", (
   assert.equal(mk.commandOf({ action: "dnc", value: "Spam.Example.com" }).args.reason, "added from Jarvis");
   assert.throws(() => mk.commandOf({ action: "upload", week: "all" }), /week like W1/);
   assert.throws(() => mk.commandOf({ action: "approve", week: "W1", email: "nobody" }), /lead's email/);
-  assert.throws(() => mk.commandOf({ action: "run", job: "rm -rf" }), /prospects, leads or replies/);
+  assert.throws(() => mk.commandOf({ action: "run", job: "rm -rf" }), /prospects, leads, replies, companies or holidays/);
+  assert.equal(mk.commandOf({ action: "run", job: "companies" }).args.job, "companies");
+  assert.equal(mk.commandOf({ action: "run", job: "holidays" }).args.job, "holidays");
   assert.throws(() => mk.commandOf({ action: "linkedin", date: "today", name: "Ana" }), /date/);
   assert.throws(() => mk.commandOf({ action: "shell" }), /Unknown/);
 });
@@ -249,6 +251,23 @@ test("marketing sync (#2479): the LinkedIn note survives a Check first line abov
   const [p] = sync.linkedin(dir).items;
   assert.equal(p.lines.length, 6);
   assert.equal(p.lines[4], "Note: Hi Miles, we reviewed theo.site. Happy to send it.");
+});
+
+test("outreach jobs (#3565): all modes parse STATS from the log and fall back to NOTIFY", () => {
+  const state = fs.mkdtempSync(path.join(os.tmpdir(), "mk-jobs-"));
+  const logs = path.join(state, "logs");
+  fs.mkdirSync(logs, { recursive: true });
+  const writeLog = (mode, body) => fs.writeFileSync(path.join(logs, "last-" + mode + ".txt"), body);
+  writeLog("prospects", "2026-11-16 prospects\nSTATS: {\"mode\":\"prospects\",\"actual\":32,\"target\":40,\"by_segment\":{\"university\":10}}\nNOTIFY: W1: 32 new prospects\n");
+  writeLog("leads", "2026-11-16 leads\nNOTIFY: W1 2 complete, 1 waiting\n");
+  const rows = sync.jobs(state);
+  assert.equal(rows.length, sync.JOBS.length);
+  assert.equal(rows[0].stats.actual, 32);
+  assert.deepEqual(rows[0].stats.by_segment, { university: 10 });
+  assert.equal(rows[1].stats.complete, 2);
+  assert.equal(rows[1].stats.waiting, 1);
+  assert.equal(rows.find((r) => r.mode === "replies").at, "");
+  assert.deepEqual(sync.parseJobStats("companies", [], "15 companies offered the trial"), { mode: "companies", actual: 15, target: 30 });
 });
 
 test("marketing sync (#2519): when the Action's commit fails, the folder edits it applied are queued again", async () => {

@@ -32,7 +32,8 @@ const FN = path.join(__dirname, "..", "functions");
 const CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(require("os").homedir(), ".cursor/preflight/config.json"), "utf8")); } catch { return {}; } })();
 const AI_URL = process.env.PREFLIGHT_URL || CFG.url || "https://preflight.carlosandmunoz.com";
 const BOOKING = "https://carlosandmunoz.com/book.html";
-const JOBS = ["prospects", "leads", "replies", "companies"];
+const JOBS = ["prospects", "leads", "replies", "companies", "holidays"];
+let jobStats = null;
 const COMPANIES_PER_DAY = 30;
 const PER_SEGMENT = 10;
 const PER_DAY = 40;
@@ -259,6 +260,7 @@ async function replies(log) {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   log(total ? Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ") : "No replies.");
   const sent = await forwardReplies(perDay, log);
+  jobStats = { mode: "replies", actual: total, by_category: counts };
   if (!named.length && !counts.opt_out) return "";
   const parts = ["interested", "question", "not_now", "wrong_person"].filter((k) => counts[k]).map((k) => `${counts[k]} ${k.replace("_", " ")}`);
   if (counts.opt_out) parts.push(`${counts.opt_out} opted out (blocked)`);
@@ -308,6 +310,7 @@ async function leadsJob(log) {
   const weeks = openWeeks(current);
   if (!weeks.length) { log("No open weeks."); return ""; }
   const summary = [];
+  let completeTotal = 0, waitingTotal = 0;
   for (const week of weeks) {
     if (!DRY) log(tool("leads", "--week", week).trim().split("\n").slice(0, 3).join("\n"));
     const rel = `prospects/week${week.slice(1)}-leads.csv`;
@@ -326,7 +329,10 @@ async function leadsJob(log) {
     const reports = open.filter((r) => /report \(not published yet\)/.test(r.missing)).length;
     log(`${week}: ${filled} fields filled; ${complete} complete, ${open.length - complete} still missing something (${reports} waiting for Live Reports)`);
     summary.push(`${week} ${complete} complete, ${open.length - complete} waiting${reports ? ` (${reports} for Live Reports)` : ""}`);
+    completeTotal += complete;
+    waitingTotal += open.length - complete;
   }
+  jobStats = { mode: "leads", complete: completeTotal, waiting: waitingTotal, weeks: weeks.length };
   return `Leads ready: ${summary.join("; ")}. Approve them in Jarvis > Marketing, then press Upload.`;
 }
 
@@ -562,6 +568,10 @@ async function prospects(log) {
     : `${week}: ${picked.length} new prospects (${bySegment.join(", ") || "none"}) queued for tonight's sweep; ${total} this week`;
   const status = read("04-sending-setup.md");
   if (status && want) write("04-sending-setup.md", status.replace(/^(## Status[^\n]*\n)/m, `$1- ${today} prospects run: ${line}${drafts.length ? `; seasonal drafts: ${drafts.join(", ")}` : ""}.\n`));
+  jobStats = {
+    mode: "prospects", actual: picked.length, target: want || PER_DAY, week_total: total,
+    by_segment: Object.fromEntries(SEGMENTS.map((s) => [s, picked.filter((r) => r.segment === s).length]))
+  };
   return `${line}${picked.length < want ? `; ${want - picked.length} short of ${PER_DAY}` : ""}${low.length ? `; seed lists running low (${low.join(", ")} left; add rows to prospects/seeds/)` : ""}`
     + `${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
 }
@@ -692,7 +702,17 @@ async function companies(log) {
   const segs = Object.entries(perSector).map(([k, v]) => `${v} ${k}`).join(", ");
   const autoMail = rows.filter((r) => r.approved).length;
   log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails (${autoMail} approved by the send switch), ${queued} profile messages (${released} sent on their own)${skipped ? "; skipped " + skipped : ""}`);
+  jobStats = { mode: "companies", actual: offered.length, target: COMPANIES_PER_DAY, emails: rows.length, profile_messages: queued };
   return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length - autoMail} emails to approve in Jarvis > Marketing, ${queued - released} profile messages waiting in Engagement${released ? `, ${released} sent on their own` : ""}.` : "";
+}
+
+async function holidays(log) {
+  const out = tool("holidays", ...(DRY ? ["--dry"] : [])).trim();
+  if (out) log(out);
+  const paused = [...out.matchAll(/paused\s+(\d+)/gi)].reduce((n, m) => n + Number(m[1]), 0);
+  const resumed = [...out.matchAll(/resumed\s+(\d+)/gi)].reduce((n, m) => n + Number(m[1]), 0);
+  jobStats = { mode: "holidays", paused, resumed };
+  return out.split("\n").find((l) => l.trim())?.slice(0, 200) || "Holiday check done.";
 }
 
 // --- Main ---------------------------------------------------------------------------------------------------------
@@ -707,7 +727,6 @@ async function main(argv) {
   HOSTS = arg("--hosts") ? path.resolve(arg("--hosts")) : "";
   if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|companies|holidays|sync> --dir <outreach folder> [--dry]");
   if (HOSTS && !DRY) throw new Error("--hosts only runs with --dry.");
-  if (mode === "holidays") return console.log(tool("holidays", ...(DRY ? ["--dry"] : [])).trim());
   if (mode === "sync") {
     return execFileSync("node", [path.join(__dirname, "jarvis-marketing-sync.js"), "--dir", DIR, "--state", path.join(DIR, "tracker"), ...(DRY ? ["--dry"] : [])], { stdio: "inherit" });
   }
@@ -716,14 +735,16 @@ async function main(argv) {
   const log = (s) => { if (!s) return; lines.push(...String(s).split("\n")); console.log(s); };
   let notify = "";
   let failed = false;
+  jobStats = null;
   try {
-    notify = await { prospects, leads: leadsJob, replies, companies }[mode](log);
+    notify = await { prospects, leads: leadsJob, replies, companies, holidays }[mode](log);
   } catch (error) {
     failed = true;
     log("error: " + String(error.message || error).split("\n")[0]);
     log("exit 1");
     notify = `The ${mode} run failed: ${String(error.message || error).split("\n")[0]}`.slice(0, 200);
   }
+  if (jobStats) log("STATS: " + JSON.stringify(jobStats));
   if (notify) log("NOTIFY: " + notify);
   write(`tracker/logs/last-${mode}.txt`, lines.join("\n") + "\n");
   if (notify) await push(failed ? "Outreach " + mode + " failed" : "Outreach " + mode, notify).catch((error) => console.error("push failed:", error.message));
