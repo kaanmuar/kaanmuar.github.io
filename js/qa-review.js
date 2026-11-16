@@ -21,6 +21,8 @@
   const SITE_COUNTRY = { uk: "GB", gb: "GB", eu: "EU", de: "DE", fr: "FR", es: "ES", it: "IT", nl: "NL", pt: "PT", ie: "IE", be: "BE", at: "AT", se: "SE", pl: "PL", co: "CO", mx: "MX", br: "BR", ar: "AR", cl: "CL", pe: "PE", ca: "CA", au: "AU", nz: "NZ", in: "IN", jp: "JP", us: "US", za: "ZA" };
   const MARK = "QA-lab URL Review · Carlos Muñoz · https://carlosandmunoz.com · Preview copy · Not a certification";
   const PAID_LINE = "This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).";
+  const DEFAULT_MARK = "assets/qa-review-mark.svg?v=20261027a";
+  const QA_BYLINE = "Report by QA-lab";
   const FRAMEWORK_GROUPS = [
     ["Browser", ["Playwright", "Cypress", "Robot", "Selenium", "WebdriverIO", "CodeceptJS", "Selenide", "TestNG", "Watir"]],
     ["Behavior-driven", ["Cucumber", "Behave", "Reqnroll"]],
@@ -706,6 +708,18 @@
     runSoftPreview(value);
   });
 
+  // Hub / social soft-gate parity (#3533): ?url=&from=hub|social auto-runs the soft preview once.
+  (function softFromHub() {
+    const params = new URLSearchParams(location.search);
+    const from = params.get("from");
+    if (from !== "hub" && from !== "social") return;
+    if (params.get("report") || params.get("live") || params.get("sample") === "1") return;
+    const value = (stageUrl && stageUrl.value || urlInput.value || "").trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value || /\s/.test(value) || !/^[a-z0-9.-]+\.[a-z]{2,}(\/[\w./-]*)?$/i.test(value)) return;
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hub_soft", "URL Review", from);
+    runSoftPreview(value);
+  })();
+
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
   });
@@ -1197,15 +1211,31 @@
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
     const brand = current && current.branding;
-    const coverLogo = brand && brand.logoDataUrl ? brand.logoDataUrl : "assets/qa-review-mark.svg?v=20261027a";
+    const coverLogo = brand && brand.logoDataUrl ? brand.logoDataUrl : DEFAULT_MARK;
     const coverKicker = brand && brand.companyName
-      ? esc(brand.companyName) + ' <span class="muted">· Report by QA-lab</span>'
+      ? esc(brand.companyName) + ' <span class="muted">· ' + esc(QA_BYLINE) + "</span>"
       : "QA-lab URL Review";
     slot("report-cover").innerHTML =
       '<div><img class="cover-logo" src="' + esc(coverLogo) + '" alt=""><p class="report-kicker">' + coverKicker + '</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
+    if (!slotRoot) applyLiveBrand(brand);
+  }
+
+  // Agency live white-label (#3494): toolbar logo + paid-line match the PDF co-brand defaults.
+  function applyLiveBrand(brand) {
+    const logo = dash.querySelector(".report-toolbar .logo");
+    if (logo) {
+      logo.src = brand && brand.logoDataUrl ? brand.logoDataUrl : DEFAULT_MARK;
+      logo.alt = brand && brand.companyName ? brand.companyName : "";
+    }
+    const paidLine = document.getElementById("paid-line");
+    if (paidLine) {
+      paidLine.textContent = brand && brand.companyName
+        ? brand.companyName + " · " + QA_BYLINE + " URL Review"
+        : PAID_LINE;
+    }
   }
 
   const cc = window.QAReviewCompareCopy;
@@ -4458,14 +4488,19 @@
     URL.revokeObjectURL(href);
   }
   function fileBanner() {
-    if (current && current.paid) return PAID_LINE;
+    if (current && current.paid) {
+      const brand = current.branding;
+      return brand && brand.companyName
+        ? brand.companyName + " · " + QA_BYLINE + " URL Review"
+        : PAID_LINE;
+    }
     return [MARK, MARK, MARK].join("\n");
   }
   document.getElementById("download-json").addEventListener("click", () => {
     spend("json", () => {
       const report = current.paid ? current.report : clipDeep(current.report);
       const body = current.paid
-        ? { attribution: PAID_LINE, report: report }
+        ? { attribution: fileBanner(), report: report }
         : { watermark: MARK, report: report };
       download("url-review-" + current.report.id + ".json", JSON.stringify(body, null, 2), "application/json");
     });
@@ -4729,7 +4764,13 @@
   // An unpaid report from the server: the frosted preview, with the findings in full when a fix list was bought.
   function lockedPayload(body) {
     const report = body.insights ? Object.assign({}, body.preview, { insights: body.insights }) : body.preview;
-    return { report, frameworks: body.frameworks || [], paid: false, addons: body.addons || [] };
+    return {
+      report,
+      frameworks: body.frameworks || [],
+      paid: false,
+      addons: body.addons || [],
+      branding: body.branding || null
+    };
   }
 
   async function reopenFixList(id) {
@@ -4761,7 +4802,7 @@
         const body = await res.json();
         lockedShared = !!body.locked;
         if (body.locked) {
-          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false });
+          if (body.preview) render({ report: body.preview, frameworks: body.frameworks || [], paid: false, branding: body.branding || null });
           setStatus((body.preview ? "This report of " + (body.host || "this site") + " is below: scores and the top finding stay readable; the rest sits under the frost. " : "") + (body.error || "Sign in with the account that ran this report to read it in full."), true);
           if (window.ReviewAuth) ReviewAuth.focus();
           return;

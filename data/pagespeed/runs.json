@@ -1,6 +1,151 @@
 {
  "runs": [
   {
+   "at": "2026-11-16T19:23:00.423Z",
+   "run": {
+    "id": 43883474756,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/43883474756"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2166,
+   "scored": 2157,
+   "failed": 9,
+   "below": 1545,
+   "avg": {
+    "mobile": 85,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-16",
+    "files": [
+     "assets/social/rss-de.xml",
+     "assets/social/rss-fr.xml",
+     "assets/social/rss-it.xml",
+     "assets/social/rss-pt.xml",
+     "data/pagespeed/compressed.json",
+     "media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg"
+    ],
+    "fixes": [
+     {
+      "page": "media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg",
+      "kind": "image",
+      "detail": "Compressed media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg from 249 KB to 139 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "social/auto-2026-11-06/07-vs-td-com.html",
+      "mobile": {
+       "before": 91,
+       "after": 95,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-11-06/07-vs-td-com.html"
+     },
+     {
+      "file": "social/pick/operationalizing-ai-proven-workflows-that-generate-measurabl-pt.html",
+      "mobile": {
+       "before": 94,
+       "after": 94,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 99,
+       "after": 99,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/operationalizing-ai-proven-workflows-that-generate-measurabl-pt.html"
+     },
+     {
+      "file": "social/evergreen-2026-11/11-vision-de.html",
+      "mobile": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/evergreen-2026-11/11-vision-de.html"
+     },
+     {
+      "file": "social/auto-2026-10-25/04-u-supresencia-com-de.html",
+      "mobile": {
+       "before": 84,
+       "after": 84,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/auto-2026-10-25/04-u-supresencia-com-de.html"
+     },
+     {
+      "file": "social/tips-2026-10/06-utm-fr.html",
+      "mobile": {
+       "before": 93,
+       "after": 93,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/tips-2026-10/06-utm-fr.html"
+     },
+     {
+      "file": "social/tips-horror-headers-2026-10/02-zombie-redirects-pt.html",
+      "mobile": {
+       "before": 92,
+       "after": 97,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/tips-horror-headers-2026-10/02-zombie-redirects-pt.html"
+     }
+    ],
+    "verdict": {
+     "up": true,
+     "reason": "Rose on social/auto-2026-11-06/07-vs-td-com.html (mobile 91 → 95), social/tips-horror-headers-2026-10/02-zombie-redirects-pt.html (mobile 92 → 97); nothing fell more than 2.",
+     "drops": 0,
+     "rises": 2,
+     "missing": 0
+    },
+    "note": "2 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-15T17:48:31.152Z",
    "run": {
     "id": 43717257766,

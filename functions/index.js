@@ -417,6 +417,13 @@ exports.notifyOwnerOnReviewCsat = withMail.firestore.document('url_review_csat/{
 		console.error('Owner CSAT notification failed:', error);
 	}
 	await pushOwner(jarvisMailPush.csatMessage(snap.id, data));
+	try {
+		const testimonials = require('./url-review-csat-testimonials');
+		const out = await testimonials.queueTestimonial(getFirestore(), snap.id, data);
+		if (out.queued) console.log('CSAT testimonial queued:', snap.id, clip(data.host, 80));
+	} catch (error) {
+		console.error('CSAT testimonial queue failed:', error);
+	}
 	return null;
 });
 
@@ -3067,7 +3074,10 @@ async function sendCsatReminders() {
 	let sent = 0;
 	for (const doc of snap.docs) {
 		const record = Object.assign({ id: doc.id }, doc.data() || {});
-		if (!record.email || record.csatRemindedAt) continue;
+		if (!record.email) continue;
+		const mailedAt = record.mail && record.mail.at ? Date.parse(record.mail.at) : 0;
+		const remindedAt = record.csatRemindedAt ? Date.parse(record.csatRemindedAt) : 0;
+		if (remindedAt && (!mailedAt || remindedAt >= mailedAt)) continue;
 		if (record.status !== 'complete' && record.status !== 'stopped') continue;
 		const stopped = await db
 			.collection('url_review_notes')
@@ -3117,6 +3127,70 @@ async function sendCsatReminders() {
 }
 
 exports.sendCsatReminders = scheduled(withMail, 'sendCsatReminders', () => sendCsatReminders());
+
+// 7–8d after report mail: second CSAT nudge when the first remind did not land an answer (#3557).
+async function sendCsatRecurrence() {
+	const csat = require('./url-review-csat');
+	const db = getFirestore();
+	const window = csat.recurWindow(new Date());
+	const snap = await db
+		.collection('url_reviews')
+		.where('mail.sent', '==', true)
+		.where('mail.at', '>=', window.after)
+		.where('mail.at', '<=', window.before)
+		.limit(40)
+		.get();
+	let sent = 0;
+	for (const doc of snap.docs) {
+		const record = Object.assign({ id: doc.id }, doc.data() || {});
+		if (!record.email || !record.csatRemindedAt) continue;
+		if (record.csatRecurAt) continue;
+		if (record.status !== 'complete' && record.status !== 'stopped') continue;
+		const stopped = await db
+			.collection('url_review_notes')
+			.where('email', '==', record.email)
+			.where('status', '==', 'follow-stop')
+			.limit(1)
+			.get();
+		if (!stopped.empty) continue;
+		const prior = await db.collection('url_review_csat').where('reviewId', '==', doc.id).limit(1).get();
+		if (!prior.empty) continue;
+		const [stopUrl, csatUrl] = await Promise.all([stopLinkFor(record.email, record.lang), csatLinkFor(record)]);
+		if (!csatUrl) continue;
+		let host = String(record.host || '').trim();
+		if (!host && record.url) {
+			try {
+				host = new URL(record.url).hostname;
+			} catch (error) {
+				host = '';
+			}
+		}
+		const parts = csat.recurMail(record.lang, host || 'your site', csatUrl);
+		const t = customerMail.COPY[customerMail.langOf(record.lang)];
+		const mail = {
+			lang: parts.lang,
+			subject: parts.subject,
+			text:
+				parts.text +
+				'\n\n' +
+				customerMail.footerText(t, customerMail.fill(t.why, { host: host || 'your site' }), { stopUrl }),
+			html: customerMail.shell(
+				parts.lang,
+				parts.subject,
+				parts.html,
+				customerMail.footerHtml(t, customerMail.fill(t.why, { host: host || 'your site' }), { stopUrl })
+			),
+		};
+		const ok = await sendAskerMail(record.email, mail, stopUrl, 'url-review-csat-recur');
+		if (ok) {
+			sent += 1;
+			await doc.ref.set({ csatRecurAt: new Date().toISOString() }, { merge: true });
+		}
+	}
+	return { sent, scanned: snap.size };
+}
+
+exports.sendCsatRecurrence = scheduled(withMail, 'sendCsatRecurrence', () => sendCsatRecurrence());
 
 // Ended outreach trials get their AFTER code (#3136); the note to the person goes out only with the follow-up notes' switch.
 async function outreachTrialsRun() {
@@ -7453,6 +7527,7 @@ exports.reviewUrl = functions
 						console.error('Shared report open note failed:', error);
 					}
 				}
+				const lockedBrand = await brandingForEmail(data.email);
 				res.status(access.status).json({
 					error: access.error,
 					signIn: true,
@@ -7462,6 +7537,9 @@ exports.reviewUrl = functions
 					status: data.status || '',
 					frameworks: data.frameworks || [],
 					preview: urlReview.previewReport(data.report),
+					branding: lockedBrand
+						? { companyName: lockedBrand.companyName, logoDataUrl: lockedBrand.logoDataUrl || '' }
+						: null,
 				});
 				return;
 			}
@@ -7865,6 +7943,7 @@ async function runSoftPreview(req, res) {
 		await getFirestore().collection('url_reviews').doc(report.id).set(record);
 		await rememberReview(record.status === 'stopped' ? 'stopped' : 'soft-preview', record);
 		const shown = urlReview.previewReport(report);
+		const softLiveBrand = email ? await brandingForEmail(email) : null;
 		writeLine({
 			type: 'done',
 			report: shown,
@@ -7874,6 +7953,9 @@ async function runSoftPreview(req, res) {
 			priceUsd: 0,
 			softLeft: quota.left,
 			softCap: quota.cap,
+			branding: softLiveBrand
+				? { companyName: softLiveBrand.companyName, logoDataUrl: softLiveBrand.logoDataUrl || '' }
+				: null,
 		});
 		res.end();
 	} catch (error) {
@@ -8253,6 +8335,7 @@ async function runReview(req, res, placeOf) {
 			record.paid === true
 				? report
 				: Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
+		const liveBrand = await brandingForEmail(intake.value.email);
 		writeLine({
 			type: 'done',
 			report: shown,
@@ -8260,6 +8343,7 @@ async function runReview(req, res, placeOf) {
 			paid: record.paid === true,
 			free: record.free === true,
 			priceUsd: record.priceUsd,
+			branding: liveBrand ? { companyName: liveBrand.companyName, logoDataUrl: liveBrand.logoDataUrl || '' } : null,
 		});
 		try {
 			await mailReportToAsker(record);
@@ -9245,8 +9329,11 @@ async function jarvisCached(op, days, load) {
 		return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
 	const fresh = await load();
 	const at = new Date().toISOString();
+	// A source may set cache:false when a dependency briefly missed (Live Reports publish, #3645).
+	const keep = fresh.cache !== false;
+	if ('cache' in fresh) delete fresh.cache;
 	const json = JSON.stringify(fresh);
-	if (json.length < 900000) await ref.set({ at, json }).catch(() => null);
+	if (keep && json.length < 900000) await ref.set({ at, json }).catch(() => null);
 	return Object.assign(fresh, { cachedAt: at });
 }
 
@@ -9997,6 +10084,10 @@ function jarvisAutoOps(settings, now, th) {
 			return { resumed, left };
 		},
 		launchCampaigns: (ids) => jarvisMarketing.launch(ctx, ids),
+		coldResendCandidates: process.env.INSTANTLY_API_KEY
+			? (limit) => jarvisMarketing.listColdResendCandidates(ctx, db, { now, limit })
+			: null,
+		resendCold: (ids) => jarvisMarketing.resendCold(ctx, db, ids),
 		ownerTagsApprovable: () => ownerTags.autoApprovable(db),
 		ownerTagsApprove: async (ids) => {
 			const res = await ownerTags.approveMany({ db, now }, ids, 'jarvis');

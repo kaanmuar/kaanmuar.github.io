@@ -89,11 +89,22 @@ function pipelineRows(queue, state, reviews, published, ctx) {
 		tally(segments, r.sweep.sector);
 	});
 	const reviewedHosts = new Set(mine.map((r) => bare(r.sweep.host || r.requestedUrl)));
-	const days = (state && state.days) || {};
-	const daily = Object.keys(days)
-		.sort()
-		.filter((d) => Date.parse(d + 'T12:00:00Z') >= start)
-		.map((date) => ({ date, reviews: Number(days[date].outreach) || 0 }));
+	// Daily series from the same outreach reviews as `reviews`, so the sparkline matches Reviewed and
+	// still has values when sweep state.days is short (KEEP_DAYS=14) or empty. Cap check is on `mine`
+	// only: non-outreach url_reviews used to push the shared read over REVIEW_CAP and blank priorReviews.
+	const byDay = {};
+	inRange.forEach((r) => {
+		const ms = toMs(r.createdAt);
+		if (!ms) return;
+		const date = new Date(ms).toISOString().slice(0, 10);
+		byDay[date] = (byDay[date] || 0) + 1;
+	});
+	const daily = [];
+	for (let t = start; t <= ctx.now; t += DAY) {
+		const date = new Date(t).toISOString().slice(0, 10);
+		if (daily.length && daily[daily.length - 1].date === date) continue;
+		daily.push({ date, reviews: byDay[date] || 0 });
+	}
 	const scores = inRange.map((r) => Number(r.score)).filter((n) => Number.isFinite(n) && n > 0);
 	return {
 		queued: hosts.length,
@@ -101,7 +112,7 @@ function pipelineRows(queue, state, reviews, published, ctx) {
 		left: Math.max(0, hosts.length - (Number(state && state.outreachAt) || 0)),
 		bySegment: listOf(bySegment),
 		reviews: inRange.length,
-		priorReviews: reachesBack(reviews, REVIEW_CAP, priorStart) ? before.length : null,
+		priorReviews: reachesBack(mine, REVIEW_CAP, priorStart) ? before.length : null,
 		thisWeek: mine.filter((r) => toMs(r.createdAt) >= week).length,
 		results: listOf(result),
 		segments: listOf(segments),

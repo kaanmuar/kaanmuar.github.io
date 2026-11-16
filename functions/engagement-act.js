@@ -312,6 +312,35 @@ async function blueskyClient(cred, f, now) {
 			});
 			return { id: out.uri, uri: out.uri, url: link(out.uri), card: embed ? 'attached' : '', cardError };
 		},
+		edit: async (d, text, lang) => {
+			const p = await post(d);
+			const rkey = String(p.uri || d.id || '')
+				.split('/')
+				.pop();
+			if (!rkey) throw new ActError('The post has no record key.');
+			const dids = {};
+			for (const m of String(text).matchAll(/(?:^|[\s(])@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+)/gi)) {
+				const h = m[1].toLowerCase();
+				if (h in dids) continue;
+				dids[h] =
+					(
+						await call(f, service + '/xrpc/com.atproto.identity.resolveHandle?handle=' + encodeURIComponent(h), {
+							headers: auth,
+						}).catch(() => ({}))
+					).did || '';
+			}
+			const facets = (linkFacets(text) || []).concat(mentionFacets(text, dids));
+			const record = Object.assign({}, p.record || {}, {
+				text,
+				facets: facets.length ? facets : undefined,
+				langs: lang ? [lang] : (p.record || {}).langs,
+			});
+			await call(f, service + '/xrpc/com.atproto.repo.putRecord', {
+				headers: auth,
+				json: { repo: s.did, collection: 'app.bsky.feed.post', rkey, record, swapRecord: p.cid },
+			});
+			return { id: p.uri, uri: p.uri, url: d.url || link(p.uri) };
+		},
 	};
 }
 
@@ -427,6 +456,15 @@ async function mastodonClient(cred, f) {
 				card: media ? 'attached' : '',
 				cardError,
 			};
+		},
+		edit: async (d, text) => {
+			const st = await status(d);
+			const out = await call(f, base + '/api/v1/statuses/' + st.id, {
+				method: 'PUT',
+				headers: auth,
+				json: { status: text },
+			});
+			return { id: String(out.id || st.id), uri: out.uri || st.uri || '', url: out.url || st.url || d.url || '' };
 		},
 	};
 }
@@ -1099,6 +1137,41 @@ function cardFields(doc, attached, error) {
 	};
 }
 
+/** One approved caption edit on our own post (#3588). */
+async function sendEdit(deps, c, task) {
+	const e = task.doc.actions.edit;
+	const tries = (e.tries || 0) + 1;
+	const at = new Date(deps.now).toISOString();
+	try {
+		if (!c.edit) throw new ActError(E.NETWORKS[task.doc.network].name + ' does not edit captions here.', true);
+		const out = await c.edit(Object.assign({ key: task.key }, task.doc), e.draft, e.lang || task.doc.lang);
+		await task.ref.update({
+			'actions.edit.status': 'posted',
+			'actions.edit.postedAt': at,
+			'actions.edit.url': out.url || task.doc.url || '',
+			'actions.edit.tries': tries,
+			'actions.edit.error': '',
+			updatedAt: at,
+		});
+		await count(deps, task.doc.network, 'edit_posted');
+		return { status: 'posted', url: out.url || '' };
+	} catch (error) {
+		const last = !error.fatal && tries >= MAX_TRIES;
+		await task.ref.update(
+			Object.assign(
+				{
+					'actions.edit.error': clip(error.message, 200),
+					'actions.edit.tries': error.fatal ? tries - 1 : tries,
+					updatedAt: at,
+				},
+				last ? { 'actions.edit.status': 'failed' } : {}
+			)
+		);
+		if (last) await count(deps, task.doc.network, 'edit_failed');
+		return { status: last ? 'failed' : 'approved', error: error.message, fatal: error.fatal };
+	}
+}
+
 /** One approved reply out, unless our account already answered there. Returns { status, url, error }. */
 async function sendReply(deps, c, task) {
 	const r = task.doc.actions.reply;
@@ -1243,6 +1316,9 @@ async function carryOut(deps, conf) {
 	const replies = docs(
 		await db.collection('engagement_posts').where('actions.reply.status', '==', 'approved').limit(50).get()
 	);
+	const edits = docs(
+		await db.collection('engagement_posts').where('actions.edit.status', '==', 'approved').limit(20).get()
+	);
 	const creds = await readCreds(db);
 
 	for (const network of API) {
@@ -1263,7 +1339,9 @@ async function carryOut(deps, conf) {
 				tally.dry += 1;
 			} else fresh.push(t);
 		}
-		const waiting = replies.filter((t) => t.doc.network === network);
+		const waiting = replies
+			.filter((t) => t.doc.network === network)
+			.concat(edits.filter((t) => t.doc.network === network));
 		if (!creds[network] || (!fresh.length && !waiting.length)) continue;
 		const got = await client(deps, network, creds[network]);
 		if (got.error) {
@@ -1273,7 +1351,10 @@ async function carryOut(deps, conf) {
 		}
 		let sent = 0;
 		for (const t of waiting) {
-			const r = await sendReply(deps, got.c, t);
+			const r =
+				((t.doc.actions || {}).edit || {}).status === 'approved'
+					? await sendEdit(deps, got.c, t)
+					: await sendReply(deps, got.c, t);
 			if (r.status === 'posted') tally.posted += 1;
 			else if (r.status === 'replied') tally.already += 1;
 			else if (r.status === 'failed') tally.failed += 1;

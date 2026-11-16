@@ -219,6 +219,12 @@ const JOBS = [
 		what: 'CSAT nudge 24–48h after a report mail when the asker has not rated yet (#3556)',
 	},
 	{
+		job: 'sendCsatRecurrence',
+		cron: '25 10 * * 2,4,6',
+		gap: 50,
+		what: 'Second CSAT nudge ~7d after report mail when remind did not land an answer (#3557)',
+	},
+	{
 		job: 'outreachTrials',
 		cron: '30 10 * * 1-6',
 		gap: 50,

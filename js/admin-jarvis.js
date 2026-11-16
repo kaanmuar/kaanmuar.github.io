@@ -26,6 +26,7 @@ const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed'
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
+let G_CHART = window.JarvisCore.chartPrefs(null);
 const GA_GROUP = { cv: 'CV site', review: 'QA-lab URL Review' };
 const FAMILY = { marketing: ['marketing', 'outreach', 'hub', 'business'] };
 const inTab = (b, product) => product === 'overview' || (FAMILY[product] || [product]).includes(b.product);
@@ -63,7 +64,8 @@ function spark(values, color, opts) {
     const w = 120, h = 32, max = Math.max(1, ...v);
     const xs = v.map((n, i) => (v.length === 1 ? w / 2 : (i / (v.length - 1)) * w));
     const pts = v.map((n, i) => `${xs[i].toFixed(1)},${(h - 2 - (n / max) * (h - 6)).toFixed(1)}`);
-    const lines = `<polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
+    const fillOn = G_CHART.fill;
+    const lines = (fillOn ? `<polyline points="0,${h} ${pts.join(' ')} ${w},${h}" fill="${color}" fill-opacity="0.12" stroke="none"></polyline>` : '') + `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>`;
     if (!opts) return `<svg class="jv-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>`;
     const labels = opts.labels || [];
     const tips = v.map((n, i) => `${labels[i] || ''}${labels[i] ? ': ' : ''}${withUnit(n, opts.unit)}`);
@@ -78,7 +80,8 @@ function spark(values, color, opts) {
 function area(labels, series, opts) {
     if (!labels || !labels.length) return '<p class="jv-empty">No days in this range.</p>';
     const o = opts || {};
-    const fill = o.fill !== false;
+    const gridMode = o.grid || G_CHART.grid;
+    const fill = o.fill === undefined ? G_CHART.fill : o.fill !== false;
     const framed = !!(o.title || o.yLabel || o.xLabel || o.unit);
     const w = 760, h = framed ? 200 : 220, pad = 30, left = framed ? 6 : pad, right = framed ? 6 : pad, top = framed ? 8 : pad, bottom = framed ? 4 : pad;
     const peakValue = Math.max(1, ...series.flatMap((s) => s.values));
@@ -92,7 +95,19 @@ function area(labels, series, opts) {
     const step = Math.max(1, Math.ceil(labels.length / 8));
     const shown = labels.map((label, i) => i).filter((i) => i % step === 0 || i === labels.length - 1);
     const stroke = framed ? ' vector-effect="non-scaling-stroke"' : '';
-    const grid = levels.map((n) => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"${stroke}></line>${framed ? '' : `<text x="${left - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`}`).join('');
+    const xIdx = labels.map((_, i) => i).filter((i) => i % step === 0 || i === labels.length - 1);
+    let grid = '';
+    if (framed) {
+        if (gridMode !== 'off') {
+            grid = levels.map((n) => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"${stroke}></line>`).join('');
+            grid += xIdx.map((i) => `<line x1="${x(i).toFixed(1)}" x2="${x(i).toFixed(1)}" y1="${top}" y2="${h - bottom}" class="jv-gridline jv-gridline-x"${stroke}></line>`).join('');
+            if (gridMode === 'micro') {
+                grid += xIdx.flatMap((i) => levels.map((n) => `<circle class="jv-grid-dot" cx="${x(i).toFixed(1)}" cy="${y(n).toFixed(1)}" r="1.5"></circle>`)).join('');
+            }
+        }
+    } else if (gridMode !== 'off') {
+        grid = levels.map((n) => `<line x1="${left}" x2="${w - right}" y1="${y(n)}" y2="${y(n)}" class="jv-gridline"${stroke}></line><text x="${left - 6}" y="${y(n) + 3}" text-anchor="end" class="jv-axis">${n}</text>`).join('');
+    }
     const ticks = framed ? '' : shown.map((i) => `<text x="${x(i)}" y="${h - 8}" text-anchor="middle" class="jv-axis">${esc(labels[i].slice(5))}</text>`).join('');
     const dot = (cx, cy, color) => (framed ? `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="${color}" stroke-width="8" stroke-linecap="round"${stroke}></line>` : `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}"></circle>`);
     const paths = series.map((s, k) => {
@@ -1020,13 +1035,39 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const EMPTY_BODY = /^\s*<p class="jv-empty">([^<]*)<\/p>\s*$/;
     // DOMParser reads the text without running or loading anything in it.
     const plainText = (html) => new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+    function panelStretch(id) {
+        return Number((((layoutOf(S.product) || {}).stretch) || {})[id]) || 1;
+    }
+
+    async function cycleChartStretch(id) {
+        const tab = S.product;
+        const prev = layoutOf(tab) || { order: [], hidden: [] };
+        const stretch = Object.assign({}, prev.stretch);
+        const n = ((Number(stretch[id]) || 1) % 3) + 1;
+        stretch[id] = n;
+        const view = $(`[data-view="${tab}"]`);
+        const ids = view ? defaultIds(view) : [];
+        const next = Object.assign(C.keepLayout(prev, prev.order && prev.order.length ? prev.order : ids, prev.hidden || [], ids), { stretch });
+        const put = (l) => { const all = Object.assign({}, (S.settings || {}).layout); if (l) all[tab] = l; else delete all[tab]; S.settings = Object.assign({}, S.settings, { layout: all }); };
+        put(next);
+        const out = await call('settings-save', { layout: { [tab]: next } }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { put(prev.order || prev.hidden || prev.stretch ? prev : null); toast('Not saved: ' + (out.error || 'offline'), 5000); render(); return; }
+        if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+        render();
+        toast(`Chart stretch ${n} for this panel.`, 2200);
+    }
+
     function panel(id, title, body, opts) {
         const o = opts || {};
         const empty = !o.keep && EMPTY_BODY.exec(body);
         if (empty) { S.empties.push({ title: plainText(title), why: plainText(empty[1]) }); return ''; }
         if (o.data) S.panels.set(id, { title, rows: o.data, product: S.product });
-        const tools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
-        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
+        const hasChart = /class="jv-chart/.test(body);
+        const stretch = hasChart ? panelStretch(id) : 1;
+        const exportTools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
+        const chartTool = hasChart ? `<button type="button" class="jv-btn small" data-chart-stretch="${esc(id)}" title="Chart height (${stretch} of 3)">↕${stretch}</button>` : '';
+        const tools = (exportTools || chartTool) ? `<span class="jv-panel-tools">${chartTool}${exportTools}</span>` : '';
+        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
     }
 
     const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
@@ -1563,15 +1604,27 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Promoters', value: (c.npsBuckets && c.npsBuckets.promoter) || 0 }
         ];
         const recent = c.recent || [];
+        const quotes = c.quotes || [];
+        const series = c.series || { labels: [], values: [] };
         const empty = !(t.answers > 0);
+        const trend = series.labels && series.labels.length
+            ? panel('review-csat-trend', 'CSAT answers per day', area(series.labels, [{ name: 'Answers', values: series.values, color: COLORS.green }]), {
+                wide: true,
+                data: series.labels.map((d, k) => ({ day: d, answers: series.values[k] }))
+            })
+            : '';
+        const quoteTable = quotes.length
+            ? table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['Quote', (r) => esc(r.quote || '—')]], quotes, 'No quote-ready feedback yet.')
+            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> on save.</p>';
         const body = empty
             ? '<p class="jv-empty">No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).</p>'
-            : kpis(c.kpis || []) + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
+            : kpis(c.kpis || []) + trend + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
+                panel('review-csat-quotes', 'Quote-ready (' + fmt(quotes.length) + ')', quoteTable, { wide: true, data: quotes }) +
                 table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['NPS', (r) => (r.nps == null ? '—' : fmt(r.nps))], ['Note', (r) => esc(r.comment || (r.low ? 'low' : '') || '—')]], recent, 'No recent answers.');
         return panel('review-csat', 'CSAT / NPS', body, {
             wide: true,
             data: recent,
-            note: 'Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.'
+            note: 'Post-report CSAT (#3556). 7d recurrence nudge + re-mail remind reset (#3557). Testimonials queue on quote ok.'
         });
     }
 
@@ -1690,6 +1743,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         }
         return panel('hub-share', 'Share a post', body + recent,
             { wide: true, note: 'Videos post as they are, in the language you speak in them, and must have sound. LinkedIn, X and the Facebook Page (plus TikTok and YouTube for a video) get it about 30 minutes after you queue it.' });
+    }
+
+    // Soft gate on Hub (#3533): same paste → frost → Unlock path as the public Social hub form.
+    function softGatePanel() {
+        return panel('hub-soft', 'Soft preview',
+            `<form class="jv-inline" data-hub-soft><input name="url" placeholder="example.com — soft preview" aria-label="URL for a soft preview"><button type="submit" class="jv-btn">Soft preview</button></form>`,
+            { note: 'Soft gate (#3478 / #3533): opens URL Review with a 1-page preview (gauges + top finding, no account). Unlock there runs OAuth + the ten terms, then queues a full crawl. Same form as qa-review-social.html.' });
     }
 
     async function shareDraft() {
@@ -2125,7 +2185,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 ['Since', sentWhat], ['', sentAct]], sent.rows, `No cold email has gone out yet${camps && camps.firstStart ? '; the first goes out ' + esc(camps.firstStart) : ''}.`);
         const li = sy ? sy.linkedin : null;
         const liSent = li ? li.items.filter((p) => p.sent).length : 0;
-        const linkedinBody = !sy ? syWait : !li.items.length ? '<p class="jv-empty">No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.</p>'
+        const liEmptyWhy = (l) => {
+            if (!l || !l.date) return 'No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before.';
+            if (l.left > 0) return `Today's list (${esc(l.date)}) has nobody left to send, but ${fmt(l.left)} named prospects with a personal LinkedIn still wait. The next sync should refill once their CSVs settle (#3564).`;
+            const since = l.lastNonEmpty ? ` Last people were on ${esc(l.lastNonEmpty)}` + (l.emptyStreak ? ` · ${fmt(l.emptyStreak)} empty working-day files since` : '') + '.' : '';
+            return `Today's list (${esc(l.date)}) is empty: every named prospect with a personal LinkedIn (/in/) was already listed.${since} Feed new contact_name + linkedin.com/in/ rows into the week prospect CSVs (week2 companies currently lack contact names) (#3564 / #3572).`;
+        };
+        const linkedinBody = !sy ? syWait : !li.items.length ? `<p class="jv-empty">${liEmptyWhy(li)}</p>`
             : (() => {
                 const liRow = (p) => {
                     const note = C.linkedinLine(p, 'Note');
@@ -2954,7 +3020,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Suggestions waiting', value: c.suggested || 0, alert: (c.suggested || 0) > 0 },
             { label: 'Approved accounts', value: c.approved || 0 },
             { label: 'Posted, last 7 days', value: weekTotal }
-        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${o.settings.paused ? ' is-primary' : ' danger'}" data-ot-pause="${o.settings.paused ? 'off' : 'on'}">${o.settings.paused ? 'Resume owner tags' : 'Pause owner tags'}</button><button type="button" class="jv-btn${o.settings.live ? '' : ' is-primary'}" data-ot-live="${o.settings.live ? 'off' : 'on'}">${o.settings.live ? 'Back to a dry run' : 'Go live'}</button><button type="button" class="jv-btn" data-ot-run${S.pending['ot:run'] ? ' disabled' : ''}>${S.pending['ot:run'] ? 'Running…' : 'Run now'}</button></div>`
+        ]) + `<div class="jv-actions"><button type="button" class="jv-btn${o.settings.paused ? ' is-primary' : ' danger'}" data-ot-pause="${o.settings.paused ? 'off' : 'on'}">${o.settings.paused ? 'Resume owner tags' : 'Pause owner tags'}</button><button type="button" class="jv-btn${o.settings.live ? '' : ' is-primary'}" data-ot-live="${o.settings.live ? 'off' : 'on'}">${o.settings.live ? 'Back to a dry run' : 'Go live'}</button><button type="button" class="jv-btn${o.settings.editCaptions ? '' : ' is-primary'}" data-ot-captions="${o.settings.editCaptions ? 'off' : 'on'}" title="Edit posted captions to @mention owners where the network allows; Facebook and YouTube keep comments.">${o.settings.editCaptions ? 'Caption edits on' : 'Try caption edits'}</button><button type="button" class="jv-btn" data-ot-run${S.pending['ot:run'] ? ' disabled' : ''}>${S.pending['ot:run'] ? 'Running…' : 'Run now'}</button></div>`
             + (S.otNote || o.note ? `<p class="jv-note">${S.otNote ? 'This run: ' : 'Last run: '}${esc(S.otNote || o.note)}</p>` : '')
             + (weekTotal ? `<p class="jv-note">Posted in the last 7 days: ${Object.keys(week).map((k) => `${esc(net(k))} ${fmt(week[k])}`).join(' · ')}</p>` : '');
         const acts = (a) => ['approved', 'rejected', 'blocked'].filter((s) => s !== a.status).map((s) => `<button type="button" data-ot-acct="${s}" data-network="${esc(a.network)}" data-handle="${esc(a.handle)}"${S.pending['ot:' + a.id] ? ' disabled' : ''}>${{ approved: 'Approve', rejected: 'Reject', blocked: 'Block' }[s]}</button>`).join('');
@@ -2971,7 +3037,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <label>Scope value<input name="scopeValue" autocomplete="off" placeholder="metrobogota, bogota, transit or co"></label>
             <label>Kind<select name="kind"><option value="related">related</option><option value="owner">owner</option></select></label>
             <button type="submit" class="jv-btn">Add account</button></form>`;
-        const comments = table([['When', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Network', (x) => esc(net(x.network))], ['Kind', (x) => (x.kind === 'reply' ? 'owner reply' : `tags (${fmt(x.mentions)})`)],
+        const comments = table([['When', (x) => `<span class="jv-nowrap">${esc(when(x.at))}</span>`], ['Network', (x) => esc(net(x.network))], ['Kind', (x) => (x.kind === 'reply' ? 'owner reply' : x.kind === 'caption' ? 'caption edit (' + fmt(x.mentions) + ')' : `tags (${fmt(x.mentions)})`)],
             ['Status', (x) => `<span class="jv-chip ${EG_STATUS_CHIP[x.status] || ''}">${esc(x.status)}</span>${x.error ? `<br><span class="jv-note">${esc(x.error)}</span>` : ''}`],
             ['Comment', (x) => `<span class="jv-note">${esc(x.draft)}</span>${x.url ? `<br><a href="${esc(x.url)}" target="_blank" rel="noopener">Our comment ↗</a>` : ''}${x.post ? ` <a href="${esc(x.post)}" target="_blank" rel="noopener">Post ↗</a>` : ''}`]], o.comments || [], 'No owner-tags comment yet. In a dry run nothing is queued; Go live queues them on the next run.');
         return head + `<h4>Accounts</h4>${groups}${add}<h4>Recent comments and owner replies</h4>${comments}`;
@@ -3673,7 +3739,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.review += take();
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialVelocityPanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${softGatePanel()}${sharePanel()}${socialVelocityPanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post views per day', area(hub.series.labels, [{ name: 'Views', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, views: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
@@ -3796,7 +3862,16 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         $$('[data-mail]').forEach((b) => b.classList.toggle('on', b.dataset.mail === S.mail));
         $('[data-print-range]').textContent = (RANGES.find(([v]) => v === S.range) || [])[1] || '';
         $('[data-print-at]').textContent = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' });
+        syncChartPrefs();
         holoSync();
+    }
+
+    function syncChartPrefs() {
+        G_CHART = C.chartPrefs((S.settings || {}).charts);
+        root.classList.remove('jv-charts-grid-off', 'jv-charts-grid-major', 'jv-charts-grid-micro');
+        root.classList.add('jv-charts-grid-' + G_CHART.grid);
+        root.classList.toggle('jv-charts-fill-off', !G_CHART.fill);
+        root.style.setProperty('--jv-chart-h', C.CHART_HEIGHT_REM[G_CHART.height] || C.CHART_HEIGHT_REM.m);
     }
 
     function pulse(n) {
@@ -4359,6 +4434,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     function draftSettings() {
         const s = S.settings || {};
         return { goals: (s.goals || []).map((g) => Object.assign({}, g)), thresholds: C.thresholds(s.thresholds), mail: Object.assign({ daily: true, gemini: true, watch: true, weekly: true }, s.mail || {}), searchQueries: (s.searchQueries || []).slice(), github: { repos: C.githubRepos(s.github && s.github.repos) },
+            charts: C.chartPrefs(s.charts),
             actions: { auto: !(s.actions && s.actions.auto === false), caps: Object.assign({}, ACTION_CAPS, (s.actions || {}).caps), confidence: Number((s.actions || {}).confidence) || 0.8, countdownHours: Number((s.actions || {}).countdownHours) || COUNTDOWN_HOURS },
             calendar: C.calendarSettings(s.calendar) };
     }
@@ -4395,6 +4471,19 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
               <label class="jv-check"><input type="checkbox" name="a-auto"${d.actions.auto ? ' checked' : ''}> Let Jarvis run the safe actions on its own every hour, within these daily caps</label>
               <div class="jv-th-grid">${Object.keys(ACTION_CAPS).map((k) => `<label class="jv-field">${esc(ACTION_LABELS[k].replace(/^./, (c) => c.toUpperCase()))} per day<input type="number" name="a-cap-${k}" min="0" max="100" step="1" value="${esc(d.actions.caps[k])}"></label>`).join('')}<label class="jv-field">AI confidence needed to act alone<input type="number" name="a-confidence" min="0.5" max="1" step="0.05" value="${esc(d.actions.confidence)}"></label><label class="jv-field">Countdown before a risky action, hours (0.25-24)<input type="number" name="a-countdown" min="0.25" max="24" step="0.25" value="${esc(d.actions.countdownHours)}"></label></div>
               <p class="jv-note">Held re-runs go out on their own only when clean (a complete report with a score). Owner notices keep Monday-Saturday 08:00-19:00 Bogotá, three tries and the daily notice budget, even when you click. Failed jobs and CI runs are re-run once; outreach mailboxes are paused when their DNS, warm-up or score fails; warm-up that is off is turned back on first, and a missing canary, postmaster or abuse alias is restored. The AI only picks from Jarvis's own actions; picks under the confidence become proposals.</p></section>
+            <section><h4>Charts</h4>
+              <div class="jv-th-grid"><label class="jv-field">Grid<select name="ch-grid" data-menu-ready="1">
+                <option value="micro"${d.charts.grid === 'micro' ? ' selected' : ''}>Micro (x and y, dots)</option>
+                <option value="major"${d.charts.grid === 'major' ? ' selected' : ''}>Major lines only</option>
+                <option value="off"${d.charts.grid === 'off' ? ' selected' : ''}>Off</option>
+              </select></label>
+              <label class="jv-check"><input type="checkbox" name="ch-fill"${d.charts.fill ? ' checked' : ''}> Fill under lines and sparks</label>
+              <label class="jv-field">Default plot height<select name="ch-height" data-menu-ready="1">
+                <option value="s"${d.charts.height === 's' ? ' selected' : ''}>Short</option>
+                <option value="m"${d.charts.height === 'm' ? ' selected' : ''}>Medium</option>
+                <option value="l"${d.charts.height === 'l' ? ' selected' : ''}>Tall</option>
+              </select></label></div>
+              <p class="jv-note">Shared with the Jarvis app. Each panel’s ↕ button stretches that chart (1–3) for your account; it is saved in the section layout.</p></section>
             <section><h4>Country dates</h4>
               <label class="jv-check"><input type="checkbox" name="c-auto"${d.calendar.autoPause ? ' checked' : ''}> Pause a country's campaigns over its public holidays on their own, and resume them the next business day</label>
               <div class="jv-th-grid"><label class="jv-field">Warn this many days ahead<input type="number" name="c-warn" min="1" max="60" step="1" value="${esc(d.calendar.warnDays)}"></label><label class="jv-field">Remind this many days ahead<input type="number" name="c-remind" min="0" max="60" step="1" value="${esc(d.calendar.remindDays)}"></label></div>
@@ -4530,8 +4619,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         Object.keys(C.THRESHOLDS).forEach((k) => { thresholds[k] = Number(val('t-' + k).value); });
         const searchQueries = String(val('s-queries').value || '').split('\n').map((q) => q.trim()).filter(Boolean).slice(0, 8);
         const github = { repos: C.githubRepos(String(val('s-repos').value || '').split('\n')) };
+        const charts = C.chartPrefs({ grid: val('ch-grid').value, fill: !!val('ch-fill').checked, height: val('ch-height').value });
         return { goals, thresholds, mail: Object.assign({ daily: !!val('m-daily').checked, gemini: !!val('m-gemini').checked, watch: !!val('m-watch').checked, weekly: !!val('m-weekly').checked, digest: !!val('m-digest').checked },
-            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github,
+            Object.fromEntries(Object.keys(MOVED_MAIL).map((k) => [k, !!val('m-' + k).checked]))), searchQueries, github, charts,
             actions: { auto: !!val('a-auto').checked, caps: Object.keys(ACTION_CAPS).reduce((m, k) => { m[k] = Number(val('a-cap-' + k).value); return m; }, {}), confidence: Number(val('a-confidence').value), countdownHours: Number(val('a-countdown').value) },
             calendar: C.calendarSettings({ autoPause: !!val('c-auto').checked, warnDays: Number(val('c-warn').value), remindDays: Number(val('c-remind').value) }) };
     }
@@ -4628,6 +4718,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const t = event.target.closest('button, a, li[data-hit], li[data-brief], .jv-geo-c');
         if (!t || !root.contains(t)) return;
         if (t.dataset.conDock !== undefined) { dock(!docked); return; }
+        if (t.dataset.chartStretch) { cycleChartStretch(t.dataset.chartStretch); return; }
         if (t.dataset.lay && t.dataset.lay !== 'drag') { layAct(t.dataset.lay, t.dataset.id); return; }
         if (t.dataset.conClose !== undefined) { dock(false); return; }
         if (t.dataset.conFull !== undefined) { dock(false); go('console'); return; }
@@ -4696,6 +4787,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.egDisconnect) { egConnect({ network: t.dataset.egDisconnect, disconnect: true }, `disconnect ${t.dataset.egDisconnect}, so nothing goes out there`); return; }
         if (t.dataset.otPause) { otSettings({ paused: t.dataset.otPause === 'on' }, t.dataset.otPause === 'on' ? 'pause owner tags: no comment, reply or suggestion until you resume' : 'resume owner tags'); return; }
         if (t.dataset.otLive) { otSettings({ live: t.dataset.otLive === 'on' }, t.dataset.otLive === 'on' ? 'go live: the next run queues the tag comments and owner replies, within the daily caps' : 'go back to a dry run, where owner tags only count what they would post'); return; }
+        if (t.dataset.otCaptions) { otSettings({ editCaptions: t.dataset.otCaptions === 'on' }, t.dataset.otCaptions === 'on' ? 'turn on caption edits: @mention owners in the post text where the network allows' : 'turn off caption edits: tag owners in comments only (#2633)'); return; }
         if (t.dataset.otRun !== undefined) { otRun(); return; }
         if (t.dataset.otAcct) {
             const s = t.dataset.otAcct;
@@ -4785,6 +4877,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             const out = await call('review', { url, lang: 'en' }).catch((error) => ({ ok: false, error: error.message }));
             toast(out.ok ? `Reviewing ${out.host}. It shows in the URL Review tab when it is done.` : 'Not started: ' + out.error, 6000);
             if (out.ok) { S.mkForm.url = ''; form.url.value = ''; }
+        } else if (form.dataset.hubSoft !== undefined) {
+            const raw = form.url.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+            if (!raw || /\s/.test(raw)) { toast('Enter a public host, e.g. example.com.', 4000); return; }
+            window.open('qa-review.html?url=' + encodeURIComponent(raw) + '&from=hub', '_blank', 'noopener');
         } else if (form.dataset.mkBlock !== undefined) {
             const value = form.address.value.trim();
             if (!value || !confirmRun(`block ${value} in Instantly, so no campaign ever emails it`)) return;

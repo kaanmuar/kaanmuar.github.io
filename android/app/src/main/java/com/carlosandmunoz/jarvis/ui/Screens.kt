@@ -100,8 +100,10 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
 
     val trend = wide.obj("trend")
     val lines = trend.objs("series").map { (it.str("name") ?: "") to it["values"].doubles() }
-    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE), id = "overview-trend") {
-        LineChart(lines, trend.at("labels").strings(), height = if (roomy) 170 else 130)
+    val layoutTab = LocalLayoutTab.current
+    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE), id = "overview-trend", charts = true,
+        onChartStretch = layoutTab?.let { { vm.cycleChartStretch(it, "overview-trend") } }) {
+        LineChart(lines, trend.at("labels").strings(), title = "Every product per day", yLabel = "events", unit = "events")
         Muted("Visits for the sites, opens for URL Review, messages for the inbox, events for the hub.")
     }
 
@@ -283,6 +285,12 @@ private fun CsatPanel(csat: JsonObject?) {
             return@Panel
         }
         KpiGrid(c.objs("kpis"))
+        c.obj("series")?.let { ser ->
+            val values = ser.at("values").doubles()
+            if (values.any { it > 0 }) Panel("CSAT answers per day", id = "review-csat-trend") {
+                BarChart(values, ser.at("labels").strings(), J.green)
+            }
+        }
         val stars = c.obj("stars")
         BarChart((1..5).map { stars.num(it.toString()) ?: 0.0 }, (1..5).map { "$it★" }, J.amber)
         val nps = c.obj("npsBuckets")
@@ -291,6 +299,18 @@ private fun CsatPanel(csat: JsonObject?) {
             listOf("Detractors", "Passives", "Promoters"),
             J.cyan
         )
+        val quotes = c.objs("quotes")
+        if (quotes.isNotEmpty()) {
+            Panel("Quote-ready (${quotes.size})", id = "review-csat-quotes") {
+                quotes.take(8).forEach { row ->
+                    StatusRow(
+                        "info",
+                        listOfNotNull(row.str("host")?.ifEmpty { null }, "${fmt(row.num("rating"))}/5").joinToString(" · "),
+                        listOfNotNull(ago(row.str("at")), row.str("quote")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
+                    )
+                }
+            }
+        }
         c.objs("recent").take(8).forEach { row ->
             StatusRow(
                 if (row.bool("low") == true) "warn" else "info",
@@ -298,7 +318,7 @@ private fun CsatPanel(csat: JsonObject?) {
                 listOfNotNull(ago(row.str("at")), row.str("comment")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
             )
         }
-        Muted("Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.")
+        Muted("Post-report CSAT (#3556). 7d recurrence nudge + quote queue (#3557).")
     }
 }
 

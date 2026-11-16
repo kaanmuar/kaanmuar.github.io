@@ -43,6 +43,10 @@ function web(opts) {
     if (url.startsWith(SITE + "/assets/social/open-social.json")) return json(OPEN);
     if (url.startsWith(SITE + "/assets/social/buffer.json")) return json(BUFFER);
     if (url.startsWith(SITE + "/assets/social/facebook.json")) return json({}, 404);
+    if (url.startsWith(SITE + "/assets/social/captions.json")) return json({
+      "runs-2026-10/02-bogota": { x: "Metro review.\n\n#QA #QAlab", instagram: "Metro IG", bluesky: "Metro sky", mastodon: "Metro toot", tiktok: "Metro tt" },
+      "auto-2026-11-03/11-vs-vivastreet-ie": { mastodon: "Vivastreet compare." }
+    });
     if (url === "https://www.metrodebogota.gov.co/") return html(HOME);
     if (url === "https://vivastreet.ie/" || url === "https://donedeal.ie/") return html('<a href="https://mastodon.social/@' + url.split("/")[2].split(".")[0] + '">M</a>');
     if (url.includes("resolveHandle")) return url.includes("fake") ? json({ error: "not found" }, 400) : json({ did: "did:plc:x" });
@@ -152,6 +156,41 @@ test("comments put owners first, then related accounts, within the network's cap
   assert.ok(x.every((c) => c.text.length <= 280 && c.mentions.length <= 10));
   assert.equal(x.reduce((n, c) => n + c.mentions.length, 0), T.RELATED_MAX);
   assert.equal(out[0].tags, undefined, "a typed handle is the mention on Instagram");
+});
+
+test("captionDraft appends @mentions within the limit and skips handles already in the caption", () => {
+  const owners = [{ network: "x", handle: "metrodebogota" }];
+  const cap = T.captionDraft("x", "Metro review @metrodebogota\n\n#QA", owners, []);
+  assert.equal(cap, null);
+  const out = T.captionDraft("x", "Metro review.\n\n#QA", owners, [{ network: "x", handle: "movilidadbog" }]);
+  assert.match(out.text, /^Metro review\.\n\n#QA\n\n@metrodebogota @movilidadbog$/);
+  assert.deepEqual(out.mentions, ["x:metrodebogota", "x:movilidadbog"]);
+});
+
+test("with editCaptions off, a dry run logs what caption edits would do but only comments would queue", async () => {
+  const db = fakeDb();
+  const { d } = deps(db);
+  const s = await T.readSettings(db);
+  assert.equal(s.editCaptions, false, "editCaptions defaults off");
+  const out = await T.run(d);
+  assert.ok(out.captionWould >= 1);
+  assert.ok(out.sample.some((s) => s.kind === "caption" && s.would));
+  assert.equal(out.captions, 0);
+  assert.match(T.runNote(out), / if enabled/);
+});
+
+test("with editCaptions on, a dry run counts caption edits toward dry and still logs them", async () => {
+  const db = fakeDb();
+  const { d } = deps(db);
+  await T.saveSettings(db, { editCaptions: true }, "test", NOW);
+  const out = await T.run(d);
+  assert.equal(out.editCaptions, true);
+  assert.ok(out.captionWould >= 1);
+  assert.ok(out.sample.some((s) => s.kind === "caption"));
+  assert.equal(out.captions, 0, "live is off, so nothing is posted");
+  const docs = (await db.collection("engagement_posts").get()).docs.map((s) => s.data());
+  assert.equal(docs.length, 0, "dry run does not write docs");
+  assert.ok(out.dry > 0);
 });
 
 test("on Facebook, LinkedIn and TikTok each comment names the accounts the agent picks from the menu, within TikTok's 150 characters", () => {

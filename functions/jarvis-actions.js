@@ -34,6 +34,8 @@
    launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
                    LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
                    campaign and start date, so one Carlos cancels stays a draft
+   resend-cold     #3566: step-1 cold emails with open tracking, unopened 48h–4d, on the countdown in one batch up to the
+                   daily cap; Instantly forwards silently to the same address
    index-submit    logged by the Monday jarvisIndexPush job (#2480): the sitemap pages missing from Brave's index sent to
                    IndexNow and Brave's Submit URL form (jarvis-index.js)
    #2660, owner tags (owner-tags.js):
@@ -87,6 +89,7 @@ const CAPS = {
 	'enable-warmup': 2,
 	'restore-alias': 2,
 	'launch-campaign': 10,
+	/* #3566: auto forward unopened cold step-1 after 48h; Carlos set daily cap to 5 */ 'resend-cold': 5,
 	'gh-board-sync': 10,
 	'gh-orphan-ticket': 5,
 	'gh-update-pr': 5,
@@ -122,6 +125,7 @@ const LABELS = {
 	'enable-warmup': 'Turn mailbox warm-up back on',
 	'restore-alias': 'Restore a missing alias',
 	'launch-campaign': 'Launch a draft campaign',
+	'resend-cold': 'Re-send unopened cold emails',
 	'pagespeed-merge': 'Merge PageSpeed fixes',
 	'pagespeed-close': 'Close PageSpeed fixes',
 	'pagespeed-run': 'Start the PageSpeed run',
@@ -912,6 +916,41 @@ async function autoRun({ db, now, settings, ops }) {
 					'A draft with ' + plural(c.leads, 'lead') + ' that starts ' + c.start + '; nothing sends until it is active.',
 				onCancel: 'activate it in Jarvis > Marketing',
 			});
+		}
+	}
+
+	if (ops.coldResendCandidates && ops.resendCold && left('resend-cold') > 0) {
+		const inCold = busy('resend-cold');
+		let candidates = [];
+		try {
+			candidates = await ops.coldResendCandidates(left('resend-cold'));
+		} catch (error) {
+			const detail = 'Instantly: ' + text(error.message || error, 200);
+			if (!rows.some((r) => r.action === 'resend-cold' && r.status === 'failed' && r.detail === detail))
+				rows.push(
+					await log(db, { action: 'resend-cold', mode: 'auto', status: 'failed', target: 'cold resends', detail }, now)
+				);
+		}
+		const fresh = candidates.filter((c) => c && c.id && !inCold.has(c.id));
+		if (fresh.length) {
+			const capLeft = left('resend-cold');
+			const take = fresh.slice(0, capLeft);
+			if (take.length) {
+				await later({
+					action: 'resend-cold',
+					target: plural(take.length, 'unopened cold email'),
+					count: take.length,
+					part: take
+						.map((c) => c.id)
+						.sort()
+						.join(','),
+					payload: { items: take.map((c) => ({ id: c.id, to: c.to })) },
+					why: 'Unopened after 2 days: ' + names(take.map((c) => c.org || c.to)) + '.',
+					onCancel: 'forward them from Jarvis > Marketing',
+				});
+			}
+			if (fresh.length > take.length)
+				await wait('resend-cold', fresh.length - take.length, "Over today's cap of " + cfg.caps['resend-cold'] + '.');
 		}
 	}
 

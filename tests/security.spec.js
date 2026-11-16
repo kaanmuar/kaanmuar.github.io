@@ -19,6 +19,7 @@ test.describe('Security and SEO', () => {
     const xml = await res.text();
     expect(xml).toContain('carlosandmunoz.com/');
         expect(xml).toContain('simulador.html');
+        expect(xml).toContain('qa.html');
         expect(xml).toContain('qa-lab.html');
         expect(xml).not.toContain('?lang=');
         expect(xml).toContain('qa-review-es.html');

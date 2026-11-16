@@ -1330,6 +1330,7 @@ function normalizeSettings(data) {
 		)
 	).slice(0, 8);
 	const github = { repos: core.githubRepos(d.github && d.github.repos) };
+	const charts = core.chartPrefs(d.charts);
 	return {
 		goals: core.cleanGoals(d.goals),
 		thresholds: core.thresholds(d.thresholds),
@@ -1337,6 +1338,7 @@ function normalizeSettings(data) {
 		mailVersion: MAIL_VERSION,
 		searchQueries,
 		github,
+		charts,
 		actions: actions.cleanSettings(d.actions),
 		calendar: calendar.cleanSettings(d.calendar),
 		layout: core.cleanLayout(d.layout),
@@ -1365,6 +1367,7 @@ async function saveSettings(db, input, by) {
 		mailVersion: MAIL_VERSION,
 		searchQueries: clean.searchQueries,
 		github: clean.github,
+		charts: clean.charts,
 		actions: clean.actions,
 		calendar: clean.calendar,
 		layout: clean.layout,

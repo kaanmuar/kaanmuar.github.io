@@ -3,7 +3,7 @@
    Cancel, then a push when it starts and one with the result; the web and the app list the pending ones.
 
    kinds      email     third-party email: held re-runs to their askers, owner notices, the jobs that mail people,
-                        launching a draft outreach campaign
+                        launching a draft outreach campaign, forwarding unopened cold step-1 emails
               post      public posts off schedule: retrying failed social posts, a failed posting job or workflow re-run
               code      code reaching production: merging a green PR (labelled jarvis-merge, or a safe PageSpeed PR),
                         the Pages and app workflows
@@ -60,7 +60,13 @@ function inner(row) {
 }
 
 function kindOf(action, target) {
-	if (action === 'rerun-held' || action === 'resend-notices' || action === 'launch-campaign') return 'email';
+	if (
+		action === 'rerun-held' ||
+		action === 'resend-notices' ||
+		action === 'launch-campaign' ||
+		action === 'resend-cold'
+	)
+		return 'email';
 	if (JOB_ACTIONS.includes(action)) return MAIL_JOBS.includes(target) ? 'email' : 'post';
 	if (action === 'rerun-ci') return /^pages$|jarvis android/i.test(String(target)) ? 'code' : 'post';
 	if (action === 'retry-social') return 'post';
@@ -315,6 +321,15 @@ async function execute(row, ops, now) {
 		return {
 			count: res.launched.length,
 			detail: 'Launched ' + res.launched.join(', ') + (res.left.length ? '; left: ' + res.left.join('; ') : '') + '.',
+		};
+	}
+	if (action === 'resend-cold') {
+		const res = await ops.resendCold((p.items || []).map((i) => i.id));
+		if (!res.launched.length)
+			throw new Error('Nothing re-sent' + (res.left.length ? ': ' + res.left.join('; ') : '') + '.');
+		return {
+			count: res.launched.length,
+			detail: 'Re-sent ' + res.launched.join(', ') + (res.left.length ? '; left: ' + res.left.join('; ') : '') + '.',
 		};
 	}
 	if (action === 'merge-pr' && p.pagespeed) {

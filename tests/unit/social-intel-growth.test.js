@@ -74,7 +74,7 @@ test("summarizeCsat scaffolds KPIs and NPS buckets (#3557)", () => {
     end: new Date("2026-11-10T00:00:00Z")
   };
   const out = core.summarizeCsat([
-    { id: "1", createdAt: "2026-11-15T12:00:00Z", rating: 5, nps: 10, quoteOk: true, host: "a.test", comment: "great" },
+    { id: "1", createdAt: "2026-11-15T12:00:00Z", rating: 5, nps: 10, quoteOk: true, host: "a.test", comment: "The report was clear and we knew what to fix first." },
     { id: "2", createdAt: "2026-11-14T12:00:00Z", rating: 2, nps: 4, low: true, host: "b.test", comment: "slow" },
     { id: "3", createdAt: "2026-11-05T12:00:00Z", rating: 4, nps: 8 }
   ], window, prior);
@@ -85,4 +85,7 @@ test("summarizeCsat scaffolds KPIs and NPS buckets (#3557)", () => {
   assert.equal(out.npsBuckets.detractor, 1);
   assert.ok(out.kpis.some((k) => k.label === "CSAT answers"));
   assert.equal(out.recent[0].host, "a.test");
+  assert.ok(out.series && out.series.values.length >= 1);
+  assert.equal(out.quotes.length, 1);
+  assert.equal(out.totals.quotes, 1);
 });
