@@ -285,6 +285,12 @@ private fun CsatPanel(csat: JsonObject?) {
             return@Panel
         }
         KpiGrid(c.objs("kpis"))
+        c.obj("series")?.let { ser ->
+            val values = ser.at("values").doubles()
+            if (values.any { it > 0 }) Panel("CSAT answers per day", id = "review-csat-trend") {
+                BarChart(values, ser.at("labels").strings(), J.green)
+            }
+        }
         val stars = c.obj("stars")
         BarChart((1..5).map { stars.num(it.toString()) ?: 0.0 }, (1..5).map { "$it★" }, J.amber)
         val nps = c.obj("npsBuckets")
@@ -293,6 +299,18 @@ private fun CsatPanel(csat: JsonObject?) {
             listOf("Detractors", "Passives", "Promoters"),
             J.cyan
         )
+        val quotes = c.objs("quotes")
+        if (quotes.isNotEmpty()) {
+            Panel("Quote-ready (${quotes.size})", id = "review-csat-quotes") {
+                quotes.take(8).forEach { row ->
+                    StatusRow(
+                        "info",
+                        listOfNotNull(row.str("host")?.ifEmpty { null }, "${fmt(row.num("rating"))}/5").joinToString(" · "),
+                        listOfNotNull(ago(row.str("at")), row.str("quote")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
+                    )
+                }
+            }
+        }
         c.objs("recent").take(8).forEach { row ->
             StatusRow(
                 if (row.bool("low") == true) "warn" else "info",
@@ -300,7 +318,7 @@ private fun CsatPanel(csat: JsonObject?) {
                 listOfNotNull(ago(row.str("at")), row.str("comment")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
             )
         }
-        Muted("Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.")
+        Muted("Post-report CSAT (#3556). 7d recurrence nudge + quote queue (#3557).")
     }
 }
 

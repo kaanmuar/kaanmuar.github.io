@@ -1656,15 +1656,27 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Promoters', value: (c.npsBuckets && c.npsBuckets.promoter) || 0 }
         ];
         const recent = c.recent || [];
+        const quotes = c.quotes || [];
+        const series = c.series || { labels: [], values: [] };
         const empty = !(t.answers > 0);
+        const trend = series.labels && series.labels.length
+            ? panel('review-csat-trend', 'CSAT answers per day', area(series.labels, [{ name: 'Answers', values: series.values, color: COLORS.green }]), {
+                wide: true,
+                data: series.labels.map((d, k) => ({ day: d, answers: series.values[k] }))
+            })
+            : '';
+        const quoteTable = quotes.length
+            ? table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['Quote', (r) => esc(r.quote || '—')]], quotes, 'No quote-ready feedback yet.')
+            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> on save.</p>';
         const body = empty
             ? '<p class="jv-empty">No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).</p>'
-            : kpis(c.kpis || []) + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
+            : kpis(c.kpis || []) + trend + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
+                panel('review-csat-quotes', 'Quote-ready (' + fmt(quotes.length) + ')', quoteTable, { wide: true, data: quotes }) +
                 table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['NPS', (r) => (r.nps == null ? '—' : fmt(r.nps))], ['Note', (r) => esc(r.comment || (r.low ? 'low' : '') || '—')]], recent, 'No recent answers.');
         return panel('review-csat', 'CSAT / NPS', body, {
             wide: true,
             data: recent,
-            note: 'Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.'
+            note: 'Post-report CSAT (#3556). 7d recurrence nudge + re-mail remind reset (#3557). Testimonials queue on quote ok.'
         });
     }
 
