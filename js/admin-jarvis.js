@@ -2982,15 +2982,15 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
             : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
         const last = g.lastRun;
-        const meta = g.metaScout;
+        const scoutMeta = g.metaScout;
         const metaTitles = { cloud: 'Cloud', mac: 'Mac', reddit: 'Reddit', ownerTags: 'Owner tags', students: 'Students' };
         const metaChip = (k) => {
-            const p = meta && meta.passes && meta.passes[k];
+            const p = scoutMeta && scoutMeta.passes && scoutMeta.passes[k];
             if (!p) return '';
             return `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}" title="${esc(p.label || '')}">${esc(metaTitles[k] || k)}</span>`;
         };
-        const packLine = (d) => d ? `Pack <strong>${esc(d.packName || d.pack || 'global')}</strong>${d.rotate ? ' (auto-rotates each slot)' : d.setting && d.setting !== 'auto' ? ' (pinned)' : ''} · ${fmt(d.topics)} searches · langs ${esc((d.langs || []).join(', '))}${meta.fieldSweep && meta.fieldSweep.count ? ` · field sweep ${fmt(meta.fieldSweep.count)}${meta.fieldSweep.tender ? ' (' + fmt(meta.fieldSweep.tender) + ' tender)' : ''}` : ''}` : '';
-        const metaBody = meta ? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(meta.at))}${meta.discovery ? ` · ${packLine(meta.discovery)}` : ''}${meta.needs && meta.needs.length ? '<br>' + esc(meta.needs.join(' · ')) : ''}</p>`
+        const packLine = (d) => d ? `Pack <strong>${esc(d.packName || d.pack || 'global')}</strong>${d.rotate ? ' (auto-rotates each slot)' : d.setting && d.setting !== 'auto' ? ' (pinned)' : ''} · ${fmt(d.topics)} searches · langs ${esc((d.langs || []).join(', '))}${scoutMeta.fieldSweep && scoutMeta.fieldSweep.count ? ` · field sweep ${fmt(scoutMeta.fieldSweep.count)}${scoutMeta.fieldSweep.tender ? ' (' + fmt(scoutMeta.fieldSweep.tender) + ' tender)' : ''}` : ''}` : '';
+        const metaBody = scoutMeta ? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(scoutMeta.at))}${scoutMeta.discovery ? ` · ${packLine(scoutMeta.discovery)}` : ''}${scoutMeta.needs && scoutMeta.needs.length ? '<br>' + esc(scoutMeta.needs.join(' · ')) : ''}</p>`
             : '<p class="jv-empty">The meta scout envelope appears after the next run.</p>';
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
