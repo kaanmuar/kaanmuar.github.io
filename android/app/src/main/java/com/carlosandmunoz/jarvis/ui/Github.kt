@@ -561,7 +561,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         DoraRow("Time to restore", fmt(dora.obj("mttrH").num("median")) + " h", dora.obj("mttrH").str("level"))
     }
 
-    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci") {
+    val layoutTab = LocalLayoutTab.current
+    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci", charts = true,
+        onChartStretch = layoutTab?.let { { vm.cycleChartStretch(it, "github-ci") } }) {
         Github.down(ci)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Runs", fmt(ci.num("runs"))), KpiData("Failed", fmt(ci.num("failed")), alert = (ci.num("failed") ?: 0.0) > 0),
