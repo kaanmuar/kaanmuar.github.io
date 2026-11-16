@@ -2754,7 +2754,7 @@ exports.pastRerunReviews = require("firebase-functions/v2/scheduler").onSchedule
   timeoutSeconds: sweep.TICK_SECONDS,
   memory: "2GiB",
   maxInstances: 1,
-  secrets: SECRETS.sweep.concat(SECRETS.mail)
+  secrets: SECRETS.pastRerunReviews
 }, () => track("pastRerunReviews", () => pastRerunReviews()));
 
 // Local-business prospects from Google Maps for tonight's sweep (#2120); see functions/url-review-prospects.js.

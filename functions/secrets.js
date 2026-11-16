@@ -28,6 +28,8 @@ const BY_FUNCTION = {
   rerunReviewFailures: list(MAIL, SCAN, GEMINI),
   fileReviewFailureBugs: list(GITHUB),
   sweep: list(SCAN),
+  // pastRerunReviews (#3458): same review browser as the sweep, plus SendGrid for the follow-up note.
+  pastRerunReviews: list(SCAN, MAIL),
   // placesProspects (#2120): Places Text Search for local-business prospects.
   prospects: list(["PLACES_KEY"]),
   // wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
