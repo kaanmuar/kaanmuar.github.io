@@ -224,6 +224,20 @@ test("rollup, report and the report mail add up across days and against the wind
   assert.equal(p.tab, "products:engagement");
 });
 
+test("report lists format signals from top posts (#3558)", () => {
+  const top = [
+    { network: "x", title: "Short hook", text: "Short hook", url: "https://x.com/a/1", topic: "SEO" },
+    { network: "x", title: "A longer post that links out https://example.com/a11y for more", text: "A longer post that links out https://example.com/a11y for more", url: "https://x.com/a/2", topic: "A11y", isReply: true },
+    { network: "linkedin", title: "Medium length LinkedIn note without a raw URL in the body text here", text: "Medium length LinkedIn note without a raw URL in the body text here", url: "https://linkedin.com/x", topic: "QA" }
+  ];
+  const r = E.report("weekly", [], [], top, NOW);
+  assert.ok(r.formats.length >= 1);
+  assert.equal(E.formatOf(top[0]).band, "short");
+  assert.equal(E.formatOf(top[1]).link, true);
+  assert.equal(E.formatOf(top[1]).thread, true);
+  assert.match(E.reportMail(r).body, /Formats in our field/);
+});
+
 test("reply pushes carry Approve, Edit inline and Dismiss, which notify-act accepts", () => {
   const msg = E.replyPush({ key: "mastodon_0123456789abcdef0123", network: "mastodon", url: "https://x.social/@a/1", score: 7, topic: "SEO", about: "Canonical tags", author: { name: "Ana" }, text: "t", actions: { reply: { draft: "Our draft", lang: "en" } } });
   assert.equal(msg.ref, "engagement:mastodon_0123456789abcdef0123");

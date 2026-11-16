@@ -1,0 +1,93 @@
+# .github/workflows/creative-intel.yml
+# Friday (#3558 / #3559): draft the weekly creative-intel edition and held tip stubs, then open a
+# draft PR for Carlos to rewrite. Nothing posts to Buffer. Schedule: functions/ops-schedule.js.
+
+name: Creative intel
+
+on:
+  schedule:
+    # Friday 14:15 UTC ≈ 09:15 Bogotá
+    - cron: '15 14 * * 5'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Friday edition date (YYYY-MM-DD); empty = this/next Friday UTC'
+        required: false
+
+concurrency:
+  group: creative-intel
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Pick the Friday and draft files
+        id: intel
+        env:
+          INPUT_DATE: ${{ inputs.date }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_DATE:-}" ]; then
+            FRIDAY="$INPUT_DATE"
+          else
+            # Next Friday from today UTC (today if already Friday).
+            FRIDAY=$(node -e 'const d=new Date(); const add=(5-d.getUTCDay()+7)%7; d.setUTCDate(d.getUTCDate()+add); process.stdout.write(d.toISOString().slice(0,10))')
+          fi
+          echo "friday=$FRIDAY" >> "$GITHUB_OUTPUT"
+          node scripts/tips-studio/creative-intel.js --draft --date "$FRIDAY" || true
+          node scripts/tips-studio/creative-intel.js --held --date "$FRIDAY"
+          ls -la scripts/tips-studio/creative-intel/
+      - name: Open a draft PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FRIDAY: ${{ steps.intel.outputs.friday }}
+        run: |
+          set -euo pipefail
+          branch="creative-intel/$FRIDAY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin main
+          git switch -q -C "$branch" origin/main
+          # Editions are gitignored locally; force-add for the human-gate PR.
+          git add -f "scripts/tips-studio/creative-intel/$FRIDAY.json" \
+            "scripts/tips-studio/creative-intel/held-$FRIDAY.json" || true
+          if git diff --cached --quiet; then
+            echo "No new creative-intel files to PR (edition may already exist)."
+            exit 0
+          fi
+          git commit -q -m "Creative intel draft for $FRIDAY (#3558, #3559)" \
+            -m "Held tip stubs and format digest. Rewrite in our words, drop draft/hold, then studio-build. No Buffer auto-post."
+          git push -q -u origin "HEAD:$branch" --force-with-lease
+          existing=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Draft PR already open: #$existing"
+            exit 0
+          fi
+          body=$(cat <<EOF
+          ## Summary
+          - Friday creative-intel edition + held tip stubs from trending tags and hook templates (#3558, #3559).
+          - Human gate only: rewrite copy, delete \`draft\` / \`hold\`, then studio-build. **No Buffer auto-post.**
+
+          ## Files
+          - \`scripts/tips-studio/creative-intel/$FRIDAY.json\`
+          - \`scripts/tips-studio/creative-intel/held-$FRIDAY.json\`
+
+          Parent epic #3555.
+          EOF
+          )
+          # Strip the leading indent from the heredoc so the PR body stays clean.
+          body=$(printf '%s\n' "$body" | sed 's/^          //')
+          gh pr create --draft --base main --head "$branch" \
+            --title "Creative intel: rewrite held drafts for $FRIDAY (#3558)" \
+            --body "$body"

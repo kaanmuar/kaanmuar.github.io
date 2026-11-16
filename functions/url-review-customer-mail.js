@@ -1039,10 +1039,14 @@ const PDF_STYLE = "@page{size:A4;margin:12mm 0 14mm}@page:first{margin:0 0 14mm}
   ".only ul{margin:0;padding-left:4mm}.only li{margin:0 0 1mm}.only small{color:" + TEXT.muted + "}";
 
 // The running footer sits in the page margin: a position:fixed footer lands over the content on pages after the first.
-function pdfFooter(id) {
+// Agency white-label keeps a small “Report by QA-lab” line (#3482 / #W2A).
+function pdfFooter(id, brand) {
   const box = "font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:8pt;color:" + TEXT.muted + ";border-top:1px solid " + fusion.LINE + ";vertical-align:middle;";
   const quoted = "\"" + String(id || "").replace(/[^A-Za-z0-9_-]/g, "") + "\"";
-  return "@page{@bottom-left{content:\"QA-lab URL Review · carlosandmunoz.com/qa-review.html\";padding-left:16mm;" + box + "}" +
+  const left = brand && brand.companyName
+    ? String(brand.companyName).replace(/["\\]/g, "") + " · Report by QA-lab"
+    : "QA-lab URL Review · carlosandmunoz.com/qa-review.html";
+  return "@page{@bottom-left{content:\"" + left + "\";padding-left:16mm;" + box + "}" +
     "@bottom-right{content:" + quoted + " \"  ·  \" counter(page) \" / \" counter(pages);padding-right:16mm;text-align:right;" + box + "}}";
 }
 
@@ -1107,10 +1111,16 @@ function reportPdf(record, options) {
   // Fixed, so the print engine repeats it on every page.
   const mark = String((record && record.email) || "");
   const watermark = mark ? "<div class=\"wm\" aria-hidden=\"true\">" + ("<span>" + esc(mark) + "</span>").repeat(40) + "</div>" : "";
-  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + pdfFooter(facts.id) + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
+  const brand = opts.brand || null;
+  const heroMark = brand && brand.logoDataUrl ? brand.logoDataUrl : markUrl();
+  const heroAlt = brand && brand.companyName ? brand.companyName : "QA-lab URL Review";
+  const heroEyebrow = brand && brand.companyName
+    ? esc(brand.companyName) + " <span style=\"opacity:.72;font-weight:500\">· Report by QA-lab</span>"
+    : "QA-lab URL Review";
+  const html = "<!DOCTYPE html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><title>" + esc(brand && brand.companyName ? brand.companyName + " · " : "") + "QA-lab URL Review · " + esc(facts.host) + "</title><style>" + PDF_STYLE + pdfFooter(facts.id, brand) + (open ? "" : ".fz{background-image:url(" + stripUrl() + ")}") + "</style></head><body>" +
     watermark +
     "<div class=\"page\">" +
-    "<div class=\"hero\"><img class=\"mark\" src=\"" + markUrl() + "\" alt=\"QA-lab URL Review\"><div class=\"who\"><p class=\"eyebrow\">QA-lab URL Review</p><p class=\"host\">" + esc(facts.host) + "</p>" +
+    "<div class=\"hero\"><img class=\"mark\" src=\"" + heroMark + "\" alt=\"" + esc(heroAlt) + "\"><div class=\"who\"><p class=\"eyebrow\">" + heroEyebrow + "</p><p class=\"host\">" + esc(facts.host) + "</p>" +
     "<p class=\"meta\">" + esc(fill(p.read, { date })) + " · <code>" + esc(facts.id) + "</code>" + (finalUrl ? "<span class=\"url\">" + esc(finalUrl) + "</span>" : "") + "</p><span class=\"badge\">" + esc(open ? p.badgeOpen : p.badge) + "</span></div>" +
     (facts.score ? "<div class=\"ring\" style=\"background:conic-gradient(" + ringColor + " " + overall * 3.6 + "deg,rgba(233,253,255,.14) 0)\"><div><b>" + overall + "</b><i>" + esc(t.outOf) + "</i><em style=\"background:" + ringColor + "\">" + esc(facts.score.grade || "") + "</em></div></div>" : "") +
     "</div>" +

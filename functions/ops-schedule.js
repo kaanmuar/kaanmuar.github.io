@@ -64,6 +64,7 @@ const JOBS = [
   { job: "reddit-live.yml", host: "github", cron: "50 15 * * *", gap: 26, what: "Upload the Reddit app with the day's Live Reports (after each batch; this slot is the backup); the app posts and pins the batch in r/QALabLiveReports at 16:20 UTC" },
   { job: "facebook-page.yml", host: "github", cron: "7 16 * * *", gap: 24, what: "Schedule the Facebook queue (started by dispatchFacebookQueue; this slot is the backup)" },
   { job: "field-sweep.yml", host: "github", cron: "23 13 * * *", gap: 50, what: "Propose standout items from the field for the social hub (the owner approves them in admin)" },
+  { job: "creative-intel.yml", host: "github", cron: "15 14 * * 5", gap: 8 * 24, what: "Friday creative-intel digest + held tip stubs as a draft PR for rewrite (#3558 / #3559); human gate, no Buffer auto-post" },
   { job: "sweep-roundup.yml", host: "github", cron: "29 14 * * 1", gap: 8 * 24, what: "Draft the weekly neutral sweep round-up post (the owner approves it in Jarvis or admin)" },
   { job: "sweep-seeds.yml", host: "github", cron: "0 9 16 * *", gap: 32 * 24, what: "Rebuild the country-sweep seeds from the CrUX top lists" },
   { job: "domain-index.yml", host: "github", cron: "0 10 16 * *", gap: 32 * 24, what: "Rebuild the URL Review host suggestions from the CrUX and Tranco lists" }

@@ -1897,6 +1897,7 @@ function findPlaces() {
 
 const REVIEW_ALERT_TO = "qa@carlosandmunoz.com";
 const customerMail = require("./url-review-customer-mail");
+const reviewAgency = require("./url-review-agency");
 const launchMail = require("./launch-mail");
 const reviewOffers = require("./url-review-offers");
 const reviewPass = require("./url-review-pass");
@@ -2081,11 +2082,24 @@ async function storePdf(base64, filename) {
   return "https://firebasestorage.googleapis.com/v0/b/" + PDF_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
 }
 
+async function brandingForEmail(email) {
+  const address = String(email || "").trim().toLowerCase();
+  if (!address) return null;
+  try {
+    const snap = await getFirestore().collection("url_review_accounts").doc(address).get();
+    return reviewAgency.pdfBrand(reviewAgency.brandingOf(snap.exists ? snap.data() : null));
+  } catch (error) {
+    console.error("Agency branding load failed:", error && error.message);
+    return null;
+  }
+}
+
 async function reportPdfFor(record, options) {
   if (!process.env.BROWSER_KEY) return null;
   let page = null;
   try {
-    page = customerMail.reportPdf(record, options);
+    const brand = (options && options.brand) || await brandingForEmail(record && record.email);
+    page = customerMail.reportPdf(record, Object.assign({}, options || {}, brand ? { brand } : {}));
   } catch (error) {
     console.error("Report PDF failed:", error && error.message);
     return null;
@@ -4239,7 +4253,47 @@ async function reviewAccount(req, res, pathName) {
     const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
     const freeAccount = await hasFreeRuns(signedIn.email);
     const file = reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), { freeAccount });
-    res.status(200).json(Object.assign(file, { comparisons: await savedComparisons(db, signedIn.email) }));
+    const account = await db.collection("url_review_accounts").doc(signedIn.email).get();
+    const accountRow = account.exists ? account.data() : null;
+    const agencyOk = reviewAgency.agencyEligible(file.passDetail);
+    res.status(200).json(Object.assign(file, {
+      comparisons: await savedComparisons(db, signedIn.email),
+      agency: agencyOk,
+      branding: reviewAgency.publicBranding(accountRow),
+      agencyCi: agencyOk ? reviewAgency.publicWebhook(accountRow) : null,
+      bundles: Object.keys(urlReview.FULL_STACK_BUNDLES).map((id) => {
+        const row = urlReview.FULL_STACK_BUNDLES[id];
+        return { id: row.id, name: row.name, usd: row.cents / 100, frameworks: row.frameworks, tools: row.tools };
+      })
+    }));
+    return;
+  }
+  if (pathName.endsWith("/account/branding") && req.method === "POST") {
+    const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
+    const file = reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), {});
+    if (!reviewAgency.agencyEligible(file.passDetail)) {
+      res.status(403).json({ error: "White-label branding is on the Team and Pro passes." });
+      return;
+    }
+    const next = reviewAgency.sanitizeBranding(req.body || {});
+    const patch = next.cleared
+      ? { branding: FieldValue.delete() }
+      : { branding: { companyName: next.companyName, logoDataUrl: next.logoDataUrl, updatedAt: new Date().toISOString() } };
+    await db.collection("url_review_accounts").doc(signedIn.email).set(patch, { merge: true });
+    res.status(200).json({ ok: true, branding: next.cleared ? null : { companyName: next.companyName, logoDataUrl: next.logoDataUrl } });
+    return;
+  }
+  if (pathName.endsWith("/account/agency-ci") && req.method === "POST") {
+    const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
+    const file = reviewOffers.accountFile(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), signedIn.email, Date.now(), {});
+    if (!reviewAgency.agencyEligible(file.passDetail)) {
+      res.status(403).json({ error: "The Agency CI webhook is on the Team and Pro passes." });
+      return;
+    }
+    const made = reviewAgency.newWebhookSecret();
+    await db.collection("url_review_accounts").doc(signedIn.email).set({ agencyCi: made }, { merge: true });
+    const pub = reviewAgency.publicWebhook({ agencyCi: made });
+    res.status(200).json({ ok: true, agencyCi: Object.assign({}, pub, { secret: made.secret }) });
     return;
   }
   if (pathName.indexOf("/account/comparison/") !== -1) {
@@ -5174,9 +5228,12 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
             depth: req.query.depth,
             billing: String(req.query.billing || ""),
             compareWith: reviewCompare.cleanId(req.query.compareWith),
-            competitors: req.query.competitors
+            competitors: req.query.competitors,
+            bundle: String(req.query.bundle || "")
           })
-          : urlReview.priceFor(String(req.query.frameworks || ""), String(req.query.tools || ""));
+          : urlReview.normalizeBundle(req.query.bundle)
+            ? urlReview.priceForBundle(req.query.bundle)
+            : urlReview.priceFor(String(req.query.frameworks || ""), String(req.query.tools || ""));
       const quotePurpose = req.query.purpose === "report" ? "report" : (req.query.pages && !req.query.layers ? "new-run" : "");
       let deal = null;
       if (quotePurpose) {
@@ -5185,7 +5242,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         if (quotePurpose === "report" && quoteReport) {
           const ownerSnap = await getFirestore().collection("url_reviews").doc(quoteReport).get();
           owner = ownerSnap.exists ? ownerSnap.data() : {};
-          priced = urlReview.priceForReport(priced.frameworks, priced.tools, urlReview.creditFor(owner));
+          priced = urlReview.priceForReport(priced.frameworks, priced.tools, urlReview.creditFor(owner), urlReview.normalizeBundle(req.query.bundle) ? { bundle: String(req.query.bundle) } : null);
         }
         const quoteDevice = String(req.query.deviceId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
         deal = await returnPrice(priced, {
@@ -5333,18 +5390,26 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         priced = urlReview.priceForAlerts(req.body && req.body.alertCount);
       } else if (purpose === "report") {
         creditCents = urlReview.creditFor(reportData);
-        priced = urlReview.priceForReport((reportData && reportData.frameworks) || [], urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools), creditCents);
+        const reportBundle = urlReview.normalizeBundle(req.body && req.body.bundle);
+        priced = urlReview.priceForReport(
+          (reportData && reportData.frameworks) || [],
+          urlReview.toolsForCharge((reportData && reportData.report && reportData.report.tools) || [], req.body && req.body.tools),
+          creditCents,
+          reportBundle ? { bundle: reportBundle.id } : null
+        );
       }
       const compareWith = purpose === "new-run" && !passPlan && req.body ? reviewCompare.cleanId(req.body.compareWith) : "";
       if (!priced) {
+        const runBundle = urlReview.normalizeBundle(req.body && req.body.bundle);
         priced = urlReview.priceForRun({
-          frameworks: (req.body && req.body.frameworks) || [],
-          tools: req.body && req.body.tools,
+          frameworks: (req.body && req.body.frameworks) || (runBundle && runBundle.frameworks) || [],
+          tools: (req.body && req.body.tools) || (runBundle && runBundle.tools) || [],
           pages: req.body && req.body.pages,
           depth: req.body && req.body.depth,
           billing: req.body && req.body.billing,
           compareWith,
-          competitors: req.body && req.body.competitors
+          competitors: req.body && req.body.competitors,
+          bundle: runBundle ? runBundle.id : ""
         });
       }
       let deal = null;
@@ -5384,6 +5449,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         pages: priced.pages,
         depth: priced.depth,
         billing: priced.billing,
+        bundle: priced.bundle || "",
         compareWith,
         competitors: priced.competitors,
         alertCount: priced.alertCount,
@@ -5416,6 +5482,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         pages: priced.pages || null,
         depth: priced.depth || null,
         billing: priced.billing || "",
+        bundle: priced.bundle || "",
         compareWith,
         competitors: priced.competitors || null,
         lang: String((req.body && req.body.lang) || "").slice(0, 2),
@@ -5541,6 +5608,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       const addons = data.addons || [];
       // A bought fix list opens the findings to the owner; the cases stay in the frosted preview.
       const fixList = addons.indexOf("fixlist") !== -1 && data.report ? { insights: data.report.insights || null } : {};
+      const softBrand = await brandingForEmail(data.email);
+      const softBrandJson = softBrand ? { companyName: softBrand.companyName, logoDataUrl: softBrand.logoDataUrl || "" } : null;
       if (data.report && reviewOffers.reopenFree(data, Date.now())) {
         const preview = urlReview.previewReport(data.report);
         res.status(200).json(Object.assign({
@@ -5554,7 +5623,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
           creditUsd: priced.creditUsd || 0,
           tools: priced.tools || [],
           id,
-          host: data.report.host
+          host: data.report.host,
+          branding: softBrandJson
         }, dealFields(deal)));
         return;
       }
@@ -5568,17 +5638,37 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         host: data.report && data.report.host,
         status: data.status || "",
         addons,
-        preview: data.report ? urlReview.previewReport(data.report) : null
+        preview: data.report ? urlReview.previewReport(data.report) : null,
+        branding: softBrandJson
       }, fixList, dealFields(deal)));
       return;
     }
     const comparisons = data.report && !data.report.compare ? await comparisonsFrom(id, data.email) : [];
     const versus = req.method === "POST" ? await versusFrom(Object.assign({ id }, data), opening, proof) : null;
-    res.status(200).json(Object.assign({ report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report, frameworks: data.frameworks || [], paid: true, free, addons: data.addons || [], addonLayers: data.addonLayers || [] }, versus ? { versus } : {}));
+    const brand = await brandingForEmail(data.email);
+    res.status(200).json(Object.assign({
+      report: comparisons.length ? Object.assign({}, data.report, { comparisons }) : data.report,
+      frameworks: data.frameworks || [],
+      paid: true,
+      free,
+      addons: data.addons || [],
+      addonLayers: data.addonLayers || [],
+      branding: brand ? { companyName: brand.companyName, logoDataUrl: brand.logoDataUrl || "" } : null
+    }, versus ? { versus } : {}));
     return;
   }
   if (req.method === "POST" && pathName.endsWith("/review/preview")) {
     await runSoftPreview(req, res);
+    return;
+  }
+  // Agency CI post-deploy hook (#3482): HMAC secret per Team/Pro account (Advice / Q32).
+  const agencyCiMatch = pathName.match(/\/agency\/ci\/([a-f0-9]{16})$/);
+  if (agencyCiMatch) {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Use POST." });
+      return;
+    }
+    await runAgencyCi(req, res, agencyCiMatch[1]);
     return;
   }
   if (req.method !== "POST") {
@@ -5661,6 +5751,74 @@ async function unlockCredit(creditId) {
 }
 
 // Soft-gate 1-page preview (#3478): optional session for the 20/day bucket; IP for anon 5/day; Turnstile when secret is set.
+async function runAgencyCi(req, res, hookId) {
+  const accounts = await getFirestore().collection("url_review_accounts").where("agencyCi.id", "==", hookId).limit(1).get();
+  if (accounts.empty) {
+    res.status(404).json({ error: "Unknown Agency CI webhook." });
+    return;
+  }
+  const accountDoc = accounts.docs[0];
+  const accountRow = accountDoc.data() || {};
+  const email = accountDoc.id;
+  const raw = req.rawBody || Buffer.from(typeof req.body === "string" ? req.body : JSON.stringify(req.body || {}));
+  if (!reviewAgency.verifyCiRequest(accountRow, raw, {
+    "x-qa-lab-signature": req.get("x-qa-lab-signature"),
+    "x-hub-signature-256": req.get("x-hub-signature-256")
+  })) {
+    res.status(401).json({ error: "Bad signature." });
+    return;
+  }
+  const body = Object.assign({}, req.body || {}, { url: (req.body && (req.body.url || req.body.site)) || "" });
+  const intake = await urlReview.screenSoftPreview(body, req.headers || {});
+  if (!intake.ok) {
+    res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
+    return;
+  }
+  const ip = reviewClientIp(req);
+  const quota = await softQuota.takeSoftQuota(getFirestore(), { ip, email });
+  if (!quota.ok) {
+    res.status(429).json({ error: softQuota.quotaMessage(quota), code: "soft-quota", softLeft: 0, softCap: quota.cap });
+    return;
+  }
+  try {
+    intake.value.email = email;
+    const report = await urlReview.reviewTarget(intake.value.url, {
+      softPreview: true,
+      asker: { reasonCode: "agency-ci", email },
+      maxPages: urlReview.SOFT_PREVIEW_PAGES,
+      maxDepth: urlReview.SOFT_PREVIEW_DEPTH,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined
+    });
+    const record = urlReview.intakeRecord(intake.value, report, {
+      ip,
+      deviceId: "agency-ci-" + hookId,
+      userAgent: req.get("user-agent") || "QA-lab-Agency-CI/1.0",
+      acceptLanguage: req.get("accept-language") || "en"
+    });
+    record.via = "agency-ci";
+    await getFirestore().collection("url_reviews").doc(report.id).set(record);
+    await rememberReview("soft-preview", record);
+    const brand = reviewAgency.publicBranding(accountRow);
+    res.status(200).json({
+      ok: true,
+      via: "agency-ci",
+      id: report.id,
+      host: report.host,
+      url: customerMail.pageUrl("en", { report: report.id }),
+      preview: urlReview.previewReport(report),
+      branding: brand,
+      softLeft: quota.left,
+      softCap: quota.cap
+    });
+  } catch (error) {
+    console.error("Agency CI preview failed:", error);
+    res.status(502).json({ error: error.message || "The preview failed." });
+  }
+}
+
 async function runSoftPreview(req, res) {
   const body = req.body || {};
   const intake = await urlReview.screenSoftPreview(body, req.headers);
@@ -5686,8 +5844,13 @@ async function runSoftPreview(req, res) {
     });
     return;
   }
+  // MCP stdio clients cannot complete Turnstile (#3480 A): shared secret skips Siteverify; soft quota still applies.
+  const mcpOk = urlReview.testKeyMatches(
+    req.get("x-qa-lab-mcp-key") || body.mcpKey,
+    process.env.QA_LAB_MCP_KEY
+  );
   const secret = process.env.TURNSTILE_SECRET_KEY || "";
-  if (secret) {
+  if (secret && !mcpOk) {
     const check = await formGuard.verifyTurnstile({
       secret,
       token: body.turnstileToken || body.token,
