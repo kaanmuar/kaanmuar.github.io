@@ -2186,7 +2186,25 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             })();
         const dncBody = !sy ? syWait : stats([{ label: 'Never contact', value: sy.dnc.length }]) + (sy.dnc.length ? table([['Address or domain', (d) => esc(d.value)], ['Added', (d) => esc(d.at)], ['Why', (d) => `<span class="jv-note">${esc(d.reason)}</span>`]], sy.dnc.slice(-12).reverse()) : '<p class="jv-empty">Nobody has asked to stop yet.</p>')
             + `<form class="jv-inline" data-mk-dnc><input name="addr" data-mk-field="dnc" data-keep="mk-dnc" value="${esc(f.dnc || '')}" placeholder="email or domain" aria-label="Address or domain to never contact"><input name="reason" data-mk-field="dncWhy" data-keep="mk-dnc-why" value="${esc(f.dncWhy || '')}" placeholder="why (optional)" aria-label="Why"><button type="submit" class="jv-btn danger">Add and block</button></form>`;
-        const jobsBody = !sy ? syWait : table([['Job', (j) => `<strong>${esc(j.mode)}</strong>`], ['Last run', (j) => (j.at ? esc(when(j.at)) : 'never')], ['Result', (j) => (j.failed ? '<span class="jv-chip c-slow">failed</span> ' : '') + `<span class="jv-note">${esc(j.notify || '')}</span>` + (j.tail.length ? `<details><summary>log</summary><pre class="jv-pre">${esc(j.tail.join('\n'))}</pre></details>` : '')],
+        const jobVolume = (j) => {
+            const s = j.stats;
+            if (s) {
+                if (s.actual != null && s.target != null) {
+                    const vol = `${s.actual} / ${s.target}`;
+                    if (j.mode === 'prospects' && s.by_segment) {
+                        const seg = Object.entries(s.by_segment).filter(([, v]) => v).map(([k, v]) => `${v} ${k}`).join(', ');
+                        return seg ? `${vol}<br><span class="jv-note">${esc(seg)}</span>` : vol;
+                    }
+                    return vol;
+                }
+                if (s.complete != null) return `${s.complete} complete · ${s.waiting || 0} waiting`;
+                if (j.mode === 'replies' && s.actual != null) return `${s.actual} sorted`;
+                if (j.mode === 'holidays') return `${s.paused || 0} paused · ${s.resumed || 0} resumed`;
+            }
+            return '—';
+        };
+        const jobsBody = !sy ? syWait : table([['Job', (j) => `<strong>${esc(j.mode)}</strong>`], ['Last run', (j) => (j.at ? esc(when(j.at)) : 'never')], ['Volume', jobVolume],
+            ['Result', (j) => (j.failed ? '<span class="jv-chip c-slow">failed</span> ' : '') + `<span class="jv-note">${esc(j.notify || '')}</span>` + (j.tail.length ? `<details><summary>log</summary><pre class="jv-pre">${esc(j.tail.join('\n'))}</pre></details>` : '')],
             ['', (j) => (pendingFor('run', j.mode) ? '<span class="jv-chip c-average">waiting for the sync</span>' : cmdBtn('Run now', { action: 'run', job: j.mode }, { disabled: sy.running }))]], sy.jobs)
             + (sy.paused.length ? `<p class="jv-note">Paused for public holidays: ${sy.paused.map((p) => esc(p.name)).join(', ')}.</p>` : '');
         const syncBody = !sy ? syWait : `${stats([{ label: 'Last sync', value: sy.at ? when(sy.at) : 'never', alert: sy.stale }, { label: 'Waiting for the sync', value: sy.commands.pending, alert: sy.stale && sy.commands.pending > 0 }, { label: 'Job', value: sy.running ? 'running' : 'idle' }])}`

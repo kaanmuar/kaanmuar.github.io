@@ -4159,6 +4159,65 @@ test.describe("cases built from evidence and ranked by risk", () => {
     assert.ok(report.compare, "the stored report is not changed");
   });
 
+  test("run-to-run compare matches findings by key and counts fixed vs new (#3483)", () => {
+    const previous = {
+      id: "old1",
+      fetchedAt: "2026-10-01T12:00:00.000Z",
+      insights: {
+        score: { overall: 60, areas: { Security: { score: 40 }, SEO: { score: 70 } } },
+        findings: [
+          { key: "sec-hsts", title: "HSTS is not sent", verdict: "fail" },
+          { key: "seo-title", title: "Title is missing", verdict: "risk" }
+        ]
+      }
+    };
+    const report = {
+      insights: {
+        score: { overall: 72, areas: { Security: { score: 80 }, SEO: { score: 65 } } },
+        findings: [
+          { key: "seo-title", title: "Title is missing", verdict: "risk" },
+          { key: "a11y-name", title: "Buttons need names", verdict: "fail" }
+        ]
+      }
+    };
+    const history = core.compareRuns(previous, report);
+    assert.equal(history.before, 60);
+    assert.equal(history.now, 72);
+    assert.equal(history.fixedCount, 1);
+    assert.equal(history.freshCount, 1);
+    assert.equal(history.still, 1);
+    assert.deepEqual(history.fixed, ["HSTS is not sent"]);
+    assert.deepEqual(history.fresh, ["Buttons need names"]);
+    assert.deepEqual(history.areas.Security, { before: 40, now: 80 });
+  });
+
+  test("the prior full crawl is the newest owned run of the same host within 90 days (#3483)", () => {
+    const now = Date.parse("2026-11-16T12:00:00.000Z");
+    const report = { id: "new", host: "shop.example", insights: { score: { overall: 70 } } };
+    const rows = [
+      { email: "a@x", softPreview: true, createdAt: "2026-11-15T12:00:00.000Z", report: { id: "soft", host: "shop.example", fetchedAt: "2026-11-15T12:00:00.000Z", softPreview: true, insights: { score: { overall: 50 } } } },
+      { email: "a@x", status: "stopped", createdAt: "2026-11-14T12:00:00.000Z", report: { id: "stop", host: "shop.example", fetchedAt: "2026-11-14T12:00:00.000Z", insights: { score: { overall: 55 } } } },
+      { email: "a@x", createdAt: "2026-08-01T12:00:00.000Z", report: { id: "old", host: "shop.example", fetchedAt: "2026-08-01T12:00:00.000Z", insights: { score: { overall: 40 } } } },
+      { email: "a@x", createdAt: "2026-10-10T12:00:00.000Z", report: { id: "keep", host: "shop.example", fetchedAt: "2026-10-10T12:00:00.000Z", insights: { score: { overall: 61 }, findings: [] } } },
+      { email: "a@x", createdAt: "2026-09-01T12:00:00.000Z", report: { id: "other", host: "other.example", fetchedAt: "2026-09-01T12:00:00.000Z", insights: { score: { overall: 90 } } } }
+    ];
+    const prior = core.pickPreviousRun(rows, report, now);
+    assert.equal(prior.report.id, "keep");
+    assert.equal(core.pickPreviousRun(rows, report, Date.parse("2027-02-01T12:00:00.000Z")), null);
+  });
+
+  test("soft and shared previews strip run history so the delta badge stays off (#3483)", () => {
+    const report = {
+      host: "shop.example",
+      history: { before: 50, now: 70, fixedCount: 2, freshCount: 1, still: 3, fixed: ["a"], fresh: ["b"] },
+      insights: { score: { overall: 70 }, findings: [] },
+      cases: []
+    };
+    const preview = core.previewReport(report);
+    assert.equal(preview.history, undefined);
+    assert.ok(report.history, "the stored report keeps history");
+  });
+
   test("shared preview keeps the top fail finding's evidence and fix in the clear (#3477)", () => {
     const secret = "the admin panel answers on port 8443 without a password";
     const report = {
