@@ -19,6 +19,34 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Non-blocking until #3571 mass-format lands (Q23B). Checks tooling paths the format hook already owns.
+  biome-format:
+    name: biome-format
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install Biome
+        run: npm install -s --no-save --prefix "$RUNNER_TEMP/biome" @biomejs/biome@2.3.4
+      - name: Biome format check (tooling paths)
+        run: |
+          BIOME="$RUNNER_TEMP/biome/node_modules/@biomejs/biome/bin/biome"
+          node "$BIOME" ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false \
+            .cursor/hooks/format.js \
+            .cursor/hooks/mcp-allow.js \
+            .cursor/hooks.json \
+            .cursor/mcp.json \
+            biome.json \
+            scripts/refresh-lab-lines.js
+
   url-review-unit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
