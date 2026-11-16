@@ -27,6 +27,7 @@ const Module = require('module');
 const { execFileSync } = require('child_process');
 const { parseCsv, toCsv } = require('./jarvis-marketing-sync');
 
+<<<<<<< HEAD
 const PROJECT = 'carlosm-interactive-cv';
 const FN = path.join(__dirname, '..', 'functions');
 const CFG = (() => {
@@ -39,6 +40,15 @@ const CFG = (() => {
 const AI_URL = process.env.PREFLIGHT_URL || CFG.url || 'https://preflight.carlosandmunoz.com';
 const BOOKING = 'https://carlosandmunoz.com/book.html';
 const JOBS = ['prospects', 'leads', 'replies', 'companies'];
+=======
+const PROJECT = "carlosm-interactive-cv";
+const FN = path.join(__dirname, "..", "functions");
+const CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(require("os").homedir(), ".cursor/preflight/config.json"), "utf8")); } catch { return {}; } })();
+const AI_URL = process.env.PREFLIGHT_URL || CFG.url || "https://preflight.carlosandmunoz.com";
+const BOOKING = "https://carlosandmunoz.com/book.html";
+const JOBS = ["prospects", "leads", "replies", "companies", "holidays"];
+let jobStats = null;
+>>>>>>> origin/main
 const COMPANIES_PER_DAY = 30;
 const PER_SEGMENT = 10;
 const PER_DAY = 40;
@@ -320,6 +330,7 @@ async function forwardReplies(perDay, log) {
 }
 
 async function replies(log) {
+<<<<<<< HEAD
 	if (!DRY) log(tool('replies').trim());
 	const signatures = JSON.parse(tool('signatures'));
 	const facts = read('collateral/prices-and-facts.md').slice(0, 5000);
@@ -419,6 +430,75 @@ async function replies(log) {
 		.map((k) => `${counts[k]} ${k.replace('_', ' ')}`);
 	if (counts.opt_out) parts.push(`${counts.opt_out} opted out (blocked)`);
 	return `${parts.join(', ')}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(', ')})` : ''}. Drafts are in Jarvis > Marketing.${sent ? ` Copies: ${sent}.` : ''}`;
+=======
+  if (!DRY) log(tool("replies").trim());
+  const signatures = JSON.parse(tool("signatures"));
+  const facts = read("collateral/prices-and-facts.md").slice(0, 5000);
+  const leads = leadIndex();
+  const counts = {};
+  const named = [];
+  const days = [];
+  const perDay = [];
+  for (let d = SINCE || utcDay(-1); d <= utcDay(); d = new Date(Date.parse(d) + 86400000).toISOString().slice(0, 10)) days.push(d);
+  for (const day of days) {
+    const items = readJson(`tracker/replies/${day}.json`, []);
+    const draftsRel = `tracker/replies/${day}.drafts.json`;
+    const drafts = readJson(draftsRel, []);
+    perDay.push({ items, drafts });
+    const done = new Set(drafts.map((d) => d.id));
+    const fresh = items.filter((r) => r && r.id && !done.has(r.id));
+    if (!fresh.length) continue;
+    const md = [read(`tracker/replies/${day}.md`) || `# Replies ${day}\n`];
+    const logCsv = csvOf("tracker/replies-log.csv", ["date", "from", "org", "campaign", "category", "next_step"]);
+    for (const r of fresh) {
+      const from = String(r.from || "").toLowerCase();
+      const lead = leads[from] || {};
+      const seq = sequenceOf(r.campaign) || lead.sequence || "A";
+      const sender = seq === "D" ? "brand" : "carlos";
+      let out;
+      try {
+        out = await ai(
+          "You sort replies to QA-lab URL Review cold emails and draft Carlos's answers. QA-lab URL Review gives six scores (SEO, visibility in AI search, analytics, security, accessibility, performance), a fix list and test cases from one URL; each prospect has a public Live Report. "
+          + `Categories: ${CATEGORIES.join(", ")}. A hard bounce is "bounce"; a delivery delay or a ticket acknowledgement is "auto_reply". `
+          + "Draft only for interested, question, not_now and wrong_person, in the reply's language, plain text, 3 to 6 short sentences, using the same form of address they used (usted in Spanish unless they wrote tú). "
+          + `Interested: offer the 15-minute walkthrough with ${BOOKING}. Question: answer briefly from the facts given (the only source for prices and numbers), write [Carlos: <what to add, e.g. price and turnaround>] for anything you don't know, and offer the walkthrough. Not now: thank them and say you'll write after the date they gave. Wrong person: thank them and ask for the right contact, or ask whether you may write to the person they named. `
+          + "Never promise a price, a date or a result that is not given. End with a blank line, then the signature given, one line each. "
+          + 'Reply with JSON only: {"category": "...", "lang": "two-letter code", "summary": "two short lines in English", "next_step": "under 12 words", "draft": "the answer, or empty"}.',
+          JSON.stringify({ facts, from: r.from, subject: r.subject, campaign: r.campaign, org: lead.org || "", live_report: lead.live_report_url || "", text: String(r.text || "").slice(0, 3500),
+            signature: (signatures[(lead.language || "en") + " " + sender] || signatures["en " + sender]).slice(0, 3) }),
+          { max: 900 }
+        );
+      } catch (error) {
+        if (error.fatal) throw error;
+        log(`could not sort ${from}: ${error.message}`);
+        continue;
+      }
+      const category = CATEGORIES.includes(out.category) ? out.category : "question";
+      const draft = ANSWER.has(category) ? String(out.draft || "").trim() : "";
+      counts[category] = (counts[category] || 0) + 1;
+      if (DRY) log(`${from}: ${category} (${out.lang})\n${draft}\n`);
+      if (ANSWER.has(category)) named.push(lead.org || from.split("@")[1]);
+      if ((category === "opt_out" || category === "bounce") && from) {
+        if (!DRY) log(tool("block", from).trim());
+        addDnc(from, category === "opt_out" ? "opted out by reply" : "hard bounce");
+      }
+      drafts.push({ id: r.id, category, summary: String(out.summary || "").slice(0, 400), lang: String(out.lang || lead.language || "en").slice(0, 2), draft });
+      md.push(`\n## ${r.from} · ${lead.org || "?"} · ${r.campaign || "?"}\n**${category}**: ${String(out.summary || "").trim()}\n` + (draft ? "\n```\n" + draft + "\n```\n" : ""));
+      logCsv.rows.push({ date: day, from: r.from, org: lead.org || "", campaign: r.campaign || "", category, next_step: String(out.next_step || "").slice(0, 120) });
+    }
+    write(draftsRel, JSON.stringify(drafts, null, 1));
+    write(`tracker/replies/${day}.md`, md.join(""));
+    saveCsv("tracker/replies-log.csv", logCsv);
+  }
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  log(total ? Object.entries(counts).map(([k, n]) => `${n} ${k}`).join(", ") : "No replies.");
+  const sent = await forwardReplies(perDay, log);
+  jobStats = { mode: "replies", actual: total, by_category: counts };
+  if (!named.length && !counts.opt_out) return "";
+  const parts = ["interested", "question", "not_now", "wrong_person"].filter((k) => counts[k]).map((k) => `${counts[k]} ${k.replace("_", " ")}`);
+  if (counts.opt_out) parts.push(`${counts.opt_out} opted out (blocked)`);
+  return `${parts.join(", ")}${named.length ? ` (${[...new Set(named)].slice(0, 3).join(", ")})` : ""}. Drafts are in Jarvis > Marketing.${sent ? ` Copies: ${sent}.` : ""}`;
+>>>>>>> origin/main
 }
 
 // --- Leads --------------------------------------------------------------------------------------------------------
@@ -482,6 +562,7 @@ async function fillLead(r) {
 }
 
 async function leadsJob(log) {
+<<<<<<< HEAD
 	const current = WEEK || tool('week').trim();
 	const weeks = openWeeks(current);
 	if (!weeks.length) {
@@ -521,6 +602,36 @@ async function leadsJob(log) {
 		);
 	}
 	return `Leads ready: ${summary.join('; ')}. Approve them in Jarvis > Marketing, then press Upload.`;
+=======
+  const current = WEEK || tool("week").trim();
+  const weeks = openWeeks(current);
+  if (!weeks.length) { log("No open weeks."); return ""; }
+  const summary = [];
+  let completeTotal = 0, waitingTotal = 0;
+  for (const week of weeks) {
+    if (!DRY) log(tool("leads", "--week", week).trim().split("\n").slice(0, 3).join("\n"));
+    const rel = `prospects/week${week.slice(1)}-leads.csv`;
+    const c = csvOf(rel);
+    let filled = 0;
+    for (const r of c.rows.filter((x) => !x.uploaded && x.missing)) {
+      const before = { ...r };
+      try { filled += await fillLead(r); } catch (error) { if (error.fatal) throw error; log(`${r.email}: ${error.message}`); }
+      if (DRY) Object.keys(r).filter((k) => r[k] !== before[k]).forEach((k) => log(`  ${r.org} (${r.language}) ${k}: ${before[k]} -> ${r[k]}`));
+    }
+    saveCsv(rel, c);
+    if (!DRY) tool("leads", "--week", week);
+    const rows = csvOf(rel).rows;
+    const open = rows.filter((r) => !r.uploaded);
+    const complete = open.filter((r) => !r.missing).length;
+    const reports = open.filter((r) => /report \(not published yet\)/.test(r.missing)).length;
+    log(`${week}: ${filled} fields filled; ${complete} complete, ${open.length - complete} still missing something (${reports} waiting for Live Reports)`);
+    summary.push(`${week} ${complete} complete, ${open.length - complete} waiting${reports ? ` (${reports} for Live Reports)` : ""}`);
+    completeTotal += complete;
+    waitingTotal += open.length - complete;
+  }
+  jobStats = { mode: "leads", complete: completeTotal, waiting: waitingTotal, weeks: weeks.length };
+  return `Leads ready: ${summary.join("; ")}. Approve them in Jarvis > Marketing, then press Upload.`;
+>>>>>>> origin/main
 }
 
 // --- Prospects ----------------------------------------------------------------------------------------------------
@@ -785,6 +896,7 @@ function append(rel, header, rows) {
 }
 
 async function prospects(log) {
+<<<<<<< HEAD
 	const week = WEEK || tool('week').trim();
 	const n = week.slice(1);
 	const today = utcDay();
@@ -888,6 +1000,64 @@ async function prospects(log) {
 		`${line}${picked.length < want ? `; ${want - picked.length} short of ${PER_DAY}` : ''}${low.length ? `; seed lists running low (${low.join(', ')} left; add rows to prospects/seeds/)` : ''}` +
 		`${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(', ')})` : ''}.`
 	);
+=======
+  const week = WEEK || tool("week").trim();
+  const n = week.slice(1);
+  const today = utcDay();
+  const site = path.join(__dirname, "..");
+  const foundRel = `prospects/week${n}-emails-found.csv`;
+  const want = Math.max(0, PER_DAY - foundOn(csvOf(foundRel, FOUND_HEADER).rows, today));
+  const used = usedHosts();
+  const day = Math.floor(Date.parse(today) / 86400000);
+  const countries = [...SLOTS, ROTATE[day % ROTATE.length]];
+  const left = {};
+  let picked = [];
+  if (!want) log(`${week}: today's ${PER_DAY} prospects are already there.`);
+  const pools = {};
+  for (const segment of want ? SEGMENTS : []) {
+    pools[segment] = shuffled(await candidates(segment, used), day * 7919);
+    const k = Math.min(PER_SEGMENT, want - picked.length);
+    if (k > 0) picked = picked.concat(await pick(segment, pools[segment], slotsFor(countries, k), used, log));
+  }
+  if (want > picked.length && pools.university) {
+    log(`filling ${want - picked.length} from universities`);
+    picked = picked.concat(await pick("university", pools.university, slotsFor(countries, want - picked.length), used, log));
+  }
+  for (const segment of Object.keys(pools)) left[segment] = pools[segment].filter((r) => !used.has(bare(r.host))).length;
+  let total = [`prospects/week${n}-education.csv`, `prospects/week${n}-agencies-startups.csv`].reduce((k, rel) => k + csvOf(rel).rows.length, 0);
+  if (picked.length) {
+    total = append(`prospects/week${n}-education.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "university" || r.segment === "tvet"))
+      + append(`prospects/week${n}-agencies-startups.csv`, PROSPECT_HEADER, picked.filter((r) => r.segment === "agency" || r.segment === "startup"));
+    append(foundRel, FOUND_HEADER, picked.map((r) => ({ host: r.host, org: r.org, contact_name: r.contact_name, email: r.email,
+      kind: r.contact_name ? "personal" : "generic", source_url: r.source, notes: "prospects run " + today })));
+    const sweepRel = `prospects/week${n}-sweep.csv`;
+    append(sweepRel, ["host", "cc", "segment"], picked.map((r) => ({ host: r.host, cc: r.cc, segment: r.segment })));
+    if (!DRY) {
+      log(execFileSync("node", [path.join(site, "scripts", "sweep-outreach.js"), "add", path.join(DIR, sweepRel)], { encoding: "utf8" }).trim());
+      log(tool("campaigns", "--week", week).trim());
+    }
+  }
+  let drafts = [];
+  if (new Date().getUTCDay() === 5 || DRY) {
+    const recent = new Set();
+    for (let w = Math.max(1, Number(n) - 3); w <= Number(n); w += 1) {
+      for (const f of [`week${w}-education.csv`, `week${w}-agencies-startups.csv`]) csvOf("prospects/" + f).rows.forEach((r) => r.country && recent.add(r.country));
+    }
+    drafts = await seasonal(week, [...recent], log).catch((error) => { if (error.fatal) throw error; log("seasonal: " + error.message); return []; });
+  }
+  const bySegment = SEGMENTS.map((s) => [s, picked.filter((r) => r.segment === s).length]).filter(([, k]) => k).map(([s, k]) => `${k} ${s}`);
+  const low = SEGMENTS.filter((s) => s in left && left[s] < PER_SEGMENT * 5).map((s) => `${s} ${left[s]}`);
+  const line = !want ? `${week}: today's prospects were already there`
+    : `${week}: ${picked.length} new prospects (${bySegment.join(", ") || "none"}) queued for tonight's sweep; ${total} this week`;
+  const status = read("04-sending-setup.md");
+  if (status && want) write("04-sending-setup.md", status.replace(/^(## Status[^\n]*\n)/m, `$1- ${today} prospects run: ${line}${drafts.length ? `; seasonal drafts: ${drafts.join(", ")}` : ""}.\n`));
+  jobStats = {
+    mode: "prospects", actual: picked.length, target: want || PER_DAY, week_total: total,
+    by_segment: Object.fromEntries(SEGMENTS.map((s) => [s, picked.filter((r) => r.segment === s).length]))
+  };
+  return `${line}${picked.length < want ? `; ${want - picked.length} short of ${PER_DAY}` : ""}${low.length ? `; seed lists running low (${low.join(", ")} left; add rows to prospects/seeds/)` : ""}`
+    + `${drafts.length ? `; ${drafts.length} seasonal drafts to review (${drafts.join(", ")})` : ""}.`;
+>>>>>>> origin/main
 }
 
 // --- Companies (#3139) --------------------------------------------------------------------------------------------
@@ -932,6 +1102,7 @@ async function translateFindings(findings, lang, log) {
 }
 
 async function companies(log) {
+<<<<<<< HEAD
 	const week = WEEK || tool('week').trim();
 	const n = week.slice(1);
 	const rel = `prospects/week${n}-companies.csv`;
@@ -1105,10 +1276,116 @@ async function companies(log) {
 	return offered.length
 		? `${offered.length} companies offered the trial (${segs}): ${rows.length - autoMail} emails to approve in Jarvis > Marketing, ${queued - released} profile messages waiting in Engagement${released ? `, ${released} sent on their own` : ''}.`
 		: '';
+=======
+  const week = WEEK || tool("week").trim();
+  const n = week.slice(1);
+  const rel = `prospects/week${n}-companies.csv`;
+  const used = usedHosts();
+  const live = !DRY || !HOSTS;
+  const db = live ? firebase().db : null;
+  const queue = HOSTS ? parseCsv(fs.readFileSync(HOSTS, "utf8")).rows : (((await db.collection("url_review_sweep").doc("outreach").get()).data() || {}).hosts || []);
+  const list = queue.filter((h) => h.host && SD.matchSector(h.sector))
+    .map((h) => Object.assign({}, h, { host: String(h.host), cc: String(h.cc || "").toLowerCase(), sector: SD.matchSector(h.sector) }))
+    .sort((a, b) => SD.sectorOf(b.sector).priority - SD.sectorOf(a.sector).priority);
+  const ledger = {};
+  if (db) {
+    for (let i = 0; i < list.length; i += 100) {
+      const refs = list.slice(i, i + 100).map((h) => db.collection("outreach_people").doc(CP.idOf(h.host)));
+      (await db.getAll(...refs)).forEach((s, k) => { if (s.exists) ledger[bare(list[i + k].host)] = s.data(); });
+    }
+  }
+  let found = 0;
+  for (const h of list.filter((x) => !ledger[bare(x.host)])) {
+    if (!DRY) await CP.record(db, CP.personOf(h, null, h.sector), "found");
+    ledger[bare(h.host)] = { stage: "found" };
+    found += 1;
+  }
+  const send = db && !DRY ? await Send.readSend(db, Date.now()) : null;
+  const paid = db ? (await db.collection("url_reviews").where("paid", "==", true).select("email").limit(3000).get()).docs.map((d) => String(d.data().email || "")).filter(Boolean) : [];
+  const perSector = {};
+  const why = {};
+  const rows = [];
+  const items = [];
+  const offered = [];
+  let checked = 0;
+  for (const h of list) {
+    if (offered.length >= COMPANIES_PER_DAY || checked >= COMPANIES_PER_DAY * 4) break;
+    const host = bare(h.host);
+    const led = ledger[host] || {};
+    if (CP.offeredYet(led) || (perSector[h.sector] || 0) >= SD.capOf(h.sector)) continue;
+    const review = db ? await reviewOf(db, h.host) : { id: "", findings: h.findings ? JSON.parse(h.findings) : [] };
+    if (!review) continue;
+    checked += 1;
+    const contacts = await CC.discover(fetch, h.host, { cc: h.cc, lang: LANG[h.cc] || "es" });
+    if (!contacts) { why["no-site"] = (why["no-site"] || 0) + 1; continue; }
+    const person = CP.personOf(h, contacts, h.sector);
+    if (!DRY && !led.reviewedAt) await CP.record(db, person, "", { note: "reviewed" }, { reviewedAt: new Date().toISOString(), reviewId: review.id });
+    const prof = db ? await db.collection(EP.COLLECTION).doc(host).get() : null;
+    const offer = CP.offerFor({
+      person: Object.assign({}, person, { stage: led.stage, offers: led.offers }), findings: review.findings, sector: h.sector,
+      dnc: used.has(host) || person.emails.some((e) => used.has(e.email)), paid: paid.some((e) => EP.sameDomain(e, host)),
+      profileCampaign: !!(prof && prof.exists && prof.data().code)
+    });
+    if (!offer.ok) { why[offer.why] = (why[offer.why] || 0) + 1; continue; }
+    perSector[h.sector] = (perSector[h.sector] || 0) + 1;
+    offered.push(host);
+    if (DRY) {
+      log(`  ${h.sector} ${host} ${offer.lang} ${offer.channels.join("+")} <${offer.email || "-"}> ${offer.socials.map((s) => s.network).join(",")} | ${offer.findings.map((f) => f.title).join(" | ")}`);
+      continue;
+    }
+    const trial = await CP.mint(db, person, offer);
+    if (offer.channels.includes("email")) {
+      const [finding_1, finding_2] = await translateFindings(offer.findings, offer.lang, log);
+      rows.push(CP.leadRow(h, person, offer, trial, { finding_1, finding_2, country: COUNTRY[person.country], approved: await CP.emailApproved(send, Date.now()) }));
+      used.add(offer.email);
+    }
+    if (offer.channels.includes("social")) items.push(...CP.socialItems(person, offer, trial).map((i) => Object.assign(i, { trialUrl: trial.url, led: prof && prof.exists ? prof.data() : null })));
+    await CP.record(db, person, "offered", { offers: [{ code: trial.code, kind: "company", url: trial.url }], note: "trial offered by " + offer.channels.join(" and ") },
+      { offeredAt: new Date().toISOString(), channels: offer.channels, findings: offer.findings });
+  }
+  let queued = 0;
+  let released = 0;
+  if (items.length && !DRY) {
+    const texts = EP.parse(await ai(EP.prompt(items), "Write the messages now.", { json: false, max: 1500 }).catch((error) => { if (error.fatal) throw error; log("social: " + error.message); return ""; }), items);
+    const batch = db.batch();
+    const byHost = {};
+    for (const i of items.filter((x) => texts[x.key])) {
+      const { trialUrl, led } = i;
+      delete i.trialUrl; delete i.led;
+      const doc = CP.socialDoc(i, texts[i.key], trialUrl, Date.now());
+      if (await CP.release(db, doc, send, Date.now())) released += 1;
+      batch.set(db.collection("engagement_posts").doc(i.key), doc);
+      (byHost[i.target.host] = byHost[i.target.host] || { led, profiles: i.profiles, code: i.offer.code, keys: [] }).keys.push(i.key);
+      queued += 1;
+    }
+    Object.entries(byHost).forEach(([host, x]) => batch.set(db.collection(EP.COLLECTION).doc(host), CP.profileLedger(x.led, host, x.profiles, x.code, x.keys, Date.now()), { merge: true }));
+    await batch.commit();
+  }
+  if (rows.length) {
+    append(rel, CP.LEAD_HEADER, rows);
+    if (!DRY) log(tool("campaigns", "--week", week).trim());
+  }
+  const skipped = Object.entries(why).map(([k, v]) => `${v} ${k}`).join(", ");
+  const segs = Object.entries(perSector).map(([k, v]) => `${v} ${k}`).join(", ");
+  const autoMail = rows.filter((r) => r.approved).length;
+  log(`${week}: ${found} new companies found, ${offered.length} offered (${segs || "none"}), ${rows.length} emails (${autoMail} approved by the send switch), ${queued} profile messages (${released} sent on their own)${skipped ? "; skipped " + skipped : ""}`);
+  jobStats = { mode: "companies", actual: offered.length, target: COMPANIES_PER_DAY, emails: rows.length, profile_messages: queued };
+  return offered.length ? `${offered.length} companies offered the trial (${segs}): ${rows.length - autoMail} emails to approve in Jarvis > Marketing, ${queued - released} profile messages waiting in Engagement${released ? `, ${released} sent on their own` : ""}.` : "";
+>>>>>>> origin/main
+}
+
+async function holidays(log) {
+  const out = tool("holidays", ...(DRY ? ["--dry"] : [])).trim();
+  if (out) log(out);
+  const paused = [...out.matchAll(/paused\s+(\d+)/gi)].reduce((n, m) => n + Number(m[1]), 0);
+  const resumed = [...out.matchAll(/resumed\s+(\d+)/gi)].reduce((n, m) => n + Number(m[1]), 0);
+  jobStats = { mode: "holidays", paused, resumed };
+  return out.split("\n").find((l) => l.trim())?.slice(0, 200) || "Holiday check done.";
 }
 
 // --- Main ---------------------------------------------------------------------------------------------------------
 async function main(argv) {
+<<<<<<< HEAD
 	const arg = (name) => {
 		const i = argv.indexOf(name);
 		return i >= 0 ? argv[i + 1] : '';
@@ -1164,6 +1441,40 @@ async function main(argv) {
 			console.error('push failed:', error.message)
 		);
 	if (failed) process.exitCode = 1;
+=======
+  const arg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ""; };
+  const mode = argv[0];
+  DIR = path.resolve(arg("--dir") || process.cwd());
+  DRY = argv.includes("--dry");
+  FORWARD_DRY = argv.includes("--forward-dry") || process.env.OUTREACH_FORWARD_DRY === "1";
+  SINCE = /^\d{4}-\d{2}-\d{2}$/.test(arg("--since")) ? arg("--since") : "";
+  WEEK = /^W\d{1,2}$/.test(arg("--week")) ? arg("--week") : "";
+  HOSTS = arg("--hosts") ? path.resolve(arg("--hosts")) : "";
+  if (!fs.existsSync(path.join(DIR, "tools", "instantly_campaigns.py"))) throw new Error("Usage: node scripts/outreach-weekly.js <prospects|leads|replies|companies|holidays|sync> --dir <outreach folder> [--dry]");
+  if (HOSTS && !DRY) throw new Error("--hosts only runs with --dry.");
+  if (mode === "sync") {
+    return execFileSync("node", [path.join(__dirname, "jarvis-marketing-sync.js"), "--dir", DIR, "--state", path.join(DIR, "tracker"), ...(DRY ? ["--dry"] : [])], { stdio: "inherit" });
+  }
+  if (!JOBS.includes(mode)) throw new Error("Unknown mode " + mode + ".");
+  const lines = [`${new Date().toISOString()} ${mode} (GitHub Action)`];
+  const log = (s) => { if (!s) return; lines.push(...String(s).split("\n")); console.log(s); };
+  let notify = "";
+  let failed = false;
+  jobStats = null;
+  try {
+    notify = await { prospects, leads: leadsJob, replies, companies, holidays }[mode](log);
+  } catch (error) {
+    failed = true;
+    log("error: " + String(error.message || error).split("\n")[0]);
+    log("exit 1");
+    notify = `The ${mode} run failed: ${String(error.message || error).split("\n")[0]}`.slice(0, 200);
+  }
+  if (jobStats) log("STATS: " + JSON.stringify(jobStats));
+  if (notify) log("NOTIFY: " + notify);
+  write(`tracker/logs/last-${mode}.txt`, lines.join("\n") + "\n");
+  if (notify) await push(failed ? "Outreach " + mode + " failed" : "Outreach " + mode, notify).catch((error) => console.error("push failed:", error.message));
+  if (failed) process.exitCode = 1;
+>>>>>>> origin/main
 }
 
 if (require.main === module)
