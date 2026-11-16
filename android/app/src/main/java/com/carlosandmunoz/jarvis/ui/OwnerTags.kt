@@ -68,9 +68,13 @@ object OwnerTags {
         a.str("kind"), if (a.bool("verified") == true) "verified" else null
     ).joinToString(" · ")
 
-    /** "tags (2 mentions) · posted" or "owner reply · failed: 422 rate limited". */
+    /** "tags (2 mentions) · posted", "caption edit (2) · approved", or "owner reply · failed: …". */
     fun commentLine(c: JsonObject): String =
-        (if (c.str("kind") == "reply") "owner reply" else "tags (${fmt(c.num("mentions") ?: 0.0)} mentions)") + " · " + c.str("status").orEmpty() +
+        (when (c.str("kind")) {
+            "reply" -> "owner reply"
+            "caption" -> "caption edit (${fmt(c.num("mentions") ?: 0.0)})"
+            else -> "tags (${fmt(c.num("mentions") ?: 0.0)} mentions)"
+        }) + " · " + c.str("status").orEmpty() +
             (c.str("error")?.ifEmpty { null }?.let { ": $it" } ?: "")
 
     /** "Bluesky 3 · X 1", the posts of the last 7 days per network. */
@@ -103,8 +107,10 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
     val o = g.obj("ownerTags")
     if (o == null) { Panel("Owner tags", id = "engagement-owner-tags") { Muted("Owner tags did not answer; pull down in a minute.") }; return }
     val state = OwnerTags.state(o)
+    val settings = o.obj("settings")
     val paused = state == "paused"
     val live = state == "live"
+    val editCaptions = settings.bool("editCaptions") == true
     val last = o.obj("last")
     val counts = o.obj("accounts")
     val net = { k: String? -> names[k]?.ifEmpty { null } ?: k.orEmpty() }
@@ -121,7 +127,7 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
         KeyRow("Posted, last 7 days", fmt(OwnerTags.weekTotal(o)))
         OwnerTags.week(o, names).takeIf { it.isNotEmpty() }?.let { Muted("Posted in the last 7 days: $it") }
         o.str("note")?.takeIf { it.isNotEmpty() }?.let { Muted("Last run: $it") }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             ActionButton(if (paused) "Resume" else "Pause", "ot:pause" in s.running) {
                 ask(if (paused) "resume owner tags" else "pause owner tags: no comment, reply or suggestion until you resume") {
                     vm.market("ot:pause", "owner-tags-settings", mapOf("settings" to JsonObject(mapOf("paused" to JsonPrimitive(!paused))))) { out -> out.str("message") ?: "Saved." }
@@ -130,6 +136,11 @@ fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map<St
             ActionButton(if (live) "Back to a dry run" else "Go live", "ot:live" in s.running) {
                 ask(if (live) "go back to a dry run, where owner tags only count what they would post" else "go live: the next run queues the tag comments and owner replies, within the daily caps") {
                     vm.market("ot:live", "owner-tags-settings", mapOf("settings" to JsonObject(mapOf("live" to JsonPrimitive(!live))))) { out -> out.str("message") ?: "Saved." }
+                }
+            }
+            ActionButton(if (editCaptions) "Caption edits on" else "Try caption edits", "ot:captions" in s.running) {
+                ask(if (editCaptions) "turn off caption edits: tag owners in comments only (#2633)" else "turn on caption edits: @mention owners in the post text where the network allows") {
+                    vm.market("ot:captions", "owner-tags-settings", mapOf("settings" to JsonObject(mapOf("editCaptions" to JsonPrimitive(!editCaptions))))) { out -> out.str("message") ?: "Saved." }
                 }
             }
         }
