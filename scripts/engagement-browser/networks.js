@@ -73,6 +73,25 @@ async function keys(page, text) {
   }
 }
 
+/** Replace our own post caption (#3588): open the post, find Edit, swap the text, save; Refused when the network hides edit. */
+async function editCaption(page, net, task) {
+  await go(page, net, task.url);
+  const more = page.locator('[data-testid="caret"], [aria-label*="More" i], [aria-label*="Más" i], [aria-label*="acciones" i]').first();
+  if (await visible(more, 6000)) await click(more);
+  const edit = page.locator('[role="menuitem"], [role="menu"] button, button').filter({ hasText: /^Edit\b|^Editar\b/i }).first();
+  if (!(await visible(edit, 6000))) throw new Refused(net.name + " does not offer caption edit on this post.");
+  await click(edit);
+  const box = page.locator('[data-testid="tweetTextarea_0"], [data-testid="tweetTextarea_1"], [contenteditable="true"][role="textbox"], div[contenteditable="true"]').first();
+  const input = await need(box, "The caption box");
+  await click(input);
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+a" : "Control+a");
+  await type(page, input, task.draft);
+  const save = page.locator('button[data-testid="tweetButton"], button').filter({ hasText: /^(Save|Update|Done|Guardar|Actualizar|Post|Publicar)/i }).last();
+  await click(await need(save, "Save the caption"));
+  await pause(2000, 4000);
+  return { url: task.url };
+}
+
 // end: the box already holds the name of the person answered, so the text goes after it.
 async function type(page, loc, text, end) {
   await click(loc);
@@ -375,6 +394,9 @@ const x = {
     got.forEach((c) => { c.ours = (c.on && texts[c.on]) || ""; });
     return got;
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     const art = await this.post(page, task);
     await click(art.locator('[data-testid="reply"]').first());
@@ -617,6 +639,9 @@ const threads = {
     const p = newest(list, since);
     return p && { id: p.id, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     const main = await this.post(page, task);
     const open = async () => { await click(button(main, SAYS.reply).first()); return page.locator('[role="dialog"]'); };
@@ -719,6 +744,9 @@ const instagram = {
       pinned: (m.timeline_pinned_user_ids || []).length > 0 || m.is_pinned === true, repost: String(m.user.username).toLowerCase() !== me
     })), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   async reply(page, task) {
     await go(page, this, task.url);
@@ -837,6 +865,9 @@ const tiktok = {
       return { url: "https://www.tiktok.com/@" + who + "/video/" + it.id, at: it.createTime ? new Date(it.createTime * 1000).toISOString() : "", pinned: it.isPinnedItem === true, repost: who.toLowerCase() !== me };
     }), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   // Mentions (#2637) are picked from the list that opens on "@", by handle.
   async reply(page, task) {
@@ -1044,6 +1075,9 @@ const linkedin = {
       });`);
     const p = newest(list.map((x) => ({ url: "https://www.linkedin.com/feed/update/" + x.urn + "/", at: liAt(x.urn), pinned: x.pinned, repost: x.repost })), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   // Mentions (#2637) are picked from the menu that opens on "@", by the company's or member's name.
   async reply(page, task) {

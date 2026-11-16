@@ -503,6 +503,32 @@ test("comments on our own posts and clips come from each network's notifications
   assert.deepEqual(net.calls.find((c) => c.url.includes("youtube/v3/comments?part=snippet") && c.body).body.snippet, { parentId: "UgyOwn", textOriginal: "Yes, measure it in the field with CrUX." }, "the answer goes into the comment's thread on our video");
 });
 
+test("owner-tags caption edit on Bluesky updates the post record (#3588)", async () => {
+  const db = fakeDb();
+  const net = networks();
+  await db.collection("engagement_private").doc("bluesky").set({ handle: "qalaburlreview.bsky.social", password: "abcd-efgh-ijkl-mnop" });
+  const key = "ot-capt-ion-test";
+  await db.collection("engagement_posts").doc(key).set({
+    network: "bluesky", id: "at://did:plc:us/app.bsky.feed.post/p1", url: "https://bsky.app/profile/qalaburlreview/post/p1", own: true, campaign: "owner-tags",
+    ownerTags: { kind: "caption", mentions: ["bluesky:metro.bsky.social"] },
+    actions: { edit: { status: "approved", draft: "Review out @metro.bsky.social" }, reply: { status: "skipped" } }
+  });
+  const base = net.fetch;
+  net.fetch = async (url, opts) => {
+    const out = url.includes("app.bsky.feed.getPosts") ? { ok: true, status: 200, text: async () => JSON.stringify({ posts: [{ uri: "at://did:plc:us/app.bsky.feed.post/p1", cid: "c1", record: { text: "Review out", createdAt: "2026-10-01T00:00:00Z" } }] }) }
+      : url.includes("com.atproto.identity.resolveHandle") ? { ok: true, status: 200, text: async () => JSON.stringify({ did: "did:plc:metro" }) }
+      : url.includes("com.atproto.repo.putRecord") ? { ok: true, status: 200, text: async () => JSON.stringify({ uri: "at://did:plc:us/app.bsky.feed.post/p1" }) }
+      : await base(url, opts);
+    net.calls.push({ url, method: (opts || {}).method, body: null, auth: ((opts || {}).headers || {}).Authorization || "" });
+    return out;
+  };
+  const deps = { db, fetch: net.fetch, now: NOW, inc: (n) => ({ inc: n }), keys: KEYS, sleep: () => Promise.resolve() };
+  await A.carryOut(deps, E.settings({ live: true }));
+  const doc = (await db.collection("engagement_posts").doc(key).get()).data();
+  assert.equal(doc.actions.edit.status, "posted");
+  assert.ok(net.calls.some((c) => String(c.url).includes("com.atproto.repo.putRecord")));
+});
+
 test("a video with comments turned off refuses only that reply; another 403 still stops the network", async () => {
   const answer = (error) => async () => ({ ok: false, status: 403, text: async () => JSON.stringify({ error }) });
   const off = await A.call(answer({ message: "The video identified by the videoId parameter has disabled comments.", errors: [{ reason: "commentsDisabled" }] }), "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", { json: {} }).catch((e) => e);

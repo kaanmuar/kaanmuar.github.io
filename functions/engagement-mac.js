@@ -301,6 +301,7 @@ async function queue(deps, body) {
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get()
     .then((s) => rows(s).map((t) => Object.assign(t, { action: a })))))).flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = rows(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get()).map((t) => Object.assign(t, { action: "reply" }));
+  const edits = rows(await db.collection("engagement_posts").where("actions.edit.status", "==", "approved").limit(20).get()).map((t) => Object.assign(t, { action: "edit" }));
   const at = new Date(now).toISOString();
   const day = db.collection("engagement_daily").doc(E.bogotaDay(now));
   const tasks = [];
@@ -326,23 +327,25 @@ async function queue(deps, body) {
     }
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
-    const r = t.doc.actions.reply || {};
+    const r = t.doc.actions[t.action] || t.doc.actions.reply || {};
     const card = t.action === "reply" && !student ? await Act.drawCard(deps, t.doc) : {};
-    const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
+    const own = (t.action === "reply" || t.action === "edit") ? t.doc.ownerTags || {} : {};
     const profileLatest = t.action === "reply" && P.needsLatest(t.doc);
     const latestDays = own.latest ? OwnerTags.REPLY_DAYS : P.FRESH_DAYS;
     const extras = t.action === "reply" ? extrasFor(t.doc, r.gif ? await gifsLeft(t.doc.network) : 0) : null;
     if (extras && extras.gif) gifs[t.doc.network] -= 1;
     const profileUrl = profileLatest ? ((t.doc.report || {}).profile || t.doc.url) : t.doc.url;
+    const drafts = t.action === "reply" || t.action === "edit";
     tasks.push(Object.assign({
       key: t.key, network: t.doc.network, action: t.action, id: profileLatest ? "" : t.doc.id, url: profileUrl, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
-      draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
+      draft: drafts ? r.draft || "" : "", lang: drafts ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
-    }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
+    }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length && (t.action === "reply" || t.action === "edit") ? { mentions: own.menu } : {},
     own.latest || profileLatest ? { latest: true, since: new Date(now - latestDays * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
     extras ? { extras } : {}, student || {}));
   };
+  for (const t of edits) await take(t);
   for (const t of replies) await take(t);
   tasks.push(...await dmTasks(deps, conf, want));
   let dry = 0;
@@ -371,7 +374,7 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "edit", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
   if (action === "dm") {
     const out = await dmResult(deps, key, b);
     if (out) return out;
@@ -387,13 +390,33 @@ async function result(deps, body) {
   const doc = snap.exists ? snap.data() : null;
   if (!doc || E.carrier(doc) !== "mac") throw new MacError("That post is gone.", 404);
   // A student post or DM (#3138) is the reply action of its draft.
-  const field = Students.ACTIONS.includes(action) ? "reply" : action;
+  const field = Students.ACTIONS.includes(action) ? "reply" : action === "edit" ? "edit" : action;
   const cur = (doc.actions || {})[field] || {};
   const k = "actions." + field + ".";
   const at = new Date(now).toISOString();
   const count = (c) => db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
   const error = clip(b.error, 200);
   let status;
+  if (field === "edit") {
+    if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
+    const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
+    const own = doc.ownerTags || {};
+    const picked = doc.campaign === OwnerTags.CAMPAIGN && Array.isArray(b.mentions)
+      ? b.mentions.slice(0, 20).map((m) => ({ token: clip((m || {}).token, 120), handle: clip((m || {}).handle, 120), name: clip((m || {}).name, 120), linked: (m || {}).linked === true })).filter((m) => m.token) : [];
+    const tagged = picked.length ? { "ownerTags.linked": picked.filter((m) => m.linked).map((m) => m.token), "ownerTags.plain": picked.filter((m) => !m.linked).map((m) => m.token) } : {};
+    if (b.ok) {
+      status = "posted";
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500) || doc.url || "", [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at }, tagged));
+      await count("edit_posted");
+      if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
+    } else {
+      status = !b.retry && tries >= Act.MAX_TRIES ? "failed" : "approved";
+      await ref.update(Object.assign({ [k + "error"]: error, [k + "tries"]: tries, [k + "leasedAt"]: "", updatedAt: at }, status === "failed" ? { [k + "status"]: status } : {}));
+      if (status === "failed") await count("edit_failed");
+    }
+    await J.clearCache(db);
+    return { ok: true, action: "edit", status, error: status === "failed" ? error : "" };
+  }
   if (field === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
