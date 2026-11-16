@@ -221,6 +221,15 @@
     "checked": "2026-11-15T17:04:47.404Z"
    },
    {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18380248537242934",
+    "at": "2026-11-16T00:11:16.442Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DfyCcz1jKzE/",
+    "checked": "2026-11-16T00:12:20.970Z"
+   },
+   {
     "channel": "threads",
     "profile": "threads.net/@qaurlreview",
     "id": "17916649890473074",
@@ -789,6 +798,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2clvgl65m2p",
     "checked": "2026-11-14T22:57:08.220Z"
+   }
+  ],
+  "auto-2026-11-08/01-u-shortmake-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2faitu37v2f",
+    "at": "2026-11-16T00:10:56.267Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2faitu37v2f",
+    "checked": "2026-11-16T00:11:14.834Z"
    }
   ],
   "auto-2026-11-08/04-vs-beebom-com": [
@@ -1538,10 +1558,10 @@
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-15T21:57:02.030Z",
+    "at": "2026-11-16T00:12:21.170Z",
     "result": "failed",
     "error": "no feed image media/social-posts/launch-2026-10/pt/a11y-story.jpg",
-    "checked": "2026-11-15T21:57:02.030Z"
+    "checked": "2026-11-16T00:12:21.321Z"
    },
    {
     "channel": "instagram",
