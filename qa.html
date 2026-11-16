@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://static.cloudflareinsights.com 'sha256-EnjeP1aASzrtNIQRIw7OpAYhGqh3HfdNjHkr8D7VZCQ=' 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-hM7OYua2xyJVkqV950PmjEvKmMGtucpnZYV6QMu+Lv4=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://translate-pa.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com; form-action 'self';">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>QA Lab · Suite hub</title>
+    <meta name="description" content="QA Lab is the suite behind carlosandmunoz.com: URL Review, the free regression Lab, and Sprint Studio. Each tool keeps its own page. More branches are coming.">
+    <meta name="author" content="Carlos A. Muñoz Ardila">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <meta name="theme-color" content="#0d6e76">
+    <link rel="canonical" href="https://carlosandmunoz.com/qa.html">
+    <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="QA Lab">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://carlosandmunoz.com/qa.html">
+    <meta property="og:title" content="QA Lab · Suite hub">
+    <meta property="og:description" content="URL Review, Lab, and Sprint Studio on their own routes. The product front door for the QA Lab suite, separate from the CV.">
+    <meta property="og:image" content="https://carlosandmunoz.com/assets/share/qa-lab.jpg?v=20261019">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="QA Lab suite: regression lab running against a live CV.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="QA Lab · Suite hub">
+    <meta name="twitter:description" content="URL Review, Lab, and Sprint Studio on their own routes. The product front door for the QA Lab suite.">
+    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-lab.jpg?v=20261019">
+    <meta name="twitter:image:alt" content="QA Lab suite: regression lab running against a live CV.">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "@id": "https://carlosandmunoz.com/qa.html#webpage",
+                "name": "QA Lab · Suite hub",
+                "url": "https://carlosandmunoz.com/qa.html",
+                "description": "Product front door for the QA Lab suite: URL Review, the free regression Lab, and Sprint Studio, each on its own route.",
+                "inLanguage": "en",
+                "isPartOf": { "@type": "WebSite", "@id": "https://carlosandmunoz.com/#website", "name": "Carlos A. Muñoz — Interactive CV", "url": "https://carlosandmunoz.com/" },
+                "about": { "@type": "Organization", "name": "QA Lab", "url": "https://carlosandmunoz.com/qa.html", "founder": { "@id": "https://carlosandmunoz.com/#person" } },
+                "mainEntity": {
+                    "@type": "ItemList",
+                    "name": "QA Lab tools",
+                    "itemListElement": [
+                        { "@type": "ListItem", "position": 1, "name": "URL Review", "url": "https://carlosandmunoz.com/qa-review.html" },
+                        { "@type": "ListItem", "position": 2, "name": "Lab", "url": "https://carlosandmunoz.com/qa-lab.html" },
+                        { "@type": "ListItem", "position": 3, "name": "Sprint Studio", "url": "https://carlosandmunoz.com/simulador.html" }
+                    ]
+                }
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "QA Lab", "item": "https://carlosandmunoz.com/qa.html" }
+                ]
+            }
+        ]
+    }
+    </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
+        try { if ((localStorage.getItem('site-analytics') || localStorage.getItem('qa-review-analytics')) === 'allow') gtag('consent', 'update', { analytics_storage: 'granted' }); } catch (e) {}
+        gtag('js', new Date());
+        gtag('config', 'G-J8GNF5380F', {
+            anonymize_ip: true,
+            send_page_view: true,
+            page_title: document.title,
+            page_path: '/qa.html',
+            page_location: window.location.href,
+            content_group: 'QA Lab suite'
+        });
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J8GNF5380F"></script>
+    <script src="js/site-consent.js?v=20261027a" defer></script>
+    <script src="js/site-analytics.js?v=20261030a" defer></script>
+    <script src="js/site-theme.js"></script>
+    <script>SiteTheme.boot();</script>
+    <script src="js/site-look.js"></script>
+    <script>SiteLook.boot();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap"></noscript>
+    <style data-critical="css/site-look.css?v=20261104a">html[data-look] body{background-color:var(--bg, var(--bg-primary));background-image:var(--look-gradient);background-attachment:fixed;color:var(--text, var(--text-secondary))}.skip-link{position:fixed;top:8px;left:8px;z-index:10000;padding:10px 16px;border-radius:8px;background:#12181f;color:#ffffff;font:600 15px/1.2 Figtree, system-ui, sans-serif;text-decoration:none;transform:translateY(calc(-100% - 16px))}.skip-link:focus{transform:none;outline:3px solid #4db3bb;outline-offset:2px}html.dark-mode .skip-link{background:#ffffff;color:#12181f;outline-color:#0d6e76}</style>
+    <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
+    <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
+    <script src="js/async-css.js?v=1b01469eb2" async></script>
+    <style>
+        :root {
+            --hub-ink: #0c1a1c;
+            --hub-fog: #e7f0f1;
+            --hub-teal: #0d6e76;
+            --hub-teal-bright: #1a9aa5;
+            --hub-sand: #d8e6e4;
+            --hub-muted: #3d5457;
+            --hub-line: color-mix(in srgb, #0d6e76 22%, transparent);
+            --hub-glow: rgba(26, 154, 165, 0.28);
+        }
+        html.dark-mode {
+            --hub-ink: #e8f4f5;
+            --hub-fog: #0b1517;
+            --hub-teal: #4db3bb;
+            --hub-teal-bright: #7ad0d6;
+            --hub-sand: #132428;
+            --hub-muted: #9bb4b7;
+            --hub-line: color-mix(in srgb, #4db3bb 28%, transparent);
+            --hub-glow: rgba(77, 179, 187, 0.22);
+            color-scheme: dark;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--hub-ink);
+            font-family: Figtree, system-ui, sans-serif;
+            font-size: 17px;
+            line-height: 1.55;
+            background: var(--hub-fog);
+        }
+        a { color: var(--hub-teal); }
+        .skip-link { font-family: Figtree, system-ui, sans-serif; }
+        .top {
+            position: absolute;
+            inset: 0 auto auto 0;
+            z-index: 3;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 18px clamp(16px, 4vw, 40px);
+        }
+        .top a.cv {
+            color: inherit;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            opacity: 0.82;
+        }
+        .top a.cv:hover, .top a.cv:focus-visible { opacity: 1; text-decoration: underline; }
+        .top-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .lang-wrap { position: relative; }
+        .lang-toggle {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--hub-line);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--hub-fog) 55%, transparent);
+            color: inherit;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            padding: 0;
+        }
+        .lang-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 6px);
+            width: 220px;
+            max-height: 60vh;
+            overflow-y: auto;
+            background: color-mix(in srgb, var(--hub-fog) 92%, #fff);
+            border: 1px solid var(--hub-line);
+            border-radius: 12px;
+            padding: 8px;
+            z-index: 30;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 8px 24px rgba(12, 26, 28, 0.14);
+        }
+        .lang-wrap.open .lang-menu { display: flex; }
+        html.dark-mode .lang-menu { background: color-mix(in srgb, var(--hub-sand) 92%, #000); }
+        #theme-toggle {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--hub-line);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--hub-fog) 55%, transparent);
+            color: inherit;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+        }
+        #theme-toggle svg { width: 18px; height: 18px; }
+        html:not(.dark-mode) #theme-toggle .moon-icon { display: none; }
+        html.dark-mode #theme-toggle .sun-icon { display: none; }
+        .hero {
+            position: relative;
+            min-height: 100svh;
+            display: grid;
+            align-items: end;
+            overflow: hidden;
+            color: #f4fbfb;
+            isolation: isolate;
+        }
+        .hero-media {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background:
+                linear-gradient(115deg, rgba(5, 22, 26, 0.94) 0%, rgba(5, 22, 26, 0.72) 42%, rgba(6, 28, 32, 0.88) 100%),
+                radial-gradient(1100px 620px at 82% 12%, var(--hub-glow), transparent 60%),
+                url("assets/share/qa-lab.jpg?v=20261019") center / cover no-repeat;
+            transform: scale(1.04);
+            animation: hub-drift 18s ease-in-out infinite alternate;
+        }
+        .hero-media::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 38%;
+            background: linear-gradient(to top, rgba(7, 22, 25, 0.92), transparent);
+        }
+        @keyframes hub-drift {
+            from { transform: scale(1.04) translate3d(0, 0, 0); }
+            to { transform: scale(1.08) translate3d(-1.4%, 1%, 0); }
+        }
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            width: min(920px, 100%);
+            padding: clamp(88px, 16vh, 140px) clamp(16px, 4vw, 40px) clamp(40px, 8vh, 72px);
+            animation: hub-rise 0.9s ease-out both;
+        }
+        @keyframes hub-rise {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: none; }
+        }
+        .brand-mark {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.35rem;
+            margin: 0 0 18px;
+            font-family: "Instrument Serif", Georgia, serif;
+            font-size: clamp(3.2rem, 9vw, 6.4rem);
+            line-height: 0.92;
+            letter-spacing: -0.04em;
+            color: #fff;
+            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+        }
+        .brand-mark small {
+            font-family: Figtree, system-ui, sans-serif;
+            font-size: 0.18em;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            opacity: 0.78;
+            transform: translateY(-0.55em);
+        }
+        .hero h1 {
+            margin: 0 0 14px;
+            max-width: 16ch;
+            font-family: "Instrument Serif", Georgia, serif;
+            font-size: clamp(1.85rem, 4.2vw, 3rem);
+            font-weight: 400;
+            line-height: 1.12;
+            letter-spacing: -0.03em;
+        }
+        .hero-lead {
+            margin: 0 0 28px;
+            max-width: 38ch;
+            font-size: 1.08rem;
+            color: color-mix(in srgb, #f4fbfb 86%, #9fd0d4);
+        }
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .cta:hover, .cta:focus-visible { transform: translateY(-1px); }
+        .cta-primary { background: #fff; color: #0b2a2e; }
+        .cta-secondary { background: transparent; color: #fff; border-color: color-mix(in srgb, #fff 55%, transparent); }
+        .cta-ghost { background: color-mix(in srgb, #041113 35%, transparent); color: #fff; border-color: color-mix(in srgb, #fff 28%, transparent); }
+        .suite {
+            width: min(980px, 100%);
+            margin: 0 auto;
+            padding: clamp(48px, 8vw, 88px) clamp(16px, 4vw, 40px) 40px;
+        }
+        .suite h2 {
+            margin: 0 0 8px;
+            font-family: "Instrument Serif", Georgia, serif;
+            font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+            font-weight: 400;
+            letter-spacing: -0.03em;
+        }
+        .suite-lead {
+            margin: 0 0 28px;
+            max-width: 52ch;
+            color: var(--hub-muted);
+        }
+        .tools {
+            display: grid;
+            gap: 0;
+            border-top: 1px solid var(--hub-line);
+        }
+        .tool {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr) auto;
+            gap: 12px 24px;
+            align-items: center;
+            padding: 22px 0;
+            border-bottom: 1px solid var(--hub-line);
+            color: inherit;
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: hub-row 0.55s ease forwards;
+        }
+        .tool:nth-child(1) { animation-delay: 0.08s; }
+        .tool:nth-child(2) { animation-delay: 0.16s; }
+        .tool:nth-child(3) { animation-delay: 0.24s; }
+        @keyframes hub-row {
+            to { opacity: 1; transform: none; }
+        }
+        .tool:hover .tool-name, .tool:focus-visible .tool-name { color: var(--hub-teal-bright); }
+        .tool-name {
+            margin: 0;
+            font-family: "Instrument Serif", Georgia, serif;
+            font-size: 1.55rem;
+            letter-spacing: -0.02em;
+            transition: color 0.2s ease;
+        }
+        .tool-copy { margin: 0; color: var(--hub-muted); font-size: 0.98rem; }
+        .tool-go {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--hub-teal);
+            white-space: nowrap;
+        }
+        .soon {
+            margin-top: 56px;
+        }
+        .soon-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 0;
+            border-top: 1px solid var(--hub-line);
+        }
+        .soon-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: baseline;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--hub-line);
+        }
+        .soon-list b { font-weight: 600; }
+        .soon-list span {
+            flex: 0 0 auto;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--hub-muted);
+        }
+        .soon-list small {
+            display: block;
+            margin-top: 4px;
+            color: var(--hub-muted);
+            font-weight: 400;
+        }
+        .who {
+            margin-top: 64px;
+            padding: 28px 0 8px;
+            border-top: 1px solid var(--hub-line);
+        }
+        .who p { margin: 0 0 10px; max-width: 48ch; color: var(--hub-muted); }
+        .foot {
+            width: min(980px, 100%);
+            margin: 0 auto;
+            padding: 0 clamp(16px, 4vw, 40px) 48px;
+            color: var(--hub-muted);
+            font-size: 0.92rem;
+        }
+        .foot nav { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 10px; }
+        @media (max-width: 760px) {
+            .tool { grid-template-columns: 1fr; gap: 6px; }
+            .tool-go { justify-self: start; }
+            .soon-list li { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .hero-copy { padding-bottom: 36px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-media, .hero-copy, .tool { animation: none !important; opacity: 1; transform: none; }
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#suite">Skip to main content</a>
+<header class="top">
+    <a class="cv" href="index.html">Built by Carlos · CV</a>
+    <div class="top-actions">
+        <div class="lang-wrap notranslate" id="langWrap">
+            <button class="lang-toggle" id="langToggle" type="button" aria-label="Language">
+                <img id="langFlag" src="https://hatscripts.github.io/circle-flags/flags/gb.svg" alt="English" width="20" height="20">
+            </button>
+            <div class="lang-menu" id="langMenu"></div>
+        </div>
+        <button id="theme-toggle" type="button" aria-label="Toggle dark mode">
+            <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+    </div>
+</header>
+<section class="hero" aria-label="QA Lab">
+    <div class="hero-media" role="img" aria-label="QA Lab regression run on a live CV"></div>
+    <div class="hero-copy">
+        <p class="brand-mark" translate="no">QA Lab<small>suite</small></p>
+        <h1>Tools that branch. One suite, not one mega-page.</h1>
+        <p class="hero-lead">URL Review, Lab, and Sprint Studio each keep their own route. Open a live tool, or watch what is next on the board.</p>
+        <div class="cta-row">
+            <a class="cta cta-primary" href="qa-review.html" data-analytics-event="open_url_review" data-analytics-category="Navigation" data-analytics-label="Suite hub hero">Open URL Review</a>
+            <a class="cta cta-secondary" href="qa-lab.html">Open Lab</a>
+            <a class="cta cta-ghost" href="simulador.html">Open Sprint Studio</a>
+        </div>
+    </div>
+</section>
+<main id="suite" class="suite" tabindex="-1">
+    <h2>Live in the suite</h2>
+    <p class="suite-lead">Three products ship today. Jump in from here; each page stays focused on its own job.</p>
+    <div class="tools" role="list">
+        <a class="tool" role="listitem" href="qa-review.html" data-analytics-event="open_url_review" data-analytics-category="Navigation" data-analytics-label="Suite hub tools">
+            <p class="tool-name">URL Review</p>
+            <p class="tool-copy">Score one public site for SEO, AI-search visibility, analytics, security, accessibility, and performance, then export cases for 20 frameworks.</p>
+            <span class="tool-go">Open →</span>
+        </a>
+        <a class="tool" role="listitem" href="qa-lab.html">
+            <p class="tool-name">Lab</p>
+            <p class="tool-copy">Run the free in-browser regression catalog against this CV: Playwright, Cypress, Robot, Appium, k6, and more, with a dashboard and report.</p>
+            <span class="tool-go">Open →</span>
+        </a>
+        <a class="tool" role="listitem" href="simulador.html">
+            <p class="tool-name">Sprint Studio</p>
+            <p class="tool-copy">Four agents walk one sprint from ticket rewrite through Gherkin, automation scripts, and Definition of Done. Free, no account.</p>
+            <span class="tool-go">Open →</span>
+        </a>
+    </div>
+
+    <section class="soon" aria-labelledby="soon-title">
+        <h2 id="soon-title">On the board</h2>
+        <p class="suite-lead">Planned branches. Linked from this hub when they ship; not built on this page.</p>
+        <ul class="soon-list">
+            <li><div><b>Monitoring</b><small>Continuous checks after a review ships.</small></div><span>Coming soon · #534</span></li>
+            <li><div><b>Hosted runs</b><small>Cloud runners for Lab catalogs without a local checkout.</small></div><span>Coming soon · #1935 · #1936</span></li>
+            <li><div><b>MCP server</b><small>IDE audits from Cursor and Claude against QA Lab.</small></div><span>Coming soon · #3480</span></li>
+            <li><div><b>Verified badge</b><small>Public proof a site completed a review.</small></div><span>Coming soon · #3481</span></li>
+            <li><div><b>White-label</b><small>Brand the suite for agencies and teams.</small></div><span>Coming soon · #3482</span></li>
+            <li><div><b>Run diff</b><small>Compare two reviews or Lab runs side by side.</small></div><span>Coming soon · #3483</span></li>
+            <li><div><b>llms.txt</b><small>Answer-engine catalog for the suite and CV.</small></div><span>Shipped · #3479</span></li>
+        </ul>
+    </section>
+
+    <section class="who" aria-labelledby="who-title">
+        <h2 id="who-title">Who built it</h2>
+        <p>Carlos A. Muñoz Ardila founded QA Lab in 2025. The interactive CV stays on the home page; this hub is the product front door for the suite.</p>
+        <p><a href="index.html">Open the interactive CV</a> · <a href="book.html">Schedule a call</a> · <a href="llms.txt">llms.txt</a></p>
+    </section>
+</main>
+<footer class="foot">
+    <nav aria-label="Suite links">
+        <a href="qa-review.html">URL Review</a>
+        <a href="qa-lab.html">Lab</a>
+        <a href="simulador.html">Sprint Studio</a>
+        <a href="qa-review-legal.html">Privacy</a>
+        <a href="accessibility.html">Accessibility</a>
+    </nav>
+    <p>© <span id="hub-year">2026</span> Carlos A. Muñoz · QA Lab</p>
+</footer>
+<script src="js/site-i18n.js?v=20261104a"></script>
+<script>
+    document.getElementById('theme-toggle').addEventListener('click', () => SiteTheme.toggle());
+    document.getElementById('hub-year').textContent = String(new Date().getFullYear());
+    if (window.SiteAnalytics) {
+        SiteAnalytics.bind('lab');
+        SiteAnalytics.noteVisit();
+    }
+    (function () {
+        if (!window.SiteI18n) return;
+        const menu = document.getElementById('langMenu');
+        const wrap = document.getElementById('langWrap');
+        menu.innerHTML = '<div class="lang-options-list"></div>';
+        const list = menu.querySelector('.lang-options-list');
+        SiteI18n.orderedLanguages().forEach((meta) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.lang = meta.code;
+            option.style.cssText = 'display:flex;width:100%;gap:8px;align-items:center;padding:6px 8px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer';
+            option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt="" width="18" height="18"><span>' + meta.native + '</span>';
+            option.onclick = () => SiteI18n.selectLanguage(meta.code);
+            list.appendChild(option);
+        });
+        SiteI18n.bindMenu(wrap, document.getElementById('langToggle'), menu, (open) => {
+            menu.style.display = open ? 'block' : 'none';
+            wrap.classList.toggle('open', open);
+        });
+        SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || 'en'));
+    })();
+</script>
+</body>
+</html>
