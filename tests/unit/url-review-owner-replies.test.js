@@ -172,7 +172,7 @@ test("the decision page offers every address in the reply, the proposal checked,
 
 test("POST do=resend only accepts an address offered on the page", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
-  assert.match(index, /action === "resend"\) problem = ownerReplies\.resendChoices\(row\)\.includes\(email\) \?/);
+  assert.match(index, /action === ['"]resend['"]\)\s*problem = ownerReplies\.resendChoices\(row\)\.includes\(email\)\s*\?/);
 });
 
 test("an auto-acknowledgement is filed, not answered (#1093, mit.edu Oct 23)", () => {

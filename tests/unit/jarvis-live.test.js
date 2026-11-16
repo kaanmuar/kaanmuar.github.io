@@ -190,10 +190,10 @@ test("the functions that load the snapshot for a live push hold every secret the
 
 test("the jarvis function pushes after the writes that drop a section and on the one-day snapshot read", () => {
   const src = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
-  assert.match(src, /if \(days === jarvisLive\.DAYS\) await jarvisLive\.check\(/);
+  assert.match(src, /if \(days === jarvisLive\.DAYS\)\s*await jarvisLive[\s\S]*?\.check\(/);
   const ops = src.match(/const JARVIS_LIVE_OPS = new Set\(\[([^\]]*)\]\)/)[1];
-  ["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report", "engagement-decide"].forEach((op) => assert.ok(ops.includes('"' + op + '"'), op));
-  assert.match(src, /jarvisLivePush\("jarvisWatch"\)/);
+  ["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report", "engagement-decide"].forEach((op) => assert.ok(ops.includes('"' + op + '"') || ops.includes("'" + op + "'"), op));
+  assert.match(src, /jarvisLivePush\(['"]jarvisWatch['"]\)/);
   assert.match(src, /async function jarvisNotifyLive/);
   assert.match(src, /if \(out && out\.live\) await jarvisNotifyLive/);
 });

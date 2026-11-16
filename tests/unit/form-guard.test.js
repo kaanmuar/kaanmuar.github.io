@@ -73,7 +73,7 @@ test("the forms post through submitGuardedForm with a Turnstile token, never str
   }
   const index = read("functions/index.js");
   assert.doesNotMatch(index, /getFormChallenge|captchaImage|abuse\/forms/);
-  assert.match(index, /submitGuardedForm = functions\.runWith\(\{ secrets: SECRETS\.turnstile/);
+  assert.match(index, /submitGuardedForm = functions[\s\S]*?\.runWith\(\{\s*secrets:\s*SECRETS\.turnstile/);
   assert.deepEqual(require("../../functions/secrets").turnstile, ["TURNSTILE_SECRET_KEY"]);
 
   const app = read("js/cv-app.js");

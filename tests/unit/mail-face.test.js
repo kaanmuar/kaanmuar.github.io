@@ -94,11 +94,11 @@ test("a note and a claimed report send the 'write to' mail to the face address",
 test("notices, claimed reports and notes go out through sendFaceMail and mailRetry", () => {
   const src = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   const face = src.match(/async function sendFaceMail[\s\S]*?\n}\n/)[0];
-  assert.match(face, /mailRetry\.send\(sgMail, getFirestore\(\), askerMessage\([^]*mailFace\.envelope\(lang, from, replyTo, REVIEW_ALERT_TO\)/);
+  assert.match(face, /mailRetry\.send\(\s*sgMail,\s*getFirestore\(\),\s*askerMessage\([^]*mailFace\.envelope\(lang, from, replyTo, REVIEW_ALERT_TO\)/);
   for (const category of ["url-review-owner-notice", "url-review-note", "url-review-owner-claim"]) {
-    assert.match(src, new RegExp("sendFaceMail\\([^\\n]*\"" + category + "\""), category);
-    assert.doesNotMatch(src, new RegExp("sendAskerMail\\([^\\n]*\"" + category + "\""), category);
+    assert.match(src, new RegExp("sendFaceMail\\([\\s\\S]{0,200}['\"]" + category + "['\"]"), category);
+    assert.doesNotMatch(src, new RegExp("sendAskerMail\\([\\s\\S]{0,200}['\"]" + category + "['\"]"), category);
   }
-  assert.match(src, /mail\.alias === "qa" \|\| mailFace\.isFaceAlias\(mail\.alias\)/);
+  assert.match(src, /mail\.alias === ['\"]qa['\"] \|\| mailFace\.isFaceAlias\(mail\.alias\)/);
   assert.match(src, /const face = mailFace\.faceOf\(link\.lang\);\n\s+const pdf = await reportPdfFor\(copy, \{ face \}\);/);
 });

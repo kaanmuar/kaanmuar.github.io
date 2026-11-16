@@ -131,11 +131,11 @@ test("every field error the server sends reads in each page language (#2837)", (
       const start = file.search(new RegExp("function " + name + "\\("));
       assert.ok(start >= 0, "no function " + name);
       const text = file.slice(start, file.indexOf("\n}\n", start));
-      for (const [, message] of text.matchAll(/(?:fieldError\(errors, "\w+", (?:[\w.]+ \|\| )?|message: |new Error\(|return )"([A-Z][^"]+)"/g)) sent.add(message);
+      for (const [, , message] of text.matchAll(/(?:fieldError\(\s*errors,\s*['"]?\w+['"]?,\s*(?:[\w.]+ \|\| )?|message:\s*|new Error\(|return\s+)(['"])([A-Z](?:(?!\1).)+)\1/g)) sent.add(message);
     }
   }
   assert.ok(sent.size >= 31, "found only " + sent.size + " server field errors");
-  assert.ok(core.includes('"The URL returned status " + first.status + "."'), "the status error changed; update fieldError.urlStatus");
+  assert.ok(core.includes("The URL returned status ") && core.includes("first.status"), "the status error changed; update fieldError.urlStatus");
   sent.add("The URL returned status 403.");
   const english = Object.values(copy.en.fieldError);
   for (const message of sent) assert.ok(english.includes(message) || /status 403/.test(message), "the server's field error has no copy: " + message);

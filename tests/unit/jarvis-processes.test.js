@@ -304,8 +304,8 @@ test("the snapshot carries the processes doc as its own section, and Ask sees it
 test("every scheduled job goes through track, so each one reports to Processes", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   const body = index.slice(index.indexOf("async function track("), index.indexOf("// A v1 schedule from the ops table"));
-  assert.match(body, /jarvisProcesses\.jobRow\(job, "running"/);
-  assert.match(body, /jarvisProcesses\.jobRow\(job, ok \? "done" : "failed"/);
+  assert.match(body, /jarvisProcesses\.jobRow\(job, ['\"]running['\"]/);
+  assert.match(body, /jarvisProcesses\.jobRow\(job, ok \? ['\"]done['\"] : ['\"]failed['\"]/);
 });
 
 test("the Cursor hook: a prompt runs, an answer ending in a question waits on Carlos, others finish", () => {

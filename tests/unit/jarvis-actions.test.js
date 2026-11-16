@@ -142,8 +142,8 @@ test("failing-job proposals carry the job names for Run again", () => {
 test("index.js runs the actions in jarvisWatch, logs clicked ops and shares the desk's release", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.match(index, /exports\.jarvisWatch = scheduled\([^]*?jarvisAutoActions\(\)/);
-  assert.match(index, /op === "action-run"/);
-  assert.match(index, /op === "actions"/);
+  assert.match(index, /op === ['\"]action-run['\"]/);
+  assert.match(index, /op === ['\"]actions['\"]/);
   assert.match(index, /const out = await releaseHeldRerun\(id, req\.body && req\.body\.send === true, operator\);/);
   assert.match(index, /release: \(id, by\) => releaseHeldRerun\(id, true, by\)/);
   assert.match(index, /JARVIS_LOGGED\[op\]/);

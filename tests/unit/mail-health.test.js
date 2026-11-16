@@ -140,7 +140,7 @@ test("mail health: the functions, the watch and the app are wired to the mailbox
   const hook = index.slice(index.indexOf("exports.mailInbound"));
   assert.ok(hook.indexOf("mailHealth.CANARY") < hook.indexOf("mailInbound.codeOf(mail)"));
   assert.match(index, /exports\.mailCanary = scheduled\(/);
-  assert.match(index, /jarvisExternal\(\["health", "jobs", "uptime", "money", "safety", "platform", "mailbox"\], 1\)/);
+  assert.match(index, /jarvisExternal\(\[['"]health['"], ['"]jobs['"], ['"]uptime['"], ['"]money['"], ['"]safety['"], ['"]platform['"], ['"]mailbox['"]\], 1\)/);
   assert.equal(require("../../functions/ops-schedule.js").cron("mailCanary"), "10 9 * * *");
   assert.ok(secrets.jarvis.includes("IMPROVMX_API_KEY") && secrets.jarvisWatch.includes("IMPROVMX_API_KEY"));
   assert.deepEqual(secrets.mailCanary, ["SENDGRID_API_KEY"]);
