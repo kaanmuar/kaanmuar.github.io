@@ -24,8 +24,25 @@ test("audit carousels build four slides from a scores tip (#3476)", () => {
   assert.match(slides[1].title[1], /A11y at 14/);
   assert.equal(slides[2].visual.type, "code");
   assert.deepEqual(slides[2].visual.lines[0], tip.fixLines[0]);
+  assert.equal(slides[2].visual.note, "808ball16.com");
   assert.equal(slides[3].visual.type, "stat");
   assert.equal(slides[3].visual.value, "53");
+});
+
+test("Slide 3 prefers case id note and Playwright title when caseId is set (#3550)", () => {
+  const tip = {
+    carousel: true,
+    host: "example.com",
+    caseId: "A11Y-01",
+    action: "Give every button an accessible name.",
+    fixLines: ["// A11Y-01: Buttons have an accessible name", "await expect(page.getByRole('button').first()).toHaveAccessibleName(/.+/);"],
+    visual: { type: "scores", overall: 40, areas: [["A11y", 14], ["SEO", 70]], note: "example.com · 3 pages" }
+  };
+  const slides = auditCarouselSlides(tip);
+  assert.equal(slides[2].visual.note, "A11Y-01");
+  assert.match(slides[2].title[0], /A11Y-01/);
+  assert.match(slides[2].visual.lines[0], /A11Y-01/);
+  assert.equal(slides[2].visual.domCrop, undefined);
 });
 
 test("rivals and tips without carousel stay null", () => {

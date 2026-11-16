@@ -57,8 +57,9 @@ const TIPS = RUNS.map((run) => {
       areas: AREAS.map(([key, label]) => [label, run.areas[key]]),
       note: run.host + " · " + run.pages + (run.pages === 1 ? " page analyzed · " : " pages analyzed · ") + analyzed
     },
-    // Four-slide LinkedIn PDF + Instagram carousel from the same audit (#3476).
+    // Four-slide LinkedIn PDF + Instagram carousel from the same audit (#3476 / #3550).
     fixLines: run.fixLines || [],
+    caseId: run.caseId || "",
     carousel: run.kind === "rivals" ? false : true
   });
 });
