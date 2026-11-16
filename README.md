@@ -196,6 +196,28 @@ Each command serves the folder on port `8767` and stays on `http://127.0.0.1:876
 * [Node.js](https://nodejs.org/en/) and npm.
 * [Firebase CLI](https://firebase.google.com/docs/cli) if you deploy rules (`npm install -g firebase-tools`).
 
+### QA-lab MCP (Cursor)
+
+Soft-preview + report-read tools for Cursor (`packages/qa-lab-mcp`, #3480):
+
+```bash
+cd packages/qa-lab-mcp && npm install
+```
+
+```json
+{
+  "mcpServers": {
+    "qa-lab": {
+      "command": "node",
+      "args": ["packages/qa-lab-mcp/src/server.js"],
+      "cwd": "/absolute/path/to/kaanmuar.github.io"
+    }
+  }
+}
+```
+
+Env vars and local server notes: [packages/qa-lab-mcp/README.md](packages/qa-lab-mcp/README.md).
+
 ### 2. Clone the Repository
 
 ```bash

@@ -5,7 +5,7 @@
   "description": "Cursor stdio MCP for QA-lab soft preview + report read (#3480)",
   "type": "module",
   "bin": {
-    "qa-lab-mcp": "./src/server.js"
+    "qa-lab-mcp": "src/server.js"
   },
   "scripts": {
     "start": "node ./src/server.js",
@@ -15,7 +15,14 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.22.0",
-    "zod": "^3.25.0"
-  }
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^3.25.76"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
