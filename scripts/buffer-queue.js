@@ -567,7 +567,11 @@ const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", sk
 // addToQueue would land it behind them. A slot already past goes out in 20 minutes. Threads is posted by
 // scripts/open-social-queue.js, so a Buffer Threads channel takes nothing (#2720).
 function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
-  const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
+  const channelSplit = require("./compare-channel-split");
+  const captions = batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "captions.json"))
+    ? JSON.parse(fs.readFileSync(path.join(ROOT, "media/social-posts", batch, "captions.json"), "utf8"))
+    : { [slug]: cap };
+  const image = (dir, forSlug) => ({ image: { url: base + "/" + dir + "/" + (forSlug || slug) + ".jpg", metadata: { altText: (captions[forSlug || slug] || cap).alt || cap.alt } } });
   const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
   // Prefer the release clip when the batch voiced this slug (#3603); else the feed still.
   const feedOrClip = () => (clipBase && socialClip.fromBatch(batch, slug, cap, voicedMap(batch)) ? video() : image("feed"));
@@ -587,21 +591,34 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
   // A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
   const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
     && { document: { url: base + "/document/" + slug + ".pdf", title: String(cap.documentTitle || own("title")).slice(0, 58), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
+  // Compare channel-split (#3497): LI/IG reveal posts quiz+reveal feed cards as one carousel.
+  const pair = channelSplit.usesPairCarousel("linkedin", slug, captions) ? channelSplit.pairSlides(base, slug, captions) : null;
+  const quizCap = pair ? captions[pair[0].slug] : null;
   switch (channel.service) {
     case "linkedin": {
-      const p = prepared("linkedin", own("linkedin"));
-      return [post("linkedin", p.text, [document() || feedOrClip()], p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
+      const body = pair ? channelSplit.mergedCaption("linkedin", cap, quizCap) : own("linkedin");
+      const p = prepared("linkedin", body);
+      const assets = pair ? pair.map((s) => image("feed", s.slug)) : [document() || feedOrClip()];
+      return [post("linkedin", p.text, assets, p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
     }
     case "facebook": {
-      const p = prepared("facebook", own("facebook"));
-      return [post("facebook", p.text, [feedOrClip()], { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
+      const fbPair = channelSplit.usesPairCarousel("facebook", slug, captions) ? channelSplit.pairSlides(base, slug, captions) : null;
+      const fbQuiz = fbPair ? captions[fbPair[0].slug] : null;
+      const fbBody = fbPair ? channelSplit.mergedCaption("facebook", cap, fbQuiz) : own("facebook");
+      const p = prepared("facebook", fbBody);
+      const fbAssets = fbPair ? fbPair.map((s) => image("feed", s.slug)) : [feedOrClip()];
+      return [post("facebook", p.text, fbAssets, { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
     }
     case "instagram": {
-      const p = prepared("instagram", own("instagram"));
-      const feed = feedOrClip();
-      const igType = feed.video ? "reel" : "post";
+      const igPair = channelSplit.usesPairCarousel("instagram", slug, captions) ? channelSplit.pairSlides(base, slug, captions) : null;
+      const igQuiz = igPair ? captions[igPair[0].slug] : null;
+      const body = igPair ? channelSplit.mergedCaption("instagram", cap, igQuiz) : own("instagram");
+      const p = prepared("instagram", body);
+      const feed = igPair ? null : feedOrClip();
+      const feedAssets = igPair ? igPair.map((s) => image("feed", s.slug)) : [feed];
+      const igType = igPair ? "post" : (feed.video ? "reel" : "post");
       return [
-        post("instagram", p.text, [feed], { instagram: Object.assign({ type: igType, shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}) }),
+        post("instagram", p.text, feedAssets, { instagram: Object.assign({ type: igType, shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}) }),
         post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
       ];
     }
