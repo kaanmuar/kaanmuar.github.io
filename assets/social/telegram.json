@@ -298,6 +298,17 @@
     "checked": "2026-11-15T17:05:06.281Z"
    }
   ],
+  "auto-2026-11-15/03-vs-mccabespharmacy-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "88",
+    "at": "2026-11-16T20:02:26.827Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/88",
+    "checked": "2026-11-16T20:02:32.021Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -696,6 +707,28 @@
     "checked": "2026-11-14T14:49:12.796Z"
    }
   ],
+  "runs-2026-10/02-bogota": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "89",
+    "at": "2026-11-16T20:02:32.021Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/89",
+    "checked": "2026-11-16T20:02:37.327Z"
+   }
+  ],
+  "runs-2026-10/03-who": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "90",
+    "at": "2026-11-16T20:02:37.327Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/90",
+    "checked": "2026-11-16T20:02:42.491Z"
+   }
+  ],
   "runs-3/01-ilo": [
    {
     "channel": "telegram",
@@ -881,6 +914,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/85",
     "checked": "2026-11-16T01:57:57.743Z"
+   }
+  ],
+  "tips-2026-10/21-canonical": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "87",
+    "at": "2026-11-16T20:02:18.126Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/87",
+    "checked": "2026-11-16T20:02:26.827Z"
    }
   ]
  }
