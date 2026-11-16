@@ -4,14 +4,20 @@
  */
 "use strict";
 
-const { FieldValue } = require("firebase-admin/firestore");
-
 const MIN_STARS = 4;
 const MIN_NPS = 8;
 const MIN_COMMENT = 24;
 const DECISIONS = new Set(["approved", "dismissed"]);
 const ROW_ID = /^[\w-]{1,128}$/;
 const HUB_IMAGE = "assets/share/qa-review-social.jpg";
+
+function serverTimestamp() {
+  try {
+    return require("firebase-admin/firestore").FieldValue.serverTimestamp();
+  } catch (error) {
+    return new Date().toISOString();
+  }
+}
 
 function qualifies(row) {
   const data = row || {};
@@ -90,7 +96,7 @@ async function publishApproved(db, row, now) {
       authorName,
       originalText: quote,
       rating,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
       sourceId: id,
       sourceType: "url-review-csat"
     });
@@ -126,7 +132,7 @@ async function publishApproved(db, row, now) {
     if (!item) throw new Error("That quote could not become a hub pick.");
     if (!(live.items || []).some((entry) => entry.id === item.id)) {
       live.items = (live.items || []).concat(item);
-      tx.set(hubRef, { json: JSON.stringify(Admin.clean(live)), updatedAt: FieldValue.serverTimestamp() });
+      tx.set(hubRef, { json: JSON.stringify(Admin.clean(live)), updatedAt: serverTimestamp() });
       social = true;
     }
   });
