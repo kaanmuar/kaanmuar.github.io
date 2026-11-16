@@ -39,6 +39,7 @@ test("each risky action has its kind: email, post, code, outreach, repo; anythin
   assert.equal(countdown.kindOf("rerun-held"), "email");
   assert.equal(countdown.kindOf("resend-notices"), "email");
   assert.equal(countdown.kindOf("launch-campaign"), "email");
+  assert.equal(countdown.kindOf("resend-cold"), "email");
   assert.equal(countdown.kindOf("run-job", "sendOwnerNotices"), "email");
   assert.equal(countdown.kindOf("run-job", "dispatchFacebookQueue"), "post");
   assert.equal(countdown.kindOf("rerun-ci", "Buffer batch"), "post");

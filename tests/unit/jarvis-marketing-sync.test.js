@@ -172,6 +172,22 @@ test("marketing sync (#2470): an upload holds back sites answered with a report 
   assert.equal(fs.readFileSync(file, "utf8"), text);
 });
 
+test("linkedin snapshot diagnoses an empty day when the /in/ pool is exhausted (#3564)", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-empty-"));
+  fs.mkdirSync(path.join(dir, "linkedin"));
+  fs.mkdirSync(path.join(dir, "prospects"));
+  fs.writeFileSync(path.join(dir, "linkedin", "2026-11-03.md"), "## [ ] Ana Pérez, Dean (Uni, CO)\n\n- Profile: [https://linkedin.com/in/ana](https://linkedin.com/in/ana)\n");
+  fs.writeFileSync(path.join(dir, "linkedin", "2026-11-04.md"), "# LinkedIn, 2026-11-04\n\nSend the connection request.\n");
+  fs.writeFileSync(path.join(dir, "prospects", "week1-education.csv"), "segment,org,host,cc,country,language,contact_name,contact_title,email,linkedin_url,source,sequence,sender,trigger,status\nuniversity,Uni,uni.edu,co,Colombia,es,Ana Pérez,Dean,a@uni.edu,https://linkedin.com/in/ana,src,A,carlos,t,ready\n");
+  const out = sync.linkedin(dir);
+  assert.equal(out.date, "2026-11-04");
+  assert.equal(out.items.length, 0);
+  assert.equal(out.lastNonEmpty, "2026-11-03");
+  assert.equal(out.emptyStreak, 1);
+  assert.equal(out.left, 0);
+  assert.equal(out.why, "pool-exhausted-since-2026-11-03");
+});
+
 test("the sync writes each working day's LinkedIn list once, from 07:00, never at weekends", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mk-li-"));
   fs.mkdirSync(path.join(dir, "linkedin"));
@@ -205,6 +221,34 @@ test("under a run's lock the LinkedIn list waits only while the prospect CSVs ar
 });
 
 const SENT = "11111111-2222-3333-4444-555555555555";
+
+test("cold resend eligibility (#3566): step-1, 48h–4d, unopened, open tracking, DNC, DE/AT/CH", () => {
+  const now = Date.parse("2026-11-16T15:00:00Z");
+  const email = { id: SENT, ue_type: 1, step: 1, timestamp_email: "2026-11-13T14:00:00Z", lead: "ana@uni.edu" };
+  const lead = { email: "ana@uni.edu", email_open_count: 0, email_reply_count: 0, status: 1, cc: "co" };
+  const camp = { open_tracking: true, status: "active" };
+  assert.equal(mk.coldResendSkip(email, lead, camp, [], [], now), "");
+  assert.equal(mk.coldResendEligible(email, lead, camp, [], [], now), true);
+  assert.equal(mk.coldResendSkip({ ...email, step: 2 }, lead, camp, [], [], now), "not-step-1");
+  assert.equal(mk.coldResendSkip({ ...email, timestamp_email: "2026-11-15T14:00:00Z" }, lead, camp, [], [], now), "too-young");
+  assert.equal(mk.coldResendSkip(email, { ...lead, email_open_count: 1 }, camp, [], [], now), "opened");
+  assert.equal(mk.coldResendSkip(email, lead, { open_tracking: false }, [], [], now), "open-tracking-off");
+  assert.equal(mk.coldResendSkip(email, lead, camp, ["uni.edu"], [], now), "dnc");
+  assert.equal(mk.coldResendSkip(email, { ...lead, cc: "de" }, camp, [], [], now), "eu-consent");
+  assert.equal(mk.coldResendSkip(email, lead, camp, [], [{ to: "ana@uni.edu", at: "2026-11-14T12:00:00Z" }], now), "already-resent");
+});
+
+test("cold resend candidates (#3566): pick eligible step-1 sends up to the limit", () => {
+  const now = Date.parse("2026-11-16T15:00:00Z");
+  const good = { id: SENT, ue_type: 1, step: 1, timestamp_email: "2026-11-13T14:00:00Z", lead: "ana@uni.edu", campaign_id: "c1", subject: "Hi" };
+  const young = { id: "y", ue_type: 1, step: 1, timestamp_email: "2026-11-15T14:00:00Z", lead: "b@x.io", campaign_id: "c1" };
+  const leads = [{ email: "ana@uni.edu", company_name: "Uni", email_open_count: 0, status: 1, cc: "co" }];
+  const camps = [{ id: "c1", status: 1, open_tracking: true }];
+  const out = mk.pickColdResendCandidates([young, good], leads, camps, [], {}, now, 2);
+  assert.deepEqual(out.map((r) => r.id), [SENT]);
+  assert.deepEqual([out[0].to, out[0].org, out[0].subject], ["ana@uni.edu", "Uni", "Hi"]);
+  assert.equal(mk.pickColdResendCandidates([good, good], leads, camps, ["ana@uni.edu"], {}, now, 5).length, 0);
+});
 
 test("sent emails (#2017): every cold email with what the lead did since, newest first", () => {
   const out = mk.sentRows([
