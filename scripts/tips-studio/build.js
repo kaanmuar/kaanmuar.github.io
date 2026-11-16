@@ -660,15 +660,18 @@ function rewriteCaptions(all, networks) {
   fs.writeFileSync(path.join(OUT, "captions.json"), JSON.stringify(captions, null, 2));
   // The text captions in the other five languages, from the phrasebooks; the daily workflow also fills their gaps.
   require("child_process").execFileSync(process.execPath, [path.join(ROOT, "scripts/social-hub/translate-captions.js"), BATCH], { stdio: "inherit" });
-  fs.writeFileSync(path.join(OUT, "calendar.csv"), ["Date,Time,Channel,Post,Asset"].concat(rows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(","))).join("\n") + "\n");
+  // Channel-split compare (#3497): drop LI/IG quiz-day rows; reveal day posts the quiz+reveal carousel.
+  const channelSplit = require("../compare-channel-split");
+  const calendarRows = channelSplit.filterCalendarRows(rows, captions);
+  fs.writeFileSync(path.join(OUT, "calendar.csv"), ["Date,Time,Channel,Post,Asset"].concat(calendarRows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(","))).join("\n") + "\n");
 
   fs.mkdirSync(path.join(OUT, "buffer"), { recursive: true });
   for (const channel of ["linkedin", "x", "facebook", "instagram"]) {
-    const lines = ["Text,Image URL,Tags,Posting Time"].concat(rows.filter((r) => r.channel === channel).map((r) =>
+    const lines = ["Text,Image URL,Tags,Posting Time"].concat(calendarRows.filter((r) => r.channel === channel).map((r) =>
       [csvCell(r.text), csvCell(IMAGE_BASE + "/" + r.asset), csvCell(""), csvCell(r.date + " " + r.time)].join(",")));
     fs.writeFileSync(path.join(OUT, "buffer", "buffer-" + channel + ".csv"), lines.join("\n") + "\n");
   }
   fs.writeFileSync(path.join(OUT, "buffer", "alt-text.csv"), ["Date,Post,Image URL,Alt Text"].concat(Object.keys(captions).map((slug) =>
     [captions[slug].date, slug, csvCell(IMAGE_BASE + "/feed/" + slug + ".jpg"), csvCell(captions[slug].alt)].join(","))).join("\n") + "\n");
-  console.log("wrote", Object.keys(captions).length, "captions,", rows.length, "calendar rows to", path.relative(ROOT, OUT));
+  console.log("wrote", Object.keys(captions).length, "captions,", calendarRows.length, "calendar rows to", path.relative(ROOT, OUT));
 })().catch((err) => { console.error(err); process.exit(1); });
