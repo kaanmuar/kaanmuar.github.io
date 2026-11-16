@@ -841,6 +841,16 @@ ${json(jsonLd(lang, published, visible.filter((post) => !post.upcoming).length, 
         <p class="hub-eyebrow" translate="no">QA-lab URL Review · Social</p>
         <h1>${esc(copy.h1)}</h1>
         <p class="hub-lead">${esc(copy.lead)}</p>
+        <form class="hub-soft" id="hub-soft" action="qa-review${sfx}.html" method="get">
+            <label class="hub-soft-label" for="hub-soft-url">${esc(copy.softLabel)}</label>
+            <div class="hub-soft-row">
+                <span class="hub-soft-scheme" aria-hidden="true">https://</span>
+                <input id="hub-soft-url" name="url" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="${esc(copy.softPlaceholder)}" required>
+                <input type="hidden" name="from" value="hub">
+                <button type="submit" class="btn btn-primary">${esc(copy.softRun)}</button>
+            </div>
+            <p class="hub-soft-hint">${esc(copy.softHint)}</p>
+        </form>
         <nav class="hub-follow" aria-label="${esc(copy.follow)}"><span>${esc(copy.follow)}</span>${follow}</nav>
         <nav class="hub-langs" aria-label="${esc(copy.language)}">${langLinks}</nav>
     </section>

@@ -347,3 +347,16 @@ test("the YouTube feed adds new uploads and re-titles the ones it still lists, a
   assert.equal(ledger.videos.b.title, "Gone from the feed");
   assert.deepEqual(Object.keys(ledger.videos), ["b", "a", "c"]);
 });
+
+test("each language hub hero has a soft-gate form that GETs qa-review with from=hub (#3533)", () => {
+  for (const lang of Object.keys(LANGS)) {
+    const c = COPY[lang];
+    assert.ok(c.softLabel && c.softPlaceholder && c.softRun && c.softHint, lang);
+    const sfx = lang === "en" ? "" : "-" + lang;
+    const html = hub.page(lang, [post()], "2026-10-24");
+    assert.match(html, new RegExp(`id="hub-soft"[^>]*action="qa-review${sfx}\\.html"`));
+    assert.match(html, /name="from" value="hub"/);
+    assert.match(html, /id="hub-soft-url" name="url"/);
+    assert.match(html, new RegExp(`>${c.softRun.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}<`));
+  }
+});
