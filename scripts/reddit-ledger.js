@@ -16,83 +16,105 @@
    Each post goes into assets/social/reddit.json (scripts/social-ledger.js) under its batch key, and the member count
    into its members, and each post's numbers into its numbers; scripts/commit-social-ledgers.sh commits it. */
 
-const fs = require("fs");
-const ledgers = require("./social-ledger");
+const fs = require('fs');
+const ledgers = require('./social-ledger');
 
-const LEDGER = "assets/social/reddit.json";
-const PREFIX = "qalab-ledger ";
+const LEDGER = 'assets/social/reddit.json';
+const PREFIX = 'qalab-ledger ';
 // live/<date> for the batch posts, <batch>/<slug> (the launch set: <batch>/<lang>/<topic>) for the campaign posts (#2606).
 const KEY = /^(?:live\/\d{4}-\d{2}-\d{2}|[\w-]+\/[\w-]+(?:\/[\w-]+)?)$/;
 
 // `devvit logs --json` wraps each line in an object; plain output and stray CLI lines pass through as text.
 function textOf(line) {
-  const raw = String(line || "").trim();
-  if (!raw.startsWith("{")) return raw;
-  try {
-    const json = JSON.parse(raw);
-    return typeof json === "string" ? json : String(json.message || json.msg || json.log || json.text || (json.data && json.data.message) || raw);
-  } catch (error) {
-    return raw;
-  }
+	const raw = String(line || '').trim();
+	if (!raw.startsWith('{')) return raw;
+	try {
+		const json = JSON.parse(raw);
+		return typeof json === 'string'
+			? json
+			: String(json.message || json.msg || json.log || json.text || (json.data && json.data.message) || raw);
+	} catch (error) {
+		return raw;
+	}
 }
 
 /** The app's ledger records in a log dump, oldest first. */
 function parse(text) {
-  const out = [];
-  String(text || "").split(/\r?\n/).forEach((line) => {
-    const msg = textOf(line);
-    const i = msg.indexOf(PREFIX);
-    if (i < 0) return;
-    try {
-      const rec = JSON.parse(msg.slice(i + PREFIX.length).trim());
-      if (rec && (rec.kind === "post" || rec.kind === "members" || rec.kind === "numbers") && Number.isFinite(Date.parse(rec.at || ""))) out.push(rec);
-    } catch (error) { /* a line cut by the log stream */ }
-  });
-  return out.sort((a, b) => a.at.localeCompare(b.at));
+	const out = [];
+	String(text || '')
+		.split(/\r?\n/)
+		.forEach((line) => {
+			const msg = textOf(line);
+			const i = msg.indexOf(PREFIX);
+			if (i < 0) return;
+			try {
+				const rec = JSON.parse(msg.slice(i + PREFIX.length).trim());
+				if (
+					rec &&
+					(rec.kind === 'post' || rec.kind === 'members' || rec.kind === 'numbers') &&
+					Number.isFinite(Date.parse(rec.at || ''))
+				)
+					out.push(rec);
+			} catch (error) {
+				/* a line cut by the log stream */
+			}
+		});
+	return out.sort((a, b) => a.at.localeCompare(b.at));
 }
 
 function apply(book, records, now) {
-  const checked = new Date(now).toISOString();
-  const keys = new Set();
-  records.forEach((rec) => {
-    if (rec.kind === "numbers") {
-      (Array.isArray(rec.posts) ? rec.posts : []).forEach((p) => {
-        if (p && p.id) ledgers.numbers(book, String(p.id), { likes: p.score, comments: p.comments }, rec.at);
-      });
-      return;
-    }
-    const chat = rec.subreddit ? "r/" + rec.subreddit : "";
-    if (rec.kind === "post" && KEY.test(rec.key || "") && rec.id) {
-      ledgers.record(book, rec.key, {
-        channel: "reddit", profile: "Reddit " + (chat || "r/QALabLiveReports"), id: String(rec.id),
-        at: Number.isFinite(Date.parse(rec.posted || "")) ? new Date(rec.posted).toISOString() : rec.at,
-        result: "sent", url: rec.url || "", checked
-      });
-      keys.add(rec.key);
-    }
-    ledgers.count(book, chat, rec.subscribers, rec.at);
-  });
-  return [...keys].sort();
+	const checked = new Date(now).toISOString();
+	const keys = new Set();
+	records.forEach((rec) => {
+		if (rec.kind === 'numbers') {
+			(Array.isArray(rec.posts) ? rec.posts : []).forEach((p) => {
+				if (p && p.id) ledgers.numbers(book, String(p.id), { likes: p.score, comments: p.comments }, rec.at);
+			});
+			return;
+		}
+		const chat = rec.subreddit ? 'r/' + rec.subreddit : '';
+		if (rec.kind === 'post' && KEY.test(rec.key || '') && rec.id) {
+			ledgers.record(book, rec.key, {
+				channel: 'reddit',
+				profile: 'Reddit ' + (chat || 'r/QALabLiveReports'),
+				id: String(rec.id),
+				at: Number.isFinite(Date.parse(rec.posted || '')) ? new Date(rec.posted).toISOString() : rec.at,
+				result: 'sent',
+				url: rec.url || '',
+				checked,
+			});
+			keys.add(rec.key);
+		}
+		ledgers.count(book, chat, rec.subscribers, rec.at);
+	});
+	return [...keys].sort();
 }
 
 function run(text, opts) {
-  const o = Object.assign({ now: Date.now(), dry: false, log: console.log, file: LEDGER }, opts);
-  const records = parse(text);
-  const book = ledgers.read(o.file);
-  const keys = apply(book, records, o.now);
-  if (!o.dry && records.length) ledgers.write(o.file, book);
-  const m = book.members;
-  const numbered = Object.keys(book.numbers || {}).length;
-  o.log(records.length
-    ? records.length + " ledger lines from the Reddit app: " + (keys.length ? keys.length + " batch posts (" + keys.join(", ") + ")" : "no batch post") + (m ? "; " + m.chat + " has " + m.members + " members" : "") + (numbered ? "; numbers for " + numbered + " posts" : "") + (o.dry ? ". Dry run: " + o.file + " not written." : ".")
-    : "No ledger lines in the Reddit app's logs; " + o.file + " is unchanged.");
-  return { records, keys, book };
+	const o = Object.assign({ now: Date.now(), dry: false, log: console.log, file: LEDGER }, opts);
+	const records = parse(text);
+	const book = ledgers.read(o.file);
+	const keys = apply(book, records, o.now);
+	if (!o.dry && records.length) ledgers.write(o.file, book);
+	const m = book.members;
+	const numbered = Object.keys(book.numbers || {}).length;
+	o.log(
+		records.length
+			? records.length +
+					' ledger lines from the Reddit app: ' +
+					(keys.length ? keys.length + ' batch posts (' + keys.join(', ') + ')' : 'no batch post') +
+					(m ? '; ' + m.chat + ' has ' + m.members + ' members' : '') +
+					(numbered ? '; numbers for ' + numbered + ' posts' : '') +
+					(o.dry ? '. Dry run: ' + o.file + ' not written.' : '.')
+			: "No ledger lines in the Reddit app's logs; " + o.file + ' is unchanged.'
+	);
+	return { records, keys, book };
 }
 
 if (require.main === module) {
-  const argv = process.argv.slice(2);
-  const file = argv.find((a) => !a.startsWith("--"));
-  run(fs.readFileSync(file || 0, "utf8"), { dry: argv.includes("--dry-run") });
+	const argv = process.argv.slice(2);
+	const file = argv.find((a) => !a.startsWith('--'));
+	run(fs.readFileSync(file || 0, 'utf8'), { dry: argv.includes('--dry-run') });
 }
 
 module.exports = { LEDGER, PREFIX, textOf, parse, apply, run };

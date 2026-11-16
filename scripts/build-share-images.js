@@ -13,21 +13,22 @@
    both there), app icons and the URL Review logo under assets/. Fonts load from
    Google Fonts, so the run needs network access. */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const fusion = require("./fusion/still");
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const fusion = require('./fusion/still');
 
-const ROOT = path.resolve(__dirname, "..");
-const FONTS = "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;600;700&family=Fira+Code:wght@500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=block";
+const ROOT = path.resolve(__dirname, '..');
+const FONTS =
+	'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;600;700&family=Fira+Code:wght@500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=block';
 
 function dataUri(file) {
-  const ext = path.extname(file).slice(1).replace("jpg", "jpeg").replace("svg", "svg+xml");
-  return "data:image/" + ext + ";base64," + fs.readFileSync(path.join(ROOT, file)).toString("base64");
+	const ext = path.extname(file).slice(1).replace('jpg', 'jpeg').replace('svg', 'svg+xml');
+	return 'data:image/' + ext + ';base64,' + fs.readFileSync(path.join(ROOT, file)).toString('base64');
 }
 
 function card({ eyebrow, title, em, sub, art, size = 84 }) {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
+	return `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
   * { box-sizing: border-box; margin: 0; }
   body { width: 1200px; height: 630px; overflow: hidden; font-family: Inter, sans-serif; color: #12181f;
     background: radial-gradient(900px 600px at 0% 0%, #2d7c83 0%, #3f8c92 30%, rgba(238,242,244,0) 62%), linear-gradient(90deg, #3a858b 0%, #c9d6d6 46%, #f2f1ec 62%, #e3eeea 100%); }
@@ -49,7 +50,9 @@ function card({ eyebrow, title, em, sub, art, size = 84 }) {
 // lines: [text, emphasis]; the emphasis line is the cyan italic one.
 const FUSION_OG = { w: 1200, h: 630, subject: [0.44, -0.02], zoom: 1.4 };
 function fusionCard({ eyebrow, lines, sub, url, size = 70, t = 6 }) {
-  return { t, html: (bg) => `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
+	return {
+		t,
+		html: (bg) => `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>
   * { box-sizing: border-box; margin: 0; }
   body { width: 1200px; height: 630px; overflow: hidden; position: relative; font-family: Inter, sans-serif; color: #f4fafb; background: #071116 url(${bg}) center / cover no-repeat; }
   .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7,17,22,.92) 0%, rgba(7,17,22,.8) 34%, rgba(7,17,22,.35) 56%, rgba(7,17,22,0) 70%), linear-gradient(0deg, rgba(7,17,22,.55), rgba(7,17,22,0) 26%); }
@@ -66,163 +69,224 @@ function fusionCard({ eyebrow, lines, sub, url, size = 70, t = 6 }) {
   .url { position: absolute; left: 72px; bottom: 56px; font: 500 20px/1 "Fira Code", monospace; color: #7ef6fb; }
   </style></head><body><div class="shade"></div>
   <div class="brand"><img src="${fusion.markUri(64)}" alt=""><div><b>QA-lab</b><small>URL REVIEW</small></div></div>
-  <div class="copy"><p class="eyebrow">${eyebrow}</p><h1>${lines.map(([text, em]) => em ? `<em>${text}</em>` : `<span>${text}</span>`).join("")}</h1>${sub ? `<p class="sub">${sub}</p>` : ""}</div>
+  <div class="copy"><p class="eyebrow">${eyebrow}</p><h1>${lines.map(([text, em]) => (em ? `<em>${text}</em>` : `<span>${text}</span>`)).join('')}</h1>${sub ? `<p class="sub">${sub}</p>` : ''}</div>
   <p class="url">${url}</p>
-  </body></html>` };
+  </body></html>`,
+	};
 }
 
-const FRAMEWORKS = ["playwright.svg", "cypress.svg", "robot.svg", "selenium.svg", "webdriverio.svg", "k6.svg", "jest.svg", "appium.svg", "cucumber.svg", "jmeter.svg", "vitest.svg", "gatling.svg"];
+const FRAMEWORKS = [
+	'playwright.svg',
+	'cypress.svg',
+	'robot.svg',
+	'selenium.svg',
+	'webdriverio.svg',
+	'k6.svg',
+	'jest.svg',
+	'appium.svg',
+	'cucumber.svg',
+	'jmeter.svg',
+	'vitest.svg',
+	'gatling.svg',
+];
 
 const CARDS = {
-  "assets/share/cv.jpg": card({
-    eyebrow: "Interactive CV",
-    title: "Carlos A. Muñoz",
-    em: "QA Architect.",
-    sub: "Contract, advisory, and a full QA path. Over 18 years.",
-    art: `<div style="text-align:center"><img src="${dataUri("assets/profile.jpg")}" style="width:190px;height:190px;border-radius:50%;object-fit:cover;border:6px solid #f4efe4;box-shadow:0 14px 34px rgba(0,0,0,.3)"><p style="color:#e9fdff;font:700 15px Inter;letter-spacing:.14em;margin-top:26px">CSPM · ISTQB<br>CISA · CISSP</p></div>`
-  }),
-  "assets/share/qa-lab.jpg": card({
-    eyebrow: "Free QA regression lab",
-    title: "20 frameworks.",
-    em: "One live CV.",
-    sub: "Playwright, Cypress, Robot, Selenium, k6, and more, run in the browser.",
-    art: '<div style="display:grid;grid-template-columns:repeat(3,64px);gap:20px">' + FRAMEWORKS.map((f) => `<div style="width:64px;height:64px;border-radius:16px;background:#f4efe4;display:grid;place-items:center;box-shadow:0 8px 18px rgba(0,0,0,.2)"><img src="${dataUri("assets/frameworks/" + f)}" style="width:40px;height:40px;object-fit:contain"></div>`).join("") + "</div>"
-  }),
-  "assets/share/sdlc-studio.jpg": card({
-    eyebrow: "Free SDLC studio",
-    title: "Four agents.",
-    em: "One sprint.",
-    sub: "Jira story, Gherkin and Xray cases, Playwright, Cypress, and Robot scripts.",
-    art: '<div style="display:flex;flex-direction:column;gap:16px;width:200px">' + [["Ticket Steward", "#e2c48a"], ["Test Designer", "#7ef6fb"], ["Automation Engineer", "#6fd3a0"], ["Release Verifier", "#f4efe4"]].map(([name, tone], i) => `<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px 12px;color:#e9fdff;font:600 15px Inter"><span style="width:30px;height:30px;border-radius:50%;background:${tone};color:#10363a;display:grid;place-items:center;font-weight:700">${i + 1}</span>${name}</div>`).join("") + "</div>"
-  }),
-  "assets/share/qa-review.jpg": fusionCard({
-    eyebrow: "Privacy · Accessibility · Security",
-    lines: [["Find the leaks,"], ["breaks and blocks", true], ["before customers"], ["or regulators do."]],
-    url: "carlosandmunoz.com/qa-review",
-    size: 66
-  }),
-  "assets/share/qa-review-guide.jpg": fusionCard({
-    eyebrow: "Guided tour",
-    lines: [["Here is how"], ["we listen.", true]],
-    sub: "Six steps, six scores, and what a review never does.",
-    url: "carlosandmunoz.com/qa-review-guide",
-    size: 84,
-    t: 9.5
-  }),
-  "assets/share/qa-review-pay.jpg": fusionCard({
-    eyebrow: "Payment",
-    lines: [["Pay through PayPal,"], ["see the amount first.", true]],
-    sub: "The total shows before you confirm. Card numbers are entered on PayPal, never here.",
-    url: "carlosandmunoz.com/qa-review-pay",
-    size: 72,
-    t: 13
-  })
+	'assets/share/cv.jpg': card({
+		eyebrow: 'Interactive CV',
+		title: 'Carlos A. Muñoz',
+		em: 'QA Architect.',
+		sub: 'Contract, advisory, and a full QA path. Over 18 years.',
+		art: `<div style="text-align:center"><img src="${dataUri('assets/profile.jpg')}" style="width:190px;height:190px;border-radius:50%;object-fit:cover;border:6px solid #f4efe4;box-shadow:0 14px 34px rgba(0,0,0,.3)"><p style="color:#e9fdff;font:700 15px Inter;letter-spacing:.14em;margin-top:26px">CSPM · ISTQB<br>CISA · CISSP</p></div>`,
+	}),
+	'assets/share/qa-lab.jpg': card({
+		eyebrow: 'Free QA regression lab',
+		title: '20 frameworks.',
+		em: 'One live CV.',
+		sub: 'Playwright, Cypress, Robot, Selenium, k6, and more, run in the browser.',
+		art:
+			'<div style="display:grid;grid-template-columns:repeat(3,64px);gap:20px">' +
+			FRAMEWORKS.map(
+				(f) =>
+					`<div style="width:64px;height:64px;border-radius:16px;background:#f4efe4;display:grid;place-items:center;box-shadow:0 8px 18px rgba(0,0,0,.2)"><img src="${dataUri('assets/frameworks/' + f)}" style="width:40px;height:40px;object-fit:contain"></div>`
+			).join('') +
+			'</div>',
+	}),
+	'assets/share/sdlc-studio.jpg': card({
+		eyebrow: 'Free SDLC studio',
+		title: 'Four agents.',
+		em: 'One sprint.',
+		sub: 'Jira story, Gherkin and Xray cases, Playwright, Cypress, and Robot scripts.',
+		art:
+			'<div style="display:flex;flex-direction:column;gap:16px;width:200px">' +
+			[
+				['Ticket Steward', '#e2c48a'],
+				['Test Designer', '#7ef6fb'],
+				['Automation Engineer', '#6fd3a0'],
+				['Release Verifier', '#f4efe4'],
+			]
+				.map(
+					([name, tone], i) =>
+						`<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:14px 12px;color:#e9fdff;font:600 15px Inter"><span style="width:30px;height:30px;border-radius:50%;background:${tone};color:#10363a;display:grid;place-items:center;font-weight:700">${i + 1}</span>${name}</div>`
+				)
+				.join('') +
+			'</div>',
+	}),
+	'assets/share/qa-review.jpg': fusionCard({
+		eyebrow: 'Privacy · Accessibility · Security',
+		lines: [['Find the leaks,'], ['breaks and blocks', true], ['before customers'], ['or regulators do.']],
+		url: 'carlosandmunoz.com/qa-review',
+		size: 66,
+	}),
+	'assets/share/qa-review-guide.jpg': fusionCard({
+		eyebrow: 'Guided tour',
+		lines: [['Here is how'], ['we listen.', true]],
+		sub: 'Six steps, six scores, and what a review never does.',
+		url: 'carlosandmunoz.com/qa-review-guide',
+		size: 84,
+		t: 9.5,
+	}),
+	'assets/share/qa-review-pay.jpg': fusionCard({
+		eyebrow: 'Payment',
+		lines: [['Pay through PayPal,'], ['see the amount first.', true]],
+		sub: 'The total shows before you confirm. Card numbers are entered on PayPal, never here.',
+		url: 'carlosandmunoz.com/qa-review-pay',
+		size: 72,
+		t: 13,
+	}),
 };
 
 // The social hub's card, one per language.
-const HUB = require("./social-hub/copy");
+const HUB = require('./social-hub/copy');
 Object.keys(HUB.LANGS).forEach((lang) => {
-  const { title, em, sub } = HUB.COPY[lang].card;
-  CARDS["assets/share/qa-review-social" + (lang === "en" ? "" : "-" + lang) + ".jpg"] = fusionCard({
-    eyebrow: "Social", lines: [[title], [em, true]], sub, url: "carlosandmunoz.com/qa-review-social",
-    size: Math.max(title.length, em.length) > 18 ? 66 : 84, t: 3
-  });
+	const { title, em, sub } = HUB.COPY[lang].card;
+	CARDS['assets/share/qa-review-social' + (lang === 'en' ? '' : '-' + lang) + '.jpg'] = fusionCard({
+		eyebrow: 'Social',
+		lines: [[title], [em, true]],
+		sub,
+		url: 'carlosandmunoz.com/qa-review-social',
+		size: Math.max(title.length, em.length) > 18 ? 66 : 84,
+		t: 3,
+	});
 });
 
 // Each brand face's landing page (scripts/build-face-pages.js): node scripts/build-share-images.js urlreview.jpg
-Object.values(require("./brand-kit/faces").FACES).forEach((face) => {
-  CARDS["assets/share/" + face.handle + ".jpg"] = fusionCard({
-    eyebrow: "@" + face.handle,
-    lines: face.copy.lines.map((line) => [line.replace(/^\*(.*)\*$/, "$1"), /^\*.*\*$/.test(line)]),
-    sub: face.copy.langs,
-    url: "carlosandmunoz.com/" + face.handle,
-    size: 76,
-    t: 9.5
-  });
+Object.values(require('./brand-kit/faces').FACES).forEach((face) => {
+	CARDS['assets/share/' + face.handle + '.jpg'] = fusionCard({
+		eyebrow: '@' + face.handle,
+		lines: face.copy.lines.map((line) => [line.replace(/^\*(.*)\*$/, '$1'), /^\*.*\*$/.test(line)]),
+		sub: face.copy.langs,
+		url: 'carlosandmunoz.com/' + face.handle,
+		size: 76,
+		t: 9.5,
+	});
 });
 
 function icon(svgFile, size, maskable) {
-  const svg = svgFile.startsWith("<") ? svgFile : fs.readFileSync(path.join(ROOT, svgFile), "utf8");
-  const inner = maskable
-    ? `<div style="width:${size}px;height:${size}px;background:#0d6e76;display:grid;place-items:center"><div style="width:${size * 0.72}px;height:${size * 0.72}px">${svg.replace(/rx="14"/, 'rx="0"')}</div></div>`
-    : `<div style="width:${size}px;height:${size}px">${svg}</div>`;
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>* { margin: 0; } body { width: ${size}px; height: ${size}px; background: transparent; } svg { width: 100%; height: 100%; display: block; }</style></head><body>${inner}</body></html>`;
+	const svg = svgFile.startsWith('<') ? svgFile : fs.readFileSync(path.join(ROOT, svgFile), 'utf8');
+	const inner = maskable
+		? `<div style="width:${size}px;height:${size}px;background:#0d6e76;display:grid;place-items:center"><div style="width:${size * 0.72}px;height:${size * 0.72}px">${svg.replace(/rx="14"/, 'rx="0"')}</div></div>`
+		: `<div style="width:${size}px;height:${size}px">${svg}</div>`;
+	return `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${FONTS}"><style>* { margin: 0; } body { width: ${size}px; height: ${size}px; background: transparent; } svg { width: 100%; height: 100%; display: block; }</style></head><body>${inner}</body></html>`;
 }
 
 const ICONS = [
-  ["apple-touch-icon.png", "favicon.svg", 180, true],
-  ["assets/app-icon-192.png", "favicon.svg", 192, false],
-  ["assets/app-icon-512.png", "favicon.svg", 512, false],
-  ["assets/app-icon-maskable-512.png", "favicon.svg", 512, true],
-  ["assets/qa-review-logo.png", fusion.markSvg(512, { square: true }), 512, false]
+	['apple-touch-icon.png', 'favicon.svg', 180, true],
+	['assets/app-icon-192.png', 'favicon.svg', 192, false],
+	['assets/app-icon-512.png', 'favicon.svg', 512, false],
+	['assets/app-icon-maskable-512.png', 'favicon.svg', 512, true],
+	['assets/qa-review-logo.png', fusion.markSvg(512, { square: true }), 512, false],
 ];
 
 function ico(pngs) {
-  const header = Buffer.alloc(6);
-  header.writeUInt16LE(0, 0);
-  header.writeUInt16LE(1, 2);
-  header.writeUInt16LE(pngs.length, 4);
-  let offset = 6 + 16 * pngs.length;
-  const entries = pngs.map(([size, data]) => {
-    const entry = Buffer.alloc(16);
-    entry.writeUInt8(size, 0);
-    entry.writeUInt8(size, 1);
-    entry.writeUInt16LE(1, 4);
-    entry.writeUInt16LE(32, 6);
-    entry.writeUInt32LE(data.length, 8);
-    entry.writeUInt32LE(offset, 12);
-    offset += data.length;
-    return entry;
-  });
-  return Buffer.concat([header, ...entries, ...pngs.map(([, data]) => data)]);
+	const header = Buffer.alloc(6);
+	header.writeUInt16LE(0, 0);
+	header.writeUInt16LE(1, 2);
+	header.writeUInt16LE(pngs.length, 4);
+	let offset = 6 + 16 * pngs.length;
+	const entries = pngs.map(([size, data]) => {
+		const entry = Buffer.alloc(16);
+		entry.writeUInt8(size, 0);
+		entry.writeUInt8(size, 1);
+		entry.writeUInt16LE(1, 4);
+		entry.writeUInt16LE(32, 6);
+		entry.writeUInt32LE(data.length, 8);
+		entry.writeUInt32LE(offset, 12);
+		offset += data.length;
+		return entry;
+	});
+	return Buffer.concat([header, ...entries, ...pngs.map(([, data]) => data)]);
 }
 
 // Captures run on this many pages at once (SHARE_CONCURRENCY=1 runs them one after another).
 const CONCURRENCY = Math.max(1, Number(process.env.SHARE_CONCURRENCY) || Math.min(4, os.cpus().length));
 
 async function main() {
-  const only = process.argv[2];
-  const browser = await fusion.launch();
-  // Fusion frames render one at a time on the engine's shared page; each t is rendered once.
-  const frames = {};
-  let rendering = Promise.resolve();
-  const frame = (t) => frames[t] || (frames[t] = rendering = rendering.then(() => fusion.still(browser, Object.assign({ t }, FUSION_OG))).then(fusion.dataUri));
-  const pages = [];
-  async function shoot(worker, { html, width, height, out, transparent }) {
-    const page = pages[worker] || (pages[worker] = await browser.newPage({ deviceScaleFactor: 1 }));
-    await page.setViewportSize({ width, height });
-    await page.setContent(typeof html === "function" ? await html() : html, { waitUntil: "networkidle" });
-    await page.evaluate(() => document.fonts.ready);
-    const jpeg = !!out && out.endsWith(".jpg");
-    const buffer = await page.screenshot(Object.assign({ type: jpeg ? "jpeg" : "png", clip: { x: 0, y: 0, width, height } }, jpeg ? { quality: 86 } : { omitBackground: !!transparent }));
-    if (out) {
-      fs.mkdirSync(path.dirname(path.join(ROOT, out)), { recursive: true });
-      fs.writeFileSync(path.join(ROOT, out), buffer);
-      console.log("wrote", out, buffer.length, "bytes");
-    }
-    return buffer;
-  }
-  const shots = [];
-  for (const [out, html] of Object.entries(CARDS)) if (!only || out.includes(only)) shots.push({ out, width: 1200, height: 630, html: typeof html === "string" ? html : async () => html.html(await frame(html.t)) });
-  for (const [out, svg, size, maskable] of ICONS) if (!only || out.includes(only)) shots.push({ out, width: size, height: size, html: icon(svg, size, maskable), transparent: !maskable });
-  const sizes = only ? [] : [16, 32, 48];
-  sizes.forEach((size) => shots.push({ out: null, width: size, height: size, html: icon("favicon.svg", size, false), transparent: true }));
-  const buffers = new Array(shots.length);
-  let next = 0;
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, shots.length) }, async (_, worker) => {
-    while (next < shots.length) {
-      const i = next++;
-      buffers[i] = await shoot(worker, shots[i]);
-    }
-  }));
-  if (sizes.length) {
-    fs.writeFileSync(path.join(ROOT, "favicon.ico"), ico(sizes.map((size, i) => [size, buffers[shots.length - sizes.length + i]])));
-    console.log("wrote favicon.ico");
-  }
-  await browser.close();
+	const only = process.argv[2];
+	const browser = await fusion.launch();
+	// Fusion frames render one at a time on the engine's shared page; each t is rendered once.
+	const frames = {};
+	let rendering = Promise.resolve();
+	const frame = (t) =>
+		frames[t] ||
+		(frames[t] = rendering =
+			rendering.then(() => fusion.still(browser, Object.assign({ t }, FUSION_OG))).then(fusion.dataUri));
+	const pages = [];
+	async function shoot(worker, { html, width, height, out, transparent }) {
+		const page = pages[worker] || (pages[worker] = await browser.newPage({ deviceScaleFactor: 1 }));
+		await page.setViewportSize({ width, height });
+		await page.setContent(typeof html === 'function' ? await html() : html, { waitUntil: 'networkidle' });
+		await page.evaluate(() => document.fonts.ready);
+		const jpeg = !!out && out.endsWith('.jpg');
+		const buffer = await page.screenshot(
+			Object.assign(
+				{ type: jpeg ? 'jpeg' : 'png', clip: { x: 0, y: 0, width, height } },
+				jpeg ? { quality: 86 } : { omitBackground: !!transparent }
+			)
+		);
+		if (out) {
+			fs.mkdirSync(path.dirname(path.join(ROOT, out)), { recursive: true });
+			fs.writeFileSync(path.join(ROOT, out), buffer);
+			console.log('wrote', out, buffer.length, 'bytes');
+		}
+		return buffer;
+	}
+	const shots = [];
+	for (const [out, html] of Object.entries(CARDS))
+		if (!only || out.includes(only))
+			shots.push({
+				out,
+				width: 1200,
+				height: 630,
+				html: typeof html === 'string' ? html : async () => html.html(await frame(html.t)),
+			});
+	for (const [out, svg, size, maskable] of ICONS)
+		if (!only || out.includes(only))
+			shots.push({ out, width: size, height: size, html: icon(svg, size, maskable), transparent: !maskable });
+	const sizes = only ? [] : [16, 32, 48];
+	sizes.forEach((size) =>
+		shots.push({ out: null, width: size, height: size, html: icon('favicon.svg', size, false), transparent: true })
+	);
+	const buffers = new Array(shots.length);
+	let next = 0;
+	await Promise.all(
+		Array.from({ length: Math.min(CONCURRENCY, shots.length) }, async (_, worker) => {
+			while (next < shots.length) {
+				const i = next++;
+				buffers[i] = await shoot(worker, shots[i]);
+			}
+		})
+	);
+	if (sizes.length) {
+		fs.writeFileSync(
+			path.join(ROOT, 'favicon.ico'),
+			ico(sizes.map((size, i) => [size, buffers[shots.length - sizes.length + i]]))
+		);
+		console.log('wrote favicon.ico');
+	}
+	await browser.close();
 }
 
 main().catch((error) => {
-  console.error(error);
-  process.exit(1);
+	console.error(error);
+	process.exit(1);
 });
