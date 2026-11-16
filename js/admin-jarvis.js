@@ -26,7 +26,7 @@ const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed'
 const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
-let G_CHART = C.chartPrefs(null);
+let G_CHART = window.JarvisCore.chartPrefs(null);
 const GA_GROUP = { cv: 'CV site', review: 'QA-lab URL Review' };
 const FAMILY = { marketing: ['marketing', 'outreach', 'hub', 'business'] };
 const inTab = (b, product) => product === 'overview' || (FAMILY[product] || [product]).includes(b.product);
