@@ -224,10 +224,18 @@ function newestEvents() {
   } catch (error) { return null; }
 }
 
+/** Close open work-log rows older than 24h (end = start + 12h) via ticket.sh (#3545). */
+function sweepWorkLog(root) {
+  const script = path.join(root, "scripts/ticket.sh");
+  if (!fs.existsSync(script)) return null;
+  return run("bash", [script, "log", "sweep"], { timeout: 15000 }).trim();
+}
+
 function collect(root, now) {
   const errors = [];
   const safe = (name, fn, fallback) => { try { return fn(); } catch (error) { errors.push(name + ": " + String(error.message || error).split("\n")[0].slice(0, 200)); return fallback; } };
   const wts = safe("worktrees", () => worktrees(root, now), []);
+  const workLogSweep = safe("workLogSweep", () => sweepWorkLog(root), null);
   const usage = safe("usage", () => usageRows(fs.readFileSync(path.join(USAGE_DIR, "work-log.csv"), "utf8"), now), []);
   const cost = safe("cost", () => {
     const { file, json } = readQuotaJson();
@@ -239,7 +247,7 @@ function collect(root, now) {
   cost.tickets = events ? safe("tickets", () => ticketCosts(fs.readFileSync(events, "utf8"), usage, now), []) : [];
   cost.eventsFile = events ? path.basename(events) : null;
   const rate = safe("rate", () => rateFrom(JSON.parse(run("gh", ["api", "rate_limit"], { timeout: 20000 }))), { graphql: null, core: null });
-  return { worktrees: wts, usage, cost, rate, results: readJson(RESULTS, []), host: os.hostname(), at: now.toISOString(), root, errors };
+  return { worktrees: wts, usage, cost, rate, workLogSweep, results: readJson(RESULTS, []), host: os.hostname(), at: now.toISOString(), root, errors };
 }
 
 // --- act -------------------------------------------------------------------------------------------------------------
