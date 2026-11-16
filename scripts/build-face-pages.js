@@ -274,6 +274,7 @@ function page(face) {
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
     <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="${url}">
+    <link rel="describedby" type="text/plain" title="llms.txt" href="${SITE}llms.txt">
 ${alternates}${me}
     <link rel="icon" href="assets/qa-review-mark.svg?v=${ICONS}" type="image/svg+xml">
     <link rel="icon" href="assets/qa-review-icon-32.png?v=${ICONS}" sizes="32x32" type="image/png">

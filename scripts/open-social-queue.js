@@ -156,6 +156,7 @@ function captionsOf(dir, when) {
 	);
 }
 
+<<<<<<< HEAD
 function posts(batch, root = ROOT, network = 'bluesky') {
 	const route = ROUTES[network];
 	const dir = path.join(root, 'media/social-posts', batch);
@@ -197,6 +198,52 @@ function posts(batch, root = ROOT, network = 'bluesky') {
 				answer ? { answerCap: answer } : {}
 			);
 		});
+=======
+function posts(batch, root = ROOT, network = "bluesky") {
+  const route = ROUTES[network];
+  const dir = path.join(root, "media/social-posts", batch);
+  const when = slots(dir, route.slot);
+  if (NO_LAUNCH.has(network) && isLaunch(dir)) return [];
+  const captions = captionsOf(dir, when);
+  const clips = faceRoute.voiced(batch, root);
+  const channelSplit = require("./compare-channel-split");
+  return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption])
+    && !channelSplit.skipQuizPublish(network, captions[slug]))
+    .map((slug) => {
+      const asset = when[slug].asset || "feed/" + slug + ".jpg";
+      const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
+      const answer = captions[slug].answer && captions[captions[slug].answer];
+      const clip = socialClip.fromBatch(batch, slug, captions[slug], clips);
+      const slides = [];
+      for (let i = 1; i <= 10; i += 1) {
+        const rel = "carousel/" + slug + "-" + String(i).padStart(2, "0") + ".jpg";
+        if (!fs.existsSync(path.join(dir, rel))) break;
+        slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, file: path.join(dir, rel), alt: captions[slug].alt || captions[slug].title || "" });
+      }
+      // Compare channel-split (#3497): carousel nets use quiz+reveal feed cards when no audit carousel exists.
+      if (slides.length < 2 && quiz && channelSplit.usesPairCarousel(network, slug, captions)) {
+        const pair = channelSplit.pairSlides(SITE + "/media/social-posts/" + batch, slug, captions);
+        if (pair) {
+          pair.forEach((s) => slides.push({
+            url: s.url,
+            file: path.join(dir, "feed", s.slug + ".jpg"),
+            alt: s.alt
+          }));
+        }
+      }
+      const cap = Object.assign({}, captions[slug]);
+      if (quiz && channelSplit.usesPairCarousel(network, slug, captions)) {
+        const merged = channelSplit.mergedCaption(network, cap, captions[quiz]);
+        if (merged) {
+          if (network === "instagram") cap.instagram = merged;
+          else if (network === "bluesky" || network === "mastodon") cap.x = merged;
+        }
+      }
+      return Object.assign({ batch, slug, cap, at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
+        slides.length >= 2 ? { slides } : {},
+        quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
+    });
+>>>>>>> origin/main
 }
 
 // Slots that have come and are not MISSED_MS old, oldest first.
@@ -396,6 +443,7 @@ function bluesky(env = process.env) {
 		/* Tries each plan of scripts/open-social-compose.js, richest first. A media upload that fails, or a record
        Bluesky refuses as invalid (400), moves to the next plan; any other failure may have created the post, so it
        is not retried as a plainer one. */
+<<<<<<< HEAD
 		async post(args) {
 			const { text, image, alt, lang } = args;
 			const once = {};
@@ -530,6 +578,103 @@ function bluesky(env = process.env) {
 			return 'https://bsky.app/profile/' + session.handle;
 		},
 	};
+=======
+    async post(args) {
+      const { text, image, alt, lang } = args;
+      const once = {};
+      const get = (name, make) => once[name] || (once[name] = make());
+      const imageBlob = async () => (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(image), type: "image/jpeg" })).blob;
+      // The video service processes the clip before the post goes out, and stores it on our PDS with a service token.
+      const video = async () => {
+        const bytes = await download(args.clip.url);
+        const pds = ((session.didDoc && session.didDoc.service) || []).find((s) => String(s.id).endsWith("#atproto_pds"));
+        const { token } = await xrpc("com.atproto.server.getServiceAuth", {
+          query: { aud: "did:web:" + new URL(pds ? pds.serviceEndpoint : service).host, lxm: "com.atproto.repo.uploadBlob", exp: String(Math.floor(Date.now() / 1000) + 1800) }
+        });
+        const res = await fetch(BSKY_VIDEO + "/xrpc/app.bsky.video.uploadVideo?" + new URLSearchParams({ did: session.did, name: args.key.replace(/\W+/g, "-") + ".mp4" }), {
+          method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "video/mp4" }, body: bytes
+        });
+        const first = await res.json().catch(() => ({}));
+        let job = first.jobStatus || first;
+        for (let i = 0; !job.blob; i += 1) {
+          if (!job.jobId || job.state === "JOB_STATE_FAILED" || i === 90) throw new Error("Bluesky video " + (job.error || job.message || job.state || res.status));
+          await sleep(2000);
+          const status = await fetch(BSKY_VIDEO + "/xrpc/app.bsky.video.getJobStatus?jobId=" + encodeURIComponent(job.jobId)).then((r) => r.json()).catch(() => ({}));
+          job = Object.assign({ jobId: job.jobId }, status.jobStatus || { error: status.message || status.error });
+        }
+        const aspectRatio = compose.aspectOf(bytes);
+        return Object.assign({ video: job.blob }, aspectRatio ? { aspectRatio } : {});
+      };
+      const quoted = async () => {
+        const { posts } = await xrpc("app.bsky.feed.getPosts", { query: { uris: args.quote } });
+        const p = (posts || [])[0];
+        if (!p || !p.cid) throw new Error("Bluesky has no quiz post " + args.quote);
+        return { uri: p.uri, cid: p.cid };
+      };
+      const embeds = {
+        image: async () => {
+          // Compare channel-split (#3497): up to four stills (quiz + reveal).
+          if (args.slides && args.slides.length >= 2) {
+            const images = [];
+            for (const slide of args.slides.slice(0, 4)) {
+              const bytes = slide.file && fs.existsSync(slide.file)
+                ? fs.readFileSync(slide.file)
+                : await download(slide.url);
+              const blob = (await xrpc("com.atproto.repo.uploadBlob", { body: bytes, type: "image/jpeg" })).blob;
+              images.push({ alt: slide.alt || alt, image: blob });
+            }
+            return { $type: "app.bsky.embed.images", images };
+          }
+          return { $type: "app.bsky.embed.images", images: [{ alt, image: await get("image", imageBlob) }] };
+        },
+        video: async () => Object.assign({ $type: "app.bsky.embed.video", alt }, await get("video", video)),
+        card: async () => {
+          const lead = text.split("\n")[0];
+          const title = compose.titleIn(args.cap, lang) || lead;
+          return { $type: "app.bsky.embed.external", external: { uri: args.hub, title, description: lead === title ? "" : lead, thumb: await get("image", imageBlob) } };
+        }
+      };
+      const links = facets(text);
+      let refused = null;
+      const plainer = [];
+      for (const plan of compose.bluesky(args)) {
+        const record = { $type: "app.bsky.feed.post", text, createdAt: new Date().toISOString(), langs: [lang] };
+        if (links.length) record.facets = links;
+        try {
+          const media = await embeds[plan.media]();
+          record.embed = plan.quote ? { $type: "app.bsky.embed.recordWithMedia", record: { $type: "app.bsky.embed.record", record: await get("quote", quoted) }, media } : media;
+        } catch (error) {
+          refused = error;
+          plainer.push(refusal(plan, error));
+          console.log("Bluesky could not add " + plan.uses.join(", ") + " - " + error.message);
+          continue;
+        }
+        try {
+          const { uri } = await xrpc("com.atproto.repo.createRecord", { body: { repo: session.did, collection: "app.bsky.feed.post", record } });
+          return sent({ id: uri, url: "https://bsky.app/profile/" + session.handle + "/post/" + uri.split("/").pop(), uses: plan.uses }, plainer);
+        } catch (error) {
+          if (error.status !== 400) throw error;
+          refused = error;
+          plainer.push(refusal(plan, error));
+          console.log("Bluesky refused " + plan.uses.join(", ") + " - " + error.message);
+        }
+      }
+      throw refused;
+    },
+    // putRecord replaces the whole profile record, so the name, bio and other fields are carried over from the current one.
+    async profile({ avatar, banner }) {
+      const current = await xrpc("com.atproto.repo.getRecord", { query: { repo: session.did, collection: "app.bsky.actor.profile", rkey: "self" } })
+        .catch((error) => { if (/RecordNotFound|Could not locate record/i.test(error.message)) return null; throw error; });
+      const record = Object.assign({ $type: "app.bsky.actor.profile" }, current ? current.value : {});
+      record.avatar = (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(avatar), type: "image/jpeg" })).blob;
+      record.banner = (await xrpc("com.atproto.repo.uploadBlob", { body: fs.readFileSync(banner), type: "image/jpeg" })).blob;
+      const body = { repo: session.did, collection: "app.bsky.actor.profile", rkey: "self", record };
+      if (current && current.cid) body.swapRecord = current.cid;
+      await xrpc("com.atproto.repo.putRecord", { body });
+      return "https://bsky.app/profile/" + session.handle;
+    }
+  };
+>>>>>>> origin/main
 }
 
 function mastodon(env = process.env) {
@@ -564,6 +709,7 @@ function mastodon(env = process.env) {
 		/* Tries each plan of scripts/open-social-compose.js, richest first. A failed upload, or a status Mastodon refuses
        as invalid (422), moves to the next plan; any other failure is not retried as a plainer post. A large image or
        a video is still processing when /api/v2/media answers; the status needs its url. */
+<<<<<<< HEAD
 		async post(args) {
 			const { text, image, alt, lang, key } = args;
 			const uploads = {};
@@ -625,6 +771,87 @@ function mastodon(env = process.env) {
 			return account.url;
 		},
 	};
+=======
+    async post(args) {
+      const { text, image, alt, lang, key } = args;
+      const uploads = {};
+      const card = () => new Blob([fs.readFileSync(image)], { type: "image/jpeg" });
+      const upload = (kind) => uploads[kind] || (uploads[kind] = (async () => {
+        const form = new FormData();
+        if (kind === "video") {
+          form.append("file", new Blob([await download(args.clip.url)], { type: "video/mp4" }), path.basename(new URL(args.clip.url).pathname));
+          form.append("thumbnail", card(), path.basename(image));
+        } else form.append("file", card(), path.basename(image));
+        form.append("description", alt);
+        let media = await call("POST", "/api/v2/media", form);
+        for (let i = 0; !media.url && i < (kind === "video" ? 60 : 15); i += 1) {
+          await sleep(kind === "video" ? 3000 : 2000);
+          media = await call("GET", "/api/v1/media/" + media.id);
+        }
+        if (kind === "video" && !media.url) throw new Error("Mastodon is still processing video " + media.id);
+        return media.id;
+      })());
+      let refused = null;
+      const plainer = [];
+      // Compare channel-split (#3497): quiz+reveal as a multi-image status when slides are present.
+      if (args.slides && args.slides.length >= 2) {
+        try {
+          const ids = [];
+          for (const slide of args.slides.slice(0, 4)) {
+            const form = new FormData();
+            const bytes = slide.file && fs.existsSync(slide.file)
+              ? fs.readFileSync(slide.file)
+              : await download(slide.url);
+            form.append("file", new Blob([bytes], { type: "image/jpeg" }), path.basename(slide.file || slide.url || "slide.jpg"));
+            form.append("description", slide.alt || alt);
+            let media = await call("POST", "/api/v2/media", form);
+            for (let i = 0; !media.url && i < 15; i += 1) {
+              await sleep(2000);
+              media = await call("GET", "/api/v1/media/" + media.id);
+            }
+            ids.push(media.id);
+          }
+          const status = await call("POST", "/api/v1/statuses", {
+            status: text, visibility: "public", language: lang, media_ids: ids
+          }, { "Idempotency-Key": key });
+          return sent({ id: status.id, url: status.url, uses: ["carousel", "slides"] }, plainer);
+        } catch (error) {
+          refused = error;
+          plainer.push(refusal({ uses: ["carousel", "slides"] }, error));
+          console.log("Mastodon could not add carousel, slides - " + error.message);
+        }
+      }
+      for (const plan of compose.mastodon(args)) {
+        let body;
+        try {
+          body = Object.assign({ visibility: "public", language: lang }, plan.status, plan.media ? { media_ids: [await upload(plan.media)] } : {});
+        } catch (error) {
+          refused = error;
+          plainer.push(refusal(plan, error));
+          console.log("Mastodon could not add " + plan.uses.join(", ") + " - " + error.message);
+          continue;
+        }
+        try {
+          const status = await call("POST", "/api/v1/statuses", body, { "Idempotency-Key": key });
+          return sent({ id: status.id, url: status.url, uses: plan.uses }, plainer);
+        } catch (error) {
+          if (error.status !== 422) throw error;
+          refused = error;
+          plainer.push(refusal(plan, error));
+          console.log("Mastodon refused " + plan.uses.join(", ") + " - " + error.message);
+        }
+      }
+      throw refused;
+    },
+    async profile({ avatar, banner }) {
+      const form = new FormData();
+      form.append("avatar", new Blob([fs.readFileSync(avatar)], { type: "image/jpeg" }), path.basename(avatar));
+      form.append("header", new Blob([fs.readFileSync(banner)], { type: "image/jpeg" }), path.basename(banner));
+      const account = await call("PATCH", "/api/v1/accounts/update_credentials", form);
+      return account.url;
+    }
+  };
+>>>>>>> origin/main
 }
 
 function threads(env = process.env) {

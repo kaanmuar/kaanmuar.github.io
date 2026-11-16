@@ -101,6 +101,7 @@ function primeReview(page, { terms = true } = {}) {
 test.describe('Skip link', () => {
   const pages = [
     { url: '/index.html', text: 'Skip to main content', target: '#main' },
+    { url: '/qa.html', text: 'Skip to main content', target: '#suite' },
     { url: '/qa-lab.html', text: 'Skip to main content', target: '#lab-tools' },
     { url: '/simulador.html', text: 'Skip to main content', target: '#main' },
     { url: '/qa-review.html', text: 'Skip to main content', target: '#review-app' },
@@ -159,7 +160,7 @@ test.describe('Skip link', () => {
 });
 
 test.describe('Language menu by keyboard', () => {
-  for (const url of ['/qa-review-guide.html', '/qa-review-legal.html', '/accessibility.html', '/qa-lab.html', '/simulador.html']) {
+  for (const url of ['/qa-review-guide.html', '/qa-review-legal.html', '/accessibility.html', '/qa.html', '/qa-lab.html', '/simulador.html']) {
     test(`${url} language menu works with the keyboard alone`, async ({ page }) => {
       await skipSiteTours(page);
       await page.goto(url);
