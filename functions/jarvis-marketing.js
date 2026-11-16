@@ -304,7 +304,7 @@ async function queueProspects(db, body, now) {
 // at once. Replies and blocks go to Instantly at once.
 const WEEK = /^W\d{1,2}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const JOBS = ["prospects", "leads", "replies"];
+const JOBS = ["prospects", "leads", "replies", "companies", "holidays"];
 // Same list as EDITABLE in scripts/marketing-leads-autopilot.js.
 const LEAD_EDITABLE = ["first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit"];
 const STALE = 4 * 3600 * 1000;
@@ -407,7 +407,7 @@ function commandOf(body) {
   }
   if (action === "run") {
     const job = str(b.job, 20);
-    if (!JOBS.includes(job)) throw new Error("Run prospects, leads or replies.");
+    if (!JOBS.includes(job)) throw new Error("Run prospects, leads, replies, companies or holidays.");
     return { action, args: { job }, label: "Run the " + job + " job" };
   }
   throw new Error("Unknown marketing command.");

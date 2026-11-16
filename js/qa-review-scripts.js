@@ -2075,20 +2075,44 @@ namespace QaLab
     return "";
   }
 
+  function verifiedFor(report, item) {
+    const row = report && report.verifiedPass;
+    if (!row || row.exitCode !== 0 || !item || row.caseId !== item.id) return null;
+    if (row.framework && row.framework !== "Playwright") return null;
+    return row;
+  }
+
   function snippets(report, item, chosen) {
     const ctx = context(report);
     const check = checkFor(item, ctx);
     const parts = splitWhy(item.why);
+    const verified = verifiedFor(report, item);
     return frameworksFor(item, chosen)
       .filter((framework) => (LOAD_TOOLS.indexOf(framework) === -1 && framework !== "Maestro") || supports(framework, check))
-      .map((framework) => ({ framework, code: snippetFor(framework, item, check, ctx, parts) }));
+      .map((framework) => {
+        let code = snippetFor(framework, item, check, ctx, parts);
+        if (framework === "Playwright" && verified) {
+          const note = verifiedLine(verified);
+          if (note && code.indexOf("Verified passing:") === -1) {
+            code = note + "\n" + code;
+          }
+        }
+        return { framework, code };
+      });
   }
 
-  function header(framework, ctx, sign) {
+  function verifiedLine(verified) {
+    if (!verified || verified.exitCode !== 0) return "";
+    const when = String(verified.at || "").slice(0, 10) || "today";
+    return "// Verified passing: Playwright sample exited 0 against crawled DOM on " + when + " (Belgium review).";
+  }
+
+  function header(framework, ctx, sign, verified) {
     const mark = oneLine(sign && sign.mark);
     const line = ctx.label + (mark ? " · " + mark : "");
+    const passNote = verifiedLine(framework === "Playwright" ? verified : null);
     if (framework === "Playwright") {
-      return ["// " + line, "// Proposed from a public analysis. Review selectors and budgets before a run.", "import { test, expect } from \"@playwright/test\";", "", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "test.describe(" + q(ctx.label) + ", () => {"].join("\n");
+      return ["// " + line, passNote || "// Proposed from a public analysis. Review selectors and budgets before a run.", "import { test, expect } from \"@playwright/test\";", "", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "test.describe(" + q(ctx.label) + ", () => {"].join("\n");
     }
     if (framework === "Cypress") {
       return ["// " + line, "// Proposed from a public analysis. Review selectors and budgets before a run.", "const BASE = " + q(ctx.base) + ";", "const HOST = " + q(ctx.host) + ";", "", "describe(" + q(ctx.label) + ", () => {"].join("\n");
@@ -2262,16 +2286,17 @@ namespace QaLab
     return "";
   }
 
-  function suite(framework, blocks, ctx, sign) {
+  function suite(framework, blocks, ctx, sign, verified) {
+    const head = header(framework, ctx, sign, verified);
     if (["Playwright", "Cypress", "WebdriverIO", "Appium", "Jest", "Vitest", "Mocha"].indexOf(framework) !== -1) {
-      return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n});\n";
+      return head + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n});\n";
     }
-    if (framework === "Selenium") return header(framework, ctx, sign) + blocks.join("\n\n");
-    if (framework === "Robot") return header(framework, ctx, sign) + "\n" + blocks.join("\n\n") + "\n";
-    if (framework === "CodeceptJS") return header(framework, ctx, sign) + "\n" + blocks.join("\n\n") + "\n";
-    if (framework === "Selenide" || framework === "TestNG") return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n}\n";
-    if (framework === "Watir") return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\nend\n";
-    if (GHERKIN_FW.indexOf(framework) !== -1) return header(framework, ctx, sign) + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n";
+    if (framework === "Selenium") return head + blocks.join("\n\n");
+    if (framework === "Robot") return head + "\n" + blocks.join("\n\n") + "\n";
+    if (framework === "CodeceptJS") return head + "\n" + blocks.join("\n\n") + "\n";
+    if (framework === "Selenide" || framework === "TestNG") return head + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n}\n";
+    if (framework === "Watir") return head + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\nend\n";
+    if (GHERKIN_FW.indexOf(framework) !== -1) return head + "\n" + indent(blocks.join("\n\n").split("\n"), "  ") + "\n";
     return "";
   }
 
@@ -2530,9 +2555,10 @@ namespace QaLab
       });
     });
     const files = [];
+    const pass = report.verifiedPass && report.verifiedPass.exitCode === 0 ? report.verifiedPass : null;
     ORDER.forEach((framework) => {
       if (!blocks[framework] || !blocks[framework].length) return;
-      files.push({ path: FILES[framework], content: suite(framework, blocks[framework], ctx, sign) });
+      files.push({ path: FILES[framework], content: suite(framework, blocks[framework], ctx, sign, framework === "Playwright" ? pass : null) });
       companions(framework, ctx, sign).forEach((file) => files.push(file));
     });
     maestroFiles.forEach((file) => files.push(file));

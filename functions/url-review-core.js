@@ -30,6 +30,7 @@ const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const hackSigns = require("./url-review-hack-signs");
 const watchCases = require("./url-review-watch");
+const verifiedSpec = require("./url-review-verified-spec");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-11-04b";
@@ -4000,6 +4001,8 @@ async function reviewTarget(rawUrl, hooks) {
   if (talked) result.chatTalk = talked;
   if (watch) result.watch = watch;
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
+  // Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
+  if (!softPreview && !stopped) verifiedSpec.applyToReport(result, pages);
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
@@ -4849,6 +4852,33 @@ async function inspectPayment(options) {
   return inspectPayPal(options);
 }
 
+// Run-diff baseline (#3483): same account + host, most recent prior full crawl within 90 days; soft previews never count.
+const HISTORY_DAYS = 90;
+const HISTORY_MS = HISTORY_DAYS * 86400000;
+
+function priorRunAt(row) {
+  return Date.parse((row && row.report && row.report.fetchedAt) || (row && row.createdAt) || "");
+}
+
+function priorRunEligible(row, report, now) {
+  if (!row || !row.report || !report || !report.host) return false;
+  if (row.softPreview === true || row.report.softPreview === true) return false;
+  if (row.status === "stopped") return false;
+  if (!row.report.insights || !row.report.insights.score) return false;
+  if (row.report.host !== report.host) return false;
+  if (report.id && row.report.id === report.id) return false;
+  const at = priorRunAt(row);
+  if (!Number.isFinite(at)) return false;
+  if ((Number(now) || Date.now()) - at > HISTORY_MS) return false;
+  return true;
+}
+
+function pickPreviousRun(rows, report, now) {
+  const when = Number(now) || Date.now();
+  return (rows || []).filter((row) => priorRunEligible(row, report, when))
+    .sort((a, b) => priorRunAt(b) - priorRunAt(a))[0] || null;
+}
+
 function compareRuns(previous, report) {
   const before = previous && previous.insights;
   const now = report && report.insights;
@@ -5041,6 +5071,8 @@ function previewReport(report, options) {
   if (copy.watch) copy.watch = watchCases.preview(copy.watch);
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
+  // Soft preview and anonymous share must not show run-to-run deltas (#3483 D3).
+  delete copy.history;
   const frosted = frostAll(copy);
   if (teaserKeep && frosted.insights && frosted.insights.findings) {
     const hit = frosted.insights.findings.find((item) => item.teaser);
@@ -5067,6 +5099,9 @@ module.exports = {
   decodeBody,
   actionLink,
   domainCases,
+  HISTORY_DAYS,
+  priorRunEligible,
+  pickPreviousRun,
   compareRuns,
   testKeyMatches,
   pageSpeed,
