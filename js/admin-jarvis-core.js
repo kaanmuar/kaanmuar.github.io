@@ -1867,7 +1867,7 @@
         const ou = ok(e.outreach) ? e.outreach : null;
         const pipe = ou && ok(ou.pipeline) && ou.pipeline ? ou.pipeline : null;
         const mail = ou && ok(ou.instantly) && ou.instantly ? ou.instantly : null;
-        out.push({ key: 'outreach', name: 'Outreach', kpis: [pipe && kpi('Reviewed', num(pipe.reviews)), pipe && kpi('Queued', num(pipe.queued)), mail && kpi('Emails sent', num(mail.sent)), mail && kpi('Replies', num(mail.replies))].filter(Boolean),
+        out.push({ key: 'outreach', name: 'Outreach', kpis: [pipe && kpi('Reviewed', num(pipe.reviews), pipe.priorReviews == null ? undefined : num(pipe.priorReviews)), pipe && kpi('Queued', num(pipe.queued)), mail && kpi('Emails sent', num(mail.sent)), mail && kpi('Replies', num(mail.replies))].filter(Boolean),
             series: pipe ? { labels: (pipe.daily || []).map((d) => d.date), values: (pipe.daily || []).map((d) => num(d.reviews)) } : { labels: [], values: [] } });
         const so = ok(e.social) && e.social.daily ? e.social : null;
         out.push({ key: 'marketing', name: 'Marketing', kpis: [so && kpi('Social posts', num(so.sent)), so && kpi('Failed', num(so.failed), undefined, { alert: num(so.failed) > 0 })].filter(Boolean),
