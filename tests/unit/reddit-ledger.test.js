@@ -125,7 +125,19 @@ test("the Devvit app logs the lines the parser reads, and the ledger job and com
   assert.match(server, /kind: "numbers"/);
   assert.match(server, /score: post\.score, comments: post\.numberOfComments/);
   const wf = fs.readFileSync(path.join(ROOT, ".github/workflows/reddit-live.yml"), "utf8");
-  assert.match(wf, /devvit logs "\$REDDIT_SUBREDDIT" qalab-live-reports --since 3d --json/);
+  assert.match(wf, /\.\/node_modules\/\.bin\/devvit logs "\$REDDIT_SUBREDDIT" qalab-live-reports --since 3d --json/);
   assert.match(wf, /node scripts\/reddit-ledger\.js/);
   assert.match(fs.readFileSync(path.join(ROOT, "scripts/commit-social-ledgers.sh"), "utf8"), /assets\/social\/reddit\.json/);
+});
+
+// npm also publishes an empty deprecated `devvit@1.0.0` stub; Dependabot #3026 pinned it and broke the workflows (#3535).
+test("the Reddit app pins a real Devvit CLI and the workflows call its local bin", () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "reddit/live-reports/package.json"), "utf8"));
+  assert.match(String(pkg.devDependencies.devvit), /^0\./, "devvit must stay on the 0.15.x CLI, not the 1.0.0 stub");
+  assert.equal(pkg.devDependencies["@devvit/web"], pkg.devDependencies.devvit);
+  const engage = fs.readFileSync(path.join(ROOT, ".github/workflows/reddit-engagement.yml"), "utf8");
+  const live = fs.readFileSync(path.join(ROOT, ".github/workflows/reddit-live.yml"), "utf8");
+  assert.match(engage, /\.\/node_modules\/\.bin\/devvit logs/);
+  assert.doesNotMatch(engage, /\bnpx devvit\b/);
+  assert.doesNotMatch(live, /\bnpx devvit\b/);
 });

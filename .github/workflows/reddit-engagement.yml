@@ -59,7 +59,8 @@ jobs:
           node scripts/build.mjs > /dev/null
           # devvit logs streams until stopped: two hours of lines come first, then it waits.
           status=0
-          timeout 60 npx devvit logs "$REDDIT_SUBREDDIT" qalab-live-reports --since 2h --json > "$RUNNER_TEMP/reddit-logs.txt" || status=$?
+          # Use the local bin: npx can resolve npm's empty `devvit@1.0.0` stub instead (#3535).
+          timeout 60 ./node_modules/.bin/devvit logs "$REDDIT_SUBREDDIT" qalab-live-reports --since 2h --json > "$RUNNER_TEMP/reddit-logs.txt" || status=$?
           [ "$status" = 0 ] || [ "$status" = 124 ] || { echo "::error::devvit logs failed ($status)"; exit 1; }
           cd ../..
           node scripts/reddit-engagement.js sync "$RUNNER_TEMP/reddit-logs.txt" | tee -a "$GITHUB_STEP_SUMMARY"
@@ -70,7 +71,7 @@ jobs:
           set -o pipefail
           cd reddit/live-reports
           node scripts/build.mjs | tee -a "$GITHUB_STEP_SUMMARY"
-          npx devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
-          npx devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest
+          ./node_modules/.bin/devvit upload --version "1.$(date -u +%Y%m%d).$(date -u +%H%M)"
+          ./node_modules/.bin/devvit install "$REDDIT_SUBREDDIT" qalab-live-reports@latest
           cd ../..
           node scripts/reddit-engagement.js uploaded | tee -a "$GITHUB_STEP_SUMMARY"
