@@ -326,7 +326,7 @@ export function patch(view, html) {
     const next = fresh.querySelector('.jv-geo-wrap');
     if (wrap && next) {
         wrap.classList.toggle('is-playing', playing);
-        Array.from(wrap.children).forEach((el) => { if (el !== card && !el.classList.contains('jv-geo-play-stats')) el.remove(); });
+        Array.from(wrap.children).forEach((el) => { if (el !== card) el.remove(); });
         Array.from(next.children).forEach((el) => { if (!el.classList.contains('jv-geo-card')) wrap.insertBefore(el, card); });
     }
     ['.jv-geo-when', '[data-panel-id="geo-map"] header', '[data-geo-play]'].forEach((sel) => swap(sel));
