@@ -1,11 +1,11 @@
 // Interactive URL Review hero (#3429 / #3591), ported from qa-lab-demos marketing/work/scene.html.
-import * as THREE from "three";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import * as THREE from "../../vendor/three/build/three.module.js";
+import { RoomEnvironment } from "../../vendor/three/examples/jsm/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "../../vendor/three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { EffectComposer } from "../../vendor/three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "../../vendor/three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "../../vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "../../vendor/three/examples/jsm/postprocessing/OutputPass.js";
 
 export const LOOP_SEC = 10;
 export const LAYER_KEYS = ["card", "shield", "orbit", "report"];
