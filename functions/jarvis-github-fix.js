@@ -15,7 +15,8 @@
    runStatus     a run's status, conclusion and attempt, for the re-run polls (#2808)
    diagnose      reads a failed run's first failed job log and asks Gemini for the cause; jarvis_github_diag/<run>
    draftFlaky    Gemini's prompt for a fix agent that makes a flaky workflow stable (#2808)
-   launchAgent   starts a Cursor cloud agent (CURSOR_API_KEY), only on Carlos's click
+   launchAgent   asks @cursor on the PR (or a new issue) so the cloud agent draws from
+                 weekly included usage; the Agents API checks prepaid and is not used (#3536)
    retro         Gemini's weekly GitHub retro from the last 7 day docs; jarvis_github_weekly/<YYYY-Www>
    localIngest   the Mac uploader's report (worktrees, usage, cost, rate) in jarvis_github_local/latest, and the
                  results of the queued worktree removals; localReply lists what is still queued for it
@@ -45,9 +46,9 @@ const CACHE_DAYS = [1, 7, 30, 90, 365];
 const LOG_LINES = 150;
 const RATE_POINTS = 48;
 const QUEUE_ACTIONS = ["remove-worktree", "prune-branches"];
-const CURSOR_AGENTS = "https://api.cursor.com/v1/agents";
+const CURSOR_WEEKLY_MODEL = "composer-2.5";
 const NO_CURSOR_KEY = "Add CURSOR_API_KEY to the functions secrets (Cursor Dashboard > API Keys).";
-const NO_CURSOR_CREDIT = "Cursor's team prepaid balance is used up, so no agent can start. Buy credits in the Cursor Dashboard > Billing, then try again.";
+const NO_CURSOR_CREDIT = "Cursor's Agents API still checks the team prepaid balance, so Jarvis asks @cursor on GitHub instead (weekly included usage). If that also failed, open cursor.com/agents and paste the prompt.";
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -519,36 +520,45 @@ async function draftFlaky(ctx, args) {
   return { ok: true, prompt, branch: "main", run: id, message: "Drafted a fix prompt for " + workflow + "." };
 }
 
+/* Cursor's Agents API (CURSOR_API_KEY) refuses launches against prepaid/top-up even when weekly
+   included usage remains. Commenting @cursor on a PR or issue starts the same cloud agent through
+   GitHub and bills the weekly pool (#3536). */
 async function launchAgent(ctx, args) {
   const a = args || {};
-  const key = String((ctx.env || {}).CURSOR_API_KEY || "");
-  if (!key) throw new Error(NO_CURSOR_KEY);
   const repo = repoOf(a);
   const prompt = block(String(a.prompt || "").trim(), 20000);
   if (prompt.length < 20) throw new Error("The agent needs a prompt.");
-  const url = "https://github.com/" + repo;
-  // A pull_request run (CodeQL's dynamic one) names refs/pull/<n>/head, which Cursor cannot start from.
+  // A pull_request run (CodeQL's dynamic one) names refs/pull/<n>/head; treat it as that PR.
   const pullRef = /^refs\/pull\/(\d+)\/(?:head|merge)$/.exec(String(a.branch || ""));
   const pr = Number(String(a.pr || "").replace(/^#/, "")) || (pullRef ? Number(pullRef[1]) : 0);
-  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(String(a.branch || "").replace(/^refs\/heads\//, ""), 200) || "main" }];
-  const res = await ctx.fetch(CURSOR_AGENTS, {
-    method: "POST",
-    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-    body: JSON.stringify({ name: text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : ""), prompt: { text: prompt }, repos, autoCreatePR: true })
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const e = data.error && typeof data.error === "object" ? data.error : { message: data.message || data.error, code: data.code };
-    if (e.code === "usage_limit_exceeded") {
-      await jarvisLog.log(null, { source: "github", level: "error", ref: "cursor:credit", text: "Cursor refused an agent: the team's prepaid balance is used up." }).catch(() => null);
-      throw new Error(NO_CURSOR_CREDIT);
-    }
-    throw new Error("Cursor refused the agent (" + res.status + "): " + text(e.message || e.code || "no detail", 200));
+  const branch = text(String(a.branch || "").replace(/^refs\/heads\//, ""), 200) || "main";
+  const name = text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : "");
+  const mention = "@cursor\n\n" + (pr > 0 ? "" : "Start from branch `" + branch + "` in " + repo + ".\n\n") + prompt;
+  let number = pr;
+  if (!(pr > 0)) {
+    let issue;
+    try {
+      issue = await call(ctx, "/repos/" + repo + "/issues", { method: "POST", body: {
+        title: name,
+        body: "Jarvis asked Cursor to fix this (#3536). Weekly included usage via @cursor."
+      } });
+    } catch (error) { throw need(error, "Issues: write", "open an issue for @cursor"); }
+    number = Number(issue.number) || 0;
+    if (!(number > 0)) throw new Error("GitHub did not return an issue number for @cursor.");
   }
-  const agent = data.agent || data;
-  const id = String(agent.id || "");
-  await jarvisLog.log(null, { source: "github", level: "info", ref: "agent:" + id, text: "Started Cursor agent " + id + " on " + repo.split("/").pop() + (pr > 0 ? " PR #" + pr : " " + (text(a.branch, 80) || "main")) + ": " + text(prompt, 160) });
-  return { ok: true, id, message: "Started Cursor agent " + (id || "") + ".", url: agent.url || (agent.target && agent.target.url) || (id ? "https://cursor.com/agents?id=" + encodeURIComponent(id) : "https://cursor.com/agents") };
+  let comment;
+  try {
+    comment = await call(ctx, "/repos/" + repo + "/issues/" + number + "/comments", { method: "POST", body: { body: mention } });
+  } catch (error) { throw need(error, "Issues: write", "comment @cursor so the cloud agent can start"); }
+  const url = comment.html_url || ("https://github.com/" + repo + (pr > 0 ? "/pull/" : "/issues/") + number + "#issuecomment-" + (comment.id || ""));
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "cursor:@cursor:" + number, text: "Asked @cursor on " + repo.split("/").pop() + (pr > 0 ? " PR #" + pr : " issue #" + number) + " (" + CURSOR_WEEKLY_MODEL + " weekly pool): " + text(prompt, 160) });
+  return {
+    ok: true,
+    via: "github",
+    number,
+    message: "Asked @cursor on " + (pr > 0 ? "PR #" + pr : "issue #" + number) + "; it uses your weekly Cursor usage.",
+    url
+  };
 }
 
 // The ISO week in Bogotá (UTC-5 all year), so Sunday evening is still that week.
@@ -704,7 +714,7 @@ function actArgs(action, body) {
 }
 
 module.exports = {
-  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
+  REPO, BOARD, COLUMNS, MERGE_LABEL, CURSOR_WEEKLY_MODEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
   quarantine, securityTicket, dismissAlert, dismissLow, runStatus, clearCache, draftFlaky,
   diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf, areaOfPath,
   _reset: () => { statusOptions = null; }

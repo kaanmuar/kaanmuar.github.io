@@ -7105,7 +7105,8 @@ async function jarvisGithubAgent(ctx, a) {
     return jarvisWorker.dispatch(ctx, { prompt, pr: pr || undefined, branch, title: name.replace(/^Jarvis fix: ?/, "Fix ") || name, key: key || (run ? "gh:diag:" + run : ""), by: a.by || "Carlos" });
   }
   const out = await jarvisGithubFix.launchAgent(ctx, { prompt, pr: pr || undefined, branch, repo, name });
-  if (out.id) await jarvisProcess(jarvisProcesses.cloudAgentRow(out.id, "running", { name, url: out.url, step: "Cursor cloud agent" + (pr ? " on PR #" + pr : "") }));
+  // Only API-started agents have a bc- id the hourly watch can poll; @cursor launches are tracked on the PR/issue.
+  if (out.id && /^bc-/.test(String(out.id))) await jarvisProcess(jarvisProcesses.cloudAgentRow(out.id, "running", { name, url: out.url, step: "Cursor cloud agent" + (pr ? " on PR #" + pr : "") }));
   return out;
 }
 

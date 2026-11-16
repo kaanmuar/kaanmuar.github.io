@@ -1099,14 +1099,14 @@ private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask
             t.obj("cursor")?.let { c ->
                 Buttons {
                     ActionButton("Hand to Cursor", s.ghRows["worker:$id"]?.state == "running") {
-                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it uses Cursor credit") {
+                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it asks @cursor on GitHub and uses your weekly Cursor usage") {
                             vm.ghRow("worker:$id", "github-agent", buildMap {
                                 put("engine", JsonPrimitive("cursor"))
                                 c.str("prompt")?.let { put("prompt", JsonPrimitive(it)) }
                                 c.str("branch")?.let { put("branch", JsonPrimitive(it)) }
                                 c.num("pr")?.let { put("pr", JsonPrimitive(it.toInt())) }
                                 c.str("name")?.let { put("name", JsonPrimitive(it)) }
-                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Cursor agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
+                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.", out.str("url"), "Open the comment") }
                         }
                     }
                 }
@@ -1135,7 +1135,10 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, 
                 d.name?.let { put("name", JsonPrimitive(it)) }
             }, "Launching the agent…") { out ->
                 if (engine == "worker") vm.loadWorker()
-                GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the agent")
+                GhResult("launched",
+                    if (engine == "worker") "Agent launched; it opens a PR when it is done."
+                    else "Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.",
+                    out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the comment")
             }
             close()
         }
@@ -1148,9 +1151,9 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, 
                 Muted(listOfNotNull(d.title, d.branch?.let { "branch $it" }, d.pr?.let { "PR #$it" }).joinToString(" · "))
                 OutlinedTextField(text, { text = it }, label = { Text("Prompt") }, minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth())
                 Muted(when {
-                    !ownRepo -> "A Cursor agent works in the cloud and opens a PR."
-                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor uses Cursor credit."
-                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor uses Cursor credit."
+                    !ownRepo -> "A Cursor agent is asked via @cursor on GitHub and uses your weekly Cursor usage."
+                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor asks @cursor on GitHub and uses your weekly Cursor usage."
+                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor asks @cursor on GitHub and uses your weekly Cursor usage."
                 })
             }
         },

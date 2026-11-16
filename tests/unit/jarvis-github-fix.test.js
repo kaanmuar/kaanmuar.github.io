@@ -122,34 +122,41 @@ test("diagnose reads the first failed job's log around its error, parses Gemini'
   assert.equal(fix.parseDiag("{\"cause\":\"Runner lost.\",\"category\":\"infra\",\"prompt\":\"x\"}").prompt, "");
 });
 
-test("launchAgent without CURSOR_API_KEY says where to get it, and with it starts an agent on the branch or the PR", async () => {
-  const f = fakeFetch([]);
-  await assert.rejects(fix.launchAgent(ctxOf(f), { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === fix.NO_CURSOR_KEY && /Cursor Dashboard > API Keys/.test(e.message));
-  const sent = [];
-  const cursor = async (url, init) => { sent.push({ url, body: JSON.parse(init.body), auth: init.headers.Authorization }); return res({ id: "bc-1", url: "https://cursor.com/agents/bc-1" }); };
-  const ctx = ctxOf({ fetchImpl: cursor }, { env: { CURSOR_API_KEY: "key_1" } });
-  const out = await fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js.", branch: "feat/x" });
-  assert.deepEqual([out.ok, out.id, out.url], [true, "bc-1", "https://cursor.com/agents/bc-1"]);
-  assert.equal(sent[0].url, "https://api.cursor.com/v1/agents");
-  assert.equal(sent[0].auth, "Bearer key_1");
-  assert.deepEqual(sent[0].body.repos, [{ url: "https://github.com/kaanmuar/kaanmuar.github.io", startingRef: "feat/x" }]);
-  assert.deepEqual([sent[0].body.prompt.text.slice(0, 7), sent[0].body.autoCreatePR], ["Fix the", true]);
-  await fix.launchAgent(ctx, { prompt: "Resolve the conflicts in this PR, keep both sides.", pr: 44 });
-  assert.deepEqual(sent[1].body.repos, [{ url: "https://github.com/kaanmuar/kaanmuar.github.io", prUrl: "https://github.com/kaanmuar/kaanmuar.github.io/pull/44" }]);
-  await fix.launchAgent(ctx, { prompt: "Fix the CodeQL alert this pull request run raised.", branch: "refs/pull/2822/head" });
-  assert.deepEqual(sent[2].body.repos, [{ url: "https://github.com/kaanmuar/kaanmuar.github.io", prUrl: "https://github.com/kaanmuar/kaanmuar.github.io/pull/2822" }]);
+test("launchAgent asks @cursor on a PR, or opens an issue then comments when there is only a branch (#3536)", async () => {
+  const f = fakeFetch([
+    ["POST", R + "/issues/44/comments", (url, body) => ({ id: 9001, html_url: "https://github.com/kaanmuar/kaanmuar.github.io/pull/44#issuecomment-9001", body: body.body })],
+    ["POST", R + "/issues/2822/comments", (url, body) => ({ id: 9002, html_url: "https://github.com/kaanmuar/kaanmuar.github.io/pull/2822#issuecomment-9002", body: body.body })],
+    ["POST", R + "/issues", (url, body) => ({ number: 501, html_url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/501", title: body.title })],
+    ["POST", R + "/issues/501/comments", (url, body) => ({ id: 9003, html_url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/501#issuecomment-9003", body: body.body })]
+  ]);
+  const ctx = ctxOf(f);
+  const onPr = await fix.launchAgent(ctx, { prompt: "Resolve the conflicts in this PR, keep both sides.", pr: 44 });
+  assert.deepEqual([onPr.ok, onPr.via, onPr.number], [true, "github", 44]);
+  assert.match(onPr.message, /weekly Cursor usage/);
+  assert.equal(onPr.url, "https://github.com/kaanmuar/kaanmuar.github.io/pull/44#issuecomment-9001");
+  const prComment = f.calls.find((c) => c.url.endsWith("/issues/44/comments")).body.body;
+  assert.match(prComment, /^@cursor\n\nResolve the conflicts/);
+  assert.doesNotMatch(prComment, /Start from branch/);
+
+  const pullRef = await fix.launchAgent(ctx, { prompt: "Fix the CodeQL alert this pull request run raised.", branch: "refs/pull/2822/head" });
+  assert.equal(pullRef.number, 2822);
+  assert.match(f.calls.find((c) => c.url.endsWith("/issues/2822/comments")).body.body, /^@cursor\n\nFix the CodeQL/);
+
+  const onBranch = await fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js.", branch: "feat/x", name: "Jarvis fix: hub" });
+  assert.deepEqual([onBranch.ok, onBranch.via, onBranch.number], [true, "github", 501]);
+  const opened = f.calls.find((c) => c.method === "POST" && c.url.endsWith("/issues") && c.body && c.body.title);
+  assert.equal(opened.body.title, "Jarvis fix: hub");
+  const issueComment = f.calls.find((c) => c.url.endsWith("/issues/501/comments")).body.body;
+  assert.match(issueComment, /^@cursor\n\nStart from branch `feat\/x`/);
+  assert.match(issueComment, /Fix the failing hub test/);
+  assert.equal(fix.CURSOR_WEEKLY_MODEL, "composer-2.5");
 });
 
-test("launchAgent says why Cursor refused the agent instead of [object Object]", async () => {
-  const refuse = async () => res({ error: { code: "validation_error", message: "startingRef is not a branch" } }, 400);
-  const ctx = ctxOf({ fetchImpl: refuse }, { env: { CURSOR_API_KEY: "key_1" } });
-  await assert.rejects(fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === "Cursor refused the agent (400): startingRef is not a branch");
-});
-
-test("launchAgent names the empty Cursor balance and its fix when Cursor refuses for credit (#2893)", async () => {
-  const broke = async () => res({ error: { code: "usage_limit_exceeded", message: "Your team's prepaid balance is used up. Buy credits for your team to keep going." } }, 400);
-  const ctx = ctxOf({ fetchImpl: broke }, { env: { CURSOR_API_KEY: "key_1" } });
-  await assert.rejects(fix.launchAgent(ctx, { prompt: "Fix the failing hub test in tests/unit/hub.test.js." }), (e) => e.message === fix.NO_CURSOR_CREDIT && /Buy credits in the Cursor Dashboard > Billing/.test(e.message));
+test("launchAgent asks for Issues: write when GitHub refuses the @cursor comment", async () => {
+  const f = fakeFetch([
+    ["POST", R + "/issues/44/comments", () => status({ message: "Resource not accessible by integration" }, 403)]
+  ]);
+  await assert.rejects(fix.launchAgent(ctxOf(f), { prompt: "Resolve the conflicts in this PR, keep both sides.", pr: 44 }), /Issues: write.*@cursor/);
 });
 
 test("localIngest keeps a clean copy of the Mac's report, one GraphQL point an hour, and marks the queued jobs it ran", async () => {
