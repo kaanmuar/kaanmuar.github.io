@@ -35,6 +35,7 @@ class OwnerTagsTest {
         val a = json("""{"why":"city transit agency","scopes":["city:bogota"],"batch":"metrobogota","source":"gemini","kind":"related","verified":true}""")
         assertEquals("city transit agency · city:bogota · batch metrobogota · from gemini · related · verified", OwnerTags.accountLine(a))
         assertEquals("tags (2 mentions) · posted", OwnerTags.commentLine(json("""{"kind":"tags","status":"posted","mentions":2,"error":""}""")))
+        assertEquals("caption edit (3) · approved", OwnerTags.commentLine(json("""{"kind":"caption","status":"approved","mentions":3}""")))
         assertEquals("owner reply · failed: 422 rate limited", OwnerTags.commentLine(json("""{"kind":"reply","status":"failed","error":"422 rate limited"}""")))
         val o = json("""{"week":{"bluesky":3,"x":1}}""")
         assertEquals("Bluesky 3 · X 1", OwnerTags.week(o, mapOf("bluesky" to "Bluesky", "x" to "X")))

@@ -30,12 +30,13 @@
  * comments carry ownerTags.menu [{ token, handle, name }], the agent picks each token's account from the menu, and its
  * result keeps which were linked and which stayed plain text, and the names the menu showed for accounts without one.
  * At most PER_DAY comments and replies a network a day; a blocked account is never tagged. settings.paused stops it;
- * until settings.live it only counts what it would post.
+ * until settings.live it only counts what it would post. settings.editCaptions (#3588), off by default, edits the
+ * posted caption to @mention owners where the network allows (EDIT_CAPTION); Facebook and YouTube keep comments only.
  * Backfill (#3587): Jarvis owner-tags-run with { backfill: true } walks posts oldest-first and uses BACKFILL_PER_DAY
  * caps so historical report posts catch up. The scheduled job stays on PER_DAY, newest first. out.pending counts
  * post×network slots that still need a first comment after today's cap.
  *
- *   owner_tags/settings            { paused, live, updatedAt, by }
+ *   owner_tags/settings            { paused, live, editCaptions, updatedAt, by }
  *   owner_tags/last                the last run's note and counts, for Jarvis
  *   owner_tag_accounts/<net>:<h>   { network, handle, name, kind, status, scopes, batch, source, why, verified, at }
  *   owner_tag_reports/<report id>  { host, name, discoveredAt, suggestedAt, pushedAt, error }
@@ -72,6 +73,8 @@ const PER_DAY = { bluesky: 20, mastodon: 20, youtube: 20, x: 6, instagram: 6, th
 // One Jarvis backfill run may clear a large backlog; still capped so a mistaken live run cannot flood every network.
 const BACKFILL_PER_DAY = { bluesky: 80, mastodon: 80, youtube: 80, x: 40, instagram: 40, threads: 40, facebook: 40, linkedin: 40, tiktok: 40 };
 const capsFor = (backfill) => (backfill ? BACKFILL_PER_DAY : PER_DAY);
+// api: engagement-act putRecord / PUT status; browser: the Mac's agent edits the post; false: comments only (#3588).
+const EDIT_CAPTION = { bluesky: "api", mastodon: "api", x: "browser", instagram: "browser", threads: "browser", linkedin: "browser", tiktok: "browser" };
 const STATUSES = ["approved", "suggested", "rejected", "blocked"];
 const SCOPES = ["report", "city", "sector", "country"];
 const NET_CODES = { x: "x", twitter: "x", ig: "instagram", instagram: "instagram", bsky: "bluesky", bluesky: "bluesky", mast: "mastodon", mastodon: "mastodon",
@@ -276,6 +279,36 @@ function comments(network, lang, owners, related, link, room, many, host, first)
   return out;
 }
 
+/**
+ * A caption with owner @mentions appended, within the network's character cap; accounts already named in the caption
+ * are left out. tags on PICKED networks are the menu tokens for the Mac's agent.
+ */
+function captionDraft(network, original, owners, related) {
+  const limit = (E.NETWORKS[network] || {}).limit || 300;
+  const cap = MENTIONS[network] || 0;
+  const base = String(original || "").replace(/\s+$/, "");
+  if (!base) return null;
+  const picked = [];
+  const bareMention = (m) => m.replace(/^@/, "").toLowerCase();
+  const named = (m) => { const h = bareMention(m); return base.toLowerCase().includes("@" + h) || base.toLowerCase().includes(h); };
+  for (const a of owners.concat(related.slice(0, RELATED_MAX))) {
+    const m = mentionOf(a);
+    if (!m || picked.length >= cap || named(m)) continue;
+    picked.push(a);
+  }
+  if (!picked.length) return null;
+  let tokens = picked.map(mentionOf);
+  const sep = base.endsWith("\n") ? "" : "\n\n";
+  let text = base + sep + tokens.join(" ");
+  while (text.length > limit && tokens.length > 1) {
+    tokens = tokens.slice(0, -1);
+    picked.pop();
+    text = base + sep + tokens.join(" ");
+  }
+  if (text.length > limit) return null;
+  return Object.assign({ text, mentions: picked.map((a) => accountId(a.network, a.handle)) }, PICKED.includes(network) ? { tags: picked.map(tagOf) } : {});
+}
+
 /** The reply under an owner's own post; Mastodon and the Mac's networks tell the owner of a comment on their own. */
 function replyText(lang, account, host, link) {
   const copy = COPY[lang] || COPY.en;
@@ -292,6 +325,21 @@ function engagementDoc(target, draft, lang, tags, now) {
     lang, createdAt: target.createdAt || "", topic: "Reports", topics: ["Reports"]
   }, { lang }, { verdict: "reply", skip: "", actions: { reply: { status: "approved", draft, lang, decidedAt: at, by: CAMPAIGN } } }, now);
   return Object.assign(base, { campaign: CAMPAIGN, own: tags.kind === "tags", ownerTags: tags });
+}
+
+/** An approved engagement_posts edit that @mentions owners in our own post caption (#3588). */
+function captionEngagementDoc(post, draft, from, lang, tags, now) {
+  const at = new Date(now).toISOString();
+  const base = E.postDoc({
+    network: post.network, id: post.id, url: post.url, author: {}, title: "", text: clip(from, 1200),
+    lang, createdAt: post.at || "", topic: "Reports", topics: ["Reports"]
+  }, { lang }, {
+    verdict: "reply", skip: "", actions: {
+      edit: { status: "approved", draft, from: clip(from, 1200), lang, decidedAt: at, by: CAMPAIGN },
+      reply: { status: "skipped", draft: "", lang, decidedAt: at, by: CAMPAIGN }
+    }
+  }, now);
+  return Object.assign(base, { campaign: CAMPAIGN, own: true, ownerTags: tags });
 }
 
 // --- Gemini suggestions -----------------------------------------------------------------------------------------
@@ -344,7 +392,7 @@ async function getText(deps, url) {
 
 async function readSettings(db) {
   const s = (await settingsRef(db).get()).data() || {};
-  return { paused: s.paused === true, live: s.live === true };
+  return { paused: s.paused === true, live: s.live === true, editCaptions: s.editCaptions === true };
 }
 
 async function saveSettings(db, patch, by, now) {
@@ -352,10 +400,13 @@ async function saveSettings(db, patch, by, now) {
   const next = {};
   if (typeof p.paused === "boolean") next.paused = p.paused;
   if (typeof p.live === "boolean") next.live = p.live;
-  if (!Object.keys(next).length) throw new Error("Say paused or live, true or false.");
+  if (typeof p.editCaptions === "boolean") next.editCaptions = p.editCaptions;
+  if (!Object.keys(next).length) throw new Error("Say paused, live or editCaptions, true or false.");
   await settingsRef(db).set(Object.assign(next, { updatedAt: new Date(now).toISOString(), by: clip(by, 80) }), { merge: true });
   const s = await readSettings(db);
-  return { settings: s, message: "Owner tags are " + (s.paused ? "paused" : s.live ? "live" : "in a dry run") + "." };
+  const mode = s.paused ? "paused" : s.live ? "live" : "in a dry run";
+  const cap = s.editCaptions ? "; caption edits on" : "";
+  return { settings: s, message: "Owner tags are " + mode + cap + "." };
 }
 
 async function readAccounts(db) {
@@ -475,19 +526,18 @@ async function latestPost(deps, a) {
 }
 
 /**
- * One daily (or Jarvis) pass. deps: { db, fetch, env, now, inc, push, site, gemini(prompt), backfill? }.
- * Returns the counts it wrote to owner_tags/last: { posts, comments, replies, dry, discovered, owners, suggested,
- * pushed, capped, pending, backfill, errors, sample }.
+ * One daily pass. deps: { db, fetch, env, now, inc, push, site, gemini(prompt) }. Returns the counts it wrote to
+ * owner_tags/last: { posts, comments, replies, dry, discovered, owners, suggested, pushed, capped, errors, sample }.
  */
 async function run(deps) {
   const { db, now } = deps;
   const backfill = deps.backfill === true;
   const caps = capsFor(backfill);
   const conf = await readSettings(db);
-  const out = { at: new Date(now).toISOString(), live: conf.live, paused: conf.paused, backfill, posts: 0, comments: 0, replies: 0, dry: 0, discovered: 0, owners: 0, suggested: 0, pushed: 0, capped: 0, pending: 0, errors: [], sample: [] };
+  const out = { at: new Date(now).toISOString(), live: conf.live, paused: conf.paused, backfill, editCaptions: conf.editCaptions, posts: 0, comments: 0, captions: 0, captionWould: 0, replies: 0, dry: 0, discovered: 0, owners: 0, suggested: 0, pushed: 0, capped: 0, pending: 0, errors: [], sample: [] };
   if (conf.paused) return finish(db, out);
   const asset = (file) => getJson(deps, deps.site + "/assets/" + file + "?t=" + now);
-  const [feed, live, ...ledgers] = await Promise.all([asset("social/feed.json"), asset("live-reports/index.json"),
+  const [feed, live, captions, ...ledgers] = await Promise.all([asset("social/feed.json"), asset("live-reports/index.json"), asset("social/captions.json").catch(() => ({})),
     ...["buffer.json", "facebook.json", "open-social.json"].map((f) => asset("social/" + f).catch((error) => { out.errors.push(error.message); return null; }))]);
   const posts = ourPosts(feed, ledgers, (live && live.reports) || [], backfill);
   out.posts = posts.length;
@@ -511,15 +561,27 @@ async function run(deps) {
   const retry = (d) => (d.ownerTags || {}).latest && Date.parse((d.ownerTags || {}).none || "") < now - LATEST_RETRY_DAYS * DAY;
   const keys = new Set(mine.filter((d) => !retry(d)).map((d) => d.key));
   const byPost = new Map();
-  mine.filter((d) => (d.ownerTags || {}).kind === "tags").forEach((d) => {
-    const k = d.ownerTags.post + "|" + d.network;
+  mine.forEach((d) => {
+    const t = d.ownerTags || {};
+    if (t.kind !== "tags" && t.kind !== "caption") return;
+    const k = t.post + "|" + d.network;
     const cur = byPost.get(k) || { count: 0, tagged: [] };
-    cur.count += 1;
-    cur.tagged.push(...(d.ownerTags.mentions || []));
+    if (t.kind === "tags") {
+      cur.count += 1;
+      cur.tagged.push(...(t.mentions || []));
+    } else {
+      const st = ((d.actions || {}).edit || {}).status;
+      cur.caption = st || "";
+      if (st === "posted") cur.tagged.push(...(t.mentions || []));
+      if (st === "approved") cur.captionPending = true;
+    }
     byPost.set(k, cur);
   });
   const add = async (key, doc) => {
-    if (out.sample.length < 5) out.sample.push({ network: doc.network, url: doc.url, text: doc.actions.reply.draft });
+    if (out.sample.length < 5) {
+      const text = ((doc.actions || {}).edit || {}).draft || ((doc.actions || {}).reply || {}).draft || "";
+      out.sample.push({ network: doc.network, url: doc.url, text, kind: (doc.ownerTags || {}).kind || "" });
+    }
     used[doc.network] = (used[doc.network] || 0) + 1;
     if (!conf.live) { out.dry += 1; return; }
     await db.collection("engagement_posts").doc(key).set(Object.assign({ key }, doc));
@@ -530,12 +592,11 @@ async function run(deps) {
   for (const p of posts) {
     if (!MENTIONS[p.network]) continue;
     const had = byPost.get(p.key + "|" + p.network) || { count: 0, tagged: [] };
-    const left = Math.min(COMMENTS_MAX - had.count, room(p.network));
-    if (left <= 0) {
+    if (room(p.network) <= 0) {
+      out.capped += 1;
       if (had.count < COMMENTS_MAX) {
-        out.capped += 1;
-        const { owners, related } = pick(usable, p.reports, p.network, had.tagged);
-        if (owners.length || related.length) out.pending += 1;
+        const trial = pick(usable, p.reports, p.network, had.tagged);
+        if (trial.owners.length || trial.related.length) out.pending += 1;
       }
       continue;
     }
@@ -545,7 +606,34 @@ async function run(deps) {
     const lead = p.reports[0];
     const lang = langOf(lead);
     const link = R.linkFor({ host: bare(lead.host) }, p.network, lang, docKey("link", p.key, p.network));
-    const list = comments(p.network, lang, owners, related.slice(0, relatedLeft), link, left, p.reports.length > 1, bare(lead.host), had.count === 0);
+    let ownersLeft = owners.slice();
+    let relatedLeftList = related.slice(0, relatedLeft);
+    const original = EDIT_CAPTION[p.network] && captions && captions[p.key] ? String((captions[p.key] || {})[p.network] || "").trim() : "";
+    if (original && !had.captionPending && had.caption !== "posted" && (ownersLeft.length || relatedLeftList.length)) {
+      const cap = captionDraft(p.network, original, ownersLeft, relatedLeftList);
+      if (cap) {
+        const key = docKey("caption", p.key, p.network);
+        const wouldLog = !conf.editCaptions || !conf.live;
+        if (wouldLog) {
+          out.captionWould += 1;
+          if (out.sample.length < 8) out.sample.push({ network: p.network, url: p.url, text: cap.text, kind: "caption", would: true, from: clip(original, 240) });
+        }
+        if (conf.editCaptions && !keys.has(key)) {
+          const tags = Object.assign({ kind: "caption", post: p.key, mentions: cap.mentions, reports: p.reports.map((r) => r.id) }, cap.tags ? { menu: cap.tags } : {});
+          await add(key, captionEngagementDoc(p, cap.text, original, lang, tags, now));
+          if (conf.live) out.captions += 1;
+        }
+        if (conf.editCaptions) {
+          const done = new Set(cap.mentions);
+          ownersLeft = ownersLeft.filter((a) => !done.has(accountId(a.network, a.handle)));
+          relatedLeftList = relatedLeftList.filter((a) => !done.has(accountId(a.network, a.handle)));
+        }
+      }
+    }
+    const left = Math.min(COMMENTS_MAX - had.count, room(p.network));
+    if (left <= 0) continue;
+    if (!ownersLeft.length && !(relatedLeftList.length)) continue;
+    const list = comments(p.network, lang, ownersLeft, relatedLeftList, link, left, p.reports.length > 1, bare(lead.host), had.count === 0);
     for (let i = 0; i < list.length; i += 1) {
       const part = had.count + i;
       const key = docKey("tags", p.key, p.network, part);
@@ -553,7 +641,6 @@ async function run(deps) {
       const tags = Object.assign({ kind: "tags", post: p.key, part, mentions: list[i].mentions, reports: p.reports.map((r) => r.id) }, part === 0 && p.image ? { image: cardUrl(p.image) } : {});
       await add(key, engagementDoc(p, list[i].text, lang, Object.assign(tags, list[i].tags ? { menu: list[i].tags } : {}), now));
       out.comments += 1;
-      byPost.set(p.key + "|" + p.network, { count: part + 1, tagged: (had.tagged || []).concat(list[i].mentions) });
     }
   }
 
@@ -591,7 +678,9 @@ async function finish(db, out) {
 
 function runNote(out) {
   if (out.paused) return "owner tags paused";
-  return "owner tags" + (out.backfill ? " backfill" : "") + (out.live ? "" : " (dry run)") + ": " + out.posts + " posts, " + out.comments + " comments, " + out.replies + " owner replies"
+  const cap = out.captions ? ", " + out.captions + " caption edit" + (out.captions === 1 ? "" : "s") : "";
+  const wouldCap = out.captionWould ? ", " + out.captionWould + " caption edit" + (out.captionWould === 1 ? "" : "s") + (out.editCaptions ? " (dry)" : " if enabled") : "";
+  return "owner tags" + (out.backfill ? " backfill" : "") + (out.live ? "" : " (dry run)") + (out.editCaptions ? ", captions on" : "") + ": " + out.posts + " posts, " + out.comments + " comments" + cap + wouldCap + ", " + out.replies + " owner replies"
     + (out.live ? "" : ", " + out.dry + " would post") + "; " + out.discovered + " sites read, " + out.owners + " owner accounts, " + out.suggested + " suggestion runs, "
     + out.pushed + " pushed" + (out.capped ? "; " + out.capped + " posts wait for " + (out.backfill ? "another backfill" : "tomorrow's cap") : "")
     + (out.pending ? "; " + out.pending + " still pending" : "")
@@ -663,14 +752,26 @@ async function status(db, now) {
   accounts.forEach((a) => { by[a.status] = (by[a.status] || 0) + 1; });
   const since = new Date(at - 7 * DAY).toISOString();
   const week = {};
-  mine.filter((d) => ((d.actions || {}).reply || {}).status === "posted" && String(d.actions.reply.postedAt || "") >= since).forEach((d) => { week[d.network] = (week[d.network] || 0) + 1; });
+  mine.filter((d) => {
+    const posted = ((d.actions || {}).reply || {}).status === "posted" && String(d.actions.reply.postedAt || "") >= since;
+    const edited = ((d.actions || {}).edit || {}).status === "posted" && String(d.actions.edit.postedAt || "") >= since;
+    return posted || edited;
+  }).forEach((d) => { week[d.network] = (week[d.network] || 0) + 1; });
   const rank = (a) => LIST_ORDER.indexOf(a.status);
   const list = accounts.slice().sort((a, b) => rank(a) - rank(b) || String(b.updatedAt || b.at || "").localeCompare(String(a.updatedAt || a.at || ""))).slice(0, LIST_ACCOUNTS)
     .map((a) => ({ id: a.id, network: a.network, handle: a.handle, name: a.name || "", kind: a.kind, status: a.status, scopes: a.scopes || [], batch: a.batch || "", source: a.source || "", why: a.why || "", verified: a.verified === true, at: a.updatedAt || a.at || "" }));
-  const comments = mine.sort((a, b) => commentAt(b).localeCompare(commentAt(a))).slice(0, LIST_COMMENTS).map((d) => {
+  const actionAt = (d) => {
+    const e = (d.actions || {}).edit || {};
+    if (e.postedAt || e.decidedAt) return String(e.postedAt || e.decidedAt);
+    return commentAt(d);
+  };
+  const comments = mine.sort((a, b) => actionAt(b).localeCompare(actionAt(a))).slice(0, LIST_COMMENTS).map((d) => {
     const r = (d.actions || {}).reply || {};
+    const e = (d.actions || {}).edit || {};
     const t = d.ownerTags || {};
-    return { key: d.key, network: d.network, kind: t.kind || "tags", status: r.status || "", draft: r.draft || "", url: r.url || "", post: d.url || "", error: r.error || "", at: commentAt(d),
+    const caption = t.kind === "caption";
+    return { key: d.key, network: d.network, kind: t.kind || "tags", status: caption ? (e.status || "") : (r.status || ""), draft: caption ? (e.draft || "") : (r.draft || ""),
+      url: caption ? (e.url || d.url || "") : (r.url || ""), post: d.url || "", error: (caption ? e : r).error || "", at: actionAt(d),
       mentions: (t.mentions || []).length, report: t.report || (t.reports || [])[0] || "" };
   });
   return { settings: s, last, note: last ? runNote(Object.assign({ errors: [] }, last)) : "", accounts: by, waiting: accounts.filter((a) => a.status === "suggested").slice(0, 20).map((a) => ({ id: a.id, batch: a.batch, why: a.why })), list, comments, week };
@@ -744,14 +845,24 @@ async function block(deps, target, why, by) {
   if (!network || !handle) throw new Error("Say which account to block.");
   await saveAccount(deps.db, { network, handle, status: "blocked", why: clip(why, 120), source: clip(by, 40) || "jarvis", force: true }, deps.now);
   const queued = (await deps.db.collection("engagement_posts").where("campaign", "==", CAMPAIGN).limit(5000).get()).docs
-    .filter((d) => { const x = d.data(); const o = x.ownerTags || {}; return ((x.actions || {}).reply || {}).status === "approved" && ((o.mentions || []).includes(id) || o.account === id); });
+    .filter((d) => {
+      const x = d.data();
+      const o = x.ownerTags || {};
+      const pending = ((x.actions || {}).reply || {}).status === "approved" || ((x.actions || {}).edit || {}).status === "approved";
+      return pending && ((o.mentions || []).includes(id) || o.account === id);
+    });
   const at = new Date(deps.now).toISOString();
-  for (const d of queued) await d.ref.update({ "actions.reply.status": "dismissed", "actions.reply.error": "@" + handle + " is blocked from owner tags.", updatedAt: at });
+  for (const d of queued) {
+    const patch = { updatedAt: at };
+    if (((d.data().actions || {}).reply || {}).status === "approved") Object.assign(patch, { "actions.reply.status": "dismissed", "actions.reply.error": "@" + handle + " is blocked from owner tags." });
+    if (((d.data().actions || {}).edit || {}).status === "approved") Object.assign(patch, { "actions.edit.status": "dismissed", "actions.edit.error": "@" + handle + " is blocked from owner tags." });
+    await d.ref.update(patch);
+  }
   return { id, dismissed: queued.length, message: "@" + handle + " on " + ((E.NETWORKS[network] || {}).name || network) + " is blocked" + (queued.length ? "; " + queued.length + " queued comment" + (queued.length === 1 ? "" : "s") + " dismissed" : "") + "." };
 }
 
 module.exports = {
-  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, BACKFILL_PER_DAY, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
-  handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, replyText, engagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey, capsFor,
+  CAMPAIGN, RELATED_MAX, COMMENTS_MAX, MENTIONS, PICKED, PER_DAY, BACKFILL_PER_DAY, EDIT_CAPTION, REPLY_NETS, LATEST_NETS, REPLY_DAYS, LATEST_RETRY_DAYS,
+  handleOf, mentionOf, profileOf, learnNames, socialLinksOf, scopesOf, langOf, reportsOf, ourPosts, pick, comments, captionDraft, replyText, engagementDoc, captionEngagementDoc, suggestPrompt, parseSuggestions, parseHandles, accountId, docKey, capsFor,
   run, runNote, decide, account, status, readSettings, saveSettings, latestPost, autoApprovable, approveMany, isStop, stopRequests, block
 };
