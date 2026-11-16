@@ -25,7 +25,8 @@ async function png(px) {
 
 export function mountIcon(sec) {
 	const sizes = [180, 96, 64, 32, 16];
-	const row = (cls) => `<div class="sizes ${cls}">${sizes.map((s) => `<figure><img src="${srcFor(s)}" width="${s}" height="${s}" alt=""><figcaption>${s}</figcaption></figure>`).join('')}</div>`;
+	const row = (cls) =>
+		`<div class="sizes ${cls}">${sizes.map((s) => `<figure><img src="${srcFor(s)}" width="${s}" height="${s}" alt=""><figcaption>${s}</figcaption></figure>`).join('')}</div>`;
 	sec.hidden = false;
 	sec.innerHTML = `
 		<p class="eyebrow">Icon</p>
@@ -53,7 +54,9 @@ export function mountIcon(sec) {
 				</div>
 			</div>
 		</div>`;
-	sec.querySelectorAll('[data-svg]').forEach((b) => b.addEventListener('click', () => download(b.dataset.svg, b.dataset.svg.split('/').pop())));
+	sec
+		.querySelectorAll('[data-svg]')
+		.forEach((b) => b.addEventListener('click', () => download(b.dataset.svg, b.dataset.svg.split('/').pop())));
 	sec.querySelectorAll('[data-png]').forEach((b) => b.addEventListener('click', () => png(+b.dataset.png)));
 	mount(sec.querySelector('.live-tile canvas'), 'fusion', { mode: 1, subject: [0, 0.04], zoom: 1.3, maxPixels: 0.4e6 });
 }

@@ -2,44 +2,104 @@ import { still } from './fx.js';
 
 export const PROPOSALS = [
 	{
-		id: 'prism', name: 'Prism Core', tag: 'One address in, every finding out.',
-		pitch: 'The mark becomes a real glass pyramid. A white beam enters one face and leaves as a fan of the palette: the product in one image.',
-		effects: ['Ray-marched glass with refraction and dispersion', 'Fresnel reflections of studio strip lights', 'Caustic light pool on a mirrored grid floor', 'Spectrum fan beam in the brand colours', 'Star glint on the apex', 'Bokeh dust in front of the lens'],
+		id: 'prism',
+		name: 'Prism Core',
+		tag: 'One address in, every finding out.',
+		pitch:
+			'The mark becomes a real glass pyramid. A white beam enters one face and leaves as a fan of the palette: the product in one image.',
+		effects: [
+			'Ray-marched glass with refraction and dispersion',
+			'Fresnel reflections of studio strip lights',
+			'Caustic light pool on a mirrored grid floor',
+			'Spectrum fan beam in the brand colours',
+			'Star glint on the apex',
+			'Bokeh dust in front of the lens',
+		],
 		best: 'Hero and link previews. The most "product shot" of the five.',
 		cost: 'Heaviest. Resolution adapts to keep 60 fps on laptops; phones render at a lower scale.',
 	},
 	{
-		id: 'tidal', start: 2.2, name: 'Tidal Scan', tag: 'Every page, scanned like a tide.',
-		pitch: 'The page as a field of dots rolling in interfering waves. A pyramid-shaped curtain of gold light sweeps through it, leaving coral dots where it found issues and mint where it passed. The pointer drops its own ripple.',
-		effects: ['Perspective wave field with interference rings', 'Pyramid-shaped scan curtain with a beacon', 'Issue and pass dots that fade after the scan', 'Pointer ripple', 'Horizon fog fade and star field'],
+		id: 'tidal',
+		start: 2.2,
+		name: 'Tidal Scan',
+		tag: 'Every page, scanned like a tide.',
+		pitch:
+			'The page as a field of dots rolling in interfering waves. A pyramid-shaped curtain of gold light sweeps through it, leaving coral dots where it found issues and mint where it passed. The pointer drops its own ripple.',
+		effects: [
+			'Perspective wave field with interference rings',
+			'Pyramid-shaped scan curtain with a beacon',
+			'Issue and pass dots that fade after the scan',
+			'Pointer ripple',
+			'Horizon fog fade and star field',
+		],
 		best: 'Hero behind the URL box, the Live Reports background and video intros.',
 		cost: 'Light.',
 	},
 	{
-		id: 'rack', name: 'Rack Focus', tag: 'Focus on what matters.',
-		pitch: 'Crystals hang at eight depths and the lens pulls focus between the mark, the near swarm and the far field like a cinema camera. Anything out of focus blooms into hexagonal bokeh with a coral fringe. Pointer height nudges the focus.',
-		effects: ['Eight-plane depth of field with timed focus pulls', 'Hexagonal bokeh with a chromatic fringe', 'Turning transparent pyramids', 'Pointer parallax', 'Viewfinder with a live focus readout'],
+		id: 'rack',
+		name: 'Rack Focus',
+		tag: 'Focus on what matters.',
+		pitch:
+			'Crystals hang at eight depths and the lens pulls focus between the mark, the near swarm and the far field like a cinema camera. Anything out of focus blooms into hexagonal bokeh with a coral fringe. Pointer height nudges the focus.',
+		effects: [
+			'Eight-plane depth of field with timed focus pulls',
+			'Hexagonal bokeh with a chromatic fringe',
+			'Turning transparent pyramids',
+			'Pointer parallax',
+			'Viewfinder with a live focus readout',
+		],
 		best: 'Hero and feature sections. Photographic and calm.',
 		cost: 'Light to medium.',
 	},
 	{
-		id: 'aurora', name: 'Aurora Glass', tag: 'Clarity through the noise.',
-		pitch: 'Teal, gold and violet aurora curtains drift behind the mark, which turns as a crystal lens. It refracts the aurora with a chromatic split, a shine sweeps across its facets, and ripple rings spread from it like a wave illusion.',
-		effects: ['Domain-warped aurora curtains', 'Lens refraction with an RGB split', 'Specular sweep across the facets', 'Ripple rings from the mark', 'Twinkling stars and film grain'],
+		id: 'aurora',
+		name: 'Aurora Glass',
+		tag: 'Clarity through the noise.',
+		pitch:
+			'Teal, gold and violet aurora curtains drift behind the mark, which turns as a crystal lens. It refracts the aurora with a chromatic split, a shine sweeps across its facets, and ripple rings spread from it like a wave illusion.',
+		effects: [
+			'Domain-warped aurora curtains',
+			'Lens refraction with an RGB split',
+			'Specular sweep across the facets',
+			'Ripple rings from the mark',
+			'Twinkling stars and film grain',
+		],
 		best: 'Backgrounds everywhere (the calmest behind text), stories and reels.',
 		cost: 'Light; heavier only inside the lens.',
 	},
 	{
-		id: 'lattice', name: 'Crystal Lattice', tag: 'Inside the machine.',
-		pitch: 'The camera flies down a tunnel through an endless lattice of turning crystal bipyramids: mostly teal, some cyan and gold, the odd coral flaw. Every few seconds a wave of light rolls forward through the lattice.',
-		effects: ['Ray-marched infinite crystal lattice', 'Volumetric glow', 'Light wave rolling through the tunnel', 'Banking camera with pointer steering', 'Depth fog'],
+		id: 'lattice',
+		name: 'Crystal Lattice',
+		tag: 'Inside the machine.',
+		pitch:
+			'The camera flies down a tunnel through an endless lattice of turning crystal bipyramids: mostly teal, some cyan and gold, the odd coral flaw. Every few seconds a wave of light rolls forward through the lattice.',
+		effects: [
+			'Ray-marched infinite crystal lattice',
+			'Volumetric glow',
+			'Light wave rolling through the tunnel',
+			'Banking camera with pointer steering',
+			'Depth fog',
+		],
 		best: 'Launch heroes, video intros and event banners. The most immersive; the busiest behind text.',
 		cost: 'Medium.',
 	},
 	{
-		id: 'fusion', featured: true, mark: 'icon/qa-review-mark-fusion.svg', name: 'Fusion', tag: 'Every look, one crystal.',
-		pitch: 'All five in one shot. The Prism Core pyramid splits its beam over the Tidal Scan dot floor, whose scan is now a ring rolling out from under the pyramid. Aurora curtains fill the sky, seven Crystal Lattice bipyramids (one per palette colour) orbit the mark, and Rack Focus crystals hang behind and in front, pulling focus. The icon is redrawn in the same look.',
-		effects: ['Glass pyramid with dispersion and the spectrum fan (Prism Core)', 'Wave dot floor with a ring scan leaving coral and mint dots (Tidal Scan)', 'Rising light wall where the scan ring passes (Tidal Scan)', 'Aurora curtains in the sky (Aurora Glass)', 'Seven orbiting crystal bipyramids with glow (Crystal Lattice)', 'Depth crystals with focus pulls and hexagonal bokeh (Rack Focus)', 'New QA-lab URL Review icon, full and small, with a live version'],
+		id: 'fusion',
+		featured: true,
+		mark: 'icon/qa-review-mark-fusion.svg',
+		name: 'Fusion',
+		tag: 'Every look, one crystal.',
+		pitch:
+			'All five in one shot. The Prism Core pyramid splits its beam over the Tidal Scan dot floor, whose scan is now a ring rolling out from under the pyramid. Aurora curtains fill the sky, seven Crystal Lattice bipyramids (one per palette colour) orbit the mark, and Rack Focus crystals hang behind and in front, pulling focus. The icon is redrawn in the same look.',
+		effects: [
+			'Glass pyramid with dispersion and the spectrum fan (Prism Core)',
+			'Wave dot floor with a ring scan leaving coral and mint dots (Tidal Scan)',
+			'Rising light wall where the scan ring passes (Tidal Scan)',
+			'Aurora curtains in the sky (Aurora Glass)',
+			'Seven orbiting crystal bipyramids with glow (Crystal Lattice)',
+			'Depth crystals with focus pulls and hexagonal bokeh (Rack Focus)',
+			'New QA-lab URL Review icon, full and small, with a live version',
+		],
 		best: 'The whole brand: hero, link previews, social, section backgrounds, the icon and video end cards.',
 		cost: 'Medium to heavy, close to Prism Core. Resolution adapts; backgrounds run at half speed.',
 	},
@@ -58,13 +118,25 @@ export const markSrc = (p) => p.mark || '../../assets/qa-review-mark.svg?v=20261
 const marks = new Map();
 for (const p of PROPOSALS) {
 	const src = markSrc(p);
-	if (!marks.has(src)) { const img = new Image(); img.src = src; marks.set(src, img); }
+	if (!marks.has(src)) {
+		const img = new Image();
+		img.src = src;
+		marks.set(src, img);
+	}
 }
-export const ready = Promise.all([document.fonts.load('400 40px "Instrument Serif"'), document.fonts.load('italic 400 40px "Instrument Serif"'), document.fonts.load('600 20px Inter'), ...[...marks.values()].map((m) => m.decode().catch(() => {}))]);
+export const ready = Promise.all([
+	document.fonts.load('400 40px "Instrument Serif"'),
+	document.fonts.load('italic 400 40px "Instrument Serif"'),
+	document.fonts.load('600 20px Inter'),
+	...[...marks.values()].map((m) => m.decode().catch(() => {})),
+]);
 
 function brand(ctx, x, y, s, align, mark) {
 	ctx.font = `400 ${s * 0.62}px "Instrument Serif"`;
-	const wText = Math.max(ctx.measureText('QA-lab').width, (ctx.font = `600 ${s * 0.2}px Inter`, ctx.measureText('URL REVIEW').width * 1.15));
+	const wText = Math.max(
+		ctx.measureText('QA-lab').width,
+		((ctx.font = `600 ${s * 0.2}px Inter`), ctx.measureText('URL REVIEW').width * 1.15)
+	);
 	const total = s + s * 0.28 + wText;
 	const x0 = align === 'center' ? x - total / 2 : x;
 	ctx.drawImage(mark, x0, y, s, s);
@@ -106,7 +178,15 @@ export function drawCopy(ctx, w, h, fmt, p) {
 		brand(ctx, pad, h * 0.1, 54 * u, 'left', marks.get(markSrc(p)));
 		ctx.textBaseline = 'alphabetic';
 		if (fmt.id === 'og') headline(ctx, four, pad, h * 0.42, 62 * u, 'left');
-		else headline(ctx, [['Find the leaks, '], ['breaks and blocks', true], ['before customers or regulators do.']], pad, h * 0.45, 52 * u, 'left');
+		else
+			headline(
+				ctx,
+				[['Find the leaks, '], ['breaks and blocks', true], ['before customers or regulators do.']],
+				pad,
+				h * 0.45,
+				52 * u,
+				'left'
+			);
 		ctx.font = `600 ${18 * u}px Inter`;
 		ctx.fillStyle = '#e2c48a';
 		ctx.textAlign = 'left';
@@ -121,7 +201,14 @@ export function drawCopy(ctx, w, h, fmt, p) {
 		ctx.fillRect(0, 0, w, h);
 		const u = w / 1080;
 		const story = fmt.id === 'story';
-		brand(ctx, story ? w / 2 : w * 0.07, story ? h * 0.06 : w * 0.07, 72 * u, story ? 'center' : 'left', marks.get(markSrc(p)));
+		brand(
+			ctx,
+			story ? w / 2 : w * 0.07,
+			story ? h * 0.06 : w * 0.07,
+			72 * u,
+			story ? 'center' : 'left',
+			marks.get(markSrc(p))
+		);
 		const size = (story ? 104 : 86) * u;
 		const x = story ? w / 2 : w * 0.07;
 		const top = story ? h * 0.62 : h * 0.56;

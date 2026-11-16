@@ -1,0 +1,14 @@
+# Prettier is for Markdown/HTML later (#3552). Keep mass HTML/social out for now.
+node_modules/
+.worktrees/
+media/
+social/
+assets/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+*.min.js
+*.min.css

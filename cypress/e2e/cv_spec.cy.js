@@ -1,293 +1,339 @@
 class CVPage {
-  visit(options = {}) {
-    cy.visitCV(options);
-  }
+	visit(options = {}) {
+		cy.visitCV(options);
+	}
 
-  get html() { return cy.get('html'); }
-  get themeToggle() { return cy.get('#theme-toggle'); }
-  get languageSelector() { return cy.get('#language-selector'); }
-  get profilePhoto() { return cy.get('#profile-photo'); }
-  get imageModal() { return cy.get('#image-modal'); }
-  get printBtn() { return cy.get('#print-btn'); }
-  get exportSelector() { return cy.get('#export-selector'); }
-  get expandAllToolkitBtn() { return cy.get('#expand-all-toolkit'); }
-  get tourStartBtn() { return cy.get('#tour-start-btn:visible'); }
-  get tourTooltip() { return cy.get('#tour-tooltip'); }
-  get contactWidgetFab() { return cy.get('#contact-widget-fab'); }
-  get contactWidget() { return cy.get('#contact-widget'); }
-  get messageForm() { return cy.get('#message-form'); }
-  get competenciesRadarChart() { return cy.get('#competencies-radar-chart'); }
-  get timelineContainer() { return cy.get('#timeline-container'); }
-  get educationSection() { return cy.get('section[aria-labelledby="education-heading"]'); }
-  get testimonialsSection() { return cy.get('#testimonials-section'); }
-  get glanceKpis() { return cy.get('#glance-kpis'); }
-  get mobileToolbar() { return cy.get('.mobile-toolbar-wrapper .mobile-toolbar'); }
-  get mobileThemeToggle() { return cy.get('#theme-toggle-mobile'); }
-  get mobileShareSelector() { return cy.get('#social-share-selector-mobile'); }
+	get html() {
+		return cy.get('html');
+	}
+	get themeToggle() {
+		return cy.get('#theme-toggle');
+	}
+	get languageSelector() {
+		return cy.get('#language-selector');
+	}
+	get profilePhoto() {
+		return cy.get('#profile-photo');
+	}
+	get imageModal() {
+		return cy.get('#image-modal');
+	}
+	get printBtn() {
+		return cy.get('#print-btn');
+	}
+	get exportSelector() {
+		return cy.get('#export-selector');
+	}
+	get expandAllToolkitBtn() {
+		return cy.get('#expand-all-toolkit');
+	}
+	get tourStartBtn() {
+		return cy.get('#tour-start-btn:visible');
+	}
+	get tourTooltip() {
+		return cy.get('#tour-tooltip');
+	}
+	get contactWidgetFab() {
+		return cy.get('#contact-widget-fab');
+	}
+	get contactWidget() {
+		return cy.get('#contact-widget');
+	}
+	get messageForm() {
+		return cy.get('#message-form');
+	}
+	get competenciesRadarChart() {
+		return cy.get('#competencies-radar-chart');
+	}
+	get timelineContainer() {
+		return cy.get('#timeline-container');
+	}
+	get educationSection() {
+		return cy.get('section[aria-labelledby="education-heading"]');
+	}
+	get testimonialsSection() {
+		return cy.get('#testimonials-section');
+	}
+	get glanceKpis() {
+		return cy.get('#glance-kpis');
+	}
+	get mobileToolbar() {
+		return cy.get('.mobile-toolbar-wrapper .mobile-toolbar');
+	}
+	get mobileThemeToggle() {
+		return cy.get('#theme-toggle-mobile');
+	}
+	get mobileShareSelector() {
+		return cy.get('#social-share-selector-mobile');
+	}
 
-  selectLanguage(langCode) {
-    this.languageSelector.click();
-    cy.get(`#language-options .lang-option[data-lang="${langCode}"]`).click();
-  }
+	selectLanguage(langCode) {
+		this.languageSelector.click();
+		cy.get(`#language-options .lang-option[data-lang="${langCode}"]`).click();
+	}
 }
 
 const cvPage = new CVPage();
 
 describe('Interactive CV', () => {
-  context('Desktop', () => {
-    beforeEach(() => {
-      cy.viewport(1280, 720);
-      cvPage.visit();
-    });
+	context('Desktop', () => {
+		beforeEach(() => {
+			cy.viewport(1280, 720);
+			cvPage.visit();
+		});
 
-    it('toggles dark mode and persists it', () => {
-      cvPage.html.should('not.have.class', 'dark-mode');
-      cvPage.themeToggle.click();
-      cvPage.html.should('have.class', 'dark-mode');
-      cy.reload();
-      cvPage.html.should('have.class', 'dark-mode');
-    });
+		it('toggles dark mode and persists it', () => {
+			cvPage.html.should('not.have.class', 'dark-mode');
+			cvPage.themeToggle.click();
+			cvPage.html.should('have.class', 'dark-mode');
+			cy.reload();
+			cvPage.html.should('have.class', 'dark-mode');
+		});
 
-    it('switches language to Spanish and back to English', () => {
-      cvPage.selectLanguage('es');
-      cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Resumen');
-      cvPage.selectLanguage('en');
-      cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Professional Summary');
-    });
+		it('switches language to Spanish and back to English', () => {
+			cvPage.selectLanguage('es');
+			cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Resumen');
+			cvPage.selectLanguage('en');
+			cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Professional Summary');
+		});
 
-    it('honors ?lang=de on load', () => {
-      cy.visitCV({ qs: '?lang=de' });
-      cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Berufliches Profil');
-    });
+		it('honors ?lang=de on load', () => {
+			cy.visitCV({ qs: '?lang=de' });
+			cy.get('[data-translate-key="summary_title"]').should('contain.text', 'Berufliches Profil');
+		});
 
-    it('opens and closes the profile photo modal', () => {
-      cvPage.profilePhoto.click();
-      cvPage.imageModal.should('have.class', 'visible');
-      cy.get('.modal-close').click();
-      cvPage.imageModal.should('not.have.class', 'visible');
-    });
+		it('opens and closes the profile photo modal', () => {
+			cvPage.profilePhoto.click();
+			cvPage.imageModal.should('have.class', 'visible');
+			cy.get('.modal-close').click();
+			cvPage.imageModal.should('not.have.class', 'visible');
+		});
 
-    it('shows glance KPIs with 18+ years', () => {
-      cvPage.glanceKpis.scrollIntoView().should('contain.text', '18+');
-      cy.get('.glance-kpi').should('have.length', 5);
-    });
+		it('shows glance KPIs with 18+ years', () => {
+			cvPage.glanceKpis.scrollIntoView().should('contain.text', '18+');
+			cy.get('.glance-kpi').should('have.length', 5);
+		});
 
-    it('filters toolkit from a radar label', () => {
-      cy.forceGlancePair(0);
-      cvPage.competenciesRadarChart.scrollIntoView();
-      cvPage.competenciesRadarChart.contains('g.radar-label', 'QA & Automation').click({ force: true });
-      cy.get('#toolkit-heading').should('be.visible');
-      cy.get('.tech-tag[data-skill-name="Selenium"]').should('have.class', 'selected');
-      cy.get('.tech-tag[data-skill-name="Cypress"]').should('have.class', 'selected');
-    });
+		it('filters toolkit from a radar label', () => {
+			cy.forceGlancePair(0);
+			cvPage.competenciesRadarChart.scrollIntoView();
+			cvPage.competenciesRadarChart.contains('g.radar-label', 'QA & Automation').click({ force: true });
+			cy.get('#toolkit-heading').should('be.visible');
+			cy.get('.tech-tag[data-skill-name="Selenium"]').should('have.class', 'selected');
+			cy.get('.tech-tag[data-skill-name="Cypress"]').should('have.class', 'selected');
+		});
 
-    it('filters the CV from a core competency and restores on outside click', () => {
-      cy.get('.competency-item[data-competency="pm"]').click();
-      cy.get('html').should('have.class', 'topic-focus');
-      cy.get('.competency-item[data-competency="pm"]').should('have.attr', 'aria-pressed', 'true');
-      cy.get('.experience-item.topic-match').should('exist');
-      cy.get('#experience-container .experience-item').then(($roles) => {
-        cy.get('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim').should('have.length', $roles.length);
-      });
-      cy.get('#languages-section').should('have.class', 'topic-dim');
-      cy.get('#languages-heading').click({ force: true });
-      cy.get('html').should('not.have.class', 'topic-focus');
-    });
+		it('filters the CV from a core competency and restores on outside click', () => {
+			cy.get('.competency-item[data-competency="pm"]').click();
+			cy.get('html').should('have.class', 'topic-focus');
+			cy.get('.competency-item[data-competency="pm"]').should('have.attr', 'aria-pressed', 'true');
+			cy.get('.experience-item.topic-match').should('exist');
+			cy.get('#experience-container .experience-item').then(($roles) => {
+				cy.get(
+					'#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim'
+				).should('have.length', $roles.length);
+			});
+			cy.get('#languages-section').should('have.class', 'topic-dim');
+			cy.get('#languages-heading').click({ force: true });
+			cy.get('html').should('not.have.class', 'topic-focus');
+		});
 
-    it('filters experience by a skill tag', () => {
-      cvPage.expandAllToolkitBtn.click();
-      cy.get('.tech-tag[data-skill-name="Selenium"]').parents('.toolkit-section').as('seleniumSection');
-      cy.get('@seleniumSection').find('.toolkit-header').should('have.attr', 'aria-expanded', 'true');
-      cy.get('@seleniumSection').find('.toolkit-preview').should('be.hidden');
-      cy.get('.tech-tag[data-skill-name="Selenium"]').click();
-      cy.get('.experience-item.filter-match').should('exist');
-      cy.get('.experience-item.filter-no-match').should('exist');
-    });
+		it('filters experience by a skill tag', () => {
+			cvPage.expandAllToolkitBtn.click();
+			cy.get('.tech-tag[data-skill-name="Selenium"]').parents('.toolkit-section').as('seleniumSection');
+			cy.get('@seleniumSection').find('.toolkit-header').should('have.attr', 'aria-expanded', 'true');
+			cy.get('@seleniumSection').find('.toolkit-preview').should('be.hidden');
+			cy.get('.tech-tag[data-skill-name="Selenium"]').click();
+			cy.get('.experience-item.filter-match').should('exist');
+			cy.get('.experience-item.filter-no-match').should('exist');
+		});
 
-    it('timeline link expands the matching experience', () => {
-      cvPage.timelineContainer.find('.timeline-item a').first().as('firstTimelineLink').click({ force: true });
-      cy.get('@firstTimelineLink').invoke('attr', 'href').then((href) => {
-        cy.get(href).should('have.class', 'is-open');
-        cy.get(`${href} .experience-body`).should('be.visible');
-      });
-    });
+		it('timeline link expands the matching experience', () => {
+			cvPage.timelineContainer.find('.timeline-item a').first().as('firstTimelineLink').click({ force: true });
+			cy.get('@firstTimelineLink')
+				.invoke('attr', 'href')
+				.then((href) => {
+					cy.get(href).should('have.class', 'is-open');
+					cy.get(`${href} .experience-body`).should('be.visible');
+				});
+		});
 
-    it('opens the export menu with all formats', () => {
-      cy.window().then((win) => {
-        cy.stub(win.CarlosMunozCV, '_exportAsPDF_jsPDF').as('exportPDF');
-        cy.stub(win.CarlosMunozCV, '_exportAsJPG').as('exportJPG');
-        cy.stub(win.CarlosMunozCV, '_exportAsATS').as('exportDOC');
-        cy.stub(win.CarlosMunozCV, '_exportAsJSON').as('exportJSON');
-        cy.stub(win.CarlosMunozCV, '_exportAsText').as('exportTEXT');
-      });
-      cvPage.exportSelector.click();
-      cy.get('#export-options button').should('have.length.at.least', 5);
-      cy.get('#export-options button').eq(0).click({ force: true });
-      cy.get('@exportPDF').should('have.been.calledOnce');
-      cy.get('#export-options button').eq(1).click({ force: true });
-      cy.get('@exportJPG').should('have.been.calledOnce');
-      cy.get('#export-options button').eq(2).click({ force: true });
-      cy.get('@exportDOC').should('have.been.calledOnce');
-      cy.get('#export-options button').eq(3).click({ force: true });
-      cy.get('@exportJSON').should('have.been.calledOnce');
-      cy.get('#export-options button').eq(4).click({ force: true });
-      cy.get('@exportTEXT').should('have.been.calledOnce');
-    });
+		it('opens the export menu with all formats', () => {
+			cy.window().then((win) => {
+				cy.stub(win.CarlosMunozCV, '_exportAsPDF_jsPDF').as('exportPDF');
+				cy.stub(win.CarlosMunozCV, '_exportAsJPG').as('exportJPG');
+				cy.stub(win.CarlosMunozCV, '_exportAsATS').as('exportDOC');
+				cy.stub(win.CarlosMunozCV, '_exportAsJSON').as('exportJSON');
+				cy.stub(win.CarlosMunozCV, '_exportAsText').as('exportTEXT');
+			});
+			cvPage.exportSelector.click();
+			cy.get('#export-options button').should('have.length.at.least', 5);
+			cy.get('#export-options button').eq(0).click({ force: true });
+			cy.get('@exportPDF').should('have.been.calledOnce');
+			cy.get('#export-options button').eq(1).click({ force: true });
+			cy.get('@exportJPG').should('have.been.calledOnce');
+			cy.get('#export-options button').eq(2).click({ force: true });
+			cy.get('@exportDOC').should('have.been.calledOnce');
+			cy.get('#export-options button').eq(3).click({ force: true });
+			cy.get('@exportJSON').should('have.been.calledOnce');
+			cy.get('#export-options button').eq(4).click({ force: true });
+			cy.get('@exportTEXT').should('have.been.calledOnce');
+		});
 
-    it('shows print, simulator, and regression lab controls', () => {
-      cvPage.printBtn.should('be.visible');
-      cy.get('#sim-launch-btn').should('be.visible');
-      cy.get('#qa-lab-btn').should('be.visible');
-    });
+		it('shows print, simulator, and regression lab controls', () => {
+			cvPage.printBtn.should('be.visible');
+			cy.get('#sim-launch-btn').should('be.visible');
+			cy.get('#qa-lab-btn').should('be.visible');
+		});
 
-    it('expands the summary on Read More', () => {
-      cy.get('#read-more-btn').click();
-      cy.get('#read-more-btn').should('have.attr', 'aria-expanded', 'true');
-    });
+		it('expands the summary on Read More', () => {
+			cy.get('#read-more-btn').click();
+			cy.get('#read-more-btn').should('have.attr', 'aria-expanded', 'true');
+		});
 
-    it('lists key certifications including ISTQB', () => {
-      cvPage.educationSection.scrollIntoView().should('be.visible');
-      cy.get('#certs-subheading').should('be.visible');
-      cvPage.educationSection.should('contain.text', 'ISTQB');
-    });
+		it('lists key certifications including ISTQB', () => {
+			cvPage.educationSection.scrollIntoView().should('be.visible');
+			cy.get('#certs-subheading').should('be.visible');
+			cvPage.educationSection.should('contain.text', 'ISTQB');
+		});
 
-    it('validates an empty contact message form without submitting', () => {
-      cvPage.contactWidgetFab.click({ force: true });
-      cvPage.contactWidget.should('be.visible');
-      cvPage.messageForm.find('button[type="submit"]').should('be.disabled');
-      cvPage.messageForm.find('#sender-name').focus().blur().should('have.class', 'invalid');
-      cvPage.messageForm.find('#sender-email').type('invalid-email').blur().should('have.class', 'invalid');
-    });
+		it('validates an empty contact message form without submitting', () => {
+			cvPage.contactWidgetFab.click({ force: true });
+			cvPage.contactWidget.should('be.visible');
+			cvPage.messageForm.find('button[type="submit"]').should('be.disabled');
+			cvPage.messageForm.find('#sender-name').focus().blur().should('have.class', 'invalid');
+			cvPage.messageForm.find('#sender-email').type('invalid-email').blur().should('have.class', 'invalid');
+		});
 
-    it('starts the tour, waits for Next, then closes', () => {
-      cvPage.tourStartBtn.click();
-      cvPage.tourTooltip.should('be.visible');
-      cy.get('#tour-step-counter').should('contain.text', '1 /');
-      cy.get('#tour-next-btn').should('be.disabled');
-      cy.get('#tour-next-btn', { timeout: 16000 }).should('not.be.disabled');
-      cy.get('#tour-next-btn').click();
-      cy.get('#tour-step-counter').should('contain.text', '2 /');
-      cy.get('#tour-close-btn').click();
-      cvPage.tourTooltip.should('not.be.visible');
-    });
+		it('starts the tour, waits for Next, then closes', () => {
+			cvPage.tourStartBtn.click();
+			cvPage.tourTooltip.should('be.visible');
+			cy.get('#tour-step-counter').should('contain.text', '1 /');
+			cy.get('#tour-next-btn').should('be.disabled');
+			cy.get('#tour-next-btn', { timeout: 16000 }).should('not.be.disabled');
+			cy.get('#tour-next-btn').click();
+			cy.get('#tour-step-counter').should('contain.text', '2 /');
+			cy.get('#tour-close-btn').click();
+			cvPage.tourTooltip.should('not.be.visible');
+		});
 
-    it('shows a summary title for every language', () => {
-      const titles = [
-        ['en', /Professional Summary/i],
-        ['es', /Resumen Profesional/i],
-        ['pt', /Resumo Profissional/i],
-        ['de', /Berufliches Profil/i],
-        ['fr', /Résumé Professionnel/i],
-        ['it', /Riepilogo Professionale/i]
-      ];
-      titles.forEach(([code, pattern]) => {
-        cvPage.selectLanguage(code);
-        cy.get('[data-translate-key="summary_title"]').invoke('text').should('match', pattern);
-      });
-      cvPage.selectLanguage('en');
-    });
+		it('shows a summary title for every language', () => {
+			const titles = [
+				['en', /Professional Summary/i],
+				['es', /Resumen Profesional/i],
+				['pt', /Resumo Profissional/i],
+				['de', /Berufliches Profil/i],
+				['fr', /Résumé Professionnel/i],
+				['it', /Riepilogo Professionale/i],
+			];
+			titles.forEach(([code, pattern]) => {
+				cvPage.selectLanguage(code);
+				cy.get('[data-translate-key="summary_title"]').invoke('text').should('match', pattern);
+			});
+			cvPage.selectLanguage('en');
+		});
 
-    it('stores dark and light with the theme color', () => {
-      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
-      cvPage.themeToggle.click();
-      cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'dark');
-      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#10161d');
-      cvPage.themeToggle.click();
-      cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'light');
-      cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
-    });
+		it('stores dark and light with the theme color', () => {
+			cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
+			cvPage.themeToggle.click();
+			cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'dark');
+			cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#10161d');
+			cvPage.themeToggle.click();
+			cy.window().its('localStorage').invoke('getItem', 'theme').should('eq', 'light');
+			cy.get('meta[name="theme-color"]').should('have.attr', 'content', '#0d6e76');
+		});
 
-    it('closes the photo dialog with Escape', () => {
-      cvPage.profilePhoto.click();
-      cvPage.imageModal.should('have.attr', 'role', 'dialog').and('have.attr', 'aria-modal', 'true');
-      cy.get('.modal-close').should('be.focused');
-      cy.get('#image-modal').trigger('keydown', { key: 'Escape' });
-      cvPage.imageModal.should('not.have.class', 'visible');
-    });
+		it('closes the photo dialog with Escape', () => {
+			cvPage.profilePhoto.click();
+			cvPage.imageModal.should('have.attr', 'role', 'dialog').and('have.attr', 'aria-modal', 'true');
+			cy.get('.modal-close').should('be.focused');
+			cy.get('#image-modal').trigger('keydown', { key: 'Escape' });
+			cvPage.imageModal.should('not.have.class', 'visible');
+		});
 
-    it('keeps Send disabled until the note is complete', () => {
-      cvPage.contactWidgetFab.click();
-      ['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach((id) => {
-        cy.get('label[for="' + id + '"]').should('be.visible');
-      });
-      cy.get('#sender-name').type('Al');
-      cy.get('#sender-email').type('not-an-email');
-      cy.get('#message-topic').select('inquiry');
-      cy.get('#sender-message').type('123456789');
-      cy.get('#send-message-btn').should('be.disabled');
-      cy.get('#sender-email').focus().blur();
-      cy.get('#sender-email').should('have.class', 'invalid').and('have.attr', 'aria-invalid', 'true');
-      cy.get('#sender-email').clear().type('ada@example.com');
-      cy.get('#sender-message').clear().type('1234567890');
-      cy.get('#send-message-btn').should('not.be.disabled');
-      cy.get('#widget-close-btn').click();
-    });
+		it('keeps Send disabled until the note is complete', () => {
+			cvPage.contactWidgetFab.click();
+			['sender-name', 'sender-email', 'message-topic', 'sender-message'].forEach((id) => {
+				cy.get('label[for="' + id + '"]').should('be.visible');
+			});
+			cy.get('#sender-name').type('Al');
+			cy.get('#sender-email').type('not-an-email');
+			cy.get('#message-topic').select('inquiry');
+			cy.get('#sender-message').type('123456789');
+			cy.get('#send-message-btn').should('be.disabled');
+			cy.get('#sender-email').focus().blur();
+			cy.get('#sender-email').should('have.class', 'invalid').and('have.attr', 'aria-invalid', 'true');
+			cy.get('#sender-email').clear().type('ada@example.com');
+			cy.get('#sender-message').clear().type('1234567890');
+			cy.get('#send-message-btn').should('not.be.disabled');
+			cy.get('#widget-close-btn').click();
+		});
 
-    it('opens company sites without expanding the job', () => {
-      cy.get('#experience-1 .company-link')
-        .should('have.attr', 'href', 'https://www.teaminternational.com')
-        .and('have.attr', 'target', '_blank')
-        .and('have.attr', 'rel')
-        .and('match', /noopener/);
-      cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
-      cy.get('#experience-1 .company-link').then(($link) => {
-        $link[0].addEventListener('click', (event) => event.preventDefault(), { capture: true });
-        $link[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      });
-      cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
-      cy.contains('.company-link', 'Zagalabs').should('have.attr', 'href', 'https://zaga.co');
-      cy.contains('.company-link', 'Prodigious').should('have.attr', 'href', 'https://publicisproduction.com');
-      cy.contains('.company-name', 'Bitgray').should('be.visible');
-      cy.get('#person-structured-data').invoke('text').should('include', 'https://zaga.co');
-      cy.request('/sitemap.xml').its('body').should('not.include', 'zaga.co').and('not.include', 'globant.com');
-    });
+		it('opens company sites without expanding the job', () => {
+			cy.get('#experience-1 .company-link')
+				.should('have.attr', 'href', 'https://www.teaminternational.com')
+				.and('have.attr', 'target', '_blank')
+				.and('have.attr', 'rel')
+				.and('match', /noopener/);
+			cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
+			cy.get('#experience-1 .company-link').then(($link) => {
+				$link[0].addEventListener('click', (event) => event.preventDefault(), { capture: true });
+				$link[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+			});
+			cy.get('#experience-header-1').should('have.attr', 'aria-expanded', 'false');
+			cy.contains('.company-link', 'Zagalabs').should('have.attr', 'href', 'https://zaga.co');
+			cy.contains('.company-link', 'Prodigious').should('have.attr', 'href', 'https://publicisproduction.com');
+			cy.contains('.company-name', 'Bitgray').should('be.visible');
+			cy.get('#person-structured-data').invoke('text').should('include', 'https://zaga.co');
+			cy.request('/sitemap.xml').its('body').should('not.include', 'zaga.co').and('not.include', 'globant.com');
+		});
 
-    it('handles testimonials if any are published', () => {
-      cvPage.testimonialsSection.scrollIntoView();
-      cy.get('body').then(($body) => {
-        if ($body.find('#testimonials-container .testimonial-card').length > 0) {
-          cvPage.testimonialsSection.should('be.visible');
-          cy.get('#average-rating-display').should('be.visible');
-        }
-      });
-    });
-  });
+		it('handles testimonials if any are published', () => {
+			cvPage.testimonialsSection.scrollIntoView();
+			cy.get('body').then(($body) => {
+				if ($body.find('#testimonials-container .testimonial-card').length > 0) {
+					cvPage.testimonialsSection.should('be.visible');
+					cy.get('#average-rating-display').should('be.visible');
+				}
+			});
+		});
+	});
 
-  context('Mobile', () => {
-    beforeEach(() => {
-      cy.viewport('iphone-xr');
-      cvPage.visit();
-    });
+	context('Mobile', () => {
+		beforeEach(() => {
+			cy.viewport('iphone-xr');
+			cvPage.visit();
+		});
 
-    it('shows the mobile toolbar and hides the desktop theme toggle', () => {
-      cvPage.mobileToolbar.should('be.visible');
-      cvPage.themeToggle.should('not.be.visible');
-    });
+		it('shows the mobile toolbar and hides the desktop theme toggle', () => {
+			cvPage.mobileToolbar.should('be.visible');
+			cvPage.themeToggle.should('not.be.visible');
+		});
 
-    it('shows studio and lab launchers without sideways spill', () => {
-      cy.get('#sim-launch-btn-mobile').should('be.visible');
-      cy.get('#qa-lab-btn-mobile').should('be.visible');
-      cy.window().then((win) => {
-        expect(win.document.documentElement.scrollWidth - win.innerWidth).to.be.at.most(2);
-      });
-    });
+		it('shows studio and lab launchers without sideways spill', () => {
+			cy.get('#sim-launch-btn-mobile').should('be.visible');
+			cy.get('#qa-lab-btn-mobile').should('be.visible');
+			cy.window().then((win) => {
+				expect(win.document.documentElement.scrollWidth - win.innerWidth).to.be.at.most(2);
+			});
+		});
 
-    it('makes the mobile toolbar sticky on scroll', () => {
-      cy.scrollTo(0, 1600);
-      cvPage.mobileToolbar.should('have.class', 'is-sticky');
-      cy.scrollTo('top');
-      cvPage.mobileToolbar.should('not.have.class', 'is-sticky');
-    });
+		it('makes the mobile toolbar sticky on scroll', () => {
+			cy.scrollTo(0, 1600);
+			cvPage.mobileToolbar.should('have.class', 'is-sticky');
+			cy.scrollTo('top');
+			cvPage.mobileToolbar.should('not.have.class', 'is-sticky');
+		});
 
-    it('toggles dark mode from the mobile control', () => {
-      cvPage.html.should('not.have.class', 'dark-mode');
-      cvPage.mobileThemeToggle.click();
-      cvPage.html.should('have.class', 'dark-mode');
-    });
+		it('toggles dark mode from the mobile control', () => {
+			cvPage.html.should('not.have.class', 'dark-mode');
+			cvPage.mobileThemeToggle.click();
+			cvPage.html.should('have.class', 'dark-mode');
+		});
 
-    it('opens the mobile share dropdown', () => {
-      cvPage.mobileShareSelector.click();
-      cy.get('#social-share-options-mobile-container').should('be.visible');
-    });
-  });
+		it('opens the mobile share dropdown', () => {
+			cvPage.mobileShareSelector.click();
+			cy.get('#social-share-options-mobile-container').should('be.visible');
+		});
+	});
 });

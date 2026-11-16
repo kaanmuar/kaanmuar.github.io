@@ -1,9 +1,12 @@
 {
-  "version": 1,
-  "hooks": {
-    "sessionStart": [{ "command": "node .cursor/hooks/preflight.js session", "timeout": 5 }],
-    "beforeSubmitPrompt": [{ "command": "node .cursor/hooks/preflight.js prompt", "timeout": 20 }],
-    "postToolUse": [{ "command": "node .cursor/hooks/preflight.js tool", "timeout": 3 }],
-    "stop": [{ "command": "node .cursor/hooks/preflight.js stop", "timeout": 5 }]
-  }
+	"version": 1,
+	"hooks": {
+		"sessionStart": [{ "command": "node .cursor/hooks/preflight.js session", "timeout": 5 }],
+		"beforeSubmitPrompt": [{ "command": "node .cursor/hooks/preflight.js prompt", "timeout": 20 }],
+		"postToolUse": [{ "command": "node .cursor/hooks/preflight.js tool", "timeout": 3 }],
+		"afterFileEdit": [{ "command": "node .cursor/hooks/format.js", "timeout": 20 }],
+		"afterTabFileEdit": [{ "command": "node .cursor/hooks/format.js", "timeout": 20 }],
+		"beforeMCPExecution": [{ "command": "node .cursor/hooks/mcp-allow.js", "timeout": 5, "failClosed": true }],
+		"stop": [{ "command": "node .cursor/hooks/preflight.js stop", "timeout": 5 }]
+	}
 }

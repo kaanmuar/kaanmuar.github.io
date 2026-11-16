@@ -7,30 +7,35 @@ const requested = process.env.PW_BROWSER;
 const channel = process.env.PW_CHANNEL;
 
 module.exports = defineConfig({
-  testDir: './tests',
-  testIgnore: ['**/unit/**'],
-  globalSetup: require.resolve('./tests/global-setup.js'),
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  timeout: 45000,
-  expect: { timeout: 10000 },
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
-  use: {
-    baseURL,
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {})
-  },
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: `python3 scripts/static-server.py ${port}`,
-    url: baseURL,
-    reuseExistingServer: true,
-    timeout: 15000
-  },
-  projects: [
-    requested
-      ? { name: requested, use: { browserName: requested, viewport: { width: 1280, height: 800 }, ...(channel ? { channel } : {}) } }
-      : { name: 'chromium', use: { ...devices['Desktop Chrome'], ...(channel ? { channel } : {}) } }
-  ]
+	testDir: './tests',
+	testIgnore: ['**/unit/**'],
+	globalSetup: require.resolve('./tests/global-setup.js'),
+	fullyParallel: true,
+	forbidOnly: !!process.env.CI,
+	retries: process.env.CI ? 1 : 0,
+	timeout: 45000,
+	expect: { timeout: 10000 },
+	reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+	use: {
+		baseURL,
+		trace: 'on-first-retry',
+		screenshot: 'only-on-failure',
+		...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}),
+	},
+	webServer: process.env.PLAYWRIGHT_BASE_URL
+		? undefined
+		: {
+				command: `python3 scripts/static-server.py ${port}`,
+				url: baseURL,
+				reuseExistingServer: true,
+				timeout: 15000,
+			},
+	projects: [
+		requested
+			? {
+					name: requested,
+					use: { browserName: requested, viewport: { width: 1280, height: 800 }, ...(channel ? { channel } : {}) },
+				}
+			: { name: 'chromium', use: { ...devices['Desktop Chrome'], ...(channel ? { channel } : {}) } },
+	],
 });
