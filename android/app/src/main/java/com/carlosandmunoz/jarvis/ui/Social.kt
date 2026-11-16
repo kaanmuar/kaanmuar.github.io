@@ -48,6 +48,7 @@ import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
@@ -104,6 +105,24 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     val social = s.snapshot.obj("external").obj("social")
     val queue = social.objs("queue")
     val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
+    val velocity = social.obj("replyVelocity")
+    val hot = velocity.objs("hot").ifEmpty { velocity.objs("top") }
+    val within = velocity.num("withinHours")?.toInt() ?: 24
+    Panel("Reply velocity (first ${within}h)", id = "hub-velocity") {
+        if (hot.isEmpty()) Muted("No comment velocity yet in the first ${within}h after send.")
+        else Muted("Comments vs hours since first send. Hot = comments inside the window — reply early.")
+        hot.take(8).forEach { row ->
+            val key = row.str("key").orEmpty().substringAfterLast('/')
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(key, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Muted("${fmt(row.num("comments"))} comments · ${fmt(row.num("hours"))} h")
+                }
+                Text(fmt(row.num("velocity")), color = if (row.bool("early") == true) J.green else J.muted, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        }
+    }
+
     Panel("Queue by channel", id = "hub-queue") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }

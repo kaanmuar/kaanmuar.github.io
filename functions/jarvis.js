@@ -894,9 +894,10 @@ async function dailyProducts(db, { now, days = 1 }) {
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
-  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+  const [{ events, opens, reviews }, messages, ratings, csatRows, pending, hubSnap] = await Promise.all([
     dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
+    rows(since("url_review_csat")),
     pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
@@ -905,12 +906,14 @@ async function dailyProducts(db, { now, days = 1 }) {
   const was = events.filter((row) => !inside(row));
   const keep = (email) => !core.isTestEmail(email);
   const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
+  const review = core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window);
+  review.csat = core.summarizeCsat(csatRows, window, window.prior);
   const products = {
     inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
-    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
+    review,
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
