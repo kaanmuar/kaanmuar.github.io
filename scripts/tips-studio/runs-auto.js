@@ -4,94 +4,207 @@
    AUTO_BATCH). Copy is that script's template; each post links to the site's own Live Report.
    Posts carry no prices, no personal name, and nothing about who asked for the review. */
 
-const fs = require("fs");
-const path = require("path");
-const { SITE, GUIDE, xPost } = require("./tips");
-const { tagLine } = require("../social-tags");
+const fs = require('fs');
+const path = require('path');
+const { SITE, GUIDE, xPost } = require('./tips');
+const { tagLine } = require('../social-tags');
 
-const OWN = SITE + "/qa-review.html";
+const OWN = SITE + '/qa-review.html';
 // The call to action in the clip's language, worded as the Live Reports page's own link (js/qa-review-live.js).
 const OWN_LINE = {
-  en: "Review your own site", es: "Analiza tu propio sitio", pt: "Analise o seu site",
-  de: "Eigene Website prüfen", fr: "Analyser votre site", it: "Analizza il tuo sito"
+	en: 'Review your own site',
+	es: 'Analiza tu propio sitio',
+	pt: 'Analise o seu site',
+	de: 'Eigene Website prüfen',
+	fr: 'Analyser votre site',
+	it: 'Analizza il tuo sito',
 };
-const ownLine = (lang) => OWN_LINE[lang] ? OWN_LINE[lang] + ": " + (lang === "en" ? OWN : SITE + "/qa-review-" + lang + ".html") : OWN_LINE.en + ": " + OWN;
-const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, "../../previews/auto-live-reports/batch.json");
-const AREAS = [["SEO", "SEO"], ["GEO", "GEO"], ["Analytics", "Analytics"], ["Security", "Security"], ["Accessibility", "A11y"], ["Performance", "Speed"]];
+const ownLine = (lang) =>
+	OWN_LINE[lang]
+		? OWN_LINE[lang] + ': ' + (lang === 'en' ? OWN : SITE + '/qa-review-' + lang + '.html')
+		: OWN_LINE.en + ': ' + OWN;
+const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, '../../previews/auto-live-reports/batch.json');
+const AREAS = [
+	['SEO', 'SEO'],
+	['GEO', 'GEO'],
+	['Analytics', 'Analytics'],
+	['Security', 'Security'],
+	['Accessibility', 'A11y'],
+	['Performance', 'Speed'],
+];
 
 const CATS = {
-  Requested: { label: "Real run · requested", color: "#f2b37a", counter: "Requested review", series: "Requested reviews" },
-  National: { label: "Real run · national", color: "#8fc1e3", counter: "Country sweep", series: "Country sweep" },
-  Versus: { label: "Real run · natural competitors", color: "#c9a7f0", counter: "Natural competitors", series: "Natural competitors" }
+	Requested: {
+		label: 'Real run · requested',
+		color: '#f2b37a',
+		counter: 'Requested review',
+		series: 'Requested reviews',
+	},
+	National: { label: 'Real run · national', color: '#8fc1e3', counter: 'Country sweep', series: 'Country sweep' },
+	Versus: {
+		label: 'Real run · natural competitors',
+		color: '#c9a7f0',
+		counter: 'Natural competitors',
+		series: 'Natural competitors',
+	},
 };
-const CAMPAIGN = { National: "country-sweep", Versus: "natural-competitors" };
+const CAMPAIGN = { National: 'country-sweep', Versus: 'natural-competitors' };
 
-const RUNS = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : [];
+const RUNS = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : [];
 
 function shortDate(iso) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+	return new Date(iso).toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		timeZone: 'UTC',
+	});
 }
 
 // The first run is the day's top Live Report and takes the site-review slot (scripts/social-calendar.js); the
 // others join the review backlog in the spare news and best-practice slots (#1115).
 const TIPS = RUNS.map((run) => {
-  const analyzed = shortDate(run.fetchedAt);
-  const fill = (text) => text.replace(/\{(\w+)\}/g, (all, key) => key === "overall" ? run.overall : run.areas[key] !== undefined ? run.areas[key] : all);
-  return Object.assign({}, run, {
-    title: run.title.map(fill),
-    body: fill(run.body),
-    action: fill(run.action),
-    cat: run.scope,
-    counter: (CATS[run.scope] || CATS.Requested).counter,
-    actionLabel: "Lesson",
-    footRight: "Analyzed on " + analyzed,
-    analyzed,
-    visual: run.kind === "rivals" ? {
-      type: "matrix",
-      cols: ["Score"].concat(AREAS.map(([, label]) => label)),
-      rows: run.sites.map((site) => [site.host, site.overall].concat(AREAS.map(([key]) => site.areas[key] == null ? null : site.areas[key]))),
-      note: "Natural competitors found on the open web · " + analyzed
-    } : {
-      type: "scores",
-      overall: run.overall,
-      areas: AREAS.map(([key, label]) => [label, run.areas[key]]),
-      note: run.host + " · " + run.pages + (run.pages === 1 ? " page analyzed · " : " pages analyzed · ") + analyzed
-    },
-    // Four-slide LinkedIn PDF + Instagram carousel from the same audit (#3476 / #3550).
-    fixLines: run.fixLines || [],
-    caseId: run.caseId || "",
-    carousel: run.kind === "rivals" ? false : true
-  });
+	const analyzed = shortDate(run.fetchedAt);
+	const fill = (text) =>
+		text.replace(/\{(\w+)\}/g, (all, key) =>
+			key === 'overall' ? run.overall : run.areas[key] !== undefined ? run.areas[key] : all
+		);
+	return Object.assign({}, run, {
+		title: run.title.map(fill),
+		body: fill(run.body),
+		action: fill(run.action),
+		cat: run.scope,
+		counter: (CATS[run.scope] || CATS.Requested).counter,
+		actionLabel: 'Lesson',
+		footRight: 'Analyzed on ' + analyzed,
+		analyzed,
+		visual:
+			run.kind === 'rivals'
+				? {
+						type: 'matrix',
+						cols: ['Score'].concat(AREAS.map(([, label]) => label)),
+						rows: run.sites.map((site) =>
+							[site.host, site.overall].concat(AREAS.map(([key]) => (site.areas[key] == null ? null : site.areas[key])))
+						),
+						note: 'Natural competitors found on the open web · ' + analyzed,
+					}
+				: {
+						type: 'scores',
+						overall: run.overall,
+						areas: AREAS.map(([key, label]) => [label, run.areas[key]]),
+						note:
+							run.host + ' · ' + run.pages + (run.pages === 1 ? ' page analyzed · ' : ' pages analyzed · ') + analyzed,
+					},
+		// Four-slide LinkedIn PDF + Instagram carousel from the same audit (#3476 / #3550).
+		fixLines: run.fixLines || [],
+		caseId: run.caseId || '',
+		carousel: run.kind === 'rivals' ? false : true,
+	});
 });
 
 function link(platform, run) {
-  const campaign = CAMPAIGN[run.scope] || "requested-reviews";
-  return SITE + "/qa-review.html?live=" + (run.live || run.id) + "&utm_source=" + platform + "&utm_medium=social&utm_campaign=" + campaign + "&utm_content=" + run.id;
+	const campaign = CAMPAIGN[run.scope] || 'requested-reviews';
+	return (
+		SITE +
+		'/qa-review.html?live=' +
+		(run.live || run.id) +
+		'&utm_source=' +
+		platform +
+		'&utm_medium=social&utm_campaign=' +
+		campaign +
+		'&utm_content=' +
+		run.id
+	);
 }
 
 /** Live-report URL without UTMs for LI/IG/FB bodies; Buffer prepareCaption moves tagged URL into firstComment (#3551). */
 function bareLive(run) {
-  return SITE + "/qa-review.html?live=" + (run.live || run.id);
+	return SITE + '/qa-review.html?live=' + (run.live || run.id);
 }
 
-function plainTitle(run) { return run.title.join(" ").replace(/\*/g, "").replace(/\s+/g, " ").trim(); }
+function plainTitle(run) {
+	return run.title.join(' ').replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+}
 
 function captions(run) {
-  const head = plainTitle(run);
-  const how = run.scope === "Versus" ? " of " + run.sites.map((site) => site.host).join(", ") + ", natural competitors found on the open web by QA-lab URL Review's rival sweep."
-    : run.scope === "National" ? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep." : ", requested through QA-lab URL Review.";
-  const fair = (run.scope === "Versus" ? "Automated analyses of public pages on " : "One automated analysis of public pages on ") + run.analyzed + how + " A starting point, not a verdict.";
-  const own = ownLine(run.lang || "en");
-  const live = bareLive(run);
-  return {
-    linkedin: [head, "", run.body, "", "The lesson for every team: " + run.action, "", fair, "The full report: " + live, "", own, "", tagLine(run, "linkedin")].join("\n"),
-    x: xPost(head + "\n\n" + run.action, link("x", run), tagLine(run, "x")),
-    instagram: [head, "", run.body, "", "Lesson: " + run.action, "", fair, "Full report: " + live, "", own, "", tagLine(run, "instagram")].join("\n"),
-    facebook: [head, "", run.body, "", "Lesson: " + run.action, "", fair, live, "", own, "", tagLine(run, "facebook")].join("\n"),
-    tiktok: head + " " + run.action + " " + own + " " + tagLine(run, "tiktok"),
-    youtubeTitle: (head + " #Shorts").slice(0, 100),
-    youtube: [run.body, "", "Lesson: " + run.action, "", fair, "", "Full report: " + link("youtube", run), "", own, "", (CATS[run.scope] || CATS.Requested).series + " · QA-lab URL Review", "", tagLine(run, "youtube")].join("\n")
-  };
+	const head = plainTitle(run);
+	const how =
+		run.scope === 'Versus'
+			? ' of ' +
+				run.sites.map((site) => site.host).join(', ') +
+				", natural competitors found on the open web by QA-lab URL Review's rival sweep."
+			: run.scope === 'National'
+				? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep."
+				: ', requested through QA-lab URL Review.';
+	const fair =
+		(run.scope === 'Versus' ? 'Automated analyses of public pages on ' : 'One automated analysis of public pages on ') +
+		run.analyzed +
+		how +
+		' A starting point, not a verdict.';
+	const own = ownLine(run.lang || 'en');
+	const live = bareLive(run);
+	return {
+		linkedin: [
+			head,
+			'',
+			run.body,
+			'',
+			'The lesson for every team: ' + run.action,
+			'',
+			fair,
+			'The full report: ' + live,
+			'',
+			own,
+			'',
+			tagLine(run, 'linkedin'),
+		].join('\n'),
+		x: xPost(head + '\n\n' + run.action, link('x', run), tagLine(run, 'x')),
+		instagram: [
+			head,
+			'',
+			run.body,
+			'',
+			'Lesson: ' + run.action,
+			'',
+			fair,
+			'Full report: ' + live,
+			'',
+			own,
+			'',
+			tagLine(run, 'instagram'),
+		].join('\n'),
+		facebook: [
+			head,
+			'',
+			run.body,
+			'',
+			'Lesson: ' + run.action,
+			'',
+			fair,
+			live,
+			'',
+			own,
+			'',
+			tagLine(run, 'facebook'),
+		].join('\n'),
+		tiktok: head + ' ' + run.action + ' ' + own + ' ' + tagLine(run, 'tiktok'),
+		youtubeTitle: (head + ' #Shorts').slice(0, 100),
+		youtube: [
+			run.body,
+			'',
+			'Lesson: ' + run.action,
+			'',
+			fair,
+			'',
+			'Full report: ' + link('youtube', run),
+			'',
+			own,
+			'',
+			(CATS[run.scope] || CATS.Requested).series + ' · QA-lab URL Review',
+			'',
+			tagLine(run, 'youtube'),
+		].join('\n'),
+	};
 }
 
 module.exports = { SITE, GUIDE, CATS, TIPS, OWN_LINE, captions, link, bareLive, plainTitle };
