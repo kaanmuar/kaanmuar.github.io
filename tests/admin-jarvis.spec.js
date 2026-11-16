@@ -1211,11 +1211,12 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(geo.locator('path[data-geo-cc="PE"]')).toHaveAttribute('fill', '#1d3340');
     await geo.locator('[data-geo-play]').click();
     await expect(geo.locator('[data-geo-play]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Sep 7 – Sep 13', { timeout: 5000 });
+    await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Sep 7 – Sep 13', { timeout: 6500 });
+    await expect(geo.locator('.jv-geo-play-stats')).toBeVisible();
     await geo.locator('[data-geo-play]').click();
     await expect(geo.locator('[data-geo-play]')).toHaveAttribute('aria-pressed', 'false');
     const held = await geo.locator('.jv-geo-when').textContent();
-    await page.waitForTimeout(1600);
+    await page.waitForTimeout(2600);
     await expect(geo.locator('.jv-geo-when')).toHaveText(held);
     await geo.locator('[data-geo-week]').fill('12');
     await expect(geo.locator('.jv-geo-when')).toHaveText('Week of Nov 2 – Nov 8');

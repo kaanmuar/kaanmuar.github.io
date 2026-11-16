@@ -449,6 +449,9 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         world?.let { w ->
             Box {
                 WorldMap(w, shown, key, tapped ?: picked, tv.fills) { cc, at -> tapped = cc; tapAt = at }
+                if (time.playing && tv.mode == "week") {
+                    GeoPlayStats(tv, key, true, Modifier.align(Alignment.CenterEnd).padding(6.dp))
+                }
                 tapped?.let { cc ->
                     GeoCard(cc, shown.firstOrNull { it.str("cc") == cc }, Modifier.align(if (tapAt.x < 0.5f) Alignment.TopEnd else Alignment.TopStart).padding(6.dp),
                         open = { picked = cc; tapped = null }, close = { tapped = null }, change = if (tv.delta != null) ({ GeoChangeLine(tv, cc, key) }) else null)
@@ -509,8 +512,9 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
+    val rankAnimate = if (time.playing && tv.mode == "week") tv.week else null
     TopList("Ranking · ${Geo.metric(rankKey).label}", Geo.ranked(shown, rankKey).map { (it.str("name") ?: "") + (tv.delta?.let { d -> " · " + GeoTime.arrow(d[it.str("cc")], rankKey) } ?: "") to (Geo.value(it, rankKey) ?: 0.0) }, limit = 15,
-        onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
+        onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) }, animateKey = rankAnimate)
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
     GeoCostPanel(g, tv, key, channel) { picked = it }
