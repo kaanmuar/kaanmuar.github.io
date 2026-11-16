@@ -225,6 +225,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
         TopList("Funnel", p.pairs("funnel"), 4, id = "review-funnel", footer = {
             Muted("Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.")
         })
+        CsatPanel(p.obj("csat"))
     }
 
     val series = p.obj("series")
@@ -272,6 +273,36 @@ private fun PageHealth(snap: JsonObject?, product: String) {
 }
 
 private fun score(v: Double?) = when { v == null -> J.muted; v >= 90 -> J.green; v >= 50 -> J.amber; else -> J.pink }
+
+@Composable
+private fun CsatPanel(csat: JsonObject?) {
+    val c = csat ?: return
+    val t = c.obj("totals")
+    val answers = t.num("answers")?.toInt() ?: 0
+    Panel("CSAT / NPS", id = "review-csat") {
+        if (answers == 0) {
+            Muted("No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).")
+            return@Panel
+        }
+        KpiGrid(c.objs("kpis"))
+        val stars = c.obj("stars")
+        BarChart((1..5).map { stars.num(it.toString()) ?: 0.0 }, (1..5).map { "$it★" }, J.amber)
+        val nps = c.obj("npsBuckets")
+        BarChart(
+            listOf(nps.num("detractor") ?: 0.0, nps.num("passive") ?: 0.0, nps.num("promoter") ?: 0.0),
+            listOf("Detractors", "Passives", "Promoters"),
+            J.cyan
+        )
+        c.objs("recent").take(8).forEach { row ->
+            StatusRow(
+                if (row.bool("low") == true) "warn" else "info",
+                listOfNotNull(row.str("host")?.ifEmpty { null }, "${fmt(row.num("rating"))}/5", row.num("nps")?.let { "NPS ${fmt(it)}" }).joinToString(" · "),
+                listOfNotNull(ago(row.str("at")), row.str("comment")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
+            )
+        }
+        Muted("Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.")
+    }
+}
 
 @Composable
 private fun ReviewOps(s: UiState, vm: JarvisViewModel) {

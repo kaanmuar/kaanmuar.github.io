@@ -18,6 +18,7 @@ import com.carlosandmunoz.jarvis.ui.Arrange
 import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.StatusSlot
 import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.ui.Github
 import com.carlosandmunoz.jarvis.voice.Heard
@@ -62,6 +63,7 @@ data class UiState(
     val push: Map<String, Boolean> = emptyMap(),
     val ongoing: Boolean = true,
     val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.DEFAULT,
+    val ongoingSlots: List<StatusSlot> = StatusSlot.DEFAULT,
     val heard: Heard = Heard(),
     val handsFree: Boolean = false,
     val speaking: String? = null,
@@ -89,7 +91,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), speak = Voice.speakOn(app),
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), ongoingSlots = Ongoing.slots(app), speak = Voice.speakOn(app),
         voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
@@ -131,7 +133,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCode() = _state.update { it.copy(pendingCode = null, authError = null) }
 
     fun signOut() {
-        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing, ongoingParts = _state.value.ongoingParts)
+        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing, ongoingParts = _state.value.ongoingParts, ongoingSlots = _state.value.ongoingSlots)
         viewModelScope.launch {
             runCatching { Push.forget(jarvis) }
             runCatching { api.call("device", 1, mapOf("gone" to JsonPrimitive(true))) }
@@ -153,6 +155,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val parts = if (on) _state.value.ongoingParts + part else _state.value.ongoingParts - part
         Ongoing.setParts(jarvis, parts)
         _state.update { it.copy(ongoingParts = parts) }
+        viewModelScope.launch { Ongoing.show(jarvis, Home.today(jarvis)) }
+    }
+
+    fun setOngoingSlots(slots: List<StatusSlot>) {
+        Ongoing.setSlots(jarvis, slots)
+        _state.update { it.copy(ongoingSlots = slots) }
         viewModelScope.launch { Ongoing.show(jarvis, Home.today(jarvis)) }
     }
 

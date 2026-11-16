@@ -621,12 +621,15 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 }
                 if (s.ongoing) {
                     Muted("Show in the notification")
-                    Ongoing.Part.entries.forEach { part ->
+                    Ongoing.Part.SETTINGS.forEach { part ->
                         Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) { Text(part.label, fontSize = 14.sp); Muted(part.hint) }
                             Switch(part in s.ongoingParts, { vm.setOngoingPart(part, it) })
                         }
                     }
+                    Spacer(Modifier.height(8.dp))
+                    Muted("Rings and bars")
+                    StatusSlotsEditor(s.ongoingSlots, vm::setOngoingSlots)
                     Spacer(Modifier.height(12.dp))
                 }
                 mapOf(

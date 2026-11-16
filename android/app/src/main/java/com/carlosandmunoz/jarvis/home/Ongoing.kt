@@ -48,20 +48,24 @@ object Ongoing {
         val counts: String = "", val card: StatusCard.Card? = null,
     )
 
-    /** What the notification shows, picked in Settings; nothing saved means everything but the Live Update. */
+    /**
+     * Chrome the notification shows, picked in Settings. Rings and bars are [StatusSlot]s (#3610);
+     * the old `readiness` / `bar` keys still parse for migration via [StatusSlot.fromParts].
+     */
     enum class Part(val key: String, val label: String, val hint: String) {
-        READINESS("readiness", "Readiness and uptime", "Readiness and pages up as rings in the card; readiness is also the status-bar icon"),
+        READINESS("readiness", "Readiness in the title", "Readiness percent next to the app name; the status-bar icon follows the readiness ring in the card"),
         ALERTS("alerts", "Alerts and warnings", "How many, next to the app name"),
         APPROVALS("approvals", "Approvals waiting", "Notices waiting for Send or Drop"),
         PROCESSES("processes", "Processes", "What runs now and what needs you, as \"2 running · 1 needs you\""),
         TOP("top", "Top briefing line", "The most urgent line from the briefing"),
         MONEY("money", "Today's money", "Revenue and sales today"),
-        BAR("bar", "Bars", "Connections online, the 90-day targets and goals as bars"),
         CHIP("live", "Live Update instead of the card", "Android 16: a chip by the clock, pinned at the top of the shade. Android can't pin the card, so this swaps it for text and one readiness bar");
 
         companion object {
             val ALL = entries.toSet()
             val DEFAULT = ALL - CHIP
+            /** Settings rows; rings and bars are edited as slots, not here. */
+            val SETTINGS = entries.toList()
             fun of(saved: String?): Set<Part> = saved?.split(",")?.let { k -> entries.filter { it.key in k }.toSet() } ?: DEFAULT
         }
     }
@@ -72,6 +76,10 @@ object Ongoing {
 
     fun setParts(app: JarvisApp, parts: Set<Part>) = app.vault.put(PARTS, parts.joinToString(",") { it.key })
 
+    fun slots(app: JarvisApp) = StatusSlot.fromParts(app.vault.get(StatusSlot.KEY), app.vault.get(PARTS))
+
+    fun setSlots(app: JarvisApp, slots: List<StatusSlot>) = app.vault.put(StatusSlot.KEY, StatusSlot.encode(slots))
+
     fun channel(context: Context) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "Live status", NotificationManager.IMPORTANCE_LOW).apply {
@@ -80,7 +88,14 @@ object Ongoing {
             })
     }
 
-    fun content(snap: JsonObject, today: JsonObject?, at: Long, approvals: Int?, show: Set<Part> = Part.DEFAULT): Content {
+    fun content(
+        snap: JsonObject,
+        today: JsonObject?,
+        at: Long,
+        approvals: Int?,
+        show: Set<Part> = Part.DEFAULT,
+        slots: List<StatusSlot> = StatusSlot.DEFAULT,
+    ): Content {
         val w = Watch.summary(snap, today, at)
         val ready = w.readiness?.roundToInt()
         val alerts = Part.ALERTS in show
@@ -96,50 +111,125 @@ object Ongoing {
             counts.ifEmpty { null },
         ).joinToString(" · ").ifEmpty { "Jarvis" }
         val lines = listOfNotNull(Processes.summary(snap.obj("processes"))?.takeIf { Part.PROCESSES in show }, w.top?.takeIf { Part.TOP in show }, money.takeIf { Part.MONEY in show })
+        val hasReadinessSlot = slots.any { it.metric == StatusSlot.Metric.READINESS.key }
         val chip = when {
             Part.CHIP !in show -> null
             alerts && w.alerts > 0 -> Home.plural(w.alerts, "alert")
             waiting -> "$approvals waiting"
-            Part.READINESS in show && ready != null -> "$ready%"
+            (Part.READINESS in show || hasReadinessSlot) && ready != null -> "$ready%"
             else -> null
         }
         val urgent = alerts && w.alerts > 0
         val color = when { urgent -> PINK; waiting -> AMBER; else -> CYAN }
-        val rings = if (Part.READINESS in show) listOfNotNull(ready?.let { StatusCard.Ring(it, "Readiness", color) }, uptime(snap)) else emptyList()
+        val (rings, bars) = cardMetrics(snap, slots, ready, color)
         val processes = snap.obj("processes")
         val note = Processes.summary(processes)?.takeIf { Part.PROCESSES in show && Processes.needsYou(processes) > 0 }
-        val card = StatusCard.Card(rings, if (Part.BAR in show) bars(snap) else emptyList(), lines, note)
+        val card = StatusCard.Card(rings, bars, lines, note)
         return Content(ready, title, lines.firstOrNull().orEmpty(), lines, urgent, at, chip,
-            waiting = waiting, ring = Part.READINESS in show, bar = Part.BAR in show, live = Part.CHIP in show, counts = counts, card = card)
+            waiting = waiting, ring = hasReadinessSlot || Part.READINESS in show, bar = bars.isNotEmpty(),
+            live = Part.CHIP in show, counts = counts, card = card)
     }
 
-    /** Pages answering right now, as the second ring. */
-    fun uptime(snap: JsonObject): StatusCard.Ring? {
+    /** Builds rings then bars from the ordered slots, capped at the card's two rings and three bars. */
+    fun cardMetrics(
+        snap: JsonObject,
+        slots: List<StatusSlot>,
+        ready: Int?,
+        readinessColor: Int,
+    ): Pair<List<StatusCard.Ring>, List<StatusCard.Bar>> {
+        val rings = mutableListOf<StatusCard.Ring>()
+        val bars = mutableListOf<StatusCard.Bar>()
+        for (slot in slots) {
+            when (slot.kind) {
+                StatusSlot.Kind.RING -> if (rings.size < 2) ringFor(slot, snap, ready, readinessColor)?.let { rings += it }
+                StatusSlot.Kind.BAR -> {
+                    val room = 3 - bars.size
+                    if (room > 0) bars += barsFor(slot, snap).take(room)
+                }
+            }
+        }
+        return rings to bars
+    }
+
+    fun ringFor(slot: StatusSlot, snap: JsonObject, ready: Int?, readinessColor: Int): StatusCard.Ring? {
+        val name = slot.label?.takeIf { it.isNotBlank() }
+        return when (slot.metric) {
+            StatusSlot.Metric.READINESS.key -> ready?.let { StatusCard.Ring(it, name ?: "Readiness", readinessColor) }
+            StatusSlot.Metric.UPTIME.key -> uptime(snap, name)
+            StatusSlot.Metric.CONNECTIONS.key -> connections(snap)?.let { (pct, value, color) ->
+                StatusCard.Ring(pct, name ?: "Connections", color)
+            }
+            StatusSlot.Metric.TARGETS.key -> targets(snap).firstOrNull()?.let { b ->
+                StatusCard.Ring(b.pct, name ?: b.label, b.color)
+            }
+            StatusSlot.Metric.GOALS.key -> goals(snap).firstOrNull()?.let { b ->
+                StatusCard.Ring(b.pct, name ?: b.label, b.color)
+            }
+            else -> null
+        }
+    }
+
+    fun barsFor(slot: StatusSlot, snap: JsonObject): List<StatusCard.Bar> {
+        val name = slot.label?.takeIf { it.isNotBlank() }
+        return when (slot.metric) {
+            StatusSlot.Metric.READINESS.key -> {
+                val w = Watch.summary(snap, null, 0L)
+                val ready = w.readiness?.roundToInt() ?: return emptyList()
+                listOf(StatusCard.Bar(name ?: "Readiness", "$ready%", ready, CYAN))
+            }
+            StatusSlot.Metric.UPTIME.key -> {
+                val r = uptime(snap) ?: return emptyList()
+                listOf(StatusCard.Bar(name ?: r.label, "${r.pct}%", r.pct, r.color))
+            }
+            StatusSlot.Metric.CONNECTIONS.key -> connections(snap)?.let { (pct, value, color) ->
+                listOf(StatusCard.Bar(name ?: "Connections", value, pct, color))
+            }.orEmpty()
+            StatusSlot.Metric.TARGETS.key -> targets(snap).let { list ->
+                if (name == null) list else list.mapIndexed { i, b -> if (i == 0) b.copy(label = name) else b }
+            }
+            StatusSlot.Metric.GOALS.key -> goals(snap).let { list ->
+                if (name == null) list else list.mapIndexed { i, b -> if (i == 0) b.copy(label = name) else b }
+            }
+            else -> emptyList()
+        }
+    }
+
+    /** Pages answering right now. */
+    fun uptime(snap: JsonObject, label: String? = null): StatusCard.Ring? {
         val pages = snap.obj("external").obj("uptime").objs("pages").takeIf { it.isNotEmpty() } ?: return null
         val up = pages.count { it.bool("ok") == true }
-        return StatusCard.Ring(up * 100 / pages.size, "Uptime", if (up == pages.size) GREEN else if (up * 2 >= pages.size) AMBER else PINK)
+        return StatusCard.Ring(up * 100 / pages.size, label ?: "Uptime", if (up == pages.size) GREEN else if (up * 2 >= pages.size) AMBER else PINK)
     }
 
-    /** Connections online, then the 90-day targets most in need of a push, then the goals; coloured by how each is doing. */
-    fun bars(snap: JsonObject): List<StatusCard.Bar> {
+    fun connections(snap: JsonObject): Triple<Int, String, Int>? {
         val states = snap.objs("connections").map { it.str("state") }
+        if (states.isEmpty()) return null
         val on = states.count { it != "down" && it != "partial" }
-        val systems = states.takeIf { it.isNotEmpty() }?.let {
-            StatusCard.Bar("Connections", "$on of ${it.size} online", on * 100 / it.size, if (on < it.size) AMBER else CYAN)
-        }
-        val goals = Home.goals(snap).take(2).map { g ->
-            val color = when (g.status) { "done" -> GREEN; "behind" -> AMBER; "far-behind" -> PINK; else -> CYAN }
-            StatusCard.Bar(g.label, "${fmt(g.value, 0)} of ${fmt(g.target, 0)}", (g.pct * 100).roundToInt(), color)
-        }
-        val rank = listOf("missed", "behind", "on-pace", "waiting", "done")
-        val targets = snap.obj("external").obj("targets").objs("targets").sortedBy { rank.indexOf(it.str("status")).let { i -> if (i < 0) rank.size else i } }.take(2).map { t ->
-            val target = maxOf(1.0, t.num("target") ?: 1.0)
-            val actual = t.num("actual") ?: 0.0
-            val color = when (t.str("status")) { "done" -> GREEN; "behind" -> AMBER; "missed" -> PINK; else -> CYAN }
-            StatusCard.Bar(t.str("label").orEmpty(), "${fmt(actual, 0)} of ${fmt(target, 0)}", (actual * 100 / target).roundToInt(), color)
-        }
-        return listOfNotNull(systems) + targets + goals
+        return Triple(on * 100 / states.size, "$on of ${states.size} online", if (on < states.size) AMBER else CYAN)
     }
+
+    fun goals(snap: JsonObject): List<StatusCard.Bar> = Home.goals(snap).take(2).map { g ->
+        val color = when (g.status) { "done" -> GREEN; "behind" -> AMBER; "far-behind" -> PINK; else -> CYAN }
+        StatusCard.Bar(g.label, "${fmt(g.value, 0)} of ${fmt(g.target, 0)}", (g.pct * 100).roundToInt(), color)
+    }
+
+    fun targets(snap: JsonObject): List<StatusCard.Bar> {
+        val rank = listOf("missed", "behind", "on-pace", "waiting", "done")
+        return snap.obj("external").obj("targets").objs("targets")
+            .sortedBy { rank.indexOf(it.str("status")).let { i -> if (i < 0) rank.size else i } }
+            .take(2)
+            .map { t ->
+                val target = maxOf(1.0, t.num("target") ?: 1.0)
+                val actual = t.num("actual") ?: 0.0
+                val color = when (t.str("status")) { "done" -> GREEN; "behind" -> AMBER; "missed" -> PINK; else -> CYAN }
+                StatusCard.Bar(t.str("label").orEmpty(), "${fmt(actual, 0)} of ${fmt(target, 0)}", (actual * 100 / target).roundToInt(), color)
+            }
+    }
+
+    /** Legacy helper: connections, then targets, then goals — used by tests that still call [bars]. */
+    fun bars(snap: JsonObject): List<StatusCard.Bar> =
+        listOfNotNull(connections(snap)?.let { (pct, value, color) -> StatusCard.Bar("Connections", value, pct, color) }) +
+            targets(snap) + goals(snap)
 
     private const val CYAN = 0xFF38E1FF.toInt()
     private const val PINK = 0xFFFF4F9A.toInt()
@@ -154,7 +244,7 @@ object Ongoing {
         val allowed = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(app, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         if (saved == null || !enabled(app) || !allowed) { nm.cancel(ID); return }
         val (snap, at) = saved
-        val c = content(snap, today(), at, approvals(app, snap), parts(app))
+        val c = content(snap, today(), at, approvals(app, snap), parts(app), slots(app))
         val open = PendingIntent.getActivity(app, ID, Home.open(app, "overview"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val again = PendingIntent.getBroadcast(app, ID, Intent(app, OngoingReceiver::class.java).setAction(ACTION_AGAIN), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val icon = if (c.ring) IconCompat.createWithBitmap(ring(c.readiness, (24 * app.resources.displayMetrics.density).roundToInt()))
