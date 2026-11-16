@@ -69,7 +69,7 @@ const BY_FUNCTION = {
   // The weekly report also opens the report replies' results ticket on the board (#2471).
   engagementWeekly: list(MAIL, GEMINI, GITHUB, ["YOUTUBE_KEY", "GOOGLE_CALENDAR_CLIENT_SECRET"]),
   // An approved YouTube comment goes out from the jarvis function at once, so it refreshes the same token.
-  // CURSOR_API_KEY: the github-agent op launches Cursor cloud agents (#2526).
+  // CURSOR_API_KEY: the hourly watch polls Cursor cloud agents Jarvis started via the API (#2526); Hand to Cursor asks @cursor on GitHub for weekly usage (#3536).
   jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ["GOOGLE_CALENDAR_CLIENT_SECRET", "CURSOR_API_KEY"])
 };
 

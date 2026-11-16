@@ -2710,10 +2710,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const t = ((S.worker && S.worker.tasks) || []).find((x) => x.id === id);
         if (!t || !t.cursor) return;
         const c = t.cursor;
-        if (!window.confirm(`Jarvis: hand "${t.title}" to a Cursor cloud agent? It uses Cursor credit and opens a PR when it is done.\n\n${c.prompt.length > 600 ? c.prompt.slice(0, 600) + '…' : c.prompt}`)) return;
+        if (!window.confirm(`Jarvis: hand "${t.title}" to a Cursor cloud agent? It asks @cursor on GitHub and uses your weekly Cursor usage.\n\n${c.prompt.length > 600 ? c.prompt.slice(0, 600) + '…' : c.prompt}`)) return;
         ghMark('worker:' + id, 'running', 'Launching the Cursor agent…');
         const out = await call('github-agent', Object.assign({}, c, { engine: 'cursor' })).catch((error) => ({ ok: false, error: error.message }));
-        ghMark('worker:' + id, out.ok ? 'launched' : 'failed', out.ok ? 'Cursor agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the agent' } : null);
+        ghMark('worker:' + id, out.ok ? 'launched' : 'failed', out.ok ? 'Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: 'Open the comment' } : null);
     }
 
     // An agent costs money and writes code: it asks every time, showing the drafted prompt. Jarvis's own worker (#2957) first,
@@ -2729,12 +2729,12 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         else if (!window.confirm(`Jarvis: start its own worker on ${where}? It opens a PR when the tests pass.${thisMonth} Cancel to choose a Cursor agent instead.\n\n${shown}`)) engine = '';
         if (engine === 'cursor' || !engine) {
             const capped = sp && sp.level === 'over' && engine !== 'cursor' ? `Jarvis's worker is stopped: its AI budget for ${sp.month} is used.${thisMonth}\n\n` : '';
-            if (!window.confirm(`${capped}Jarvis: launch a Cursor cloud agent on ${where}? It uses Cursor credit and opens a PR when it is done.${engine || capped ? '\n\n' + shown : ''}`)) return false;
+            if (!window.confirm(`${capped}Jarvis: launch a Cursor cloud agent on ${where}? It asks @cursor on GitHub and uses your weekly Cursor usage.${engine || capped ? '\n\n' + shown : ''}`)) return false;
             engine = 'cursor';
         }
         ghMark(key, 'running', 'Launching the agent…');
         const out = await call('github-agent', Object.assign({}, body, { engine })).catch((error) => ({ ok: false, error: error.message }));
-        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? 'Agent launched; it opens a PR when it is done.' : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: engine === 'worker' ? 'Open the worker runs' : 'Open the agent' } : null);
+        ghMark(key, out.ok ? 'launched' : 'failed', out.ok ? (engine === 'worker' ? 'Agent launched; it opens a PR when it is done.' : 'Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.') : 'Not launched: ' + out.error, out.ok && out.url ? { url: out.url, link: engine === 'worker' ? 'Open the worker runs' : 'Open the comment' } : null);
         toast(out.ok ? `Agent launched${out.url ? ': ' + out.url : ''}.` : 'Not launched: ' + out.error, 9000);
         if (out.ok) ghFresh();
         if (engine === 'worker') loadWorker();
