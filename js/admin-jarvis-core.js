@@ -305,6 +305,51 @@
         };
     }
 
+    /** URL Review CSAT answers (#3557 scaffold): stars, NPS, quote opt-ins in range. Empty until answers land. */
+    function summarizeCsat(rows, window, priorWindow) {
+        const inside = (row, w) => { const when = toDate(row.createdAt); return when && when >= w.start && when <= w.end; };
+        const now = (rows || []).filter((row) => inside(row, window));
+        const prior = priorWindow ? (rows || []).filter((row) => inside(row, priorWindow)) : [];
+        const stars = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const npsBuckets = { detractor: 0, passive: 0, promoter: 0 };
+        let starSum = 0, npsSum = 0, npsN = 0, quoteOk = 0, low = 0;
+        now.forEach((row) => {
+            const s = Math.min(5, Math.max(0, Number(row.rating) || 0));
+            if (stars[s] !== undefined) stars[s] += 1;
+            starSum += s;
+            const nps = Number(row.nps);
+            if (Number.isFinite(nps) && nps >= 0 && nps <= 10) {
+                npsSum += nps;
+                npsN += 1;
+                if (nps <= 6) npsBuckets.detractor += 1;
+                else if (nps <= 8) npsBuckets.passive += 1;
+                else npsBuckets.promoter += 1;
+            }
+            if (row.quoteOk) quoteOk += 1;
+            if (row.low || s <= 2 || (Number.isFinite(nps) && nps <= 6)) low += 1;
+        });
+        const avg = now.length ? Math.round((starSum / now.length) * 10) / 10 : null;
+        const avgNps = npsN ? Math.round((npsSum / npsN) * 10) / 10 : null;
+        const score = npsN ? Math.round(((npsBuckets.promoter - npsBuckets.detractor) / npsN) * 100) : null;
+        return {
+            totals: { answers: now.length, prior: prior.length, avg, avgNps, nps: score, quoteOk, low },
+            stars,
+            npsBuckets,
+            kpis: [
+                kpi('CSAT answers', now.length, prior.length || undefined),
+                kpi('Avg run', avg === null ? '—' : avg + '/5', undefined, { raw: avg }),
+                kpi('Avg NPS', avgNps === null ? '—' : avgNps + '/10', undefined, { raw: avgNps }),
+                kpi('NPS score', score === null ? '—' : score, undefined, { raw: score }),
+                kpi('Quote ok', quoteOk, undefined),
+                kpi('Low', low, undefined, { alert: low > 0 })
+            ],
+            recent: now.slice().sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0)).slice(0, 8).map((row) => ({
+                id: row.id, host: row.host || '', rating: row.rating, nps: row.nps, quoteOk: !!row.quoteOk, low: !!row.low,
+                comment: String(row.comment || '').slice(0, 160), at: row.createdAt || ''
+            }))
+        };
+    }
+
     function summarizeInbox(messages, ratings, window, priorWindow, keep, pendingCount) {
         const inside = (row, w) => { const when = toDate(row.createdAt); return when && when >= w.start && when <= w.end; };
         const pass = (row) => (keep ? keep(row.email) : true);
@@ -1842,7 +1887,7 @@
             && (!words.length || words.every((w) => (String(r.text || '') + ' ' + r.source + ' ' + String(r.ref || '')).toLowerCase().includes(w))));
     }
 
-    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
+    const api = { LOG_SOURCES, LOG_LEVELS, logFilter, linkedinLine, TREND, PURPOSES, deck, trend, trafficMix, trafficCompare, revenueByProduct, outreachFunnel, statusMatrix, uptimeStrip, productList, wide, DEVICE_KINDS, POSTURES, cleanDevice, deviceLabel, askHint, browserDevice, VOICES, VOICE_RATE, VOICE_SAMPLE, voicePrefs, THRESHOLDS, thresholds, CONNECTIONS, connections, outreachVisits, SOCIAL, socialHeat, feed, SEARCH_QUERIES, GITHUB_REPOS, githubRepos, LAYOUT_TABS, panelSlug, cleanLayout, layoutWeave, applyLayout, layoutMove, keepLayout, GOAL_METRICS, GOAL_PERIODS, cleanGoals, goalKey, goalLabel, periodWindow, goalProgress, ZONE, DAY, PRODUCTS, WEEKDAYS, toDate, zoneParts, bump, topList, delta, kpi, dayKeys, dailySeries, anomaly, openSource, linkCode, actionTitle, isHubEvent, isTestEmail, heatmap, peak, summarizeSite, summarizeReview, summarizeCsat, summarizeInbox, summarizeHub, siteVisits, briefing, reviewOpsLines, reviewOpsAsk, CALENDAR, calendarSettings, heldCampaigns, calendarLines, dayDiff, dayLabel, githubTargets, PROPOSAL_RULES, SAFE_ACTIONS, CLICK_ACTIONS, RUN_LABELS, proposalRules, pageSpeedPr, ghTarget, proposalRun, proposalButtons, openProposals, BRIEF_HIDE_DAYS, openBrief, briefDetail, readiness, systemsNote, csv, parseCommand, windowFor, sectionsToFetch, sectionSince, applySections };
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.JarvisCore = api;
 })(typeof self !== 'undefined' ? self : this);
