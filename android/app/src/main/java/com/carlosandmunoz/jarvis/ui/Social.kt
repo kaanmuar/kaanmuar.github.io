@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.net.Uri
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.CardImages
@@ -64,6 +67,24 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
         if (picked != null) context.startActivity(Intent(context, SharePostActivity::class.java).setAction(Intent.ACTION_SEND)
             .putExtra(Intent.EXTRA_STREAM, picked).setDataAndType(picked, context.contentResolver.getType(picked)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     }
+    // Soft gate (#3533): same paste → frost → Unlock path as the web Social hub / Jarvis Hub form.
+    var softUrl by rememberSaveable { mutableStateOf("") }
+    Panel("Soft preview", id = "hub-soft") {
+        Muted("Paste a public URL for a 1-page soft preview (#3478): real gauges + the top finding without an account. Unlock on the site runs OAuth + the ten terms, then queues a full crawl.")
+        OutlinedTextField(
+            softUrl,
+            { softUrl = it },
+            label = { Text("https://your-site.com") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        ActionButton("Soft preview", false) {
+            val host = softUrl.trim().removePrefix("https://").removePrefix("http://").trimStart('/')
+            if (host.isBlank()) return@ActionButton
+            runCatching { uri.openUri("https://carlosandmunoz.com/qa-review.html?url=${Uri.encode(host)}&from=hub") }
+        }
+    }
+
     Panel("Share a post", id = "hub-share") {
         Muted("A photo or a video with sound and one caption. Gemini drafts each network's post; you check them, then LinkedIn, X and the Facebook Page (plus TikTok and YouTube for video) get it about 30 minutes later. Sharing from the gallery works too: Post with Jarvis.")
         ActionButton("Choose a photo or video", false) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
