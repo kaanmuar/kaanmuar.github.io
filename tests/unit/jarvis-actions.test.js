@@ -478,6 +478,25 @@ test("owner tags (#2660): a confident AI pick approves the verified suggestions"
   assert.deepEqual(approved, [[]]);
 });
 
+test("unopened cold emails queue one batch on the countdown up to the resend-cold cap (#3566)", async () => {
+  const db = fakeDb();
+  const cands = [
+    { id: "e1", to: "a@uni.edu", org: "Uni A", subject: "Hi" },
+    { id: "e2", to: "b@uni.edu", org: "Uni B", subject: "Hey" },
+    { id: "e3", to: "c@uni.edu", org: "Uni C", subject: "Ho" }
+  ];
+  const { ops } = autoOps({
+    coldResendCandidates: async (limit) => cands.slice(0, limit),
+    resendCold: async () => ({ launched: [], left: [] })
+  });
+  const out = await actions.autoRun({ db, now: MONDAY_10, settings: { actions: { caps: { "resend-cold": 2 } } }, ops });
+  assert.equal(out.queued.length, 1, "one batch, not one per email");
+  assert.deepEqual(out.queued.map((r) => [r.action, r.kind, r.count, r.payload.items.map((i) => i.id)]), [["resend-cold", "email", 2, ["e1", "e2"]]]);
+  assert.match(out.queued[0].why, /Unopened after 2 days/);
+  const again = await actions.autoRun({ db, now: MONDAY_10 + 3600000, settings: { actions: { caps: { "resend-cold": 2 } } }, ops });
+  assert.equal(again.queued.length, 0, "the cap counts what is already on the countdown");
+});
+
 test("index.js wires the owner-tags actions into the hourly pass, and Run now answers with the run's note (#2660)", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   ["ownerTagsApprovable: () => ownerTags.autoApprovable(db)", "ownerTags.approveMany(", "ownerTagsStops: () => ownerTags.stopRequests(db)", "ownerTags.block(", "note: ownerTags.runNote(ran)", "ownerTags.status(getFirestore(), now)"]

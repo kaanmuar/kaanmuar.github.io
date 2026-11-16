@@ -160,6 +160,115 @@ function coldResendEligible(email, lead, campaign, dnc, resendHistory, now) {
   return !coldResendSkip(email, lead, campaign, dnc, resendHistory, now);
 }
 
+const COLD_RESEND_EMAIL_PAGES = 5;
+const COLD_RESEND_LEAD_PAGES = 5;
+
+function campaignMeta(campaigns) {
+  const out = {};
+  (campaigns || []).forEach((c) => {
+    if (!c || !c.id) return;
+    out[c.id] = { open_tracking: c.open_tracking === true, status: CAMPAIGN_STATUS[String(c.status)] || String(c.status || "") };
+  });
+  return out;
+}
+
+/** Pure: eligible step-1 cold sends, newest eligible first (emails should be newest-first). */
+function pickColdResendCandidates(emails, leads, campaigns, dnc, resends, now, limit) {
+  const byLead = {};
+  (leads || []).forEach((l) => { if (l && l.email) byLead[String(l.email).toLowerCase()] = l; });
+  const camps = campaignMeta(campaigns);
+  const done = resends || {};
+  const cap = Math.max(0, Math.min(Number(limit) ?? 5, 50));
+  const out = [];
+  if (!cap) return out;
+  for (const e of emails || []) {
+    if (out.length >= cap) break;
+    if (!e || Number(e.ue_type) !== 1) continue;
+    const to = String(e.lead || String(e.to_address_email_list || "").split(",")[0] || "").trim().toLowerCase();
+    const lead = byLead[to] || {};
+    const camp = camps[e.campaign_id] || {};
+    const hist = done[e.id];
+    if (!coldResendEligible(e, lead, camp, dnc, hist, now)) continue;
+    out.push({
+      id: String(e.id || ""),
+      to,
+      subject: String(e.subject || "").slice(0, 160),
+      org: String(lead.company_name || "").slice(0, 80) || domainOf(to),
+      at: String(e.timestamp_email || e.timestamp_created || "")
+    });
+  }
+  return out;
+}
+
+async function sentEmails(ctx, maxPages) {
+  const items = [];
+  let after = "";
+  for (let page = 0; page < maxPages; page++) {
+    const path = "emails?email_type=sent&mode=emode_all&preview_only=true&limit=100" + (after ? "&starting_after=" + encodeURIComponent(after) : "");
+    const res = await instantly(ctx, path);
+    const batch = res.items || [];
+    items.push(...batch);
+    after = batch.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return items;
+}
+
+async function contactedLeads(ctx, maxPages) {
+  const items = [];
+  let after = "";
+  for (let page = 0; page < maxPages; page++) {
+    const res = await instantly(ctx, "leads/list", { method: "POST", body: JSON.stringify(Object.assign({ filter: "FILTER_VAL_CONTACTED", limit: 100 }, after ? { starting_after: after } : {})) });
+    const batch = res.items || [];
+    items.push(...batch);
+    after = batch.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return items;
+}
+
+async function coldResendSources(ctx, db) {
+  const [syncSnap, resendSnap] = await Promise.all([
+    db.collection("jarvis_settings").doc("marketing_sync").get().catch(() => null),
+    db.collection("jarvis_settings").doc("marketing_resends").get().catch(() => null)
+  ]);
+  const sync = syncSnap && syncSnap.exists ? syncSnap.data() : null;
+  const resends = resendSnap && resendSnap.exists ? resendSnap.data() : {};
+  const dnc = ((sync && (sync.dnc || {}).items) || []).map((d) => String((d && d.value) || "").toLowerCase());
+  const cached = sync && sync.instantly;
+  if (cached && Array.isArray(cached.emails) && Array.isArray(cached.leads) && Array.isArray(cached.campaigns)) {
+    return { emails: cached.emails, leads: cached.leads, campaigns: cached.campaigns, dnc, resends };
+  }
+  needKey(ctx);
+  const [campaigns, emails, leads] = await Promise.all([
+    instantly(ctx, "campaigns?limit=100").then((r) => r.items || []).catch(() => []),
+    sentEmails(ctx, COLD_RESEND_EMAIL_PAGES),
+    contactedLeads(ctx, COLD_RESEND_LEAD_PAGES).catch(() => [])
+  ]);
+  return { emails, leads, campaigns, dnc, resends };
+}
+
+// Step-1 cold emails Jarvis may forward again after 48h with no open (#3566).
+async function listColdResendCandidates(ctx, db, { now, limit }) {
+  const src = await coldResendSources(ctx, db);
+  return pickColdResendCandidates(src.emails, src.leads, src.campaigns, src.dnc, src.resends, now, limit);
+}
+
+async function resendCold(ctx, db, ids) {
+  const launched = [];
+  const left = [];
+  for (const id of ids || []) {
+    try {
+      const r = await resend(ctx, db, { id });
+      launched.push(r.to || id);
+    } catch (error) {
+      left.push(String(id).slice(0, 12) + ": " + clean(error));
+    }
+  }
+  if (!launched.length && left.length) throw new Error(left.join("; "));
+  return { launched, left, count: launched.length };
+}
+
 // Every cold email Instantly sent (campaign steps, ue_type 1) and every resend from Jarvis (manual, ue_type 3), newest
 // first, with what the lead did since: opened, replied, bounced, unsubscribed.
 function sentRows(emails, leads, campaigns, resends) {
@@ -509,5 +618,6 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, coldResendSkip, coldResendEligible, NO_COLD_RESEND_CC, instantly, needKey, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, resendCold, listColdResendCandidates, pickColdResendCandidates,
+  coldResendSkip, coldResendEligible, NO_COLD_RESEND_CC, instantly, needKey, TTL: 10 * 60 * 1000
 };

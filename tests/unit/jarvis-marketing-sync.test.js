@@ -236,6 +236,18 @@ test("cold resend eligibility (#3566): step-1, 48h–4d, unopened, open tracking
   assert.equal(mk.coldResendSkip(email, lead, camp, [], [{ to: "ana@uni.edu", at: "2026-11-14T12:00:00Z" }], now), "already-resent");
 });
 
+test("cold resend candidates (#3566): pick eligible step-1 sends up to the limit", () => {
+  const now = Date.parse("2026-11-16T15:00:00Z");
+  const good = { id: SENT, ue_type: 1, step: 1, timestamp_email: "2026-11-13T14:00:00Z", lead: "ana@uni.edu", campaign_id: "c1", subject: "Hi" };
+  const young = { id: "y", ue_type: 1, step: 1, timestamp_email: "2026-11-15T14:00:00Z", lead: "b@x.io", campaign_id: "c1" };
+  const leads = [{ email: "ana@uni.edu", company_name: "Uni", email_open_count: 0, status: 1, cc: "co" }];
+  const camps = [{ id: "c1", status: 1, open_tracking: true }];
+  const out = mk.pickColdResendCandidates([young, good], leads, camps, [], {}, now, 2);
+  assert.deepEqual(out.map((r) => r.id), [SENT]);
+  assert.deepEqual([out[0].to, out[0].org, out[0].subject], ["ana@uni.edu", "Uni", "Hi"]);
+  assert.equal(mk.pickColdResendCandidates([good, good], leads, camps, ["ana@uni.edu"], {}, now, 5).length, 0);
+});
+
 test("sent emails (#2017): every cold email with what the lead did since, newest first", () => {
   const out = mk.sentRows([
     { id: SENT, ue_type: 1, timestamp_email: "2026-11-02T14:00:00Z", lead: "Ana@Uni.edu", eaccount: "hello@qalabreview.com", subject: "Your site", campaign_id: "c1", step: 1 },
