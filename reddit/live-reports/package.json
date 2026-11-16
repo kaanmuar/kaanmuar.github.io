@@ -10,10 +10,10 @@
     "upload": "node scripts/build.mjs && devvit upload"
   },
   "devDependencies": {
-    "@devvit/web": "0.15.2",
+    "@devvit/web": "0.15.3",
     "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
-    "devvit": "1.0.0",
+    "devvit": "0.15.3",
     "esbuild": "0.28.2"
   },
   "engines": {
