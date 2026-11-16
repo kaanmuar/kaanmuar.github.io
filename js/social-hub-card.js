@@ -160,7 +160,7 @@
     const report = post.report
       ? "<a class=\"post-report\" data-act=\"report\" href=\"qa-review" + suffix(lang) + ".html?live=" + encodeURIComponent(post.report) + "&amp;from=social\">" + esc(copy.report) + " →</a>"
       : "";
-    return "<article class=\"post" + (post.youtube ? " post-has-clip" : "") + "\" id=\"" + anchor(post) + "\" data-id=\"" + esc(post.id) + "\" data-kind=\"" + esc(post.kind) + "\" data-lang=\"" + esc(post.lang) + "\">"
+    return "<article class=\"post" + (post.youtube || post.clip ? " post-has-clip" : "") + "\" id=\"" + anchor(post) + "\" data-id=\"" + esc(post.id) + "\" data-kind=\"" + esc(post.kind) + "\" data-lang=\"" + esc(post.lang) + "\">"
       + "<div class=\"post-media\"><img src=\"" + esc(post.thumb) + "\" width=\"540\" height=\"675\" loading=\"lazy\" decoding=\"async\" alt=\"" + esc(post.alt) + "\">" + play + "</div>"
       + "<div class=\"post-body\">"
       + "<p class=\"post-meta\"><span class=\"post-tag post-kind-" + esc(post.kind) + "\">" + esc(kind) + "</span>"
