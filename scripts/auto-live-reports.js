@@ -15,17 +15,18 @@
    Adult and gambling sites (scripts/sensitive-sites.js) keep their card but get no social post, and a comparison
    drops them from its competitors (#1929). */
 
-const fs = require("fs");
-const path = require("path");
-const live = require("./build-live-reports");
-const { siteKind } = require("./tips-studio/site-assets");
-const { tldCountry } = require("./live-report-countries");
-const QAReviewScripts = require("../js/qa-review-scripts");
+const fs = require('fs');
+const path = require('path');
+const live = require('./build-live-reports');
+const { siteKind } = require('./tips-studio/site-assets');
+const { tldCountry } = require('./live-report-countries');
+const QAReviewScripts = require('../js/qa-review-scripts');
 
-const ROOT = path.resolve(__dirname, "..");
-const STATE = path.join(__dirname, "auto-live-reports.state.json");
-const BATCH_DIR = path.join(ROOT, "previews/auto-live-reports");
-const ENDPOINT = process.env.PUBLISH_URL || "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable";
+const ROOT = path.resolve(__dirname, '..');
+const STATE = path.join(__dirname, 'auto-live-reports.state.json');
+const BATCH_DIR = path.join(ROOT, 'previews/auto-live-reports');
+const ENDPOINT =
+	process.env.PUBLISH_URL || 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable';
 const POST_EVERY_DAYS = 30;
 // /publishable holds whole reports in memory, so it answers PAGE reviews at a time (#2038); a run catches up page by page.
 const PAGE = 100;
@@ -39,322 +40,795 @@ const COMPARE_POSTS_PER_BATCH = 2;
 
 // Top finding key: [the gap, in a few words; a lesson that is true for any site; hashtags].
 const LESSONS = {
-  "sec-hsts": ["HSTS", "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.", ["WebSecurity", "HSTS", "HTTPS"]],
-  "sec-http": ["the https redirect", "Redirect every http request to https with one permanent 301, then add HSTS.", ["WebSecurity", "HTTPS", "Redirects"]],
-  "sec-frame": ["framing", "Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.", ["WebSecurity", "Clickjacking", "HTTPHeaders"]],
-  "sec-csp": ["the CSP", "Tighten the content security policy one directive at a time, starting from default-src 'self'.", ["WebSecurity", "CSP", "HTTPHeaders"]],
-  "sec-cookies": ["cookie flags", "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.", ["WebSecurity", "Cookies", "HTTPHeaders"]],
-  "sec-tls": ["TLS", "Renew the TLS certificate automatically, and alert well before it expires.", ["WebSecurity", "TLS", "HTTPS"]],
-  "sec-permissions": ["Permissions-Policy", "Send a Permissions-Policy header that turns off camera, microphone, and geolocation where pages do not use them.", ["WebSecurity", "PermissionsPolicy", "HTTPHeaders"]],
-  "sec-coop": ["Cross-Origin-Opener-Policy", "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so windows on other sites lose their handle to the page.", ["WebSecurity", "HTTPHeaders", "COOP"]],
-  "sec-isolation": ["cross-origin isolation", "Send COOP same-origin next to COEP, or drop COEP when the page does not need SharedArrayBuffer.", ["WebSecurity", "HTTPHeaders", "COEP"]],
-  "sec-referrer": ["Referrer-Policy", "Send Referrer-Policy: strict-origin-when-cross-origin, so full addresses do not leak to other sites.", ["WebSecurity", "HTTPHeaders", "Privacy"]],
-  "sec-headers-uneven": ["uneven headers", "Set security headers at the edge, once, so every page and path sends the same ones.", ["WebSecurity", "HTTPHeaders", "Headers"]],
-  "a11y-labels": ["form labels", "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.", ["Accessibility", "Forms", "A11y"]],
-  "a11y-alt": ["alt text", "Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.", ["Accessibility", "A11y", "WebDev"]],
-  "a11y-zoom": ["pinch-zoom", "Remove maximum-scale and user-scalable=no from the viewport tag. People need to zoom.", ["Accessibility", "Zoom", "MobileUX"]],
-  "a11y-lang": ["the page language", "Set lang on the html element, so screen readers pronounce the page in the right language.", ["Accessibility", "Lang", "A11y"]],
-  "a11y-frames": ["frame titles", "Give every iframe a title that says what it holds.", ["Accessibility", "A11y", "WebDev"]],
-  "a11y-main": ["landmarks", "Wrap each page's main content in one main element, so screen-reader users can jump straight to it.", ["Accessibility", "Landmarks", "A11y"]],
-  "a11y-h1": ["headings", "Give each page exactly one h1 that names it, then nest the rest in order.", ["Accessibility", "Headings", "SEO"]],
-  "seo-broken-links": ["broken links", "Check your own links after each release, and fix or redirect every one that answers 404.", ["SEO", "BrokenLinks", "QA"]],
-  "seo-sitemap-offhost": ["the sitemap host", "Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.", ["SEO", "Sitemap", "RobotsTxt"]],
-  "seo-sitemap": ["the sitemap", "Publish a sitemap.xml of the pages you want found, and name it in robots.txt with one Sitemap: line.", ["SEO", "Sitemap", "RobotsTxt"]],
-  "seo-title-missing": ["page titles", "Give every page a unique title of about 60 characters: the page first, the site second.", ["SEO", "Titles", "SERP"]],
-  "seo-description-missing": ["meta descriptions", "Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.", ["SEO", "MetaDescription", "SERP"]],
-  "seo-canonical-away": ["canonicals", "Point each page's canonical at itself, unless it really is a copy of another page.", ["SEO", "Canonical", "WebDev"]],
-  "seo-canonical-missing": ["canonicals", "Add a self-referencing canonical link to every page you want indexed.", ["SEO", "Canonical", "WebDev"]],
-  "seo-noindex": ["noindex", "Review every noindex on purpose, and remove it from pages you want found.", ["SEO", "SERP", "WebDev"]],
-  "seo-viewport": ["the viewport", "Add a width=device-width, initial-scale=1 viewport to every page, so phones do not shrink it.", ["MobileUX", "SEO", "WebDev"]],
-  "seo-schema-props": ["schema fields", "Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.", ["StructuredData", "SEO", "GEO"]],
-  "seo-schema-parse": ["JSON-LD", "Validate each JSON-LD block after every release. One stray comma hides all of it.", ["StructuredData", "SEO", "GEO"]],
-  "seo-hreflang": ["hreflang", "Make every language version list all the others, itself included, with matching hreflang links.", ["SEO", "Hreflang", "i18n"]],
-  "geo-crawlers": ["AI crawler access", "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.", ["GEO", "AISearch", "RobotsTxt"]],
-  "geo-crawlers-partial": ["AI crawler access", "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.", ["GEO", "AISearch", "RobotsTxt"]],
-  "geo-entity": ["who runs the site", "Add one Organization block with name, url, logo, and sameAs links. AI answers use it to name you.", ["GEO", "StructuredData", "AISearch"]],
-  "geo-llms": ["llms.txt", "Publish a short /llms.txt that points AI assistants at your key pages.", ["GEO", "AISearch", "WebDev"]],
-  "an-duplicate": ["duplicate tags", "Load each measurement tag once, from one place, so every visit counts once.", ["Analytics", "GA4", "Measurement"]],
-  "an-consent": ["consent", "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait for it.", ["Analytics", "Privacy", "GA4"]],
-  "an-utm": ["campaign tags", "Keep the query string on every redirect, so campaign tags reach the landing page.", ["Analytics", "Measurement", "Redirects"]],
-  "an-gaps": ["measurement gaps", "Put the same measurement tag on every page, so no part of the site goes uncounted.", ["Analytics", "Measurement", "GA4"]],
-  "pf-cls": ["layout shift", "Give images, ads, and embeds a width and height, so the page does not jump while it loads.", ["WebPerformance", "CoreWebVitals", "CLS"]],
-  "pf-trend": ["slipping Core Web Vitals", "Watch the six-month Chrome UX Report trend, and check each release against the week the line starts to rise.", ["WebPerformance", "CoreWebVitals", "CrUX"]],
-  "seo-external-links": ["broken outbound links", "Check outbound links every month, and point dead ones at the new page or an archived copy.", ["SEO", "BrokenLinks", "LinkRot"]],
-  "seo-external-moved": ["moved outbound links", "Update outbound links that now land on another site or a home page.", ["SEO", "BrokenLinks", "LinkRot"]],
-  "seo-external-http": ["plain http links", "Link to https addresses, so visitors stay on an encrypted connection.", ["SEO", "HTTPS", "WebSecurity"]],
-  "pf-img-size": ["oversized images", "Resize images to at most twice the width they are shown at, and give phones smaller files with srcset.", ["WebPerformance", "Images", "PageWeight"]],
-  "pf-img-format": ["image formats", "Serve WebP or AVIF from the CDN or image service; it is about 30% smaller than JPEG at the same quality.", ["WebPerformance", "Images", "WebP"]],
-  "pf-img-lazy": ["lazy loading", "Lazy-load images below the first screen, and never the main image.", ["WebPerformance", "Images", "LCP"]],
-  "pf-bfcache": ["back/forward cache", "Replace unload listeners with pagehide and close open connections on pagehide, so Back shows the page at once.", ["WebPerformance", "bfcache", "UX"]],
-  "pf-blocking": ["blocking scripts", "Add defer to every script the first paint does not need.", ["WebPerformance", "PageWeight", "LCP"]],
-  "pf-field": ["real-user speed", "Start with the largest image on the first screen: size it, compress it, and preload it.", ["WebPerformance", "CoreWebVitals", "LCP"]],
-  "sec-safebrowsing": ["a Safe Browsing listing", "Watch the Security issues report in Search Console, clean the cause the day it appears, then request a review.", ["WebSecurity", "SafeBrowsing", "Malware"]],
-  "sec-linked-script": ["a listed script host", "Load scripts only from hosts you chose, name them in a Content-Security-Policy, and remove any you do not know the day it appears.", ["WebSecurity", "SafeBrowsing", "Magecart"]],
-  "sec-linked-risk": ["a listed linked host", "Check what the site embeds and links to after every plugin or theme update, and unlink any host Google lists.", ["WebSecurity", "SafeBrowsing", "Phishing"]],
-  "sec-domain-expiry": ["domain renewal", "Turn on automatic renewal for every domain you own, and keep the card on file valid.", ["WebSecurity", "Domains", "DNS"]],
-  "sec-domain-lock": ["the domain transfer lock", "Turn on the registrar's transfer lock, and two-factor sign-in for the registrar account.", ["WebSecurity", "Domains", "DNS"]],
-  "sec-mta-sts": ["MTA-STS", "Publish an MTA-STS policy in testing mode, read the TLS-RPT reports, then switch it to enforce.", ["EmailSecurity", "MTASTS", "DNS"]],
-  "sec-tlsrpt": ["TLS-RPT", "Publish a TLS-RPT record, so you hear when other servers cannot deliver your mail over TLS.", ["EmailSecurity", "TLSRPT", "DNS"]],
-  "sec-libraries": ["outdated libraries", "Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.", ["WebSecurity", "Dependencies", "JavaScript"]],
-  "an-privacy": ["the privacy notice", "Link a privacy notice from the footer of every page: who controls the data, what is collected, why, and the visitor's rights.", ["Privacy", "GDPR", "WebDev"]],
-  "an-imprint": ["the Impressum", "Link an Impressum from every page: who runs the site, a postal address, an email, and the register numbers.", ["Impressum", "Legal", "WebDev"]],
-  "a11y-statement": ["the accessibility statement", "Publish an accessibility statement with known gaps and a contact for access problems, and link it from every page.", ["Accessibility", "EAA", "A11y"]],
-  "an-chat-consent": ["chat before consent", "Load the chat widget after consent, or on the first click of a plain chat button.", ["Privacy", "Cookies", "Chatbots"]],
-  "an-chat-reject": ["chat after Reject", "Put the chat widget in a consent category, and block it when that category is refused.", ["Privacy", "Cookies", "Chatbots"]],
-  "an-chat-privacy": ["the chat's privacy link", "Link the privacy notice from the chat's welcome screen, before anyone types personal data.", ["Privacy", "Chatbots", "GDPR"]],
-  "pf-chat": ["chat weight", "Load the chat widget on the first click of a plain button, so it costs nothing until someone needs help.", ["WebPerformance", "Chatbots", "PageWeight"]],
-  "a11y-chat-cover": ["the chat button", "Keep the chat launcher clear of the cookie banner and call-to-action buttons on a phone.", ["Accessibility", "MobileUX", "Chatbots"]],
-  "a11y-chat-name": ["the chat button's name", "Give the chat launcher an accessible name such as \"Open chat\".", ["Accessibility", "A11y", "Chatbots"]],
-  "a11y-chat-focus": ["chat focus", "Move keyboard focus into the chat when it opens, and back to the launcher when it closes.", ["Accessibility", "Keyboard", "Chatbots"]],
-  "a11y-chat-trap": ["a keyboard trap", "Let Escape close the chat and return focus to the launcher.", ["Accessibility", "Keyboard", "Chatbots"]],
-  "a11y-reflow": ["the phone layout", "Let wide elements shrink to the screen, and give tables their own scroll box.", ["Accessibility", "MobileUX", "ResponsiveDesign"]],
-  "a11y-targets": ["tap targets", "Make every link and button at least 24 by 24 px, with space between them.", ["Accessibility", "MobileUX", "A11y"]],
-  "ax-color-contrast": ["text contrast", "Keep body text at a 4.5:1 contrast ratio or more against its background.", ["Accessibility", "Contrast", "A11y"]],
-  "ax-link-name": ["link names", "Give every link text that says where it goes. An icon alone needs an aria-label.", ["Accessibility", "A11y", "WebDev"]],
-  "ax-button-name": ["button names", "Give every button text or an aria-label, so a screen reader can announce it.", ["Accessibility", "A11y", "WebDev"]],
-  "ax-image-alt": ["alt text", "Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.", ["Accessibility", "A11y", "WebDev"]],
-  "ax-label": ["form labels", "Give every input a visible label tied to it with for and id.", ["Accessibility", "Forms", "A11y"]],
-  "ax-aria-required-parent": ["ARIA roles", "Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.", ["Accessibility", "ARIA", "A11y"]],
-  "ax-aria-required-children": ["ARIA roles", "Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.", ["Accessibility", "ARIA", "A11y"]],
-  "ax-aria-hidden-focus": ["hidden focus", "Never leave a focusable element inside aria-hidden content.", ["Accessibility", "Keyboard", "ARIA"]],
-  "ax-list": ["list markup", "Keep only li elements directly inside ul and ol.", ["Accessibility", "A11y", "HTML"]],
-  "ax-listitem": ["list markup", "Put each li inside a ul or ol.", ["Accessibility", "A11y", "HTML"]],
-  "ax-heading-order": ["headings", "Nest headings in order, one level at a time, under one h1.", ["Accessibility", "Headings", "A11y"]],
-  "ax-region": ["landmarks", "Put all visible content inside landmarks: header, nav, main, and footer.", ["Accessibility", "Landmarks", "A11y"]],
-  "ax-target-size": ["tap targets", "Make every link and button at least 24 by 24 px, with space between them.", ["Accessibility", "MobileUX", "A11y"]]
+	'sec-hsts': [
+		'HSTS',
+		'Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.',
+		['WebSecurity', 'HSTS', 'HTTPS'],
+	],
+	'sec-http': [
+		'the https redirect',
+		'Redirect every http request to https with one permanent 301, then add HSTS.',
+		['WebSecurity', 'HTTPS', 'Redirects'],
+	],
+	'sec-frame': [
+		'framing',
+		"Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.",
+		['WebSecurity', 'Clickjacking', 'HTTPHeaders'],
+	],
+	'sec-csp': [
+		'the CSP',
+		"Tighten the content security policy one directive at a time, starting from default-src 'self'.",
+		['WebSecurity', 'CSP', 'HTTPHeaders'],
+	],
+	'sec-cookies': [
+		'cookie flags',
+		'Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.',
+		['WebSecurity', 'Cookies', 'HTTPHeaders'],
+	],
+	'sec-tls': [
+		'TLS',
+		'Renew the TLS certificate automatically, and alert well before it expires.',
+		['WebSecurity', 'TLS', 'HTTPS'],
+	],
+	'sec-permissions': [
+		'Permissions-Policy',
+		'Send a Permissions-Policy header that turns off camera, microphone, and geolocation where pages do not use them.',
+		['WebSecurity', 'PermissionsPolicy', 'HTTPHeaders'],
+	],
+	'sec-coop': [
+		'Cross-Origin-Opener-Policy',
+		'Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so windows on other sites lose their handle to the page.',
+		['WebSecurity', 'HTTPHeaders', 'COOP'],
+	],
+	'sec-isolation': [
+		'cross-origin isolation',
+		'Send COOP same-origin next to COEP, or drop COEP when the page does not need SharedArrayBuffer.',
+		['WebSecurity', 'HTTPHeaders', 'COEP'],
+	],
+	'sec-referrer': [
+		'Referrer-Policy',
+		'Send Referrer-Policy: strict-origin-when-cross-origin, so full addresses do not leak to other sites.',
+		['WebSecurity', 'HTTPHeaders', 'Privacy'],
+	],
+	'sec-headers-uneven': [
+		'uneven headers',
+		'Set security headers at the edge, once, so every page and path sends the same ones.',
+		['WebSecurity', 'HTTPHeaders', 'Headers'],
+	],
+	'a11y-labels': [
+		'form labels',
+		'Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.',
+		['Accessibility', 'Forms', 'A11y'],
+	],
+	'a11y-alt': [
+		'alt text',
+		'Describe what each image shows in its alt attribute, and use alt="" on purely decorative ones.',
+		['Accessibility', 'A11y', 'WebDev'],
+	],
+	'a11y-zoom': [
+		'pinch-zoom',
+		'Remove maximum-scale and user-scalable=no from the viewport tag. People need to zoom.',
+		['Accessibility', 'Zoom', 'MobileUX'],
+	],
+	'a11y-lang': [
+		'the page language',
+		'Set lang on the html element, so screen readers pronounce the page in the right language.',
+		['Accessibility', 'Lang', 'A11y'],
+	],
+	'a11y-frames': [
+		'frame titles',
+		'Give every iframe a title that says what it holds.',
+		['Accessibility', 'A11y', 'WebDev'],
+	],
+	'a11y-main': [
+		'landmarks',
+		"Wrap each page's main content in one main element, so screen-reader users can jump straight to it.",
+		['Accessibility', 'Landmarks', 'A11y'],
+	],
+	'a11y-h1': [
+		'headings',
+		'Give each page exactly one h1 that names it, then nest the rest in order.',
+		['Accessibility', 'Headings', 'SEO'],
+	],
+	'seo-broken-links': [
+		'broken links',
+		'Check your own links after each release, and fix or redirect every one that answers 404.',
+		['SEO', 'BrokenLinks', 'QA'],
+	],
+	'seo-sitemap-offhost': [
+		'the sitemap host',
+		'Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.',
+		['SEO', 'Sitemap', 'RobotsTxt'],
+	],
+	'seo-sitemap': [
+		'the sitemap',
+		'Publish a sitemap.xml of the pages you want found, and name it in robots.txt with one Sitemap: line.',
+		['SEO', 'Sitemap', 'RobotsTxt'],
+	],
+	'seo-title-missing': [
+		'page titles',
+		'Give every page a unique title of about 60 characters: the page first, the site second.',
+		['SEO', 'Titles', 'SERP'],
+	],
+	'seo-description-missing': [
+		'meta descriptions',
+		'Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.',
+		['SEO', 'MetaDescription', 'SERP'],
+	],
+	'seo-canonical-away': [
+		'canonicals',
+		"Point each page's canonical at itself, unless it really is a copy of another page.",
+		['SEO', 'Canonical', 'WebDev'],
+	],
+	'seo-canonical-missing': [
+		'canonicals',
+		'Add a self-referencing canonical link to every page you want indexed.',
+		['SEO', 'Canonical', 'WebDev'],
+	],
+	'seo-noindex': [
+		'noindex',
+		'Review every noindex on purpose, and remove it from pages you want found.',
+		['SEO', 'SERP', 'WebDev'],
+	],
+	'seo-viewport': [
+		'the viewport',
+		'Add a width=device-width, initial-scale=1 viewport to every page, so phones do not shrink it.',
+		['MobileUX', 'SEO', 'WebDev'],
+	],
+	'seo-schema-props': [
+		'schema fields',
+		'Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.',
+		['StructuredData', 'SEO', 'GEO'],
+	],
+	'seo-schema-parse': [
+		'JSON-LD',
+		'Validate each JSON-LD block after every release. One stray comma hides all of it.',
+		['StructuredData', 'SEO', 'GEO'],
+	],
+	'seo-hreflang': [
+		'hreflang',
+		'Make every language version list all the others, itself included, with matching hreflang links.',
+		['SEO', 'Hreflang', 'i18n'],
+	],
+	'geo-crawlers': [
+		'AI crawler access',
+		'Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.',
+		['GEO', 'AISearch', 'RobotsTxt'],
+	],
+	'geo-crawlers-partial': [
+		'AI crawler access',
+		'Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.',
+		['GEO', 'AISearch', 'RobotsTxt'],
+	],
+	'geo-entity': [
+		'who runs the site',
+		'Add one Organization block with name, url, logo, and sameAs links. AI answers use it to name you.',
+		['GEO', 'StructuredData', 'AISearch'],
+	],
+	'geo-llms': [
+		'llms.txt',
+		'Publish a short /llms.txt that points AI assistants at your key pages.',
+		['GEO', 'AISearch', 'WebDev'],
+	],
+	'an-duplicate': [
+		'duplicate tags',
+		'Load each measurement tag once, from one place, so every visit counts once.',
+		['Analytics', 'GA4', 'Measurement'],
+	],
+	'an-consent': [
+		'consent',
+		'Load tracking only after a consent choice, or use Consent Mode v2 so tags wait for it.',
+		['Analytics', 'Privacy', 'GA4'],
+	],
+	'an-utm': [
+		'campaign tags',
+		'Keep the query string on every redirect, so campaign tags reach the landing page.',
+		['Analytics', 'Measurement', 'Redirects'],
+	],
+	'an-gaps': [
+		'measurement gaps',
+		'Put the same measurement tag on every page, so no part of the site goes uncounted.',
+		['Analytics', 'Measurement', 'GA4'],
+	],
+	'pf-cls': [
+		'layout shift',
+		'Give images, ads, and embeds a width and height, so the page does not jump while it loads.',
+		['WebPerformance', 'CoreWebVitals', 'CLS'],
+	],
+	'pf-trend': [
+		'slipping Core Web Vitals',
+		'Watch the six-month Chrome UX Report trend, and check each release against the week the line starts to rise.',
+		['WebPerformance', 'CoreWebVitals', 'CrUX'],
+	],
+	'seo-external-links': [
+		'broken outbound links',
+		'Check outbound links every month, and point dead ones at the new page or an archived copy.',
+		['SEO', 'BrokenLinks', 'LinkRot'],
+	],
+	'seo-external-moved': [
+		'moved outbound links',
+		'Update outbound links that now land on another site or a home page.',
+		['SEO', 'BrokenLinks', 'LinkRot'],
+	],
+	'seo-external-http': [
+		'plain http links',
+		'Link to https addresses, so visitors stay on an encrypted connection.',
+		['SEO', 'HTTPS', 'WebSecurity'],
+	],
+	'pf-img-size': [
+		'oversized images',
+		'Resize images to at most twice the width they are shown at, and give phones smaller files with srcset.',
+		['WebPerformance', 'Images', 'PageWeight'],
+	],
+	'pf-img-format': [
+		'image formats',
+		'Serve WebP or AVIF from the CDN or image service; it is about 30% smaller than JPEG at the same quality.',
+		['WebPerformance', 'Images', 'WebP'],
+	],
+	'pf-img-lazy': [
+		'lazy loading',
+		'Lazy-load images below the first screen, and never the main image.',
+		['WebPerformance', 'Images', 'LCP'],
+	],
+	'pf-bfcache': [
+		'back/forward cache',
+		'Replace unload listeners with pagehide and close open connections on pagehide, so Back shows the page at once.',
+		['WebPerformance', 'bfcache', 'UX'],
+	],
+	'pf-blocking': [
+		'blocking scripts',
+		'Add defer to every script the first paint does not need.',
+		['WebPerformance', 'PageWeight', 'LCP'],
+	],
+	'pf-field': [
+		'real-user speed',
+		'Start with the largest image on the first screen: size it, compress it, and preload it.',
+		['WebPerformance', 'CoreWebVitals', 'LCP'],
+	],
+	'sec-safebrowsing': [
+		'a Safe Browsing listing',
+		'Watch the Security issues report in Search Console, clean the cause the day it appears, then request a review.',
+		['WebSecurity', 'SafeBrowsing', 'Malware'],
+	],
+	'sec-linked-script': [
+		'a listed script host',
+		'Load scripts only from hosts you chose, name them in a Content-Security-Policy, and remove any you do not know the day it appears.',
+		['WebSecurity', 'SafeBrowsing', 'Magecart'],
+	],
+	'sec-linked-risk': [
+		'a listed linked host',
+		'Check what the site embeds and links to after every plugin or theme update, and unlink any host Google lists.',
+		['WebSecurity', 'SafeBrowsing', 'Phishing'],
+	],
+	'sec-domain-expiry': [
+		'domain renewal',
+		'Turn on automatic renewal for every domain you own, and keep the card on file valid.',
+		['WebSecurity', 'Domains', 'DNS'],
+	],
+	'sec-domain-lock': [
+		'the domain transfer lock',
+		"Turn on the registrar's transfer lock, and two-factor sign-in for the registrar account.",
+		['WebSecurity', 'Domains', 'DNS'],
+	],
+	'sec-mta-sts': [
+		'MTA-STS',
+		'Publish an MTA-STS policy in testing mode, read the TLS-RPT reports, then switch it to enforce.',
+		['EmailSecurity', 'MTASTS', 'DNS'],
+	],
+	'sec-tlsrpt': [
+		'TLS-RPT',
+		'Publish a TLS-RPT record, so you hear when other servers cannot deliver your mail over TLS.',
+		['EmailSecurity', 'TLSRPT', 'DNS'],
+	],
+	'sec-libraries': [
+		'outdated libraries',
+		'Check front-end library versions against a known-flaw list on every release, and upgrade the ones that are flagged.',
+		['WebSecurity', 'Dependencies', 'JavaScript'],
+	],
+	'an-privacy': [
+		'the privacy notice',
+		"Link a privacy notice from the footer of every page: who controls the data, what is collected, why, and the visitor's rights.",
+		['Privacy', 'GDPR', 'WebDev'],
+	],
+	'an-imprint': [
+		'the Impressum',
+		'Link an Impressum from every page: who runs the site, a postal address, an email, and the register numbers.',
+		['Impressum', 'Legal', 'WebDev'],
+	],
+	'a11y-statement': [
+		'the accessibility statement',
+		'Publish an accessibility statement with known gaps and a contact for access problems, and link it from every page.',
+		['Accessibility', 'EAA', 'A11y'],
+	],
+	'an-chat-consent': [
+		'chat before consent',
+		'Load the chat widget after consent, or on the first click of a plain chat button.',
+		['Privacy', 'Cookies', 'Chatbots'],
+	],
+	'an-chat-reject': [
+		'chat after Reject',
+		'Put the chat widget in a consent category, and block it when that category is refused.',
+		['Privacy', 'Cookies', 'Chatbots'],
+	],
+	'an-chat-privacy': [
+		"the chat's privacy link",
+		"Link the privacy notice from the chat's welcome screen, before anyone types personal data.",
+		['Privacy', 'Chatbots', 'GDPR'],
+	],
+	'pf-chat': [
+		'chat weight',
+		'Load the chat widget on the first click of a plain button, so it costs nothing until someone needs help.',
+		['WebPerformance', 'Chatbots', 'PageWeight'],
+	],
+	'a11y-chat-cover': [
+		'the chat button',
+		'Keep the chat launcher clear of the cookie banner and call-to-action buttons on a phone.',
+		['Accessibility', 'MobileUX', 'Chatbots'],
+	],
+	'a11y-chat-name': [
+		"the chat button's name",
+		'Give the chat launcher an accessible name such as "Open chat".',
+		['Accessibility', 'A11y', 'Chatbots'],
+	],
+	'a11y-chat-focus': [
+		'chat focus',
+		'Move keyboard focus into the chat when it opens, and back to the launcher when it closes.',
+		['Accessibility', 'Keyboard', 'Chatbots'],
+	],
+	'a11y-chat-trap': [
+		'a keyboard trap',
+		'Let Escape close the chat and return focus to the launcher.',
+		['Accessibility', 'Keyboard', 'Chatbots'],
+	],
+	'a11y-reflow': [
+		'the phone layout',
+		'Let wide elements shrink to the screen, and give tables their own scroll box.',
+		['Accessibility', 'MobileUX', 'ResponsiveDesign'],
+	],
+	'a11y-targets': [
+		'tap targets',
+		'Make every link and button at least 24 by 24 px, with space between them.',
+		['Accessibility', 'MobileUX', 'A11y'],
+	],
+	'ax-color-contrast': [
+		'text contrast',
+		'Keep body text at a 4.5:1 contrast ratio or more against its background.',
+		['Accessibility', 'Contrast', 'A11y'],
+	],
+	'ax-link-name': [
+		'link names',
+		'Give every link text that says where it goes. An icon alone needs an aria-label.',
+		['Accessibility', 'A11y', 'WebDev'],
+	],
+	'ax-button-name': [
+		'button names',
+		'Give every button text or an aria-label, so a screen reader can announce it.',
+		['Accessibility', 'A11y', 'WebDev'],
+	],
+	'ax-image-alt': [
+		'alt text',
+		'Describe what each image shows in its alt attribute, and use alt="" on purely decorative ones.',
+		['Accessibility', 'A11y', 'WebDev'],
+	],
+	'ax-label': [
+		'form labels',
+		'Give every input a visible label tied to it with for and id.',
+		['Accessibility', 'Forms', 'A11y'],
+	],
+	'ax-aria-required-parent': [
+		'ARIA roles',
+		'Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.',
+		['Accessibility', 'ARIA', 'A11y'],
+	],
+	'ax-aria-required-children': [
+		'ARIA roles',
+		'Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.',
+		['Accessibility', 'ARIA', 'A11y'],
+	],
+	'ax-aria-hidden-focus': [
+		'hidden focus',
+		'Never leave a focusable element inside aria-hidden content.',
+		['Accessibility', 'Keyboard', 'ARIA'],
+	],
+	'ax-list': ['list markup', 'Keep only li elements directly inside ul and ol.', ['Accessibility', 'A11y', 'HTML']],
+	'ax-listitem': ['list markup', 'Put each li inside a ul or ol.', ['Accessibility', 'A11y', 'HTML']],
+	'ax-heading-order': [
+		'headings',
+		'Nest headings in order, one level at a time, under one h1.',
+		['Accessibility', 'Headings', 'A11y'],
+	],
+	'ax-region': [
+		'landmarks',
+		'Put all visible content inside landmarks: header, nav, main, and footer.',
+		['Accessibility', 'Landmarks', 'A11y'],
+	],
+	'ax-target-size': [
+		'tap targets',
+		'Make every link and button at least 24 by 24 px, with space between them.',
+		['Accessibility', 'MobileUX', 'A11y'],
+	],
 };
-const AREA_GAPS = { SEO: "search", GEO: "AI search", Analytics: "measurement", Security: "security", Accessibility: "accessibility", Performance: "speed" };
+const AREA_GAPS = {
+	SEO: 'search',
+	GEO: 'AI search',
+	Analytics: 'measurement',
+	Security: 'security',
+	Accessibility: 'accessibility',
+	Performance: 'speed',
+};
 const AREA_ACTIONS = {
-  SEO: "Fix the first search item in the report, then run the review again.",
-  GEO: "Make the key pages readable without JavaScript, and let the answer engines you want in through robots.txt.",
-  Analytics: "Load every tag after the visitor's choice, and check it again after each release.",
-  Security: "Fix the first security item in the report, then run the review again.",
-  Accessibility: "Run an automated accessibility check on every release, then test the main paths with a keyboard and a screen reader.",
-  Performance: "Measure the start page on a phone after every release, and fix the largest cost first."
+	SEO: 'Fix the first search item in the report, then run the review again.',
+	GEO: 'Make the key pages readable without JavaScript, and let the answer engines you want in through robots.txt.',
+	Analytics: "Load every tag after the visitor's choice, and check it again after each release.",
+	Security: 'Fix the first security item in the report, then run the review again.',
+	Accessibility:
+		'Run an automated accessibility check on every release, then test the main paths with a keyboard and a screen reader.',
+	Performance: 'Measure the start page on a phone after every release, and fix the largest cost first.',
 };
-const AREA_TAGS = { SEO: ["SEO"], GEO: ["GEO", "AISearch"], Analytics: ["Analytics"], Security: ["WebSecurity"], Accessibility: ["Accessibility"], Performance: ["WebPerformance"] };
+const AREA_TAGS = {
+	SEO: ['SEO'],
+	GEO: ['GEO', 'AISearch'],
+	Analytics: ['Analytics'],
+	Security: ['WebSecurity'],
+	Accessibility: ['Accessibility'],
+	Performance: ['WebPerformance'],
+};
 function args() {
-  const out = {};
-  const argv = process.argv.slice(2);
-  for (let i = 0; i < argv.length; i += 1) {
-    const key = argv[i].replace(/^--/, "");
-    const next = argv[i + 1];
-    if (next === undefined || next.startsWith("--")) out[key] = true;
-    else { out[key] = next; i += 1; }
-  }
-  return out;
+	const out = {};
+	const argv = process.argv.slice(2);
+	for (let i = 0; i < argv.length; i += 1) {
+		const key = argv[i].replace(/^--/, '');
+		const next = argv[i + 1];
+		if (next === undefined || next.startsWith('--')) out[key] = true;
+		else {
+			out[key] = next;
+			i += 1;
+		}
+	}
+	return out;
 }
 
-function bare(host) { return String(host || "").toLowerCase().replace(/^www\./, ""); }
+function bare(host) {
+	return String(host || '')
+		.toLowerCase()
+		.replace(/^www\./, '');
+}
 
 function sentence(text) {
-  const t = live.scrub(text, 160).replace(/[.…]+$/, "");
-  return t ? t + "." : "";
+	const t = live.scrub(text, 160).replace(/[.…]+$/, '');
+	return t ? t + '.' : '';
 }
-function lower(text) { return /^[A-Z][a-z]/.test(text) ? text[0].toLowerCase() + text.slice(1) : text; }
+function lower(text) {
+	return /^[A-Z][a-z]/.test(text) ? text[0].toLowerCase() + text.slice(1) : text;
+}
 
 function copyFor(report, recent) {
-  const ins = report.insights;
-  const gaps = ins.findings.filter((f) => f.verdict === "fail" || f.verdict === "risk").sort((a, b) => (a.rank || 999) - (b.rank || 999));
-  const top = gaps.slice(0, 3);
-  const gap = top.find((f) => LESSONS[f.key] && !recent.includes(f.key)) || top.find((f) => LESSONS[f.key]) || top[0];
-  const passes = ins.findings.filter((f) => f.verdict === "pass");
-  const good = [];
-  for (const f of passes) { if (good.length < 2 && !good.some((g) => g.area === f.area)) good.push(f); }
-  const name = bare(report.host);
-  const head = name.length <= 22 ? name + ": {overall}." : "Scored {overall} of 100.";
-  if (!gap) {
-    return { key: "", caseId: "", title: [head, "*Nothing failed.*"], tags: ["QA", "WebDev", "SEO"],
-      body: [sentence(good[0] && good[0].title), sentence(good[1] && good[1].title), "No check failed on the pages analyzed."].filter(Boolean).join(" "),
-      action: "Keep the review in your release checklist, so the next change keeps it that way.",
-      fixLines: ["// Nothing failed on the pages analyzed", "// Keep the review in your release checklist"] };
-  }
-  const lesson = LESSONS[gap.key];
-  const strengths = good.map((g) => live.scrub(g.title, 90).replace(/\.$/, ""));
-  const lead = strengths.length === 2 ? strengths[0] + ", and " + lower(strengths[1]) + "." : strengths.length ? strengths[0] + "." : "";
-  const action = lesson ? lesson[1] : (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) || "Fix the first item in the report, then run the review again.";
-  const fromCase = caseFix(report, gap);
-  return {
-    key: gap.key,
-    caseId: fromCase.caseId || "",
-    title: [head, "*The gap: " + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + ".*"],
-    body: (lead ? lead + " But " + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
-    action,
-    tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(["QA", "WebDev"]).slice(0, 3),
-    // Prefer real case id + Playwright (#3550); fall back to lesson / fix prose. Never paste URLs into the graphic.
-    fixLines: fromCase.fixLines || fixLinesFor(gap, action)
-  };
+	const ins = report.insights;
+	const gaps = ins.findings
+		.filter((f) => f.verdict === 'fail' || f.verdict === 'risk')
+		.sort((a, b) => (a.rank || 999) - (b.rank || 999));
+	const top = gaps.slice(0, 3);
+	const gap = top.find((f) => LESSONS[f.key] && !recent.includes(f.key)) || top.find((f) => LESSONS[f.key]) || top[0];
+	const passes = ins.findings.filter((f) => f.verdict === 'pass');
+	const good = [];
+	for (const f of passes) {
+		if (good.length < 2 && !good.some((g) => g.area === f.area)) good.push(f);
+	}
+	const name = bare(report.host);
+	const head = name.length <= 22 ? name + ': {overall}.' : 'Scored {overall} of 100.';
+	if (!gap) {
+		return {
+			key: '',
+			caseId: '',
+			title: [head, '*Nothing failed.*'],
+			tags: ['QA', 'WebDev', 'SEO'],
+			body: [
+				sentence(good[0] && good[0].title),
+				sentence(good[1] && good[1].title),
+				'No check failed on the pages analyzed.',
+			]
+				.filter(Boolean)
+				.join(' '),
+			action: 'Keep the review in your release checklist, so the next change keeps it that way.',
+			fixLines: ['// Nothing failed on the pages analyzed', '// Keep the review in your release checklist'],
+		};
+	}
+	const lesson = LESSONS[gap.key];
+	const strengths = good.map((g) => live.scrub(g.title, 90).replace(/\.$/, ''));
+	const lead =
+		strengths.length === 2
+			? strengths[0] + ', and ' + lower(strengths[1]) + '.'
+			: strengths.length
+				? strengths[0] + '.'
+				: '';
+	const action = lesson
+		? lesson[1]
+		: (gap.fix && gap.fix.length <= 160 && !/https?:\/\//.test(gap.fix) ? sentence(gap.fix) : AREA_ACTIONS[gap.area]) ||
+			'Fix the first item in the report, then run the review again.';
+	const fromCase = caseFix(report, gap);
+	return {
+		key: gap.key,
+		caseId: fromCase.caseId || '',
+		title: [head, '*The gap: ' + (lesson ? lesson[0] : AREA_GAPS[gap.area] || gap.area) + '.*'],
+		body: (lead ? lead + ' But ' + lower(sentence(gap.title)) : sentence(gap.title)).trim(),
+		action,
+		tags: lesson ? lesson[2] : (AREA_TAGS[gap.area] || []).concat(['QA', 'WebDev']).slice(0, 3),
+		// Prefer real case id + Playwright (#3550); fall back to lesson / fix prose. Never paste URLs into the graphic.
+		fixLines: fromCase.fixLines || fixLinesFor(gap, action),
+	};
 }
 
 /** Rank-1 finding → case id + short Playwright lines for carousel Slide 3 (#3550). */
 function caseFix(report, gap) {
-  const caseId = String(((gap && gap.cases) || [])[0] || "");
-  if (!caseId) return { caseId: "", fixLines: null };
-  const item = ((report && report.cases) || []).find((c) => String(c.id) === caseId);
-  if (!item) return { caseId, fixLines: ["// " + caseId, String((gap && gap.fix) || gap.title || "").slice(0, 72)].filter(Boolean) };
-  try {
-    const snip = (QAReviewScripts.snippets(report, item, ["Playwright"]) || [])[0];
-    const lines = playwrightCarouselLines(caseId, snip && snip.code, item);
-    return { caseId, fixLines: lines };
-  } catch (error) {
-    return { caseId, fixLines: ["// " + caseId, live.scrub(item.title || gap.title || "", 56)].filter(Boolean) };
-  }
+	const caseId = String(((gap && gap.cases) || [])[0] || '');
+	if (!caseId) return { caseId: '', fixLines: null };
+	const item = ((report && report.cases) || []).find((c) => String(c.id) === caseId);
+	if (!item)
+		return {
+			caseId,
+			fixLines: ['// ' + caseId, String((gap && gap.fix) || gap.title || '').slice(0, 72)].filter(Boolean),
+		};
+	try {
+		const snip = (QAReviewScripts.snippets(report, item, ['Playwright']) || [])[0];
+		const lines = playwrightCarouselLines(caseId, snip && snip.code, item);
+		return { caseId, fixLines: lines };
+	} catch (error) {
+		return { caseId, fixLines: ['// ' + caseId, live.scrub(item.title || gap.title || '', 56)].filter(Boolean) };
+	}
 }
 
 function playwrightCarouselLines(caseId, code, item) {
-  const head = "// " + caseId + (item && item.title ? ": " + live.scrub(item.title, 40) : "");
-  if (!code) return [head, "// Proposed Playwright assertion from the review"].filter(Boolean);
-  const body = String(code).split("\n")
-    .map((line) => line.trimEnd())
-    .filter((line) => /^\s*(await\s+)?expect\(|^\s*await\s+page\.|^\s*const\s+\w+\s*=\s*page\./.test(line))
-    .map((line) => line.replace(/^\s+/, "").slice(0, 88));
-  if (body.length) return [head].concat(body.slice(0, 5));
-  return [head, "// expect(…) — open the report for the full Playwright sample"];
+	const head = '// ' + caseId + (item && item.title ? ': ' + live.scrub(item.title, 40) : '');
+	if (!code) return [head, '// Proposed Playwright assertion from the review'].filter(Boolean);
+	const body = String(code)
+		.split('\n')
+		.map((line) => line.trimEnd())
+		.filter((line) => /^\s*(await\s+)?expect\(|^\s*await\s+page\.|^\s*const\s+\w+\s*=\s*page\./.test(line))
+		.map((line) => line.replace(/^\s+/, '').slice(0, 88));
+	if (body.length) return [head].concat(body.slice(0, 5));
+	return [head, '// expect(…) — open the report for the full Playwright sample'];
 }
 
 function fixLinesFor(gap, action) {
-  const raw = String((gap && gap.fix) || "").trim();
-  if (raw && !/https?:\/\//i.test(raw) && raw.length <= 280) {
-    const lines = raw.split(/\n/).map((line) => line.trim()).filter(Boolean);
-    if (lines.length) return lines.slice(0, 6);
-  }
-  const title = live.scrub((gap && gap.title) || "top finding", 48);
-  return ["// Gap: " + title, String(action || "").slice(0, 72)].filter(Boolean);
+	const raw = String((gap && gap.fix) || '').trim();
+	if (raw && !/https?:\/\//i.test(raw) && raw.length <= 280) {
+		const lines = raw
+			.split(/\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+		if (lines.length) return lines.slice(0, 6);
+	}
+	const title = live.scrub((gap && gap.title) || 'top finding', 48);
+	return ['// Gap: ' + title, String(action || '').slice(0, 72)].filter(Boolean);
 }
 
 // The leader overall, and for each area which site leads it.
 function versusCopy(sites) {
-  const names = sites.map((site) => site.host);
-  const order = sites.slice().sort((a, b) => b.overall - a.overall);
-  const lead = order[0];
-  const base = sites[0];
-  const leads = live.AREAS.map((area) => {
-    const best = sites.filter((site) => typeof site.areas[area] === "number").sort((a, b) => b.areas[area] - a.areas[area])[0];
-    return best ? [area, best.host] : null;
-  }).filter(Boolean);
-  const byHost = new Map();
-  leads.forEach(([area, host]) => byHost.set(host, (byHost.get(host) || []).concat(area)));
-  const parts = [...byHost].map(([host, areas]) => host + " leads in " + (areas.length === live.AREAS.length ? "all six areas" : areas.join(", ")));
-  const vs = names.join(" vs ");
-  return {
-    title: [vs.length <= 30 ? vs + "." : names.length + " natural competitors.", "*" + (order.length > 1 && lead.overall === order[1].overall ? "A tie at the top: " + lead.overall + "." : lead.host + " leads: " + lead.overall + ".") + "*"],
-    body: (parts.length ? parts.join("; ") + "." : "") + (byHost.has(base.host) ? "" : " " + base.host + " leads in none of the six areas."),
-    action: "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
-    tags: ["SEO", "WebPerf", "QA"]
-  };
+	const names = sites.map((site) => site.host);
+	const order = sites.slice().sort((a, b) => b.overall - a.overall);
+	const lead = order[0];
+	const base = sites[0];
+	const leads = live.AREAS.map((area) => {
+		const best = sites
+			.filter((site) => typeof site.areas[area] === 'number')
+			.sort((a, b) => b.areas[area] - a.areas[area])[0];
+		return best ? [area, best.host] : null;
+	}).filter(Boolean);
+	const byHost = new Map();
+	leads.forEach(([area, host]) => byHost.set(host, (byHost.get(host) || []).concat(area)));
+	const parts = [...byHost].map(
+		([host, areas]) => host + ' leads in ' + (areas.length === live.AREAS.length ? 'all six areas' : areas.join(', '))
+	);
+	const vs = names.join(' vs ');
+	return {
+		title: [
+			vs.length <= 30 ? vs + '.' : names.length + ' natural competitors.',
+			'*' +
+				(order.length > 1 && lead.overall === order[1].overall
+					? 'A tie at the top: ' + lead.overall + '.'
+					: lead.host + ' leads: ' + lead.overall + '.') +
+				'*',
+		],
+		body:
+			(parts.length ? parts.join('; ') + '.' : '') +
+			(byHost.has(base.host) ? '' : ' ' + base.host + ' leads in none of the six areas.'),
+		action:
+			'Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.',
+		tags: ['SEO', 'WebPerf', 'QA'],
+	};
 }
 
 function mergePages(pages) {
-  const last = pages[pages.length - 1] || {};
-  const held = {};
-  pages.forEach((p) => Object.entries(p.held || {}).forEach(([k, v]) => { held[k] = (held[k] || 0) + v; }));
-  return {
-    since: (pages[0] || {}).since, until: last.until, read: pages.reduce((n, p) => n + (p.read || 0), 0), held, unlisted: last.unlisted || [],
-    reports: pages.flatMap((p) => p.reports || []), comparisons: pages.flatMap((p) => p.comparisons || [])
-  };
+	const last = pages[pages.length - 1] || {};
+	const held = {};
+	pages.forEach((p) =>
+		Object.entries(p.held || {}).forEach(([k, v]) => {
+			held[k] = (held[k] || 0) + v;
+		})
+	);
+	return {
+		since: (pages[0] || {}).since,
+		until: last.until,
+		read: pages.reduce((n, p) => n + (p.read || 0), 0),
+		held,
+		unlisted: last.unlisted || [],
+		reports: pages.flatMap((p) => p.reports || []),
+		comparisons: pages.flatMap((p) => p.comparisons || []),
+	};
 }
 
 // A page that fails after others came back ends the run there; the next run starts from the last page's until.
 async function fetchPublishable(since, get) {
-  if (!process.env.PUBLISH_KEY && !get) throw new Error("PUBLISH_KEY is not set.");
-  const fetchPage = get || (async (from) => {
-    const res = await fetch(ENDPOINT + "?since=" + encodeURIComponent(from) + "&limit=" + PAGE, { headers: { "x-publish-key": process.env.PUBLISH_KEY } });
-    if (!res.ok) throw new Error("publishable answered " + res.status + ": " + (await res.text()).slice(0, 200));
-    return res.json();
-  });
-  const pages = [];
-  let from = since;
-  for (let i = 0; i < PAGES; i++) {
-    let page;
-    try { page = await fetchPage(from); } catch (error) { if (!pages.length) throw error; console.warn("stopped after", pages.length, "pages:", error.message); break; }
-    pages.push(page);
-    if ((page.read || 0) < PAGE || !page.until || page.until === from) break;
-    from = page.until;
-  }
-  return mergePages(pages);
+	if (!process.env.PUBLISH_KEY && !get) throw new Error('PUBLISH_KEY is not set.');
+	const fetchPage =
+		get ||
+		(async (from) => {
+			const res = await fetch(ENDPOINT + '?since=' + encodeURIComponent(from) + '&limit=' + PAGE, {
+				headers: { 'x-publish-key': process.env.PUBLISH_KEY },
+			});
+			if (!res.ok) throw new Error('publishable answered ' + res.status + ': ' + (await res.text()).slice(0, 200));
+			return res.json();
+		});
+	const pages = [];
+	let from = since;
+	for (let i = 0; i < PAGES; i++) {
+		let page;
+		try {
+			page = await fetchPage(from);
+		} catch (error) {
+			if (!pages.length) throw error;
+			console.warn('stopped after', pages.length, 'pages:', error.message);
+			break;
+		}
+		pages.push(page);
+		if ((page.read || 0) < PAGE || !page.until || page.until === from) break;
+		from = page.until;
+	}
+	return mergePages(pages);
 }
 
 function output(values) {
-  const lines = Object.entries(values).map(([k, v]) => k + "=" + v);
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, lines.join("\n") + "\n");
-  console.log(lines.join(" "));
+	const lines = Object.entries(values).map(([k, v]) => k + '=' + v);
+	if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, lines.join('\n') + '\n');
+	console.log(lines.join(' '));
 }
 
 async function main() {
-  const opts = args();
-  const state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, "utf8")) : { since: new Date(Date.now() - 864e5).toISOString(), posted: {}, recent: [] };
-  const payload = opts.from ? JSON.parse(fs.readFileSync(opts.from, "utf8")) : await fetchPublishable(opts.since || state.since);
-  const unlisted = (payload.unlisted || []).map(bare);
-  const gone = (host) => unlisted.some((u) => bare(host) === u || bare(host).endsWith("." + u));
+	const opts = args();
+	const state = fs.existsSync(STATE)
+		? JSON.parse(fs.readFileSync(STATE, 'utf8'))
+		: { since: new Date(Date.now() - 864e5).toISOString(), posted: {}, recent: [] };
+	const payload = opts.from
+		? JSON.parse(fs.readFileSync(opts.from, 'utf8'))
+		: await fetchPublishable(opts.since || state.since);
+	const unlisted = (payload.unlisted || []).map(bare);
+	const gone = (host) => unlisted.some((u) => bare(host) === u || bare(host).endsWith('.' + u));
 
-  const items = live.existingItems((card) => !gone(card.host));
-  const removed = live.existingItems().length - items.length;
-  const curated = new Set(items.filter((x) => x.card.series !== "auto").map((x) => bare(x.card.host)));
-  const today = new Date().toISOString().slice(0, 10);
-  const batch = [];
-  let added = 0;
-  let held = 0;
-  let sweepPosts = 0;
-  for (const { report, source } of payload.reports || []) {
-    const host = bare(report.host);
-    if (curated.has(host) || gone(host)) continue;
-    const swept = source === "sweep" || source === "rivals" || source === "outreach";
-    const scope = swept ? "National" : "Requested";
-    const copy = copyFor(report, state.recent || []);
-    // The address when it is sure (.de, .gov.co, .com.mx; never a bare .co or .io), else data/live-report-countries.json in build().
-    const country = tldCountry(host);
-    const run = { id: "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60), data: report, scope,
-      title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, meta: [host, "", "", "", country] };
-    let built;
-    try { built = live.build(run, "auto"); } catch (error) { console.warn("skip", host, "-", error.message); continue; }
-    const at = items.findIndex((x) => x.card.id === run.id);
-    if (at >= 0) items.splice(at, 1, built); else items.push(built);
-    added += 1;
-    const restricted = await siteKind(host, (report.pages || []).map((page) => page.title || ""));
-    if (restricted) { console.log("no post for", host, "-", restricted); held += 1; continue; }
-    const last = (state.posted || {})[host];
-    if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
-    if (source === "rivals" || source === "outreach") continue;
-    if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
-    if (swept) sweepPosts += 1;
-    const score = report.insights.score;
-    batch.push({ id: run.id, host, title: copy.title, body: copy.body, action: copy.action, tags: copy.tags, scope,
-      fetchedAt: report.fetchedAt, pages: report.limits.pagesRead, overall: score.overall,
-      areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])),
-      fixLines: copy.fixLines || [], caseId: copy.caseId || "" });
-    state.posted = Object.assign(state.posted || {}, { [host]: today });
-    if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
-  }
+	const items = live.existingItems((card) => !gone(card.host));
+	const removed = live.existingItems().length - items.length;
+	const curated = new Set(items.filter((x) => x.card.series !== 'auto').map((x) => bare(x.card.host)));
+	const today = new Date().toISOString().slice(0, 10);
+	const batch = [];
+	let added = 0;
+	let held = 0;
+	let sweepPosts = 0;
+	for (const { report, source } of payload.reports || []) {
+		const host = bare(report.host);
+		if (curated.has(host) || gone(host)) continue;
+		const swept = source === 'sweep' || source === 'rivals' || source === 'outreach';
+		const scope = swept ? 'National' : 'Requested';
+		const copy = copyFor(report, state.recent || []);
+		// The address when it is sure (.de, .gov.co, .com.mx; never a bare .co or .io), else data/live-report-countries.json in build().
+		const country = tldCountry(host);
+		const run = {
+			id: 'u-' + host.replace(/[^a-z0-9]+/g, '-').slice(0, 60),
+			data: report,
+			scope,
+			title: copy.title,
+			body: copy.body,
+			action: copy.action,
+			tags: copy.tags,
+			meta: [host, '', '', '', country],
+		};
+		let built;
+		try {
+			built = live.build(run, 'auto');
+		} catch (error) {
+			console.warn('skip', host, '-', error.message);
+			continue;
+		}
+		const at = items.findIndex((x) => x.card.id === run.id);
+		if (at >= 0) items.splice(at, 1, built);
+		else items.push(built);
+		added += 1;
+		const restricted = await siteKind(
+			host,
+			(report.pages || []).map((page) => page.title || '')
+		);
+		if (restricted) {
+			console.log('no post for', host, '-', restricted);
+			held += 1;
+			continue;
+		}
+		const last = (state.posted || {})[host];
+		if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
+		if (source === 'rivals' || source === 'outreach') continue;
+		if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
+		if (swept) sweepPosts += 1;
+		const score = report.insights.score;
+		batch.push({
+			id: run.id,
+			host,
+			title: copy.title,
+			body: copy.body,
+			action: copy.action,
+			tags: copy.tags,
+			scope,
+			fetchedAt: report.fetchedAt,
+			pages: report.limits.pagesRead,
+			overall: score.overall,
+			areas: Object.fromEntries(live.AREAS.map((a) => [a, score.areas[a].score])),
+			fixLines: copy.fixLines || [],
+			caseId: copy.caseId || '',
+		});
+		state.posted = Object.assign(state.posted || {}, { [host]: today });
+		if (copy.key) state.recent = [copy.key].concat(state.recent || []).slice(0, 5);
+	}
 
-  let comparePosts = 0;
-  for (const cmp of payload.comparisons || []) {
-    if (comparePosts >= COMPARE_POSTS_PER_BATCH) break;
-    const host = bare(cmp.host);
-    const key = "vs:" + host;
-    const id = "u-" + host.replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-    if (cmp.outreach || gone(host) || await siteKind(host) || !items.some((x) => x.card.id === id)) continue;
-    const sites = [];
-    for (const site of [cmp].concat(cmp.rivals || [])) if (!gone(site.host) && !await siteKind(site.host)) sites.push(site);
-    if (sites.length < 2) continue;
-    const last = (state.posted || {})[key];
-    if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
-    const copy = versusCopy(sites.map((site) => Object.assign({}, site, { host: bare(site.host) })));
-    batch.push({ id: "vs-" + id.slice(2), live: id, host, kind: "rivals", scope: "Versus", title: copy.title, body: copy.body, action: copy.action, tags: copy.tags,
-      fetchedAt: cmp.createdAt, pages: 0, overall: cmp.overall, areas: cmp.areas,
-      sites: sites.map((site) => ({ host: bare(site.host), overall: site.overall, areas: site.areas })) });
-    state.posted = Object.assign(state.posted || {}, { [key]: today });
-    comparePosts += 1;
-  }
+	let comparePosts = 0;
+	for (const cmp of payload.comparisons || []) {
+		if (comparePosts >= COMPARE_POSTS_PER_BATCH) break;
+		const host = bare(cmp.host);
+		const key = 'vs:' + host;
+		const id = 'u-' + host.replace(/[^a-z0-9]+/g, '-').slice(0, 60);
+		if (cmp.outreach || gone(host) || (await siteKind(host)) || !items.some((x) => x.card.id === id)) continue;
+		const sites = [];
+		for (const site of [cmp].concat(cmp.rivals || []))
+			if (!gone(site.host) && !(await siteKind(site.host))) sites.push(site);
+		if (sites.length < 2) continue;
+		const last = (state.posted || {})[key];
+		if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
+		const copy = versusCopy(sites.map((site) => Object.assign({}, site, { host: bare(site.host) })));
+		batch.push({
+			id: 'vs-' + id.slice(2),
+			live: id,
+			host,
+			kind: 'rivals',
+			scope: 'Versus',
+			title: copy.title,
+			body: copy.body,
+			action: copy.action,
+			tags: copy.tags,
+			fetchedAt: cmp.createdAt,
+			pages: 0,
+			overall: cmp.overall,
+			areas: cmp.areas,
+			sites: sites.map((site) => ({ host: bare(site.host), overall: site.overall, areas: site.areas })),
+		});
+		state.posted = Object.assign(state.posted || {}, { [key]: today });
+		comparePosts += 1;
+	}
 
-  if (added || removed) live.writeAll(items);
-  fs.mkdirSync(BATCH_DIR, { recursive: true });
-  fs.writeFileSync(path.join(BATCH_DIR, "batch.json"), JSON.stringify(batch, null, 1) + "\n");
-  if (!opts.from) state.since = payload.until || state.since;
-  fs.writeFileSync(STATE, JSON.stringify(state, null, 1) + "\n");
-  console.log("read " + (payload.read || 0) + ", held " + JSON.stringify(payload.held || {}));
-  output({ cards: added, removed, social: batch.length, restricted: held, batch: "auto-" + today, total: items.length });
+	if (added || removed) live.writeAll(items);
+	fs.mkdirSync(BATCH_DIR, { recursive: true });
+	fs.writeFileSync(path.join(BATCH_DIR, 'batch.json'), JSON.stringify(batch, null, 1) + '\n');
+	if (!opts.from) state.since = payload.until || state.since;
+	fs.writeFileSync(STATE, JSON.stringify(state, null, 1) + '\n');
+	console.log('read ' + (payload.read || 0) + ', held ' + JSON.stringify(payload.held || {}));
+	output({
+		cards: added,
+		removed,
+		social: batch.length,
+		restricted: held,
+		batch: 'auto-' + today,
+		total: items.length,
+	});
 }
 
-if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
+if (require.main === module)
+	main().catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
 
 module.exports = { fetchPublishable, mergePages, PAGE, copyFor, caseFix, fixLinesFor, playwrightCarouselLines };
