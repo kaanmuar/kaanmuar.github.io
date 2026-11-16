@@ -1207,10 +1207,8 @@
       '<div><img class="cover-logo" src="' + esc(coverLogo) + '" alt=""><p class="report-kicker">' + coverKicker + '</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
-    if (!slotRoot) {
-      document.getElementById("print-mark").textContent = "";
-      applyLiveBrand(brand);
-    }
+    if (!slotRoot) document.getElementById("print-mark").textContent = "";
+    if (!slotRoot) applyLiveBrand(brand);
   }
 
   // Agency live white-label (#3494): toolbar logo + paid-line match the PDF co-brand defaults.
