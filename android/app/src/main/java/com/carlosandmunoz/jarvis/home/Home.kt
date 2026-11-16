@@ -425,7 +425,10 @@ object Home {
             val only = Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d)
             if (only.isEmpty()) true else runCatching { app.api.snapshot(d, only) }.isSuccess.also { fetched = true }
         }.all { it }
-        if (fetched) redraw(context)
+        if (fetched) {
+            redraw(context)
+            com.carlosandmunoz.jarvis.push.Push.cancelPeerNotices(app, data["sections"].orEmpty().split(","))
+        }
         return ok
     }
 

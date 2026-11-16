@@ -192,8 +192,10 @@ test("the jarvis function pushes after the writes that drop a section and on the
   const src = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.match(src, /if \(days === jarvisLive\.DAYS\) await jarvisLive\.check\(/);
   const ops = src.match(/const JARVIS_LIVE_OPS = new Set\(\[([^\]]*)\]\)/)[1];
-  ["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report"].forEach((op) => assert.ok(ops.includes('"' + op + '"'), op));
+  ["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "send-report", "engagement-decide"].forEach((op) => assert.ok(ops.includes('"' + op + '"'), op));
   assert.match(src, /jarvisLivePush\("jarvisWatch"\)/);
+  assert.match(src, /async function jarvisNotifyLive/);
+  assert.match(src, /if \(out && out\.live\) await jarvisNotifyLive/);
 });
 
 test("on a section push the web page fetches only the versions it lacks, or on another range the sections named", () => {
