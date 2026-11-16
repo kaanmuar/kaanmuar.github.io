@@ -345,6 +345,13 @@ exports.notifyOwnerOnReviewCsat = withMail.firestore
       console.error("Owner CSAT notification failed:", error);
     }
     await pushOwner(jarvisMailPush.csatMessage(snap.id, data));
+    try {
+      const testimonials = require("./url-review-csat-testimonials");
+      const out = await testimonials.queueTestimonial(getFirestore(), snap.id, data);
+      if (out.queued) console.log("CSAT testimonial queued:", snap.id, clip(data.host, 80));
+    } catch (error) {
+      console.error("CSAT testimonial queue failed:", error);
+    }
     return null;
   });
 
@@ -2377,7 +2384,10 @@ async function sendCsatReminders() {
   let sent = 0;
   for (const doc of snap.docs) {
     const record = Object.assign({ id: doc.id }, doc.data() || {});
-    if (!record.email || record.csatRemindedAt) continue;
+    if (!record.email) continue;
+    const mailedAt = record.mail && record.mail.at ? Date.parse(record.mail.at) : 0;
+    const remindedAt = record.csatRemindedAt ? Date.parse(record.csatRemindedAt) : 0;
+    if (remindedAt && (!mailedAt || remindedAt >= mailedAt)) continue;
     if (record.status !== "complete" && record.status !== "stopped") continue;
     const stopped = await db.collection("url_review_notes").where("email", "==", record.email).where("status", "==", "follow-stop").limit(1).get();
     if (!stopped.empty) continue;
@@ -2410,6 +2420,52 @@ async function sendCsatReminders() {
 }
 
 exports.sendCsatReminders = scheduled(withMail, "sendCsatReminders", () => sendCsatReminders());
+
+// 7–8d after report mail: second CSAT nudge when the first remind did not land an answer (#3557).
+async function sendCsatRecurrence() {
+  const csat = require("./url-review-csat");
+  const db = getFirestore();
+  const window = csat.recurWindow(new Date());
+  const snap = await db.collection("url_reviews")
+    .where("mail.sent", "==", true)
+    .where("mail.at", ">=", window.after)
+    .where("mail.at", "<=", window.before)
+    .limit(40)
+    .get();
+  let sent = 0;
+  for (const doc of snap.docs) {
+    const record = Object.assign({ id: doc.id }, doc.data() || {});
+    if (!record.email || !record.csatRemindedAt) continue;
+    if (record.csatRecurAt) continue;
+    if (record.status !== "complete" && record.status !== "stopped") continue;
+    const stopped = await db.collection("url_review_notes").where("email", "==", record.email).where("status", "==", "follow-stop").limit(1).get();
+    if (!stopped.empty) continue;
+    const prior = await db.collection("url_review_csat").where("reviewId", "==", doc.id).limit(1).get();
+    if (!prior.empty) continue;
+    const [stopUrl, csatUrl] = await Promise.all([stopLinkFor(record.email, record.lang), csatLinkFor(record)]);
+    if (!csatUrl) continue;
+    let host = String(record.host || "").trim();
+    if (!host && record.url) {
+      try { host = new URL(record.url).hostname; } catch (error) { host = ""; }
+    }
+    const parts = csat.recurMail(record.lang, host || "your site", csatUrl);
+    const t = customerMail.COPY[customerMail.langOf(record.lang)];
+    const mail = {
+      lang: parts.lang,
+      subject: parts.subject,
+      text: parts.text + "\n\n" + customerMail.footerText(t, customerMail.fill(t.why, { host: host || "your site" }), { stopUrl }),
+      html: customerMail.shell(parts.lang, parts.subject, parts.html, customerMail.footerHtml(t, customerMail.fill(t.why, { host: host || "your site" }), { stopUrl }))
+    };
+    const ok = await sendAskerMail(record.email, mail, stopUrl, "url-review-csat-recur");
+    if (ok) {
+      sent += 1;
+      await doc.ref.set({ csatRecurAt: new Date().toISOString() }, { merge: true });
+    }
+  }
+  return { sent, scanned: snap.size };
+}
+
+exports.sendCsatRecurrence = scheduled(withMail, "sendCsatRecurrence", () => sendCsatRecurrence());
 
 // Ended outreach trials get their AFTER code (#3136); the note to the person goes out only with the follow-up notes' switch.
 async function outreachTrialsRun() {
