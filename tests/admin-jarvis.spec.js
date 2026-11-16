@@ -1505,6 +1505,9 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(ci.locator('.jv-legend')).toContainText('4,880 runs in range');
     await ci.locator('.jv-hit').last().click();
     await expect(ci.locator('.jv-tip')).toHaveText('2026-11-03: Runs 2,480 runs · Failed 223 runs');
+    await expect(ci.locator('.jv-grid-dot').first()).toBeAttached();
+    await ci.locator('[data-chart-stretch="github-ci-trend"]').click();
+    await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('2');
     await expect(gh.locator('[data-panel-id="github-trend"] .jv-spark-axis').first()).toContainText('11-02');
     await expect(gh.locator('[data-panel-id="github-board"] .jv-bars-head')).toContainText('cards');
     await expect(gh.locator('[data-panel-id="github-board"] .jv-legend')).toContainText('Cards on the board');
@@ -1518,7 +1521,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(field).toHaveValue('kaanmuar/kaanmuar.github.io\nkaanmuar/qa-lab-outreach\nkaanmuar/cursor-quota\nkaanmuar/cursor-quota-releases');
     await field.fill('kaanmuar/qa-lab-outreach\nhttps://github.com/kaanmuar/cursor-quota\nnot a repo');
     await page.locator('.jv-settings button[type="submit"]').click();
-    await expect.poll(() => calls.filter((c) => c.op === 'settings-save').map((c) => c.body.settings.github)).toEqual([{ repos: ['kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota'] }]);
+    await expect.poll(() => calls.filter((c) => c.op === 'settings-save' && c.body.settings).map((c) => c.body.settings.github)).toEqual([{ repos: ['kaanmuar/qa-lab-outreach', 'kaanmuar/cursor-quota'] }]);
     await expect.poll(() => calls.filter((c) => c.op === 'github-work').length).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });

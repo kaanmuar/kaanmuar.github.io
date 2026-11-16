@@ -1,11 +1,12 @@
 z-library.sk
 z-lib.sk
-z-library.bz
 z-lib.id
 z-lib.fm
-z-library.im
 z-lib.gd
+z-library.bz
+z-library.im
 z-library.biz
 www.z-z.jp
 z-library.ec
+z-lib.by
 z-library.website

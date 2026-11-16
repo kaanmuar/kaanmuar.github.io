@@ -1,7 +1,12 @@
 /* Four feed-sized slides for a single-host audit post (#3476): hook, six areas, code fix, CTA.
-   tips-studio/build.js renders them to carousel/ + document/{slug}.pdf for Buffer LinkedIn. */
+   tips-studio/build.js renders them to carousel/ + document/{slug}.pdf for Buffer LinkedIn.
+   Also serves vs-tool battle scorecards (#3627) from scripts/battle-formats.js. */
+
+const battle = require("../battle-formats");
 
 function auditCarouselSlides(tip) {
+  const battleSlides = battle.vsToolCarouselSlides(tip);
+  if (battleSlides) return battleSlides;
   if (!tip || !tip.carousel || !tip.visual || tip.visual.type !== "scores") return null;
   const v = tip.visual;
   const areas = (v.areas || []).slice();
