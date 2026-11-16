@@ -498,6 +498,7 @@ async function social(ctx) {
     latest: latest.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 15),
     scheduled,
     queue: jarvisSocial.byChannel([buffer, facebook, open, telegram, reddit], ctx.now, since, metrics),
+    replyVelocity: jarvisSocial.replyVelocity([buffer, facebook, open, telegram, reddit], metrics, ctx.now, { hours: 24, limit: 8 }),
     telegram: tgMembers,
     reddit: rdMembers,
     youtube: { videos: videos.sort((a, b) => (b.views || 0) - (a.views || 0) || Date.parse(b.published || 0) - Date.parse(a.published || 0)).slice(0, 10), views },

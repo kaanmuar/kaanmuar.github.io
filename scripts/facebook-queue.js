@@ -668,4 +668,6 @@ if (require.main === module)
 		process.exit(1);
 	});
 
-module.exports = { posts, compose, publish, lookup, isReel, fromReel };
+function usePageToken(token) { TOKEN = token; }
+
+module.exports = { posts, compose, publish, lookup, isReel, fromReel, usePageToken };

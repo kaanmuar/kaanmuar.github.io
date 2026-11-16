@@ -39,6 +39,12 @@
     JMeter: "jmeter.svg", Gatling: "gatling.svg", k6: "k6.svg"
   };
   const TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+  // Full Stack flat SKUs (#3482): under à-la-carte Starter $34 / Complete $149.
+  const FULL_STACK = {
+    starter: { id: "starter", usd: 29, frameworks: ["Playwright", "k6"], tools: ["axe-core", "Lighthouse"] },
+    complete: { id: "complete", usd: 99, frameworks: FRAMEWORKS.slice(), tools: TOOLS.slice() }
+  };
+  let selectedBundleId = "";
   const PRODUCT_NAMES = FRAMEWORKS.concat(TOOLS, ["Robot Framework", "Selenium WebDriver", "Jira", "Xray", "Zephyr", "TestRail", "Azure Test Plans", "Mantis", "PayPal"]);
   const PRODUCT_PATTERN = new RegExp("\\b(?:" + PRODUCT_NAMES.slice().sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b", "g");
   // Each id needs a reason.<id> label in every language of js/qa-review-report-copy.js.
@@ -250,6 +256,47 @@
         '<label><input type="checkbox" name="fw" value="' + name + '"' + (DEFAULT_FRAMEWORKS.includes(name) ? " checked" : "") + " disabled>" + fwLogo(name) + '<span translate="no">' + name + "</span></label>"
       ).join("") + "</div>"
     ).join("");
+    const bundles = document.getElementById("full-stack-picker");
+    if (!bundles || bundles.dataset.bound) return;
+    bundles.dataset.bound = "1";
+    bundles.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-bundle]");
+      if (!btn) return;
+      applyBundle(btn.getAttribute("data-bundle"));
+    });
+  }
+
+  function applyBundle(id) {
+    const bundle = FULL_STACK[id];
+    if (!bundle) return;
+    selectedBundleId = bundle.id;
+    document.querySelectorAll('#fw-picker input[name="fw"]').forEach((box) => {
+      box.checked = bundle.frameworks.indexOf(box.value) !== -1;
+      box.disabled = false;
+    });
+    document.querySelectorAll('#tools input[name="tool"]').forEach((box) => {
+      box.checked = bundle.tools.indexOf(box.value) !== -1;
+    });
+    document.querySelectorAll("#full-stack-picker [data-bundle]").forEach((btn) => {
+      btn.classList.toggle("btn-primary", btn.getAttribute("data-bundle") === bundle.id);
+      btn.classList.toggle("btn-ghost", btn.getAttribute("data-bundle") !== bundle.id);
+    });
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_bundle", "URL Review", bundle.id);
+  }
+
+  function clearBundleIfMismatch() {
+    if (!selectedBundleId) return;
+    const bundle = FULL_STACK[selectedBundleId];
+    if (!bundle) { selectedBundleId = ""; return; }
+    const fw = selectedFrameworks().slice().sort().join(",");
+    const tools = selectedTools().slice().sort().join(",");
+    if (fw !== bundle.frameworks.slice().sort().join(",") || tools !== bundle.tools.slice().sort().join(",")) {
+      selectedBundleId = "";
+      document.querySelectorAll("#full-stack-picker [data-bundle]").forEach((btn) => {
+        btn.classList.add("btn-ghost");
+        btn.classList.remove("btn-primary");
+      });
+    }
   }
 
   function paintScope() {
@@ -463,6 +510,7 @@
       sectionTouched = true;
       syncSection();
     }
+    if (target && (target.name === "fw" || target.name === "tool")) clearBundleIfMismatch();
     if (!target || !window.SiteAnalytics) return;
     if (target.name === "fw") SiteAnalytics.trackEvent("qa_review_frameworks", "URL Review", String(selectedFrameworks().length));
     if (target.name === "tool") SiteAnalytics.trackEvent("qa_review_tools", "URL Review", target.value);
@@ -693,6 +741,7 @@
       params.set("reportId", current.report.id);
       params.set("frameworks", ((current.frameworks && current.frameworks.length) ? current.frameworks : selectedFrameworks()).join(","));
       params.set("tools", selectedTools().join(","));
+      if (selectedBundleId) params.set("bundle", selectedBundleId);
     }
     if (purpose === "new-run") {
       extra = extra || {};
@@ -706,6 +755,7 @@
       if (extra.pass) params.set("pass", extra.pass);
       if (extra.compareWith) params.set("compareWith", extra.compareWith);
       if (extra.compareWith && extra.competitors > 1) params.set("competitors", String(extra.competitors));
+      if (extra.bundle || selectedBundleId) params.set("bundle", extra.bundle || selectedBundleId);
     }
     const coupon = window.ReviewDeal ? ReviewDeal.code() : "";
     if (coupon && (purpose === "report" || (purpose === "new-run" && !(extra && extra.pass)))) params.set("coupon", coupon);
@@ -1146,8 +1196,13 @@
       '<article class="card" data-card="tech"><h2>' + esc(rc.t("visTech")) + "</h2>" + groupBars + "</article>" +
       '<article class="card" data-card="practices"><h2>' + esc(rc.t("visAdvice")) + '</h2><div class="advice">' + adviceHtml + "</div></article>";
     const when = report.fetchedAt ? new Date(report.fetchedAt).toLocaleString(rc.lang) : "";
+    const brand = current && current.branding;
+    const coverLogo = brand && brand.logoDataUrl ? brand.logoDataUrl : "assets/qa-review-mark.svg?v=20261027a";
+    const coverKicker = brand && brand.companyName
+      ? esc(brand.companyName) + ' <span class="muted">· Report by QA-lab</span>'
+      : "QA-lab URL Review";
     slot("report-cover").innerHTML =
-      '<div><img class="cover-logo" src="assets/qa-review-mark.svg?v=20261027a" alt=""><p class="report-kicker">QA-lab URL Review</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
+      '<div><img class="cover-logo" src="' + esc(coverLogo) + '" alt=""><p class="report-kicker">' + coverKicker + '</p><h2>' + (report.host ? esc(report.host).replace(/\./g, ".<wbr>") : esc(rc.t("dashTitle"))) + '</h2><p class="muted">' + esc(when) + "</p>" +
       (report.signature ? '<p class="sign-line">' + esc(report.signature.mark) + "</p>" : "") + "</div>" +
       '<div><p class="report-kicker">' + esc(rc.t("coverCases", { n: (report.counts && report.counts.cases) || 0 })) + "</p><p>" + esc(rc.t(report.status === "stopped" ? "coverStatementStopped" : "coverStatement")) + "</p></div>";
     if (!slotRoot) document.getElementById("print-mark").textContent = "";
@@ -3539,6 +3594,10 @@
     const id = src.report ? src.report.id : src.id;
     const quote = src === current ? fullQuotes[fullQuoteKey()] : null;
     if (quote) return quote.usd;
+    if (selectedBundleId && FULL_STACK[selectedBundleId]) {
+      const credit = id && ((src.addons || []).indexOf("fixlist") !== -1 || hasFixList(id)) ? FIXLIST_USD : 0;
+      return FULL_STACK[selectedBundleId].usd - credit;
+    }
     const list = src.frameworks && src.frameworks.length ? src.frameworks : selectedFrameworks();
     const credit = id && ((src.addons || []).indexOf("fixlist") !== -1 || hasFixList(id)) ? FIXLIST_USD : 0;
     return reviewUsd(list, src === current ? selectedTools() : []) - credit;
@@ -4118,6 +4177,7 @@
     params.set("deviceId", deviceId());
     if (ask.billing) params.set("billing", ask.billing);
     if (ask.pass) params.set("pass", ask.pass);
+    if (ask.bundle || selectedBundleId) params.set("bundle", ask.bundle || selectedBundleId);
     if (ask.compareWith) {
       params.set("compareWith", ask.compareWith);
       params.set("competitors", String(ask.competitors || 1));

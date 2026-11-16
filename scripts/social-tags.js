@@ -159,12 +159,27 @@ function topicsOf(post) {
 
 function trendingFor(topics, seed, n) {
 	const all = trending();
+	// Topic gate (#3559): hitch only tags whose VOCAB topic matches the post (near), then a thin
+	// WebDev/AI/QA fill. Never hitch a sports/celebrity trend — trending-tags.js already filters VOCAB.
 	const near = all.filter((t) => topics.includes(t.topic));
 	const wide = all.filter((t) => !topics.includes(t.topic) && ['WebDev', 'AI', 'QA'].includes(t.topic));
 	const pool = near.slice(0, 4).concat(wide.slice(0, 4));
 	return rotate(pool.slice(0, Math.max(n * 2, 3)), seed)
 		.slice(0, n)
 		.map((t) => t.tag);
+}
+
+/** Tags that matched VOCAB in `text` but not the post's topics — do not hitch these (#3559). */
+function hitchSkipped(text, topics) {
+	const allowed = new Set(topics || []);
+	const words = String(text || '').toLowerCase();
+	const skipped = [];
+	Object.keys(TOPIC_OF).forEach((word) => {
+		if (word.length < 3 || words.indexOf(word) === -1) return;
+		const topic = TOPIC_OF[word];
+		if (!allowed.has(topic) && skipped.indexOf(topic) === -1) skipped.push(topic);
+	});
+	return skipped;
 }
 
 // Ordered by priority; the brand tag always fits and is written last.
@@ -211,4 +226,16 @@ function tagLine(post, network, lang) {
 	return tagsFor(post, network, lang || post.lang).join(' ');
 }
 
-module.exports = { BRAND, LIMITS, RELATED, REACH, LOCAL, TRENDING_FILE, tagsFor, tagLine, topicsOf };
+module.exports = {
+	BRAND,
+	LIMITS,
+	RELATED,
+	REACH,
+	LOCAL,
+	TRENDING_FILE,
+	tagsFor,
+	tagLine,
+	topicsOf,
+	trendingFor,
+	hitchSkipped,
+};
