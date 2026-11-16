@@ -15,85 +15,114 @@
  * The es, pt, de, fr and it samples are built from it: translate the new
  * sentences in scripts/qa-review-sample-copy/ and run scripts/build-sample-langs.js.
  */
-const fs = require("fs");
-const path = require("path");
-const core = require("../functions/url-review-core");
+const fs = require('fs');
+const path = require('path');
+const core = require('../functions/url-review-core');
 
-const ROOT = path.join(__dirname, "..");
-const OUT = path.join(ROOT, "previews", "insights-test");
-const SAMPLE = path.join(ROOT, "assets", "qa-review-sample.json");
+const ROOT = path.join(__dirname, '..');
+const OUT = path.join(ROOT, 'previews', 'insights-test');
+const SAMPLE = path.join(ROOT, 'assets', 'qa-review-sample.json');
 
 function loadEnvFile(name) {
-  let text = "";
-  try { text = fs.readFileSync(path.join(ROOT, "functions", name), "utf8"); } catch (error) { return; }
-  text.split("\n").forEach((line) => {
-    const trimmed = line.trim();
-    const eq = trimmed.indexOf("=");
-    if (!trimmed || trimmed.startsWith("#") || eq < 1) return;
-    const key = trimmed.slice(0, eq).trim();
-    if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
-  });
+	let text = '';
+	try {
+		text = fs.readFileSync(path.join(ROOT, 'functions', name), 'utf8');
+	} catch (error) {
+		return;
+	}
+	text.split('\n').forEach((line) => {
+		const trimmed = line.trim();
+		const eq = trimmed.indexOf('=');
+		if (!trimmed || trimmed.startsWith('#') || eq < 1) return;
+		const key = trimmed.slice(0, eq).trim();
+		if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
+	});
 }
 
 function summary(name, report) {
-  const scores = (report.insights && report.insights.score && report.insights.score.areas) || {};
-  const areas = Object.keys(scores).map((area) => area + " " + scores[area].score).join(", ");
-  const overall = report.insights && report.insights.score ? report.insights.score.overall : "";
-  return name + ": " + report.pages.length + " pages, " + report.cases.length + " cases, overall " + overall + " (" + areas + ")";
+	const scores = (report.insights && report.insights.score && report.insights.score.areas) || {};
+	const areas = Object.keys(scores)
+		.map((area) => area + ' ' + scores[area].score)
+		.join(', ');
+	const overall = report.insights && report.insights.score ? report.insights.score.overall : '';
+	return (
+		name +
+		': ' +
+		report.pages.length +
+		' pages, ' +
+		report.cases.length +
+		' cases, overall ' +
+		overall +
+		' (' +
+		areas +
+		')'
+	);
 }
 
 async function main() {
-  loadEnvFile(".env");
-  loadEnvFile(".secret.local");
-  const args = process.argv.slice(2);
-  if (args[0] === "--sample") {
-    if (!args[1]) {
-      console.error("Usage: node scripts/review-snapshot.js --sample https://example.com/");
-      process.exit(2);
-    }
-    const report = await core.reviewTarget(args[1], {
-      browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-      places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
-    });
-    if (!report.browser || !report.browser.ok) {
-      console.error("The sample needs the browser pass (" + ((report.browser && report.browser.error) || "set CHROME_PATH") + "). Nothing was written.");
-      process.exit(1);
-    }
-    // The sample page and every test that opens it load nothing from the reviewed site (#2955).
-    const google = report.insights && report.insights.previews && report.insights.previews.google;
-    if (google && google.icon) google.icon = await core.iconData(google.icon);
-    fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + "\n");
-    console.log(summary("sample", report) + " -> " + path.relative(ROOT, SAMPLE));
-    return;
-  }
-  const targets = args.map((arg) => {
-    const eq = arg.indexOf("=");
-    return { name: arg.slice(0, eq), url: arg.slice(eq + 1) };
-  }).filter((t) => t.name && t.url);
-  if (!targets.length) {
-    console.error("Usage: node scripts/review-snapshot.js name=https://example.com [name=url ...]");
-    process.exit(2);
-  }
-  fs.mkdirSync(OUT, { recursive: true });
-  for (const target of targets) {
-    const started = Date.now();
-    try {
-      const report = await core.reviewTarget(target.url, {
-        browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-        pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-        crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-        places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
-      });
-      fs.writeFileSync(path.join(OUT, target.name + "-current.json"), JSON.stringify(report, null, 1));
-      console.log(summary(target.name, report) + " in " + Math.round((Date.now() - started) / 1000) + " s");
-    } catch (error) {
-      console.log(target.name + ": failed, " + (error && error.message ? error.message : error));
-    }
-  }
+	loadEnvFile('.env');
+	loadEnvFile('.secret.local');
+	const args = process.argv.slice(2);
+	if (args[0] === '--sample') {
+		if (!args[1]) {
+			console.error('Usage: node scripts/review-snapshot.js --sample https://example.com/');
+			process.exit(2);
+		}
+		const report = await core.reviewTarget(args[1], {
+			browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
+			pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+			crux:
+				process.env.CRUX_KEY || process.env.PAGESPEED_KEY
+					? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY)
+					: undefined,
+			webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+			places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined,
+		});
+		if (!report.browser || !report.browser.ok) {
+			console.error(
+				'The sample needs the browser pass (' +
+					((report.browser && report.browser.error) || 'set CHROME_PATH') +
+					'). Nothing was written.'
+			);
+			process.exit(1);
+		}
+		// The sample page and every test that opens it load nothing from the reviewed site (#2955).
+		const google = report.insights && report.insights.previews && report.insights.previews.google;
+		if (google && google.icon) google.icon = await core.iconData(google.icon);
+		fs.writeFileSync(SAMPLE, JSON.stringify({ frameworks: core.FRAMEWORKS, report }) + '\n');
+		console.log(summary('sample', report) + ' -> ' + path.relative(ROOT, SAMPLE));
+		return;
+	}
+	const targets = args
+		.map((arg) => {
+			const eq = arg.indexOf('=');
+			return { name: arg.slice(0, eq), url: arg.slice(eq + 1) };
+		})
+		.filter((t) => t.name && t.url);
+	if (!targets.length) {
+		console.error('Usage: node scripts/review-snapshot.js name=https://example.com [name=url ...]');
+		process.exit(2);
+	}
+	fs.mkdirSync(OUT, { recursive: true });
+	for (const target of targets) {
+		const started = Date.now();
+		try {
+			const report = await core.reviewTarget(target.url, {
+				browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
+				pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+				crux:
+					process.env.CRUX_KEY || process.env.PAGESPEED_KEY
+						? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY)
+						: undefined,
+				webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+				places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined,
+			});
+			fs.writeFileSync(path.join(OUT, target.name + '-current.json'), JSON.stringify(report, null, 1));
+			console.log(summary(target.name, report) + ' in ' + Math.round((Date.now() - started) / 1000) + ' s');
+		} catch (error) {
+			console.log(target.name + ': failed, ' + (error && error.message ? error.message : error));
+		}
+	}
 }
 
 main();

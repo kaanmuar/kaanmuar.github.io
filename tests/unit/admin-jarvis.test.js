@@ -947,10 +947,16 @@ test("outreach: the week starts Monday in Bogota and the pipeline counts only ou
   assert.equal(p.withLiveReport, 1);
   assert.equal(p.reviewedHosts, 3);
   assert.equal(p.reviewedWithLiveReport, 1);
-  assert.deepEqual(p.daily, [{ date: "2026-10-24", reviews: 1 }]);
+  assert.equal(p.daily.reduce((n, d) => n + d.reviews, 0), 2);
+  assert.equal(p.daily.find((d) => d.date === "2026-10-24").reviews, 1);
+  assert.equal(p.daily.find((d) => d.date === "2026-10-23").reviews, 1);
+  assert.ok(p.daily.length >= 7);
   assert.equal(p.priorReviews, 1);
   const capped = Array.from({ length: 3000 }, () => ({ createdAt: daysAgo(1).toISOString(), status: "complete", sweep: { host: "x.example", outreach: true } }));
   assert.equal(outreachSrc.pipelineRows(queue, {}, capped, [], { now: NOW.getTime(), days: 7 }).priorReviews, null);
+  // Non-outreach reviews must not blank the % change once the shared day-rows read is large (#3653).
+  const crowded = reviews.concat(Array.from({ length: 3000 }, () => ({ createdAt: daysAgo(1).toISOString(), status: "complete", sweep: { host: "other.example" } })));
+  assert.equal(outreachSrc.pipelineRows(queue, {}, crowded, [], { now: NOW.getTime(), days: 7 }).priorReviews, 1);
 });
 
 test("Social hub: views and interactions in range carry the period before, and lead with hub + post views", () => {

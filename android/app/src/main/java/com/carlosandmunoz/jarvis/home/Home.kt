@@ -103,7 +103,8 @@ object Home {
             return Cell(label, k?.prim("value").text(), delta, dirOf(delta), p.obj("series").at("values").doubles())
         }
         val pipe = snap.obj("external").obj("outreach").obj("pipeline")?.takeIf { it.isOk() }
-        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), null, 0, pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
+        val reviewedDelta = change(pipe?.num("reviews"), pipe?.num("priorReviews"))
+        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), reviewedDelta, dirOf(reviewedDelta), pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
         return listOf(revenue, product("review", "Reviews"), product("cv", "CV"), outreach)
     }
 
