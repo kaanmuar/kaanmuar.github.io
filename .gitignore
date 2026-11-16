@@ -69,3 +69,4 @@ media/report-cards/
 media/dm-cards/
 
 .cursor/handoffs/
+.tmp/
