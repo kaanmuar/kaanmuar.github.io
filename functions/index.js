@@ -6150,12 +6150,12 @@ async function jarvisNotifyAct(body, by) {
       const run = await jarvisProposals.savedRun(db, id, now);
       if (act === "close" && run.action !== "pagespeed-merge") throw new Error("Only a PageSpeed PR closes from here.");
       const out = await jarvisClickAction(Object.assign({}, run, act === "close" ? { action: "pagespeed-close" } : {}, { proposal: id }), by);
-      if (out.note) return { message: out.note };
+      if (out.note) return { message: out.note, live: "proposal" };
       const said = String(out.ran ? out.ran + (out.action === "run-job" ? " started" : "") : (out.done || 0) + " done").replace(/\.$/, "");
-      return { message: run.label + ": " + said + (out.failed ? ", " + out.failed + " failed" : "") + "." };
+      return { message: run.label + ": " + said + (out.failed ? ", " + out.failed + " failed" : "") + ".", live: "proposal" };
     }
     await jarvisProposals.mark(db, { key: id, status: act }, by, now);
-    return { message: act === "done" ? "Marked done." : "Dismissed." };
+    return { message: act === "done" ? "Marked done." : "Dismissed.", live: "proposal" };
   }
   if (type === "notice") {
     const out = await decideOwnerNotice(id, act === "send", "", by);
@@ -6165,7 +6165,7 @@ async function jarvisNotifyAct(body, by) {
   if (type === "owner-tags") return ownerTags.decide(Object.assign(engagementDeps(), { now }), id, act, body.text, by);
   if (type === "engagement" || type === "engagement-dm") {
     const out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), Object.assign({ key: id, decision: act, text: body.text }, type === "engagement-dm" ? { what: "dm" } : {}), by);
-    return { message: out.message };
+    return { message: out.message, live: type };
   }
   if (type === "countdown" && /^pagespeed-/.test(id)) {
     return jarvisPageSpeed.countdownAct(Object.assign(await pageSpeedDeps(by), { decide: (b) => jarvisCountdownDecide(b, by) }), id, act);
@@ -6176,7 +6176,7 @@ async function jarvisNotifyAct(body, by) {
     return act === "merge" ? jarvisPageSpeed.merge(deps) : jarvisPageSpeed.close(deps);
   }
   await jarvisSocialDecide(id, act, now);
-  return { message: act === "approved" ? "Added to the hub queue." : "Skipped." };
+  return { message: act === "approved" ? "Added to the hub queue." : "Skipped.", live: "social" };
 }
 
 // The latest run of each posting workflow, for the Social hub panel.
@@ -6671,9 +6671,18 @@ async function jarvisLivePush(where) {
 }
 
 // The jarvis ops whose write drops a build section (jarvis-snapshot.js); each is followed by a live push.
-const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "geo-country-confirm", "geo-costs-save", "send-report"]);
+// engagement-decide already drops `external` in jarvisEngagement.clearCache (#3570).
+const JARVIS_LIVE_OPS = new Set(["settings-save", "proposal-mark", "countdown", "brief-mark", "outreach-target", "geo-target", "geo-country-confirm", "geo-costs-save", "send-report", "engagement-decide"]);
 
 const jarvisLiveNote = (out) => "live push " + (out && out.pushed ? out.sections.join(",") : (out && out.reason) || "none");
+
+/** After a notification button succeeds (#3570): bump sections so peers refresh, and drop proposal cache when mark ran via notify-act. */
+async function jarvisNotifyLive(type) {
+  if (type === "proposal") await jarvisSnap.drop(getFirestore(), ["proposals"]).catch(() => null);
+  if (type === "engagement" || type === "engagement-dm" || type === "proposal" || type === "social") {
+    await jarvisLivePush("notify-act:" + type);
+  }
+}
 
 async function jarvisHeld() {
   const snap = await getFirestore().collection("url_review_reruns").where("status", "==", "held").limit(100).get();
@@ -7723,6 +7732,7 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       const k = await jarvisWebPush.keys(db, require("web-push"));
       if (b.text || !jarvisWebPush.verify(k.signKey, b, Date.now())) { res.status(403).json({ ok: false, error: "This button expired. Open Jarvis to do it." }); return; }
       const out = await jarvisNotifyAct({ ref: b.ref, act: b.act }, "browser push");
+      if (out && out.live) await jarvisNotifyLive(out.live);
       await jarvisActions.log(db, { action: "notify-act", mode: "click", status: "done", target, by: "browser push" }, Date.now()).catch(() => null);
       res.json(Object.assign({ ok: true, op: "notify-act" }, out));
     } catch (error) {
@@ -7863,7 +7873,10 @@ exports.jarvis = functions.runWith({ timeoutSeconds: 180, memory: "512MB", maxIn
       out = await jarvisClickAction(body, operator);
       if (body.action === "rerun-ci") await jarvisGithubFresh();
     }
-    else if (op === "notify-act") out = await jarvisNotifyAct(body, operator);
+    else if (op === "notify-act") {
+      out = await jarvisNotifyAct(body, operator);
+      if (out && out.live) await jarvisNotifyLive(out.live);
+    }
     else if (op === "actions") out = await jarvisActionsView(now);
     else if (op === "countdown") {
       const res = await jarvisCountdownDecide(body, operator);
