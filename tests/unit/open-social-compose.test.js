@@ -102,6 +102,15 @@ test("Instagram: audit slide carousels rank above reel when the batch rendered f
   assert.ok(rest.some((p) => p.uses[0] === "reel"));
 });
 
+test("Instagram: carousel loop is a Reels fallback when no matching voiced clip (#3498)", () => {
+  const loop = { url: "https://carlosandmunoz.com/media/social-posts/b/loop/01-a.mp4" };
+  const plans = c.instagram(Object.assign({}, base, { loop }));
+  assert.deepEqual(plans[0].uses, ["reel", "loop"]);
+  assert.equal(plans[0].params.video_url, loop.url);
+  assert.equal(plans[0].params.media_type, "REELS");
+  assert.deepEqual(uses(c.instagram(Object.assign({ clip, loop }, base))).slice(0, 1), ["reel"]);
+});
+
 test("a clip's aspect ratio is read from its first track header with a size, in either header version", () => {
   const tkhd = (version, width, height) => {
     const body = Buffer.alloc(4 + (version === 1 ? 32 : 20) + 16 + 36 + 8);
