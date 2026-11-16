@@ -6299,13 +6299,11 @@ async function previousRun(email, report) {
   try {
     const snap = await getFirestore().collection("url_reviews")
       .where("email", "==", email)
-      .select("createdAt", "status", "report.id", "report.host", "report.fetchedAt", "report.insights.score", "report.insights.findings")
+      .select("createdAt", "status", "softPreview", "report.id", "report.host", "report.fetchedAt", "report.softPreview", "report.insights.score", "report.insights.findings")
       .limit(60)
       .get();
-    const rows = snap.docs.map((doc) => doc.data())
-      .filter((row) => row.report && row.report.host === report.host && row.report.id !== report.id && row.report.insights && row.status !== "stopped")
-      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    return rows.length ? urlReview.compareRuns(rows[0].report, report) : null;
+    const prior = urlReview.pickPreviousRun(snap.docs.map((doc) => doc.data()), report);
+    return prior ? urlReview.compareRuns(prior.report, report) : null;
   } catch (error) {
     console.error("URL review history failed:", error);
     return null;

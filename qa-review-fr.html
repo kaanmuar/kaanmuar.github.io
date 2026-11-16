@@ -710,6 +710,9 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .delta-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); font-size: 12px; font-weight: 600; vertical-align: middle; }
+        .delta-badge .delta { font-size: 13px; }
+        .delta-badge .delta-count { color: var(--muted); font-weight: 600; }
         .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin: 10px 0 6px; }
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
         .compare-field { flex: 1 1 240px; min-width: 0; }
