@@ -8,7 +8,7 @@
 const fs = require('node:fs');
 
 /** Servers declared in `.cursor/mcp.json` (plus common aliases). */
-const ALLOW = new Set(['cloudflare', 'github', 'user-cloudflare']);
+const ALLOW = new Set(['cloudflare', 'user-cloudflare']);
 
 function reply(obj) {
 	process.stdout.write(JSON.stringify(obj));
@@ -42,7 +42,7 @@ function main() {
 
 	reply({
 		permission: 'deny',
-		user_message: `MCP server "${server}" is not on the project allowlist (cloudflare, github).`,
+		user_message: `MCP server "${server}" is not on the project allowlist (cloudflare only).`,
 		agent_message: `Denied MCP ${server}/${tool}: add it to .cursor/mcp.json and .cursor/hooks/mcp-allow.js ALLOW if intentional (#3552).`,
 	});
 }
