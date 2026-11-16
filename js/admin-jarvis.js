@@ -2511,8 +2511,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const dismissForm = (kind, i) => {
             const panel = 'github-sec-' + kind, key = ghAlertKey(kind, i);
             return `<div class="jv-drill" data-drill="${esc(drillKey(panel, key))}"${openDrills.get(panel) === key ? '' : ' hidden'}><header><strong>Dismiss ${esc(ghAlertName(kind, i))} #${esc(i.number)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, key))}" aria-label="Close">×</button></header>
-                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
-                <label>Comment, optional <input type="text" name="comment" maxlength="280" placeholder="Why, for the audit trail"></label>
+                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason" data-keep="gh-dismiss-reason-${esc(key)}">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
+                <label>Comment, optional <input type="text" name="comment" data-keep="gh-dismiss-comment-${esc(key)}" maxlength="280" placeholder="Why, for the audit trail"></label>
                 <div class="jv-actions"><button type="submit" class="jv-btn small danger">Dismiss on GitHub</button></div><p class="jv-note">Closes the alert on GitHub; it can be reopened there.</p></form></div>`;
         };
         const secFix = (i) => {
@@ -3766,7 +3766,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 S.product = prev;
                 const ask = view.querySelector('.jv-ask input');
                 if (ask && typed) { ask.value = typed; if (focused) ask.focus(); }
-                typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && !el.value) el.value = v; });
+                typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && el.value !== v) el.value = v; });
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
                 arrange(view, p.key);
