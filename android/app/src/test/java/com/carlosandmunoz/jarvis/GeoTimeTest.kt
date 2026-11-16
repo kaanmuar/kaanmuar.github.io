@@ -5,6 +5,7 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.ui.GeoTime
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -77,5 +78,22 @@ class GeoTimeTest {
         assertEquals(GeoTime.DOWN, GeoTime.arrowColor(1.0, "bounceRate"))
         assertFalse(GeoTime.canShow(g["time"] as JsonObject, "bounceRate"))
         assertTrue(GeoTime.canShow(g["time"] as JsonObject, "light"))
+    }
+
+    @Test
+    fun playStatsDataTotalsSentAndListsMovers() {
+        val tv = GeoTime.View(
+            mode = "week", week = 2,
+            rows = listOf(
+                JsonObject(mapOf("cc" to JsonPrimitive("CO"), "name" to JsonPrimitive("Colombia"), "sent" to JsonPrimitive(10.0))),
+                JsonObject(mapOf("cc" to JsonPrimitive("BR"), "name" to JsonPrimitive("Brazil"), "sent" to JsonPrimitive(5.0)))
+            ),
+            delta = mapOf("CO" to 3.0, "BR" to -2.0)
+        )
+        val s = GeoTime.playStatsData(tv, "sent")
+        assertEquals(15.0, s!!.total!!, 0.0)
+        assertEquals(1, s.up.size)
+        assertEquals("CO", s.up[0].cc)
+        assertEquals("BR", s.down[0].cc)
     }
 }

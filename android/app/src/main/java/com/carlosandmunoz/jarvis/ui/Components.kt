@@ -606,7 +606,7 @@ fun Dot(color: Color) = GlowDot(color, pulse = color == J.pink)
 @Composable
 fun TopList(title: String, rows: List<Pair<String, Double>>, limit: Int = 8,
             yLabel: String? = null, unit: String? = null, legend: String? = null, open: String? = null, onRow: ((String) -> Unit)? = null, id: String,
-            footer: @Composable ColumnScope.() -> Unit = {}, format: (Double) -> String = { fmt(it) }) {
+            animateKey: Any? = null, footer: @Composable ColumnScope.() -> Unit = {}, format: (Double) -> String = { fmt(it) }) {
     if (rows.isEmpty()) return
     Panel(title, id = id) {
         val max = rows.maxOf { it.second }.coerceAtLeast(1.0)
@@ -623,7 +623,9 @@ fun TopList(title: String, rows: List<Pair<String, Double>>, limit: Int = 8,
             ) {
                 Row {
                     Text(label.ifBlank { "(none)" } + if (onRow == null) "" else if (on) " ▾" else " ▸", fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Text(format(value), fontFamily = Mono, fontSize = 13.sp, color = J.muted)
+                    val shown = format(value)
+                    if (animateKey != null) CountUp(shown, animateKey) { Text(it, fontFamily = Mono, fontSize = 13.sp, color = J.muted) }
+                    else Text(shown, fontFamily = Mono, fontSize = 13.sp, color = J.muted)
                 }
                 GlowBar((value / max).toFloat())
             }
