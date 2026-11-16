@@ -6820,8 +6820,11 @@ async function jarvisCached(op, days, load) {
   if (saved && Date.now() - Date.parse(saved.at) < (jarvis.TTL[op] || jarvisSources.TTL[op] || 60000)) return Object.assign(JSON.parse(saved.json), { cachedAt: saved.at });
   const fresh = await load();
   const at = new Date().toISOString();
+  // A source may set cache:false when a dependency briefly missed (Live Reports publish, #3645).
+  const keep = fresh.cache !== false;
+  if ("cache" in fresh) delete fresh.cache;
   const json = JSON.stringify(fresh);
-  if (json.length < 900000) await ref.set({ at, json }).catch(() => null);
+  if (keep && json.length < 900000) await ref.set({ at, json }).catch(() => null);
   return Object.assign(fresh, { cachedAt: at });
 }
 

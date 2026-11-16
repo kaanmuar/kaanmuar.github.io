@@ -286,13 +286,20 @@ function posts(batch) {
 	const clips = faceRoute.voiced(batch, ROOT);
 	return Object.keys(captions)
 		.filter((slug) => captions[slug].facebook && !captions[slug].hold)
-		.map((slug) => ({
-			batch,
-			slug,
-			cap: captions[slug],
-			at: when[slug] || 0,
-			clip: socialClip.fromBatch(batch, slug, captions[slug], clips) || undefined,
-		}));
+		.map((slug) => {
+			const loopRel = 'loop/' + slug + '.mp4';
+			const loop = fs.existsSync(path.join(dir, loopRel))
+				? { url: SITE + '/media/social-posts/' + batch + '/' + loopRel }
+				: undefined;
+			return {
+				batch,
+				slug,
+				cap: captions[slug],
+				at: when[slug] || 0,
+				clip: socialClip.fromBatch(batch, slug, captions[slug], clips) || undefined,
+				loop,
+			};
+		});
 }
 
 const imageOf = (post) => SITE + '/media/social-posts/' + post.batch + '/feed/' + post.slug + '.jpg';
@@ -320,6 +327,8 @@ async function compose(post, caption, due, face) {
 		cap: post.cap,
 		lang,
 		clip: clip ? { url: clip, lang } : null,
+		// Site-hosted carousel loop (#3498); Meta can fetch carlosandmunoz.com (unlike GitHub release clips).
+		loop: !clip && post.loop && post.loop.url ? post.loop : null,
 		hub: hubUrl(post.batch, post.slug) + '?utm_source=facebook&utm_medium=social&utm_campaign=' + post.batch,
 	});
 }
@@ -668,6 +677,8 @@ if (require.main === module)
 		process.exit(1);
 	});
 
-function usePageToken(token) { TOKEN = token; }
+function usePageToken(token) {
+	TOKEN = token;
+}
 
 module.exports = { posts, compose, publish, lookup, isReel, fromReel, usePageToken };

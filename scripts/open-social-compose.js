@@ -127,7 +127,8 @@ function telegram({ text, url, lang, cap = {}, answerCap, clip, quote }) {
 
 // As for Threads: { uses, params } for one container, or { uses, items, params } for a carousel. Alt text is for images only.
 // Audit carousels (#3476) prefer the four still slides when the batch rendered them; otherwise reel / card+clip / image.
-function instagram({ text, url, alt, lang, clip, slides }) {
+// The carousel FFmpeg loop (#3498) is a Reels fallback when no matching-language voiced clip exists.
+function instagram({ text, url, alt, lang, clip, slides, loop }) {
 	const image = { image_url: url, alt_text: alt };
 	const out = [];
 	if (slides && slides.length >= 2) {
@@ -149,6 +150,11 @@ function instagram({ text, url, alt, lang, clip, slides }) {
 				{ is_carousel_item: 'true', media_type: 'VIDEO', video_url: clip.url },
 			],
 			params: { media_type: 'CAROUSEL', caption: text },
+		});
+	} else if (loop && loop.url) {
+		out.push({
+			uses: ['reel', 'loop'],
+			params: { media_type: 'REELS', video_url: loop.url, caption: text, share_to_feed: 'true', cover_url: url },
 		});
 	}
 	out.push({ uses: ['image'], params: Object.assign({ caption: text }, image) });
