@@ -199,5 +199,5 @@ async function boot() {
 boot().catch((e) => {
   console.error(e);
   setStatus("Could not start the 3D view. Try a newer browser with WebGL.");
-  mountMain.innerHTML = `<p class="x-fallback">3D preview unavailable. See the rendered loop at <code>qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.webp</code> (local).</p>`;
+  mountMain.innerHTML = `<p class="x-fallback">3D preview unavailable. See the rendered still at <a href="assets/url-review-hero/hero-3d-en-safe.webp?v=3429a">hero-3d-en-safe.webp</a> or the full loop in <code>qa-lab-demos/2026-11-10/marketing/visuals/hero/</code> (local).</p>`;
 });

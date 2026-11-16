@@ -980,11 +980,13 @@
             color: var(--text); color-scheme: dark;
             background: radial-gradient(42% 70% at 76% 48%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(30% 45% at 90% 14%, rgba(185, 168, 255, .18), transparent 70%), radial-gradient(46% 36% at 72% 100%, rgba(226, 196, 138, .14), transparent 70%), #071116;
         }
-        .stage > .fx, .stage > .stage-hero { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
-        .stage.fx-on > .fx, .stage.stage-hero-on > .stage-hero { opacity: 1; }
+        .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+        .stage.fx-on > .fx, .stage.stage-hero-on > .stage-hero, .stage.stage-hero-still-on > .stage-hero-still { opacity: 1; }
         .stage > .stage-hero canvas { display: block; width: 100% !important; height: 100% !important; }
+        .stage-hero-still { margin: 0; object-fit: cover; object-position: 72% center; filter: saturate(1.05); }
+        .stage-hero-still[hidden] { display: none; }
         .stage::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(7, 17, 22, .92) 0%, rgba(7, 17, 22, .78) max(300px, 30%), rgba(7, 17, 22, 0) max(640px, 58%)); }
-        .stage.fx-fallback::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
+        .stage.fx-fallback:not(.stage-hero-still-on)::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
         .stage-copy { position: relative; max-width: 640px; }
         .stage .display { color: #f4fafb; }
         .wire { overflow: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
@@ -1434,8 +1436,9 @@
             h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
             .stage { display: block; min-height: 0; padding: 236px 14px 20px; }
-            .stage > .fx, .stage > .stage-hero { height: 420px; bottom: auto; }
-            .stage.fx-fallback::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
+            .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { height: 420px; bottom: auto; }
+            .stage-hero-still { object-position: center 28%; }
+            .stage.fx-fallback:not(.stage-hero-still-on)::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
             .stage::before { background: linear-gradient(180deg, rgba(7, 17, 22, 0) 150px, rgba(7, 17, 22, .82) 270px, #071116 420px); }
             .facts { gap: 10px; }
             .facts li { flex: 1 1 28%; min-width: 0; }
@@ -1601,6 +1604,10 @@
     <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
 </section>
 <section class="stage" aria-labelledby="studio-title">
+        <picture id="review-hero-still" class="stage-hero-still" hidden>
+            <source srcset="assets/url-review-hero/hero-3d-en-safe.webp?v=3429a" type="image/webp">
+            <img src="assets/url-review-hero/hero-3d-en-safe.png?v=3429a" alt="" width="1920" height="1080" decoding="async" fetchpriority="low">
+        </picture>
         <div id="review-hero-3d" class="stage-hero" aria-hidden="true"></div>
         <div class="stage-copy">
             <p class="eyebrow" translate="no">QA-lab URL Review</p>
@@ -2179,7 +2186,7 @@
 <script src="js/site-glossary.js?v=20261102a" defer></script>
 <script src="js/site-tour.js?v=20261110-3332" defer></script>
 <script type="importmap" src="js/url-review-hero/importmap.json"></script>
-<script type="module" src="js/url-review-hero/landing-boot.js?v=3591a"></script>
+<script type="module" src="js/url-review-hero/landing-boot.js?v=3429a"></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
