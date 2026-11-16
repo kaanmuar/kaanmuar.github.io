@@ -1553,6 +1553,52 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     }
 
     // Social hub (#1420): the queue per channel from the social ledgers, the posting runs, and field-sweep proposals.
+    function csatPanel(csat) {
+        const c = csat || { totals: {}, stars: {}, npsBuckets: {}, kpis: [], recent: [] };
+        const t = c.totals || {};
+        const starBars = [1, 2, 3, 4, 5].map((n) => ({ label: n + '★', value: (c.stars && c.stars[n]) || 0 }));
+        const npsBars = [
+            { label: 'Detractors', value: (c.npsBuckets && c.npsBuckets.detractor) || 0 },
+            { label: 'Passives', value: (c.npsBuckets && c.npsBuckets.passive) || 0 },
+            { label: 'Promoters', value: (c.npsBuckets && c.npsBuckets.promoter) || 0 }
+        ];
+        const recent = c.recent || [];
+        const empty = !(t.answers > 0);
+        const body = empty
+            ? '<p class="jv-empty">No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).</p>'
+            : kpis(c.kpis || []) + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
+                table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['NPS', (r) => (r.nps == null ? '—' : fmt(r.nps))], ['Note', (r) => esc(r.comment || (r.low ? 'low' : '') || '—')]], recent, 'No recent answers.');
+        return panel('review-csat', 'CSAT / NPS', body, {
+            wide: true,
+            data: recent,
+            note: 'Post-report feedback (#3556). Recurrence and testimonials come next on #3557 once answers exist.'
+        });
+    }
+
+    function socialVelocityPanel() {
+        const so = S.external.social;
+        const v = so && so.replyVelocity;
+        if (!so) return panel('hub-velocity', 'Reply velocity', waiting('social', 'Reading the social ledgers…'));
+        if (so.ok === false) return panel('hub-velocity', 'Reply velocity', `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>`);
+        const hot = (v && v.hot) || [];
+        const top = (v && v.top) || [];
+        const rows = (hot.length ? hot : top).slice(0, 8);
+        const body = rows.length
+            ? table([
+                ['Post', (r) => esc(String(r.key || '').split('/').pop() || r.key)],
+                ['Comments', (r) => fmt(r.comments)],
+                ['Hours', (r) => esc(String(r.hours))],
+                ['Velocity', (r) => esc(String(r.velocity))],
+                ['Window', (r) => (r.early ? '<span class="jv-chip c-fast">hot</span>' : '—')]
+            ], rows)
+            : '<p class="jv-empty">No comment velocity yet in the first ' + esc(String((v && v.withinHours) || 24)) + 'h after send.</p>';
+        return panel('hub-velocity', 'Reply velocity (first ' + esc(String((v && v.withinHours) || 24)) + 'h)', body, {
+            wide: true,
+            data: rows,
+            note: 'Comments vs hours since first send across Buffer, Facebook, Bluesky/Mastodon, Telegram and Reddit. Hot = comments inside the window. Reply early on hot posts.'
+        });
+    }
+
     function socialQueuePanel() {
         const so = S.external.social;
         if (!so || !so.queue) return panel('hub-queue', 'Queue by channel', so && so.ok === false ? `<p class="jv-empty">${esc(so.error || 'Not loaded.')}</p>` : waiting('social', 'Reading the social ledgers…'), { wide: true });
@@ -3592,6 +3638,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${localPanel()}
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel, note: 'Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.' })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
+            ${csatPanel(r.csat)}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
             ${speedCard('review')}${gaCard('review')}
             ${listPanel('review', 'sources', 'Sources (opens)', r.lists.sources)}${listPanel('review', 'review-sources', 'Sources (reviews)', r.lists.reviewSources, { color: COLORS.green, empty: 'Reviews carry their source since 25 Oct 2026.' })}
@@ -3611,7 +3658,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.review += take();
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialVelocityPanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post views per day', area(hub.series.labels, [{ name: 'Views', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, views: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
