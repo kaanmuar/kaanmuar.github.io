@@ -1,0 +1,108 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-notino-de": {
+   "lang": "es",
+   "strings": {
+    "title.0": "notino.de: 56.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But 18 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "fixLines.0": "Pair each control with <label for>, wrap it in a label, or add aria-label.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 15 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "notino.de · 20 pages analyzed · 15 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But 18 form controls have no label.\n\nLesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 15 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-notino-de\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #DevOps #QA #Forms #A11y #Programming #LearnOnYouTube #WCAG #TestAutomation #InclusiveDesign #Testing #QAlab"
+   }
+  },
+  "u-predictz-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "predictz.com: 77.",
+    "title.1": "*The gap: text contrast.*",
+    "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.",
+    "action": "Keep body text at a 4.5:1 contrast ratio or more against its background.",
+    "fixLines.0": "Darken the text or lighten the background until normal text reaches 4.5:1 and large text 3:1.",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 15 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "predictz.com · 20 pages analyzed · 15 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.\n\nLesson: Keep body text at a 4.5:1 contrast ratio or more against its background.\n\nOne automated analysis of public pages on 15 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-predictz-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-predictz-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #Outage #SoftwareTesting #QA #Contrast #A11y #LearnOnYouTube #TechTips #DigitalAccessibility #QAEngineer #UXDesign #QAlab"
+   }
+  },
+  "vs-doram-ru-org": {
+   "lang": "de",
+   "strings": {
+    "live": "u-doram-ru-org",
+    "title.0": "doram-ru.org vs doramclub.com.",
+    "title.1": "*doramclub.com leads: 62.*",
+    "body": "doramclub.com leads in SEO, Security, Performance; doram-ru.org leads in GEO, Analytics, Accessibility.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 16 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "doram-ru.org",
+    "visual.rows.1.0": "doramclub.com",
+    "visual.note": "Natural competitors found on the open web · 16 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "doramclub.com leads in SEO, Security, Performance; doram-ru.org leads in GEO, Analytics, Accessibility.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 16 Nov 2026 of doram-ru.org, doramclub.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-doram-ru-org&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-doram-ru-org\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #Outage #QA #WebPerf #LearnOnYouTube #TechTips #DigitalMarketing #CoreWebVitals #QualityAssurance #GoogleSearch #QAlab"
+   }
+  },
+  "vs-byamica-com": {
+   "lang": "fr",
+   "strings": {
+    "live": "u-byamica-com",
+    "title.0": "4 natural competitors.",
+    "title.1": "*byamica.com leads: 68.*",
+    "body": "scamadviser.com leads in SEO, Accessibility; sachadrake.com leads in GEO; amazon.com leads in Analytics, Performance; byamica.com leads in Security.",
+    "action": "Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.",
+    "counter": "Natural competitors",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 16 Nov 2026",
+    "visual.cols.0": "Score",
+    "visual.cols.1": "SEO",
+    "visual.cols.2": "GEO",
+    "visual.cols.3": "Analytics",
+    "visual.cols.4": "Security",
+    "visual.cols.6": "Speed",
+    "visual.rows.0.0": "byamica.com",
+    "visual.rows.1.0": "scamadviser.com",
+    "visual.rows.2.0": "sachadrake.com",
+    "visual.rows.3.0": "amazon.com",
+    "visual.note": "Natural competitors found on the open web · 16 Nov 2026",
+    "cat.label": "Real run · natural competitors",
+    "cap.youtube": "scamadviser.com leads in SEO, Accessibility; sachadrake.com leads in GEO; amazon.com leads in Analytics, Performance; byamica.com leads in Security.\n\nLesson: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.\n\nAutomated analyses of public pages on 16 Nov 2026 of byamica.com, scamadviser.com, sachadrake.com, amazon.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.\n\nFull report: https://carlosandmunoz.com/qa-review.html?live=u-byamica-com&utm_source=youtube&utm_medium=social&utm_campaign=natural-competitors&utm_content=vs-byamica-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nNatural competitors · QA-lab URL Review\n\n#SEO #WebPerformance #Outage #QA #WebPerf #Coding #Programming #SiteSpeed #SDET #TechnicalSEO #SoftwareTesting #QAlab"
+   }
+  }
+ }
+}

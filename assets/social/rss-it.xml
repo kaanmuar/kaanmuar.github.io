@@ -224,6 +224,24 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Le schede informative dell’OMS finiscono con un punto e virgola di troppo.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-it</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Worldwide</category>
+      <description>L’OMS accoglie i crawler di risposta AI e le sue pagine si leggono bene senza JavaScript: GEO 91. Ma il JSON-LD delle sue schede informative finisce con &quot;};&quot;, e un parser rigoroso scarta l’intero blocco.
+
+La lezione per ogni team: Passa ogni blocco JSON-LD in un validatore JSON prima della release. Un solo carattere può invalidare l’intero blocco.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>setec.mk: 61. Il divario: l'host della mappa del sito.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-it.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-it</guid>
@@ -359,7 +377,9 @@ Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-sinarharian
 
 Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 
-#SEO #WebPerformance #DevOps #QA #WebPerf #QAlab</description>
+#SEO #WebPerformance #DevOps #QA #WebPerf #QAlab
+
+https://www.youtube.com/shorts/EV3Gz5w3eoI</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" length="268689" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -417,6 +437,23 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La ricerca AI legge il tuo HTML, non la tua app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-it</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consiglio</category>
+      <category>GEO</category>
+      <description>Molti motori di risposta non eseguono JavaScript. Se le tue informazioni chiave compaiono solo dopo il caricamento degli script, potrebbero non essere mai lette né citate.
+
+Provalo oggi: Guarda il sorgente della tua home. Si capisce cosa vendi e per chi, senza eseguire script?
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 concorrenti naturali. vivastreet.ie è in testa: 74.</title>
@@ -964,45 +1001,6 @@ Come funziona la review di una pagina pubblica, passo dopo passo: https://carlos
 #Accessibility #SoftwareTesting #WebDev #QA #DevTools #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" length="230522" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/11-vision.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Mito: le meta keywords aiutano ancora il posizionamento.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/18-myth-keywords-it.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/18-myth-keywords-it</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Mito o realtà</category>
-      <category>SEO</category>
-      <description>Mito o realtà: Mito: le meta keywords aiutano ancora il posizionamento.
-
-Nel 2009 Google ha dichiarato di non usare il meta tag keywords per il posizionamento nella ricerca web. Il tag però mostra ai concorrenti le parole che stai puntando.
-
-Verifica: Cerca name=&quot;keywords&quot; nei tuoi template. Toglilo e scrivi invece una vera description per ogni pagina chiave.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=myth-keywords
-
-#SEO #AI #SoftwareTesting #QA #MetaTags #QAlab
-
-https://www.youtube.com/shorts/HipUbZf_TiA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" length="238657" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/18-myth-keywords.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Le home del W3C condividono un solo titolo.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/04-w3c-it.html</link>
-      <guid isPermaLink="false">runs-100/04-w3c-it</guid>
-      <pubDate>Thu, 12 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Worldwide</category>
-      <description>HSTS in preload, un lang su ogni pagina e pagine veloci per i visitatori reali. Ma le home page in inglese, giapponese e cinese si intitolano tutte solo &quot;W3C&quot;, e la descrizione giapponese dice &quot;Homepage&quot;.
-
-La lezione per ogni team: Traduci titolo e descrizione insieme alla pagina. Ogni versione linguistica dovrebbe dire cos’è, nella sua lingua.
-
-Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
-Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=w3c
-
-#SEO #i18n #Multilingual #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" length="248631" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/04-w3c.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

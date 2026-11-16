@@ -224,6 +224,24 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>WHO's fact sheets end in a stray semicolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
+
+The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>setec.mk: 61. The gap: the sitemap host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk</guid>
@@ -359,7 +377,9 @@ The full report: https://carlosandmunoz.com/qa-review.html?live=u-sinarharian-co
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#SEO #WebPerformance #DevOps #QA #WebPerf #QAlab</description>
+#SEO #WebPerformance #DevOps #QA #WebPerf #QAlab
+
+https://www.youtube.com/shorts/EV3Gz5w3eoI</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" length="268689" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -381,6 +401,230 @@ How a public-page review works, step by step: https://carlosandmunoz.com/qa-revi
 #Accessibility #Playwright #QA #WCAG #a11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg" length="237513" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>13 Things Google Search Console Ranking Data Says</title>
+      <link>https://carlosandmunoz.com/social/pick/13-things-google-search-console-ranking-data-says.html</link>
+      <guid isPermaLink="false">pick/13-things-google-search-console-ranking-data-says</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Drawn from Google Search Console data for 166 brands, roughly 9.5 billion impressions and 105 million clicks a month over ~16 months. Findings at a Glance Finding 1 The −0.29 link between a site’s branded search demand and how well it ranks for the plain keyword falls once other factors such as authority are accounted […] The post 13 Things Google Search Console Ranking Data Says appeared first…
+
+Via iPullRank, by Michael Tandoh, 2026-11-12.
+
+https://ipullrank.com/gsc-ranking-data</description>
+      <media:content url="https://ipullrank.com/wp-content/uploads/2026/07/Frame-1597879968.png" medium="image"/>
+    </item>
+    <item>
+      <title>AI search listed a feature we haven't shipped. Here's how we traced it and the script we now run.</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-search-listed-a-feature-we-haven-t-shipped-here-s-how-we-.html</link>
+      <guid isPermaLink="false">pick/ai-search-listed-a-feature-we-haven-t-shipped-here-s-how-we-</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>This week we asked Perplexity a simple question: &quot;what is Cresca email?&quot; Cresca is our product, an...
+
+Via DEV, by Lalit Kumar Jangid, 2026-11-12.
+
+https://dev.to/lalitkumarjangid/ai-search-listed-a-feature-we-havent-shipped-heres-how-we-traced-it-and-the-script-we-now-run-3756</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fz2fpadu6jibejckmr2r5.png" medium="image"/>
+    </item>
+    <item>
+      <title>Audit Core Web Vitals for a whole sitemap in one run (and get alerted when pages fail)</title>
+      <link>https://carlosandmunoz.com/social/pick/audit-core-web-vitals-for-a-whole-sitemap-in-one-run-and-get.html</link>
+      <guid isPermaLink="false">pick/audit-core-web-vitals-for-a-whole-sitemap-in-one-run-and-get</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Disclosure: I'm Lindenbyte, the small studio that built the Apify Actor used below, and this post...
+
+Via DEV, by Lindenbyte, 2026-11-13.
+
+https://dev.to/lindenbyte/audit-core-web-vitals-for-a-whole-sitemap-in-one-run-and-get-alerted-when-pages-fail-2mfc</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fz4bqx2csfjfwrasxv5vd.png" medium="image"/>
+    </item>
+    <item>
+      <title>Building a Faster Playwright MCP Server: Compact DOM Deltas, 1-Turn Form Filling, and Submit Guards</title>
+      <link>https://carlosandmunoz.com/social/pick/building-a-faster-playwright-mcp-server-compact-dom-deltas-1.html</link>
+      <guid isPermaLink="false">pick/building-a-faster-playwright-mcp-server-compact-dom-deltas-1</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>While using a browser automation agent over Model Context Protocol (MCP) to prefill job applications...
+
+Via DEV, by Trung Thanh Tran, 2026-11-15.
+
+https://dev.to/tthanh2k6/building-a-faster-playwright-mcp-server-compact-dom-deltas-1-turn-form-filling-and-submit-guards-2o2p</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9z3gfmexqbx8fo4obj0d.png" medium="image"/>
+    </item>
+    <item>
+      <title>Core Update, ChatGPT Business Hub &amp; AI Mode’s New Model – SEO Pulse via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/core-update-chatgpt-business-hub-ai-mode-s-new-model-seo-pul.html</link>
+      <guid isPermaLink="false">pick/core-update-chatgpt-business-hub-ai-mode-s-new-model-seo-pul</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>A core update rolls out, AI search gets a new default model, ChatGPT shares mention and click counts, and sites plan for less search traffic. The post Core Update, ChatGPT Business Hub &amp; AI Mode’s New Model – SEO Pulse appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-14.
+
+https://www.searchenginejournal.com/seo-pulse-core-update-chatgpt-business-hub-ai-modes-new-model/597135/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-12-2026.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Cypress Ambassador Spotlight: Cuong Le</title>
+      <link>https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-cuong-le.html</link>
+      <guid isPermaLink="false">pick/cypress-ambassador-spotlight-cuong-le</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>Welcome back to our Ambassador Spotlight series! With every blog, we sit down with one of the people who make the Cypress community what it is. We ask where they started, how they think about testing, and what they've learned along the way. Want to know more about the Ambassador program? Learn more here. This time we're talking with Cuong Le, who writes about test automation on Medium to help QA…
+
+Via Cypress, by Jessica Capuano Mora, 2026-11-12.
+
+https://www.cypress.io/blog/cypress-ambassador-spotlight-cuong-le/</description>
+      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/Blog_Ambassador-Spotlight_Cuong-Le--1-.png" medium="image"/>
+    </item>
+    <item>
+      <title>Does The Affiliate Model Survive Checkout Inside AI Mode And Gemini? – Ask An SEO via @sejournal, @rollerblader</title>
+      <link>https://carlosandmunoz.com/social/pick/does-the-affiliate-model-survive-checkout-inside-ai-mode-and.html</link>
+      <guid isPermaLink="false">pick/does-the-affiliate-model-survive-checkout-inside-ai-mode-and</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Affiliate links still help protect your commissions as AI checkout grows, but stronger tracking and better program choices add crucial layers of protection. The post Does The Affiliate Model Survive Checkout Inside AI Mode And Gemini? – Ask An SEO appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Adam Riemer, 2026-11-12.
+
+https://www.searchenginejournal.com/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-gemini-ask-an-seo/585080/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-adam-riemer-376.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google Explains How To Find Search Traffic In Analytics &amp; Logs via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-find-search-traffic-in-analytics-logs.html</link>
+      <guid isPermaLink="false">pick/google-explains-how-to-find-search-traffic-in-analytics-logs</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Analytics</category>
+      <description>A Google Search help page lists the referrer values Search traffic sends, why some visits arrive with none, and why counts differ from Search Console. The post Google Explains How To Find Search Traffic In Analytics &amp; Logs appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-14.
+
+https://www.searchenginejournal.com/google-search-traffic-analytics-logs/597382/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-search-traffic-analytics-logs.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google Releases Modern Web Guidance 1.0 For AI Coding Agents via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-releases-modern-web-guidance-1-0-for-ai-coding-agents.html</link>
+      <guid isPermaLink="false">pick/google-releases-modern-web-guidance-1-0-for-ai-coding-agents</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Google’s Modern Web Guidance 1.0 adds a codebase audit to its free skill set for AI coding agents. The post Google Releases Modern Web Guidance 1.0 For AI Coding Agents appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-10.
+
+https://www.searchenginejournal.com/google-releases-modern-web-guidance-1-0-for-ai-coding-agents/596495/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-modern-web-guidance-featured-1600x840-1.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Hands-On with Playwright Test Agents: Planner, Generator, Healer — Measured</title>
+      <link>https://carlosandmunoz.com/social/pick/hands-on-with-playwright-test-agents-planner-generator-heale.html</link>
+      <guid isPermaLink="false">pick/hands-on-with-playwright-test-agents-planner-generator-heale</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>Playwright's official test agents evaluated properly: generated suite quality vs a baseline, the 43-minute agentic tax, and why the healer should never run unsupervised.
+
+Via DEV, by Gary Parker, 2026-11-12.
+
+https://garyparker.dev/blog/hands-on-with-playwright-test-agents</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fgaryparker.dev%2Fblog%2Fhands-on-with-playwright-test-agents%2Fopengraph-image" medium="image"/>
+    </item>
+    <item>
+      <title>How to run bulk PageSpeed Insights checks for hundreds of URLs (and export Core Web Vitals to CSV)</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-ur.html</link>
+      <guid isPermaLink="false">pick/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-ur</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Performance</category>
+      <description>The PageSpeed Insights website is fine when you have one URL. It is a slow way to check a sitemap, a...
+
+Via DEV, by Hill Country Bots, 2026-11-12.
+
+https://dev.to/hillcountrybots/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-urls-and-export-core-web-vitals-to-csv-2mn9</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9ikuqgcvsxmz0iwehtr3.png" medium="image"/>
+    </item>
+    <item>
+      <title>OrderogNebula/ai-resocket-test-architect: AI-Driven Visual &amp; Functional QA Agent powered by Gemini Multimodal Structured Outputs &amp; Terminal CLI</title>
+      <link>https://carlosandmunoz.com/social/pick/orderognebula-ai-resocket-test-architect-ai-driven-visual-fu.html</link>
+      <guid isPermaLink="false">pick/orderognebula-ai-resocket-test-architect-ai-driven-visual-fu</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>AI-Driven Visual &amp; Functional QA Agent powered by Gemini Multimodal Structured Outputs &amp; Terminal CLI
+
+Via GitHub, by OrderogNebula, 2026-11-09.
+
+https://github.com/OrderogNebula/ai-resocket-test-architect</description>
+      <media:content url="https://opengraph.githubassets.com/1/OrderogNebula/ai-resocket-test-architect" medium="image"/>
+    </item>
+    <item>
+      <title>Playwright 1.65 onlyFailures: Smaller Reports That Say Zero Tests Passed</title>
+      <link>https://carlosandmunoz.com/social/pick/playwright-1-65-onlyfailures-smaller-reports-that-say-zero-t.html</link>
+      <guid isPermaLink="false">pick/playwright-1-65-onlyfailures-smaller-reports-that-say-zero-t</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>160 runs of a 2,000-test suite on Playwright 1.65.1. onlyFailures cut the JSON report from 3.05 MB to 158 KB at 20 failed tests. It also cut the totals, and the durations other tools read.
+
+Via DEV, by Gary Parker, 2026-11-14.
+
+https://garyparker.dev/blog/playwright-165-only-failures</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fgaryparker.dev%2Fblog%2Fplaywright-165-only-failures%2Fopengraph-image" medium="image"/>
+    </item>
+    <item>
+      <title>Playwright v1.65.1</title>
+      <link>https://carlosandmunoz.com/social/pick/playwright-v1-65-1.html</link>
+      <guid isPermaLink="false">pick/playwright-v1-65-1</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>Bug Fixes #43936 [Regression]: decorated class with a static field fails to load in 1.65 (&quot;_initClass is not a function&quot;) with useDefineForClassFields: false #43934 [Bug]: Test locations are one column off under Bun 1.4.4+ Browser Versions Chromium 159.0.8154.6 Mozilla Firefox 159.0 WebKit 27.2
+
+Via Playwright releases, by github-actions[bot], 2026-11-13.
+
+https://github.com/microsoft/playwright/releases/tag/v1.65.1</description>
+      <media:content url="https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4" medium="image"/>
+    </item>
+    <item>
+      <title>SeeHere: Making Educational Videos More Accessible with AI-Powered Audio Descriptions</title>
+      <link>https://carlosandmunoz.com/social/pick/seehere-making-educational-videos-more-accessible-with-ai-po.html</link>
+      <guid isPermaLink="false">pick/seehere-making-educational-videos-more-accessible-with-ai-po</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>Educational videos have become an essential part of how people learn. From online courses and...
+
+Via DEV, by Priyansh Narang, 2026-11-15.
+
+https://dev.to/priyansh_narang_c1b96ab75/seehere-making-educational-videos-more-accessible-with-ai-powered-audio-descriptions-5c12</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fk72op8gl5gfu7ov4blsn.png" medium="image"/>
+    </item>
+    <item>
+      <title>The Best Search Console MCP Lets the Database Do the Math, Not the Model</title>
+      <link>https://carlosandmunoz.com/social/pick/the-best-search-console-mcp-lets-the-database-do-the-math-no.html</link>
+      <guid isPermaLink="false">pick/the-best-search-console-mcp-lets-the-database-do-the-math-no</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Almost everyone I know who works in SEO has run the same experiment in the past year. They connect...
+
+Via DEV, by Jan-Willem Bobbink, 2026-11-13.
+
+https://dev.to/jbobbink/the-best-search-console-mcp-lets-the-database-do-the-math-not-the-model-160h</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F4fzlnudl5mqj9f45p4d4.png" medium="image"/>
     </item>
     <item>
       <title>Amnesty's robots.txt turns Bingbot away.</title>
@@ -417,6 +661,23 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>AI search reads your HTML, not your app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Tip</category>
+      <category>GEO</category>
+      <description>Many answer engines do not run JavaScript. If your key facts appear only after scripts load, they may never be read or cited.
+
+Try this today: View source on your home page. Can you find what you sell and who it is for, without running scripts?
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 natural competitors. vivastreet.ie leads: 74.</title>
@@ -623,349 +884,6 @@ Via Search Engine Journal, by Chris Green, 2026-11-13.
 
 https://www.searchenginejournal.com/ai-bot-management-why-seos-need-more-than-block-lists/597148/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/bot-management-410.png" medium="image"/>
-    </item>
-    <item>
-      <title>I built QAFind — a red Playwright build should mean a real bug</title>
-      <link>https://carlosandmunoz.com/social/pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug.html</link>
-      <guid isPermaLink="false">pick/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>`If your team clicks Re-run failed jobs more than once a week, your end-to-end suite has stopped...
-
-Via DEV, by Kate Sai kishore, 2026-11-11.
-
-https://dev.to/kate_saikishore_5d4d69ae/i-built-qafind-a-red-playwright-build-should-mean-a-real-bug-3hlm</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fbpyp6w7ld1z9vzswho6d.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>I made Playwright 3.5x faster 🔥</title>
-      <link>https://carlosandmunoz.com/social/pick/i-made-playwright-3-5x-faster.html</link>
-      <guid isPermaLink="false">pick/i-made-playwright-3-5x-faster</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>I have a weird obsession with making stuff run faster, even when it seems practically impossible to...
-
-Via DEV, by codebeast, 2026-11-13.
-
-https://dev.to/xcodebeast/i-made-playwright-35x-faster-d1f</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fr1dq79fbb060rw3y9cgs.gif" medium="image"/>
-    </item>
-    <item>
-      <title>Multi-tab testing in Cypress: @cypress/puppeteer 1.0 is generally available</title>
-      <link>https://carlosandmunoz.com/social/pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera.html</link>
-      <guid isPermaLink="false">pick/multi-tab-testing-in-cypress-cypress-puppeteer-1-0-is-genera</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Cypress runs each test in one tab, so flows that open a new tab or popup have been hard to test. @cypress/puppeteer 1.0 is now generally available, with a stable API, Puppeteer v24, and a new multi-tab testing guide. See what changed and how to upgrade from 0.1.x.
-
-Via Cypress, by Jennifer Shehane, 2026-11-12.
-
-https://www.cypress.io/blog/cypress-puppeteer-ga/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/11/cypress-puppeteer-ga-header-1.png" medium="image"/>
-    </item>
-    <item>
-      <title>What Playwright's toHaveScreenshot() default lets through: threshold, maxDiffPixels and ratio tested on 11 changes</title>
-      <link>https://carlosandmunoz.com/social/pick/what-playwright-s-tohavescreenshot-default-lets-through-thre.html</link>
-      <guid isPermaLink="false">pick/what-playwright-s-tohavescreenshot-default-lets-through-thre</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Eleven small UI changes compared against one baseline under five option sets: which ones pass, why a changed button colour passes and a changed digit fails.
-
-Via DEV, by CurlShot, 2026-11-13.
-
-https://dev.to/curlshot/what-playwrights-tohavescreenshot-default-lets-through-threshold-maxdiffpixels-and-ratio-3idp</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fyxiew8vomed8g9bwv5ue.png" medium="image"/>
-    </item>
-    <item>
-      <title>The ICRC tests a CSP. Now it can enforce it.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/08-icrc.html</link>
-      <guid isPermaLink="false">runs-100/08-icrc</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A security.txt for researchers, a sitemap named in robots.txt, and HSTS. Its content security policy runs in report-only mode, so the browser logs violations but blocks nothing.
-
-The lesson for every team: Read the reports for a few weeks, fix what they flag, then switch the header to Content-Security-Policy.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=icrc
-
-#WebSecurity #CSP #Humanitarian #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/08-icrc.jpg" length="246460" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/08-icrc.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>MSF serves every page without HSTS.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/09-msf.html</link>
-      <guid isPermaLink="false">runs-100/09-msf</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Pages name their language, Arabic included with right-to-left set, and a sitemap answers. But none of the 20 pages analyzed sends Strict-Transport-Security, so a first visit over http can be intercepted.
-
-The lesson for every team: Add Strict-Transport-Security: max-age=31536000; includeSubDomains. Then consider the browser preload list.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=msf
-
-#WebSecurity #HSTS #Humanitarian #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/09-msf.jpg" length="246197" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/09-msf.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>3 natural competitors. capetinhas.blog leads: 81.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-03/10-vs-kabinedasnovinhas-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-03/10-vs-kabinedasnovinhas-com</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>tubepussy.org leads in SEO; kabinedasnovinhas.com leads in GEO, Analytics; capetinhas.blog leads in Security, Accessibility, Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 2 Nov 2026 of kabinedasnovinhas.com, tubepussy.org, capetinhas.blog, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-kabinedasnovinhas-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-kabinedasnovinhas-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #QA #WebPerf #SoftwareEngineering #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/10-vs-kabinedasnovinhas-com.jpg" length="266672" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/10-vs-kabinedasnovinhas-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>airhelp.com: 72. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/09-u-airhelp-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/09-u-airhelp-com</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 47 form controls have no label.
-
-The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 3 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-airhelp-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-airhelp-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Forms #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/09-u-airhelp-com.jpg" length="236185" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/09-u-airhelp-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>cetys.mx: 70. The gap: campaign tags.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/08-u-cetys-mx.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/08-u-cetys-mx</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But redirects strip campaign parameters.
-
-The lesson for every team: Keep the query string on every redirect, so campaign tags reach the landing page.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-cetys-mx&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-cetys-mx
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Analytics #DevOps #SEO #QA #Measurement #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg" length="232700" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>td.com vs desjardins.com. desjardins.com leads: 81.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/07-vs-td-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/07-vs-td-com</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>td.com leads in SEO, Analytics; desjardins.com leads in GEO, Security, Accessibility, Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 6 Nov 2026 of td.com, desjardins.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-td-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-td-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SRE #Automation #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" length="254496" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 natural competitors. sylviapark.com leads: 64.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-09/04-vs-strandbags-co-nz.html</link>
-      <guid isPermaLink="false">auto-2026-11-09/04-vs-strandbags-co-nz</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>sylviapark.com leads in SEO, Accessibility; strandbags.co.nz leads in GEO, Analytics, Security, Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 9 Nov 2026 of strandbags.co.nz, sylviapark.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-strandbags-co-nz&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-strandbags-co-nz
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #SRE #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" length="255567" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 natural competitors. globalbank.com.pa leads: 71.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/03-vs-multimax-net.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/03-vs-multimax-net</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>multimax.net leads in SEO, Analytics, Performance; globalbank.com.pa leads in GEO, Security, Accessibility.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 10 Nov 2026 of multimax.net, globalbank.com.pa, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-multimax-net&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-multimax-net
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #DevOps #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" length="258011" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>windrawwin.com: 77. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-11/02-u-windrawwin-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-11/02-u-windrawwin-com</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 4 form controls have no label.
-
-The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 10 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-windrawwin-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-windrawwin-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Programming #DevOps #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" length="239507" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>made-in-china.com: 50. The gap: the https redirect.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-12/01-u-made-in-china-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-12/01-u-made-in-china-com</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every external link that was checked answered, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
-
-The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
-
-One automated analysis of public pages on 11 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-made-in-china-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-made-in-china-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #CyberSecurity #QA #HTTPS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" length="241985" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>El País or Le Monde: which newspaper site scored higher?</title>
-      <link>https://carlosandmunoz.com/social/compare-2026-11b/03-quiz-newspapers.html</link>
-      <guid isPermaLink="false">compare-2026-11b/03-quiz-newspapers</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Quiz</category>
-      <category>Worldwide</category>
-      <description>Two daily newspapers, from Spain and France, 20 public pages each, analyzed by the same review on the same day in October 2026. Two points separate them.
-
-Your guess: Make your guess. The answer, with all six area scores, comes out tomorrow.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-newspapers
-
-#WebQuality #AI #DevOps #QA #Quiz #QAlab
-
-https://www.youtube.com/shorts/y_EmhX1_RYo</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" length="251297" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>This week in web quality.</title>
-      <link>https://carlosandmunoz.com/social/digest-2026-11-13/01-this-week.html</link>
-      <guid isPermaLink="false">digest-2026-11-13/01-this-week</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>News</category>
-      <category>Field</category>
-      <description>This week in web quality, Nov 13, 2026
-
-Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.
-
-1. Lighthouse 13.6 can lift your PSI score
-PageSpeed Insights now runs Lighthouse 13.6, which changes how it simulates FCP and LCP. Chrome's Barry Pollard says scores usually come out higher, most often on JavaScript-heavy sites, even when the page did not change. Before crediting a better score to your own work, check that both reports name the same Lighthouse version and compare the field data.
-By Matt G. Southern, Search Engine Journal: https://www.searchenginejournal.com/pagespeed-insights-scores-lighthouse-update/595698/
-
-2. Playwright 1.65 runs tests under Bun
-Playwright 1.65 runs its test runner under Bun with bunx --bun playwright test, without watch mode. A new failures reporter and an onlyFailures option keep reports to what went wrong. Among the breaking changes, actions now wait for an inert element to stop being inert, and Node.js 20 is no longer tested.
-By dgozman, Playwright releases: https://github.com/microsoft/playwright/releases/tag/v1.65.0
-
-3. Google on 301s, 302s and ranking signals
-Google's Gary Illyes and Cherry Prommawin explained that a 301 hands the old URL's ranking signals to the new one, while a 302 keeps the old URL in results because Google expects it back. A 307 or 308 does the same jobs but keeps form data on a POST. They recommend server-side redirects over JavaScript or meta refresh.
-By Roger Montti, Search Engine Journal: https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/
-
-4. Reporting SEO when GA4 sees less
-After a stricter consent policy, GA4 organic sessions fell 64% in four weeks while Search Console clicks rose 1.8%. Dii Pooler shows how to audit where tracking stops, compare GA4 with backend records, and report search visibility, tracked behavior and verified outcomes separately, with the measurement limits stated first.
-By Dii Pooler, Moz: https://moz.com/blog/measure-seo-performance-incomplete-data
-
-5. AI can check an ACR, not write it
-Will Creedle argues that general AI tools cannot test, fix or assess WCAG conformance on their own, so they should not produce a VPAT-based Accessibility Conformance Report alone. They do help catch errors, such as a wrong EN 301 549 clause or not evaluated in place of not applicable, and make the wording clearer.
-By Will Creedle, Deque: https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/
-
-Every digest, tip and site review on our social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=weekly-digest&amp;utm_content=digest-2026-11-13
-
-#WebDev #Programming #QA #Accessibility #SEO #QAlab
-
-https://www.youtube.com/shorts/3LEjpxQ2BYw</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" length="233234" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>LCP: when the main thing shows up.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/13-lcp.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/13-lcp</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glossary</category>
-      <category>Perf</category>
-      <description>Word of the day: LCP: when the main thing shows up.
-
-Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering. Good is 2.5 seconds or less for at least 75% of page loads.
-
-Spot it: Open the Performance panel in Chrome DevTools: its live metrics name your LCP element. Make sure it is never lazy-loaded.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=lcp
-
-#WebPerformance #SoftwareTesting #DevOps #QA #CoreWebVitals #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg" length="234159" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/13-lcp.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Adrian Roselli's Interop 2027 ballot ranks the places authors keep getting it wrong</title>
-      <link>https://carlosandmunoz.com/social/pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author.html</link>
-      <guid isPermaLink="false">pick/adrian-roselli-s-interop-2027-ballot-ranks-the-places-author</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Standards</category>
-      <description>Adrian Roselli has published his fifteen ranked picks for Interop 2027, led by `ariaNotify()`, the HTML `focusgroup` attribute and Shadow DOM `referenceTarget`, with an accessibility reason attached to each. Voting closes on 19 November 2026.
-
-Via DEV, by Leo, 2026-11-11.
-
-https://news.html.to/roselli-interop-2027-accessibility-ballot/</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fx1ununhkkqgxxlp31lg3.png" medium="image"/>
     </item>
   </channel>
 </rss>

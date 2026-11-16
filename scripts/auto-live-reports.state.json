@@ -1,5 +1,5 @@
 {
- "since": "2026-11-15T11:01:21.410Z",
+ "since": "2026-11-16T11:15:48.723Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -151,13 +151,17 @@
   "najserialy.io": "2026-11-15",
   "sarhne.com": "2026-11-15",
   "vs:mccabespharmacy.com": "2026-11-15",
-  "vs:zefoy.com": "2026-11-15"
+  "vs:zefoy.com": "2026-11-15",
+  "notino.de": "2026-11-16",
+  "predictz.com": "2026-11-16",
+  "vs:doram-ru.org": "2026-11-16",
+  "vs:byamica.com": "2026-11-16"
  },
  "recent": [
+  "ax-color-contrast",
+  "a11y-labels",
   "sec-hsts",
   "geo-crawlers",
-  "a11y-labels",
-  "ax-link-name",
-  "an-fingerprint"
+  "a11y-labels"
  ]
 }
