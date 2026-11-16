@@ -10,6 +10,7 @@
 #   scripts/ticket.sh child <parent> <child>
 #   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done
 #   scripts/ticket.sh log start|end <n> [title]                 Cursor usage log row
+#   scripts/ticket.sh log sweep                                 close open rows older than 24h (end = start + 12h)
 # new and bug first list open issues that may be the same ticket (scripts/open-work.js dups, #2969), on stderr.
 # In a terminal they ask before filing; without one (agents) they file anyway and name the candidates in the body.
 #   --dry-run        (new, bug, design) print the duplicate check and the issue it would file; writes nothing
@@ -175,7 +176,7 @@ child) child "${1:?parent}" "${2:?child}" ;;
 "done") close "${1:?n}" "${2:?pr}" ;;
 log)
 	now=$(date -u +%FT%TZ)
-	case "${1:?start|end}" in
+	case "${1:?start|end|sweep}" in
 	start) echo "$now,,${2:?n},${3:-},${CURSOR_CONVERSATION_ID:-chat}," >>"$LOG" ;;
 	end)
 		python3 - "$LOG" "${2:?n}" "$now" "${CURSOR_CONVERSATION_ID:-chat}" <<'PY'
@@ -187,6 +188,36 @@ mine = [r for r in open_rows if len(r) > 4 and r[4] == chat]
 if mine or open_rows:
     (mine or open_rows)[0][1] = now
 csv.writer(open(path, "w", newline="")).writerows(rows)
+PY
+		;;
+	# Stale open rows inflate attribution; close ones older than 24h at start+12h (#3545).
+	sweep)
+		python3 - "$LOG" <<'PY'
+import csv, sys
+from datetime import datetime, timedelta, timezone
+
+path = sys.argv[1]
+now = datetime.now(timezone.utc)
+max_age = timedelta(hours=24)
+span = timedelta(hours=12)
+
+def parse(ts):
+    if not ts:
+        return None
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+rows = list(csv.reader(open(path)))
+closed = 0
+for r in rows:
+    if len(r) < 2 or r[1] or not r[0]:
+        continue
+    start = parse(r[0])
+    if not start or now - start < max_age:
+        continue
+    r[1] = (start + span).strftime("%Y-%m-%dT%H:%M:%SZ")
+    closed += 1
+csv.writer(open(path, "w", newline="")).writerows(rows)
+print(f"closed {closed} open work-log rows older than 24h")
 PY
 		;;
 	esac
