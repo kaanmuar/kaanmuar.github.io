@@ -140,8 +140,12 @@ function posts(batch, root = ROOT, network = "bluesky") {
         if (!fs.existsSync(path.join(dir, rel))) break;
         slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, alt: captions[slug].alt || captions[slug].title || "" });
       }
+      const reelRel = "reel/" + slug + ".mp4";
+      const carouselReel = fs.existsSync(path.join(dir, reelRel))
+        ? { url: SITE + "/media/social-posts/" + batch + "/" + reelRel } : null;
       return Object.assign({ batch, slug, cap: captions[slug], at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
         slides.length >= 2 ? { slides } : {},
+        carouselReel ? { carouselReel } : {},
         quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
     });
 }
@@ -185,6 +189,7 @@ function extras(network, post, face, book) {
   return {
     cap: post.cap, clip: post.clip, quizCap: post.quizCap, answerCap: post.answerCap, quote: quiz ? quiz.id : "",
     slides: post.slides || null,
+    carouselReel: post.carouselReel || null,
     hub: hubUrl(post.batch, post.slug) + "?utm_source=" + network + "&utm_medium=social&utm_campaign=" + post.batch
   };
 }

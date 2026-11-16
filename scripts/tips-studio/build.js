@@ -50,6 +50,7 @@ const { chromium } = require("playwright");
 const brands = require("./brands");
 const assets = require("./site-assets");
 const { auditCarouselSlides } = require("./audit-carousel");
+const { encodeCarouselReel } = require("./carousel-reel");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
@@ -402,7 +403,12 @@ async function renderCarousel(page, browser, tip, index, total, slug, ui, extras
     files.push(out);
   }
   await pdfFrom(browser, files, path.join(OUT, "document", slug + ".pdf"));
-  return files;
+  // Additive Reels loop from the same stills (#3498); skip-video / schedule-only leave reel/ alone.
+  let reel = null;
+  if (!(opts["skip-video"] || opts["schedule-only"]) && BED) {
+    reel = encodeCarouselReel(files, BED, path.join(OUT, "reel", slug + ".mp4")).out;
+  }
+  return { files, reel };
 }
 
 // Each line is voiced first, so every scene knows how long it runs before a frame is drawn. A clip's lines are voiced
@@ -546,7 +552,7 @@ function rewriteCaptions(all, networks) {
   if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
   if (opts["captions-only"]) { rewriteCaptions(all, String(opts["captions-only"]).split(",")); return; }
   if (opts.rotate || !(opts["skip-video"] || opts["schedule-only"])) BED = findBed();
-  for (const dir of ["feed", "story", "clip", "cover", "carousel", "document"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+  for (const dir of ["feed", "story", "clip", "cover", "carousel", "document", "reel"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
@@ -600,17 +606,22 @@ function rewriteCaptions(all, networks) {
     const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
-    const carouselFiles = await renderCarousel(page, browser, tip, index, total, slug, ui, extras);
-    if (carouselFiles) {
+    const carouselOut = await renderCarousel(page, browser, tip, index, total, slug, ui, extras);
+    if (carouselOut) {
+      const carouselFiles = carouselOut.files;
+      const hasDoc = fs.existsSync(path.join(OUT, "document", slug + ".pdf"));
+      const hasReel = !!(carouselOut.reel && fs.existsSync(carouselOut.reel));
       tip._carouselMeta = {
         carousel: carouselFiles.length,
-        document: fs.existsSync(path.join(OUT, "document", slug + ".pdf")),
+        document: hasDoc,
+        reel: hasReel,
         assetsMissing: [
           ...(carouselFiles.length === 4 ? [] : ["carousel"]),
-          ...(fs.existsSync(path.join(OUT, "document", slug + ".pdf")) ? [] : ["document"])
+          ...(hasDoc ? [] : ["document"]),
+          ...(!(opts["skip-video"] || opts["schedule-only"]) && !hasReel ? ["reel"] : [])
         ]
       };
-      console.log("carousel", slug);
+      console.log("carousel", slug, hasReel ? "reel" : "");
     }
     const said = saids[n];
     const done = () => console.log("rendered", slug, said.voice.file);
@@ -639,15 +650,17 @@ function rewriteCaptions(all, networks) {
     if (!carouselMeta && auditCarouselSlides(tip)) {
       const slideCount = [1, 2, 3, 4].filter((i) => fs.existsSync(path.join(OUT, "carousel", slug + "-" + String(i).padStart(2, "0") + ".jpg"))).length;
       const hasDoc = fs.existsSync(path.join(OUT, "document", slug + ".pdf"));
+      const hasReel = fs.existsSync(path.join(OUT, "reel", slug + ".mp4"));
       const missing = [];
       if (slideCount !== 4) missing.push("carousel");
       if (!hasDoc) missing.push("document");
-      carouselMeta = { carousel: slideCount, document: hasDoc, assetsMissing: missing };
+      if (!opts["skip-video"] && !opts["schedule-only"] && !hasReel) missing.push("reel");
+      carouselMeta = { carousel: slideCount, document: hasDoc, reel: hasReel, assetsMissing: missing };
     }
     const documentTitle = String(studio.plainTitle(tip) || "").slice(0, 58);
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
       tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap,
-      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
+      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, reel: !!carouselMeta.reel, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of held ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);

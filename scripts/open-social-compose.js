@@ -11,8 +11,8 @@
    - Telegram (#2706): a compare quiz as a poll carrying the card and the caption, in quiz mode when the answer's
      scores name the winner; the clip as a video with the card as its cover; the answer replies to the quiz, its
      scores behind a spoiler.
-   - Instagram (#2702): the clip as a reel shared to the feed with the card as its cover, else a carousel of the
-     card and the clip. Stories stay a single image.
+   - Instagram (#2702 / #3498): audit still carousels first; then the carousel FFmpeg Reels loop when rendered;
+     else the voiced clip as a reel (card cover) or a card+clip carousel. Stories stay a single image.
 
    Not used: Bluesky threadgates (replies stay open), Instagram collaborators, music and location (a pick per post). */
 const { pollOf } = require("./threads-compose");
@@ -97,7 +97,8 @@ function telegram({ text, url, lang, cap = {}, answerCap, clip, quote }) {
 
 // As for Threads: { uses, params } for one container, or { uses, items, params } for a carousel. Alt text is for images only.
 // Audit carousels (#3476) prefer the four still slides when the batch rendered them; otherwise reel / card+clip / image.
-function instagram({ text, url, alt, lang, clip, slides }) {
+// Carousel FFmpeg reel (#3498) is an additive REELS fallback after still slides and before the voiced clip.
+function instagram({ text, url, alt, lang, clip, slides, carouselReel }) {
   const image = { image_url: url, alt_text: alt };
   const out = [];
   if (slides && slides.length >= 2) {
@@ -106,6 +107,9 @@ function instagram({ text, url, alt, lang, clip, slides }) {
       items: slides.map((s) => ({ is_carousel_item: "true", image_url: s.url, alt_text: s.alt || alt })),
       params: { media_type: "CAROUSEL", caption: text }
     });
+  }
+  if (carouselReel && carouselReel.url) {
+    out.push({ uses: ["reel", "carousel"], params: { media_type: "REELS", video_url: carouselReel.url, caption: text, share_to_feed: "true", cover_url: url } });
   }
   if (voiced(clip, lang)) {
     out.push({ uses: ["reel"], params: { media_type: "REELS", video_url: clip.url, caption: text, share_to_feed: "true", cover_url: url } });

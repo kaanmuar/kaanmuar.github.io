@@ -102,6 +102,20 @@ test("Instagram: audit slide carousels rank above reel when the batch rendered f
   assert.ok(rest.some((p) => p.uses[0] === "reel"));
 });
 
+test("Instagram: carousel FFmpeg reel ranks after still slides and before the voiced clip (#3498)", () => {
+  const slides = [
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-01.jpg" },
+    { url: "https://carlosandmunoz.com/media/social-posts/b/carousel/01-a-02.jpg" }
+  ];
+  const carouselReel = { url: "https://carlosandmunoz.com/media/social-posts/b/reel/01-a.mp4" };
+  const plans = c.instagram(Object.assign({ clip, slides, carouselReel }, base));
+  assert.deepEqual(plans[0].uses, ["carousel", "slides"]);
+  assert.deepEqual(plans[1].uses, ["reel", "carousel"]);
+  assert.equal(plans[1].params.video_url, carouselReel.url);
+  assert.equal(plans[1].params.media_type, "REELS");
+  assert.equal(plans[2].params.video_url, clip.url);
+});
+
 test("a clip's aspect ratio is read from its first track header with a size, in either header version", () => {
   const tkhd = (version, width, height) => {
     const body = Buffer.alloc(4 + (version === 1 ? 32 : 20) + 16 + 36 + 8);
