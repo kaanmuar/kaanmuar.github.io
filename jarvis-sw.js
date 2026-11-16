@@ -10,6 +10,21 @@ const ICON = '/assets/app-icon-192.png';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
+// An open admin tab clears peer notifications after section sync (#3570).
+self.addEventListener('message', (event) => {
+    const d = event.data || {};
+    const keep = d.jarvisCancelEngage;
+    const brief = d.jarvisCancelBriefing === true;
+    if (!Array.isArray(keep) && !brief) return;
+    const waiting = Array.isArray(keep) ? new Set(keep.map(String)) : null;
+    event.waitUntil(self.registration.getNotifications().then((list) => {
+        list.forEach((n) => {
+            if (waiting && n.tag && n.tag.indexOf('jarvis-engage-') === 0 && !waiting.has(n.tag.slice('jarvis-engage-'.length))) n.close();
+            if (brief && n.tag === 'jarvis-briefing') n.close();
+        });
+    }));
+});
+
 function text(msg) {
     const lines = (msg.lines || []).filter(Boolean);
     return [msg.body].concat(lines.slice(0, 3)).filter(Boolean).join('\n');

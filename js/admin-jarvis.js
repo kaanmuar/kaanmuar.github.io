@@ -703,6 +703,27 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         render();
         const added = newest ? S.feed.filter((f) => f.at > newest).length : 0;
         if (added > 0) pulse(added);
+        if (!only || only.includes('marketing') || only.includes('briefing')) cancelPeerPushes(only);
+    }
+
+    /** Peers acted (#3570): drop stale engagement/briefing push cards and tell the SW to close matching OS notifications. */
+    function cancelPeerPushes(only) {
+        const wantEngage = !only || only.includes('marketing');
+        const wantBrief = !only || only.includes('briefing');
+        const waiting = new Set((((S.e || {}).engagement || {}).waiting || []).map((d) => d.key).filter(Boolean));
+        Array.from(document.querySelectorAll('.jv-push')).forEach((card) => {
+            const msg = pushes[Number(card.dataset.push)];
+            const ref = msg && msg.ref ? String(msg.ref) : '';
+            const tag = msg && msg.tag ? String(msg.tag) : '';
+            if (wantEngage && /^engagement:/.test(ref) && !waiting.has(ref.slice('engagement:'.length))) card.remove();
+            if (wantBrief && (tag === 'jarvis-briefing' || /^proposal:/.test(ref))) card.remove();
+        });
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                jarvisCancelEngage: wantEngage ? Array.from(waiting) : null,
+                jarvisCancelBriefing: wantBrief
+            });
+        }
     }
 
     // --- this browser's screen (#2068): sent with every call, like the app's ----------------------------------
