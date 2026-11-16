@@ -946,7 +946,7 @@
 
   // Headings, controls, scores and the notes that explain the blur stay readable on an unpaid report.
   // .finding-teaser is the top gap shared links keep in the clear (#3477); .case-sample is the whole top case.
-  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .finding-teaser, #report-index";
+  const FADE_CLEAR = "h1, h2, h3, h4, th, button, label, input, select, textarea, script, style, svg, time, .filters, .fade-line, #kpis, #paid-line, #compare-ask, #rivals > p, .rivals-kind, .rivals-pick, .rivals-add, #case-note, #alarm-note, #tool-note, #unlock-offer, .case-sample, .case-verified, .finding-teaser, #report-index";
   // A bought fix list opens the scores and findings; the cases, signals and fix kit stay blurred.
   const FIX_OPEN = "#exec, #health, #fix-first, #browser-pass, #previews, #geo, #analytics, #seo, #site-graph, #security, #findings";
 
