@@ -23,7 +23,8 @@ const PROJECT = "carlosm-interactive-cv";
 const FN = path.join(__dirname, "..", "functions");
 const R = require(path.join(FN, "engagement-reports"));
 const YES = /^(yes|y|x|1)$/i;
-const JOBS = ["prospects", "leads", "replies"];
+const JOBS = ["prospects", "leads", "replies", "companies", "holidays"];
+const JOB_TARGETS = { prospects: 40, companies: 30 };
 const REPLY_DAYS = 14;
 const LEAD_FIELDS = ["campaign", "email", "org", "host", "cc", "language", "sequence", "first_name", "last_name", "title", "score",
   "top_finding", "top_finding_en", "missing", "live_report_url", "report_read"];
@@ -220,14 +221,52 @@ function dnc(dir) {
   return { items: parseCsv(read(path.join(dir, "prospects", "do-not-contact.csv"), "")).rows.map((r) => ({ value: r.email_or_domain, at: r.added_utc, reason: r.reason })).slice(-400) };
 }
 
+function parseJobStats(mode, lines, notify) {
+  const statsLine = (lines || []).find((l) => /^STATS:\s*/.test(l));
+  if (statsLine) {
+    try {
+      const stats = JSON.parse(statsLine.replace(/^STATS:\s*/, ""));
+      if (stats && typeof stats === "object") return stats;
+    } catch (error) { /* old logs without valid JSON */ }
+  }
+  const text = String(notify || "");
+  if (!text) return null;
+  const stats = { mode };
+  if (mode === "prospects") {
+    const picked = /(\d+) new prospects/.exec(text);
+    if (picked) stats.actual = Number(picked[1]);
+    stats.target = JOB_TARGETS.prospects;
+    const short = /(\d+) short of (\d+)/.exec(text);
+    if (short) { stats.gap = Number(short[1]); stats.target = Number(short[2]); if (stats.actual == null) stats.actual = stats.target - stats.gap; }
+  } else if (mode === "companies") {
+    const offered = /(\d+) companies offered/.exec(text) || /(\d+) offered/.exec(text);
+    if (offered) stats.actual = Number(offered[1]);
+    stats.target = JOB_TARGETS.companies;
+  } else if (mode === "leads") {
+    const complete = /(\d+) complete/.exec(text);
+    if (complete) stats.complete = Number(complete[1]);
+    const waiting = /(\d+) (?:still )?waiting/.exec(text);
+    if (waiting) stats.waiting = Number(waiting[1]);
+  } else if (mode === "replies") {
+    const sum = ["interested", "question", "not_now", "wrong_person", "opt_out"].reduce((n, k) => {
+      const m = new RegExp("(\\d+) " + k.replace(/_/g, "[ _]")).exec(text);
+      return n + (m ? Number(m[1]) : 0);
+    }, 0);
+    if (sum) stats.actual = sum;
+  }
+  return Object.keys(stats).length > 1 ? stats : null;
+}
+
 function jobs(state) {
   const logs = path.join(state, "logs");
   return JOBS.map((mode) => {
     const file = path.join(logs, "last-" + mode + ".txt");
-    if (!fs.existsSync(file)) return { mode, at: "", notify: "", tail: [] };
+    if (!fs.existsSync(file)) return { mode, at: "", notify: "", tail: [], stats: null };
     const lines = read(file, "").split(/\r?\n/).filter((l) => l.trim());
-    const notify = lines.find((l) => /^NOTIFY:/.test(l));
-    return { mode, at: fs.statSync(file).mtime.toISOString(), notify: notify ? notify.replace(/^NOTIFY:\s*/, "").slice(0, 300) : "", failed: lines.some((l) => /^exit \d+$/.test(l)), tail: lines.slice(-8).map((l) => l.slice(0, 200)) };
+    const notifyLine = lines.find((l) => /^NOTIFY:/.test(l));
+    const notify = notifyLine ? notifyLine.replace(/^NOTIFY:\s*/, "").slice(0, 300) : "";
+    const stats = parseJobStats(mode, lines, notify);
+    return { mode, at: fs.statSync(file).mtime.toISOString(), notify, stats, failed: lines.some((l) => /^exit \d+$/.test(l)), tail: lines.slice(-8).map((l) => l.slice(0, 200)) };
   });
 }
 
@@ -452,4 +491,4 @@ async function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exit(1); });
 
-module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinPeople, linkedinListed, linkedinLeft, linkedinHeading, linkedinDay, dnc, jobs, kpis, snapshot, runCommand, HANDLERS, SAVES, noteApplied, requeue };
+module.exports = { parseCsv, toCsv, leadFiles, leads, replies, linkedin, linkedinPeople, linkedinListed, linkedinLeft, linkedinHeading, linkedinDay, dnc, jobs, parseJobStats, JOBS, JOB_TARGETS, kpis, snapshot, runCommand, HANDLERS, SAVES, noteApplied, requeue };
