@@ -800,7 +800,8 @@ function normalizeSettings(data) {
   kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
   const github = { repos: core.githubRepos(d.github && d.github.repos) };
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
+  const charts = core.chartPrefs(d.charts);
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, charts, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -813,7 +814,7 @@ async function saveSettings(db, input, by) {
   const layout = input && input.layout !== undefined ? input.layout : saved.layout;
   const cal = input && input.calendar !== undefined ? input.calendar : saved.calendar;
   const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION, layout, calendar: cal }));
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, charts: clean.charts, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
