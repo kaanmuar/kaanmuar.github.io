@@ -140,4 +140,44 @@ function redditMembers(book, since, now) {
   return Object.assign(inRange(r, since), { need: old ? "Reddit members: showing the count from " + String(r.at || "").slice(0, 10) + ", more than two days old. " + REDDIT_SETUP : "" });
 }
 
-module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, cardImage, pending, decide, telegramMembers, redditMembers };
+/** Reply velocity on our posts from ledgers + metrics (#3559). Mirrors scripts/social-reply-velocity.js for Cloud Functions. */
+function firstSentAt(entries) {
+  const times = (entries || []).filter((e) => e && e.result === "sent" && e.at).map((e) => Date.parse(e.at)).filter(Number.isFinite);
+  return times.length ? Math.min(...times) : 0;
+}
+
+function commentsOf(metricsPost) {
+  let n = 0;
+  Object.values(metricsPost || {}).forEach((row) => { n += Number(row && row.comments) || 0; });
+  return n;
+}
+
+function replyVelocity(books, metrics, now, opts) {
+  const o = opts || {};
+  const within = Number(o.hours) > 0 ? Number(o.hours) : 24;
+  const at = Number.isFinite(Number(now)) ? Number(now) : Date.now();
+  const posts = (metrics && metrics.posts) || {};
+  const byKey = {};
+  (books || []).forEach((book) => {
+    Object.keys((book && book.posts) || {}).forEach((key) => {
+      const sent = firstSentAt(book.posts[key]);
+      if (!sent) return;
+      if (!byKey[key] || sent < byKey[key]) byKey[key] = sent;
+    });
+  });
+  const rows = Object.keys(byKey).map((key) => {
+    const sentAt = byKey[key];
+    const hours = (at - sentAt) / 3600000;
+    const comments = commentsOf(posts[key]);
+    const h = Math.max(0.25, Math.min(hours, within));
+    const velocity = Math.round((comments / Math.pow(h, 0.8)) * 100) / 100;
+    return {
+      key, sentAt: new Date(sentAt).toISOString(), hours: Math.round(hours * 10) / 10,
+      comments, velocity, early: hours <= within && comments > 0
+    };
+  }).filter((row) => row.hours >= 0).sort((a, b) => b.velocity - a.velocity || b.comments - a.comments);
+  const limit = Number(o.limit) > 0 ? Number(o.limit) : 8;
+  return { withinHours: within, hot: rows.filter((r) => r.early).slice(0, limit), top: rows.slice(0, limit) };
+}
+
+module.exports = { WORKFLOWS, LIVE_CHANNELS, byChannel, state, cardImage, pending, decide, telegramMembers, redditMembers, replyVelocity };
