@@ -161,8 +161,14 @@ function posts(batch, root = ROOT, network = "bluesky") {
           else if (network === "bluesky" || network === "mastodon") cap.x = merged;
         }
       }
+      // Carousel FFmpeg loop (#3498): IG/FB Reels fallback when no matching-language voiced clip.
+      const loopRel = "loop/" + slug + ".mp4";
+      const loop = fs.existsSync(path.join(dir, loopRel))
+        ? { url: SITE + "/media/social-posts/" + batch + "/" + loopRel }
+        : null;
       return Object.assign({ batch, slug, cap, at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
         slides.length >= 2 ? { slides } : {},
+        loop ? { loop } : {},
         quiz ? { quiz, quizCap: captions[quiz] } : {}, answer ? { answerCap: answer } : {});
     });
 }
@@ -206,6 +212,7 @@ function extras(network, post, face, book) {
   return {
     cap: post.cap, clip: post.clip, quizCap: post.quizCap, answerCap: post.answerCap, quote: quiz ? quiz.id : "",
     slides: post.slides || null,
+    loop: post.loop || null,
     hub: hubUrl(post.batch, post.slug) + "?utm_source=" + network + "&utm_medium=social&utm_campaign=" + post.batch
   };
 }
