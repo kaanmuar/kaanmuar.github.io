@@ -562,6 +562,29 @@ const pairs = (map, n) => Object.entries(map || {}).sort((a, b) => b[1] - a[1]).
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
 
 /** A report over engagement_daily documents, against the window before; top lists the window's best posts. */
+/** Format signals from scout posts for the creative-intel digest (#3558). */
+function formatOf(post) {
+  const text = String((post && (post.title || post.text)) || "");
+  const len = text.replace(/\s+/g, " ").trim().length;
+  const band = len < 80 ? "short" : len < 220 ? "medium" : "long";
+  const link = /\bhttps?:\/\//i.test(text) || /\bhttps?:\/\//i.test(String((post && post.url) || ""));
+  const thread = !!(post && (post.isReply || post.thread));
+  return { network: (post && post.network) || "", band, link: !!link, thread, topic: (post && post.topic) || "" };
+}
+
+function formatsFrom(top) {
+  const counts = {};
+  (top || []).forEach((d) => {
+    const f = formatOf(d);
+    const key = [f.network || "?", f.band, f.link ? "link" : "text", f.thread ? "thread" : "root"].join("|");
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return pairs(counts, 12).map((row) => {
+    const [network, band, link, thread] = String(row.label).split("|");
+    return { label: row.label, value: row.value, network, band, link: link === "link", thread: thread === "thread" };
+  });
+}
+
 function report(period, days, priorDays, top, now) {
   const sum = sumInto({}, {});
   (days || []).forEach((d) => sumInto(sum, d));
@@ -585,7 +608,7 @@ function report(period, days, priorDays, top, now) {
   const posts = (top || []).slice(0, 15).map((d) => ({
     key: d.key, network: d.network, url: d.url, author: (d.author || {}).name || (d.author || {}).handle || "", title: d.title || clip(d.text, 120), about: d.about || "",
     topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: (d.metrics || {}).likes || 0, replies: (d.metrics || {}).replies || 0, reposts: (d.metrics || {}).reposts || 0,
-    verdict: d.verdict, reply: (d.actions && d.actions.reply && d.actions.reply.status) || ""
+    verdict: d.verdict, reply: (d.actions && d.actions.reply && d.actions.reply.status) || "", format: formatOf(d)
   }));
   const authors = {};
   (top || []).forEach((d) => { const a = (d.author || {}).handle; if (a) authors[d.network + ":" + a] = (authors[d.network + ":" + a] || 0) + 1; });
@@ -596,7 +619,7 @@ function report(period, days, priorDays, top, now) {
     approvalRate: pct(t.approved + t.edited, decided), editRate: pct(t.edited, t.approved + t.edited), expiredRate: pct(t.expired, t.drafted),
     avgDecideMin: sum.decided ? Math.round((sum.decideMs || 0) / sum.decided / 60000) : null,
     networks, topics: pairs(sum.topic), langs: pairs(sum.lang), tags: pairs(sum.tag, 20), skips: pairs(sum.skip), verdicts: pairs(sum.verdict),
-    posts, authors: pairs(authors, 10), invites: invitesOf(sum.report)
+    formats: formatsFrom(top), posts, authors: pairs(authors, 10), invites: invitesOf(sum.report)
   };
 }
 
@@ -648,6 +671,7 @@ function reportMail(r) {
   const body = [
     ...list("By network", r.networks, (n) => "- " + n.name + ": " + n.read + " read, " + n.candidates + " in field, " + n.like + " likes, " + n.repost + " reposts, " + n.follow + " follows planned (done: " + doneLine(n) + "), " + n.drafted + " replies drafted, " + n.posted + " posted"),
     ...list("Topics", r.topics, (x) => "- " + x.label + ": " + x.value),
+    ...list("Formats in our field", r.formats || [], (x) => "- " + ((NETWORKS[x.network] || {}).name || x.network || "?") + " · " + x.band + (x.link ? " · with link" : " · text") + (x.thread ? " · thread" : " · root") + ": " + x.value),
     ...list("Trending keywords", r.tags.slice(0, 12), (x) => "- " + x.label.replace(/_/g, " ") + ": " + x.value),
     ...list("Languages", r.langs, (x) => "- " + x.label + ": " + x.value),
     ...list("Left alone", r.skips, (x) => "- " + x.label.replace(/_/g, " ") + ": " + x.value),
@@ -743,5 +767,5 @@ function decideReply(doc, decision, text, by, now) {
 module.exports = {
   NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
-  postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
+  postDoc, chainDoc, rollup, sumInto, formatOf, formatsFrom, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };
