@@ -859,6 +859,17 @@
     "url": "https://t.me/qalab_live/77",
     "checked": "2026-11-14T22:57:35.291Z"
    }
+  ],
+  "tips-2026-10/20-html-first": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "85",
+    "at": "2026-11-16T01:57:56.718Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/85",
+    "checked": "2026-11-16T01:57:57.743Z"
+   }
   ]
  }
 }
