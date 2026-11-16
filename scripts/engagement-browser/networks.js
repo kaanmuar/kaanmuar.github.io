@@ -1360,7 +1360,9 @@ const RD_SUBS = ["QualityAssurance", "softwaretesting", "Playwright", "Cypress",
 
 // token_v2 is httpOnly and lasts a day; a www page view renews it.
 async function rdToken(page) {
-  if (!page.url().startsWith(RD)) await go(page, reddit, RD + "/");
+  let host = "";
+  try { host = new URL(page.url()).hostname; } catch (_) { /* ignore */ }
+  if (host !== "www.reddit.com" && host !== "reddit.com") await go(page, reddit, RD + "/");
   const t = (await page.context().cookies(RD)).find((c) => c.name === "token_v2");
   if (!t || !t.value) throw new Refused("Reddit is signed out in the agent's Chrome.");
   return t.value;

@@ -42,15 +42,28 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Section layout per tab (#2809): jarvis_settings layout[tab] = { order, hidden } of panel ids, the same entry the web edits.
+ * Continuous size (#3611): layout[tab].size[id] = { h, w }. stretch (#3569) is passed through so size saves do not wipe it.
  * The web's panelSlug, applyLayout, layoutMove and keepLayout from js/admin-jarvis-core.js. Each panel passes the id of its web panel
  * (#2866, tests/unit/jarvis-panel-ids.test.js); before that the app saved title slugs, which [alias] still reads.
  */
 object Layouts {
-    data class Saved(val order: List<String> = emptyList(), val hidden: List<String> = emptyList(), val stretch: Map<String, Int> = emptyMap())
+    data class Size(val h: Float = 1f, val w: Float = 1f) {
+        fun isDefault() = h == 1f && w == 1f
+    }
+    data class Saved(
+        val order: List<String> = emptyList(),
+        val hidden: List<String> = emptyList(),
+        val size: Map<String, Size> = emptyMap(),
+        val stretch: Map<String, Int> = emptyMap()
+    )
     data class Applied(val all: List<String>, val order: List<String>, val hidden: List<String>)
 
     private val ID = Regex("^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$")
     private const val MAX = 200
+    private const val H_MIN = 0.5f
+    private const val H_MAX = 3f
+    private const val W_MIN = 0.5f
+    private const val W_MAX = 2f
 
     fun slug(title: String): String {
         val s = title.split(" · ")[0].replace(Regex("\\s*\\([^)]*\\)\\s*$"), "").lowercase()
@@ -59,6 +72,25 @@ object Layouts {
     }
 
     fun ids(list: List<String>?): List<String> = list.orEmpty().filter { ID.matches(it) }.distinct().take(MAX)
+
+    fun clampSize(h: Float = 1f, w: Float = 1f): Size {
+        fun one(n: Float, min: Float, max: Float) =
+            if (!n.isFinite()) 1f else kotlin.math.round(n.coerceIn(min, max) * 100f) / 100f
+        return Size(one(h, H_MIN, H_MAX), one(w, W_MIN, W_MAX))
+    }
+
+    fun cleanSize(map: Map<String, Size>?): Map<String, Size> =
+        map.orEmpty().mapNotNull { (id, s) ->
+            if (!ID.matches(id)) return@mapNotNull null
+            val one = clampSize(s.h, s.w)
+            if (one.isDefault()) null else id to one
+        }.toMap()
+
+    fun cleanStretch(map: Map<String, Int>?): Map<String, Int> =
+        map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
+
+    /** Width factor → treat as full-bleed in Masonry when large enough (matches web sizeSpan). */
+    fun isWideSize(w: Float, alreadyWide: Boolean = false) = w >= 1.85f || (alreadyWide && w >= 0.95f) || w >= 1.35f
 
     /** base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is). */
     fun weave(base: List<String>, ref: List<String>): List<String> {
@@ -87,7 +119,7 @@ object Layouts {
         if (layout == null || legacy.isEmpty()) return layout
         val have = present.toSet()
         fun map(list: List<String>) = list.map { id -> legacy[id]?.takeIf { id !in have && it in have } ?: id }.distinct()
-        return Saved(map(layout.order), map(layout.hidden), layout.stretch)
+        return Saved(map(layout.order), map(layout.hidden), layout.size, layout.stretch)
     }
 
     /** One step up (-1) or down (1) past the next shown panel; hidden panels keep their place. */
@@ -104,25 +136,38 @@ object Layouts {
     }
 
     /** What to save after an edit: this side's order and hidden panels, with the ids it did not show (the web's, or empty panels) kept. */
-    fun cleanStretch(map: Map<String, Int>?): Map<String, Int> {
-        return map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
-    }
-
     fun keep(prev: Saved?, all: List<String>, hidden: List<String>, shown: List<String>): Saved {
         val mine = shown.toSet()
+        val size = cleanSize(prev?.size).filterKeys { it in mine }
         val stretch = cleanStretch(prev?.stretch).filterKeys { it in mine }
-        return Saved(weave(ids(all), ids(prev?.order)).take(MAX), ids(ids(prev?.hidden).filter { it !in mine } + ids(hidden)), stretch)
+        return Saved(weave(ids(all), ids(prev?.order)).take(MAX), ids(ids(prev?.hidden).filter { it !in mine } + ids(hidden)), size, stretch)
+    }
+
+    fun withSize(prev: Saved?, id: String, size: Size, shown: List<String>): Saved {
+        val base = keep(prev, prev?.order.orEmpty().ifEmpty { shown }, prev?.hidden.orEmpty(), shown)
+        val next = cleanSize(base.size + (id to size))
+        return base.copy(size = next)
     }
 
     fun read(snapshot: JsonObject?, tab: String): Saved? {
         val t = snapshot.obj("settings").obj("layout").obj(tab) ?: return null
         fun list(key: String) = (t[key] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
+        val sizeObj = t["size"] as? JsonObject
+        val size = sizeObj?.mapNotNull { (id, el) ->
+            val o = el as? JsonObject ?: return@mapNotNull null
+            val h = (o["h"] as? JsonPrimitive)?.content?.toFloatOrNull() ?: 1f
+            val w = (o["w"] as? JsonPrimitive)?.content?.toFloatOrNull() ?: 1f
+            if (!ID.matches(id)) null else id to clampSize(h, w)
+        }?.filter { !it.second.isDefault() }?.toMap().orEmpty()
         val stretchObj = t["stretch"] as? JsonObject
         val stretch = stretchObj?.mapNotNull { (id, el) ->
             val n = (el as? JsonPrimitive)?.content?.toIntOrNull()
             if (ID.matches(id) && n != null && n in 1..3) id to n else null
         }?.toMap().orEmpty()
-        return Saved(ids(list("order")), ids(list("hidden")), stretch)
+        val order = ids(list("order"))
+        val hidden = ids(list("hidden"))
+        if (order.isEmpty() && hidden.isEmpty() && size.isEmpty() && stretch.isEmpty()) return null
+        return Saved(order, hidden, size, stretch)
     }
 
     fun json(layout: Saved?): JsonElement = layout?.let {
@@ -130,6 +175,12 @@ object Layouts {
             "order" to JsonArray(it.order.map(::JsonPrimitive)),
             "hidden" to JsonArray(it.hidden.map(::JsonPrimitive))
         )
+        val size = cleanSize(it.size)
+        if (size.isNotEmpty()) {
+            base["size"] = JsonObject(size.mapValues { (_, s) ->
+                JsonObject(mapOf("h" to JsonPrimitive(s.h), "w" to JsonPrimitive(s.w)))
+            })
+        }
         val stretch = cleanStretch(it.stretch)
         if (stretch.isNotEmpty()) base["stretch"] = JsonObject(stretch.mapValues { (_, n) -> JsonPrimitive(n) })
         JsonObject(base)
@@ -152,6 +203,8 @@ object Layouts {
 /** The tab whose panels a [Masonry] arranges, and its saved layout; null outside the tabs (Settings, Ask). */
 val LocalLayoutTab = compositionLocalOf<String?> { null }
 val LocalLayout = compositionLocalOf<Layouts.Saved?> { null }
+/** Saves one panel's continuous size (#3611) into settings.layout; null outside tab content. */
+val LocalSavePanelSize = compositionLocalOf<((String, Layouts.Size) -> Unit)?> { null }
 
 /** The tab being edited and the ids each tab drew last, in their default order. */
 object Arrange {
