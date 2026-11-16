@@ -1,6 +1,7 @@
 /**
- * Agency white-label branding and CI post-deploy webhook (#3482).
- * Branding: company name + logo on PDF and shared soft-preview header; small “Report by QA-lab” line stays.
+ * Agency white-label branding and CI post-deploy webhook (#3482 / #3494).
+ * Branding: company name + logo on PDF, live/on-screen report, and shared soft-preview header;
+ * small “Report by QA-lab” line stays. Team/Pro only.
  * CI auth: per-account HMAC secret (Advice / Q32), not the shared publish key.
  */
 const crypto = require("crypto");
@@ -105,6 +106,11 @@ function pdfBrand(brand) {
   };
 }
 
+// Live/on-screen report uses the same co-brand defaults as the PDF (#3494).
+function liveBrand(brand) {
+  return pdfBrand(brand);
+}
+
 module.exports = {
   brandingOf,
   publicBranding,
@@ -115,5 +121,6 @@ module.exports = {
   signed,
   verifyCiRequest,
   pdfBrand,
+  liveBrand,
   HOOK_ID_RE
 };

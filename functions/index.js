@@ -5589,6 +5589,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
           console.error("Shared report open note failed:", error);
         }
       }
+      const lockedBrand = await brandingForEmail(data.email);
       res.status(access.status).json({
         error: access.error,
         signIn: true,
@@ -5597,7 +5598,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         host: data.report.host,
         status: data.status || "",
         frameworks: data.frameworks || [],
-        preview: urlReview.previewReport(data.report)
+        preview: urlReview.previewReport(data.report),
+        branding: lockedBrand ? { companyName: lockedBrand.companyName, logoDataUrl: lockedBrand.logoDataUrl || "" } : null
       });
       return;
     }
@@ -5922,6 +5924,7 @@ async function runSoftPreview(req, res) {
     await getFirestore().collection("url_reviews").doc(report.id).set(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "soft-preview", record);
     const shown = urlReview.previewReport(report);
+    const softLiveBrand = email ? await brandingForEmail(email) : null;
     writeLine({
       type: "done",
       report: shown,
@@ -5930,7 +5933,8 @@ async function runSoftPreview(req, res) {
       softPreview: true,
       priceUsd: 0,
       softLeft: quota.left,
-      softCap: quota.cap
+      softCap: quota.cap,
+      branding: softLiveBrand ? { companyName: softLiveBrand.companyName, logoDataUrl: softLiveBrand.logoDataUrl || "" } : null
     });
     res.end();
   } catch (error) {
@@ -6183,7 +6187,16 @@ async function runReview(req, res, placeOf) {
     writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
     // The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
     const shown = record.paid === true ? report : Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
-    writeLine({ type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, free: record.free === true, priceUsd: record.priceUsd });
+    const liveBrand = await brandingForEmail(intake.value.email);
+    writeLine({
+      type: "done",
+      report: shown,
+      frameworks: record.frameworks,
+      paid: record.paid === true,
+      free: record.free === true,
+      priceUsd: record.priceUsd,
+      branding: liveBrand ? { companyName: liveBrand.companyName, logoDataUrl: liveBrand.logoDataUrl || "" } : null
+    });
     try {
       await mailReportToAsker(record);
     } catch (error) {

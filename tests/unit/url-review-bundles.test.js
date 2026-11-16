@@ -47,6 +47,15 @@ describe("Agency branding + CI HMAC (#3482)", () => {
     assert.equal(brand.byline, "Report by QA-lab URL Review");
   });
 
+  it("mirrors PDF co-brand defaults on live reports (#3494)", () => {
+    const brand = agency.liveBrand({ companyName: "North Agency", logoDataUrl: "data:image/png;base64,aaaa" });
+    assert.equal(brand.companyName, "North Agency");
+    assert.equal(brand.logoDataUrl, "data:image/png;base64,aaaa");
+    assert.equal(brand.eyebrow, "North Agency");
+    assert.equal(brand.byline, "Report by QA-lab URL Review");
+    assert.equal(agency.liveBrand(null), null);
+  });
+
   it("gates agency features on Team and Pro", () => {
     assert.equal(agency.agencyEligible({ plan: "freelancer" }), false);
     assert.equal(agency.agencyEligible({ plan: "team" }), true);
