@@ -201,6 +201,16 @@ test.describe('A first review from the hero (#2756)', () => {
     expect(calls).not.toContain('/review');
   });
 
+  test('Hub soft-gate (?url=&from=hub) auto soft-previews (#3533)', async ({ page }) => {
+    await prime(page, { terms: false });
+    const calls = await backend(page);
+    await page.goto('/qa-review.html?url=example.com&from=hub');
+    await expect(page.locator('#gate')).toBeHidden();
+    await expect(page.locator('#soft-unlock-btn')).toBeVisible({ timeout: 20000 });
+    await expect.poll(() => calls.includes('/review/preview')).toBe(true);
+    expect(calls).not.toContain('/review');
+  });
+
   test('an empty hero field stays put', async ({ page }) => {
     await prime(page);
     await backend(page);

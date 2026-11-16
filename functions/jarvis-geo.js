@@ -55,9 +55,32 @@ const NO_REPORTS = new Set(["AQ", "BV", "GS", "HM", "TF", "UM"]);
 const POSITIVE = /interest|positive|meeting|yes|book/i;
 const ACTIVE = /^(active|running subsequences)$/;
 const MIN_SENT = 50;
+const LIVE_INDEX = ORIGIN + "/assets/live-reports/index.json";
+const LIVE_TRIES = 3;
+const LIVE_WAIT_MS = 400;
 
 const up = (cc) => String(cc || "").trim().toUpperCase();
 const valid = (cc) => /^[A-Z]{2}$/.test(cc);
+const sleep = (ms) => (ms > 0 ? new Promise((ok) => setTimeout(ok, ms)) : Promise.resolve());
+
+/** Live Reports index for the Map (#3645): retries through a brief publish miss; null when every try fails. */
+async function readLiveIndex(fetchImpl, opts) {
+  const tries = Math.max(1, Number(opts && opts.tries) || LIVE_TRIES);
+  const wait = opts && opts.wait !== undefined ? Number(opts.wait) || 0 : LIVE_WAIT_MS;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetchImpl(LIVE_INDEX, { signal: AbortSignal.timeout(15000), cache: "no-store" });
+      if (!res.ok) throw new Error("status " + res.status);
+      const data = await res.json();
+      if (data && Array.isArray(data.reports)) return data;
+      throw new Error("bad shape");
+    } catch (error) {
+      if (i + 1 >= tries) return null;
+      await sleep(wait * (i + 1));
+    }
+  }
+  return null;
+}
 const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
 const domainOf = (email) => bare(String(email || "").split("@")[1] || "");
 const round = (n, d) => Math.round(n * (d || 1)) / (d || 1);
@@ -343,7 +366,7 @@ async function geo(ctx) {
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
     ctx.db.collection("url_review_sweep").doc("lane").get(),
-    ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => null),
+    readLiveIndex(ctx.fetch, ctx.liveIndex),
     readTargets(ctx.db),
     peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4"), peer("calendar")
   ]);
@@ -371,7 +394,8 @@ async function geo(ctx) {
   out.time = await geoTime.read(ctx.db).catch(() => null);
   await require("./jarvis-geo-cost").attach(ctx, out, { marketing, needs }).catch(() => null);
   await require("./jarvis-geo-actions").attach(ctx, out, { outreach, marketing, calendar, confirm: confirm.rows });
-  return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
+  // cache:false when Live Reports missed: jarvisCached must not keep that miss for the full TTL (#3645).
+  return Object.assign({ ok: true, needs, days: ctx.days }, live ? {} : { cache: false }, out, { confirm: confirm.rows });
 }
 
-module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
+module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS, readLiveIndex };

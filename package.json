@@ -37,7 +37,8 @@
     "format": "biome format --write .",
     "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false .cursor/hooks/format.js .cursor/hooks/mcp-allow.js .cursor/hooks.json .cursor/mcp.json biome.json scripts/refresh-lab-lines.js",
     "format:md": "prettier --write \"**/*.{md,mdc,html}\"",
-    "lab:lines": "node scripts/refresh-lab-lines.js"
+    "lab:lines": "node scripts/refresh-lab-lines.js",
+    "vendor:three": "node scripts/vendor-three.js"
   },
   "author": "Carlos A. Muñoz",
   "license": "ISC",
@@ -75,6 +76,7 @@
     "prettier": "^3.6.2",
     "selenium-webdriver": "^4.52.0",
     "tailwindcss": "^4.3.3",
+    "three": "^0.170.0",
     "vitest": "^5.0.5"
   },
   "overrides": {

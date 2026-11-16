@@ -1733,6 +1733,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { wide: true, note: 'Videos post as they are, in the language you speak in them, and must have sound. LinkedIn, X and the Facebook Page (plus TikTok and YouTube for a video) get it about 30 minutes after you queue it.' });
     }
 
+    // Soft gate on Hub (#3533): same paste → frost → Unlock path as the public Social hub form.
+    function softGatePanel() {
+        return panel('hub-soft', 'Soft preview',
+            `<form class="jv-inline" data-hub-soft><input name="url" placeholder="example.com — soft preview" aria-label="URL for a soft preview"><button type="submit" class="jv-btn">Soft preview</button></form>`,
+            { note: 'Soft gate (#3478 / #3533): opens URL Review with a 1-page preview (gauges + top finding, no account). Unlock there runs OAuth + the ten terms, then queues a full crawl. Same form as qa-review-social.html.' });
+    }
+
     async function shareDraft() {
         const H = S.share;
         if (!H.file || H.busy) return;
@@ -3723,7 +3730,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         out.review += take();
 
         const hub = s.hub;
-        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${sharePanel()}${socialVelocityPanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
+        out.hub = kpis(hub.kpis) + `<div class="jv-grid">${briefPanel('hub')}${softGatePanel()}${sharePanel()}${socialVelocityPanel()}${socialQueuePanel()}${socialRunsPanel()}${socialProposalsPanel()}
             ${panel('hub-trend', 'Hub and post views per day', area(hub.series.labels, [{ name: 'Views', values: hub.series.values, color: COLORS.violet }]), { wide: true, data: hub.series.labels.map((d, k) => ({ day: d, views: hub.series.values[k] })) })}
             ${listPanel('hub', 'posts', 'Top posts (score)', hub.lists.posts)}${listPanel('hub', 'sources', 'GA4 sources', hub.lists.sources, { color: COLORS.amber })}
             ${listPanel('hub', 'networks', 'Shares by network', hub.lists.networks, { color: COLORS.green })}${listPanel('hub', 'events', 'Events in range', hub.lists.events, { color: COLORS.violet })}${listPanel('hub', 'langs', 'Hub pages by language', hub.lists.langs)}
@@ -4864,6 +4871,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             const out = await call('review', { url, lang: 'en' }).catch((error) => ({ ok: false, error: error.message }));
             toast(out.ok ? `Reviewing ${out.host}. It shows in the URL Review tab when it is done.` : 'Not started: ' + out.error, 6000);
             if (out.ok) { S.mkForm.url = ''; form.url.value = ''; }
+        } else if (form.dataset.hubSoft !== undefined) {
+            const raw = form.url.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+            if (!raw || /\s/.test(raw)) { toast('Enter a public host, e.g. example.com.', 4000); return; }
+            window.open('qa-review.html?url=' + encodeURIComponent(raw) + '&from=hub', '_blank', 'noopener');
         } else if (form.dataset.mkBlock !== undefined) {
             const value = form.address.value.trim();
             if (!value || !confirmRun(`block ${value} in Instantly, so no campaign ever emails it`)) return;
