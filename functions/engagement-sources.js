@@ -12,8 +12,11 @@
  *   Hacker News, DEV and Lobsters: read for trends only
  * X, LinkedIn, Facebook, Instagram, Threads and TikTok are read by the Mac's browser (#1991).
  */
+const E = require("./engagement");
 const SLOT = 30 * 60 * 1000;
 const TIMEOUT = 12000;
+/** Full-text Mastodon searches per slot on top of tag timelines, when MASTODON_SEARCH_* is set (#3613). */
+const MASTODON_SEARCH_PER_RUN = 4;
 
 const MASTODON_TAGS = ["a11y", "accessibility", "webperf", "corewebvitals", "seo", "softwaretesting", "testautomation", "playwright", "qa", "webdev", "wcag", "technicalseo", "webaccessibility", "ga4", "privacy"];
 const BLUESKY_QUERIES = ["accessibility", "a11y", "web performance", "core web vitals", "SEO", "technical SEO", "playwright", "software testing", "test automation", "WCAG", "AI overviews", "GA4"];
@@ -44,7 +47,12 @@ function mastodonPost(s) {
   };
 }
 
-async function mastodon(ctx) {
+const dedupePosts = (posts) => {
+  const seen = new Set();
+  return posts.filter((p) => { const k = p.network + ":" + String(p.id); return seen.has(k) ? false : seen.add(k); });
+};
+
+async function mastodonTags(ctx) {
   const base = String(ctx.env.MASTODON_URL || "https://mastodon.social").replace(/\/+$/, "");
   const urls = pick(MASTODON_TAGS, ctx.slot, 4).map((t) => base + "/api/v1/timelines/tag/" + encodeURIComponent(t) + "?limit=30")
     .concat([base + "/api/v1/trends/statuses?limit=30"]);
@@ -52,6 +60,25 @@ async function mastodon(ctx) {
   const failed = lists.filter((l) => l && l.error);
   if (failed.length === lists.length) throw failed[0].error;
   return lists.filter(Array.isArray).flat().filter((s) => !(s.account || {}).bot).map(mastodonPost);
+}
+
+/** Field search with the connected account's token; rotates TOPICS and DISCOVERY, not tags alone (#3613). */
+async function mastodonSearch(ctx) {
+  if (!ctx.env.MASTODON_SEARCH_URL || !ctx.env.MASTODON_SEARCH_TOKEN) return [];
+  const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/\/+$/, "");
+  const since = new Date(ctx.now - 2 * 24 * 3600000).toISOString();
+  const topicQs = pick(Object.keys(E.TOPICS), ctx.slot, 2).flatMap((t) => pick(E.TOPICS[t].slice(0, 3), ctx.slot, 1));
+  const discQs = E.discoveryForRun(ctx.now, E.MASTODON_DISCOVERY_BUDGET).map((d) => d.q);
+  const queries = [...new Set(pick(BLUESKY_QUERIES, ctx.slot, 2).concat(topicQs, discQs))].slice(0, MASTODON_SEARCH_PER_RUN);
+  if (!queries.length) return [];
+  const lists = await Promise.all(queries.map((q) => getJson(ctx.fetch, base + "/api/v2/search?type=statuses&resolve=false&limit=20&q=" + encodeURIComponent(q),
+    { headers: { Authorization: "Bearer " + ctx.env.MASTODON_SEARCH_TOKEN } }).then((l) => (l.statuses || []).filter((s) => !(s.account || {}).bot && String(s.created_at || "") >= since).map((s) => Object.assign(mastodonPost(s), { query: q }))).catch(() => [])));
+  return lists.flat();
+}
+
+async function mastodon(ctx) {
+  const [tags, search] = await Promise.all([mastodonTags(ctx).catch((error) => { throw error; }), mastodonSearch(ctx)]);
+  return dedupePosts(tags.concat(search));
 }
 
 function blueskyPost(p) {
@@ -228,4 +255,4 @@ async function search(ctx, queries) {
   return out;
 }
 
-module.exports = { readAll, readable, search, blueskySession, mastodonPost, blueskyPost, plain, pick, READERS, SEARCHERS, SLOT, SEARCH_DAYS };
+module.exports = { readAll, readable, search, blueskySession, mastodonPost, blueskyPost, plain, pick, dedupePosts, mastodonTags, mastodonSearch, MASTODON_SEARCH_PER_RUN, READERS, SEARCHERS, SLOT, SEARCH_DAYS };

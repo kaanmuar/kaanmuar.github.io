@@ -845,9 +845,10 @@ async function source(ctx) {
   const now = ctx.now;
   const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
   const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-  const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap, redditSnap] = await Promise.all([
+  const [conf, runsSnap, metaSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap, redditSnap] = await Promise.all([
     readSettings(db),
     db.collection("engagement_runs").orderBy("at", "desc").limit(12).get(),
+    db.collection("engagement_meta_runs").orderBy("at", "desc").limit(1).get(),
     db.collection("engagement_posts").where("actions.reply.status", "==", "waiting").limit(60).get(),
     db.collection("engagement_posts").where("actions.reply.status", "in", ["approved", "posted", "failed", "replied"]).limit(90).get(),
     dailies(db, range),
@@ -866,6 +867,7 @@ async function source(ctx) {
   const signed = (k) => !!(mac && (mac.signedIn || {})[k]);
   const macReads = (k) => (!mac ? "Mac browser, not set up" : !signed(k) ? "Mac browser, not signed in" : "Mac browser" + ((mac.accounts || {})[k] ? " as " + mac.accounts[k] : ""));
   const runs = runsSnap.docs.map((d) => d.data());
+  const metaScout = metaSnap.docs[0] ? metaSnap.docs[0].data() : null;
   const last = runs[0] || null;
   const stale = !last || now - Date.parse(last.at) > STALE;
   const report = E.report("range", cur, prev, top, now);
@@ -918,7 +920,7 @@ async function source(ctx) {
   const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
   const joins = await Joins.summary(db, conf, mac, used, now);
   return {
-    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, runs, accounts, ownerTags,
+    ok: true, settings: conf, paused: conf.paused, live: conf.live, stale, lastRun: last, metaScout, runs, accounts, ownerTags,
     waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
     approved: approvedSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt))).slice(0, 30),
     posts: top.map(brief), report, networks,

@@ -75,8 +75,9 @@ test("the curated list: real communities and searches in six languages, each wit
   });
   assert.equal(new Set(C.LIST.map(C.keyOf)).size, C.LIST.length, "no duplicates");
   ["linkedin", "facebook", "telegram"].forEach((n) => assert.ok(C.LIST.some((c) => c.network === n && c.kind === "search"), n));
-  const topics = C.withStudents(E.DISCOVERY, 4);
-  assert.equal(topics.filter((t) => t.topic === "Students").length, Math.floor(E.DISCOVERY.length / 4));
+  const pool = E.discoveryForRun(NOW);
+  const topics = C.withStudents(pool, 4);
+  assert.equal(topics.filter((t) => t.topic === "Students").length, Math.floor(pool.length / 4));
   ["en", "es", "pt", "de", "fr", "it"].forEach((l) => {
     assert.ok(COPY[l].posts.length >= 2 && COPY[l].reply.length >= 1 && COPY[l].subject, l);
     assert.ok(COPY[l].offerPost.includes("{days}") && COPY[l].offerPost.includes("{pct}") && !COPY[l].offerPost.includes("{link}"), l + " offerPost");

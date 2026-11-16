@@ -75,7 +75,7 @@ const TOPICS = {
   Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"]
 };
 // The same topics in other languages (#2614), so a post or group in any of them is in our field and the Mac's browser
-// searches in them too (DISCOVERY: each language's first phrase per topic). Lowercase; regex like TOPICS.
+// searches in them too (DISCOVERY: every phrase per topic, discoveryForRun picks a budget per slot). Lowercase; regex like TOPICS.
 const INTL = {
   Testing: {
     es: ["pruebas de software", "automatización de pruebas", "pruebas automatizadas", "aseguramiento de la calidad"], pt: ["testes de software", "automação de testes", "testes automatizados", "garantia de qualidade"],
@@ -135,14 +135,28 @@ const wordRe = (w) => (UNSPACED.test(w) ? new RegExp(w, "iu") : new RegExp("(^|[
 const TOPIC_RES = Object.fromEntries(Object.entries(TOPICS).map(([t, words]) => [t, words.concat(...Object.values(INTL[t] || {})).map((w) => [w, wordRe(w)])]));
 const phrase = (w) => w.replace(/\\p\{L\}\*|\?|\\/g, "").replace(/\s+/g, " ").trim();
 // Topic searches in other languages for the Mac's browser: [{ q, lang, topic }], languages interleaved.
+// Every phrase per topic, not only the first; discoveryForRun picks DISCOVERY_BUDGET per slot (#3613).
 const DISCOVERY = (() => {
   const by = {};
-  Object.entries(INTL).forEach(([topic, langs]) => Object.entries(langs).forEach(([lang, words]) => { (by[lang] = by[lang] || []).push({ q: phrase(words[0]), lang, topic }); }));
+  Object.entries(INTL).forEach(([topic, langs]) => Object.entries(langs).forEach(([lang, words]) => {
+    (by[lang] = by[lang] || []).push(...words.map((w) => ({ q: phrase(w), lang, topic })));
+  }));
   const lists = Object.values(by);
   const out = [];
   for (let i = 0; lists.some((l) => l[i]); i += 1) lists.forEach((l) => { if (l[i]) out.push(l[i]); });
   return out;
 })();
+const DISCOVERY_SLOT = 30 * 60 * 1000;
+/** How many topic searches the Mac (and Mastodon field search) ask per half-hour slot (#3613). */
+const DISCOVERY_BUDGET = 12;
+const MASTODON_DISCOVERY_BUDGET = 3;
+
+function discoveryForRun(now, budget) {
+  const b = budget == null ? DISCOVERY_BUDGET : Math.max(0, Math.min(Number(budget) || 0, DISCOVERY.length));
+  if (!b) return [];
+  const slot = Math.floor((now || Date.now()) / DISCOVERY_SLOT);
+  return Array.from({ length: b }, (_, i) => DISCOVERY[(slot * b + i) % DISCOVERY.length]);
+}
 
 // As scripts/trending-tags.js: no post rides on news about deaths, wars, elections or layoffs. Words our field also
 // uses ("dead links", "killed the process", "fired an event") are left to Gemini's political and tone flags.
@@ -741,7 +755,7 @@ function decideReply(doc, decision, text, by, now) {
 }
 
 module.exports = {
-  NETWORKS, TOPICS, INTL, DISCOVERY, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
   postDoc, chainDoc, rollup, sumInto, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };

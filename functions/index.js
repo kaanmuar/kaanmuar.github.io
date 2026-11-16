@@ -6261,6 +6261,7 @@ const jarvisCalendar = require("./jarvis-calendar");
 const jarvisOutreach = require("./jarvis-outreach");
 const jarvisAddresses = require("./jarvis-addresses");
 const jarvisEngagement = require("./jarvis-engagement");
+const metaScout = require("./meta-scout");
 const ownerTags = require("./owner-tags");
 const engagementMac = require("./engagement-mac");
 const engagementReddit = require("./engagement-reddit");
@@ -7723,9 +7724,9 @@ exports.jarvisLogPoll = scheduled(functions.runWith({ timeoutSeconds: 60, memory
 // Hourly at :20 (#2526): GitHub day docs, backfill, diagnoses and the Sunday retro.
 exports.jarvisGithub = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.jarvisGithub }), "jarvisGithub", jarvisGithubJob);
 
-// Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
+// Every 30 minutes (#1988, #3613 meta-scout): cloud read and plan, folded with Mac/Reddit/owner-tags/student status.
 exports.engagementScout = scheduled(functions.runWith({ timeoutSeconds: 540, memory: "512MB", secrets: SECRETS.engagement }), "engagementScout",
-  async () => jarvisEngagement.runNote(await jarvisEngagement.scout(engagementDeps())));
+  async () => jarvisEngagement.runNote((await metaScout.run(engagementDeps())).run));
 const engagementReport = (period) => async () => {
   const out = await jarvisEngagement.sendReport(engagementDeps(), period);
   if (!out.sent) throw new Error("The " + period + " engagement report was not mailed.");

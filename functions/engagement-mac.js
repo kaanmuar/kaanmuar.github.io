@@ -122,7 +122,15 @@ async function sites(deps) {
   const conf = await J.readSettings(deps.db);
   if (conf.paused) return { ok: true, paused: true, queries: [], topics: [], groups: {} };
   const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
-  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: Communities.withStudents(E.DISCOVERY), groups }, look.error ? { error: look.error } : {});
+  const looseAll = R.looseQueries(look.sites);
+  const loose = R.looseForMac(looseAll, deps.now);
+  const topics = Communities.withStudents(E.discoveryForRun(deps.now), 4);
+  return Object.assign({
+    ok: true, paused: false,
+    queries: look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)),
+    loose: loose.map((l) => ({ q: l.q, match: l.match, host: l.target.host })),
+    topics, groups
+  }, look.error ? { error: look.error } : {});
 }
 
 /** Student communities the searches found, student posts to comment on and students who answered us (#3138). */

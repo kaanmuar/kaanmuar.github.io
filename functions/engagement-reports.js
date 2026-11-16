@@ -57,6 +57,8 @@ const RERUN_PER_RUN = 4;
 
 const WEAK = 70;
 const LOOSE_PER_RUN = 4;
+/** Niche/problem searches handed to the Mac when named Live Report queries are not enough (#3613). */
+const LOOSE_MAC_BUDGET = 2;
 const LOOSE_WORTH = 0.75;
 const LOOSE = ["problem", "niche"];
 // Weak areas in the order people complain about them in public; the first one is searched.
@@ -204,6 +206,15 @@ function looseQueries(list) {
   });
   const seen = new Set();
   return problems.concat(niches).filter((l) => !seen.has(l.q) && seen.add(l.q)).slice(0, LOOSE_PER_RUN);
+}
+
+/** A rotating subset of looseQueries for engagement-mac-sites (#3613). */
+function looseForMac(loose, now) {
+  const list = loose || [];
+  if (!list.length) return [];
+  const slot = Math.floor((now || Date.now()) / (30 * 60 * 1000));
+  const n = Math.min(LOOSE_MAC_BUDGET, list.length);
+  return Array.from({ length: n }, (_, i) => list[(slot * n + i) % list.length]);
 }
 
 /** The site a post fits by a loose search, the one that found it first, as { target, match, problem } or null. */
@@ -494,7 +505,7 @@ function resultsIssue(r, social) {
 }
 
 module.exports = {
-  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH, PARENT,
+  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_MAC_BUDGET, LOOSE_WORTH, looseForMac, PARENT,
   RERUN_MIN, BACK_DAYS, RERUN_PER_RUN, RERUN_COPY, REGISTER,
   targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue,
   toldScore, moved, reruns, replyId, rerunText, rerunDoc
