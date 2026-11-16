@@ -2,8 +2,14 @@
 import { LOOP_SEC, LANGS, createHeroScene } from "./scene.js";
 
 const mount = document.getElementById("review-hero-3d");
+const still = document.getElementById("review-hero-still");
 const stage = mount?.closest(".stage");
 if (!mount || !stage) throw new Error("review-hero-3d mount missing");
+
+function showHeroStill() {
+  stage.classList.add("stage-hero-still-on");
+  if (still) still.removeAttribute("hidden");
+}
 
 function gpuOk() {
   const gl = document.createElement("canvas").getContext("webgl2");
@@ -16,6 +22,9 @@ function gpuOk() {
 
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const lang = LANGS.includes(document.documentElement.lang?.slice(0, 2)) ? document.documentElement.lang.slice(0, 2) : "en";
+
+const useStill = reduce || !gpuOk();
+if (useStill) showHeroStill();
 
 let scene;
 let time = 0;
@@ -51,25 +60,26 @@ async function start() {
   new ResizeObserver(fit).observe(mount);
   fit();
   stage.classList.add("stage-hero-on");
-  if (reduce) {
-    scene.frame(7.45);
-    return;
-  }
   last = performance.now();
   raf = requestAnimationFrame(loop);
 }
 
-const watch = new IntersectionObserver(
-  (entries) => {
-    if (!entries.some((e) => e.isIntersecting)) return;
-    watch.disconnect();
-    (window.requestIdleCallback || ((f) => setTimeout(f, 400)))(() => {
-      start().catch(() => stage.classList.add("fx-fallback"));
-    }, { timeout: 2000 });
-  },
-  { rootMargin: "120px 0px" },
-);
-watch.observe(stage);
+if (!useStill) {
+  const watch = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      watch.disconnect();
+      (window.requestIdleCallback || ((f) => setTimeout(f, 400)))(() => {
+        start().catch(() => {
+          showHeroStill();
+          stage.classList.add("fx-fallback");
+        });
+      }, { timeout: 2000 });
+    },
+    { rootMargin: "120px 0px" },
+  );
+  watch.observe(stage);
+}
 
 document.addEventListener("visibilitychange", () => {
   playing = !document.hidden && !reduce;
