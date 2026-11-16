@@ -1543,7 +1543,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await panel.screenshot({ path: 'test-results/jarvis-worker-panel.png' });
     await panel.locator('[data-worker-cursor="w1"]').click();
     await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.engine, c.body.prompt, c.body.branch])).toEqual([['cursor', 'Update the sitemap test for the new pages.', 'main']]);
-    await expect(panel).toContainText('Cursor agent launched');
+    await expect(panel).toContainText('Asked @cursor; it uses your weekly Cursor usage');
     expect(calls.filter((c) => c.op === 'worker').length).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
@@ -1605,7 +1605,7 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect.poll(() => calls.filter((c) => c.op === 'github-agent').map((c) => [c.body.run, c.body.branch])).toEqual([[901, 'main']]);
     expect(asked).toContain('Update the admin visual baseline on main');
     const launched = ai.locator('[data-gh-result="run:901"]');
-    await expect(launched).toContainText('Agent launched');
+    await expect(launched).toContainText('Asked @cursor; it uses your weekly Cursor usage');
     await expect(launched.locator('a')).toHaveAttribute('href', 'https://cursor.com/agents/bc-123');
     expect(errors).toEqual([]);
   });
