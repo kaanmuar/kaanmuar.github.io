@@ -3214,14 +3214,16 @@
       const prio = item.priority ? '<span class="prio prio-' + esc(item.priority) + '" title="' + esc(rc.t("caseRisk", { risk: item.risk })) + '">' + esc(item.priority) + "</span>" : "";
       const firstPages = item.pages && item.pages.slice(0, 6).join(", ");
       const where = (item.pages || []).length > 1 ? '<p class="muted case-pages">' + esc(rc.t("casePages", { list: item.pages.length > 6 ? rc.t("casePagesMore", { list: firstPages, more: item.pages.length - 6 }) : firstPages })) + "</p>" : "";
-      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span></div>";
+      const verified = report.verifiedPass && report.verifiedPass.exitCode === 0 && report.verifiedPass.caseId === item.id;
+      const verifiedBadge = verified ? '<span class="case-verified" title="' + esc(rc.t("caseVerifiedHint")) + '">' + esc(rc.t("caseVerified")) + "</span>" : "";
+      const head = "<div>" + prio + '<span class="id">' + esc(item.id) + "</span> " + esc(layerName(item.layer)) + '<span class="tag">' + (item.verdict ? verdictBadge(item.verdict, item.severity) : esc(rc.t("caseProposed"))) + "</span>" + verifiedBadge + "</div>";
       const title = fc.line(item.msg && item.msg.title, item.title);
       const why = fc.line(item.msg && item.msg.why, item.why);
       if (item === sampleCase) {
-        return '<article class="case case-sample">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
+        return '<article class="case case-sample' + (verified ? " is-verified" : "") + '">' + head + '<p class="case-sample-label">' + esc(rc.t("caseSample")) + "</p><strong>" + esc(title) + "</strong>" +
           sampleBody(report, item, why, payload.frameworks || selectedFrameworks()) + where + '<p class="muted fw-line">' + tools + "</p></article>";
       }
-      return '<article class="case">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
+      return '<article class="case' + (verified ? " is-verified" : "") + '">' + head + "<strong>" + fadeText(title, paid) + '</strong><p class="muted">' + fadeText(why, paid) + "</p>" + where + '<p class="muted fw-line">' + tools + "</p></article>";
     }).join("") || '<p class="muted">' + esc(rc.t("casesNone")) + "</p>";
     paintWatch(report, paid);
     paintCsat(report, sample);
