@@ -33,11 +33,16 @@
     "lab:runners": "node scripts/native-runner.js",
     "review:server": "node scripts/url-review-server.js",
     "review:snapshot": "node scripts/review-snapshot.js",
-    "review:sample": "node scripts/review-snapshot.js --sample https://carlosandmunoz.com/"
+    "review:sample": "node scripts/review-snapshot.js --sample https://carlosandmunoz.com/",
+    "format": "biome format --write .",
+    "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false .cursor/hooks/format.js .cursor/hooks/mcp-allow.js .cursor/hooks.json .cursor/mcp.json biome.json scripts/refresh-lab-lines.js",
+    "format:md": "prettier --write \"**/*.{md,mdc,html}\"",
+    "lab:lines": "node scripts/refresh-lab-lines.js"
   },
   "author": "Carlos A. Muñoz",
   "license": "ISC",
   "devDependencies": {
+    "@biomejs/biome": "^2.3.4",
     "@cucumber/cucumber": "^13.3.0",
     "@cypress/grep": "^7.0.0",
     "@cypress/webpack-preprocessor": "^8.0.0",
@@ -67,6 +72,7 @@
     "mochawesome-report-generator": "^6.3.2",
     "playwright": "^1.63.0",
     "postcss": "^8.5.32",
+    "prettier": "^3.6.2",
     "selenium-webdriver": "^4.52.0",
     "tailwindcss": "^4.3.3",
     "vitest": "^5.0.5"

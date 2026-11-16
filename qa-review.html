@@ -1048,6 +1048,21 @@
         .service-facts dd { margin: 4px 0 0; color: var(--muted); }
         .unlock-offer { margin: 14px 0; }
         .unlock-offer[hidden] { display: none; }
+        .report-csat { margin: 14px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+        .report-csat[hidden] { display: none; }
+        .report-csat h2 { margin: 0 0 6px; font-size: 1.05rem; }
+        .report-csat .csat-lead { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+        .report-csat fieldset { border: 0; margin: 0 0 12px; padding: 0; }
+        .report-csat legend { margin: 0 0 8px; }
+        .report-csat .csat-picks { display: flex; flex-wrap: wrap; gap: 6px; }
+        .report-csat .csat-picks label { display: inline-flex; margin: 0; padding: 0; font-weight: 700; }
+        .report-csat .csat-picks span { display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); cursor: pointer; box-sizing: border-box; }
+        .report-csat .csat-picks input { position: absolute; opacity: 0; pointer-events: none; }
+        .report-csat .csat-picks input:checked + span, .report-csat .csat-picks label:hover span { background: var(--cyan); color: var(--night, #102226); }
+        .report-csat .csat-quote { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; margin: 0 0 12px; }
+        .report-csat .csat-msg { min-height: 1.2em; margin: 8px 0 0; font-size: 13px; }
+        .report-csat .csat-msg.bad { color: var(--red); }
+        .report-csat .csat-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .offer-note { margin: 0 0 10px; color: var(--muted); }
         .offer-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
         .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); text-align: left; font: inherit; cursor: pointer; width: 100%; }
@@ -1881,6 +1896,7 @@
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
         <div class="unlock-offer no-print" id="unlock-offer" hidden></div>
+        <section class="report-csat no-print" id="report-csat" hidden aria-labelledby="report-csat-title"></section>
         <nav class="report-index no-print" id="report-index" aria-labelledby="report-index-label" hidden>
             <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel">On this report</p>
             <ol class="report-index-list" id="report-index-list"></ol>

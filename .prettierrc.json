@@ -1,0 +1,15 @@
+{
+	"$schema": "https://json.schemastore.org/prettierrc",
+	"useTabs": true,
+	"printWidth": 120,
+	"singleQuote": true,
+	"trailingComma": "es5",
+	"overrides": [
+		{
+			"files": ["*.md", "*.mdc", "*.html"],
+			"options": {
+				"proseWrap": "preserve"
+			}
+		}
+	]
+}

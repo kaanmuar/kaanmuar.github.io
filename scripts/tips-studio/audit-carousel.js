@@ -10,6 +10,7 @@ function auditCarouselSlides(tip) {
   const lines = (tip.fixLines && tip.fixLines.length) ? tip.fixLines.slice(0, 6)
     : ["// Fix the top finding in the report", String(tip.action || "").slice(0, 72)].filter(Boolean);
   const host = tip.host || String((v.note || "").split(" · ")[0] || "this site");
+  const caseNote = tip.caseId ? String(tip.caseId) : host;
   return [
     Object.assign({}, tip, { counter: "1 / 4", actionLabel: tip.actionLabel || "Lesson" }),
     Object.assign({}, tip, {
@@ -21,9 +22,10 @@ function auditCarouselSlides(tip) {
     }),
     Object.assign({}, tip, {
       counter: "3 / 4",
-      title: ["The fix.", "*In one change.*"],
+      title: tip.caseId ? ["Case " + tip.caseId + ".", "*Playwright.*"] : ["The fix.", "*In one change.*"],
       body: tip.action,
-      visual: { type: "code", lines, note: host },
+      // DOM element crop omitted until the publish pipeline exposes a finding shot (#3550); no mock box.
+      visual: { type: "code", lines, note: caseNote },
       actionLabel: "Fix"
     }),
     Object.assign({}, tip, {

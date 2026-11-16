@@ -1,0 +1,41 @@
+---
+description: QA-lab growth locks from Gemini share #3475 — read before social, tips-studio, soft-gate, MCP, or marketing changes
+globs: scripts/tips-studio/**,scripts/auto-live-reports.js,scripts/buffer-queue.js,scripts/open-social*.js,scripts/social-tags.js,js/qa-review.js,functions/url-review*.js,functions/jarvis.js,js/admin-jarvis*.js,android/app/src/main/java/com/carlosandmunoz/jarvis/**
+alwaysApply: false
+---
+# QA-lab growth locks (#3475)
+
+Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays open until playbook (#3549) and Slide 3 (#3550) land.
+
+## Already shipped — do not rebuild greenfield
+- Soft gate: `POST /review/preview` (gauges + top finding, no OAuth); unlock = terms + OAuth → full crawl (#3478).
+- Shared links: overall + 6 areas + top finding clear; rest frosted (#3477).
+- Auto Live Reports: 4-slide carousel JPG + LinkedIn `document/{slug}.pdf` via tips-studio (#3476), not a standalone `generate-carousel.js`.
+- GEO `llms.txt` check + fix-kit starter (#3479).
+- Telegram `@qalab_live` is a **publish channel**; drafts/approvals stay Jarvis Hub / share-queue.
+
+## Refuse
+- Claude API just for social hooks (keep Gemini Vertex → Studio).
+- Parallel Telegram `/scan` + 1-tap auto-publish bot.
+- 7-second mute gauge loops as the video product (voiced 30–55s clips stay primary; see `social-clips.mdc`).
+- 30-tag hashtag walls (caps: IG 5, LinkedIn 6, X 2; see `scripts/social-tags.js`).
+- Auto-opening GitHub issues on third-party OSS repos.
+
+## Build order (Carlos 2026-11-16)
+1. Slide 3 = real case id + Playwright snippet + DOM crop (#3550).
+2. First-comment UTM on every network that supports it (#3551).
+3. Money ticket (#3482): white-label PDF (logo + name) **and** co-brand soft-preview header; **two** Full Stack SKUs — Starter (Playwright + axe + Lighthouse + k6) and Complete (all frameworks + tools, flat); Agency CI webhook.
+4. Channel-split compare: two-day quiz→reveal on X/Telegram/Threads; same-carousel reveal on LinkedIn/IG (#3497).
+5. MCP after money: `/review/preview` **and** signed-in unlock/full (#3480).
+6. Light DOM-verified specs badge only — not live multi-framework runs (#3481).
+7. Vertex-grounded AI citation GEO check (#3553).
+8. Discord/Slack syndication later (not now).
+
+## Slide 3 + first-comment locks (#3550 / #3551)
+- **Case source:** prefer rank-1 finding’s real case id + its Playwright sample from the report; fall back to mapped lesson id + canned assertion when the report has no case/snippet.
+- **DOM crop:** real finding crop when the publish pipeline exposes one; otherwise omit (no fake red-box mock). Full-page `browser.shots` alone are not enough for Slide 3.
+- **First comment:** Buffer LI/IG/FB via `prepareCaption` (#3551). Link target by kind: audit → live report; tips/evergreen → hub/guide; try-it → soft-gate `qa-review` (OWN_LINE). Drop-URL CTA in the post’s six languages (`DROP_URL` in `hub-gate.js`).
+- **Captions:** when first-comment is set, strip UTMs from the LI/IG/FB body; X/TikTok/YT keep UTMs in-body.
+
+## When teaching Jarvis
+Hub panel notes (web + Android) and Ask `VOICE` in `functions/jarvis.js` carry these locks. Keep them in sync when decisions change.

@@ -46,3 +46,19 @@ test("an unreachable site counts as not on the hub", async () => {
   const check = gate.createGate({ root: site({}), fetchImpl: async () => { throw new Error("offline"); } });
   assert.strictEqual((await check("b", "01-a", { date: "2026-10-27" }, "2026-10-27T15:00:00Z")).why, "not on the hub");
 });
+
+test("prepareCaption strips UTMs from LI/IG/FB bodies and puts drop-URL + tagged link in firstComment (#3551)", () => {
+  const text = "Lesson.\n\nhttps://carlosandmunoz.com/qa-review.html?live=u-x&utm_source=linkedin&utm_medium=social&utm_campaign=requested-reviews";
+  const out = gate.prepareCaption({ text, network: "linkedin", batch: "auto-2026-11-16", slug: "01-a", lang: "es" });
+  assert.ok(!/utm_/.test(out.text), "body has no utm_");
+  assert.match(out.text, /live=u-x/);
+  assert.match(out.firstComment, /Deja una URL pública/);
+  assert.match(out.firstComment, /utm_source=linkedin/);
+  assert.match(out.firstComment, /utm_campaign=auto-2026-11-16/);
+});
+
+test("prepareCaption keeps withHubLink for X and other nets without firstComment (#3551)", () => {
+  const out = gate.prepareCaption({ text: "Hello world", network: "x", batch: "tips-2026-10", slug: "01-a", lang: "en" });
+  assert.strictEqual(out.firstComment, null);
+  assert.match(out.text, /utm_source=x/);
+});

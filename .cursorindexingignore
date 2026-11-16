@@ -46,3 +46,22 @@ scripts/social-hub/phrases/
 **/social-clips/**/manifest*.json
 **/social-clips/**/*.vtt
 **/social-clips/**/*.srt
+
+# Build / test / cache outputs (still Read/Grep-able; #3552 re-audit)
+node_modules/
+**/node_modules/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+robot-results/
+.venv-robot/
+dist/
+build/
+.turbo/
+.cache/
+.tmp/
+tmp/
+.firebase/
+android/
+ios/
