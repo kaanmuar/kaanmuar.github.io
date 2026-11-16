@@ -47,12 +47,24 @@ test("past the limit a caption loses whole words from its end, never part of a l
 
 test("buffer-queue tags each channel's caption with its own network and leaves the story card alone", () => {
   const cap = { linkedin: "In.", x: "On X.", instagram: "Ig.", facebook: "Fb.", tiktok: "Tt.", youtube: "Yt.", youtubeTitle: "T", title: "Story", alt: "a" };
-  const text = (service) => inputsFor({ id: "c", service }, at.slug, cap, "https://site/media", "https://clips", {}, at.batch).map(({ slot, input }) => [slot, input.text]);
-  const source = (t) => (t.match(/utm_source=([a-z]+)&utm_medium=social&utm_campaign=auto-2026-10-23$/) || [])[1];
+  const posts = (service) => inputsFor({ id: "c", service }, at.slug, cap, "https://site/media", "https://clips", {}, at.batch);
+  const text = (service) => posts(service).map(({ slot, input }) => [slot, input.text]);
+  const source = (t) => (t.match(/utm_source=([a-z]+)&utm_medium=social&utm_campaign=auto-2026-10-23(?:&utm_content=[^\s]+)?$/) || [])[1];
+  const fcSource = (service) => {
+    const input = posts(service)[0].input;
+    const meta = (input.metadata && (input.metadata.linkedin || input.metadata.facebook || input.metadata.instagram)) || {};
+    return source(meta.firstComment || "");
+  };
   assert.equal(source(text("twitter")[0][1]), "x");
-  ["linkedin", "facebook", "tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
+  // LI/IG/FB: UTMs live in firstComment (#3551); body stays without utm_source.
+  ["linkedin", "facebook"].forEach((service) => {
+    assert.equal(source(text(service)[0][1]), undefined, service + " body");
+    assert.equal(fcSource(service), service, service + " firstComment");
+  });
+  ["tiktok", "youtube"].forEach((service) => assert.equal(source(text(service)[0][1]), service, service));
   ["threads", "bluesky", "mastodon"].forEach((service) => assert.deepEqual(text(service), [], service + " is posted by open-social-queue.js"));
-  const ig = text("instagram");
-  assert.equal(source(ig[0][1]), "instagram");
-  assert.deepEqual(ig[1], ["instagram-story", "Story"]);
+  const ig = posts("instagram");
+  assert.equal(source(ig[0].input.text), undefined);
+  assert.equal(source(ig[0].input.metadata.instagram.firstComment), "instagram");
+  assert.deepEqual([ig[1].slot, ig[1].input.text], ["instagram-story", "Story"]);
 });
