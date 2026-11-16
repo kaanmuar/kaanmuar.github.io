@@ -12,13 +12,23 @@ const captions = {
 };
 
 describe("compare channel-split (#3497)", () => {
-  it("drops LinkedIn and Instagram quiz-day calendar rows", () => {
+  it("drops LI/IG/FB quiz-day calendar rows; X slot stays for two-day + shared-slot nets", () => {
     assert.equal(split.keepCalendarRow("x", "01-quiz-a-b", captions), true);
     assert.equal(split.keepCalendarRow("threads", "01-quiz-a-b", captions), true);
     assert.equal(split.keepCalendarRow("telegram", "01-quiz-a-b", captions), true);
     assert.equal(split.keepCalendarRow("linkedin", "01-quiz-a-b", captions), false);
     assert.equal(split.keepCalendarRow("instagram", "01-quiz-a-b", captions), false);
     assert.equal(split.keepCalendarRow("instagram-story", "01-quiz-a-b", captions), false);
+    assert.equal(split.keepCalendarRow("facebook", "01-quiz-a-b", captions), false);
+  });
+
+  it("skips quiz publish on carousel nets; Threads/Telegram still get the quiz", () => {
+    assert.equal(split.skipQuizPublish("mastodon", captions["01-quiz-a-b"]), true);
+    assert.equal(split.skipQuizPublish("bluesky", captions["01-quiz-a-b"]), true);
+    assert.equal(split.skipQuizPublish("facebook", captions["01-quiz-a-b"]), true);
+    assert.equal(split.skipQuizPublish("threads", captions["01-quiz-a-b"]), false);
+    assert.equal(split.skipQuizPublish("telegram", captions["01-quiz-a-b"]), false);
+    assert.equal(split.skipQuizPublish("x", captions["01-quiz-a-b"]), false);
   });
 
   it("keeps reveal and non-quiz rows on every channel", () => {
@@ -46,6 +56,9 @@ describe("compare channel-split (#3497)", () => {
     assert.match(pair[0].url, /\/feed\/01-quiz-a-b\.jpg$/);
     assert.match(pair[1].url, /\/feed\/02-a-b\.jpg$/);
     assert.equal(split.usesPairCarousel("linkedin", "02-a-b", captions), true);
+    assert.equal(split.usesPairCarousel("facebook", "02-a-b", captions), true);
+    assert.equal(split.usesPairCarousel("mastodon", "02-a-b", captions), true);
+    assert.equal(split.usesPairCarousel("bluesky", "02-a-b", captions), true);
     assert.equal(split.usesPairCarousel("x", "02-a-b", captions), false);
     assert.equal(split.usesPairCarousel("linkedin", "01-quiz-a-b", captions), false);
   });

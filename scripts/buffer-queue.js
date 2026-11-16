@@ -602,8 +602,12 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
       return [post("linkedin", p.text, assets, p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
     }
     case "facebook": {
-      const p = prepared("facebook", own("facebook"));
-      return [post("facebook", p.text, [feedOrClip()], { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
+      const fbPair = channelSplit.usesPairCarousel("facebook", slug, captions) ? channelSplit.pairSlides(base, slug, captions) : null;
+      const fbQuiz = fbPair ? captions[fbPair[0].slug] : null;
+      const fbBody = fbPair ? channelSplit.mergedCaption("facebook", cap, fbQuiz) : own("facebook");
+      const p = prepared("facebook", fbBody);
+      const fbAssets = fbPair ? fbPair.map((s) => image("feed", s.slug)) : [feedOrClip()];
+      return [post("facebook", p.text, fbAssets, { facebook: Object.assign({ type: "post" }, p.firstComment ? { firstComment: p.firstComment } : {}) })];
     }
     case "instagram": {
       const igPair = channelSplit.usesPairCarousel("instagram", slug, captions) ? channelSplit.pairSlides(base, slug, captions) : null;

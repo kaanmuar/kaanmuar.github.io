@@ -128,7 +128,9 @@ function posts(batch, root = ROOT, network = "bluesky") {
   if (NO_LAUNCH.has(network) && isLaunch(dir)) return [];
   const captions = captionsOf(dir, when);
   const clips = faceRoute.voiced(batch, root);
-  return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption]))
+  const channelSplit = require("./compare-channel-split");
+  return Object.keys(captions).filter((slug) => captions[slug].x && !captions[slug].hold && when[slug] && (!route.caption || captions[slug][route.caption])
+    && !channelSplit.skipQuizPublish(network, captions[slug]))
     .map((slug) => {
       const asset = when[slug].asset || "feed/" + slug + ".jpg";
       const quiz = Object.keys(captions).find((other) => captions[other].answer === slug);
@@ -138,18 +140,26 @@ function posts(batch, root = ROOT, network = "bluesky") {
       for (let i = 1; i <= 10; i += 1) {
         const rel = "carousel/" + slug + "-" + String(i).padStart(2, "0") + ".jpg";
         if (!fs.existsSync(path.join(dir, rel))) break;
-        slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, alt: captions[slug].alt || captions[slug].title || "" });
+        slides.push({ url: SITE + "/media/social-posts/" + batch + "/" + rel, file: path.join(dir, rel), alt: captions[slug].alt || captions[slug].title || "" });
       }
-      // Compare channel-split (#3497): IG reveal uses quiz+reveal feed cards when no audit carousel exists.
-      const channelSplit = require("./compare-channel-split");
-      if (slides.length < 2 && network === "instagram" && quiz && channelSplit.usesPairCarousel("instagram", slug, captions)) {
+      // Compare channel-split (#3497): carousel nets use quiz+reveal feed cards when no audit carousel exists.
+      if (slides.length < 2 && quiz && channelSplit.usesPairCarousel(network, slug, captions)) {
         const pair = channelSplit.pairSlides(SITE + "/media/social-posts/" + batch, slug, captions);
-        if (pair) pair.forEach((s) => slides.push({ url: s.url, alt: s.alt }));
+        if (pair) {
+          pair.forEach((s) => slides.push({
+            url: s.url,
+            file: path.join(dir, "feed", s.slug + ".jpg"),
+            alt: s.alt
+          }));
+        }
       }
       const cap = Object.assign({}, captions[slug]);
-      if (quiz && channelSplit.SAME_CAROUSEL.has("instagram") && !channelSplit.isQuiz(cap)) {
-        const merged = channelSplit.mergedCaption("instagram", cap, captions[quiz]);
-        if (merged) cap.instagram = merged;
+      if (quiz && channelSplit.usesPairCarousel(network, slug, captions)) {
+        const merged = channelSplit.mergedCaption(network, cap, captions[quiz]);
+        if (merged) {
+          if (network === "instagram") cap.instagram = merged;
+          else if (network === "bluesky" || network === "mastodon") cap.x = merged;
+        }
       }
       return Object.assign({ batch, slug, cap, at: when[slug].at, image: path.join(dir, asset), url: SITE + "/media/social-posts/" + batch + "/" + asset, clip: clip || undefined },
         slides.length >= 2 ? { slides } : {},
@@ -348,7 +358,21 @@ function bluesky(env = process.env) {
         return { uri: p.uri, cid: p.cid };
       };
       const embeds = {
-        image: async () => ({ $type: "app.bsky.embed.images", images: [{ alt, image: await get("image", imageBlob) }] }),
+        image: async () => {
+          // Compare channel-split (#3497): up to four stills (quiz + reveal).
+          if (args.slides && args.slides.length >= 2) {
+            const images = [];
+            for (const slide of args.slides.slice(0, 4)) {
+              const bytes = slide.file && fs.existsSync(slide.file)
+                ? fs.readFileSync(slide.file)
+                : await download(slide.url);
+              const blob = (await xrpc("com.atproto.repo.uploadBlob", { body: bytes, type: "image/jpeg" })).blob;
+              images.push({ alt: slide.alt || alt, image: blob });
+            }
+            return { $type: "app.bsky.embed.images", images };
+          }
+          return { $type: "app.bsky.embed.images", images: [{ alt, image: await get("image", imageBlob) }] };
+        },
         video: async () => Object.assign({ $type: "app.bsky.embed.video", alt }, await get("video", video)),
         card: async () => {
           const lead = text.split("\n")[0];
@@ -444,6 +468,34 @@ function mastodon(env = process.env) {
       })());
       let refused = null;
       const plainer = [];
+      // Compare channel-split (#3497): quiz+reveal as a multi-image status when slides are present.
+      if (args.slides && args.slides.length >= 2) {
+        try {
+          const ids = [];
+          for (const slide of args.slides.slice(0, 4)) {
+            const form = new FormData();
+            const bytes = slide.file && fs.existsSync(slide.file)
+              ? fs.readFileSync(slide.file)
+              : await download(slide.url);
+            form.append("file", new Blob([bytes], { type: "image/jpeg" }), path.basename(slide.file || slide.url || "slide.jpg"));
+            form.append("description", slide.alt || alt);
+            let media = await call("POST", "/api/v2/media", form);
+            for (let i = 0; !media.url && i < 15; i += 1) {
+              await sleep(2000);
+              media = await call("GET", "/api/v1/media/" + media.id);
+            }
+            ids.push(media.id);
+          }
+          const status = await call("POST", "/api/v1/statuses", {
+            status: text, visibility: "public", language: lang, media_ids: ids
+          }, { "Idempotency-Key": key });
+          return sent({ id: status.id, url: status.url, uses: ["carousel", "slides"] }, plainer);
+        } catch (error) {
+          refused = error;
+          plainer.push({ uses: ["carousel", "slides"], error: error.message || String(error) });
+          console.log("Mastodon could not add carousel, slides - " + error.message);
+        }
+      }
       for (const plan of compose.mastodon(args)) {
         let body;
         try {
