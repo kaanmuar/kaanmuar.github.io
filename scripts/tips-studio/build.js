@@ -1005,7 +1005,6 @@ function rewriteCaptions(all, networks) {
 	}
 	await browser.close();
 
-<<<<<<< HEAD
 	const rows = [];
 	const captions = {};
 	const slugOf = Object.fromEntries(
@@ -1085,17 +1084,20 @@ function rewriteCaptions(all, networks) {
 		[path.join(ROOT, 'scripts/social-hub/translate-captions.js'), BATCH],
 		{ stdio: 'inherit' }
 	);
+	// Channel-split compare (#3497): drop LI/IG quiz-day rows; reveal day posts the quiz+reveal carousel.
+	const channelSplit = require('../compare-channel-split');
+	const calendarRows = channelSplit.filterCalendarRows(rows, captions);
 	fs.writeFileSync(
 		path.join(OUT, 'calendar.csv'),
 		['Date,Time,Channel,Post,Asset']
-			.concat(rows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(',')))
+			.concat(calendarRows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(',')))
 			.join('\n') + '\n'
 	);
 
 	fs.mkdirSync(path.join(OUT, 'buffer'), { recursive: true });
 	for (const channel of ['linkedin', 'x', 'facebook', 'instagram']) {
 		const lines = ['Text,Image URL,Tags,Posting Time'].concat(
-			rows
+			calendarRows
 				.filter((r) => r.channel === channel)
 				.map((r) =>
 					[csvCell(r.text), csvCell(IMAGE_BASE + '/' + r.asset), csvCell(''), csvCell(r.date + ' ' + r.time)].join(',')
@@ -1119,7 +1121,7 @@ function rewriteCaptions(all, networks) {
 		'wrote',
 		Object.keys(captions).length,
 		'captions,',
-		rows.length,
+		calendarRows.length,
 		'calendar rows to',
 		path.relative(ROOT, OUT)
 	);
@@ -1127,57 +1129,3 @@ function rewriteCaptions(all, networks) {
 	console.error(err);
 	process.exit(1);
 });
-=======
-  const rows = [];
-  const captions = {};
-  const slugOf = Object.fromEntries(all.map((tip, index) => [tip.id, String(index + 1).padStart(2, "0") + "-" + tip.id]));
-  all.forEach((tip, index) => {
-    const slug = String(index + 1).padStart(2, "0") + "-" + tip.id;
-    const date = tip.date || day(START, Math.floor((AFTER + index) / PER_DAY) * EVERY);
-    const slot = (AFTER + index) % PER_DAY;
-    const said = localize(tip, index, total, i18n);
-    if (said.lang !== "en" && studio.OWN_LINE && said.tiktok.includes(studio.OWN_LINE.en)) throw new Error(slug + ": the " + said.lang + " TikTok caption carries the English call to action");
-    const cap = Object.assign(studio.captions(tip, index, total), { tiktok: said.tiktok, youtubeTitle: said.youtubeTitle, youtube: said.youtube });
-    // The networks restrict adult and gambling sites, so a post about one is held even if its source let it through.
-    const held = tip.hold || !!(EXTRAS.get(tip.id) || {}).sensitive;
-    let carouselMeta = tip._carouselMeta || null;
-    if (!carouselMeta && auditCarouselSlides(tip)) {
-      const slideCount = [1, 2, 3, 4].filter((i) => fs.existsSync(path.join(OUT, "carousel", slug + "-" + String(i).padStart(2, "0") + ".jpg"))).length;
-      const hasDoc = fs.existsSync(path.join(OUT, "document", slug + ".pdf"));
-      const missing = [];
-      if (slideCount !== 4) missing.push("carousel");
-      if (!hasDoc) missing.push("document");
-      carouselMeta = { carousel: slideCount, document: hasDoc, assetsMissing: missing };
-    }
-    const documentTitle = String(studio.plainTitle(tip) || "").slice(0, 58);
-    captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
-      tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap,
-      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
-    const windows = studio.WINDOWS || WINDOWS;
-    for (const channel of held ? [] : Object.keys(windows)) {
-      const video = ["tiktok", "youtube"].includes(channel);
-      rows.push({ date, time: (tip.times || {})[channel] || randomTime(windows[channel], rand, slot), channel, slug,
-        asset: video ? "clip/" + slug + ".mp4" : channel === "instagram-story" ? "story/" + slug + ".jpg" : "feed/" + slug + ".jpg",
-        text: channel === "youtube" ? cap.youtubeTitle : channel === "instagram-story" ? "" : cap[channel] });
-    }
-  });
-  rows.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  fs.writeFileSync(path.join(OUT, "captions.json"), JSON.stringify(captions, null, 2));
-  // The text captions in the other five languages, from the phrasebooks; the daily workflow also fills their gaps.
-  require("child_process").execFileSync(process.execPath, [path.join(ROOT, "scripts/social-hub/translate-captions.js"), BATCH], { stdio: "inherit" });
-  // Channel-split compare (#3497): drop LI/IG quiz-day rows; reveal day posts the quiz+reveal carousel.
-  const channelSplit = require("../compare-channel-split");
-  const calendarRows = channelSplit.filterCalendarRows(rows, captions);
-  fs.writeFileSync(path.join(OUT, "calendar.csv"), ["Date,Time,Channel,Post,Asset"].concat(calendarRows.map((r) => [r.date, r.time, r.channel, r.slug, r.asset].join(","))).join("\n") + "\n");
-
-  fs.mkdirSync(path.join(OUT, "buffer"), { recursive: true });
-  for (const channel of ["linkedin", "x", "facebook", "instagram"]) {
-    const lines = ["Text,Image URL,Tags,Posting Time"].concat(calendarRows.filter((r) => r.channel === channel).map((r) =>
-      [csvCell(r.text), csvCell(IMAGE_BASE + "/" + r.asset), csvCell(""), csvCell(r.date + " " + r.time)].join(",")));
-    fs.writeFileSync(path.join(OUT, "buffer", "buffer-" + channel + ".csv"), lines.join("\n") + "\n");
-  }
-  fs.writeFileSync(path.join(OUT, "buffer", "alt-text.csv"), ["Date,Post,Image URL,Alt Text"].concat(Object.keys(captions).map((slug) =>
-    [captions[slug].date, slug, csvCell(IMAGE_BASE + "/feed/" + slug + ".jpg"), csvCell(captions[slug].alt)].join(","))).join("\n") + "\n");
-  console.log("wrote", Object.keys(captions).length, "captions,", calendarRows.length, "calendar rows to", path.relative(ROOT, OUT));
-})().catch((err) => { console.error(err); process.exit(1); });
->>>>>>> origin/main
