@@ -68,6 +68,32 @@ object Marketing {
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
 
+    /** Actual vs target from STATS on the outreach job log, else the NOTIFY summary (#3565). */
+    fun jobVolume(j: JsonObject): String {
+        val s = j.obj("stats") ?: return j.str("notify")?.takeIf { it.isNotEmpty() } ?: "—"
+        val actual = s.num("actual")?.toInt()
+        val target = s.num("target")?.toInt()
+        if (actual != null && target != null) {
+            var vol = "$actual / $target"
+            if (j.str("mode") == "prospects") {
+                val note = s.obj("by_segment")?.let { seg ->
+                    seg.keys.mapNotNull { k -> seg.num(k)?.toInt()?.takeIf { it > 0 }?.let { "$it $k" } }.joinToString(", ")
+                }.orEmpty()
+                if (note.isNotEmpty()) vol += " · $note"
+            }
+            return vol
+        }
+        s.num("complete")?.toInt()?.let { c ->
+            val w = s.num("waiting")?.toInt() ?: 0
+            return "$c complete · $w waiting"
+        }
+        s.num("actual")?.toInt()?.let { return "$it sorted" }
+        val paused = s.num("paused")?.toInt() ?: 0
+        val resumed = s.num("resumed")?.toInt() ?: 0
+        if (j.str("mode") == "holidays") return "$paused paused · $resumed resumed"
+        return j.str("notify")?.takeIf { it.isNotEmpty() } ?: "—"
+    }
+
     /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
     fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
 
@@ -269,7 +295,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(mode, fontWeight = FontWeight.Medium, color = if (j.bool("failed") == true) J.pink else J.text)
-                        Muted(listOfNotNull(ago(j.str("at")) ?: "never", j.str("notify")?.takeIf { it.isNotEmpty() }).joinToString(" · "))
+                        Muted(listOfNotNull(ago(j.str("at")) ?: "never", Marketing.jobVolume(j).takeIf { it != "—" }).joinToString(" · "))
                     }
                     if (Marketing.waiting(sy, "run", mode)) Text("waiting", color = J.amber, fontSize = 12.sp)
                     else TextButton({ ask("run the $mode job now (it can take half an hour)") { command("mk:run:$mode", mapOf("action" to "run", "job" to mode)) } }, enabled = sy.bool("running") != true) { Text("Run now", color = J.cyan, fontSize = 13.sp) }
