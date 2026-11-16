@@ -61,6 +61,23 @@ describe("qa-lab-mcp client (#3480)", () => {
     assert.match(out.content[0].text, /deadbeef/);
   });
 
+  it("preview_url sends x-qa-lab-mcp-key when QA_LAB_MCP_KEY is set", async () => {
+    let seen;
+    const key = "mcp-test-key-at-least-24-chars!!";
+    const fetchImpl = mock.fn(async (url, opts) => {
+      seen = { url, opts };
+      return {
+        ok: true,
+        headers: { get: () => "application/x-ndjson" },
+        async text() {
+          return '{"type":"done","report":{"id":"aa","host":"ex.com"}}\n';
+        }
+      };
+    });
+    await previewUrl("https://ex.com", { QA_LAB_MCP_KEY: key }, fetchImpl);
+    assert.equal(seen.opts.headers["x-qa-lab-mcp-key"], key);
+  });
+
   it("get_report POSTs to reviewUrl /review/open", async () => {
     let seen;
     const fetchImpl = mock.fn(async (url, opts) => {

@@ -26,7 +26,7 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 2. First-comment UTM on every network that supports it (#3551).
 3. Money ticket (#3482): white-label PDF (logo + name) **and** co-brand soft-preview header; **two** Full Stack SKUs — Starter (Playwright + axe + Lighthouse + k6) and Complete (all frameworks + tools, flat); Agency CI webhook.
 4. Channel-split compare: two-day quiz→reveal on X/Telegram/Threads; same-carousel reveal on LinkedIn/IG (#3497).
-5. MCP after money: Cursor stdio `packages/qa-lab-mcp` — tools `preview_url` + `get_report` wrapping `/review/preview` **and** signed-in `/review/open` (#3480). Turnstile on production soft-preview is an open product Q (exemption vs local-only).
+5. MCP after money: Cursor stdio `packages/qa-lab-mcp` — tools `preview_url` + `get_report` wrapping `/review/preview` **and** signed-in `/review/open` (#3480). Production soft-preview: `QA_LAB_MCP_KEY` header skips Turnstile; soft quota still applies (#3480 A).
 6. Light DOM-verified specs badge only — not live multi-framework runs (#3481).
 7. Vertex-grounded AI citation GEO check (#3553).
 8. Discord/Slack syndication later (not now).

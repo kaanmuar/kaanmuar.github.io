@@ -44,7 +44,7 @@ Local soft-preview (no Turnstile): start `node scripts/url-review-server.js`, th
 | `QA_LAB_SESSION` | Signed-in session for full `get_report` |
 | `QA_LAB_DEVICE_KEY` | Device key paired with the session |
 | `QA_LAB_DEVICE_ID` | Hex device id for soft-preview (random if unset) |
-| `QA_LAB_TURNSTILE` | Turnstile token if calling production soft-preview |
-| `QA_LAB_MCP_KEY` | Reserved for a product-approved Turnstile exemption |
+| `QA_LAB_TURNSTILE` | Optional; not needed when `QA_LAB_MCP_KEY` matches the server secret |
+| `QA_LAB_MCP_KEY` | Shared secret (≥24 chars). Sent as `x-qa-lab-mcp-key`; skips Turnstile, still counts soft quota (#3480 A) |
 
-Production soft-preview currently requires Turnstile when Siteverify is bound — open product Q on #3480.
+Set the same value in Firebase Secret Manager (`firebase functions:secrets:set QA_LAB_MCP_KEY`) so `reviewUrl` / `reviewRun` accept MCP soft-previews without Turnstile.

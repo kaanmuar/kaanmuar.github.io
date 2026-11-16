@@ -5686,8 +5686,13 @@ async function runSoftPreview(req, res) {
     });
     return;
   }
+  // MCP stdio clients cannot complete Turnstile (#3480 A): shared secret skips Siteverify; soft quota still applies.
+  const mcpOk = urlReview.testKeyMatches(
+    req.get("x-qa-lab-mcp-key") || body.mcpKey,
+    process.env.QA_LAB_MCP_KEY
+  );
   const secret = process.env.TURNSTILE_SECRET_KEY || "";
-  if (secret) {
+  if (secret && !mcpOk) {
     const check = await formGuard.verifyTurnstile({
       secret,
       token: body.turnstileToken || body.token,

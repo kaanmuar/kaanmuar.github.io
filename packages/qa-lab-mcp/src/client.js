@@ -11,7 +11,7 @@
  *   QA_LAB_DEVICE_KEY   optional device key paired with the session
  *   QA_LAB_DEVICE_ID    optional hex device id for soft-preview identity
  *   QA_LAB_TURNSTILE    optional Turnstile token (prod soft-preview when Siteverify is on)
- *   QA_LAB_MCP_KEY      reserved for a product-approved Turnstile exemption
+ *   QA_LAB_MCP_KEY      shared secret (≥24 chars); skips Turnstile, soft quota still applies (#3480 A)
  */
 "use strict";
 
@@ -105,7 +105,7 @@ async function previewUrl(url, env = process.env, fetchImpl = fetch) {
       softCap: err.softCap,
       needTurnstile: !!err.needTurnstile,
       hint: err.code === "soft-turnstile"
-        ? "Production soft-preview needs Turnstile (or a product-approved MCP exemption). See #3480."
+        ? "Set QA_LAB_MCP_KEY to the server secret (skips Turnstile; soft quota still applies). See #3480 A."
         : undefined
     }, true);
   }
