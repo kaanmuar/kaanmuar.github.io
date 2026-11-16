@@ -50,6 +50,7 @@ const { chromium } = require("playwright");
 const brands = require("./brands");
 const assets = require("./site-assets");
 const { auditCarouselSlides } = require("./audit-carousel");
+const { encodeCarouselLoop } = require("./carousel-loop");
 const ROOT = path.resolve(__dirname, "../..");
 const FFMPEG = fs.existsSync("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg";
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, "ffprobe");
@@ -222,11 +223,14 @@ function hubFields(tip, slugOf) {
   if (steps) out.steps = steps;
   if (tip.term) out.term = tip.term;
   if (tip.place) out.place = tip.place;
+  // Extra battle formats (#3627): vs-tool carousel / us-vs-them thread (not channel-split).
+  if (tip.battleFormat) out.battleFormat = tip.battleFormat;
+  if (tip.vsRival) out.vsRival = tip.vsRival;
   return out;
 }
 
 // Card text worth translating: code lines, ids, tags and check marks stay as they are.
-const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "place", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition"]);
+const KEEP_KEYS = new Set(["id", "kind", "answer", "term", "steps", "place", "alt", "host", "cat", "report", "scope", "tags", "lines", "mark", "type", "analyzed", "overall", "value", "by", "url", "date", "edition", "battleFormat", "vsRival"]);
 function strings(node, at, out) {
   if (typeof node === "string") { if (/[a-z]{2}/i.test(node) && !MARK_WORDS[node]) out[at] = node; }
   else if (node && typeof node === "object") Object.keys(node).forEach((key) => { if (!KEEP_KEYS.has(key)) strings(node[key], at ? at + "." + key : key, out); });
@@ -402,7 +406,14 @@ async function renderCarousel(page, browser, tip, index, total, slug, ui, extras
     files.push(out);
   }
   await pdfFrom(browser, files, path.join(OUT, "document", slug + ".pdf"));
-  return files;
+  // Additive 9:16 Reels cut from the same stills + bed (#3498); skipped when BED was not loaded (--skip-video).
+  let loop = false;
+  if (BED && files.length >= 2) {
+    encodeCarouselLoop(files, path.join(OUT, "loop", slug + ".mp4"), { bed: BED, ffmpeg: FFMPEG });
+    loop = true;
+    console.log("loop", slug);
+  }
+  return { files, loop };
 }
 
 // Each line is voiced first, so every scene knows how long it runs before a frame is drawn. A clip's lines are voiced
@@ -546,7 +557,7 @@ function rewriteCaptions(all, networks) {
   if (opts["export-strings"]) { fs.mkdirSync(OUT, { recursive: true }); exportStrings(all); return; }
   if (opts["captions-only"]) { rewriteCaptions(all, String(opts["captions-only"]).split(",")); return; }
   if (opts.rotate || !(opts["skip-video"] || opts["schedule-only"])) BED = findBed();
-  for (const dir of ["feed", "story", "clip", "cover", "carousel", "document"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+  for (const dir of ["feed", "story", "clip", "cover", "carousel", "document", "loop"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ deviceScaleFactor: 1 });
@@ -600,14 +611,17 @@ function rewriteCaptions(all, networks) {
     const extras = await extrasFor(tip, opts["skip-video"] ? null : browser);
     await renderStill(page, tip, "feed", index, total, path.join(OUT, "feed", slug + ".jpg"), ui, null, extras);
     await renderStill(page, tip, "story", index, total, path.join(OUT, "story", slug + ".jpg"), ui, null, extras);
-    const carouselFiles = await renderCarousel(page, browser, tip, index, total, slug, ui, extras);
-    if (carouselFiles) {
+    const carousel = await renderCarousel(page, browser, tip, index, total, slug, ui, extras);
+    if (carousel) {
+      const carouselFiles = carousel.files;
       tip._carouselMeta = {
         carousel: carouselFiles.length,
         document: fs.existsSync(path.join(OUT, "document", slug + ".pdf")),
+        loop: !!carousel.loop,
         assetsMissing: [
           ...(carouselFiles.length === 4 ? [] : ["carousel"]),
-          ...(fs.existsSync(path.join(OUT, "document", slug + ".pdf")) ? [] : ["document"])
+          ...(fs.existsSync(path.join(OUT, "document", slug + ".pdf")) ? [] : ["document"]),
+          ...(carousel.loop || !BED ? [] : ["loop"])
         ]
       };
       console.log("carousel", slug);
@@ -639,15 +653,17 @@ function rewriteCaptions(all, networks) {
     if (!carouselMeta && auditCarouselSlides(tip)) {
       const slideCount = [1, 2, 3, 4].filter((i) => fs.existsSync(path.join(OUT, "carousel", slug + "-" + String(i).padStart(2, "0") + ".jpg"))).length;
       const hasDoc = fs.existsSync(path.join(OUT, "document", slug + ".pdf"));
+      const hasLoop = fs.existsSync(path.join(OUT, "loop", slug + ".mp4"));
       const missing = [];
       if (slideCount !== 4) missing.push("carousel");
       if (!hasDoc) missing.push("document");
-      carouselMeta = { carousel: slideCount, document: hasDoc, assetsMissing: missing };
+      if (slideCount >= 2 && !hasLoop) missing.push("loop");
+      carouselMeta = { carousel: slideCount, document: hasDoc, loop: hasLoop, assetsMissing: missing };
     }
     const documentTitle = String(studio.plainTitle(tip) || "").slice(0, 58);
     captions[slug] = Object.assign({ date, cat: tip.cat, title: studio.plainTitle(tip), alt: tip.alt || altText(tip), lang: said.lang, voice: said.voice.file },
       tip.lang ? { textLang: tip.lang } : {}, held ? { hold: true } : {}, tip.pin ? { pin: true } : {}, hubFields(tip, slugOf), cap,
-      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
+      carouselMeta ? { carousel: carouselMeta.carousel, document: !!carouselMeta.document, loop: !!carouselMeta.loop, assetsMissing: carouselMeta.assetsMissing || [], documentTitle } : {});
     const windows = studio.WINDOWS || WINDOWS;
     for (const channel of held ? [] : Object.keys(windows)) {
       const video = ["tiktok", "youtube"].includes(channel);

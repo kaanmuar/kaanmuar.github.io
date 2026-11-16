@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import com.carlosandmunoz.jarvis.data.bool
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -122,7 +125,8 @@ fun FoldAllButton() {
 }
 
 @Composable
-fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, id: String = Layouts.slug(title), content: @Composable ColumnScope.() -> Unit) {
+fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, id: String = Layouts.slug(title),
+            charts: Boolean = false, onChartStretch: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     val context = LocalContext.current
     remember { Folds.load(context) }
     Folds.seen(key)
@@ -132,6 +136,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val tab = LocalLayoutTab.current
     val saved = LocalLayout.current
     val saveSize = LocalSavePanelSize.current
+    val stretch = if (charts) LocalLayout.current?.stretch?.get(id) ?: 1 else 1
     if (tab != null) Arrange.seen(tab, id, title)
     val stored = saved?.size?.get(id) ?: Layouts.Size()
     var live by remember(id, stored) { mutableStateOf(stored) }
@@ -191,10 +196,13 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                 Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
+                if (charts && onChartStretch != null) {
+                    TextButton(onClick = onChartStretch, modifier = Modifier.heightIn(min = 40.dp)) { Text("↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
+                }
                 trailing?.let { Spacer(Modifier.width(8.dp)); it() }
             }
-            if (editing) PanelTools(tab!!, id, title)
-            if (!folded) content()
+            if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
+            if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch) { content() }
         }
         if (!folded && !editing && saveSize != null) {
             val edge = 14.dp
@@ -311,6 +319,43 @@ fun KpiPairs(items: List<KpiData>, open: String? = null, onDrill: ((String) -> U
     }
 }
 
+/** Shared chart prefs (#3569), saved in jarvis_settings and read from the snapshot. */
+object ChartPrefs {
+    data class Prefs(val grid: String = "micro", val fill: Boolean = true, val height: String = "m")
+    fun clean(o: JsonObject?): Prefs {
+        if (o == null) return Prefs()
+        val grid = when (o.str("grid")) { "off", "major", "micro" -> o.str("grid")!!; else -> "micro" }
+        val height = when (o.str("height")) { "s", "m", "l" -> o.str("height")!!; else -> "m" }
+        val fill = o.bool("fill") != false
+        return Prefs(grid, fill, height)
+    }
+
+    fun baseHeight(p: Prefs, stretch: Int = 1): Int {
+        val base = when (p.height) { "s" -> 100; "l" -> 190; else -> 130 }
+        val mul = when (stretch) { 2 -> 1.45; 3 -> 2.0; else -> 1.0 }
+        return (base * mul).toInt()
+    }
+}
+
+val LocalChartPrefs = compositionLocalOf { ChartPrefs.Prefs() }
+val LocalPanelStretch = compositionLocalOf { 1 }
+
+internal fun DrawScope.chartMicroGrid(grid: String) {
+    if (grid == "off") return
+    listOf(0f, 0.5f, 1f).forEach { f ->
+        drawLine(J.line.copy(alpha = 0.28f), Offset(0f, size.height * f), Offset(size.width, size.height * f), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f)))
+    }
+    val xs = if (grid == "micro") (0..10).map { it / 10f } else listOf(0f, 0.5f, 1f)
+    xs.forEach { fx ->
+        drawLine(J.line.copy(alpha = 0.22f), Offset(size.width * fx, 0f), Offset(size.width * fx, size.height), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 6f)))
+    }
+    if (grid == "micro") {
+        listOf(0f, 0.5f, 1f).forEach { fy -> xs.forEach { fx ->
+            drawCircle(J.cyan.copy(alpha = 0.35f), 1.5f, Offset(size.width * fx, size.height * (1f - fy)))
+        } }
+    }
+}
+
 /** Pure arithmetic behind the charts' opt-in titles, axes, legends and tap values (#2807). */
 object Charts {
     private val HOUR = Regex("""^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}""")
@@ -339,7 +384,7 @@ object Charts {
 }
 
 @Composable
-private fun ChartTitle(title: String, color: Color? = null) {
+internal fun ChartTitle(title: String, color: Color? = null) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         color?.let { Box(Modifier.size(9.dp).clip(RoundedCornerShape(3.dp)).background(it)); Spacer(Modifier.width(6.dp)) }
         Text(title.uppercase(), color = J.muted, fontFamily = Mono, fontSize = 11.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.SemiBold)
@@ -361,13 +406,13 @@ fun Legend(items: List<Pair<String, Color>>) {
 }
 
 @Composable
-private fun ChartTip(text: String?, hint: String) {
+internal fun ChartTip(text: String?, hint: String) {
     Text(text ?: hint, color = if (text != null) J.text else J.dim, fontFamily = Mono, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
         modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite })
 }
 
 @Composable
-private fun XTicks(labels: List<String>) {
+internal fun XTicks(labels: List<String>) {
     val ticks = Charts.ticks(labels)
     if (ticks.size < 2) return
     Row(Modifier.fillMaxWidth()) {
@@ -384,11 +429,14 @@ private fun XTicks(labels: List<String>) {
  * without them it is the chart it always was.
  */
 @Composable
-fun BarChart(values: List<Double>, labels: List<String> = emptyList(), color: Color = J.cyan, height: Int = 120,
+fun BarChart(values: List<Double>, labels: List<String> = emptyList(), color: Color = J.cyan, height: Int? = null,
              title: String? = null, yLabel: String? = null, unit: String? = null, legend: String? = null) {
     if (values.isEmpty()) { Muted("No data in this range."); return }
+    val prefs = LocalChartPrefs.current
+    val stretch = LocalPanelStretch.current
+    val plotH = height ?: ChartPrefs.baseHeight(prefs, stretch)
     val max = (values.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
-    if (title != null || yLabel != null || unit != null || legend != null) { FramedBars(values, labels, color, height, max, title, yLabel, unit, legend); return }
+    if (title != null || yLabel != null || unit != null || legend != null) { FramedBars(values, labels, color, plotH, max, title, yLabel, unit, legend, prefs.grid); return }
     Column {
         Row(Modifier.fillMaxWidth()) {
             Text(fmt(max), color = J.dim, fontFamily = Mono, fontSize = 10.sp)
@@ -397,8 +445,8 @@ fun BarChart(values: List<Double>, labels: List<String> = emptyList(), color: Co
         }
         val grow = remember(values) { Animatable(0f) }
         LaunchedEffect(values) { grow.animateTo(1f, tween(1000, easing = FastOutSlowInEasing)) }
-        Canvas(Modifier.fillMaxWidth().height(height.dp)) {
-            listOf(0.25f, 0.5f, 0.75f).forEach { f -> drawLine(J.line.copy(alpha = 0.25f), Offset(0f, size.height * f), Offset(size.width, size.height * f), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f))) }
+        Canvas(Modifier.fillMaxWidth().height(plotH.dp)) {
+            chartMicroGrid(prefs.grid)
             val gap = if (values.size > 60) 1f else 4f
             val w = (size.width - gap * (values.size - 1)) / values.size
             values.forEachIndexed { i, v ->
@@ -420,7 +468,7 @@ fun BarChart(values: List<Double>, labels: List<String> = emptyList(), color: Co
 }
 
 @Composable
-private fun FramedBars(values: List<Double>, labels: List<String>, color: Color, height: Int, max: Double, title: String?, yLabel: String?, unit: String?, legend: String?) {
+private fun FramedBars(values: List<Double>, labels: List<String>, color: Color, height: Int, max: Double, title: String?, yLabel: String?, unit: String?, legend: String?, grid: String) {
     var sel by remember(values) { mutableStateOf<Int?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         title?.let { ChartTitle(it) }
@@ -435,7 +483,7 @@ private fun FramedBars(values: List<Double>, labels: List<String>, color: Color,
                 Text("0", color = J.dim, fontFamily = Mono, fontSize = 10.sp)
             }
             Canvas(Modifier.weight(1f).height(height.dp).pointerInput(values) { detectTapGestures { o -> sel = Charts.indexAt(o.x, size.width.toFloat(), values.size, true) } }) {
-                listOf(0f, 0.5f, 1f).forEach { f -> drawLine(J.line.copy(alpha = 0.3f), Offset(0f, size.height * f), Offset(size.width, size.height * f), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f))) }
+                chartMicroGrid(grid)
                 val gap = if (values.size > 60) 1f else 4f
                 val w = (size.width - gap * (values.size - 1)) / values.size
                 values.forEachIndexed { i, v ->
@@ -458,7 +506,8 @@ private fun FramedBars(values: List<Double>, labels: List<String>, color: Color,
 @Composable
 fun Sparkline(values: List<Double>, color: Color = J.cyan, modifier: Modifier = Modifier,
               title: String? = null, unit: String? = null, labels: List<String> = emptyList(), legend: String? = null) {
-    if (title != null || unit != null || labels.isNotEmpty() || legend != null) { FramedSpark(values, color, modifier, title, unit, labels, legend); return }
+    val prefs = LocalChartPrefs.current
+    if (title != null || unit != null || labels.isNotEmpty() || legend != null) { FramedSpark(values, color, modifier, title, unit, labels, legend, prefs); return }
     val draw = remember(values) { Animatable(0f) }
     LaunchedEffect(values) { draw.animateTo(1f, tween(1100, easing = FastOutSlowInEasing)) }
     Canvas(modifier.height(30.dp).fillMaxWidth()) {
@@ -478,7 +527,7 @@ fun Sparkline(values: List<Double>, color: Color = J.cyan, modifier: Modifier = 
 }
 
 @Composable
-private fun FramedSpark(values: List<Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List<String>, legend: String?) {
+private fun FramedSpark(values: List<Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List<String>, legend: String?, prefs: ChartPrefs.Prefs) {
     var sel by remember(values) { mutableStateOf<Int?>(null) }
     val max = (values.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -486,11 +535,14 @@ private fun FramedSpark(values: List<Double>, color: Color, modifier: Modifier, 
         ChartTip(sel?.let { Charts.tip(labels.getOrNull(it), values[it], unit) }, "0–${Charts.withUnit(max, unit)} · tap for a day's value")
         Canvas(Modifier.fillMaxWidth().height(48.dp).pointerInput(values) { detectTapGestures { o -> sel = Charts.indexAt(o.x, size.width.toFloat(), values.size, false) } }) {
             if (values.size < 2) return@Canvas
+            chartMicroGrid(prefs.grid)
             val step = size.width / (values.size - 1)
             val points = values.mapIndexed { i, v -> Offset(i * step, (size.height - 3f - v / max * (size.height - 6f)).toFloat()) }
             val line = Path().apply { points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) } }
-            val area = Path().apply { addPath(line); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
-            drawPath(area, Brush.verticalGradient(listOf(color.copy(alpha = 0.30f), Color.Transparent)))
+            if (prefs.fill) {
+                val area = Path().apply { addPath(line); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
+                drawPath(area, Brush.verticalGradient(listOf(color.copy(alpha = 0.30f), Color.Transparent)))
+            }
             drawPath(line, color, style = Stroke(width = 2.5f, cap = StrokeCap.Round))
             sel?.let { i ->
                 drawLine(Color.White.copy(alpha = 0.5f), Offset(points[i].x, 0f), Offset(points[i].x, size.height), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))

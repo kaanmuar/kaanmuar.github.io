@@ -39,6 +39,15 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
 .hub-eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .hub-hero h1 { margin: 0; font: 400 clamp(2.2rem, 5vw, 3.6rem)/1.05 "Instrument Serif", Georgia, serif; letter-spacing: -0.03em; overflow-wrap: break-word; hyphens: auto; }
 .hub-lead { margin: 14px 0 20px; color: var(--muted); font-size: 1.05rem; }
+/* Soft gate (#3533): paste → qa-review soft preview (frost → Unlock). */
+.hub-soft { margin: 0 0 22px; max-width: 560px; }
+.hub-soft-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text); }
+.hub-soft-row { display: flex; align-items: stretch; gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; }
+.hub-soft-scheme { display: flex; align-items: center; padding: 0 0 0 12px; color: var(--muted); font: 600 13px Inter, system-ui, sans-serif; flex: none; }
+.hub-soft-row input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font: 15px Inter, system-ui, sans-serif; padding: 11px 10px; outline: none; }
+.hub-soft-row .btn { border-radius: 0; margin: 0; flex: none; padding-inline: 16px; }
+.hub-soft-row:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--ring); }
+.hub-soft-hint { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
 .hub-follow, .hub-langs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 10px; }
 .hub-follow span { font-weight: 600; margin-right: 4px; }
 .hub-follow a, .hub-langs a { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text); background: var(--card); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -170,6 +179,10 @@ a:focus-visible, button:focus-visible, select:focus-visible, iframe:focus-visibl
   .topbar { position: static; }
   .hub-hero { padding: 24px 0 22px; }
   .hub-lead { font-size: 1rem; margin-bottom: 16px; }
+  .hub-soft { margin-bottom: 18px; }
+  .hub-soft-row { flex-wrap: wrap; }
+  .hub-soft-row input { min-height: 44px; flex: 1 1 140px; }
+  .hub-soft-row .btn { min-height: 44px; flex: 1 1 100%; border-radius: 0 0 11px 11px; }
   .hub-follow { justify-items: stretch; margin-right: -16px; }
   .hub-face { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 16px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
   .hub-face::-webkit-scrollbar, .hub-chips::-webkit-scrollbar { display: none; }

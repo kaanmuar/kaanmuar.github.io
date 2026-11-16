@@ -100,8 +100,10 @@ fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {
 
     val trend = wide.obj("trend")
     val lines = trend.objs("series").map { (it.str("name") ?: "") to it["values"].doubles() }
-    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE), id = "overview-trend") {
-        LineChart(lines, trend.at("labels").strings(), height = if (roomy) 170 else 130)
+    val layoutTab = LocalLayoutTab.current
+    if (lines.any { l -> l.second.any { it > 0 } }) Panel("Every product per day", Modifier.layoutId(WIDE), id = "overview-trend", charts = true,
+        onChartStretch = layoutTab?.let { { vm.cycleChartStretch(it, "overview-trend") } }) {
+        LineChart(lines, trend.at("labels").strings(), title = "Every product per day", yLabel = "events", unit = "events")
         Muted("Visits for the sites, opens for URL Review, messages for the inbox, events for the hub.")
     }
 

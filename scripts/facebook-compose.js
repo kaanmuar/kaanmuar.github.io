@@ -9,13 +9,16 @@
    Not used: polls, music and stickers (no Page API), Stories (no caption for a rerun to recognise). */
 
 // Reels take 3 to 90 seconds of 9:16 video; the batch clips are 1080x1920 and under a minute.
-function plans({ caption, image, alt, due, cap = {}, clip, lang, hub }) {
+// Carousel loop (#3498) fills a Reel when no matching-language voiced clip exists.
+function plans({ caption, image, alt, due, cap = {}, clip, lang, hub, loop }) {
   const when = { published: "false", scheduled_publish_time: String(Math.floor(due / 1000)) };
   const photo = { uses: ["photo"], edge: "photos", params: Object.assign({ url: image, caption, alt_text_custom: alt || "" }, when) };
   const out = [];
   if (cap.kind === "news" && hub) out.push({ uses: ["link"], edge: "feed", params: Object.assign({ message: caption, link: hub }, when) });
   else if (cap.kind !== "quiz" && clip && clip.url && clip.lang === lang) {
     out.push({ uses: ["reel"], edge: "video_reels", file: clip.url, params: { description: caption, video_state: "SCHEDULED", scheduled_publish_time: when.scheduled_publish_time } });
+  } else if (cap.kind !== "quiz" && loop && loop.url) {
+    out.push({ uses: ["reel", "loop"], edge: "video_reels", file: loop.url, params: { description: caption, video_state: "SCHEDULED", scheduled_publish_time: when.scheduled_publish_time } });
   }
   out.push(photo);
   return out;

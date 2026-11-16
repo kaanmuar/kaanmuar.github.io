@@ -706,6 +706,18 @@
     runSoftPreview(value);
   });
 
+  // Hub / social soft-gate parity (#3533): ?url=&from=hub|social auto-runs the soft preview once.
+  (function softFromHub() {
+    const params = new URLSearchParams(location.search);
+    const from = params.get("from");
+    if (from !== "hub" && from !== "social") return;
+    if (params.get("report") || params.get("live") || params.get("sample") === "1") return;
+    const value = (stageUrl && stageUrl.value || urlInput.value || "").trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
+    if (!value || /\s/.test(value) || !/^[a-z0-9.-]+\.[a-z]{2,}(\/[\w./-]*)?$/i.test(value)) return;
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_hub_soft", "URL Review", from);
+    runSoftPreview(value);
+  })();
+
   document.getElementById("theme-toggle").addEventListener("click", () => {
     if (window.SiteTheme && SiteTheme.toggle) SiteTheme.toggle();
   });

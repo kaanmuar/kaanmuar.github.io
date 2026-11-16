@@ -25,6 +25,14 @@ test("a clip in another language, a missing clip and a compare quiz post the car
   assert.deepEqual(uses(c.plans(Object.assign({}, base, { cap: { kind: "quiz" }, clip: { url: "https://assets/clip.mp4", lang: "es" } }))), ["photo"]);
 });
 
+test("a carousel loop fills a Reel when no matching voiced clip (#3498)", () => {
+  const loop = { url: "https://carlosandmunoz.com/media/social-posts/b/loop/01-a.mp4" };
+  const plans = c.plans(Object.assign({}, base, { loop }));
+  assert.deepEqual(uses(plans), ["reel+loop", "photo"]);
+  assert.equal(plans[0].file, loop.url);
+  assert.deepEqual(uses(c.plans(Object.assign({}, base, { clip: { url: "https://assets/clip.mp4", lang: "es" }, loop }))), ["reel", "photo"]);
+});
+
 test("the digest is a link post to its hub page, then the card", () => {
   const plans = c.plans(Object.assign({}, base, { cap: { kind: "news" } }));
   assert.deepEqual(uses(plans), ["link", "photo"]);
