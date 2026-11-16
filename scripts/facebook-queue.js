@@ -477,4 +477,6 @@ async function queue(p, { batch, all, live, connected }) {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { posts, compose, publish, lookup, isReel, fromReel };
+function usePageToken(token) { TOKEN = token; }
+
+module.exports = { posts, compose, publish, lookup, isReel, fromReel, usePageToken };
