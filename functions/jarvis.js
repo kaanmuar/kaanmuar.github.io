@@ -848,6 +848,7 @@ async function ga4(fetchImpl, { days }) {
 		countries: geoGa4.top(countries.countryRows),
 		countryRows: countries.countryRows,
 		keyEvents: countries.keyEvents,
+		keyEventFallback: countries.keyEventFallback || '',
 		sources: Object.entries(split(sources))
 			.map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] }))
 			.sort((a, b) => b.value - a.value)
