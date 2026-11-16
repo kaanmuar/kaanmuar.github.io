@@ -835,7 +835,7 @@ test("admin.html loads the Jarvis files with a version that changes with their c
   const want = require("crypto").createHash("sha1").update(Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))))).digest("hex").slice(0, 10);
   const html = fs.readFileSync(path.join(root, "admin.html"), "utf8");
   const seen = Array.from(html.matchAll(/admin-jarvis(?:-core)?\.(?:css|js)\?v=([^"]+)"/g)).map((m) => m[1]);
-  assert.equal(seen.length, 5);
+  assert.equal(seen.length, 6);
   assert.deepEqual(Array.from(new Set(seen)), [want], "set ?v=" + want + " on the Jarvis links in admin.html, then run node scripts/build-csp-hashes.js (the module import is an inline script)");
 });
 
