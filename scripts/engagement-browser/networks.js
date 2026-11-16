@@ -82,6 +82,37 @@ async function keys(page, text) {
 	}
 }
 
+/** Replace our own post caption (#3588): open the post, find Edit, swap the text, save; Refused when the network hides edit. */
+async function editCaption(page, net, task) {
+	await go(page, net, task.url);
+	const more = page
+		.locator('[data-testid="caret"], [aria-label*="More" i], [aria-label*="Más" i], [aria-label*="acciones" i]')
+		.first();
+	if (await visible(more, 6000)) await click(more);
+	const edit = page
+		.locator('[role="menuitem"], [role="menu"] button, button')
+		.filter({ hasText: /^Edit\b|^Editar\b/i })
+		.first();
+	if (!(await visible(edit, 6000))) throw new Refused(net.name + ' does not offer caption edit on this post.');
+	await click(edit);
+	const box = page
+		.locator(
+			'[data-testid="tweetTextarea_0"], [data-testid="tweetTextarea_1"], [contenteditable="true"][role="textbox"], div[contenteditable="true"]'
+		)
+		.first();
+	const input = await need(box, 'The caption box');
+	await click(input);
+	await page.keyboard.press(process.platform === 'darwin' ? 'Meta+a' : 'Control+a');
+	await type(page, input, task.draft);
+	const save = page
+		.locator('button[data-testid="tweetButton"], button')
+		.filter({ hasText: /^(Save|Update|Done|Guardar|Actualizar|Post|Publicar)/i })
+		.last();
+	await click(await need(save, 'Save the caption'));
+	await pause(2000, 4000);
+	return { url: task.url };
+}
+
 // end: the box already holds the name of the person answered, so the text goes after it.
 async function type(page, loc, text, end) {
 	await click(loc);
@@ -577,6 +608,9 @@ const x = {
 		});
 		return got;
 	},
+	async edit(page, task) {
+		return editCaption(page, this, task);
+	},
 	async reply(page, task) {
 		const art = await this.post(page, task);
 		await click(art.locator('[data-testid="reply"]').first());
@@ -910,6 +944,9 @@ const threads = {
 		const p = newest(list, since);
 		return p && { id: p.id, url: p.url };
 	},
+	async edit(page, task) {
+		return editCaption(page, this, task);
+	},
 	async reply(page, task) {
 		const main = await this.post(page, task);
 		const open = async () => {
@@ -1116,6 +1153,9 @@ const instagram = {
 		);
 		return p && { id: p.url, url: p.url };
 	},
+	async edit(page, task) {
+		return editCaption(page, this, task);
+	},
 	async reply(page, task) {
 		await go(page, this, task.url);
 		const box = await need(
@@ -1316,6 +1356,9 @@ const tiktok = {
 			since
 		);
 		return p && { id: p.url, url: p.url };
+	},
+	async edit(page, task) {
+		return editCaption(page, this, task);
 	},
 	// Mentions (#2637) are picked from the list that opens on "@", by handle.
 	async reply(page, task) {
@@ -1559,9 +1602,11 @@ const linkedin = {
 	// A comment component on the post whose author link is our company page.
 	async replied(page, task) {
 		const main = await this.post(page, task);
-		const mine = main.locator('[componentkey^="CommentComponentReference_urn:li:comment:("]').filter({
-			has: page.locator('a[href*="/company/qalab-url-review/"], a[href*="/company/' + PAGES.linkedin + '/"]'),
-		});
+		const mine = main
+			.locator('[componentkey^="CommentComponentReference_urn:li:comment:("]')
+			.filter({
+				has: page.locator('a[href*="/company/qalab-url-review/"], a[href*="/company/' + PAGES.linkedin + '/"]'),
+			});
 		return (await has(mine)) ? { url: task.url } : null;
 	},
 	// An owner's newest post on their company page's posts or a member's activity; the header says pinned or reposted.
@@ -1594,6 +1639,9 @@ const linkedin = {
 			since
 		);
 		return p && { id: p.url, url: p.url };
+	},
+	async edit(page, task) {
+		return editCaption(page, this, task);
 	},
 	// Mentions (#2637) are picked from the menu that opens on "@", by the company's or member's name.
 	async reply(page, task) {
@@ -2503,19 +2551,21 @@ const telegram = {
 		await go(page, this, tgOpen(task.id));
 		await pause(2000, 4000);
 		const members = await this.members(page);
-		const join = page.locator('.chat-join, .chat-input button').filter({
-			visible: true,
-			hasText: TG_MENU([
-				'Join',
-				'Join Channel',
-				'Join Group',
-				'Subscribe',
-				'Unirse',
-				'Unirse al grupo',
-				'Unirse al canal',
-				'Suscribirse',
-			]),
-		});
+		const join = page
+			.locator('.chat-join, .chat-input button')
+			.filter({
+				visible: true,
+				hasText: TG_MENU([
+					'Join',
+					'Join Channel',
+					'Join Group',
+					'Subscribe',
+					'Unirse',
+					'Unirse al grupo',
+					'Unirse al canal',
+					'Suscribirse',
+				]),
+			});
 		if (!(await visible(join, 8000))) {
 			if (
 				await visible(
