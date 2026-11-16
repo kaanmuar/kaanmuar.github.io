@@ -20,7 +20,7 @@
  *   node scripts/engagement-browser/agent.js setup              pair, install the launchd job, sign in, clone profiles
  *   node scripts/engagement-browser/agent.js login [network]    sign in (or clear a check) in that network's Chrome
  *   node scripts/engagement-browser/agent.js check [--read]     who it is signed in as, and what one search reads
- *   node scripts/engagement-browser/agent.js run [--force]      one run now (--force: outside the hours too)
+ *   node scripts/engagement-browser/agent.js run [--force]      one run now; also up to 3 LinkedIn connects when the list has people (--force: outside the hours too)
  *   node scripts/engagement-browser/agent.js connect [--manual] today's LinkedIn connects (up to 15; --manual: only Send-queued)
  *   node scripts/engagement-browser/agent.js clone-profiles [network] [--force]   a profile per network from the main one
  *   node scripts/engagement-browser/agent.js import <file>      sessions signed in elsewhere (Playwright cookies JSON)
@@ -61,6 +61,7 @@ const LOGS = path.join(STATE, "logs");
 const PLIST = path.join(os.homedir(), "Library/LaunchAgents", LABEL + ".plist");
 const HOURS = [7, 22];
 const MAX_ACTIONS = 10;
+const CONNECT_PER_RUN = 3;
 const RUN_MS = 25 * 60 * 1000;
 const HOLD_MS = 12 * 3600000;
 const INBOX_MS = 3600000;
@@ -489,6 +490,11 @@ async function run(opts) {
   }));
   try {
     await report("running", "Reading " + mine.length + " networks in " + Math.min(opts.parallel, units.length) + " Chromes");
+    // Connect first on a quiet session before feed search and replies (#3576); failures must not stop the run.
+    if (mine.includes("linkedin") && !c.blocked.linkedin) {
+      try { await connectLinkedin({ manual: false, fromRun: true, max: CONNECT_PER_RUN }); }
+      catch (error) { log("LinkedIn connects (from run): " + String(error.message || error).slice(0, 180)); }
+    }
     const order = Object.fromEntries(nets.map((k, i) => [k, i]));
     mine.filter((k) => c.blocked[k]).forEach((k) => { seen.errors[k] = "Held until " + c.blocked[k] + " after a check."; seen.signedIn[k] = true; });
     const toRead = units.map((u) => ({ profile: u.profile, nets: u.nets.filter((k) => !c.blocked[k]) })).filter((u) => u.nets.length);
@@ -527,25 +533,29 @@ async function run(opts) {
 // --- LinkedIn connects (#3576) ---------------------------------------------------------------------------------------
 
 async function connectLinkedin(opts) {
+  const o = opts || {};
   const owned = [];
   const k = "linkedin";
   if (!NETWORKS[k].connect) throw new Error("LinkedIn connect is not installed.");
-  if (!claim([k], owned).length) { log("LinkedIn is busy in another run or sign-in; skipped."); return; }
+  if (!o.fromRun) {
+    if (!claim([k], owned).length) { log("LinkedIn is busy in another run or sign-in; skipped."); return; }
+  }
   const started = new Date().toISOString();
   const reportLi = (state, step) => api("process-report", { row: { id: "linkedin-connect", kind: "mac-agent", name: "LinkedIn connects", state, step, needsYou: false, startedAt: started, url: "https://carlosandmunoz.com/admin.html#stats/marketing" } })
     .catch((error) => log("Processes: " + error.message));
   try {
     await reportLi("running", "Loading the LinkedIn queue");
-    const q = await api("engagement-mac-linkedin-queue", { auto: !(opts || {}).manual });
-    if (!q.tasks || !q.tasks.length) { await reportLi("done", "No LinkedIn connects to send (cap " + (q.cap || 15) + ")."); return; }
+    const q = await api("engagement-mac-linkedin-queue", Object.assign({ auto: !o.manual }, o.max > 0 ? { limit: o.max } : {}));
+    const tasks = q.tasks || [];
+    if (!tasks.length) { await reportLi("done", "No LinkedIn connects to send (cap " + (q.cap || 15) + ")."); return; }
     const { ctx, page } = await launch(true, profileOf(k));
     try {
       const who = await signedIn(page, k);
       if (!who.who) throw new Error(who.why || "Not signed in to LinkedIn in the agent's Chrome.");
       let done = 0;
-      for (let i = 0; i < q.tasks.length; i += 1) {
-        const t = q.tasks[i];
-        await reportLi("running", "Connecting with " + t.name + " (" + (i + 1) + "/" + q.tasks.length + ")");
+      for (let i = 0; i < tasks.length; i += 1) {
+        const t = tasks[i];
+        await reportLi("running", "Connecting with " + t.name + " (" + (i + 1) + "/" + tasks.length + ")");
         let r;
         try { r = await NETWORKS[k].connect(page, t); }
         catch (error) {
@@ -556,14 +566,17 @@ async function connectLinkedin(opts) {
         await api("engagement-mac-linkedin-result", { key: t.key, date: t.date, name: t.name, ok: !!r.ok, outcome, url: r.url || "", error: r.error || "" });
         netLog(k)("connect " + t.name + ": " + outcome + (r.error ? " (" + r.error + ")" : ""));
         if (outcome === "sent" || outcome === "already") done += 1;
-        if (i < q.tasks.length - 1) await pause(45000, 90000);
+        if (i < tasks.length - 1) await pause(45000, 90000);
       }
-      await reportLi("done", "LinkedIn: " + done + " connected of " + q.tasks.length);
+      await reportLi("done", "LinkedIn: " + done + " connected of " + tasks.length);
     } finally { await ctx.close().catch(() => null); }
   } catch (error) {
     await reportLi("failed", String(error.message || error).slice(0, 150));
-    throw error;
-  } finally { release(owned); }
+    if (!o.fromRun) throw error;
+    log("LinkedIn connects: " + String(error.message || error).slice(0, 180));
+  } finally {
+    if (!o.fromRun) release(owned);
+  }
 }
 
 // --- install -----------------------------------------------------------------------------------------------------------

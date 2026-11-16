@@ -149,9 +149,11 @@ async function macQueue(deps, body) {
   const sync = (await deps.db.collection("jarvis_settings").doc("marketing_sync").get()).data() || {};
   const { tasks: stored } = await readTasks(deps.db);
   const plan = buildTasks(sync, stored, now, body && body.auto !== false);
+  const want = Number(body && body.limit);
+  const batch = plan.tasks.slice(0, Number.isFinite(want) && want > 0 ? Math.min(want, plan.tasks.length) : plan.tasks.length);
   const leased = [];
   const next = stored.slice();
-  for (const row of plan.tasks) {
+  for (const row of batch) {
     const i = next.findIndex((t) => t && t.key === row.key);
     const at = new Date(now).toISOString();
     const merged = Object.assign({}, row, { status: "running", leasedAt: at, error: "" });
