@@ -7,6 +7,7 @@ const fusion = require("./url-review-fusion");
 const booking = require("./booking");
 const mailFace = require("./mail-face");
 const fixOffers = require("./url-review-fix-offers");
+const csat = require("./url-review-csat");
 
 const { FUSION, TEXT, ON_NIGHT } = fusion;
 const SITE = "https://carlosandmunoz.com";
@@ -840,6 +841,7 @@ function reportMail(record, options) {
   const openUrl = pageUrl(lang, { report: facts.id, utm_campaign: "report" });
   const anotherUrl = pageUrl(lang, { coupon: promise ? promise.coupon : "", utm_campaign: "report-another" });
   const fixUrl = facts.findings.length ? pageUrl(lang, { report: facts.id, utm_campaign: "report-fix" }) : "";
+  const csatAsk = csat.mailBlock(lang, opts.csatUrl);
   const cf = compareFacts(record, lang);
   const baseUrl = cf && cf.ownId ? pageUrl(lang, { report: cf.ownId, utm_campaign: "report-compare" }) : "";
   const scoreHtml = scoreBlock(t, p, facts, story.title);
@@ -854,6 +856,7 @@ function reportMail(record, options) {
     "<p style=\"margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.muted + ";\">" + esc(t.openNote) + "</p>" +
     (opts.attached ? "<p style=\"margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:19px;color:" + TEXT.link + ";font-weight:bold;\">&#128206; " + esc(attached) + "</p>" : "") +
     "</td></tr>" +
+    (csatAsk.html || "") +
     "<tr><td style=\"height:16px;line-height:16px;font-size:0;\">&nbsp;</td></tr>" +
     (fixUrl ? fixBlock(t, fixUrl) : "") +
     deeperBlock(t, facts.host, facts.id, lang, "report", opts.face);
@@ -876,6 +879,7 @@ function reportMail(record, options) {
     story.cta + ": " + openUrl,
     opts.attached ? attached : "",
     t.another + ": " + anotherUrl,
+    csatAsk.text ? "\n" + csatAsk.text : "",
     "",
     fixUrl ? t.fixTitle + "\n" + t.fixLines.map((line) => "- " + fill(line, { usd: fixFrom() })).join("\n") + "\n" + t.fixCta + ": " + fixUrl + "\n" : "",
     t.deeper,
