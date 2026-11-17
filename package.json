@@ -71,7 +71,7 @@
     "mochawesome-merge": "^5.1.1",
     "mochawesome-report-generator": "^6.3.2",
     "playwright": "^1.63.0",
-    "postcss": "^8.5.32",
+    "postcss": "^8.5.33",
     "prettier": "^3.10.1",
     "selenium-webdriver": "^4.52.0",
     "tailwindcss": "^4.3.3",
