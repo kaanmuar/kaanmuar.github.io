@@ -36,6 +36,12 @@ const sweep = require('../functions/url-review-sweep');
 const browserPass = require('../functions/url-review-browser');
 
 const PROJECT = 'carlosm-interactive-cv';
+/* Wordfence's stored index lives in Firebase Storage (#3716). Cloud Functions init the
+   default app at load; this Mac path must too before wordpress.check → loadIndex. */
+const { initializeApp, getApps } = require('module').createRequire(
+	path.join(__dirname, '../functions/index.js')
+)('firebase-admin/app');
+if (!getApps().length) initializeApp({ projectId: PROJECT });
 const BASE = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents';
 const REVIEW_MS = 300000;
 const WINDOW_WAIT_MS = 20000;
