@@ -102,6 +102,40 @@ test("a run fixes only the 6 worst pages under 90; the rest wait for later days"
   assert.deepEqual(routine.toFix([]), []);
 });
 
+test("planCheck keeps core dual-mode, skips healthy social most days, mobile-only when due (#3684)", () => {
+  const core = { url: URL0, file: "index.html", sitemap: "sitemap.xml" };
+  const healthyUrl = URL0 + "social/good/";
+  const weakUrl = URL0 + "social/weak/";
+  const list = [
+    core,
+    { url: healthyUrl, file: "social/good/index.html", sitemap: "sitemap-social.xml" },
+    { url: weakUrl, file: "social/weak/index.html", sitemap: "sitemap-social.xml" },
+  ];
+  const prev = [
+    { url: healthyUrl, mobile: { ok: true, score: 95 }, desktop: { ok: true, score: 96 } },
+    { url: weakUrl, mobile: { ok: true, score: 70 }, desktop: { ok: true, score: 72 } },
+  ];
+  const bucket = routine.urlBucket(healthyUrl, 7);
+  const skipDay = (bucket + 1) % 7;
+  const dueDay = bucket;
+  const skipped = routine.planCheck(list, prev, { day: skipDay });
+  assert.deepEqual(
+    skipped.jobs.map((j) => [j.p.url, j.mode]),
+    [
+      [URL0, "mobile"],
+      [URL0, "desktop"],
+      [weakUrl, "mobile"],
+    ]
+  );
+  assert.equal(skipped.reused.length, 2);
+  const due = routine.planCheck(list, prev, { day: dueDay });
+  assert.ok(due.jobs.some((j) => j.p.url === healthyUrl && j.mode === "mobile"));
+  assert.equal(
+    due.jobs.filter((j) => j.p.url === healthyUrl && j.mode === "desktop").length,
+    0
+  );
+});
+
 test("a branch merges on its own only when nothing fell and something rose", () => {
   assert.equal(routine.verdict([{ file: "index.html", mobile: { before: 80, after: 86 }, desktop: { before: 95, after: 94 } }]).up, true);
   const fell = routine.verdict([{ file: "index.html", mobile: { before: 80, after: 90 }, desktop: { before: 95, after: 92 } }]);
