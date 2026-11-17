@@ -161,8 +161,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122095175259532027",
     "at": "2026-11-17T17:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T00:09:27.657Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122095175259532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-17T22:06:59.632Z"
    }
   ],
   "auto-2026-10-22/14-u-co-computrabajo-com": [
@@ -171,8 +172,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122095175403532027",
     "at": "2026-11-17T19:08:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T00:09:27.657Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122095175403532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-17T22:06:59.632Z"
    }
   ],
   "auto-2026-10-22/15-u-nice-com": [
@@ -854,8 +856,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122108401161532027",
     "at": "2026-11-17T17:44:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T00:09:27.661Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1805501363989855/",
+    "checked": "2026-11-17T22:06:59.632Z"
    }
   ],
   "auto-2026-11-10/02-u-meutimao-com-br": [
@@ -958,8 +961,119 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122110938981532027",
     "at": "2026-11-17T20:31:00.000Z",
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122110938981532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-17T22:06:59.632Z"
+   }
+  ],
+  "auto-2026-11-17/01-u-flyliatair-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2581001919046114",
+    "at": "2026-11-18T19:30:00.000Z",
     "result": "queued",
-    "checked": "2026-11-17T00:09:27.662Z"
+    "checked": "2026-11-17T22:07:10.062Z"
+   }
+  ],
+  "auto-2026-11-17/07-u-123carrentalbonaire-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1717139886667450",
+    "at": "2026-11-18T22:17:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:07:19.461Z"
+   }
+  ],
+  "auto-2026-11-17/13-u-24hour-emergencydentist-co-uk": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1849849686345884",
+    "at": "2026-11-18T23:42:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:07:28.155Z"
+   }
+  ],
+  "auto-2026-11-17/19-u-44ye-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1852774192417596",
+    "at": "2026-11-19T23:12:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:07:37.289Z"
+   }
+  ],
+  "auto-2026-11-17/25-u-7diasdesabor-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2132297640991303",
+    "at": "2026-11-19T17:35:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:07:46.443Z"
+   }
+  ],
+  "auto-2026-11-17/31-u-accounts-google-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1843326456701711",
+    "at": "2026-11-20T17:39:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:07:54.977Z"
+   }
+  ],
+  "auto-2026-11-17/37-u-abogadosdiazyasociados-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "4574622606082775",
+    "at": "2026-11-20T19:03:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:08:04.654Z"
+   }
+  ],
+  "auto-2026-11-17/43-u-abstract-cl": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1120062994142316",
+    "at": "2026-11-21T18:38:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:08:13.765Z"
+   }
+  ],
+  "auto-2026-11-17/49-u-acs-edu-au": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1150522447512194",
+    "at": "2026-11-21T20:01:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:08:23.959Z"
+   }
+  ],
+  "auto-2026-11-17/55-u-adonay-cl": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1141458192113754",
+    "at": "2026-11-22T20:11:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:08:33.925Z"
+   }
+  ],
+  "auto-2026-11-17/61-u-organicadigital-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2201754640763121",
+    "at": "2026-11-22T21:36:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:08:43.472Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -1624,8 +1738,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122093299755532027",
     "at": "2026-11-17T17:05:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T00:09:27.664Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122093299755532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-17T22:06:59.632Z"
    }
   ],
   "runs-100/15-lemonde": [
