@@ -2040,6 +2040,278 @@
 
   const COMPARE_AT_ONCE = 3;
   let comparePool = null;
+  let batchPool = null;
+
+  function batchCopy(key, vars) {
+    return window.QAReviewBatchCopy ? QAReviewBatchCopy.t(key, vars) : key;
+  }
+
+  async function batchPost(path, body) {
+    const res = await fetch(endpoint() + path, {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, body || {}))
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const error = new Error(data.error || batchCopy("fixList"));
+      error.body = data;
+      error.status = res.status;
+      throw error;
+    }
+    return data;
+  }
+
+  // Bulk many-URL run (#3737): signed-in, pass credits for every URL, sequential, persist + email on finish.
+  async function startBulkBatch() {
+    const bc = window.QAReviewBatch;
+    if (!bc) return;
+    if (!signedIn()) {
+      setStatus(batchCopy("signIn"), true);
+      if (window.ReviewAuth) ReviewAuth.focus();
+      return;
+    }
+    const parsed = bc.parseList(bc.listText(), { leadUrl: bc.leadUrl() });
+    if (parsed.error) {
+      const msg = (parsed.problems || []).map(bc.problemText).join(" ") || batchCopy(parsed.code || "fixList", { max: bc.BATCH_MAX });
+      setStatus(msg, true);
+      document.getElementById("batch-error").textContent = msg;
+      return;
+    }
+    const pass = passOn();
+    const left = pass && pass.runsLeft != null ? pass.runsLeft : 0;
+    if (!pass || left < parsed.urls.length) {
+      setStatus(left <= 0 ? batchCopy("needCreditsNone") : batchCopy("needCredits", { need: parsed.urls.length, left }), true);
+      return;
+    }
+    if (!termsOk) {
+      askTerms(() => startBulkBatch(), parsed.urls.map((row) => row.url));
+      return;
+    }
+    if (activeRun) {
+      setStatus(batchCopy("busy"), true);
+      return;
+    }
+    setStatus(batchCopy("starting"), false);
+    let batch;
+    try {
+      const started = await batchPost("/account/batch/start", {
+        text: bc.listText(),
+        leadUrl: bc.leadUrl(),
+        leadFromReport: bc.leadFromReport(),
+        leadReportId: current && current.report ? current.report.id : "",
+        frameworks: selectedFrameworks(),
+        tools: selectedTools(),
+        pages: selectedPages(),
+        depth: selectedDepth(),
+        lang: document.documentElement.lang || "en",
+        name: document.getElementById("name").value
+      });
+      batch = started.batch;
+    } catch (error) {
+      const body = error.body || {};
+      setStatus(body.error || error.message || batchCopy("needCreditsNone"), true);
+      return;
+    }
+    bc.remember(batch);
+    history.replaceState(null, "", location.pathname + "?batch=" + encodeURIComponent(batch.id) + location.hash);
+    await runBulkBatch(batch);
+  }
+
+  async function runBulkBatch(batch) {
+    const bc = window.QAReviewBatch;
+    const pool = { batch, stopping: false };
+    batchPool = pool;
+    activeRun = "batch";
+    reviewBtn.disabled = true;
+    stopBtn.disabled = false;
+    const stopBatchBtn = document.getElementById("batch-stop");
+    if (stopBatchBtn) stopBatchBtn.hidden = false;
+    const runLog = document.getElementById("run-log");
+    runLog.innerHTML = "";
+    runLog.classList.add("is-live");
+    if (window.ReviewProgress) ReviewProgress.reset();
+    if (bc) bc.paintPanel(batch);
+    try {
+      for (let index = 0; index < batch.rows.length; index += 1) {
+        if (pool.stopping) break;
+        const row = batch.rows[index];
+        if (row.state !== "waiting") continue;
+        try {
+          await runBulkRow(pool, index);
+        } catch (error) {
+          if (error.body && error.body.signIn) {
+            ReviewAuth.expire(error.message);
+            ReviewAuth.focus();
+            setStatus(error.message, true);
+            break;
+          }
+          if (error.paymentRequired) {
+            setStatus(batchCopy("needCreditsNone"), true);
+            break;
+          }
+          throw error;
+        }
+        if (bc) bc.paintPanel(pool.batch);
+      }
+    } finally {
+      runLog.classList.remove("is-live");
+      activeRun = "";
+      batchPool = null;
+      reviewBtn.disabled = false;
+      stopBtn.disabled = true;
+      loadStanding();
+      if (bc) bc.paintPanel(pool.batch);
+    }
+  }
+
+  const BATCH_ROW_TRIES = 3;
+
+  async function runBulkRow(pool, index) {
+    const batch = pool.batch;
+    const row = batch.rows[index];
+    let lastError = null;
+    for (let tryN = 1; tryN <= BATCH_ROW_TRIES; tryN += 1) {
+      if (pool.stopping) return;
+      const runId = hexId();
+      activeRun = runId;
+      row.state = "running";
+      try {
+        await batchPost("/account/batch/row", { id: batch.id, index, state: "running", note: tryN > 1 ? batchCopy("retrying", { n: tryN, max: BATCH_ROW_TRIES }) : "" });
+      } catch (error) { /* paint continues; server catches up on done */ }
+      if (window.QAReviewBatch) QAReviewBatch.paintPanel(pool.batch);
+      setStatus(
+        tryN > 1
+          ? batchCopy("retryingHost", { host: row.host, n: tryN, max: BATCH_ROW_TRIES })
+          : batchCopy("running", { n: index + 1, total: batch.rows.length, host: row.host }),
+        false
+      );
+      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_start", "URL Review", "batch");
+      fetch(endpoint() + "/place", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ runId: runId })
+      }).catch(() => {});
+      const body = JSON.parse(reviewBody(null, row.url, runId));
+      body.frameworks = batch.frameworks && batch.frameworks.length ? batch.frameworks : body.frameworks;
+      body.tools = batch.tools && batch.tools.length ? batch.tools : body.tools;
+      if (batch.pages) body.pages = batch.pages;
+      if (batch.depth) body.depth = batch.depth;
+      if (body.reasonCode === "compare") body.reasonCode = "allowed";
+      try {
+        const res = await fetch(runEndpoint() + "/review", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const payload = await readStream(res, row.url);
+        if (!payload || !payload.report) throw new Error(rc.word("fieldError", "noReport"));
+        const stopped = payload.report.status === "stopped";
+        const overall = payload.report.insights && payload.report.insights.score ? payload.report.insights.score.overall : null;
+        const patch = {
+          id: batch.id,
+          index,
+          state: pool.stopping || stopped ? "stopped" : "done",
+          reviewId: payload.report.id || "",
+          overall: typeof overall === "number" ? overall : null,
+          note: stopped ? "Stopped." : ""
+        };
+        const updated = await batchPost("/account/batch/row", patch);
+        pool.batch = updated;
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_done", "URL Review", payload.report.host);
+        if (!pool.stopping && index === 0) {
+          layer = "All";
+          render(payload);
+          dash.scrollTop = 0;
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+        if (error.body && error.body.signIn) throw error;
+        if (error.paymentRequired) throw error;
+        if (pool.stopping) return;
+        if (tryN < BATCH_ROW_TRIES) continue;
+      }
+    }
+    const error = lastError || new Error(rc.word("fieldError", "reviewFailed"));
+    const field = (error.fields || []).find((item) => item.field === "url");
+    const note = ((field && field.message) || error.message || rc.word("fieldError", "reviewFailed")).replace(/([^.!?])\s*$/, "$1.");
+    const rescue = !!(error.body && error.body.code === "inconclusive");
+    try {
+      pool.batch = await batchPost("/account/batch/row", {
+        id: batch.id,
+        index,
+        state: rescue ? "rescue" : "failed",
+        note: (rescue ? batchCopy("rescueNote") + " " : "") + note.slice(0, 200)
+      });
+    } catch (updateError) {
+      row.state = rescue ? "rescue" : "failed";
+      row.note = note;
+    }
+    if (rescue) showInconclusive(error.body);
+    if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_blocked", "URL Review", note);
+  }
+
+  async function stopBulkBatch() {
+    if (!batchPool) return;
+    batchPool.stopping = true;
+    setStatus(batchCopy("stopping"), false);
+    try {
+      const updated = await batchPost("/account/batch/stop", { id: batchPool.batch.id });
+      batchPool.batch = updated;
+      if (window.QAReviewBatch) QAReviewBatch.paintPanel(updated);
+    } catch (error) { /* local stop flag still skips waiting rows */ }
+    if (activeRun && activeRun !== "batch") {
+      try {
+        await fetch(endpoint() + "/stop", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(Object.assign(window.ReviewAuth ? ReviewAuth.proof() : {}, { runId: activeRun }))
+        });
+      } catch (error) { /* stop is best-effort */ }
+    }
+  }
+
+  async function openSavedBatch(id) {
+    if (!id || !signedIn()) return;
+    try {
+      const batch = await batchPost("/account/batch/open", { id });
+      if (window.QAReviewBatch) {
+        QAReviewBatch.remember(batch);
+        QAReviewBatch.setMode("many");
+        QAReviewBatch.paintPanel(batch);
+      }
+      if (batch.status === "running") await runBulkBatch(batch);
+    } catch (error) {
+      setStatus(error.message || batchCopy("fixList"), true);
+    }
+  }
+
+  async function saveBatchComparison() {
+    const panel = document.getElementById("batch-panel");
+    const id = (location.search.match(/[?&]batch=([A-Za-z0-9]+)/) || [])[1] || (window.QAReviewBatch && QAReviewBatch.rememberedId());
+    if (!id || !window.QAReviewMulti) return;
+    setStatus(batchCopy("savingCompare"), false);
+    try {
+      const batch = await batchPost("/account/batch/open", { id });
+      const ids = batch.doneIds || [];
+      if (ids.length < 2) return;
+      const comparisonId = await QAReviewMulti.save(ids, "review", null);
+      if (!comparisonId) {
+        setStatus(batchCopy("saveCompareHint"), true);
+        return;
+      }
+      history.pushState(null, "", location.pathname + "?report=" + encodeURIComponent(ids[0]) + "&comparison=" + encodeURIComponent(comparisonId));
+      await reopenFixList(ids[0]);
+      QAReviewMulti.load(comparisonId);
+    } catch (error) {
+      setStatus(error.message || batchCopy("saveCompareHint"), true);
+    }
+    if (panel) panel.hidden = false;
+  }
 
   function paintCompareRows(pool) {
     let list = document.getElementById("compare-rows");
@@ -3463,6 +3735,10 @@
   reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (activeRun) return;
+    if (!compareTarget && window.QAReviewBatch && QAReviewBatch.mode() === "many") {
+      await startBulkBatch();
+      return;
+    }
     if (!compareTarget) {
       const value = urlInput.value.trim().replace(/^https?:\/\//i, "").replace(/^\/+/, "");
       if (!value || /\s/.test(value)) {
@@ -3613,6 +3889,10 @@
     stopBtn.disabled = true;
     if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_stop", "URL Review", "stop");
     appendLog("Stop requested.");
+    if (batchPool) {
+      await stopBulkBatch();
+      return;
+    }
     setStatus("Stopping the review…", false);
     if (comparePool) comparePool.stopping = true;
     const runIds = comparePool ? comparePool.rows.filter((row) => row.state === "running").map((row) => row.runId) : [activeRun];
@@ -5176,6 +5456,21 @@
     document.getElementById("compare-running-text").textContent = cc.t("runStopping");
     stopBtn.click();
   });
+  if (window.QAReviewBatch) {
+    QAReviewBatch.currentReport = () => current && current.report ? current.report : null;
+    const batchStop = document.getElementById("batch-stop");
+    if (batchStop) batchStop.addEventListener("click", () => { if (batchPool) stopBtn.click(); });
+    const batchCompare = document.getElementById("batch-save-compare");
+    if (batchCompare) batchCompare.addEventListener("click", saveBatchComparison);
+  }
+  const batchParam = new URLSearchParams(location.search).get("batch");
+  if (batchParam) {
+    const openBatch = () => openSavedBatch(batchParam);
+    if (signedIn()) openBatch();
+    else if (window.ReviewAuth) ReviewAuth.onChange((on) => { if (on) openBatch(); });
+  } else if (window.QAReviewBatch && QAReviewBatch.rememberedId() && signedIn()) {
+    openSavedBatch(QAReviewBatch.rememberedId());
+  }
   compareInputs().forEach((compareInput) => {
     compareInput.addEventListener("input", () => {
       const next = compareInput.value.replace(/^\s*https?:\/\//i, "").replace(/^\/+/, "");

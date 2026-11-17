@@ -1872,6 +1872,40 @@ async function mailComparison(notice) {
   }
 }
 
+// Bulk batch finished (#3737): owner desk notice plus asker summary. A mail failure still leaves the batch saved.
+async function mailBatchFinished(id, doc, meta) {
+  const notice = batchMail.ownerNotice(id, doc, meta);
+  if (notice) {
+    try {
+      await pushOwner(jarvisMailPush.comparisonMessage(notice));
+    } catch (error) {
+      console.error("Batch owner push failed:", error);
+    }
+    if (await mailOn("comparisons")) {
+      try {
+        await sendOwnerEmail({
+          eyebrow: "QA-lab URL Review",
+          subject: notice.subject,
+          intro: notice.intro,
+          rows: notice.rows,
+          respondUrl: notice.respondUrl,
+          buttonLabel: notice.buttonLabel || "Open the batch"
+        });
+      } catch (error) {
+        console.error("Batch owner notice failed:", error);
+      }
+    }
+  }
+  const asker = batchMail.askerMail(id, doc, meta);
+  if (asker && asker.to) {
+    try {
+      await sendAskerMail(asker.to, { subject: asker.subject, text: asker.text, html: asker.html, lang: asker.lang }, "", "url-review-batch");
+    } catch (error) {
+      console.error("Batch asker mail failed:", error);
+    }
+  }
+}
+
 const urlReview = require("./url-review-core");
 const softQuota = require("./url-review-soft-quota");
 const lookalikes = require("./url-review-lookalikes");
@@ -1911,6 +1945,8 @@ const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
 const compareMail = require("./url-review-compare-mail");
 const reviewMulti = require("./url-review-multi");
+const reviewBatch = require("./url-review-batch");
+const batchMail = require("./url-review-batch-mail");
 const reviewPeers = require("./url-review-peers");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
@@ -4425,6 +4461,10 @@ async function reviewAccount(req, res, pathName) {
     await reviewComparison(req, res, pathName, db, signedIn.email);
     return;
   }
+  if (pathName.indexOf("/account/batch/") !== -1) {
+    await reviewBatchRoutes(req, res, pathName, db, signedIn);
+    return;
+  }
   if (pathName.endsWith("/account/compare")) {
     const snap = await db.collection("url_reviews").where("email", "==", signedIn.email).limit(200).get();
     const records = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
@@ -4544,6 +4584,116 @@ async function openPeerGroup(req, res) {
   const rows = {};
   snaps.forEach((row) => { if (row.exists) rows[row.id] = row.data(); });
   res.status(200).json(reviewPeers.payloadOf(id, doc, rows, viewer));
+}
+
+// Bulk URL review batches (#3737): create from a pasted/file list, patch each row, stop, open, list.
+async function reviewBatchRoutes(req, res, pathName, db, signedIn) {
+  const body = req.body || {};
+  const email = signedIn.email;
+  if (pathName.endsWith("/account/batch/parse")) {
+    const parsed = reviewBatch.parseList(body.text, { leadUrl: body.leadUrl });
+    res.status(parsed.error ? 400 : 200).json(parsed);
+    return;
+  }
+  if (pathName.endsWith("/account/batch/start")) {
+    if (await hasFreeRuns(email)) {
+      res.status(402).json({ error: "A pass with enough runs is needed for a bulk review. Add credits, then try again.", code: "needCredits" });
+      return;
+    }
+    const parsed = reviewBatch.parseList(body.text, { leadUrl: body.leadUrl });
+    if (parsed.error) {
+      res.status(400).json(parsed);
+      return;
+    }
+    const passes = await passRowsFor(email);
+    const pass = reviewOffers.passView(reviewOffers.passFor(passes, email, Date.now()));
+    const credit = reviewBatch.creditProblem(pass && pass.runsLeft, parsed.urls.length);
+    if (credit) {
+      res.status(402).json(credit);
+      return;
+    }
+    const saved = reviewBatch.savedRecord(email, parsed, {
+      frameworks: body.frameworks,
+      tools: body.tools,
+      pages: body.pages,
+      depth: body.depth,
+      lang: body.lang || signedIn.lang,
+      name: body.name || signedIn.name,
+      leadFromReport: body.leadFromReport === true,
+      leadReportId: body.leadReportId
+    });
+    const ref = await db.collection(reviewBatch.COLLECTION).add(saved);
+    res.status(200).json({ ok: true, batch: reviewBatch.payloadOf(ref.id, saved) });
+    return;
+  }
+  if (pathName.endsWith("/account/batch/list")) {
+    try {
+      const snap = await db.collection(reviewBatch.COLLECTION).where("email", "==", email).limit(reviewBatch.LISTED_MAX * 2).get();
+      res.status(200).json({ ok: true, batches: reviewBatch.listOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), email) });
+    } catch (error) {
+      console.error("Batch list failed:", error);
+      res.status(200).json({ ok: true, batches: [] });
+    }
+    return;
+  }
+  const id = reviewBatch.docId(body.id);
+  const snap = id ? await db.collection(reviewBatch.COLLECTION).doc(id).get() : null;
+  const doc = snap && snap.exists ? snap.data() || {} : null;
+  if (!doc || String(doc.email || "").toLowerCase() !== String(email).toLowerCase()) {
+    res.status(404).json({ error: "That batch is not saved under this account.", code: "batchNotSaved" });
+    return;
+  }
+  if (pathName.endsWith("/account/batch/open")) {
+    const stuck = (doc.rows || []).some((row) => row.state === "running");
+    if (stuck && doc.status === "running") {
+      const next = reviewBatch.resetStuck(doc);
+      await snap.ref.update({ rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt });
+      res.status(200).json(reviewBatch.payloadOf(id, Object.assign({}, doc, next)));
+      return;
+    }
+    res.status(200).json(reviewBatch.payloadOf(id, doc));
+    return;
+  }
+  if (pathName.endsWith("/account/batch/row")) {
+    const index = Number(body.index);
+    const patch = {
+      state: body.state,
+      reviewId: body.reviewId,
+      note: body.note,
+      overall: body.overall
+    };
+    Object.keys(patch).forEach((key) => { if (patch[key] === undefined) delete patch[key]; });
+    const next = reviewBatch.applyRow(doc, index, patch);
+    if (next.error) {
+      res.status(400).json(next);
+      return;
+    }
+    const mailedAt = doc.mailedAt || "";
+    const update = { rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt };
+    if (reviewBatch.finished(update) && !mailedAt) {
+      update.mailedAt = next.updatedAt;
+      await snap.ref.update(update);
+      const fresh = Object.assign({}, doc, update);
+      await mailBatchFinished(id, fresh, { email, name: doc.name || signedIn.name, lang: doc.lang });
+      res.status(200).json(reviewBatch.payloadOf(id, fresh));
+      return;
+    }
+    await snap.ref.update(update);
+    res.status(200).json(reviewBatch.payloadOf(id, Object.assign({}, doc, update)));
+    return;
+  }
+  if (pathName.endsWith("/account/batch/stop")) {
+    const next = reviewBatch.stopBatch(doc);
+    const mailedAt = doc.mailedAt || "";
+    const update = { rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt };
+    if (!mailedAt) update.mailedAt = next.updatedAt;
+    await snap.ref.update(update);
+    const fresh = Object.assign({}, doc, update);
+    if (!mailedAt) await mailBatchFinished(id, fresh, { email, name: doc.name || signedIn.name, lang: doc.lang });
+    res.status(200).json(reviewBatch.payloadOf(id, fresh));
+    return;
+  }
+  res.status(404).json({ error: "Not found." });
 }
 
 // A many-URL comparison: saved from the account page or the review page, opened, deleted, and printed to PDF.
