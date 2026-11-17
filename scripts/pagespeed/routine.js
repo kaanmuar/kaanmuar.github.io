@@ -30,7 +30,50 @@ function worstFirst(a, b) {
 }
 
 function toFix(pages) {
-	return (pages || []).filter(needsFix).sort(worstFirst).slice(0, PER_RUN);
+  return (pages || []).filter(needsFix).sort(worstFirst).slice(0, PER_RUN);
+}
+
+/** Stable 0..n-1 bucket from a URL (weekly rotate of healthy social pages). */
+function urlBucket(url, n) {
+  let h = 0;
+  const s = String(url || "");
+  for (let i = 0; i < s.length; i += 1) h = (Math.imul(h, 33) + s.charCodeAt(i)) >>> 0;
+  return n ? h % n : 0;
+}
+
+/**
+ * PSI jobs for the daily check (#3684). Core sitemap: mobile + desktop every day.
+ * Social: reuse yesterday when both scores were ≥ THRESHOLD unless this URL's weekday
+ * bucket matches today; otherwise mobile only (desktop for the worst PER_RUN is a second pass).
+ * Returns { jobs: [{ p, mode, listIndex }], reused: [{ listIndex, mode, value }] }.
+ */
+function planCheck(list, prevPages, opts) {
+  const day = opts && opts.day != null ? Number(opts.day) : new Date().getUTCDay();
+  const prevByUrl = new Map((prevPages || []).map((p) => [p.url, p]));
+  const jobs = [];
+  const reused = [];
+  (list || []).forEach((p, listIndex) => {
+    if (p.sitemap === "sitemap.xml") {
+      jobs.push({ p, mode: "mobile", listIndex }, { p, mode: "desktop", listIndex });
+      return;
+    }
+    const prev = prevByUrl.get(p.url);
+    const healthy =
+      prev &&
+      ok(prev.mobile) &&
+      ok(prev.desktop) &&
+      prev.mobile.score >= THRESHOLD &&
+      prev.desktop.score >= THRESHOLD;
+    if (healthy && urlBucket(p.url, 7) !== day) {
+      reused.push(
+        { listIndex, mode: "mobile", value: prev.mobile },
+        { listIndex, mode: "desktop", value: prev.desktop }
+      );
+      return;
+    }
+    jobs.push({ p, mode: "mobile", listIndex });
+  });
+  return { jobs, reused };
 }
 
 function affected(changed, pages, readText) {
@@ -179,6 +222,8 @@ module.exports = {
 	needsFix,
 	worstFirst,
 	toFix,
+	urlBucket,
+	planCheck,
 	affected,
 	verdict,
 	cacheNotes,
