@@ -81,6 +81,7 @@
   const TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? "1x00000000000000000000AA" : "0x4AAAAAAFoMHSvmRtt1Z3Lz";
   let turnstileReady = null;
   let softTurnstileId = null;
+  let softTurnstileMode = null;
   const COMPARE_KEY = "qa-review-compare";
   const fileUses = {};
 
@@ -104,30 +105,53 @@
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return "";
     const api = await loadTurnstile();
     const box = document.getElementById("soft-turnstile");
-    if (!box) return "";
-    box.hidden = !visible;
-    if (softTurnstileId != null) {
-      try { api.reset(softTurnstileId); } catch (error) { softTurnstileId = null; }
+    // A stale cached page without the mount returns no token and looks like a failed bot check (#3745).
+    if (!box) throw new Error("The bot check did not load. Reload the page and try again.");
+    // Turnstile does not mint a token from display:none. interaction-only hides itself; always shows the checkbox.
+    const mode = visible ? "always" : "interaction-only";
+    box.hidden = false;
+    box.setAttribute("aria-hidden", visible ? "false" : "true");
+    box.classList.toggle("is-visible", !!visible);
+    if (softTurnstileId != null && softTurnstileMode !== mode) {
+      try { api.remove(softTurnstileId); } catch (error) { /* already gone */ }
+      softTurnstileId = null;
     }
-    if (softTurnstileId == null) {
-      softTurnstileId = api.render(box, {
-        sitekey: TURNSTILE_SITEKEY,
-        action: "soft-preview",
-        appearance: visible ? "always" : "interaction-only",
-        size: visible ? "normal" : "flexible"
-      });
-    }
+    softTurnstileMode = mode;
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (token, error) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(timer);
+        if (error) reject(error);
+        else resolve(token);
+      };
       const started = Date.now();
-      const tick = () => {
+      const timer = setInterval(() => {
         try {
           const token = api.getResponse(softTurnstileId);
-          if (token) return resolve(token);
+          if (token) return finish(token);
         } catch (error) { /* still warming */ }
-        if (Date.now() - started > 20000) return reject(new Error("The bot check timed out."));
-        setTimeout(tick, 200);
-      };
-      tick();
+        if (Date.now() - started > 20000) finish("", new Error("The bot check timed out."));
+      }, 200);
+      if (softTurnstileId == null) {
+        softTurnstileId = api.render(box, {
+          sitekey: TURNSTILE_SITEKEY,
+          action: "soft-preview",
+          appearance: mode,
+          size: visible ? "normal" : "flexible",
+          callback: (token) => { if (token) finish(token); },
+          "expired-callback": () => { /* wait for a fresh token */ },
+          "error-callback": () => { /* keep polling until the timeout */ }
+        });
+      } else {
+        try { api.reset(softTurnstileId); } catch (error) {
+          softTurnstileId = null;
+          softTurnstileMode = null;
+          clearInterval(timer);
+          softTurnstileToken(visible).then(resolve, reject);
+        }
+      }
     });
   }
 
