@@ -1042,7 +1042,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const sz = panelSizeOf(id);
         const resized = sz.h !== 1 || sz.w !== 1;
         const span = C.sizeSpan(sz.w, wide);
-        const style = `--jv-size-h:${sz.h};--jv-size-w:${sz.w}`;
+        const style = `--jv-size-h:${sz.h};--jv-size-w:${sz.w};--jv-span:${span}`;
         return { sz, resized, span, style, className: (resized ? ' is-resized' : '') + (span >= 3 ? ' is-size-wide' : span === 2 ? ' is-size-mid' : '') };
     }
     function applySizeDom(sec, sz) {
@@ -1052,6 +1052,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const span = C.sizeSpan(next.w, wide);
         sec.style.setProperty('--jv-size-h', String(next.h));
         sec.style.setProperty('--jv-size-w', String(next.w));
+        sec.style.setProperty('--jv-span', String(span));
         sec.classList.toggle('is-resized', next.h !== 1 || next.w !== 1);
         sec.classList.toggle('is-size-mid', span === 2);
         sec.classList.toggle('is-size-wide', span >= 3);

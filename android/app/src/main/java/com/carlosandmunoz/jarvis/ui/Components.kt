@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.shape.CircleShape
@@ -154,7 +155,15 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val canResize = !folded && !editing && saveSize != null
     Box(
         Modifier.then(PanelIdElement(id)).then(modifier)
-            .fillMaxWidth()
+            // #3709: continuous width on the card itself (east/west was a no-op when only scaleY ran).
+            .then(
+                if (live.w == 1f) Modifier.fillMaxWidth()
+                else Modifier.layout { measurable, constraints ->
+                    val tw = (constraints.maxWidth * live.w).roundToInt().coerceAtLeast(1)
+                    val p = measurable.measure(Constraints(minWidth = tw, maxWidth = tw))
+                    layout(tw, p.height) { p.place(0, 0) }
+                }
+            )
             .padding(horizontal = if (dense) 7.dp else 14.dp, vertical = if (dense) 5.dp else 8.dp)
             .reveal()
             .glass()

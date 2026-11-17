@@ -108,6 +108,12 @@ class LayoutsTest {
     @Test fun panelSizeIsCleanedAndKeptWithStretch() {
         assertEquals(Layouts.Size(1.56f, 0.5f), Layouts.clampSize(1.555f, 0.2f))
         assertEquals(Layouts.Size(3f, 1f), Layouts.clampSize(9f, Float.NaN))
+        assertEquals(1, Layouts.sizeSpan(1f, false))
+        assertEquals(2, Layouts.sizeSpan(1.4f, false))
+        assertEquals(3, Layouts.sizeSpan(1.9f, false))
+        assertEquals(3, Layouts.sizeSpan(1f, true))
+        assertEquals(false, Layouts.isWideSize(1.4f))
+        assertEquals(true, Layouts.isWideSize(1.9f))
         val size = Layouts.cleanSize(mapOf("geo-map" to Layouts.Size(1.5f, 1f), "a" to Layouts.Size(1f, 1f), "bad id!" to Layouts.Size(2f, 1f)))
         assertEquals(mapOf("geo-map" to Layouts.Size(1.5f, 1f)), size)
         val kept = Layouts.keep(

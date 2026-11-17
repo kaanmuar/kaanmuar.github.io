@@ -75,6 +75,7 @@ fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable ()
         val placed = arranged(items, tab, saved).map { m ->
             val id = panelId(m)
             val sizeW = id?.let { saved?.size?.get(it)?.w } ?: 1f
+            // Full-bleed when w is wide (#3611); mid widths grow inside the slot via Panel's continuous w (#3709).
             val asWide = m.layoutId == WIDE || Layouts.isWideSize(sizeW, m.layoutId == WIDE)
             if (asWide) {
                 val top = heights.max()
