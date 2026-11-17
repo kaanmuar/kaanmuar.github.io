@@ -89,13 +89,33 @@
 .jv-panel.is-size-mid:not(.is-wide):not(.is-size-wide) { grid-column: span 2; }
 .jv-panel.is-tall { grid-row: span 2; }
 .jv-panel-body { min-width: 0; }
-/* Height factor scales the body (charts, Map SVG, tables). Width factor uses grid span classes. Coexists with #3600 stretch. */
+/* #3611 / #3709: height via zoom; width continuous on the panel box (span only reserves columns). */
+.jv-panel.is-resized { --jv-span: 1; }
 .jv-panel.is-resized > .jv-panel-body { zoom: var(--jv-size-h); }
 @supports not (zoom: 1) {
     .jv-panel.is-resized > .jv-panel-body {
-        transform: scale(var(--jv-size-h));
+        transform: scaleY(var(--jv-size-h));
         transform-origin: top left;
-        width: calc(100% / var(--jv-size-h));
+    }
+}
+/* Multi-col: width in column-units = w, cell is span columns → fraction w/span of the cell. */
+@media (min-width: 721px) {
+    .jv-panel.is-resized:not(.is-wide):not(.is-size-wide) {
+        width: calc(100% * var(--jv-size-w) / var(--jv-span));
+        max-width: none;
+        justify-self: start;
+        box-sizing: border-box;
+        z-index: 1;
+    }
+}
+/* 1-col phone: span classes are no-ops, so width must track w directly or east/west drag looks dead. */
+@media (max-width: 720px) {
+    .jv-panel.is-resized {
+        width: calc(100% * var(--jv-size-w));
+        max-width: none;
+        justify-self: start;
+        box-sizing: border-box;
+        z-index: 1;
     }
 }
 .jv-panel.is-resizing { outline: 1px solid rgba(56, 225, 255, 0.55); outline-offset: 1px; }
