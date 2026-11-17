@@ -91,7 +91,7 @@ export function viewFor(g, tv) {
     const c = g && g.cost;
     if (!c) return null;
     if (tv && tv.mode === 'span') return ((c.ranges || {})[tv.span] || [])[0] || null;
-    if (tv && tv.mode === 'week') return (c.weeks || [])[tv.week] || null;
+    if (tv && tv.mode === 'week') return (c.weeks || [])[Math.floor(Number(tv.week) || 0)] || null;
     return c.now || null;
 }
 

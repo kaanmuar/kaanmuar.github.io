@@ -427,7 +427,7 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     val sel = rows.firstOrNull { it.str("cc") == picked }
     val rankKey = if (key == "gaps") "activity" else key
     val time = rememberGeoTime()
-    val tv = remember(g, time.span, time.weekAt, time.shade, key) { GeoTime.view(g, time.span, time.week, time.shade, key) }
+    val tv = remember(g, time.span, time.weekAt, time.shade, key) { GeoTime.view(g, time.span, time.week?.toDouble(), time.shade, key) }
     val shown = tv.rows
     val byName = shown.associate { (it.str("name") ?: "") to (it.str("cc") ?: "") }
 
@@ -512,7 +512,7 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
-    val rankAnimate = if (time.playing && tv.mode == "week") tv.week else null
+    val rankAnimate = if (time.playing && tv.mode == "week") tv.week?.toInt() else null
     TopList("Ranking · ${Geo.metric(rankKey).label}", Geo.ranked(shown, rankKey).map { (it.str("name") ?: "") + (tv.delta?.let { d -> " · " + GeoTime.arrow(d[it.str("cc")], rankKey) } ?: "") to (Geo.value(it, rankKey) ?: 0.0) }, limit = 15,
         onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) }, animateKey = rankAnimate)
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
