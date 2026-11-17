@@ -254,6 +254,17 @@
     "checked": "2026-11-09T21:02:38.180Z"
    }
   ],
+  "auto-2026-11-09/01-u-beatmastering-ir": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "92",
+    "at": "2026-11-17T02:55:02.933Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/92",
+    "checked": "2026-11-17T02:55:07.623Z"
+   }
+  ],
   "auto-2026-11-09/03-vs-tide-forecast-com": [
    {
     "channel": "telegram",
@@ -694,6 +705,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/74",
     "checked": "2026-11-14T18:52:17.346Z"
+   }
+  ],
+  "promo-social-hub-2026-10/33-clips-it": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "91",
+    "at": "2026-11-17T02:54:56.281Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/91",
+    "checked": "2026-11-17T02:55:02.933Z"
    }
   ],
   "runs-2026-10/01-govuk": [

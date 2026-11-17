@@ -849,6 +849,17 @@
     "checked": "2026-11-09T21:01:15.078Z"
    }
   ],
+  "auto-2026-11-09/01-u-beatmastering-ir": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2i245vs2x2a",
+    "at": "2026-11-17T02:54:29.211Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2i245vs2x2a",
+    "checked": "2026-11-17T02:54:45.110Z"
+   }
+  ],
   "auto-2026-11-09/03-vs-tide-forecast-com": [
    {
     "channel": "bluesky",
@@ -1028,6 +1039,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/reel/Df0Kpg3DhNm/",
     "checked": "2026-11-16T20:02:08.564Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qaurlreview@mastodon.social",
+    "id": "117629523960517025",
+    "at": "2026-11-17T02:54:46.302Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qaurlreview/117629523960517025",
+    "checked": "2026-11-17T02:54:53.807Z"
    },
    {
     "channel": "threads",
@@ -1760,6 +1780,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2c66fwgdm2f",
     "checked": "2026-11-14T18:51:36.963Z"
+   }
+  ],
+  "promo-social-hub-2026-10/33-clips-it": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2i23onnx72a",
+    "at": "2026-11-17T02:54:15.951Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2i23onnx72a",
+    "checked": "2026-11-17T02:54:29.211Z"
    }
   ],
   "runs-2026-10/01-govuk": [
