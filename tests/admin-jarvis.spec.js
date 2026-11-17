@@ -1890,13 +1890,11 @@ test.describe('admin statistics (Jarvis)', () => {
     await expect(li.locator('details.jv-li-sent')).not.toHaveAttribute('open', '');
     await expect(li.locator('[data-li-todo]')).toContainText('Note: Hola Ana, vi el sitio de Uni Norte.');
     await expect(li.locator('[data-li-todo]')).toContainText('Check first: confirm the role.');
-    await page.evaluate(() => {
-        window.open = (url) => { window.__opened = url; return null; };
-        Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (text) => { window.__copied = text; } } });
-    });
     await li.locator('[data-li-todo] [data-li-send]').click();
-    await expect.poll(() => cmds().slice(-1)).toEqual([{ action: 'linkedin', date: '2026-10-26', name: 'Ana Pérez', sent: true }]);
-    expect(await page.evaluate(() => [window.__opened, window.__copied])).toEqual(['https://www.linkedin.com/in/ana', 'Hola Ana, vi el sitio de Uni Norte.']);
+    await expect.poll(() => cmds().slice(-1)).toEqual([{
+        action: 'linkedin-send', date: '2026-10-26', name: 'Ana Pérez',
+        profile: 'https://www.linkedin.com/in/ana', note: 'Hola Ana, vi el sitio de Uni Norte.', checkFirst: 'confirm the role.'
+    }]);
 
     const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
     await expect(draft).toHaveValue('Hola, gracias');
