@@ -135,14 +135,16 @@ test("the default thresholds act on the posts a live run scores, not only on vir
   assert.equal(E.decide(quiet, null, c, {}, NOW, new Set()).verdict, "watch");
 });
 
-test("decide skips political, angry and promo posts, replies only in the languages we search in, and only reads trend networks", () => {
+test("decide skips political, angry and promo posts, replies in any post language, and only reads trend networks", () => {
   const c = E.settings(null);
   const p = scored({ text: "WCAG accessibility", metrics: { likes: 300, replies: 40, reposts: 60 } });
   assert.equal(E.decide(p, { political: true }, c, {}, NOW).skip, "political");
   assert.equal(E.decide(p, { sentiment: "angry" }, c, {}, NOW).skip, "angry");
   assert.equal(E.decide(p, { promo: true }, c, {}, NOW).skip, "promo");
-  const th = E.decide(p, { worth: 0.9, reply: "เราทดสอบด้วยโปรแกรมอ่านหน้าจอ", lang: "th" }, c, {}, NOW);
-  assert.equal(th.actions.reply, undefined);
+  const th = E.decide(p, { worth: 0.9, reply: "เราทดสอบด้วยโปรแกรมอ่านหน้าจอ", lang: "th", english: "We test with a screen reader." }, c, {}, NOW);
+  assert.equal(th.actions.reply.status, "waiting");
+  assert.equal(th.actions.reply.lang, "th");
+  assert.equal(th.actions.reply.english, "We test with a screen reader.");
   assert.equal(th.actions.like.status, "planned");
   assert.equal(E.decide(Object.assign({}, p, { network: "hn" }), null, c, {}, NOW).verdict, "trend");
 });
@@ -158,7 +160,8 @@ test("a reply in a language Carlos may not read carries Gemini's English to the 
   assert.equal(out[en.key].english, "");
   assert.ok(E.REPLY_LANGS.includes("ja") && E.REPLY_LANGS.includes("hi") && !E.REPLY_LANGS.includes("th"));
   assert.match(E.aiPrompt([p]), /"english"/);
-  assert.match(E.chainPrompt([Object.assign({ parent: {} }, p)]), /ja, ko, zh/);
+  assert.match(E.aiPrompt([p]), /any ISO 639-1/);
+  assert.match(E.chainPrompt([Object.assign({ parent: {} }, p)]), /any ISO 639-1/);
   const d = E.decide(p, out[p.key], E.settings(null), {}, NOW, new Set());
   assert.equal(d.actions.reply.status, "waiting");
   assert.equal(d.actions.reply.lang, "ja");
