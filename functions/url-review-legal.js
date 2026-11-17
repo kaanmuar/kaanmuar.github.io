@@ -56,4 +56,4 @@ function germanSpeaking(lang, textLang, pageUrl) {
   return /^de\b/i.test(String(lang || "")) || textLang === "de" || /\.(de|at)$/i.test(host);
 }
 
-module.exports = { legalLinks, germanSpeaking, LEGAL_ANY: ANY.source };
+module.exports = { legalLinks, germanSpeaking, LEGAL_ANY: ANY.source, LEGAL, OVERLAY };
