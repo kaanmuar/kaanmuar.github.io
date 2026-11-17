@@ -140,7 +140,10 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     if (tab != null) Arrange.seen(tab, id, title)
     val stored = saved?.size?.get(id) ?: Layouts.Size()
     var live by remember(id, stored) { mutableStateOf(stored) }
+    // #3673: resize stays off until a long-press, so scroll and tab taps are free.
+    var armed by remember(id) { mutableStateOf(false) }
     LaunchedEffect(stored) { live = stored }
+    LaunchedEffect(tab) { armed = false }
     // Pinch has no drag-end; debounce a save when the live size settles away from the stored one.
     LaunchedEffect(live, saveSize) {
         if (saveSize == null || live == stored) return@LaunchedEffect
@@ -148,6 +151,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
         if (live != stored) saveSize(id, live)
     }
     val editing = Arrange.movable(tab, id)
+    val canResize = !folded && !editing && saveSize != null
     Box(
         Modifier.then(PanelIdElement(id)).then(modifier)
             .fillMaxWidth()
@@ -156,12 +160,19 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             .glass()
             .animateContentSize(tween(320, easing = FastOutSlowInEasing))
             .then(
-                if (folded || editing || saveSize == null) Modifier
-                else Modifier.pointerInput(id, live) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        if (zoom == 1f) return@detectTransformGestures
-                        live = Layouts.clampSize(live.h * zoom, live.w * (1f + (zoom - 1f) * 0.5f))
+                when {
+                    !canResize -> Modifier
+                    !armed -> Modifier.pointerInput(id) {
+                        detectTapGestures(onLongPress = { armed = true })
                     }
+                    else -> Modifier
+                        .border(1.dp, J.cyan.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                        .pointerInput(id, live) {
+                            detectTransformGestures { _, _, zoom, _ ->
+                                if (zoom == 1f) return@detectTransformGestures
+                                live = Layouts.clampSize(live.h * zoom, live.w * (1f + (zoom - 1f) * 0.5f))
+                            }
+                        }
                 }
             )
     ) {
@@ -196,6 +207,15 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                 Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
+                if (armed) {
+                    TextButton(
+                        onClick = {
+                            saveSize?.invoke(id, live)
+                            armed = false
+                        },
+                        modifier = Modifier.heightIn(min = 40.dp)
+                    ) { Text("Done", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
+                }
                 if (charts && onChartStretch != null) {
                     TextButton(onClick = onChartStretch, modifier = Modifier.heightIn(min = 40.dp)) { Text("↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
                 }
@@ -204,10 +224,11 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
             if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch) { content() }
         }
-        if (!folded && !editing && saveSize != null) {
+        // Edge drag only while armed (#3673); otherwise scroll and dock taps win.
+        if (canResize && armed) {
             val edge = 14.dp
-            val commit = { saveSize(id, live) }
-            // North / south → height; east / west → width (press-drag on edges, same as web).
+            val strip = J.cyan.copy(alpha = 0.22f)
+            val commit = { saveSize!!(id, live) }
             Box(
                 Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
                     .pointerInput(id, live) {
@@ -220,7 +241,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                             }
                         )
                     }
-                    .background(J.cyan.copy(alpha = 0.08f))
+                    .background(strip)
             )
             Box(
                 Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
@@ -234,7 +255,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                             }
                         )
                     }
-                    .background(J.cyan.copy(alpha = 0.08f))
+                    .background(strip)
             )
             Box(
                 Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
@@ -248,7 +269,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                             }
                         )
                     }
-                    .background(J.cyan.copy(alpha = 0.08f))
+                    .background(strip)
             )
             Box(
                 Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
@@ -262,7 +283,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                             }
                         )
                     }
-                    .background(J.cyan.copy(alpha = 0.08f))
+                    .background(strip)
             )
         }
     }

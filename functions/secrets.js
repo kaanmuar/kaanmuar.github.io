@@ -34,7 +34,8 @@ const BY_FUNCTION = {
   prospects: list(["PLACES_KEY"]),
   // wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
   wordfenceFeed: list(["WORDFENCE_KEY"]),
-  ownerReplies: list(MAIL, ["OWNER_REPLY_KEY"]),
+  // Gemini drafts answers for interested / other owner replies on the decide page (#3670).
+  ownerReplies: list(MAIL, GEMINI, ["OWNER_REPLY_KEY"]),
   reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY", "TURNSTILE_SECRET_KEY", "QA_LAB_MCP_KEY"]),
   reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY", "TURNSTILE_SECRET_KEY", "QA_LAB_MCP_KEY"]),
   reviewBrowser: list(BROWSER),
@@ -60,8 +61,8 @@ const BY_FUNCTION = {
   // functions/mailbox-graduate.js (#2382): Instantly accounts and campaigns, then a mail and a comment on #2379.
   mailboxGraduate: list(MAIL, GITHUB, ["INSTANTLY_API_KEY"]),
   // The key in the webhook URL each ImprovMX alias posts to (functions/mail-inbound.js); an owner reply to qa@
-  // mails the operator like ownerReplies does (#1899).
-  mailInbound: list(MAIL, ["MAIL_WEBHOOK_KEY"]),
+  // mails the operator like ownerReplies does (#1899). Gemini drafts when that path files an interested reply (#3670).
+  mailInbound: list(MAIL, GEMINI, ["MAIL_WEBHOOK_KEY"]),
   // The daily canary mails canary@ through SendGrid (functions/mail-health.js, #1900).
   mailCanary: list(MAIL),
   // The engagement scout (#1988): Gemini reads the posts and drafts replies, YouTube search finds the videos, and
