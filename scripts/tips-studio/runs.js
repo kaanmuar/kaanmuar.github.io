@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { SITE, GUIDE, xPost } = require('./tips');
 const { tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const REPORTS = path.resolve(__dirname, '../../previews/insights-test');
 const AREAS = [
@@ -176,17 +177,18 @@ function plainTitle(run) {
 
 function captions(run) {
 	const head = plainTitle(run);
-	const fair = 'One automated analysis of public pages on ' + run.analyzed + '. A starting point, not a verdict.';
+	const fair = lines.fairLine(run, run.analyzed);
+	const lead = lines.actionLead(run, 'lesson');
 	return {
 		linkedin: [
 			head,
 			'',
 			run.body,
 			'',
-			'The lesson for every team: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
-			'How the review works, step by step: ' + link('linkedin', run),
+			lines.guideLinked(run, link('linkedin', run)),
 			'',
 			tagLine(run, 'linkedin'),
 		].join('\n'),
@@ -196,10 +198,10 @@ function captions(run) {
 			'',
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
-			'Guide: link in bio.',
+			lines.guideBio(run),
 			'',
 			tagLine(run, 'instagram'),
 		].join('\n'),
@@ -208,7 +210,7 @@ function captions(run) {
 			'',
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
 			link('facebook', run),
@@ -220,11 +222,11 @@ function captions(run) {
 		youtube: [
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
 			'',
-			'Guide: ' + link('youtube', run),
+			lines.youtubeGuide(run, link('youtube', run)),
 			'',
 			'Real runs · QA-lab URL Review',
 			'',
