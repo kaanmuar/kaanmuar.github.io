@@ -1035,7 +1035,8 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-geo-clicks h4 { margin: 0.6rem 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .jv-geo-clicks td:nth-child(n+2), .jv-geo-clicks th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .jv-geo-play { flex-basis: 100%; } .jv-geo-when { white-space: normal; } }
-.jv-geo-wrap.is-playing .jv-geo-c { transition-duration: 0.45s; }
+/* Short fill blend: continuous Play paints ~12×/s with lerped values (#3710). */
+.jv-geo-wrap.is-playing .jv-geo-c { transition-duration: 0.1s; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-wrap.is-playing .jv-geo-c { transition-duration: 0.25s; } }
 /* Map cost and return (#3283) */
 .jv-cost-scale > i { background: linear-gradient(90deg, #3dffa8, #ffb547, #ff4d8d); }

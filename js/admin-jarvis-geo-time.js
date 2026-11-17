@@ -1,7 +1,8 @@
 /*
- * The Map tab over time (#3109): 7, 30 or 90 days against the span before, and the last 13 weeks played week by week,
- * from the geo source's `time` (functions/jarvis-geo-time.js). Rows built here have the fields of the geo rows, so the
- * map, labels, ranking and card in admin-jarvis-geo.js draw them as they draw today's. Twin: android/.../ui/GeoTime.kt.
+ * The Map tab over time (#3109): 7, 30 or 90 days against the span before, and the last 13 weeks played as a continuous
+ * blend between weeks (#3710), from the geo source's `time` (functions/jarvis-geo-time.js). Rows built here have the
+ * fields of the geo rows, so the map, labels, ranking and card in admin-jarvis-geo.js draw them as they draw today's.
+ * Twin: android/.../ui/GeoTime.kt.
  */
 import * as Geo from './admin-jarvis-geo.js?v=3282';
 import * as GeoCost from './admin-jarvis-geo-cost.js?v=3283';
@@ -13,9 +14,12 @@ const KEYS = ['light', 'activity', 'sent', 'replies', 'replyRate', 'positive', '
 const WORSE_UP = new Set(['bounceRate', 'cost', ...GeoCost.LOWER]);
 const UP = [56, 225, 255];
 const DOWN = [255, 77, 141];
+/** Milliseconds to advance one week during continuous Play. */
 export const STEP_MS = 2000;
 export const TWEEN_MS = 900;
 const STEP_REDUCE_MS = 1600;
+/** How often to rebuild the map while Play runs (rAF still advances the week every frame). */
+export const PAINT_MS = 80;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const round1 = (n) => Math.round(n * 10) / 10;
@@ -23,6 +27,11 @@ const short = (day) => { const [, m, d] = String(day || '').split('-').map(Numbe
 const plus = (day, n) => new Date(Date.parse(day + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
 let dn = null;
 const nameOf = (cc) => { try { dn = dn || new Intl.DisplayNames(['en'], { type: 'region' }); return dn.of(cc) || cc; } catch (error) { return cc; } };
+const lerpNum = (a, b, t) => {
+    if (a === null || a === undefined) return b === null || b === undefined ? null : b;
+    if (b === null || b === undefined) return a;
+    return a + (b - a) * t;
+};
 
 /** Whether the history can draw this metric; bounce rate only once Instantly sends bounces per day. */
 export function canShow(time, key) {
@@ -38,7 +47,8 @@ const FIELDS = ['sent', 'opened', 'replies', 'interested', 'bounced', 'answered'
 function rowOf(base, cc, get) {
     const b = base[cc] || { cc, name: nameOf(cc), target: false, langs: [] };
     const r = { cc, name: b.name, target: !!b.target, langs: b.langs || [], gaps: [], camps: [], sectors: [], est: false, score: null };
-    // Email split across countries comes in fractions; shown whole, as geoRows rounds today's.
+    // Email split across countries comes in fractions; shown whole, as geoRows rounds today's. Continuous Play
+    // lerps first, then rounds, so fills still step through the in-between values.
     FIELDS.forEach((f) => { const v = get(f); r[f] = v === undefined || v === null ? null : f === 'usd' ? Math.round(v * 100) / 100 : Math.round(v); });
     r.replyRate = r.sent ? round1((r.replies / r.sent) * 100) : null;
     r.openRate = r.sent ? round1((r.opened / r.sent) * 100) : null;
@@ -54,10 +64,43 @@ function rowsFrom(g, byCc, pick) {
     return Array.from(ccs).map((cc) => rowOf(base, cc, (f) => { const list = (byCc[cc] || {})[f]; return list ? pick(list) : null; }));
 }
 
+/** Blend two cost week views' per-country field arrays. */
+function blendCost(a, b, t) {
+    if (!a) return b || null;
+    if (!b || t < 1e-4) return a;
+    if (t > 1 - 1e-4) return b;
+    const c = {};
+    const ccs = new Set(Object.keys(a.c || {}).concat(Object.keys(b.c || {})));
+    ccs.forEach((cc) => {
+        const ra = (a.c || {})[cc];
+        const rb = (b.c || {})[cc];
+        if (!ra && !rb) return;
+        const n = Math.max((ra && ra.length) || 0, (rb && rb.length) || 0);
+        c[cc] = Array.from({ length: n }, (_, i) => lerpNum(ra ? ra[i] : null, rb ? rb[i] : null, t));
+    });
+    return Object.assign({}, a, { c });
+}
+
 /** Every country over a range: which 0 is the last n days to yesterday, 1 the n days before. */
 export const spanRows = (g, n, which) => GeoCost.join(rowsFrom(g, g.time.ranges[n].c, (list) => list[which]), g.cost && (g.cost.ranges || {})[n] && g.cost.ranges[n][which]);
-/** Every country in week k of the 13 (0 the oldest). */
-export const weekRows = (g, k) => GeoCost.join(rowsFrom(g, g.time.weeks.c, (list) => list[k]), g.cost && (g.cost.weeks || [])[k]);
+/**
+ * Every country at week index t (0 the oldest). t may be fractional during continuous Play: values blend between
+ * floor(t) and ceil(t).
+ */
+export function weekRows(g, t) {
+    const n = g.time.weeks.start.length;
+    const x = Math.max(0, Math.min(n - 1, Number(t) || 0));
+    const i = Math.floor(x + 1e-9);
+    const f = x - i;
+    const weeks = (g.cost && g.cost.weeks) || [];
+    if (f < 1e-4 || i >= n - 1) {
+        return GeoCost.join(rowsFrom(g, g.time.weeks.c, (list) => list[i]), weeks[i]);
+    }
+    return GeoCost.join(
+        rowsFrom(g, g.time.weeks.c, (list) => lerpNum(list[i], list[i + 1], f)),
+        blendCost(weeks[i], weeks[i + 1], f)
+    );
+}
 
 /** A row's number for a metric, null where the history has none (Geo.value reads a missing count as 0). */
 export const valueOf = (r, key) => (!r || (FIELDS.includes(key) && r[key] === null) ? null : Geo.value(r, key));
@@ -71,8 +114,9 @@ export function deltaOf(now, before, key) {
 }
 
 /**
- * What the map shows for the time controls. st: span (0, 7, 30, 90), week (null or 0 to 12), shade ('value' or 'change').
- * Returns rows to draw, delta per country (or null), fills for the change shading, the week's label and a note.
+ * What the map shows for the time controls. st: span (0, 7, 30, 90), week (null or 0 to 12, may be fractional while
+ * playing), shade ('value' or 'change'). Returns rows to draw, delta per country (or null), fills for the change
+ * shading, the week's label and a note.
  */
 export function view(g, st, key) {
     const time = g && g.time;
@@ -87,9 +131,11 @@ export function view(g, st, key) {
     }
     let before = null;
     if (st.week !== null && st.week !== undefined) {
-        const k = Math.max(0, Math.min(time.weeks.start.length - 1, st.week));
-        Object.assign(out, { mode: 'week', week: k, rows: weekRows(g, k) });
-        before = k > 0 ? weekRows(g, k - 1) : null;
+        const n = time.weeks.start.length;
+        const t = Math.max(0, Math.min(n - 1, Number(st.week) || 0));
+        const k = Math.floor(t + 1e-9);
+        Object.assign(out, { mode: 'week', week: t, rows: weekRows(g, t) });
+        before = t > 0 ? weekRows(g, Math.max(0, t - 1)) : null;
         const s = time.weeks.start[k];
         out.label = `Week of ${short(s)} – ${short(plus(s, 6))}`;
         if (!time.weeks.days[k]) out.note = 'Nothing recorded that week.';
@@ -237,8 +283,8 @@ export function controls(g, st, v, esc) {
     const seg = SPANS.map(([n, label]) => `<button type="button" data-geo-span="${n}" class="${n === (st.week === null ? st.span : -1) ? 'on' : ''}" aria-pressed="${n === (st.week === null ? st.span : -1)}">${esc(label)}</button>`).join('');
     const shade = v.delta ? `<label class="jv-geo-metric"><input type="checkbox" data-geo-shade${st.shade === 'change' ? ' checked' : ''}> Shade the change</label>` : '';
     return `<div class="jv-actions jv-geo-controls jv-geo-time"><div class="jv-seg" role="group" aria-label="Compare a range with the one before">${seg}</div>${shade}
-        <div class="jv-geo-play"><button type="button" class="jv-btn small" data-geo-play aria-pressed="${!!st.playing}" aria-label="${st.playing ? 'Pause' : 'Play the last 13 weeks'}">${st.playing ? '❚❚ Pause' : '▶ Play 13 weeks'}</button>
-        <input type="range" min="0" max="${weeks}" step="1" value="${at}" data-geo-week aria-label="Week" aria-valuetext="${esc(v.mode === 'week' ? v.label : 'Now')}"${time && time.weeks ? '' : ' disabled'}>
+        <div class="jv-geo-play"><button type="button" class="jv-btn small" data-geo-play aria-pressed="${!!st.playing}" aria-label="${st.playing ? 'Pause' : 'Play the last 13 weeks continuously'}">${st.playing ? '❚❚ Pause' : '▶ Play 13 weeks'}</button>
+        <input type="range" min="0" max="${weeks}" step="any" value="${at}" data-geo-week aria-label="Week" aria-valuetext="${esc(v.mode === 'week' ? v.label : 'Now')}"${time && time.weeks ? '' : ' disabled'}>
         <span class="jv-geo-when" aria-live="polite">${esc(v.mode === 'week' ? v.label : v.mode === 'span' ? v.label : 'Now')}</span></div></div>
         ${v.note ? `<p class="jv-note jv-geo-time-note">${esc(v.note)}</p>` : ''}`;
 }
@@ -269,17 +315,38 @@ export function sheet(g, cc, st, esc) {
 
 /**
  * The controls' events. S holds geoSpan, geoWeek, geoShade and geoPlaying; paint() redraws the map without a full
- * render (the slider keeps focus while dragged); render() redraws the tab.
+ * render (the slider keeps focus while dragged); render() redraws the tab. Play advances geoWeek continuously
+ * (fractional) so fills and numbers morph between weeks instead of jumping once per week (#3710).
  */
 export function bind(root, S, paint, render) {
-    let timer = null;
-    const stop = () => { if (timer) clearInterval(timer); timer = null; S.geoPlaying = false; };
+    let raf = 0;
+    let last = 0;
+    let painted = 0;
+    const stop = () => { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; S.geoPlaying = false; };
     const weeks = () => { const g = S.external.geo; return g && g.time && g.time.weeks ? g.time.weeks.start.length : 0; };
-    const step = () => {
-        if (S.product !== 'geo' || !root.querySelector('[data-geo-week]')) { stop(); return; }
-        S.geoWeek = S.geoWeek === null || S.geoWeek >= weeks() - 1 ? 0 : S.geoWeek + 1;
-        if (S.geoWeek >= weeks() - 1) { stop(); render(); return; }
-        paint();
+    const tick = (now) => {
+        if (S.product !== 'geo' || !root.querySelector('[data-geo-week]')) { stop(); render(); return; }
+        const n = weeks();
+        if (!n) { stop(); render(); return; }
+        const dt = last ? Math.min(80, now - last) : 0;
+        last = now;
+        let w = S.geoWeek === null || S.geoWeek === undefined ? 0 : Number(S.geoWeek);
+        w += dt / stepMs();
+        if (w >= n - 1) {
+            S.geoWeek = n - 1;
+            stop();
+            render();
+            return;
+        }
+        S.geoWeek = w;
+        if (!painted || now - painted >= PAINT_MS) {
+            painted = now;
+            paint();
+        } else {
+            const range = root.querySelector('[data-geo-week]');
+            if (range && document.activeElement !== range) range.value = String(w);
+        }
+        raf = requestAnimationFrame(tick);
     };
     root.addEventListener('click', (event) => {
         const t = event.target.closest && event.target.closest('[data-geo-span], [data-geo-play]');
@@ -287,10 +354,12 @@ export function bind(root, S, paint, render) {
         if (t.dataset.geoSpan !== undefined) { stop(); S.geoWeek = null; S.geoSpan = Number(t.dataset.geoSpan) || 0; render(); return; }
         if (S.geoPlaying) { stop(); render(); return; }
         if (!weeks()) return;
-        if (S.geoWeek === null || S.geoWeek >= weeks() - 1) S.geoWeek = 0;
+        if (S.geoWeek === null || S.geoWeek === undefined || S.geoWeek >= weeks() - 1) S.geoWeek = 0;
         S.geoPlaying = true;
         render();
-        timer = setInterval(step, stepMs());
+        last = 0;
+        painted = 0;
+        raf = requestAnimationFrame(tick);
     });
     root.addEventListener('input', (event) => {
         if (!event.target.matches || !event.target.matches('[data-geo-week]')) return;
@@ -300,7 +369,13 @@ export function bind(root, S, paint, render) {
         paint();
     });
     root.addEventListener('change', (event) => {
-        if (event.target.matches && event.target.matches('[data-geo-week]')) { render(); return; }
+        if (event.target.matches && event.target.matches('[data-geo-week]')) {
+            const k = Number(event.target.value);
+            // Snap the scrubber to a whole week when the drag ends, keep Now at the far end.
+            if (k < weeks()) S.geoWeek = Math.round(k);
+            render();
+            return;
+        }
         if (event.target.matches && event.target.matches('[data-geo-shade]')) { S.geoShade = event.target.checked ? 'change' : 'value'; render(); }
     });
     return stop;
@@ -336,5 +411,6 @@ export function patch(view, html) {
     const was = fresh.querySelector('[data-geo-week]');
     if (range && was && document.activeElement !== range) range.value = was.value;
     if (range && was) range.setAttribute('aria-valuetext', was.getAttribute('aria-valuetext'));
-    tweenCounts(view);
+    // Continuous Play already lerps the numbers each paint; CountUp would fight that.
+    if (!playing) tweenCounts(view);
 }

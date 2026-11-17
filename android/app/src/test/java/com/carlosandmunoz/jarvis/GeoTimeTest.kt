@@ -59,13 +59,16 @@ class GeoTimeTest {
 
     @Test fun weeksPlayOneAtATimeAgainstTheWeekBefore() {
         assertEquals(3, GeoTime.weeks(g))
-        val v = GeoTime.view(g, 0, 2, false, "sent")
+        val v = GeoTime.view(g, 0, 2.0, false, "sent")
         assertEquals("week", v.mode)
         assertEquals("Week of Nov 2 – Nov 8", v.label)
         assertEquals(-6.0, v.delta!!["BR"]!!, 0.0)
-        assertEquals("Nothing recorded that week.", GeoTime.view(g, 0, 0, false, "sent").note)
-        assertNull(GeoTime.view(g, 0, 0, false, "sent").delta)
-        assertEquals(2, GeoTime.view(g, 0, 9, false, "sent").week)
+        assertEquals("Nothing recorded that week.", GeoTime.view(g, 0, 0.0, false, "sent").note)
+        assertNull(GeoTime.view(g, 0, 0.0, false, "sent").delta)
+        assertEquals(2.0, GeoTime.view(g, 0, 9.0, false, "sent").week)
+        val mid = GeoTime.view(g, 0, 1.5, false, "sent")
+        assertEquals(1.5, mid.week)
+        assertEquals(16.0, GeoTime.valueOf(mid.rows.first { it.str("cc") == "BR" }, "sent")!!, 0.01)
     }
 
     @Test fun arrowsMatchTheWeb() {
@@ -83,7 +86,7 @@ class GeoTimeTest {
     @Test
     fun playStatsDataTotalsSentAndListsMovers() {
         val tv = GeoTime.View(
-            mode = "week", week = 2,
+            mode = "week", week = 2.0,
             rows = listOf(
                 JsonObject(mapOf("cc" to JsonPrimitive("CO"), "name" to JsonPrimitive("Colombia"), "sent" to JsonPrimitive(10.0))),
                 JsonObject(mapOf("cc" to JsonPrimitive("BR"), "name" to JsonPrimitive("Brazil"), "sent" to JsonPrimitive(5.0)))
