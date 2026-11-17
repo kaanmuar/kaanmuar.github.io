@@ -30,7 +30,9 @@ const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const hackSigns = require("./url-review-hack-signs");
 const watchCases = require("./url-review-watch");
-const verifiedSpec = require("./url-review-verified-spec");
+/* Lazy: Live reports and other light importers only need iconData (#3713). verified-spec
+   pulls htmlparser2/css-select, which those jobs do not install. */
+const verifiedSpec = () => require("./url-review-verified-spec");
 const { siteLabel } = caseRank;
 
 const TERMS_VERSION = "2026-11-04b";
@@ -4002,7 +4004,7 @@ async function reviewTarget(rawUrl, hooks) {
   if (watch) result.watch = watch;
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   // Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
-  if (!softPreview && !stopped) verifiedSpec.applyToReport(result, pages);
+  if (!softPreview && !stopped) verifiedSpec().applyToReport(result, pages);
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
