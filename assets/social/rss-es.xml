@@ -320,7 +320,9 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-mccabespha
 
 Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
-#SEO #DevOps #Automation #QA #WebPerf #QAlab</description>
+#SEO #DevOps #Automation #QA #WebPerf #QAlab
+
+https://www.youtube.com/shorts/Ngvh-JywM-E</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" length="266860" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -342,6 +344,29 @@ Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosa
 #WebPerformance #SoftwareTesting #QA #CoreWebVitals #Lighthouse #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" length="230253" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Barrido nocturno: 1238 sitios en 119 países, del 9 de noviembre al 15 de noviembre</title>
+      <link>https://carlosandmunoz.com/social/pick/nightly-sweep-1238-sites-in-119-countries-nov-9-to-nov-15-es.html</link>
+      <guid isPermaLink="false">pick/nightly-sweep-1238-sites-in-119-countries-nov-9-to-nov-15-es</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Field sweep</category>
+      <description>Nuestro barrido nocturno revisó 1238 sitios web públicos en 119 países la semana pasada (del 9 de noviembre al 15 de noviembre).
+
+Lo que surgió con más frecuencia entre los problemas principales de cada sitio:
+• Texto con muy poco contraste de color: 61% de sitios
+• Campos de formulario sin etiqueta: 59% de sitios
+• Sin encabezado HSTS: 54% de sitios
+
+La mayoría de estas son pequeñas correcciones. Vea un caso completo y su solución en nuestro informe de muestra:
+https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-16
+
+¿Ya hiciste una reseña? Su informe se vuelve a abrir gratis durante 7 días.
+
+https://carlosandmunoz.com/qa-review.html?sample=1&amp;week=2026-11-16</description>
+      <enclosure url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-16.jpg" length="121769" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/assets/social/sweep-roundup/2026-11-16.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Al Jazeera marca texto para voz y bloquea la IA.</title>
@@ -876,26 +901,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #Accessibility #HTML #CSS #QA #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg" length="229863" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>okta.com contra rippling.com. rippling.com pistas: 66.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/08-vs-okta-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/08-vs-okta-com-es</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Versus</category>
-      <description>rippling.com líderes en SEO, análisis, accesibilidad; okta.com lidera en GEO, Seguridad, Rendimiento.
-
-La lección para cualquier equipo: Compárate con los sitios con los que te comparan tus visitantes, no con una puntuación perfecta: la brecha que te cuesta es la que un competidor ya ha cerrado.
-
-Análisis automatizados de páginas públicas el 6 noviembre 2026 de okta.com, rippling.com, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-okta-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-okta-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #SRE #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/08-vs-okta-com.jpg" length="251077" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/08-vs-okta-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
