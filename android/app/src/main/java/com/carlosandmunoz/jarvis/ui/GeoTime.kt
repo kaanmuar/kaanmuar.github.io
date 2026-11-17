@@ -224,7 +224,12 @@ object GeoTime {
         if (d == null) return "—"
         if (d == 0.0) return "= 0"
         val unit = if (key != "light" && Geo.metric(key).unit == "%") " pts" else ""
-        return (if (d > 0) "▲ +" else "▼ −") + if (key in GeoCost.KEYS) GeoCost.show(abs(d), key) else (if (key == "usd") "$" else "") + fmt(abs(d)) + unit
+        // en-US like the web arrow (toLocaleString('en-US')), so decimals stay "0.5" on every device locale.
+        val n = abs(d).let { v ->
+            if (v == v.roundToLong().toDouble() && abs(v) < 1e15) "%,d".format(Locale.US, v.roundToLong())
+            else "%,.1f".format(Locale.US, v)
+        }
+        return (if (d > 0) "▲ +" else "▼ −") + if (key in GeoCost.KEYS) GeoCost.show(abs(d), key) else (if (key == "usd") "$" else "") + n + unit
     }
     fun arrowColor(d: Double?, key: String): Color = if (d == null || d == 0.0) J.muted else if (good(d, key)) UP else DOWN
 
