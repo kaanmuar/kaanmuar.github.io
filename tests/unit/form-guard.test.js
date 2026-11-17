@@ -29,6 +29,30 @@ test("a Turnstile token passes only with success, the form's action and a live h
   assert.equal((await call(pass, "rating")).reason, "action");
   assert.equal((await call(Object.assign({}, pass, { hostname: "localhost" }))).reason, "hostname");
   assert.equal((await call(Object.assign({}, pass, { hostname: "evil.example" }))).reason, "hostname");
+  const soft = await guard.verifyTurnstile({
+    secret: "s",
+    token: "t",
+    action: "soft-preview",
+    fetchImpl: siteverify(Object.assign({}, pass, { action: "soft-preview" }))
+  });
+  assert.deepEqual(soft, { ok: true });
+});
+
+test("soft preview Turnstile stays in layout and re-renders when the checkbox must show (#3745)", () => {
+  const review = read("js/qa-review.js");
+  const page = read("qa-review.html");
+  assert.match(page, /id="soft-turnstile"/);
+  assert.match(page, /#soft-turnstile\.is-visible/);
+  assert.equal((page.match(/id="soft-turnstile"/g) || []).length, 1, "one mount, next to the form status");
+  const csp = page.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)[1];
+  assert.match(csp, /script-src [^;]*https:\/\/challenges\.cloudflare\.com/);
+  assert.match(csp, /frame-src [^;]*https:\/\/challenges\.cloudflare\.com/);
+  assert.match(review, /softTurnstileMode/);
+  assert.match(review, /box\.hidden = false/);
+  assert.match(review, /api\.remove\(softTurnstileId\)/);
+  assert.match(review, /appearance: mode/);
+  assert.doesNotMatch(review, /box\.hidden = !visible/);
+  assert.match(review, /The bot check did not load\. Reload the page and try again\./);
 });
 
 test("a missing token, secret or reachable Siteverify fails closed", async () => {
