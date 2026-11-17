@@ -797,7 +797,7 @@ function attr(tag, name) {
 function textOf(html) {
 	return String(html || '')
 		.replace(
-			/<script\b[\s\S]*?<\/script\s*>|<style\b[\s\S]*?<\/style\s*>|<noscript\b[\s\S]*?<\/noscript\s*>|<svg\b[\s\S]*?<\/svg\s*>/gi,
+			/<script\b[\s\S]*?<\/script[^>]*>|<style\b[\s\S]*?<\/style[^>]*>|<noscript\b[\s\S]*?<\/noscript[^>]*>|<svg\b[\s\S]*?<\/svg[^>]*>/gi,
 			' '
 		)
 		.replace(/<br\s*\/?>|<\/(p|div|li|td|h\d|address|span)>/gi, ', ')

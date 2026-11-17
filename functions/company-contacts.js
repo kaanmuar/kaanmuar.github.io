@@ -50,7 +50,7 @@ function emailOf(raw, host) {
 /** Every JSON-LD object in a page, @graph members included. */
 function jsonLd(html) {
   const out = [];
-  const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script\s*>/gi;
+  const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script[^>]*>/gi;
   let m;
   const walk = (x) => {
     if (Array.isArray(x)) return x.forEach(walk);
@@ -143,7 +143,7 @@ function contactsOf(pages, host, hint) {
     const add = (raw) => { const e = emailOf(raw, host); if (e && !emails.has(e.email)) emails.set(e.email, Object.assign(e, { url: p.url })); };
     for (const m of html.matchAll(/href\s*=\s*["']mailto:([^"'?]+)/gi)) add(m[1]);
     org.emails.forEach(add);
-    const text = decode(html.replace(/<script\b[\s\S]*?<\/script\s*>|<style\b[\s\S]*?<\/style\s*>/gi, " ")).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
+    const text = decode(html.replace(/<script\b[\s\S]*?<\/script[^>]*>|<style\b[\s\S]*?<\/style[^>]*>/gi, " ")).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
     for (const m of text.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add(m[0]);
     [...[...html.matchAll(/href\s*=\s*["']tel:([^"']+)/gi)].map((m) => m[1]), ...org.phones].map(phoneOf).forEach((x) => { if (x && !phones.includes(x)) phones.push(x); });
     socialHtml.push(html, org.sameAs.length ? '"sameAs": ' + JSON.stringify(org.sameAs) : "");
