@@ -1379,6 +1379,18 @@
             backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
         #review-form { display: grid; gap: 10px; margin-top: 14px; perspective: 1000px; }
         #review-form .row-actions { margin-top: 2px; }
+        .url-mode { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+        .url-mode button { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 8px 14px; font: inherit; cursor: pointer; }
+        .url-mode button.is-on, .url-mode button[aria-pressed="true"] { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); font-weight: 600; }
+        #url-mode-many textarea { width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 10px 12px; font: inherit; resize: vertical; }
+        #batch-preview, #batch-panel-rows { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+        #batch-preview li, #batch-panel-rows li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .06); border-left: 3px solid rgba(255, 255, 255, .25); }
+        #batch-preview li.is-lead, #batch-panel-rows li.is-lead { border-left-color: var(--cyan); background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+        .batch-lead-tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cyan); }
+        .batch-host { font-weight: 600; }
+        .batch-url, .batch-state, .batch-score { font-size: 13px; opacity: .85; }
+        #batch-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+        #batch-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .req-group:hover { transform: translateY(-1px); }
         .req-group[open]:hover { transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
         .req-group.done .tg-count { font-size: 12px; }
@@ -1712,12 +1724,41 @@
             <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
                 <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="it" translate="no">La pagina</b><span class="tg-gist" lang="it" translate="no">L’indirizzo https pubblico da analizzare.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
                 <div class="rg-body">
-                    <label for="url" lang="it" translate="no">Pagina pubblica</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    <div class="url-mode" id="url-mode" role="group" aria-label="URL mode">
+                        <button type="button" data-url-mode="one" aria-pressed="true" class="is-on" data-batch-copy="modeOne">One URL</button>
+                        <button type="button" data-url-mode="many" aria-pressed="false" data-batch-copy="modeMany">Many URLs</button>
                     </div>
-                    <p class="field-error" id="url-error"></p>
+                    <div id="url-mode-one">
+                        <label for="url" data-batch-copy="publicPage" lang="it" translate="no">Pagina pubblica</label>
+                        <div class="url-row notranslate" id="url-field">
+                            <span>https://</span>
+                            <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                        </div>
+                        <p class="field-error" id="url-error"></p>
+                    </div>
+                    <div id="url-mode-many" hidden>
+                        <label for="batch-text" data-batch-copy="listLabel">Addresses to review</label>
+                        <p class="muted" data-batch-copy="listHint">One https address per line, or load a .txt / .csv with a url column. Up to 6. The first is the lead.</p>
+                        <textarea id="batch-text" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com&#10;other.example.com" disabled></textarea>
+                        <label class="check" for="batch-file"><span data-batch-copy="fileLabel">Load a file</span>
+                            <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" disabled>
+                        </label>
+                        <label class="check"><input id="batch-lead-report" type="checkbox" disabled> <span data-batch-copy="leadReport">Use the open report’s URL as the lead</span></label>
+                        <p class="muted" id="batch-lead-note"></p>
+                        <p class="muted" data-batch-copy="previewTitle">Ready to run</p>
+                        <ul id="batch-preview"></ul>
+                        <p class="field-error" id="batch-error"></p>
+                        <div id="batch-panel" hidden>
+                            <h3 id="batch-panel-title" data-batch-copy="panelTitle">Bulk review</h3>
+                            <p id="batch-panel-status" role="status"></p>
+                            <ol id="batch-panel-rows"></ol>
+                            <div id="batch-panel-actions">
+                                <button class="btn btn-ghost" id="batch-stop" type="button" hidden data-batch-copy="stop">Stop batch</button>
+                                <button class="btn btn-ghost" id="batch-save-compare" type="button" hidden data-batch-copy="saveCompare">Save comparison</button>
+                            </div>
+                            <p class="muted" data-batch-copy="saveCompareHint">Save the finished reports side by side.</p>
+                        </div>
+                    </div>
                 </div>
             </details>
             <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
@@ -2204,10 +2245,12 @@
 <script src="js/qa-review-fix.js?v=20261110-3393" defer></script>
 <script src="js/qa-review-progress.js?v=20261024a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
+<script src="js/qa-review-batch-copy.js?v=20261117-3737" defer></script>
+<script src="js/qa-review-batch.js?v=20261117-3737" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
 <script src="js/qa-review-findings-copy.it.js?v=20261110-3409" defer></script>
 <script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261116-3533" defer></script>
+<script src="js/qa-review.js?v=20261117-3737" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>
