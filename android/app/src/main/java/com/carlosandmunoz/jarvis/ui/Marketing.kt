@@ -280,13 +280,14 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                         if (!sent && note.isNotEmpty()) Muted("Note: $note")
                     }
                     if (sent) profile?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
+                    val queue = p.str("queue").orEmpty()
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
+                    else if (!sent && queue in listOf("queued", "running")) Text(if (queue == "running") "Mac agent sending" else "queued for Mac", color = J.amber, fontSize = 12.sp)
                     else if (!sent && profile != null) TextButton({
-                        if (note.isNotEmpty()) copyNote(context, note)
-                        uri.openUri(profile)
-                        command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to true)) {
-                            (if (note.isNotEmpty()) "Note copied: on LinkedIn tap Connect, Add a note, paste and Send." else "On LinkedIn tap Connect and Send.") + " $name is marked sent."
-                        }
+                        command("mk:li:$name", mapOf(
+                            "action" to JsonPrimitive("linkedin-send"), "date" to li.str("date").orEmpty(),
+                            "name" to name, "profile" to profile, "note" to note, "checkFirst" to check
+                        )) { "Queued for the Mac agent: $name." }
                     }, enabled = "mk:li:$name" !in s.running) { Text("Send", color = J.cyan, fontWeight = FontWeight.Medium, fontSize = 13.sp) }
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
                         Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)

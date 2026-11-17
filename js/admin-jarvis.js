@@ -2273,8 +2273,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                     const note = C.linkedinLine(p, 'Note');
                     const check = C.linkedinLine(p, 'Check first');
                     const send = !p.sent && p.profile;
+                    const liQueue = p.queue === 'queued' || p.queue === 'running' ? p.queue : '';
                     const act = pendingFor('linkedin', p.name) ? '<span class="jv-chip c-average">waiting for the sync</span>'
-                        : send ? `<button type="button" class="jv-btn small is-primary" data-li-send="${esc(p.profile)}" data-date="${esc(li.date)}" data-name="${esc(p.name)}" data-note="${esc(note)}">Send</button>`
+                        : liQueue ? `<span class="jv-chip c-average">${liQueue === 'running' ? 'Mac agent sending' : 'queued for the Mac agent'}</span>`
+                        : send ? `<button type="button" class="jv-btn small is-primary" data-li-send="${esc(p.profile)}" data-date="${esc(li.date)}" data-name="${esc(p.name)}" data-note="${esc(note)}" data-li-check="${esc(check)}">Send</button>`
                         : cmdBtn(p.sent ? 'Not sent' : 'Mark sent', { action: 'linkedin', date: li.date, name: p.name, sent: p.sent ? 'no' : 'yes' });
                     return `<li><span class="jv-chip ${p.sent ? 'c-fast' : ''}">${p.sent ? 'sent' : 'to send'}</span> <strong>${esc(p.name)}</strong>, ${esc(p.title)} <span class="jv-note">(${esc(p.org)}, ${esc(p.cc)})</span>
                 ${!p.sent && check ? `<br><span class="jv-chip c-average">Check first: ${esc(check)}</span>` : ''}${!p.sent && note ? `<br><span class="jv-note">Note: ${esc(note)}</span>` : ''}${!p.sent && (check || note) ? '<br>' : ''}${p.profile && !send ? `<a class="jv-btn small" href="${esc(p.profile)}" target="_blank" rel="noopener">Profile</a>` : ''}${act}</li>`;
@@ -3567,6 +3569,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         'approve-week': (d) => `approve every complete lead in ${d.week}`,
         upload: (d) => `upload ${d.week}'s approved leads to their Instantly campaigns (they start getting emails on the campaign's start date once it is active)`,
         linkedin: (d) => `mark the LinkedIn request to ${d.name} as ${d.sent === 'no' ? 'not sent' : 'sent'}`,
+        'linkedin-send': (d) => `queue a LinkedIn connect for ${d.name} on the Mac browser agent`,
         dnc: (d) => `never contact ${d.value} again and block it in Instantly`,
         run: (d) => `run the ${d.job} job now (it can take half an hour)`,
         'lead-set': (d) => `set ${d.field} for ${d.email} to "${d.value}"`,
@@ -3598,16 +3601,12 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (!out || !out.ok) t.disabled = false;
     }
 
-    // LinkedIn has no invitation API and company pages cannot connect, so Carlos clicks Connect himself (#2479).
-    // The clipboard write and window.open run before any await, while the click still counts as a user gesture.
+    // LinkedIn has no invitation API (#2479); the Mac browser agent sends Connect + note (#3576).
     async function liSend(t) {
-        const { liSend: url, date, name, note } = t.dataset;
-        const copied = note && navigator.clipboard ? navigator.clipboard.writeText(note).then(() => true, () => false) : Promise.resolve(false);
-        window.open(url, '_blank', 'noopener');
+        const { liSend: profile, date, name, note, liCheck: checkFirst } = t.dataset;
         t.disabled = true;
-        const [ok, out] = await Promise.all([copied, call('marketing-command', { action: 'linkedin', date, name, sent: true }).catch((error) => ({ ok: false, error: error.message }))]);
-        const how = ok ? 'Note copied: on LinkedIn click Connect, Add a note, paste and Send.' : note ? 'Copy failed; the note is under the name. On LinkedIn click Connect, Add a note and Send.' : 'On LinkedIn click Connect and Send.';
-        toast(out.ok ? `${how} ${name} is marked sent.` : `${how} Not marked sent: ${out.error}`, 10000);
+        const out = await call('marketing-command', { action: 'linkedin-send', date, name, profile, note: note || '', checkFirst: checkFirst || '' }).catch((error) => ({ ok: false, error: error.message }));
+        toast(out.ok ? `Queued for the Mac agent: ${name}. Run node scripts/engagement-browser/agent.js connect on the Mac (or wait for the next run). Jarvis notifies you when it sends.` : `Not queued: ${out.error}`, 10000);
         if (!out.ok) t.disabled = false;
         loadExternal(['marketing-sync']);
     }
