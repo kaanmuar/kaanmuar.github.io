@@ -10,7 +10,7 @@
     "@sendgrid/mail": "^8.1.4",
     "@sparticuz/chromium": "^153.0.0",
     "axe-core": "^4.14.0",
-    "css-select": "^5.2.2",
+    "css-select": "^7.0.0",
     "firebase-admin": "^14.5.1",
     "firebase-functions": "^7.4.0",
     "htmlparser2": "^10.1.0",
