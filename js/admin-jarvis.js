@@ -2,7 +2,7 @@
 
    Jarvis reads no Firestore (#2102). The products, the range's numbers and the external sources come from the jarvis
    function's snapshot op, the same cached answer the Android app reads (jarvisSnapshot in functions/index.js); the
-   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares) ask their own ops. The
+   few panels it does not carry (actions, notices, social proposals and runs, Studio, shares, CSAT quote queue) ask their own ops. The
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from "./admin-jarvis-push.js?v=2509";
 import * as Proc from "./admin-jarvis-processes.js?v=2890";
@@ -23,7 +23,7 @@ const SNAPSHOT_MS = 5 * 60 * 1000;
 const PROCESSES_MS = 60 * 1000;
 // The external sources the snapshot carries; the rest are asked one by one.
 const SNAPSHOT_OPS = ['health', 'jobs', 'github', 'uptime', 'speed', 'pagespeed', 'local', 'rescue', 'fixes', 'checks', 'ga4', 'cloudflare', 'money', 'email', 'mailbox', 'social', 'safety', 'platform', 'search', 'outreach', 'targets', 'addresses', 'marketing', 'marketing-sync', 'calls', 'engagement', 'people', 'github-work', 'geo', 'calendar', 'mail-codes'];
-const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list'];
+const OWN_OPS = ['actions', 'notices', 'social-proposals', 'social-runs', 'studio', 'share-list', 'csat-testimonials'];
 const RANGES = [['1', '24 hours'], ['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']];
 const COLORS = { cyan: '#38e1ff', amber: '#ffb547', pink: '#ff4d8d', green: '#3dffa8', violet: '#a98bff', dim: '#5d7a8c' };
 let G_CHART = window.JarvisCore.chartPrefs(null);
@@ -1035,6 +1035,57 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     const EMPTY_BODY = /^\s*<p class="jv-empty">([^<]*)<\/p>\s*$/;
     // DOMParser reads the text without running or loading anything in it.
     const plainText = (html) => new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+    const panelSizeOf = (id) => C.clampSize((((layoutOf(S.product) || {}).size) || {})[id]);
+    const resizeHandles = () => ['n', 'e', 's', 'w'].map((edge) => `<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${edge === 'n' || edge === 's' ? 'height' : 'width'}" title="Drag to resize · pinch the panel · double-click to reset"></button>`).join('');
+    function sizeAttrs(id, wide) {
+        const sz = panelSizeOf(id);
+        const resized = sz.h !== 1 || sz.w !== 1;
+        const span = C.sizeSpan(sz.w, wide);
+        const style = `--jv-size-h:${sz.h};--jv-size-w:${sz.w}`;
+        return { sz, resized, span, style, className: (resized ? ' is-resized' : '') + (span >= 3 ? ' is-size-wide' : span === 2 ? ' is-size-mid' : '') };
+    }
+    function applySizeDom(sec, sz) {
+        if (!sec) return;
+        const wide = sec.classList.contains('is-wide');
+        const next = C.clampSize(sz);
+        const span = C.sizeSpan(next.w, wide);
+        sec.style.setProperty('--jv-size-h', String(next.h));
+        sec.style.setProperty('--jv-size-w', String(next.w));
+        sec.classList.toggle('is-resized', next.h !== 1 || next.w !== 1);
+        sec.classList.toggle('is-size-mid', span === 2);
+        sec.classList.toggle('is-size-wide', span >= 3);
+        sec.dataset.sizeH = String(next.h);
+        sec.dataset.sizeW = String(next.w);
+    }
+    function putLayoutTab(tab, l) {
+        const all = Object.assign({}, (S.settings || {}).layout);
+        if (l) all[tab] = l; else delete all[tab];
+        S.settings = Object.assign({}, S.settings, { layout: all });
+    }
+    async function savePanelSize(id, h, w) {
+        const tab = S.product;
+        const prev = layoutOf(tab) || { order: [], hidden: [] };
+        const view = $(`[data-view="${tab}"]`);
+        const ids = view ? defaultIds(view) : [];
+        const size = Object.assign({}, prev.size || {});
+        const one = C.clampSize({ h, w });
+        if (one.h === 1 && one.w === 1) delete size[id];
+        else size[id] = one;
+        const base = C.keepLayout(prev, prev.order && prev.order.length ? prev.order : ids, prev.hidden || [], ids);
+        const next = Object.assign({}, base);
+        const cleaned = C.cleanSize(size);
+        if (cleaned) next.size = cleaned; else delete next.size;
+        const saved = C.cleanLayout({ [tab]: next })[tab] || null;
+        putLayoutTab(tab, saved);
+        const out = await call('settings-save', { layout: { [tab]: saved } }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) {
+            putLayoutTab(tab, prev.order || prev.hidden || prev.size || prev.stretch ? prev : null);
+            toast('Size not saved: ' + (out.error || 'offline'), 5000);
+            return false;
+        }
+        if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+        return true;
+    }
     function panelStretch(id) {
         return Number((((layoutOf(S.product) || {}).stretch) || {})[id]) || 1;
     }
@@ -1048,15 +1099,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const view = $(`[data-view="${tab}"]`);
         const ids = view ? defaultIds(view) : [];
         const next = Object.assign(C.keepLayout(prev, prev.order && prev.order.length ? prev.order : ids, prev.hidden || [], ids), { stretch });
-        const put = (l) => { const all = Object.assign({}, (S.settings || {}).layout); if (l) all[tab] = l; else delete all[tab]; S.settings = Object.assign({}, S.settings, { layout: all }); };
-        put(next);
-        const out = await call('settings-save', { layout: { [tab]: next } }).catch((error) => ({ ok: false, error: error.message }));
-        if (!out.ok) { put(prev.order || prev.hidden || prev.stretch ? prev : null); toast('Not saved: ' + (out.error || 'offline'), 5000); render(); return; }
+        const saved = C.cleanLayout({ [tab]: next })[tab] || null;
+        putLayoutTab(tab, saved);
+        const out = await call('settings-save', { layout: { [tab]: saved } }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { putLayoutTab(tab, prev.order || prev.hidden || prev.stretch ? prev : null); toast('Not saved: ' + (out.error || 'offline'), 5000); render(); return; }
         if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
         render();
         toast(`Chart stretch ${n} for this panel.`, 2200);
     }
-
     function panel(id, title, body, opts) {
         const o = opts || {};
         const empty = !o.keep && EMPTY_BODY.exec(body);
@@ -1064,13 +1114,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (o.data) S.panels.set(id, { title, rows: o.data, product: S.product });
         const hasChart = /class="jv-chart/.test(body);
         const stretch = hasChart ? panelStretch(id) : 1;
-        const exportTools = o.data ? `<span class="jv-panel-tools"><button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button></span>` : '';
+        const exportTools = o.data ? `<button type="button" data-panel-export="csv" data-panel="${id}" title="CSV">CSV</button><button type="button" data-panel-export="json" data-panel="${id}" title="JSON">JSON</button><button type="button" data-panel-export="png" data-panel="${id}" title="PNG">PNG</button>` : '';
         const chartTool = hasChart ? `<button type="button" class="jv-btn small" data-chart-stretch="${esc(id)}" title="Chart height (${stretch} of 3)">↕${stretch}</button>` : '';
         const tools = (exportTools || chartTool) ? `<span class="jv-panel-tools">${chartTool}${exportTools}</span>` : '';
-        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header>${body}${o.note ? `<p class="jv-note">${o.note}</p>` : ''}</section>`;
+        const sized = sizeAttrs(id, !!o.wide);
+        return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${sized.className}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}" data-size-h="${sized.sz.h}" data-size-w="${sized.sz.w}" style="${sized.style}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header><div class="jv-panel-body">${body}</div>${o.note ? `<p class="jv-note">${o.note}</p>` : ''}${resizeHandles()}</section>`;
     }
 
-    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
+    const ACTION_LABELS = { 'rerun-held': 'send held re-runs', 'resend-notices': 're-send failed notices', 'publish-hub': 'publish the hub', 'run-job': 'run a job again', 'rerun-ci': 're-run failed CI jobs', 'rating-decide': 'decide ratings', 'csat-testimonial-decide': 'decide CSAT quotes', 'brief-mark': 'snooze or dismiss a briefing line', 'rerun-job': 're-run failed jobs', 'refresh-stale': 'refresh stale data', 'rerun-reviews': 're-run reviews after a fix', 'pause-outreach': 'pause an outreach mailbox', 'resume-outreach': 'resume outreach mailboxes', 'retry-social': 'retry failed social posts', 'ai-ask': 'ask the AI what to fix', 'ai-fix': 'run fixes the AI picked', 'pagespeed-merge': 'merge PageSpeed fixes', 'pagespeed-close': 'close PageSpeed fixes', 'pagespeed-run': 'start the PageSpeed run', 'merge-pr': 'merge a green PR', 'enable-warmup': 'turn mailbox warm-up back on', 'restore-alias': 'restore a missing alias', 'launch-campaign': 'launch a draft campaign', 'index-submit': 'send missing pages to search engines',
         'gh-board-sync': 'sync the board', 'gh-orphan-ticket': 'file a ticket for the PR', 'gh-update-pr': 'update the PR with main', 'gh-merge-pr': 'merge the green PR', 'gh-revert': 'open a revert PR',
         'gh-delete-branch': 'delete merged branches', 'gh-close-issue': 'close the issue', 'gh-remove-worktree': 'remove the merged worktree', 'gh-agent': 'launch a fix agent', 'gh-worker': 'start Jarvis\'s worker on a fix',
         'gh-quarantine': 'file a flaky-workflow ticket', 'gh-security-ticket': 'file a ticket for a security alert', 'gh-dismiss-alert': 'dismiss a security alert', 'gh-dismiss-low': 'dismiss the low security alerts',
@@ -1280,9 +1331,10 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const hiddenHere = S.briefHidden.filter((b) => inTab(b, product));
         const items = (list.length ? list.map((b) => row(b)).join('') : '<li class="lv-good"><b>clear</b><span>All quiet. Nothing needs you right now.</span></li>')
             + (hiddenHere.length ? `<li class="lv-info jv-brief-more"><b>hidden</b><span>${hiddenHere.length} snoozed or dismissed</span><button type="button" data-brief-hidden>${S.showHidden ? 'Hide' : 'Show'}</button></li>` + (S.showHidden ? hiddenHere.map((b) => row(b, true)).join('') : '') : '');
-        return `<section class="jv-panel is-wide jv-briefing${folded.has('briefing') ? ' is-folded' : ''}" data-panel-id="briefing"><header>${foldHead('briefing', 'Briefing')}<span class="jv-panel-tools"><button type="button" data-fold-all="1">Collapse all</button><button type="button" data-fold-all="0">Expand all</button><button type="button" data-act="speak">Read aloud</button><button type="button" data-act="ai-brief">Gemini briefing</button></span></header><ul class="jv-brief">${items}</ul>
+        const sized = sizeAttrs('briefing', true);
+        return `<section class="jv-panel is-wide jv-briefing${sized.className}${folded.has('briefing') ? ' is-folded' : ''}" data-panel-id="briefing" data-size-h="${sized.sz.h}" data-size-w="${sized.sz.w}" style="${sized.style}"><header>${foldHead('briefing', 'Briefing')}<span class="jv-panel-tools"><button type="button" data-fold-all="1">Collapse all</button><button type="button" data-fold-all="0">Expand all</button><button type="button" data-act="speak">Read aloud</button><button type="button" data-act="ai-brief">Gemini briefing</button></span></header><div class="jv-panel-body"><ul class="jv-brief">${items}</ul>
             <div class="jv-ai"${S.ai ? '' : ' hidden'}><span class="jv-eyebrow">Gemini · ${S.aiAt ? when(S.aiAt) : ''}</span><div class="jv-ai-text">${esc(S.ai).replace(/\n/g, '<br>')}</div></div>
-            <form class="jv-ask" data-ask><input type="text" name="q" placeholder="Ask Jarvis: why did opens jump? which source pays? what should I fix first?" aria-label="Ask Jarvis"><button type="submit" class="jv-btn">Ask</button></form></section>`;
+            <form class="jv-ask" data-ask><input type="text" name="q" placeholder="Ask Jarvis: why did opens jump? which source pays? what should I fix first?" aria-label="Ask Jarvis"><button type="submit" class="jv-btn">Ask</button></form></div>${resizeHandles()}</section>`;
     }
 
     function goalRow(g) {
@@ -1615,7 +1667,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             : '';
         const quoteTable = quotes.length
             ? table([['When', (r) => esc(when(r.at))], ['Site', (r) => esc(r.host || '—')], ['Run', (r) => fmt(r.rating) + '/5'], ['Quote', (r) => esc(r.quote || '—')]], quotes, 'No quote-ready feedback yet.')
-            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> on save.</p>';
+            : '<p class="jv-note">Quote-ready rows (4★+, NPS 8+, quote ok, 24+ chars) queue to <code>url_review_csat_testimonials</code> for approval below.</p>';
         const body = empty
             ? '<p class="jv-empty">No CSAT answers in this range yet. Charts fill after report-mail / in-page feedback lands (#3556 → #3557).</p>'
             : kpis(c.kpis || []) + trend + bars(starBars, { color: COLORS.amber, empty: 'No star ratings.' }) + bars(npsBars, { color: COLORS.cyan, empty: 'No NPS yet.' }) +
@@ -1626,6 +1678,29 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             data: recent,
             note: 'Post-report CSAT (#3556). 7d recurrence nudge + re-mail remind reset (#3557). Testimonials queue on quote ok.'
         });
+    }
+
+    function csatTestimonialsPanel() {
+        const Q = S.external['csat-testimonials'];
+        if (!Q) return panel('review-csat-pending', 'CSAT quotes to approve', waiting('csat-testimonials', 'Reading pending CSAT quotes…'), { wide: true });
+        if (Q.ok === false) return panel('review-csat-pending', 'CSAT quotes to approve', `<p class="jv-empty">${esc(Q.error || 'Not loaded.')}</p>`, { wide: true });
+        const list = Q.items || [];
+        const items = list.map((row) => `<li class="jv-prop lv-info"><div class="jv-prop-body">
+            <p class="jv-prop-title"><strong>${esc(row.host || 'Site')}</strong> <span class="jv-chip">${fmt(row.rating)}/5</span>${row.nps != null ? ` <span class="jv-chip">NPS ${fmt(row.nps)}</span>` : ''}</p>
+            <p class="jv-prop-why">${esc(when(row.createdAt))}</p>
+            <p class="jv-prop-why">${esc(row.quote || '')}</p>
+            <div class="jv-prop-acts"><button type="button" data-csat-decide="approved" data-key="${esc(row.id)}">Approve</button><button type="button" data-csat-decide="dismissed" data-key="${esc(row.id)}">Dismiss</button></div></div></li>`).join('');
+        return panel('review-csat-pending', 'CSAT quotes to approve' + (list.length ? ' (' + list.length + ')' : ''), `<p class="jv-note">Approve publishes the quote on the CV testimonials section and adds a Social hub pick for the next daily build. Nothing goes out until you approve here.</p>` +
+            (list.length ? `<ol class="jv-props">${items}</ol>` : '<p class="jv-empty">No CSAT quotes are waiting.</p>'), { wide: true });
+    }
+
+    async function decideCsatQuote(id, decision) {
+        const out = await call('csat-testimonial-decide', { id, decision }).catch((error) => ({ ok: false, error: error.message }));
+        if (!out.ok) { toast('Not saved: ' + out.error, 6000); return; }
+        const Q = S.external['csat-testimonials'];
+        if (Q && Q.items) Q.items = Q.items.filter((row) => row.id !== id);
+        render();
+        toast(decision === 'approved' ? 'Approved. CV testimonial + Social hub pick saved.' : 'Dismissed.', 3500);
     }
 
     function socialVelocityPanel() {
@@ -2577,8 +2652,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const dismissForm = (kind, i) => {
             const panel = 'github-sec-' + kind, key = ghAlertKey(kind, i);
             return `<div class="jv-drill" data-drill="${esc(drillKey(panel, key))}"${openDrills.get(panel) === key ? '' : ' hidden'}><header><strong>Dismiss ${esc(ghAlertName(kind, i))} #${esc(i.number)}</strong><button type="button" class="jv-drill-close" data-drill-open="${esc(drillKey(panel, key))}" aria-label="Close">×</button></header>
-                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
-                <label>Comment, optional <input type="text" name="comment" maxlength="280" placeholder="Why, for the audit trail"></label>
+                <form class="jv-gh-dismiss" data-gh-dismiss="${esc(key)}"><label>Reason <select name="reason" data-keep="gh-dismiss-reason-${esc(key)}">${GH_DISMISS[kind].map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('')}</select></label>
+                <label>Comment, optional <input type="text" name="comment" data-keep="gh-dismiss-comment-${esc(key)}" maxlength="280" placeholder="Why, for the audit trail"></label>
                 <div class="jv-actions"><button type="submit" class="jv-btn small danger">Dismiss on GitHub</button></div><p class="jv-note">Closes the alert on GitHub; it can be reopened there.</p></form></div>`;
         };
         const secFix = (i) => {
@@ -3240,11 +3315,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         const tv = S.geoTv = Object.assign(GeoTime.view(g, geoTimeState(), key), { key });
         const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Channel">${Geo.CHANNELS.map(([k, label]) => `<button type="button" data-geo-channel="${k}" class="${k === channel ? 'on' : ''}" aria-pressed="${k === channel}">${esc(label)}</button>`).join('')}</div>
             <label class="jv-geo-metric">Show <select data-geo-metric aria-label="What the map shows" data-menu-ready="1">${metrics.map(([k, label]) => `<option value="${k}"${k === key ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label></div>${GeoTime.controls(g, geoTimeState(), tv, esc)}`;
+        const gts = geoTimeState();
+        const playing = !!gts.playing;
         const map = S.world ? geoMap(tv.rows, key, tv.fills) + (tv.fills ? GeoTime.legend(tv, key, esc) : Geo.legend(tv.rows, key, esc)) + (GeoCost.KEYS.has(key) ? GeoCost.note(g, tv, esc) : '') : '<p class="jv-note">Drawing the map…</p>';
         const clicksNote = key === 'clicks' && GeoClicks.note(g) ? `<p class="jv-note">${esc(GeoClicks.note(g))}</p>` : '';
         const top = Geo.ranked(tv.rows, key === 'gaps' ? 'activity' : key);
+        const rk = key === 'gaps' ? 'activity' : key;
         const rank = (list) => table([['Country', (r) => `<button type="button" class="jv-link" data-geo-cc="${r.cc}">${esc(r.name)}</button>${r.target ? '' : ' <span class="jv-note">not a target</span>'}`],
-            [Geo.labelOf(key === 'gaps' ? 'activity' : key), (r) => esc(Geo.show(Geo.value(r, key === 'gaps' ? 'activity' : key), key === 'gaps' ? 'activity' : key))],
+            [Geo.labelOf(rk), (r) => GeoTime.countCell(Geo.value(r, rk), rk, esc)],
             ...(tv.delta ? [['Change', (r) => GeoTime.arrow(tv.delta[r.cc], key)]] : []),
             ['Sent · reply %', (r) => `${fmt(r.sent)}${r.replyRate === null ? '' : ' · ' + r.replyRate + '%'}${r.est ? ' <span class="jv-note" title="Split from campaigns that cover several countries">est.</span>' : ''}`],
             ['Prospects left', (r) => fmt(r.left)], ['Gaps', (r) => r.gaps.map((k) => `<span class="jv-chip" style="border-color:${(Geo.GAPS[k] || [, ''])[1]}">${esc((Geo.GAPS[k] || [k])[0])}</span>`).join(' ')]], list, 'No country has this yet.');
@@ -3254,7 +3332,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Countries needing attention', value: t.missing || 0, alert: t.missing > 0 }, { label: 'Average reply rate', value: t.avgReply === null || t.avgReply === undefined ? '—' : t.avgReply + '%' },
             { label: 'Emails sent', value: t.sent || 0 }, { label: 'Prospects queued', value: t.prospects || 0 }])}
         <div class="jv-grid">
-            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap">${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap${playing ? ' is-playing' : ''}">${GeoTime.playStats(tv, key, playing, esc)}${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
             ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
@@ -3720,6 +3798,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             ${panel('review-funnel', 'Funnel', funnel(r.funnel), { data: r.funnel, note: 'Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.' })}
             ${panel('review-trend', 'Opens and reviews per day', area(r.series.labels, [{ name: 'Opens', values: r.series.values, color: COLORS.cyan }, { name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green }]), { wide: true, data: r.series.labels.map((d, k) => ({ day: d, opens: r.series.values[k], reviews: r.reviewSeries.values[k] })) })}
             ${csatPanel(r.csat)}
+            ${csatTestimonialsPanel()}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
             ${speedCard('review')}${gaCard('review')}
             ${listPanel('review', 'sources', 'Sources (opens)', r.lists.sources)}${listPanel('review', 'review-sources', 'Sources (reviews)', r.lists.reviewSources, { color: COLORS.green, empty: 'Reviews carry their source since 25 Oct 2026.' })}
@@ -3829,10 +3908,14 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
                 S.product = prev;
                 const ask = view.querySelector('.jv-ask input');
                 if (ask && typed) { ask.value = typed; if (focused) ask.focus(); }
-                typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && !el.value) el.value = v; });
+                typedKept.forEach(([k, v]) => { const el = view.querySelector(`[data-keep="${k}"]`); if (el && v && el.value !== v) el.value = v; });
                 const again = held && view.querySelector(`[data-keep="${held.dataset.keep}"]`);
                 if (again) { again.focus(); again.setSelectionRange(held.selectionStart, held.selectionEnd); }
                 arrange(view, p.key);
+                if (p.key === 'geo') {
+                    view.classList.toggle('is-geo-playing', !!S.geoPlaying);
+                    GeoTime.tweenCounts(view);
+                }
             }
         });
         $$('[data-go]').forEach((b) => { if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', String(b.dataset.go === S.product)); });
@@ -4750,6 +4833,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (t.dataset.countdownAct) { countdownAct(t.dataset.id, t.dataset.countdownAct); return; }
         if (t.dataset.psAct) { pageSpeedAct(t); return; }
         if (t.dataset.socialDecide) { decideSocial(t.dataset.key, t.dataset.socialDecide); return; }
+        if (t.dataset.csatDecide) { decideCsatQuote(t.dataset.key, t.dataset.csatDecide); return; }
         if (t.dataset.geoCc !== undefined) { S.geoCc = t.dataset.geoCc; render(); const at = S.geoCc && $('[data-panel-id="geo-country"]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
         if (t.dataset.geoChannel) { S.geoChannel = t.dataset.geoChannel; render(); return; }
         if (t.dataset.geoCamp !== undefined) { event.preventDefault(); S.geoCamp = S.geoCamp === t.dataset.geoCamp ? '' : t.dataset.geoCamp; render(); const at = S.geoCamp && $('[data-geo-camp-sheet]'); if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
@@ -4979,6 +5063,131 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     document.addEventListener('pointermove', dragMove);
     document.addEventListener('pointerup', dragEnd);
     document.addEventListener('pointercancel', dragEnd);
+
+    // Continuous panel resize (#3611): edge handles / press-hold on edges, or two-finger pinch (Map included).
+    let resizing = null;
+    let pinch = null;
+    let edgeHold = null;
+    const EDGE_PX = 22;
+    function edgeAt(sec, x, y) {
+        const r = sec.getBoundingClientRect();
+        const near = (a, b) => Math.abs(a - b) <= EDGE_PX;
+        if (near(y, r.top)) return 'n';
+        if (near(y, r.bottom)) return 's';
+        if (near(x, r.left)) return 'w';
+        if (near(x, r.right)) return 'e';
+        return null;
+    }
+    function startResize(sec, edge, event) {
+        if (!sec || sec.classList.contains('is-folded') || S.layoutEdit) return;
+        const id = sec.dataset.panelId;
+        if (!id) return;
+        if (edgeHold) { clearTimeout(edgeHold.timer); edgeHold = null; }
+        const start = panelSizeOf(id);
+        resizing = { sec, id, edge, pointer: event.pointerId, x: event.clientX, y: event.clientY, start, rect: sec.getBoundingClientRect() };
+        sec.classList.add('is-resizing');
+        if (event.target.setPointerCapture) event.target.setPointerCapture(event.pointerId);
+    }
+    function resizeMove(event) {
+        if (edgeHold && event.pointerId === edgeHold.pointer) {
+            if (Math.hypot(event.clientX - edgeHold.x, event.clientY - edgeHold.y) > 10) {
+                clearTimeout(edgeHold.timer);
+                edgeHold = null;
+            }
+            return;
+        }
+        if (resizing && event.pointerId === resizing.pointer) {
+            const { sec, edge, start, rect, x, y } = resizing;
+            const dx = event.clientX - x;
+            const dy = event.clientY - y;
+            let h = start.h;
+            let w = start.w;
+            if (edge === 's') h = start.h + dy / Math.max(120, rect.height);
+            else if (edge === 'n') h = start.h - dy / Math.max(120, rect.height);
+            else if (edge === 'e') w = start.w + dx / Math.max(120, rect.width);
+            else if (edge === 'w') w = start.w - dx / Math.max(120, rect.width);
+            applySizeDom(sec, { h, w });
+            return;
+        }
+        if (!pinch || !pinch.pointers.has(event.pointerId)) return;
+        pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pinch.pointers.size < 2) return;
+        if (!pinch.active) {
+            const pts = Array.from(pinch.pointers.values());
+            pinch.baseDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+            pinch.start = panelSizeOf(pinch.id);
+            pinch.active = true;
+            pinch.sec.classList.add('is-resizing');
+        }
+        const pts = Array.from(pinch.pointers.values());
+        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        const scale = dist / (pinch.baseDist || 1);
+        applySizeDom(pinch.sec, { h: pinch.start.h * scale, w: pinch.start.w * (1 + (scale - 1) * 0.5) });
+    }
+    async function resizeEnd(event) {
+        if (edgeHold && event.pointerId === edgeHold.pointer) {
+            clearTimeout(edgeHold.timer);
+            edgeHold = null;
+        }
+        if (resizing && event.pointerId === resizing.pointer) {
+            const { sec, id } = resizing;
+            const h = Number(sec.dataset.sizeH) || 1;
+            const w = Number(sec.dataset.sizeW) || 1;
+            resizing = null;
+            sec.classList.remove('is-resizing');
+            await savePanelSize(id, h, w);
+            return;
+        }
+        if (!pinch || !pinch.pointers.has(event.pointerId)) return;
+        pinch.pointers.delete(event.pointerId);
+        if (pinch.pointers.size >= 1) return;
+        const { sec, id, active } = pinch;
+        pinch = null;
+        if (!active) return;
+        sec.classList.remove('is-resizing');
+        await savePanelSize(id, Number(sec.dataset.sizeH) || 1, Number(sec.dataset.sizeW) || 1);
+    }
+    root.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('a, button:not(.jv-resize), input, textarea, select, [data-lay], .jv-lay-drag')) return;
+        const handle = event.target.closest('.jv-resize');
+        const sec = (handle || event.target).closest?.('.jv-panel[data-panel-id]');
+        if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) return;
+        if (handle) {
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            event.preventDefault();
+            startResize(sec, handle.dataset.resize, event);
+            return;
+        }
+        if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+        const edge = edgeAt(sec, event.clientX, event.clientY);
+        if (edge) {
+            // Press-hold on an edge (~280ms) starts a continuous resize without stealing quick taps.
+            edgeHold = {
+                pointer: event.pointerId, x: event.clientX, y: event.clientY,
+                timer: setTimeout(() => {
+                    if (!edgeHold || edgeHold.pointer !== event.pointerId) return;
+                    edgeHold = null;
+                    startResize(sec, edge, event);
+                }, 280)
+            };
+            return;
+        }
+        if (!pinch || pinch.sec !== sec) {
+            pinch = { sec, id: sec.dataset.panelId, pointers: new Map(), active: false, baseDist: 0, start: { h: 1, w: 1 } };
+        }
+        pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    });
+    root.addEventListener('dblclick', (event) => {
+        const handle = event.target.closest('.jv-resize');
+        const sec = handle && handle.closest('.jv-panel[data-panel-id]');
+        if (!sec || S.layoutEdit) return;
+        event.preventDefault();
+        applySizeDom(sec, { h: 1, w: 1 });
+        savePanelSize(sec.dataset.panelId, 1, 1);
+    });
+    document.addEventListener('pointermove', resizeMove);
+    document.addEventListener('pointerup', resizeEnd);
+    document.addEventListener('pointercancel', resizeEnd);
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { S.voices = {}; };
 
     S.timers.push(setInterval(() => {
@@ -5019,6 +5228,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             document.removeEventListener('pointermove', dragMove);
             document.removeEventListener('pointerup', dragEnd);
             document.removeEventListener('pointercancel', dragEnd);
+            document.removeEventListener('pointermove', resizeMove);
+            document.removeEventListener('pointerup', resizeEnd);
+            document.removeEventListener('pointercancel', resizeEnd);
             const icon = document.querySelector('link[data-jv-icon]');
             if (icon) icon.remove();
             document.title = pageTitle;

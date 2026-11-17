@@ -1,6 +1,7 @@
 package com.carlosandmunoz.jarvis.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -29,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import android.provider.Settings
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.data.fmt
@@ -64,7 +68,9 @@ object GeoTime {
     private val WORSE_UP = setOf("bounceRate", "cost") + GeoCost.LOWER
     val UP = Color(0xFF38E1FF)
     val DOWN = Color(0xFFFF4D8D)
-    const val STEP_MS = 1400L
+    const val STEP_MS = 2000L
+    const val TWEEN_MS = 900
+    const val STEP_REDUCE_MS = 1600L
     private val DAY = DateTimeFormatter.ofPattern("MMM d", Locale.US)
 
     fun short(day: String?): String = day?.let { runCatching { LocalDate.parse(it).format(DAY) }.getOrNull() } ?: ""
@@ -174,6 +180,44 @@ object GeoTime {
         return (if (d > 0) "▲ +" else "▼ −") + if (key in GeoCost.KEYS) GeoCost.show(abs(d), key) else (if (key == "usd") "$" else "") + fmt(abs(d)) + unit
     }
     fun arrowColor(d: Double?, key: String): Color = if (d == null || d == 0.0) J.muted else if (good(d, key)) UP else DOWN
+
+    data class PlayStats(val total: Double?, val totalKey: String, val up: List<Mover>, val down: List<Mover>, val upN: Int, val downN: Int)
+    data class Mover(val cc: String, val name: String, val d: Double, val good: Boolean)
+
+    /** Totals and movers for the week playback side rail (twin of playStatsData in admin-jarvis-geo-time.js). */
+    fun playStatsData(tv: View, key: String): PlayStats? {
+        if (tv.mode != "week") return null
+        val withVal = tv.rows.mapNotNull { r ->
+            val v = valueOf(r, key) ?: return@mapNotNull null
+            r.str("cc").orEmpty() to Triple(r.str("name").orEmpty(), v, r)
+        }
+        val total = when (key) {
+            "light" -> withVal.size.toDouble()
+            "replyRate", "openRate", "bounceRate" -> {
+                var sent = 0.0
+                var w = 0.0
+                tv.rows.forEach { r ->
+                    val s = valueOf(r, "sent") ?: return@forEach
+                    val v = valueOf(r, key) ?: return@forEach
+                    sent += s
+                    w += v * s
+                }
+                if (sent > 0) round1(w / sent) else null
+            }
+            in GeoCost.KEYS -> Math.round(withVal.sumOf { it.second.second } * 100) / 100.0
+            else -> {
+                val sum = withVal.sumOf { it.second.second }
+                if (key == "usd") Math.round(sum * 100) / 100.0 else sum.roundToLong().toDouble()
+            }
+        }
+        val movers = tv.delta.orEmpty().mapNotNull { (cc, d) ->
+            if (d == null || d == 0.0) return@mapNotNull null
+            val row = tv.rows.firstOrNull { it.str("cc") == cc } ?: return@mapNotNull null
+            Mover(cc, row.str("name").orEmpty(), d, good(d, key))
+        }
+        return PlayStats(total, key, movers.filter { it.good }.sortedByDescending { it.d }.take(3),
+            movers.filter { !it.good }.sortedBy { it.d }.take(3), movers.count { it.d > 0 }, movers.count { it.d < 0 })
+    }
 }
 
 /** The controls' state: a range to compare, a week to play, and value or change shading. */
@@ -201,9 +245,14 @@ fun rememberGeoTime(): GeoTimeState {
 @Composable
 fun GeoTimeControls(g: JsonObject, st: GeoTimeState, v: GeoTime.View) {
     val weeks = GeoTime.weeks(g)
-    LaunchedEffect(st.playing) {
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    LaunchedEffect(st.playing, reduceMotion) {
+        val step = if (reduceMotion) GeoTime.STEP_REDUCE_MS else GeoTime.STEP_MS
         while (st.playing && weeks > 0) {
-            delay(GeoTime.STEP_MS)
+            delay(step)
             val next = if (st.weekAt < 0 || st.weekAt >= weeks - 1) 0 else st.weekAt + 1
             st.weekAt = next
             if (next >= weeks - 1) st.playing = false
@@ -240,6 +289,40 @@ fun GeoChangeLine(v: GeoTime.View, cc: String, key: String) {
     Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("${Geo.metric(key).label} ${Geo.show(GeoTime.valueOf(r, key), key)} · before ${Geo.show(GeoTime.valueOf(v.before[cc], key), key)} ", fontSize = 11.sp, color = J.text, modifier = Modifier.weight(1f, fill = false))
         Text(GeoTime.arrow(d, key), fontSize = 11.sp, color = GeoTime.arrowColor(d, key), fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Side map statistics while Play is on (#3568). */
+@Composable
+fun GeoPlayStats(tv: GeoTime.View, key: String, playing: Boolean, modifier: Modifier = Modifier) {
+    if (!playing) return
+    val s = GeoTime.playStatsData(tv, key) ?: return
+    val totalShow = s.total?.let { Geo.show(it, s.totalKey) } ?: "—"
+    val animateKey = tv.week
+    Column(
+        modifier
+            .widthIn(min = 152.dp, max = 200.dp)
+            .background(J.panel.copy(alpha = 0.92f), RoundedCornerShape(10.dp))
+            .border(1.dp, J.line, RoundedCornerShape(10.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text("TOTAL · ${Geo.metric(key).label.uppercase()}", color = J.amber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        CountUp(totalShow, animateKey, GeoTime.TWEEN_MS) { Text(it, color = J.text, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        Muted("${s.upN} up · ${s.downN} down vs last week")
+        @Composable
+        fun block(head: String, rows: List<GeoTime.Mover>, empty: String) {
+            Text(head.uppercase(), color = J.amber, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            if (rows.isEmpty()) Muted(empty)
+            else rows.forEach { m ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(m.name, fontSize = 12.sp, color = J.text, modifier = Modifier.weight(1f))
+                    Text(GeoTime.arrow(m.d, key), fontSize = 11.sp, color = GeoTime.arrowColor(m.d, key), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        block("Biggest rise", s.up, "No country rose")
+        block("Biggest drop", s.down, "No country fell")
     }
 }
 

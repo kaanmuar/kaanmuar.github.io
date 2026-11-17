@@ -226,6 +226,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
             Muted("Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.")
         })
         CsatPanel(p.obj("csat"))
+        CsatQuotesPanel(s, vm)
     }
 
     val series = p.obj("series")
@@ -319,6 +320,30 @@ private fun CsatPanel(csat: JsonObject?) {
             )
         }
         Muted("Post-report CSAT (#3556). 7d recurrence nudge + quote queue (#3557).")
+    }
+}
+
+@Composable
+private fun CsatQuotesPanel(s: UiState, vm: JarvisViewModel) {
+    LaunchedEffect(Unit) { if (s.csatQuotes == null) vm.loadCsatQuotes() }
+    val list = s.csatQuotes.orEmpty()
+    Panel("CSAT quotes to approve" + if (list.isNotEmpty()) " (${list.size})" else "", id = "review-csat-pending") {
+        if (s.csatQuotes == null) Muted("Reading pending CSAT quotes…")
+        else if (list.isEmpty()) Muted("No CSAT quotes are waiting.")
+        else Muted("Approve publishes on the CV and adds a Social hub pick. Nothing posts until you approve.")
+        list.take(12).forEach { row ->
+            val id = row.str("id").orEmpty()
+            val busy = "csat:$id" in s.running
+            StatusRow(
+                "info",
+                listOfNotNull(row.str("host")?.ifEmpty { null }, "${fmt(row.num("rating"))}/5", row.num("nps")?.let { "NPS ${fmt(it)}" }).joinToString(" · "),
+                listOfNotNull(ago(row.str("createdAt")), row.str("quote")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
+            )
+            Row {
+                TextButton({ vm.decideCsatQuote(id, "approved") }, enabled = !busy) { Text("Approve", color = J.cyan, fontWeight = FontWeight.Bold) }
+                TextButton({ vm.decideCsatQuote(id, "dismissed") }, enabled = !busy) { Text("Dismiss", color = J.muted) }
+            }
+        }
     }
 }
 
