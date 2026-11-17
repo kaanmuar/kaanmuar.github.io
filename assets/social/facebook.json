@@ -976,6 +976,16 @@
     "checked": "2026-11-17T22:07:10.062Z"
    }
   ],
+  "auto-2026-11-17/01-u-motives-ai": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "29034375872897540",
+    "at": "2026-11-18T19:30:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-17T22:36:29.568Z"
+   }
+  ],
   "auto-2026-11-17/07-u-123carrentalbonaire-com": [
    {
     "channel": "facebook",
@@ -1749,8 +1759,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122093299815532027",
     "at": "2026-11-17T22:25:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T00:09:27.664Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122093299815532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-17T22:36:20.412Z"
    }
   ],
   "runs-100/16-mit": [
