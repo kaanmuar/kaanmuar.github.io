@@ -89,7 +89,7 @@ test("rows: the last day only, newest first, at most ten", () => {
 test("wiring: mailInbound reads its key, the snapshot carries the codes, and both apps list the codes kind", () => {
   const root = path.join(__dirname, "../..");
   const index = fs.readFileSync(path.join(root, "functions/index.js"), "utf8");
-  assert.deepEqual(secrets.mailInbound, ["SENDGRID_API_KEY", "MAIL_WEBHOOK_KEY"]);
+  assert.deepEqual(secrets.mailInbound, ["SENDGRID_API_KEY", "GEMINI_API_KEY", "MAIL_WEBHOOK_KEY"]);
   assert.match(index, /exports\.mailInbound = functions\.runWith\(\{[^}]*secrets: SECRETS\.mailInbound/);
   assert.match(index, /op === "snapshot"\) out = await jarvisSnapshotOp\(/);
   const op = index.slice(index.indexOf("async function jarvisSnapshotOp("), index.indexOf("async function jarvisHeld("));

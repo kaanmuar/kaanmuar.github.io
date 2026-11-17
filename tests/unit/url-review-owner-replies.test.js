@@ -152,6 +152,10 @@ test("the owner reply page renders and escapes the proposed address", () => {
   const html = loadReplyPage()("abc", { kind: "other", status: "waiting", from: "a@b.c", host: "shop.example", domain: "shop.example", propose: "resend:" + evil, mentioned: [evil], words: "hi" }, "");
   assert.match(html, /value="x&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;@shop\.example" required checked/);
   assert.ok(!html.includes("<script>"));
+  const interested = loadReplyPage()("abc", { kind: "interested", status: "waiting", from: "owner@shop.example", host: "shop.example", domain: "shop.example", words: "Thanks, how much?", draft: "Hola <b>x</b>", draftSummary: "Asks price" }, "");
+  assert.match(interested, /Send answer/);
+  assert.match(interested, /Hola &lt;b&gt;x&lt;\/b&gt;/);
+  assert.match(interested, /Draft again with Gemini|Draft with Gemini/);
 });
 
 test("the decision page offers every address in the reply, the proposal checked, never the notice's own (#1095, #1094)", () => {
@@ -170,9 +174,46 @@ test("the decision page offers every address in the reply, the proposal checked,
   assert.ok(!none.includes("do\" value=\"resend\""), "no resend button without another address");
 });
 
-test("POST do=resend only accepts an address offered on the page", () => {
+test("POST do=resend only accepts an address offered on the page; answer and draft are wired (#3670)", () => {
   const index = fs.readFileSync(path.join(__dirname, "../../functions/index.js"), "utf8");
   assert.match(index, /action === "resend"\) problem = ownerReplies\.resendChoices\(row\)\.includes\(email\) \?/);
+  assert.match(index, /action === "answer"\) problem = await sendOwnerAnswer/);
+  assert.match(index, /action === "draft"/);
+  assert.match(index, /value=\\"answer\\"/);
+  assert.match(index, /Send answer/);
+});
+
+test("a closed inbox that only points at a contact form is auto, not wrong_person (#3670, Simplon Nov 5)", () => {
+  const text = [
+    "Bonjour,",
+    "",
+    "Nous vous remercions d'avoir contacté Simplon.",
+    "",
+    "Veuillez noter que cette adresse électronique n'est pas destinée à recevoir des",
+    "demandes et votre message ne sera pas traité.",
+    "",
+    "Pour nous contacter, veuillez vous rendre sur notre site web à",
+    "l'adresse https://www.simplon.co/ et utiliser le formulaire de contact.",
+    "",
+    "Cordialement,",
+    "L'équipe Simplon"
+  ].join("\n");
+  const reply = replies.read({ from: "contact@simplon.co", subject: "Message traité // Re: Simplon", text });
+  assert.equal(reply.kind, "auto");
+  assert.deepEqual(replies.plan(reply, { email: "contact@simplon.co" }), { status: "filed", apply: [], propose: "" });
+  assert.equal(replies.outreachCategory("auto"), "auto_reply");
+  assert.equal(replies.needsAnswer("auto"), false);
+  assert.equal(replies.needsAnswer("interested"), true);
+});
+
+test("Gemini answer-draft JSON is parsed for the decide page (#3670)", () => {
+  const parsed = replies.parseAnswerDraft('{"lang":"es","summary":"Wants a price","draft":"Hola, gracias por escribir. Podemos agendar 15 minutos aquí: https://carlosandmunoz.com/book.html.\\n\\nCarlos Munoz\\ncarlosandmunoz.com","english":"Hi, thanks for writing."}');
+  assert.equal(parsed.lang, "es");
+  assert.match(parsed.draft, /book\.html/);
+  assert.equal(parsed.english, "Hi, thanks for writing.");
+  assert.equal(replies.parseAnswerDraft("not json"), null);
+  assert.equal(replies.parseAnswerDraft('{"draft":"short"}'), null);
+  assert.match(replies.answerPrompt({ from: "a@b.co", kind: "interested", words: "Gracias" }, { host: "b.co" }), /b\.co/);
 });
 
 test("an auto-acknowledgement is filed, not answered (#1093, mit.edu Oct 23)", () => {
