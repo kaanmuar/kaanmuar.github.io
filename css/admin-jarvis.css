@@ -99,29 +99,35 @@
     }
 }
 .jv-panel.is-resizing { outline: 1px solid rgba(56, 225, 255, 0.55); outline-offset: 1px; }
+/* #3673: long-press arms resize; dashed outline while armed so nav stays free until then. */
+.jv-panel.is-resize-armed { outline: 1px dashed rgba(56, 225, 255, 0.45); outline-offset: 2px; }
 .jv-resize {
     position: absolute; z-index: 3; padding: 0; margin: 0; border: 0; background: transparent; opacity: 0;
     transition: opacity 0.15s, background 0.15s;
 }
-.jv-panel:hover > .jv-resize, .jv-panel:focus-within > .jv-resize, .jv-panel.is-resizing > .jv-resize { opacity: 1; }
+.jv-panel:hover > .jv-resize, .jv-panel:focus-within > .jv-resize, .jv-panel.is-resizing > .jv-resize,
+.jv-panel.is-resize-armed > .jv-resize { opacity: 1; }
 .jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { left: 18%; right: 18%; height: 10px; cursor: ns-resize; }
 .jv-resize[data-resize="n"] { top: 0; }
 .jv-resize[data-resize="s"] { bottom: 0; }
 .jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { top: 18%; bottom: 18%; width: 10px; cursor: ew-resize; }
 .jv-resize[data-resize="e"] { right: 0; }
 .jv-resize[data-resize="w"] { left: 0; }
-.jv-panel:hover > .jv-resize[data-resize="n"], .jv-panel.is-resizing > .jv-resize[data-resize="n"],
-.jv-panel:hover > .jv-resize[data-resize="s"], .jv-panel.is-resizing > .jv-resize[data-resize="s"] {
+.jv-panel:hover > .jv-resize[data-resize="n"], .jv-panel.is-resizing > .jv-resize[data-resize="n"], .jv-panel.is-resize-armed > .jv-resize[data-resize="n"],
+.jv-panel:hover > .jv-resize[data-resize="s"], .jv-panel.is-resizing > .jv-resize[data-resize="s"], .jv-panel.is-resize-armed > .jv-resize[data-resize="s"] {
     background: linear-gradient(to bottom, transparent, rgba(56, 225, 255, 0.35), transparent);
 }
-.jv-panel:hover > .jv-resize[data-resize="e"], .jv-panel.is-resizing > .jv-resize[data-resize="e"],
-.jv-panel:hover > .jv-resize[data-resize="w"], .jv-panel.is-resizing > .jv-resize[data-resize="w"] {
+.jv-panel:hover > .jv-resize[data-resize="e"], .jv-panel.is-resizing > .jv-resize[data-resize="e"], .jv-panel.is-resize-armed > .jv-resize[data-resize="e"],
+.jv-panel:hover > .jv-resize[data-resize="w"], .jv-panel.is-resizing > .jv-resize[data-resize="w"], .jv-panel.is-resize-armed > .jv-resize[data-resize="w"] {
     background: linear-gradient(to right, transparent, rgba(56, 225, 255, 0.35), transparent);
 }
 @media (pointer: coarse) {
     .jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { height: 18px; }
     .jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { width: 18px; }
-    .jv-panel > .jv-resize { opacity: 0.35; }
+    /* Hidden and non-hit until long-press (#3673), so scroll and tab taps are not stolen. */
+    .jv-panel > .jv-resize { opacity: 0; pointer-events: none; }
+    .jv-panel.is-resize-armed > .jv-resize,
+    .jv-panel.is-resizing > .jv-resize { opacity: 1; pointer-events: auto; }
 }
 @media print { .jv-resize { display: none !important; } }
 .jv-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }

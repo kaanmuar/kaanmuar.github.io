@@ -3242,14 +3242,65 @@ async function noticeForReply(reply) {
   return { link, ref: snap && snap.exists ? snap.ref : null, notice: snap && snap.exists ? snap.data() : null };
 }
 
-// The Decide page's buttons and Jarvis's notification buttons: resend, stop, unlist or done.
-async function decideOwnerReply(ref, row, action, rawEmail) {
-  if (row.status !== "waiting" || ["resend", "stop", "unlist", "done"].indexOf(action) === -1) return { conflict: true, row };
+/** Gemini draft for an interested / other owner reply (#3670). Empty fields when Gemini is off or fails. */
+async function draftOwnerAnswer(reply, notice) {
+  if (!ownerReplies.needsAnswer(reply && reply.kind)) return {};
+  if (!Gemini.ready(process.env)) return {};
+  try {
+    const { data } = await Gemini.generate(fetch, process.env, {
+      contents: [{ role: "user", parts: [{ text: ownerReplies.answerPrompt(reply, notice) }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 900, thinkingConfig: { thinkingLevel: "low" } }
+    }, { timeoutMs: 45000 });
+    const parsed = ownerReplies.parseAnswerDraft(Gemini.text(data));
+    if (!parsed) return {};
+    return { draft: parsed.draft, draftLang: parsed.lang, draftEnglish: parsed.english, draftSummary: parsed.summary };
+  } catch (error) {
+    console.error("Owner reply draft failed:", error.message || error);
+    return {};
+  }
+}
+
+async function sendOwnerAnswer(row, text) {
+  const from = prepareMail();
+  if (!from) return "SendGrid is not configured.";
+  const body = String(text || "").trim().slice(0, 8000);
+  if (body.length < 5) return "Write the answer first.";
+  if (!row.from || ownerReplies.OPERATORS.includes(String(row.from).toLowerCase())) return "That reply has no owner address to answer.";
+  const subject = /^re:/i.test(String(row.subject || "")) ? String(row.subject) : "Re: " + String(row.subject || row.host || "your note");
+  const mid = String(row.messageId || "").trim();
+  const headers = mid ? { "In-Reply-To": mid.startsWith("<") ? mid : "<" + mid + ">", References: mid.startsWith("<") ? mid : "<" + mid + ">" } : undefined;
+  await mailRetry.send(sgMail, getFirestore(), Object.assign({
+    to: row.from,
+    from,
+    replyTo: REVIEW_ALERT_TO,
+    subject: clip(subject, 140),
+    text: body,
+    html: body.split(/\n/).map((l) => "<div>" + (l.trim() ? ownerLayout.escapeHtml(l) : "<br>") + "</div>").join("")
+  }, headers ? { headers } : {}));
+  return "";
+}
+
+// The Decide page's buttons and Jarvis's notification buttons: answer, resend, stop, unlist, done, or draft again (#3670).
+async function decideOwnerReply(ref, row, action, rawEmail, rawText) {
+  if (row.status !== "waiting") return { conflict: true, row };
+  if (action === "draft") {
+    const drafted = await draftOwnerAnswer(row, { host: row.host, email: row.noticeEmail });
+    if (!drafted.draft) return { problem: "Gemini did not return a draft; try again or write one.", saved: false, row };
+    await ref.update(drafted);
+    return { problem: "Draft ready.", saved: true, row: Object.assign({}, row, drafted) };
+  }
+  if (["answer", "resend", "stop", "unlist", "done"].indexOf(action) === -1) return { conflict: true, row };
   const email = String(rawEmail || "").trim().toLowerCase().slice(0, 200);
+  const text = String(rawText || "").trim().slice(0, 8000);
   let problem = "";
-  if (action === "resend") problem = ownerReplies.resendChoices(row).includes(email) ? await resendNotice(row, email) : "Pick one of the addresses in the reply.";
+  if (action === "answer") problem = await sendOwnerAnswer(row, text || row.draft || "");
+  else if (action === "resend") problem = ownerReplies.resendChoices(row).includes(email) ? await resendNotice(row, email) : "Pick one of the addresses in the reply.";
   else if (action !== "done") await applyReplyAction(action === "stop" ? "stop-domain" : "unlist", row);
-  const decided = { status: "decided", decision: action, decidedAt: new Date().toISOString(), decidedEmail: action === "resend" ? email : "" };
+  const decided = {
+    status: "decided", decision: action, decidedAt: new Date().toISOString(),
+    decidedEmail: action === "resend" ? email : "",
+    answeredText: action === "answer" ? (text || row.draft || "").slice(0, 8000) : ""
+  };
   const saved = !problem || problem.startsWith("Saved");
   if (saved) await ref.update(decided);
   return { problem, saved, row: Object.assign({}, row, saved ? decided : {}) };
@@ -3264,18 +3315,21 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
   if (matchedOnly && !ref && !link) return { id: "", outcome: "unmatched" };
   const decision = ownerReplies.plan(reply, notice);
   const id = ownerReplies.replyId(mail.messageId) || crypto.randomBytes(16).toString("hex");
+  const host = (notice && notice.host) || (link && link.host) || "";
+  const drafted = decision.status === "waiting" ? await draftOwnerAnswer(Object.assign({}, reply, { host }), notice || { host }) : {};
   const row = Object.assign({}, reply, {
     at: new Date().toISOString(),
     noticeDomain: ref ? ref.id : "",
-    host: (notice && notice.host) || (link && link.host) || "",
+    host,
     noticeEmail: (link && link.email) || (notice && notice.email) || "",
+    messageId: String(mail.messageId || "").trim().slice(0, 200),
     spf: clip(auth.spf, 40),
     dkim: clip(auth.dkim, 200),
     status: decision.status,
     propose: decision.propose,
     applied: decision.apply,
     expireAt: keepUntil()
-  });
+  }, drafted);
   try {
     await getFirestore().collection("url_review_owner_replies").doc(id).create(row);
   } catch (error) {
@@ -3298,7 +3352,7 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
         { label: "Mail checks", value: "SPF " + (row.spf || "none") + ", DKIM " + (row.dkim || "none") },
         { label: "Forwarded by", value: row.forwardedBy }
       ],
-      body: row.words,
+      body: (row.draft ? "Gemini draft:\n" + row.draft + "\n\n---\nTheir words:\n" : "") + row.words,
       respondUrl: OWNER_REPLIES_URL + "/decide?t=" + id,
       buttonLabel: row.status === "waiting" ? "Decide" : "See what was done"
     });
@@ -3314,6 +3368,19 @@ function replyPage(id, row, message) {
   const proposed = String(row.propose || "").startsWith("resend:") && choices.includes(row.propose.slice(7)) ? row.propose.slice(7) : choices[0];
   const radios = choices.map((email) => "<label style=\"display:block;margin:6px 0\"><input type=\"radio\" name=\"email\" value=\"" + esc(email) + "\" required" + (email === proposed ? " checked" : "") + "> " + esc(email) + "</label>").join("");
   const open = row.status === "waiting";
+  const answer = ownerReplies.needsAnswer(row.kind);
+  const answerForm = answer
+    ? "<form method=\"post\" action=\"" + esc(action) + "\" style=\"margin:16px 0\">" +
+      "<input type=\"hidden\" name=\"do\" value=\"answer\">" +
+      (row.draftSummary ? "<p style=\"color:#52606d\">" + esc(row.draftSummary) + "</p>" : "") +
+      (row.draftEnglish ? "<p style=\"color:#52606d;font-size:13px\"><b>In English:</b> " + esc(row.draftEnglish) + "</p>" : "") +
+      "<label style=\"display:block;margin:8px 0 4px;font-size:13px\">Answer to " + esc(row.from) + "</label>" +
+      "<textarea name=\"text\" rows=\"8\" required style=\"width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:14px/1.4 Arial,sans-serif\">" + esc(row.draft || "") + "</textarea>" +
+      "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap\">" +
+      "<button style=\"padding:10px 16px;border-radius:8px;border:0;background:#0e7490;color:#fff;font-size:14px\">Send answer</button>" +
+      "</div></form>" +
+      button("draft", row.draft ? "Draft again with Gemini" : "Draft with Gemini")
+    : "";
   return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Owner reply</title></head>" +
     "<body style=\"font-family:Arial,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1c2833\">" +
     "<h1 style=\"font-size:20px\">" + esc(ownerReplies.KIND_LABELS[row.kind] || row.kind) + "</h1>" +
@@ -3321,11 +3388,13 @@ function replyPage(id, row, message) {
     "<p><b>" + esc(row.from) + "</b> about " + esc(row.host || "no matched notice") + " · " + esc(row.at) + "</p>" +
     "<pre style=\"white-space:pre-wrap;background:#f4f7f8;padding:12px;border-radius:8px\">" + esc(row.words) + "</pre>" +
     (open
-      ? (choices.length ? button("resend", "Send the notice to the chosen address", radios) : "") +
+      ? answerForm +
+        (choices.length ? button("resend", "Send the notice to the chosen address", radios) : "") +
         button("stop", "Stop notices to " + (row.noticeDomain || row.domain)) +
         (row.host ? button("unlist", "Take " + row.host + " off Live Reports") : "") +
         button("done", "Handled, nothing to do")
-      : "<p>Status: " + esc(row.status) + (row.decision ? " (" + esc(row.decision) + ")" : "") + (row.applied && row.applied.length ? " · applied: " + esc(row.applied.join(", ")) : "") + "</p>") +
+      : "<p>Status: " + esc(row.status) + (row.decision ? " (" + esc(row.decision) + ")" : "") + (row.applied && row.applied.length ? " · applied: " + esc(row.applied.join(", ")) : "") + "</p>" +
+        (row.answeredText ? "<pre style=\"white-space:pre-wrap;background:#ecfdf5;padding:12px;border-radius:8px\">" + esc(row.answeredText) + "</pre>" : "")) +
     "</body></html>";
 }
 
@@ -3370,12 +3439,12 @@ exports.ownerReplies = functions.runWith({ timeoutSeconds: 60, memory: "256MB", 
         res.status(200).send(replyPage(id, row, ""));
         return;
       }
-      const out = await decideOwnerReply(ref, row, String((req.body && req.body.do) || ""), (req.body && req.body.email) || "");
+      const out = await decideOwnerReply(ref, row, String((req.body && req.body.do) || ""), (req.body && req.body.email) || "", (req.body && req.body.text) || "");
       if (out.conflict) {
         res.status(409).send(replyPage(id, row, "This reply was already decided."));
         return;
       }
-      res.status(200).send(replyPage(id, out.row, out.problem || "Done."));
+      res.status(200).send(replyPage(id, out.row, out.problem || (out.saved ? "Done." : "")));
       return;
     }
     res.status(404).send("Not found");

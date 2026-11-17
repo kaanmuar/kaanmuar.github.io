@@ -954,6 +954,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (act === 'edit') {
             const L = C.applyLayout(ids, layoutOf(tab));
             S.layoutEdit = { tab, all: L.all, hidden: L.hidden, dirty: false, reset: false };
+            if (typeof disarmResize === 'function') disarmResize();
             arrange(view, tab);
             focusLay('done');
             return;
@@ -1036,7 +1037,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     // DOMParser reads the text without running or loading anything in it.
     const plainText = (html) => new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
     const panelSizeOf = (id) => C.clampSize((((layoutOf(S.product) || {}).size) || {})[id]);
-    const resizeHandles = () => ['n', 'e', 's', 'w'].map((edge) => `<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${edge === 'n' || edge === 's' ? 'height' : 'width'}" title="Drag to resize · pinch the panel · double-click to reset"></button>`).join('');
+    const resizeHandles = () => ['n', 'e', 's', 'w'].map((edge) => `<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${edge === 'n' || edge === 's' ? 'height' : 'width'}" title="Long-press the panel to resize · drag edges or pinch · double-click to reset"></button>`).join('');
     function sizeAttrs(id, wide) {
         const sz = panelSizeOf(id);
         const resized = sz.h !== 1 || sz.w !== 1;
@@ -5063,11 +5064,13 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
     document.addEventListener('pointerup', dragEnd);
     document.addEventListener('pointercancel', dragEnd);
 
-    // Continuous panel resize (#3611): edge handles / press-hold on edges, or two-finger pinch (Map included).
+    // Continuous panel resize (#3611, #3673): long-press arms a panel; then edge drag or pinch. Mouse keeps hover handles.
     let resizing = null;
     let pinch = null;
     let edgeHold = null;
+    let armHold = null;
     const EDGE_PX = 22;
+    const ARM_MS = 420;
     function edgeAt(sec, x, y) {
         const r = sec.getBoundingClientRect();
         const near = (a, b) => Math.abs(a - b) <= EDGE_PX;
@@ -5077,17 +5080,37 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         if (near(x, r.right)) return 'e';
         return null;
     }
+    function disarmResize(except) {
+        root.querySelectorAll('.jv-panel.is-resize-armed').forEach((el) => {
+            if (el !== except) el.classList.remove('is-resize-armed');
+        });
+    }
+    function armResize(sec) {
+        if (!sec || sec.classList.contains('is-folded') || S.layoutEdit) return;
+        disarmResize(sec);
+        sec.classList.add('is-resize-armed');
+    }
+    function clearArmHold() {
+        if (!armHold) return;
+        clearTimeout(armHold.timer);
+        armHold = null;
+    }
     function startResize(sec, edge, event) {
         if (!sec || sec.classList.contains('is-folded') || S.layoutEdit) return;
         const id = sec.dataset.panelId;
         if (!id) return;
         if (edgeHold) { clearTimeout(edgeHold.timer); edgeHold = null; }
+        clearArmHold();
+        armResize(sec);
         const start = panelSizeOf(id);
         resizing = { sec, id, edge, pointer: event.pointerId, x: event.clientX, y: event.clientY, start, rect: sec.getBoundingClientRect() };
         sec.classList.add('is-resizing');
         if (event.target.setPointerCapture) event.target.setPointerCapture(event.pointerId);
     }
     function resizeMove(event) {
+        if (armHold && event.pointerId === armHold.pointer) {
+            if (Math.hypot(event.clientX - armHold.x, event.clientY - armHold.y) > 10) clearArmHold();
+        }
         if (edgeHold && event.pointerId === edgeHold.pointer) {
             if (Math.hypot(event.clientX - edgeHold.x, event.clientY - edgeHold.y) > 10) {
                 clearTimeout(edgeHold.timer);
@@ -5109,6 +5132,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             return;
         }
         if (!pinch || !pinch.pointers.has(event.pointerId)) return;
+        if (!pinch.sec.classList.contains('is-resize-armed')) return;
         pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         if (pinch.pointers.size < 2) return;
         if (!pinch.active) {
@@ -5124,6 +5148,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         applySizeDom(pinch.sec, { h: pinch.start.h * scale, w: pinch.start.w * (1 + (scale - 1) * 0.5) });
     }
     async function resizeEnd(event) {
+        if (armHold && event.pointerId === armHold.pointer) clearArmHold();
         if (edgeHold && event.pointerId === edgeHold.pointer) {
             clearTimeout(edgeHold.timer);
             edgeHold = null;
@@ -5147,34 +5172,52 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
         await savePanelSize(id, Number(sec.dataset.sizeH) || 1, Number(sec.dataset.sizeW) || 1);
     }
     root.addEventListener('pointerdown', (event) => {
+        const touch = event.pointerType === 'touch' || event.pointerType === 'pen';
+        const armedHit = event.target.closest?.('.jv-panel.is-resize-armed');
+        if (!armedHit && !event.target.closest?.('.jv-resize')) disarmResize();
         if (event.target.closest('a, button:not(.jv-resize), input, textarea, select, [data-lay], .jv-lay-drag')) return;
         const handle = event.target.closest('.jv-resize');
         const sec = (handle || event.target).closest?.('.jv-panel[data-panel-id]');
         if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) return;
         if (handle) {
             if (event.pointerType === 'mouse' && event.button !== 0) return;
+            // Touch: handles only work after long-press armed the panel (#3673).
+            if (touch && !sec.classList.contains('is-resize-armed')) return;
             event.preventDefault();
             startResize(sec, handle.dataset.resize, event);
             return;
         }
-        if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+        if (!touch) return;
         const edge = edgeAt(sec, event.clientX, event.clientY);
-        if (edge) {
-            // Press-hold on an edge (~280ms) starts a continuous resize without stealing quick taps.
+        if (edge && sec.classList.contains('is-resize-armed')) {
+            // Already armed: a short hold on an edge starts the drag without a second long-press.
             edgeHold = {
                 pointer: event.pointerId, x: event.clientX, y: event.clientY,
                 timer: setTimeout(() => {
                     if (!edgeHold || edgeHold.pointer !== event.pointerId) return;
                     edgeHold = null;
                     startResize(sec, edge, event);
-                }, 280)
+                }, 160)
             };
             return;
         }
-        if (!pinch || pinch.sec !== sec) {
-            pinch = { sec, id: sec.dataset.panelId, pointers: new Map(), active: false, baseDist: 0, start: { h: 1, w: 1 } };
+        // Long-press arms resize; finger move beyond slop cancels so scroll still wins.
+        clearArmHold();
+        armHold = {
+            pointer: event.pointerId, x: event.clientX, y: event.clientY, sec,
+            timer: setTimeout(() => {
+                if (!armHold || armHold.pointer !== event.pointerId) return;
+                const target = armHold.sec;
+                armHold = null;
+                armResize(target);
+            }, ARM_MS)
+        };
+        if (sec.classList.contains('is-resize-armed')) {
+            if (!pinch || pinch.sec !== sec) {
+                pinch = { sec, id: sec.dataset.panelId, pointers: new Map(), active: false, baseDist: 0, start: { h: 1, w: 1 } };
+            }
+            pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         }
-        pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     });
     root.addEventListener('dblclick', (event) => {
         const handle = event.target.closest('.jv-resize');
@@ -5222,6 +5265,9 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             if (holo.raf) cancelAnimationFrame(holo.raf);
             if (holo.io) holo.io.disconnect();
             holo.node = null;
+            clearArmHold();
+            if (edgeHold) { clearTimeout(edgeHold.timer); edgeHold = null; }
+            disarmResize();
             document.removeEventListener('visibilitychange', holoRun);
             document.removeEventListener('keydown', onKey);
             document.removeEventListener('pointermove', dragMove);
