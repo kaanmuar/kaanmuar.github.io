@@ -100,6 +100,17 @@
     "checked": "2026-11-15T17:05:02.173Z"
    }
   ],
+  "auto-2026-10-22/16-u-honda-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "95",
+    "at": "2026-11-17T20:53:18.097Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/95",
+    "checked": "2026-11-17T20:53:24.746Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -276,6 +287,17 @@
     "checked": "2026-11-10T17:21:02.510Z"
    }
   ],
+  "auto-2026-11-10/01-u-motorsport-total-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "93",
+    "at": "2026-11-17T20:53:04.994Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/93",
+    "checked": "2026-11-17T20:53:12.313Z"
+   }
+  ],
   "auto-2026-11-10/02-u-meutimao-com-br": [
    {
     "channel": "telegram",
@@ -318,6 +340,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/88",
     "checked": "2026-11-16T20:02:32.021Z"
+   }
+  ],
+  "auto-2026-11-16/02-u-predictz-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "96",
+    "at": "2026-11-17T20:53:24.746Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/96",
+    "checked": "2026-11-17T20:53:31.118Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -384,6 +417,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/67",
     "checked": "2026-11-13T18:30:58.663Z"
+   }
+  ],
+  "evergreen-2026-11/01-ttfb-curl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "94",
+    "at": "2026-11-17T20:53:12.313Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/94",
+    "checked": "2026-11-17T20:53:18.097Z"
    }
   ],
   "evergreen-2026-11/02-myth-lighthouse": [
