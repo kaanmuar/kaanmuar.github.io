@@ -119,7 +119,8 @@ test("an invite waits for Carlos with the filled link; guards, the 30-day gap, m
   assert.equal(R.decide(post(), ai(), upb, conf, {}, NOW, mailed).skip, "contacted");
   assert.equal(R.decide(post(), ai({ aboutSite: false }), upb, conf, {}, NOW, ctx()).skip, "not_site");
   assert.equal(R.decide(post(), ai({ political: true }), upb, conf, {}, NOW, ctx()).skip, "political");
-  assert.equal(R.decide(post(), ai({ lang: "ja" }), upb, conf, {}, NOW, ctx()).skip, "lang");
+  assert.equal(R.decide(post(), ai({ lang: "ja" }), upb, conf, {}, NOW, ctx()).verdict, "engage", "any post language (#3735)");
+  assert.equal(R.decide(post({ lang: "" }), ai({ lang: "" }), upb, conf, {}, NOW, ctx()).skip, "lang");
   assert.equal(R.decide(post({ author: { handle: "semrush" } }), ai(), upb, conf, {}, NOW, ctx()).skip, "competitor");
   assert.equal(R.decide(post({ createdAt: "2026-10-20T00:00:00Z" }), ai(), upb, conf, {}, NOW, ctx()).skip, "old");
   assert.equal(R.decide(post({ createdAt: "2026-10-30T00:00:00Z" }), ai(), upb, conf, {}, NOW, ctx()).verdict, "engage", "site mentions stay open a week");

@@ -130,10 +130,12 @@ const INTL = {
   }
 };
 // Chinese, Japanese and Korean run words together, so their keywords match anywhere in the text.
-// Replies are drafted in the post's language when it is one we search in (#2630); Jarvis shows an English
-// translation beside a draft in any other language. LANGS stays the clip and report languages.
+// Languages topic search covers (#2614 / #2630). Replies are drafted in whatever language the post is in
+// (#3735), including ones outside this list; Jarvis shows an English translation beside a non-English draft.
+// LANGS stays the clip and report languages.
 const REPLY_LANGS = ["en"].concat(Array.from(new Set([].concat(...Object.values(INTL).map(Object.keys)))));
 const ENGLISH_KEY = '"english": the reply translated to English when it is in another language, else ""';
+const REPLY_IN_POST_LANG = "write in the post's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English.";
 
 const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
 const wordRe = (w) => (UNSPACED.test(w) ? new RegExp(w, "iu") : new RegExp("(^|[^\\p{L}\\p{N}])#?" + w + "($|[^\\p{L}\\p{N}])", "iu"));
@@ -332,7 +334,7 @@ function aiPrompt(items) {
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
     "For each post below, return one JSON object in a JSON array, same order, with exactly these keys:",
     '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument or promo, ' + ENGLISH_KEY + '}',
-    "Reply rules: write in the post's language (" + REPLY_LANGS.join(", ") + "; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
+    "Reply rules: " + REPLY_IN_POST_LANG + " Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
     NEVER,
     "Posts:",
     JSON.stringify(list)
@@ -360,7 +362,7 @@ function chainPrompt(items) {
     "Each item below is a comment someone left on one of our posts or replies (on says which): ours is what we wrote (it may be empty when we could not read it), post is what we were replying to (empty on our own posts), comment is theirs.",
     "For each comment, return one JSON object in a JSON array, same order, with exactly these keys:",
     '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "tone": "nice" when it is friendly, appreciative or warmly engaged | "neutral" when matter-of-fact | "hostile" when rude, mocking or aggressive | "spam" when it is promo, a bot or a link drop, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only, unless active is true) or it is political, angry, an argument or promo, "invited": the invite rung your reply used ("none", "soft" or "link"), ' + ENGLISH_KEY + '}',
-    "Reply rules: write in the comment's language (" + REPLY_LANGS.join(", ") + "; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
+    "Reply rules: write in the comment's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English. Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
     NEVER,
     LADDER,
     "Comments:",
@@ -434,7 +436,7 @@ function decide(post, ai, conf, used, now, followed, replied) {
   plan("repost", s >= conf.thresholds.repost && !post.isReply && (!a || a.sentiment !== "negative"));
   plan("follow", s >= conf.thresholds.follow && handle && !(followed && followed.has(post.network + ":" + handle)));
   const lang = (a && a.lang) || lang2(post.lang);
-  if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && REPLY_LANGS.includes(lang)) {
+  if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && lang) {
     if (replied && replied.has(threadKey(post))) actions.reply = { status: "replied", error: "We already replied in this conversation." };
     else {
       plan("reply", true, Object.assign({ draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + REPLY_TTL).toISOString() }));
@@ -469,7 +471,7 @@ function chainDecide(comment, ai, conf, now) {
   const lang = a.lang || lang2(comment.lang);
   // An active person's comment is always answered (#3137), so no thread with them is left hanging.
   const owed = comment.active === true && (conf.trials || Trials.TRIALS).answerAll;
-  if (!comment.answered && a.reply && (a.worth >= conf.worth || owed) && REPLY_LANGS.includes(lang)) {
+  if (!comment.answered && a.reply && (a.worth >= conf.worth || owed) && lang) {
     actions.reply = Object.assign({ status: status("waiting"), draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + CHAIN_TTL).toISOString() },
       { invite: Trials.used(comment.invite || "none", a.invited, a.reply) });
   }

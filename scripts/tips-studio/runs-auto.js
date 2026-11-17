@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { SITE, GUIDE, xPost } = require('./tips');
 const { tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const OWN = SITE + '/qa-review.html';
 // The call to action in the clip's language, worded as the Live Reports page's own link (js/qa-review-live.js).
@@ -136,12 +137,9 @@ function captions(run) {
 			: run.scope === 'National'
 				? ", one of the most visited sites in its country, from QA-lab URL Review's country sweep."
 				: ', requested through QA-lab URL Review.';
-	const fair =
-		(run.scope === 'Versus' ? 'Automated analyses of public pages on ' : 'One automated analysis of public pages on ') +
-		run.analyzed +
-		how +
-		' A starting point, not a verdict.';
+	const fair = lines.fairLine(run, run.analyzed, how, run.scope === 'Versus');
 	const own = ownLine(run.lang || 'en');
+	const lead = lines.actionLead(run, 'lesson');
 	const live = bareLive(run);
 	return {
 		linkedin: [
@@ -149,10 +147,10 @@ function captions(run) {
 			'',
 			run.body,
 			'',
-			'The lesson for every team: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
-			'The full report: ' + live,
+			lines.reportLinked(run, live),
 			'',
 			own,
 			'',
@@ -164,10 +162,10 @@ function captions(run) {
 			'',
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
-			'Full report: ' + live,
+			lines.reportLinked(run, live),
 			'',
 			own,
 			'',
@@ -178,7 +176,7 @@ function captions(run) {
 			'',
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
 			live,
@@ -192,11 +190,11 @@ function captions(run) {
 		youtube: [
 			run.body,
 			'',
-			'Lesson: ' + run.action,
+			lead + run.action,
 			'',
 			fair,
 			'',
-			'Full report: ' + link('youtube', run),
+			lines.reportLinked(run, link('youtube', run)),
 			'',
 			own,
 			'',

@@ -6,6 +6,7 @@
 
 const { SITE, GUIDE, CATS, xPost } = require('./tips');
 const { BRAND, tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const CAMPAIGN = 'evergreen-2026-11';
 const MYTH = { counter: 'Myth vs fact', actionLabel: 'Check it' };
@@ -460,7 +461,7 @@ function plainTitle(tip) {
 
 function captions(tip) {
 	const head = plainTitle(tip);
-	const label = tip.actionLabel + ': ';
+	const label = lines.actionLead(tip);
 	return {
 		linkedin: [
 			tip.counter + ': ' + head,
@@ -469,7 +470,7 @@ function captions(tip) {
 			'',
 			label + tip.action,
 			'',
-			'How a public-page review works, step by step: ' + link('linkedin', tip),
+			lines.guideLinked(tip, link('linkedin', tip)),
 			'',
 			tagLine(tip, 'linkedin'),
 		].join('\n'),
@@ -492,8 +493,8 @@ function captions(tip) {
 		youtubeTitle: (head + ' #Shorts').slice(0, 100),
 		youtube: [tip.body, '', label + tip.action, '']
 			.concat(
-				tip.more ? ['Did you know? ' + tip.more, ''] : [],
-				'Guide: ' + link('youtube', tip),
+				tip.more ? [lines.didYouKnow(tip) + tip.more, ''] : [],
+				lines.youtubeGuide(tip, link('youtube', tip)),
 				'',
 				tip.counter + ' · QA-lab URL Review',
 				'',

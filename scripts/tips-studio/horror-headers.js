@@ -5,6 +5,7 @@
 
 const { SITE, GUIDE, CATS, plainTitle, xPost } = require('./tips');
 const { BRAND, tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const CAMPAIGN = 'tips-horror-2026-10';
 const KIND = 'series';
@@ -110,15 +111,16 @@ function link(platform, tip) {
 function captions(tip, index, total) {
 	const head = plainTitle(tip);
 	const counter = 'Horror headers ' + (index + 1) + '/' + total;
+	const lead = lines.actionLead(tip, 'check');
 	return {
 		linkedin: [
 			counter + ': ' + head,
 			'',
 			tip.body,
 			'',
-			'Check it today: ' + tip.action,
+			lead + tip.action,
 			'',
-			'How a public-page review works, step by step: ' + link('linkedin', tip),
+			lines.guideLinked(tip, link('linkedin', tip)),
 			'',
 			tagLine(tip, 'linkedin'),
 		].join('\n'),
@@ -128,7 +130,7 @@ function captions(tip, index, total) {
 			'',
 			tip.body,
 			'',
-			'Check it today: ' + tip.action,
+			lead + tip.action,
 			'',
 			tagLine(tip, 'instagram'),
 		].join('\n'),
@@ -137,7 +139,7 @@ function captions(tip, index, total) {
 			'',
 			tip.body,
 			'',
-			'Check it today: ' + tip.action,
+			lead + tip.action,
 			'',
 			link('facebook', tip),
 			'',
@@ -148,9 +150,9 @@ function captions(tip, index, total) {
 		youtube: [
 			tip.body,
 			'',
-			'Check it today: ' + tip.action,
+			lead + tip.action,
 			'',
-			'Guide: ' + link('youtube', tip),
+			lines.youtubeGuide(tip, link('youtube', tip)),
 			'',
 			counter + ' · QA-lab URL Review',
 			'',

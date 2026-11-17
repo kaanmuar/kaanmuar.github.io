@@ -5,6 +5,7 @@
 const SITE = 'https://carlosandmunoz.com';
 const GUIDE = SITE + '/qa-review-guide.html';
 const { BRAND, tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const CATS = {
 	QA: { label: 'QA', color: '#7ef6fb' },
@@ -555,15 +556,16 @@ function bareLink(url) {
 function captions(tip, index, total) {
 	const head = plainTitle(tip);
 	const counter = 'Tip ' + (index + 1) + '/' + total;
+	const lead = lines.actionLead(tip, 'try');
 	return {
 		linkedin: [
 			head,
 			'',
 			tip.body,
 			'',
-			'Try this today: ' + tip.action,
+			lead + tip.action,
 			'',
-			'How a public-page review works, step by step: ' + link('linkedin', tip),
+			lines.guideLinked(tip, link('linkedin', tip)),
 			'',
 			tagLine(tip, 'linkedin'),
 		].join('\n'),
@@ -573,9 +575,9 @@ function captions(tip, index, total) {
 			'',
 			tip.body,
 			'',
-			'Try this: ' + tip.action,
+			lead + tip.action,
 			'',
-			'Full guide: link in bio.',
+			lines.guideBio(tip),
 			'',
 			tagLine(tip, 'instagram'),
 		].join('\n'),
@@ -584,7 +586,7 @@ function captions(tip, index, total) {
 			'',
 			tip.body,
 			'',
-			'Try this: ' + tip.action,
+			lead + tip.action,
 			'',
 			link('facebook', tip),
 			'',
@@ -592,10 +594,10 @@ function captions(tip, index, total) {
 		].join('\n'),
 		tiktok: head + ' ' + tip.action + ' ' + tagLine(tip, 'tiktok'),
 		youtubeTitle: (head + ' #Shorts').slice(0, 100),
-		youtube: [tip.body, '', 'Try this: ' + tip.action, '']
+		youtube: [tip.body, '', lead + tip.action, '']
 			.concat(
-				tip.more ? ['Did you know? ' + tip.more, ''] : [],
-				'Guide: ' + link('youtube', tip),
+				tip.more ? [lines.didYouKnow(tip) + tip.more, ''] : [],
+				lines.youtubeGuide(tip, link('youtube', tip)),
 				'',
 				counter + ' · QA-lab URL Review',
 				'',
