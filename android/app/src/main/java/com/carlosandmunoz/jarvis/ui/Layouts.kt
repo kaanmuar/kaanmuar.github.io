@@ -89,8 +89,16 @@ object Layouts {
     fun cleanStretch(map: Map<String, Int>?): Map<String, Int> =
         map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
 
-    /** Width factor → treat as full-bleed in Masonry when large enough (matches web sizeSpan). */
-    fun isWideSize(w: Float, alreadyWide: Boolean = false) = w >= 1.85f || (alreadyWide && w >= 0.95f) || w >= 1.35f
+    /** Grid column span for a width factor (matches web sizeSpan). */
+    fun sizeSpan(w: Float, alreadyWide: Boolean = false): Int {
+        val n = clampSize(1f, w).w
+        if (n >= 1.85f || (alreadyWide && n >= 0.95f)) return 3
+        if (n >= 1.35f) return 2
+        return 1
+    }
+
+    /** Width factor → full-bleed in Masonry when span is 3 (matches web is-size-wide). */
+    fun isWideSize(w: Float, alreadyWide: Boolean = false) = sizeSpan(w, alreadyWide) >= 3
 
     /** base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is). */
     fun weave(base: List<String>, ref: List<String>): List<String> {
