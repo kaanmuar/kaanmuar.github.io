@@ -212,7 +212,8 @@ test("the Mac gets this slot's reviewed-site queries, and the posts naming a sit
   const db = await paired();
   const d = deps(db, { fetch: reportFetch() });
   const s = await M.handle(d, { op: "engagement-mac-sites" }, TOKEN);
-  assert.deepEqual(s.queries.sort(), ["Bancolombia", "bancolombia.com", "upb.edu.co"], "the domain, and the name when it says something");
+  assert.deepEqual(s.queries.sort(), ["Bancolombia", "bancolombia.com", "university website hard to use", "upb.edu.co"], "domain, name, and this slot's loose problem query (#3613)");
+  assert.ok((s.loose || []).some((l) => l.q === "university website hard to use" && l.host === "upb.edu.co"));
 
   const hit = Object.assign(tweet("70", "Me matriculé en upb.edu.co, qué buena la web nueva", 4), { lang: "es", query: "upb.edu.co" });
   const miss = Object.assign(tweet("71", "Un post sin nada que ver", 4), { query: "upb.edu.co" });

@@ -12,8 +12,12 @@
  *   Hacker News, DEV and Lobsters: read for trends only
  * X, LinkedIn, Facebook, Instagram, Threads and TikTok are read by the Mac's browser (#1991).
  */
+const E = require("./engagement");
+const Regions = require("./engagement-regions");
 const SLOT = 30 * 60 * 1000;
 const TIMEOUT = 12000;
+/** Full-text Mastodon searches per slot on top of tag timelines, when MASTODON_SEARCH_* is set (#3613). */
+const MASTODON_SEARCH_PER_RUN = 4;
 
 const MASTODON_TAGS = ["a11y", "accessibility", "webperf", "corewebvitals", "seo", "softwaretesting", "testautomation", "playwright", "qa", "webdev", "wcag", "technicalseo", "webaccessibility", "ga4", "privacy"];
 const BLUESKY_QUERIES = ["accessibility", "a11y", "web performance", "core web vitals", "SEO", "technical SEO", "playwright", "software testing", "test automation", "WCAG", "AI overviews", "GA4"];
@@ -44,14 +48,39 @@ function mastodonPost(s) {
   };
 }
 
-async function mastodon(ctx) {
-  const base = String(ctx.env.MASTODON_URL || "https://mastodon.social").replace(/\/+$/, "");
+const dedupePosts = (posts) => {
+  const seen = new Set();
+  return posts.filter((p) => { const k = p.network + ":" + String(p.id); return seen.has(k) ? false : seen.add(k); });
+};
+
+async function mastodonTags(ctx) {
+  const packHint = ctx.pack && ctx.pack.pack && ctx.pack.pack.mastodon;
+  const base = String(ctx.env.MASTODON_URL || packHint || "https://mastodon.social").replace(/\/+$/, "");
   const urls = pick(MASTODON_TAGS, ctx.slot, 4).map((t) => base + "/api/v1/timelines/tag/" + encodeURIComponent(t) + "?limit=30")
     .concat([base + "/api/v1/trends/statuses?limit=30"]);
   const lists = await Promise.all(urls.map((u) => getJson(ctx.fetch, u).catch((error) => ({ error }))));
   const failed = lists.filter((l) => l && l.error);
   if (failed.length === lists.length) throw failed[0].error;
   return lists.filter(Array.isArray).flat().filter((s) => !(s.account || {}).bot).map(mastodonPost);
+}
+
+/** Field search with the connected account's token; rotates TOPICS and DISCOVERY, not tags alone (#3613). */
+async function mastodonSearch(ctx) {
+  if (!ctx.env.MASTODON_SEARCH_URL || !ctx.env.MASTODON_SEARCH_TOKEN) return [];
+  const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/\/+$/, "");
+  const since = new Date(ctx.now - 2 * 24 * 3600000).toISOString();
+  const topicQs = pick(Object.keys(E.TOPICS), ctx.slot, 2).flatMap((t) => pick(E.TOPICS[t].slice(0, 3), ctx.slot, 1));
+  const discQs = Regions.discoveryForRun(ctx.now, E.MASTODON_DISCOVERY_BUDGET, ctx.settings || { discoveryPack: "auto" }).map((d) => d.q);
+  const queries = [...new Set(pick(BLUESKY_QUERIES, ctx.slot, 2).concat(topicQs, discQs))].slice(0, MASTODON_SEARCH_PER_RUN);
+  if (!queries.length) return [];
+  const lists = await Promise.all(queries.map((q) => getJson(ctx.fetch, base + "/api/v2/search?type=statuses&resolve=false&limit=20&q=" + encodeURIComponent(q),
+    { headers: { Authorization: "Bearer " + ctx.env.MASTODON_SEARCH_TOKEN } }).then((l) => (l.statuses || []).filter((s) => !(s.account || {}).bot && String(s.created_at || "") >= since).map((s) => Object.assign(mastodonPost(s), { query: q }))).catch(() => [])));
+  return lists.flat();
+}
+
+async function mastodon(ctx) {
+  const [tags, search] = await Promise.all([mastodonTags(ctx).catch((error) => { throw error; }), mastodonSearch(ctx)]);
+  return dedupePosts(tags.concat(search));
 }
 
 function blueskyPost(p) {
@@ -136,6 +165,46 @@ async function lobsters(ctx) {
   }));
 }
 
+const QIITA_TAGS = ["playwright", "testing", "accessibility", "SEO", "qa", "web"];
+const SE_SITES = ["stackoverflow", "webmasters", "ux"];
+const SE_QUERIES = ["playwright accessibility", "core web vitals", "wcag testing", "technical seo", "test automation"];
+const ZENN_TOPICS = ["testing", "accessibility", "web", "playwright"];
+
+async function qiita(ctx) {
+  const tag = pick(QIITA_TAGS, ctx.slot, 1)[0];
+  const list = await getJson(ctx.fetch, "https://qiita.com/api/v2/tags/" + encodeURIComponent(tag) + "/items?per_page=12&page=1");
+  return (Array.isArray(list) ? list : []).map((it) => ({
+    network: "qiita", id: String(it.id), url: it.url || ("https://qiita.com/items/" + it.id),
+    author: { handle: (it.user || {}).id || "", name: (it.user || {}).name || (it.user || {}).id || "", id: "", followers: 0 },
+    title: String(it.title || ""), text: [it.title, ...(it.tags || []).map((t) => t.name)].join(" "), lang: "ja", createdAt: it.created_at || "", isReply: false,
+    metrics: { likes: num(it.likes_count), replies: num(it.comments_count), reposts: num(it.stocks_count), views: 0 }, tags: (it.tags || []).map((t) => t.name).filter(Boolean)
+  }));
+}
+
+async function stackexchange(ctx) {
+  const site = pick(SE_SITES, ctx.slot, 1)[0];
+  const q = pick(SE_QUERIES, ctx.slot, 1)[0];
+  const data = await getJson(ctx.fetch, "https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=activity&q=" + encodeURIComponent(q) + "&site=" + site + "&pagesize=12&filter=withbody");
+  const since = ctx.now - 3 * 24 * 3600000;
+  return (data.items || []).filter((it) => (it.creation_date || 0) * 1000 >= since).map((it) => ({
+    network: "stackexchange", id: site + ":" + it.question_id, url: it.link,
+    author: { handle: it.owner && it.owner.display_name || "", name: it.owner && it.owner.display_name || "", id: String(it.owner && it.owner.user_id || ""), followers: num(it.owner && it.owner.reputation) },
+    title: String(it.title || ""), text: plain(String(it.body || "").slice(0, 800)), lang: "en", createdAt: new Date((it.creation_date || 0) * 1000).toISOString(), isReply: false,
+    metrics: { likes: num(it.score), replies: num(it.answer_count), reposts: num(it.view_count), views: num(it.view_count) }, tags: it.tags || []
+  }));
+}
+
+async function zenn(ctx) {
+  const topic = pick(ZENN_TOPICS, ctx.slot, 1)[0];
+  const data = await getJson(ctx.fetch, "https://zenn.dev/api/articles?order=latest&count=12&topic_name=" + encodeURIComponent(topic));
+  return (data.articles || []).map((a) => ({
+    network: "zenn", id: String(a.slug || a.id), url: "https://zenn.dev" + (a.path || ("/@" + (a.user && a.user.username) + "/articles/" + a.slug)),
+    author: { handle: (a.user || {}).username || "", name: (a.user || {}).username || "", id: "", followers: 0 },
+    title: String(a.title || ""), text: String(a.title || "") + "\n" + String(a.emoji || ""), lang: "ja", createdAt: a.published_at || a.created_at || "", isReply: false,
+    metrics: { likes: num(a.liked_count), replies: num(a.comments_count), reposts: 0, views: 0 }, tags: [topic]
+  }));
+}
+
 // [network, reader, what it needs in env (all of them), what to do when it is missing]
 const READERS = [
   ["mastodon", mastodon, [], ""],
@@ -143,7 +212,10 @@ const READERS = [
   ["youtube", youtube, ["YOUTUBE_KEY"], "YouTube: YOUTUBE_KEY is not set for the engagement scout."],
   ["hn", hn, [], ""],
   ["devto", devto, [], ""],
-  ["lobsters", lobsters, [], ""]
+  ["lobsters", lobsters, [], ""],
+  ["qiita", qiita, [], ""],
+  ["stackexchange", stackexchange, [], ""],
+  ["zenn", zenn, [], ""]
 ];
 
 /** Which networks the scout can read now, and what each one missing needs. */
@@ -153,7 +225,7 @@ function readable(env) {
 
 /** Every reader in parallel: { posts, read: { network: n }, errors: { network: message }, skipped: [network] }. */
 async function readAll(ctx) {
-  const c = Object.assign({ slot: Math.floor(ctx.now / SLOT) }, ctx);
+  const c = Object.assign({ slot: Math.floor(ctx.now / SLOT), pack: Regions.packForRun(ctx.now, ctx.settings) }, ctx);
   const out = { posts: [], read: {}, errors: {}, skipped: [] };
   await Promise.all(READERS.map(async ([network, reader, needs]) => {
     if (!needs.every((k) => c.env && c.env[k])) { out.skipped.push(network); return; }
@@ -228,4 +300,4 @@ async function search(ctx, queries) {
   return out;
 }
 
-module.exports = { readAll, readable, search, blueskySession, mastodonPost, blueskyPost, plain, pick, READERS, SEARCHERS, SLOT, SEARCH_DAYS };
+module.exports = { readAll, readable, search, blueskySession, mastodonPost, blueskyPost, plain, pick, dedupePosts, mastodonTags, mastodonSearch, MASTODON_SEARCH_PER_RUN, READERS, SEARCHERS, SLOT, SEARCH_DAYS };

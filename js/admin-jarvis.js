@@ -3144,6 +3144,16 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`).join('')}</ol>${more}`
             : `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
         const last = g.lastRun;
+        const scoutMeta = g.metaScout;
+        const metaTitles = { cloud: 'Cloud', mac: 'Mac', reddit: 'Reddit', ownerTags: 'Owner tags', students: 'Students' };
+        const metaChip = (k) => {
+            const p = scoutMeta && scoutMeta.passes && scoutMeta.passes[k];
+            if (!p) return '';
+            return `<span class="jv-chip ${p.ok ? 'c-fast' : 'c-slow'}" title="${esc(p.label || '')}">${esc(metaTitles[k] || k)}</span>`;
+        };
+        const packLine = (d) => d ? `Pack <strong>${esc(d.packName || d.pack || 'global')}</strong>${d.rotate ? ' (auto-rotates each slot)' : d.setting && d.setting !== 'auto' ? ' (pinned)' : ''} · ${fmt(d.topics)} searches · langs ${esc((d.langs || []).join(', '))}${scoutMeta.fieldSweep && scoutMeta.fieldSweep.count ? ` · field sweep ${fmt(scoutMeta.fieldSweep.count)}${scoutMeta.fieldSweep.tender ? ' (' + fmt(scoutMeta.fieldSweep.tender) + ' tender)' : ''}` : ''}` : '';
+        const metaBody = scoutMeta ? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(scoutMeta.at))}${scoutMeta.discovery ? ` · ${packLine(scoutMeta.discovery)}` : ''}${scoutMeta.needs && scoutMeta.needs.length ? '<br>' + esc(scoutMeta.needs.join(' · ')) : ''}</p>`
+            : '<p class="jv-empty">The meta scout envelope appears after the next run.</p>';
         const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
         const statusBody = stats([
             { label: 'State', value: g.paused ? 'paused' : 'running', alert: g.paused },
@@ -3197,6 +3207,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             <fieldset><legend>Score needed</legend>${['like', 'repost', 'follow', 'reply'].map((a) => num('th-' + a, c.thresholds[a], a, 0.5)).join('')}${num('worth', c.worth, 'Gemini worth for a reply (0-1)', 0.05)}${num('perRun', c.perRun, 'Posts Gemini reads a run')}${num('maxAgeHours', c.maxAgeHours, 'Oldest post (hours)')}</fieldset>
             <label>Competitors, never answered under (one per line)<textarea name="competitors" rows="4" data-keep="eg-competitors">${esc(c.competitors.join('\n'))}</textarea></label>
             <label>Our own handles, never engaged<textarea name="own" rows="2" data-keep="eg-own">${esc(c.own.join('\n'))}</textarea></label>
+            <label>Discovery region pack<select name="discoveryPack">${['auto', 'global', 'western', 'apac', 'europe', 'cis', 'mena', 'latam'].map((p) => `<option value="${p}"${(c.discoveryPack || 'auto') === p ? ' selected' : ''}>${p === 'auto' ? 'Auto (rotate by slot)' : p}</option>`).join('')}</select></label>
+            <span class="jv-note">Auto rotates global → APAC → Europe → Western → LatAm → CIS → MENA each half-hour slot so discovery is not stuck on Western English (#3613).</span>
             <div class="jv-actions"><button type="submit" class="jv-btn is-primary">Save settings</button>${c.updatedAt ? `<span class="jv-note">Saved ${esc(when(c.updatedAt))}</span>` : ''}</div></form>`;
         return kpis([
             { label: 'Posts in our field', value: t.candidates }, { label: 'Likes planned', value: t.like }, { label: 'Reposts planned', value: t.repost }, { label: 'Follows planned', value: t.follow },
@@ -3205,6 +3217,7 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             { label: 'Approval rate', value: r.approvalRate === null ? '—' : r.approvalRate + '%' }, { label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale }
         ]) + `<div class="jv-grid">${briefPanel('engagement')}
             ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: 'Approve tells Jarvis to send it (never a clipboard paste). Your edit goes when you changed the text. A draft in a language other than English shows Gemini\'s English translation under it (#2630). Drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac\'s browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461).' })}
+            ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs.' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: 'The poster acts as these accounts. Connect signs in on the network\'s own page and comes back here; Mastodon is marked as a bot when it connects.' })}
             ${panel('engagement-joins', 'Joins', joinsBody, { wide: true, data: joins.log, note: 'Telegram channels and groups and subreddits in our field, found by topic searches in any language. One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.' })}
@@ -5002,7 +5015,8 @@ export function mountJarvis({ auth, host, getInbox, isTestEmail, endpoint, uploa
             egSettings({
                 caps: Object.fromEntries(acts.concat('join').map((a) => [a, n('cap-' + a)])), thresholds: Object.fromEntries(acts.map((a) => [a, n('th-' + a)])),
                 worth: n('worth'), perRun: n('perRun'), maxAgeHours: n('maxAgeHours'),
-                competitors: form.elements.competitors.value.split('\n'), own: form.elements.own.value.split('\n')
+                competitors: form.elements.competitors.value.split('\n'), own: form.elements.own.value.split('\n'),
+                discoveryPack: String(form.elements.discoveryPack.value || 'auto')
             });
         } else if (form.dataset.unlist !== undefined) {
             const hostName = form.host.value.trim();

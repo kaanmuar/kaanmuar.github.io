@@ -92,7 +92,8 @@ test("posts the Mac read on Telegram and Reddit are marked as its own, and group
   assert.equal(why(sub("TestAutomation", { open: false })), "private");
 
   const plan = await M.sites(deps(db));
-  assert.ok(plan.topics.length > 50);
+  const pool = E.discoveryForRun(NOW);
+  assert.equal(plan.topics.length, pool.length + Math.floor(pool.length / 4), "topic searches per slot plus student ones (#3613)");
   assert.deepEqual(plan.groups.reddit.map((g) => g.q), ["r/accessibility", "r/qualityassurance"], "groups we are in come first");
   assert.deepEqual(plan.groups.telegram.map((g) => g.q), ["@qa_automation_ru"]);
 });
