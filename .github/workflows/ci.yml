@@ -1,7 +1,9 @@
 # .github/workflows/ci.yml
 # Merges are gated by Lint Code, url-review-unit, and playwright (branch ruleset on main).
-# Cypress and Robot fail their job when a case fails. Load and the native catalogs report but do not block a merge.
-# The Cypress catalog runs on pushes to main and manual runs, not on pull requests.
+# Pull requests only run those required jobs (plus the non-blocking biome-format check) so
+# Cypress, Robot, load, and the native catalogs do not queue-starve Playwright (#3675).
+# Those suites still run on pushes to main and on workflow_dispatch; Cypress and Robot fail
+# their job when a case fails, while load and the native catalogs report without blocking.
 # The Safari and iPhone catalog needs a macOS runner, so it lives in catalog-apple.yml (#2273).
 # Pull requests leave the generated social hub files to the bots (#2242): the jobs that read the hub build it first.
 
@@ -151,6 +153,7 @@ jobs:
         run: test "${{ needs.playwright-shard.result }}" = success
 
   cypress:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -200,6 +203,7 @@ jobs:
           retention-days: 7
 
   robot:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -230,6 +234,7 @@ jobs:
           retention-days: 7
 
   load:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -276,6 +281,7 @@ jobs:
         run: npm run test:gatling
 
   catalog-browsers:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
