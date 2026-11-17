@@ -601,24 +601,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>WHO's fact sheets end in a stray semicolon.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
-
-The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. The gap: the sitemap host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk</guid>
@@ -876,6 +858,20 @@ Via Search Engine Journal, by Adam Riemer, 2026-11-12.
 
 https://www.searchenginejournal.com/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-gemini-ask-an-seo/585080/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-adam-riemer-376.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google Explains How To Find Search Traffic In Analytics &amp; Logs via @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-find-search-traffic-in-analytics-logs.html</link>
+      <guid isPermaLink="false">pick/google-explains-how-to-find-search-traffic-in-analytics-logs</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Analytics</category>
+      <description>A Google Search help page lists the referrer values Search traffic sends, why some visits arrive with none, and why counts differ from Search Console. The post Google Explains How To Find Search Traffic In Analytics &amp; Logs appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Matt G. Southern, 2026-11-14.
+
+https://www.searchenginejournal.com/google-search-traffic-analytics-logs/597382/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-search-traffic-analytics-logs.jpg" medium="image"/>
     </item>
   </channel>
 </rss>

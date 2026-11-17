@@ -382,24 +382,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Le schede informative dell’OMS finiscono con un punto e virgola di troppo.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-it.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-it</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Worldwide</category>
-      <description>L’OMS accoglie i crawler di risposta AI e le sue pagine si leggono bene senza JavaScript: GEO 91. Ma il JSON-LD delle sue schede informative finisce con &quot;};&quot;, e un parser rigoroso scarta l’intero blocco.
-
-La lezione per ogni team: Passa ogni blocco JSON-LD in un validatore JSON prima della release. Un solo carattere può invalidare l’intero blocco.
-
-Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
-Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. Il divario: l'host della mappa del sito.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-it.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-it</guid>
@@ -595,23 +577,6 @@ Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>La ricerca AI legge il tuo HTML, non la tua app.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-it.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-it</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Consiglio</category>
-      <category>GEO</category>
-      <description>Molti motori di risposta non eseguono JavaScript. Se le tue informazioni chiave compaiono solo dopo il caricamento degli script, potrebbero non essere mai lette né citate.
-
-Provalo oggi: Guarda il sorgente della tua home. Si capisce cosa vendi e per chi, senza eseguire script?
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 concorrenti naturali. vivastreet.ie è in testa: 74.</title>
@@ -986,6 +951,64 @@ Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #SoftwareTesting #CyberSecurity #QA #HTTPS #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" length="241985" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>El País o Le Monde: quale sito di giornale ha ottenuto di più?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11b/03-quiz-newspapers-it.html</link>
+      <guid isPermaLink="false">compare-2026-11b/03-quiz-newspapers-it</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>Worldwide</category>
+      <description>Due quotidiani, dalla Spagna e dalla Francia, 20 pagine pubbliche ciascuno, analizzati dalla stessa analisi lo stesso giorno di ottobre 2026. Li separano due punti.
+
+La tua ipotesi: Fai la tua ipotesi. La risposta, con tutti e sei i punteggi per area, arriva domani.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-newspapers
+
+#WebQuality #AI #DevOps #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/y_EmhX1_RYo</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" length="251297" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Questa settimana nella qualità web.</title>
+      <link>https://carlosandmunoz.com/social/digest-2026-11-13/01-this-week-it.html</link>
+      <guid isPermaLink="false">digest-2026-11-13/01-this-week-it</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Notizia</category>
+      <category>Field</category>
+      <description>Questa settimana nella qualità web, 13 novembre 2026
+
+Cinque scelte dalla nostra rassegna quotidiana del settore, ognuna riassunta con parole nostre e con la sua fonte.
+
+1. Lighthouse 13.6 può alzare il tuo punteggio PSI
+PageSpeed Insights ora usa Lighthouse 13.6, che cambia il modo in cui simula FCP e LCP. Barry Pollard di Chrome dice che i punteggi di solito risultano più alti, soprattutto sui siti pieni di JavaScript, anche quando la pagina non è cambiata. Prima di attribuire un punteggio migliore al tuo lavoro, controlla che i due report indichino la stessa versione di Lighthouse e confronta i dati sul campo.
+Di Matt G. Southern, Search Engine Journal: https://www.searchenginejournal.com/pagespeed-insights-scores-lighthouse-update/595698/
+
+2. Playwright 1.65 esegue i test con Bun
+Playwright 1.65 esegue il suo test runner con Bun tramite bunx --bun playwright test, senza modalità watch. Un nuovo reporter failures e l'opzione onlyFailures limitano i report a ciò che è andato storto. Tra le modifiche incompatibili, le azioni ora aspettano che un elemento inert smetta di esserlo, e Node.js 20 non viene più testato.
+Di dgozman, Playwright releases: https://github.com/microsoft/playwright/releases/tag/v1.65.0
+
+3. Google su 301, 302 e segnali di ranking
+Gary Illyes e Cherry Prommawin di Google hanno spiegato che un 301 passa i segnali di ranking del vecchio URL al nuovo, mentre un 302 tiene il vecchio URL nei risultati perché Google si aspetta che torni. Un 307 o un 308 fa lo stesso lavoro, ma conserva i dati del modulo in un POST. Consigliano i redirect lato server invece di JavaScript o del meta refresh.
+Di Roger Montti, Search Engine Journal: https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/
+
+4. Riportare la SEO quando GA4 vede meno
+Dopo una politica di consenso più rigida, le sessioni organiche in GA4 sono calate del 64% in quattro settimane, mentre i clic in Search Console sono saliti dell'1.8%. Dii Pooler mostra come verificare dove si ferma il tracciamento, confrontare GA4 con i dati del backend e riportare separatamente visibilità nella ricerca, comportamento tracciato e risultati verificati, dichiarando prima i limiti della misurazione.
+Di Dii Pooler, Moz: https://moz.com/blog/measure-seo-performance-incomplete-data
+
+5. L'IA può controllare un ACR, non scriverlo
+Will Creedle sostiene che gli strumenti di IA generici non possono testare, correggere né valutare da soli la conformità WCAG, quindi non dovrebbero produrre da soli un Accessibility Conformance Report basato su un VPAT. Aiutano però a trovare errori, come una clausola sbagliata della EN 301 549 o not evaluated al posto di not applicable, e a rendere il testo più chiaro.
+Di Will Creedle, Deque: https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/
+
+Tutte le rassegne, i consigli e le revisioni di siti sul nostro hub social: https://carlosandmunoz.com/qa-review-social.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=weekly-digest&amp;utm_content=digest-2026-11-13
+
+#WebDev #Programming #QA #Accessibility #SEO #QAlab
+
+https://www.youtube.com/shorts/3LEjpxQ2BYw</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" length="233234" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

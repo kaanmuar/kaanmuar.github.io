@@ -405,24 +405,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Die Faktenblätter der WHO enden mit einem verirrten Semikolon.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-de.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-de</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Worldwide</category>
-      <description>Die WHO heißt KI-Antwort-Crawler willkommen, und ihre Seiten lesen sich ohne JavaScript gut: GEO 91. Doch das JSON-LD auf den Faktenblättern endet mit „};“, und ein strikter Parser verwirft den ganzen Block.
-
-Die Lektion für jedes Team: Prüfen Sie jeden JSON-LD-Block vor dem Release mit einem JSON-Validator. Ein Zeichen kann den ganzen Block ungültig machen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
-So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. Die Lücke: der Sitemap-Host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-de.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-de</guid>
@@ -618,23 +600,6 @@ So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/q
 #Accessibility #A11y #Headings #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" length="243667" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>KI-Suche liest Ihr HTML, nicht Ihre App.</title>
-      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-de.html</link>
-      <guid isPermaLink="false">tips-2026-10/20-html-first-de</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Tipp</category>
-      <category>GEO</category>
-      <description>Viele Answer Engines führen kein JavaScript aus. Erscheinen Ihre wichtigsten Fakten erst nach dem Laden der Skripte, werden sie womöglich nie gelesen oder zitiert.
-
-Probieren Sie es heute: Sehen Sie sich den Quelltext Ihrer Startseite an. Findet man ohne Skripte, was Sie verkaufen und für wen?
-
-So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
-
-#GEO #AISearch #SEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>2 natürliche Konkurrenten. vivastreet.ie führt: 74.</title>
@@ -989,6 +954,45 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #Accessibility #Programming #DevOps #QA #Forms #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" length="239507" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>made-in-china.com: 50. Die Lücke: die https-Weiterleitung.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-12/01-u-made-in-china-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-12/01-u-made-in-china-com-de</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>National</category>
+      <description>Jeder überprüfte externe Link wurde beantwortet, und KI-Antwort- und Suchcrawler können die Startseite lesen. Doch einfaches http liefert die Website ohne Weiterleitung aus.
+
+Die Lektion für jedes Team: Leiten Sie jede http-Anfrage mit einem dauerhaften 301 auf https um und ergänzen Sie dann HSTS.
+
+Eine automatisierte Analyse öffentlicher Seiten am 11 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-made-in-china-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-made-in-china-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #CyberSecurity #QA #HTTPS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" length="241985" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>El País oder Le Monde: Welche Zeitungs-Website schnitt besser ab?</title>
+      <link>https://carlosandmunoz.com/social/compare-2026-11b/03-quiz-newspapers-de.html</link>
+      <guid isPermaLink="false">compare-2026-11b/03-quiz-newspapers-de</guid>
+      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Quiz</category>
+      <category>Worldwide</category>
+      <description>Zwei Tageszeitungen aus Spanien und Frankreich, je 20 öffentliche Seiten, am selben Tag im Oktober 2026 mit derselben Prüfung analysiert. Zwei Punkte trennen sie.
+
+Ihr Tipp: Geben Sie Ihren Tipp ab. Die Antwort mit allen sechs Bereichswerten kommt morgen.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compare-2026-11b&amp;utm_content=quiz-newspapers
+
+#WebQuality #AI #DevOps #QA #Quiz #QAlab
+
+https://www.youtube.com/shorts/y_EmhX1_RYo</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" length="251297" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/compare-2026-11b/feed/03-quiz-newspapers.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

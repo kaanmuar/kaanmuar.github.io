@@ -601,24 +601,6 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Las notas descriptivas de la OMS acaban en un punto y coma suelto.</title>
-      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</link>
-      <guid isPermaLink="false">runs-2026-10/03-who-es</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Worldwide</category>
-      <description>La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript: GEO 91. Pero el JSON-LD de sus fichas termina en &quot;};&quot;, y un parser estricto descarta el bloque entero.
-
-La lección para cualquier equipo: Pasa cada bloque JSON-LD por un validador JSON antes del lanzamiento. Un carácter puede invalidar el bloque entero.
-
-Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
-Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
-
-#StructuredData #SEO #GEO #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>setec.mk: 61. La brecha: el host del mapa del sitio.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-es.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-es</guid>
@@ -876,6 +858,20 @@ Vía Search Engine Journal, por Adam Riemer, 2026-11-12.
 
 https://www.searchenginejournal.com/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-gemini-ask-an-seo/585080/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-adam-riemer-376.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google explica cómo encontrar tráfico de búsqueda en Analytics y registros mediante @sejournal, @MattGSouthern</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-find-search-traffic-in-analytics-logs-es.html</link>
+      <guid isPermaLink="false">pick/google-explains-how-to-find-search-traffic-in-analytics-logs-es</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Recomendado</category>
+      <category>Analytics</category>
+      <description>Una página de ayuda de la Búsqueda de Google enumera los valores de referencia que envía el tráfico de búsqueda, por qué algunas visitas llegan sin ninguna y por qué los recuentos difieren de los de Search Console. La publicación Google explica cómo encontrar tráfico de búsqueda en análisis y registros apareció por primera vez en Search Engine Journal.
+
+A través de Search Engine Journal, por Matt G. Sur, 2026-11-14.
+
+https://www.searchenginejournal.com/google-search-traffic-analytics-logs/597382/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-search-traffic-analytics-logs.jpg" medium="image"/>
     </item>
   </channel>
 </rss>
