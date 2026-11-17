@@ -261,6 +261,10 @@
  "A sitemap, language alternates that point at each other, HSTS, and FAQ-style content.": "Un sitemap, des alternates de langue qui se renvoient l’un à l’autre, HSTS et un contenu en style FAQ.",
  "A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed.": "Un sitemap, HSTS d’un an, l’intégration en iframe limitée à sa propre origine et aucun lien cassé parmi les pages analysées.",
  "A small check on every release keeps the ⟦1⟧s out of your visitors' way.": "Un petit contrôle à chaque release tient les erreurs ⟦1⟧ loin de vos visiteurs.",
+ "A snapshot to start from, not a verdict.": {
+  "text": "Un instantané pour commencer, pas un verdict.",
+  "machine": true
+ },
  "A starting point, not a verdict.": "Un point de départ, pas un verdict.",
  "A strict Referrer-Policy, framing limited to its origin, and ⟦1⟧ that lists its sitemaps.": "Une Referrer-Policy stricte, l’intégration en iframe limitée à son origine, et ⟦1⟧ qui liste ses sitemaps.",
  "A template printed its placeholder where a link belonged.": "Un modèle a affiché son espace réservé là où devait figurer un lien.",
@@ -1850,6 +1854,10 @@
  "Renew the TLS certificate automatically, and alert well before it expires.": "Renouvelez le certificat TLS automatiquement, et alertez bien avant son expiration.",
  "Replace ALLOW-FROM with Content-Security-Policy: frame-ancestors 'self' plus the one partner you allow.": "Remplacez ALLOW-FROM par Content-Security-Policy: frame-ancestors 'self' plus le seul partenaire autorisé.",
  "Report-Only shows what would be blocked, so you can enforce with confidence a week later.": "Report-Only montre ce qui serait bloqué : vous pouvez appliquer en toute confiance une semaine plus tard.",
+ "Report: ⟦1⟧": {
+  "text": "Rapport : ⟦1⟧",
+  "machine": true
+ },
  "Reporting SEO when GA4 sees less": "Rendre compte du SEO quand GA4 voit moins",
  "Request your error page and every PDF you link to.": "Demandez votre page d’erreur et chaque PDF vers lequel vous renvoyez.",
  "Retire the UA- tag; feed one GA4 property through Tag Manager or gtag, not both.": "Retirez la balise UA- ; alimentez une seule propriété GA4 via Tag Manager ou gtag, pas les deux.",
@@ -2447,6 +2455,10 @@
  "What it lacks is a content security policy: none of the pages analyzed sends one.": "Ce qui lui manque, c’est une politique de sécurité du contenu : aucune des pages analysées n’en envoie.",
  "What people see there is your real first impression.": "Ce que les gens y voient, c’est votre vraie première impression.",
  "What Search Console Can Still Tell You When Indexing Data Lags via ⟦1⟧, ⟦2⟧": "Ce que la Search Console peut encore vous apprendre quand les données d’indexation sont en retard via ⟦1⟧, ⟦2⟧",
+ "What to change:": {
+  "text": "Que changer :",
+  "machine": true
+ },
  "What Ziff Davis’ Jonathan Berthold Tests First": "Ce que Jonathan Berthold, de Ziff Davis, teste en premier",
  "What Ziff Davis’ Jonathan Berthold Tests First appeared first on Search Engine Journal .": "Ce que Jonathan Berthold, de Ziff Davis, teste en premier a d’abord été publié sur Search Engine Journal .",
  "When an image has no width and height, the page jumps as it loads.": "Quand une image n’a ni width ni height, la page saute pendant le chargement.",

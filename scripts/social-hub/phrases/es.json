@@ -20,10 +20,18 @@
  "⟦1⟧ days of HTTPS only.": "⟦1⟧ días de solo HTTPS.",
  "⟦1⟧ decides who may read you.": "⟦1⟧ decide quién puede leerte.",
  "⟦1⟧ free books, no Book markup.": "⟦1⟧ libros gratis, sin marcado Book.",
+ "⟦1⟧ free marketing skills for your AI agent: research, positioning, copy, pages, SEO, AI search, ads, email and content, plus a deep local-business pack.": {
+  "text": "⟦1⟧ Habilidades de marketing gratuitas para su agente de IA: investigación, posicionamiento, texto, páginas, SEO, búsqueda de IA, anuncios, correo electrónico y contenido, además de un completo paquete de negocios locales.",
+  "machine": true
+ },
  "⟦1⟧ has ⟦2⟧ but blank HTML.": "⟦1⟧ tiene ⟦2⟧, pero el HTML está en blanco.",
  "⟦1⟧ has ⟦2⟧.": "⟦1⟧ tiene ⟦2⟧.",
  "⟦1⟧ has no entity markup.": "⟦1⟧ no tiene marcado de entidad.",
  "⟦1⟧ is empty until JavaScript runs.": "⟦1⟧ está vacío hasta que se ejecuta JavaScript.",
+ "⟦1⟧ is great for one page.": {
+  "text": "⟦1⟧ es genial para una página.",
+  "machine": true
+ },
  "⟦1⟧ is published, Core Web Vitals pass for real visitors, and every image has alt text.": "⟦1⟧ está publicado, las Core Web Vitals aprueban con visitantes reales y cada imagen tiene texto alt.",
  "⟦1⟧ is published, DMARC rejects spoofed mail, framing is limited, and Core Web Vitals pass for real visitors.": "⟦1⟧ está publicado, DMARC rechaza el correo suplantado, el framing está limitado y las Core Web Vitals aprueban con visitantes reales.",
  "⟦1⟧ is published, HSTS covers subdomains, and DMARC rejects spoofed mail.": "⟦1⟧ está publicado, HSTS cubre los subdominios y DMARC rechaza el correo suplantado.",
@@ -368,6 +376,10 @@
  "A sitemap, language alternates that point at each other, HSTS, and FAQ-style content.": "Un sitemap, alternativas de idioma que se apuntan entre sí, HSTS y contenido tipo FAQ.",
  "A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed.": "Un sitemap, HSTS de un año, framing limitado a su propio origen y ningún enlace roto entre las páginas analizadas.",
  "A small check on every release keeps the ⟦1⟧s out of your visitors' way.": "Una pequeña comprobación en cada versión mantiene los ⟦1⟧ lejos de tus visitantes.",
+ "A snapshot to start from, not a verdict.": {
+  "text": "Una instantánea para empezar, no un veredicto.",
+  "machine": true
+ },
  "A starting point, not a verdict.": "Un punto de partida, no un veredicto.",
  "A strict Referrer-Policy, framing limited to its origin, and ⟦1⟧ that lists its sitemaps.": "Una Referrer-Policy estricta, framing limitado a su origen y ⟦1⟧ que lista sus sitemaps.",
  "A teammate opened our new streaming assistant with VoiceOver, typed a short prompt about the water...": {
@@ -382,8 +394,16 @@
  },
  "A valid sitemap, structured data that parses, real ⟦1⟧s, and every internal link opened answered.": "Un sitemap válido, datos estructurados que se procesan bien, ⟦1⟧ reales y todos los enlaces internos abiertos respondieron.",
  "A visitor ID should never travel over plain http.": "Un ID de visitante nunca debería viajar por http sin cifrar.",
+ "A visual, ⟦1⟧-minute deep dive into web accessibility architecture.": {
+  "text": "Una inmersión visual profunda de ⟦1⟧ minuto en la arquitectura de accesibilidad web.",
+  "machine": true
+ },
  "A wide gap often starts in one weak area.": "Una gran diferencia suele empezar en un área débil.",
  "A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSON-LD.": "Un año de HSTS, framing limitado a su propio origen y NewsMediaOrganization en JSON-LD.",
+ "A/B Testing and SEO:": {
+  "text": "Pruebas A/B y SEO:",
+  "machine": true
+ },
  "About a minute each, on the live site, before you announce anything.": "Más o menos un minuto cada una, en el sitio en vivo, antes de anunciar nada.",
  "Accessibility ⟦1⟧, a strict content security policy, and real visitors see the main content in ⟦2⟧ s.": "Accesibilidad ⟦1⟧, una política de seguridad de contenido estricta y los visitantes reales ven el contenido principal en ⟦2⟧ s.",
  "Accessibility card.": "Tarjeta de accesibilidad.",
@@ -454,6 +474,10 @@
   "text": "La boleta de Interop ⟦1⟧ de Adrian Roselli clasifica los lugares en los que los autores siguen equivocándose",
   "machine": true
  },
+ "Advanced web traffic generator and SEO testing tool.": {
+  "text": "Generador de tráfico web avanzado y herramienta de prueba SEO.",
+  "machine": true
+ },
  "Affiliate links still help protect your commissions as AI checkout grows, but stronger tracking and better program choices add crucial layers of protection.": {
   "text": "Los enlaces de afiliados aún ayudan a proteger sus comisiones a medida que crece el pago mediante IA, pero un seguimiento más sólido y mejores opciones de programas agregan capas cruciales de protección.",
   "machine": true
@@ -498,6 +522,10 @@
   "machine": true
  },
  "AI Mode now has its own …": "AI Mode ahora tiene su propio …",
+ "AI Referral Traffic Benchmark (Nov ⟦1⟧):": {
+  "text": "Punto de referencia del tráfico de referencia de IA (⟦1⟧ de noviembre):",
+  "machine": true
+ },
  "AI Search for the Procurement Professional": "Búsqueda con IA para profesionales de compras",
  "AI Search Is Not a Distraction, It’s a Branding Channel": {
   "text": "La búsqueda con IA no es una distracción, es un canal de marca",
@@ -615,6 +643,10 @@
   "text": "Audite Core Web Vitals para un mapa del sitio completo de una sola vez (y reciba alertas cuando las páginas fallen)",
   "machine": true
  },
+ "Audit the Temporary Route Before Launch": {
+  "text": "Audite la ruta temporal antes del lanzamiento",
+  "machine": true
+ },
  "Audit which pages carry noindex.": "Audita qué páginas llevan noindex.",
  "Automated analyses of public pages on ⟦1⟧ Nov ⟦2⟧ of ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, natural competitors found on the open web by QA-lab URL Review's rival sweep.": {
   "text": "Análisis automatizados de páginas públicas el ⟦1⟧ noviembre ⟦2⟧ de ⟦3⟧, ⟦4⟧, ⟦5⟧, ⟦6⟧, competidores naturales encontrados en la web abierta por el barrido rival de QA-lab URL Review.",
@@ -708,6 +740,10 @@
  "Bogotá or Medellín: whose city hall site scored higher?": "Bogotá o Medellín: ¿el sitio de qué alcaldía obtuvo más puntos?",
  "Bogotá's site is faster.": "El sitio de Bogotá es más rápido.",
  "Bolívar's home page waits ⟦1⟧ s to start.": "La portada de Bolívar tarda ⟦1⟧ s en empezar.",
+ "boringmarketer/boring-marketing-skills:": {
+  "text": "aburridomarketer/habilidades-de-marketing-aburridas:",
+  "machine": true
+ },
  "Both build their pages from a public design system.": "Ambos construyen sus páginas con un sistema de diseño público.",
  "Both score ⟦1⟧ for accessibility.": "Ambos sacan ⟦1⟧ en accesibilidad.",
  "Both should point to one canonical.": "Ambas deberían apuntar a un único canonical.",
@@ -755,6 +791,10 @@
  },
  "Building a reliable configuration pipeline for Python test automation": {
   "text": "Creación de un canal de configuración confiable para la automatización de pruebas de Python",
+  "machine": true
+ },
+ "Built from real work, not a checklist.": {
+  "text": "Construido a partir de trabajo real, no de una lista de verificación.",
   "machine": true
  },
  "Bun transpiles your TypeScript test files itself, so Playwright does not use Babel or its compilation cache.": {
@@ -1188,6 +1228,10 @@
  },
  "Cloud wildcards include strangers.": "Los comodines de la nube incluyen a desconocidos.",
  "Cloudflare's CSP skips ⟦1⟧ of ⟦2⟧ pages.": "La CSP de Cloudflare se salta ⟦1⟧ de ⟦2⟧ páginas.",
+ "CMS Market Share Trends:": {
+  "text": "Tendencias de participación de mercado de CMS:",
+  "machine": true
+ },
  "Code and output included.": {
   "text": "Código y salida incluidos.",
   "machine": true
@@ -1216,6 +1260,10 @@
  "Comparing AI and Google searches among the same group of users over a month to examine how their behavior differs between platforms.": "Comparación de las búsquedas con IA y en Google de un mismo grupo de usuarios durante un mes para analizar cómo difiere su comportamiento entre plataformas.",
  "Comparison card.": "Tarjeta comparativa.",
  "Compensar lets any Azure site frame it.": "Compensar deja que cualquier sitio de Azure lo enmarque.",
+ "Compromised WordPress plugins can introduce security threats and SEO problems.": {
+  "text": "Los complementos de WordPress comprometidos pueden presentar amenazas de seguridad y problemas de SEO.",
+  "machine": true
+ },
  "Consent means before, too.": "El consentimiento también significa antes.",
  "Content-Encoding and SEO:": {
   "text": "Codificación de contenido y SEO:",
@@ -1228,6 +1276,10 @@
  "Copy the list into your release ticket and tick it on the live site, not on staging.": "Copia la lista en tu ticket de lanzamiento y márcala en el sitio en vivo, no en staging.",
  "Core Update, ChatGPT Business Hub & AI Mode’s New Model – SEO Pulse via ⟦1⟧, ⟦2⟧": {
   "text": "Actualización principal, ChatGPT Business Hub y nuevo modelo del modo AI: SEO Pulse a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
+ "Core Web Vitals for ⟦1⟧ URLs in one run, with the fixes ranked by time saved (no API key, $⟦2⟧ per ⟦3⟧)": {
+  "text": "Core Web Vitals para ⟦1⟧ URL en una sola ejecución, con las correcciones clasificadas por tiempo ahorrado (sin clave API, $⟦2⟧ por ⟦3⟧)",
   "machine": true
  },
  "Core Web Vitals pass for real visitors, every image has alt text, and share cards are complete.": "Las Core Web Vitals aprueban con visitantes reales, cada imagen tiene texto alt y las tarjetas para compartir están completas.",
@@ -1388,6 +1440,10 @@
  "Drop maximum-scale from the viewport. width=device-width, initial-scale=⟦1⟧ is all most sites need.": "Quita maximum-scale del viewport. width=device-width, initial-scale=⟦1⟧ es todo lo que necesitan la mayoría de sitios.",
  "Drop user-scalable=no and maximum-scale from the viewport tag, so people can zoom to at least ⟦1⟧.": "Quita user-scalable=no y maximum-scale de la etiqueta viewport, para que la gente pueda ampliar al menos al ⟦1⟧.",
  "DW blocks framing.": "DW bloquea el enmarcado.",
+ "E2E test desk for Playwright — selectors, fixtures and flake control.": {
+  "text": "Mesa de pruebas E2E para Playwright: selectores, accesorios y control de escamas.",
+  "machine": true
+ },
  "Each field should say what it is.": "Cada campo debería decir qué es.",
  "Each language version should say what it is, in its language.": "Cada versión de idioma debería decir qué es, en su idioma.",
  "Each localized home page should stand on its own in search.": "Cada portada localizada debería valerse por sí misma en el buscador.",
@@ -1481,6 +1537,10 @@
  },
  "Every source is linked on our social hub.": "Cada fuente está enlazada en nuestro hub social.",
  "Every year the same thing happens.": "Cada año pasa lo mismo.",
+ "Everyone talks about GEO (Generative Engine Optimization)—getting cited inside ChatGPT Search,...": {
+  "text": "Todo el mundo habla de GEO (optimización generativa del motor): ser citado en ChatGPT Search,...",
+  "machine": true
+ },
  "Exact versions make it easy to match known flaws.": "Las versiones exactas facilitan cruzarlas con fallos conocidos.",
  "Examine the accessibility tree updates and screen reader behavior when ARIA roles change dynamically, including how browsers and assistive tech sync semantic updates with UI changes.": "Analiza las actualizaciones del árbol de accesibilidad y el comportamiento de los lectores de pantalla cuando los roles ARIA cambian dinámicamente, incluido cómo los navegadores y las tecnologías de asistencia sincronizan los cambios semánticos con los cambios de la interfaz.",
  "Example analysis, response time per page.": "Análisis de ejemplo, tiempo de respuesta por página.",
@@ -1550,6 +1610,14 @@
  "Follow the rule guide at…": "Sigue la guía de la regla en…",
  "Follow your old links to their final address.": "Sigue tus enlaces antiguos hasta su dirección final.",
  "Followertustuff/anomalith-steam-deck-small-text-accessibility:": "Followertustuff/anomalith-steam-deck-small-text-accessibility:",
+ "For a client's top ⟦1⟧ pages, or every product page before a...": {
+  "text": "Para las ⟦1⟧ páginas principales de un cliente, o para cada página de producto antes de...",
+  "machine": true
+ },
+ "For an A/B test that redirects visitors to a variation URL, review the temporary route, canonical...": {
+  "text": "Para una prueba A/B que redirige a los visitantes a una URL variante, revise la ruta temporal, canónica...",
+  "machine": true
+ },
  "For traffic-dependent businesses, the visit was only a step toward the sale.": {
   "text": "Para las empresas que dependen del tráfico, la visita fue sólo un paso hacia la venta.",
   "machine": true
@@ -1786,6 +1854,10 @@
   "text": "Los piratas informáticos secuestraron el DNS de DebugBear para servir JavaScript malicioso a través de ⟦1⟧, ⟦2⟧",
   "machine": true
  },
+ "HallDreamBulwark/web-traffic-simulator:": {
+  "text": "HallDreamBulwark/simulador de tráfico web:",
+  "machine": true
+ },
  "Hands-On with Playwright Test Agents:": {
   "text": "Práctica con agentes de pruebas de dramaturgos:",
   "machine": true
@@ -1871,6 +1943,10 @@
  },
  "How the review works, step by step: ⟦1⟧": "Cómo funciona la revisión, paso a paso: ⟦1⟧",
  "How the Same ⟦1⟧ Users Behave in AI Search vs.": "Cómo se comportan los mismos ⟦1⟧ usuarios en la búsqueda con IA vs.",
+ "How to add PageSpeed Insights monitoring in your Laravel setup": {
+  "text": "Cómo agregar monitoreo de PageSpeed ​​Insights en su configuración de Laravel",
+  "machine": true
+ },
  "How To Analyze Server Logs for AI Search": "Cómo analizar los logs del servidor para la búsqueda con IA",
  "How to check Core Web Vitals for ⟦1⟧ URLs in Python (PageSpeed Insights API, CrUX field data, quotas and retries)": {
   "text": "Cómo verificar Core Web Vitals para ⟦1⟧ URL en Python (API de PageSpeed ​​Insights, datos de campo CrUX, cuotas y reintentos)",
@@ -2220,6 +2296,10 @@
   "text": "Aprenda un flujo de trabajo sencillo de ⟦1⟧ paso para realizar un seguimiento de la visibilidad de la IA y optimizar su contenido utilizando el kit de herramientas de investigación de IA de Moz Pro.",
   "machine": true
  },
+ "Learn how browsers construct the Accessibility Tree from the DOM, why custom ARIA divs create more errors than native HTML, how CSS visibility properties alter screen reader output, and how to build leak-free accessible focus traps.": {
+  "text": "Descubra cómo los navegadores construyen el árbol de accesibilidad desde el DOM, por qué los divs ARIA personalizados crean más errores que el HTML nativo, cómo las propiedades de visibilidad de CSS alteran la salida del lector de pantalla y cómo crear trampas de enfoque accesibles y sin fugas.",
+  "machine": true
+ },
  "Learn how to evaluate LLM recommendations, track influential citations, and identify key growth opportunities.": "Aprende a evaluar las recomendaciones de los LLMs, hacer seguimiento de las citas influyentes e identificar oportunidades clave de crecimiento.",
  "Learn how to find AI crawler requests in server logs and fix pages that crawlers cannot read": "Aprende a encontrar las solicitudes de crawlers de IA en los logs del servidor y a corregir las páginas que los crawlers no pueden leer",
  "Learn how to read the Cypress plugin directory, check a plugin against your project and security review, integrate it correctly, and fix the gotchas that show up in CI and during upgrades.": {
@@ -2360,9 +2440,17 @@
  "Migración Colombia has no sitemap.": "Migración Colombia no tiene sitemap.",
  "MinCIT reports to two GA4 properties.": "MinCIT envía datos a dos propiedades GA4.",
  "MinEducación's sitemap lists the old address.": "El sitemap de MinEducación lista la dirección antigua.",
+ "Minibruimplode/playwright-test-desk:": {
+  "text": "Minibruimplode/dramaturgo-test-desk:",
+  "machine": true
+ },
  "MinSalud's home page links to ⟦1⟧s.": "La portada de MinSalud enlaza a páginas que dan ⟦1⟧.",
  "MinTIC's analytics stopped years ago.": "La analítica de MinTIC se detuvo hace años.",
  "MIT has the fastest pages, ⟦1⟧ for speed.": "El MIT tiene las páginas más rápidas, ⟦1⟧ en velocidad.",
+ "MIT.": {
+  "text": "MIT.",
+  "machine": true
+ },
  "MIT's canonical tags point to its CMS.": "Las etiquetas canonical del MIT apuntan a su CMS.",
  "Money surfaces in October.": "El dinero aparece en octubre.",
  "Montería's pages can't be zoomed.": "Las páginas de Montería no permiten zoom.",
@@ -2448,6 +2536,10 @@
  "Neiva's sitemap lists a host that won't load.": "El sitemap de Neiva lista un host que no carga.",
  "Nequi's hreflang points to the home page.": "El hreflang de Nequi apunta a la portada.",
  "Never point it at an address that redirects.": "Nunca lo apuntes a una dirección que redirige.",
+ "New filtering and reporting capabilities in the Search Analytics API": {
+  "text": "Nuevas capacidades de filtrado e informes en la API de Search Analytics",
+  "machine": true
+ },
  "New research identifies a potential weakness in big-brand visibility that smaller publishers may be able to exploit.": "Una nueva investigación identifica una posible debilidad en la visibilidad de las grandes marcas que los editores más pequeños podrían aprovechar.",
  "New spam guidance says to noindex or block crawling on pages made for sharing.": "Las nuevas pautas sobre spam indican aplicar noindex o bloquear el rastreo en las páginas creadas para compartir.",
  "NEW YORK, October ⟦1⟧, ⟦2⟧ – iPullRank today announced that SEO Week is now Relevance.": "NUEVA YORK, ⟦1⟧ de octubre de ⟦2⟧ – iPullRank anunció hoy que SEO Week ahora es Relevance.",
@@ -2589,6 +2681,10 @@
  },
  "Our own site scored ⟦1⟧ overall, and security was the weakest area.": "Nuestro propio sitio sacó ⟦1⟧ en la puntuación general, y la seguridad fue el área más floja.",
  "Over ⟦1⟧ seconds?": "¿Más de ⟦1⟧ segundos?",
+ "Over the past year, we introduced several updates to the Search Console Performance report to help you better slice and understand your traffic, including the branded queries filter, web multimodal search reporting, and multi-country and multi-device filtering.": {
+  "text": "Durante el año pasado, introdujimos varias actualizaciones en el informe de rendimiento de Search Console para ayudarlo a dividir y comprender mejor su tráfico, incluido el filtro de consultas de marca, los informes de búsqueda web multimodal y el filtrado para varios países y dispositivos.",
+  "machine": true
+ },
  "Overall score ⟦1⟧ of ⟦2⟧.": "Puntuación general: ⟦1⟧ de ⟦2⟧.",
  "Overlay widgets promise WCAG compliance from a single script.": "Los widgets de superposición prometen cumplir WCAG con un solo script.",
  "Oxfam: three scripts hold up the page.": "Oxfam: tres scripts frenan la página.",
@@ -2671,6 +2767,10 @@
   "text": "Las capturas de pantalla de Playwright fullPage devuelven una ventana gráfica cuando la página se desplaza dentro de un contenedor",
   "machine": true
  },
+ "Playwright MCP server built to cut agent turns and tokens: one-call form filling, delta snapshots, batched steps, and a submit guard on by default": {
+  "text": "Servidor Playwright MCP creado para reducir turnos y tokens de agentes: llenado de formularios con una sola llamada, instantáneas delta, pasos por lotes y protección de envío activada de forma predeterminada",
+  "machine": true
+ },
  "Playwright Page Object Model in TypeScript (the Right Way)": {
   "text": "Modelo de objetos de página de dramaturgo en TypeScript (la forma correcta)",
   "machine": true
@@ -2681,6 +2781,10 @@
  },
  "Playwright request fixture.": "Fixture request de Playwright.",
  "Playwright v1.⟦1⟧": "Playwright v1.⟦1⟧",
+ "Playwright-based, stealth, open-source.": {
+  "text": "Basado en dramaturgos, sigiloso y de código abierto.",
+  "machine": true
+ },
  "Playwright's new_page() Pulled Chrome to the Front.": {
   "text": "New_page() del dramaturgo llevó a Chrome al frente.",
   "machine": true
@@ -2771,6 +2875,10 @@
   "machine": true
  },
  "Rappi's viewport sets maximum-scale=⟦1⟧.": "El viewport de Rappi fija maximum-scale=⟦1⟧.",
+ "Raw Guzzle works until it hurts; the open-source...": {
+  "text": "Raw Guzzle funciona hasta que duele; el código abierto...",
+  "machine": true
+ },
  "React's docs pages have no description.": "Las páginas de documentación de React no tienen descripción.",
  "Read more ›": "Leer más ›",
  "Read only the h1 of your top ten pages.": "Lee solo el h1 de tus diez páginas principales.",
@@ -2804,6 +2912,10 @@
  "Real run, worldwide card. ⟦1⟧ receives mail, but has no SPF.": "Ejecución real, tarjeta mundial. ⟦1⟧ recibe correo, pero no tiene SPF.",
  "Real run, worldwide card. ⟦1⟧'s home page has an empty headline.": "Ejecución real, tarjeta mundial. La home de ⟦1⟧ tiene un headline vacío.",
  "Real run, worldwide card. oneworld: fast, but zoom is locked.": "Ejecución real, tarjeta mundial. oneworld: rápido, pero con el zoom bloqueado.",
+ "Recent supply-chain attacks reveal why software updates, vendor trust, and verification deserve closer scrutiny.": {
+  "text": "Los recientes ataques a la cadena de suministro revelan por qué las actualizaciones de software, la confianza de los proveedores y la verificación merecen un examen más detenido.",
+  "machine": true
+ },
  "Recheck headers after config changes.": "Revisa las cabeceras tras cada cambio de configuración.",
  "Redirect every http request to https with a ⟦1⟧, then add Strict-Transport-Security.": "Redirige cada petición http a https con un ⟦1⟧ y luego añade Strict-Transport-Security.",
  "Redirect every http request to https with a ⟦1⟧.": "Redirige cada petición http a https con un ⟦1⟧.",
@@ -2832,6 +2944,10 @@
  "Renew the TLS certificate automatically, and alert well before it expires.": "Renueva el certificado TLS automáticamente y avisa mucho antes de que caduque.",
  "Replace ALLOW-FROM with Content-Security-Policy: frame-ancestors 'self' plus the one partner you allow.": "Sustituye ALLOW-FROM por Content-Security-Policy: frame-ancestors 'self' más el único socio que permitas.",
  "Report-Only shows what would be blocked, so you can enforce with confidence a week later.": "Report-Only muestra lo que se bloquearía, así que una semana después puedes aplicarla con confianza.",
+ "Report: ⟦1⟧": {
+  "text": "Informe: ⟦1⟧",
+  "machine": true
+ },
  "Reporting SEO when GA4 sees less": "Informar de SEO cuando GA4 ve menos",
  "Reproduce the flake, read the trace, then fix timing, selectors, shared data or the CI environment, in that order.": {
   "text": "Reproduzca la escama, lea el seguimiento y luego corrija la sincronización, los selectores, los datos compartidos o el entorno de CI, en ese orden.",
@@ -2902,6 +3018,10 @@
  "SATENA's pages have no canonical.": "Las páginas de SATENA no tienen canonical.",
  "Scale an AI content factory without erasing local relevance by grounding each market's pages in approved facts, local evidence, and human judgment.": {
   "text": "Amplíe una fábrica de contenido de IA sin borrar la relevancia local al basar las páginas de cada mercado en hechos aprobados, evidencia local y juicio humano.",
+  "machine": true
+ },
+ "Schedule Google PageSpeed Insights from Laravel, store scores and Core Web Vitals fields, and watch API quota.": {
+  "text": "Programe Google PageSpeed ​​Insights desde Laravel, almacene puntuaciones y campos de Core Web Vitals, y observe la cuota de API.",
   "machine": true
  },
  "Scored ⟦1⟧ of ⟦2⟧.": {
@@ -3085,6 +3205,10 @@
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analítica ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ páginas analizadas, ⟦9⟧ oct. ⟦10⟧.",
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
  "SEO card.": "Tarjeta de SEO.",
+ "SEO skill for Claude Code and Codex: grow signups from search using your own Search Console data.": {
+  "text": "Habilidad de SEO para Claude Code y Codex: aumente los registros de búsqueda utilizando sus propios datos de Search Console.",
+  "machine": true
+ },
  "SEO Split Testing In ⟦1⟧:": {
   "text": "Pruebas divididas de SEO en ⟦1⟧:",
   "machine": true
@@ -3160,6 +3284,14 @@
  "siketyan/xwright:": "siketyan/xwright:",
  "Simple Library adalah Tema Blogger responsif dan SEO-friendly yang dirancang khusus untuk website perpustakaan sekolah.": {
   "text": "Biblioteca simple adalah Tema Blogger responsable y compatible con SEO yang dirancang khusus untuk website perpustakaan sekolah.",
+  "machine": true
+ },
+ "Simulate human-like browsing behavior, search referrals, and CTR patterns for analytics validation.": {
+  "text": "Simule el comportamiento de navegación, las referencias de búsqueda y los patrones de CTR similares a los humanos para la validación analítica.",
+  "machine": true
+ },
+ "Simulate human-like browsing behavior, search referrals, and CTR patterns for analytics validation…": {
+  "text": "Simule el comportamiento de navegación humano, las referencias de búsqueda y los patrones de CTR para la validación analítica...",
   "machine": true
  },
  "Site owners should also check exposed accounts and unauthorized changes.": {
@@ -3302,6 +3434,10 @@
  "The Botanic Garden loads logos over http.": "El Jardín Botánico carga logos por http.",
  "The browser then reserves the space early.": "Así el navegador reserva el espacio desde el principio.",
  "The catch: every page reports to two GA4 properties.": "El detalle: cada página reporta a dos propiedades de GA4.",
+ "The CMS market is fragmenting, and platform choice now carries direct implications for scalability, SEO, and revenue growth.": {
+  "text": "El mercado de CMS se está fragmentando y la elección de plataforma ahora tiene implicaciones directas para la escalabilidad, el SEO y el crecimiento de los ingresos.",
+  "machine": true
+ },
  "The colour picker shows the ratio.": "El selector de color muestra la ratio.",
  "The Complete AI Research Workflow:": {
   "text": "El flujo de trabajo completo de investigación de IA:",
@@ -3463,6 +3599,10 @@
   "text": "La publicación China escribió el primer libro de reglas de GEO después de un escándalo televisivo: los SEO occidentales deberían tomar notas apareció por primera vez en Search Engine Journal.",
   "machine": true
  },
+ "The post CMS Market Share Trends:": {
+  "text": "El post Tendencias de participación de mercado de CMS:",
+  "machine": true
+ },
  "The post Core Update, ChatGPT Business Hub & AI Mode’s New Model – SEO Pulse appeared first on Search Engine Journal .": {
   "text": "La publicación Actualización principal, ChatGPT Business Hub y nuevo modelo del modo AI: SEO Pulse apareció por primera vez en Search Engine Journal.",
   "machine": true
@@ -3603,6 +3743,10 @@
   "machine": true
  },
  "The post What Search Console Can Still Tell You When Indexing Data Lags appeared first on Search Engine Journal .": "La entrada Lo que Search Console aún puede decirte cuando los datos de indexación se retrasan apareció primero en Search Engine Journal .",
+ "The post When The WordPress Plugin Update Is The Security Risk:": {
+  "text": "La publicación Cuando la actualización del complemento de WordPress es un riesgo para la seguridad:",
+  "machine": true
+ },
  "The Rijksmuseum's HSTS lasts ⟦1⟧ days.": "El HSTS del Rijksmuseum dura ⟦1⟧ días.",
  "The score below it is one lab run on a simulated phone.": "La puntuación de abajo es una sola prueba de laboratorio en un teléfono simulado.",
  "The Screen Reader Read My Whole Answer ⟦1⟧ Times:": {
@@ -3623,6 +3767,14 @@
  "The UN home page never says its language.": "La portada de la ONU nunca indica su idioma.",
  "The usual answer was ⟦1⟧ Not Found.": "La respuesta habitual fue ⟦1⟧ Not Found.",
  "The Verifiable Credentials Working Group has published a series of W3C Working Group Note Drafts for threat models.": "El Verifiable Credentials Working Group publicó una serie de borradores de notas de grupo de trabajo del W3C sobre modelos de amenazas.",
+ "The Visual Architecture Guide to the Browser Accessibility Tree": {
+  "text": "La guía de arquitectura visual para el árbol de accesibilidad del navegador",
+  "machine": true
+ },
+ "The W3C Advisory Committee, having nominated nine individuals, is invited today to vote until ⟦1⟧ December ⟦2⟧ to fill five seats in the W3C TAG election.": {
+  "text": "El Comité Asesor del W3C, después de haber nominado a nueve personas, está invitado hoy a votar hasta el ⟦1⟧ de diciembre ⟦2⟧ para cubrir cinco puestos en la elección del W3C TAG.",
+  "machine": true
+ },
  "The World Bank:": "El Banco Mundial:",
  "The zombie redirect chain: it keeps coming back.": "La cadena de redirecciones zombi: vuelve una y otra vez.",
  "Their security scores still range from ⟦1⟧ to ⟦2⟧ out of ⟦3⟧.": "Aun así, sus puntuaciones de seguridad van de ⟦1⟧ a ⟦2⟧ sobre ⟦3⟧.",
@@ -3716,6 +3868,10 @@
   "text": "Tiempo, memoria y fugas medidas en Dramaturgia",
   "machine": true
  },
+ "tipsai/product-seo:": {
+  "text": "tipsai/producto-seo:",
+  "machine": true
+ },
  "TL;DR:": "TL;DR:",
  "TLS.": "TLS.",
  "To test optimistic UI rollback in a public SaaS demo, show an immediate interface change,...": {
@@ -3730,6 +3886,14 @@
  "Tolima's ⟦1⟧ shuts out AI answers.": "El ⟦1⟧ del Tolima deja fuera las respuestas con IA.",
  "Tom Capper reveals the ⟦1⟧ biggest mistakes in AI prompt tracking and ⟦2⟧ creative ways to expand your list of prompts.": {
   "text": "Tom Capper revela los ⟦1⟧ errores más grandes en el seguimiento de mensajes de IA y ⟦2⟧ formas creativas de ampliar su lista de mensajes.",
+  "machine": true
+ },
+ "Top Content Management Systems (Nov ⟦1⟧) appeared first on Search Engine Journal .": {
+  "text": "Principales sistemas de gestión de contenido (⟦1⟧ de noviembre) apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "Top Content Management Systems (Nov ⟦1⟧) via ⟦2⟧, ⟦3⟧": {
+  "text": "Principales sistemas de gestión de contenido (⟦1⟧ de noviembre) a través de ⟦2⟧, ⟦3⟧",
   "machine": true
  },
  "Training bots and answer bots are separate user-agents, so each can get its own rule.": "Los bots de entrenamiento y los de respuestas son user-agents distintos, así que cada uno puede tener su propia regla.",
@@ -3748,6 +3912,10 @@
  "Try it now:": "Pruébalo ya:",
  "Try this today:": "Prueba esto hoy:",
  "Try this:": "Prueba esto:",
+ "Tthanh2k6/turbo-browser-mcp:": {
+  "text": "Tthanh2k6/turbo-navegador-mcp:",
+  "machine": true
+ },
  "Tunja's home page says \"Territoriales\".": "La portada de Tunja dice \"Territoriales\".",
  "Turn off version tokens (server_tokens off in nginx).": "Desactiva los tokens de versión (server_tokens off en nginx).",
  "Two capital city portals, ⟦1⟧ pages each, analyzed by the same public-page review in October ⟦2⟧.": "Dos portales de capitales, ⟦1⟧ páginas cada uno, analizados con la misma revisión de páginas públicas en octubre de ⟦2⟧.",
@@ -3850,6 +4018,10 @@
   "text": "Vía DEV, por Alina Shah, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by Apogee Watcher, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Apogee Watcher, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by AppInitDev, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por AppInitDev, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
@@ -3898,6 +4070,10 @@
  "Via DEV, by Henry Lee, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Henry Lee, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via DEV, by Hill Country Bots, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, por Hill Country Bots, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via DEV, by Jack Yu, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por Jack Yu, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via DEV, by Jaja juliana, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -3958,8 +4134,16 @@
   "text": "Vía DEV, por Priyansh Narang, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via DEV, by S M Tahosin, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por S M Tahosin, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via DEV, by Simon Gerber, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía DEV, de Simon Gerber, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via DEV, by SpellzCode, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía DEV, por SpellzCode, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via DEV, by Srikar Phani Kumar Marti, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía DEV, por Srikar Phani Kumar Marti, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -3985,6 +4169,10 @@
   "text": "Vía GitHub, por alpinjolala, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
+ "Via GitHub, by boringmarketer, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "A través de GitHub, por aburridomarketer, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via GitHub, by dansugc, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por dansugc, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by esdrassantos06, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por esdrassantos06, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -3995,6 +4183,10 @@
   "machine": true
  },
  "Via GitHub, by Followertustuff, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por Followertustuff, ⟦1⟧-⟦2⟧-⟦3⟧.",
+ "Via GitHub, by HallDreamBulwark, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por HallDreamBulwark, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Via GitHub, by iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por iamumeransari, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by irraz, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por irraz, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -4006,6 +4198,10 @@
  },
  "Via GitHub, by LoyaltyobsidianOcean2704, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por LoyaltyobsidianOcean2704, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via GitHub, by Minibruimplode, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por Minibruimplode, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via GitHub, by nautnhanahp-design, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por nautnhanahp-design, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -4029,6 +4225,14 @@
  "Via GitHub, by siketyan, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por siketyan, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via GitHub, by Snorlark, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía GitHub, por Snorlark, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via GitHub, by tipsai, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por tipsai, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via GitHub, by Tthanh2k6, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía GitHub, por Tthanh2k6, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via GitHub, by zhtyyx, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía GitHub, por zhtyyx, ⟦1⟧-⟦2⟧-⟦3⟧.",
@@ -4078,6 +4282,10 @@
  "Via Search Engine Journal, by Adam Riemer, ⟦1⟧-⟦2⟧-⟦3⟧.": "Vía Search Engine Journal, por Adam Riemer, ⟦1⟧-⟦2⟧-⟦3⟧.",
  "Via Search Engine Journal, by Bartek Jazwinski, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía Search Engine Journal, de Bartek Jazwinski, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via Search Engine Journal, by Carolyn Shelby, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Search Engine Journal, de Carolyn Shelby, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via Search Engine Journal, by Chris Green, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -4133,6 +4341,10 @@
  },
  "Via Search Engine Journal, by Sally Mills, ⟦1⟧-⟦2⟧-⟦3⟧.": {
   "text": "Vía Search Engine Journal, de Sally Mills, ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
+ "Via Search Engine Journal, by Shelley Walsh, ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vía Search Engine Journal, de Shelley Walsh, ⟦1⟧-⟦2⟧-⟦3⟧.",
   "machine": true
  },
  "Via Search Engine Journal, by Slobodan Manic, ⟦1⟧-⟦2⟧-⟦3⟧.": {
@@ -4191,6 +4403,10 @@
  "W3C maps the web for AI agents": "El W3C traza el mapa de la web para agentes de IA",
  "W3C maps the web for AI agents; axe-core ⟦1⟧ turns on Label in Name; Screen reader tests in Playwright; Encoded brackets make a new URL; CSS Animation Triggers: a first draft.": "El W3C traza el mapa de la web para agentes de IA; axe-core ⟦1⟧ activa Etiqueta en el nombre; Pruebas con lector de pantalla en Playwright; Los corchetes codificados crean otra URL; CSS Animation Triggers: un primer borrador.",
  "W3C on AI agents, axe-core ⟦1⟧, screen reader tests in Playwright, bracket URLs and CSS animation triggers.": "El W3C sobre agentes de IA, axe-core ⟦1⟧, pruebas con lector de pantalla en Playwright, URL con corchetes y CSS animation triggers.",
+ "W3C opens Technical Architecture Group (TAG) election": {
+  "text": "El W3C abre las elecciones del Grupo de Arquitectura Técnica (TAG)",
+  "machine": true
+ },
  "W3C's home pages share one title.": "Las portadas del W3C comparten un mismo título.",
  "W3C's Strategy Team set out how the web's technical agenda should change now that AI agents act on people's behalf, while keeping people at the center of the web.": "El equipo de estrategia del W3C expuso cómo debería cambiar la agenda técnica de la web ahora que los agentes de IA actúan en nombre de las personas, sin dejar de poner a las personas en el centro de la web.",
  "Want to know more about the Ambassador program?": {
@@ -4245,6 +4461,10 @@
   "text": "Qué enterrar y qué aún gana a través de ⟦1⟧, ⟦2⟧",
   "machine": true
  },
+ "What to change:": {
+  "text": "Qué cambiar:",
+  "machine": true
+ },
  "What To Fix To Help Shoppers Choose Your Products": {
   "text": "Qué solucionar para ayudar a los compradores a elegir sus productos",
   "machine": true
@@ -4265,6 +4485,10 @@
   "machine": true
  },
  "When the same content answers at several addresses, ranking signals split between them.": "Cuando el mismo contenido responde en varias direcciones, las señales de ranking se reparten entre ellas.",
+ "When The WordPress Plugin Update Is The Security Risk:": {
+  "text": "Cuando la actualización del complemento de WordPress es un riesgo para la seguridad:",
+  "machine": true
+ },
  "When you build a test automation framework, configuration is usually an afterthought.": {
   "text": "Cuando se crea un marco de automatización de pruebas, la configuración suele ser una ocurrencia tardía.",
   "machine": true
@@ -4278,6 +4502,10 @@
   "machine": true
  },
  "Whether captions come from an automatic tool or a professional service, this article explains why evaluating the finished viewing experience is essential for people who rely on captions.": "Ya sea que los subtítulos provengan de una herramienta automática o de un servicio profesional, este artículo explica por qué evaluar la experiencia de visualización final es esencial para las personas que dependen de los subtítulos.",
+ "Which SaaS & AI Tools Actually Get Traffic from ChatGPT, Gemini, and Perplexity?": {
+  "text": "¿Qué herramientas SaaS e IA realmente obtienen tráfico de ChatGPT, Gemini y Perplexity?",
+  "machine": true
+ },
  "While using a browser automation agent over Model Context Protocol (MCP) to prefill job applications...": {
   "text": "Al utilizar un agente de automatización del navegador a través del Protocolo de contexto modelo (MCP) para completar previamente las solicitudes de empleo...",
   "machine": true
@@ -4290,6 +4518,14 @@
  },
  "Why SEOs Need More Than Block Lists via ⟦1⟧, ⟦2⟧": {
   "text": "Por qué los SEO necesitan más que listas de bloqueo a través de ⟦1⟧, ⟦2⟧",
+  "machine": true
+ },
+ "Why SEOs Should Pay Attention appeared first on Search Engine Journal .": {
+  "text": "Por qué los SEO deberían prestar atención apareció por primera vez en Search Engine Journal.",
+  "machine": true
+ },
+ "Why SEOs Should Pay Attention via ⟦1⟧, ⟦2⟧": {
+  "text": "Por qué los SEO deberían prestar atención a través de ⟦1⟧, ⟦2⟧",
   "machine": true
  },
  "Why we replaced a CRUD exercise with a real-work simulation, injected failures with MSW, and auto-graded submissions with E2E tests in CI.": "Por qué reemplazamos un ejercicio CRUD por una simulación de trabajo real, inyectamos fallos con MSW y calificamos automáticamente las entregas con pruebas E2E en CI.",
@@ -4376,6 +4612,10 @@
  },
  "You write a...": {
   "text": "Escribes un...",
+  "machine": true
+ },
+ "Your ⟦1⟧ Lighthouse A11y Score Is a Lie:": {
+  "text": "Tu puntuación de ⟦1⟧ Lighthouse A11y es una mentira:",
   "machine": true
  },
  "Your Accessibility and UI Coverage reports already tell you a lot.": "Tus informes de Accessibility y UI Coverage ya te dicen mucho.",

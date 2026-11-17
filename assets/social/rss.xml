@@ -129,6 +129,48 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>HallDreamBulwark/web-traffic-simulator: Advanced web traffic generator and SEO testing tool. Simulate human-like browsing behavior, search referrals, and CTR patterns for analytics validation…</title>
+      <link>https://carlosandmunoz.com/social/pick/halldreambulwark-web-traffic-simulator-advanced-web-traffic-.html</link>
+      <guid isPermaLink="false">pick/halldreambulwark-web-traffic-simulator-advanced-web-traffic-</guid>
+      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Advanced web traffic generator and SEO testing tool. Simulate human-like browsing behavior, search referrals, and CTR patterns for analytics validation. Playwright-based, stealth, open-source.
+
+Via GitHub, by HallDreamBulwark, 2026-11-17.
+
+https://github.com/HallDreamBulwark/web-traffic-simulator</description>
+      <media:content url="https://opengraph.githubassets.com/1/HallDreamBulwark/web-traffic-simulator" medium="image"/>
+    </item>
+    <item>
+      <title>W3C opens Technical Architecture Group (TAG) election</title>
+      <link>https://carlosandmunoz.com/social/pick/w3c-opens-technical-architecture-group-tag-election.html</link>
+      <guid isPermaLink="false">pick/w3c-opens-technical-architecture-group-tag-election</guid>
+      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Standards</category>
+      <description>The W3C Advisory Committee, having nominated nine individuals, is invited today to vote until 15 December 2026 to fill five seats in the W3C TAG election.
+
+Via W3C, 2026-11-17.
+
+https://www.w3.org/news/2026/w3c-opens-technical-architecture-group-tag-election/</description>
+      <media:content url="https://www.w3.org/assets/website-2021/images/w3c-opengraph-image.png" medium="image"/>
+    </item>
+    <item>
+      <title>Your 100% Lighthouse A11y Score Is a Lie: The Visual Architecture Guide to the Browser Accessibility Tree</title>
+      <link>https://carlosandmunoz.com/social/pick/your-100-lighthouse-a11y-score-is-a-lie-the-visual-architect.html</link>
+      <guid isPermaLink="false">pick/your-100-lighthouse-a11y-score-is-a-lie-the-visual-architect</guid>
+      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>A visual, 10-minute deep dive into web accessibility architecture. Learn how browsers construct the Accessibility Tree from the DOM, why custom ARIA divs create more errors than native HTML, how CSS visibility properties alter screen reader output, and how to build leak-free accessible focus traps.
+
+Via DEV, by S M Tahosin, 2026-11-16.
+
+https://dev.to/smtahosin/your-100-lighthouse-a11y-score-is-a-lie-the-visual-architecture-guide-to-the-browser-50l7</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fi.imgur.com%2FoLZVOCF.png" medium="image"/>
+    </item>
+    <item>
       <title>El País sends no security headers.</title>
       <link>https://carlosandmunoz.com/social/runs-100/14-elpais.html</link>
       <guid isPermaLink="false">runs-100/14-elpais</guid>
@@ -559,6 +601,24 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>WHO's fact sheets end in a stray semicolon.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>WHO welcomes AI answer crawlers and its pages read well without JavaScript: GEO 91. But the JSON-LD on its fact sheets ends in &quot;};&quot;, and a strict parser drops the whole block.
+
+The lesson for every team: Run every JSON-LD block through a JSON validator before release. One character can void the entire block.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>setec.mk: 61. The gap: the sitemap host.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk</guid>
@@ -816,62 +876,6 @@ Via Search Engine Journal, by Adam Riemer, 2026-11-12.
 
 https://www.searchenginejournal.com/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-gemini-ask-an-seo/585080/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-adam-riemer-376.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google Explains How To Find Search Traffic In Analytics &amp; Logs via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-find-search-traffic-in-analytics-logs.html</link>
-      <guid isPermaLink="false">pick/google-explains-how-to-find-search-traffic-in-analytics-logs</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Analytics</category>
-      <description>A Google Search help page lists the referrer values Search traffic sends, why some visits arrive with none, and why counts differ from Search Console. The post Google Explains How To Find Search Traffic In Analytics &amp; Logs appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-14.
-
-https://www.searchenginejournal.com/google-search-traffic-analytics-logs/597382/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-search-traffic-analytics-logs.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google Releases Modern Web Guidance 1.0 For AI Coding Agents via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-releases-modern-web-guidance-1-0-for-ai-coding-agents.html</link>
-      <guid isPermaLink="false">pick/google-releases-modern-web-guidance-1-0-for-ai-coding-agents</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Google’s Modern Web Guidance 1.0 adds a codebase audit to its free skill set for AI coding agents. The post Google Releases Modern Web Guidance 1.0 For AI Coding Agents appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-10.
-
-https://www.searchenginejournal.com/google-releases-modern-web-guidance-1-0-for-ai-coding-agents/596495/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-modern-web-guidance-featured-1600x840-1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Hands-On with Playwright Test Agents: Planner, Generator, Healer — Measured</title>
-      <link>https://carlosandmunoz.com/social/pick/hands-on-with-playwright-test-agents-planner-generator-heale.html</link>
-      <guid isPermaLink="false">pick/hands-on-with-playwright-test-agents-planner-generator-heale</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Playwright's official test agents evaluated properly: generated suite quality vs a baseline, the 43-minute agentic tax, and why the healer should never run unsupervised.
-
-Via DEV, by Gary Parker, 2026-11-12.
-
-https://garyparker.dev/blog/hands-on-with-playwright-test-agents</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fgaryparker.dev%2Fblog%2Fhands-on-with-playwright-test-agents%2Fopengraph-image" medium="image"/>
-    </item>
-    <item>
-      <title>How to run bulk PageSpeed Insights checks for hundreds of URLs (and export Core Web Vitals to CSV)</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-ur.html</link>
-      <guid isPermaLink="false">pick/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-ur</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Performance</category>
-      <description>The PageSpeed Insights website is fine when you have one URL. It is a slow way to check a sitemap, a...
-
-Via DEV, by Hill Country Bots, 2026-11-12.
-
-https://dev.to/hillcountrybots/how-to-run-bulk-pagespeed-insights-checks-for-hundreds-of-urls-and-export-core-web-vitals-to-csv-2mn9</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9ikuqgcvsxmz0iwehtr3.png" medium="image"/>
     </item>
   </channel>
 </rss>

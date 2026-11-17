@@ -405,6 +405,24 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/13-dw.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Las notas descriptivas de la OMS acaban en un punto y coma suelto.</title>
+      <link>https://carlosandmunoz.com/social/runs-2026-10/03-who-es.html</link>
+      <guid isPermaLink="false">runs-2026-10/03-who-es</guid>
+      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>La OMS da la bienvenida a los rastreadores de respuestas de IA y sus páginas se leen bien sin JavaScript: GEO 91. Pero el JSON-LD de sus fichas termina en &quot;};&quot;, y un parser estricto descarta el bloque entero.
+
+La lección para cualquier equipo: Pasa cada bloque JSON-LD por un validador JSON antes del lanzamiento. Un carácter puede invalidar el bloque entero.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-2026-10&amp;utm_content=who
+
+#StructuredData #SEO #GEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" length="245630" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-2026-10/feed/03-who.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>setec.mk: 61. La brecha: el host del mapa del sitio.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/11-u-setec-mk-es.html</link>
       <guid isPermaLink="false">auto-2026-11-04/11-u-setec-mk-es</guid>
@@ -843,6 +861,23 @@ Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-g
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/11-guardian.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>La búsqueda con IA lee tu HTML, no tu app.</title>
+      <link>https://carlosandmunoz.com/social/tips-2026-10/20-html-first-es.html</link>
+      <guid isPermaLink="false">tips-2026-10/20-html-first-es</guid>
+      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Consejo</category>
+      <category>GEO</category>
+      <description>Muchos motores de respuestas no ejecutan JavaScript. Si tus datos clave solo aparecen después de cargar los scripts, puede que nunca se lean ni se citen.
+
+Prueba esto hoy: Mira el código fuente de tu portada. ¿Se ve qué vendes y para quién, sin ejecutar scripts?
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=tips-2026-10&amp;utm_content=html-first
+
+#GEO #AISearch #SEO #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" length="223510" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/tips-2026-10/feed/20-html-first.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>2 competidores naturales. vivastreet.ie va en cabeza: 74.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-03/11-vs-vivastreet-ie-es.html</link>
       <guid isPermaLink="false">auto-2026-11-03/11-vs-vivastreet-ie-es</guid>
@@ -861,46 +896,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #QA #WebPerf #SoftwareEngineering #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/11-vs-vivastreet-ie.jpg" length="243046" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-03/feed/11-vs-vivastreet-ie.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ucentral.edu.co: 62. El punto débil: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/10-u-ucentral-edu-co-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/10-u-ucentral-edu-co-es</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
-
-La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
-
-Un análisis automatizado de páginas públicas el 4 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-ucentral-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ucentral-edu-co
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #Automation #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/10-u-ucentral-edu-co.jpg" length="228154" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/10-u-ucentral-edu-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ufrj.br: 74. El punto débil: nombres de botones.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/09-u-ufrj-br-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/09-u-ufrj-br-es</guid>
-      <pubDate>Sat, 14 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los botones deben tener texto discernible.
-
-La lección para cualquier equipo: Dale a cada botón texto o un aria-label, para que un lector de pantalla pueda anunciarlo.
-
-Un análisis automatizado de páginas públicas el 5 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-ufrj-br&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ufrj-br
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #HTML #CSS #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg" length="229863" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/09-u-ufrj-br.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

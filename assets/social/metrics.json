@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-17T21:55:14.427Z",
+ "updatedAt": "2026-11-17T22:21:42.536Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -415,6 +415,11 @@
    },
    "reddit": {
     "likes": 1
+   }
+  },
+  "auto-2026-10-22/16-u-honda-com": {
+   "telegram": {
+    "views": 1
    }
   },
   "auto-2026-10-23/01-u-pirouline-com": {
@@ -1087,6 +1092,23 @@
   "auto-2026-11-09/01-u-beatmastering-ir": {
    "telegram": {
     "views": 1
+   },
+   "linkedin": {
+    "impressions": 18,
+    "likes": 1
+   },
+   "tiktok": {
+    "views": 39,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "youtube": {
+    "views": 5,
+    "likes": 1,
+    "comments": 1
    }
   },
   "auto-2026-11-09/03-vs-tide-forecast-com": {
@@ -1112,6 +1134,11 @@
    "youtube": {
     "likes": 1,
     "comments": 1
+   }
+  },
+  "auto-2026-11-10/01-u-motorsport-total-com": {
+   "telegram": {
+    "views": 1
    }
   },
   "auto-2026-11-10/02-u-meutimao-com-br": {
@@ -1194,6 +1221,27 @@
   "auto-2026-11-15/03-vs-mccabespharmacy-com": {
    "telegram": {
     "views": 2
+   },
+   "linkedin": {
+    "impressions": 1
+   },
+   "tiktok": {
+    "views": 82,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 2,
+    "likes": 1,
+    "comments": 1
+   }
+  },
+  "auto-2026-11-16/02-u-predictz-com": {
+   "telegram": {
+    "views": 1
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -1577,6 +1625,11 @@
     "likes": 1
    }
   },
+  "evergreen-2026-11/01-ttfb-curl": {
+   "telegram": {
+    "views": 1
+   }
+  },
   "evergreen-2026-11/02-myth-lighthouse": {
    "linkedin": {
     "impressions": 3,
@@ -1949,6 +2002,11 @@
     "likes": 1
    }
   },
+  "live/2026-11-17": {
+   "telegram": {
+    "views": 1
+   }
+  },
   "promo-social-hub-2026-10/01-one-page-en": {
    "linkedin": {
     "impressions": 8,
@@ -2144,6 +2202,17 @@
   "promo-social-hub-2026-10/33-clips-it": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 39,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "runs-100/01-wikipedia": {
@@ -2178,11 +2247,44 @@
   "runs-2026-10/02-bogota": {
    "telegram": {
     "views": 2
+   },
+   "linkedin": {
+    "impressions": 5
+   },
+   "tiktok": {
+    "views": 75,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-2026-10/03-who": {
    "telegram": {
     "views": 2
+   },
+   "linkedin": {
+    "impressions": 3,
+    "likes": 1
+   },
+   "tiktok": {
+    "views": 17,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 3
+   },
+   "youtube": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-3/01-ilo": {
@@ -2793,6 +2895,17 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 3
+   },
+   "tiktok": {
+    "views": 60,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 4
    }
   },
   "tips-horror-headers-2026-10/01-missing-csp": {
@@ -2910,9 +3023,9 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 148,
-   "answered": 148,
-   "insights": 148
+   "asked": 153,
+   "answered": 153,
+   "insights": 153
   }
  },
  "channels": {
@@ -2969,7 +3082,8 @@
      "date": "2026-11-17",
      "members": 3
     }
-   ]
+   ],
+   "error": "Telegram 504: Gateway Timeout"
   }
  }
 }
