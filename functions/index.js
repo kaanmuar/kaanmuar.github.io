@@ -4419,6 +4419,7 @@ async function reviewAccount(req, res, pathName) {
     const agencyOk = reviewAgency.agencyEligible(file.passDetail);
     res.status(200).json(Object.assign(file, {
       comparisons: await savedComparisons(db, signedIn.email),
+      batches: await savedBatches(db, signedIn.email),
       agency: agencyOk,
       branding: reviewAgency.publicBranding(accountRow),
       agencyCi: agencyOk ? reviewAgency.publicWebhook(accountRow) : null,
@@ -4559,6 +4560,16 @@ async function savedComparisons(db, email) {
     return reviewMulti.listOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), email);
   } catch (error) {
     console.error("Saved comparisons did not load:", error);
+    return [];
+  }
+}
+
+async function savedBatches(db, email) {
+  try {
+    const snap = await db.collection(reviewBatch.COLLECTION).where("email", "==", email).limit(reviewBatch.LISTED_MAX * 2).get();
+    return reviewBatch.listOf(snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())), email);
+  } catch (error) {
+    console.error("Saved batches did not load:", error);
     return [];
   }
 }

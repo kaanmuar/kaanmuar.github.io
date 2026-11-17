@@ -74,3 +74,18 @@ test("batch mail covers a finished batch", () => {
   assert.match(asker.text, /a\.example/);
   assert.match(asker.html, /batch=batch1/);
 });
+
+test("listOf keeps own batches newest first", () => {
+  const docs = [
+    { id: "old", email: "a@b.co", createdAt: "2026-01-01T00:00:00Z", status: "done", hosts: ["a.example"], rows: [{ state: "done" }, { state: "done" }], urls: ["https://a.example/"] },
+    { id: "new", email: "a@b.co", createdAt: "2026-02-01T00:00:00Z", status: "running", hosts: ["b.example", "c.example"], rows: [{ state: "done" }, { state: "waiting" }], urls: [] },
+    { id: "other", email: "x@y.co", createdAt: "2026-03-01T00:00:00Z", status: "done", hosts: ["z.example"], rows: [{ state: "done" }], urls: [] }
+  ];
+  const listed = batch.listOf(docs, "a@b.co");
+  assert.equal(listed.length, 2);
+  assert.equal(listed[0].id, "new");
+  assert.equal(listed[0].done, 1);
+  assert.equal(listed[0].total, 2);
+  assert.deepEqual(listed[0].hosts, ["b.example", "c.example"]);
+  assert.equal(listed[1].id, "old");
+});
