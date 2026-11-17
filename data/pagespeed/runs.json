@@ -1,6 +1,116 @@
 {
  "runs": [
   {
+   "at": "2026-11-17T16:15:44.656Z",
+   "run": {
+    "id": 44110408631,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/44110408631"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2220,
+   "scored": 2208,
+   "failed": 12,
+   "below": 1344,
+   "avg": {
+    "mobile": 86,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-17",
+    "files": [
+     "index.html",
+     "media/qa-lab-running.html",
+     "media/qa-lab-tour.html"
+    ],
+    "fixes": [
+     {
+      "page": "media/qa-lab-tour.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "media/qa-lab-running.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 6 images or frames that start below 1.5 screens on phone and desktop."
+     }
+    ],
+    "pages": [
+     {
+      "file": "media/qa-lab-tour.html",
+      "mobile": {
+       "before": 90,
+       "after": 90,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/media/qa-lab-tour.html"
+     },
+     {
+      "file": "media/qa-lab-running.html",
+      "mobile": {
+       "before": 92,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/media/qa-lab-running.html"
+     },
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 63,
+       "after": 64,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 95,
+       "after": 95,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-16T19:23:00.423Z",
    "run": {
     "id": 43883474756,
