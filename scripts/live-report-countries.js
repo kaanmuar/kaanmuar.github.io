@@ -797,15 +797,13 @@ function attr(tag, name) {
 function textOf(html) {
 	return String(html || '')
 		.replace(
-			/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>|<noscript\b[\s\S]*?<\/noscript>|<svg\b[\s\S]*?<\/svg>/gi,
+			/<script\b[\s\S]*?<\/script\s*>|<style\b[\s\S]*?<\/style\s*>|<noscript\b[\s\S]*?<\/noscript\s*>|<svg\b[\s\S]*?<\/svg\s*>/gi,
 			' '
 		)
 		.replace(/<br\s*\/?>|<\/(p|div|li|td|h\d|address|span)>/gi, ', ')
 		.replace(/<[^>]+>/g, ' ')
 		.replace(/&nbsp;|&#160;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&#x27;|&#39;|&rsquo;/g, "'")
-		.replace(/&quot;/g, '"')
+		/* Numeric / named entities only once; plain text for country matching, not HTML (#3719). */
 		.replace(/&#(\d+);/g, (all, n) => {
 			try {
 				return String.fromCodePoint(Number(n));
@@ -813,6 +811,9 @@ function textOf(html) {
 				return ' ';
 			}
 		})
+		.replace(/&#x27;|&#39;|&rsquo;/g, "'")
+		.replace(/&quot;/g, '"')
+		.replace(/&amp;/g, '&')
 		.replace(/\s+/g, ' ')
 		.trim();
 }

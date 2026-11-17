@@ -28,7 +28,9 @@ const COUNTRY_NAMES = { colombia: "co", mexico: "mx", méxico: "mx", peru: "pe",
   "united states": "us", usa: "us" };
 
 const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
-const decode = (s) => String(s || "").replace(/&#64;|&#x40;|%40/gi, "@").replace(/&amp;/g, "&").replace(/&#46;|&#x2e;/gi, ".");
+/* Decode obfuscation only (@ / dot). Do not turn &amp; into & here: emailOf calls decode
+   again, and CodeQL flags that as double-unescaping (#3719 / alert 141). */
+const decode = (s) => String(s || "").replace(/&#64;|&#x40;|%40/gi, "@").replace(/&#46;|&#x2e;/gi, ".");
 
 /** True when the address sits on the site's domain (or one sits under the other). */
 function sameSite(email, host) {
@@ -48,7 +50,7 @@ function emailOf(raw, host) {
 /** Every JSON-LD object in a page, @graph members included. */
 function jsonLd(html) {
   const out = [];
-  const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script\s*>/gi;
   let m;
   const walk = (x) => {
     if (Array.isArray(x)) return x.forEach(walk);
@@ -141,7 +143,7 @@ function contactsOf(pages, host, hint) {
     const add = (raw) => { const e = emailOf(raw, host); if (e && !emails.has(e.email)) emails.set(e.email, Object.assign(e, { url: p.url })); };
     for (const m of html.matchAll(/href\s*=\s*["']mailto:([^"'?]+)/gi)) add(m[1]);
     org.emails.forEach(add);
-    const text = decode(html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/gi, " ")).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
+    const text = decode(html.replace(/<script\b[\s\S]*?<\/script\s*>|<style\b[\s\S]*?<\/style\s*>/gi, " ")).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
     for (const m of text.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add(m[0]);
     [...[...html.matchAll(/href\s*=\s*["']tel:([^"']+)/gi)].map((m) => m[1]), ...org.phones].map(phoneOf).forEach((x) => { if (x && !phones.includes(x)) phones.push(x); });
     socialHtml.push(html, org.sameAs.length ? '"sameAs": ' + JSON.stringify(org.sameAs) : "");
