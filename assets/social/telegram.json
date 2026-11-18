@@ -833,10 +833,10 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "at": "2026-11-18T22:35:19.561Z",
+    "at": "2026-11-18T23:11:18.366Z",
     "result": "failed",
     "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
-    "checked": "2026-11-18T22:35:21.647Z"
+    "checked": "2026-11-18T23:11:20.434Z"
    }
   ],
   "runs-2026-10/01-govuk": [
