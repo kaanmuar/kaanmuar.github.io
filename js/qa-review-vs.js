@@ -229,6 +229,19 @@
       '<h2 id="vs-details">' + esc(book.details) + "</h2>" + cards +
       '<p class="vs-note">' + esc(book.note) + "</p>" +
       '<p><a class="vs-cta" href="' + (lang === "en" ? "qa-review.html" : "qa-review-" + lang + ".html") + '">' + esc(book.cta) + "</a></p>";
+    if (root.querySelectorAll) {
+      root.querySelectorAll(".vs-langs a").forEach((link) => {
+        link.addEventListener("click", () => {
+          if (window.SiteAnalytics) window.SiteAnalytics.trackEvent("qa_review_vs_lang", "URL Review", link.getAttribute("lang") || "");
+        });
+      });
+    }
+    const cta = root.querySelector ? root.querySelector(".vs-cta") : null;
+    if (cta) {
+      cta.addEventListener("click", () => {
+        if (window.SiteAnalytics) window.SiteAnalytics.trackEvent("qa_review_vs_cta", "URL Review", lang);
+      });
+    }
     document.querySelectorAll("[data-vs-back]").forEach((link) => { link.href = lang === "en" ? "qa-review.html" : "qa-review-" + lang + ".html"; });
   }
 

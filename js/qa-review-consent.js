@@ -96,7 +96,7 @@
       if (sessionStorage.getItem(LANDING_KEY)) return;
       let referrerHost = "";
       try { referrerHost = document.referrer ? new URL(document.referrer).host : ""; } catch (error) { referrerHost = ""; }
-      sessionStorage.setItem(LANDING_KEY, JSON.stringify({ query: scrubbed(root.location.href).search.slice(0, 400), referrerHost: referrerHost.slice(0, 80) }));
+      sessionStorage.setItem(LANDING_KEY, JSON.stringify({ query: scrubbed(root.location.href).search.slice(0, 500), referrerHost: referrerHost.slice(0, 80) }));
     } catch (error) { /* storage is off */ }
   }
 
@@ -114,11 +114,12 @@
     if (root.top !== root.self || navigator.webdriver) return;
     const host = root.location.hostname;
     if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") return;
+    const page = (root.location.pathname.split("/").pop() || "qa-review.html").slice(0, 80);
+    if (!/^qa-review(-(?:es|pt|de|fr|it|pay(?:-(?:es|pt|de|fr|it))?|account|guide|legal|vs|explorer))?\.html$|^live\.html$/.test(page)) return;
     try {
       if (sessionStorage.getItem("qa-review-open-noted") === "1") return;
       sessionStorage.setItem("qa-review-open-noted", "1");
     } catch (error) { return; }
-    const page = (root.location.pathname.split("/").pop() || "qa-review.html").slice(0, 80);
     let referrerHost = "";
     try { referrerHost = document.referrer ? new URL(document.referrer).host : ""; } catch (error) { referrerHost = ""; }
     const query = scrubbed(root.location.href).search.slice(0, 120);

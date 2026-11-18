@@ -125,3 +125,39 @@ test("Consent Mode defaults scoped to regions are read as denied there, not as g
   assert.equal(finding(review(denied), "an-consent-mode").title, "Consent Mode v2 starts in denied");
   assert.equal(finding(review(denied), "an-consent-mode").evidence, "gtag consent default sets analytics_storage to denied and includes ad_user_data and ad_personalization.");
 });
+
+test("no-consent-tool finding downgrades and notes runtime Consent Mode when Google denied pings are observed (#890)", () => {
+  const consent = {
+    banner: "",
+    rejectLabel: "",
+    rejected: false,
+    before: {
+      vendors: [
+        { name: "Google Tag Manager", loads: 1, hits: 0, denied: 0, signals: [] },
+        { name: "Google Analytics", loads: 0, hits: 0, denied: 1, signals: ["G100"] }
+      ],
+      cookies: [],
+      cookieCount: 0
+    },
+    after: null
+  };
+  const result = review(GTM, browsed(consent));
+  const c = finding(result, "an-consent");
+  assert.equal(c.verdict, "risk");
+  assert.equal(c.severity, "medium");
+  assert.equal(c.title, "No consent banner was matched in the HTML while Consent Mode runs at runtime");
+  assert.match(c.evidence, /Google Analytics sent pings with Consent Mode denied/);
+  const mode = finding(result, "an-consent-mode");
+  assert.equal(mode.verdict, "pass");
+  assert.equal(mode.title, "Consent Mode defaults are set when the page runs, not in the HTML");
+});
+
+test("multiple GTM containers or duplicate gtm.js loads are flagged as an-gtm-duplicate", () => {
+  const dup = GTM + "<script src=\"https://www.googletagmanager.com/gtm.js?id=GTM-SECOND2\"></script>";
+  const parsed = core.analyzeHtml(dup, HEADERS, URL_).analytics;
+  assert.equal(parsed.gtmLoads, 2);
+  assert.deepEqual(parsed.gtmIds, ["GTM-M7H54VD", "GTM-SECOND2"]);
+  const f = finding(review(dup), "an-gtm-duplicate");
+  assert.equal(f.verdict, "risk");
+  assert.equal(f.severity, "medium");
+});

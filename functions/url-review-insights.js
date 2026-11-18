@@ -74,6 +74,7 @@ const REQUIRED_PROPS = {
 };
 
 const COOKIELESS = ["Plausible", "Fathom", "Cloudflare Web Analytics", "Umami", "Vercel Analytics"];
+const AD_TAGS = ["Google Ads", "Meta Pixel", "LinkedIn Insight", "TikTok Pixel", "X Pixel", "Pinterest Tag", "Microsoft Ads UET"];
 const NO_SRI_HOSTS = /(^|\.)(googletagmanager\.com|google-analytics\.com|google\.com|gstatic\.com|facebook\.net|doubleclick\.net|hotjar\.com|clarity\.ms|licdn\.com|hs-scripts\.com|hs-analytics\.net|stripe\.com|paypal\.com|recaptcha\.net|cloudflareinsights\.com|youtube\.com|twitter\.com|x\.com|tiktok\.com|bing\.com)$/i;
 const ANALYTICS_CONNECT = {
   "Google Analytics 4": ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"],
@@ -1301,6 +1302,27 @@ function analyze(input) {
   } else {
     add("SEO", "pass", "info", "seo-social", say("seo-social.pass.title"), say("seo-social.pass.evidence"), "", { cases: ["CT-03"] });
   }
+  if (social.ogUrl && face.seo && face.seo.canonicalAbs && normal(social.ogUrl) !== normal(face.seo.canonicalAbs)) {
+    add("SEO", "risk", "low", "seo-social-url", say("seo-social-url.title"),
+      say("seo-social-url.evidence", { ogUrl: shownAgainst(social.ogUrl, home.url), canonical: shownAgainst(face.seo.canonicalAbs, home.url) }),
+      say("seo-social-url.fix"), { effort: "minutes", cases: ["CT-03"] });
+  }
+  const shareImage = extras.shareImage || null;
+  if (shareImage && social.ogImage) {
+    const notImage = shareImage.contentType && !/^image\//i.test(shareImage.contentType);
+    if (!shareImage.status || shareImage.status >= 400 || notImage) {
+      add("SEO", "fail", "medium", "seo-social-image", say("seo-social-image.broken.title"),
+        say("seo-social-image.broken.evidence", {
+          url: shownAgainst(social.ogImage, home.url),
+          detail: notImage ? say("seo-social-image.broken.notImage", { type: shareImage.contentType }) : say("seo-social-image.broken.status", { status: shareImage.status || say("noAnswer") })
+        }),
+        say("seo-social-image.broken.fix"), { effort: "minutes", cases: ["CT-03"] });
+    } else if (shareImage.overLimit || shareImage.bytes > 300 * 1024) {
+      add("SEO", "risk", "low", "seo-social-image", say("seo-social-image.large.title"),
+        say("seo-social-image.large.evidence", { url: shownAgainst(social.ogImage, home.url), kb: Math.max(301, Math.round((shareImage.bytes || 307200) / 1024)) }),
+        say("seo-social-image.large.fix"), { effort: "minutes", cases: ["CT-03"] });
+    }
+  }
   if (!face.icon) add("SEO", "risk", "low", "seo-favicon", say("seo-favicon.title"), say("seo-favicon.evidence"), say("seo-favicon.fix"), { effort: "minutes" });
 
   const soft = extras.soft404 || {};
@@ -1483,6 +1505,12 @@ function analyze(input) {
       say("an-duplicate.evidence", { multi: multiGa.length ? say("an-duplicate.multi", { n: multiGa.length }) : "", double: doubleLoad.length ? say("an-duplicate.double", { n: doubleLoad.length }) : "" }),
       say("an-duplicate.fix"), { pages: multiGa.concat(doubleLoad).map((page) => page.path), effort: "minutes" });
   }
+  const multiGtm = read.filter((page) => ((page.inspect.analytics && page.inspect.analytics.gtmIds) || []).length > 1 || (page.inspect.analytics && page.inspect.analytics.gtmLoads) > 1);
+  if (multiGtm.length) {
+    add("Analytics", "risk", "medium", "an-gtm-duplicate", say("an-gtm-duplicate.title"),
+      say("an-gtm-duplicate.evidence", { n: multiGtm.length, list: some(multiGtm.map((page) => page.path), 4) }),
+      say("an-gtm-duplicate.fix"), { pages: multiGtm.map((page) => page.path), effort: "minutes" });
+  }
   if (tagPages["Google Tag Manager"] && tagPages["Google Analytics 4"]) {
     add("Analytics", "risk", "low", "an-gtm-and-gtag", say("an-gtm-and-gtag.title"),
       say("an-gtm-and-gtag.evidence"), say("an-gtm-and-gtag.fix"), { effort: "minutes" });
@@ -1492,9 +1520,17 @@ function analyze(input) {
       say("an-ua.fix"), { pages: tagPages["Universal Analytics"], effort: "minutes" });
   }
   if (tracking.length && !consentTools.length && !consentMode) {
-    add("Analytics", "risk", "high", "an-consent", say("an-consent.title"),
-      say("an-consent.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
-      say("an-consent.fix"), { effort: "hours", cases: ["PR-03", "AN-01"] });
+    if (googleTags.length && deniedPings.length) {
+      add("Analytics", "risk", "medium", "an-consent", say("an-consent.runtime.title"),
+        say("an-consent.runtime.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) }, pings: { items: deniedPings } }),
+        say("an-consent.runtime.fix"), { effort: "minutes", cases: ["PR-03", "AN-01"] });
+      add("Analytics", "pass", "info", "an-consent-mode", say("an-consent-mode.runtimeNoTool.title"),
+        say("an-consent-mode.runtimeNoTool.evidence", { pings: { items: deniedPings } }), "", { cases: ["PR-03", "AN-01"] });
+    } else {
+      add("Analytics", "risk", "high", "an-consent", say("an-consent.title"),
+        say("an-consent.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
+        say("an-consent.fix"), { effort: "hours", cases: ["PR-03", "AN-01"] });
+    }
   } else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
     add("Analytics", "pass", "info", "an-consent-mode", say("an-consent-mode.runtime.title"),
       say("an-consent-mode.runtime.evidence", { pings: { items: deniedPings }, tools }), "", { cases: ["PR-03", "AN-01"] });
@@ -1850,6 +1886,8 @@ function analyze(input) {
       title: social.ogTitle || titleText,
       description: social.ogDescription || description,
       image: /^https:\/\//i.test(social.ogImage || "") ? social.ogImage : "",
+      imageAlt: social.ogImageAlt || social.twitterImageAlt || "",
+      twitterImage: /^https:\/\//i.test(social.twitterImage || "") ? social.twitterImage : "",
       site: social.ogSiteName || host,
       host,
       card: social.twitterCard || "",
@@ -1857,7 +1895,7 @@ function analyze(input) {
     }
   };
 
-  const analytics = { tags, consentTools, consentMode, utm: utm && utm.status ? { kept: !!utm.kept, finalPath: pathOf(utm.finalUrl) } : null, untagged: untagged.slice(0, 20) };
+  const analytics = { tags, adTags: tags.filter((tag) => AD_TAGS.includes(tag.name)).map((tag) => tag.name), consentTools, consentMode, utm: utm && utm.status ? { kept: !!utm.kept, finalPath: pathOf(utm.finalUrl) } : null, untagged: untagged.slice(0, 20) };
   const geo = {
     crawlers: crawlers.map((bot) => ({ token: bot.token, owner: bot.owner, product: bot.product, role: bot.role, allowed: bot.allowed, rule: bot.rule, blockedPages: bot.blockedPages })),
     robotsFound: robots.groups.length > 0 || !!input.robotsText,

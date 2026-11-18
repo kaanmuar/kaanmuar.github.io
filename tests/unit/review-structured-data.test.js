@@ -50,6 +50,7 @@ for (const lang of LANGS) {
       assert.equal(offer["@type"], "Offer");
       assert.equal(offer.price, String(p.usd), p.id);
       assert.equal(offer.priceCurrency, "USD");
+      assert.equal(offer.priceValidUntil, "2026-12-10");
       assert.equal(offer.name, p.name[lang]);
       assert.equal(offer.description, p.what[lang]);
       assert.equal(offer.availability, "https://schema.org/InStock");

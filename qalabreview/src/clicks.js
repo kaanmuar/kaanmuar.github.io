@@ -34,7 +34,7 @@ export function clickOf(url, out, { acceptLanguage = "" } = {}) {
   const parts = url.pathname.split("/").filter(Boolean).map((p) => p.toLowerCase());
   const pathLang = parts.length && LANGS.includes(parts[0]) ? parts.shift() : "";
   const first = parts[0] || "";
-  if (["robots.txt", "sitemap.xml", "favicon.ico"].includes(first)) return null;
+  if (["robots.txt", "sitemap.xml", "llms.txt", "favicon.ico"].includes(first)) return null;
   let tags = new URLSearchParams();
   if (out.location) {
     try { tags = new URL(out.location).searchParams; } catch (error) { tags = new URLSearchParams(); }

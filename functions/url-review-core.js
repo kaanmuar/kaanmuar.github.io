@@ -429,22 +429,23 @@ function preformatUrl(input) {
   return normalizeUrl("https://" + raw);
 }
 
-const LANDING_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+const LANDING_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "wbraid", "gbraid", "msclkid", "fbclid", "ttclid", "li_fat_id"];
 
-// Where the asker landed this visit, in the shape openSource() reads: only the utm_* tags and a bare host.
+// Where the asker landed this visit, in the shape openSource() reads: utm_* tags first, paid ad click IDs, and a bare host.
 function landingSource(landing) {
   const src = landing && typeof landing === "object" ? landing : {};
   let params;
-  try { params = new URLSearchParams(String(src.query || "").slice(0, 400)); } catch (error) { params = new URLSearchParams(); }
+  try { params = new URLSearchParams(String(src.query || "").slice(0, 600)); } catch (error) { params = new URLSearchParams(); }
   const kept = new URLSearchParams();
   LANDING_TAGS.forEach((name) => {
-    const value = String(params.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, 40);
+    const cap = name.startsWith("utm_") ? 40 : 120;
+    const value = String(params.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, cap);
     if (value) kept.set(name, value);
   });
   const tags = kept.toString();
   const host = String(src.referrerHost || "").toLowerCase();
   return {
-    query: tags && tags.length <= 200 ? "?" + tags : "",
+    query: tags && tags.length <= 320 ? "?" + tags : "",
     referrerHost: /^[a-z0-9.-]+(:\d{1,5})?$/.test(host) ? host.slice(0, 80) : ""
   };
 }
@@ -2024,12 +2025,15 @@ function analyticsScan(html) {
   const consent = CONSENT_TOOLS.filter(([, pattern]) => pattern.test(body)).map(([name]) => name);
   const consentMode = consentModeOf(body);
   const ga4 = (tags.find((tag) => tag.name === "Google Analytics 4") || { ids: [] }).ids;
+  const gtmIds = (tags.find((tag) => tag.name === "Google Tag Manager") || { ids: [] }).ids;
   return {
     tags,
     consent,
     consentMode,
     ga4,
+    gtmIds,
     gtagLoads: (body.match(/googletagmanager\.com\/gtag\/js/g) || []).length,
+    gtmLoads: (body.match(/googletagmanager\.com\/gtm\.js/g) || []).length,
     loader: /<script\b[^>]*\ssrc\s*=\s*["'][^"']*(analytics|gtag|gtm|tracking|tagmanager)[^"']*["']/i.test(body),
     dataLayer: /dataLayer\s*=|dataLayer\.push/.test(body)
   };
@@ -2283,11 +2287,17 @@ function inspect(html, headers, pageUrl) {
       ogTitle: clean(metaValue("og:title"), 200),
       ogDescription: clean(metaValue("og:description"), 300),
       ogImage: absolute(metaValue("og:image") || metaValue("og:image:url")),
+      ogImageAlt: clean(metaValue("og:image:alt"), 240),
+      ogImageWidth: clean(metaValue("og:image:width"), 16),
+      ogImageHeight: clean(metaValue("og:image:height"), 16),
       ogUrl: absolute(metaValue("og:url")),
       ogSiteName: clean(metaValue("og:site_name"), 120),
       ogType: clean(metaValue("og:type"), 40),
       twitterCard: clean(metaValue("twitter:card"), 40),
-      twitterImage: absolute(metaValue("twitter:image"))
+      twitterTitle: clean(metaValue("twitter:title"), 200),
+      twitterDescription: clean(metaValue("twitter:description"), 300),
+      twitterImage: absolute(metaValue("twitter:image")),
+      twitterImageAlt: clean(metaValue("twitter:image:alt"), 240)
     },
     schema: schemaScan(html),
     analytics: analyticsScan(html),
@@ -3219,6 +3229,94 @@ async function iconData(raw) {
   return "";
 }
 
+const SHARE_IMAGE_LIMIT = 300 * 1024;
+
+function probeShareImageOnce(target, pinned, method, halt) {
+  return new Promise((resolve, reject) => {
+    if (halt && halt()) { reject(stoppedError()); return; }
+    const lib = target.protocol === "https:" ? https : http;
+    const req = lib.request({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: Number(target.port) || (target.protocol === "https:" ? 443 : 80),
+      path: target.pathname + target.search,
+      method,
+      timeout: 5000,
+      headers: { "user-agent": USER_AGENT, accept: "image/*,*/*;q=0.8", connection: "close" },
+      lookup: pinnedLookup(pinned)
+    }, (res) => {
+      const lengthHeader = Number(res.headers["content-length"] || 0);
+      let seen = 0;
+      let over = lengthHeader > SHARE_IMAGE_LIMIT;
+      if (method === "HEAD") {
+        if (typeof res.resume === "function") res.resume();
+        res.on("end", () => resolve({
+          status: res.statusCode,
+          contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+          location: res.headers.location || "",
+          bytes: Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0,
+          overLimit: over
+        }));
+        res.on("error", reject);
+        return;
+      }
+      res.on("data", (chunk) => {
+        seen += chunk.length;
+        if (seen > SHARE_IMAGE_LIMIT) {
+          over = true;
+          req.destroy();
+          resolve({
+            status: res.statusCode,
+            contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+            location: res.headers.location || "",
+            bytes: Number.isFinite(lengthHeader) && lengthHeader > seen ? lengthHeader : seen,
+            overLimit: true
+          });
+        }
+      });
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+        location: res.headers.location || "",
+        bytes: seen || (Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0),
+        overLimit: over
+      }));
+      res.on("error", reject);
+    });
+    const deadline = setTimeout(() => req.destroy(new Error("The share image took too long.")), 5500);
+    req.on("close", () => clearTimeout(deadline));
+    req.on("timeout", () => req.destroy(new Error("The share image took too long.")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function checkShareImage(raw, halt) {
+  try {
+    let current = normalizeUrl(raw);
+    for (let hop = 0; hop <= 3; hop += 1) {
+      const pinned = await assertPublic(current.hostname);
+      let res = await probeShareImageOnce(current, pinned, "HEAD", halt);
+      if (res.status === 405 || res.status === 501) res = await probeShareImageOnce(current, pinned, "GET", halt);
+      if ([301, 302, 303, 307, 308].includes(res.status) && res.location) {
+        current = normalizeUrl(new URL(res.location, current).toString());
+        continue;
+      }
+      return {
+        url: clean(current.toString(), 400),
+        status: res.status || 0,
+        contentType: res.contentType || "",
+        bytes: res.bytes || 0,
+        overLimit: !!res.overLimit
+      };
+    }
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return null;
+  }
+  return null;
+}
+
 // The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
 async function tcpCheck(raw, ms) {
   try {
@@ -3383,7 +3481,8 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const lookalikeJob = lookups && typeof lookups.doh === "function"
     ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
     : Promise.resolve(undefined);
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists] = await Promise.all([
+  const shareImageUrl = lookups && lookups.inspect && lookups.inspect.social && /^https:\/\//i.test(lookups.inspect.social.ogImage || "") ? lookups.inspect.social.ogImage : "";
+  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists, shareImage] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
@@ -3434,14 +3533,17 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
         (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
       return res;
     }),
-    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null)
+    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null),
+    shareImageUrl ? checkShareImage(shareImageUrl, halt).catch(() => null) : Promise.resolve(null)
   ]);
   const lookalikeFound = await lookalikeJob;
   if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
     : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
       : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
   const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
+  const out = { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
+  if (shareImage) out.shareImage = shareImage;
+  return out;
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -5236,6 +5338,7 @@ module.exports = {
   ipBlocked,
   hostBlocked,
   iconData,
+  checkShareImage,
   assertPublic,
   pinnedLookup
 };

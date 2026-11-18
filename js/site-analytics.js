@@ -67,6 +67,40 @@
         qa_review_fix_checkout: 'click',
         qa_review_fix_paid: 'click',
         qa_review_fix_recheck: 'click',
+        qa_review_hero_start: 'click',
+        qa_review_compare: 'click',
+        qa_review_rivals_kind: 'click',
+        qa_review_rivals_add: 'click',
+        qa_review_offer: 'click',
+        qa_review_offer_shown: 'click',
+        qa_review_offer_go: 'click',
+        qa_review_offer_later: 'click',
+        qa_review_offer_closed: 'click',
+        qa_review_pass_offer: 'click',
+        qa_review_watch_scripts: 'click',
+        qa_review_lang_offer: 'click',
+        qa_review_trial_shown: 'click',
+        qa_review_trial_claimed: 'click',
+        qa_review_ask: 'click',
+        qa_review_url_suggest: 'click',
+        qa_review_multi_open: 'click',
+        qa_review_multi_print: 'click',
+        qa_review_multi_pdf: 'click',
+        qa_review_peers_open: 'click',
+        qa_review_account_verify: 'click',
+        qa_review_account_bulk: 'click',
+        qa_review_account_compare: 'click',
+        qa_review_account_delete: 'click',
+        qa_review_account_export: 'click',
+        qa_review_account_fold: 'click',
+        qa_review_account_multi: 'click',
+        qa_review_vs_lang: 'click',
+        qa_review_vs_cta: 'click',
+        qa_lab_run: 'run',
+        qa_lab_pace: 'click',
+        qa_lab_view: 'click',
+        qa_lab_language_change: 'click',
+        book_call: 'click',
         hub_view: 'view',
         post_view: 'view',
         hub_open: 'click',
@@ -251,6 +285,20 @@
         if (!network || /share|intent|submit/i.test(url.pathname)) return;
         track('social_click', { event_category: 'Social', event_label: network, link_url: url.origin + url.pathname });
     }, true);
+
+    function keepLanding() {
+        try {
+            if (sessionStorage.getItem('qa-review-landing')) return;
+            const raw = root.location.href || ((root.location.pathname || '/') + (root.location.search || ''));
+            const page = new URL(raw, 'https://carlosandmunoz.com');
+            ['report', 'signin', 'key', 'state', 'code', 'scope', 'error', 'error_description', 'error_uri', 'iss'].forEach((name) => page.searchParams.delete(name));
+            let referrerHost = '';
+            try { referrerHost = document.referrer ? new URL(document.referrer).host : ''; } catch (err) { referrerHost = ''; }
+            sessionStorage.setItem('qa-review-landing', JSON.stringify({ query: page.search.slice(0, 500), referrerHost: referrerHost.slice(0, 80) }));
+        } catch (e) {}
+    }
+
+    keepLanding();
 
     // Pages that load this file with defer put a stub in its place first; calls made before it ran are replayed.
     const queued = root.SiteAnalytics && Array.isArray(root.SiteAnalytics.q) ? root.SiteAnalytics.q : [];

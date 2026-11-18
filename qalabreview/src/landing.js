@@ -5,6 +5,15 @@ import { LABELS, SEGMENTS } from "./copy.js";
 export const ORIGIN = "https://qalabreview.com";
 export const AUDIENCES = Object.keys(SEGMENTS);
 const ASSETS = "https://carlosandmunoz.com/assets/";
+const LOCALES = { en: "en_US", es: "es_CO", pt: "pt_BR", de: "de_DE", fr: "fr_FR", it: "it_IT" };
+const SHARE_ALTS = {
+  en: "QA-lab URL Review. Is your site safe? We check deeper, fix it at a fixed price, and you always hear back.",
+  es: "QA-lab URL Review. ¿Tu sitio es seguro? Revisamos más a fondo, lo corregimos a precio fijo y siempre te respondemos.",
+  pt: "QA-lab URL Review. Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo e você sempre tem retorno.",
+  de: "QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Sie hören immer von uns.",
+  fr: "QA-lab URL Review. Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe, et vous avez toujours une réponse.",
+  it: "QA-lab URL Review. Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso e ti rispondiamo sempre."
+};
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const path = (lang, audience) => "/" + [lang, audience].filter(Boolean).join("/");
@@ -69,6 +78,32 @@ export function renderLanding(lang, audience, { link, review }) {
   const call = link("book.html", { type: "intro", lang });
   const alternates = Object.keys(LABELS).map((l) => `<link rel="alternate" hreflang="${l}" href="${ORIGIN + path(l, audience)}">`).join("")
     + `<link rel="alternate" hreflang="x-default" href="${ORIGIN + (audience ? "/" + audience : "/")}">`;
+  const shareImage = `${ASSETS}share/qa-review-pitch${lang === "en" ? "" : "-" + lang}.jpg?v=20261110-3424`;
+  const shareAlt = SHARE_ALTS[lang] || SHARE_ALTS.en;
+  const ogTitle = seg ? seg.headline : L.hero.join(" ");
+  const localeAlts = Object.entries(LOCALES).filter(([code]) => code !== lang).map(([, loc]) => `<meta property="og:locale:alternate" content="${loc}">`).join("");
+  const schemaJson = JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${canonical}#webpage`,
+        name: title,
+        url: canonical,
+        inLanguage: lang,
+        description,
+        about: { "@type": "WebApplication", "@id": "https://carlosandmunoz.com/qa-review.html#app", name: "QA-lab URL Review", url: "https://carlosandmunoz.com/qa-review.html" },
+        publisher: { "@type": "Organization", "@id": "https://carlosandmunoz.com/qa-review.html#organization", name: "QA-lab URL Review", url: "https://carlosandmunoz.com/qa-review.html" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "QA-lab URL Review", item: `${ORIGIN}/${lang}` },
+          ...(audience ? [{ "@type": "ListItem", position: 2, name: L.names[audience], item: canonical }] : [])
+        ]
+      }
+    ]
+  }).replace(/</g, "\\u003c");
   const langs = Object.keys(LABELS).map((l) => `<a href="${path(l, audience)}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="page"' : ""}>${l.toUpperCase()}</a>`).join("");
   const h1 = seg ? esc(seg.headline) : `${esc(L.hero[0])} <em>${esc(L.hero[1])}</em> ${esc(L.hero[2])}`;
   const facts = audience === "colleges"
@@ -90,15 +125,29 @@ export function renderLanding(lang, audience, { link, review }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${canonical}">
+<link rel="sitemap" type="application/xml" href="${ORIGIN}/sitemap.xml">
+<link rel="describedby" href="${ORIGIN}/llms.txt">
 ${alternates}
 <meta name="theme-color" content="#071116">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QA-lab URL Review">
-<meta property="og:title" content="${esc(seg ? seg.headline : L.hero.join(" "))}">
+<meta property="og:locale" content="${LOCALES[lang] || "en_US"}">
+${localeAlts}
+<meta property="og:title" content="${esc(ogTitle)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:image" content="${ASSETS}share/qa-review.jpg?v=20261027">
+<meta property="og:image" content="${shareImage}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(shareAlt)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@qalaburlreview">
+<meta name="twitter:title" content="${esc(ogTitle)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="${shareImage}">
+<meta name="twitter:image:alt" content="${esc(shareAlt)}">
+<script type="application/ld+json">${schemaJson}</script>
 <link rel="icon" href="${ASSETS}qa-review-mark.svg?v=20261027a" type="image/svg+xml">
 <link rel="icon" href="${ASSETS}qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -17,6 +17,7 @@ main() {
 	local builders=(
 		scripts/build-catalog-suites.js
 		scripts/build-legal-html.js
+		scripts/build-vs-html.js
 		scripts/build-style-css.js
 		scripts/build-critical-css.js
 		scripts/build-llms-full.py

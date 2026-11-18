@@ -92,6 +92,8 @@ jobs:
         run: node scripts/build-findings-copy.js --check
       - name: Sample report languages match their dictionaries
         run: node scripts/build-sample-langs.js --check
+      - name: Comparison page matches js/qa-review-vs.js
+        run: node scripts/build-vs-html.js --check
 
   playwright-shard:
     runs-on: ubuntu-latest
