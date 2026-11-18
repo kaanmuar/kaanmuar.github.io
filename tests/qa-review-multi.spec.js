@@ -2070,10 +2070,12 @@ test('the cases sit in the same layer groups, in the same order and at the same 
 	const box = page.locator('#multi-overlay');
 	const sec = box.locator('.multi-sec[data-sec="cases"]');
 	await expect(sec.locator('.multi-cell')).toHaveCount(6, { timeout: 20000 });
-	const order = JSON.parse(
-		require('fs')
-			.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
-			.match(/CASE_LAYERS = (\[[^\]]+\])/)[1]
+	const order = require('vm').runInNewContext(
+		'(' +
+			require('fs')
+				.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
+				.match(/CASE_LAYERS = (\[[^\]]+\])/)[1] +
+			')'
 	);
 	const union = order.filter((name) => records.some((row) => row.report.cases.some((item) => item.layer === name)));
 	const cells = sec.locator('.multi-cell');
