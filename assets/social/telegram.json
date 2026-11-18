@@ -833,10 +833,10 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "at": "2026-11-18T22:15:21.481Z",
+    "at": "2026-11-18T22:35:19.561Z",
     "result": "failed",
     "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
-    "checked": "2026-11-18T22:15:24.691Z"
+    "checked": "2026-11-18T22:35:21.647Z"
    }
   ],
   "runs-2026-10/01-govuk": [
@@ -881,6 +881,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/98",
     "checked": "2026-11-18T02:53:01.116Z"
+   }
+  ],
+  "runs-2026-10/05-bbc": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "107",
+    "at": "2026-11-18T22:35:21.648Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/107",
+    "checked": "2026-11-18T22:35:26.271Z"
    }
   ],
   "runs-3/01-ilo": [
