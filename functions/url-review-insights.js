@@ -1585,7 +1585,7 @@ function analyze(input) {
     return {
       path: page.path,
       hsts: !!h.hsts,
-      csp: !!h.csp,
+      csp: !!(h.csp || h.metaCsp),
       frame: framesGuarded(h.frame) || /frame-ancestors/i.test(h.csp || ""),
       nosniff: !!h.nosniff,
       referrer: !!h.referrer,
@@ -1627,18 +1627,24 @@ function analyze(input) {
     else add("Security", "pass", "info", "sec-hsts", say("sec-hsts.pass.title"), say("listDot", { list: hdr.hsts }), "", { cases: ["SEC-02"] });
   }
   const csp = cspDirectives(hdr.csp);
-  if (!hdr.csp) {
+  const metaCsp = cspDirectives(hdr.metaCsp);
+  const cspPolicies = [hdr.csp ? csp : null, hdr.metaCsp ? metaCsp : null].filter(Boolean);
+  if (!cspPolicies.length) {
     add("Security", "risk", "medium", "sec-csp", say("sec-csp.title"), say("sec-csp.evidence", { spread: spread("csp").text }),
       say("sec-csp.fix"), { pages: spread("csp").pages, effort: "hours", cases: ["SEC-03"] });
   } else {
-    const scriptSrc = csp["script-src"] || csp["default-src"] || [];
     const issues = [];
-    if (!csp["default-src"] && !csp["script-src"]) issues.push("noDefault");
-    if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) issues.push("unsafeInline");
-    if (scriptSrc.indexOf("'unsafe-eval'") !== -1) issues.push("unsafeEval");
-    if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) issues.push("anyHost");
-    if (!csp["object-src"] && !(csp["default-src"] || []).some((token) => token === "'none'")) issues.push("object");
-    if (!csp["base-uri"]) issues.push("base");
+    const pushIssue = (name) => { if (issues.indexOf(name) === -1) issues.push(name); };
+    if (!cspPolicies.some((policy) => policy["default-src"] || policy["script-src"])) pushIssue("noDefault");
+    cspPolicies.forEach((policy) => {
+      if (!policy["default-src"] && !policy["script-src"]) return;
+      const scriptSrc = policy["script-src"] || policy["default-src"] || [];
+      if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) pushIssue("unsafeInline");
+      if (scriptSrc.indexOf("'unsafe-eval'") !== -1) pushIssue("unsafeEval");
+      if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) pushIssue("anyHost");
+    });
+    if (!cspPolicies.some((policy) => policy["object-src"] || (policy["default-src"] || []).some((token) => token === "'none'"))) pushIssue("object");
+    if (!cspPolicies.some((policy) => policy["base-uri"])) pushIssue("base");
     if (issues.length) add("Security", "risk", issues.some((issue) => issue === "anyHost" || issue === "unsafeInline") ? "medium" : "low", "sec-csp", say("sec-csp.gaps.title"), say("listDot", { list: some(issues.map((issue) => say("sec-csp.issue." + issue)), 5) }),
       say("sec-csp.gaps.fix"), { count: issues.length, effort: "hours", cases: ["SEC-03"] });
     else add("Security", "pass", "info", "sec-csp", say("sec-csp.pass.title"), say("sec-csp.pass.evidence"), "", { cases: ["SEC-03"] });
@@ -1922,7 +1928,7 @@ function analyze(input) {
     headers: [
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
       { label: "HSTS", state: hdr.hsts ? "pass" : "fail" },
-      { label: "Content-Security-Policy", state: hdr.csp ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
+      { label: "Content-Security-Policy", state: (hdr.csp || hdr.metaCsp) ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
       { label: "Frame protection", state: framesGuarded(hdr.frame) || csp["frame-ancestors"] ? "pass" : "risk" },
       { label: "X-Content-Type-Options", state: hdr.nosniff ? "pass" : "risk" },
       { label: "Referrer-Policy", state: hdr.referrer ? "pass" : "risk" },

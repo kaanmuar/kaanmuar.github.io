@@ -64,6 +64,8 @@ workers/outreach-cron/.cloudflare/
 workers/outreach-cron/dist/
 workers/edge-og/.cloudflare/
 workers/edge-og/dist/
+workers/mta-sts-policy/.cloudflare/
+workers/mta-sts-policy/dist/
 
 # Mini report card previews (#2466): node scripts/report-card-preview.js
 media/report-cards/

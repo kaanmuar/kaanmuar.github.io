@@ -4343,3 +4343,23 @@ test("SMO checks extract richer metadata, detect og:url/canonical mismatch, and 
     restore();
   }
 });
+
+test("sec-csp reads <meta> Content-Security-Policy alongside HTTP headers while keeping frame-ancestors header-only", async () => {
+  const splitHtml = HTML.replace("</head>", "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'sha256-abc123=';\"></head>");
+  const splitHdr = Object.assign({}, STRONG_HEADERS, { "content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'" });
+  const splitRes = insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 100, depth: 0, inspect: core.analyzeHtml(splitHtml, splitHdr, URL_) }] });
+  assert.equal(verdict(splitRes, "sec-csp"), "pass");
+  assert.equal(verdict(splitRes, "sec-frame"), "pass");
+  assert.equal(splitRes.security.headers.find((r) => r.label === "Content-Security-Policy").state, "pass");
+
+  const weakMeta = HTML.replace("</head>", "<meta http-equiv=\"Content-Security-Policy\" content=\"script-src 'unsafe-inline'; frame-ancestors 'none'\"></head>");
+  const noHdr = Object.assign({}, STRONG_HEADERS);
+  delete noHdr["content-security-policy"];
+  const weakRes = insights.analyze({ pages: [{ url: URL_, path: "/", status: 200, ms: 100, depth: 0, inspect: core.analyzeHtml(weakMeta, noHdr, URL_) }] });
+  assert.equal(verdict(weakRes, "sec-csp"), "risk");
+  assert.equal(verdict(weakRes, "sec-frame"), "risk");
+
+  const mta = await import("../../workers/mta-sts-policy/src/index.js");
+  assert.match(mta.POLICY, /mode: enforce/);
+  assert.match(mta.POLICY, /max_age: 1209600/);
+});
