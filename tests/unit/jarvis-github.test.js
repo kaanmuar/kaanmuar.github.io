@@ -397,6 +397,33 @@ test("the Mac report as github-local-report.js builds it goes through localInges
   assert.deepEqual([out.budget.kaanmuar.graphql.used, out.budget.kaanmuar.graphql.limit, out.budget.hourly], [1200, 5000, [{ hour: "2026-11-03T18:00:00.000Z", graphql: 1200 }]]);
 });
 
+test("kaanmuar's budget is kept in the cloud with the user's token, and shown only when the Mac report is stale (#3759)", async () => {
+  const db = fakeDb();
+  const seen = [];
+  const fetchImpl = async (url, init) => {
+    seen.push(url + " " + (init && init.headers ? init.headers.Authorization : ""));
+    return json(200, { resources: { graphql: { used: 900, limit: 5000, reset: NOW / 1000 + 600 }, core: { used: 10, limit: 5000, reset: NOW / 1000 + 600 } } });
+  };
+  // Without the secret nothing is read or written.
+  assert.equal(await gh.kaanmuarBudget(ctx(fetchImpl, db, { env: {} })), null);
+  assert.equal(seen.length, 0);
+  assert.equal((await db.collection("jarvis_github_budget").doc("kaanmuar").get()).exists, false);
+  await gh.kaanmuarBudget(ctx(fetchImpl, db, { env: { GITHUB_BUDGET_TOKEN: "k" } }));
+  assert.equal(seen.length, 1);
+  assert.match(seen[0], /api\.github\.com\/rate_limit Bearer k$/);
+  const saved = (await db.collection("jarvis_github_budget").doc("kaanmuar").get()).data();
+  assert.deepEqual([saved.at, saved.graphql.used, saved.graphql.limit], [new Date(NOW).toISOString(), 900, 5000]);
+  const local = (ageMin, used) => ({ at: at(ageMin / 60), host: "m", rate: { graphql: { used, limit: 5000, reset: null }, core: null }, rateHistory: [], worktrees: [], usage: [], cost: { tickets: [] }, errors: [] });
+  // The Mac report is fresh: its number wins.
+  await db.collection("jarvis_github_local").doc("latest").set(local(5, 1200));
+  const fresh = await gh.source(ctx(fakeFetch(), db));
+  assert.deepEqual([fresh.budget.kaanmuar.source, fresh.budget.kaanmuar.graphql.used], ["mac", 1200]);
+  // The Mac report is older than 30 minutes: the cloud copy is shown instead.
+  await db.collection("jarvis_github_local").doc("latest").set(local(45, 1200));
+  const stale = await gh.source(ctx(fakeFetch(), db));
+  assert.deepEqual([stale.budget.kaanmuar.source, stale.budget.kaanmuar.graphql.used, stale.budget.kaanmuar.at], ["cloud", 900, new Date(NOW).toISOString()]);
+});
+
 test("PageSpeed runs are not deploys, Pages is, and Dependabot runs never make main red", async () => {
   const extra = RUNS.concat([
     run(8, "PageSpeed daily", 5, "main", "failure", 1.5, { path: ".github/workflows/pagespeed-daily.yml" }),
