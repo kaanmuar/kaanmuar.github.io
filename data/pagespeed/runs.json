@@ -1,6 +1,83 @@
 {
  "runs": [
   {
+   "at": "2026-11-18T15:45:46.505Z",
+   "run": {
+    "id": 44327602461,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/44327602461"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2291,
+   "scored": 2275,
+   "failed": 16,
+   "below": 1286,
+   "avg": {
+    "mobile": 87,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-18",
+    "files": [
+     "data/pagespeed/compressed.json",
+     "media/sdlc-studio-running.html",
+     "media/sdlc-studio-running.jpg"
+    ],
+    "fixes": [
+     {
+      "page": "media/sdlc-studio-running.html",
+      "kind": "fonts",
+      "detail": "Preconnected to fonts.gstatic.com."
+     },
+     {
+      "page": "media/sdlc-studio-running.jpg",
+      "kind": "image",
+      "detail": "Compressed media/sdlc-studio-running.jpg from 158 KB to 114 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "media/sdlc-studio-running.html",
+      "mobile": {
+       "before": 90,
+       "after": 92,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/media/sdlc-studio-running.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "3 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-17T16:15:44.656Z",
    "run": {
     "id": 44110408631,
