@@ -507,6 +507,17 @@
     "checked": "2026-11-12T22:28:35.212Z"
    }
   ],
+  "launch-2026-10/de/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "99",
+    "at": "2026-11-18T02:53:01.116Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/99",
+    "checked": "2026-11-18T02:53:02.518Z"
+   }
+  ],
   "launch-2026-10/es/a11y": [
    {
     "channel": "telegram",
@@ -805,6 +816,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/90",
     "checked": "2026-11-16T20:02:42.491Z"
+   }
+  ],
+  "runs-2026-10/04-govco": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "98",
+    "at": "2026-11-18T02:52:55.745Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/98",
+    "checked": "2026-11-18T02:53:01.116Z"
    }
   ],
   "runs-3/01-ilo": [

@@ -1646,6 +1646,17 @@
     "checked": "2026-11-12T22:26:59.976Z"
    }
   ],
+  "launch-2026-10/de/a11y": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2kkhqmowy2h",
+    "at": "2026-11-18T02:52:50.828Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2kkhqmowy2h",
+    "checked": "2026-11-18T02:52:52.853Z"
+   }
+  ],
   "launch-2026-10/es/a11y": [
    {
     "channel": "bluesky",
@@ -1904,6 +1915,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2hcxamddo2d",
     "checked": "2026-11-16T20:00:25.123Z"
+   }
+  ],
+  "runs-2026-10/04-govco": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2kkho3czy2n",
+    "at": "2026-11-18T02:52:24.688Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2kkho3czy2n",
+    "checked": "2026-11-18T02:52:50.828Z"
    }
   ],
   "runs-3/01-ilo": [

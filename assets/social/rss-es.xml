@@ -5,9 +5,65 @@
     <link>https://carlosandmunoz.com/qa-review-social-es.html</link>
     <description>Cada publicación de QA-lab URL Review: consejos, revisiones reales de sitios y clips cortos.</description>
     <language>es</language>
-    <lastBuildDate>Tue, 17 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-es.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-es.html</link></image>
+    <item>
+      <title>motives.ai: 70. El punto débil: enmarcado.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/01-u-motives-ai-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/01-u-motives-ai-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
+
+Qué cambiar: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una instantánea para empezar, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-motives-ai
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" length="230186" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Las etiquetas canonical del MIT apuntan a su CMS.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/16-mit-es.html</link>
+      <guid isPermaLink="false">runs-100/16-mit-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>Las páginas declaran su idioma y cargan rápido para visitantes reales. Pero los enlaces canonical apuntan a tlecms.mit.edu, un host que no respondió a nuestra petición, y la home declara una noticia como su canonical.
+
+La lección para cualquier equipo: Las URLs canónicas deben ser públicas, estar activas y ser la propia página. Revísalos tras cada cambio de CMS o de dominio.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=mit
+
+#SEO #Canonical #HigherEd #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" length="248347" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>El canonical de Stanford lleva a un 404.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/17-stanford-es.html</link>
+      <guid isPermaLink="false">runs-100/17-stanford-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Worldwide</category>
+      <description>HSTS con preload, una política de seguridad de contenido basada en nonce, una Permissions-Policy y framing denegado: Seguridad 86. Pero la home declara stanford.edu/home como canonical, y esa URL responde 404.
+
+La lección para cualquier equipo: Pide cada URL canónica en tu suite de pruebas. Debería responder 200 y declararse a sí misma como canonical.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=stanford
+
+#SEO #Canonical #HigherEd #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" length="245447" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>unillanos.edu.co: 49. El punto débil: texto alt.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/13-u-unillanos-edu-co-es.html</link>
@@ -830,48 +886,6 @@ A través de Search Engine Journal, por Matt G. Sur, 2026-11-14.
 
 https://www.searchenginejournal.com/seo-pulse-core-update-chatgpt-business-hub-ai-modes-new-model/597135/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-12-2026.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Ambassador Spotlight de Cypress: Cuong Le</title>
-      <link>https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-cuong-le-es.html</link>
-      <guid isPermaLink="false">pick/cypress-ambassador-spotlight-cuong-le-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>¡Bienvenido de nuevo a nuestra serie Ambassador Spotlight! En cada blog, nos sentamos con una de las personas que hacen de la comunidad Cypress lo que es. Les preguntamos dónde empezaron, qué piensan acerca de las pruebas y qué han aprendido a lo largo del camino. ¿Quieres saber más sobre el programa Embajador? Obtén más información aquí. Esta vez estamos hablando con Cuong Le, quien escribe sobre la automatización de pruebas en Medium para ayudar al control de calidad...
-
-Vía Cypress, por Jessica Capuano Mora, 2026-11-12.
-
-https://www.cypress.io/blog/cypress-ambassador-spotlight-cuong-le/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/10/Blog_Ambassador-Spotlight_Cuong-Le--1-.png" medium="image"/>
-    </item>
-    <item>
-      <title>¿El modelo de afiliado sobrevive al pago dentro del modo AI y Gemini? – Pregúntele a un SEO a través de @sejournal, @rollerblader</title>
-      <link>https://carlosandmunoz.com/social/pick/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-es.html</link>
-      <guid isPermaLink="false">pick/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Los enlaces de afiliados aún ayudan a proteger sus comisiones a medida que crece el pago mediante IA, pero un seguimiento más sólido y mejores opciones de programas agregan capas cruciales de protección. La publicación ¿El modelo de afiliado sobrevive al pago dentro del modo AI y Gemini? – Ask An SEO apareció por primera vez en Search Engine Journal.
-
-Vía Search Engine Journal, por Adam Riemer, 2026-11-12.
-
-https://www.searchenginejournal.com/does-the-affiliate-model-survive-checkout-inside-ai-mode-and-gemini-ask-an-seo/585080/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/06/ask-an-seo-adam-riemer-376.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Google explica cómo encontrar tráfico de búsqueda en Analytics y registros mediante @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-find-search-traffic-in-analytics-logs-es.html</link>
-      <guid isPermaLink="false">pick/google-explains-how-to-find-search-traffic-in-analytics-logs-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Analytics</category>
-      <description>Una página de ayuda de la Búsqueda de Google enumera los valores de referencia que envía el tráfico de búsqueda, por qué algunas visitas llegan sin ninguna y por qué los recuentos difieren de los de Search Console. La publicación Google explica cómo encontrar tráfico de búsqueda en análisis y registros apareció por primera vez en Search Engine Journal.
-
-A través de Search Engine Journal, por Matt G. Sur, 2026-11-14.
-
-https://www.searchenginejournal.com/google-search-traffic-analytics-logs/597382/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-search-traffic-analytics-logs.jpg" medium="image"/>
     </item>
   </channel>
 </rss>

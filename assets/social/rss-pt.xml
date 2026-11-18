@@ -5,9 +5,65 @@
     <link>https://carlosandmunoz.com/qa-review-social-pt.html</link>
     <description>Cada publicação do QA-lab URL Review: dicas, análises reais de sites e clipes curtos.</description>
     <language>pt</language>
-    <lastBuildDate>Tue, 17 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-pt.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-pt.html</link></image>
+    <item>
+      <title>motives.ai: 70. A lacuna: frames.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/01-u-motives-ai-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/01-u-motives-ai-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas outros sites podem colocar a página em frame.
+
+O que mudar: Envie frame-ancestors 'self' no CSP, ou X-Frame-Options: SAMEORIGIN, para que outros sites não possam colocar suas páginas em frame.
+
+Uma análise automatizada de páginas públicas em 17 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um instantâneo para começar, não um veredicto.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-motives-ai
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" length="230186" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>As tags canonical do MIT apontam para o CMS.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/16-mit-pt.html</link>
+      <guid isPermaLink="false">runs-100/16-mit-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>As páginas declaram o idioma e carregam rápido para visitantes reais. Mas os links canonical apontam para tlecms.mit.edu, um host que não respondeu à nossa requisição, e a home indica uma notícia como canonical.
+
+A lição para toda equipe: URLs canonical devem ser públicas, estar no ar e ser a própria página. Confira-os após cada mudança de CMS ou domínio.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=mit
+
+#SEO #Canonical #HigherEd #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" length="248347" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>O canonical de Stanford leva a um 404.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/17-stanford-pt.html</link>
+      <guid isPermaLink="false">runs-100/17-stanford-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>HSTS com preload, uma content security policy baseada em nonce, uma Permissions-Policy e framing negado: Segurança 86. Mas a home indica stanford.edu/home como canonical, e essa URL responde 404.
+
+A lição para toda equipe: Busque cada URL canonical na sua suíte de testes. Ela deve responder 200 e se indicar como canonical.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=stanford
+
+#SEO #Canonical #HigherEd #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" length="245447" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>unillanos.edu.co: 49. A lacuna: texto alt.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/13-u-unillanos-edu-co-pt.html</link>
@@ -929,66 +985,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #SRE #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" length="255567" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 concorrentes naturais. globalbank.com.pa lidera: 71.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/03-vs-multimax-net-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/03-vs-multimax-net-pt</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Versus</category>
-      <description>multimax.net lidera em SEO, Analytics, Performance; globalbank.com.pa lidera em GEO, Segurança, Acessibilidade.
-
-A lição para toda equipe: Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.
-
-Análises automatizadas de páginas públicas em 10 novembro 2026 de multimax.net, globalbank.com.pa, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-multimax-net&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-multimax-net
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #DevOps #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" length="258011" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>windrawwin.com: 77. A lacuna: rótulos de formulário.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-11/02-u-windrawwin-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-11/02-u-windrawwin-com-pt</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>National</category>
-      <description>Cada link externo verificado foi respondido e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 4 controles de formulário não têm rótulo.
-
-A lição para toda equipe: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
-
-Uma análise automatizada de páginas públicas em 10 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-windrawwin-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-windrawwin-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Programming #DevOps #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" length="239507" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>made-in-china.com: 50. A lacuna: o redirecionamento para https.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-12/01-u-made-in-china-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-12/01-u-made-in-china-com-pt</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>National</category>
-      <description>Cada link externo verificado foi respondido e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas o http simples serve o site sem redirecionar.
-
-A lição para toda equipe: Redirecione toda requisição http para https com um único 301 permanente e depois adicione HSTS.
-
-Uma análise automatizada de páginas públicas em 11 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-made-in-china-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-made-in-china-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #CyberSecurity #QA #HTTPS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" length="241985" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/01-u-made-in-china-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
