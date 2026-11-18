@@ -754,7 +754,7 @@ const EN = {
   "sec-dmarc-pct.title": "DMARC applies its policy to only {pct}% of forged mail",
   "sec-dmarc-pct.reject": "pct={pct} tells receivers to reject {pct}% of the mail that fails DMARC and only quarantine the rest.",
   "sec-dmarc-pct.quarantine": "pct={pct} tells receivers to quarantine {pct}% of the mail that fails DMARC and deliver the rest as usual.",
-  "sec-dmarc-pct.fix": "Set pct=100, or remove the tag, since 100 is the default.",
+  "sec-dmarc-pct.fix": "Before you raise pct, check your DMARC aggregate reports (rua) for legitimate senders that fail. Then set pct=100, or remove the tag, since 100 is the default.",
   "sec-dkim.key.rsa": "{name} (RSA, {bits}-bit)",
   "sec-dkim.key.ed25519": "{name} (Ed25519)",
   "sec-dkim.key.other": "{name} (k={type})",

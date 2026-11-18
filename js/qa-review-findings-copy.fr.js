@@ -754,7 +754,7 @@
       "sec-dmarc-pct.title": "DMARC n’applique sa politique qu’à {pct} % du courrier usurpé",
       "sec-dmarc-pct.reject": "pct={pct} demande aux destinataires de rejeter {pct} % du courrier qui échoue à DMARC et de seulement mettre le reste en quarantaine.",
       "sec-dmarc-pct.quarantine": "pct={pct} demande aux destinataires de mettre en quarantaine {pct} % du courrier qui échoue à DMARC et de livrer le reste normalement.",
-      "sec-dmarc-pct.fix": "Mettez pct=100, ou retirez la balise, puisque 100 est la valeur par défaut.",
+      "sec-dmarc-pct.fix": "Avant d’augmenter pct, vérifiez vos rapports agrégés DMARC (rua) pour repérer des expéditeurs légitimes qui échouent. Mettez ensuite pct=100, ou retirez la balise, puisque 100 est la valeur par défaut.",
       "sec-dkim.key.rsa": "{name} (RSA, {bits} bits)",
       "sec-dkim.key.ed25519": "{name} (Ed25519)",
       "sec-dkim.key.other": "{name} (k={type})",
