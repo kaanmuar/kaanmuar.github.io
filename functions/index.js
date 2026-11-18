@@ -6942,6 +6942,8 @@ const jarvisProposals = require("./jarvis-proposals");
 const jarvisActions = require("./jarvis-actions");
 const jarvisCountdown = require("./jarvis-countdown");
 const jarvisSnap = require("./jarvis-snapshot");
+const dayRows = require("./jarvis-days");
+const changeLedger = require("./jarvis-ledger");
 const jarvisSections = require("./jarvis-sections");
 const jarvisLive = require("./jarvis-live");
 const jarvisDigest = require("./jarvis-digest");
@@ -8070,6 +8072,17 @@ async function jarvisWatchRun() {
   await ref.set({ day, sent });
   return fresh.length + " new alert" + (fresh.length > 1 ? "s" : "") + ", pushed to " + push.sent + " phone" + (push.sent === 1 ? "" : "s");
 }
+
+// Jarvis change ledger (#3784): each shipped change against the metric it was meant to move, one read of the day rollups.
+async function jarvisChangeLedger() {
+	const db = getFirestore();
+	const out = await changeLedger.run(db, require("./change-ledger.json").entries, Date.now(), dayRows);
+	const saved = JSON.parse(JSON.stringify(out));
+	await db.collection("jarvis_ledger").doc("latest").set(saved);
+	const count = (status) => saved.results.filter((row) => row.status === status).length;
+	return saved.results.length + " changes: " + count("better") + " better, " + count("worse") + " worse, " + count("flat") + " flat, " + count("too early") + " too early";
+}
+exports.jarvisChangeLedger = scheduled(functions, "jarvisChangeLedger", () => jarvisChangeLedger());
 
 exports.jarvisDailyBriefing = scheduled(functions.runWith({ timeoutSeconds: 300, memory: "512MB", secrets: SECRETS.jarvisMail }), "jarvisDailyBriefing", async () => {
   const out = await jarvisDaily({ force: false });
