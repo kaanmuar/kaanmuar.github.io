@@ -1,0 +1,340 @@
+Text,Image URL,Tags,Posting Time
+"Scored 52 of 100. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen…
+
+carlosandmunoz.com/qa-review?live=u-advanceconstrucciones-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-advanceconstrucciones-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg","","2026-11-19 08:35"
+"advancedplumbing.ca: 74. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-advancedplumbing-ca&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-advancedplumbing-ca","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/02-u-advancedplumbing-ca.jpg","","2026-11-20 13:25"
+"aegas247.co.uk: 72. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-aegas247-co-uk&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aegas247-co-uk","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/03-u-aegas247-co-uk.jpg","","2026-11-21 11:35"
+"aelf.org: 67. The gap: tap targets.
+
+Make every link and button at least 24 by 24 px, with space between them.
+
+https://carlosandmunoz.com/qa-review.html?live=u-aelf-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aelf-org
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/04-u-aelf-org.jpg","","2026-11-22 09:50"
+"aeofmiami.com: 44. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+https://carlosandmunoz.com/qa-review.html?live=u-aeofmiami-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aeofmiami-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/05-u-aeofmiami-com.jpg","","2026-11-23 16:55"
+"aeropost.com: 61. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader can announce it.
+
+carlosandmunoz.com/qa-review?live=u-aeropost-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aeropost-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg","","2026-11-24 16:05"
+"Scored 46 of 100. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the…
+
+carlosandmunoz.com/qa-review?live=u-aeropuertosargentina-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aeropuertosargentina-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/07-u-aeropuertosargentina-com.jpg","","2026-11-25 15:30"
+"aeurus.cl: 47. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target…
+
+carlosandmunoz.com/qa-review?live=u-aeurus-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aeurus-cl","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/08-u-aeurus-cl.jpg","","2026-11-26 11:15"
+"afel.cl: 67. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+https://carlosandmunoz.com/qa-review.html?live=u-afel-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-afel-cl
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/09-u-afel-cl.jpg","","2026-11-27 14:10"
+"affection.org: 48. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-affection-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-affection-org","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/10-u-affection-org.jpg","","2026-11-28 14:25"
+"ahrefstop.com: 83. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-ahrefstop-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ahrefstop-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/11-u-ahrefstop-com.jpg","","2026-11-29 16:10"
+"affinityplusbb.com: 59. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the…
+
+carlosandmunoz.com/qa-review?live=u-affinityplusbb-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-affinityplusbb-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg","","2026-11-30 13:00"
+"Scored 59 of 100. The gap: cookie flags.
+
+Set Secure, HttpOnly, and SameSite on every cookie that scripts do not…
+
+carlosandmunoz.com/qa-review?live=u-affluenceglobaldream-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-affluenceglobaldream-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/13-u-affluenceglobaldream-com.jpg","","2026-12-01 16:00"
+"Scored 56 of 100. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen…
+
+carlosandmunoz.com/qa-review?live=u-affordabledentist-sydney&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-affordabledentist-sydney","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/14-u-affordabledentist-sydney.jpg","","2026-12-02 08:05"
+"afluenta.com: 51. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+carlosandmunoz.com/qa-review?live=u-afluenta-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-afluenta-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/15-u-afluenta-com.jpg","","2026-12-03 13:50"
+"africacdc.org: 51. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-africacdc-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-africacdc-org","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/16-u-africacdc-org.jpg","","2026-12-04 14:05"
+"ag.gov.tt: 47. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only…
+
+carlosandmunoz.com/qa-review?live=u-ag-gov-tt&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ag-gov-tt","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/17-u-ag-gov-tt.jpg","","2026-12-05 11:50"
+"Scored 81 of 100. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its…
+
+carlosandmunoz.com/qa-review?live=u-agenciadeviajestravelone-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agenciadeviajestravelone-cl","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg","","2026-12-06 13:55"
+"agenciadrisoft.cl: 68. The gap: tap targets.
+
+Make every link and button at least 24 by 24 px, with space between them.
+
+carlosandmunoz.com/qa-review?live=u-agenciadrisoft-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agenciadrisoft-cl
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/19-u-agenciadrisoft-cl.jpg","","2026-12-07 16:20"
+"agenciageo.mx: 86. The gap: the CSP.
+
+Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+carlosandmunoz.com/qa-review?live=u-agenciageo-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agenciageo-mx
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/20-u-agenciageo-mx.jpg","","2026-12-08 12:15"
+"agencija-oskar.si: 58. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers…
+
+carlosandmunoz.com/qa-review?live=u-agencija-oskar-si&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agencija-oskar-si","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/21-u-agencija-oskar-si.jpg","","2026-12-09 16:35"
+"Scored 80 of 100. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never…
+
+carlosandmunoz.com/qa-review?live=u-agencyestrategia360-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agencyestrategia360-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/22-u-agencyestrategia360-com.jpg","","2026-12-10 11:35"
+"agendaweb.org: 57. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-agendaweb-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agendaweb-org","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/23-u-agendaweb-org.jpg","","2026-12-11 12:00"
+"agilex.com.co: 64. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block…
+
+carlosandmunoz.com/qa-review?live=u-agilex-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agilex-com-co","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg","","2026-12-12 16:05"
+"agmarketing.cl: 60. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+https://carlosandmunoz.com/qa-review.html?live=u-agmarketing-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agmarketing-cl
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/25-u-agmarketing-cl.jpg","","2026-12-13 11:30"
+"agora.gf: 67. The gap: measurement.
+
+Hold every tag until consent, or set Google Consent Mode v2 defaults to denied before any tag loads. Block…
+
+carlosandmunoz.com/qa-review?live=u-agora-gf&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-agora-gf","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/26-u-agora-gf.jpg","","2026-12-14 11:20"
+"airportaruba.com: 61. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce…
+
+carlosandmunoz.com/qa-review?live=u-airportaruba-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airportaruba-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/27-u-airportaruba-com.jpg","","2026-12-15 12:50"
+"aic.ac.nz: 57. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+carlosandmunoz.com/qa-review?live=u-aic-ac-nz&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aic-ac-nz
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/28-u-aic-ac-nz.jpg","","2026-12-16 14:45"
+"aiconfort.com: 65. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame…
+
+carlosandmunoz.com/qa-review?live=u-aiconfort-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aiconfort-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/29-u-aiconfort-com.jpg","","2026-12-17 14:40"
+"aijabogados.cl: 74. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and…
+
+carlosandmunoz.com/qa-review?live=u-aijabogados-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aijabogados-cl","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg","","2026-12-18 17:00"
+"airarabia.com: 32. The gap: noindex.
+
+Review every noindex on purpose, and remove it from pages you want found.
+
+https://carlosandmunoz.com/qa-review.html?live=u-airarabia-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airarabia-com
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/31-u-airarabia-com.jpg","","2026-12-19 13:15"
+"airbnb.com.co: 63. The gap: hidden focus.
+
+Never leave a focusable element inside aria-hidden content.
+
+https://carlosandmunoz.com/qa-review.html?live=u-airbnb-com-co&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airbnb-com-co
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/32-u-airbnb-com-co.jpg","","2026-12-20 13:50"
+"aircaraibes.com: 60. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+carlosandmunoz.com/qa-review?live=u-aircaraibes-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aircaraibes-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/33-u-aircaraibes-com.jpg","","2026-12-21 13:25"
+"airclim.com.pe: 62. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-airclim-com-pe&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airclim-com-pe","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/34-u-airclim-com-pe.jpg","","2026-12-22 13:05"
+"aircon.pe: 58. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+carlosandmunoz.com/qa-review?live=u-aircon-pe&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aircon-pe
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/35-u-aircon-pe.jpg","","2026-12-23 12:50"
+"aire-plus.com: 79. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame…
+
+carlosandmunoz.com/qa-review?live=u-aire-plus-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aire-plus-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg","","2026-12-24 16:15"
+"Scored 90 of 100. The gap: who runs the site.
+
+Add one Organization block with name, url, logo, and sameAs links. AI…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadoaq-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadoaq-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/37-u-aireacondicionadoaq-com.jpg","","2026-12-25 10:40"
+"Scored 86 of 100. The gap: layout shift.
+
+Give images, ads, and embeds a width and height, so the page does…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadocharly-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadocharly-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/38-u-aireacondicionadocharly-com.jpg","","2026-12-26 17:35"
+"Scored 68 of 100. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadodemexico-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadodemexico-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/39-u-aireacondicionadodemexico-com.jpg","","2026-12-27 12:50"
+"aktia.fi: 74. The gap: tap targets.
+
+Make every link and button at least 24 by 24 px, with space between them.
+
+https://carlosandmunoz.com/qa-review.html?live=u-aktia-fi&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aktia-fi
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/40-u-aktia-fi.jpg","","2026-12-28 10:55"
+"aktionis.ch: 65. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap…
+
+carlosandmunoz.com/qa-review?live=u-aktionis-ch&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aktionis-ch","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/41-u-aktionis-ch.jpg","","2026-12-29 10:45"
+"Scored 79 of 100. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadointegral-com-mx&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadointegral-com-mx","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/42-u-aireacondicionadointegral-com-mx.jpg","","2026-12-30 14:45"
+"Scored 60 of 100. The gap: framing.
+
+Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadomaese-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadomaese-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/43-u-aireacondicionadomaese-com.jpg","","2026-12-31 09:35"
+"Scored 68 of 100. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them…
+
+carlosandmunoz.com/qa-review?live=u-aireacondicionadospanama-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireacondicionadospanama-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/44-u-aireacondicionadospanama-com.jpg","","2027-01-01 08:20"
+"aireclimat.com: 61. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-aireclimat-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireclimat-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/45-u-aireclimat-com.jpg","","2027-01-02 13:05"
+"aireflow.com.ar: 82. The gap: the CSP.
+
+Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+carlosandmunoz.com/qa-review?live=u-aireflow-com-ar&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireflow-com-ar","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/46-u-aireflow-com-ar.jpg","","2027-01-03 11:35"
+"airemadrid.es: 52. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and…
+
+carlosandmunoz.com/qa-review?live=u-airemadrid-es&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airemadrid-es","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/47-u-airemadrid-es.jpg","","2027-01-04 15:45"
+"airequipo.com: 71. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-airequipo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airequipo-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg","","2027-01-05 14:50"
+"Scored 64 of 100. The gap: the page language.
+
+Set lang on the html element, so screen readers…
+
+carlosandmunoz.com/qa-review?live=u-airesacondicionadoselsalvador-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airesacondicionadoselsalvador-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/49-u-airesacondicionadoselsalvador-com.jpg","","2027-01-06 12:50"
+"airesi.myshopify.com: 62. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the…
+
+carlosandmunoz.com/qa-review?live=u-airesi-myshopify-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airesi-myshopify-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/50-u-airesi-myshopify-com.jpg","","2027-01-07 13:05"
+"Scored 79 of 100. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so…
+
+carlosandmunoz.com/qa-review?live=u-airesoesteclimatizacion-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airesoesteclimatizacion-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/51-u-airesoesteclimatizacion-com.jpg","","2027-01-08 14:25"
+"aireuropa.com: 54. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add HSTS.
+
+carlosandmunoz.com/qa-review?live=u-aireuropa-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aireuropa-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/52-u-aireuropa-com.jpg","","2027-01-09 14:45"
+"airflowltda.com: 66. The gap: outdated libraries.
+
+Check front-end library versions against a known-flaw list on every release, and…
+
+carlosandmunoz.com/qa-review?live=u-airflowltda-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airflowltda-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/53-u-airflowltda-com.jpg","","2027-01-10 12:50"
+"airgreenland.gl: 46. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it…
+
+carlosandmunoz.com/qa-review?live=u-airgreenland-gl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airgreenland-gl","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/54-u-airgreenland-gl.jpg","","2027-01-11 12:40"
+"aliss.hn: 68. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training…
+
+carlosandmunoz.com/qa-review?live=u-aliss-hn&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aliss-hn","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/55-u-aliss-hn.jpg","","2027-01-12 12:40"
+"airportassist.com: 38. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try…
+
+carlosandmunoz.com/qa-review?live=u-airportassist-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airportassist-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/56-u-airportassist-com.jpg","","2027-01-13 14:45"
+"airqualityperu.pe: 73. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that…
+
+carlosandmunoz.com/qa-review?live=u-airqualityperu-pe&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airqualityperu-pe","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/57-u-airqualityperu-pe.jpg","","2027-01-14 14:35"
+"airsens.cl: 85. The gap: the CSP.
+
+Tighten the content security policy one directive at a time, starting from default-src 'self'.
+
+carlosandmunoz.com/qa-review?live=u-airsens-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airsens-cl
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/58-u-airsens-cl.jpg","","2027-01-15 14:00"
+"airycold.com: 62. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block…
+
+carlosandmunoz.com/qa-review?live=u-airycold-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-airycold-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/59-u-airycold-com.jpg","","2027-01-16 16:25"
+"aiyellow.com: 45. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the…
+
+carlosandmunoz.com/qa-review?live=u-aiyellow-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-aiyellow-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/60-u-aiyellow-com.jpg","","2027-01-17 16:50"
+"ajokoe.fi: 69. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+https://carlosandmunoz.com/qa-review.html?live=u-ajokoe-fi&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-ajokoe-fi
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/61-u-ajokoe-fi.jpg","","2027-01-18 11:10"
+"akipress.org: 33. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-akipress-org&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-akipress-org","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/62-u-akipress-org.jpg","","2027-01-19 08:55"
+"Scored 50 of 100. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be…
+
+carlosandmunoz.com/qa-review?live=u-al-aminelectrical-co-uk&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-al-aminelectrical-co-uk","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/63-u-al-aminelectrical-co-uk.jpg","","2027-01-20 17:30"
+"alamo.com: 54. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+carlosandmunoz.com/qa-review?live=u-alamo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-alamo-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/64-u-alamo-com.jpg","","2027-01-21 11:35"

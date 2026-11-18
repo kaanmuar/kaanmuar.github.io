@@ -29,6 +29,46 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>aeropost.com: 61. Le point faible : les noms de boutons.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/06-u-aeropost-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/06-u-aeropost-com-fr</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les boutons doivent avoir un texte discernable.
+
+À retenir : Donnez à chaque bouton un texte ou un aria-label, pour qu’un lecteur d’écran puisse l’annoncer.
+
+Une analyse automatisée des pages publiques le 18 novembre 2026, demandée via QA-lab URL Review. Une base de départ, pas un verdict définitif.
+Ouvrez le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-aeropost-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>affinityplusbb.com: 59. Le point faible : Rôles ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/12-u-affinityplusbb-com-fr.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/12-u-affinityplusbb-com-fr</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revue de site</category>
+      <category>Requested</category>
+      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais certains rôles ARIA doivent être contenus dans des parents précis.
+
+Ce qu’il faut changer : Utilisez d'abord les éléments HTML natifs. Lorsque vous utilisez des rôles ARIA, imbriquez-les comme le rôle l'exige.
+
+Une analyse automatisée des pages publiques le 18 novembre 2026, demandée via QA-lab URL Review. Une analyse d’ouverture, pas une décision finale.
+Ouvrez le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-affinityplusbb-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Les balises canonical du MIT pointent vers son CMS.</title>
       <link>https://carlosandmunoz.com/social/runs-100/16-mit-fr.html</link>
       <guid isPermaLink="false">runs-100/16-mit-fr</guid>
@@ -180,7 +220,9 @@ Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-predictz-c
 
 Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/f0H6jUOTqjw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" length="235031" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -947,46 +989,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #SRE #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" length="255567" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 concurrents naturels. globalbank.com.pa est en tête : 71.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/03-vs-multimax-net-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/03-vs-multimax-net-fr</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>Versus</category>
-      <description>multimax.net leads en SEO, Analytics, Performance ; globalbank.com.pa leads en GEO, Sécurité, Accessibilité.
-
-La leçon pour chaque équipe : Comparez-vous aux sites auxquels vos visiteurs vous comparent, pas à un score parfait : l’écart qui vous coûte, c’est celui qu’un concurrent a déjà comblé.
-
-Analyses automatisées des pages publiques le 10 novembre 2026 des multimax.net, globalbank.com.pa, concurrents naturels trouvés sur le Web ouvert par le balayage rival de QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-multimax-net&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-multimax-net
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #DevOps #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" length="258011" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>windrawwin.com: 77. Le point faible : les libellés de formulaire.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-11/02-u-windrawwin-com-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-11/02-u-windrawwin-com-fr</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>National</category>
-      <description>Chaque lien externe qui a été vérifié a répondu, et les robots de réponse et de recherche IA peuvent lire la page de démarrage. Mais 4 champs de formulaire n’ont pas de libellé.
-
-La leçon pour chaque équipe : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
-
-Une analyse automatisée des pages publiques du 10 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-windrawwin-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-windrawwin-com
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Programming #DevOps #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" length="239507" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/02-u-windrawwin-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

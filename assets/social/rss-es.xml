@@ -29,6 +29,46 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>aeropost.com: 61. El punto débil: nombres de botones.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/06-u-aeropost-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/06-u-aeropost-com-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los botones deben tener texto discernible.
+
+Conclusión: Dale a cada botón texto o un aria-label, para que un lector de pantalla pueda anunciarlo.
+
+Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una línea base, no un dictamen.
+Abre el informe completo: https://carlosandmunoz.com/qa-review.html?live=u-aeropost-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>affinityplusbb.com: 59. El punto débil: Roles ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/12-u-affinityplusbb-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/12-u-affinityplusbb-com-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero ciertos roles ARIA deben estar contenidos en padres concretos.
+
+Qué cambiar: Utilice primero elementos HTML nativos. Cuando utilice roles ARIA, anídelos de la manera que lo requiera el rol.
+
+Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un análisis inicial, no una decisión final.
+Abre el informe completo: https://carlosandmunoz.com/qa-review.html?live=u-affinityplusbb-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Las etiquetas canonical del MIT apuntan a su CMS.</title>
       <link>https://carlosandmunoz.com/social/runs-100/16-mit-es.html</link>
       <guid isPermaLink="false">runs-100/16-mit-es</guid>
@@ -180,7 +220,9 @@ El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-predictz-c
 
 Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/f0H6jUOTqjw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" length="235031" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -858,34 +900,6 @@ Vía DEV, por Lindenbyte, 2026-11-13.
 
 https://dev.to/lindenbyte/audit-core-web-vitals-for-a-whole-sitemap-in-one-run-and-get-alerted-when-pages-fail-2mfc</description>
       <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fz4bqx2csfjfwrasxv5vd.png" medium="image"/>
-    </item>
-    <item>
-      <title>Creación de un servidor MCP Dramaturgo más rápido: Deltas DOM compactos, 1: llenado de formularios de turno y guardias de envío</title>
-      <link>https://carlosandmunoz.com/social/pick/building-a-faster-playwright-mcp-server-compact-dom-deltas-1-es.html</link>
-      <guid isPermaLink="false">pick/building-a-faster-playwright-mcp-server-compact-dom-deltas-1-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Testing</category>
-      <description>Al utilizar un agente de automatización del navegador a través del Protocolo de contexto modelo (MCP) para completar previamente las solicitudes de empleo...
-
-Vía DEV, por Trung Thanh Tran, 2026-11-15.
-
-https://dev.to/tthanh2k6/building-a-faster-playwright-mcp-server-compact-dom-deltas-1-turn-form-filling-and-submit-guards-2o2p</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F9z3gfmexqbx8fo4obj0d.png" medium="image"/>
-    </item>
-    <item>
-      <title>Actualización principal, ChatGPT Business Hub y nuevo modelo del modo AI: SEO Pulse a través de @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/core-update-chatgpt-business-hub-ai-mode-s-new-model-seo-pul-es.html</link>
-      <guid isPermaLink="false">pick/core-update-chatgpt-business-hub-ai-mode-s-new-model-seo-pul-es</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>SEO</category>
-      <description>Se implementa una actualización central, la búsqueda de IA obtiene un nuevo modelo predeterminado, ChatGPT comparte menciones y recuentos de clics, y los sitios planifican menos tráfico de búsqueda. La publicación Actualización principal, ChatGPT Business Hub y nuevo modelo del modo AI: SEO Pulse apareció por primera vez en Search Engine Journal.
-
-A través de Search Engine Journal, por Matt G. Sur, 2026-11-14.
-
-https://www.searchenginejournal.com/seo-pulse-core-update-chatgpt-business-hub-ai-modes-new-model/597135/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-12-2026.jpg" medium="image"/>
     </item>
   </channel>
 </rss>

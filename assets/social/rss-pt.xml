@@ -29,6 +29,46 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>aeropost.com: 61. A lacuna: nomes de botões.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/06-u-aeropost-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/06-u-aeropost-com-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os botões precisam ter texto discernível.
+
+Conclusão: Dê a todo botão um texto ou aria-label, para que o leitor de tela possa anunciá-lo.
+
+Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Uma linha de base, não um parecer.
+Abra o relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-aeropost-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>affinityplusbb.com: 59. A lacuna: Funções ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/12-u-affinityplusbb-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/12-u-affinityplusbb-com-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas certos papéis ARIA precisam estar contidos em elementos pais específicos.
+
+O que mudar: Use elementos HTML nativos primeiro. Ao usar funções ARIA, aninhe-as da maneira exigida pela função.
+
+Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Uma análise inicial, não uma decisão final.
+Abra o relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-affinityplusbb-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>As tags canonical do MIT apontam para o CMS.</title>
       <link>https://carlosandmunoz.com/social/runs-100/16-mit-pt.html</link>
       <guid isPermaLink="false">runs-100/16-mit-pt</guid>
@@ -180,7 +220,9 @@ O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-predictz
 
 Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/f0H6jUOTqjw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" length="235031" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -945,46 +987,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #Analytics #DevOps #SEO #QA #Measurement #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg" length="232700" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/08-u-cetys-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>td.com versus desjardins.com. desjardins.com leads: 81.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-06/07-vs-td-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-06/07-vs-td-com-pt</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Versus</category>
-      <description>td.com leads em SEO, Analytics; desjardins.com lidera em GEO, Segurança, Acessibilidade, Desempenho.
-
-A lição para toda equipe: Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.
-
-Análises automatizadas de páginas públicas em 6 novembro 2026 de td.com, desjardins.com, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-td-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-td-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SRE #Automation #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" length="254496" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 concorrentes naturais. sylviapark.com lidera: 64.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-09/04-vs-strandbags-co-nz-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-09/04-vs-strandbags-co-nz-pt</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Versus</category>
-      <description>sylviapark.com lidera em SEO, Acessibilidade; strandbags.co.nz lidera em GEO, Analytics, Segurança, Desempenho.
-
-A lição para toda equipe: Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.
-
-Análises automatizadas de páginas públicas em 9 novembro 2026 de strandbags.co.nz, sylviapark.com, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-strandbags-co-nz&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-strandbags-co-nz
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #SRE #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" length="255567" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

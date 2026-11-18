@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-17T22:21:42.536Z",
+ "updatedAt": "2026-11-18T03:58:44.592Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -1109,6 +1109,9 @@
     "views": 5,
     "likes": 1,
     "comments": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-11-09/03-vs-tide-forecast-com": {
@@ -1139,6 +1142,9 @@
   "auto-2026-11-10/01-u-motorsport-total-com": {
    "telegram": {
     "views": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-11-10/02-u-meutimao-com-br": {
@@ -1237,6 +1243,9 @@
     "views": 2,
     "likes": 1,
     "comments": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-11-16/02-u-predictz-com": {
@@ -2213,6 +2222,9 @@
    },
    "youtube": {
     "views": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "runs-100/01-wikipedia": {
@@ -2263,6 +2275,9 @@
     "views": 1,
     "likes": 1,
     "comments": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "runs-2026-10/03-who": {
@@ -2285,6 +2300,9 @@
     "views": 1,
     "likes": 1,
     "comments": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "runs-3/01-ilo": {
@@ -2636,7 +2654,7 @@
     "impressions": 3
    },
    "telegram": {
-    "views": 275
+    "views": 278
    },
    "reddit": {
     "likes": 1
@@ -3023,16 +3041,16 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 153,
-   "answered": 153,
-   "insights": 153
+   "asked": 154,
+   "answered": 154,
+   "insights": 154
   }
  },
  "channels": {
   "telegram": {
    "chat": "@qalab_live",
    "members": 3,
-   "at": "2026-11-17T21:55:14.427Z",
+   "at": "2026-11-18T03:58:44.592Z",
    "history": [
     {
      "date": "2026-11-05",
@@ -3081,9 +3099,12 @@
     {
      "date": "2026-11-17",
      "members": 3
+    },
+    {
+     "date": "2026-11-18",
+     "members": 3
     }
-   ],
-   "error": "Telegram 504: Gateway Timeout"
+   ]
   }
  }
 }

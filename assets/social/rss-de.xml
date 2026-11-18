@@ -29,6 +29,46 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>aeropost.com: 61. Die Lücke: Button-Namen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/06-u-aeropost-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/06-u-aeropost-com-de</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Buttons brauchen erkennbaren Text.
+
+Fazit: Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.
+
+Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Ausgangslage, kein Urteilsspruch.
+Öffnen Sie den vollständigen Bericht: https://carlosandmunoz.com/qa-review.html?live=u-aeropost-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>affinityplusbb.com: 59. Die Lücke: ARIA-Rollen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/12-u-affinityplusbb-com-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/12-u-affinityplusbb-com-de</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch bestimmte ARIA-Rollen müssen in bestimmten Elternelementen stehen.
+
+Was zu ändern ist: Verwenden Sie zunächst native HTML-Elemente. Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.
+
+Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine erste Analyse, kein endgültiger Entscheid.
+Öffnen Sie den vollständigen Bericht: https://carlosandmunoz.com/qa-review.html?live=u-affinityplusbb-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Die Canonical-Tags des MIT zeigen auf sein CMS.</title>
       <link>https://carlosandmunoz.com/social/runs-100/16-mit-de.html</link>
       <guid isPermaLink="false">runs-100/16-mit-de</guid>
@@ -180,7 +220,9 @@ Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-pred
 
 Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/f0H6jUOTqjw</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" length="235031" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/02-u-predictz-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -950,46 +992,6 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 #SEO #SRE #Automation #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" length="254496" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-06/feed/07-vs-td-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 natürliche Konkurrenten. sylviapark.com führt: 64.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-09/04-vs-strandbags-co-nz-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-09/04-vs-strandbags-co-nz-de</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Versus</category>
-      <description>sylviapark.com führend in SEO, Barrierefreiheit; strandbags.co.nz führt in GEO, Analytics, Sicherheit, Leistung.
-
-Die Lektion für jedes Team: Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht an einer perfekten Punktzahl: Teuer wird die Lücke, die ein Mitbewerber schon geschlossen hat.
-
-Automatisierte Analysen öffentlicher Seiten am 9 Nov. 2026 von strandbags.co.nz, sylviapark.com, natürlichen Konkurrenten, die im offenen Web durch die Konkurrenzsuche von QA-lab URL Review gefunden wurden. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-strandbags-co-nz&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-strandbags-co-nz
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #SRE #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" length="255567" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-09/feed/04-vs-strandbags-co-nz.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 natürliche Konkurrenten. globalbank.com.pa führt: 71.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-10/03-vs-multimax-net-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-10/03-vs-multimax-net-de</guid>
-      <pubDate>Fri, 13 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Versus</category>
-      <description>multimax.net führend in SEO, Analytics, Performance; globalbank.com.pa führt in den Bereichen GEO, Sicherheit, Barrierefreiheit.
-
-Die Lektion für jedes Team: Messen Sie sich an den Websites, mit denen Ihre Besucher Sie vergleichen, nicht an einer perfekten Punktzahl: Teuer wird die Lücke, die ein Mitbewerber schon geschlossen hat.
-
-Automatisierte Analysen öffentlicher Seiten am 10 Nov. 2026 von multimax.net, globalbank.com.pa, natürlichen Konkurrenten, die im offenen Web durch die Konkurrenzsuche von QA-lab URL Review gefunden wurden. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-multimax-net&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-multimax-net
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #DevOps #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" length="258011" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-10/feed/03-vs-multimax-net.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
