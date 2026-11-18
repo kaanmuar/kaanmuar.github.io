@@ -754,7 +754,7 @@
       "sec-dmarc-pct.title": "DMARC aplica su política solo al {pct}% del correo falsificado",
       "sec-dmarc-pct.reject": "pct={pct} indica a los receptores que rechacen el {pct}% del correo que falla DMARC y que al resto solo lo pongan en cuarentena.",
       "sec-dmarc-pct.quarantine": "pct={pct} indica a los receptores que pongan en cuarentena el {pct}% del correo que falla DMARC y que entreguen el resto como siempre.",
-      "sec-dmarc-pct.fix": "Pon pct=100, o quita la etiqueta, porque 100 es el valor predeterminado.",
+      "sec-dmarc-pct.fix": "Antes de subir pct, revisa tus informes agregados de DMARC (rua) por si hay remitentes legítimos que fallan. Luego pon pct=100, o quita la etiqueta, porque 100 es el valor predeterminado.",
       "sec-dkim.key.rsa": "{name} (RSA, {bits} bits)",
       "sec-dkim.key.ed25519": "{name} (Ed25519)",
       "sec-dkim.key.other": "{name} (k={type})",

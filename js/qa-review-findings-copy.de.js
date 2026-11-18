@@ -754,7 +754,7 @@
       "sec-dmarc-pct.title": "DMARC wendet seine Richtlinie nur auf {pct} % der gefälschten E-Mails an",
       "sec-dmarc-pct.reject": "pct={pct} weist Empfänger an, {pct} % der E-Mails abzuweisen, die an DMARC scheitern, und den Rest nur unter Quarantäne zu stellen.",
       "sec-dmarc-pct.quarantine": "pct={pct} weist Empfänger an, {pct} % der E-Mails unter Quarantäne zu stellen, die an DMARC scheitern, und den Rest normal zuzustellen.",
-      "sec-dmarc-pct.fix": "Setzen Sie pct=100 oder entfernen Sie den Tag, denn 100 ist der Standardwert.",
+      "sec-dmarc-pct.fix": "Prüfen Sie vor einer Erhöhung von pct Ihre DMARC-Aggregatberichte (rua) auf legitime Absender, die fehlschlagen. Setzen Sie dann pct=100 oder entfernen Sie den Tag, denn 100 ist der Standardwert.",
       "sec-dkim.key.rsa": "{name} (RSA, {bits} Bit)",
       "sec-dkim.key.ed25519": "{name} (Ed25519)",
       "sec-dkim.key.other": "{name} (k={type})",
