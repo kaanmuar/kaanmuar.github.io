@@ -1,239 +1,377 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const auth = require("../../functions/url-review-auth");
-const accountData = require("../../functions/url-review-account-data");
-const offers = require("../../functions/url-review-offers");
-const desk = require("../../functions/url-review-desk");
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const auth = require('../../functions/url-review-auth');
+const accountData = require('../../functions/url-review-account-data');
+const offers = require('../../functions/url-review-offers');
+const desk = require('../../functions/url-review-desk');
 
-const EMAIL = "ana@example.com";
+const EMAIL = 'ana@example.com';
 
 async function seeded() {
-  const store = auth.memoryStore();
-  await store.set("url_review_accounts", EMAIL, { email: EMAIL, providers: ["google.com"], profile: { name: "Ana" }, expireAt: new Date("2027-10-22T00:00:00Z") });
-  await store.set("url_review_sessions", "s".repeat(64), { email: EMAIL, deviceHash: "d".repeat(64), provider: "google.com" });
-  await store.set("url_review_sign_ins", "i1", { email: EMAIL, codeHash: "c", tokenHash: "t", deviceHash: "d" });
-  await store.set("url_reviews", "run1", { email: EMAIL, status: "done", url: "https://a.example/", deviceId: "abc", ip: "1.1.1.1", report: { cases: [1] } });
-  await store.set("url_reviews", "run2", { email: EMAIL, status: "done", paid: true, provider: "wompi", amount: 950, currency: "USD", deviceId: "abc", report: { cases: [2] } });
-  await store.set("url_reviews", "credit1", { email: EMAIL, status: "run-credit", paid: true, priceUsd: 9.5, deviceId: "abc", ip: "1.1.1.1" });
-  await store.set("url_reviews", "other", { email: "bo@example.com", status: "done" });
-  await store.set("url_review_notes", "n1", { email: EMAIL, status: "follow-note" });
-  await store.set("url_review_notes", "n2", { email: EMAIL, status: "follow-stop" });
-  await store.set("url_review_alerts", "a1", { email: EMAIL, kind: "run" });
-  await store.set("url_review_stop_links", "tok", { email: EMAIL });
-  await store.set("url_review_failures", "run3", { email: EMAIL, cause: "timeout" });
-  await store.set("url_review_coupons", "SAVE10", { email: EMAIL, percent: 10 });
-  await store.set("url_review_free_runs", EMAIL, { note: "friend" });
-  await store.set("url_review_captures", "c1", { reportId: "run1", kind: "copy" });
-  await store.set("url_review_captures", "c2", { reportId: "other", kind: "copy" });
-  await store.set("url_review_stops", "run1", { at: "2026-10-01T00:00:00Z" });
-  await store.set("url_review_visits", "v1", { email: EMAIL, startedAt: "2026-10-21T10:00:00Z", activeMs: 60000, pages: ["qa-review.html"] });
-  await store.set("url_review_visits", "v2", { email: "bo@example.com", startedAt: "2026-10-21T10:00:00Z" });
-  return store;
+	const store = auth.memoryStore();
+	await store.set('url_review_accounts', EMAIL, {
+		email: EMAIL,
+		providers: ['google.com'],
+		profile: { name: 'Ana' },
+		expireAt: new Date('2027-10-22T00:00:00Z'),
+	});
+	await store.set('url_review_sessions', 's'.repeat(64), {
+		email: EMAIL,
+		deviceHash: 'd'.repeat(64),
+		provider: 'google.com',
+	});
+	await store.set('url_review_sign_ins', 'i1', { email: EMAIL, codeHash: 'c', tokenHash: 't', deviceHash: 'd' });
+	await store.set('url_reviews', 'run1', {
+		email: EMAIL,
+		status: 'done',
+		url: 'https://a.example/',
+		deviceId: 'abc',
+		ip: '1.1.1.1',
+		report: { cases: [1] },
+	});
+	await store.set('url_reviews', 'run2', {
+		email: EMAIL,
+		status: 'done',
+		paid: true,
+		provider: 'wompi',
+		amount: 950,
+		currency: 'USD',
+		deviceId: 'abc',
+		report: { cases: [2] },
+	});
+	await store.set('url_reviews', 'credit1', {
+		email: EMAIL,
+		status: 'run-credit',
+		paid: true,
+		priceUsd: 9.5,
+		deviceId: 'abc',
+		ip: '1.1.1.1',
+	});
+	await store.set('url_reviews', 'other', { email: 'bo@example.com', status: 'done' });
+	await store.set('url_review_notes', 'n1', { email: EMAIL, status: 'follow-note' });
+	await store.set('url_review_notes', 'n2', { email: EMAIL, status: 'follow-stop' });
+	await store.set('url_review_alerts', 'a1', { email: EMAIL, kind: 'run' });
+	await store.set('url_review_stop_links', 'tok', { email: EMAIL });
+	await store.set('url_review_failures', 'run3', { email: EMAIL, cause: 'timeout' });
+	await store.set('url_review_coupons', 'SAVE10', { email: EMAIL, percent: 10 });
+	await store.set('url_review_free_runs', EMAIL, { note: 'friend' });
+	await store.set('url_review_captures', 'c1', { reportId: 'run1', kind: 'copy' });
+	await store.set('url_review_captures', 'c2', { reportId: 'other', kind: 'copy' });
+	await store.set('url_review_stops', 'run1', { at: '2026-10-01T00:00:00Z' });
+	await store.set('url_review_visits', 'v1', {
+		email: EMAIL,
+		startedAt: '2026-10-21T10:00:00Z',
+		activeMs: 60000,
+		pages: ['qa-review.html'],
+	});
+	await store.set('url_review_visits', 'v2', { email: 'bo@example.com', startedAt: '2026-10-21T10:00:00Z' });
+	return store;
 }
 
-test("the export holds every row under the address and no secret", async () => {
-  const store = await seeded();
-  const data = await accountData.exportAccount(store, "Ana@Example.com", Date.parse("2026-10-22T00:00:00Z"));
-  assert.equal(data.email, EMAIL);
-  assert.equal(data.account.profile.name, "Ana");
-  assert.equal(data.account.expireAt, "2027-10-22T00:00:00.000Z");
-  assert.deepEqual(data.reviews.map((row) => row.id).sort(), ["credit1", "run1", "run2"]);
-  assert.equal(data.notes.length, 2);
-  assert.equal(data.freeAccount.note, "friend");
-  assert.deepEqual(data.captures.map((row) => row.id), ["c1"]);
-  assert.deepEqual(data.stops.map((row) => row.id), ["run1"]);
-  assert.deepEqual(data.visits.map((row) => row.id), ["v1"]);
-  const text = JSON.stringify(data);
-  assert.doesNotMatch(text, /deviceHash|codeHash|tokenHash/);
-  assert.doesNotMatch(text, /"tok"|s{64}/);
-  assert.equal(data.sessions[0].provider, "google.com");
+test('the export holds every row under the address and no secret', async () => {
+	const store = await seeded();
+	const data = await accountData.exportAccount(store, 'Ana@Example.com', Date.parse('2026-10-22T00:00:00Z'));
+	assert.equal(data.email, EMAIL);
+	assert.equal(data.account.profile.name, 'Ana');
+	assert.equal(data.account.expireAt, '2027-10-22T00:00:00.000Z');
+	assert.deepEqual(data.reviews.map((row) => row.id).sort(), ['credit1', 'run1', 'run2']);
+	assert.equal(data.notes.length, 2);
+	assert.equal(data.freeAccount.note, 'friend');
+	assert.deepEqual(
+		data.captures.map((row) => row.id),
+		['c1']
+	);
+	assert.deepEqual(
+		data.stops.map((row) => row.id),
+		['run1']
+	);
+	assert.deepEqual(
+		data.visits.map((row) => row.id),
+		['v1']
+	);
+	const text = JSON.stringify(data);
+	assert.doesNotMatch(text, /deviceHash|codeHash|tokenHash/);
+	assert.doesNotMatch(text, /"tok"|s{64}/);
+	assert.equal(data.sessions[0].provider, 'google.com');
 });
 
-test("deleting the account removes its rows, keeps payments without the report, and keeps the stop", async () => {
-  const store = await seeded();
-  const dropped = [];
-  const authApi = {
-    users: [{ uid: "u1" }],
-    async getUserByEmail() {
-      if (!this.users.length) throw Object.assign(new Error("gone"), { code: "auth/user-not-found" });
-      return this.users[0];
-    },
-    async deleteUser(uid) { dropped.push(uid); this.users.shift(); }
-  };
-  const counts = await accountData.deleteAccount(store, EMAIL, { authApi, now: Date.parse("2026-10-22T00:00:00Z") });
-  assert.deepEqual(dropped, ["u1"]);
-  assert.equal(counts.authUsers, 1);
-  assert.equal(counts.paymentsKept, 2);
-  assert.equal(await store.get("url_review_accounts", EMAIL), null);
-  assert.equal(await store.get("url_review_free_runs", EMAIL), null);
-  assert.equal(await store.get("url_reviews", "run1"), null);
-  assert.equal(await store.get("url_review_captures", "c1"), null);
-  assert.ok(await store.get("url_review_captures", "c2"));
-  assert.equal(await store.get("url_review_stops", "run1"), null);
-  assert.ok(await store.get("url_reviews", "other"));
-  const paid = await store.get("url_reviews", "run2");
-  assert.equal(paid.report, undefined);
-  assert.equal(paid.deviceId, undefined);
-  assert.equal(paid.amount, 950);
-  assert.equal(paid.accountDeletedAt, "2026-10-22T00:00:00.000Z");
-  const credit = await store.get("url_reviews", "credit1");
-  assert.equal(credit.ip, undefined);
-  assert.equal(credit.priceUsd, 9.5);
-  for (const col of ["url_review_sessions", "url_review_sign_ins", "url_review_alerts", "url_review_stop_links", "url_review_failures", "url_review_coupons", "url_review_visits"]) {
-    assert.deepEqual(await store.where(col, "email", EMAIL), [], col);
-  }
-  assert.deepEqual((await store.where("url_review_notes", "email", EMAIL)).map((row) => row.status), ["follow-stop"]);
+test('deleting the account removes its rows, keeps payments without the report, and keeps the stop', async () => {
+	const store = await seeded();
+	const dropped = [];
+	const authApi = {
+		users: [{ uid: 'u1' }],
+		async getUserByEmail() {
+			if (!this.users.length) throw Object.assign(new Error('gone'), { code: 'auth/user-not-found' });
+			return this.users[0];
+		},
+		async deleteUser(uid) {
+			dropped.push(uid);
+			this.users.shift();
+		},
+	};
+	const counts = await accountData.deleteAccount(store, EMAIL, { authApi, now: Date.parse('2026-10-22T00:00:00Z') });
+	assert.deepEqual(dropped, ['u1']);
+	assert.equal(counts.authUsers, 1);
+	assert.equal(counts.paymentsKept, 2);
+	assert.equal(await store.get('url_review_accounts', EMAIL), null);
+	assert.equal(await store.get('url_review_free_runs', EMAIL), null);
+	assert.equal(await store.get('url_reviews', 'run1'), null);
+	assert.equal(await store.get('url_review_captures', 'c1'), null);
+	assert.ok(await store.get('url_review_captures', 'c2'));
+	assert.equal(await store.get('url_review_stops', 'run1'), null);
+	assert.ok(await store.get('url_reviews', 'other'));
+	const paid = await store.get('url_reviews', 'run2');
+	assert.equal(paid.report, undefined);
+	assert.equal(paid.deviceId, undefined);
+	assert.equal(paid.amount, 950);
+	assert.equal(paid.accountDeletedAt, '2026-10-22T00:00:00.000Z');
+	const credit = await store.get('url_reviews', 'credit1');
+	assert.equal(credit.ip, undefined);
+	assert.equal(credit.priceUsd, 9.5);
+	for (const col of [
+		'url_review_sessions',
+		'url_review_sign_ins',
+		'url_review_alerts',
+		'url_review_stop_links',
+		'url_review_failures',
+		'url_review_coupons',
+		'url_review_visits',
+	]) {
+		assert.deepEqual(await store.where(col, 'email', EMAIL), [], col);
+	}
+	assert.deepEqual(
+		(await store.where('url_review_notes', 'email', EMAIL)).map((row) => row.status),
+		['follow-stop']
+	);
 });
 
-test("a report paid after its run gets its own payment row, without the report", () => {
-  const row = offers.reportPayment({ email: " Ana@Example.com", frameworks: ["iso"], report: { cases: [1] }, ip: "1.1.1.1" }, { reportId: "run9", provider: "wompi", amount: 950, reference: undefined });
-  assert.deepEqual(row, { status: "paid-report", paid: true, purpose: "report", email: EMAIL, frameworks: ["iso"], reportId: "run9", provider: "wompi", amount: 950 });
+test('a report paid after its run gets its own payment row, without the report', () => {
+	const row = offers.reportPayment(
+		{ email: ' Ana@Example.com', frameworks: ['iso'], report: { cases: [1] }, ip: '1.1.1.1' },
+		{ reportId: 'run9', provider: 'wompi', amount: 950, reference: undefined }
+	);
+	assert.deepEqual(row, {
+		status: 'paid-report',
+		paid: true,
+		purpose: 'report',
+		email: EMAIL,
+		frameworks: ['iso'],
+		reportId: 'run9',
+		provider: 'wompi',
+		amount: 950,
+	});
 });
 
-test("a paid case export, signals, or signed-in run keeps its purpose and never becomes a run credit", () => {
-  assert.equal(offers.paidPurpose("report"), "report");
-  ["cases", "alerts", "credentials"].forEach((purpose) => assert.equal(offers.paidPurpose(purpose), purpose));
-  assert.equal(offers.paidPurpose("new-run"), "new-run");
-  assert.equal(offers.paidPurpose(""), "new-run");
-  const row = offers.addonPayment({ email: " Ana@Example.com", frameworks: ["iso"], report: { cases: [1] } }, { purpose: "cases", reportId: "run9", layers: ["Security"], alertCount: undefined, amount: 19 });
-  assert.deepEqual(row, { status: "paid-addon", paid: true, email: EMAIL, frameworks: ["iso"], purpose: "cases", reportId: "run9", layers: ["Security"], amount: 19 });
-  assert.equal(accountData.isPayment({ status: "paid-addon" }), true);
+test('a paid case export, signals, or signed-in run keeps its purpose and never becomes a run credit', () => {
+	assert.equal(offers.paidPurpose('report'), 'report');
+	['cases', 'alerts', 'credentials'].forEach((purpose) => assert.equal(offers.paidPurpose(purpose), purpose));
+	assert.equal(offers.paidPurpose('new-run'), 'new-run');
+	assert.equal(offers.paidPurpose(''), 'new-run');
+	const row = offers.addonPayment(
+		{ email: ' Ana@Example.com', frameworks: ['iso'], report: { cases: [1] } },
+		{ purpose: 'cases', reportId: 'run9', layers: ['Security'], alertCount: undefined, amount: 19 }
+	);
+	assert.deepEqual(row, {
+		status: 'paid-addon',
+		paid: true,
+		email: EMAIL,
+		frameworks: ['iso'],
+		purpose: 'cases',
+		reportId: 'run9',
+		layers: ['Security'],
+		amount: 19,
+	});
+	assert.equal(accountData.isPayment({ status: 'paid-addon' }), true);
 });
 
-test("report add-ons count as revenue in the period summary", () => {
-  const summary = require("../../functions/url-review-mail").summarizePeriod([], [{ createdAt: new Date().toISOString(), status: "paid-addon", paid: true, purpose: "alerts", priceUsd: 19 }], [], []);
-  assert.equal(summary.paidUsd, 19);
-  assert.equal(summary.paidCount, 1);
+test('report add-ons count as revenue in the period summary', () => {
+	const summary = require('../../functions/url-review-mail').summarizePeriod(
+		[],
+		[{ createdAt: new Date().toISOString(), status: 'paid-addon', paid: true, purpose: 'alerts', priceUsd: 19 }],
+		[],
+		[]
+	);
+	assert.equal(summary.paidUsd, 19);
+	assert.equal(summary.paidCount, 1);
 });
 
-test("the desk counts a paid report once, through its payment row", () => {
-  const rows = [
-    { id: "run9", email: EMAIL, status: "complete", paid: true, report: { cases: [] } },
-    { id: "paid-report-run9", email: EMAIL, status: "paid-report", paid: true, reportId: "run9" },
-    { id: "run8", email: EMAIL, status: "complete", paid: true, report: { cases: [] } }
-  ];
-  assert.equal(desk.snapshot(rows, [], [], [], []).tally.paid, 2);
+test('the desk counts a paid report once, through its payment row', () => {
+	const rows = [
+		{ id: 'run9', email: EMAIL, status: 'complete', paid: true, report: { cases: [] } },
+		{ id: 'paid-report-run9', email: EMAIL, status: 'paid-report', paid: true, reportId: 'run9' },
+		{ id: 'run8', email: EMAIL, status: 'complete', paid: true, report: { cases: [] } },
+	];
+	assert.equal(desk.snapshot(rows, [], [], [], []).tally.paid, 2);
 });
 
-test("the desk counts a test payment only once it is captured, and never as paid", () => {
-  const rows = [
-    { id: "credit", email: EMAIL, status: "run-credit", paid: true, test: true, priceUsd: 19, provider: "paypal" },
-    { id: "open1", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" },
-    { id: "open2", email: EMAIL, status: "checkout-open", paid: false, test: true, priceUsd: 19, provider: "paypal" }
-  ];
-  const tally = desk.snapshot(rows, [], [], [], []).tally;
-  assert.equal(tally.test, 1);
-  assert.equal(tally.paid, 0);
-  assert.equal(tally.checkout, 2);
+test('the desk counts a test payment only once it is captured, and never as paid', () => {
+	const rows = [
+		{ id: 'credit', email: EMAIL, status: 'run-credit', paid: true, test: true, priceUsd: 19, provider: 'paypal' },
+		{ id: 'open1', email: EMAIL, status: 'checkout-open', paid: false, test: true, priceUsd: 19, provider: 'paypal' },
+		{ id: 'open2', email: EMAIL, status: 'checkout-open', paid: false, test: true, priceUsd: 19, provider: 'paypal' },
+	];
+	const tally = desk.snapshot(rows, [], [], [], []).tally;
+	assert.equal(tally.test, 1);
+	assert.equal(tally.paid, 0);
+	assert.equal(tally.checkout, 2);
 });
 
-test("deleting the account drops a paid run whose payment has its own row, and keeps that row", async () => {
-  const store = auth.memoryStore();
-  await store.set("url_reviews", "run9", { email: EMAIL, status: "complete", paid: true, provider: "wompi", report: { cases: [1] } });
-  await store.set("url_reviews", "paid-report-run9", offers.reportPayment({ email: EMAIL }, { reportId: "run9", provider: "wompi", amount: 950, deviceId: "abc" }));
-  const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-10-22T00:00:00Z") });
-  assert.equal(await store.get("url_reviews", "run9"), null);
-  const kept = await store.get("url_reviews", "paid-report-run9");
-  assert.equal(kept.reportId, "run9");
-  assert.equal(kept.amount, 950);
-  assert.equal(kept.deviceId, undefined);
-  assert.equal(counts.paymentsKept, 1);
+test('deleting the account drops a paid run whose payment has its own row, and keeps that row', async () => {
+	const store = auth.memoryStore();
+	await store.set('url_reviews', 'run9', {
+		email: EMAIL,
+		status: 'complete',
+		paid: true,
+		provider: 'wompi',
+		report: { cases: [1] },
+	});
+	await store.set(
+		'url_reviews',
+		'paid-report-run9',
+		offers.reportPayment({ email: EMAIL }, { reportId: 'run9', provider: 'wompi', amount: 950, deviceId: 'abc' })
+	);
+	const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse('2026-10-22T00:00:00Z') });
+	assert.equal(await store.get('url_reviews', 'run9'), null);
+	const kept = await store.get('url_reviews', 'paid-report-run9');
+	assert.equal(kept.reportId, 'run9');
+	assert.equal(kept.amount, 950);
+	assert.equal(kept.deviceId, undefined);
+	assert.equal(counts.paymentsKept, 1);
 });
 
-test("deleting twice leaves the kept rows as they are", async () => {
-  const store = await seeded();
-  await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-10-22T00:00:00Z") });
-  const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-11-22T00:00:00Z") });
-  assert.equal(counts.paymentsKept, undefined);
-  assert.equal((await store.get("url_reviews", "run2")).accountDeletedAt, "2026-10-22T00:00:00.000Z");
+test('deleting twice leaves the kept rows as they are', async () => {
+	const store = await seeded();
+	await accountData.deleteAccount(store, EMAIL, { now: Date.parse('2026-10-22T00:00:00Z') });
+	const counts = await accountData.deleteAccount(store, EMAIL, { now: Date.parse('2026-11-22T00:00:00Z') });
+	assert.equal(counts.paymentsKept, undefined);
+	assert.equal((await store.get('url_reviews', 'run2')).accountDeletedAt, '2026-10-22T00:00:00.000Z');
 });
 
-test("the desk opens for the operator email signed in by password or emailed link, and not by Google", async () => {
-  const realFetch = global.fetch;
-  let user = null;
-  global.fetch = async () => ({ json: async () => ({ users: [user] }) });
-  const as = (providerId, extra) => Object.assign({ localId: "op1", email: "kaanmuar@gmail.com", emailVerified: true, providerUserInfo: [{ providerId }] }, extra);
-  const signedBy = (method, sub = "op1") => ["h", Buffer.from(JSON.stringify({ sub, firebase: { sign_in_provider: method } })).toString("base64url"), "s".repeat(30)].join(".");
-  try {
-    user = as("password");
-    assert.equal(await desk.verifyOperator(signedBy("password")), "kaanmuar@gmail.com");
-    assert.equal(await desk.verifyOperator(signedBy("emailLink")), "kaanmuar@gmail.com");
-    assert.equal(await desk.verifyOperator(signedBy("google.com")), null);
-    assert.equal(await desk.verifyOperator(signedBy("password", "someone-else")), null);
-    user = as("password", { providerUserInfo: [{ providerId: "google.com" }, { providerId: "password" }] });
-    assert.equal(await desk.verifyOperator(signedBy("google.com")), null);
-    user = as("google.com");
-    assert.equal(await desk.verifyOperator(signedBy("password")), null);
-    user = as("password", { emailVerified: false });
-    assert.equal(await desk.verifyOperator(signedBy("password")), null);
-    user = as("password", { email: "someone@example.com" });
-    assert.equal(await desk.verifyOperator(signedBy("password")), null);
-    assert.equal(await desk.verifyOperator("t".repeat(40)), null);
-    assert.equal(await desk.verifyOperator("short"), null);
-  } finally {
-    global.fetch = realFetch;
-  }
+test('the desk opens for the operator email signed in by password or emailed link, and not by Google', async () => {
+	const realFetch = global.fetch;
+	let user = null;
+	global.fetch = async () => ({ json: async () => ({ users: [user] }) });
+	const as = (providerId, extra) =>
+		Object.assign(
+			{ localId: 'op1', email: 'kaanmuar@gmail.com', emailVerified: true, providerUserInfo: [{ providerId }] },
+			extra
+		);
+	const signedBy = (method, sub = 'op1') =>
+		[
+			'h',
+			Buffer.from(JSON.stringify({ sub, firebase: { sign_in_provider: method } })).toString('base64url'),
+			's'.repeat(30),
+		].join('.');
+	try {
+		user = as('password');
+		assert.equal(await desk.verifyOperator(signedBy('password')), 'kaanmuar@gmail.com');
+		assert.equal(await desk.verifyOperator(signedBy('emailLink')), 'kaanmuar@gmail.com');
+		assert.equal(await desk.verifyOperator(signedBy('google.com')), null);
+		assert.equal(await desk.verifyOperator(signedBy('password', 'someone-else')), null);
+		user = as('password', { providerUserInfo: [{ providerId: 'google.com' }, { providerId: 'password' }] });
+		assert.equal(await desk.verifyOperator(signedBy('google.com')), null);
+		user = as('google.com');
+		assert.equal(await desk.verifyOperator(signedBy('password')), null);
+		user = as('password', { emailVerified: false });
+		assert.equal(await desk.verifyOperator(signedBy('password')), null);
+		user = as('password', { email: 'someone@example.com' });
+		assert.equal(await desk.verifyOperator(signedBy('password')), null);
+		assert.equal(await desk.verifyOperator('t'.repeat(40)), null);
+		assert.equal(await desk.verifyOperator('short'), null);
+	} finally {
+		global.fetch = realFetch;
+	}
 });
 
-test("the desk page offers email and password or an emailed link, asks for the authenticator code, and has no Google sign-in", () => {
-  for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
-    assert.ok(page.indexOf('id="desk-password"') < page.indexOf('id="desk-link"'));
-    assert.match(page, /signInWithEmailAndPassword/);
-    assert.match(page, /sendSignInLinkToEmail/);
-    assert.match(page, /signInWithEmailLink/);
-    assert.match(page, /auth\/multi-factor-auth-required/);
-    assert.doesNotMatch(page, /GoogleAuthProvider|desk-google|Continue with Google/);
-  }
+test('the desk page offers email and password or an emailed link, asks for the authenticator code, and has no Google sign-in', () => {
+	for (const page of [desk.PAGE, desk.FAILURES_PAGE]) {
+		assert.ok(page.indexOf('id="desk-password"') < page.indexOf('id="desk-link"'));
+		assert.match(page, /signInWithEmailAndPassword/);
+		assert.match(page, /sendSignInLinkToEmail/);
+		assert.match(page, /signInWithEmailLink/);
+		assert.match(page, /auth\/multi-factor-auth-required/);
+		assert.doesNotMatch(page, /GoogleAuthProvider|desk-google|Continue with Google/);
+	}
 });
 
-test("deleting chosen runs drops them and what hangs off them, and nothing else", async () => {
-  const store = await seeded();
-  const counts = await accountData.deleteRuns(store, "Ana@Example.com", ["run1"]);
-  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
-  assert.equal(await store.get("url_reviews", "run1"), null);
-  assert.equal(await store.get("url_review_captures", "c1"), null);
-  assert.equal(await store.get("url_review_stops", "run1"), null);
-  assert.ok(await store.get("url_reviews", "run2"));
-  assert.ok(await store.get("url_review_captures", "c2"));
-  assert.ok(await store.get("url_review_accounts", EMAIL));
+test('deleting chosen runs drops them and what hangs off them, and nothing else', async () => {
+	const store = await seeded();
+	const counts = await accountData.deleteRuns(store, 'Ana@Example.com', ['run1']);
+	assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+	assert.equal(await store.get('url_reviews', 'run1'), null);
+	assert.equal(await store.get('url_review_captures', 'c1'), null);
+	assert.equal(await store.get('url_review_stops', 'run1'), null);
+	assert.ok(await store.get('url_reviews', 'run2'));
+	assert.ok(await store.get('url_review_captures', 'c2'));
+	assert.ok(await store.get('url_review_accounts', EMAIL));
 });
 
 test("deleting chosen runs keeps a paid run's payment and skips other people's runs and payment rows", async () => {
-  const store = await seeded();
-  await store.set("url_reviews", "paid-report-run1", offers.reportPayment({ email: EMAIL }, { reportId: "run1", provider: "wompi", amount: 950, deviceId: "abc" }));
-  const counts = await accountData.deleteRuns(store, EMAIL, ["run2", "other", "credit1", "paid-report-run1", "../x", "missing"], { now: Date.parse("2026-10-23T00:00:00Z") });
-  assert.deepEqual(counts, { deleted: 1, paymentsKept: 1, skipped: 5 });
-  const kept = await store.get("url_reviews", "run2");
-  assert.equal(kept.report, undefined);
-  assert.equal(kept.amount, 950);
-  assert.equal(kept.accountDeletedAt, "2026-10-23T00:00:00.000Z");
-  assert.ok(await store.get("url_reviews", "other"));
-  assert.ok(await store.get("url_reviews", "credit1"));
-  assert.ok(await store.get("url_reviews", "paid-report-run1"));
+	const store = await seeded();
+	await store.set(
+		'url_reviews',
+		'paid-report-run1',
+		offers.reportPayment({ email: EMAIL }, { reportId: 'run1', provider: 'wompi', amount: 950, deviceId: 'abc' })
+	);
+	const counts = await accountData.deleteRuns(
+		store,
+		EMAIL,
+		['run2', 'other', 'credit1', 'paid-report-run1', '../x', 'missing'],
+		{ now: Date.parse('2026-10-23T00:00:00Z') }
+	);
+	assert.deepEqual(counts, { deleted: 1, paymentsKept: 1, skipped: 5 });
+	const kept = await store.get('url_reviews', 'run2');
+	assert.equal(kept.report, undefined);
+	assert.equal(kept.amount, 950);
+	assert.equal(kept.accountDeletedAt, '2026-10-23T00:00:00.000Z');
+	assert.ok(await store.get('url_reviews', 'other'));
+	assert.ok(await store.get('url_reviews', 'credit1'));
+	assert.ok(await store.get('url_reviews', 'paid-report-run1'));
 });
 
-test("deleting a paid run whose payment has its own row removes the run outright", async () => {
-  const store = await seeded();
-  await store.set("url_reviews", "paid-report-run2", offers.reportPayment({ email: EMAIL }, { reportId: "run2", provider: "wompi", amount: 950, deviceId: "abc" }));
-  const counts = await accountData.deleteRuns(store, EMAIL, ["run2"]);
-  assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
-  assert.equal(await store.get("url_reviews", "run2"), null);
-  assert.ok(await store.get("url_reviews", "paid-report-run2"));
+test('deleting a paid run whose payment has its own row removes the run outright', async () => {
+	const store = await seeded();
+	await store.set(
+		'url_reviews',
+		'paid-report-run2',
+		offers.reportPayment({ email: EMAIL }, { reportId: 'run2', provider: 'wompi', amount: 950, deviceId: 'abc' })
+	);
+	const counts = await accountData.deleteRuns(store, EMAIL, ['run2']);
+	assert.deepEqual(counts, { deleted: 1, paymentsKept: 0, skipped: 0 });
+	assert.equal(await store.get('url_reviews', 'run2'), null);
+	assert.ok(await store.get('url_reviews', 'paid-report-run2'));
 });
 
-test("coupon redemptions and used or refunded credits are in the export, and deleting keeps them as payments", async () => {
-  const store = await seeded();
-  await store.set("url_review_redemptions", "ref-r1", { email: EMAIL, code: "HALF", reference: "r1", priceUsd: 4.75 });
-  await store.set("url_reviews", "used1", { email: EMAIL, status: "run-credit-used", creditId: "credit1", runId: "run1", deviceId: "abc" });
-  await store.set("url_reviews", "credit2", { email: EMAIL, status: "run-credit-refunded", paid: true, refunded: true, captureId: "CAP1", payerName: "Ana", ip: "1.1.1.1" });
-  const data = await accountData.exportAccount(store, EMAIL, Date.parse("2026-10-22T00:00:00Z"));
-  assert.deepEqual(data.redemptions.map((row) => row.code), ["HALF"]);
-  assert.ok(data.reviews.some((row) => row.id === "used1"));
-  await accountData.deleteAccount(store, EMAIL, { now: Date.parse("2026-10-22T00:00:00Z") });
-  assert.equal((await store.get("url_review_redemptions", "ref-r1")).code, "HALF");
-  assert.equal((await store.get("url_reviews", "used1")).creditId, "credit1");
-  const refunded = await store.get("url_reviews", "credit2");
-  assert.equal(refunded.captureId, "CAP1");
-  assert.equal(refunded.refunded, true);
-  assert.equal(refunded.ip, undefined);
+test('coupon redemptions and used or refunded credits are in the export, and deleting keeps them as payments', async () => {
+	const store = await seeded();
+	await store.set('url_review_redemptions', 'ref-r1', { email: EMAIL, code: 'HALF', reference: 'r1', priceUsd: 4.75 });
+	await store.set('url_reviews', 'used1', {
+		email: EMAIL,
+		status: 'run-credit-used',
+		creditId: 'credit1',
+		runId: 'run1',
+		deviceId: 'abc',
+	});
+	await store.set('url_reviews', 'credit2', {
+		email: EMAIL,
+		status: 'run-credit-refunded',
+		paid: true,
+		refunded: true,
+		captureId: 'CAP1',
+		payerName: 'Ana',
+		ip: '1.1.1.1',
+	});
+	const data = await accountData.exportAccount(store, EMAIL, Date.parse('2026-10-22T00:00:00Z'));
+	assert.deepEqual(
+		data.redemptions.map((row) => row.code),
+		['HALF']
+	);
+	assert.ok(data.reviews.some((row) => row.id === 'used1'));
+	await accountData.deleteAccount(store, EMAIL, { now: Date.parse('2026-10-22T00:00:00Z') });
+	assert.equal((await store.get('url_review_redemptions', 'ref-r1')).code, 'HALF');
+	assert.equal((await store.get('url_reviews', 'used1')).creditId, 'credit1');
+	const refunded = await store.get('url_reviews', 'credit2');
+	assert.equal(refunded.captureId, 'CAP1');
+	assert.equal(refunded.refunded, true);
+	assert.equal(refunded.ip, undefined);
 });

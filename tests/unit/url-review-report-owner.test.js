@@ -1,164 +1,236 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const auth = require("../../functions/url-review-auth");
-const customerMail = require("../../functions/url-review-customer-mail");
-const offers = require("../../functions/url-review-offers");
-const sample = require("../../assets/qa-review-sample.json");
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const auth = require('../../functions/url-review-auth');
+const customerMail = require('../../functions/url-review-customer-mail');
+const offers = require('../../functions/url-review-offers');
+const sample = require('../../assets/qa-review-sample.json');
 
-const ANA_DESKTOP = "a".repeat(64);
-const ANA_PHONE = "b".repeat(64);
-const BEN_DESKTOP = "c".repeat(64);
+const ANA_DESKTOP = 'a'.repeat(64);
+const ANA_PHONE = 'b'.repeat(64);
+const BEN_DESKTOP = 'c'.repeat(64);
 
 async function signIn(store, email, deviceKey) {
-  const started = await auth.startEmail(store, { email, deviceKey, ip: "1.1.1.1" });
-  const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey });
-  return { session: signed.session, deviceKey };
+	const started = await auth.startEmail(store, { email, deviceKey, ip: '1.1.1.1' });
+	const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey });
+	return { session: signed.session, deviceKey };
 }
 
 function run(extra) {
-  return Object.assign({ id: "ab12cd34", email: "ana@example.com", paid: true, frameworks: sample.frameworks, report: Object.assign({}, sample.report, { id: "ab12cd34" }) }, extra);
+	return Object.assign(
+		{
+			id: 'ab12cd34',
+			email: 'ana@example.com',
+			paid: true,
+			frameworks: sample.frameworks,
+			report: Object.assign({}, sample.report, { id: 'ab12cd34' }),
+		},
+		extra
+	);
 }
 
 async function people() {
-  const store = auth.memoryStore();
-  return { store, ana: await signIn(store, "ana@example.com", ANA_DESKTOP), ben: await signIn(store, "ben@example.com", BEN_DESKTOP) };
+	const store = auth.memoryStore();
+	return {
+		store,
+		ana: await signIn(store, 'ana@example.com', ANA_DESKTOP),
+		ben: await signIn(store, 'ben@example.com', BEN_DESKTOP),
+	};
 }
 
-test("the account that ran a paid report reads it in full", async () => {
-  const { store, ana } = await people();
-  assert.deepEqual(await auth.reportAccess(store, ana, run(), false), { ok: true, email: "ana@example.com" });
+test('the account that ran a paid report reads it in full', async () => {
+	const { store, ana } = await people();
+	assert.deepEqual(await auth.reportAccess(store, ana, run(), false), { ok: true, email: 'ana@example.com' });
 });
 
-test("a free-allowance report opens in full for its account only, like a paid one", async () => {
-  const { store, ana, ben } = await people();
-  assert.equal((await auth.reportAccess(store, ana, run({ paid: false }), true)).ok, true);
-  const other = await auth.reportAccess(store, ben, run({ paid: false }), true);
-  assert.equal(other.status, 403);
-  assert.equal(other.locked, true);
+test('a free-allowance report opens in full for its account only, like a paid one', async () => {
+	const { store, ana, ben } = await people();
+	assert.equal((await auth.reportAccess(store, ana, run({ paid: false }), true)).ok, true);
+	const other = await auth.reportAccess(store, ben, run({ paid: false }), true);
+	assert.equal(other.status, 403);
+	assert.equal(other.locked, true);
 });
 
-test("another signed-in account holding the link gets the blurred view and a sign-in prompt, never the payment offer", async () => {
-  const { store, ben } = await people();
-  const other = await auth.reportAccess(store, ben, run(), false);
-  assert.equal(other.ok, false);
-  assert.equal(other.status, 403);
-  assert.equal(other.signIn, true);
-  assert.equal(other.locked, true);
-  assert.match(other.error, /belongs to another account/);
-  const unpaid = await auth.reportAccess(store, ben, run({ paid: false }), false);
-  assert.equal(unpaid.status, 403, "someone else's unpaid report is not offered for payment");
+test('another signed-in account holding the link gets the blurred view and a sign-in prompt, never the payment offer', async () => {
+	const { store, ben } = await people();
+	const other = await auth.reportAccess(store, ben, run(), false);
+	assert.equal(other.ok, false);
+	assert.equal(other.status, 403);
+	assert.equal(other.signIn, true);
+	assert.equal(other.locked, true);
+	assert.match(other.error, /belongs to another account/);
+	const unpaid = await auth.reportAccess(store, ben, run({ paid: false }), false);
+	assert.equal(unpaid.status, 403, "someone else's unpaid report is not offered for payment");
 });
 
-test("a signed-out visitor holding the link gets the blurred view and a sign-in prompt", async () => {
-  const { store } = await people();
-  for (const proof of [{}, { deviceKey: BEN_DESKTOP }, { session: "f".repeat(64), deviceKey: BEN_DESKTOP }]) {
-    const out = await auth.reportAccess(store, proof, run(), false);
-    assert.equal(out.status, 401);
-    assert.equal(out.signIn, true);
-    assert.equal(out.locked, true);
-  }
+test('a signed-out visitor holding the link gets the blurred view and a sign-in prompt', async () => {
+	const { store } = await people();
+	for (const proof of [{}, { deviceKey: BEN_DESKTOP }, { session: 'f'.repeat(64), deviceKey: BEN_DESKTOP }]) {
+		const out = await auth.reportAccess(store, proof, run(), false);
+		assert.equal(out.status, 401);
+		assert.equal(out.signIn, true);
+		assert.equal(out.locked, true);
+	}
 });
 
 test("the owner's session copied to another device does not open the report", async () => {
-  const { store, ana } = await people();
-  const out = await auth.reportAccess(store, { session: ana.session, deviceKey: ANA_PHONE }, run(), false);
-  assert.equal(out.status, 401);
-  assert.equal(out.locked, true);
+	const { store, ana } = await people();
+	const out = await auth.reportAccess(store, { session: ana.session, deviceKey: ANA_PHONE }, run(), false);
+	assert.equal(out.status, 401);
+	assert.equal(out.locked, true);
 });
 
-test("the owner of an unpaid report is offered payment; a run with no account opens for nobody", async () => {
-  const { store, ana } = await people();
-  const unpaid = await auth.reportAccess(store, ana, run({ paid: false }), false);
-  assert.equal(unpaid.status, 402);
-  assert.ok(!unpaid.locked);
-  assert.equal((await auth.reportAccess(store, ana, run({ email: "" }), false)).status, 403);
-  assert.equal((await auth.reportAccess(store, ana, run({ report: null }), false)).status, 404);
-  assert.equal((await auth.reportAccess(store, ana, run({ report: { id: "ab12cd34", preview: true } }), false)).status, 404);
+test('the owner of an unpaid report is offered payment; a run with no account opens for nobody', async () => {
+	const { store, ana } = await people();
+	const unpaid = await auth.reportAccess(store, ana, run({ paid: false }), false);
+	assert.equal(unpaid.status, 402);
+	assert.ok(!unpaid.locked);
+	assert.equal((await auth.reportAccess(store, ana, run({ email: '' }), false)).status, 403);
+	assert.equal((await auth.reportAccess(store, ana, run({ report: null }), false)).status, 404);
+	assert.equal(
+		(await auth.reportAccess(store, ana, run({ report: { id: 'ab12cd34', preview: true } }), false)).status,
+		404
+	);
 });
 
-test("the owner reopens an unpaid report at no charge for 7 days after the run, then is asked to pay", () => {
-  const ran = run({ paid: false, createdAt: "2026-11-01T10:00:00.000Z" });
-  assert.equal(offers.REOPEN_FREE_DAYS, 7);
-  assert.equal(offers.reopenFreeUntil(ran), "2026-11-08T10:00:00.000Z");
-  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-01T10:00:00.000Z")), true);
-  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-08T09:59:59.000Z")), true);
-  assert.equal(offers.reopenFree(ran, Date.parse("2026-11-08T10:00:00.000Z")), false);
-  assert.equal(offers.reopenFree(ran, "2026-12-01T00:00:00.000Z"), false);
-  assert.equal(offers.reopenFreeUntil({ createdAt: { toDate: () => new Date("2026-11-01T10:00:00.000Z") } }), "2026-11-08T10:00:00.000Z");
+test('the owner reopens an unpaid report at no charge for 7 days after the run, then is asked to pay', () => {
+	const ran = run({ paid: false, createdAt: '2026-11-01T10:00:00.000Z' });
+	assert.equal(offers.REOPEN_FREE_DAYS, 7);
+	assert.equal(offers.reopenFreeUntil(ran), '2026-11-08T10:00:00.000Z');
+	assert.equal(offers.reopenFree(ran, Date.parse('2026-11-01T10:00:00.000Z')), true);
+	assert.equal(offers.reopenFree(ran, Date.parse('2026-11-08T09:59:59.000Z')), true);
+	assert.equal(offers.reopenFree(ran, Date.parse('2026-11-08T10:00:00.000Z')), false);
+	assert.equal(offers.reopenFree(ran, '2026-12-01T00:00:00.000Z'), false);
+	assert.equal(
+		offers.reopenFreeUntil({ createdAt: { toDate: () => new Date('2026-11-01T10:00:00.000Z') } }),
+		'2026-11-08T10:00:00.000Z'
+	);
 });
 
-test("a run with no readable start date has no free reopen", () => {
-  for (const record of [null, {}, { createdAt: "" }, { createdAt: "not a date" }]) {
-    assert.equal(offers.reopenFreeUntil(record), "");
-    assert.equal(offers.reopenFree(record, Date.parse("2026-11-02T00:00:00.000Z")), false);
-  }
+test('a run with no readable start date has no free reopen', () => {
+	for (const record of [null, {}, { createdAt: '' }, { createdAt: 'not a date' }]) {
+		assert.equal(offers.reopenFreeUntil(record), '');
+		assert.equal(offers.reopenFree(record, Date.parse('2026-11-02T00:00:00.000Z')), false);
+	}
 });
 
-test("the link in the report email carries only the report id, so opened signed out it lands on the blurred view", async () => {
-  const { store, ana } = await people();
-  for (const lang of ["en", "es", "pt", "de", "fr", "it"]) {
-    const mail = customerMail.reportMail(run(), { lang });
-    const links = (mail.text.match(/https:\/\/\S+[?&]report=\S+/g) || []);
-    assert.ok(links.length, lang);
-    links.forEach((link) => {
-      const url = new URL(link);
-      assert.equal(url.searchParams.get("report"), "ab12cd34");
-      assert.deepEqual([...url.searchParams.keys()].filter((key) => !/^(report|utm_\w+|coupon)$/.test(key)), [], lang + " link grants nothing beyond the id");
-    });
-  }
-  const signedOut = await auth.reportAccess(store, {}, run(), false);
-  assert.equal(signedOut.status, 401);
-  assert.equal(signedOut.locked, true);
-  assert.equal((await auth.reportAccess(store, ana, run(), false)).ok, true, "the same link opens in full once the owner signs in");
+test('the link in the report email carries only the report id, so opened signed out it lands on the blurred view', async () => {
+	const { store, ana } = await people();
+	for (const lang of ['en', 'es', 'pt', 'de', 'fr', 'it']) {
+		const mail = customerMail.reportMail(run(), { lang });
+		const links = mail.text.match(/https:\/\/\S+[?&]report=\S+/g) || [];
+		assert.ok(links.length, lang);
+		links.forEach((link) => {
+			const url = new URL(link);
+			assert.equal(url.searchParams.get('report'), 'ab12cd34');
+			assert.deepEqual(
+				[...url.searchParams.keys()].filter((key) => !/^(report|utm_\w+|coupon)$/.test(key)),
+				[],
+				lang + ' link grants nothing beyond the id'
+			);
+		});
+	}
+	const signedOut = await auth.reportAccess(store, {}, run(), false);
+	assert.equal(signedOut.status, 401);
+	assert.equal(signedOut.locked, true);
+	assert.equal(
+		(await auth.reportAccess(store, ana, run(), false)).ok,
+		true,
+		'the same link opens in full once the owner signs in'
+	);
 });
 
-test("opens of the link by another signed-in account are counted, and the owner is told once, without who opened it", () => {
-  const first = auth.sharedOpenStep(run(), "2026-10-24T08:00:00.000Z");
-  assert.equal(first.notify, true);
-  assert.deepEqual(first.sharedOpen, { count: 1, firstAt: "2026-10-24T08:00:00.000Z", lastAt: "2026-10-24T08:00:00.000Z", noticeAt: "2026-10-24T08:00:00.000Z" });
-  const second = auth.sharedOpenStep(run({ sharedOpen: first.sharedOpen }), "2026-10-25T09:00:00.000Z");
-  assert.equal(second.notify, false, "later opens are not emailed");
-  assert.equal(second.sharedOpen.count, 2);
-  assert.equal(second.sharedOpen.firstAt, "2026-10-24T08:00:00.000Z");
-  assert.equal(second.sharedOpen.noticeAt, "2026-10-24T08:00:00.000Z");
-  assert.equal(auth.sharedOpenStep(run({ email: "" }), "2026-10-24T08:00:00.000Z").notify, false, "a run with no account has no one to tell");
+test('opens of the link by another signed-in account are counted, and the owner is told once, without who opened it', () => {
+	const first = auth.sharedOpenStep(run(), '2026-10-24T08:00:00.000Z');
+	assert.equal(first.notify, true);
+	assert.deepEqual(first.sharedOpen, {
+		count: 1,
+		firstAt: '2026-10-24T08:00:00.000Z',
+		lastAt: '2026-10-24T08:00:00.000Z',
+		noticeAt: '2026-10-24T08:00:00.000Z',
+	});
+	const second = auth.sharedOpenStep(run({ sharedOpen: first.sharedOpen }), '2026-10-25T09:00:00.000Z');
+	assert.equal(second.notify, false, 'later opens are not emailed');
+	assert.equal(second.sharedOpen.count, 2);
+	assert.equal(second.sharedOpen.firstAt, '2026-10-24T08:00:00.000Z');
+	assert.equal(second.sharedOpen.noticeAt, '2026-10-24T08:00:00.000Z');
+	assert.equal(
+		auth.sharedOpenStep(run({ email: '' }), '2026-10-24T08:00:00.000Z').notify,
+		false,
+		'a run with no account has no one to tell'
+	);
 });
 
 test("the shared-open notice names the site and date in the owner's language, links the report, and says nothing of the opener", () => {
-  for (const lang of ["en", "es", "pt", "de", "fr", "it"]) {
-    const mail = customerMail.sharedOpenMail(run({ lang, report: Object.assign({}, sample.report, { id: "ab12cd34", host: "example.com" }) }), "2026-10-24T08:00:00.000Z");
-    assert.equal(mail.lang, lang);
-    assert.match(mail.subject, /example\.com/, lang);
-    assert.match(mail.text, /2026-10-24/, lang);
-    assert.equal(new URL(mail.text.match(/https:\/\/\S+[?&]report=\S+/)[0]).searchParams.get("report"), "ab12cd34", lang);
-    assert.doesNotMatch(mail.text + mail.html, /ben@example\.com|\{\w+\}/, lang);
-  }
+	for (const lang of ['en', 'es', 'pt', 'de', 'fr', 'it']) {
+		const mail = customerMail.sharedOpenMail(
+			run({ lang, report: Object.assign({}, sample.report, { id: 'ab12cd34', host: 'example.com' }) }),
+			'2026-10-24T08:00:00.000Z'
+		);
+		assert.equal(mail.lang, lang);
+		assert.match(mail.subject, /example\.com/, lang);
+		assert.match(mail.text, /2026-10-24/, lang);
+		assert.equal(
+			new URL(mail.text.match(/https:\/\/\S+[?&]report=\S+/)[0]).searchParams.get('report'),
+			'ab12cd34',
+			lang
+		);
+		assert.doesNotMatch(mail.text + mail.html, /ben@example\.com|\{\w+\}/, lang);
+	}
 });
 
-test("the emailed report PDF is watermarked with the address it is sent to", () => {
-  const marked = customerMail.reportPdf(run()).html;
-  assert.match(marked, /<div class="wm"[^>]*>(<span>ana@example\.com<\/span>){40}<\/div>/);
-  assert.match(marked, /\.wm\{position:fixed;/, "fixed, so it prints on every page");
-  assert.doesNotMatch(customerMail.reportPdf(run({ email: "" })).html, /class="wm"/);
-  assert.match(customerMail.reportPdf(run({ email: "<b>@x.co" })).html, /<span>&lt;b&gt;@x\.co<\/span>/);
+test('the emailed report PDF is watermarked with the address it is sent to', () => {
+	const marked = customerMail.reportPdf(run()).html;
+	assert.match(marked, /<div class="wm"[^>]*>(<span>ana@example\.com<\/span>){40}<\/div>/);
+	assert.match(marked, /\.wm\{position:fixed;/, 'fixed, so it prints on every page');
+	assert.doesNotMatch(customerMail.reportPdf(run({ email: '' })).html, /class="wm"/);
+	assert.match(customerMail.reportPdf(run({ email: '<b>@x.co' })).html, /<span>&lt;b&gt;@x\.co<\/span>/);
 });
 
 test("the receipt names the item, amount, PayPal ids and seller in the buyer's language, and says it is not a tax invoice", () => {
-  for (const lang of ["en", "es", "pt", "de", "fr", "it"]) {
-    const mail = customerMail.receiptMail({ lang, purpose: "report", host: "example.com", priceUsd: 4.75, listUsd: 9.5, coupon: "HALF", percent: 50, reference: "9bab0d9c9f112599", orderId: "5O190127TN364715T", captureId: "0YX61976ET982492D", paidAt: "2026-10-25T19:00:00.000Z" });
-    assert.equal(mail.lang, lang);
-    assert.match(mail.subject, /US\$4\.75/, lang);
-    for (const shown of ["example.com", "US$9.50", "HALF (50%)", "2026-10-25", "9bab0d9c9f112599", "5O190127TN364715T", "0YX61976ET982492D", "Carlos A. Muñoz", "qa@carlosandmunoz.com", "factura electrónica"]) {
-      assert.ok(mail.text.includes(shown), lang + " " + shown);
-    }
-    assert.doesNotMatch(mail.text + mail.html, /\{\w+\}|undefined/, lang);
-  }
+	for (const lang of ['en', 'es', 'pt', 'de', 'fr', 'it']) {
+		const mail = customerMail.receiptMail({
+			lang,
+			purpose: 'report',
+			host: 'example.com',
+			priceUsd: 4.75,
+			listUsd: 9.5,
+			coupon: 'HALF',
+			percent: 50,
+			reference: '9bab0d9c9f112599',
+			orderId: '5O190127TN364715T',
+			captureId: '0YX61976ET982492D',
+			paidAt: '2026-10-25T19:00:00.000Z',
+		});
+		assert.equal(mail.lang, lang);
+		assert.match(mail.subject, /US\$4\.75/, lang);
+		for (const shown of [
+			'example.com',
+			'US$9.50',
+			'HALF (50%)',
+			'2026-10-25',
+			'9bab0d9c9f112599',
+			'5O190127TN364715T',
+			'0YX61976ET982492D',
+			'Carlos A. Muñoz',
+			'qa@carlosandmunoz.com',
+			'factura electrónica',
+		]) {
+			assert.ok(mail.text.includes(shown), lang + ' ' + shown);
+		}
+		assert.doesNotMatch(mail.text + mail.html, /\{\w+\}|undefined/, lang);
+	}
 });
 
-test("a receipt at list price shows no coupon, and a sandbox receipt says no money moved", () => {
-  const mail = customerMail.receiptMail({ purpose: "new-run", priceUsd: 9.5, reference: "abc", test: true, paidAt: "2026-10-25T19:00:00.000Z" });
-  assert.equal(mail.lang, "en");
-  assert.match(mail.text, /Item: Review run/);
-  assert.doesNotMatch(mail.text, /List price|Coupon|PayPal order/);
-  assert.match(mail.text, /No money moved/);
+test('a receipt at list price shows no coupon, and a sandbox receipt says no money moved', () => {
+	const mail = customerMail.receiptMail({
+		purpose: 'new-run',
+		priceUsd: 9.5,
+		reference: 'abc',
+		test: true,
+		paidAt: '2026-10-25T19:00:00.000Z',
+	});
+	assert.equal(mail.lang, 'en');
+	assert.match(mail.text, /Item: Review run/);
+	assert.doesNotMatch(mail.text, /List price|Coupon|PayPal order/);
+	assert.match(mail.text, /No money moved/);
 });

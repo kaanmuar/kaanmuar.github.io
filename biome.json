@@ -44,6 +44,24 @@
 				"**/fixtures/**"
 			],
 			"formatter": { "enabled": false }
+		},
+		{
+			"includes": [
+				"js/qa-review-findings-copy*.js",
+				"js/qa-review-report-copy.js",
+				"js/qa-review-multi.js",
+				"js/qa-review-compare-copy.js",
+				"js/qa-review-progress.js",
+				"js/qa-review-verify.js",
+				"js/qa-review-benchmark.js",
+				"js/qa-review-live.js",
+				"js/qa-review-ask.js",
+				"js/qa-review-pay-copy.js",
+				"js/site-glossary.js",
+				"js/site-i18n.js",
+				"js/async-css.js"
+			],
+			"formatter": { "enabled": false }
 		}
 	]
 }
