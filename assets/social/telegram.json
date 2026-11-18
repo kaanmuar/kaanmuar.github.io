@@ -324,11 +324,11 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "id": "100",
-    "at": "2026-11-18T19:40:51.594Z",
+    "id": "103",
+    "at": "2026-11-18T22:15:24.691Z",
     "result": "sent",
-    "url": "https://t.me/qalab_live/100",
-    "checked": "2026-11-18T19:41:02.982Z"
+    "url": "https://t.me/qalab_live/103",
+    "checked": "2026-11-18T22:15:28.618Z"
    }
   ],
   "auto-2026-11-14/04-vs-sinarharian-com-my": [
@@ -368,11 +368,22 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "id": "101",
-    "at": "2026-11-18T19:41:02.982Z",
+    "id": "104",
+    "at": "2026-11-18T22:15:28.618Z",
     "result": "sent",
-    "url": "https://t.me/qalab_live/101",
-    "checked": "2026-11-18T19:41:14.395Z"
+    "url": "https://t.me/qalab_live/104",
+    "checked": "2026-11-18T22:15:29.400Z"
+   }
+  ],
+  "auto-2026-11-18/06-u-aeropost-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "106",
+    "at": "2026-11-18T22:15:32.359Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/106",
+    "checked": "2026-11-18T22:15:38.011Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -467,11 +478,11 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "id": "102",
-    "at": "2026-11-18T19:41:14.395Z",
+    "id": "105",
+    "at": "2026-11-18T22:15:29.400Z",
     "result": "sent",
-    "url": "https://t.me/qalab_live/102",
-    "checked": "2026-11-18T19:41:41.929Z"
+    "url": "https://t.me/qalab_live/105",
+    "checked": "2026-11-18T22:15:32.359Z"
    }
   ],
   "evergreen-2026-11/05-myth-https": [
@@ -822,10 +833,10 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "at": "2026-11-18T19:40:38.749Z",
+    "at": "2026-11-18T22:15:21.481Z",
     "result": "failed",
     "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
-    "checked": "2026-11-18T19:40:51.594Z"
+    "checked": "2026-11-18T22:15:24.691Z"
    }
   ],
   "runs-2026-10/01-govuk": [
