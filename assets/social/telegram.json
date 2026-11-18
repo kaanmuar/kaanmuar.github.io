@@ -320,6 +320,17 @@
     "checked": "2026-11-12T16:20:22.022Z"
    }
   ],
+  "auto-2026-11-12/01-u-made-in-china-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "100",
+    "at": "2026-11-18T19:40:51.594Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/100",
+    "checked": "2026-11-18T19:41:02.982Z"
+   }
+  ],
   "auto-2026-11-14/04-vs-sinarharian-com-my": [
    {
     "channel": "telegram",
@@ -351,6 +362,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/96",
     "checked": "2026-11-17T20:53:31.118Z"
+   }
+  ],
+  "auto-2026-11-17/01-u-motives-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "101",
+    "at": "2026-11-18T19:41:02.982Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/101",
+    "checked": "2026-11-18T19:41:14.395Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -439,6 +461,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/18",
     "checked": "2026-11-06T22:14:23.541Z"
+   }
+  ],
+  "evergreen-2026-11/03-hreflang": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "102",
+    "at": "2026-11-18T19:41:14.395Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/102",
+    "checked": "2026-11-18T19:41:41.929Z"
    }
   ],
   "evergreen-2026-11/05-myth-https": [
@@ -783,6 +816,16 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/91",
     "checked": "2026-11-17T02:55:02.933Z"
+   }
+  ],
+  "promo-social-hub-2026-10/34-six-languages-en": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "at": "2026-11-18T19:40:38.749Z",
+    "result": "failed",
+    "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
+    "checked": "2026-11-18T19:40:51.594Z"
    }
   ],
   "runs-2026-10/01-govuk": [
