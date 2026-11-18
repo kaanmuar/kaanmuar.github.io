@@ -10,356 +10,412 @@
  * lists page paths from that site's sitemap, read once per host by reviewUrl/paths.
  */
 (function () {
-  "use strict";
+	'use strict';
 
-  const BASE = "assets/domains/";
-  const SHOWN = 6;
-  const shards = new Map();
-  const answers = new Map();
-  const sitePaths = new Map();
+	const BASE = 'assets/domains/';
+	const SHOWN = 6;
+	const shards = new Map();
+	const answers = new Map();
+	const sitePaths = new Map();
 
-  const T = {
-    en: {
-      sites: "Suggested sites", pages: "Suggested pages",
-      top: "{host} is online and is one of the most visited sites worldwide.", online: "{host} is online.",
-      missing: "{host} does not exist.", spell: "{host} does not exist. Check the spelling.",
-      bare: "{host} is registered but has no website address.", mean: "Did you mean {fix}?"
-    },
-    es: {
-      sites: "Sitios sugeridos", pages: "Páginas sugeridas",
-      top: "{host} está en línea y es uno de los sitios más visitados del mundo.", online: "{host} está en línea.",
-      missing: "{host} no existe.", spell: "{host} no existe. Revisa cómo se escribe.",
-      bare: "{host} está registrado, pero no tiene dirección de sitio web.", mean: "¿Quisiste decir {fix}?"
-    },
-    pt: {
-      sites: "Sites sugeridos", pages: "Páginas sugeridas",
-      top: "{host} está no ar e é um dos sites mais visitados do mundo.", online: "{host} está no ar.",
-      missing: "{host} não existe.", spell: "{host} não existe. Confira a grafia.",
-      bare: "{host} está registrado, mas não tem endereço de site.", mean: "Você quis dizer {fix}?"
-    },
-    de: {
-      sites: "Vorgeschlagene Websites", pages: "Vorgeschlagene Seiten",
-      top: "{host} ist online und gehört zu den meistbesuchten Websites der Welt.", online: "{host} ist online.",
-      missing: "{host} existiert nicht.", spell: "{host} existiert nicht. Bitte prüfen Sie die Schreibweise.",
-      bare: "{host} ist registriert, hat aber keine Website-Adresse.", mean: "Meinten Sie {fix}?"
-    },
-    fr: {
-      sites: "Sites suggérés", pages: "Pages suggérées",
-      top: "{host} est en ligne et fait partie des sites les plus visités au monde.", online: "{host} est en ligne.",
-      missing: "{host} n’existe pas.", spell: "{host} n’existe pas. Vérifiez l’orthographe.",
-      bare: "{host} est enregistré, mais n’a pas d’adresse de site web.", mean: "Vouliez-vous dire {fix} ?"
-    },
-    it: {
-      sites: "Siti suggeriti", pages: "Pagine suggerite",
-      top: "{host} è online ed è uno dei siti più visitati al mondo.", online: "{host} è online.",
-      missing: "{host} non esiste.", spell: "{host} non esiste. Controlla l’ortografia.",
-      bare: "{host} è registrato, ma non ha un indirizzo web.", mean: "Forse intendevi {fix}?"
-    }
-  };
-  const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
-  const book = T[code] || T.en;
+	const T = {
+		en: {
+			sites: 'Suggested sites',
+			pages: 'Suggested pages',
+			top: '{host} is online and is one of the most visited sites worldwide.',
+			online: '{host} is online.',
+			missing: '{host} does not exist.',
+			spell: '{host} does not exist. Check the spelling.',
+			bare: '{host} is registered but has no website address.',
+			mean: 'Did you mean {fix}?',
+		},
+		es: {
+			sites: 'Sitios sugeridos',
+			pages: 'Páginas sugeridas',
+			top: '{host} está en línea y es uno de los sitios más visitados del mundo.',
+			online: '{host} está en línea.',
+			missing: '{host} no existe.',
+			spell: '{host} no existe. Revisa cómo se escribe.',
+			bare: '{host} está registrado, pero no tiene dirección de sitio web.',
+			mean: '¿Quisiste decir {fix}?',
+		},
+		pt: {
+			sites: 'Sites sugeridos',
+			pages: 'Páginas sugeridas',
+			top: '{host} está no ar e é um dos sites mais visitados do mundo.',
+			online: '{host} está no ar.',
+			missing: '{host} não existe.',
+			spell: '{host} não existe. Confira a grafia.',
+			bare: '{host} está registrado, mas não tem endereço de site.',
+			mean: 'Você quis dizer {fix}?',
+		},
+		de: {
+			sites: 'Vorgeschlagene Websites',
+			pages: 'Vorgeschlagene Seiten',
+			top: '{host} ist online und gehört zu den meistbesuchten Websites der Welt.',
+			online: '{host} ist online.',
+			missing: '{host} existiert nicht.',
+			spell: '{host} existiert nicht. Bitte prüfen Sie die Schreibweise.',
+			bare: '{host} ist registriert, hat aber keine Website-Adresse.',
+			mean: 'Meinten Sie {fix}?',
+		},
+		fr: {
+			sites: 'Sites suggérés',
+			pages: 'Pages suggérées',
+			top: '{host} est en ligne et fait partie des sites les plus visités au monde.',
+			online: '{host} est en ligne.',
+			missing: '{host} n’existe pas.',
+			spell: '{host} n’existe pas. Vérifiez l’orthographe.',
+			bare: '{host} est enregistré, mais n’a pas d’adresse de site web.',
+			mean: 'Vouliez-vous dire {fix} ?',
+		},
+		it: {
+			sites: 'Siti suggeriti',
+			pages: 'Pagine suggerite',
+			top: '{host} è online ed è uno dei siti più visitati al mondo.',
+			online: '{host} è online.',
+			missing: '{host} non esiste.',
+			spell: '{host} non esiste. Controlla l’ortografia.',
+			bare: '{host} è registrato, ma non ha un indirizzo web.',
+			mean: 'Forse intendevi {fix}?',
+		},
+	};
+	const code = String(document.documentElement.lang || 'en')
+		.slice(0, 2)
+		.toLowerCase();
+	const book = T[code] || T.en;
 
-  function keyOf(host) {
-    return host.replace(/^(www|m)\./, "");
-  }
+	function keyOf(host) {
+		return host.replace(/^(www|m)\./, '');
+	}
 
-  // Same rule as codePath in functions/url-review-core.js: /1a or /3m/x9 is a code no reader would pick.
-  function codePath(path) {
-    return path.split("/").filter(Boolean).some((part) => !/\p{L}{3}/u.test(part));
-  }
+	// Same rule as codePath in functions/url-review-core.js: /1a or /3m/x9 is a code no reader would pick.
+	function codePath(path) {
+		return path
+			.split('/')
+			.filter(Boolean)
+			.some((part) => !/\p{L}{3}/u.test(part));
+	}
 
-  function hostPart(value) {
-    return String(value || "").trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].split(":")[0];
-  }
+	function hostPart(value) {
+		return String(value || '')
+			.trim()
+			.toLowerCase()
+			.replace(/^https?:\/\//, '')
+			.split(/[/?#]/)[0]
+			.split(':')[0];
+	}
 
-  function load(name) {
-    if (!shards.has(name)) {
-      shards.set(name, fetch(BASE + name + ".txt")
-        .then((res) => (res.ok ? res.text() : ""))
-        .then((text) => text.split("\n").filter(Boolean))
-        .catch(() => []));
-    }
-    return shards.get(name);
-  }
+	function load(name) {
+		if (!shards.has(name)) {
+			shards.set(
+				name,
+				fetch(BASE + name + '.txt')
+					.then((res) => (res.ok ? res.text() : ''))
+					.then((text) => text.split('\n').filter(Boolean))
+					.catch(() => [])
+			);
+		}
+		return shards.get(name);
+	}
 
-  function shardFor(key) {
-    return load(key.slice(0, 2).replace(/\./g, "_"));
-  }
+	function shardFor(key) {
+		return load(key.slice(0, 2).replace(/\./g, '_'));
+	}
 
-  async function lookup(host, type) {
-    try {
-      const res = await fetch("https://dns.google/resolve?name=" + encodeURIComponent(host) + "&type=" + type);
-      if (!res.ok) return "unknown";
-      const data = await res.json();
-      if (data.Status === 3) return "missing";
-      if (data.Status !== 0) return "unknown";
-      return data.Answer && data.Answer.length ? "found" : "empty";
-    } catch (error) {
-      return "unknown";
-    }
-  }
+	async function lookup(host, type) {
+		try {
+			const res = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(host) + '&type=' + type);
+			if (!res.ok) return 'unknown';
+			const data = await res.json();
+			if (data.Status === 3) return 'missing';
+			if (data.Status !== 0) return 'unknown';
+			return data.Answer && data.Answer.length ? 'found' : 'empty';
+		} catch (error) {
+			return 'unknown';
+		}
+	}
 
-  function endpoint() {
-    const host = location.hostname;
-    if (host === "127.0.0.1" || host === "localhost") return "http://127.0.0.1:8768";
-    return "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl";
-  }
+	function endpoint() {
+		const host = location.hostname;
+		if (host === '127.0.0.1' || host === 'localhost') return 'http://127.0.0.1:8768';
+		return 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl';
+	}
 
-  function pathsFor(host) {
-    if (!sitePaths.has(host)) {
-      sitePaths.set(host, fetch(endpoint() + "/paths?host=" + encodeURIComponent(host))
-        .then((res) => (res.ok ? res.json() : {}))
-        .then((data) => (Array.isArray(data.paths) ? data.paths.filter((path) => typeof path === "string") : []))
-        .catch(() => []));
-    }
-    return sitePaths.get(host);
-  }
+	function pathsFor(host) {
+		if (!sitePaths.has(host)) {
+			sitePaths.set(
+				host,
+				fetch(endpoint() + '/paths?host=' + encodeURIComponent(host))
+					.then((res) => (res.ok ? res.json() : {}))
+					.then((data) => (Array.isArray(data.paths) ? data.paths.filter((path) => typeof path === 'string') : []))
+					.catch(() => [])
+			);
+		}
+		return sitePaths.get(host);
+	}
 
-  function resolve(host) {
-    if (!answers.has(host)) {
-      answers.set(host, lookup(host, "A")
-        .then((state) => (state === "empty" ? lookup(host, "AAAA") : state))
-        .then((state) => (state === "empty" ? "no-address" : state)));
-    }
-    return answers.get(host);
-  }
+	function resolve(host) {
+		if (!answers.has(host)) {
+			answers.set(
+				host,
+				lookup(host, 'A')
+					.then((state) => (state === 'empty' ? lookup(host, 'AAAA') : state))
+					.then((state) => (state === 'empty' ? 'no-address' : state))
+			);
+		}
+		return answers.get(host);
+	}
 
-  // Optimal string alignment distance, giving up once it passes max.
-  function distance(a, b, max) {
-    if (Math.abs(a.length - b.length) > max) return max + 1;
-    let prev2 = [];
-    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-    for (let i = 1; i <= a.length; i += 1) {
-      const row = [i];
-      let best = i;
-      for (let j = 1; j <= b.length; j += 1) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        let value = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
-        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) value = Math.min(value, prev2[j - 2] + 1);
-        row.push(value);
-        if (value < best) best = value;
-      }
-      if (best > max) return max + 1;
-      prev2 = prev;
-      prev = row;
-    }
-    return prev[b.length];
-  }
+	// Optimal string alignment distance, giving up once it passes max.
+	function distance(a, b, max) {
+		if (Math.abs(a.length - b.length) > max) return max + 1;
+		let prev2 = [];
+		let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+		for (let i = 1; i <= a.length; i += 1) {
+			const row = [i];
+			let best = i;
+			for (let j = 1; j <= b.length; j += 1) {
+				const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+				let value = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
+				if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) value = Math.min(value, prev2[j - 2] + 1);
+				row.push(value);
+				if (value < best) best = value;
+			}
+			if (best > max) return max + 1;
+			prev2 = prev;
+			prev = row;
+		}
+		return prev[b.length];
+	}
 
-  async function nearest(host) {
-    const key = keyOf(host);
-    const max = key.split(".")[0].length >= 10 ? 2 : 1;
-    const pools = await Promise.all([load("top"), shardFor(key)]);
-    let found = "";
-    let score = max + 1;
-    pools.forEach((pool) => pool.forEach((candidate) => {
-      const other = keyOf(candidate);
-      if (other === key || score === 1) return;
-      const d = distance(key, other, Math.min(max, score - 1));
-      if (d < score) { score = d; found = candidate; }
-    }));
-    return found;
-  }
+	async function nearest(host) {
+		const key = keyOf(host);
+		const max = key.split('.')[0].length >= 10 ? 2 : 1;
+		const pools = await Promise.all([load('top'), shardFor(key)]);
+		let found = '';
+		let score = max + 1;
+		pools.forEach((pool) =>
+			pool.forEach((candidate) => {
+				const other = keyOf(candidate);
+				if (other === key || score === 1) return;
+				const d = distance(key, other, Math.min(max, score - 1));
+				if (d < score) {
+					score = d;
+					found = candidate;
+				}
+			})
+		);
+		return found;
+	}
 
-  function looksComplete(host) {
-    return /^([a-z0-9-]+\.)+([a-z]{2,}|xn--[a-z0-9-]+)$/.test(host);
-  }
+	function looksComplete(host) {
+		return /^([a-z0-9-]+\.)+([a-z]{2,}|xn--[a-z0-9-]+)$/.test(host);
+	}
 
-  function attach(inputId, fieldId, track) {
-    const input = document.getElementById(inputId);
-    const field = document.getElementById(fieldId);
-    if (!input || !field) return;
+	function attach(inputId, fieldId, track) {
+		const input = document.getElementById(inputId);
+		const field = document.getElementById(fieldId);
+		if (!input || !field) return;
 
-    let seq = 0;
-    let timer = 0;
-    let options = [];
-    let mode = "host";
-    let active = -1;
-    let picking = false;
+		let seq = 0;
+		let timer = 0;
+		let options = [];
+		let mode = 'host';
+		let active = -1;
+		let picking = false;
 
-    const list = document.createElement("ul");
-    list.id = inputId + "-suggest";
-    list.className = "url-suggest notranslate";
-    list.setAttribute("role", "listbox");
-    list.setAttribute("aria-label", book.sites);
-    list.hidden = true;
-    field.after(list);
+		const list = document.createElement('ul');
+		list.id = inputId + '-suggest';
+		list.className = 'url-suggest notranslate';
+		list.setAttribute('role', 'listbox');
+		list.setAttribute('aria-label', book.sites);
+		list.hidden = true;
+		field.after(list);
 
-    const hint = document.createElement("p");
-    hint.id = inputId + "-hint";
-    hint.className = "url-hint";
-    hint.setAttribute("aria-live", "polite");
-    if (book !== T.en) {
-      hint.lang = code;
-      hint.setAttribute("translate", "no");
-    }
-    (document.getElementById(inputId + "-error") || list).after(hint);
+		const hint = document.createElement('p');
+		hint.id = inputId + '-hint';
+		hint.className = 'url-hint';
+		hint.setAttribute('aria-live', 'polite');
+		if (book !== T.en) {
+			hint.lang = code;
+			hint.setAttribute('translate', 'no');
+		}
+		(document.getElementById(inputId + '-error') || list).after(hint);
 
-    input.setAttribute("role", "combobox");
-    input.setAttribute("aria-autocomplete", "list");
-    input.setAttribute("aria-controls", list.id);
-    input.setAttribute("aria-expanded", "false");
-    input.setAttribute("aria-describedby", hint.id);
+		input.setAttribute('role', 'combobox');
+		input.setAttribute('aria-autocomplete', 'list');
+		input.setAttribute('aria-controls', list.id);
+		input.setAttribute('aria-expanded', 'false');
+		input.setAttribute('aria-describedby', hint.id);
 
-    function render() {
-      // A field filled from elsewhere (the hero fills the request's) keeps its list shut until it has focus.
-      if (document.activeElement !== input) options = [];
-      list.setAttribute("aria-label", mode === "path" ? book.pages : book.sites);
-      list.replaceChildren(...options.map((option, index) => {
-        const item = document.createElement("li");
-        item.id = inputId + "-opt-" + index;
-        item.setAttribute("role", "option");
-        item.setAttribute("aria-selected", index === active ? "true" : "false");
-        item.textContent = option;
-        item.addEventListener("mousedown", (event) => event.preventDefault());
-        item.addEventListener("click", () => choose(index));
-        return item;
-      }));
-      list.hidden = !options.length;
-      input.setAttribute("aria-expanded", options.length ? "true" : "false");
-      if (active >= 0 && options[active]) input.setAttribute("aria-activedescendant", inputId + "-opt-" + active);
-      else input.removeAttribute("aria-activedescendant");
-    }
+		function render() {
+			// A field filled from elsewhere (the hero fills the request's) keeps its list shut until it has focus.
+			if (document.activeElement !== input) options = [];
+			list.setAttribute('aria-label', mode === 'path' ? book.pages : book.sites);
+			list.replaceChildren(
+				...options.map((option, index) => {
+					const item = document.createElement('li');
+					item.id = inputId + '-opt-' + index;
+					item.setAttribute('role', 'option');
+					item.setAttribute('aria-selected', index === active ? 'true' : 'false');
+					item.textContent = option;
+					item.addEventListener('mousedown', (event) => event.preventDefault());
+					item.addEventListener('click', () => choose(index));
+					return item;
+				})
+			);
+			list.hidden = !options.length;
+			input.setAttribute('aria-expanded', options.length ? 'true' : 'false');
+			if (active >= 0 && options[active]) input.setAttribute('aria-activedescendant', inputId + '-opt-' + active);
+			else input.removeAttribute('aria-activedescendant');
+		}
 
-    function close() {
-      options = [];
-      active = -1;
-      render();
-    }
+		function close() {
+			options = [];
+			active = -1;
+			render();
+		}
 
-    function fill(value, how) {
-      picking = true;
-      input.value = value;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      picking = false;
-      close();
-      check();
-      input.focus();
-      if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_url_suggest", "URL Review", track + how);
-    }
+		function fill(value, how) {
+			picking = true;
+			input.value = value;
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+			picking = false;
+			close();
+			check();
+			input.focus();
+			if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_url_suggest', 'URL Review', track + how);
+		}
 
-    function pick(host, how) {
-      fill(host + input.value.trim().slice(hostPart(input.value).length), how);
-    }
+		function pick(host, how) {
+			fill(host + input.value.trim().slice(hostPart(input.value).length), how);
+		}
 
-    function pickPath(path) {
-      fill(input.value.trim().match(/^(https?:\/\/)?[^/?#]*/i)[0] + path, "path");
-    }
+		function pickPath(path) {
+			fill(input.value.trim().match(/^(https?:\/\/)?[^/?#]*/i)[0] + path, 'path');
+		}
 
-    function choose(index) {
-      if (mode === "path") pickPath(options[index]);
-      else pick(options[index], "list");
-    }
+		function choose(index) {
+			if (mode === 'path') pickPath(options[index]);
+			else pick(options[index], 'list');
+		}
 
-    function words(template, key, node) {
-      const at = template.indexOf("{" + key + "}");
-      return [template.slice(0, at), node, template.slice(at + key.length + 2)].filter(Boolean);
-    }
+		function words(template, key, node) {
+			const at = template.indexOf('{' + key + '}');
+			return [template.slice(0, at), node, template.slice(at + key.length + 2)].filter(Boolean);
+		}
 
-    function say(state, key, host, fix) {
-      hint.className = "url-hint" + (state ? " " + state : "");
-      hint.replaceChildren();
-      if (!key) return;
-      const name = document.createElement("b");
-      name.className = "notranslate";
-      // A browser translating the page trims the text after the host, so the space stays with the host.
-      const spaced = book[key].indexOf("{host} ") !== -1;
-      name.textContent = host + (spaced ? " " : "");
-      hint.append(...words(spaced ? book[key].replace("{host} ", "{host}") : book[key], "host", name));
-      if (fix) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "url-fix notranslate";
-        button.textContent = fix;
-        button.addEventListener("click", () => pick(fix, "did-you-mean"));
-        hint.append(" ", ...words(book.mean, "fix", button));
-      }
-    }
+		function say(state, key, host, fix) {
+			hint.className = 'url-hint' + (state ? ' ' + state : '');
+			hint.replaceChildren();
+			if (!key) return;
+			const name = document.createElement('b');
+			name.className = 'notranslate';
+			// A browser translating the page trims the text after the host, so the space stays with the host.
+			const spaced = book[key].indexOf('{host} ') !== -1;
+			name.textContent = host + (spaced ? ' ' : '');
+			hint.append(...words(spaced ? book[key].replace('{host} ', '{host}') : book[key], 'host', name));
+			if (fix) {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'url-fix notranslate';
+				button.textContent = fix;
+				button.addEventListener('click', () => pick(fix, 'did-you-mean'));
+				hint.append(' ', ...words(book.mean, 'fix', button));
+			}
+		}
 
-    async function suggestPaths(mine, host, typed) {
-      if (!looksComplete(host)) return close();
-      const state = await resolve(host);
-      if (mine !== seq) return;
-      if (state !== "found") return close();
-      const pool = await pathsFor(host);
-      if (mine !== seq) return;
-      const want = typed.toLowerCase();
-      const starts = pool.filter((path) => path !== typed && path.toLowerCase().startsWith(want) && (want !== "/" || !codePath(path)));
-      const within = want.length > 1 ? pool.filter((path) => !path.toLowerCase().startsWith(want) && path.toLowerCase().includes(want)) : [];
-      options = starts.concat(within).slice(0, SHOWN);
-      mode = "path";
-      active = -1;
-      render();
-    }
+		async function suggestPaths(mine, host, typed) {
+			if (!looksComplete(host)) return close();
+			const state = await resolve(host);
+			if (mine !== seq) return;
+			if (state !== 'found') return close();
+			const pool = await pathsFor(host);
+			if (mine !== seq) return;
+			const want = typed.toLowerCase();
+			const starts = pool.filter(
+				(path) => path !== typed && path.toLowerCase().startsWith(want) && (want !== '/' || !codePath(path))
+			);
+			const within =
+				want.length > 1
+					? pool.filter((path) => !path.toLowerCase().startsWith(want) && path.toLowerCase().includes(want))
+					: [];
+			options = starts.concat(within).slice(0, SHOWN);
+			mode = 'path';
+			active = -1;
+			render();
+		}
 
-    async function suggest() {
-      const mine = ++seq;
-      const value = input.value;
-      const typed = value.trim().replace(/^https?:\/\//i, "");
-      const slash = typed.indexOf("/");
-      if (slash > 0 && !/[?#]/.test(typed)) return suggestPaths(mine, typed.slice(0, slash).toLowerCase(), typed.slice(slash));
-      const host = hostPart(value);
-      const key = keyOf(host);
-      if (/[/?#]/.test(value) || key.length < 2) return close();
-      const pool = await shardFor(key);
-      if (mine !== seq) return;
-      const matches = [];
-      for (const candidate of pool) {
-        if (keyOf(candidate).startsWith(key) || candidate.startsWith(host)) matches.push(candidate);
-        if (matches.length === SHOWN) break;
-      }
-      options = matches.length === 1 && matches[0] === host ? [] : matches;
-      mode = "host";
-      active = -1;
-      render();
-    }
+		async function suggest() {
+			const mine = ++seq;
+			const value = input.value;
+			const typed = value.trim().replace(/^https?:\/\//i, '');
+			const slash = typed.indexOf('/');
+			if (slash > 0 && !/[?#]/.test(typed))
+				return suggestPaths(mine, typed.slice(0, slash).toLowerCase(), typed.slice(slash));
+			const host = hostPart(value);
+			const key = keyOf(host);
+			if (/[/?#]/.test(value) || key.length < 2) return close();
+			const pool = await shardFor(key);
+			if (mine !== seq) return;
+			const matches = [];
+			for (const candidate of pool) {
+				if (keyOf(candidate).startsWith(key) || candidate.startsWith(host)) matches.push(candidate);
+				if (matches.length === SHOWN) break;
+			}
+			options = matches.length === 1 && matches[0] === host ? [] : matches;
+			mode = 'host';
+			active = -1;
+			render();
+		}
 
-    async function check() {
-      const host = hostPart(input.value);
-      if (!looksComplete(host)) return say("", "");
-      const [state, pool] = await Promise.all([resolve(host), shardFor(keyOf(host))]);
-      if (host !== hostPart(input.value)) return;
-      const known = pool.some((candidate) => keyOf(candidate) === keyOf(host));
-      if (state === "found" && known) return say("ok", "top", host);
-      const fix = await nearest(host);
-      if (host !== hostPart(input.value)) return;
-      if (state === "found") return say(fix ? "warn" : "ok", "online", host, fix);
-      if (state === "missing") return say("bad", fix ? "missing" : "spell", host, fix);
-      if (state === "no-address") return say("bad", "bare", host, fix);
-      say("", "");
-    }
+		async function check() {
+			const host = hostPart(input.value);
+			if (!looksComplete(host)) return say('', '');
+			const [state, pool] = await Promise.all([resolve(host), shardFor(keyOf(host))]);
+			if (host !== hostPart(input.value)) return;
+			const known = pool.some((candidate) => keyOf(candidate) === keyOf(host));
+			if (state === 'found' && known) return say('ok', 'top', host);
+			const fix = await nearest(host);
+			if (host !== hostPart(input.value)) return;
+			if (state === 'found') return say(fix ? 'warn' : 'ok', 'online', host, fix);
+			if (state === 'missing') return say('bad', fix ? 'missing' : 'spell', host, fix);
+			if (state === 'no-address') return say('bad', 'bare', host, fix);
+			say('', '');
+		}
 
-    input.addEventListener("input", () => {
-      if (picking) return;
-      suggest();
-      clearTimeout(timer);
-      say("", "");
-      timer = setTimeout(check, 500);
-    });
+		input.addEventListener('input', () => {
+			if (picking) return;
+			suggest();
+			clearTimeout(timer);
+			say('', '');
+			timer = setTimeout(check, 500);
+		});
 
-    input.addEventListener("keydown", (event) => {
-      if (list.hidden) return;
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-        event.preventDefault();
-        const step = event.key === "ArrowDown" ? 1 : -1;
-        active = (active + step + options.length + 1) % (options.length + 1);
-        if (active === options.length) active = -1;
-        render();
-      } else if ((event.key === "Enter" || event.key === "Tab") && active >= 0) {
-        if (event.key === "Enter") event.preventDefault();
-        choose(active);
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        close();
-      }
-    });
+		input.addEventListener('keydown', (event) => {
+			if (list.hidden) return;
+			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+				event.preventDefault();
+				const step = event.key === 'ArrowDown' ? 1 : -1;
+				active = (active + step + options.length + 1) % (options.length + 1);
+				if (active === options.length) active = -1;
+				render();
+			} else if ((event.key === 'Enter' || event.key === 'Tab') && active >= 0) {
+				if (event.key === 'Enter') event.preventDefault();
+				choose(active);
+			} else if (event.key === 'Escape') {
+				event.preventDefault();
+				close();
+			}
+		});
 
-    input.addEventListener("blur", close);
-    input.addEventListener("focus", suggest);
-  }
+		input.addEventListener('blur', close);
+		input.addEventListener('focus', suggest);
+	}
 
-  attach("url", "url-field", "");
-  attach("stage-url", "stage-url-field", "hero-");
-  attach("compare-url", "compare-url-field", "compare-");
-  [2, 3, 4, 5].forEach((n) => attach("compare-url-" + n, "compare-url-" + n + "-field", "compare-"));
+	attach('url', 'url-field', '');
+	attach('stage-url', 'stage-url-field', 'hero-');
+	attach('compare-url', 'compare-url-field', 'compare-');
+	[2, 3, 4, 5].forEach((n) => attach('compare-url-' + n, 'compare-url-' + n + '-field', 'compare-'));
 })();
