@@ -70,3 +70,7 @@ media/dm-cards/
 
 .cursor/handoffs/
 .tmp/
+
+assets/review-arena/v3/*/debug-boxes.png
+assets/review-arena/*.mp4
+assets/review-arena/*-v2.jpg
