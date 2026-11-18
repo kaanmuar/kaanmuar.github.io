@@ -7986,6 +7986,7 @@ async function jarvisGithubJob() {
   const snapshot = (await jarvisExternal(["github-work"], 1))["github-work"];
   await step("days", () => jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {})));
   await step("backfill", () => jarvisGithub.backfill(Object.assign({}, ctx, { limit: 10 })));
+  await step("budget", () => jarvisGithub.kaanmuarBudget(ctx));
   await step("diagnosed", async () => {
     if (!ctx.gemini) return "none (no Gemini)";
     const start = jarvisCore.zoneParts(new Date(now)).day + "T05:00:00.000Z";
