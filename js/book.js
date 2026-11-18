@@ -304,11 +304,17 @@
         error.textContent = '';
         const host = params.get('host') || '';
         const note = $('book-note').value.trim();
+        let savedLanding = null;
+        try { savedLanding = JSON.parse(sessionStorage.getItem('qa-review-landing') || 'null'); } catch (e) { savedLanding = null; }
+        const savedParams = savedLanding && savedLanding.query ? new URLSearchParams(savedLanding.query) : null;
+        const firstRef = (savedParams && (savedParams.get('utm_campaign') || savedParams.get('utm_source'))) || (savedLanding && savedLanding.referrerHost) || '';
+        const docRefHost = (() => { try { return document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (e) { return ''; } })();
+        const externalDocRef = docRefHost && docRefHost !== 'carlosandmunoz.com' ? docRefHost : '';
         try {
             const { data } = await post({
                 op: 'book', type: state.type, start: state.start, lang: state.lang, token, name, email,
                 company: $('book-company').value.trim(), note, host, report: params.get('review') || '',
-                ref: params.get('utm_campaign') || params.get('ref') || (document.referrer ? new URL(document.referrer).hostname : '')
+                ref: params.get('utm_campaign') || params.get('ref') || firstRef || externalDocRef || docRefHost
             });
             if (!data.ok) throw new Error({ taken: t().taken, limit: t().limit, bot: t().check, closed: t().closed }[data.code] || t().failed);
             $('book-form').hidden = true;
@@ -319,7 +325,8 @@
                 $('book-done-meet').hidden = false;
             }
             $('book-done').focus();
-            if (typeof window.gtag === 'function') window.gtag('event', 'book_call', { event_category: 'Booking', event_label: state.type });
+            if (window.SiteAnalytics) window.SiteAnalytics.trackEvent('book_call', 'Booking', state.type);
+            else if (typeof window.gtag === 'function') window.gtag('event', 'book_call', { event_category: 'Booking', event_label: state.type });
         } catch (e) {
             error.textContent = e.message;
             if (window.turnstile && state.widget != null) window.turnstile.reset(state.widget);

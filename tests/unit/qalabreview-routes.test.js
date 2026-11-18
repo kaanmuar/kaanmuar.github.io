@@ -177,3 +177,19 @@ test("audience words never shadow a domain or a channel path", async () => {
   assert.equal(params((await route(at("/es/agencies.com"))).location).get("url"), "agencies.com");
   assert.equal(params((await route(at("/es/agencies/more"))).location).get("utm_campaign"), "unknown-path");
 });
+
+test("qalabreview serves /llms.txt, localized pitch OG cards with JSON-LD, and forwards ad click IDs", async () => {
+  const { route } = await load();
+  const llms = await route(at("/llms.txt"));
+  assert.equal(llms.status, 200);
+  assert.match(llms.body, /carlosandmunoz\.com\/llms\.txt/);
+  const landing = await route(at("/es/startups"));
+  assert.match(landing.body, /qa-review-pitch-es\.jpg/);
+  assert.match(landing.body, /application\/ld\+json/);
+  assert.match(landing.body, /twitter:site" content="@qalaburlreview"/);
+  const ad = await route(at("/es/yt?gclid=TestGclid123&fbclid=Fb456"));
+  assert.equal(params(ad.location).get("utm_source"), "qalabreview");
+  assert.equal(params(ad.location).get("utm_campaign"), "youtube");
+  assert.equal(params(ad.location).get("gclid"), "TestGclid123");
+  assert.equal(params(ad.location).get("fbclid"), "Fb456");
+});

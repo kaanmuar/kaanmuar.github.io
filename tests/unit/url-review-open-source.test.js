@@ -99,3 +99,9 @@ test("the review page sends the visit's first landing with the review", () => {
   const page = fs.readFileSync(path.join(__dirname, "../../js/qa-review.js"), "utf8");
   assert.match(page, /landing: window\.QaConsent && QaConsent\.landing \? QaConsent\.landing\(\) : null,/);
 });
+
+test("landingSource preserves paid ad click IDs alongside utm_* tags, keeping utm_* first", () => {
+  const out = core.landingSource({ query: "?fbclid=fb123&utm_source=google&gclid=Cj0KCQjw123&utm_campaign=search&lang=es", referrerHost: "www.google.com" });
+  assert.equal(out.query, "?utm_source=google&utm_campaign=search&gclid=Cj0KCQjw123&fbclid=fb123");
+  assert.equal(out.referrerHost, "www.google.com");
+});

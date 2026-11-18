@@ -4297,3 +4297,49 @@ test("technologies come from the site's own markup, not from words, prose attrib
     "<a href=\"/sites/default/files/menu.pdf\">Menu</a><a href=\"https://shop.example.com/wp-content/a.pdf\">A</a></body></html>";
   assert.deepEqual(names(own).filter((name) => /Shopify|Squarespace|Drupal|WordPress/.test(name)).sort(), ["Drupal", "Shopify", "WordPress"], "a comment naming Squarespace is not its marker (#3312)");
 });
+
+test("SMO checks extract richer metadata, detect og:url/canonical mismatch, and validate og:image delivery and size", async () => {
+  const html = "<!doctype html><html lang=\"en\"><head><title>Garden Shop</title>" +
+    "<meta name=\"description\" content=\"Garden tools shipped across Europe, with a two year guarantee and free returns.\">" +
+    "<link rel=\"canonical\" href=\"https://shop.example.com/\">" +
+    "<meta property=\"og:title\" content=\"Garden Shop\"><meta property=\"og:description\" content=\"Tools.\">" +
+    "<meta property=\"og:url\" content=\"https://shop.example.com/other\"><meta property=\"og:image\" content=\"https://cdn.example.com/share.jpg\">" +
+    "<meta property=\"og:image:alt\" content=\"Garden shears\"><meta property=\"og:image:width\" content=\"1200\"><meta property=\"og:image:height\" content=\"630\">" +
+    "<meta name=\"twitter:card\" content=\"summary_large_image\"><meta name=\"twitter:image:alt\" content=\"Shears card\">" +
+    "<script>gtag('config','AW-123456789');</script>" +
+    "</head><body><main><h1>Garden Shop</h1></main></body></html>";
+  const inspected = core.analyzeHtml(html, STRONG_HEADERS, URL_);
+  assert.equal(inspected.social.ogImageAlt, "Garden shears");
+  assert.equal(inspected.social.ogImageWidth, "1200");
+  assert.equal(inspected.social.twitterImageAlt, "Shears card");
+  const pages = [{ url: URL_, path: "/", status: 200, ms: 120, depth: 0, inspect: inspected }];
+
+  const badImg = insights.analyze({ pages, extras: { shareImage: { url: "https://cdn.example.com/share.jpg", status: 404, contentType: "text/html", bytes: 0, overLimit: false } } });
+  assert.equal(verdict(badImg, "seo-social-url"), "risk");
+  assert.equal(verdict(badImg, "seo-social-image"), "fail");
+  assert.deepEqual(badImg.analytics.adTags, ["Google Ads"]);
+
+  const bigImg = insights.analyze({ pages, extras: { shareImage: { url: "https://cdn.example.com/share.jpg", status: 200, contentType: "image/jpeg", bytes: 420 * 1024, overLimit: true } } });
+  assert.equal(verdict(bigImg, "seo-social-image"), "risk");
+
+  const okImg = insights.analyze({ pages, extras: { shareImage: { url: "https://cdn.example.com/share.jpg", status: 200, contentType: "image/jpeg", bytes: 95000, overLimit: false } } });
+  assert.equal(verdict(okImg, "seo-social-image"), "missing");
+
+  const restore = fakeNetwork({
+    "https://cdn.example.com/ok.jpg": { status: 200, headers: { "content-type": "image/jpeg", "content-length": "90000" } },
+    "https://cdn.example.com/nohead.jpg": (opts) => opts.method === "HEAD"
+      ? { status: 405, headers: {} }
+      : { status: 200, headers: { "content-type": "image/jpeg" }, body: Buffer.alloc(12000) }
+  });
+  try {
+    const resOk = await core.checkShareImage("https://cdn.example.com/ok.jpg");
+    assert.equal(resOk.status, 200);
+    assert.equal(resOk.bytes, 90000);
+    assert.equal(resOk.overLimit, false);
+    const resGet = await core.checkShareImage("https://cdn.example.com/nohead.jpg");
+    assert.equal(resGet.status, 200);
+    assert.equal(resGet.bytes, 12000);
+  } finally {
+    restore();
+  }
+});

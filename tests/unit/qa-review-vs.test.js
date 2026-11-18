@@ -52,3 +52,24 @@ test("the language comes from the address, then the saved choice, then the brows
   assert.equal(run("", null, "pt-BR"), "pt");
   assert.equal(run("?lang=ja", "zh", "ja-JP"), "en");
 });
+
+test("qa-review-vs.html carries the static English comparison, JSON-LD, analytics, and clean sitemap/robots (#2053)", () => {
+  const root = path.join(__dirname, "../..");
+  const builder = require("../../scripts/build-vs-html");
+  const vsHtml = fs.readFileSync(path.join(root, "qa-review-vs.html"), "utf8");
+  const vsJs = fs.readFileSync(path.join(root, "js/qa-review-vs.js"), "utf8");
+  assert.equal(builder.build(vsHtml, vsJs), vsHtml, "run node scripts/build-vs-html.js");
+  assert.ok(vsHtml.includes("Sucuri SiteCheck"));
+  assert.ok(vsHtml.includes("application/ld+json"));
+  assert.ok(vsHtml.includes("js/site-analytics.js"));
+  const sitemap = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
+  assert.ok(sitemap.includes("https://carlosandmunoz.com/qa-review-vs.html"));
+  assert.ok(!sitemap.includes("qa-review-social"), "social hubs belong only in sitemap-social.xml (#2053)");
+  const live = fs.readFileSync(path.join(root, "live.html"), "utf8");
+  assert.ok(live.includes('<link rel="canonical" href="https://carlosandmunoz.com/qa-review.html">'));
+  assert.ok(live.includes('property="og:url" content="https://carlosandmunoz.com/qa-review.html"'));
+  assert.ok(live.includes('name="twitter:site"'));
+  for (const kit of ["media/brand-kit-2026-10/index.html", "media/faces-2026-11/en/index.html", "media/faces-2026-11/es/index.html"]) {
+    assert.match(fs.readFileSync(path.join(root, kit), "utf8"), /<meta name="robots" content="noindex, nofollow">/);
+  }
+});

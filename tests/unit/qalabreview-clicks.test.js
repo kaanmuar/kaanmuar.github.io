@@ -31,7 +31,7 @@ test("social replies, channels, calls, the landing and unknown paths each get th
 
 test("robots, the sitemap, the favicon and the landing's language redirect are not clicks", async () => {
   const { route, clickOf } = await load();
-  for (const path of ["/robots.txt", "/sitemap.xml", "/favicon.ico", "/", "/agencies"]) {
+  for (const path of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/favicon.ico", "/", "/agencies"]) {
     const url = at(path);
     assert.equal(clickOf(url, await route(url, { acceptLanguage: "es" }), { acceptLanguage: "es" }), null, path);
   }

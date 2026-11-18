@@ -413,7 +413,7 @@ function sheet(items) {
 			'</span></figcaption></figure>'
 		);
 	};
-	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>QA-lab URL Review profile kit</title>
+	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><title>QA-lab URL Review profile kit</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;600&family=Fira+Code:wght@400&display=block" rel="stylesheet">
 <style>
   body { margin: 0; padding: 56px 64px 72px; width: 1800px; box-sizing: border-box; background: #071116; color: #f4fafb; font: 15px/1.4 Inter, sans-serif; }
