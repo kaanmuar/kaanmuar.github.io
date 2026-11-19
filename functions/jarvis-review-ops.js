@@ -299,6 +299,7 @@ function threatsSummary(threatRows, globalMap, { now, days, mapRanges }) {
     kevVersion: String((g.kevSummary && g.kevSummary.version) || ""),
     dropRanges: Number(g.dropSummary && g.dropSummary.v4Ranges) || 0,
     historyDays: Number(g.historyDays) || 0,
+    botnetNow: g.botnetNow || null,
     attributions: (Array.isArray(g.attributions) ? g.attributions : []).slice(0, 6).map((a) => String(a).slice(0, 160)),
     ranges,
     events: (Array.isArray(g.events) ? g.events : []).slice(0, 30).map((e) => ({

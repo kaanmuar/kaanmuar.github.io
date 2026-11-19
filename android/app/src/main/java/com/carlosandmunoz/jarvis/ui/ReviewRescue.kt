@@ -115,7 +115,7 @@ object ReviewRescue {
     ).joinToString(" · ")
 
     /** The live map's timeframes, as CY_RANGES in js/admin-jarvis.js. */
-    val RANGES = listOf("live" to "Live (15 min)", "7d" to "7 days", "30d" to "30 days", "90d" to "90 days")
+    val RANGES = listOf("live" to "Latest news, hourly", "7d" to "7 days", "30d" to "30 days", "90d" to "90 days")
 
     /** A country's pink by the square root of its share of the busiest one, as the web map. */
     fun cyberFill(count: Double, max: Double): Color =
@@ -322,7 +322,7 @@ fun CyberMapPanel(s: UiState) {
     val mp = c.obj("map")
     val ranges = mp.obj("ranges")
     if (c == null || !c.isOk() || ranges == null || ranges.isEmpty()) {
-        Panel("Live cyber-attack map", id = "review-cyber-map") { Muted(c.str("error") ?: "Pull down to read the global cyber feed.") }
+        Panel("Cyber-attack map", id = "review-cyber-map") { Muted(c.str("error") ?: "Pull down to read the global cyber feed.") }
         return
     }
     val ex = c.obj("exposure")
@@ -331,18 +331,19 @@ fun CyberMapPanel(s: UiState) {
     val rows = cur.objs("countries")
     val max = rows.maxOfOrNull { it.num("count") ?: 0.0 } ?: 0.0
     val by = rows.associateBy { it.str("cc").orEmpty() }
-    val label = ReviewRescue.RANGES.firstOrNull { it.first == range }?.second ?: "Live (15 min)"
+    val label = ReviewRescue.RANGES.firstOrNull { it.first == range }?.second ?: "Latest news, hourly"
     val direct = ex.objs("direct")
     val regional = ex.objs("regional")
     val pins = direct.mapNotNull { it.str("country")?.ifEmpty { null } }.toSet()
     val fills = rows.associate { it.str("cc").orEmpty() to ReviewRescue.cyberFill(it.num("count") ?: 0.0, max) }
     fun inRange(r: String, cc: String): Double = ranges.obj(r).objs("countries").firstOrNull { it.str("cc") == cc }?.num("count") ?: 0.0
-    Panel("Live cyber-attack map · $label", id = "review-cyber-map") {
+    Panel("Cyber-attack map · $label", id = "review-cyber-map") {
         KpiPairs(listOf(
             KpiData("Cited events · $label", fmt(cur.num("total"))),
             KpiData("Countries cited", fmt(rows.size.toDouble())),
             KpiData("CISA KEV", fmt(mp.num("kevCount"))),
             KpiData("DROP blocks", fmt(mp.num("dropRanges"))),
+            KpiData("Botnet servers online now (Feodo)", fmt(mp.obj("botnetNow")?.num("online") ?: 0.0)),
             KpiData("Reports exposed", fmt(t.num("directReports") ?: 0.0), alert = (t.num("directReports") ?: 0.0) > 0),
             KpiData("Customers exposed", fmt(t.num("directCustomers") ?: 0.0), alert = (t.num("directCustomers") ?: 0.0) > 0)
         ))
@@ -374,13 +375,13 @@ fun CyberMapPanel(s: UiState) {
                     if (d > 0) "$d exposed" else null, if (g > 0) "$g same country" else null).joinToString(" · "), onClick = { picked = cc })
         }
         val events = mp.objs("events").filter { picked == null || it.arr("countries").any { c2 -> c2.toString().trim('"') == picked } }
-        Text("Live cyber-attack and breach headlines · ${events.size}", color = J.amber, fontSize = 12.sp)
+        Text("Cyber-attack and breach headlines · ${events.size}", color = J.amber, fontSize = 12.sp)
         if (events.isEmpty()) Muted(if (picked == null) "No headlines in the latest feed." else "No headline names this country in the latest feed.")
         events.take(12).forEach { e ->
             StatusRow("info", e.str("source").orEmpty(), listOfNotNull(ago(ReviewRescue.eventIso(e.str("date"))), e.arr("countries").joinToString("/") { it.toString().trim('"') }.ifEmpty { null },
                 e.arr("themes").joinToString(", ") { it.toString().trim('"').replace('_', ' ').lowercase() }.ifEmpty { null }).joinToString(" · "), url = e.str("url"))
         }
-        Muted("Global telemetry: GDELT Project 15-minute feed${mp.str("slice")?.let { " (slice $it)" } ?: ""}; CISA KEV ${mp.str("kevVersion").orEmpty()}; DROP network counts. Counts are cited reports by country, not confirmed attacks.")
+        Muted("News telemetry: GDELT Project feed, updated hourly${mp.str("slice")?.let { " (latest file $it)" } ?: ""}; CISA KEV ${mp.str("kevVersion").orEmpty()}; DROP network counts. Counts are cited reports by country, not confirmed attacks.")
     }
 }
 
