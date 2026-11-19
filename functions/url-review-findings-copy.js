@@ -375,7 +375,7 @@
       "geo-ai-catalog.kind.version": "campo version",
       "geo-ai-catalog.kind.object": "objeto",
       "geo-ai-catalog.title": "No se encontró ai-catalog.json",
-      "geo-ai-catalog.none.evidence": "/.well-known/ai-catalog.json devolvió {status}. Los agentes lo usan para listar herramientas y servicios invocables cuando no hay puntero ARD en robots.txt o cabeceras.",
+      "geo-ai-catalog.none.evidence": "/.well-known/ai-catalog.json devolvió {status}. Los agentes lo usan para listar herramientas y servicios invocables cuando no hay puntero ARD en robots.txt o encabezados.",
       "geo-ai-catalog.invalid.title": "ai-catalog.json no se puede analizar",
       "geo-ai-catalog.invalid.evidence": "/.well-known/ai-catalog.json respondió 200 pero {detail}.",
       "geo-ai-catalog.html": "el cuerpo es una página HTML",
