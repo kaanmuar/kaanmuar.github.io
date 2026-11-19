@@ -789,6 +789,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
         snap.ext("speed").objs("pages").forEach { p -> KeyRow(p.str("name") ?: "", p.num("score")?.let { fmt(it) } ?: (p.str("error") ?: "—"), score(p.num("score")), p.str("url")) }
     }
     PageSpeedPanels(snap.ext("pagespeed"), vm)
+    LedgerPanel(snap.at("ledger"), Modifier.layoutId(WIDE))
     Panel("Scheduled jobs", id = "systems-jobs", trailing = { ActionButton("Daily now", "daily-now" in s.running) { vm.act("daily-now", "daily-now") { "Daily briefing: " + (it.str("sent") ?: "sent") } } }) {
         snap.ext("jobs").objs("jobs").forEach { j ->
             val name = j.str("name") ?: return@forEach

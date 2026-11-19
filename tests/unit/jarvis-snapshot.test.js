@@ -138,6 +138,7 @@ function src(db, range, now) {
 				})),
 		briefMarks: () => proposals.savedBrief(db),
 		countdowns: () => countdown.view(db, now),
+		ledger: () => null,
 	};
 }
 

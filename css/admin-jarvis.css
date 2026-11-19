@@ -810,6 +810,18 @@
 .jv-proc-open { justify-self: start; margin-top: 0.3rem; border-color: var(--amber); color: var(--amber); }
 .jv-proc time { font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .jv-proc.is-running time { color: var(--cyan); }
+/* Change ledger (#3794): one row per shipped change, "worse" the loudest. */
+.jv-ledger-sum { margin: 0 0 0.5rem; font: 600 0.82rem ui-monospace, Menlo, monospace; color: var(--cyan); }
+.jv-ledger-sum.is-worse { color: var(--pink); }
+.jv-ledger { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.jv-ledger-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: start; padding: 0.45rem 0.55rem; border: 1px solid transparent; border-radius: 8px; }
+.jv-ledger-row.is-worse { background: rgba(255, 77, 141, 0.1); border-color: rgba(255, 77, 141, 0.55); }
+.jv-ledger-main { min-width: 0; display: grid; gap: 0.15rem; }
+.jv-ledger-main b { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.jv-ledger-main small { color: var(--muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.jv-ledger-nums { font: 0.8rem ui-monospace, Menlo, monospace; color: var(--text); font-variant-numeric: tabular-nums; }
+.jv-ledger-row.is-worse .jv-ledger-nums { color: var(--pink); }
+.jv-chip.is-worse { background: rgba(255, 77, 141, 0.2); font-weight: 700; }
 /* Console (#2810): one log, in its own tab or docked over any tab from the >_ button. */
 .jv-con { display: flex; flex-direction: column; height: min(78vh, 980px); min-height: 320px; background: #01070c; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font: 0.78rem/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .jv-con-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); background: rgba(9, 30, 44, 0.6); }

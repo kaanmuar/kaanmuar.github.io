@@ -126,6 +126,7 @@ function src(db, range, now, external) {
 				})),
 		briefMarks: () => proposals.savedBrief(db),
 		countdowns: () => countdown.view(db, now),
+		ledger: () => null,
 	};
 }
 
