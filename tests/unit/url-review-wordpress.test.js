@@ -296,7 +296,7 @@ test('the daily job skips without a key, with a fresh index or on 429, and store
 	);
 	const before = state.body;
 	await assert.rejects(
-		wp.refreshFeed({ key: 'k1', storage: fakeStorage(state), fetch: async () => feedResponse(FEED), now: now + 25 * 3600000 }),
+		wp.refreshFeed({ key: 'k1', storage: fakeStorage(state), fetch: async () => feedResponse(FEED), now: now + 73 * 3600000 }),
 		/only 5 records/
 	);
 	assert.equal(state.body, before);
@@ -305,7 +305,7 @@ test('the daily job skips without a key, with a fresh index or on 429, and store
 	assert.equal(index.count, 5);
 });
 
-test('a 429 backs the feed off for a day, so the next run, a retry or a manual run makes no call (#3808)', async () => {
+test('a 429 backs the feed off for 72 hours, so the daily runs, a retry or a manual run make no call (#3808)', async () => {
 	const state = {};
 	const now = Date.parse('2026-11-19T13:40:00Z');
 	state.updated = new Date(now - 30 * 3600000).toISOString();
@@ -322,9 +322,10 @@ test('a 429 backs the feed off for a day, so the next run, a retry or a manual r
 
 	const retry = await run(now + 20 * 60000, limited);
 	assert.equal(retry.skipped, 'backoff');
-	assert.equal((await run(now + 23 * 3600000, limited)).skipped, 'backoff');
+	assert.equal((await run(now + 24 * 3600000, limited)).skipped, 'backoff');
+	assert.equal((await run(now + 71 * 3600000, limited)).skipped, 'backoff');
 	assert.equal(calls, 1);
 
-	const after = await run(now + 25 * 3600000, async () => feedResponse(FEED));
+	const after = await run(now + 73 * 3600000, async () => feedResponse(FEED));
 	assert.equal(after.count, 5);
 });
