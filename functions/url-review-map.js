@@ -205,6 +205,7 @@ function buildGlobalMapPayload(rawMap, query, nowMs) {
     totalsByRange,
     countries,
     events: events.slice(0, MAX_EVENTS),
+    botnetNow: raw.botnetNow && Array.isArray(raw.botnetNow.countries) ? { asOf: String(raw.botnetNow.asOf || ""), online: Number(raw.botnetNow.online) || 0, countries: raw.botnetNow.countries.slice(0, 40).map((x) => ({ cc: String(x.cc || "").slice(0, 2), count: Number(x.count) || 0 })), source: String(raw.botnetNow.source || "").slice(0, 120) } : null,
     kevSummary: {
       version: stripForbidden((raw.kevSummary && raw.kevSummary.version) || ""),
       count: Number(raw.kevSummary && raw.kevSummary.count) || 0

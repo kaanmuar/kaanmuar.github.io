@@ -2494,14 +2494,14 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(threats).toContainText('1,786');
 		await expect(threats).toContainText('1,747');
 		const cyber = page.locator('[data-view="review"] [data-panel-id="review-cyber-map"]');
-		await expect(cyber).toContainText('Live cyber-attack map · Live (15 min)');
+		await expect(cyber).toContainText('Cyber-attack map · Latest news, hourly');
 		await expect(cyber.locator('svg.jv-geo-map path.jv-cy-c').first()).toBeAttached();
 		await expect(cyber.locator('circle.jv-cy-pin')).toHaveCount(3);
 		await expect(cyber).toContainText('bleepingcomputer.com');
 		await expect(cyber).toContainText('heise.de');
 		await expect(cyber).toContainText('2026.11.10');
 		await cyber.locator('[data-cy-range="30d"]').click();
-		await expect(cyber).toContainText('Live cyber-attack map · 30 days');
+		await expect(cyber).toContainText('Cyber-attack map · 30 days');
 		await expect(cyber).toContainText('5,840');
 		await cyber.locator('path[data-cy-cc="DE"]').dispatchEvent('click');
 		await expect(cyber.locator('.jv-cy-card')).toContainText('Germany');
