@@ -19,7 +19,8 @@ try {
 }
 
 const NEW_RE = /new RegExp\(\s*(`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\s*(?:,\s*(`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|'[^']*'|"[^"]*"))?\s*\)/g;
-const LIT_RE = /=\s*(\/(?:\\.|[^/\n])+\/[gimsuy]*)/g;
+// The class excludes backslash so \\. and the class never match the same character (CodeQL js/polynomial-redos).
+const LIT_RE = /=\s*(\/(?:\\.|[^/\\\n])+\/[gimsuy]*)/g;
 
 const unquote = (raw) => {
 	const q = raw[0];
