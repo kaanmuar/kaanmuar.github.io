@@ -108,7 +108,7 @@ test('the event description is HTML in the visitor language, with the visitor te
 	assert.match(event.description, /^<b>Gespräch über eine Stelle<\/b>/);
 	assert.match(event.description, /Hallo &lt;script&gt;x&lt;\/script&gt;/);
 	assert.match(event.description, /A&amp;B/);
-	assert.doesNotMatch(event.description, /<script>/);
+	assert.equal(event.description.toLowerCase().includes('<script'), false);
 	assert.equal(event.colorId, bookingMail.LOOKS.cv.colorId);
 	assert.equal(event.guestsCanSeeOtherGuests, false);
 	assert.ok(event.description.length < 7000);
