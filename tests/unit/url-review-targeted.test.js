@@ -220,3 +220,14 @@ test("previewReport, publicReport and ownerNotice never leak targeted findings o
   withoutFeodo.insights.findings = [report.insights.findings[0], report.insights.findings[2]];
   assert.equal(ownerNotice.criticalSecurity(withoutFeodo), false);
 });
+
+test("targeted.lines names the sources read and skipped and never the level (#3848)", () => {
+  assert.deepEqual(targeted.lines(null), ["The attack and exploit sources did not answer in time."]);
+  const out = targeted.lines({ level: "critical", status: "critical", sourcesRead: ["CISA KEV", "OSV.dev"], sourcesSkipped: ["CertSpotter CT (no key)"], items: [{ level: "critical" }] });
+  assert.deepEqual(out, [
+    "Attack and exploit sources read: CISA KEV, OSV.dev.",
+    "Attack and exploit sources skipped: CertSpotter CT (no key)."
+  ]);
+  assert.ok(!out.join(" ").match(/critical|signal/i));
+  assert.deepEqual(targeted.lines({ sourcesRead: [], sourcesSkipped: [] }), ["Attack and exploit sources read: none."]);
+});

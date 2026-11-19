@@ -106,4 +106,52 @@ test.describe('Review progress', () => {
 			'Report saved. Emailing a copy to ana@example.com.'
 		);
 	});
+	test('shows a Threat check phase between the cases and the speed checks (#3848)', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		await feed(page, ['Proposed 12 test cases across 6 layers.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Writing cases');
+		const before = await percent(page);
+		await feed(page, ['Waiting for the background checks to finish.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+		await feed(page, [
+			'Reading attack and exploit sources for example.com.',
+			'Attack and exploit sources read: CISA KEV, OSV.dev.',
+			'Attack and exploit sources skipped: CertSpotter CT (no key).',
+		]);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+		await expect.poll(() => percent(page)).toBeGreaterThan(before);
+		expect(await percent(page)).toBeLessThan(87);
+		await feed(page, ['Waiting for PageSpeed Insights, up to 30 s.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Speed checks');
+		await feed(page, ['Scoring the checks from the pages analyzed.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Scoring and signing');
+		await expect(page.locator('.rp-bead')).toHaveCount(6);
+	});
+
+	test('the hacked-site and WordPress lines also belong to the Threat check (#3848)', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		await feed(page, ['Proposed 12 test cases across 6 layers.']);
+		await feed(page, ['Hacked-site checks: web search for spam on example.com: nothing; no spam links in the HTML.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+	});
+
+	test('names the Threat check in every page language and translates its log lines (#3848)', async ({ page }) => {
+		await prime(page);
+		const names = { es: 'Revisión de amenazas', pt: 'Verificação de ameaças', de: 'Bedrohungsprüfung', fr: 'Contrôle des menaces', it: 'Controllo delle minacce' };
+		for (const code of Object.keys(names)) {
+			await page.goto('/qa-review-' + code + '.html');
+			await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+			await feed(page, ['Waiting for the background checks to finish.']);
+			await expect(page.locator('.rp-phase')).toHaveText(names[code]);
+			const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
+			const read = await say('Attack and exploit sources read: CISA KEV, OSV.dev.');
+			expect(read).toContain('CISA KEV, OSV.dev');
+			expect(read).not.toContain('Attack and exploit');
+			expect(await say('Reading attack and exploit sources for example.com.')).toContain('example.com');
+		}
+	});
 });

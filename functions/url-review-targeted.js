@@ -1023,6 +1023,17 @@ async function check(input, options) {
   return withTimeout(work, opts.timeoutMs || CHECK_DEADLINE_MS, null);
 }
 
+// The review log's lines for what check() read (#3848). The page's progress meter matches them by their start.
+// They name the sources only: the level and the findings stay in the paid report (#3818).
+function lines(result) {
+  if (!result) return ["The attack and exploit sources did not answer in time."];
+  const read = result.sourcesRead || [];
+  const skipped = result.sourcesSkipped || [];
+  const out = ["Attack and exploit sources read: " + (read.length ? read.join(", ") : "none") + "."];
+  if (skipped.length) out.push("Attack and exploit sources skipped: " + skipped.join(", ") + ".");
+  return out;
+}
+
 function addFindings(result, add) {
   if (!result || typeof add !== "function") return;
   const kevHits = Array.isArray(result.kevHits) ? result.kevHits : [];
@@ -1088,6 +1099,7 @@ function addFindings(result, add) {
 }
 
 module.exports = {
+  lines,
   BUCKET,
   FEEDS_OBJECT,
   MAP_GLOBAL_OBJECT,
