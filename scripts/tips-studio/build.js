@@ -826,6 +826,19 @@ async function encodeClip(tip, file, tmp, scenes, length) {
 		) || [])[1]
 	);
 	if (!(peak > -30)) throw new Error('clip ' + tip.id + ' is silent (peak ' + peak + ' dB); never post a muted clip');
+	const lufs = await integratedLufs(file);
+	if (lufs !== null && lufs < LUFS_QUIET_BELOW)
+		console.warn('clip ' + tip.id + ' is quiet: ' + lufs + ' LUFS (web target ' + LUFS_TARGET + '); report only, not a gate');
+}
+
+// Loudness report (#3791): platforms normalise near -14 LUFS, so a clip far below it sounds quiet next to the rest.
+// Only a warning: the render never gates on it or changes the mix (the peak rule above is the gate).
+const LUFS_TARGET = -14;
+const LUFS_QUIET_BELOW = -16;
+async function integratedLufs(file) {
+	const r = await exec(FFMPEG, ['-hide_banner', '-nostdin', '-i', file, '-filter_complex', 'ebur128=peak=true', '-f', 'null', '-']);
+	const m = (r.stderr || '').match(/Summary[\s\S]*?I:\s+(-?[\d.]+) LUFS/);
+	return m ? parseFloat(m[1]) : null;
 }
 
 // Posts dated before today keep the caption they went out with; the calendar is left as the queues hold it.
