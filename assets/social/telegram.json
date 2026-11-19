@@ -397,6 +397,17 @@
     "checked": "2026-11-19T01:19:20.545Z"
    }
   ],
+  "auto-2026-11-18/24-u-agilex-com-co": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "110",
+    "at": "2026-11-19T18:43:02.464Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/110",
+    "checked": "2026-11-19T18:43:24.932Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -582,6 +593,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/65",
     "checked": "2026-11-13T18:30:47.326Z"
+   }
+  ],
+  "launch-2026-10/fr/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "112",
+    "at": "2026-11-19T18:43:30.238Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/112",
+    "checked": "2026-11-19T18:43:31.464Z"
    }
   ],
   "launch-2026-10/pt/a11y": [
@@ -914,6 +936,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/109",
     "checked": "2026-11-19T01:19:24.848Z"
+   }
+  ],
+  "runs-2026-10/08-bancolombia": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "111",
+    "at": "2026-11-19T18:43:24.932Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/111",
+    "checked": "2026-11-19T18:43:30.238Z"
    }
   ],
   "runs-3/01-ilo": [

@@ -1280,6 +1280,55 @@
     "checked": "2026-11-19T01:19:11.240Z"
    }
   ],
+  "auto-2026-11-18/18-u-agenciadeviajestravelone-cl": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18112548859908408",
+    "at": "2026-11-19T18:42:52.065Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4034029175287809734",
+    "checked": "2026-11-19T18:43:01.779Z"
+   }
+  ],
+  "auto-2026-11-18/24-u-agilex-com-co": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2opwgrv7z25",
+    "at": "2026-11-19T18:40:56.730Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2opwgrv7z25",
+    "checked": "2026-11-19T18:41:14.082Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18153631582478132",
+    "at": "2026-11-19T18:42:41.539Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4034029086335035673",
+    "checked": "2026-11-19T18:42:52.065Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qaurlreview@mastodon.social",
+    "id": "117644571947011248",
+    "at": "2026-11-19T18:41:40.188Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qaurlreview/117644571947011248",
+    "checked": "2026-11-19T18:41:47.895Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18446406379182430",
+    "at": "2026-11-19T18:41:48.657Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Df7v_jxnDfs",
+    "checked": "2026-11-19T18:42:40.443Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -1893,6 +1942,17 @@
     "checked": "2026-11-13T18:30:22.690Z"
    }
   ],
+  "launch-2026-10/fr/a11y": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2opx7emoe2t",
+    "at": "2026-11-19T18:41:36.915Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2opx7emoe2t",
+    "checked": "2026-11-19T18:41:39.140Z"
+   }
+  ],
   "launch-2026-10/pt/a11y": [
    {
     "channel": "bluesky",
@@ -2158,6 +2218,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2mvn7ybdn2t",
     "checked": "2026-11-19T01:18:07.885Z"
+   }
+  ],
+  "runs-2026-10/08-bancolombia": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2opx4gz5u26",
+    "at": "2026-11-19T18:41:14.082Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2opx4gz5u26",
+    "checked": "2026-11-19T18:41:36.915Z"
    }
   ],
   "runs-3/01-ilo": [
