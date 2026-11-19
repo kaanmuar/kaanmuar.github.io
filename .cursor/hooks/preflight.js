@@ -30,7 +30,7 @@ const RULE_HINTS = [
   [/jarvis|android|admin-jarvis|snapshot/i, ".cursor/rules/jarvis-mobile-parity.mdc"],
   [/clip|tiktok|youtube|reel|skit|voice|social|video|short/i, ".cursor/rules/social-clips.mdc"],
   [/playwright|e2e|chromium|spec\b|screenshot/i, ".cursor/rules/playwright-sandbox.mdc"],
-  [/arsenal|evaluat\w*|hallmark|voicestudio|floorplan|cinecode|artcraft|mattpocock|unslop|astryx|anything-llm|documenso|\brea\b|github\.com\//i, ".cursor/rules/tool-arsenal.mdc"],
+  [/arsenal|evaluat\w*|public repo|open[- ]source|outside tool|license trap|hallmark|voicestudio|floorplan|cinecode|artcraft|mattpocock|unslop|astryx|anything-llm|documenso|\brea\b|cve\.now|zizmor|osv-scanner|takumi|csp[-_ ]evaluator|co2\.js|three-globe|c2pa|audioseal|worktrunk|cockatiel|mailauth|axtree-audit|agentmarkup|horologist|github\.com\//i, ".cursor/rules/tool-arsenal.mdc"],
 ];
 
 fs.mkdirSync(STATE, { recursive: true });
