@@ -51,6 +51,21 @@
 			status: 'fail',
 		},
 		{ re: /^The time budget ended/, anomaly: 'timeout', pose: 'timeout', stage: 'pages', status: 'fail' },
+		// Stage-specific timeouts first: the generic rule below has no stage, so a line that matches it would hide which check failed (#3862).
+		{
+			re: /^The hacked-site checks did not answer/,
+			stage: 'security',
+			pose: 'fail',
+			anomaly: 'timeout',
+			status: 'fail',
+		},
+		{
+			re: /^The attack and exploit sources did not answer/,
+			stage: 'malware',
+			pose: 'fail',
+			anomaly: 'timeout',
+			status: 'fail',
+		},
 		{
 			re: /timed out|did not finish in time|did not answer in time|no answer in time/i,
 			anomaly: 'timeout',
@@ -148,13 +163,6 @@
 		{ re: /^The lookalike domain check/, stage: 'lookalike', pose: 'fail', anomaly: 'timeout', status: 'fail' },
 		{ re: /^WordPress /, stage: 'wordpress', pose: 'work', status: 'done' },
 		{ re: /^Hacked-site checks:/, stage: 'security', pose: 'work', status: 'done' },
-		{
-			re: /^The hacked-site checks did not answer/,
-			stage: 'security',
-			pose: 'fail',
-			anomaly: 'timeout',
-			status: 'fail',
-		},
 		{ re: /^Checked \d+ well-known paths for exposed files/, stage: 'security', pose: 'work', status: 'done' },
 		{ re: /^Checked \d+ of \d+ external links/, stage: 'security', pose: 'work', status: 'done' },
 		{ re: /phishing or malware list|URLHAUS|PHISHSTATS|URLSCAN/i, stage: 'malware', pose: 'work', status: 'done' },
