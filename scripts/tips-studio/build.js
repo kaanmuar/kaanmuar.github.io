@@ -579,15 +579,29 @@ function seconds(file) {
 }
 
 // spawnSync without blocking the event loop, so the frame workers keep drawing while edge-tts and ffmpeg run.
-function exec(cmd, argv) {
+// A call that runs past its timeout is killed and resolves with timedOut: true (no error), so the caller can retry it.
+// Without a timeout a hung edge-tts request held the whole render until GitHub's 180-minute job limit (#3840).
+const EXEC_TIMEOUT_MS = 10 * 60 * 1000;
+const VOICE_TIMEOUT_MS = 2 * 60 * 1000;
+function exec(cmd, argv, timeoutMs = EXEC_TIMEOUT_MS) {
 	return new Promise((resolve) => {
 		const child = spawn(cmd, argv);
 		let stderr = '';
+		let timer = null;
+		const done = (result) => {
+			clearTimeout(timer);
+			resolve(result);
+		};
+		timer = setTimeout(() => {
+			stderr += '\n[timed out after ' + timeoutMs / 1000 + 's; killed]';
+			child.kill('SIGKILL');
+			done({ status: null, timedOut: true, stderr });
+		}, timeoutMs);
 		child.stderr.on('data', (chunk) => {
 			stderr += chunk;
 		});
-		child.on('error', (error) => resolve({ status: null, error, stderr }));
-		child.on('close', (status) => resolve({ status, stderr }));
+		child.on('error', (error) => done({ status: null, error, stderr }));
+		child.on('close', (status) => done({ status, stderr }));
 	});
 }
 
@@ -602,7 +616,7 @@ async function speak(voice, text, file) {
 			text,
 			'--write-media',
 			file,
-		]);
+		], VOICE_TIMEOUT_MS);
 		if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
 		if (run.error || /ModuleNotFoundError|No module named/.test(run.stderr)) break;
 		await new Promise((resolve) => setTimeout(resolve, (3 + attempt * 5) * 1000));
