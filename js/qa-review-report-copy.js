@@ -230,7 +230,45 @@
         stoppedOne: "The review of {host} stopped early. Compare finished reviews.", stoppedBase: "The review of {host} stopped early. Compare from a finished review.",
         noScores: "The review of {host} is not saved with scores, so there is nothing to compare.",
         notOpen: "The report of {host} is not open in full yet. Unlock it to compare from it."
-      }
+      },
+      targetedTitle: "Was it targeted?",
+      targetedPrivateNote: "Private to your paid report: never published in Live Reports, owner emails, or shared previews.",
+      targetedStatus: {
+        clear: "No public attack or exploit signal found",
+        info: "Context only",
+        watch: "Watch signals found",
+        high: "High-risk targeting signals found",
+        critical: "Critical attack or active exploit signals found"
+      },
+      targetedHostIp: "Hosting IP {ip}",
+      targetedHostCountry: "Hosting country {country}",
+      targetedHostAsn: "Network AS{asn}",
+      targetedMentions: "Global cyber news feed (15-min window): {n} mentions citing {country}.",
+      targetedEmpty: "None of the checked public attack, exploit, C2, blocklist, or breach feeds flagged this site or its hosting IP.",
+      targetedRole: { site_hit: "This site", host_used: "Shared host or ASN", company_hit: "Company or brand", context: "Context" },
+      targetedConf: { observed: "Observed", inferred: "Inferred", third_party: "Third-party feed" },
+      targetedKind: {
+        "known-exploit-software": "Known exploited software",
+        "c2-indicator": "C2 or hostile network",
+        "phishing-host": "Phishing host",
+        "malware-host": "Malware host",
+        "hacked-spam": "Hacked or spam injection",
+        cloaking: "Crawler cloaking",
+        "exposed-secret": "Exposed secret or backup",
+        lookalike: "Lookalike domain",
+        "mail-blocklist": "Mail blocklist",
+        "outdated-cms": "Outdated CMS component",
+        "breach-news": "Breach or attack news",
+        "cert-anomaly": "Certificate anomaly",
+        "ransomware-news": "Ransomware report",
+        "attack-trend": "Attack trend",
+        "ddos-context": "DDoS context"
+      },
+      targetedDates: "First seen {first} · Last seen {last}",
+      targetedRef: "Reference",
+      targetedSources: "Sources checked: {list}.",
+      targetedSkipped: "Not checked: {list}.",
+      targetedAttr: "Attribution: {list}."
     },
     es: {
       fieldError: {
@@ -461,7 +499,45 @@
         stoppedOne: "La revisión de {host} se detuvo antes de terminar. Compara revisiones terminadas.", stoppedBase: "La revisión de {host} se detuvo antes de terminar. Compara desde una revisión terminada.",
         noScores: "La revisión de {host} no está guardada con puntuaciones, así que no hay nada que comparar.",
         notOpen: "El informe de {host} todavía no está abierto completo. Desbloquéalo para comparar desde él."
-      }
+      },
+      targetedTitle: "¿Fue atacado?",
+      targetedPrivateNote: "Privado en tu informe pagado: nunca se publica en informes en vivo, correos al propietario ni vistas previas compartidas.",
+      targetedStatus: {
+        clear: "No se encontró ninguna señal pública de ataque ni exploit",
+        info: "Solo contexto",
+        watch: "Se encontraron señales de vigilancia",
+        high: "Se encontraron señales de ataque de riesgo alto",
+        critical: "Se encontraron señales críticas de ataque o exploit activo"
+      },
+      targetedHostIp: "IP de alojamiento {ip}",
+      targetedHostCountry: "País de alojamiento {country}",
+      targetedHostAsn: "Red AS{asn}",
+      targetedMentions: "Cobertura global de ciberataques (ventana de 15 min): {n} menciones que citan {country}.",
+      targetedEmpty: "Ninguna de las fuentes públicas de ataques, exploits, C2, listas de bloqueo o filtraciones consultadas marcó este sitio ni su IP.",
+      targetedRole: { site_hit: "Este sitio", host_used: "Host o ASN compartido", company_hit: "Empresa o marca", context: "Contexto" },
+      targetedConf: { observed: "Observado", inferred: "Inferido", third_party: "Fuente externa" },
+      targetedKind: {
+        "known-exploit-software": "Software con exploit conocido",
+        "c2-indicator": "C2 o red hostil",
+        "phishing-host": "Host de phishing",
+        "malware-host": "Host de malware",
+        "hacked-spam": "Sitio hackeado o spam inyectado",
+        cloaking: "Encubrimiento al rastreador",
+        "exposed-secret": "Secreto o respaldo expuesto",
+        lookalike: "Dominio parecido",
+        "mail-blocklist": "Lista de bloqueo de correo",
+        "outdated-cms": "Componente CMS desactualizado",
+        "breach-news": "Noticia de ataque o brecha",
+        "cert-anomaly": "Anomalía de certificado",
+        "ransomware-news": "Reporte de ransomware",
+        "attack-trend": "Tendencia de ataques",
+        "ddos-context": "Contexto DDoS"
+      },
+      targetedDates: "Visto por primera vez {first} · Última vez {last}",
+      targetedRef: "Referencia",
+      targetedSources: "Fuentes consultadas: {list}.",
+      targetedSkipped: "No consultadas: {list}.",
+      targetedAttr: "Atribución: {list}."
     },
     pt: {
       fieldError: {
@@ -693,7 +769,45 @@
         stoppedOne: "A revisão de {host} parou antes do fim. Compare revisões terminadas.", stoppedBase: "A revisão de {host} parou antes do fim. Compare a partir de uma revisão terminada.",
         noScores: "A revisão de {host} não foi salva com pontuações, então não há nada para comparar.",
         notOpen: "O relatório de {host} ainda não está aberto por completo. Desbloqueie o relatório para comparar a partir dele."
-      }
+      },
+      targetedTitle: "Este site foi alvo de ataques?",
+      targetedPrivateNote: "Privado no seu relatório pago: nunca publicado em relatórios ao vivo, e-mails ao proprietário ou prévias compartilhadas.",
+      targetedStatus: {
+        clear: "Nenhum sinal público de ataque ou exploit encontrado",
+        info: "Apenas contexto",
+        watch: "Sinais de atenção encontrados",
+        high: "Sinais de ataque de alto risco encontrados",
+        critical: "Sinais críticos de ataque ou exploit ativo encontrados"
+      },
+      targetedHostIp: "IP de hospedagem {ip}",
+      targetedHostCountry: "País de hospedagem {country}",
+      targetedHostAsn: "Rede AS{asn}",
+      targetedMentions: "Feed global de ciberataques (janela de 15 min): {n} menções citando {country}.",
+      targetedEmpty: "Nenhuma das fontes públicas verificadas de ataques, exploits, C2, listas de bloqueio ou vazamentos marcou este site nem seu IP.",
+      targetedRole: { site_hit: "Este site", host_used: "Host ou ASN compartilhado", company_hit: "Empresa ou marca", context: "Contexto" },
+      targetedConf: { observed: "Observado", inferred: "Inferido", third_party: "Fonte externa" },
+      targetedKind: {
+        "known-exploit-software": "Software com exploit conhecido",
+        "c2-indicator": "C2 ou rede hostil",
+        "phishing-host": "Host de phishing",
+        "malware-host": "Host de malware",
+        "hacked-spam": "Site invadido ou spam injetado",
+        cloaking: "Ocultação ao rastreador",
+        "exposed-secret": "Segredo ou backup exposto",
+        lookalike: "Domínio parecido",
+        "mail-blocklist": "Lista de bloqueio de e-mail",
+        "outdated-cms": "Componente CMS desatualizado",
+        "breach-news": "Notícia de ataque ou vazamento",
+        "cert-anomaly": "Anomalia de certificado",
+        "ransomware-news": "Relato de ransomware",
+        "attack-trend": "Tendência de ataques",
+        "ddos-context": "Contexto DDoS"
+      },
+      targetedDates: "Visto pela primeira vez {first} · Última vez {last}",
+      targetedRef: "Referência",
+      targetedSources: "Fontes verificadas: {list}.",
+      targetedSkipped: "Não verificadas: {list}.",
+      targetedAttr: "Atribuição: {list}."
     },
     de: {
       fieldError: {
@@ -925,7 +1039,45 @@
         stoppedOne: "Die Prüfung von {host} wurde vorzeitig beendet. Vergleichen Sie abgeschlossene Prüfungen.", stoppedBase: "Die Prüfung von {host} wurde vorzeitig beendet. Vergleichen Sie von einer abgeschlossenen Prüfung aus.",
         noScores: "Die Prüfung von {host} ist ohne Werte gespeichert, daher gibt es nichts zu vergleichen.",
         notOpen: "Der Bericht von {host} ist noch nicht vollständig freigeschaltet. Schalten Sie ihn frei, um von ihm aus zu vergleichen."
-      }
+      },
+      targetedTitle: "Wurde die Website angegriffen?",
+      targetedPrivateNote: "Privat in Ihrem bezahlten Bericht: wird niemals in Live Reports, Eigentümer-E-Mails oder geteilten Vorschauen veröffentlicht.",
+      targetedStatus: {
+        clear: "Kein öffentliches Angriffs- oder Exploit-Signal gefunden",
+        info: "Nur Kontext",
+        watch: "Beobachtungssignale gefunden",
+        high: "Hochriskante Angriffssignale gefunden",
+        critical: "Kritische Angriffs- oder aktive Exploit-Signale gefunden"
+      },
+      targetedHostIp: "Hosting-IP {ip}",
+      targetedHostCountry: "Hosting-Land {country}",
+      targetedHostAsn: "Netz AS{asn}",
+      targetedMentions: "Globaler Cyber-Nachrichtenfeed (15-Min.-Fenster): {n} Erwähnungen mit Bezug zu {country}.",
+      targetedEmpty: "Keine der geprüften öffentlichen Angriffs-, Exploit-, C2-, Blocklisten- oder Sicherheitsvorfall-Quellen hat diese Website oder ihre IP gemeldet.",
+      targetedRole: { site_hit: "Diese Website", host_used: "Geteilter Host oder ASN", company_hit: "Unternehmen oder Marke", context: "Kontext" },
+      targetedConf: { observed: "Beobachtet", inferred: "Abgeleitet", third_party: "Drittanbieter-Feed" },
+      targetedKind: {
+        "known-exploit-software": "Software mit bekanntem Exploit",
+        "c2-indicator": "C2 oder feindliches Netz",
+        "phishing-host": "Phishing-Host",
+        "malware-host": "Malware-Host",
+        "hacked-spam": "Gehackt oder Spam-Injektion",
+        cloaking: "Crawler-Cloaking",
+        "exposed-secret": "Offen liegendes Geheimnis oder Backup",
+        lookalike: "Lookalike-Domain",
+        "mail-blocklist": "Mail-Blockliste",
+        "outdated-cms": "Veraltete CMS-Komponente",
+        "breach-news": "Angriffs- oder Vorfallsmeldung",
+        "cert-anomaly": "Zertifikatsanomalie",
+        "ransomware-news": "Ransomware-Meldung",
+        "attack-trend": "Angriffstrend",
+        "ddos-context": "DDoS-Kontext"
+      },
+      targetedDates: "Zuerst gesehen {first} · Zuletzt gesehen {last}",
+      targetedRef: "Quelle",
+      targetedSources: "Geprüfte Quellen: {list}.",
+      targetedSkipped: "Nicht geprüft: {list}.",
+      targetedAttr: "Quellenangaben: {list}."
     },
     fr: {
       fieldError: {
@@ -1155,7 +1307,45 @@
         stoppedOne: "L’analyse de {host} s’est arrêtée avant la fin. Comparez des analyses terminées.", stoppedBase: "L’analyse de {host} s’est arrêtée avant la fin. Comparez à partir d’une analyse terminée.",
         noScores: "L’analyse de {host} n’est pas enregistrée avec des scores, il n’y a donc rien à comparer.",
         notOpen: "Le rapport de {host} n’est pas encore ouvert en entier. Débloquez-le pour comparer à partir de lui."
-      }
+      },
+      targetedTitle: "Ce site a-t-il été ciblé ?",
+      targetedPrivateNote: "Confidentiel dans votre rapport payé : jamais publié dans les rapports en direct, e-mails au propriétaire ni aperçus partagés.",
+      targetedStatus: {
+        clear: "Aucun signal public d’attaque ou d’exploit trouvé",
+        info: "Contexte uniquement",
+        watch: "Signaux de vigilance trouvés",
+        high: "Signaux de ciblage à risque élevé trouvés",
+        critical: "Signaux critiques d’attaque ou d’exploit actif trouvés"
+      },
+      targetedHostIp: "IP d’hébergement {ip}",
+      targetedHostCountry: "Pays d’hébergement {country}",
+      targetedHostAsn: "Réseau AS{asn}",
+      targetedMentions: "Flux mondial d’actualités cyber (fenêtre de 15 min) : {n} mentions citant {country}.",
+      targetedEmpty: "Aucune des sources publiques vérifiées d’attaques, d’exploits, de C2, de listes de blocage ou de fuites n’a signalé ce site ni son IP.",
+      targetedRole: { site_hit: "Ce site", host_used: "Hôte ou ASN partagé", company_hit: "Entreprise ou marque", context: "Contexte" },
+      targetedConf: { observed: "Observé", inferred: "Déduit", third_party: "Source tierce" },
+      targetedKind: {
+        "known-exploit-software": "Logiciel avec exploit connu",
+        "c2-indicator": "C2 ou réseau hostile",
+        "phishing-host": "Hôte de phishing",
+        "malware-host": "Hôte de malware",
+        "hacked-spam": "Site piraté ou spam injecté",
+        cloaking: "Dissimulation aux robots",
+        "exposed-secret": "Secret ou sauvegarde exposée",
+        lookalike: "Domaine sosie",
+        "mail-blocklist": "Liste de blocage e-mail",
+        "outdated-cms": "Composant CMS obsolète",
+        "breach-news": "Actualité d’attaque ou de fuite",
+        "cert-anomaly": "Anomalie de certificat",
+        "ransomware-news": "Signalement de rançongiciel",
+        "attack-trend": "Tendance des attaques",
+        "ddos-context": "Contexte DDoS"
+      },
+      targetedDates: "Vu pour la première fois {first} · Dernière fois {last}",
+      targetedRef: "Référence",
+      targetedSources: "Sources vérifiées : {list}.",
+      targetedSkipped: "Non vérifiées : {list}.",
+      targetedAttr: "Attribution : {list}."
     },
     it: {
       fieldError: {
@@ -1387,7 +1577,45 @@
         stoppedOne: "La revisione di {host} si è fermata prima della fine. Confronta revisioni concluse.", stoppedBase: "La revisione di {host} si è fermata prima della fine. Confronta a partire da una revisione conclusa.",
         noScores: "La revisione di {host} non è salvata con i punteggi, quindi non c’è niente da confrontare.",
         notOpen: "Il report di {host} non è ancora aperto per intero. Sbloccalo per confrontare a partire da esso."
-      }
+      },
+      targetedTitle: "Questo sito è stato preso di mira?",
+      targetedPrivateNote: "Riservato al tuo report pagato: mai pubblicato in Live Reports, email al proprietario o anteprime condivise.",
+      targetedStatus: {
+        clear: "Nessun segnale pubblico di attacco o exploit rilevato",
+        info: "Solo contesto",
+        watch: "Segnali di attenzione rilevati",
+        high: "Segnali di attacco ad alto rischio rilevati",
+        critical: "Segnali critici di attacco o exploit attivo rilevati"
+      },
+      targetedHostIp: "IP di hosting {ip}",
+      targetedHostCountry: "Paese di hosting {country}",
+      targetedHostAsn: "Rete AS{asn}",
+      targetedMentions: "Feed globale di notizie cyber (finestra di 15 min): {n} menzioni che citano {country}.",
+      targetedEmpty: "Nessuna delle fonti pubbliche verificate di attacchi, exploit, C2, blocklist o violazioni ha segnalato questo sito o il suo IP.",
+      targetedRole: { site_hit: "Questo sito", host_used: "Host o ASN condiviso", company_hit: "Azienda o marchio", context: "Contesto" },
+      targetedConf: { observed: "Osservato", inferred: "Dedotto", third_party: "Fonte esterna" },
+      targetedKind: {
+        "known-exploit-software": "Software con exploit noto",
+        "c2-indicator": "C2 o rete ostile",
+        "phishing-host": "Host di phishing",
+        "malware-host": "Host di malware",
+        "hacked-spam": "Sito violato o spam iniettato",
+        cloaking: "Cloaking per crawler",
+        "exposed-secret": "Segreto o backup esposto",
+        lookalike: "Dominio sosia",
+        "mail-blocklist": "Blocklist email",
+        "outdated-cms": "Componente CMS obsoleto",
+        "breach-news": "Notizia di attacco o violazione",
+        "cert-anomaly": "Anomalia del certificato",
+        "ransomware-news": "Segnalazione ransomware",
+        "attack-trend": "Andamento degli attacchi",
+        "ddos-context": "Contesto DDoS"
+      },
+      targetedDates: "Prima rilevazione {first} · Ultima rilevazione {last}",
+      targetedRef: "Riferimento",
+      targetedSources: "Fonti verificate: {list}.",
+      targetedSkipped: "Non verificate: {list}.",
+      targetedAttr: "Attribuzione: {list}."
     }
   };
 

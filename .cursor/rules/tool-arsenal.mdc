@@ -17,6 +17,8 @@ Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know wh
 - Never install from a community hub (CLI-Anything). Read `setup` or install scripts before running them (REA `setup` writes agent configs).
 - Browser-facing scripts/assets under `script-src 'self'` (such as `designs/3d/` and `live.html`) must be self-hosted/vendored, never loaded from external CDNs.
 - A new tool gets a ticket. Add its row here when it is adopted or rejected.
+- Read the LICENSE file, not only GitHub's license badge: the badge shows NOASSERTION for many real MIT and Apache repos (`adobe/trustmark` opens with an Adobe notice and then grants MIT) and shows a license for repos whose datasets carry others (`sapics/ip-location-db`).
+- A weekly scout (`scripts/tool-scout.js`, draft PRs named `tool-scout/<date>`, #3857) re-checks every repo here and searches for new ones. Its report is a suggestion: a row is added or changed only with its ticket.
 - Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
 
 ## Adopted
@@ -85,8 +87,8 @@ Tickets filed in priority order (`B -> C -> D -> A`); use only inside each ticke
 | `dmnsgn/canvas-record` (FR) + `Vanilagy/mediabunny` (AT), `midrender/revideo` (DE) | MIT / MPL-2.0 / MIT | #3826, #3714 | **Whole pkgs:** direct WebGL/Three.js->MP4 capture and programmatic TS->MP4 rendering without Remotion's commercial license. |
 | `contentauth/c2pa-js`, `contentauth/c2patool`, `facebookresearch/audioseal`, `adobe/trustmark` | MIT / Apache-2.0 | #3824 | **Whole pkgs:** C2PA `trainedAlgorithmicMedia` manifests + resilient speech/image watermarks surviving re-encoding. |
 | `SYSTRAN/faster-whisper` (FR), `m-bain/whisperX` (UK), `slhck/ffmpeg-normalize` (DE) | MIT / BSD-2-Clause / MIT | #3714 | **Whole CLIs:** forced word-level 6-lang subtitle alignment + two-pass EBU R128 normalization. |
-| `sazabi/cve.now`, `cisagov/kev-data`, `projectdiscovery/vulnx`, `macieklamberski/feedsmith` (PL), `newsnext/newsnow` (CN) | Apache-2.0 / CC0-1.0 / MIT | #3839 | **Feeds / Libs:** add zero-key CVE/GHSA/OSV/EUVD/KEV/EPSS cyber stream + strict RSS/Atom parser to `scripts/field-sweep.js`. |
-| `Telegram-Mini-Apps/tma.js`, `grammyjs/grammY` (DE), `bluesky-social/atproto`, `fedify-dev/fedify` (KR), `neet/masto.js` (JP), `BoundaryML/baml` | MIT / Apache-2.0 | #3841 | **Whole pkgs:** self-hosted Mini App SDK under `script-src 'self'`, `@atproto/lex`, unified Fediverse adapters and typed LLM contracts. |
+| `sazabi/cve.now`, `cisagov/kev-data`, `projectdiscovery/vulnx`, `macieklamberski/feedsmith` (PL), `newsnext/newsnow` (CN) | Apache-2.0 / CC0-1.0 / MIT | #3839 | **Feeds / Libs:** add zero-key CVE/GHSA/OSV/EUVD/KEV/EPSS cyber stream + strict RSS/Atom parser to `scripts/field-sweep.js`. `cve.now`'s MCP tools were deprecated on 2026-11-11 (the feed endpoints still answer): confirm the endpoints stay up, or fall back to `cisagov/kev-data` plus `github/advisory-database` (CC-BY-4.0, needs attribution). |
+| `Telegram-Mini-Apps/tma.js`, `grammyjs/grammY` (DE), `bluesky-social/atproto`, `fedify-dev/fedify` (KR), `neet/masto.js` (JP), `BoundaryML/baml` | MIT / Apache-2.0 | #3841 | **Whole pkgs:** self-hosted Mini App SDK under `script-src 'self'`, `@atproto/lex`, unified Fediverse adapters (not the deprecated `@fedify/denokv` package) and typed LLM contracts. |
 
 ### Wave 4 (A): Cyber-Attack Side & Customer Trust (`#3816`–`#3819`, `#3842`, `#3843`)
 *(Additive to `#3816` / `#3818` / `#3819`; does not modify in-flight `#3817` / PR `#3825` or `#3826`.)*
@@ -96,9 +98,22 @@ Tickets filed in priority order (`B -> C -> D -> A`); use only inside each ticke
 | `google/csp-evaluator` | Apache-2.0 | #3842, #3816 | **Whole pkg:** real CSP allowlist/JSONP/nonce bypass detection. |
 | `RetireJS/retire.js` | Apache-2.0 | #3842, #3816 | **Part:** `jsrepository-v6-combined.json` + OSV + backdoored feeds + native missing-SRI check on `<script>`/`<link>`. |
 | `promptfoo/promptfoo` & `Agent-Threat-Rule/agent-threat-rules` (TW) | MIT / MIT | #3842, #3816 | **Part:** harmless prompt-injection/exfil probe taxonomies in `url-review-chat-talk.js` (review ATR YAML rules statically first). |
-| `TURROKS/CVE_Prioritizer`, `nttgin/BGPalerter`, `typosquatter/ail-typo-squatting` (LU), `az7rb/crt.sh`, CIRCL public feeds | BSD-3-Clause / BSD-2-Clause / MIT | #3842, #3816 | **Part / Feeds:** EPSS+KEV ranking, RPKI/RIPEstat routing signals, CT-log lookalikes and public CSIRT feeds (feeds only; never embed `AGPL-3.0` `vulnerability-lookup`). |
-| `vasturiano/three-globe` / `globe.gl`, `shuding/cobe`, `d3/d3-geo`, `apache/echarts`, `sapics/ip-location-db` + `runk/mmdb-lib` | MIT / ISC / Apache-2.0 / PDDL | #3819, #3838 | **Whole pkgs + PDDL data:** 3D/2D map over `assets/jarvis/world.json` + zero-attribution PDDL `.mmdb` GeoIP/ASN lookups in Node/Workers. |
+| `TURROKS/CVE_Prioritizer`, `nttgin/BGPalerter`, `typosquatter/ail-typo-squatting` (LU; no push for over a year on Nov 19: pin the last release and use it as a pattern source only), `az7rb/crt.sh`, CIRCL public feeds | BSD-3-Clause / BSD-2-Clause / MIT | #3842, #3816 | **Part / Feeds:** EPSS+KEV ranking, RPKI/RIPEstat routing signals, CT-log lookalikes and public CSIRT feeds (feeds only; never embed `AGPL-3.0` `vulnerability-lookup`). |
+| `vasturiano/three-globe` / `globe.gl`, `shuding/cobe`, `d3/d3-geo`, `apache/echarts`, `sapics/ip-location-db` + `runk/mmdb-lib` | MIT / ISC / Apache-2.0 / PDDL-1.0 | #3819, #3838 | **Whole pkgs + PDDL data:** 3D/2D map over `assets/jarvis/world.json` + zero-attribution PDDL `.mmdb` GeoIP/ASN lookups in Node/Workers. The repo has no LICENSE file; its README grants PDDL only for `iptoasn-*`, `origin-asn`, `user-country` and `server-country`. Never use `geolite2-*` (MaxMind's license); `dbip-*` is CC BY 4.0 (attribution). |
 | `mdn/mdn-http-observatory` + `helmetjs/helmet`, `disclose/diodb`, `certsocietegenerale/IRM` (FR) | MPL-2.0 / MIT / CC0-1.0 / CC-BY-3.0 | #3843, #3818 | **Part / Templates:** clean-room A+–F security rubric + Helmet fixes, RFC 9116 `/.well-known/security.txt` check, and EN/ES/FR IR playbooks w/ attribution. |
+
+## Scouted Nov 19, 2026, not ticketed
+LICENSE files read; nothing else evaluated. Pick one with Carlos, then it gets a ticket (`scripts/ticket.sh new`).
+
+| Tool / Source | License | Corner | Fit |
+|---|---|---|---|
+| `sherwinvishesh/OpenGSO` | Apache-2.0 | B | GEO tooling monorepo; compare against `agentmarkup` and `elmo` before any use. |
+| `AgriciDaniel/claude-seo` | MIT | B | SEO audit skill pack; read its `agents/` before copying anything. |
+| `yaojingang/GEOInflow` | MIT | B | Umami-derived analytics with GEO features; heavy (Next, Prisma, ClickHouse): pattern only. |
+| `a11y-oracle/a11y-oracle` | MIT | B | Accessibility oracle with keyboard and screen-reader checks; compare with `virtual-screen-reader`. |
+| `micmro/PerfCascade` | MIT | B | HAR waterfall; alternative to `@cloudflare/waterfall`. |
+| `harlan-zw/unlighthouse` | MIT | B | Whole-site Lighthouse crawl; compare with `lighthouse-ci-action`. |
+| `github/advisory-database` | CC-BY-4.0 | A, D | OSV-format advisories for the #3839 cyber stream; data, so attribution is required. |
 
 ## Reference only
 - astryx (`meta/astryx`, MIT): React and StyleX design system; the site is plain HTML with Tailwind.
@@ -109,7 +124,9 @@ Tickets filed in priority order (`B -> C -> D -> A`); use only inside each ticke
 - **Previously rejected:** AutoGPT (Polyform Shield restricts competing products), pinchtab (stealth injection conflicts with responsible scanning), `deepseek-ai/dsh-superagent-prototype` (prototype), `storytold/craft-anything` (same publisher as ArtCraft), VERT (FFmpeg covers media), sand3d (no use case), pixelfx (decorative).
 - **Non-commercial / proprietary traps (never bundle in commercial/paid paths):** `cnumr/EcoIndex` / `ecoindex_js` (`CC BY-NC-ND 3.0`), `patriciogonzalezvivo/lygia` (`Prosperity Public License 3.0.0`), `remotion-dev/remotion` (paid company license), `cortega26/geo-opt` (Tooltician Community License 1.0), `invoiceninja/invoiceninja` (Elastic License 2.0), `BIK-BITV/BIK-Web-Test` / `DISIC/Ara` / `JPCERTCC/phishurl-list` / `telegram-mini-apps-dev/analytics` (no commercial OSI license; analytics uses JS obfuscator), `Cloudflare Radar API` (`CC BY-NC 4.0`, free global context only until licensed), `Shodan InternetDB` (non-commercial without enterprise license).
 - **Copyleft / broken-license traps (do not embed in proprietary bundles):** `vulnerability-lookup/vulnerability-lookup` (`AGPL-3.0`), `qeeqbox/raven` (`AGPL-3.0`), `4ARMED/sri-check` (`GPL-3.0`), `MobSF` (`GPL-3.0`), `ryersondmp/sa11y` (`GPL-2.0-or-later`), `cnumr/GreenIT-Analysis` (`AGPL-3.0`), `DIYgod/RSSHub` (`AGPL-3.0`), `gitroomhq/postiz-app` (`AGPL-3.0`), `knadh/listmonk` (`AGPL-3.0`), `sansan0/TrendRadar` & `WEIFENG2333/VideoCaptioner` (`GPL-3.0`), `Tirth1107/Hyde-Security-JS` (broken merge-conflict `LICENSE`).
-- **Archived / deprecated:** `fluent-ffmpeg/node-fluent-ffmpeg`, `protectai/llm-guard`, `ethyca/fides`, `contentauth/c2pa-node` (merged into `c2pa-js`), `coderabbitai/git-worktree-runner`, `skyware-js/bot` & `skyware-js/jetstream`, `jianfch/stable-ts`, `openai/skills`.
+- **Archived / deprecated:** `fluent-ffmpeg/node-fluent-ffmpeg`, `protectai/llm-guard`, `ethyca/fides`, `contentauth/c2pa-node` (merged into `c2pa-js`), `coderabbitai/git-worktree-runner`, `skyware-js/bot` & `skyware-js/jetstream`, `jianfch/stable-ts`.
+- **No license file (nothing to copy):** `openai/skills` (active, not archived), `anthropics/skills` and `vercel-labs/agent-skills` (no license at the repo root: read a skill's own LICENSE before reusing it), `mbaersch/tracking-auditor`.
+- **Mixed or share-alike (read only, never bundle):** `trailofbits/skills` (`CC-BY-SA-4.0`), `EndlessFractal/Threat-Intel-Feed` (`GPL-3.0`), `francozanardi/pycaps` (engine MIT but app AGPL-3.0: read its LICENSE and take the engine only), `CreativeMayhemLtd/provcheck` (watermark add-ons are source-available), `sickn33/agentic-awesome-skills` (an aggregator of other repos' skills, some AGPL: never bulk-import).
 
 ## Not evaluated
 - `annonerdrenzy/survivalllm`: repo not found, and the account does not exist. Needs the correct URL from Carlos.

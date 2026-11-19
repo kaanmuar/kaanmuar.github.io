@@ -68,7 +68,8 @@
         market: "Presencia en el mercado: {1}; {2}.", rank: "{1} ocupa el puesto #{2} en Tranco", out: "{1} está fuera del millón principal de Tranco", presence: ", presencia {1}/100",
         saving: "Guardando el informe.", saved: "Informe guardado. Enviando una copia a {1}.",
         threatStart: "Leyendo fuentes públicas de ataques y exploits para {1}.", threatRead: "Fuentes de ataques y exploits leídas: {1}.",
-        threatSkipped: "Fuentes de ataques y exploits omitidas: {1}.", threatLate: "Las fuentes de ataques y exploits no respondieron a tiempo."
+        threatSkipped: "Fuentes de ataques y exploits omitidas: {1}.", threatLate: "Las fuentes de ataques y exploits no respondieron a tiempo.",
+        threatOff: "Las comprobaciones de fuentes de ataques y exploits están desactivadas en esta revisión."
       }
     },
     pt: {
@@ -105,7 +106,8 @@
         market: "Presença no mercado: {1}; {2}.", rank: "{1} está em #{2} no Tranco", out: "{1} está fora do top 1 milhão do Tranco", presence: ", presença {1}/100",
         saving: "Salvando o relatório.", saved: "Relatório salvo. Enviando uma cópia para {1}.",
         threatStart: "Lendo fontes públicas de ataques e exploits para {1}.", threatRead: "Fontes de ataques e exploits lidas: {1}.",
-        threatSkipped: "Fontes de ataques e exploits ignoradas: {1}.", threatLate: "As fontes de ataques e exploits não responderam a tempo."
+        threatSkipped: "Fontes de ataques e exploits ignoradas: {1}.", threatLate: "As fontes de ataques e exploits não responderam a tempo.",
+        threatOff: "As verificações de fontes de ataques e exploits estão desativadas nesta revisão."
       }
     },
     de: {
@@ -142,7 +144,8 @@
         market: "Marktpräsenz: {1}; {2}.", rank: "{1} steht bei Tranco auf Platz {2}", out: "{1} liegt außerhalb der Tranco-Top-Million", presence: ", Präsenz {1}/100",
         saving: "Der Bericht wird gespeichert.", saved: "Bericht gespeichert. Eine Kopie geht an {1}.",
         threatStart: "Öffentliche Angriffs- und Exploit-Quellen für {1} werden gelesen.", threatRead: "Gelesene Angriffs- und Exploit-Quellen: {1}.",
-        threatSkipped: "Übersprungene Angriffs- und Exploit-Quellen: {1}.", threatLate: "Die Angriffs- und Exploit-Quellen antworteten nicht rechtzeitig."
+        threatSkipped: "Übersprungene Angriffs- und Exploit-Quellen: {1}.", threatLate: "Die Angriffs- und Exploit-Quellen antworteten nicht rechtzeitig.",
+        threatOff: "Die Prüfungen mit Angriffs- und Exploit-Quellen sind für diese Prüfung abgeschaltet."
       }
     },
     fr: {
@@ -179,7 +182,8 @@
         market: "Présence sur le marché : {1} ; {2}.", rank: "{1} est n° {2} sur Tranco", out: "{1} est hors du top million de Tranco", presence: ", présence {1}/100",
         saving: "Enregistrement du rapport.", saved: "Rapport enregistré. Envoi d’une copie à {1}.",
         threatStart: "Lecture des sources publiques d’attaques et d’exploits pour {1}.", threatRead: "Sources d’attaques et d’exploits lues : {1}.",
-        threatSkipped: "Sources d’attaques et d’exploits ignorées : {1}.", threatLate: "Les sources d’attaques et d’exploits n’ont pas répondu à temps."
+        threatSkipped: "Sources d’attaques et d’exploits ignorées : {1}.", threatLate: "Les sources d’attaques et d’exploits n’ont pas répondu à temps.",
+        threatOff: "Les contrôles des sources d’attaques et d’exploits sont désactivés pour cette analyse."
       }
     },
     it: {
@@ -216,7 +220,8 @@
         market: "Presenza sul mercato: {1}; {2}.", rank: "{1} è al n. {2} su Tranco", out: "{1} è fuori dal primo milione di Tranco", presence: ", presenza {1}/100",
         saving: "Salvataggio del report.", saved: "Report salvato. Invio di una copia a {1}.",
         threatStart: "Lettura delle fonti pubbliche di attacchi ed exploit per {1}.", threatRead: "Fonti di attacchi ed exploit lette: {1}.",
-        threatSkipped: "Fonti di attacchi ed exploit saltate: {1}.", threatLate: "Le fonti di attacchi ed exploit non hanno risposto in tempo."
+        threatSkipped: "Fonti di attacchi ed exploit saltate: {1}.", threatLate: "Le fonti di attacchi ed exploit non hanno risposto in tempo.",
+        threatOff: "I controlli sulle fonti di attacchi ed exploit sono disattivati per questa revisione."
       }
     }
   };
@@ -241,7 +246,7 @@
     // The threat check (#3848): the background reads end, then the lines for linked hosts, WordPress, hacked-site signs and the attack and exploit sources.
     [/^Waiting for the background (?:reads|checks)/, 81, 4],
     [/^(?:Google's Safe Browsing lists were read for|WordPress(?: \S+)?: \d+ plugins?|Checked \d+ well-known paths for exposed files|Hacked-site checks:|The hacked-site checks did not answer)/, 82, 4],
-    [/^Reading attack and exploit sources for /, 83, 4],
+    [/^(?:Reading attack and exploit sources for |Attack and exploit source checks were switched off)/, 83, 4],
     [/^(?:Attack and exploit sources (?:read|skipped):|The attack and exploit sources did not answer)/, 85, 4],
     [/^Waiting for PageSpeed Insights/, 88, 5],
     [/^PageSpeed Insights (answered|did not answer)/, 90, 5],
@@ -265,7 +270,8 @@
     [/^Reading attack and exploit sources for (\S+)\.$/, "threatStart"],
     [/^Attack and exploit sources read: (.+)\.$/, "threatRead"],
     [/^Attack and exploit sources skipped: (.+)\.$/, "threatSkipped"],
-    [/^The attack and exploit sources did not answer in time\.$/, "threatLate"]
+    [/^The attack and exploit sources did not answer in time\.$/, "threatLate"],
+    [/^Attack and exploit source checks were switched off for this run\.$/, "threatOff"]
   ];
 
   const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();

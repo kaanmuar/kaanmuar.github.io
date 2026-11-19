@@ -485,7 +485,7 @@
                         "name": "¿Una revisión busca phishing, malware y hackeos?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Cada revisión busca también problemas que un visitante no vería. Comprueba la dirección con Google Safe Browsing a través de Web Risk y con Cloudflare URL Scanner, que reutiliza un escaneo del último día o envía uno que se vuelve público en Cloudflare Radar. Cada host externo del que la página carga scripts, marcos o formularios, o al que enlaza, también se comprueba con Web Risk; un host de scripts listado es un hallazgo crítico. Busca señales de un sitio hackeado: spam inyectado en los resultados de búsqueda, páginas que le muestran otra cosa a Googlebot y enlaces de spam ocultos. Enumera los dominios parecidos registrados para imitar el tuyo que tienen sitio web o servidor de correo, comprueba el dominio y sus servidores de correo y web en listas de bloqueo de spam gratuitas como SpamCop, Mailspike y NordSpam, y examina SPF, DMARC y DKIM en detalle. Cuando demuestras que el sitio es tuyo, también busca archivos expuestos, como .env, .git y copias de seguridad."
+                            "text": "Cada revisión busca también problemas que un visitante no vería. Comprueba la dirección con Google Safe Browsing a través de Web Risk y con Cloudflare URL Scanner, que reutiliza un escaneo del último día o envía uno marcado como no listado en Cloudflare Radar. Cada host externo del que la página carga scripts, marcos o formularios, o al que enlaza, también se comprueba con Web Risk; un host de scripts listado es un hallazgo crítico. Busca señales de un sitio hackeado: spam inyectado en los resultados de búsqueda, páginas que le muestran otra cosa a Googlebot y enlaces de spam ocultos. Enumera los dominios parecidos registrados para imitar el tuyo que tienen sitio web o servidor de correo, comprueba el dominio y sus servidores de correo y web en listas de bloqueo de spam gratuitas como SpamCop, Mailspike y NordSpam, y examina SPF, DMARC y DKIM en detalle. Cuando demuestras que el sitio es tuyo, también busca archivos expuestos, como .env, .git y copias de seguridad."
                         }
                     },
                     {
@@ -935,6 +935,24 @@
         .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
         .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .targeted-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .targeted-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); }
+        .targeted-badge.is-clear { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 10%, transparent); }
+        .targeted-badge.is-info { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+        .targeted-badge.is-watch { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+        .targeted-badge.is-high, .targeted-badge.is-critical { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 12%, transparent); }
+        .targeted-badge.is-critical { font-weight: 800; border-width: 1.5px; }
+        .targeted-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+        .targeted-meta strong { color: var(--text); font-weight: 600; }
+        .targeted-list { display: grid; gap: 10px; margin: 0 0 12px; }
+        .targeted-item { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); overflow-wrap: anywhere; }
+        .targeted-item.lvl-critical, .targeted-item.lvl-high { border-left-color: var(--red); }
+        .targeted-item.lvl-watch { border-left-color: var(--amber); }
+        .targeted-item.lvl-info { border-left-color: var(--cyan); }
+        .targeted-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .targeted-item h3 { margin: 0 0 4px; font-size: 15px; }
+        .targeted-item p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; }
+        .targeted-foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: grid; gap: 4px; }
         .shots { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 12px; align-items: start; margin: 12px 0; }
         .shots figure { margin: 0; }
         .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
@@ -1587,7 +1605,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review" lang="es" translate="no">Qué hace la revisión</b><span class="tg-gist" data-tg="review" lang="es" translate="no">Solo páginas públicas. Propone casos de prueba y nunca los ejecuta.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <p class="lede" lang="es" translate="no">Nada de lo que escribas se envía a revisión hasta que aceptes. Para ejecutar una revisión, inicias sesión en este dispositivo con tu correo o con una cuenta que ya tienes (Google, Microsoft, GitHub, Yahoo o X). La revisión obtiene páginas públicas, abre hasta tres de ellas en un navegador sin interfaz desde una dirección de la UE en Bélgica y propone casos de prueba. En ese navegador pulsa una vez el botón de rechazo del banner de cookies y nada más. Google PageSpeed Insights califica la página de inicio y Google Web Risk la compara con las listas de Navegación segura, así que Google recibe esa dirección, y se consulta al registro del dominio por RDAP. No ejecuta los casos, no inicia sesión en tu sitio, no envía formularios ni genera carga. El selector de idioma está en esta pantalla.</p>
-                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t2"> Este servicio obtendrá páginas públicas, describirá lo que encuentre y propondrá casos de prueba. No ejecutará esos casos.</label>
+                        <label class="check" lang="es" translate="no"><input type="checkbox" name="t2"> Este servicio obtendrá páginas públicas, describirá lo que encuentre y propondrá casos de prueba. No ejecutará esos casos. También compara el sitio con listas públicas de ataques y exploits. Para eso solo salen de este servicio el dominio (para resolver su dirección y al registro de certificados de CertSpotter), los nombres y versiones de las bibliotecas (a OSV.dev) y los números CVE (a FIRST); puedes desactivar estas comprobaciones antes de cada revisión.</label>
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t3"> Enviaré una dirección https pública. No enviaré una dirección privada, de enlace local ni de metadatos.</label>
                         <label class="check" lang="es" translate="no"><input type="checkbox" name="t4"> El informe es una instantánea y una propuesta. No certifica que el sitio sea seguro, rápido ni que cumpla la normativa.</label>
                     </div>
@@ -1704,7 +1722,7 @@
             <dt lang="es" translate="no">Lo que califica el informe</dt>
             <dd lang="es" translate="no">Seis áreas de 0 a 100: SEO, GEO (si la búsqueda con IA y los motores de respuesta pueden leer y citar el sitio), analítica, seguridad, accesibilidad y rendimiento. GEO mide si el sitio se puede leer y citar, no si ChatGPT, Perplexity o el Modo IA de Google lo citan hoy. Cada comprobación se marca como falla ahora, en riesgo, aprueba o necesita una persona, con la evidencia, un arreglo y una estimación del esfuerzo. También ves cómo se ve el sitio en un resultado de Google y en un enlace compartido, qué rastreadores de IA deja entrar su robots.txt, un mapa de las páginas analizadas y qué corregir primero. Un navegador sin interfaz carga hasta tres páginas desde una dirección de la UE en Bélgica: registra el rastreo antes y después de una elección de cookies, ejecuta axe-core, compara el texto del HTML con la página renderizada, revisa anchos de teléfono y tableta, y guarda tres capturas de pantalla. También revisa widgets de chat y chatbots de IA (consentimiento, peso y acceso por teclado), la declaración de accesibilidad, el aviso legal y las páginas de privacidad, librerías front-end desactualizadas, Google Safe Browsing a través de Web Risk, el vencimiento y el bloqueo de transferencia del dominio por RDAP, y MTA-STS, TLS-RPT y BIMI para el correo, y estima el carbono de una visita. Un sitio cuya protección contra bots rechaza la solicitud simple se analiza en Chrome sin interfaz.</dd>
             <dt lang="es" translate="no">Comprobaciones de seguridad</dt>
-            <dd lang="es" translate="no">Cada revisión busca también problemas que un visitante no vería. Comprueba la dirección con Google Safe Browsing a través de Web Risk y con Cloudflare URL Scanner, que reutiliza un escaneo del último día o envía uno que se vuelve público en Cloudflare Radar. Cada host externo del que la página carga scripts, marcos o formularios, o al que enlaza, también se comprueba con Web Risk; un host de scripts listado es un hallazgo crítico. Busca señales de un sitio hackeado: spam inyectado en los resultados de búsqueda, páginas que le muestran otra cosa a Googlebot y enlaces de spam ocultos. Enumera los dominios parecidos registrados para imitar el tuyo que tienen sitio web o servidor de correo, comprueba el dominio y sus servidores de correo y web en listas de bloqueo de spam gratuitas como SpamCop, Mailspike y NordSpam, y examina SPF, DMARC y DKIM en detalle. Cuando demuestras que el sitio es tuyo, también busca archivos expuestos, como .env, .git y copias de seguridad.</dd>
+            <dd lang="es" translate="no">Cada revisión busca también problemas que un visitante no vería. Comprueba la dirección con Google Safe Browsing a través de Web Risk y con Cloudflare URL Scanner, que reutiliza un escaneo del último día o envía uno marcado como no listado en Cloudflare Radar. Cada host externo del que la página carga scripts, marcos o formularios, o al que enlaza, también se comprueba con Web Risk; un host de scripts listado es un hallazgo crítico. Busca señales de un sitio hackeado: spam inyectado en los resultados de búsqueda, páginas que le muestran otra cosa a Googlebot y enlaces de spam ocultos. Enumera los dominios parecidos registrados para imitar el tuyo que tienen sitio web o servidor de correo, comprueba el dominio y sus servidores de correo y web en listas de bloqueo de spam gratuitas como SpamCop, Mailspike y NordSpam, y examina SPF, DMARC y DKIM en detalle. Cuando demuestras que el sitio es tuyo, también busca archivos expuestos, como .env, .git y copias de seguridad.</dd>
             <dt lang="es" translate="no">Si una revisión no puede terminar</dt>
             <dd lang="es" translate="no">A veces una revisión se detiene por un motivo de nuestro lado, como un sitio que rechaza los servidores en la nube. Guardamos tu correo, la volvemos a ejecutar de otra forma y te enviamos el informe completo en cuanto esté listo, normalmente en <span data-promise-hours>48</span> horas. Por la molestia, recibes un código con 20 % de descuento en tu próxima revisión, válido por 90 días. Si el informe aún no está listo después de <span data-promise-hours>48</span> horas, te escribimos para avisarte y seguimos intentándolo: si se termina dentro de 14 días, te llega igual, y el código sigue siendo válido.</dd>
             <dt lang="es" translate="no">Después del informe</dt>
@@ -1894,6 +1912,8 @@
                     </fieldset>
                     <label class="check" id="section-row" lang="es" translate="no"><input id="stay-section" name="section" type="checkbox" disabled> Quedarse en esta sección</label>
                     <p class="scope-note muted" id="section-note">Agrega una ruta, como example.com/docs, para mantener las páginas siguientes en esa sección. Con solo el host se revisa todo el sitio.</p>
+                    <label class="check" id="cyber-row" lang="es" translate="no"><input id="cyber-sources" name="cyberSources" type="checkbox" checked disabled> Incluir comprobaciones de fuentes de ataques y exploits</label>
+                    <p class="scope-note muted" id="cyber-note" lang="es" translate="no">Compara el sitio con listas públicas de ataques y exploits. El resultado queda en tu propio informe y nunca en un Live Report.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
@@ -2047,6 +2067,8 @@
         <article class="card" data-insight id="site-graph"></article>
         <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle" lang="es" translate="no">Seguridad y correo</h2>
         <article class="card" data-insight id="security"></article>
+        <h2 id="targeted-head" data-face="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden lang="es" translate="no">¿Fue atacado?</h2>
+        <article class="card" id="targeted" hidden></article>
         <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle" lang="es" translate="no">Cada control, con su veredicto</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
@@ -2254,9 +2276,9 @@
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
-<script src="js/qa-review-ask.js?v=20261109b" defer></script>
+<script src="js/qa-review-ask.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-fix.js?v=20261110-3393" defer></script>
-<script src="js/qa-review-progress.js?v=20261119a" defer></script>
+<script src="js/qa-review-progress.js?v=20261119b" defer></script>
 <script src="js/qa-review-arena-facts.js?v=20261119a" defer></script>
 <script src="js/qa-review-arena-atlas.js?v=20261118a" defer></script>
 <script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
@@ -2264,10 +2286,10 @@
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
 <script src="js/qa-review-batch-copy.js?v=20261117-3737" defer></script>
 <script src="js/qa-review-batch.js?v=20261117-3737" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-findings-copy.es.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261119-3826" defer></script>
+<script src="js/qa-review.js?v=20261119c-3849" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

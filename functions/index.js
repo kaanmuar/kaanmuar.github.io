@@ -1402,6 +1402,7 @@ async function rerunFailure(group) {
         maxDepth: options.depth || undefined,
         pageLang: options.pageLang || "",
         section: options.section === true,
+        targeted: options.targeted === false ? false : undefined,
         passive: !!(group.intake && group.intake.reasonCode === "compare"),
         customer: true,
         browse: browseForReview,
@@ -1419,7 +1420,8 @@ async function rerunFailure(group) {
         pages: options.pages,
         depth: options.depth,
         pageLang: options.pageLang || "",
-        section: options.section === true
+        section: options.section === true,
+        targeted: options.targeted !== false
       }), report, { deviceId: (group.intake || {}).deviceId });
     }
   } catch (caught) {
@@ -6476,6 +6478,7 @@ async function runReview(req, res, placeOf) {
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
       section: intake.value.section,
+      targeted: intake.value.targeted === false ? false : undefined,
       passive: !!intake.value.compareWith,
       customer: true,
       browse: browseForReview,
@@ -7093,6 +7096,7 @@ exports.fixRereview = functions.runWith({ timeoutSeconds: 540, memory: "1GB", se
       maxDepth: goal.options.depth,
       pageLang: goal.options.pageLang,
       section: goal.options.section,
+      targeted: goal.options.targeted === false ? false : undefined,
       asker: { reasonCode: original.reasonCode || "own", email: goal.email, proofs: await ownerProofRows(goal.email), siteToken: siteTokenFor(goal.email) },
       customer: true,
       browse: browseForReview,

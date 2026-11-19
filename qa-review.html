@@ -485,7 +485,7 @@
                         "name": "Does a review check for phishing, malware, and hacking?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Every review also looks for trouble a visitor would not see. It checks the address with Google Safe Browsing through Web Risk and with Cloudflare URL Scanner, which reuses a scan from the last day or submits one that becomes public on Cloudflare Radar. Every outside host the page loads scripts, frames, or forms from, or links to, is checked with Web Risk too; a listed script host is a critical finding. It looks for signs of a hacked site: spam injected into search results, pages that show Googlebot something else, and hidden spam links. It lists lookalike domains registered to imitate yours that have a website or a mail server, checks the domain and its mail and web servers against free spam blocklists such as SpamCop, Mailspike, and NordSpam, and examines SPF, DMARC, and DKIM in detail. Once you prove you own the site, it also looks for files left in the open, such as .env, .git, and backups."
+                            "text": "Every review also looks for trouble a visitor would not see. It checks the address with Google Safe Browsing through Web Risk and with Cloudflare URL Scanner, which reuses a scan from the last day or submits one marked unlisted on Cloudflare Radar. Every outside host the page loads scripts, frames, or forms from, or links to, is checked with Web Risk too; a listed script host is a critical finding. It looks for signs of a hacked site: spam injected into search results, pages that show Googlebot something else, and hidden spam links. It lists lookalike domains registered to imitate yours that have a website or a mail server, checks the domain and its mail and web servers against free spam blocklists such as SpamCop, Mailspike, and NordSpam, and examines SPF, DMARC, and DKIM in detail. Once you prove you own the site, it also looks for files left in the open, such as .env, .git, and backups."
                         }
                     },
                     {
@@ -935,6 +935,24 @@
         .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
         .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .targeted-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .targeted-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); }
+        .targeted-badge.is-clear { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 10%, transparent); }
+        .targeted-badge.is-info { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+        .targeted-badge.is-watch { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+        .targeted-badge.is-high, .targeted-badge.is-critical { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 12%, transparent); }
+        .targeted-badge.is-critical { font-weight: 800; border-width: 1.5px; }
+        .targeted-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+        .targeted-meta strong { color: var(--text); font-weight: 600; }
+        .targeted-list { display: grid; gap: 10px; margin: 0 0 12px; }
+        .targeted-item { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); overflow-wrap: anywhere; }
+        .targeted-item.lvl-critical, .targeted-item.lvl-high { border-left-color: var(--red); }
+        .targeted-item.lvl-watch { border-left-color: var(--amber); }
+        .targeted-item.lvl-info { border-left-color: var(--cyan); }
+        .targeted-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .targeted-item h3 { margin: 0 0 4px; font-size: 15px; }
+        .targeted-item p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; }
+        .targeted-foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: grid; gap: 4px; }
         .shots { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 12px; align-items: start; margin: 12px 0; }
         .shots figure { margin: 0; }
         .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
@@ -1587,7 +1605,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review">What the review does</b><span class="tg-gist" data-tg="review">Public pages only. It proposes test cases and never runs them.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <p class="lede">Nothing you type is sent for review until you accept. To run a review, you sign in on this device with email or an account you already have (Google, Microsoft, GitHub, Yahoo, or X). The review fetches public pages, opens up to three of them in a headless browser from an EU address in Belgium, and proposes test cases. In that browser it presses a cookie banner's reject button once and nothing else. Google PageSpeed Insights scores the start page and Google Web Risk checks it against the Safe Browsing lists, so Google receives that address, and the domain's registry is asked for its registration over RDAP. It does not run the cases, sign in to your site, submit forms, or generate load. The language control is on this screen.</p>
-                        <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases.</label>
+                        <label class="check"><input type="checkbox" name="t2"> This service will fetch public pages, describe what it finds, and propose test cases. It will not run those cases. It also compares the site with public attack and exploit lists. Only the domain (to resolve its address and to the certificate log service CertSpotter), library names and versions (to OSV.dev) and CVE numbers (to FIRST) leave this service for that; you can switch these checks off before a run.</label>
                         <label class="check"><input type="checkbox" name="t3"> I will submit a public https address. I will not submit a private, link-local, or metadata address.</label>
                         <label class="check"><input type="checkbox" name="t4"> The report is a snapshot and a proposal. It is not a certification that the site is safe, fast, or compliant.</label>
                     </div>
@@ -1704,7 +1722,7 @@
             <dt>What the report scores</dt>
             <dd>Six areas from 0 to 100: SEO, GEO (whether AI search and answer engines can read and cite the site), analytics, security, accessibility, and performance. GEO measures whether the site can be read and cited, not whether ChatGPT, Perplexity, or Google AI Mode cite it today. Each check is marked fails now, at risk, passes, or needs a person, with the evidence, a fix, and an effort estimate. You also see how the site looks in a Google result and a shared link, which AI crawlers its robots.txt lets in, a map of the pages analyzed, and what to fix first. A headless browser loads up to three pages from an EU address in Belgium: it records tracking before and after a cookie choice, runs axe-core, compares the HTML text with the rendered page, checks phone and tablet widths, and keeps three screenshots. It also checks chat widgets and AI chatbots (consent, weight, and keyboard access), the accessibility statement, imprint, and privacy pages, outdated front-end libraries, Google Safe Browsing through Web Risk, domain expiry and transfer lock through RDAP, and MTA-STS, TLS-RPT, and BIMI for mail, and estimates the carbon of one visit. A site whose bot protection refuses the plain request is analyzed in headless Chrome.</dd>
             <dt>Safety checks</dt>
-            <dd>Every review also looks for trouble a visitor would not see. It checks the address with Google Safe Browsing through Web Risk and with Cloudflare URL Scanner, which reuses a scan from the last day or submits one that becomes public on Cloudflare Radar. Every outside host the page loads scripts, frames, or forms from, or links to, is checked with Web Risk too; a listed script host is a critical finding. It looks for signs of a hacked site: spam injected into search results, pages that show Googlebot something else, and hidden spam links. It lists lookalike domains registered to imitate yours that have a website or a mail server, checks the domain and its mail and web servers against free spam blocklists such as SpamCop, Mailspike, and NordSpam, and examines SPF, DMARC, and DKIM in detail. Once you prove you own the site, it also looks for files left in the open, such as .env, .git, and backups.</dd>
+            <dd>Every review also looks for trouble a visitor would not see. It checks the address with Google Safe Browsing through Web Risk and with Cloudflare URL Scanner, which reuses a scan from the last day or submits one marked unlisted on Cloudflare Radar. Every outside host the page loads scripts, frames, or forms from, or links to, is checked with Web Risk too; a listed script host is a critical finding. It looks for signs of a hacked site: spam injected into search results, pages that show Googlebot something else, and hidden spam links. It lists lookalike domains registered to imitate yours that have a website or a mail server, checks the domain and its mail and web servers against free spam blocklists such as SpamCop, Mailspike, and NordSpam, and examines SPF, DMARC, and DKIM in detail. Once you prove you own the site, it also looks for files left in the open, such as .env, .git, and backups.</dd>
             <dt>If a review cannot finish</dt>
             <dd>Sometimes a review stops for a reason on our side, such as a site that turns away cloud servers. We keep your email, run it again another way, and email you the full report as soon as it is ready, usually within <span data-promise-hours>48</span> hours. For the trouble, you get a code for 20% off your next review, valid for 90 days. If the report is still not ready after <span data-promise-hours>48</span> hours, we write to tell you and keep trying: a report that finishes within 14 days still reaches you, and the code stays valid.</dd>
             <dt>After the report</dt>
@@ -1894,6 +1912,8 @@
                     </fieldset>
                     <label class="check" id="section-row"><input id="stay-section" name="section" type="checkbox" disabled> Stay in this section</label>
                     <p class="scope-note muted" id="section-note">Add a path, such as example.com/docs, to keep later pages in that section. A host alone reviews the whole site.</p>
+                    <label class="check" id="cyber-row"><input id="cyber-sources" name="cyberSources" type="checkbox" checked disabled> Include attack and exploit source checks</label>
+                    <p class="scope-note muted" id="cyber-note">Compares the site with public attack and exploit lists. The result is in your own report and never on a Live Report.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
@@ -2047,6 +2067,8 @@
         <article class="card" data-insight id="site-graph"></article>
         <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle">Security and email</h2>
         <article class="card" data-insight id="security"></article>
+        <h2 id="targeted-head" data-face="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden>Was it targeted?</h2>
+        <article class="card" id="targeted" hidden></article>
         <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle">Every check, with its verdict</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
@@ -2253,9 +2275,9 @@
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
-<script src="js/qa-review-ask.js?v=20261109b" defer></script>
+<script src="js/qa-review-ask.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-fix.js?v=20261110-3393" defer></script>
-<script src="js/qa-review-progress.js?v=20261119a" defer></script>
+<script src="js/qa-review-progress.js?v=20261119b" defer></script>
 <script src="js/qa-review-arena-facts.js?v=20261119a" defer></script>
 <script src="js/qa-review-arena-atlas.js?v=20261118a" defer></script>
 <script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
@@ -2263,10 +2285,10 @@
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
 <script src="js/qa-review-batch-copy.js?v=20261117-3737" defer></script>
 <script src="js/qa-review-batch.js?v=20261117-3737" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-findings-copy.en.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261119-3826" defer></script>
+<script src="js/qa-review.js?v=20261119c-3849" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>
