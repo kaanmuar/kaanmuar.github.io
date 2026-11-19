@@ -163,6 +163,15 @@ Verdicts from the scouted-candidate review (#3899) and the knock-knock review (#
 | `micmro/PerfCascade` | MIT | #3899 | **Skip:** SVG HAR viewer, no push since 2023. `@cloudflare/waterfall` covers it. |
 | `djkurlander/knock-knock` | MIT | #3900 | **Skip, end-user app (Carlos's responsibility):** personal multi-protocol honeypot with a live dashboard (Python and FastAPI). It actively receives attack traffic, so it is out of scope for the passive-only policy and must never feed product code, customer reports or CI. Run it only on a dedicated public-IP host that holds no customer data and shares no network with Jarvis or URL Review. Keep the public blocklist and federation off unless publishing attacker IPs is intended. The MaxMind GeoLite2 terms and the dependency licenses are Carlos's to meet. |
 
+### Wave 7 (weekly scout candidates, `#3909`, Nov 19 2026)
+Verdicts from the review of the three candidates in scout PR #3907. The end-user theme is listed for Carlos's personal use, at his own responsibility, and is never embedded in product or customer code.
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `pourdev/pour-engine` | MIT | #3909 | **Watch:** a zero-dependency in-page WCAG 2.2 engine, an optional second accessibility engine for URL Review beside axe (#3831) and `koodikiht/axtree-audit`. Pin a version, dedupe against axe before any use, and do not use the name "pour" in branding (a UK trademark). Its tests live upstream, so nothing is vendored yet. |
+| `Capta1nRaj/goshipit` | Apache-2.0 | #3909 | **Pattern:** a ticked pre-deploy checklist for Jarvis chats only. Its checks are run by an agent, not a deterministic gate, so it never replaces the #3833 gates (zizmor, gitleaks, osv-scanner). Do not install it as a global skill. |
+| `rbartoli/obsidian-tela-theme` | MIT | #3909 | **Skip, end-user app (Carlos's responsibility):** a CSS-only Obsidian theme for Carlos's own vault. Never embedded in product or customer code. |
+
 ## Reference only
 - astryx (`meta/astryx`, MIT): React and StyleX design system; the site is plain HTML with Tailwind.
 - Mika (`wangzan101/mika`, Apache-2.0): Android agent over ADB or wireless debugging. Not on Carlos's phone; Maestro flows cover the test phone.
