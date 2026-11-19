@@ -5,6 +5,7 @@ const offers = require("./url-review-offers");
 const publish = require("./url-review-publish");
 const fixOffers = require("./url-review-fix-offers");
 const reviewPromise = require("./url-review-promise");
+const threats = require("./url-review-threats");
 
 const HELD_WORDS = {
   "not-complete": "the review did not complete",
@@ -260,7 +261,13 @@ function deskRecord(row) {
       images: report.observed.images,
       missingAlt: report.observed.missingAlt
     } : undefined,
-    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict })) },
+    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict, severity: item && item.severity })) },
+    targeted: report.targeted && typeof report.targeted === "object" ? {
+      level: report.targeted.level || "",
+      status: report.targeted.status || "",
+      hosting: report.targeted.hosting || null,
+      items: list(report.targeted.items).slice(0, 30)
+    } : undefined,
     alerts: Array.isArray(report.alerts) ? report.alerts.map((item) => ({ id: item && item.id, level: item && item.level, title: item && item.title })) : undefined,
     tools: list(report.tools).map((item) => (item && typeof item === "object" ? { name: item.name } : item)),
     technologies: list(report.technologies).slice(0, 8).map((item) => ({ name: item && item.name })),
@@ -397,6 +404,11 @@ const STYLE = `
     .fix-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
     .fix-edit input { min-width: 0; width: 120px; }
     .fix-edit input[type="url"] { width: min(320px, 100%); }
+    .threat-lvl { display: inline-block; padding: 2px 8px; border-radius: 999px; font: bold 11px Arial, sans-serif; text-transform: uppercase; letter-spacing: .04em; background: #e3f5f6; color: var(--teal); }
+    .threat-lvl[data-level="critical"] { background: #fde2e2; color: #8c1d1d; }
+    .threat-lvl[data-level="high"] { background: #ffe8d6; color: #8a3c00; }
+    .threat-lvl[data-level="watch"] { background: #fff4d6; color: #7a5200; }
+    .threat-lvl[data-level="info"] { background: #e6eef2; color: #36505c; }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
 `;
 
@@ -717,6 +729,42 @@ const PAGE = `<!DOCTYPE html>
       <p class="empty">A note stays here until the person checks the box. Nothing in this list is mailed.</p>
       <div id="notes"></div>
     </section>
+    <section id="threats-block">
+      <h2>Internal threat list</h2>
+      <p class="empty">Operator-only list of every attack, exploit, compromise, leak, lookalike, or blocklist finding extracted per review. Never shown on Live Reports or public pages (public_ok defaults to false).</p>
+      <div class="stats" id="threat-stats"></div>
+      <div class="tools">
+        <input id="threat-q" type="search" placeholder="Host, subject, source, country, or evidence" aria-label="Filter threats">
+        <select id="threat-level" aria-label="Threat level">
+          <option value="">Every level</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="watch">Watch</option>
+          <option value="info">Info</option>
+        </select>
+        <select id="threat-kind" aria-label="Threat kind">
+          <option value="">Every kind</option>
+        </select>
+        <select id="threat-delist" aria-label="Delist status">
+          <option value="">Every delist status</option>
+          <option value="none">none</option>
+          <option value="pending">pending</option>
+          <option value="requested">requested</option>
+          <option value="delisted">delisted</option>
+          <option value="false_positive">false_positive</option>
+        </select>
+        <button id="threat-backfill" type="button" class="quiet">Scan recent reviews</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Observed</th><th>Level</th><th>Kind</th><th>Subject</th><th>Role</th><th>Country</th><th>Source</th><th>Confidence</th><th>Delist</th><th>Public</th></tr>
+          </thead>
+          <tbody id="threat-rows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="threat-detail" hidden></div>
+    </section>
     <section>
       <h2>Runs</h2>
       <div class="tools">
@@ -760,9 +808,23 @@ const PAGE = `<!DOCTYPE html>
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
     const fixesEl = document.getElementById("fix-requests");
+    const threatStatsEl = document.getElementById("threat-stats");
+    const threatRowsEl = document.getElementById("threat-rows");
+    const threatDetailEl = document.getElementById("threat-detail");
+    const threatQEl = document.getElementById("threat-q");
+    const threatLevelEl = document.getElementById("threat-level");
+    const threatKindEl = document.getElementById("threat-kind");
+    const threatDelistEl = document.getElementById("threat-delist");
+    const threatBackfillBtn = document.getElementById("threat-backfill");
     const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
     const PROMISE_STATES = ${JSON.stringify(reviewPromise.STATE_LABELS)};
+    const THREAT_KINDS = ${JSON.stringify(threats.KINDS)};
+    const THREAT_DELIST = ${JSON.stringify(threats.DELIST_STATUSES)};
     let fixesShown = "";
+    let threatsData = { summary: {}, items: [] };
+    let selectedThreat = "";
+    let lastThreatsAt = 0;
+    THREAT_KINDS.forEach((kind) => threatKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind })));
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -1308,8 +1370,155 @@ const PAGE = `<!DOCTYPE html>
       if (!body) return;
       data = body;
       render();
+      if (!lastThreatsAt || Date.now() - lastThreatsAt > 30000) loadThreats();
+    }
+
+    function renderThreats() {
+      const sum = threatsData.summary || {};
+      const lv = sum.byLevel || {};
+      const del = sum.byDelist || {};
+      const chips = [
+        ["Total", sum.total || 0],
+        ["Critical", lv.critical || 0],
+        ["High", lv.high || 0],
+        ["Watch", lv.watch || 0],
+        ["Info", lv.info || 0],
+        ["Pending delist", del.pending || 0]
+      ];
+      threatStatsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        threatStatsEl.appendChild(el);
+      });
+      const q = threatQEl.value.trim().toLowerCase();
+      const lvl = threatLevelEl.value;
+      const kind = threatKindEl.value;
+      const delist = threatDelistEl.value;
+      const list = (threatsData.items || []).filter((item) => {
+        if (lvl && item.level !== lvl) return false;
+        if (kind && item.kind !== kind) return false;
+        if (delist && item.delist_status !== delist) return false;
+        if (!q) return true;
+        return [item.host, item.subject, item.source, item.evidence, item.hosting_country, item.host_ip, item.kind].join(" ").toLowerCase().indexOf(q) !== -1;
+      });
+      threatRowsEl.replaceChildren();
+      list.slice(0, 150).forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("aria-selected", item.id === selectedThreat ? "true" : "false");
+        tr.appendChild(node("td", when(item.observed_at)));
+        const lvlTd = document.createElement("td");
+        const badge = node("span", item.level);
+        badge.className = "threat-lvl";
+        badge.dataset.level = item.level;
+        lvlTd.appendChild(badge);
+        tr.appendChild(lvlTd);
+        [item.kind, item.subject || item.host, item.role, item.hosting_country || item.company_country, item.source, item.confidence, item.delist_status, item.public_ok ? "Yes" : "No"].forEach((val) => {
+          tr.appendChild(node("td", text(val)));
+        });
+        tr.addEventListener("click", () => { selectedThreat = item.id; renderThreats(); });
+        threatRowsEl.appendChild(tr);
+      });
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        const td = node("td", "No threat entry matches.");
+        td.colSpan = 10;
+        tr.appendChild(td);
+        threatRowsEl.appendChild(tr);
+      }
+      if (threatDetailEl.contains(document.activeElement)) return;
+      const picked = (threatsData.items || []).find((item) => item.id === selectedThreat);
+      if (!picked) { threatDetailEl.hidden = true; threatDetailEl.replaceChildren(); return; }
+      threatDetailEl.hidden = false;
+      threatDetailEl.replaceChildren();
+      const dl = document.createElement("dl");
+      [
+        ["ID", picked.id],
+        ["Level", picked.level],
+        ["Kind", picked.kind],
+        ["Subject type", picked.subject_type],
+        ["Subject", picked.subject],
+        ["Host", picked.host],
+        ["Role", picked.role],
+        ["Host IP", picked.host_ip],
+        ["Hosting country", picked.hosting_country],
+        ["Company country", picked.company_country],
+        ["Source", picked.source],
+        ["Source ref", picked.source_ref],
+        ["Confidence", picked.confidence],
+        ["Time window", picked.time_window],
+        ["First seen", when(picked.first_seen)],
+        ["Last seen", when(picked.last_seen)],
+        ["Observed at", when(picked.observed_at)],
+        ["Evidence", picked.evidence],
+        ["Review ID", picked.review_id],
+        ["Public OK", picked.public_ok ? "true" : "false (private)"],
+        ["Owner notified", picked.owner_notified_at ? when(picked.owner_notified_at) : "—"],
+        ["Delist status", picked.delist_status],
+        ["Retention until", picked.retention_until]
+      ].forEach(([k, v]) => line(dl, k, v));
+      threatDetailEl.appendChild(dl);
+      const form = document.createElement("form");
+      form.className = "fix-edit";
+      const pick = document.createElement("select");
+      pick.setAttribute("aria-label", "Delist status");
+      THREAT_DELIST.forEach((st) => {
+        const opt = document.createElement("option");
+        opt.value = st;
+        opt.textContent = st;
+        opt.selected = st === picked.delist_status;
+        pick.appendChild(opt);
+      });
+      const noteIn = Object.assign(document.createElement("input"), { type: "text", placeholder: "Operator note", value: picked.note || "" });
+      noteIn.setAttribute("aria-label", "Operator note");
+      noteIn.style.width = "min(320px, 100%)";
+      const saveBtn = Object.assign(document.createElement("button"), { type: "submit", textContent: "Save status" });
+      const msg = Object.assign(document.createElement("span"), { className: "meta" });
+      [pick, noteIn, saveBtn, msg].forEach((el) => form.appendChild(el));
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveBtn.disabled = true;
+        msg.textContent = "";
+        const res = await fetch(deskBase() + "/desk/threats", {
+          method: "POST",
+          credentials: "include",
+          headers: await deskHeaders(),
+          body: JSON.stringify({ id: picked.id, delist_status: pick.value, note: noteIn.value.trim() })
+        });
+        saveBtn.disabled = false;
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.textContent = out.error || "Could not save."; return; }
+        msg.textContent = "Saved";
+        loadThreats();
+      });
+      threatDetailEl.appendChild(form);
+    }
+
+    async function loadThreats() {
+      const body = await deskFetch("/desk/threats/data");
+      if (!body) return;
+      lastThreatsAt = Date.now();
+      threatsData = body;
+      renderThreats();
     }
 ${SIGN_IN}
+    threatQEl.addEventListener("input", renderThreats);
+    threatLevelEl.addEventListener("change", renderThreats);
+    threatKindEl.addEventListener("change", renderThreats);
+    threatDelistEl.addEventListener("change", renderThreats);
+    threatBackfillBtn.addEventListener("click", async () => {
+      threatBackfillBtn.disabled = true;
+      await fetch(deskBase() + "/desk/threats", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ action: "backfill" })
+      });
+      threatBackfillBtn.disabled = false;
+      loadThreats();
+    });
     document.getElementById("free-add").addEventListener("click", async () => {
       const email = freeEmailEl.value.trim().toLowerCase();
       if (!email || email.indexOf("@") === -1) return;
