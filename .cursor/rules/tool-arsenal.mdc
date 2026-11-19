@@ -1,0 +1,45 @@
+---
+description: Arsenal of outside tools and repos we evaluated (Nov 2026): verdict, status, where each lives and how to run it. Read before adding a tool, skill, dependency, voice or design generator, scanner, or outside repo to our work, or when a prompt names one of them.
+alwaysApply: false
+---
+# Tool arsenal
+
+Carlos, Nov 18 2026: the evaluations exist so that chats and Jarvis know which tools exist and can use all or part of them in daily work. Verdicts are decisions. A status changes only with its ticket (`scripts/ticket.sh`).
+
+## Rules for any outside tool
+- Check the tables below first. Use an adopted tool as pinned here. A pilot runs only inside its ticket's scope.
+- Provenance first: publisher, license, version. Pin a version or commit. Stars are not evidence: several 2026 repos showed very high stars for their age.
+- Never install from a community hub (CLI-Anything). Read `setup` or install scripts before running them (REA `setup` writes agent configs).
+- A new tool gets a ticket. Add its row here when it is adopted or rejected.
+- Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
+
+## Adopted
+| Tool | Source and pin | Where it lives | Use |
+|---|---|---|---|
+| mattpocock/skills, shortlist | github.com/mattpocock/skills at `5863806` (MIT) | `.cursor/skills/diagnosing-bugs`, `.cursor/skills/tdd`; notices in `.cursor/skills/THIRD_PARTY_NOTICES.md` | `diagnosing-bugs` for failed reviews and bugs; `tdd` for test-first changes. Shortlist also named `triage` and `to-spec`; not copied (they overlap `scrum-board.mdc` and `ticket.sh`). PR #3773. |
+| cinecode QC measurement | github.com/sarpstar/cinecode (MIT), measurement only | `scripts/tips-studio/build.js`: `integratedLufs()` (ebur128), target -14 LUFS, warn below -16 | Warn-only report on each clip; the peak > -30 dB gate stays. Not their `loudnorm` step, which compresses the mix and breaks `social-clips.mdc`. PR #3792 (#3791). |
+
+## Pilots and one-offs
+| Tool | Source | Status and where | Use and limits |
+|---|---|---|---|
+| VoiceStudio | github.com/debpalash/VoiceStudio (AGPL-3.0); Homebrew cask `debpalash/tap/voicestudio` (0.5.7, notarized) | Pilot #3774, installed on Carlos's Mac. Local API `http://localhost:3900`, OpenAI-compatible `POST /v1/audio/speech`; `model: "mlx-audio"` routes to Kokoro or MeloTTS. Installed: `mlx-community/Kokoro-82M-bf16`, `mlx-community/MeloTTS-English-v3-MLX` (commercial category); `k2-fsa/OmniVoice` (CC-BY-NC, test only). | Not in the render path: social clips stay on edge-tts (six languages). Renders run on GitHub Actions with no GPU; VoiceStudio needs CUDA or MLX. Pilot clip: -20.1 LUFS, so it needs loudness normalization. Cloning Carlos's voice needs his explicit consent and a label. AGPL: internal use is fine; a hosted modified version must publish its source. |
+| Hallmark design skill | github.com/nutlope/hallmark (MIT) at `04977e1`, skill in `skills/hallmark` | Pilot #3776, design deliverable #3795. Not vendored: fetch the skill folder into `/tmp` or another scratch path. | Floor rules for new pages. Lint: `node <skill>/scripts/sloplint.mjs <path>`; the render tier needs puppeteer-core. CursorQuota draft is held outside the repo until the download route, privacy text and support contact are set. |
+| floorplan | github.com/haydenschmitty/floorplan (MIT) at `94f81b4` | One-off audit #3789, no adoption. Scanner not vendored. | Health check (keys in code, open Firebase rules, fakeable Stripe webhooks, open endpoints) on a `git archive` copy of main, output to `/tmp`. Findings tracked in tickets, not kept here. |
+| REA (rea-agents) | github.com/morluto/rea, npm `rea-agents@4.1.0` (MIT) | Low priority, #3775. Not run: needs a JDK and a JADX MCP jar. | Own artifacts only: scan our APK and JS bundles for leaked keys before release. Not customer sites (reverse engineering third-party sites is out of scope). Firebase web keys are public by design; the restriction check in Google Cloud is on Carlos's side. |
+| anything-llm | github.com/Mintplex-Labs/anything-llm (MIT) | Optional, not installed. | Internal Q&A over the rules and docs, only if needed. Telemetry is on by default; set `DISABLE_TELEMETRY`. |
+| check-if-email-exists | github.com/reacherhq/check-if-email-exists (MIT) | Defer. | Take the syntax, MX and disposable-domain checks for outreach lists. No SMTP probe: mail providers restrict it. |
+| CLI-Anything | github.com/HKUDS/CLI-Anything (Apache-2.0) | Pattern only, not installed. | Its `HARNESS.md` pattern for wrapping `ticket.sh` as an agent CLI. Do not install per-app CLIs from its hub. |
+| documenso | github.com/documenso/documenso (AGPL-3.0) | Defer. | Only if fixed-price packages need signed terms. Postgres and Docker app. |
+| ArtCraft | github.com/storytold/artcraft (MIT or Apache-2.0) | No. Carlos declined. | Not used. |
+
+## Reference only
+- astryx (`meta/astryx`, MIT): React and StyleX design system; the site is plain HTML with Tailwind.
+- Mika (`wangzan101/mika`, Apache-2.0): Android agent over ADB or wireless debugging. Not on Carlos's phone; Maestro flows cover the test phone.
+- unslop (`heydamir/unslop`, CC-BY-4.0): overlaps Hallmark. Pick one: Hallmark.
+
+## Rejected
+AutoGPT (its platform is under Polyform Shield, which restricts products that compete). pinchtab (stealth injection conflicts with responsible scanning). `deepseek-ai/dsh-superagent-prototype` (prototype). `storytold/craft-anything` (same publisher as ArtCraft). VERT (FFmpeg already covers media). sand3d (no use case). pixelfx (decorative).
+
+## Not evaluated
+- `annonerdrenzy/survivalllm`: repo not found, and the account does not exist. Needs the correct URL from Carlos.
+- `interplains/Zero-Breach-Toolkit`: not the CursorQuota app. Needs the intended repo.
