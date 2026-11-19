@@ -386,6 +386,17 @@
     "checked": "2026-11-18T22:15:38.011Z"
    }
   ],
+  "auto-2026-11-18/12-u-affinityplusbb-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "108",
+    "at": "2026-11-19T01:19:15.294Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/108",
+    "checked": "2026-11-19T01:19:20.545Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -833,10 +844,10 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "at": "2026-11-19T00:07:21.535Z",
+    "at": "2026-11-19T01:19:12.895Z",
     "result": "failed",
     "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
-    "checked": "2026-11-19T00:07:24.790Z"
+    "checked": "2026-11-19T01:19:15.294Z"
    }
   ],
   "runs-2026-10/01-govuk": [
@@ -892,6 +903,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/107",
     "checked": "2026-11-18T22:35:26.271Z"
+   }
+  ],
+  "runs-2026-10/06-transmilenio": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "109",
+    "at": "2026-11-19T01:19:20.545Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/109",
+    "checked": "2026-11-19T01:19:24.848Z"
    }
   ],
   "runs-3/01-ilo": [

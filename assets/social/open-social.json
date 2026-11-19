@@ -1235,6 +1235,15 @@
   ],
   "auto-2026-11-18/12-u-affinityplusbb-com": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2mvmpkw4j27",
+    "at": "2026-11-19T01:17:20.287Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2mvmpkw4j27",
+    "checked": "2026-11-19T01:17:51.057Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "17918327259503791",
@@ -1251,6 +1260,24 @@
     "result": "sent",
     "url": "https://www.instagram.com/p/Df5jcGKiYQy/",
     "checked": "2026-11-18T22:14:36.982Z"
+   },
+   {
+    "channel": "mastodon",
+    "profile": "qaurlreview@mastodon.social",
+    "id": "117640468429475212",
+    "at": "2026-11-19T01:18:08.657Z",
+    "result": "sent",
+    "url": "https://mastodon.social/@qaurlreview/117640468429475212",
+    "checked": "2026-11-19T01:18:13.142Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18130259716915759",
+    "at": "2026-11-19T01:18:14.254Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/Df54keVgL-V",
+    "checked": "2026-11-19T01:19:11.240Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -2120,6 +2147,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2mla5gbeq2a",
     "checked": "2026-11-18T22:11:51.499Z"
+   }
+  ],
+  "runs-2026-10/06-transmilenio": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2mvn7ybdn2t",
+    "at": "2026-11-19T01:17:51.057Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2mvn7ybdn2t",
+    "checked": "2026-11-19T01:18:07.885Z"
    }
   ],
   "runs-3/01-ilo": [
