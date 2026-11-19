@@ -119,6 +119,8 @@ test.describe('Review arena live facts', () => {
 				'WordPress 6.4: 3 plugins and themes seen, 2 with a version.',
 				'DNS for example.com: SPF found, DMARC found, 1 MX, 0 CAA, MTA-STS missing, TLS-RPT missing, BIMI missing.',
 				'Hacked-site checks: no planted spam paths; search clean.',
+				'Reading attack and exploit sources for example.com.',
+				'Attack and exploit sources read: CISA KEV, OSV.dev.',
 				'Checked 12 well-known paths for exposed files; none gave out content.',
 				'Waiting for PageSpeed Insights, up to 12 s.',
 				'PageSpeed Insights answered: Lighthouse performance 78/100 on mobile, without enough real-user Chrome data.',

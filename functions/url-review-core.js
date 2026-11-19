@@ -3961,6 +3961,7 @@ async function reviewTarget(rawUrl, hooks) {
   if (!stopped && !softPreview && controls.targeted !== false) {
     const assessedLibs = [].concat.apply([], pages.map((page) => (page.inspect && page.inspect.libraries) || [])).concat((browser && browser.ok && browser.libraries) || []);
     const runTargeted = typeof controls.targeted === "function" ? controls.targeted : targeted.check;
+    note("Reading attack and exploit sources for " + origin.hostname + ".");
     extras.targeted = await runTargeted({
       url: first.url,
       host: origin.hostname,
@@ -3974,6 +3975,7 @@ async function reviewTarget(rawUrl, hooks) {
       env: process.env,
       certspotterKey: process.env.CERTSPOTTER_KEY || ""
     }).catch(() => null);
+    targeted.lines(extras.targeted).forEach((text) => note(text));
   }
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;

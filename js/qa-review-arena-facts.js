@@ -18,7 +18,7 @@
 		{ id: 'axe', label: 'axe', kind: 'hammer', lab: true, jarvis: true },
 		{ id: 'security', label: 'Security', kind: 'shield', lab: true, jarvis: false },
 		{ id: 'a11y', label: 'A11Y', kind: 'bot', lab: true, jarvis: false },
-		{ id: 'malware', label: 'Malware', kind: 'radar', lab: true, jarvis: false },
+		{ id: 'malware', label: 'Threats', kind: 'radar', lab: true, jarvis: false },
 		{ id: 'webrisk', label: 'WebRisk', kind: 'target', lab: true, jarvis: true },
 		{ id: 'blocklist', label: 'Blocklist', kind: 'list', lab: true, jarvis: false },
 		{ id: 'lookalike', label: 'Lookalike', kind: 'mirror', lab: true, jarvis: true },
@@ -158,6 +158,9 @@
 		{ re: /^Checked \d+ well-known paths for exposed files/, stage: 'security', pose: 'work', status: 'done' },
 		{ re: /^Checked \d+ of \d+ external links/, stage: 'security', pose: 'work', status: 'done' },
 		{ re: /phishing or malware list|URLHAUS|PHISHSTATS|URLSCAN/i, stage: 'malware', pose: 'work', status: 'done' },
+		// The attack and exploit sources (#3848) ride the radar until the art of #3826 gives them their own item.
+		{ re: /^Reading attack and exploit sources/, stage: 'malware', pose: 'work', status: 'wip' },
+		{ re: /^Attack and exploit sources read:/, stage: 'malware', pose: 'work', status: 'done' },
 		{ re: /^Plain http /, stage: 'https', pose: 'work', status: 'done' },
 		{ re: /^RDAP for /, stage: 'dns', pose: 'work', status: 'done' },
 		{ re: /^The RDAP registration/, stage: 'dns', pose: 'work', status: 'skip' },

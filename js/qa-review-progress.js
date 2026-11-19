@@ -13,12 +13,13 @@
       slow: "Still working. This step waits on the site.",
       slower: "Slow site, still running. Stop keeps the pages already saved.",
       ready: "Report ready", stopped: "Stopped", stopping: "Stopping…", failed: "The review ended early",
-      phases: ["Connecting", "Analyzing pages", "Browser pass", "Writing cases", "Speed checks", "Scoring and signing"],
+      phases: ["Connecting", "Analyzing pages", "Browser pass", "Writing cases", "Threat check", "Speed checks", "Scoring and signing"],
       lines: [
         ["Checking the front door: https, DNS, certificate.", "First impressions count. Opening {host}."],
         ["Following the links your visitors follow.", "Analyzing {host} page by page."],
         ["Real Chrome, real pixels, phone and tablet sizes.", "Checking what loads before anyone says yes to cookies."],
         ["Turning what was found into test cases.", "Matching cases to the frameworks you chose."],
+        ["Reading public attack and exploit lists: CISA KEV, OSV, Feodo, Spamhaus DROP.", "Looking for signs {host} was targeted. Public sources only."],
         ["Lighthouse is timing the page on a phone.", "Speed is a feature. It is being measured now."],
         ["Scoring each check from the pages analyzed.", "Signing the report."]
       ],
@@ -39,12 +40,13 @@
       slow: "Sigue trabajando. Este paso espera al sitio.",
       slower: "Sitio lento, sigue en marcha. Detener conserva las páginas ya guardadas.",
       ready: "Informe listo", stopped: "Detenido", stopping: "Deteniendo…", failed: "La revisión terminó antes de tiempo",
-      phases: ["Conectando", "Analizando páginas", "Pasada del navegador", "Escribiendo casos", "Pruebas de velocidad", "Puntuando y firmando"],
+      phases: ["Conectando", "Analizando páginas", "Pasada del navegador", "Escribiendo casos", "Revisión de amenazas", "Pruebas de velocidad", "Puntuando y firmando"],
       lines: [
         ["Revisando la puerta de entrada: https, DNS, certificado.", "La primera impresión cuenta. Abriendo {host}."],
         ["Siguiendo los enlaces que siguen tus visitantes.", "Analizando {host} página a página."],
         ["Chrome real, píxeles reales, en tamaño móvil y tableta.", "Comprobando qué se carga antes de que nadie acepte las cookies."],
         ["Convirtiendo lo encontrado en casos de prueba.", "Ajustando los casos a los frameworks elegidos."],
+        ["Leyendo listas públicas de ataques y exploits: CISA KEV, OSV, Feodo, Spamhaus DROP.", "Buscando señales de que {host} fue objetivo de un ataque. Solo fuentes públicas."],
         ["Lighthouse está midiendo la página en un móvil.", "La velocidad es una función. Se está midiendo ahora."],
         ["Puntuando cada comprobación con las páginas analizadas.", "Firmando el informe."]
       ],
@@ -64,7 +66,9 @@
         none: "No hay una revisión anterior de {1} con este correo.", ranks: "Leyendo los rankings de Tranco y tu historial de puntuaciones de ambos sitios.",
         compare: "Comparado con tu revisión de {1}: {2} problemas abiertos solo los tiene {3}, {4} solo {5} y {6} ambos.",
         market: "Presencia en el mercado: {1}; {2}.", rank: "{1} ocupa el puesto #{2} en Tranco", out: "{1} está fuera del millón principal de Tranco", presence: ", presencia {1}/100",
-        saving: "Guardando el informe.", saved: "Informe guardado. Enviando una copia a {1}."
+        saving: "Guardando el informe.", saved: "Informe guardado. Enviando una copia a {1}.",
+        threatStart: "Leyendo fuentes públicas de ataques y exploits para {1}.", threatRead: "Fuentes de ataques y exploits leídas: {1}.",
+        threatSkipped: "Fuentes de ataques y exploits omitidas: {1}.", threatLate: "Las fuentes de ataques y exploits no respondieron a tiempo."
       }
     },
     pt: {
@@ -73,12 +77,13 @@
       slow: "Ainda trabalhando. Esta etapa espera pelo site.",
       slower: "Site lento, ainda em andamento. Parar mantém as páginas já salvas.",
       ready: "Relatório pronto", stopped: "Parado", stopping: "Parando…", failed: "A revisão terminou antes do tempo",
-      phases: ["Conectando", "Analisando páginas", "Passada do navegador", "Escrevendo casos", "Testes de velocidade", "Pontuando e assinando"],
+      phases: ["Conectando", "Analisando páginas", "Passada do navegador", "Escrevendo casos", "Verificação de ameaças", "Testes de velocidade", "Pontuando e assinando"],
       lines: [
         ["Verificando a porta de entrada: https, DNS, certificado.", "A primeira impressão conta. Abrindo {host}."],
         ["Seguindo os links que seus visitantes seguem.", "Analisando {host} página por página."],
         ["Chrome real, pixels reais, em tamanho de celular e tablet.", "Verificando o que carrega antes de alguém aceitar os cookies."],
         ["Transformando o que foi encontrado em casos de teste.", "Ajustando os casos aos frameworks escolhidos."],
+        ["Lendo listas públicas de ataques e exploits: CISA KEV, OSV, Feodo, Spamhaus DROP.", "Procurando sinais de que {host} foi alvo de ataque. Só fontes públicas."],
         ["O Lighthouse está cronometrando a página num celular.", "Velocidade é um recurso. Está sendo medida agora."],
         ["Pontuando cada verificação com as páginas analisadas.", "Assinando o relatório."]
       ],
@@ -98,7 +103,9 @@
         none: "Nenhuma revisão anterior de {1} com este e-mail.", ranks: "Lendo os rankings do Tranco e seu histórico de pontuação dos dois sites.",
         compare: "Comparado com sua revisão de {1}: {2} problemas abertos só {3} tem, {4} só {5} tem, {6} os dois têm.",
         market: "Presença no mercado: {1}; {2}.", rank: "{1} está em #{2} no Tranco", out: "{1} está fora do top 1 milhão do Tranco", presence: ", presença {1}/100",
-        saving: "Salvando o relatório.", saved: "Relatório salvo. Enviando uma cópia para {1}."
+        saving: "Salvando o relatório.", saved: "Relatório salvo. Enviando uma cópia para {1}.",
+        threatStart: "Lendo fontes públicas de ataques e exploits para {1}.", threatRead: "Fontes de ataques e exploits lidas: {1}.",
+        threatSkipped: "Fontes de ataques e exploits ignoradas: {1}.", threatLate: "As fontes de ataques e exploits não responderam a tempo."
       }
     },
     de: {
@@ -107,12 +114,13 @@
       slow: "Läuft noch. Dieser Schritt wartet auf die Website.",
       slower: "Langsame Website, läuft weiter. Stopp behält die bereits gespeicherten Seiten.",
       ready: "Bericht fertig", stopped: "Gestoppt", stopping: "Wird gestoppt…", failed: "Die Prüfung endete vorzeitig",
-      phases: ["Verbinden", "Seiten prüfen", "Browser-Durchlauf", "Fälle schreiben", "Tempo-Messung", "Bewerten und signieren"],
+      phases: ["Verbinden", "Seiten prüfen", "Browser-Durchlauf", "Fälle schreiben", "Bedrohungsprüfung", "Tempo-Messung", "Bewerten und signieren"],
       lines: [
         ["Prüfung der Eingangstür: https, DNS, Zertifikat.", "Der erste Eindruck zählt. {host} wird geöffnet."],
         ["Den Links folgen, denen Ihre Besucher folgen.", "{host} wird Seite für Seite geprüft."],
         ["Echtes Chrome, echte Pixel, in Handy- und Tablet-Größe.", "Was lädt, bevor jemand Cookies zustimmt?"],
         ["Aus den Funden werden Testfälle.", "Die Fälle richten sich nach den gewählten Frameworks."],
+        ["Öffentliche Angriffs- und Exploit-Listen werden gelesen: CISA KEV, OSV, Feodo, Spamhaus DROP.", "Gesucht werden Hinweise, dass {host} angegriffen wurde. Nur öffentliche Quellen."],
         ["Lighthouse misst die Seite auf einem Handy.", "Tempo ist ein Feature. Es wird gerade gemessen."],
         ["Jede Prüfung wird anhand der geprüften Seiten bewertet.", "Der Bericht wird signiert."]
       ],
@@ -132,7 +140,9 @@
         none: "Keine frühere Prüfung von {1} unter dieser E-Mail-Adresse.", ranks: "Die Tranco-Ränge und Ihr Punkteverlauf für beide Websites werden gelesen.",
         compare: "Verglichen mit Ihrer Prüfung von {1}: {2} offene Probleme hat nur {3}, {4} nur {5}, {6} haben beide.",
         market: "Marktpräsenz: {1}; {2}.", rank: "{1} steht bei Tranco auf Platz {2}", out: "{1} liegt außerhalb der Tranco-Top-Million", presence: ", Präsenz {1}/100",
-        saving: "Der Bericht wird gespeichert.", saved: "Bericht gespeichert. Eine Kopie geht an {1}."
+        saving: "Der Bericht wird gespeichert.", saved: "Bericht gespeichert. Eine Kopie geht an {1}.",
+        threatStart: "Öffentliche Angriffs- und Exploit-Quellen für {1} werden gelesen.", threatRead: "Gelesene Angriffs- und Exploit-Quellen: {1}.",
+        threatSkipped: "Übersprungene Angriffs- und Exploit-Quellen: {1}.", threatLate: "Die Angriffs- und Exploit-Quellen antworteten nicht rechtzeitig."
       }
     },
     fr: {
@@ -141,12 +151,13 @@
       slow: "Toujours en cours. Cette étape attend le site.",
       slower: "Site lent, toujours en cours. Arrêter garde les pages déjà enregistrées.",
       ready: "Rapport prêt", stopped: "Arrêté", stopping: "Arrêt en cours…", failed: "L’analyse s’est terminée plus tôt",
-      phases: ["Connexion", "Analyse des pages", "Passage du navigateur", "Rédaction des cas", "Mesure de vitesse", "Notation et signature"],
+      phases: ["Connexion", "Analyse des pages", "Passage du navigateur", "Rédaction des cas", "Contrôle des menaces", "Mesure de vitesse", "Notation et signature"],
       lines: [
         ["Vérification de la porte d’entrée : https, DNS, certificat.", "La première impression compte. Ouverture de {host}."],
         ["On suit les liens que suivent vos visiteurs.", "Analyse de {host}, page après page."],
         ["Vrai Chrome, vrais pixels, en format mobile et tablette.", "Ce qui se charge avant que quiconque accepte les cookies."],
         ["Ce qui a été trouvé devient des cas de test.", "Les cas s’alignent sur les frameworks choisis."],
+        ["Lecture des listes publiques d’attaques et d’exploits : CISA KEV, OSV, Feodo, Spamhaus DROP.", "Recherche de signes que {host} a été visé. Sources publiques uniquement."],
         ["Lighthouse chronomètre la page sur mobile.", "La vitesse est une fonctionnalité. Elle est mesurée maintenant."],
         ["Chaque contrôle est noté à partir des pages analysées.", "Signature du rapport."]
       ],
@@ -166,7 +177,9 @@
         none: "Aucune analyse précédente de {1} avec cet e-mail.", ranks: "Lecture des rangs Tranco et de l’historique de vos scores pour les deux sites.",
         compare: "Comparé à votre analyse de {1} : {2} problèmes ouverts que seul {3} a, {4} que seul {5} a, {6} communs aux deux.",
         market: "Présence sur le marché : {1} ; {2}.", rank: "{1} est n° {2} sur Tranco", out: "{1} est hors du top million de Tranco", presence: ", présence {1}/100",
-        saving: "Enregistrement du rapport.", saved: "Rapport enregistré. Envoi d’une copie à {1}."
+        saving: "Enregistrement du rapport.", saved: "Rapport enregistré. Envoi d’une copie à {1}.",
+        threatStart: "Lecture des sources publiques d’attaques et d’exploits pour {1}.", threatRead: "Sources d’attaques et d’exploits lues : {1}.",
+        threatSkipped: "Sources d’attaques et d’exploits ignorées : {1}.", threatLate: "Les sources d’attaques et d’exploits n’ont pas répondu à temps."
       }
     },
     it: {
@@ -175,12 +188,13 @@
       slow: "Ancora al lavoro. Questo passaggio attende il sito.",
       slower: "Sito lento, ancora in corso. Interrompi conserva le pagine già salvate.",
       ready: "Report pronto", stopped: "Interrotto", stopping: "Interruzione…", failed: "La revisione è finita in anticipo",
-      phases: ["Connessione", "Analisi delle pagine", "Passaggio del browser", "Stesura dei casi", "Misura della velocità", "Punteggio e firma"],
+      phases: ["Connessione", "Analisi delle pagine", "Passaggio del browser", "Stesura dei casi", "Controllo delle minacce", "Misura della velocità", "Punteggio e firma"],
       lines: [
         ["Controllo della porta d’ingresso: https, DNS, certificato.", "La prima impressione conta. Apertura di {host}."],
         ["Seguendo i link che seguono i tuoi visitatori.", "Analisi di {host} pagina per pagina."],
         ["Chrome vero, pixel veri, in formato telefono e tablet.", "Cosa si carica prima che qualcuno accetti i cookie."],
         ["Ciò che è stato trovato diventa casi di test.", "I casi si adattano ai framework scelti."],
+        ["Lettura delle liste pubbliche di attacchi ed exploit: CISA KEV, OSV, Feodo, Spamhaus DROP.", "Ricerca di segni che {host} sia stato preso di mira. Solo fonti pubbliche."],
         ["Lighthouse cronometra la pagina su un telefono.", "La velocità è una funzionalità. Si sta misurando ora."],
         ["Ogni controllo riceve un punteggio dalle pagine analizzate.", "Firma del report."]
       ],
@@ -200,13 +214,15 @@
         none: "Nessuna revisione precedente di {1} con questa email.", ranks: "Lettura dei ranking Tranco e dello storico dei tuoi punteggi per entrambi i siti.",
         compare: "Confronto con la tua revisione di {1}: {2} problemi aperti solo su {3}, {4} solo su {5}, {6} su entrambi.",
         market: "Presenza sul mercato: {1}; {2}.", rank: "{1} è al n. {2} su Tranco", out: "{1} è fuori dal primo milione di Tranco", presence: ", presenza {1}/100",
-        saving: "Salvataggio del report.", saved: "Report salvato. Invio di una copia a {1}."
+        saving: "Salvataggio del report.", saved: "Report salvato. Invio di una copia a {1}.",
+        threatStart: "Lettura delle fonti pubbliche di attacchi ed exploit per {1}.", threatRead: "Fonti di attacchi ed exploit lette: {1}.",
+        threatSkipped: "Fonti di attacchi ed exploit saltate: {1}.", threatLate: "Le fonti di attacchi ed exploit non hanno risposto in tempo."
       }
     }
   };
 
   // Where each phase starts on the bar; the last entry is where signing ends.
-  const PHASE_AT = [0, 12, 60, 76, 84, 92, 99];
+  const PHASE_AT = [0, 12, 58, 72, 80, 87, 93, 99];
   const PAGES_FROM = 20;
   const PAGES_TO = 58;
   // Server lines are English on every page; the first match moves the bar forward, never back.
@@ -219,16 +235,20 @@
     [/^Opening the start page in a headless browser/, 14, 1],
     [/^First page answered/, 17, 1],
     [/same-host links were listed/, PAGES_FROM, 1],
-    [/^((?:Read|Analyzed) \d+ pages?\.|The time budget ended|Stopped\. The report keeps|No further pages)/, 60, 2],
-    [/^Waiting for the headless browser/, 64, 2],
-    [/^Proposed \d+/, 78, 3],
-    [/^Waiting for the background (?:reads|checks)/, 84, 4],
-    [/^Waiting for PageSpeed Insights/, 86, 4],
-    [/^PageSpeed Insights (answered|did not answer)/, 89, 4],
-    [/^The browser pass (finished|did not finish)/, 91, 4],
-    [/^Scoring the checks/, 93, 5],
-    [/^(Scored |The scored checks could not)/, 96, 5],
-    [/^Signed the report/, 98, 5]
+    [/^((?:Read|Analyzed) \d+ pages?\.|The time budget ended|Stopped\. The report keeps|No further pages)/, 58, 2],
+    [/^Waiting for the headless browser/, 62, 2],
+    [/^Proposed \d+/, 74, 3],
+    // The threat check (#3848): the background reads end, then the lines for linked hosts, WordPress, hacked-site signs and the attack and exploit sources.
+    [/^Waiting for the background (?:reads|checks)/, 81, 4],
+    [/^(?:Google's Safe Browsing lists were read for|WordPress(?: \S+)?: \d+ plugins?|Checked \d+ well-known paths for exposed files|Hacked-site checks:|The hacked-site checks did not answer)/, 82, 4],
+    [/^Reading attack and exploit sources for /, 83, 4],
+    [/^(?:Attack and exploit sources (?:read|skipped):|The attack and exploit sources did not answer)/, 85, 4],
+    [/^Waiting for PageSpeed Insights/, 88, 5],
+    [/^PageSpeed Insights (answered|did not answer)/, 90, 5],
+    [/^The browser pass (finished|did not finish)/, 92, 5],
+    [/^Scoring the checks/, 94, 6],
+    [/^(Scored |The scored checks could not)/, 96, 6],
+    [/^Signed the report/, 98, 6]
   ];
   // The fixed lines the page and functions/index.js write; the crawl's own notes stay English.
   const LOG = [
@@ -241,7 +261,11 @@
     [/^Compared with your review of (\S+): (\d+) open problems only (\S+) has, (\d+) only (\S+) has, (\d+) both have\.$/, "compare"],
     [/^Market presence: ([^;]+); (.+)\.$/, "market"],
     [/^Saving the report\.$/, "saving"],
-    [/^Report saved\. Emailing a copy to (\S+)\.$/, "saved"]
+    [/^Report saved\. Emailing a copy to (\S+)\.$/, "saved"],
+    [/^Reading attack and exploit sources for (\S+)\.$/, "threatStart"],
+    [/^Attack and exploit sources read: (.+)\.$/, "threatRead"],
+    [/^Attack and exploit sources skipped: (.+)\.$/, "threatSkipped"],
+    [/^The attack and exploit sources did not answer in time\.$/, "threatLate"]
   ];
 
   const code = String(document.documentElement.lang || "en").slice(0, 2).toLowerCase();
