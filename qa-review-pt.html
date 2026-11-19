@@ -524,9 +524,9 @@
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
     <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/qa-review-folds.css?v=20261027a" as="style">
-    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a"></noscript>
+    <link rel="preload" href="css/qa-review-folds.css?v=20261119-3826" as="style">
+    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826"></noscript>
     <link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
@@ -1977,9 +1977,9 @@
             <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel" lang="pt" translate="no">Neste relatório</p>
             <ol class="report-index-list" id="report-index-list"></ol>
         </nav>
-        <h2 data-insight data-index-group="summary" data-report-copy="execTitle" lang="pt" translate="no">Resumo em uma página</h2>
+        <h2 data-face="summary" data-insight data-index-group="summary" data-report-copy="execTitle" lang="pt" translate="no">Resumo em uma página</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight data-index-group="summary" data-report-copy="compareTitle" lang="pt" translate="no">Ao lado de um concorrente</h2>
+        <h2 data-face="compare" data-insight data-index-group="summary" data-report-copy="compareTitle" lang="pt" translate="no">Ao lado de um concorrente</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
@@ -2029,44 +2029,44 @@
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight data-index-group="summary" data-report-copy="healthTitle" lang="pt" translate="no">Pontuação de saúde</h2>
+        <h2 data-face="health" data-insight data-index-group="summary" data-report-copy="healthTitle" lang="pt" translate="no">Pontuação de saúde</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight data-index-group="summary" data-report-copy="fixTitle" lang="pt" translate="no">Corrigir primeiro</h2>
+        <h2 data-face="fixfirst" data-insight data-index-group="summary" data-report-copy="fixTitle" lang="pt" translate="no">Corrigir primeiro</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight data-index-group="browser" data-report-copy="browserTitle" lang="pt" translate="no">Em um navegador real</h2>
+        <h2 data-face="browser" data-insight data-index-group="browser" data-report-copy="browserTitle" lang="pt" translate="no">Em um navegador real</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="pt" translate="no">Como aparece no Google e ao compartilhar</h2>
+        <h2 data-face="preview" data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="pt" translate="no">Como aparece no Google e ao compartilhar</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="aiTitle" lang="pt" translate="no">O que a IA vê</h2>
+        <h2 data-face="ai" data-insight data-index-group="browser" data-report-copy="aiTitle" lang="pt" translate="no">O que a IA vê</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="pt" translate="no">Analítica e consentimento</h2>
+        <h2 data-face="analytics" data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="pt" translate="no">Analítica e consentimento</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="searchTitle" lang="pt" translate="no">Visibilidade na pesquisa</h2>
+        <h2 data-face="seo" data-insight data-index-group="browser" data-report-copy="searchTitle" lang="pt" translate="no">Visibilidade na pesquisa</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="mapTitle" lang="pt" translate="no">Mapa das páginas analisadas</h2>
+        <h2 data-face="sitemap" data-insight data-index-group="browser" data-report-copy="mapTitle" lang="pt" translate="no">Mapa das páginas analisadas</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="securityTitle" lang="pt" translate="no">Segurança e email</h2>
+        <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle" lang="pt" translate="no">Segurança e email</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="checksTitle" lang="pt" translate="no">Todas as verificações, com o seu veredicto</h2>
+        <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle" lang="pt" translate="no">Todas as verificações, com o seu veredicto</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="pt" translate="no">Kit de correções</h2>
+        <h2 data-face="fixkit" data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="pt" translate="no">Kit de correções</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
-                <h2 data-index-group="glance" lang="pt" translate="no">Casos propostos por camada</h2>
+                <h2 data-face="cases" data-index-group="glance" lang="pt" translate="no">Casos propostos por camada</h2>
                 <div id="layers"></div>
             </article>
             <article class="card">
-                <h2 data-index-group="glance" lang="pt" translate="no">Tecnologias encontradas</h2>
+                <h2 data-face="tech" data-index-group="glance" lang="pt" translate="no">Tecnologias encontradas</h2>
                 <div class="pills" id="tech"></div>
             </article>
         </div>
         <section id="tool-block" hidden>
-            <h2 data-index-group="glance" lang="pt" translate="no">Ferramentas que se aplicam</h2>
+            <h2 data-face="tools" data-index-group="glance" lang="pt" translate="no">Ferramentas que se aplicam</h2>
             <p class="muted" id="tool-note" lang="pt" translate="no">Cada ferramenta marcada soma 5 USD ao relatório completo, como um framework extra. O axe-core já rodou no navegador headless da revisão. Marcá-lo adiciona as verificações dele aos seus scripts. As outras ferramentas não são executadas.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
@@ -2075,7 +2075,7 @@
                 <span class="alarm-lamp" aria-hidden="true"></span>
                 <div>
                     <p class="eyebrow" lang="pt" translate="no">Alarme</p>
-                    <h2 data-index-group="exposure" lang="pt" translate="no">O que a resposta pública deixou à vista</h2>
+                    <h2 data-face="exposed" data-index-group="exposure" lang="pt" translate="no">O que a resposta pública deixou à vista</h2>
                 </div>
                 <button class="btn btn-primary" id="alarm-open" type="button" lang="pt" translate="no">Abrir o resto</button>
             </div>
@@ -2084,27 +2084,27 @@
         </section>
         <section class="credential-run" id="credential-run" hidden>
             <p class="eyebrow" lang="pt" translate="no">Revisão com login</p>
-            <h2 data-index-group="exposure" lang="pt" translate="no">Um login que você tem permissão para usar</h2>
+            <h2 data-face="login" data-index-group="exposure" lang="pt" translate="no">Um login que você tem permissão para usar</h2>
             <p id="credential-run-copy">Esta página não pede a senha. A revisão com login espera até ser paga.</p>
             <button class="btn btn-primary" id="credential-open" type="button" lang="pt" translate="no">Combinar a revisão com login</button>
         </section>
         <section class="credential-run" id="report-call" hidden>
             <p class="eyebrow" data-report-copy="callEyebrow" lang="pt" translate="no">Tour guiado</p>
-            <h2 data-report-copy="callTitle" lang="pt" translate="no">Veja este relatório com o Carlos</h2>
+            <h2 data-face="call" data-report-copy="callTitle" lang="pt" translate="no">Veja este relatório com o Carlos</h2>
             <p data-report-copy="callCopy" lang="pt" translate="no">Uma videochamada de 30 minutos sobre o que os achados significam para o seu site e o que corrigir primeiro.</p>
             <a class="btn btn-primary" id="report-call-link" href="book.html?type=walkthrough" data-report-copy="callButton" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Report" lang="pt" translate="no">Agende um tour de 30 min</a>
         </section>
         <section class="mentions" id="mentions-block">
-            <h2 data-index-group="exposure" lang="pt" translate="no">Artigos públicos</h2>
+            <h2 data-face="writeups" data-index-group="exposure" lang="pt" translate="no">Artigos públicos</h2>
             <ol id="mentions"></ol>
         </section>
-        <h2 data-index-group="evidence" lang="pt" translate="no">O que a resposta mostrou</h2>
+        <h2 data-face="response" data-index-group="evidence" lang="pt" translate="no">O que a resposta mostrou</h2>
         <article class="card" id="observed"></article>
-        <h2 data-index-group="evidence" lang="pt" translate="no">Páginas analisadas</h2>
+        <h2 data-face="pages" data-index-group="evidence" lang="pt" translate="no">Páginas analisadas</h2>
         <article class="card"><p class="muted" id="pages-found" hidden></p><table class="page-table"><thead><tr><th lang="pt" translate="no">Caminho</th><th lang="pt" translate="no">Status</th><th>ms</th><th lang="pt" translate="no">Título</th></tr></thead><tbody id="pages"></tbody></table></article>
-        <h2 data-index-group="evidence" lang="pt" translate="no">Registro da revisão</h2>
+        <h2 data-face="log" data-index-group="evidence" lang="pt" translate="no">Registro da revisão</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
-        <h2 data-index-group="cases" lang="pt" translate="no">Casos que podem ser executados</h2>
+        <h2 data-face="cases" data-index-group="cases" lang="pt" translate="no">Casos que podem ser executados</h2>
         <p class="muted case-note" id="case-note"></p>
         <p class="muted" id="specialist-tools" hidden></p>
         <div class="filters" id="layer-filters"></div>
@@ -2118,7 +2118,7 @@
         <div class="ask-head">
             <div>
                 <p class="eyebrow" data-ask-text="open">Perguntar ao relatório</p>
-                <h2 id="ask-title" data-ask-text="title">Respostas só deste relatório</h2>
+                <h2 data-face="ask" id="ask-title" data-ask-text="title">Respostas só deste relatório</h2>
             </div>
             <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Fechar</button>
         </div>
@@ -2137,7 +2137,7 @@
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
         <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36">
         <p class="eyebrow" lang="pt" translate="no">Casos de teste</p>
-        <h2 id="case-export-title" lang="pt" translate="no">Leve esta lista com você</h2>
+        <h2 data-face="export" id="case-export-title" lang="pt" translate="no">Leve esta lista com você</h2>
         <p id="case-export-copy" lang="pt" translate="no">Estes casos podem ir como arquivo para Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON ou texto, e podem ser impressos. Cada caso leva um script inicial para os frameworks que você escolheu, e um ZIP traz uma suíte por framework. Escolha os tipos que quer no arquivo. O relatório completo libera todos os tipos.</p>
         <label class="select-all" lang="pt" translate="no"><input type="checkbox" id="case-select-all" checked> Selecionar tudo</label>
         <p id="case-export-count"></p>
@@ -2267,7 +2267,7 @@
 <script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
 <script src="js/qa-review-findings-copy.pt.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261117-3745" defer></script>
+<script src="js/qa-review.js?v=20261119-3826" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

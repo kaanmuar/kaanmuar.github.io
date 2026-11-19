@@ -524,9 +524,9 @@
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
     <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/qa-review-folds.css?v=20261027a" as="style">
-    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a"></noscript>
+    <link rel="preload" href="css/qa-review-folds.css?v=20261119-3826" as="style">
+    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826"></noscript>
     <link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
@@ -1977,9 +1977,9 @@
             <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel">On this report</p>
             <ol class="report-index-list" id="report-index-list"></ol>
         </nav>
-        <h2 data-insight data-index-group="summary" data-report-copy="execTitle">One-page summary</h2>
+        <h2 data-face="summary" data-insight data-index-group="summary" data-report-copy="execTitle">One-page summary</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight data-index-group="summary" data-report-copy="compareTitle">Next to a competitor</h2>
+        <h2 data-face="compare" data-insight data-index-group="summary" data-report-copy="compareTitle">Next to a competitor</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
@@ -2029,44 +2029,44 @@
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight data-index-group="summary" data-report-copy="healthTitle">Health score</h2>
+        <h2 data-face="health" data-insight data-index-group="summary" data-report-copy="healthTitle">Health score</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight data-index-group="summary" data-report-copy="fixTitle">Fix first</h2>
+        <h2 data-face="fixfirst" data-insight data-index-group="summary" data-report-copy="fixTitle">Fix first</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight data-index-group="browser" data-report-copy="browserTitle">In a real browser</h2>
+        <h2 data-face="browser" data-insight data-index-group="browser" data-report-copy="browserTitle">In a real browser</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="snippetTitle">How it looks in Google and when shared</h2>
+        <h2 data-face="preview" data-insight data-index-group="browser" data-report-copy="snippetTitle">How it looks in Google and when shared</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="aiTitle">What AI sees</h2>
+        <h2 data-face="ai" data-insight data-index-group="browser" data-report-copy="aiTitle">What AI sees</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="analyticsTitle">Analytics and consent</h2>
+        <h2 data-face="analytics" data-insight data-index-group="browser" data-report-copy="analyticsTitle">Analytics and consent</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="searchTitle">Search visibility</h2>
+        <h2 data-face="seo" data-insight data-index-group="browser" data-report-copy="searchTitle">Search visibility</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="mapTitle">Map of the pages analyzed</h2>
+        <h2 data-face="sitemap" data-insight data-index-group="browser" data-report-copy="mapTitle">Map of the pages analyzed</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="securityTitle">Security and email</h2>
+        <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle">Security and email</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="checksTitle">Every check, with its verdict</h2>
+        <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle">Every check, with its verdict</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight data-index-group="checks" data-report-copy="fixKitTitle">Fix kit</h2>
+        <h2 data-face="fixkit" data-insight data-index-group="checks" data-report-copy="fixKitTitle">Fix kit</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
-                <h2 data-index-group="glance">Proposed cases by layer</h2>
+                <h2 data-face="cases" data-index-group="glance">Proposed cases by layer</h2>
                 <div id="layers"></div>
             </article>
             <article class="card">
-                <h2 data-index-group="glance">Technologies seen</h2>
+                <h2 data-face="tech" data-index-group="glance">Technologies seen</h2>
                 <div class="pills" id="tech"></div>
             </article>
         </div>
         <section id="tool-block" hidden>
-            <h2 data-index-group="glance">Tools that apply</h2>
+            <h2 data-face="tools" data-index-group="glance">Tools that apply</h2>
             <p class="muted" id="tool-note">Each checked tool adds 5 USD to the full report, like an extra framework. axe-core already ran in the review's headless browser. Checking it adds its checks to your scripts. The other tools are not launched.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
@@ -2075,7 +2075,7 @@
                 <span class="alarm-lamp" aria-hidden="true"></span>
                 <div>
                     <p class="eyebrow">Alarm</p>
-                    <h2 data-index-group="exposure">What the public response left in the open</h2>
+                    <h2 data-face="exposed" data-index-group="exposure">What the public response left in the open</h2>
                 </div>
                 <button class="btn btn-primary" id="alarm-open" type="button">Open the rest</button>
             </div>
@@ -2084,27 +2084,27 @@
         </section>
         <section class="credential-run" id="credential-run" hidden>
             <p class="eyebrow">Signed-in run</p>
-            <h2 data-index-group="exposure">A login you are allowed to use</h2>
+            <h2 data-face="login" data-index-group="exposure">A login you are allowed to use</h2>
             <p id="credential-run-copy">This page does not take the password. The signed-in run waits until it is paid.</p>
             <button class="btn btn-primary" id="credential-open" type="button">Arrange the signed-in run</button>
         </section>
         <section class="credential-run" id="report-call" hidden>
             <p class="eyebrow" data-report-copy="callEyebrow">Walkthrough</p>
-            <h2 data-report-copy="callTitle">Go through this report with Carlos</h2>
+            <h2 data-face="call" data-report-copy="callTitle">Go through this report with Carlos</h2>
             <p data-report-copy="callCopy">A 30-minute video call on what the findings mean for your site and what to fix first.</p>
             <a class="btn btn-primary" id="report-call-link" href="book.html?type=walkthrough" data-report-copy="callButton" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Report">Book a 30-min walkthrough</a>
         </section>
         <section class="mentions" id="mentions-block">
-            <h2 data-index-group="exposure">Public write-ups</h2>
+            <h2 data-face="writeups" data-index-group="exposure">Public write-ups</h2>
             <ol id="mentions"></ol>
         </section>
-        <h2 data-index-group="evidence">What the response showed</h2>
+        <h2 data-face="response" data-index-group="evidence">What the response showed</h2>
         <article class="card" id="observed"></article>
-        <h2 data-index-group="evidence">Pages analyzed</h2>
+        <h2 data-face="pages" data-index-group="evidence">Pages analyzed</h2>
         <article class="card"><p class="muted" id="pages-found" hidden></p><table class="page-table"><thead><tr><th>Path</th><th>Status</th><th>ms</th><th>Title</th></tr></thead><tbody id="pages"></tbody></table></article>
-        <h2 data-index-group="evidence">Review log kept with this run</h2>
+        <h2 data-face="log" data-index-group="evidence">Review log kept with this run</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
-        <h2 data-index-group="cases">Cases that could be run</h2>
+        <h2 data-face="cases" data-index-group="cases">Cases that could be run</h2>
         <p class="muted case-note" id="case-note"></p>
         <p class="muted" id="specialist-tools" hidden></p>
         <div class="filters" id="layer-filters"></div>
@@ -2118,7 +2118,7 @@
         <div class="ask-head">
             <div>
                 <p class="eyebrow" data-ask-text="open">Ask the report</p>
-                <h2 id="ask-title" data-ask-text="title">Answers from this report only</h2>
+                <h2 data-face="ask" id="ask-title" data-ask-text="title">Answers from this report only</h2>
             </div>
             <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Close</button>
         </div>
@@ -2137,7 +2137,7 @@
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
         <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36">
         <p class="eyebrow">Test cases</p>
-        <h2 id="case-export-title">Take this list with you</h2>
+        <h2 data-face="export" id="case-export-title">Take this list with you</h2>
         <p id="case-export-copy">These cases can travel as a file for Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON, or text, and they can be printed. Each case carries a starting script for the frameworks you chose, and a ZIP holds one suite per framework. Choose the kinds you want in the file. The full report opens every kind.</p>
         <label class="select-all"><input type="checkbox" id="case-select-all" checked> Select all</label>
         <p id="case-export-count"></p>
@@ -2266,7 +2266,7 @@
 <script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
 <script src="js/qa-review-findings-copy.en.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261117-3745" defer></script>
+<script src="js/qa-review.js?v=20261119-3826" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
 <script src="js/qa-review-multi.js?v=20261102q" defer></script>
 <script src="js/url-suggest.js?v=20261109b" defer></script>

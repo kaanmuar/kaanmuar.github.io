@@ -6,6 +6,10 @@
 .alarm .fold-icon { border-color: currentColor; }
 .fold-toggle[aria-expanded="false"] .fold-icon { transform: rotate(-45deg); margin-bottom: 0; }
 .fold-panel[hidden] { display: none !important; }
+.fold-face { display: inline-flex; margin-right: 10px; vertical-align: -4px; }
+.face { flex: none; }
+.badge .face { margin-right: 5px; vertical-align: -2px; }
+html.dark-mode .face-light, html:not(.dark-mode) .face-dark { display: none; }
 .list-more { all: unset; cursor: pointer; color: var(--cyan); font-weight: 600; white-space: nowrap; }
 .list-more:hover { text-decoration: underline; }
 .list-more:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
@@ -19,6 +23,8 @@
 @media print {
     .fold-panel[hidden] { display: block !important; }
     .fold-icon, .fold-bar, .list-more, .list-rest { display: none !important; }
+    html.dark-mode .face-dark { display: none; }
+    html.dark-mode .face-light { display: inline; }
     .list-dots, .list-dots[hidden] { display: inline !important; }
     .case-print article:has(pre) { break-inside: auto; }
     .case-print pre { break-inside: avoid; }

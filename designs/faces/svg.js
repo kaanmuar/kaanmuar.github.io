@@ -39,7 +39,18 @@ const STYLE = `
 .l-spark{animation:ff-spark 2.6s linear infinite}
 @keyframes ff-spark{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
 .still *{animation:none!important}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}`.replace(/\n/g, '');
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
+
+// Each file carries only the keyframes its own classes use.
+const RULES = new Map();
+const ALWAYS = [];
+const lines = STYLE.trim().split('\n');
+for (let i = 0; i < lines.length; i++) {
+	const m = lines[i].match(/^\.([a-z]-[a-z]+)\{/);
+	if (m && lines[i + 1]?.startsWith('@keyframes')) RULES.set(m[1], lines[i] + lines[++i]);
+	else ALWAYS.push(lines[i]);
+}
+const styleFor = (body) => [...new Set([...body.matchAll(/class="([a-z]-[a-z]+)"/g)].map((m) => m[1]))].map((c) => RULES.get(c) || '').join('') + ALWAYS.join('');
 
 // Tilted ellipse as a closed path, so a dash can travel it (the orbit dot).
 function orbitPath(cx, cy, rx, ry, deg) {
@@ -170,7 +181,7 @@ export function faceSVG(item, direction, { size = 96, theme = 'dark', still = fa
 	const u = `f${(seq++).toString(36)}`;
 	const c = colors(item, theme);
 	const body = DRAW[direction](item, c, u).replace(/\n/g, '');
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${title}"${still ? ' class="still"' : ''}><style>${STYLE}</style>${body}</svg>`;
+	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" role="img" aria-label="${title}"${still ? ' class="still"' : ''}><style>${styleFor(body)}</style>${body}</svg>`;
 }
 
 export function levelItem(level) {

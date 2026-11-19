@@ -1726,6 +1726,28 @@
 	['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'].forEach((name) => {
 		AREA_NOTE[name] = cc.areaNote(name);
 	});
+	// Faces (#3826): built by scripts/faces/build.mjs; the page theme picks one of the pair.
+	const FACE_V = '20261119';
+	const FACE_AREA = { SEO: 'seo', GEO: 'ai', Analytics: 'analytics', Security: 'sec', Accessibility: 'a11y', Performance: 'perf' };
+	const faceImgs = (id, size) =>
+		['', '-light']
+			.map(
+				(theme) =>
+					'<img class="face face' +
+					(theme || '-dark') +
+					'" src="assets/faces/badge/' +
+					id +
+					theme +
+					'.svg?v=' +
+					FACE_V +
+					'" alt="" width="' +
+					size +
+					'" height="' +
+					size +
+					'" loading="lazy" decoding="async">'
+			)
+			.join('');
+	const areaFace = (area) => (FACE_AREA[area] ? faceImgs(FACE_AREA[area], 14) : '');
 	let findingFilter = { area: 'All', verdict: 'open' };
 
 	// The section painters draw into the report on this page, or, while slotRoot is set, into one column
@@ -4288,6 +4310,7 @@
 							'</span><div>' +
 							verdictBadge(item.verdict, item.severity) +
 							'<span class="badge">' +
+							areaFace(item.area) +
 							esc(cc.area(item.area)) +
 							'</span>' +
 							'<strong>' +
@@ -5818,6 +5841,7 @@
 							'</span>' +
 							verdictBadge(item.verdict, item.severity) +
 							'<span class="badge">' +
+							areaFace(item.area) +
 							esc(cc.area(item.area)) +
 							'</span></div>' +
 							'<strong>' +
@@ -5985,6 +6009,7 @@
 		button.setAttribute('aria-controls', panel.id);
 		const label = document.createElement('span');
 		while (heading.firstChild) label.appendChild(heading.firstChild);
+		if (heading.dataset.face) label.insertAdjacentHTML('afterbegin', '<span class="fold-face" aria-hidden="true">' + faceImgs(heading.dataset.face, 22) + '</span>');
 		const icon = document.createElement('span');
 		icon.className = 'fold-icon';
 		icon.setAttribute('aria-hidden', 'true');
