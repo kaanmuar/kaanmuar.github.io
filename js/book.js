@@ -48,7 +48,30 @@
 			doneTitle: "You're booked",
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'Google Calendar is sending the invite to your email. It has the Meet link and lets you add the call to your calendar.',
+				'We sent a confirmation to your email, and Google Calendar sends its own invite with the Meet link. Add the call to your calendar below.',
+			addTitle: 'Add it to your calendar',
+			addGoogle: 'Google Calendar',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Calendar / .ics file',
+			prepTitle: 'To get the most from the call',
+			prep: {
+				intro: [
+					'Have the site you want reviewed open, or its address ready.',
+					'Bring the one thing you most want to know: cost, scope or fit.',
+				],
+				walkthrough: [
+					'Open your report beforehand.',
+					'Note the findings you want to start with; we cover those first.',
+				],
+				cv: [
+					'Reply with the job description or a link, if you have one.',
+					'Tell me the stack and the team size, so we use the time well.',
+				],
+				call: [
+					'Send a line on what you want to talk about, if you can.',
+					'Bring any link or document you want to look at together.',
+				],
+			},
 			meet: 'Open the Meet link',
 			other: 'Prefer email?',
 			cv: 'Interactive CV',
@@ -97,7 +120,30 @@
 			doneTitle: 'Llamada agendada',
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'Google Calendar te está enviando la invitación por correo. Trae el enlace de Meet y te deja añadir la llamada a tu calendario.',
+				'Te enviamos una confirmación por correo, y Google Calendar envía su propia invitación con el enlace de Meet. Añade la llamada a tu calendario aquí abajo.',
+			addTitle: 'Añádela a tu calendario',
+			addGoogle: 'Google Calendar',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Calendar / archivo .ics',
+			prepTitle: 'Para aprovechar la llamada',
+			prep: {
+				intro: [
+					'Ten a mano el sitio que quieres revisar, o su dirección.',
+					'Trae lo que más quieres saber: costo, alcance o si te sirve.',
+				],
+				walkthrough: [
+					'Abre tu informe antes de la llamada.',
+					'Anota los hallazgos con los que quieres empezar; vemos esos primero.',
+				],
+				cv: [
+					'Responde con la descripción del puesto o un enlace, si lo tienes.',
+					'Cuéntame el stack y el tamaño del equipo para aprovechar el tiempo.',
+				],
+				call: [
+					'Envíame una línea sobre lo que quieres tratar, si puedes.',
+					'Trae cualquier enlace o documento que quieras ver juntos.',
+				],
+			},
 			meet: 'Abrir el enlace de Meet',
 			other: '¿Prefieres escribir?',
 			cv: 'CV interactivo',
@@ -147,7 +193,30 @@
 			doneTitle: 'Conversa agendada',
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'O Google Agenda está enviando o convite para o seu e-mail. Ele traz o link do Meet e permite adicionar a conversa à sua agenda.',
+				'Enviamos uma confirmação por e-mail, e o Google Agenda envia o próprio convite com o link do Meet. Adicione a conversa à sua agenda abaixo.',
+			addTitle: 'Adicione à sua agenda',
+			addGoogle: 'Google Agenda',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Calendar / arquivo .ics',
+			prepTitle: 'Para aproveitar a conversa',
+			prep: {
+				intro: [
+					'Deixe aberto o site que quer revisar, ou tenha o endereço à mão.',
+					'Traga o que mais quer saber: custo, escopo ou se serve para você.',
+				],
+				walkthrough: [
+					'Abra o seu relatório antes da conversa.',
+					'Anote as descobertas com que quer começar; vemos essas primeiro.',
+				],
+				cv: [
+					'Responda com a descrição da vaga ou um link, se tiver.',
+					'Conte a stack e o tamanho da equipe para aproveitarmos o tempo.',
+				],
+				call: [
+					'Mande uma linha sobre o que quer conversar, se puder.',
+					'Traga qualquer link ou documento que queira ver junto.',
+				],
+			},
 			meet: 'Abrir o link do Meet',
 			other: 'Prefere e-mail?',
 			cv: 'CV interativo',
@@ -199,7 +268,30 @@
 			doneTitle: 'Gespräch gebucht',
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'Google Kalender schickt Ihnen die Einladung per E-Mail. Sie enthält den Meet-Link, und Sie können das Gespräch in Ihren Kalender übernehmen.',
+				'Wir haben Ihnen eine Bestätigung per E-Mail geschickt, und Google Kalender sendet eine eigene Einladung mit dem Meet-Link. Tragen Sie das Gespräch unten in Ihren Kalender ein.',
+			addTitle: 'In Ihren Kalender eintragen',
+			addGoogle: 'Google Kalender',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Kalender / .ics-Datei',
+			prepTitle: 'Damit das Gespräch viel bringt',
+			prep: {
+				intro: [
+					'Halten Sie die zu prüfende Website offen oder die Adresse bereit.',
+					'Bringen Sie mit, was Sie am meisten wissen wollen: Kosten, Umfang oder Passung.',
+				],
+				walkthrough: [
+					'Öffnen Sie Ihren Bericht vorab.',
+					'Notieren Sie die Befunde, mit denen wir beginnen sollen; die gehen wir zuerst durch.',
+				],
+				cv: [
+					'Antworten Sie mit der Stellenbeschreibung oder einem Link, falls vorhanden.',
+					'Nennen Sie Stack und Teamgröße, damit wir die Zeit gut nutzen.',
+				],
+				call: [
+					'Schreiben Sie kurz, worüber Sie sprechen möchten, wenn möglich.',
+					'Bringen Sie Links oder Dokumente mit, die wir gemeinsam ansehen sollen.',
+				],
+			},
 			meet: 'Meet-Link öffnen',
 			other: 'Lieber per E-Mail?',
 			cv: 'Interaktiver Lebenslauf',
@@ -251,7 +343,30 @@
 			doneTitle: 'Appel réservé',
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'Google Agenda vous envoie l’invitation par e-mail. Elle contient le lien Meet et vous permet d’ajouter l’appel à votre agenda.',
+				"Nous vous avons envoyé une confirmation par e-mail, et Google Agenda envoie sa propre invitation avec le lien Meet. Ajoutez l'appel à votre agenda ci-dessous.",
+			addTitle: 'Ajouter à votre agenda',
+			addGoogle: 'Google Agenda',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Calendrier / fichier .ics',
+			prepTitle: "Pour tirer le meilleur de l'appel",
+			prep: {
+				intro: [
+					'Gardez le site à analyser ouvert, ou son adresse sous la main.',
+					'Apportez ce que vous voulez le plus savoir : coût, périmètre ou adéquation.',
+				],
+				walkthrough: [
+					"Ouvrez votre rapport avant l'appel.",
+					'Notez les constats par lesquels commencer ; nous les verrons en premier.',
+				],
+				cv: [
+					'Répondez avec la description du poste ou un lien, si vous en avez un.',
+					"Indiquez la stack et la taille de l'équipe pour bien utiliser le temps.",
+				],
+				call: [
+					'Envoyez une ligne sur le sujet qui vous intéresse, si possible.',
+					'Apportez tout lien ou document à regarder ensemble.',
+				],
+			},
 			meet: 'Ouvrir le lien Meet',
 			other: 'Vous préférez écrire ?',
 			cv: 'CV interactif',
@@ -303,7 +418,27 @@
 			doneTitle: 'Chiamata prenotata',
 			doneWhen: '{label}, {when}.',
 			doneInvite:
-				'Google Calendar ti sta mandando l’invito per email. Contiene il link Meet e ti permette di aggiungere la chiamata al tuo calendario.',
+				'Ti abbiamo inviato una conferma via email, e Google Calendar invia il suo invito con il link Meet. Aggiungi la chiamata al tuo calendario qui sotto.',
+			addTitle: 'Aggiungila al tuo calendario',
+			addGoogle: 'Google Calendar',
+			addOutlook: 'Outlook',
+			addIcs: 'Apple Calendar / file .ics',
+			prepTitle: 'Per sfruttare al meglio la chiamata',
+			prep: {
+				intro: [
+					"Tieni aperto il sito da analizzare, o l'indirizzo a portata di mano.",
+					'Porta ciò che vuoi sapere di più: costo, ambito o se fa per te.',
+				],
+				walkthrough: [
+					'Apri il tuo report prima della chiamata.',
+					'Annota i risultati da cui vuoi partire; vedremo quelli per primi.',
+				],
+				cv: [
+					"Rispondi con la descrizione del ruolo o un link, se ce l'hai.",
+					'Indica lo stack e la dimensione del team per usare bene il tempo.',
+				],
+				call: ['Manda una riga su ciò di cui vuoi parlare, se puoi.', 'Porta link o documenti da guardare insieme.'],
+			},
 			meet: 'Apri il link Meet',
 			other: 'Preferisci scrivere?',
 			cv: 'CV interattivo',
@@ -553,6 +688,67 @@
 		return turnstileReady;
 	}
 
+	// The confirmation wears the look of the call: URL Review Fusion for the review calls, the CV card for a role,
+	// plain ink for anything else. The links add the call to Google or Outlook; the .ics is built here.
+	const LOOK = { intro: 'review', walkthrough: 'review', cv: 'cv', call: 'general' };
+	function stamp(iso) {
+		return new Date(iso)
+			.toISOString()
+			.replace(/[-:]/g, '')
+			.replace(/\.\d{3}/, '');
+	}
+	function icsText(value) {
+		return String(value).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+	}
+	function paintDone(data) {
+		const look = LOOK[state.type] || 'general';
+		const label = t().types[state.type][0];
+		const title = label + ': Carlos A. Muñoz';
+		const meet = data.meet && /^https:\/\/meet\.google\.com\//.test(data.meet) ? data.meet : '';
+		$('book-done').setAttribute('data-look', look);
+		$('book-done-eyebrow').textContent = look === 'review' ? 'QA-lab URL Review' : 'Carlos A. Muñoz · QA Architect';
+		const google = new URL('https://calendar.google.com/calendar/render');
+		google.searchParams.set('action', 'TEMPLATE');
+		google.searchParams.set('text', title);
+		google.searchParams.set('dates', stamp(data.start) + '/' + stamp(data.end));
+		if (meet) google.searchParams.set('location', meet);
+		$('book-add-google').href = google.toString();
+		const outlook = new URL('https://outlook.live.com/calendar/0/deeplink/compose');
+		outlook.searchParams.set('path', '/calendar/action/compose');
+		outlook.searchParams.set('rru', 'addevent');
+		outlook.searchParams.set('subject', title);
+		outlook.searchParams.set('startdt', new Date(data.start).toISOString());
+		outlook.searchParams.set('enddt', new Date(data.end).toISOString());
+		if (meet) outlook.searchParams.set('location', meet);
+		$('book-add-outlook').href = outlook.toString();
+		const ics = [
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:-//Carlos A. Munoz//Calls//EN',
+			'METHOD:PUBLISH',
+			'BEGIN:VEVENT',
+			'UID:' + stamp(data.start) + '-' + state.type + '@carlosandmunoz.com',
+			'DTSTAMP:' + stamp(new Date().toISOString()),
+			'DTSTART:' + stamp(data.start),
+			'DTEND:' + stamp(data.end),
+			'SUMMARY:' + icsText(title),
+			meet ? 'LOCATION:' + icsText(meet) : '',
+			'BEGIN:VALARM',
+			'ACTION:DISPLAY',
+			'DESCRIPTION:' + icsText(label),
+			'TRIGGER:-PT15M',
+			'END:VALARM',
+			'END:VEVENT',
+			'END:VCALENDAR',
+		]
+			.filter(Boolean)
+			.join('\r\n');
+		$('book-add-ics').href = URL.createObjectURL(new Blob([ics + '\r\n'], { type: 'text/calendar' }));
+		const prep = $('book-prep');
+		prep.textContent = '';
+		t().prep[state.type].forEach((line) => prep.appendChild(el('li', { text: line })));
+	}
+
 	async function submit(event) {
 		event.preventDefault();
 		const error = $('book-error');
@@ -616,6 +812,7 @@
 				company: $('book-company').value.trim(),
 				note,
 				host,
+				tz: zone,
 				report: params.get('review') || '',
 				ref: params.get('utm_campaign') || params.get('ref') || firstRef || externalDocRef || docRefHost,
 			});
@@ -633,6 +830,7 @@
 				$('book-meet').href = data.meet;
 				$('book-done-meet').hidden = false;
 			}
+			paintDone(data);
 			$('book-done').focus();
 			if (window.SiteAnalytics) window.SiteAnalytics.trackEvent('book_call', 'Booking', state.type);
 			else if (typeof window.gtag === 'function')
