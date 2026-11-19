@@ -126,6 +126,9 @@ function animatePart(mesh, p, t, setGlow) {
 		case 'spin':
 			mesh.rotation.y = (TAU * t) / 5;
 			break;
+		case 'turn':
+			mesh.rotation.z = (TAU * t) / 8;
+			break;
 		default:
 			break;
 	}

@@ -24,6 +24,8 @@ const STYLE = `
 @keyframes ff-flicker{0%,26%{opacity:.25}34%{opacity:1}38%{opacity:.55}42%{opacity:1}70%{opacity:.9}100%{opacity:.25}}
 .a-spin{transform-box:fill-box;transform-origin:center;animation:ff-spin 5s ease-in-out infinite}
 @keyframes ff-spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+.a-turn{transform-box:fill-box;transform-origin:center;animation:ff-turn 8s linear infinite}
+@keyframes ff-turn{to{transform:rotate(360deg)}}
 .d-ring{transform-box:fill-box;transform-origin:center;animation:ff-ring 2.6s ease-out infinite}
 @keyframes ff-ring{0%{transform:scale(.72);opacity:.75}100%{transform:scale(1.24);opacity:0}}
 .d-halo{animation:ff-halo 3.2s ease-in-out infinite}
