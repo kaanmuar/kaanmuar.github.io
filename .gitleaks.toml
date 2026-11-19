@@ -1,0 +1,16 @@
+# Gitleaks config for linter.yml job (#3833). Allowlist test and vendor fixtures only.
+title = "kaanmuar.github.io gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "fixtures and third-party trees"
+paths = [
+  '''(?i)^tests/''',
+  '''(?i)^cypress/''',
+  '''(?i)^vendor/''',
+  '''(?i)^android/app/src/test/''',
+  '''(?i)^media/social-posts/''',
+  '''(?i)features/robot/''',
+]
