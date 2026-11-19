@@ -55,6 +55,7 @@ jarvisLog.use(getFirestore);
 const linkedRisk = require("./url-review-linked-risk");
 linkedRisk.use(getFirestore, FieldValue);
 require("./url-review-threat-lists").use(getFirestore, FieldValue);
+const reviewThreats = require("./url-review-threats");
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -2589,6 +2590,7 @@ async function releaseHeldRerun(id, send, by) {
   const record = reviewFailures.sentRecord(doc, decidedAt);
   await db.collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
+  await saveReviewThreats(record);
   try {
     await queueOwnerNotice(record);
   } catch (error) {
@@ -2792,6 +2794,7 @@ async function sweepReview(target, controls) {
   const record = Object.assign(urlReview.intakeRecord(value, report, { country: target.cc.toUpperCase() }), { source: "sweep", sweep: target });
   await getFirestore().collection("url_reviews").doc(record.id).set(record);
   await countReviewed(record.report);
+  await saveReviewThreats(record);
   if (target.outreach) return { record, report };
   try {
     await queueOwnerNotice(record, { search: false });
@@ -2910,6 +2913,7 @@ async function pastRerunReviews() {
       });
       await db.collection("url_reviews").doc(record.id).set(record);
       await countReviewed(record.report);
+      await saveReviewThreats(record);
       reviewId = record.id;
       outcome = "reviewed";
       room -= 1;
@@ -3105,6 +3109,7 @@ async function rivalSweep() {
         const record = Object.assign(urlReview.intakeRecord(value, report, { country: job.cc.toUpperCase() }), { source: "rivals", rivalOf: job.baseId });
         await db.collection("url_reviews").doc(record.id).set(record);
         await countReviewed(record.report);
+        await saveReviewThreats(record);
         try {
           await queueOwnerNotice(record, { search: false });
         } catch (error) {
@@ -4818,6 +4823,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
   }
   const deskRoutes = [
     ["/desk/failures/data", "failures-data"],
+    ["/desk/threats/data", "threats-data"],
+    ["/desk/threats", "threats"],
     ["/desk/data", "data"],
     ["/desk/pass", "pass"],
     ["/desk/free", "free"],
@@ -4855,6 +4862,27 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     }
     if (!operator) {
       res.status(bearer ? 403 : 401).json({ error: bearer ? "This account cannot open the desk." : "Sign in with the operator account." });
+      return;
+    }
+    if (deskName === "threats-data" && req.method === "GET") {
+      try {
+        const out = await reviewThreats.readThreats(getFirestore(), req.query || {});
+        res.status(200).json(out);
+      } catch (error) {
+        console.error("Desk threats read failed:", error);
+        res.status(500).json({ error: "Could not read the threat list." });
+      }
+      return;
+    }
+    if (deskName === "threats" && req.method === "POST") {
+      const body = req.body || {};
+      if (body.action === "backfill") {
+        const out = await reviewThreats.backfillFromReviews(getFirestore(), { limit: body.limit || 200 });
+        res.status(200).json(Object.assign({ ok: true }, out));
+        return;
+      }
+      const out = await reviewThreats.updateThreat(getFirestore(), body, operator);
+      res.status(out.status || 200).json(out.ok ? out : { error: out.error });
       return;
     }
     if (deskName === "data" && req.method === "GET") {
@@ -6471,6 +6499,7 @@ async function runReview(req, res, placeOf) {
     writeLine({ type: "log", text: "Saving the report." });
     await getFirestore().collection("url_reviews").doc(report.id).set(record);
     await countReviewed(report);
+    await saveReviewThreats(record);
     await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
     const score = report.insights && report.insights.score ? report.insights.score.overall : null;
     await reviewProcess(record.status === "stopped" ? "cancelled" : "done", { step: record.status === "stopped" ? "Stopped" : score == null ? "Report saved" : "Score " + score + "/100", link: customerMail.pageUrl("en", { report: report.id }) });
@@ -6579,6 +6608,15 @@ async function reviewTotals() {
     return (await ref.get()).data();
   }
   return seeded;
+}
+
+async function saveReviewThreats(record) {
+  if (!record || !record.report) return;
+  try {
+    await reviewThreats.recordThreats(getFirestore(), record);
+  } catch (error) {
+    console.error("Review threats update failed:", error);
+  }
 }
 
 async function countReviewed(report) {
@@ -6979,6 +7017,7 @@ exports.jarvisReviewRun = functions.runWith({ timeoutSeconds: 540, memory: "1GB"
     const record = Object.assign(urlReview.intakeRecord(value, report, {}), { source: "jarvis", paid: true, free: true, priceUsd: 0 });
     await db.collection("url_reviews").doc(record.id).set(record);
     await countReviewed(record.report);
+    await saveReviewThreats(record);
     const linkUrl = new URL(customerMail.pageUrl(value.lang, { report: record.id }));
     linkUrl.searchParams.set("utm_source", "jarvis");
     linkUrl.searchParams.set("utm_medium", "push");
@@ -7039,6 +7078,7 @@ exports.fixRereview = functions.runWith({ timeoutSeconds: 540, memory: "1GB", se
     record.report = watchCases.withRegressions(record.report, watchCases.regressions(original.report, record.report, result));
     await db.collection("url_reviews").doc(record.id).set(record);
     await countReviewed(record.report);
+    await saveReviewThreats(record);
     await ref.update(fixRereview.finishedPatch(request, record.id, result));
     const mailed = await Promise.allSettled([
       deps.mailCustomer(request.lang, request.email, fixMail.afterMail(request, record.id, result), "url-review-fix-rereview"),

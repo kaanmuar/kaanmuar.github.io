@@ -20,6 +20,7 @@ const oauth = require('../functions/url-review-oauth');
 const fixOffers = require('../functions/url-review-fix-offers');
 const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
+const threats = require('../functions/url-review-threats');
 const localSoftQuota = softQuota.memoryStore();
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
@@ -76,6 +77,7 @@ const activeRuns = new Map();
 const deskSessions = new Map();
 const FILE = path.join(__dirname, '..', 'runner-results', 'url-reviews.jsonl');
 const ALERT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-alerts.jsonl');
+const THREAT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-threats.jsonl');
 const ALLOW = new Set([
 	'http://127.0.0.1:8765',
 	'http://localhost:8765',
@@ -170,11 +172,32 @@ function seedAlerts() {
 	desk.alertsFromHistory(readStore()).forEach((note) => storeAlert(note));
 }
 
+function readThreatsLocal() {
+	const map = new Map();
+	readStore().forEach((row) => {
+		threats.recordsFromReview(row).forEach((item) => map.set(item.id, item));
+	});
+	try {
+		fs.readFileSync(THREAT_FILE, 'utf8')
+			.split('\n')
+			.filter(Boolean)
+			.forEach((line) => {
+				const item = threats.normalizeRecord(JSON.parse(line));
+				map.set(item.id, item);
+			});
+	} catch (error) { /* empty */ }
+	return Array.from(map.values());
+}
+
 function writeRecord(record) {
 	fs.mkdirSync(path.dirname(FILE), { recursive: true });
 	fs.appendFileSync(FILE, JSON.stringify(record) + '\n');
 	const kind = desk.kindFor(record);
 	if (kind) noteReview(kind, record);
+	const items = threats.recordsFromReview(record);
+	if (items.length) {
+		items.forEach((item) => fs.appendFileSync(THREAT_FILE, JSON.stringify(item) + '\n'));
+	}
 }
 
 // Production changes a row inside a Firestore transaction; this mirror rewrites the line.
@@ -479,6 +502,49 @@ const server = http.createServer(async (req, res) => {
 			'set-cookie': 'qa_desk=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax',
 		});
 		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/threats/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const all = readThreatsLocal();
+		const filtered = threats.filterThreats(all, Object.fromEntries(url.searchParams));
+		sendJson(res, 200, { summary: threats.summarizeThreats(all), items: filtered }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/threats') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let tBody = {};
+		try {
+			tBody = await readBody(req);
+		} catch (error) {
+			tBody = {};
+		}
+		const all = readThreatsLocal();
+		if (tBody.action === 'backfill') {
+			fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+			fs.writeFileSync(THREAT_FILE, all.map((r) => JSON.stringify(r) + '\n').join(''));
+			sendJson(res, 200, { ok: true, scanned: readStore().length, stored: all.length }, origin, deviceHint);
+			return;
+		}
+		const prev = all.find((item) => item.id === tBody.id);
+		if (!prev) {
+			sendJson(res, 404, { error: 'That threat entry was not found.' }, origin, deviceHint);
+			return;
+		}
+		const next = threats.normalizeRecord(Object.assign({}, prev, {
+			delist_status: tBody.delist_status != null ? tBody.delist_status : prev.delist_status,
+			note: tBody.note != null ? tBody.note : prev.note,
+			public_ok: typeof tBody.public_ok === 'boolean' ? tBody.public_ok : prev.public_ok
+		}));
+		fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+		fs.appendFileSync(THREAT_FILE, JSON.stringify(next) + '\n');
+		sendJson(res, 200, { ok: true, item: next }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'GET' && url.pathname === '/desk/data') {
