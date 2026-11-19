@@ -587,3 +587,60 @@ test('AI phrasing is off without a key, needs sentences, is capped per report pe
 test('every page language has an AI phrasing instruction', () => {
 	Object.keys(ask.T).forEach((lang) => assert.ok(phraser.LANGS[lang], lang));
 });
+
+test('targeted answers explain clear vs hit status across languages and never answer blurred previews (#3818)', () => {
+	const withTargeted = (targeted) => {
+		const copy = report();
+		copy.targeted = targeted;
+		return copy;
+	};
+	const clearRep = withTargeted({
+		host: 'carlosandmunoz.com',
+		checkedAt: '2026-11-19T10:00:00Z',
+		status: 'clear',
+		hosting: { ip: '93.184.216.34', country: 'US', asn: 15133, asName: 'Edgecast' },
+		context: { country: 'US', cyberMentions15m: 0 },
+		items: [],
+		sourcesRead: ['CISA KEV', 'OSV.dev', 'GDELT Project'],
+		attributions: ['GDELT Project'],
+	});
+	const clearAns = ask.answer(clearRep, 'Was this site targeted?');
+	assert.equal(clearAns.title, 'Was it targeted?');
+	assert.match(words(clearAns), /No public attack, active exploit, C2, blocklist, or breach signal matched carlosandmunoz\.com\./);
+	assert.match(words(clearAns), /Hosting IP 93\.184\.216\.34 \(US\) on AS15133\./);
+	assert.match(words(clearAns), /Sources checked: CISA KEV, OSV\.dev, GDELT Project\./);
+
+	const hitRep = withTargeted({
+		checkedAt: '2026-11-19T10:00:00Z',
+		status: 'high',
+		hosting: { ip: '198.51.100.7', country: 'NL', asn: 'AS24940', asName: 'Hetzner' },
+		items: [
+			{
+				level: 'high',
+				kind: 'known-exploit-software',
+				role: 'site_hit',
+				confidence: 'observed',
+				subject: 'nginx 1.18 (CVE-2024-1234)',
+				source: 'CISA KEV',
+				evidence: 'Known exploited vulnerability in detected stack',
+			},
+		],
+		sourcesRead: ['CISA KEV', 'OSV.dev', 'Network DROP'],
+		attributions: ['GDELT Project', 'DB-IP'],
+	});
+	const hitAns = ask.answer(hitRep, 'Was this site targeted?');
+	assert.match(words(hitAns), /1 targeting or attack signals matched .+ \(status: high\)\./);
+	assert.match(words(hitAns), /AS24940/);
+	assert.doesNotMatch(words(hitAns), /ASAS24940|\[object Object\]/);
+	assert.match(words(hitAns), /CVE-2024-1234/);
+	assert.match(words(hitAns), /CISA KEV/);
+
+	const esAns = ask.answer(hitRep, '¿Este sitio fue atacado?', { lang: 'es' });
+	assert.equal(esAns.title, '¿Fue atacado?');
+	assert.match(words(esAns), /1 señales de ataque o exposición coincidieron/);
+	assert.ok(ask.suggestions(hitRep, { lang: 'en' }).includes('Was this site targeted?'));
+
+	const previewRep = Object.assign(hitRep, { preview: true });
+	assert.equal(ask.answer(previewRep, 'Was this site targeted?').intent, 'closed');
+	assert.ok(!ask.suggestions(previewRep, { lang: 'en' }).includes('Was this site targeted?'));
+});
