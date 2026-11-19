@@ -540,7 +540,8 @@ function reportFacts(record, open, lang) {
   const insights = report.insights || {};
   const score = insights.score || null;
   const actionable = (Array.isArray(insights.findings) ? insights.findings : [])
-    .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk"))
+    .filter((item) => item && (item.verdict === "fail" || item.verdict === "risk") &&
+      (open || !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String(item.key || ""))))
     .sort((a, b) => (a.rank || 999) - (b.rank || 999));
   const counts = report.counts || {};
   const fails = actionable.filter((item) => item.verdict === "fail").length;

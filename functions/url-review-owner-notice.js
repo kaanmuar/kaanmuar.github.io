@@ -23,7 +23,8 @@ const JUNK_DOMAIN = /(^|\.)(example\.(com|org|net)|domain\.com|email\.com|yourdo
 
 function criticalSecurity(report) {
   return ((report && report.insights && report.insights.findings) || [])
-    .some((item) => item && item.area === "Security" && item.verdict === "fail" && item.severity === "critical");
+    .some((item) => item && item.area === "Security" && item.verdict === "fail" && item.severity === "critical" &&
+      !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String(item.key || "")));
 }
 
 // The Google Maps finding (#2067) a notice to a local business opens with (#2119): the worst one, as a key of the

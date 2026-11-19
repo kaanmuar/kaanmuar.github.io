@@ -1324,7 +1324,31 @@ const EN = {
   "pf-cwv.title": "Core Web Vitals need a rendered page",
   "pf-cwv.evidence": "Largest Contentful Paint, Interaction to Next Paint, and layout shift are measured by PageSpeed Insights or the browser run.",
   "coverage.title": "The time budget ended before every page was analyzed",
-  "coverage.evidence": "{pages} of {max} were analyzed. Slow responses use up the budget."
+  "coverage.evidence": "{pages} of {max} were analyzed. Slow responses use up the budget.",
+  "sec-kev.title_one": "{n} software component has a known exploited vulnerability (CISA KEV)",
+  "sec-kev.title_other": "{n} software components have known exploited vulnerabilities (CISA KEV)",
+  "sec-kev.evidence": "Detected versions match actively exploited CVEs in CISA's catalog: {list}.",
+  "sec-kev.fix": "Upgrade the affected packages or WordPress components immediately to a patched release.",
+  "sec-osv.title_one": "{n} front-end library matches an advisory in OSV.dev",
+  "sec-osv.title_other": "{n} front-end libraries match advisories in OSV.dev",
+  "sec-osv.evidence": "Matched package advisories: {list}.",
+  "sec-osv.fix": "Update each listed package to its latest patched release and rebuild your bundle.",
+  "sec-feodo.title": "The host IP is listed as a botnet command-and-control indicator",
+  "sec-feodo.evidence": "Feodo Tracker lists {ip} as an active C2 endpoint ({malware}).",
+  "sec-feodo.fix": "Investigate the server or hosting provider at once, rotate keys, and clean any compromise before asking for delisting.",
+  "sec-drop.title": "The hosting network appears on a hijacked-block list",
+  "sec-drop.evidence": "Hosting {target} falls inside a hijacked or cybercrime-allocated network block (DROP).",
+  "sec-drop.fix": "Move the site to a reputable hosting provider or clean ASN so mail filters and firewalls stop dropping traffic.",
+  "sec-breach-news.title_one": "{n} recent cyber-attack news report mentions the domain",
+  "sec-breach-news.title_other": "{n} recent cyber-attack news reports mention the domain",
+  "sec-breach-news.evidence": "Third-party coverage in GDELT ({sources}) mentions {host} alongside cyber-attack themes. Confirm whether it refers to the same organization.",
+  "sec-breach-news.fix": "Review incident disclosures and verify whether the cited report involves your organization or only a similar name.",
+  "sec-cert-anomaly.title_one": "{n} TLS certificate anomaly was observed",
+  "sec-cert-anomaly.title_other": "{n} TLS certificate anomalies were observed",
+  "sec-cert-anomaly.evidence": "Observed signals: {details}.",
+  "sec-cert-anomaly.fix": "Verify your certificate chain and recent certificate issuances in your CA or Certificate Transparency logs.",
+  "sec-targeted.pass.title": "No targeted attack or active-exploit match in checked sources",
+  "sec-targeted.pass.evidence": "{host} matched no known exploited vulnerability, C2 blocklist, hijacked prefix, or breach-news report across {sources}."
 };
 
 // Firestore refuses undefined, so a missing value is sent as an empty string.

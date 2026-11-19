@@ -3028,6 +3028,24 @@ exports.wordfenceFeed = require("firebase-functions/v2/scheduler").onSchedule({
   return out.skipped ? "skipped: " + out.skipped : out.count + " records, " + out.slugs + " slugs stored";
 }));
 
+// Commercial-safe threat feeds (CISA KEV, DROP, Feodo, Tor, GDELT) + monthly DB-IP Lite index (#3816).
+exports.threatFeeds = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("threatFeeds"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 300,
+  memory: "1GiB",
+  maxInstances: 1
+}, () => track("threatFeeds", async () => {
+  const [feeds, geo] = await Promise.all([
+    require("./url-review-targeted").refreshFeeds(),
+    require("./url-review-host-geo").refreshDbipIndex()
+  ]);
+  return [
+    feeds.skipped ? "feeds " + feeds.skipped : "kev " + feeds.kev + ", gdelt " + feeds.gdeltMentions,
+    geo.skipped ? "geo " + geo.skipped : "geo " + geo.version
+  ].join("; ");
+}));
+
 const rivals = require("./url-review-rivals");
 
 // Reviews of a host (with or without www.) that could go public; the newest recent one, or null.
