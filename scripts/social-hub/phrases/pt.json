@@ -604,6 +604,10 @@
   "text": "Mas todos os alvos de toque devem ter ⟦1⟧px de tamanho ou deixar espaço suficiente.",
   "machine": true
  },
+ "But analytics may count some visits twice.": {
+  "text": "Mas a análise pode contar algumas visitas duas vezes.",
+  "machine": true
+ },
  "But ARIA hidden element must not be focusable or contain focusable elements.": {
   "text": "Mas o elemento oculto ARIA não deve ser focável ou conter elementos focáveis.",
   "machine": true
@@ -1226,6 +1230,10 @@
  "Give each page one h1 that names its topic.": "Dê a cada página um h1 que nomeie o assunto.",
  "Give each subdomain its own sitemap, named in that subdomain's ⟦1⟧.": "Dê a cada subdomínio seu próprio sitemap, indicado no ⟦1⟧ desse subdomínio.",
  "Give every button text or an aria-label, so a screen reader can announce it.": "Dê a todo botão um texto ou aria-label, para que o leitor de tela possa anunciá-lo.",
+ "Give every button text or an aria-label, so a screen reader can announce…": {
+  "text": "Dê a cada botão um texto ou um rótulo de ária, para que um leitor de tela possa anunciar…",
+  "machine": true
+ },
  "Give every field a ⟦1⟧ or an aria-label.": "Dê a cada campo um ⟦1⟧ ou um aria-label.",
  "Give every input a visible label tied to it with for and id.": "Dê a cada campo um rótulo visível ligado a ele com for e id.",
  "Give every link text that says where it goes.": "Dê a todo link um texto que diga para onde ele leva.",
@@ -1552,6 +1560,14 @@
  "List your five most visited pages from analytics and time each one.": "Liste no analytics suas cinco páginas mais visitadas e cronometre cada uma.",
  "LLMs are Effective UI Generators, spells out where that road may end: a model writes the entire page, including the HTML, CSS and JavaScript, from scratch for each query.": "LLMs are Effective UI Generators, explica onde esse caminho pode terminar: um modelo escreve a página inteira, incluindo HTML, CSS e JavaScript, do zero para cada consulta.",
  "Load each analytics tag once, from the template or a tag manager, never both.": "Carregue cada tag de analytics uma vez, pelo template ou por um tag manager, nunca pelos dois.",
+ "Load each measurement tag once, from one place, so every visit counts once.": {
+  "text": "Carregue cada tag de medição uma vez, em um só lugar, para que cada visita conte uma vez.",
+  "machine": true
+ },
+ "Load each measurement tag once, from one place, so every visit…": {
+  "text": "Carregue cada etiqueta de medição uma vez, em um só lugar, para que cada visita…",
+  "machine": true
+ },
  "Load every asset over https or as a relative URL.": "Carregue todo recurso por https ou como URL relativa.",
  "Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.": "Carregue uma única tag do Google e envie para todos os destinos a partir dela, ou passe todas as tags por um único Tag Manager.",
  "Load your page and press Tab once.": "Carregue sua página e aperte Tab uma vez.",
@@ -1735,6 +1751,10 @@
  "One server setting covers them all.": "Uma configuração de servidor resolve todos.",
  "One site, one GA4 property, one ⟦1⟧.": "Um site, uma propriedade GA4, um ⟦1⟧.",
  "One stray comma hides all of it.": "Uma vírgula perdida esconde tudo isso.",
+ "One stray comma…": {
+  "text": "Uma vírgula perdida…",
+  "machine": true
+ },
  "One tag, loaded once, keeps every report honest.": "Uma tag, carregada uma vez, mantém todo relatório honesto.",
  "One-year HSTS with includeSubDomains, and http goes to https.": "HSTS de um ano com includeSubDomains, e o http vai para https.",
  "One-year HSTS with preload, nosniff, a content security policy, alt text on every image, and a permanent https redirect.": "HSTS de um ano com preload, nosniff, uma content security policy, texto alt em toda imagem e um redirect https permanente.",
@@ -2136,6 +2156,10 @@
   "text": "Sirva ⟦1⟧ do mesmo host das páginas listadas e nomeie-o em ⟦2⟧.",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
+  "text": "Servir ⟦1⟧ no mesmo host das páginas que ele lista e nomear…",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Sirva um ⟦1⟧ com uma linha Sitemap:.",
  "Serve the full chain: leaf plus intermediates.": "Sirva a cadeia completa: certificado final mais intermediários.",
  "Served as /⟦1⟧.": "Servido como /⟦1⟧.",
@@ -2293,6 +2317,10 @@
  },
  "The gap: cookie flags.": {
   "text": "A lacuna: sinalizadores de cookies.",
+  "machine": true
+ },
+ "The gap: duplicate tags.": {
+  "text": "A lacuna: tags duplicadas.",
   "machine": true
  },
  "The gap: form labels.": "A lacuna: rótulos de formulário.",
@@ -2602,8 +2630,16 @@
   "text": "Ao usar funções ARIA, aninhe-as da maneira exigida pela função.",
   "machine": true
  },
+ "When you use ARIA roles, nest them the way the role…": {
+  "text": "Ao usar funções ARIA, aninhe-as da mesma forma que a função…",
+  "machine": true
+ },
  "When you use ARIA roles, nest them the way the…": {
   "text": "Ao usar funções ARIA, aninhe-as da maneira que…",
+  "machine": true
+ },
+ "When you use ARIA roles, nest them the…": {
+  "text": "Ao usar funções ARIA, aninhe-as…",
   "machine": true
  },
  "When you use ARIA roles, nest them…": {

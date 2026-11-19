@@ -164,9 +164,53 @@ Full report: https://carlosandmunoz.com/qa-review.html?live=u-agilex-com-co
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#GEO #DevOps #Automation #QA #AISearch #QAlab</description>
+#GEO #DevOps #Automation #QA #AISearch #QAlab
+
+https://www.youtube.com/shorts/P2FFK6IcwFA</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" length="240118" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Android: Google verschärft Qualitätsanforderungen für Foldable-Apps ab April</title>
+      <link>https://carlosandmunoz.com/social/pick/android-google-verscharft-qualitatsanforderungen-fur-foldabl.html</link>
+      <guid isPermaLink="false">pick/android-google-verscharft-qualitatsanforderungen-fur-foldabl</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Procurement</category>
+      <description>Google verschärft die Regeln für Entwickler: Ab April 2027 müssen im Play Store angebotene Apps grundlegende Anforderungen für Foldables erfüllen.
+
+Via heise Developer, 2026-11-19.
+
+https://www.heise.de/news/Android-Google-verschaerft-Qualitaetsanforderungen-fuer-Foldable-Apps-ab-April-11531191.html</description>
+      <media:content url="https://heise.cloudimg.io/v7/_www-heise-de_/imgs/18/5/2/0/4/6/7/0/samsung-galaxy-z8-foldables-5e5468a47421c741.png?height=300&amp;org_if_sml=1&amp;q=75" medium="image"/>
+    </item>
+    <item>
+      <title>Playwright --update-snapshots Overwrote a Good Baseline and Passed: 226 of 226 Runs</title>
+      <link>https://carlosandmunoz.com/social/pick/playwright-update-snapshots-overwrote-a-good-baseline-and-pa.html</link>
+      <guid isPermaLink="false">pick/playwright-update-snapshots-overwrote-a-good-baseline-and-pa</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>On a page that never stops moving, --update-snapshots=changed or all wrote a random frame as the baseline and passed, on Playwright 1.40 to 1.65.1. Masking the container stopped it.
+
+Via DEV, by Gary Parker, 2026-11-17.
+
+https://garyparker.dev/blog/playwright-update-snapshots-unstable-page</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fgaryparker.dev%2Fblog%2Fplaywright-update-snapshots-unstable-page%2Fopengraph-image" medium="image"/>
+    </item>
+    <item>
+      <title>Your WordPress Sitemap Isn’t Broken – Chrome 158 Has Dropped XSLT via @sejournal, @TaylorDanRW</title>
+      <link>https://carlosandmunoz.com/social/pick/your-wordpress-sitemap-isn-t-broken-chrome-158-has-dropped-x.html</link>
+      <guid isPermaLink="false">pick/your-wordpress-sitemap-isn-t-broken-chrome-158-has-dropped-x</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Chrome dropping XSLT makes WordPress sitemaps display as raw XML. Skip the unnecessary fixes and use Google Search Console to verify crawlers still read them. The post Your WordPress Sitemap Isn’t Broken – Chrome 158 Has Dropped XSLT appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Dan Taylor, 2026-11-19.
+
+https://www.searchenginejournal.com/your-wordpress-sitemap-isnt-broken-chrome-158-has-dropped-xslt/597549/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/wp-sitemap-1-14.png" medium="image"/>
     </item>
     <item>
       <title>Any site can frame Harvard's pages.</title>
@@ -240,7 +284,9 @@ Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-aeropost-
 
 Review your own site: https://carlosandmunoz.com/qa-review.html
 
-#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab
+
+https://www.youtube.com/shorts/yrea2uKdlGM</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
     </item>
@@ -263,6 +309,160 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>AgriciDaniel/dataforseo-agent: Ask SEO questions in plain words. Get DataForSEO data as charts, tables and maps in your terminal, priced before you pay.</title>
+      <link>https://carlosandmunoz.com/social/pick/agricidaniel-dataforseo-agent-ask-seo-questions-in-plain-wor.html</link>
+      <guid isPermaLink="false">pick/agricidaniel-dataforseo-agent-ask-seo-questions-in-plain-wor</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Ask SEO questions in plain words. Get DataForSEO data as charts, tables and maps in your terminal, priced before you pay.
+
+Via GitHub, by AgriciDaniel, 2026-11-14.
+
+https://github.com/AgriciDaniel/dataforseo-agent</description>
+      <media:content url="https://opengraph.githubassets.com/1/AgriciDaniel/dataforseo-agent" medium="image"/>
+    </item>
+    <item>
+      <title>AI-Generated Playwright Tools: 1 in 4 Runs Returned Wrong Data With No Error</title>
+      <link>https://carlosandmunoz.com/social/pick/ai-generated-playwright-tools-1-in-4-runs-returned-wrong-dat.html</link>
+      <guid isPermaLink="false">pick/ai-generated-playwright-tools-1-in-4-runs-returned-wrong-dat</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Testing</category>
+      <description>3 AI-generated Playwright tools, 10 page changes: 16 of 66 runs reported success with wrong data, and the repair loop never saw them. Four checks against the page took that to 0.
+
+Via DEV, by Gary Parker, 2026-11-16.
+
+https://garyparker.dev/blog/ai-generated-playwright-tools-silent-failures</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fgaryparker.dev%2Fblog%2Fai-generated-playwright-tools-silent-failures%2Fopengraph-image" medium="image"/>
+    </item>
+    <item>
+      <title>Barnacle SEO: Spam Risk or Smart Marketing?</title>
+      <link>https://carlosandmunoz.com/social/pick/barnacle-seo-spam-risk-or-smart-marketing.html</link>
+      <guid isPermaLink="false">pick/barnacle-seo-spam-risk-or-smart-marketing</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Directories, review sites and big publishers often own page one, and it’s unlikely you’ll be able to outrank them any time soon. But you can get your brand onto the pages that do rank. That’s barnacle SEO, a tactic named … Read more ›
+
+Via Ahrefs, by Louise Linehan, 2026-11-18.
+
+https://ahrefs.com/blog/barnacle-seo/</description>
+      <media:content url="https://ahrefs.com/blog/wp-content/uploads/2026/11/barnacle-seo-10-wide.png" medium="image"/>
+    </item>
+    <item>
+      <title>Google Explains How To Avoid CDN Migration SEO Problems via @sejournal, @martinibuster</title>
+      <link>https://carlosandmunoz.com/social/pick/google-explains-how-to-avoid-cdn-migration-seo-problems-via-.html</link>
+      <guid isPermaLink="false">pick/google-explains-how-to-avoid-cdn-migration-seo-problems-via-</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Google explains how to get the best SEO outcome from a CDN migration and avoid unexpected crawling problems. The post Google Explains How To Avoid CDN Migration SEO Problems appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Roger Montti, 2026-11-18.
+
+https://www.searchenginejournal.com/google-explains-how-to-avoid-cdn-migration-seo-problems/597888/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-cdn-advisory-43.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>Google’s CDN Migration Guidance: How to Protect Crawling and Indexing</title>
+      <link>https://carlosandmunoz.com/social/pick/google-s-cdn-migration-guidance-how-to-protect-crawling-and-.html</link>
+      <guid isPermaLink="false">pick/google-s-cdn-migration-guidance-how-to-protect-crawling-and-</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Google has published new technical SEO guidance for websites moving to a content delivery network...
+
+Via DEV, by Ali Farhat, 2026-11-12.
+
+https://blog.geosearchleads.com/google-cdn-migration-seo-guidance-crawling/</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fblog.geosearchleads.com%2Fcontent%2Fimages%2F2026%2F11%2Fgoogle-cdn-migration-seo-guidance-crawling.webp" medium="image"/>
+    </item>
+    <item>
+      <title>How I’m Approaching AI Search (And How You Should To)</title>
+      <link>https://carlosandmunoz.com/social/pick/how-i-m-approaching-ai-search-and-how-you-should-to.html</link>
+      <guid isPermaLink="false">pick/how-i-m-approaching-ai-search-and-how-you-should-to</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>GEO</category>
+      <description>Citation tactics miss the point. Build a brand worth recommending and a business that benefits whether the citation comes or not. The post How I’m Approaching AI Search (And How You Should To) appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Harry Clarkson-Bennett, 2026-11-18.
+
+https://www.searchenginejournal.com/how-im-approaching-ai-search-and-how-you-should-to/597775/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/approach-to-ai-search-7.png" medium="image"/>
+    </item>
+    <item>
+      <title>How To Find The Questions Your Customers Ask AI (And Your Keyword Tools Miss)</title>
+      <link>https://carlosandmunoz.com/social/pick/how-to-find-the-questions-your-customers-ask-ai-and-your-key.html</link>
+      <guid isPermaLink="false">pick/how-to-find-the-questions-your-customers-ask-ai-and-your-key</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Turn sales calls, support tickets, and forum threads into a content plan built around the questions your customers ask AI. The post How To Find The Questions Your Customers Ask AI (And Your Keyword Tools Miss) appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Itamar Blauer, 2026-11-18.
+
+https://www.searchenginejournal.com/how-to-find-the-questions-your-customers-ask-ai-and-your-keyword-tools-miss/596522/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/questions-customers-ask-ai-sej.webp" medium="image"/>
+    </item>
+    <item>
+      <title>HTML Character Encoding and SEO: Repair the Text Before Rewriting the Answer</title>
+      <link>https://carlosandmunoz.com/social/pick/html-character-encoding-and-seo-repair-the-text-before-rewri.html</link>
+      <guid isPermaLink="false">pick/html-character-encoding-and-seo-repair-the-text-before-rewri</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>When a public page displays broken accented letters or replacement symbols, check character encoding...
+
+Via DEV, by Uriel Bitton, 2026-11-13.
+
+https://dev.to/urielbitton/html-character-encoding-and-seo-repair-the-text-before-rewriting-the-answer-31c2</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flv6h03ic6i951ai6y1pr.png" medium="image"/>
+    </item>
+    <item>
+      <title>HyunSeob/iphone-cli: Let AI agents read and operate any app on a real iPhone through the accessibility tree. No XCUITest, WebDriverAgent or Xcode signing.</title>
+      <link>https://carlosandmunoz.com/social/pick/hyunseob-iphone-cli-let-ai-agents-read-and-operate-any-app-o.html</link>
+      <guid isPermaLink="false">pick/hyunseob-iphone-cli-let-ai-agents-read-and-operate-any-app-o</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>Let AI agents read and operate any app on a real iPhone through the accessibility tree. No XCUITest, WebDriverAgent or Xcode signing.
+
+Via GitHub, by HyunSeob, 2026-11-10.
+
+https://github.com/HyunSeob/iphone-cli</description>
+      <media:content url="https://opengraph.githubassets.com/1/HyunSeob/iphone-cli" medium="image"/>
+    </item>
+    <item>
+      <title>I turned an Arabic SEO knowledge base into a remote MCP server (no SDK, ~140 lines on Cloudflare Workers)</title>
+      <link>https://carlosandmunoz.com/social/pick/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-serv.html</link>
+      <guid isPermaLink="false">pick/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-serv</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>How I exposed 86 step-by-step SEO fixes to Claude, Cursor and any MCP client with a stateless, read-only Streamable HTTP endpoint, plus what Glama's tool-quality score taught me.
+
+Via DEV, by Mohamed Eid, 2026-11-14.
+
+https://dev.to/designermohamedeid/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-server-no-sdk-140-lines-on-cloudflare-1cn5</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fkibxrzj40t5br6l92kpv.png" medium="image"/>
+    </item>
+    <item>
+      <title>Robots.txt Guide – Best Practices For Search &amp; AI Crawlers via @sejournal, @vahandev</title>
+      <link>https://carlosandmunoz.com/social/pick/robots-txt-guide-best-practices-for-search-ai-crawlers-via-s.html</link>
+      <guid isPermaLink="false">pick/robots-txt-guide-best-practices-for-search-ai-crawlers-via-s</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Learn how to configure robots.txt, avoid crawl and indexing mistakes, and manage AI training, search crawlers, and user-requested visits separately. The post Robots.txt Guide – Best Practices For Search &amp; AI Crawlers appeared first on Search Engine Journal .
+
+Via Search Engine Journal, by Vahan Petrosyan, 2026-11-18.
+
+https://www.searchenginejournal.com/technical-seo/robots-txt-guide-best-practices-for-search-ai-crawlers/</description>
+      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/09/best-practices-for-setting-up-meta-robots-tags-robots.txt-584-e1726145406885.jpg" medium="image"/>
     </item>
     <item>
       <title>MIT's canonical tags point to its CMS.</title>
@@ -635,261 +835,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #WebSecurity #HTTPHeaders #News #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/14-elpais.jpg" length="246228" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/14-elpais.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Le Monde has a CSP that allows any https.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/15-lemonde.html</link>
-      <guid isPermaLink="false">runs-100/15-lemonde</guid>
-      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A year of HSTS, framing limited to its own origin, and NewsMediaOrganization JSON-LD. Its content security policy exists, but default-src allows any https: source plus 'unsafe-inline' and 'unsafe-eval'.
-
-The lesson for every team: List the script hosts you actually use, then drop 'unsafe-eval'. A policy that allows everything blocks nothing.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=lemonde
-
-#WebSecurity #CSP #News #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg" length="247945" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/15-lemonde.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>y-jesus.org: 63. The gap: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/12-u-y-jesus-org.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/12-u-y-jesus-org</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
-
-The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
-
-One automated analysis of public pages on 4 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-y-jesus-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-y-jesus-org
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SoftwareTesting #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/12-u-y-jesus-org.jpg" length="224037" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/12-u-y-jesus-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>uah.edu: 57. The gap: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/11-u-uah-edu.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/11-u-uah-edu</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
-
-The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
-
-One automated analysis of public pages on 5 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-uah-edu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-uah-edu
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #DevOps #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg" length="221462" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/11-u-uah-edu.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. zetatijuana.com leads: 72.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-11/05-vs-elimparcial-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-11/05-vs-elimparcial-com</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>milenio.com leads in SEO; movierulez2.com leads in GEO, Analytics, Accessibility; zetatijuana.com leads in Security, Performance. elimparcial.com leads in none of the six areas.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 11 Nov 2026 of elimparcial.com, milenio.com, zetatijuana.com, movierulez2.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-elimparcial-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-elimparcial-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #Automation #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/05-vs-elimparcial-com.jpg" length="265999" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-11/feed/05-vs-elimparcial-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>2 natural competitors. evdeeczane.com leads: 70.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-12/04-vs-dermoeczanem-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-12/04-vs-dermoeczanem-com</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>evdeeczane.com leads in SEO, Analytics, Security, Performance; dermoeczanem.com leads in GEO, Accessibility.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 12 Nov 2026 of dermoeczanem.com, evdeeczane.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-dermoeczanem-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-dermoeczanem-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Automation #WebPerformance #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/04-vs-dermoeczanem-com.jpg" length="255213" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/04-vs-dermoeczanem-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. unideb.hu leads: 61.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-13/03-vs-pte-hu.html</link>
-      <guid isPermaLink="false">auto-2026-11-13/03-vs-pte-hu</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>elte.hu leads in SEO, Accessibility; pte.hu leads in GEO; unideb.hu leads in Analytics, Security; bme.hu leads in Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 13 Nov 2026 of pte.hu, elte.hu, unideb.hu, bme.hu, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-pte-hu&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-pte-hu
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Outage #DevOps #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/03-vs-pte-hu.jpg" length="257428" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/03-vs-pte-hu.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>circajewels.com: 60. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-14/02-u-circajewels-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-14/02-u-circajewels-com</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.
-
-The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-circajewels-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-circajewels-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/02-u-circajewels-com.jpg" length="237512" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/02-u-circajewels-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>najserialy.io: 73. The gap: AI crawler access.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io.html</link>
-      <guid isPermaLink="false">auto-2026-11-15/01-u-najserialy-io</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every page has a title, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.
-
-The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
-
-One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg" length="233933" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. healthwave.ie leads: 78.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-15/03-vs-mccabespharmacy-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-15/03-vs-mccabespharmacy-com</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>healthwave.ie leads in SEO, Analytics, Security, Performance; inishpharmacy.com leads in GEO; mccabespharmacy.com leads in Accessibility.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 15 Nov 2026 of mccabespharmacy.com, healthwave.ie, inishpharmacy.com, onlinepharmacy.ie, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-mccabespharmacy-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-mccabespharmacy-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #Automation #QA #WebPerf #QAlab
-
-https://www.youtube.com/shorts/Ngvh-JywM-E</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" length="266860" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/03-vs-mccabespharmacy-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Your Lighthouse score is not your visitors.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/17-field-vs-lab.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/17-field-vs-lab</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Trick</category>
-      <category>Perf</category>
-      <description>30-second trick: Your Lighthouse score is not your visitors.
-
-PageSpeed Insights shows two things. The top half is real-user data from the Chrome UX Report over the last 28 days. The score below it is one lab run on a simulated phone.
-
-Try it now: Read the top half first. If your page has no real-user data there, collect your own with Google's web-vitals library.
-
-How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=field-vs-lab
-
-#WebPerformance #SoftwareTesting #QA #CoreWebVitals #Lighthouse #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" length="230253" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/17-field-vs-lab.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>A/B Testing and SEO: Audit the Temporary Route Before Launch</title>
-      <link>https://carlosandmunoz.com/social/pick/a-b-testing-and-seo-audit-the-temporary-route-before-launch.html</link>
-      <guid isPermaLink="false">pick/a-b-testing-and-seo-audit-the-temporary-route-before-launch</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>For an A/B test that redirects visitors to a variation URL, review the temporary route, canonical...
-
-Via DEV, by Uriel Bitton, 2026-11-16.
-
-https://dev.to/urielbitton/ab-testing-and-seo-audit-the-temporary-route-before-launch-kk2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fh7dx1iewy26nx5ksa06o.png" medium="image"/>
-    </item>
-    <item>
-      <title>AI Referral Traffic Benchmark (Nov 2026): Which SaaS &amp; AI Tools Actually Get Traffic from ChatGPT, Gemini, and Perplexity?</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-referral-traffic-benchmark-nov-2026-which-saas-ai-tools-a.html</link>
-      <guid isPermaLink="false">pick/ai-referral-traffic-benchmark-nov-2026-which-saas-ai-tools-a</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>GEO</category>
-      <description>Everyone talks about GEO (Generative Engine Optimization)—getting cited inside ChatGPT Search,...
-
-Via DEV, by Jack Yu, 2026-11-16.
-
-https://dev.to/jack_yu_0909/ai-referral-traffic-benchmark-nov-2026-which-saas-ai-tools-actually-get-traffic-from-chatgpt-260o</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fp7xcc6me4hcrmwyx34gy.png" medium="image"/>
-    </item>
-    <item>
-      <title>boringmarketer/boring-marketing-skills: 31 free marketing skills for your AI agent: research, positioning, copy, pages, SEO, AI search, ads, email and content, plus a deep local-business pack. MIT.</title>
-      <link>https://carlosandmunoz.com/social/pick/boringmarketer-boring-marketing-skills-31-free-marketing-ski.html</link>
-      <guid isPermaLink="false">pick/boringmarketer-boring-marketing-skills-31-free-marketing-ski</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>31 free marketing skills for your AI agent: research, positioning, copy, pages, SEO, AI search, ads, email and content, plus a deep local-business pack. MIT.
-
-Via GitHub, by boringmarketer, 2026-11-16.
-
-https://github.com/boringmarketer/boring-marketing-skills</description>
-      <media:content url="https://opengraph.githubassets.com/1/boringmarketer/boring-marketing-skills" medium="image"/>
-    </item>
-    <item>
-      <title>CMS Market Share Trends: Top Content Management Systems (Nov 2026) via @sejournal, @theshelleywalsh</title>
-      <link>https://carlosandmunoz.com/social/pick/cms-market-share-trends-top-content-management-systems-nov-2.html</link>
-      <guid isPermaLink="false">pick/cms-market-share-trends-top-content-management-systems-nov-2</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>The CMS market is fragmenting, and platform choice now carries direct implications for scalability, SEO, and revenue growth. The post CMS Market Share Trends: Top Content Management Systems (Nov 2026) appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Shelley Walsh, 2026-11-16.
-
-https://www.searchenginejournal.com/cms-market-share-trends-top-content-management-systems-nov-2026/596729/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2025/10/cms-market-share-trends-446.png" medium="image"/>
     </item>
   </channel>
 </rss>

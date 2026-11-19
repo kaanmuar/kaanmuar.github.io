@@ -604,6 +604,10 @@
   "text": "Alle Touch-Ziele müssen jedoch ⟦1⟧px groß sein oder ausreichend Platz lassen.",
   "machine": true
  },
+ "But analytics may count some visits twice.": {
+  "text": "Bei der Analyse kann es jedoch sein, dass einige Besuche doppelt gezählt werden.",
+  "machine": true
+ },
  "But ARIA hidden element must not be focusable or contain focusable elements.": {
   "text": "Das versteckte ARIA-Element darf jedoch nicht fokussierbar sein oder fokussierbare Elemente enthalten.",
   "machine": true
@@ -1226,6 +1230,10 @@
  "Give each page one h1 that names its topic.": "Geben Sie jeder Seite ein h1, das ihr Thema nennt.",
  "Give each subdomain its own sitemap, named in that subdomain's ⟦1⟧.": "Geben Sie jeder Subdomain eine eigene Sitemap, genannt in deren ⟦1⟧.",
  "Give every button text or an aria-label, so a screen reader can announce it.": "Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.",
+ "Give every button text or an aria-label, so a screen reader can announce…": {
+  "text": "Geben Sie jeder Schaltfläche einen Text oder eine Arie-Beschriftung, damit ein Screenreader Folgendes ankündigen kann:",
+  "machine": true
+ },
  "Give every field a ⟦1⟧ or an aria-label.": "Geben Sie jedem Feld ein ⟦1⟧ oder ein aria-label.",
  "Give every input a visible label tied to it with for and id.": "Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id.",
  "Give every link text that says where it goes.": "Geben Sie jedem Link einen Text, der sagt, wohin er führt.",
@@ -1552,6 +1560,14 @@
  "List your five most visited pages from analytics and time each one.": "Listen Sie Ihre fünf meistbesuchten Seiten aus Analytics auf und messen Sie jede.",
  "LLMs are Effective UI Generators, spells out where that road may end: a model writes the entire page, including the HTML, CSS and JavaScript, from scratch for each query.": "LLMs are Effective UI Generators, zeigt, wo dieser Weg enden könnte: Ein Modell schreibt für jede Suchanfrage die gesamte Seite samt HTML, CSS und JavaScript von Grund auf neu.",
  "Load each analytics tag once, from the template or a tag manager, never both.": "Laden Sie jedes Analytics-Tag einmal, aus der Vorlage oder einem Tag-Manager, nie aus beiden.",
+ "Load each measurement tag once, from one place, so every visit counts once.": {
+  "text": "Laden Sie jedes Mess-Tag einmal von einem Ort aus, sodass jeder Besuch einmal zählt.",
+  "machine": true
+ },
+ "Load each measurement tag once, from one place, so every visit…": {
+  "text": "Laden Sie jedes Mess-Tag einmal von einem Ort, also bei jedem Besuch ...",
+  "machine": true
+ },
  "Load every asset over https or as a relative URL.": "Laden Sie jedes Asset über https oder als relative URL.",
  "Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.": "Laden Sie ein Google-Tag und senden Sie von dort an jedes Ziel, oder leiten Sie alle Tags über einen Tag Manager.",
  "Load your page and press Tab once.": "Laden Sie Ihre Seite und drücken Sie einmal die Tabulatortaste.",
@@ -1735,6 +1751,10 @@
  "One server setting covers them all.": "Eine Servereinstellung deckt alle ab.",
  "One site, one GA4 property, one ⟦1⟧.": "Eine Website, eine GA4-Property, ein ⟦1⟧.",
  "One stray comma hides all of it.": "Ein verirrtes Komma versteckt alles.",
+ "One stray comma…": {
+  "text": "Ein verirrtes Komma ...",
+  "machine": true
+ },
  "One tag, loaded once, keeps every report honest.": "Ein Tag, einmal geladen, hält jeden Bericht ehrlich.",
  "One-year HSTS with includeSubDomains, and http goes to https.": "HSTS für ein Jahr mit includeSubDomains, und http geht auf https.",
  "One-year HSTS with preload, nosniff, a content security policy, alt text on every image, and a permanent https redirect.": "HSTS für ein Jahr mit preload, nosniff, eine Content Security Policy, Alt-Text an jedem Bild und eine permanente https-Weiterleitung.",
@@ -2136,6 +2156,10 @@
   "text": "Stellen Sie ⟦1⟧ vom selben Host wie die aufgelisteten Seiten bereit und benennen Sie es in ⟦2⟧.",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
+  "text": "Stellen Sie ⟦1⟧ vom selben Host wie die darin aufgelisteten Seiten bereit und benennen Sie …",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Liefern Sie eine ⟦1⟧ mit einer Sitemap:-Zeile aus.",
  "Serve the full chain: leaf plus intermediates.": "Liefern Sie die vollständige Kette aus: Leaf- plus Zwischenzertifikate.",
  "Served as /⟦1⟧.": "Ausgeliefert als /⟦1⟧.",
@@ -2293,6 +2317,10 @@
  },
  "The gap: cookie flags.": {
   "text": "Die Lücke: Cookie-Flags.",
+  "machine": true
+ },
+ "The gap: duplicate tags.": {
+  "text": "Die Lücke: doppelte Tags.",
   "machine": true
  },
  "The gap: form labels.": "Die Lücke: Formular-Labels.",
@@ -2602,8 +2630,16 @@
   "text": "Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie es die Rolle erfordert.",
   "machine": true
  },
+ "When you use ARIA roles, nest them the way the role…": {
+  "text": "Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie die Rolle…",
+  "machine": true
+ },
  "When you use ARIA roles, nest them the way the…": {
   "text": "Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese so, wie…",
+  "machine": true
+ },
+ "When you use ARIA roles, nest them the…": {
+  "text": "Wenn Sie ARIA-Rollen verwenden, verschachteln Sie diese in …",
   "machine": true
  },
  "When you use ARIA roles, nest them…": {
