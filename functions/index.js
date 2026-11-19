@@ -3010,12 +3010,14 @@ exports.placesProspects = require("firebase-functions/v2/scheduler").onSchedule(
 }, () => track("placesProspects", () => placesProspects()));
 
 // The Wordfence vulnerability feed for the reviews' WordPress check (#3086); see functions/url-review-wordpress.js.
+// No Cloud Scheduler retries: a retry is a second call to a key that Wordfence may suspend (#3808).
 exports.wordfenceFeed = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("wordfenceFeed"),
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: 540,
   memory: "1GiB",
   maxInstances: 1,
+  retryConfig: { retryCount: 0 },
   secrets: SECRETS.wordfenceFeed
 }, () => track("wordfenceFeed", async () => {
   const out = await require("./url-review-wordpress").refreshFeed({ key: process.env.WORDFENCE_KEY });
