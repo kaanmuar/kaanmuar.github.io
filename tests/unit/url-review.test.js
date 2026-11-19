@@ -3777,7 +3777,7 @@ test('a failed run keeps its log, error and timings for 90 days', () => {
 	assert.equal(record.timings.ms, 60000);
 	assert.equal(record.expireAt.getTime() - 61000, 90 * 86400000);
 	assert.equal(record.diagnosedAt, null);
-	assert.deepEqual(record.options, { pages: 20, depth: 2, pageLang: '', section: false, frameworks: ['playwright'] });
+	assert.deepEqual(record.options, { pages: 20, depth: 2, pageLang: '', section: false, targeted: true, frameworks: ['playwright'] });
 
 	const stopped = failures.failureRecord({ kind: 'stopped', url: 'https://shop.example.com/', lines: [] });
 	assert.equal(stopped.error, null);
@@ -6793,6 +6793,10 @@ test('a review can ask for a language and stay under the start path', () => {
 	const ignored = core.validateIntake(body({ pageLang: 'english', section: 'yes' })).value;
 	assert.equal(ignored.pageLang, '');
 	assert.equal(ignored.section, false);
+	// The attack and exploit source checks run unless the form sends exactly false (#3849).
+	assert.equal(site.targeted, true);
+	assert.equal(core.validateIntake(body({ targeted: false })).value.targeted, false);
+	assert.equal(core.validateIntake(body({ targeted: 'no' })).value.targeted, true);
 	assert.equal(core.sectionPrefix('https://example.org/docs/guide'), '/docs/guide');
 	assert.equal(core.sectionPrefix('https://example.org/docs/'), '/docs');
 	assert.equal(core.sectionPrefix('https://example.org/'), '');

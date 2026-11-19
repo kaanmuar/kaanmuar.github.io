@@ -1809,6 +1809,7 @@ const server = http.createServer(async (req, res) => {
 			maxDepth: intake.value.depth,
 			pageLang: intake.value.pageLang,
 			section: intake.value.section,
+			targeted: intake.value.targeted === false ? false : undefined,
 			passive: !!intake.value.compareWith,
 			browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
 			pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,

@@ -279,7 +279,7 @@ test("the desk's done queues the re-review on the request", async () => {
 test('the re-review runs the original address with the original options', () => {
 	const goal = fixRereview.target(reportRow({ frameworks: ['Playwright'], pageLang: 'es', section: true }));
 	assert.equal(goal.url, 'https://carlosandmunoz.com/');
-	assert.deepEqual(goal.options, { frameworks: ['Playwright'], pages: 20, depth: 2, pageLang: 'es', section: true });
+	assert.deepEqual(goal.options, { frameworks: ['Playwright'], pages: 20, depth: 2, pageLang: 'es', section: true, targeted: true });
 	assert.equal(goal.email, 'ana@example.com');
 	assert.equal(fixRereview.target({ report: { host: 'shop.example.com' } }).url, 'https://shop.example.com/');
 });

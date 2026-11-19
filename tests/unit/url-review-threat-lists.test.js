@@ -254,7 +254,7 @@ test('Cloudflare submits a public scan when none is recent, polls it, and report
 			},
 		});
 		const scan = calls.find((call) => /\/scan$/.test(call.url));
-		assert.deepEqual(JSON.parse(scan.init.body), { url: URL_, visibility: 'Public' });
+		assert.deepEqual(JSON.parse(scan.init.body), { url: URL_, visibility: 'Unlisted' });
 		assert.equal(polls, 3);
 		assert.deepEqual(
 			[result.sources[2].pending, result.sources[2].report],
@@ -338,7 +338,7 @@ test('a URL with credentials, query and fragment is searched by host and submitt
 	const search = calls.find((call) => /search/.test(call.url));
 	assert.equal(new URL(search.url).searchParams.get('q'), 'page.domain:"shop.example.com" AND date:>now-1d');
 	const scan = calls.find((call) => /\/scan$/.test(call.url));
-	assert.deepEqual(JSON.parse(scan.init.body), { url: 'https://shop.example.com/account', visibility: 'Public' });
+	assert.deepEqual(JSON.parse(scan.init.body), { url: 'https://shop.example.com/account', visibility: 'Unlisted' });
 	assert.ok(
 		!calls.some((call) => /s3cret|a%40b|me:pw|#top/.test(call.url + (call.init.body || ''))),
 		'nothing private leaves'
