@@ -2604,6 +2604,232 @@ export function mountJarvis({
 		);
 	}
 
+	// --- the live cyber-attack map and who it might touch (#3894) ---------------------------------------------------
+	const CY_RANGES = [
+		['live', 'Live (15 min)'],
+		['7d', '7 days'],
+		['30d', '30 days'],
+		['90d', '90 days'],
+	];
+	const CY_LEVEL = { critical: 'down', high: 'quiet', watch: 'ok' };
+
+	function ensureWorldNames() {
+		if (S.worldNames || !S.world) return S.worldNames || {};
+		const dn = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+		S.worldNames = {};
+		Object.keys(S.world.dots).forEach((cc) => {
+			try {
+				S.worldNames[cc] = dn ? dn.of(cc) : cc;
+			} catch (error) {
+				S.worldNames[cc] = cc;
+			}
+		});
+		return S.worldNames;
+	}
+
+	// GDELT gives 20261119T143000Z or 20261119143000; a headline's own date may also be ISO.
+	function cyEventTime(value) {
+		const m = String(value || '').match(/^(\d{4})(\d{2})(\d{2})T?(\d{2})(\d{2})(\d{2})Z?$/);
+		return m ? when(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`) : when(value);
+	}
+
+	function cyberMapPanel() {
+		const c = S.external.checks;
+		const mp = c && c.ok && c.map;
+		if (!mp || !mp.ranges || !Object.keys(mp.ranges).length)
+			return panel(
+				'review-cyber-map',
+				'Live cyber-attack map',
+				waiting('checks', 'Reading the global cyber feed…'),
+				{ wide: true }
+			);
+		if (!S.world && !S.worldLoading) loadWorld();
+		const range = mp.ranges[S.cyRange] ? S.cyRange : 'live';
+		const cur = mp.ranges[range];
+		const ex = c.exposure || { totals: {}, direct: [], regional: [], hot: [] };
+		const tot = ex.totals || {};
+		const max = Math.max(0, ...cur.countries.map((x) => x.count));
+		const by = {};
+		cur.countries.forEach((x) => (by[x.cc] = x));
+		const ours = {};
+		const mine = (cc) => (ours[cc] = ours[cc] || { direct: 0, regional: 0 });
+		(ex.direct || []).forEach((d) => d.country && (mine(d.country).direct += 1));
+		(ex.regional || []).forEach((r) => (mine(r.country).regional += 1));
+		const names = ensureWorldNames();
+		const sel = S.cyCc && (by[S.cyCc] || ours[S.cyCc] || names[S.cyCc]) ? S.cyCc : '';
+		const tipOf = (cc) => {
+			const x = by[cc];
+			const o = ours[cc];
+			return `${names[cc] || cc}: ${x ? `${fmt(x.count)} events (${x.share}%)` : 'no events'}${o ? ` · ${o.direct} exposed, ${o.regional} same-country reports of ours` : ''}`;
+		};
+		let svg = '<p class="jv-note">Drawing the map…</p>';
+		if (S.world) {
+			const fills = {};
+			cur.countries.forEach((x) => {
+				if (x.count > 0 && max > 0)
+					fills[x.cc] = `rgba(255,77,141,${(0.18 + 0.82 * Math.sqrt(Math.min(1, x.count / max))).toFixed(2)})`;
+			});
+			const tips = {};
+			Object.keys(S.world.dots).forEach((cc) => (tips[cc] = tipOf(cc)));
+			const pins = Object.keys(ours)
+				.filter((cc) => ours[cc].direct && S.world.dots[cc])
+				.map((cc) => {
+					const [x, y] = S.world.dots[cc];
+					return `<circle class="jv-cy-c jv-cy-pin" data-cy-cc="${cc}" cx="${x}" cy="${y}" r="6" tabindex="0" role="button" aria-label="${esc(tipOf(cc))}"><title>${esc(tipOf(cc))}</title></circle>`;
+				})
+				.join('');
+			svg = Geo.mapSvg(S.world, [], 'cyber', { selected: sel, names: tips, labels: [], fills }, esc)
+				.replace(/ data-geo-cc=/g, ' data-cy-cc=')
+				.replace(/class="jv-geo-c/g, 'class="jv-cy-c')
+				.replace('</svg>', `${pins}</svg>`);
+		}
+		const controls = `<div class="jv-actions jv-geo-controls"><div class="jv-seg" role="group" aria-label="Timeframe">${CY_RANGES.map(([k, label]) => `<button type="button" data-cy-range="${k}" class="${k === range ? 'on' : ''}" aria-pressed="${k === range}">${esc(label)} <small>${fmt((mp.ranges[k] || {}).total || 0)}</small></button>`).join('')}</div>
+            ${sel ? '<button type="button" class="jv-btn small" data-cy-cc="">Clear country</button>' : ''}<button type="button" class="jv-btn small" data-cy-reload>Reload feed</button><button type="button" class="jv-btn small" data-run="threatFeeds">Refresh threat feeds</button></div>`;
+		const legend = `<div class="jv-geo-scale jv-cy-scale"><span>0</span><i></i><span>${fmt(max)} events</span><em><b class="jv-cy-key"></b>a country with a reported site of ours that has a threat finding</em></div>`;
+		const top = cur.countries.slice(0, 12);
+		const rank = table(
+			[
+				['Country', (x) => `<button type="button" class="jv-link" data-cy-cc="${esc(x.cc)}">${esc(names[x.cc] || x.cc)}</button> <span class="jv-note">${esc(x.cc)}</span>`],
+				['Events', (x) => fmt(x.count)],
+				['Share', (x) => x.share + '%'],
+				['7 d', (x) => fmt(((mp.ranges['7d'] || {}).countries || []).find((y) => y.cc === x.cc)?.count || 0)],
+				['30 d', (x) => fmt(((mp.ranges['30d'] || {}).countries || []).find((y) => y.cc === x.cc)?.count || 0)],
+				['90 d', (x) => fmt(((mp.ranges['90d'] || {}).countries || []).find((y) => y.cc === x.cc)?.count || 0)],
+				[
+					'Ours',
+					(x) => {
+						const o = ours[x.cc];
+						return o ? `${o.direct ? `<span class="jv-chip c-slow">${o.direct} exposed</span> ` : ''}${o.regional ? `<span class="jv-chip c-average">${o.regional} same country</span>` : ''}` : '—';
+					},
+				],
+			],
+			top,
+			'No country cited in this window.'
+		);
+		const events = (mp.events || []).filter((e) => !sel || (e.countries || []).includes(sel));
+		const headlines = events.length
+			? `<ul class="jv-facts jv-cy-feed">${events
+					.slice(0, 20)
+					.map(
+						(e) =>
+							`<li><a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">${esc(e.source || e.host)}</a> <span class="jv-note">${esc(cyEventTime(e.date))}</span> ${(e.countries || []).map((cc) => `<button type="button" class="jv-chip" data-cy-cc="${esc(cc)}">${esc(cc)}</button>`).join(' ')} ${(e.themes || []).map((t) => `<span class="jv-chip c-average">${esc(String(t).replace(/_/g, ' ').toLowerCase())}</span>`).join(' ')}</li>`
+					)
+					.join('')}</ul>`
+			: `<p class="jv-empty">${sel ? 'No headline names this country in the latest feed.' : 'No headlines in the latest feed.'}</p>`;
+		let card = '';
+		if (sel) {
+			const x = by[sel];
+			const rows = (r) => (mp.ranges[r] || { countries: [] }).countries.find((y) => y.cc === sel);
+			const dir = (ex.direct || []).filter((d) => d.country === sel);
+			const reg = (ex.regional || []).filter((d) => d.country === sel);
+			card = `<div class="jv-cy-card" role="status"><h4 class="jv-sub">${esc(names[sel] || sel)} <span class="jv-note">${esc(sel)}</span></h4>
+                ${stats(CY_RANGES.map(([k, label]) => ({ label, value: (rows(k) || {}).count || 0 })))}
+                <p class="jv-note">${x ? `${x.share}% of the ${esc(CY_RANGES.find((r) => r[0] === range)[1].toLowerCase())} window.` : 'No events cited here in this window.'} ${dir.length ? `${plural(dir.length, 'report of ours has', 'reports of ours have')} a threat finding on a site hosted here.` : ''} ${reg.length ? `${plural(reg.length, 'customer report is', 'customer reports are')} on a site here (context).` : ''}</p>
+                ${dir.length ? `<ul class="jv-facts">${dir.map((d) => `<li><b>${esc(d.host)}</b> · ${esc(d.email || (d.known ? 'our sweep' : 'customer unknown'))} · ${roChip(CY_LEVEL[d.level], d.level)} ${esc((d.findings[0] || {}).kind || '')}</li>`).join('')}</ul>` : ''}</div>`;
+		}
+		const body = `${stats([
+			{ label: `Cited events · ${CY_RANGES.find((r) => r[0] === range)[1]}`, value: cur.total },
+			{ label: 'Countries cited', value: cur.countries.length },
+			{ label: 'CISA KEV', value: mp.kevCount || 0 },
+			{ label: 'DROP blocks', value: mp.dropRanges || 0 },
+			{ label: 'Reports exposed', value: tot.directReports || 0, alert: (tot.directReports || 0) > 0 },
+			{ label: 'Customers exposed', value: tot.directCustomers || 0, alert: (tot.directCustomers || 0) > 0 },
+		])}${controls}<div class="jv-cy-wrap">${svg}</div>${legend}${card}
+            <h4 class="jv-sub">Countries, ranked${sel ? ' · tap a row or the map to change country' : ''}</h4>${rank}
+            <h4 class="jv-sub">Live cyber-attack and breach headlines${sel ? ' · ' + esc(names[sel] || sel) : ''} · ${fmt(events.length)}</h4>${headlines}
+            <p class="jv-note">${esc((mp.attributions || []).join(' · '))}</p>`;
+		return panel(
+			'review-cyber-map',
+			`Live cyber-attack map · ${esc(CY_RANGES.find((r) => r[0] === range)[1])}`,
+			body,
+			{
+				wide: true,
+				keep: true,
+				data: cur.countries.map((x) => ({ cc: x.cc, country: names[x.cc] || x.cc, events: x.count, share: x.share, exposedReports: (ours[x.cc] || {}).direct || 0, sameCountryReports: (ours[x.cc] || {}).regional || 0 })),
+				note: `Global telemetry: GDELT Project 15-minute feed${mp.slice ? ' (slice ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
+			}
+		);
+	}
+
+	function exposurePanel() {
+		const c = S.external.checks;
+		const ex = c && c.ok && c.exposure;
+		if (!ex)
+			return panel('review-exposed', 'Who might be impacted', waiting('checks', 'Matching the threat ledger to reports…'), {
+				wide: true,
+			});
+		const t = ex.totals || {};
+		const names = ensureWorldNames();
+		const who = (d) =>
+			d.email
+				? `${esc(d.email)}${d.paid ? ' <span class="jv-chip c-fast">paid</span>' : ''}`
+				: d.known
+					? '<span class="jv-note">our sweep (not a customer)</span>'
+					: '<span class="jv-note">customer unknown</span>';
+		const direct = table(
+			[
+				['Site', (d) => `${esc(d.host)}${d.country ? ` <span class="jv-chip">${esc(d.country)}</span>` : ''}`],
+				['Customer', who],
+				['Level', (d) => roChip(CY_LEVEL[d.level] || 'ok', d.level)],
+				[
+					'Findings',
+					(d) =>
+						d.findings
+							.slice(0, 3)
+							.map((f) => `<span title="${esc(f.evidence)}">${esc(f.kind)} · ${esc(f.source)}${f.delistStatus && f.delistStatus !== 'none' ? ' · delist ' + esc(f.delistStatus) : ''}</span>`)
+							.join('<br>') + (d.findingCount > 3 ? `<br><span class="jv-note">+${d.findingCount - 3} more</span>` : ''),
+				],
+				['Reviewed', (d) => esc(d.reviewedAt ? when(d.reviewedAt) : '')],
+			],
+			ex.direct,
+			`No report of the last ${ex.windowDays} days carries a critical, high or watch threat finding.`
+		);
+		const customers = table(
+			[
+				['Customer', (x) => esc(x.email)],
+				['Reports', (x) => fmt(x.reports)],
+				['Paid', (x) => fmt(x.paid)],
+				['Worst', (x) => roChip(CY_LEVEL[x.level] || 'ok', x.level)],
+				['Sites', (x) => esc(x.hosts.join(', '))],
+			],
+			ex.customers,
+			'No customer is directly exposed.'
+		);
+		const regional = table(
+			[
+				['Site', (r) => esc(r.host)],
+				['Customer', (r) => `${esc(r.email)}${r.paid ? ' <span class="jv-chip c-fast">paid</span>' : ''}`],
+				['Why', (r) => `${esc(r.basis)} <button type="button" class="jv-link" data-cy-cc="${esc(r.country)}">${esc(names[r.country] || r.country)}</button> · ${fmt(r.liveCount)} events`],
+				['Reviewed', (r) => esc(r.reviewedAt ? when(r.reviewedAt) : '')],
+			],
+			ex.regional,
+			'No customer report is on a site in the countries the feed is busiest in.'
+		);
+		const hot = (ex.hot || []).map((h) => `${esc(names[h.cc] || h.cc)} ${fmt(h.count)}`).join(' · ');
+		return panel(
+			'review-exposed',
+			`Who might be impacted · ${fmt(t.directCustomers || 0)} customers`,
+			`${stats([
+				{ label: 'Reports with a threat finding', value: t.directReports || 0, alert: (t.directReports || 0) > 0 },
+				{ label: 'Customers exposed', value: t.directCustomers || 0, alert: (t.directCustomers || 0) > 0 },
+				{ label: 'Paid reports exposed', value: t.directPaid || 0, alert: (t.directPaid || 0) > 0 },
+				{ label: 'Critical', value: t.directCritical || 0, alert: (t.directCritical || 0) > 0 },
+				{ label: 'Our sweep sites', value: t.directSweep || 0 },
+				{ label: 'Same-country reports (context)', value: t.regionalReports || 0 },
+			])}
+            <h4 class="jv-sub">Directly exposed: a threat finding on their site · last ${ex.windowDays} days</h4>${direct}
+            <h4 class="jv-sub">By customer</h4>${customers}
+            <h4 class="jv-sub">Context only: customer reports on sites in the busiest countries now${hot ? ' (' + hot + ')' : ''}</h4>${regional}
+            <div class="jv-actions"><a class="jv-btn" href="${DESK}#threats-block" target="_blank" rel="noopener">Open the threat list</a><button type="button" class="jv-btn" data-cy-reload>Reload</button></div>`,
+			{
+				wide: true,
+				keep: true,
+				data: ex.direct.map((d) => ({ host: d.host, customer: d.email, paid: d.paid, level: d.level, country: d.country, findings: d.findings.map((f) => f.kind).join(', '), reviewedAt: d.reviewedAt })),
+				note: `Directly exposed means the report found a critical, high or watch finding on that site (known exploited software, a vulnerable library, a listed network or host, a leaked secret). Same country is context, not proof: it only means the site is hosted or based where the global feed is busy. ${t.regionalSweep ? fmt(t.regionalSweep) + ' of our own sweep sites are in those countries too. ' : ''}Test accounts are left out.`,
+			}
+		);
+	}
+
 	function listPanel(key, id, title, list, opts) {
 		return panel(
 			key + '-' + id,
@@ -7833,7 +8059,7 @@ export function mountJarvis({
 			.then((r) => (r.ok ? r.json() : null))
 			.then((w) => {
 				S.world = w;
-				if (S.product === 'geo') render();
+				if (S.product === 'geo' || S.product === 'review') render();
 			})
 			.catch(() => null)
 			.finally(() => {
@@ -8825,7 +9051,7 @@ export function mountJarvis({
             ${listPanel('review', 'frameworks', 'Frameworks', r.lists.frameworks, { color: COLORS.violet })}${listPanel('review', 'actions', 'Clicks on the review pages', r.lists.actions, { color: COLORS.amber })}
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
-            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}${threatsPanel()}
+            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}${cyberMapPanel()}${exposurePanel()}${threatsPanel()}
             ${panel(
 							'review-alerts',
 							'Alerts',
@@ -10620,7 +10846,7 @@ export function mountJarvis({
 			drillToggle(opener);
 			return;
 		}
-		const t = event.target.closest('button, a, li[data-hit], li[data-brief], .jv-geo-c');
+		const t = event.target.closest('button, a, li[data-hit], li[data-brief], .jv-geo-c, .jv-cy-c');
 		if (!t || !root.contains(t)) return;
 		if (t.dataset.conDock !== undefined) {
 			dock(!docked);
@@ -10772,6 +10998,23 @@ export function mountJarvis({
 		}
 		if (t.dataset.csatDecide) {
 			decideCsatQuote(t.dataset.key, t.dataset.csatDecide);
+			return;
+		}
+		if (t.dataset.cyRange) {
+			S.cyRange = t.dataset.cyRange;
+			render();
+			return;
+		}
+		if (t.dataset.cyCc !== undefined) {
+			S.cyCc = S.cyCc === t.dataset.cyCc ? '' : t.dataset.cyCc;
+			render();
+			const at = S.cyCc && $('[data-panel-id="review-cyber-map"] .jv-cy-card');
+			if (at) at.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			return;
+		}
+		if (t.dataset.cyReload !== undefined) {
+			loadExternal(['checks']);
+			toast('Reloading the cyber feed and the threat ledger…');
 			return;
 		}
 		if (t.dataset.geoCc !== undefined) {

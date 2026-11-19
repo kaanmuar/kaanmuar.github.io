@@ -930,6 +930,20 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-date-kind { font-size: 0.68rem; padding: 0 0.4rem; }
 .jv-dates-country .jv-btn { margin-left: 0.3rem; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c { transition: none; } }
+/* The live cyber-attack map on the URL Review tab (#3894): shaded by cited events, pinned where a report of ours has a threat finding. */
+.jv-cy-wrap { width: 100%; overflow: hidden; border-radius: 10px; background: #0a141b; position: relative; margin-top: 0.5rem; }
+.jv-cy-c { stroke: #0a141b; stroke-width: 0.5; cursor: pointer; transition: fill 0.25s, stroke 0.2s; outline: none; }
+.jv-cy-c:hover, .jv-cy-c:focus-visible { stroke: #fff; stroke-width: 1.2; }
+.jv-cy-c.is-on { stroke: var(--amber); stroke-width: 2; }
+circle.jv-cy-c { stroke: #fff; stroke-width: 0.6; }
+.jv-cy-pin { fill: var(--cyan); stroke: #fff; stroke-width: 1.2; filter: drop-shadow(0 0 4px var(--cyan)); }
+.jv-cy-scale > i { background: linear-gradient(90deg, rgba(255, 77, 141, 0.18), rgba(255, 77, 141, 1)); }
+.jv-cy-key { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--cyan); border: 1px solid #fff; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-cy-card { margin-top: 0.6rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(56, 225, 255, 0.04); }
+.jv-cy-feed li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
+.jv-cy-feed button.jv-chip { cursor: pointer; background: transparent; }
+@media (prefers-reduced-motion: reduce) { .jv-cy-c { transition: none; } }
+
 .jv-geo-confirm { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; font-size: 0.82rem; }
 .jv-geo-confirm li { display: grid; gap: 0.2rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
 .jv-geo-confirm li:last-child { border-bottom: 0; padding-bottom: 0; }

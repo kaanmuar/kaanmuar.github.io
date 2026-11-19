@@ -1362,6 +1362,18 @@
 					'review:threats-critical'
 				);
 			}
+			const ex = c.exposure;
+			if (ex && ex.totals && (ex.totals.directCustomers > 0 || ex.totals.directReports > 0)) {
+				const who = (ex.customers || [])
+					.slice(0, 3)
+					.map((x) => x.email)
+					.join(', ');
+				add(
+					ex.totals.directCritical > 0 ? 'alert' : 'warn',
+					`${n(ex.totals.directCustomers, 'customer has', 'customers have')} a report with a critical, high or watch threat finding (${n(ex.totals.directReports, 'report', 'reports')} in ${ex.windowDays} days)${who ? ': ' + who : ''}.`,
+					'review:exposed'
+				);
+			}
 			(c.sources || [])
 				.filter((x) => x.state === 'down' && x.key !== 'wordfence' && x.key !== 'threatfeeds')
 				.forEach((x) => add('warn', `${x.name} is failing in reviews: ${x.detail}.`, 'review:source:' + x.key));
@@ -1450,6 +1462,25 @@
 											kevCount: c.map.kevCount,
 											dropRanges: c.map.dropRanges,
 											slice: c.map.slice,
+											hotNow: ((c.map.ranges && c.map.ranges.live && c.map.ranges.live.countries) || [])
+												.slice(0, 5)
+												.map((x) => x.cc + ' ' + x.count),
+											headlines: (c.map.events || []).slice(0, 5).map((e) => e.source + ' (' + (e.countries || []).join('/') + ')'),
+										},
+									}
+								: {},
+							c.exposure
+								? {
+										exposure: {
+											days: c.exposure.windowDays,
+											directReports: c.exposure.totals.directReports,
+											directCustomers: c.exposure.totals.directCustomers,
+											directPaid: c.exposure.totals.directPaid,
+											regionalCustomers: c.exposure.totals.regionalCustomers,
+											hotCountries: (c.exposure.hot || []).map((x) => x.cc + ' ' + x.count),
+											customers: (c.exposure.customers || [])
+												.slice(0, 5)
+												.map((x) => x.email + ' (' + x.level + ', ' + x.reports + ' report' + (x.reports === 1 ? '' : 's') + ')'),
 										},
 									}
 								: {}
@@ -2433,6 +2464,13 @@
 			levels: ['alert'],
 			title: 'Review critical cyber threats and pending delistings on the Review desk',
 			link: 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk#threats-block',
+			tab: 'review',
+		},
+		{
+			prefix: 'review:exposed',
+			impact: 4,
+			levels: ['warn', 'alert'],
+			title: 'Warn the customers whose reports carry a threat finding, from Jarvis > URL Review > Who might be impacted',
 			tab: 'review',
 		},
 		{

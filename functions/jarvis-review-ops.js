@@ -245,7 +245,7 @@ function threatFeedsState(run) {
   return { stored: true, state: "ok", detail: note.slice(0, 160) || "stored", at };
 }
 
-function threatsSummary(threatRows, globalMap, { now, days }) {
+function threatsSummary(threatRows, globalMap, { now, days, mapRanges }) {
   const start = now - (days || 7) * DAY;
   const rows = (Array.isArray(threatRows) ? threatRows : []).filter(Boolean);
   const byLevel = { critical: 0, high: 0, watch: 0, info: 0 };
@@ -280,15 +280,31 @@ function threatsSummary(threatRows, globalMap, { now, days }) {
       observedAt: iso(item.observed_at)
     }));
   const g = globalMap && typeof globalMap === "object" ? globalMap : null;
+  const rangeOf = (payload) => payload ? {
+    total: Number(payload.totalMentions) || 0,
+    countries: (Array.isArray(payload.countries) ? payload.countries : []).slice(0, 80).map((c) => ({ cc: c.cc, count: Number(c.count) || 0, share: Number(c.share) || 0 }))
+  } : null;
+  const ranges = {};
+  Object.keys(mapRanges || {}).forEach((k) => { const r = rangeOf(mapRanges[k]); if (r) ranges[k] = r; });
+  if (g && !ranges.live) ranges.live = rangeOf(g);
   const map = g ? {
     updatedAt: String(g.updatedAt || ""),
     slice: String(g.slice || ""),
     mentionsLive: Number((g.totalsByRange && g.totalsByRange.live) || g.totalMentions) || 0,
     mentions7d: Number(g.totalsByRange && g.totalsByRange["7d"]) || 0,
     mentions30d: Number(g.totalsByRange && g.totalsByRange["30d"]) || 0,
+    mentions90d: Number(g.totalsByRange && g.totalsByRange["90d"]) || 0,
     countryCount: Number(g.countryCount) || 0,
     kevCount: Number(g.kevSummary && g.kevSummary.count) || 0,
+    kevVersion: String((g.kevSummary && g.kevSummary.version) || ""),
     dropRanges: Number(g.dropSummary && g.dropSummary.v4Ranges) || 0,
+    historyDays: Number(g.historyDays) || 0,
+    attributions: (Array.isArray(g.attributions) ? g.attributions : []).slice(0, 6).map((a) => String(a).slice(0, 160)),
+    ranges,
+    events: (Array.isArray(g.events) ? g.events : []).slice(0, 30).map((e) => ({
+      date: String(e.date || ""), source: String(e.source || ""), host: String(e.host || ""), url: String(e.url || ""),
+      themes: Array.isArray(e.themes) ? e.themes.slice(0, 4) : [], countries: Array.isArray(e.countries) ? e.countries.slice(0, 6) : []
+    })),
     topCountries: (Array.isArray(g.countries) ? g.countries : []).slice(0, 6).map((c) => ({ label: c.cc, value: Number(c.count) || 0 }))
   } : null;
   return {
@@ -306,7 +322,131 @@ function threatsSummary(threatRows, globalMap, { now, days }) {
   };
 }
 
-function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap }, { now, days }) {
+// Who might be impacted: customers' and users' reports with a site finding in the internal ledger (direct), and reports on sites
+// hosted or based in the countries the live feed is busiest in (context only: the same country is not proof of a hit).
+const LEVEL_RANK = { critical: 3, high: 2, watch: 1 };
+const clip = (value, n) => String(value || "").slice(0, n);
+const hostOf = (value) => { try { return new URL(/^[a-z]+:\/\//i.test(String(value)) ? String(value) : "https://" + value).hostname.replace(/^www\./, ""); } catch (error) { return clip(value, 120).toLowerCase(); } };
+const ccOf = (value) => { const cc = String(value || "").trim().toUpperCase(); return /^[A-Z]{2}$/.test(cc) ? cc : ""; };
+
+function reviewView(r) {
+  const report = r.report || {};
+  const targeted = report.targeted || {};
+  const email = String(r.email || "").trim().toLowerCase();
+  return {
+    reviewId: r.id || "",
+    host: hostOf(report.host || r.requestedUrl || r.url || ""),
+    url: clip(r.requestedUrl || r.url, 200),
+    email,
+    customer: CUSTOMER(r.source) && !!email,
+    paid: r.paid === true,
+    test: r.test === true || (!!email && core.isTestEmail(email)),
+    source: String(r.source || ""),
+    status: String(r.status || ""),
+    reviewedAt: iso(r.createdAt),
+    hosting: ccOf((targeted.hosting || {}).country || r.hostingCountry),
+    company: ccOf(targeted.companyCountry || (r.sweep || {}).cc)
+  };
+}
+
+function exposureSummary(threatRows, reviews, mapRanges, { now, days }) {
+  const start = now - (days || 7) * DAY;
+  const byId = new Map();
+  const views = [];
+  (reviews || []).filter(Boolean).forEach((r) => {
+    if (r.id && byId.has(r.id)) return;
+    const v = reviewView(r);
+    views.push(v);
+    if (r.id) byId.set(r.id, v);
+  });
+  const groups = new Map();
+  (threatRows || []).filter((t) => t && LEVEL_RANK[t.level] && t.role !== "context" && ms(t.observed_at) >= start).forEach((t) => {
+    const key = t.review_id || "host:" + (t.host || t.subject || "");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(t);
+  });
+  const direct = [];
+  groups.forEach((list, key) => {
+    const rv = byId.get(String(key)) || null;
+    if (rv && rv.test) return;
+    const sorted = list.slice().sort((a, b) => (LEVEL_RANK[b.level] - LEVEL_RANK[a.level]) || ms(b.observed_at) - ms(a.observed_at));
+    const seen = new Set();
+    const findings = [];
+    sorted.forEach((t) => {
+      const id = t.kind + "|" + (t.subject || t.host) + "|" + t.source;
+      if (seen.has(id) || findings.length >= 5) return;
+      seen.add(id);
+      findings.push({ kind: t.kind || "", level: t.level, source: clip(t.source, 60), evidence: clip(t.evidence, 160), delistStatus: t.delist_status || "none", observedAt: iso(t.observed_at) });
+    });
+    const top = sorted[0];
+    direct.push({
+      reviewId: rv ? rv.reviewId : String(top.review_id || ""),
+      host: (rv && rv.host) || top.host || top.subject || "",
+      url: rv ? rv.url : "",
+      email: rv ? rv.email : "",
+      customer: rv ? rv.customer : false,
+      known: !!rv,
+      paid: rv ? rv.paid : false,
+      source: rv ? rv.source : "",
+      reviewedAt: rv ? rv.reviewedAt : iso(top.observed_at),
+      country: ccOf(top.hosting_country) || (rv && rv.hosting) || "",
+      level: top.level,
+      findings,
+      findingCount: sorted.length
+    });
+  });
+  direct.sort((a, b) => (LEVEL_RANK[b.level] - LEVEL_RANK[a.level]) || (Number(b.customer) - Number(a.customer)) || ms(b.reviewedAt) - ms(a.reviewedAt));
+  const customers = new Map();
+  direct.filter((d) => d.email).forEach((d) => {
+    const c = customers.get(d.email) || { email: d.email, reports: 0, paid: 0, level: d.level, hosts: [] };
+    c.reports += 1;
+    if (d.paid) c.paid += 1;
+    if (LEVEL_RANK[d.level] > LEVEL_RANK[c.level]) c.level = d.level;
+    if (!c.hosts.includes(d.host) && c.hosts.length < 4) c.hosts.push(d.host);
+    customers.set(d.email, c);
+  });
+  const rangesIn = mapRanges || {};
+  const hotRange = rangesIn.live && rangesIn.live.total ? "live" : rangesIn["7d"] && rangesIn["7d"].total ? "7d" : "live";
+  const hotSrc = rangesIn[hotRange];
+  const hot = ((hotSrc && hotSrc.countries) || []).slice(0, 5).map((c) => ({ cc: c.cc, count: Number(c.count) || 0 }));
+  const hotBy = new Map(hot.map((h) => [h.cc, h.count]));
+  const directIds = new Set(direct.map((d) => d.reviewId).filter(Boolean));
+  const directHosts = new Set(direct.map((d) => d.host));
+  const regional = [];
+  let regionalSweep = 0;
+  const seenRegional = new Set();
+  views.filter((r) => !r.test && ms(r.reviewedAt) >= start && !directIds.has(r.reviewId) && !directHosts.has(r.host))
+    .sort((a, b) => ms(b.reviewedAt) - ms(a.reviewedAt)).forEach((r) => {
+      const cc = hotBy.has(r.hosting) ? r.hosting : hotBy.has(r.company) ? r.company : "";
+      if (!cc) return;
+      if (!r.customer) { regionalSweep += 1; return; }
+      const key = r.email + "|" + r.host;
+      if (seenRegional.has(key)) return;
+      seenRegional.add(key);
+      regional.push({ reviewId: r.reviewId, host: r.host, email: r.email, paid: r.paid, reviewedAt: r.reviewedAt, country: cc, basis: cc === r.hosting ? "hosted in" : "company in", liveCount: hotBy.get(cc) });
+    });
+  const customerList = [...customers.values()].sort((a, b) => (LEVEL_RANK[b.level] - LEVEL_RANK[a.level]) || b.reports - a.reports);
+  return {
+    windowDays: days || 7,
+    hotRange,
+    hot,
+    totals: {
+      directReports: direct.length,
+      directCustomers: customerList.length,
+      directPaid: direct.filter((d) => d.paid).length,
+      directSweep: direct.filter((d) => d.known && !d.customer).length,
+      directCritical: direct.filter((d) => d.level === "critical").length,
+      regionalReports: regional.length,
+      regionalCustomers: new Set(regional.map((r) => r.email)).size,
+      regionalSweep
+    },
+    direct: direct.slice(0, 40),
+    customers: customerList.slice(0, 20),
+    regional: regional.slice(0, 30)
+  };
+}
+
+function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews }, { now, days }) {
   const start = now - days * DAY;
   const real = (reviews || []).filter((r) => r && r.test !== true && ms(r.createdAt) >= start);
   const counted = real.filter((r) => Array.isArray(r.checks));
@@ -346,7 +486,8 @@ function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threa
     { key: "wordfence", name: "Wordfence feed (WordPress)", state: feed.state, detail: feed.detail, at: feed.at }
   ];
   if (tf) sources.push({ key: "threatfeeds", name: "Threat feeds (KEV, DROP, Feodo, GDELT, DB-IP)", state: tf.state, detail: tf.detail, at: tf.at });
-  const intel = threats !== undefined || globalMap !== undefined ? threatsSummary(threats, globalMap, { now, days }) : null;
+  const intel = threats !== undefined || globalMap !== undefined ? threatsSummary(threats, globalMap, { now, days, mapRanges }) : null;
+  const exposure = intel ? exposureSummary(threats, (reviews || []).concat(threatReviews || []), intel.map && intel.map.ranges, { now, days }) : null;
   return Object.assign(
     {
       ok: true,
@@ -359,7 +500,7 @@ function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threa
       sources
     },
     tf ? { threatFeeds: tf } : {},
-    intel ? { threats: intel.threats, map: intel.map } : {}
+    intel ? { threats: intel.threats, map: intel.map, exposure } : {}
   );
 }
 
@@ -373,15 +514,25 @@ async function checksSource(ctx) {
     try { return require("firebase-admin/storage").getStorage(); } catch (error) { return null; }
   })();
   const [reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap] = await Promise.all([
-    db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("createdAt", "test", "source", "checks").limit(5000).get().then(rowsOf).catch(() => []),
+    db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("createdAt", "test", "source", "checks", "email", "paid", "status", "requestedUrl", "hostingCountry", "sweep.cc", "report.host", "report.targeted.hosting.country", "report.targeted.companyCountry").limit(5000).get().then(rowsOf).catch(() => []),
     one(db.collection("webrisk_usage").doc(month)),
     one(db.collection("threatlist_usage").doc(month)),
     one(db.collection("ops_runs").doc("wordfenceFeed")),
     one(db.collection("ops_runs").doc("threatFeeds")),
-    db.collection("url_review_threats").orderBy("observed_at", "desc").select("id", "observed_at", "level", "kind", "host", "hosting_country", "source", "delist_status", "time_window").limit(1000).get().then(rowsOf).catch(() => []),
-    reviewMap.loadGlobalMapPayload({ storage, fetch: false, cacheTtlMs: 5 * 60 * 1000 }).catch(() => null)
+    db.collection("url_review_threats").orderBy("observed_at", "desc").select("id", "observed_at", "level", "kind", "host", "subject", "hosting_country", "source", "delist_status", "time_window", "review_id", "role", "evidence").limit(1000).get().then(rowsOf).catch(() => []),
+    reviewMap.loadGlobalMapPayload({ storage, fetch: false, query: { range: "live" } }).catch(() => null)
   ]);
-  return checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap }, { now, days });
+  // The other ranges come from the same stored object, already held in memory by the first read.
+  const others = await Promise.all(["7d", "30d", "90d"].map((range) => reviewMap.loadGlobalMapPayload({ storage, fetch: false, query: { range } }).catch(() => null)));
+  const mapRanges = { live: globalMap, "7d": others[0], "30d": others[1], "90d": others[2] };
+  // Threat rows whose review is older than the window: read just those reviews, so the customer behind a finding is still named.
+  const have = new Set(reviews.map((r) => r.id));
+  const missing = [...new Set((threats || []).filter((t) => t.review_id && !have.has(t.review_id) && (t.level === "critical" || t.level === "high" || t.level === "watch")).map((t) => t.review_id))].slice(0, 40);
+  const threatReviews = missing.length && typeof db.getAll === "function"
+    ? await db.getAll(...missing.map((id) => db.collection("url_reviews").doc(id)), { fieldMask: ["createdAt", "test", "source", "email", "paid", "status", "requestedUrl", "hostingCountry", "sweep.cc", "report.host", "report.targeted.hosting.country", "report.targeted.companyCountry"] })
+      .then((snaps) => snaps.filter((snap) => snap.exists).map((snap) => Object.assign({ id: snap.id }, snap.data()))).catch(() => [])
+    : [];
+  return checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews }, { now, days });
 }
 
 // --- Ask -----------------------------------------------------------------------------------------------------
@@ -394,4 +545,4 @@ const ask = (e) => {
   return view;
 };
 
-module.exports = { FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, threatFeedsState, threatsSummary, checksSummary, checksSource, ask, pastRerunLine: pastRerun.line };
+module.exports = { exposureSummary, FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, threatFeedsState, threatsSummary, checksSummary, checksSource, ask, pastRerunLine: pastRerun.line };

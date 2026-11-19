@@ -2493,6 +2493,31 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(threats).toContainText('phish-target.example.com');
 		await expect(threats).toContainText('1,786');
 		await expect(threats).toContainText('1,747');
+		const cyber = page.locator('[data-view="review"] [data-panel-id="review-cyber-map"]');
+		await expect(cyber).toContainText('Live cyber-attack map · Live (15 min)');
+		await expect(cyber.locator('svg.jv-geo-map path.jv-cy-c').first()).toBeAttached();
+		await expect(cyber.locator('circle.jv-cy-pin')).toHaveCount(3);
+		await expect(cyber).toContainText('bleepingcomputer.com');
+		await expect(cyber).toContainText('heise.de');
+		await expect(cyber).toContainText('2026.11.10');
+		await cyber.locator('[data-cy-range="30d"]').click();
+		await expect(cyber).toContainText('Live cyber-attack map · 30 days');
+		await expect(cyber).toContainText('5,840');
+		await cyber.locator('path[data-cy-cc="DE"]').dispatchEvent('click');
+		await expect(cyber.locator('.jv-cy-card')).toContainText('Germany');
+		await expect(cyber.locator('.jv-cy-card')).toContainText('shop-eu.example.de');
+		await expect(cyber).toContainText('heise.de');
+		await expect(cyber).not.toContainText('bleepingcomputer.com');
+		await cyber.locator('[data-cy-cc=""]').click();
+		await expect(cyber.locator('.jv-cy-card')).toHaveCount(0);
+		const exposed = page.locator('[data-view="review"] [data-panel-id="review-exposed"]');
+		await expect(exposed).toContainText('Who might be impacted · 2 customers');
+		await expect(exposed).toContainText('ana@ruiz.co');
+		await expect(exposed).toContainText('marta@tienda-eu.de');
+		await expect(exposed).toContainText('our sweep (not a customer)');
+		await expect(exposed).toContainText('phishing-host');
+		await expect(exposed).toContainText('lucia@hotel-mar.co');
+		await expect(exposed).toContainText('Context only');
 		const brief = page.locator('[data-view="review"] [data-panel-id="briefing"]');
 		await expect(brief).toContainText('near the 48-hour deadline');
 		await expect(brief).toContainText('paid fix request');
@@ -2504,6 +2529,8 @@ test.describe('admin statistics (Jarvis)', () => {
 				['review-fixes', 'web-fixes'],
 				['review-checks', 'web-checks'],
 				['review-threats', 'web-threats'],
+				['review-cyber-map', 'web-cyber-map'],
+				['review-exposed', 'web-exposed'],
 				['briefing', 'web-briefing'],
 			]) {
 				await page
@@ -2538,7 +2565,8 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(people.locator('[data-person="ana@ruiz.co"]')).toHaveAttribute('open', '');
 		if (process.env.JARVIS_SHOTS) {
 			for (const [id, name] of [
-				['review-checks', 'web-checks-desktop'],
+				['review-cyber-map', 'web-cyber-map-desktop'],
+				['review-exposed', 'web-exposed-desktop'],
 				['review-threats', 'web-threats-desktop'],
 			]) {
 				await page

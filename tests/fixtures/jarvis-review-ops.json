@@ -389,13 +389,28 @@
       "pendingDelist": 1,
       "criticalOpen": 1,
       "topKinds": [
-        { "label": "phishing-host", "value": 1 },
-        { "label": "known-exploit-software", "value": 2 }
+        {
+          "label": "phishing-host",
+          "value": 1
+        },
+        {
+          "label": "known-exploit-software",
+          "value": 2
+        }
       ],
       "topCountries": [
-        { "label": "US", "value": 2 },
-        { "label": "DE", "value": 1 },
-        { "label": "CO", "value": 1 }
+        {
+          "label": "US",
+          "value": 2
+        },
+        {
+          "label": "DE",
+          "value": 1
+        },
+        {
+          "label": "CO",
+          "value": 1
+        }
       ],
       "recentCritical": [
         {
@@ -430,9 +445,341 @@
       "kevCount": 1786,
       "dropRanges": 1747,
       "topCountries": [
-        { "label": "US", "value": 20 },
-        { "label": "DE", "value": 8 },
-        { "label": "GB", "value": 8 }
+        {
+          "label": "US",
+          "value": 20
+        },
+        {
+          "label": "DE",
+          "value": 8
+        },
+        {
+          "label": "GB",
+          "value": 8
+        }
+      ],
+      "mentions90d": 17210,
+      "historyDays": 90,
+      "kevVersion": "2026.11.10",
+      "attributions": [
+        "GDELT Project (https://www.gdeltproject.org/)",
+        "CISA Known Exploited Vulnerabilities Catalog (CC0 1.0)"
+      ],
+      "ranges": {
+        "live": {
+          "total": 99,
+          "countries": [
+            {
+              "cc": "US",
+              "count": 20,
+              "share": 20.2
+            },
+            {
+              "cc": "DE",
+              "count": 8,
+              "share": 8.1
+            },
+            {
+              "cc": "GB",
+              "count": 8,
+              "share": 8.1
+            },
+            {
+              "cc": "CO",
+              "count": 5,
+              "share": 5.1
+            },
+            {
+              "cc": "BR",
+              "count": 4,
+              "share": 4.0
+            },
+            {
+              "cc": "IN",
+              "count": 3,
+              "share": 3.0
+            }
+          ]
+        },
+        "7d": {
+          "total": 1420,
+          "countries": [
+            {
+              "cc": "US",
+              "count": 300,
+              "share": 21.1
+            },
+            {
+              "cc": "DE",
+              "count": 120,
+              "share": 8.5
+            },
+            {
+              "cc": "GB",
+              "count": 110,
+              "share": 7.7
+            },
+            {
+              "cc": "CO",
+              "count": 60,
+              "share": 4.2
+            },
+            {
+              "cc": "BR",
+              "count": 58,
+              "share": 4.1
+            }
+          ]
+        },
+        "30d": {
+          "total": 5840,
+          "countries": [
+            {
+              "cc": "US",
+              "count": 1200,
+              "share": 20.5
+            },
+            {
+              "cc": "DE",
+              "count": 470,
+              "share": 8.0
+            },
+            {
+              "cc": "GB",
+              "count": 430,
+              "share": 7.4
+            },
+            {
+              "cc": "CO",
+              "count": 250,
+              "share": 4.3
+            }
+          ]
+        },
+        "90d": {
+          "total": 17210,
+          "countries": [
+            {
+              "cc": "US",
+              "count": 3500,
+              "share": 20.3
+            },
+            {
+              "cc": "DE",
+              "count": 1400,
+              "share": 8.1
+            },
+            {
+              "cc": "GB",
+              "count": 1300,
+              "share": 7.6
+            },
+            {
+              "cc": "CO",
+              "count": 700,
+              "share": 4.1
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "date": "20261110T143000Z",
+          "source": "bleepingcomputer.com",
+          "host": "bleepingcomputer.com",
+          "url": "https://www.bleepingcomputer.com/news/security/example-ransomware/",
+          "themes": [
+            "CYBER_ATTACK",
+            "RANSOM"
+          ],
+          "countries": [
+            "US"
+          ]
+        },
+        {
+          "date": "20261110T141500Z",
+          "source": "heise.de",
+          "host": "heise.de",
+          "url": "https://www.heise.de/news/example-breach.html",
+          "themes": [
+            "BREACH"
+          ],
+          "countries": [
+            "DE"
+          ]
+        },
+        {
+          "date": "20261110T140000Z",
+          "source": "elespectador.com",
+          "host": "elespectador.com",
+          "url": "https://www.elespectador.com/example-ciberataque/",
+          "themes": [
+            "CYBER_ATTACK"
+          ],
+          "countries": [
+            "CO"
+          ]
+        }
+      ]
+    },
+    "exposure": {
+      "windowDays": 30,
+      "hotRange": "live",
+      "hot": [
+        {
+          "cc": "US",
+          "count": 20
+        },
+        {
+          "cc": "DE",
+          "count": 8
+        },
+        {
+          "cc": "GB",
+          "count": 8
+        },
+        {
+          "cc": "CO",
+          "count": 5
+        },
+        {
+          "cc": "BR",
+          "count": 4
+        }
+      ],
+      "totals": {
+        "directReports": 3,
+        "directCustomers": 2,
+        "directPaid": 1,
+        "directSweep": 1,
+        "directCritical": 1,
+        "regionalReports": 2,
+        "regionalCustomers": 2,
+        "regionalSweep": 4
+      },
+      "direct": [
+        {
+          "reviewId": "r-phish",
+          "host": "phish-target.example.com",
+          "url": "https://phish-target.example.com/",
+          "email": "ana@ruiz.co",
+          "customer": true,
+          "known": true,
+          "paid": true,
+          "source": "",
+          "reviewedAt": "2026-11-10T13:25:00.000Z",
+          "country": "US",
+          "level": "critical",
+          "findings": [
+            {
+              "kind": "phishing-host",
+              "level": "critical",
+              "source": "Google Web Risk",
+              "evidence": "Listed as SOCIAL_ENGINEERING",
+              "delistStatus": "pending",
+              "observedAt": "2026-11-10T13:30:00.000Z"
+            },
+            {
+              "kind": "exposed-secret",
+              "level": "high",
+              "source": "Page leak scanner",
+              "evidence": "Key in /app.js",
+              "delistStatus": "none",
+              "observedAt": "2026-11-10T13:25:00.000Z"
+            }
+          ],
+          "findingCount": 2
+        },
+        {
+          "reviewId": "r-shop",
+          "host": "shop-eu.example.de",
+          "url": "https://shop-eu.example.de/",
+          "email": "marta@tienda-eu.de",
+          "customer": true,
+          "known": true,
+          "paid": false,
+          "source": "",
+          "reviewedAt": "2026-11-10T10:55:00.000Z",
+          "country": "DE",
+          "level": "high",
+          "findings": [
+            {
+              "kind": "known-exploit-software",
+              "level": "high",
+              "source": "CISA KEV",
+              "evidence": "CVE-2026-1234 in Fortinet FortiOS",
+              "delistStatus": "none",
+              "observedAt": "2026-11-10T11:00:00.000Z"
+            }
+          ],
+          "findingCount": 1
+        },
+        {
+          "reviewId": "r-sweep",
+          "host": "dental-uno.mx",
+          "url": "",
+          "email": "",
+          "customer": false,
+          "known": true,
+          "paid": false,
+          "source": "sweep",
+          "reviewedAt": "2026-11-09T09:00:00.000Z",
+          "country": "MX",
+          "level": "watch",
+          "findings": [
+            {
+              "kind": "breach-news",
+              "level": "watch",
+              "source": "GDELT",
+              "evidence": "Named in a breach headline",
+              "delistStatus": "none",
+              "observedAt": "2026-11-09T09:00:00.000Z"
+            }
+          ],
+          "findingCount": 1
+        }
+      ],
+      "customers": [
+        {
+          "email": "ana@ruiz.co",
+          "reports": 1,
+          "paid": 1,
+          "level": "critical",
+          "hosts": [
+            "phish-target.example.com"
+          ]
+        },
+        {
+          "email": "marta@tienda-eu.de",
+          "reports": 1,
+          "paid": 0,
+          "level": "high",
+          "hosts": [
+            "shop-eu.example.de"
+          ]
+        }
+      ],
+      "regional": [
+        {
+          "reviewId": "r-gb",
+          "host": "cafe-london.co.uk",
+          "email": "tom@cafe-london.co.uk",
+          "paid": false,
+          "reviewedAt": "2026-11-08T12:00:00.000Z",
+          "country": "GB",
+          "basis": "hosted in",
+          "liveCount": 8
+        },
+        {
+          "reviewId": "r-co",
+          "host": "hotel-mar.co",
+          "email": "lucia@hotel-mar.co",
+          "paid": true,
+          "reviewedAt": "2026-11-07T15:30:00.000Z",
+          "country": "CO",
+          "basis": "company in",
+          "liveCount": 5
+        }
       ]
     }
   }

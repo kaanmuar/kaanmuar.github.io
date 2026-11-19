@@ -353,6 +353,8 @@ private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
     RescuePanel(s)
     FixesPanel(s)
     ChecksPanel(s)
+    CyberMapPanel(s)
+    ExposedPanel(s)
     ThreatsPanel(s)
     val alerts = health.obj("alerts").objs("latest")
     if (alerts.isNotEmpty()) Panel("Review alerts", id = "review-alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
