@@ -568,5 +568,20 @@
 		"first": "2026-11-19",
 		"corner": "A",
 		"license": "MIT"
+	},
+	"pourdev/pour-engine": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"Capta1nRaj/goshipit": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "Apache-2.0"
+	},
+	"rbartoli/obsidian-tela-theme": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
 	}
 }
