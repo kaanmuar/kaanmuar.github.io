@@ -42,6 +42,7 @@ function keepUntil() {
 const siteReport = require("./site-report-mail");
 const ownerLayout = require("./owner-mail");
 const ops = require("./ops-schedule");
+const retention = require("./retention");
 const systemReview = require("./system-review");
 const githubApp = require("./github-app");
 const jarvisProcesses = require("./jarvis-processes");
@@ -2823,6 +2824,15 @@ exports.sweepReviews = require("firebase-functions/v2/scheduler").onSchedule({
   maxInstances: 1,
   secrets: SECRETS.sweep
 }, () => track("sweepReviews", () => sweepReviews()));
+
+// Retention (#3823): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
+exports.retentionSweep = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("retentionSweep"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "1GiB",
+  maxInstances: 1
+}, () => track("retentionSweep", () => retention.sweep(getFirestore(), { apply: process.env.RETENTION_APPLY === "on" })));
 
 exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("outreachSweep"),

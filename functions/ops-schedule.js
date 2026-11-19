@@ -51,6 +51,7 @@ const JOBS = [
   { job: "emailQuarterSiteReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour site report, only when something happened" },
   { job: "emailQuarterReviewReport", cron: "*/15 * * * *", gap: 1, what: "Quarter-hour review report, only when something happened" },
   { job: "exportFirestoreWeekly", cron: "0 8 * * 0", gap: 7 * 24 + 2, what: "Firestore backup" },
+  { job: "retentionSweep", cron: "30 9 * * 1", gap: 7 * 24 + 2, what: "Retention (#3823): delete outreach rows 12 months after the last contact (declined or blocked people keep a stop-list stub), engagement posts 12 months, contact messages, ratings and bookings 24 months. A dry run until RETENTION_APPLY=on; counts only, in retention_runs" },
   { job: "opsWatchdog", cron: "10 8 * * *", gap: 26, what: "Flag missed, failed or crashed jobs, and the system review (#2409): workflows failing on main with the cause from their logs and its fix, security alerts, stale PRs; Monday digest of budgets" },
   { job: "remindOwnerReplies", cron: "0 9 * * 1-6", gap: 50, what: "List owner replies still waiting for a decision, by email only with its switch on; the evening digest lists them too" },
   { job: "sendReviewNotes", cron: "0 10 * * 1-6", gap: 50, what: "Follow-up notes to askers (REVIEW_NOTES_LIVE=1)" },
