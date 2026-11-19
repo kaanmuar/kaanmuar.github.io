@@ -277,7 +277,9 @@ function xTexts(j, into = {}) {
   return into;
 }
 
-const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
+const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance",
+  // Next to our field and rising (#3814)
+  "ChatGPT search", "vibe coding", "AI agents", "website outage", "data breach", "web dev"];
 
 const x = {
   name: "X", account: "qalaburlreview", home: "https://x.com/home", queries: GENERAL,
@@ -679,7 +681,7 @@ function igMedia(o, into) {
 
 const instagram = {
   name: "Instagram", account: "qaurlreview", home: "https://www.instagram.com/",
-  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics"],
+  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics", "chatgpt", "vibecoding", "webdev", "techtok"],
   async signedIn(page) {
     if (!(await visible(page.locator(icon(SAYS.home)), 15000))) return "";
     // This endpoint sometimes answers with an HTML page that still carries the username.
@@ -792,7 +794,7 @@ const TT_MENU = '[data-e2e="comment-at-user"], [data-e2e^="comment-at-list"] > d
 
 const tiktok = {
   name: "TikTok", account: "qalaburlreview", home: "https://www.tiktok.com/",
-  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo"],
+  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo", "vibe coding", "chatgpt tips", "website hacked"],
   async signedIn(page) {
     if (await visible(page.locator('[data-e2e="top-login-button"]'), 6000)) return "";
     const me = page.locator('a[data-e2e="nav-profile"]');

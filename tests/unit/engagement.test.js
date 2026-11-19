@@ -34,14 +34,14 @@ const scored = (o) => {
 test('settings fill defaults, clamp numbers and merge a patch', () => {
 	const s = E.settings(null);
 	assert.equal(s.paused, false);
-	assert.deepEqual(s.caps, { like: 60, repost: 15, follow: 15, reply: 15, join: 2 });
+	assert.deepEqual(s.caps, { like: 75, repost: 19, follow: 19, reply: 19, join: 2 });
 	assert.ok(s.competitors.includes('semrush'));
 	assert.equal(E.settings({ caps: { like: -4, reply: 9999 } }).caps.like, 0);
 	assert.equal(E.settings({ caps: { reply: 9999 } }).caps.reply, 500);
 	const next = E.settingsPatch(s, { paused: true, caps: { reply: 5 }, competitors: 'acme, Foo\nbar' });
 	assert.equal(next.paused, true);
 	assert.equal(next.caps.reply, 5);
-	assert.equal(next.caps.like, 60);
+	assert.equal(next.caps.like, 75);
 	assert.deepEqual(next.competitors, ['acme', 'foo', 'bar']);
 	assert.throws(() => E.settingsPatch(s, {}), /Nothing to change/);
 });
@@ -196,7 +196,7 @@ test('decide skips political, angry and promo posts, replies in any post languag
 	);
 	assert.equal(th.actions.reply.status, 'waiting');
 	assert.equal(th.actions.reply.lang, 'th');
-	assert.equal(th.actions.reply.english, 'We test with a screen reader.');
+	assert.equal(th.actions.reply.english, 'We test with a screen reader. #a11y');
 	assert.equal(th.actions.like.status, 'planned');
 	assert.equal(E.decide(Object.assign({}, p, { network: 'hn' }), null, c, {}, NOW).verdict, 'trend');
 });
@@ -236,11 +236,11 @@ test("a reply in a language Carlos may not read carries Gemini's English to the 
 	const d = E.decide(p, out[p.key], E.settings(null), {}, NOW, new Set());
 	assert.equal(d.actions.reply.status, 'waiting');
 	assert.equal(d.actions.reply.lang, 'ja');
-	assert.equal(d.actions.reply.english, 'We run axe in the same Playwright job, see');
+	assert.equal(d.actions.reply.english, 'We run axe in the same Playwright job, see #a11y');
 	assert.equal(E.decide(en, out[en.key], E.settings(null), {}, NOW, new Set()).actions.reply.english, undefined);
 	const doc = Object.assign({ key: 'mastodon_0123456789abcdef0123', seenAt: hoursAgo(1) }, p, { actions: d.actions });
-	assert.ok(E.replyPush(doc).lines.includes('In English: We run axe in the same Playwright job, see'));
-	assert.equal(E.decideReply(doc, 'approve', '', 'c', NOW).reply.english, 'We run axe in the same Playwright job, see');
+	assert.ok(E.replyPush(doc).lines.includes('In English: We run axe in the same Playwright job, see #a11y'));
+	assert.equal(E.decideReply(doc, 'approve', '', 'c', NOW).reply.english, 'We run axe in the same Playwright job, see #a11y');
 	assert.equal(E.decideReply(doc, 'edit', '私たちは CI で axe を実行します。', 'c', NOW).reply.english, '');
 	const chain = E.chainDecide(
 		Object.assign({}, p, { answered: false, liked: true }),

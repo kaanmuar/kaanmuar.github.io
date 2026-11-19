@@ -109,6 +109,24 @@ function usedToday(daily) {
 }
 
 /**
+ * Trend-safe replies (#3814, engagement-trends.js autoReply) go out on their own in a live run, once outreach-send says
+ * "auto" (after the first days of approval) and within the network's daily reply cap; the rest wait for Carlos.
+ */
+async function autoApprove(deps, conf, docs, now) {
+  const safe = docs.filter((d) => d.actions.reply && d.actions.reply.status === "waiting" && d.actions.reply.trendSafe === true);
+  if (!safe.length || !conf.live) return 0;
+  const send = await Send.readSend(deps.db, now);
+  let n = 0;
+  for (const d of safe.sort((a, b) => b.score - a.score)) {
+    if (Send.modeOf(send, { network: d.network, kind: "reply", now }) !== "auto") break;
+    if (!(await Send.useCap(deps.db, { network: d.network, kind: "reply", now, settings: send })).ok) continue;
+    Object.assign(d.actions.reply, { status: "approved", auto: true, decidedAt: new Date(now).toISOString(), by: "auto" });
+    n += 1;
+  }
+  return n;
+}
+
+/**
  * Posts read this run, from the cloud readers or the Mac's browser (functions/engagement-mac.js): kept when in our
  * field, scored, read by Gemini, planned, stored and counted, and the best waiting replies pushed to Carlos.
  * read: posts read per network; errors: per network.
@@ -118,11 +136,13 @@ async function takeIn(deps, conf, posts, read, errors) {
   const seen = new Map();
   posts.forEach((p) => {
     const s = E.score(p, now);
-    if (!s.relevance) return;
+    // A post trending hard is read even with no field keyword in it (#3814); Gemini and the guards decide whether we answer.
+    if (!s.relevance && !E.Trends.viral(p, s)) return;
     const key = E.keyOf(p.network, p.id);
     if (!seen.has(key) || seen.get(key).score < s.score) seen.set(key, Object.assign({ key }, p, s));
   });
   const candidates = Array.from(seen.values());
+  const trends = E.Trends.trendingNow(candidates);
   const refs = candidates.map((p) => db.collection("engagement_posts").doc(p.key));
   const known = refs.length ? await db.getAll(...refs) : [];
   const fresh = [];
@@ -148,7 +168,7 @@ async function takeIn(deps, conf, posts, read, errors) {
   const follows = await followed(db, now).catch(() => new Set());
   const replied = await repliedThreads(db);
   const plan = (p, read) => {
-    const d = E.decide(p, read, conf, used, now, follows, replied);
+    const d = E.decide(p, read, conf, used, now, follows, replied, trends);
     if (d.actions.follow && d.actions.follow.status === "planned") follows.add(p.network + ":" + String((p.author || {}).handle || "").toLowerCase());
     if (d.actions.reply && d.actions.reply.status === "waiting") replied.add(E.threadKey(p));
     return Object.assign({ key: p.key }, E.postDoc(p, read, d, now));
@@ -158,6 +178,8 @@ async function takeIn(deps, conf, posts, read, errors) {
     const d = plan(post, ai[post.key] || E.storedAi(doc));
     return Object.assign(d, { seenAt: doc.seenAt, day: doc.day, decidedAgainAt: new Date(now).toISOString() });
   });
+
+  await autoApprove(deps, conf, docs.concat(again), now);
 
   const writes = docs.map((d) => ({ ref: db.collection("engagement_posts").doc(d.key), data: d, set: true }))
     .concat(again.map((d) => ({ ref: db.collection("engagement_posts").doc(d.key), data: d, set: true })))
@@ -945,4 +967,4 @@ async function source(ctx) {
   };
 }
 
-module.exports = { scout, expire, takeIn, reportSites, reportPass, rerunPass, profilePass, profilePosts, promoteCopies, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
+module.exports = { scout, expire, takeIn, autoApprove, reportSites, reportPass, rerunPass, profilePass, profilePosts, promoteCopies, macReports, shortLink, followChains, takeChains, runNote, sendReport, buildReport, resultsTicket, windowOf, decide, connect, saveSettings, readSettings, source, increments, usedToday, clearCache, withAccounts, STALE, geminiJson };
