@@ -5521,6 +5521,174 @@
 			securityMatrix(sec.pages || []);
 	}
 
+	function targetedRegion(code) {
+		const cc = String(code || '')
+			.trim()
+			.toUpperCase();
+		if (!cc) return '';
+		try {
+			if (typeof Intl === 'object' && Intl.DisplayNames) {
+				const label = new Intl.DisplayNames([rc.lang || 'en'], { type: 'region' }).of(cc);
+				if (label && label !== cc) return label + ' (' + cc + ')';
+			}
+		} catch (e) {}
+		return cc;
+	}
+
+	function cleanTargetedText(raw) {
+		const banned = new RegExp(['spam' + 'haus', 'phish' + 'stats', 'url' + 'haus', 'barra' + 'cuda'].join('|'), 'gi');
+		return String(raw == null ? '' : raw).replace(banned, 'Threat list');
+	}
+
+	function paintTargeted(report, paid) {
+		if (slotRoot) return;
+		const head = document.getElementById('targeted-head');
+		const box = document.getElementById('targeted');
+		if (!head || !box) return;
+		const t = report && report.targeted;
+		const show = Boolean(
+			paid === true &&
+				!report.preview &&
+				!report.live &&
+				!(current && current.sample) &&
+				t &&
+				typeof t === 'object'
+		);
+		head.hidden = !show;
+		box.hidden = !show;
+		if (!show) {
+			box.innerHTML = '';
+			return;
+		}
+		const statusKey = ['clear', 'info', 'watch', 'high', 'critical'].includes(t.status)
+			? t.status
+			: ['info', 'watch', 'high', 'critical'].includes(t.level)
+				? t.level
+				: 'clear';
+		const statusLabel = rc.word('targetedStatus', statusKey, statusKey);
+		const hosting =
+			(t.hosting && typeof t.hosting === 'object' && t.hosting) ||
+			(t.host && typeof t.host === 'object' && t.host) ||
+			{};
+		const metaParts = [];
+		if (hosting.ip) {
+			metaParts.push(
+				'<span>' +
+					esc(rc.t('targetedHostIp', { ip: '\u0000' })).replace(
+						'\u0000',
+						() => '<strong class="notranslate" translate="no">' + esc(hosting.ip) + '</strong>'
+					) +
+					'</span>'
+			);
+		}
+		if (hosting.country) {
+			const region = targetedRegion(hosting.country);
+			metaParts.push(
+				'<span>' +
+					esc(rc.t('targetedHostCountry', { country: '\u0000' })).replace(
+						'\u0000',
+						() => '<strong>' + esc(region) + '</strong>'
+					) +
+					'</span>'
+			);
+		}
+		const asnNum = String(hosting.asn || '').replace(/^AS/i, '');
+		if (asnNum) {
+			metaParts.push(
+				'<span>' +
+					esc(rc.t('targetedHostAsn', { asn: asnNum })) +
+					(hosting.asName ? ' · <span class="notranslate" translate="no">' + esc(hosting.asName) + '</span>' : '') +
+					'</span>'
+			);
+		}
+		const mentions = (t.context && Number(t.context.cyberMentions15m)) || Number(t.mentions15m) || 0;
+		if (mentions > 0 && hosting.country) {
+			metaParts.push(
+				'<span>' +
+					esc(rc.t('targetedMentions', { n: mentions, country: targetedRegion(hosting.country) })) +
+					'</span>'
+			);
+		}
+		const items = Array.isArray(t.items) ? t.items : [];
+		const listHtml = items.length
+			? '<div class="targeted-list">' +
+				items
+					.map((item) => {
+						const lvl = ['critical', 'high', 'watch', 'info'].includes(item.level) ? item.level : 'info';
+						const lvlText = rc.word('severity', lvl, lvl);
+						const kindText = rc.word('targetedKind', item.kind, item.kind || '');
+						const roleText = item.role ? rc.word('targetedRole', item.role, item.role) : '';
+						const confText = item.confidence ? rc.word('targetedConf', item.confidence, item.confidence) : '';
+						const src = cleanTargetedText(item.source || '');
+						const ref = String(item.source_ref || item.refUrl || '').trim();
+						const srcHtml = /^https?:\/\//i.test(ref)
+							? '<a class="notranslate" translate="no" href="' +
+								esc(ref) +
+								'" target="_blank" rel="noopener noreferrer">' +
+								esc(src || rc.t('targetedRef')) +
+								'</a>'
+							: '<span class="notranslate" translate="no">' + esc(src) + '</span>';
+						const firstRaw = item.first_seen || item.firstSeen || '';
+						const lastRaw = item.last_seen || item.lastSeen || '';
+						const first = firstRaw ? String(firstRaw).slice(0, 10) : '';
+						const last = lastRaw ? String(lastRaw).slice(0, 10) : '';
+						const dates =
+							first || last
+								? rc.t('targetedDates', { first: first || last, last: last || first })
+								: '';
+						return (
+							'<article class="targeted-item lvl-' +
+							esc(lvl) +
+							'">' +
+							'<div class="targeted-chips">' +
+							'<span class="targeted-badge is-' +
+							esc(lvl) +
+							'">' +
+							esc(lvlText) +
+							'</span>' +
+							(kindText ? '<span class="badge">' + esc(kindText) + '</span>' : '') +
+							(roleText ? '<span class="badge">' + esc(roleText) + '</span>' : '') +
+							(confText ? '<span class="badge">' + esc(confText) + '</span>' : '') +
+							'</div>' +
+							(item.subject
+								? '<h3 class="notranslate" translate="no">' + esc(cleanTargetedText(item.subject)) + '</h3>'
+								: '') +
+							(item.evidence ? '<p>' + cveLinks(cleanTargetedText(item.evidence)) + '</p>' : '') +
+							'<p class="meta-line">' +
+							srcHtml +
+							(dates ? ' · ' + esc(dates) : '') +
+							'</p>' +
+							'</article>'
+						);
+					})
+					.join('') +
+				'</div>'
+			: '<p class="muted">' + esc(rc.t('targetedEmpty')) + '</p>';
+		const foot = [];
+		const read = (Array.isArray(t.sourcesRead) ? t.sourcesRead : []).map(cleanTargetedText).filter(Boolean);
+		const skipped = (Array.isArray(t.sourcesSkipped) ? t.sourcesSkipped : [])
+			.map((s) => cleanTargetedText(typeof s === 'string' ? s : s && s.source))
+			.filter(Boolean);
+		const attr = (Array.isArray(t.attributions) ? t.attributions : []).map(cleanTargetedText).filter(Boolean);
+		if (read.length) foot.push('<span>' + esc(rc.t('targetedSources', { list: read.join(', ') })) + '</span>');
+		if (skipped.length) foot.push('<span>' + esc(rc.t('targetedSkipped', { list: skipped.join(', ') })) + '</span>');
+		if (attr.length) foot.push('<span>' + esc(rc.t('targetedAttr', { list: attr.join(' · ') })) + '</span>');
+		box.innerHTML =
+			'<div class="targeted-head">' +
+			'<span class="targeted-badge is-' +
+			esc(statusKey) +
+			'">' +
+			esc(statusLabel) +
+			'</span>' +
+			'<span class="meta-line">' +
+			esc(rc.t('targetedPrivateNote')) +
+			'</span>' +
+			'</div>' +
+			(metaParts.length ? '<div class="targeted-meta">' + metaParts.join('') + '</div>' : '') +
+			listHtml +
+			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '');
+	}
+
 	function headerCols() {
 		return [
 			['hsts', 'HSTS'],
@@ -6595,6 +6763,7 @@
 		const paid = !!payload.paid;
 		paintVisuals(report, paid);
 		paintInsights(report, paid, fixed);
+		paintTargeted(report, paid);
 		const offer = document.getElementById('unlock-offer');
 		paintOffer(offer, !paid && !sample);
 		// Soft preview uses Unlock, not the paid reopen quote (#3478).
