@@ -105,7 +105,17 @@ const release = (owned) => owned.splice(0).forEach(P.unlock);
 const readConfig = () => { try { return JSON.parse(fs.readFileSync(CONFIG, "utf8")); } catch (error) { return {}; } };
 const writeConfig = (c) => { fs.writeFileSync(CONFIG, JSON.stringify(c, null, 2)); fs.chmodSync(CONFIG, 0o600); };
 const bogotaHour = () => new Date(Date.now() - 5 * 3600000).getUTCHours();
-const pickNets = (arg) => { const want = String(arg || "").split(",").filter(Boolean); return want.length ? want.filter((k) => NETWORKS[k]) : Object.keys(NETWORKS); };
+// Networks this agent never signs in to. Carlos's personal Facebook profile stays deactivated on purpose (#3879):
+// signing it in, by login, by restore-sessions or by a cookie import, reactivates it, and the QA-lab Page runs on its
+// Graph Page token without a personal login.
+const PAUSED = { facebook: "Carlos's personal profile stays deactivated on purpose (#3879)" };
+const pickNets = (arg) => {
+  const want = String(arg || "").split(",").filter(Boolean);
+  const held = want.filter((k) => PAUSED[k]);
+  if (held.length) log(names(held) + ": " + PAUSED[held[0]] + "; the agent does not sign in there.");
+  return (want.length ? want.filter((k) => NETWORKS[k]) : Object.keys(NETWORKS)).filter((k) => !PAUSED[k]);
+};
+const pausedHost = (domain) => Object.keys(PAUSED).some((k) => P.cookieOf(domain, k));
 
 function playwright() {
   for (const name of ["playwright-core", "playwright"]) {
@@ -294,10 +304,10 @@ async function restoreSessions(nets, parallel) {
 
 /** Sessions signed in elsewhere on this Mac (Playwright cookies as JSON), only for the agent's networks, into every profile. */
 async function importCookies(file) {
-  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => P.cookieOf(c.domain));
+  const list = JSON.parse(fs.readFileSync(file, "utf8")).filter((c) => P.cookieOf(c.domain) && !pausedHost(c.domain));
   const owned = [];
   try {
-    for (const u of claim(Object.keys(NETWORKS), owned)) {
+    for (const u of claim(pickNets(), owned)) {
       const { ctx } = await launch(true, u.profile);
       try { await ctx.addCookies(list); } finally { await ctx.close(); }
     }
@@ -647,7 +657,7 @@ async function main() {
   if (cmd === "setup") {
     if (!readConfig().token) await pair();
     install(parallel);
-    await login(Object.keys(NETWORKS), parallel);
+    await login(pickNets(), parallel);
     return cloneProfiles(Object.keys(NETWORKS), false, parallel);
   }
   const src = fs.readFileSync(__filename, "utf8").split("\n");
