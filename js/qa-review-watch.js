@@ -24,7 +24,7 @@
 		Playwright: 'playwright.svg',
 	};
 	const LOGO_VERSION = '20261110';
-	const KINDS = ['lists', 'linked', 'hacked', 'lookalike', 'exposed', 'mail', 'blocklist', 'headers', 'tls', 'a11y'];
+	const KINDS = ['lists', 'linked', 'hacked', 'lookalike', 'exposed', 'mail', 'blocklist', 'headers', 'tls', 'a11y', 'targeted'];
 	const WARN_DAYS = 21;
 	const BOT_UA =
 		'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.116 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
@@ -67,6 +67,7 @@
 				headers: 'Security baseline',
 				tls: 'Certificate and uptime',
 				a11y: 'Accessibility',
+				targeted: 'Attack and exploit sources',
 				regression: 'Fix regression',
 			},
 			verdict: { fail: 'fails', risk: 'at risk', person: 'needs a person', pass: 'passes', gone: 'no longer flagged' },
@@ -119,6 +120,12 @@
 				'axe-core, through @axe-core/playwright, and Pa11y rerun WCAG 2.1 AA on the pages where this review found problems{rules}. Any violation fails the build.',
 			],
 			rules: ' (axe rules: {list})',
+			targeted: [
+				'Attack and exploit signals on {host} stay cleared',
+				'This review matched public attack and exploit sources{sources}. The scripts re-read those feeds and recheck the libraries, hosting addresses and certificate the review flagged. Any return fails the build.',
+			],
+			targetedSources: ' (sources read at review: {list})',
+			targetedSourcesNote: 'Sources read at review: {list}',
 			fixTitle: 'Fixed by your fix package: keep it fixed',
 			fixIntro:
 				'The re-review marked these findings fixed. Each pin reruns its cases every day, so a fix cannot quietly come undone.',
@@ -154,6 +161,7 @@
 				headers: 'Sicherheits-Basisscan',
 				tls: 'Zertifikat und Erreichbarkeit',
 				a11y: 'Barrierefreiheit',
+				targeted: 'Angriffs- und Exploit-Quellen',
 				regression: 'Rückfall nach Behebung',
 			},
 			verdict: {
@@ -212,6 +220,12 @@
 				'axe-core über @axe-core/playwright und Pa11y prüfen WCAG 2.1 AA erneut auf den Seiten, auf denen diese Prüfung Probleme gefunden hat{rules}. Jeder Verstoß lässt den Build scheitern.',
 			],
 			rules: ' (axe-Regeln: {list})',
+			targeted: [
+				'Angriffs- und Exploit-Signale für {host} bleiben aus',
+				'Diese Prüfung hat öffentliche Angriffs- und Exploit-Quellen gematcht{sources}. Die Skripte lesen diese Feeds erneut und prüfen die Bibliotheken, Hosting-Adressen und das Zertifikat, die die Prüfung markiert hat. Jedes Wiederauftreten lässt den Build scheitern.',
+			],
+			targetedSources: ' (gelesene Quellen: {list})',
+			targetedSourcesNote: 'Gelesene Quellen: {list}',
 			fixTitle: 'Durch Ihr Behebungspaket behoben: so soll es bleiben',
 			fixIntro:
 				'Die erneute Prüfung hat diese Befunde als behoben markiert. Jede Fixierung führt ihre Fälle täglich erneut aus, damit eine Behebung nicht unbemerkt verloren geht.',
@@ -247,6 +261,7 @@
 				headers: 'Línea base de seguridad',
 				tls: 'Certificado y disponibilidad',
 				a11y: 'Accesibilidad',
+				targeted: 'Fuentes de ataque y exploits',
 				regression: 'Regresión de un arreglo',
 			},
 			verdict: {
@@ -305,6 +320,12 @@
 				'axe-core, mediante @axe-core/playwright, y Pa11y vuelven a pasar WCAG 2.1 AA en las páginas donde esta revisión encontró problemas{rules}. Cualquier infracción hace fallar el build.',
 			],
 			rules: ' (reglas de axe: {list})',
+			targeted: [
+				'Las señales de ataque y exploit en {host} siguen despejadas',
+				'Esta revisión coincidió con fuentes públicas de ataque y exploits{sources}. Los scripts vuelven a leer esos feeds y comprueban las bibliotecas, direcciones de hosting y certificado que señaló la revisión. Cualquier regreso hace fallar el build.',
+			],
+			targetedSources: ' (fuentes leídas en la revisión: {list})',
+			targetedSourcesNote: 'Fuentes leídas en la revisión: {list}',
 			fixTitle: 'Arreglado con tu paquete: que siga arreglado',
 			fixIntro:
 				'La nueva revisión marcó estos hallazgos como arreglados. Cada fijación vuelve a ejecutar sus casos cada día, para que un arreglo no se deshaga sin que nadie lo note.',
@@ -340,6 +361,7 @@
 				headers: 'Base de sécurité',
 				tls: 'Certificat et disponibilité',
 				a11y: 'Accessibilité',
+				targeted: 'Sources d’attaque et d’exploit',
 				regression: 'Régression d’un correctif',
 			},
 			verdict: {
@@ -398,6 +420,12 @@
 				'axe-core, via @axe-core/playwright, et Pa11y relancent WCAG 2.1 AA sur les pages où cette analyse a trouvé des problèmes{rules}. La moindre violation fait échouer le build.',
 			],
 			rules: ' (règles axe : {list})',
+			targeted: [
+				'Les signaux d’attaque et d’exploit sur {host} restent levés',
+				'Cette analyse a correspondu à des sources publiques d’attaque et d’exploit{sources}. Les scripts relisent ces flux et revérifient les bibliothèques, adresses d’hébergement et certificat signalés. Tout retour fait échouer le build.',
+			],
+			targetedSources: ' (sources lues lors de l’analyse : {list})',
+			targetedSourcesNote: 'Sources lues lors de l’analyse : {list}',
 			fixTitle: 'Corrigé par votre forfait : que ça le reste',
 			fixIntro:
 				'La nouvelle analyse a marqué ces constats comme corrigés. Chaque épingle relance ses cas chaque jour, pour qu’un correctif ne se défasse pas en silence.',
@@ -433,6 +461,7 @@
 				headers: 'Base di sicurezza',
 				tls: 'Certificato e disponibilità',
 				a11y: 'Accessibilità',
+				targeted: 'Fonti di attacco ed exploit',
 				regression: 'Regressione di una correzione',
 			},
 			verdict: {
@@ -491,6 +520,12 @@
 				'axe-core, tramite @axe-core/playwright, e Pa11y ripetono WCAG 2.1 AA sulle pagine dove questa revisione ha trovato problemi{rules}. Qualsiasi violazione fa fallire la build.',
 			],
 			rules: ' (regole axe: {list})',
+			targeted: [
+				'I segnali di attacco ed exploit su {host} restano assenti',
+				'Questa revisione ha trovato corrispondenze in fonti pubbliche di attacco ed exploit{sources}. Gli script rileggono quei feed e ricontrollano le librerie, gli indirizzi di hosting e il certificato segnalati. Ogni ritorno fa fallire la build.',
+			],
+			targetedSources: ' (fonti lette nella revisione: {list})',
+			targetedSourcesNote: 'Fonti lette nella revisione: {list}',
 			fixTitle: 'Corretto con il tuo pacchetto: che resti corretto',
 			fixIntro:
 				'La nuova revisione ha segnato questi rilievi come corretti. Ogni blocco riesegue i suoi casi ogni giorno, così una correzione non si annulla in silenzio.',
@@ -526,6 +561,7 @@
 				headers: 'Linha de base de segurança',
 				tls: 'Certificado e disponibilidade',
 				a11y: 'Acessibilidade',
+				targeted: 'Fontes de ataque e exploit',
 				regression: 'Regressão de uma correção',
 			},
 			verdict: {
@@ -584,6 +620,12 @@
 				'O axe-core, via @axe-core/playwright, e o Pa11y repetem a WCAG 2.1 AA nas páginas onde esta revisão encontrou problemas{rules}. Qualquer violação faz o build falhar.',
 			],
 			rules: ' (regras do axe: {list})',
+			targeted: [
+				'Os sinais de ataque e exploit em {host} continuam limpos',
+				'Esta revisão correspondeu a fontes públicas de ataque e exploit{sources}. Os scripts relêem esses feeds e verificam de novo as bibliotecas, endereços de hospedagem e certificado sinalados. Qualquer retorno faz o build falhar.',
+			],
+			targetedSources: ' (fontes lidas na revisão: {list})',
+			targetedSourcesNote: 'Fontes lidas na revisão: {list}',
 			fixTitle: 'Corrigido pelo seu pacote: que continue corrigido',
 			fixIntro:
 				'A nova revisão marcou estes achados como corrigidos. Cada fixação executa os seus casos todo dia, para que uma correção não se desfaça sem ninguém ver.',
@@ -647,6 +689,11 @@
 		selector: (v) => /^[a-z0-9][a-z0-9-]{0,62}$/i.test(String(v || '')),
 		base: (v) => /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(String(v || '')),
 		url: (v) => /^https:\/\/[^\s"'<>]+$/.test(String(v || '')),
+		libVer: (v) => /^[a-zA-Z0-9@._+\-/]{1,60}$/.test(String(v || '')),
+		asn: (v) => {
+			const n = Number(v);
+			return Number.isInteger(n) && n > 0 && n < 4294967295;
+		},
 	};
 
 	// The DKIM selectors the review found keys at; DKIM_SELECTORS overrides them.
@@ -727,6 +774,12 @@
 					rules: (data.rules || []).length ? fill(book.rules, { list: data.rules.join(', ') }) : '',
 				}),
 			};
+		if (item.kind === 'targeted') {
+			const sources = (data.sources || []).length
+				? fill(book.targetedSources, { list: data.sources.slice(0, 6).join(', ') })
+				: '';
+			return { title: fill(pair[0], vars), why: fill(pair[1], { sources }) };
+		}
 		return { title: fill(pair[0], vars), why: fill(pair[1], vars) };
 	}
 
@@ -810,6 +863,13 @@
 		}
 		if ((item.kind === 'exposed' || item.kind === 'a11y') && (data.paths || []).length) {
 			return '<p class="muted case-pages" translate="no">' + esc(data.paths.join(', ')) + '</p>';
+		}
+		if (item.kind === 'targeted' && (data.sources || []).length) {
+			return (
+				'<p class="muted watch-note">' +
+				esc(fill(book.targetedSourcesNote, { list: data.sources.slice(0, 6).join(', ') })) +
+				'</p>'
+			);
 		}
 		return '';
 	}
@@ -1067,6 +1127,35 @@
 			rows.forEach((row) => lines.push(row.domain + ' ' + (row.web ? 'yes' : 'no') + ' ' + (row.mx ? 'yes' : 'no')));
 			lines.push('LOOKALIKES');
 		});
+		(by.targeted || []).slice(0, 1).forEach((item) => {
+			const data = item.data || {};
+			const ips = keep(data.ips || [], SAFE.ip, 4);
+			const asn = SAFE.asn(data.asn) ? data.asn : 0;
+			if (!ips.length && !asn) return;
+			lines.push(
+				'',
+				'# ' + ids(by.targeted) + ' · Network blocklists (public feeds) for hosting addresses',
+				'fetch_feed() { curl -fsS --max-time 40 "$1" 2>/dev/null || true; }'
+			);
+			if (ips.length) {
+				lines.push(shArray('TARGET_IPS', ips));
+				lines.push(
+					'feodo=$(fetch_feed \'https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.json\')',
+					'drop=$(fetch_feed \'https://www.spamhaus.org/drop/drop_v4.json\')',
+					'for ip in "${TARGET_IPS[@]}"; do',
+					'  if [ -n "$feodo" ] && printf \'%s\' "$feodo" | grep -Fq "$ip"; then fail "$ip still appears on the Feodo Tracker blocklist"; else pass "$ip not on the Feodo Tracker blocklist"; fi',
+					'  if [ -n "$drop" ] && printf \'%s\' "$drop" | grep -Fq "$ip"; then fail "$ip still appears in the Spamhaus DROP feed"; else pass "$ip not seen in the Spamhaus DROP feed"; fi',
+					'done'
+				);
+			}
+			if (asn) {
+				lines.push(
+					'ASN=' + asn,
+					'asndrop=$(fetch_feed \'https://www.spamhaus.org/drop/asndrop.json\')',
+					'if [ -n "$asndrop" ] && printf \'%s\' "$asndrop" | grep -Fq \'"asn": \'$ASN; then fail "AS$ASN still appears in the Spamhaus ASN-DROP feed"; else pass "AS$ASN not seen in the Spamhaus ASN-DROP feed"; fi'
+				);
+			}
+		});
 		if (by.mail) {
 			lines.push(
 				'',
@@ -1220,6 +1309,39 @@
 				'  esac',
 				'done'
 			);
+		});
+		(by.targeted || []).slice(0, 1).forEach((item) => {
+			const data = item.data || {};
+			const libs = (data.libs || [])
+				.filter((row) => row && SAFE.libVer(row.name) && SAFE.libVer(row.version))
+				.slice(0, 12);
+			const certKinds = keep(data.certKinds || [], SAFE.key, 6);
+			const breach = data.breachCount > 0;
+			if (!libs.length && !certKinds.length && !breach) return;
+			lines.push('', '# ' + ids(by.targeted) + ' · Attack and exploit signals on $HOST (public rechecks only)');
+			if (libs.length) {
+				lines.push(
+					'page=$(curl -sL --max-time 25 "$BASE/" || true)',
+					'while read -r name version; do',
+					'  [ -n "$name" ] || continue',
+					'  if printf \'%s\' "$page" | grep -Fq "$version"; then fail "the home page still embeds $name $version"; else pass "$name $version not seen on the home page"; fi',
+					"done <<'LIBS'"
+				);
+				libs.forEach((row) => lines.push(row.name + ' ' + row.version));
+				lines.push('LIBS');
+			}
+			if (certKinds.length) {
+				lines.push(
+					'cert=$(echo | openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev/null | openssl x509 2>/dev/null || true)',
+					'if [ -z "$cert" ]; then fail "no certificate was read from $HOST:443"; else pass "a live certificate is still served"; fi',
+					'if curl -sS -o /dev/null --max-time 20 "$BASE/" 2>/dev/null; then pass "TLS chain still verifies"; else fail "curl could not verify TLS or reach $BASE/"; fi'
+				);
+			}
+			if (breach) {
+				lines.push(
+					"note 'Breach-news mentions from GDELT are not rechecked here; search public incident reporting if this finding returns.'"
+				);
+			}
 		});
 		if (by.tls) {
 			lines.push(
@@ -1704,9 +1826,9 @@
 		const sign = (report && report.signature && report.signature.mark) || '';
 		const line = 'QA-lab URL Review · ' + watch.host + (sign ? ' · ' + sign : '');
 		const out = [];
-		if (by.blocklist || by.lookalike || by.mail)
+		if (by.blocklist || by.lookalike || by.mail || by.targeted)
 			out.push({ path: 'dig/qa-lab-dns.sh', content: digScript(watch, by, line) });
-		if (by.lists || by.linked || by.hacked || by.exposed || by.tls)
+		if (by.lists || by.linked || by.hacked || by.exposed || by.tls || by.targeted)
 			out.push({ path: 'curl/qa-lab-http.sh', content: curlScript(watch, by, line) });
 		if (by.mail) out.push({ path: 'checkdmarc/check_mail.py', content: mailPython(watch, by, line) });
 		if (by.headers) out.push(...zapFiles(watch, by, line));

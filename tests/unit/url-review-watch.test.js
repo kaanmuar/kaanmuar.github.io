@@ -72,6 +72,12 @@ const OPEN = {
 		finding('a11y-contrast', 'fail', { area: 'Accessibility', pages: ['/', '/contact'] }),
 		finding('ax-image-alt', 'fail', { area: 'Accessibility', pages: ['/gallery'] }),
 	],
+	targeted: [
+		finding('sec-kev', 'fail'),
+		finding('sec-osv', 'risk'),
+		finding('sec-feodo', 'fail'),
+		finding('sec-drop', 'fail'),
+	],
 };
 
 const EXTRAS = {
@@ -135,6 +141,16 @@ const EXTRAS = {
 		},
 	},
 	tls: { validTo: '2026-11-25', daysLeft: 15 },
+	targeted: {
+		host: HOST,
+		sourcesRead: ['CISA KEV', 'OSV.dev', 'Feodo Tracker', 'Network DROP'],
+		kevHits: [{ cve: 'CVE-2024-99999', software: 'jquery@3.6.0' }],
+		osvHits: [{ name: 'lodash', version: '4.17.20', ids: ['GHSA-xxxx'] }],
+		dropIpHit: { ip: '45.155.205.42', cidr: '45.155.205.0/24' },
+		feodoHit: { ip: '45.155.205.42', malware: 'Pikabot' },
+		hosting: { ips: ['45.155.205.42', '198.51.100.7'] },
+		certCheck: { anomalies: [{ kind: 'missing-intermediate', detail: 'Incomplete chain' }] },
+	},
 };
 const BROWSER = {
 	ok: true,
@@ -151,6 +167,11 @@ const ALL = [].concat(...Object.values(OPEN));
 function report(built, extra) {
 	return Object.assign({ id: 'rep123', host: HOST, finalUrl: BASE + '/', cases: [], watch: built }, extra);
 }
+
+test('targeted finding keys map to the targeted kind', () => {
+	watchCases.TARGETED_KEYS.forEach((key) => assert.equal(watchCases.kindOf(key), 'targeted'));
+	assert.equal(watchCases.kindOf('sec-threatlists'), 'lists');
+});
 
 test.describe('watch cases on the server', () => {
 	test('nothing is written without an open finding', () => {
@@ -229,14 +250,24 @@ test.describe('watch cases on the server', () => {
 	});
 
 	test('a frosted preview keeps kinds and counts, never hosts, paths or terms', () => {
+		const targetedOnly = report(watchCases.build(OPEN.targeted, EXTRAS, CTX));
 		const full = report(watchCases.build(ALL, EXTRAS, CTX));
 		const frosted = core.previewReport(full);
 		const text = JSON.stringify(frosted.watch);
 		['evil-cdn', '/.env', 'examp1e', 'viagra', '192.0.2.10', 'urlhaus.abuse.ch'].forEach((secret) =>
 			assert.ok(text.indexOf(secret) === -1, secret + ' leaked into the preview')
 		);
+		['CVE-2024-99999', '45.155.205.42', 'CISA KEV', 'jquery', 'lodash'].forEach((secret) =>
+			assert.ok(text.indexOf(secret) === -1, secret + ' leaked into the watch preview')
+		);
 		assert.equal(frosted.watch.cases.length, full.watch.cases.length);
 		assert.equal(frosted.watch.cases.find((item) => item.kind === 'exposed').count, 2);
+		const targetedPreview = frosted.watch.cases.find((item) => item.kind === 'targeted');
+		assert.ok(targetedPreview, 'targeted case stays in the preview shell');
+		assert.equal(targetedPreview.count, targetedOnly.watch.cases[0].keys.length);
+		assert.equal(targetedPreview.data, undefined);
+		assert.equal(watchCases.preview(targetedOnly.watch).cases[0].count, OPEN.targeted.length);
+		assert.equal(JSON.stringify(watchCases.preview(targetedOnly.watch)).indexOf('OSV'), -1);
 	});
 
 	test('a fix re-review pins every finding it marked fixed', () => {
@@ -445,6 +476,19 @@ test.describe('watch scripts', () => {
 		} finally {
 			fs.rmSync(dir, { recursive: true, force: true });
 		}
+	});
+
+	test('the targeted watch scripts recheck public feeds and library versions', () => {
+		const built = report(watchCases.build(OPEN.targeted, EXTRAS, CTX));
+		const files = watch.files(built, { lang: 'en', scripts });
+		const byPath = new Map(files.map((file) => [file.path, file.content]));
+		const http = byPath.get('curl/qa-lab-http.sh');
+		const dns = byPath.get('dig/qa-lab-dns.sh');
+		assert.ok(http.indexOf('LIBS') !== -1);
+		assert.ok(http.indexOf('jquery 3.6.0') !== -1);
+		assert.ok(dns.indexOf('feodotracker.abuse.ch') !== -1);
+		assert.ok(dns.indexOf('spamhaus.org/drop') !== -1);
+		assert.ok(dns.indexOf("'45.155.205.42'") !== -1);
 	});
 
 	test('the DNS script asks every free blocklist about every address', () => {
