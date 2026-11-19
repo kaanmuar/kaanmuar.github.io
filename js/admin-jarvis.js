@@ -2606,7 +2606,7 @@ export function mountJarvis({
 
 	// --- the live cyber-attack map and who it might touch (#3894) ---------------------------------------------------
 	const CY_RANGES = [
-		['live', 'Live (15 min)'],
+		['live', 'Latest news, hourly'],
 		['7d', '7 days'],
 		['30d', '30 days'],
 		['90d', '90 days'],
@@ -2639,7 +2639,7 @@ export function mountJarvis({
 		if (!mp || !mp.ranges || !Object.keys(mp.ranges).length)
 			return panel(
 				'review-cyber-map',
-				'Live cyber-attack map',
+				'Cyber-attack map',
 				waiting('checks', 'Reading the global cyber feed…'),
 				{ wide: true }
 			);
@@ -2732,21 +2732,22 @@ export function mountJarvis({
 			{ label: 'Countries cited', value: cur.countries.length },
 			{ label: 'CISA KEV', value: mp.kevCount || 0 },
 			{ label: 'DROP blocks', value: mp.dropRanges || 0 },
+			{ label: 'Botnet servers online now (Feodo)', value: (mp.botnetNow && mp.botnetNow.online) || 0 },
 			{ label: 'Reports exposed', value: tot.directReports || 0, alert: (tot.directReports || 0) > 0 },
 			{ label: 'Customers exposed', value: tot.directCustomers || 0, alert: (tot.directCustomers || 0) > 0 },
 		])}${controls}<div class="jv-cy-wrap">${svg}</div>${legend}${card}
             <h4 class="jv-sub">Countries, ranked${sel ? ' · tap a row or the map to change country' : ''}</h4>${rank}
-            <h4 class="jv-sub">Live cyber-attack and breach headlines${sel ? ' · ' + esc(names[sel] || sel) : ''} · ${fmt(events.length)}</h4>${headlines}
+            <h4 class="jv-sub">Cyber-attack and breach headlines${sel ? ' · ' + esc(names[sel] || sel) : ''} · ${fmt(events.length)}</h4>${headlines}
             <p class="jv-note">${esc((mp.attributions || []).join(' · '))}</p>`;
 		return panel(
 			'review-cyber-map',
-			`Live cyber-attack map · ${esc(CY_RANGES.find((r) => r[0] === range)[1])}`,
+			`Cyber-attack map · ${esc(CY_RANGES.find((r) => r[0] === range)[1])}`,
 			body,
 			{
 				wide: true,
 				keep: true,
 				data: cur.countries.map((x) => ({ cc: x.cc, country: names[x.cc] || x.cc, events: x.count, share: x.share, exposedReports: (ours[x.cc] || {}).direct || 0, sameCountryReports: (ours[x.cc] || {}).regional || 0 })),
-				note: `Global telemetry: GDELT Project 15-minute feed${mp.slice ? ' (slice ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
+				note: `News telemetry: GDELT Project feed, updated hourly${mp.slice ? ' (latest file ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
 			}
 		);
 	}

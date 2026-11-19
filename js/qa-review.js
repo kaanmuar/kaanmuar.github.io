@@ -5586,6 +5586,54 @@
 		}
 	}
 
+	const ATTACK_FINDING_KEYS = [
+		'sec-kev',
+		'sec-osv',
+		'sec-drop',
+		'sec-feodo',
+		'sec-breach-news',
+		'sec-cert-anomaly',
+		'sec-targeted',
+	];
+
+	function attackSourceFindings(report) {
+		return (report && report.insights && Array.isArray(report.insights.findings) ? report.insights.findings : []).filter(
+			(row) => row && ATTACK_FINDING_KEYS.indexOf(String(row.key || '')) !== -1
+		);
+	}
+
+	async function downloadEvidencePdf() {
+		const button = document.getElementById('targeted-evidence-pdf');
+		if (!button || !current || !current.paid || !current.report) return;
+		button.disabled = true;
+		const busy = rc.t('evidencePdfBusy');
+		const prior = button.textContent;
+		button.textContent = busy;
+		try {
+			const data = await batchPost('/account/evidence/pdf', { id: current.report.id || current.id });
+			if (!data.pdf) {
+				setStatus(rc.t('evidencePdfFailed'), true);
+				return;
+			}
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(
+				new Blob([Uint8Array.from(atob(data.pdf), (ch) => ch.charCodeAt(0))], { type: 'application/pdf' })
+			);
+			link.download = data.filename || 'qa-lab-attack-evidence.pdf';
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+			setStatus(rc.t('evidencePdfDone'), false);
+			if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_evidence_pdf', 'URL Review', 'pdf');
+		} catch (error) {
+			setStatus(error && error.message ? error.message : rc.t('evidencePdfFailed'), true);
+		} finally {
+			button.disabled = false;
+			button.textContent = prior;
+		}
+	}
+
 	function paintTargeted(report, paid, payload) {
 		if (slotRoot) return;
 		const head = document.getElementById('targeted-head');
@@ -5732,6 +5780,11 @@
 						'<p class="meta-line targeted-owner-status" hidden></p>') +
 				'</div>'
 			: '';
+		const pdfBtn = attackSourceFindings(report).length
+			? '<p class="no-print targeted-pdf-row"><button type="button" class="btn btn-ghost" id="targeted-evidence-pdf">' +
+				esc(rc.t('evidencePdf')) +
+				'</button></p>'
+			: '';
 		box.innerHTML =
 			'<div class="targeted-head">' +
 			'<span class="targeted-badge is-' +
@@ -5746,11 +5799,17 @@
 			(metaParts.length ? '<div class="targeted-meta">' + metaParts.join('') + '</div>' : '') +
 			listHtml +
 			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '') +
-			offerHtml;
+			offerHtml +
+			pdfBtn;
 		const offerBtn = box.querySelector('[data-act="owner-notice-offer"]');
 		const offerNote = box.querySelector('.targeted-owner-status');
 		if (offerBtn && report && report.id) {
 			offerBtn.addEventListener('click', () => sendAttackOwnerNotice(report.id, offerBtn, offerNote));
+		}
+		const evidenceBtn = document.getElementById('targeted-evidence-pdf');
+		if (evidenceBtn && !evidenceBtn.dataset.wired) {
+			evidenceBtn.dataset.wired = '1';
+			evidenceBtn.addEventListener('click', () => downloadEvidencePdf());
 		}
 	}
 

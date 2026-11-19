@@ -1994,6 +1994,7 @@ const reviewPass = require("./url-review-pass");
 const reviewCompare = require("./url-review-compare");
 const compareMail = require("./url-review-compare-mail");
 const reviewMulti = require("./url-review-multi");
+const evidencePdf = require("./url-review-evidence-pdf");
 const reviewBatch = require("./url-review-batch");
 const batchMail = require("./url-review-batch-mail");
 const reviewPeers = require("./url-review-peers");
@@ -4539,6 +4540,41 @@ async function reviewAccount(req, res, pathName) {
     await db.collection("url_review_accounts").doc(signedIn.email).set({ agencyCi: made }, { merge: true });
     const pub = reviewAgency.publicWebhook({ agencyCi: made });
     res.status(200).json({ ok: true, agencyCi: Object.assign({}, pub, { secret: made.secret }) });
+    return;
+  }
+  if (pathName.endsWith("/account/evidence/pdf")) {
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (!id) {
+      res.status(400).json({ error: "Missing report id." });
+      return;
+    }
+    const snap = await db.collection("url_reviews").doc(id).get();
+    if (!snap.exists) {
+      res.status(404).json({ error: "That report was not found." });
+      return;
+    }
+    const data = Object.assign({ id }, snap.data() || {});
+    if (String(data.email || "").toLowerCase() !== String(signedIn.email).toLowerCase()) {
+      res.status(404).json({ error: "That report is not under this account." });
+      return;
+    }
+    if (!evidencePdf.paidReport(data)) {
+      res.status(402).json({ error: "This evidence PDF is only for a paid report.", paymentRequired: true });
+      return;
+    }
+    const gate = evidencePdf.meta(data);
+    if (!gate.ok) {
+      res.status(404).json({ error: gate.reason });
+      return;
+    }
+    const built = evidencePdf.page(data, { lang: body.lang || data.lang });
+    const pdf = await printHtml(built.html);
+    if (!pdf) {
+      res.status(503).json({ error: "The evidence PDF did not print. Try again in a moment." });
+      return;
+    }
+    res.status(200).json({ ok: true, pdf, filename: built.filename });
     return;
   }
   if (pathName.indexOf("/account/comparison/") !== -1) {
