@@ -21,6 +21,7 @@ const fixOffers = require('../functions/url-review-fix-offers');
 const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
 const threats = require('../functions/url-review-threats');
+const reviewMap = require('../functions/url-review-map');
 const localSoftQuota = softQuota.memoryStore();
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
@@ -78,6 +79,7 @@ const deskSessions = new Map();
 const FILE = path.join(__dirname, '..', 'runner-results', 'url-reviews.jsonl');
 const ALERT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-alerts.jsonl');
 const THREAT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-threats.jsonl');
+const MAP_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-map-global.json');
 const ALLOW = new Set([
 	'http://127.0.0.1:8765',
 	'http://localhost:8765',
@@ -502,6 +504,45 @@ const server = http.createServer(async (req, res) => {
 			'set-cookie': 'qa_desk=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax',
 		});
 		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+	if (req.method === 'GET' && (url.pathname === '/desk/world.json' || url.pathname === '/assets/jarvis/world.json')) {
+		res.writeHead(200, {
+			'content-type': 'application/json; charset=utf-8',
+			'cache-control': 'no-store',
+			'access-control-allow-origin': origin,
+		});
+		res.end(fs.readFileSync(path.join(__dirname, '..', 'assets', 'jarvis', 'world.json')));
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/threats/global') {
+		let rawMap = null;
+		try {
+			rawMap = JSON.parse(fs.readFileSync(MAP_FILE, 'utf8'));
+		} catch (error) {
+			rawMap = null;
+		}
+		const payload = rawMap
+			? reviewMap.buildGlobalMapPayload(rawMap, Object.fromEntries(url.searchParams))
+			: await reviewMap.loadGlobalMapPayload({
+				storage: null,
+				fetch: process.env.URL_REVIEW_LIVE_MAP === '1' ? global.fetch : false,
+				query: Object.fromEntries(url.searchParams),
+			});
+		sendJson(res, 200, payload, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/map/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const payload = reviewMap.buildDeskMapData(
+			readThreatsLocal(),
+			readStore(),
+			Object.fromEntries(url.searchParams)
+		);
+		sendJson(res, 200, payload, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'GET' && url.pathname === '/desk/threats/data') {

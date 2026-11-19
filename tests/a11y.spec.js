@@ -113,6 +113,7 @@ test.describe('Skip link', () => {
 		{ url: '/simulador.html', text: 'Skip to main content', target: '#main' },
 		{ url: '/qa-review.html', text: 'Skip to main content', target: '#review-app' },
 		{ url: '/qa-review-guide.html', text: 'Skip to main content', target: '#main' },
+		{ url: '/cyber-attacks.html', text: 'Skip to main content', target: '#main' },
 		{ url: '/accessibility.html', text: 'Skip to main content', target: '#main' },
 		{ url: '/qa-review-social-de.html', text: 'Zum Hauptinhalt springen', target: '#main' },
 		{ url: '/qaurlreview.html', text: 'Saltar al contenido principal', target: '#main' },

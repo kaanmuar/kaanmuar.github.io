@@ -56,6 +56,7 @@ const linkedRisk = require("./url-review-linked-risk");
 linkedRisk.use(getFirestore, FieldValue);
 require("./url-review-threat-lists").use(getFirestore, FieldValue);
 const reviewThreats = require("./url-review-threats");
+const reviewMap = require("./url-review-map");
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -4845,6 +4846,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     ["/desk/failures/data", "failures-data"],
     ["/desk/threats/data", "threats-data"],
     ["/desk/threats", "threats"],
+    ["/desk/map/data", "map-data"],
     ["/desk/data", "data"],
     ["/desk/pass", "pass"],
     ["/desk/free", "free"],
@@ -4903,6 +4905,44 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       }
       const out = await reviewThreats.updateThreat(getFirestore(), body, operator);
       res.status(out.status || 200).json(out.ok ? out : { error: out.error });
+      return;
+    }
+    if (deskName === "map-data" && req.method === "GET") {
+      try {
+        const stamp = (value) => value && value.toDate ? value.toDate().toISOString() : value;
+        const readReviews = async () => {
+          const rows = [];
+          for await (const doc of getFirestore().collection("url_reviews").limit(400).stream()) {
+            const d = doc.data() || {};
+            const rep = d.report && typeof d.report === "object" ? d.report : null;
+            rows.push({
+              id: doc.id,
+              createdAt: stamp(d.createdAt),
+              host: d.host || "",
+              requestedUrl: d.requestedUrl || "",
+              hostIp: d.hostIp || "",
+              hostingCountry: d.hostingCountry || "",
+              report: rep ? {
+                id: rep.id || doc.id,
+                host: rep.host || "",
+                finalUrl: rep.finalUrl || "",
+                fetchedAt: rep.fetchedAt || "",
+                targeted: rep.targeted ? { hosting: rep.targeted.hosting || null } : null,
+                insights: rep.insights && rep.insights.score ? { score: { overall: rep.insights.score.overall } } : null
+              } : null
+            });
+          }
+          return rows;
+        };
+        const [threatOut, reviewRows] = await Promise.all([
+          reviewThreats.readThreats(getFirestore(), { limit: 1000 }),
+          readReviews()
+        ]);
+        res.status(200).json(reviewMap.buildDeskMapData(threatOut.items, reviewRows, req.query || {}));
+      } catch (error) {
+        console.error("Desk map data failed:", error);
+        res.status(500).json({ error: "Could not load map data." });
+      }
       return;
     }
     if (deskName === "data" && req.method === "GET") {
@@ -5153,6 +5193,20 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     } catch (error) {
       console.error("Review totals failed:", error);
       res.status(503).json({ error: "The totals are not available right now." });
+    }
+    return;
+  }
+  if (req.method === "GET" && pathName.indexOf("/threats/global") !== -1) {
+    try {
+      const payload = await reviewMap.loadGlobalMapPayload({
+        storage: getStorage(),
+        query: req.query || {}
+      });
+      res.set("Cache-Control", "public, max-age=120");
+      res.status(200).json(payload);
+    } catch (error) {
+      console.error("Global map feed failed:", error);
+      res.status(200).json(reviewMap.buildGlobalMapPayload(null, req.query || {}));
     }
     return;
   }
