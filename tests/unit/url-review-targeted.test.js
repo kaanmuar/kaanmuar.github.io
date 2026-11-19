@@ -94,7 +94,8 @@ test("targeted.check detects CISA KEV, OSV (excluding non-commercial prefixes), 
   };
   const dbip = hostGeo.buildDbipIndex(SAMPLE_CSV, "2026-11");
   const fakeFetch = async (url, init) => {
-    if (url.includes("api.osv.dev/v1/querybatch")) {
+    const parsed = new URL(url);
+    if (parsed.hostname === "api.osv.dev" && parsed.pathname === "/v1/querybatch") {
       return fakeRes(200, {
         results: [
           { vulns: [{ id: "GHSA-aaaa-1111" }, { id: "CHAINGUARD-skip-me" }] },
@@ -102,16 +103,16 @@ test("targeted.check detects CISA KEV, OSV (excluding non-commercial prefixes), 
         ]
       });
     }
-    if (url.includes("api.osv.dev/v1/vulns/GHSA-aaaa-1111")) {
+    if (parsed.hostname === "api.osv.dev" && parsed.pathname === "/v1/vulns/GHSA-aaaa-1111") {
       return fakeRes(200, { id: "GHSA-aaaa-1111", aliases: ["CVE-2024-99999"], summary: "jQuery KEV issue" });
     }
-    if (url.includes("api.osv.dev/v1/vulns/GHSA-bbbb-2222")) {
+    if (parsed.hostname === "api.osv.dev" && parsed.pathname === "/v1/vulns/GHSA-bbbb-2222") {
       return fakeRes(200, { id: "GHSA-bbbb-2222", aliases: ["CVE-2024-11111"], summary: "Lodash issue" });
     }
-    if (url.includes("api.first.org/data/v1/epss")) {
+    if (parsed.hostname === "api.first.org" && parsed.pathname === "/data/v1/epss") {
       return fakeRes(200, { data: [{ cve: "CVE-2024-99999", epss: "0.82", percentile: "0.99" }, { cve: "CVE-2024-11111", epss: "0.60", percentile: "0.91" }] });
     }
-    if (url.includes("api.certspotter.com")) {
+    if (parsed.hostname === "api.certspotter.com") {
       return fakeRes(200, Array.from({ length: 26 }, (_, i) => ({
         id: String(i),
         not_before: new Date().toISOString(),
@@ -153,7 +154,7 @@ test("targeted.check detects CISA KEV, OSV (excluding non-commercial prefixes), 
   assert.equal(result.dropAsnHit.asn, 64496);
   assert.equal(result.torHit, "45.155.205.42");
   assert.equal(result.breachNews.length, 1);
-  assert.ok(result.breachNews[0].url.includes("bleepingcomputer.com"));
+  assert.equal(new URL(result.breachNews[0].url).hostname, "bleepingcomputer.com");
   assert.ok(result.certCheck.anomalies.length >= 2);
   // Marketing compliance: never print "Spamhaus" in user-facing items or attributions.
   assert.ok(!JSON.stringify(result.items).toLowerCase().includes("spamhaus"));
