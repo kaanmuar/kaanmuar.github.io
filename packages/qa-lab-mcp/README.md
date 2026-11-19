@@ -6,8 +6,8 @@ Cursor stdio MCP for QA-lab URL Review: soft preview + report read. No npm publi
 
 | Tool | Calls | Notes |
 |------|--------|--------|
-| `preview_url` | `POST {reviewRun}/review/preview` | Soft scores + top finding; same soft quota as the web gate |
-| `get_report` | `POST {reviewUrl}/review/open` | Frosted without session; full report when `QA_LAB_SESSION` owns it |
+| `preview_url` | `POST {reviewRun}/review/preview` | Soft scores + top finding; same soft quota as the web gate. Does not run attack/exploit source checks (KEV, OSV, EPSS, DROP, Feodo, Tor, GDELT, CertSpotter). |
+| `get_report` | `POST {reviewUrl}/review/open` | Frosted without session (attack-source findings stripped). Full report with paid “Was it targeted?” when `QA_LAB_SESSION` owns it. |
 
 ## Install (Cursor)
 

@@ -556,6 +556,32 @@ test('targeted check families, threatFeeds state, internal threat ledger and glo
 	assert.equal(asked.urlReviewNewChecks.cyberMap.kevCount, 1786);
 });
 
+test('desk families cover every attack-source finding key (#3927)', () => {
+	const byId = Object.fromEntries(ops.FAMILIES.map((f) => [f.id, f]));
+	const keys = {
+		kev: 'sec-kev',
+		osv: 'sec-osv',
+		drop: 'sec-drop',
+		feodo: 'sec-feodo',
+		breachNews: 'sec-breach-news',
+		certAnomaly: 'sec-cert-anomaly',
+		targeted: 'sec-targeted',
+	};
+	Object.entries(keys).forEach(([id, key]) => assert.ok(byId[id] && byId[id].test.test(key), id + ' matches ' + key));
+	// EPSS scores enrich KEV/OSV rows; Tor exit hits live in report.targeted items, not a separate finding key.
+	const row = (key, verdict, severity) => ({ key, verdict, severity });
+	const out = ops.checksSummary(
+		{
+			reviews: [{ createdAt: at(1), source: '', checks: [row('sec-targeted', 'pass', 'info')] }],
+			webrisk: {},
+			threat: {},
+			wordfence: null,
+		},
+		range
+	);
+	assert.equal(out.families.find((f) => f.id === 'targeted').checked, 1);
+});
+
 test('the live map carries every range, the headlines and CISA KEV, and the threat ledger is matched to the customers and reports it might impact (#3894)', () => {
 	const live = { totalMentions: 99, countries: [{ cc: 'US', count: 20, share: 20.2 }, { cc: 'DE', count: 8, share: 8.1 }, { cc: 'CO', count: 5, share: 5.1 }] };
 	const mapRanges = {
