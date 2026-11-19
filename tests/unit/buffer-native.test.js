@@ -51,7 +51,8 @@ test('an evergreen checklist threads its steps on X; a step the post already say
 	replies.forEach((reply) => assert.ok(xSize(reply) <= 280, reply));
 	assert.equal(replies.join('\n'), cap['07-pre-release'].steps.map((step, i) => i + 1 + '. ' + step).join('\n'));
 	const [{ input: whole }] = make('twitter', 'evergreen-2026-11', '01-ttfb-curl', cap['01-ttfb-curl']);
-	assert.equal(whole.metadata, undefined);
+	// A voiced clip is synthetic, so the X post is labelled AI-generated (#3824).
+	assert.deepEqual(whole.metadata, { twitter: { isAiGenerated: true } });
 	const [{ input: cut }] = make('twitter', 'evergreen-2026-11', '08-googlebot', cap['08-googlebot']);
 	assert.deepEqual(
 		thread(cut)
@@ -66,9 +67,9 @@ test('a translated X post carries no English steps, and a compare quiz stays one
 	const es = Object.assign({}, cap, { lang: 'es' });
 	const [{ input }] = make('twitter', 'evergreen-2026-11', '07-pre-release', es, 'es');
 	assert.ok(input.text.startsWith(cap.i18n.es.x.split('\n')[0]), input.text);
-	assert.equal(input.metadata, undefined);
+	assert.deepEqual(input.metadata, { twitter: { isAiGenerated: true } }); // a voiced clip in Spanish (#3824)
 	const quiz = captions('compare-2026-11')['01-quiz-berlin-vienna'];
-	assert.equal(make('twitter', 'compare-2026-11', '01-quiz-berlin-vienna', quiz)[0].input.metadata, undefined);
+	assert.deepEqual(make('twitter', 'compare-2026-11', '01-quiz-berlin-vienna', quiz)[0].input.metadata, { twitter: { isAiGenerated: true } }); // a voiced clip (#3824)
 });
 
 test('YouTube files each track in its category; LinkedIn keeps the feed card when there is no voiced clip', () => {

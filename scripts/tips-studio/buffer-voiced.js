@@ -91,12 +91,12 @@
 					notifySubscribers: m.notifySubscribers !== false,
 					embeddable: m.embeddable !== false,
 					madeForKids: !!m.madeForKids,
-					isAiGenerated: !!m.isAiGenerated,
+					isAiGenerated: true, // #3824: a voiced copy is a synthetic voice, labelled on the network
 					categoryId: (m.category && m.category.categoryId) || '28',
 				},
 			};
 		} else {
-			input.metadata = { tiktok: { isAiGenerated: !!(p.metadata && p.metadata.isAiGenerated) } };
+			input.metadata = { tiktok: { isAiGenerated: true } }; // #3824: a voiced copy is a synthetic voice
 		}
 		const r = await g(
 			'mutation($i:EditPostInput!){editPost(input:$i){__typename ... on PostActionSuccess{post{id dueAt assets{source}}} ... on InvalidInputError{message} ... on UnexpectedError{message} ... on RestProxyError{message} ... on NotFoundError{message} ... on LimitReachedError{message} ... on UnauthorizedError{message}}}',
