@@ -186,4 +186,16 @@ async function discover(fetchFn, host, hint) {
   return contactsOf([home].concat(more), h, hint);
 }
 
-module.exports = { CONTACT_PAGES, MAX_EMAILS, emailOf, sameSite, orgFacts, jsonLd, countryOf, phoneOf, contactLinks, langOf, tldCountry, contactsOf, discover };
+// Countries whose law requires consent before an unsolicited marketing email to an individual (#3827): the EU members,
+// the United Kingdom (PECR regulation 22), Canada (CASL) and Australia (Spam Act 2003). There cold email goes only to
+// a role address of an organisation (info@, admissions@), never a named person's inbox.
+const NEEDS_CONSENT = new Set(["at", "be", "bg", "hr", "cy", "cz", "dk", "ee", "fi", "fr", "de", "gr", "hu", "ie", "it", "lv", "lt", "lu", "mt", "nl", "pl", "pt", "ro", "sk", "si", "es", "se", "gb", "ca", "au"]);
+const roleOnly = (country) => NEEDS_CONSENT.has(String(country || "").toLowerCase());
+// Organisation inboxes of schools and universities (admissions, enrolment, students' office), which ROLE does not list.
+const ROLE_SCHOOL = /^(admissions?|admisiones?|admision|informes|secretar[ií]a|matr[ií]culas?|registro|alumnos|estudiantes|students|postgrado|posgrado)$/i;
+const isRoleEmail = (email) => {
+  const local = String(email || "").split("@")[0];
+  return ROLE.test(local) || ROLE_SCHOOL.test(local);
+};
+
+module.exports = { CONTACT_PAGES, MAX_EMAILS, NEEDS_CONSENT, roleOnly, isRoleEmail, emailOf, sameSite, orgFacts, jsonLd, countryOf, phoneOf, contactLinks, langOf, tldCountry, contactsOf, discover };

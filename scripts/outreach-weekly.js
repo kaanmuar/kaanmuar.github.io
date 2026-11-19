@@ -29,6 +29,7 @@ const { parseCsv, toCsv } = require('./jarvis-marketing-sync');
 
 const PROJECT = 'carlosm-interactive-cv';
 const FN = path.join(__dirname, '..', 'functions');
+const CONTACTS = require(path.join(FN, 'company-contacts'));
 const CFG = (() => {
 	try {
 		return JSON.parse(fs.readFileSync(path.join(require('os').homedir(), '.cursor/preflight/config.json'), 'utf8'));
@@ -753,6 +754,10 @@ async function pick(segment, pool, slots, used, log) {
 			const facts = await Promise.all(batch.map((r) => siteFacts(r.host)));
 			for (let i = 0; i < batch.length && !row; i += 1) {
 				if (facts[i] && facts[i].emails.length) row = await judge(segment, cc, batch[i], facts[i], used, log);
+				if (row && CONTACTS.roleOnly(cc) && !CONTACTS.isRoleEmail(row.email)) {
+					log(`  ${cc}: ${row.email} is a named inbox; consent is needed there, so it is skipped (#3827)`);
+					row = null;
+				}
 			}
 		}
 		if (!row) continue;
