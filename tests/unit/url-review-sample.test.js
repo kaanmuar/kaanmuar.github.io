@@ -47,6 +47,20 @@ test("each language's sample carries its search icon and screenshots inline", ()
 	});
 });
 
+test('the English sample log names the attack and exploit sources checked (#3927)', () => {
+	const log = (sample.report.log || []).map((line) => line.text);
+	assert.ok(log.some((text) => /^Reading attack and exploit sources for /.test(text)));
+	assert.ok(
+		log.some((text) =>
+			text.startsWith(
+				'Attack and exploit sources read: CISA KEV, OSV.dev, FIRST EPSS, Network DROP, Feodo Tracker, Tor Exit List, GDELT Project.'
+			)
+		)
+	);
+	assert.ok(log.some((text) => text === 'Attack and exploit sources skipped: CertSpotter CT (no key).'));
+	assert.equal(sample.report.targeted, undefined, 'no paid targeted block in the free sample');
+});
+
 test('the review page, its languages and the guide name the site the sample reviewed', () => {
 	const host = sample.report.host.replace(/^www\./, '');
 	[

@@ -7,7 +7,7 @@ const TERMS = require('fs')
 	.match(/TERMS_VERSION = ['"]([^'"]+)['"]/)[1];
 const ANA = 'a'.repeat(64);
 
-async function openReview(page, { runsLeft = 6 } = {}) {
+async function openReview(page, { runsLeft = 6, startDelayMs = 0 } = {}) {
 	const store = auth.memoryStore();
 	const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
 	const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -79,6 +79,7 @@ async function openReview(page, { runsLeft = 6 } = {}) {
 		}
 		if (path.endsWith('/account/batch/start')) {
 			startedBodies.push(body);
+			if (startDelayMs) await new Promise((resolve) => setTimeout(resolve, startDelayMs));
 			const parsed = batch.parseList(body.text, { leadUrl: body.leadUrl });
 			if (parsed.error) return json(400, parsed);
 			const credit = batch.creditProblem(runsLeft, parsed.urls.length);
@@ -130,4 +131,19 @@ test('a short pass blocks starting a bulk review', async ({ page }) => {
 		{ timeout: 10000 }
 	);
 	expect(startedBodies).toEqual([]);
+});
+
+test('pressing Start shows the panel, the meter, and a held button before the server answers (#3932)', async ({ page }) => {
+	const { startedBodies } = await openReview(page, { startDelayMs: 4000 });
+	await page.locator('[data-url-mode="many"]').click();
+	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/');
+	await expect(page.locator('#batch-preview li')).toHaveCount(2);
+	await page.locator('#name').fill('Ana');
+	await page.locator('#review-btn').click();
+	await expect(page.locator('#batch-panel')).toBeVisible({ timeout: 2000 });
+	await expect(page.locator('#batch-panel-rows li')).toHaveCount(2);
+	await expect(page.locator('#batch-panel-status')).not.toHaveText('');
+	await expect(page.locator('#review-btn')).toBeDisabled();
+	await expect(page.locator('#run-panel.rp-on')).toBeVisible();
+	await expect.poll(() => startedBodies.length).toBe(1);
 });

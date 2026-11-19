@@ -240,5 +240,8 @@
 	"Signed the report.": "Report firmato.",
 	"4 public write-ups were listed for this host.": "Sono stati elencati 4 articoli pubblici per questo host.",
 	"3 public signals were listed. The tail of each one stays closed until that section is paid.": "Sono stati elencati 3 segnali pubblici. La parte finale di ognuno resta chiusa finché quella sezione non viene pagata.",
-	"Tools that apply: axe-core, Lighthouse, BrowserStack, Applitools, Percy. axe-core ran in the headless browser. Lighthouse ran through PageSpeed Insights. The others are not launched.": "Strumenti pertinenti: axe-core, Lighthouse, BrowserStack, Applitools, Percy. axe-core è stato eseguito nel browser headless. Lighthouse è stato eseguito tramite PageSpeed Insights. Gli altri non vengono avviati."
+	"Tools that apply: axe-core, Lighthouse, BrowserStack, Applitools, Percy. axe-core ran in the headless browser. Lighthouse ran through PageSpeed Insights. The others are not launched.": "Strumenti pertinenti: axe-core, Lighthouse, BrowserStack, Applitools, Percy. axe-core è stato eseguito nel browser headless. Lighthouse è stato eseguito tramite PageSpeed Insights. Gli altri non vengono avviati.",
+	"Reading attack and exploit sources for automationexercise.com.": "Si leggono le fonti pubbliche di attacchi ed exploit per automationexercise.com.",
+	"Attack and exploit sources read: CISA KEV, OSV.dev, FIRST EPSS, Network DROP, Feodo Tracker, Tor Exit List, GDELT Project.": "Fonti di attacchi ed exploit lette: CISA KEV, OSV.dev, FIRST EPSS, Network DROP, Feodo Tracker, Tor Exit List, GDELT Project.",
+	"Attack and exploit sources skipped: CertSpotter CT (no key).": "Fonti di attacchi ed exploit saltate: CertSpotter CT (no key)."
 }

@@ -257,6 +257,22 @@
 		if (stopBtn) stopBtn.hidden = batch.status !== 'running';
 	}
 
+	// Shown the moment Start is pressed, before the server has saved the batch (#3932): one row per address, all waiting.
+	function paintStarting(urls) {
+		const rows = (urls || []).map((row, index) => ({
+			index,
+			url: row.url,
+			host: row.host,
+			lead: !!row.lead,
+			state: 'waiting',
+		}));
+		paintPanel({ status: 'running', rows });
+		const status = document.getElementById('batch-panel-status');
+		if (status) status.textContent = bc().t('starting');
+		const stopBtn = document.getElementById('batch-stop');
+		if (stopBtn) stopBtn.hidden = true;
+	}
+
 	function remember(batch) {
 		try {
 			if (batch && batch.id) sessionStorage.setItem(BATCH_KEY, JSON.stringify({ id: batch.id }));
@@ -314,6 +330,7 @@
 		problemText,
 		refreshPreview,
 		paintPanel,
+		paintStarting,
 		remember,
 		rememberedId,
 		leadUrl,
