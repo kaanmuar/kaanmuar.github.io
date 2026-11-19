@@ -141,3 +141,14 @@ test('the scout keeps its memory on the tool-scout-data branch, not in the draft
 	assert.ok(!/git add -f[^\n]*seen\.json/.test(flow), 'seen.json never rides on the PR branch');
 	assert.ok(flow.indexOf('Open a draft PR') < flow.indexOf("Save the scout's memory"), 'memory is saved only after the PR is opened');
 });
+
+test('the README status check reads a status line, not a passing mention (#3901)', () => {
+	const flag = (line) => scout.isStatusLine(line);
+	assert.equal(flag('# Deprecated'), true);
+	assert.equal(flag('⚠️ **Deprecated**: use v2 instead'), true);
+	assert.equal(flag('This project is no longer maintained.'), true);
+	assert.equal(flag('Status: unmaintained'), true);
+	assert.equal(flag('We replaced our deprecated API last year.'), false);
+	assert.equal(flag('Unlike unmaintained forks, this one ships every week.'), false);
+	assert.equal(flag('Migrating from the deprecated `foo` package? See the guide.'), false);
+});
