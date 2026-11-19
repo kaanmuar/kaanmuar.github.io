@@ -82,6 +82,22 @@ object ReviewRescue {
         (f.num("critical") ?: 0.0).takeIf { it > 0 }?.let { "${fmt(it)} high" },
         (f.num("unchecked") ?: 0.0).takeIf { it > 0 }?.let { "${fmt(it)} not checked" }
     ).joinToString(" · ")
+
+    /** Dot colour for an internal threat ledger level (#3890). */
+    fun threatLevel(level: String?): String = when (level) {
+        "critical" -> "alert"
+        "high" -> "warn"
+        else -> "info"
+    }
+
+    /** "critical · phishing-host · US · delist pending" */
+    fun threatLine(x: JsonObject): String = listOfNotNull(
+        x.str("level")?.ifEmpty { null },
+        x.str("kind")?.ifEmpty { null },
+        x.str("country")?.ifEmpty { null },
+        x.str("source")?.ifEmpty { null },
+        x.str("delistStatus")?.takeIf { it.isNotEmpty() && it != "none" }?.let { "delist $it" }
+    ).joinToString(" · ")
 }
 
 @Composable
@@ -191,11 +207,13 @@ fun ChecksPanel(s: UiState) {
     if (c == null || !c.isOk() || c.obj("totals") == null) { Panel("New checks: hits, quotas and sources", id = "review-checks") { Muted(c.str("error") ?: "Pull down to read the new checks.") }; return }
     val t = c.obj("totals")
     Panel("New checks: hits, quotas and sources · ${fmt(t.num("withHits"))}", id = "review-checks") {
-        KpiPairs(listOf(
+        val tf = c.obj("threatFeeds")
+        KpiPairs(listOfNotNull(
             KpiData("Reviews in range", fmt(t.num("reviews"))),
             KpiData("Counted", fmt(t.num("counted"))),
             KpiData("With a hit", fmt(t.num("withHits"))),
-            KpiData("Wordfence feed", if (c.obj("wordfence").bool("stored") == true) "stored" else "not stored", alert = c.obj("wordfence").bool("stored") != true)
+            KpiData("Wordfence feed", if (c.obj("wordfence").bool("stored") == true) "stored" else "not stored", alert = c.obj("wordfence").bool("stored") != true),
+            if (tf != null) KpiData("Threat feeds", if (tf.bool("stored") == true) "stored" else "not stored", alert = tf.bool("stored") != true) else null
         ))
         c.objs("families").forEach { fam -> StatusRow(when { (fam.num("critical") ?: 0.0) > 0 -> "alert"; (fam.num("hits") ?: 0.0) > 0 -> "warn"; else -> "good" }, fam.str("label").orEmpty(), ReviewRescue.familyLine(fam)) }
         Text("Quotas", color = J.amber, fontSize = 12.sp)
@@ -203,5 +221,47 @@ fun ChecksPanel(s: UiState) {
         Text("Sources", color = J.amber, fontSize = 12.sp)
         c.objs("sources").forEach { x -> StatusRow(ReviewRescue.sourceLevel(x.str("state")), x.str("name").orEmpty(), listOfNotNull(x.str("state"), x.str("detail")?.ifEmpty { null }, ago(x.str("at"))).joinToString(" · ")) }
         Muted("Hits are counted from ${c.str("since") ?: "10 Nov 2026"}, when reviews started keeping a small summary of these checks; test runs are left out. A phishing-list or linked-script hit is critical and keeps the site off Live Reports. Web Risk keeps half of each day for client reviews; URL Scanner scans are public on Cloudflare Radar.")
+    }
+}
+
+@Composable
+fun ThreatsPanel(s: UiState) {
+    val c = s.snapshot.obj("external").obj("checks")
+    val th = c.obj("threats")
+    val mp = c.obj("map")
+    if (c == null || !c.isOk() || (th == null && mp == null)) {
+        Panel("Cyber threats and global map", id = "review-threats") { Muted(c.str("error") ?: "Pull down to read cyber threats and the global map.") }
+        return
+    }
+    val lv = th.obj("byLevel")
+    val crit = lv.num("critical") ?: 0.0
+    val hw = (lv.num("high") ?: 0.0) + (lv.num("watch") ?: 0.0)
+    val delist = th.num("pendingDelist") ?: 0.0
+    Panel("Cyber threats and global map · ${fmt(th.num("total") ?: 0.0)}", id = "review-threats") {
+        KpiPairs(listOf(
+            KpiData("Critical", fmt(crit), alert = crit > 0),
+            KpiData("High / Watch", fmt(hw)),
+            KpiData("Pending delist", fmt(delist), alert = delist > 0),
+            KpiData("Global 15m", fmt(mp.num("mentionsLive") ?: 0.0)),
+            KpiData("CISA KEV", fmt(mp.num("kevCount") ?: 0.0)),
+            KpiData("DROP blocks", fmt(mp.num("dropRanges") ?: 0.0))
+        ))
+        val recent = th.objs("recentCritical")
+        if (recent.isEmpty()) Muted("No critical or high threats recorded yet.")
+        recent.take(ReviewRescue.SHOWN).forEach { x ->
+            StatusRow(ReviewRescue.threatLevel(x.str("level")), x.str("host").orEmpty(), listOfNotNull(ReviewRescue.threatLine(x), ago(x.str("observedAt"))).joinToString(" · "))
+        }
+        val countries = th.pairs("topCountries")
+        if (countries.isNotEmpty()) {
+            Text("Reviewed threat hosts by DB-IP country", color = J.amber, fontSize = 12.sp)
+            countries.take(6).forEach { (cc, n) -> KeyRow(cc, fmt(n)) }
+        }
+        val mapCountries = mp.pairs("topCountries")
+        if (mapCountries.isNotEmpty()) {
+            Text("Global map top cited countries", color = J.amber, fontSize = 12.sp)
+            mapCountries.take(6).forEach { (cc, n) -> KeyRow(cc, fmt(n), J.cyan) }
+        }
+        val slice = mp.str("slice").orEmpty()
+        Muted("Internal url_review_threats stays operator-only on /desk; global telemetry comes from GDELT Project, CISA KEV and DROP." + if (slice.isNotEmpty()) " Latest global slice $slice." else "")
     }
 }

@@ -2483,19 +2483,27 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(fixes).toContainText('hotel-mar.pt');
 		const checks = page.locator('[data-view="review"] [data-panel-id="review-checks"]');
 		await expect(checks).toContainText('Phishing and malware lists');
+		await expect(checks).toContainText('Threat feeds');
 		await expect(checks).toContainText('Web Risk linked hosts today');
 		await expect(checks).toContainText('Cloudflare URL Scanner scans this month');
 		await expect(checks).toContainText('Wordfence answered 401');
 		await expect(checks).not.toContainText('PhishStats lookups today');
+		const threats = page.locator('[data-view="review"] [data-panel-id="review-threats"]');
+		await expect(threats).toContainText('Cyber threats and global map · 4');
+		await expect(threats).toContainText('phish-target.example.com');
+		await expect(threats).toContainText('1,786');
+		await expect(threats).toContainText('1,747');
 		const brief = page.locator('[data-view="review"] [data-panel-id="briefing"]');
 		await expect(brief).toContainText('near the 48-hour deadline');
 		await expect(brief).toContainText('paid fix request');
+		await expect(brief).toContainText('critical threat finding');
 		expect(errors).toEqual([]);
 		if (process.env.JARVIS_SHOTS) {
 			for (const [id, name] of [
 				['review-failures', 'web-rescue'],
 				['review-fixes', 'web-fixes'],
 				['review-checks', 'web-checks'],
+				['review-threats', 'web-threats'],
 				['briefing', 'web-briefing'],
 			]) {
 				await page
@@ -2528,6 +2536,16 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(people).not.toContainText('Ana Ruiz');
 		await page.locator('.jv-seg [data-mail="real"]').click();
 		await expect(people.locator('[data-person="ana@ruiz.co"]')).toHaveAttribute('open', '');
+		if (process.env.JARVIS_SHOTS) {
+			for (const [id, name] of [
+				['review-checks', 'web-checks-desktop'],
+				['review-threats', 'web-threats-desktop'],
+			]) {
+				await page
+					.locator(`[data-view="review"] [data-panel-id="${id}"]`)
+					.screenshot({ path: process.env.JARVIS_SHOTS + '/' + name + '.png' });
+			}
+		}
 		expect(errors).toEqual([]);
 	});
 

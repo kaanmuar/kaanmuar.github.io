@@ -14,6 +14,7 @@ const linkedRisk = require("./url-review-linked-risk");
 const promise = require("./url-review-promise");
 const fixOffers = require("./url-review-fix-offers");
 const pastRerun = require("./url-review-rerun-past");
+const reviewMap = require("./url-review-map");
 
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
@@ -199,7 +200,13 @@ const FAMILIES = [
   { id: "lookalike", label: "Lookalike domains", test: /^sec-lookalike/ },
   { id: "exposed", label: "Exposed files", test: /^sec-exposed/ },
   { id: "wordpress", label: "WordPress vulnerabilities", test: /^sec-wordpress/ },
-  { id: "blocklist", label: "Spam and DNS blocklists", test: /^sec-blocklist/ }
+  { id: "blocklist", label: "Spam and DNS blocklists", test: /^sec-blocklist/ },
+  { id: "kev", label: "CISA KEV exploited CVEs", test: /^sec-kev/ },
+  { id: "osv", label: "OSV vulnerable libraries", test: /^sec-osv/ },
+  { id: "drop", label: "Hijacked prefixes (DROP)", test: /^sec-drop/ },
+  { id: "feodo", label: "Feodo botnet C2 IPs", test: /^sec-feodo/ },
+  { id: "breachNews", label: "Breach news (GDELT)", test: /^sec-breach-news/ },
+  { id: "certAnomaly", label: "Certificate anomalies", test: /^sec-cert-anomaly/ }
 ];
 const HIT = (row) => row.verdict === "fail" || row.verdict === "risk";
 
@@ -227,7 +234,79 @@ function wordfenceState(run) {
   return { stored: false, state: r.endedAt ? "quiet" : "running", detail: note.slice(0, 160) || "no result yet", at };
 }
 
-function checksSummary({ reviews, webrisk, threat, wordfence }, { now, days }) {
+function threatFeedsState(run) {
+  const r = run || {};
+  const at = r.endedAt || r.startedAt || "";
+  if (!at) return { stored: false, state: "quiet", detail: "never ran", at: "" };
+  const note = String(r.note || "");
+  if (r.ok === false) return { stored: false, state: "down", detail: String(r.error || "failed").slice(0, 160), at };
+  if (!r.endedAt) return { stored: false, state: "running", detail: note.slice(0, 160) || "running", at };
+  if (/^off\b/i.test(note)) return { stored: false, state: "off", detail: note.slice(0, 160), at };
+  return { stored: true, state: "ok", detail: note.slice(0, 160) || "stored", at };
+}
+
+function threatsSummary(threatRows, globalMap, { now, days }) {
+  const start = now - (days || 7) * DAY;
+  const rows = (Array.isArray(threatRows) ? threatRows : []).filter(Boolean);
+  const byLevel = { critical: 0, high: 0, watch: 0, info: 0 };
+  const byKind = {};
+  const byCountry = {};
+  let inRange = 0;
+  let pendingDelist = 0;
+  let criticalOpen = 0;
+  rows.forEach((item) => {
+    const lv = String(item.level || "info").toLowerCase();
+    if (byLevel[lv] !== undefined) byLevel[lv] += 1;
+    if (ms(item.observed_at) >= start) inRange += 1;
+    if (item.kind) count(byKind, item.kind);
+    if (item.hosting_country) count(byCountry, String(item.hosting_country).toUpperCase());
+    if (item.delist_status === "pending") pendingDelist += 1;
+    if (lv === "critical" && item.delist_status !== "resolved" && item.delist_status !== "false_positive") criticalOpen += 1;
+  });
+  const rank = { critical: 4, high: 3, watch: 2, info: 1 };
+  const recentCritical = rows
+    .filter((item) => item.level === "critical" || item.level === "high")
+    .slice()
+    .sort((a, b) => (rank[b.level] || 0) - (rank[a.level] || 0) || ms(b.observed_at) - ms(a.observed_at))
+    .slice(0, 8)
+    .map((item) => ({
+      id: item.id || "",
+      host: item.host || item.subject || "",
+      kind: item.kind || "",
+      level: item.level || "info",
+      country: item.hosting_country || "",
+      source: item.source || "",
+      delistStatus: item.delist_status || "none",
+      observedAt: iso(item.observed_at)
+    }));
+  const g = globalMap && typeof globalMap === "object" ? globalMap : null;
+  const map = g ? {
+    updatedAt: String(g.updatedAt || ""),
+    slice: String(g.slice || ""),
+    mentionsLive: Number((g.totalsByRange && g.totalsByRange.live) || g.totalMentions) || 0,
+    mentions7d: Number(g.totalsByRange && g.totalsByRange["7d"]) || 0,
+    mentions30d: Number(g.totalsByRange && g.totalsByRange["30d"]) || 0,
+    countryCount: Number(g.countryCount) || 0,
+    kevCount: Number(g.kevSummary && g.kevSummary.count) || 0,
+    dropRanges: Number(g.dropSummary && g.dropSummary.v4Ranges) || 0,
+    topCountries: (Array.isArray(g.countries) ? g.countries : []).slice(0, 6).map((c) => ({ label: c.cc, value: Number(c.count) || 0 }))
+  } : null;
+  return {
+    threats: {
+      total: rows.length,
+      inRange,
+      byLevel,
+      pendingDelist,
+      criticalOpen,
+      topKinds: top(byKind, 6),
+      topCountries: top(byCountry, 8),
+      recentCritical
+    },
+    map
+  };
+}
+
+function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap }, { now, days }) {
   const start = now - days * DAY;
   const real = (reviews || []).filter((r) => r && r.test !== true && ms(r.createdAt) >= start);
   const counted = real.filter((r) => Array.isArray(r.checks));
@@ -254,6 +333,8 @@ function checksSummary({ reviews, webrisk, threat, wordfence }, { now, days }) {
   const phish = sourceState(t.phishstats);
   if (phish.state !== "off") quotas.push(quota("phishstats-day", "PhishStats lookups today", day("phishstats"), null));
   const feed = wordfenceState(wordfence);
+  const hasThreatFeeds = threatFeeds !== undefined;
+  const tf = hasThreatFeeds ? threatFeedsState(threatFeeds) : null;
   const seo = families.find((f) => f.id === "hacked");
   const sources = [
     Object.assign({ key: "webrisk", name: "Google Web Risk (linked hosts)" }, w.lookups ? { state: "ok", detail: Number(w.lookups).toLocaleString("en-US") + " lookups this month" } : { state: "quiet", detail: "no lookups this month" }),
@@ -264,16 +345,22 @@ function checksSummary({ reviews, webrisk, threat, wordfence }, { now, days }) {
       : seo.unchecked >= Math.max(3, seo.checked / 2) ? { state: "down", detail: seo.unchecked + " of " + seo.checked + " reviews could not search" } : { state: "ok", detail: seo.unchecked + " of " + seo.checked + " reviews could not search" }),
     { key: "wordfence", name: "Wordfence feed (WordPress)", state: feed.state, detail: feed.detail, at: feed.at }
   ];
-  return {
-    ok: true,
-    since: CHECKS_SINCE,
-    totals: { reviews: real.length, counted: counted.length, withHits: counted.filter((r) => r.checks.some(HIT)).length },
-    families,
-    quotas,
-    nearCap: quotas.filter((q) => q.pct !== null && q.pct >= 80).map((q) => q.id),
-    wordfence: feed,
-    sources
-  };
+  if (tf) sources.push({ key: "threatfeeds", name: "Threat feeds (KEV, DROP, Feodo, GDELT, DB-IP)", state: tf.state, detail: tf.detail, at: tf.at });
+  const intel = threats !== undefined || globalMap !== undefined ? threatsSummary(threats, globalMap, { now, days }) : null;
+  return Object.assign(
+    {
+      ok: true,
+      since: CHECKS_SINCE,
+      totals: { reviews: real.length, counted: counted.length, withHits: counted.filter((r) => r.checks.some(HIT)).length },
+      families,
+      quotas,
+      nearCap: quotas.filter((q) => q.pct !== null && q.pct >= 80).map((q) => q.id),
+      wordfence: feed,
+      sources
+    },
+    tf ? { threatFeeds: tf } : {},
+    intel ? { threats: intel.threats, map: intel.map } : {}
+  );
 }
 
 async function checksSource(ctx) {
@@ -282,13 +369,19 @@ async function checksSource(ctx) {
   const since = new Date(now - days * DAY).toISOString();
   const month = new Date(now).toISOString().slice(0, 7);
   const one = (ref) => ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null);
-  const [reviews, webrisk, threat, wordfence] = await Promise.all([
+  const storage = ctx.storage !== undefined ? ctx.storage : (() => {
+    try { return require("firebase-admin/storage").getStorage(); } catch (error) { return null; }
+  })();
+  const [reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap] = await Promise.all([
     db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("createdAt", "test", "source", "checks").limit(5000).get().then(rowsOf).catch(() => []),
     one(db.collection("webrisk_usage").doc(month)),
     one(db.collection("threatlist_usage").doc(month)),
-    one(db.collection("ops_runs").doc("wordfenceFeed"))
+    one(db.collection("ops_runs").doc("wordfenceFeed")),
+    one(db.collection("ops_runs").doc("threatFeeds")),
+    db.collection("url_review_threats").orderBy("observed_at", "desc").select("id", "observed_at", "level", "kind", "host", "hosting_country", "source", "delist_status", "time_window").limit(1000).get().then(rowsOf).catch(() => []),
+    reviewMap.loadGlobalMapPayload({ storage, fetch: false, cacheTtlMs: 5 * 60 * 1000 }).catch(() => null)
   ]);
-  return checksSummary({ reviews, webrisk, threat, wordfence }, { now, days });
+  return checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap }, { now, days });
 }
 
 // --- Ask -----------------------------------------------------------------------------------------------------
@@ -301,4 +394,4 @@ const ask = (e) => {
   return view;
 };
 
-module.exports = { FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, checksSummary, checksSource, ask, pastRerunLine: pastRerun.line };
+module.exports = { FAMILIES, URLSCAN_PER_MONTH, promiseGroups, rescueSummary, rescueSource, fixesSummary, fixesSource, sourceState, wordfenceState, threatFeedsState, threatsSummary, checksSummary, checksSource, ask, pastRerunLine: pastRerun.line };

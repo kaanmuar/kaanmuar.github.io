@@ -42,4 +42,14 @@ class ReviewRescueTest {
         assertEquals("1 of 2 · 1 client · 1 high", ReviewRescue.familyLine(json("""{"hits":1,"checked":2,"customerHits":1,"critical":1,"unchecked":0}""")))
         assertEquals("0 of 3 · 3 not checked", ReviewRescue.familyLine(json("""{"hits":0,"checked":3,"customerHits":0,"critical":0,"unchecked":3}""")))
     }
+
+    @Test fun threatsFormatLevelAndDetails() {
+        assertEquals("alert", ReviewRescue.threatLevel("critical"))
+        assertEquals("warn", ReviewRescue.threatLevel("high"))
+        assertEquals("info", ReviewRescue.threatLevel("watch"))
+        assertEquals(
+            "critical · phishing-host · US · Google Web Risk · delist pending",
+            ReviewRescue.threatLine(json("""{"level":"critical","kind":"phishing-host","country":"US","source":"Google Web Risk","delistStatus":"pending"}"""))
+        )
+    }
 }

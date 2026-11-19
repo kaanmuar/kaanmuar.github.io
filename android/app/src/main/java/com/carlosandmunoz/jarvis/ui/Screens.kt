@@ -353,12 +353,16 @@ private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
     RescuePanel(s)
     FixesPanel(s)
     ChecksPanel(s)
+    ThreatsPanel(s)
     val alerts = health.obj("alerts").objs("latest")
     if (alerts.isNotEmpty()) Panel("Review alerts", id = "review-alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
     Panel("Actions", id = "review-ops") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RunJob(s, vm, "sweepReviews", "Sweep reviews")
             RunJob(s, vm, "rerunReviewFailures", "Re-run failures")
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RunJob(s, vm, "threatFeeds", "Threat feeds")
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("daily", "weekly").forEach { SendReport(s, vm, "review", it) } }
         var host by remember { mutableStateOf("") }

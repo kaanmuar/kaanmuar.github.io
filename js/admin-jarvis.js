@@ -2506,12 +2506,16 @@ export function mountJarvis({
 		return panel(
 			'review-checks',
 			`New checks: hits, quotas and sources · ${fmt(t.withHits)}`,
-			stats([
-				{ label: 'Reviews in range', value: t.reviews },
-				{ label: 'Counted', value: t.counted },
-				{ label: 'With a hit', value: t.withHits },
-				{ label: 'Wordfence feed', value: c.wordfence.stored ? 'stored' : 'not stored' },
-			]) +
+			stats(
+				[
+					{ label: 'Reviews in range', value: t.reviews },
+					{ label: 'Counted', value: t.counted },
+					{ label: 'With a hit', value: t.withHits },
+					{ label: 'Wordfence feed', value: c.wordfence.stored ? 'stored' : 'not stored' },
+				].concat(
+					c.threatFeeds ? [{ label: 'Threat feeds', value: c.threatFeeds.stored ? 'stored' : 'not stored' }] : []
+				)
+			) +
 				fam +
 				quotas +
 				src,
@@ -2526,6 +2530,76 @@ export function mountJarvis({
 					unchecked: x.unchecked,
 				})),
 				note: `Hits are counted from ${esc(c.since)}, when reviews started keeping a small summary of these checks; test runs are left out. A phishing-list or linked-script hit is critical and keeps the site off Live Reports. Web Risk keeps half of each day for client reviews; URL Scanner scans are public on Cloudflare Radar.`,
+			}
+		);
+	}
+
+	function threatsPanel() {
+		const c = S.external.checks;
+		if (!c || !c.ok || (!c.threats && !c.map))
+			return panel(
+				'review-threats',
+				'Cyber threats and global map',
+				waiting('checks', 'Reading the threat ledger and cyber map…'),
+				{ wide: true }
+			);
+		const th = c.threats || {};
+		const lv = th.byLevel || {};
+		const mp = c.map || {};
+		const critRows = th.recentCritical || [];
+		const critTable = table(
+			[
+				['Host', (x) => `${esc(x.host || '')}${x.country ? ` <span class="jv-chip">${esc(x.country)}</span>` : ''}`],
+				['Level', (x) => roChip(x.level === 'critical' ? 'down' : x.level === 'high' ? 'quiet' : 'ok', x.level)],
+				[
+					'Finding',
+					(x) =>
+						esc(
+							[x.kind, x.source, x.delistStatus && x.delistStatus !== 'none' ? 'delist ' + x.delistStatus : '']
+								.filter(Boolean)
+								.join(' · ')
+						),
+				],
+				['When', (x) => esc(x.observedAt ? when(x.observedAt) : '')],
+			],
+			critRows,
+			'No critical or high threats recorded yet.'
+		);
+		const countryBars = (th.topCountries || []).length
+			? '<h4 class="jv-sub">Reviewed threat hosts by DB-IP country</h4>' + bars(th.topCountries)
+			: '';
+		const mapBars =
+			mp && (mp.topCountries || []).length
+				? '<h4 class="jv-sub">Global map top cited countries</h4>' + bars(mp.topCountries, { color: COLORS.amber })
+				: '';
+		const actions = `<div class="jv-actions"><a class="jv-btn" href="${DESK}#threats-block" target="_blank" rel="noopener">Threat list</a><a class="jv-btn" href="${DESK}#desk-map-block" target="_blank" rel="noopener">Hosting map</a><a class="jv-btn" href="cyber-attacks.html" target="_blank" rel="noopener">Global cyber map</a><button type="button" class="jv-btn" data-run="threatFeeds">Refresh threat feeds</button></div>`;
+		return panel(
+			'review-threats',
+			`Cyber threats and global map · ${fmt(th.total || 0)}`,
+			stats([
+				{ label: 'Critical', value: lv.critical || 0, alert: (lv.critical || 0) > 0 },
+				{ label: 'High / Watch', value: (lv.high || 0) + (lv.watch || 0) },
+				{ label: 'Pending delist', value: th.pendingDelist || 0, alert: (th.pendingDelist || 0) > 0 },
+				{ label: 'Global 15m', value: mp.mentionsLive || 0 },
+				{ label: 'CISA KEV', value: mp.kevCount || 0 },
+				{ label: 'DROP blocks', value: mp.dropRanges || 0 },
+			]) +
+				critTable +
+				countryBars +
+				mapBars +
+				actions,
+			{
+				wide: true,
+				data: critRows.map((x) => ({
+					host: x.host,
+					level: x.level,
+					kind: x.kind,
+					country: x.country,
+					source: x.source,
+					delistStatus: x.delistStatus,
+					observedAt: x.observedAt,
+				})),
+				note: `Internal url_review_threats stays operator-only on /desk; global telemetry comes from GDELT Project, CISA KEV and DROP.${mp.slice ? ' Latest global slice ' + esc(mp.slice) + '.' : ''}`,
 			}
 		);
 	}
@@ -8751,7 +8825,7 @@ export function mountJarvis({
             ${listPanel('review', 'frameworks', 'Frameworks', r.lists.frameworks, { color: COLORS.violet })}${listPanel('review', 'actions', 'Clicks on the review pages', r.lists.actions, { color: COLORS.amber })}
             ${listPanel('review', 'pages', 'Pages', r.lists.pages)}${listPanel('review', 'countries', 'Countries', r.lists.countries)}${listPanel('review', 'cities', 'Cities', r.lists.cities)}
             ${listPanel('review', 'langs', 'Languages', r.lists.langs)}${listPanel('review', 'screens', 'Screens', r.lists.screens)}
-            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}
+            ${rescuePanel(h)}${fixesPanel()}${checksPanel()}${threatsPanel()}
             ${panel(
 							'review-alerts',
 							'Alerts',
@@ -8803,7 +8877,7 @@ export function mountJarvis({
 							'Actions',
 							`<div class="jv-actions">
                 <a class="jv-btn" href="${DESK}" target="_blank" rel="noopener">Review desk</a><a class="jv-btn" href="${DESK}/failures" target="_blank" rel="noopener">Failed runs</a>
-                <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button>
+                <button type="button" class="jv-btn" data-run="sweepReviews">Run the sweep</button><button type="button" class="jv-btn" data-run="rerunReviewFailures">Re-run failures</button><button type="button" class="jv-btn" data-run="threatFeeds">Threat feeds</button>
                 <button type="button" class="jv-btn" data-report="review:daily">Send the daily report</button><button type="button" class="jv-btn" data-report="review:weekly">Send the weekly report</button></div>
                 <form class="jv-inline" data-unlist><input name="host" data-keep="unlist" placeholder="host to unlist, e.g. example.com" aria-label="Host to unlist"><button type="submit" class="jv-btn danger">Unlist</button></form>`
 						)}

@@ -1343,13 +1343,36 @@
 					`The Wordfence feed is not stored${wf.at ? ` (last attempt ${String(wf.at).slice(0, 10)}: ${wf.detail})` : ''}, so WordPress plugin versions are not checked.`,
 					'review:wordfence'
 				);
+			const tf = c.threatFeeds;
+			if (tf && !tf.stored && tf.state !== 'off')
+				add(
+					tf.state === 'down' ? 'warn' : 'info',
+					`The cyber threat feeds job is not stored${tf.at ? ` (last attempt ${String(tf.at).slice(0, 10)}: ${tf.detail})` : ''}, so KEV, DROP, Feodo, GDELT and DB-IP GeoIP context may be stale.`,
+					'review:threatfeeds'
+				);
+			const thr = c.threats;
+			if (thr && ((thr.byLevel && thr.byLevel.critical > 0) || thr.pendingDelist > 0)) {
+				const sample = (thr.recentCritical || [])
+					.slice(0, 3)
+					.map((x) => `${x.host} (${x.kind})`)
+					.join(', ');
+				add(
+					'alert',
+					`${n((thr.byLevel && thr.byLevel.critical) || 0, 'critical threat finding', 'critical threat findings')} in the internal ledger${thr.pendingDelist ? ` (${thr.pendingDelist} pending delisting)` : ''}${sample ? `: ${sample}` : ''}.`,
+					'review:threats-critical'
+				);
+			}
 			(c.sources || [])
-				.filter((x) => x.state === 'down' && x.key !== 'wordfence')
+				.filter((x) => x.state === 'down' && x.key !== 'wordfence' && x.key !== 'threatfeeds')
 				.forEach((x) => add('warn', `${x.name} is failing in reviews: ${x.detail}.`, 'review:source:' + x.key));
 			const hits = (c.families || []).filter((x) => x.hits);
 			if (hits.length)
 				add(
-					hits.some((x) => (x.id === 'phishing' || x.id === 'linked') && x.customerHits) ? 'warn' : 'info',
+					hits.some(
+						(x) => ['phishing', 'linked', 'kev', 'osv', 'drop', 'feodo'].includes(x.id) && x.customerHits
+					)
+						? 'warn'
+						: 'info',
 					`New checks in range: ${hits.map((x) => `${x.label} ${x.hits}`).join('; ')}.`,
 					'review:check-hits'
 				);
@@ -1392,14 +1415,45 @@
 					: null,
 			urlReviewNewChecks:
 				ok(c) && c.families
-					? {
-							countedSince: c.since,
-							reviews: c.totals,
-							hits: c.families.map((x) => x.label + ': ' + x.hits + ' of ' + x.checked),
-							quotas: c.quotas.map((q) => q.label + ': ' + q.used + (q.cap ? ' of ' + q.cap : '')),
-							sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')),
-							wordfenceStored: !!(c.wordfence && c.wordfence.stored),
-						}
+					? Object.assign(
+							{
+								countedSince: c.since,
+								reviews: c.totals,
+								hits: c.families.map((x) => x.label + ': ' + x.hits + ' of ' + x.checked),
+								quotas: c.quotas.map((q) => q.label + ': ' + q.used + (q.cap ? ' of ' + q.cap : '')),
+								sources: c.sources.map((x) => x.name + ': ' + x.state + (x.detail ? ' (' + x.detail + ')' : '')),
+								wordfenceStored: !!(c.wordfence && c.wordfence.stored),
+							},
+							c.threatFeeds ? { threatFeedsStored: !!c.threatFeeds.stored } : {},
+							c.threats
+								? {
+										threats: {
+											total: c.threats.total,
+											inRange: c.threats.inRange,
+											critical: (c.threats.byLevel && c.threats.byLevel.critical) || 0,
+											high: (c.threats.byLevel && c.threats.byLevel.high) || 0,
+											pendingDelist: c.threats.pendingDelist || 0,
+											topCountries: (c.threats.topCountries || []).slice(0, 5),
+											topKinds: (c.threats.topKinds || []).slice(0, 5),
+											recentCritical: (c.threats.recentCritical || [])
+												.slice(0, 5)
+												.map((x) => x.host + ' (' + x.level + ' ' + x.kind + ', ' + (x.country || '—') + ')'),
+										},
+									}
+								: {},
+							c.map
+								? {
+										cyberMap: {
+											mentionsLive: c.map.mentionsLive,
+											mentions7d: c.map.mentions7d,
+											countryCount: c.map.countryCount,
+											kevCount: c.map.kevCount,
+											dropRanges: c.map.dropRanges,
+											slice: c.map.slice,
+										},
+									}
+								: {}
+						)
 					: null,
 			urlReviewPastRerun: ok(r) && r.pastRerun ? r.pastRerun : null,
 		};
@@ -2364,6 +2418,21 @@
 			impact: 3,
 			levels: ['warn'],
 			title: 'Get the Wordfence feed stored so WordPress plugins are checked',
+			tab: 'review',
+		},
+		{
+			prefix: 'review:threatfeeds',
+			impact: 4,
+			levels: ['warn'],
+			title: 'Refresh the hourly threat feeds so KEV, DROP, Feodo, GDELT and DB-IP stay live',
+			tab: 'review',
+		},
+		{
+			prefix: 'review:threats-critical',
+			impact: 5,
+			levels: ['alert'],
+			title: 'Review critical cyber threats and pending delistings on the Review desk',
+			link: 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk#threats-block',
 			tab: 'review',
 		},
 		{

@@ -463,3 +463,95 @@ test('the threat-list usage write counts calls, new scans, errors and keys that 
 	assert.equal(patch.urlhaus.skipped, 1);
 	assert.equal(patch.urlhaus.calls, 0);
 });
+
+test('targeted check families, threatFeeds state, internal threat ledger and global cyber map flow into checks, briefing, proposals and Ask (#3890)', async () => {
+	const row = (key, verdict, severity) => ({ key, verdict, severity });
+	const out = ops.checksSummary(
+		{
+			reviews: [
+				{
+					createdAt: at(1),
+					source: '',
+					checks: [
+						row('sec-kev', 'fail', 'high'),
+						row('sec-osv', 'risk', 'medium'),
+						row('sec-drop', 'fail', 'critical'),
+						row('sec-feodo', 'fail', 'critical'),
+						row('sec-breach-news', 'risk', 'medium'),
+						row('sec-cert-anomaly', 'risk', 'medium'),
+					],
+				},
+			],
+			webrisk: {},
+			threat: {},
+			wordfence: { ok: true, endedAt: at(1), note: '10 records stored' },
+			threatFeeds: { ok: false, startedAt: at(2), endedAt: at(2), error: 'GDELT 503' },
+			threats: [
+				{
+					id: 't1',
+					host: 'attacked.example.com',
+					kind: 'c2-indicator',
+					level: 'critical',
+					hosting_country: 'US',
+					source: 'Feodo Tracker',
+					delist_status: 'pending',
+					observed_at: at(1),
+				},
+				{
+					id: 't2',
+					host: 'old.example.de',
+					kind: 'known-exploit-software',
+					level: 'high',
+					hosting_country: 'DE',
+					source: 'CISA KEV',
+					delist_status: 'none',
+					observed_at: at(24 * 10),
+				},
+			],
+			globalMap: {
+				updatedAt: at(0),
+				slice: '20261110150000',
+				totalsByRange: { live: 88, '7d': 1200, '30d': 4500 },
+				countryCount: 30,
+				kevSummary: { count: 1786 },
+				dropSummary: { v4Ranges: 1747 },
+				countries: [{ cc: 'US', count: 18 }],
+			},
+		},
+		range
+	);
+	const fam = Object.fromEntries(out.families.map((f) => [f.id, f]));
+	assert.equal(fam.kev.hits, 1);
+	assert.equal(fam.kev.customerHits, 1);
+	assert.equal(fam.osv.hits, 1);
+	assert.equal(fam.drop.critical, 1);
+	assert.equal(fam.feodo.critical, 1);
+	assert.equal(fam.breachNews.hits, 1);
+	assert.equal(fam.certAnomaly.hits, 1);
+	assert.equal(out.threatFeeds.state, 'down');
+	assert.equal(out.threatFeeds.stored, false);
+	assert.equal(out.sources.find((s) => s.key === 'threatfeeds').state, 'down');
+	assert.equal(out.threats.total, 2);
+	assert.equal(out.threats.inRange, 1);
+	assert.equal(out.threats.byLevel.critical, 1);
+	assert.equal(out.threats.pendingDelist, 1);
+	assert.equal(out.threats.recentCritical[0].host, 'attacked.example.com');
+	assert.equal(out.map.mentionsLive, 88);
+	assert.equal(out.map.kevCount, 1786);
+	assert.equal(out.map.dropRanges, 1747);
+
+	const lines = jcore.briefing({ products: {}, external: { checks: out } });
+	const by = Object.fromEntries(lines.map((b) => [b.key, b]));
+	assert.equal(by['review:threatfeeds'].level, 'warn');
+	assert.equal(by['review:threats-critical'].level, 'alert');
+	assert.match(by['review:threats-critical'].text, /attacked\.example\.com/);
+
+	const proposals = jcore.proposalRules({ products: {}, external: { checks: out } }, lines).map((p) => p.title);
+	assert.ok(proposals.includes('Refresh the hourly threat feeds so KEV, DROP, Feodo, GDELT and DB-IP stay live'));
+	assert.ok(proposals.includes('Review critical cyber threats and pending delistings on the Review desk'));
+
+	const asked = ops.ask({ rescue: { ok: false }, fixes: { ok: false }, checks: out });
+	assert.equal(asked.urlReviewNewChecks.threatFeedsStored, false);
+	assert.equal(asked.urlReviewNewChecks.threats.critical, 1);
+	assert.equal(asked.urlReviewNewChecks.cyberMap.kevCount, 1786);
+});
