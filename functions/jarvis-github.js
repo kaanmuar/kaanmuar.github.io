@@ -485,6 +485,25 @@ async function issuesPart(gh, now, start, days, live) {
   };
 }
 
+// The weekly tool scout (#3857): its open draft PR (tool-scout/<date>) and the tickets under the arsenal parent.
+const ARSENAL = 3828;
+const SCOUT_REF = /^tool-scout\/(\d{4}-\d{2}-\d{2})$/;
+
+async function scoutPart(gh, open, now) {
+  const found = open.map((pr) => ({ pr, m: SCOUT_REF.exec((pr.head && pr.head.ref) || "") })).filter((x) => x.m)
+    .sort((a, b) => ms(b.pr.created_at) - ms(a.pr.created_at))[0];
+  const count = (title, word) => { const m = new RegExp("(\\d+) " + word).exec(title || ""); return m ? Number(m[1]) : null; };
+  const run = found ? {
+    pr: found.pr.number, url: found.pr.html_url || "", date: found.m[1], draft: !!found.pr.draft, ageH: round((now - ms(found.pr.created_at)) / HOUR),
+    drift: count(found.pr.title, "drift"), candidates: count(found.pr.title, "new candidates")
+  } : null;
+  const kids = await gh.get("repos/" + REPO + "/issues/" + ARSENAL + "/sub_issues?per_page=100");
+  const list = Array.isArray(kids) ? kids : [];
+  const items = list.filter((i) => i.state === "open").sort((a, b) => b.number - a.number).slice(0, ITEMS)
+    .map((i) => ({ number: i.number, title: String(i.title || "").slice(0, 160), url: i.html_url || "" }));
+  return { run, tickets: { open: list.filter((i) => i.state === "open").length, closed: list.filter((i) => i.state !== "open").length, items } };
+}
+
 const encodeRef = (name) => String(name).split("/").map(encodeURIComponent).join("/");
 
 async function branchesPart(gh, open, closed, local, now) {
@@ -927,6 +946,7 @@ async function source(ctx) {
     part("board", async () => { if (!boardGh) throw new Error("No GitHub token is set."); return boardPart(boardGh, ctx, now, start, days); }, "organization_projects"),
     part("issues", async () => issuesPart(repo(), now, start, days, live)),
     part("branches", async () => branchesPart(repo(), await data.open(), await data.closed(), await data.local(), now)),
+    part("scout", async () => scoutPart(repo(), await data.open(), now)),
     part("deploys", async () => deploysPart(repo(), await data.runs(), await data.days(), now, days, want)),
     part("android", async () => androidPart(repo(), start)),
     part("budget", async () => budgetPart(gh, await data.local(), await data.budgetCloud(), now)),
@@ -1044,4 +1064,4 @@ async function backfill(ctx) {
   return { ok: true, days, left };
 }
 
-module.exports = { source, daily, backfill, kaanmuarBudget, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy };
+module.exports = { source, daily, backfill, kaanmuarBudget, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy, scoutPart };

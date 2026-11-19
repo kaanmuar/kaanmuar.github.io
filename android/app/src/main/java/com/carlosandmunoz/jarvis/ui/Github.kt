@@ -745,6 +745,20 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         gh.obj("local")?.let { Muted("Mac upload " + (ago(it.str("at")) ?: "—")) } ?: Muted("The Mac uploader has not reported yet, so worktrees are unknown.")
     }
 
+    // The weekly tool scout (#3857): its open draft PR and the arsenal tickets still open; nothing here changes the arsenal.
+    val scout = gh.obj("scout")
+    val scoutRun = scout?.obj("run")
+    val scoutTickets = scout?.obj("tickets")
+    Panel("Tool scout" + (scoutRun?.let { " · ${fmt((it.num("drift") ?: 0.0) + (it.num("candidates") ?: 0.0))} findings" } ?: ""), id = "github-scout") {
+        Github.down(scout)?.let { Muted(it); return@Panel }
+        if (scoutRun != null) KeyRow("Scout ${scoutRun.str("date").orEmpty()}", "draft PR #${fmt(scoutRun.num("pr"))} · ${fmt(scoutRun.num("drift") ?: 0.0)} drift · ${fmt(scoutRun.num("candidates") ?: 0.0)} new", J.text, scoutRun.str("url"))
+        else Muted("No scout draft is waiting. The scout runs Wednesdays at 15:37 UTC and opens one when it finds something.")
+        val items = scoutTickets.objs("items")
+        if (items.isEmpty()) Muted("No arsenal tickets are open.")
+        items.forEach { t -> StatusRow(null, t.str("title").orEmpty(), "#${fmt(t.num("number"))}", t.str("url")) }
+        Muted("${fmt(scoutTickets.num("open") ?: 0.0)} open, ${fmt(scoutTickets.num("closed") ?: 0.0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.")
+    }
+
     val deploys = gh.obj("deploys")
     Panel("Deploys", id = "github-deploys") {
         Github.down(deploys)?.let { Muted(it); return@Panel }

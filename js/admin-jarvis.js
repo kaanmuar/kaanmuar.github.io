@@ -5413,7 +5413,8 @@ export function mountJarvis({
 			iss = live(g.issues),
 			br = live(g.branches),
 			dep = live(g.deploys),
-			an = live(g.android);
+			an = live(g.android),
+			sct = live(g.scout);
 		const sec = g.security || {},
 			bud = g.budget || null,
 			ag = g.agents || null,
@@ -6073,6 +6074,21 @@ export function mountJarvis({
 				) + (g.local ? `<p class="jv-note">From the Mac uploader ${esc(ghAgo(g.local.at))}.</p>` : '')
 			: off(g.branches);
 
+		// The weekly tool scout (#3857): its open draft PR and the arsenal tickets still open. Nothing here changes the arsenal.
+		const scoutRun = sct ? sct.run : null;
+		const scoutOpen = sct ? (sct.tickets && sct.tickets.items) || [] : [];
+		const scoutBody = sct
+			? `<p class="jv-note">${
+					scoutRun
+						? `Scout ${esc(scoutRun.date)}: ${ghLink(scoutRun.url, 'draft PR #' + scoutRun.pr)}, ${fmt(scoutRun.drift ?? 0)} drift rows and ${fmt(scoutRun.candidates ?? 0)} new candidates, waiting ${esc(hoursText(scoutRun.ageH || 0))}.`
+						: 'No scout draft is waiting. The scout runs Wednesdays at 15:37 UTC and opens one when it finds something.'
+				}</p>${table(
+					[['Arsenal ticket', (t) => `${ghLink(t.url, '#' + t.number)} ${esc(t.title)}`]],
+					scoutOpen,
+					'No arsenal tickets are open.'
+				)}<p class="jv-note">${fmt((sct.tickets && sct.tickets.open) || 0)} open, ${fmt((sct.tickets && sct.tickets.closed) || 0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.</p>`
+			: off(g.scout);
+
 		const depDaily = dep
 			? align([
 					{
@@ -6520,6 +6536,7 @@ export function mountJarvis({
             ${panel('github-branches', 'Branches', branchBody, { data: merged, note: 'Tap a number to list its branches, each with its compare against main.' })}
             ${panel('github-ahead', 'Ahead of and behind main', aheadBody, { data: br && br.ahead })}
             ${panel('github-worktrees', `Worktrees${trees.length ? ' · ' + trees.length : ''}`, treeBody, { wide: true, data: trees, note: 'Remove queues git worktree remove for the Mac uploader, which runs it within 5 minutes; it never forces, so uncommitted files stay.' })}
+            ${panel('github-scout', `Tool scout${scoutRun ? ' · ' + fmt((scoutRun.drift || 0) + (scoutRun.candidates || 0)) + ' findings' : ''}`, scoutBody, { wide: true, data: scoutOpen })}
             ${depDaily ? panel('github-deploys', 'Deploys per day', area(depDaily.labels, depDaily.series, { title: 'Deploy runs on main each day', yLabel: 'deploys per day', unit: 'deploys', xLabel: 'Day (UTC)' }), { wide: true, data: daily(depDaily) }) : ''}
             ${panel('github-deploy-last', 'Latest deploys', depBody, { data: dep && dep.last })}
             ${panel('github-envs', 'Environments', envBody, { data: dep && dep.environments })}
