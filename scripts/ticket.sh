@@ -8,7 +8,7 @@
 #   scripts/ticket.sh design <parent> <title> <body>            Design: deliverable, linked, set to Design
 #   scripts/ticket.sh move <n> <column>                         backlog next design dev qa stg prod done
 #   scripts/ticket.sh child <parent> <child>
-#   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done
+#   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done; refused until #pr has merged
 #   scripts/ticket.sh log start|end <n> [title]                 Cursor usage log row
 #   scripts/ticket.sh log sweep                                 close open rows older than 24h (end = start + 12h)
 # new and bug first list open issues that may be the same ticket (scripts/open-work.js dups, #2969), on stderr.
@@ -59,6 +59,17 @@ close() { # <n> <pr>
 	gh api $R/issues/"$1"/comments -f body="Fixed in #$2." >/dev/null
 	gh api -X PATCH $R/issues/"$1" -f state=closed -f state_reason=completed >/dev/null
 	board "$1" "done"
+}
+
+# done closes a ticket only once its PR has merged (#3782): a failed merge must not leave a ticket closed as completed.
+close_when_merged() { # <n> <pr>
+	local merged
+	merged=$(gh api $R/pulls/"$2" --jq .merged)
+	if [ "$merged" != true ]; then
+		echo "PR #$2 is not merged; ticket #$1 stays open. Merge the PR, then run done again." >&2
+		exit 1
+	fi
+	close "$1" "$2"
 }
 
 area_name() { case "$1" in be) echo BE ;; fe) echo FE ;; ui) echo UI ;; qa) echo QA ;; ci) echo CI ;; *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${1:0:1}")${1:1}" ;; esac }
@@ -173,7 +184,7 @@ design)
 	;;
 move) board "${1:?n}" "${2:?column}" ;;
 child) child "${1:?parent}" "${2:?child}" ;;
-"done") close "${1:?n}" "${2:?pr}" ;;
+"done") close_when_merged "${1:?n}" "${2:?pr}" ;;
 log)
 	now=$(date -u +%FT%TZ)
 	case "${1:?start|end|sweep}" in
