@@ -192,10 +192,9 @@ test("days before a source's first row and past its retention are not read", asy
 	assert.equal(stored.length, 5 + 1);
 });
 
-test('a day too large for one document keeps its rows out and is read raw', async () => {
-	days._memo.clear();
+function bigEvents(n) {
 	const big = [];
-	for (let i = 0; i < 400; i += 1)
+	for (let i = 0; i < n; i += 1)
 		big.push({
 			id: 'b' + i,
 			site: 'cv',
@@ -203,13 +202,92 @@ test('a day too large for one document keeps its rows out and is read raw', asyn
 			page: 'x'.repeat(3000),
 			createdAt: ts(Date.parse('2026-10-30T12:00:00Z') + i),
 		});
-	const db = fakeDb({ site_events: big });
+	return big;
+}
+
+test('a day too big for one document is stored in shards and read back whole (#3785)', async () => {
+	days._memo.clear();
+	const db = fakeDb({ site_events: bigEvents(400) });
 	const out = await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
 	assert.equal(out.events.length, 400);
-	assert.equal(db.docs['jarvis_days/2026-10-30_365'].parts.events.over, true);
-	assert.equal(db.docs['jarvis_days/2026-10-30_365'].parts.events.rows.length, 0);
+	const part = db.docs['jarvis_days/2026-10-30_365'].parts.events;
+	assert.equal(part.shards, 2);
+	assert.equal(part.rows.length, 0);
+	assert.ok(!part.over);
+	assert.equal(
+		db.docs['jarvis_days/2026-10-30_365~events~1'].rows.length +
+			db.docs['jarvis_days/2026-10-30_365~events~2'].rows.length,
+		400
+	);
 	days._memo.clear();
-	assert.equal((await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW })).events.length, 400);
+	db.stats.reads = 0;
+	const again = await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
+	assert.deepEqual(
+		again.events.map((r) => r.id),
+		out.events.map((r) => r.id)
+	);
+	// the day document and its two shards, not 400 raw rows
+	assert.ok(db.stats.reads < 20, 'reads ' + db.stats.reads);
+});
+
+test('a day beyond the shard cap keeps its rows out and is read raw each time', async () => {
+	days._memo.clear();
+	const saved = Object.assign({}, days.LIMITS);
+	Object.assign(days.LIMITS, { shard: 20000, maxShards: 2 });
+	try {
+		const db = fakeDb({ site_events: bigEvents(400) });
+		const out = await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
+		assert.equal(out.events.length, 400);
+		const part = db.docs['jarvis_days/2026-10-30_365'].parts.events;
+		assert.equal(part.over, true);
+		assert.equal(part.rows.length, 0);
+		assert.equal(part.shards, 0);
+		days._memo.clear();
+		assert.equal((await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW })).events.length, 400);
+	} finally {
+		Object.assign(days.LIMITS, saved);
+	}
+});
+
+test('a missing shard is read raw again and stored once more', async () => {
+	days._memo.clear();
+	const db = fakeDb({ site_events: bigEvents(400) });
+	await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
+	delete db.docs['jarvis_days/2026-10-30_365~events~2'];
+	days._memo.clear();
+	const out = await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
+	assert.equal(out.events.length, 400);
+	assert.ok(db.docs['jarvis_days/2026-10-30_365~events~2'], 'shard 2 written again');
+	assert.equal(db.docs['jarvis_days/2026-10-30_365'].parts.events.shards, 2);
+});
+
+test('a version 1 day that went over the cap is read again once, into shards', async () => {
+	days._memo.clear();
+	const db = fakeDb({ site_events: bigEvents(400) });
+	db.docs['jarvis_days/2026-10-30_365'] = {
+		parts: {
+			events: { v: 1, at: '2026-11-02T00:00:00.000Z', final: true, over: true, open: false, through: null, rows: [] },
+		},
+	};
+	const out = await days.rows(db, ['events'], { from: NOW - 3 * DAY, now: NOW });
+	assert.equal(out.events.length, 400);
+	const part = db.docs['jarvis_days/2026-10-30_365'].parts.events;
+	assert.equal(part.v, days.VERSION);
+	assert.equal(part.shards, 2);
+});
+
+test('splitRows packs rows into chunks under the limit, a row bigger than the limit in a chunk of its own', () => {
+	const rows = [{ a: 'x'.repeat(10) }, { a: 'y'.repeat(10) }, { a: 'z'.repeat(500) }, { a: 'w' }];
+	const chunks = days.splitRows(rows, 100);
+	assert.deepEqual(
+		chunks.map((c) => c.length),
+		[2, 1, 1]
+	);
+	assert.deepEqual(
+		days.splitRows(rows.slice(0, 2), 100).map((c) => c.length),
+		[2]
+	);
+	assert.deepEqual(days.splitRows([], 100), []);
 });
 
 test('rows for the browser carry Timestamps as ISO strings', () => {
