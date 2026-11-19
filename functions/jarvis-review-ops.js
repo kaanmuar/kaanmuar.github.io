@@ -206,7 +206,8 @@ const FAMILIES = [
   { id: "drop", label: "Hijacked prefixes (DROP)", test: /^sec-drop/ },
   { id: "feodo", label: "Feodo botnet C2 IPs", test: /^sec-feodo/ },
   { id: "breachNews", label: "Breach news (GDELT)", test: /^sec-breach-news/ },
-  { id: "certAnomaly", label: "Certificate anomalies", test: /^sec-cert-anomaly/ }
+  { id: "certAnomaly", label: "Certificate anomalies", test: /^sec-cert-anomaly/ },
+  { id: "targeted", label: "Attack sources (clear pass)", test: /^sec-targeted$/ }
 ];
 const HIT = (row) => row.verdict === "fail" || row.verdict === "risk";
 
