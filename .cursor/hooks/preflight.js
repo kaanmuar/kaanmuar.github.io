@@ -30,6 +30,7 @@ const RULE_HINTS = [
   [/jarvis|android|admin-jarvis|snapshot/i, ".cursor/rules/jarvis-mobile-parity.mdc"],
   [/clip|tiktok|youtube|reel|skit|voice|social|video|short/i, ".cursor/rules/social-clips.mdc"],
   [/playwright|e2e|chromium|spec\b|screenshot/i, ".cursor/rules/playwright-sandbox.mdc"],
+  [/arsenal|evaluat\w*|hallmark|voicestudio|floorplan|cinecode|artcraft|mattpocock|unslop|astryx|anything-llm|documenso|\brea\b|github\.com\//i, ".cursor/rules/tool-arsenal.mdc"],
 ];
 
 fs.mkdirSync(STATE, { recursive: true });
