@@ -134,7 +134,8 @@ function auditRepo(meta, line, kind, now, licenseText) {
 	const issues = [];
 	const spdx = meta.license && meta.license.spdx_id;
 	const cls = classifyLicense(spdx);
-	const claimsArchived = /archived/i.test(line.text) && kind === 'excluded';
+	// 'active, not archived' is the opposite claim.
+	const claimsArchived = /archived/i.test(line.text.replace(/\b(?:not|never|isn't|un)[ -]+archived/gi, '')) && kind === 'excluded';
 	if (meta.archived && kind === 'listed') issues.push({ level: 'ARCHIVED', note: 'archived, but listed as a tool to use' });
 	if (!meta.archived && claimsArchived) issues.push({ level: 'MISMATCH', note: 'listed as archived, but the repo is active' });
 	if (kind === 'listed') {

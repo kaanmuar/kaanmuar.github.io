@@ -126,3 +126,10 @@ test('the weekly workflow and its Jarvis schedule row agree, and the report is a
 	assert.match(flow, /gh pr create --draft/);
 	assert.doesNotMatch(flow, /gh pr merge|--auto/);
 });
+
+test('an excluded row that says "not archived" is not read as an archived claim (#3880)', () => {
+	const meta = { archived: false, license: { spdx_id: 'NOASSERTION' }, pushed_at: '2026-11-16T00:00:00Z' };
+	const levels = (text) => scout.auditRepo(meta, { text, claimed: [] }, 'excluded', NOW).map((r) => r.level);
+	assert.deepEqual(levels('`openai/skills` (active, not archived), no license at the repo root'), []);
+	assert.deepEqual(levels('`old/tool` is archived'), ['MISMATCH']);
+});
