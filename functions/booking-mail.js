@@ -755,7 +755,7 @@ function build(kind, b, extra) {
 				{
 					content: Buffer.from(ics(b, x), 'utf8').toString('base64'),
 					filename: 'call-with-carlos.ics',
-					type: 'text/calendar; charset=utf-8; method=PUBLISH',
+					type: 'text/calendar',
 					disposition: 'attachment',
 				},
 			];
@@ -768,7 +768,14 @@ function message(kind, b, extra, defaultFrom) {
 	const env =
 		built.look === 'review' ? mailFace.envelope(built.lang, defaultFrom) : { from: defaultFrom, replyTo: REPLY_TO };
 	const msg = {
-		to: { email: b.email, name: b.name },
+		to: {
+			email: b.email,
+			name:
+				String(b.name)
+					.replace(/[<>"(),;:#]/g, ' ')
+					.replace(/\s+/g, ' ')
+					.trim() || b.email,
+		},
 		from: env.from,
 		subject: built.subject.slice(0, 140),
 		text: built.text,
