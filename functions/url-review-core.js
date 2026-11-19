@@ -1299,16 +1299,16 @@ async function missingIntermediate(hostname, pinned) {
   };
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
   } catch (error) {
     if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
   }
 }
 
@@ -1319,14 +1319,14 @@ function foldedHeader(error) {
   return !!error && (error.code === "HPE_CR_EXPECTED" || error.message === "Parse Error: Missing expected CR after header value");
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
-  return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, false).catch((error) => {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
+  return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, false, extraHeaders).catch((error) => {
     if (!foldedHeader(error)) throw error;
-    return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, true);
+    return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, true, extraHeaders);
   });
 }
 
-function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, lenient) {
+function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, lenient, extraHeaders) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1359,7 +1359,7 @@ function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, 
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
       maxHeaderSize: MAX_HEADER_BYTES,
-      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}),
+      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}, extraHeaders || {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
       lookup: pinnedLookup(pinned),
       insecureHTTPParser: lenient === true
@@ -1532,7 +1532,7 @@ const httpOnly = (href, tried) => new Error("The site redirected to " + clean(hr
 const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
 const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent, extraHeaders) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   const upgrades = [];
@@ -1556,7 +1556,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage,
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent, cookieHeader(jar, current));
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent, cookieHeader(jar, current), extraHeaders);
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
@@ -2580,6 +2580,9 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "GEO-04", layer: "GEO", title: "An Organization or Person entity names who is behind " + host, why: (entityType ? "A " + entityType + " entity is published in JSON-LD on " + here + "." : types.length ? "JSON-LD on " + here + " is present (" + types.slice(0, 4).join(", ") + ") without an Organization or Person entity." : "No JSON-LD was found on " + here + ".") + " AI answers use the entity to name the brand, its logo, and its profiles.", fw: browser });
   addCase(cases, { id: "GEO-05", layer: "GEO", title: "Questions customers ask are answered on " + host + " under question headings or FAQ markup", why: (face.questionHeadings || 0) + " heading(s) on " + here + " are phrased as a question" + (types.indexOf("FAQPage") !== -1 ? ", and FAQPage data is present." : ".") + " Answer engines favour a short answer under the question it answers.", fw: browser });
   addCase(cases, { id: "GEO-06", layer: "GEO", title: "Content pages on " + host + " show when they were published or changed", why: (face.dated ? "A published or modified date is present on " + here + "." : "No published or modified date was found on " + here + ".") + (face.author ? " An author is named." : " No author is named, which the report lists separately.") + " Search engines and AI answers weigh whether a page is current.", fw: browser });
+  addCase(cases, { id: "GEO-07", layer: "GEO", title: host + "/.well-known/ai-catalog.json names callable agent resources", why: "The case fetches https://" + host + "/.well-known/ai-catalog.json when no ARD pointer is in robots.txt or page headers. The file should be JSON that agents can parse. Publishing it is optional until a catalog exists.", fw: browser });
+  addCase(cases, { id: "GEO-08", layer: "GEO", title: here + " declares WebMCP tools in static HTML or inline scripts", why: "The case searches " + here + " for document.modelContext in the HTML without running JavaScript. Chrome's WebMCP trial lets a page register tools agents can call in the browser.", fw: browser });
+  addCase(cases, { id: "GEO-09", layer: "GEO", title: here + " can answer agents with markdown when asked", why: "The case requests " + here + " with Accept: text/markdown and expects markdown or plain text, not only HTML. Agents that negotiate content type can skip conversion.", fw: browser });
   const budgetMs = Math.max(800, Math.ceil(((home.ms || 0) * 1.5) / 100) * 100);
   addCase(cases, { id: "PF-01", layer: "Performance", title: here + " arrives inside an 800 ms and 1.5 MB budget", why: "This request for " + here + " took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test, and a suite stops a page that hangs past its own timeout. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse, through PageSpeed Insights, scores the rendered start page in the Performance findings.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
   addCase(cases, { id: "PF-02", layer: "Performance", title: "Scripts and stylesheets on " + here + " stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced on " + here + ((sig.blockingScripts || 0) ? ", and " + sig.blockingScripts + " script(s) in the head block rendering without async or defer" : "") + ". The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
@@ -2801,9 +2804,9 @@ function withTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); })]).finally(() => clearTimeout(timer));
 }
 
-async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
+async function fetchExtra(url, halt, keepPartial, acceptLanguage, extraHeaders) {
   try {
-    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage);
+    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage, null, extraHeaders);
     const type = header(res.headers, "content-type");
     const body = String(res.body || "");
     return {
@@ -2811,6 +2814,7 @@ async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
       url: res.url,
       truncated: !!res.truncated || body.length > 600000,
       body: body.slice(0, 600000),
+      contentType: type,
       html: /text\/html|application\/xhtml/i.test(type) || /^\s*<(!doctype|html)/i.test(res.body || "")
     };
   } catch (error) {
@@ -3473,7 +3477,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
     : missingIntermediate ? { missingIntermediate } : null;
   const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/ai-catalog.json, the start page with Accept: text/markdown, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const reach = (url) => {
     const target = new URL(url);
@@ -3487,12 +3491,20 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
     ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
     : Promise.resolve(undefined);
   const shareImageUrl = lookups && lookups.inspect && lookups.inspect.social && /^https:\/\//i.test(lookups.inspect.social.ogImage || "") ? lookups.inspect.social.ogImage : "";
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists, shareImage] = await Promise.all([
+  const catalogPath = "/.well-known/ai-catalog.json";
+  const homePath = pagePath(first.url);
+  const [sitemap, llms, llmsFull, aiCatalog, agentMarkdown, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists, shareImage] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
     done(fetchExtra(origin.origin + "/llms.txt", halt, false, acceptLanguage), (res) => answered("/llms.txt", res)),
     done(fetchExtra(origin.origin + "/llms-full.txt", halt, false, acceptLanguage), (res) => answered("/llms-full.txt", res)),
+    allowed(catalogPath)
+      ? done(fetchExtra(origin.origin + catalogPath, halt, false, acceptLanguage), (res) => answered(catalogPath, res))
+      : Promise.resolve(null).then(() => { say("The ai-catalog check was skipped: robots.txt disallows " + catalogPath + "."); return null; }),
+    allowed(homePath)
+      ? done(fetchExtra(first.url, halt, false, acceptLanguage, { accept: "text/markdown" }), (res) => "The start page with Accept: text/markdown answered " + (res.status || "nothing") + (res.contentType ? " as " + clean(res.contentType, 80) : "") + ".")
+      : Promise.resolve(null).then(() => { say("The agent markdown check was skipped: robots.txt disallows the start page."); return null; }),
     done(fetchExtra(origin.origin + "/.well-known/security.txt", halt, false, acceptLanguage), (res) => answered("/.well-known/security.txt", res)),
     allowed(pagePath(utmUrl.toString()))
       ? done(fetchPublic(utmUrl.toString(), halt, null, false, acceptLanguage).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
@@ -3545,8 +3557,8 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
     : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
       : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
-  const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  const out = { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
+  const trim = (item) => item ? { status: item.status, html: !!item.html, contentType: item.contentType || "", body: String(item.body || "").slice(0, 20000), error: item.error || "" } : null;
+  const out = { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), aiCatalog: trim(aiCatalog), agentMarkdown: trim(agentMarkdown), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
   if (shareImage) out.shareImage = shareImage;
   return out;
 }

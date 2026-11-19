@@ -14,6 +14,7 @@ const exposedFiles = require("./url-review-exposed");
 const lookalikes = require("./url-review-lookalikes");
 const hackSigns = require("./url-review-hack-signs");
 const targeted = require("./url-review-targeted");
+const geoAgent = require("./url-review-geo-agent");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1381,31 +1382,8 @@ function analyze(input) {
   } else {
     add("GEO", "pass", "info", "geo-js-only", say("geo-js-only.pass.title"), say("geo-js-only.pass.evidence", { chars: homeText.chars }), "", { cases: ["GEO-03", "CMP-01"] });
   }
-  const llms = extras.llms || {};
-  const llmsReport = { status: llms.status || 0, ok: false, title: "", summary: "", sections: 0, links: 0, full: !!(extras.llmsFull && extras.llmsFull.status === 200 && !extras.llmsFull.html) };
-  if (llms.status === 200 && !llms.html && /^\s*#\s+\S/.test(llms.body || "")) {
-    const body = llms.body || "";
-    llmsReport.ok = true;
-    llmsReport.title = ((body.match(/^\s*#\s+(.+)$/m) || [])[1] || "").slice(0, 120);
-    llmsReport.summary = ((body.match(/^\s*>\s*(.+)$/m) || [])[1] || "").slice(0, 240);
-    llmsReport.sections = (body.match(/^##\s+/gm) || []).length;
-    llmsReport.links = (body.match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
-    llmsReport.bareLinks = (body.match(/(^|\s)https?:\/\/\S+/gm) || []).length;
-    const gaps = [];
-    if (!llmsReport.summary) gaps.push(say("geo-llms.gapSummary"));
-    if (!llmsReport.links && !llmsReport.bareLinks) gaps.push(say("geo-llms.gapLinks"));
-    else if (!llmsReport.links) gaps.push(say("geo-llms.gapMarkdown"));
-    llmsReport.complete = !gaps.length;
-    add("GEO", gaps.length ? "risk" : "pass", "low", "geo-llms", gaps.length ? say("geo-llms.lacks.title", { gaps: { items: gaps, join: "and" } }) : say("geo-llms.pass.title"),
-      say("geo-llms.evidence", { sections: say("geo-llms.sections", { n: llmsReport.sections }), links: say("geo-llms.links", { n: llmsReport.links || llmsReport.bareLinks || 0 }), full: llmsReport.full ? say("geo-llms.full") : "." }),
-      gaps.length ? say("geo-llms.lacks.fix") : "", { cases: ["GEO-02"], effort: "minutes" });
-  } else if (llms.status === 200 && llms.html) {
-    add("GEO", "risk", "low", "geo-llms", say("geo-llms.html.title"), say("geo-llms.html.evidence"),
-      say("geo-llms.html.fix"), { cases: ["GEO-02"], effort: "minutes" });
-  } else {
-    add("GEO", "risk", "low", "geo-llms", say("geo-llms.title"), say("geo-llms.none.evidence", { status: llms.status || say("nothing") }),
-      say("geo-llms.fix"), { cases: ["GEO-02"], effort: "minutes" });
-  }
+  const geoAgentReports = geoAgent.findings({ extras, pages }, add);
+  const llmsReport = geoAgentReports.llms;
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));
   const ENTITY = /^(\w*Organization|Corporation|LocalBusiness|Person|NGO|Store|Restaurant|ProfessionalService|OnlineBusiness)$/;
@@ -1908,6 +1886,9 @@ function analyze(input) {
     crawlers: crawlers.map((bot) => ({ token: bot.token, owner: bot.owner, product: bot.product, role: bot.role, allowed: bot.allowed, rule: bot.rule, blockedPages: bot.blockedPages })),
     robotsFound: robots.groups.length > 0 || !!input.robotsText,
     llms: llmsReport,
+    aiCatalog: geoAgentReports.aiCatalog,
+    webmcp: geoAgentReports.webmcp,
+    agentMarkdown: geoAgentReports.agentMarkdown,
     aiView: { text: (homeText.text || "").slice(0, 1600), chars: homeText.chars || 0, words: homeText.words || 0, outline: (homeText.outline || []).slice(0, 24), appShell },
     entity: entity ? { type: entity.types[0], props: entity.props.slice(0, 20), sameAs: (entity.sameAs || []).slice(0, 10) } : null,
     schemaTypes: [...schemaTypes].slice(0, 20),
@@ -2060,10 +2041,10 @@ function fixKit(ctx) {
       }
     ]
   };
-  const pagesForLlms = (ctx.read || []).filter((page) => ctx.indexable.some((row) => row.path === page.path)).slice(0, 40);
-  const llmsTxt = ["# " + name, "", "> " + (face.description || "Describe in one or two sentences what this site offers and who it is for."), "", "## Pages", ""]
-    .concat(pagesForLlms.map((page) => "- [" + (page.inspect.title || page.path).replace(/[[\]]/g, "") + "](" + page.url + ")" + (page.inspect.description ? ": " + page.inspect.description : "")))
-    .concat(["", "## Contact", "", "- [Home](" + ctx.origin + "/)"]).join("\n") + "\n";
+  const pagesForLlms = (ctx.read || []).filter((page) => ctx.indexable.some((row) => row.path === page.path)).slice(0, 40)
+    .map((page) => ({ path: page.path, url: page.url, title: page.inspect.title, description: page.inspect.description }));
+  const llmsParsed = geoAgent.parseLlmsTxt((ctx.extras.llms && ctx.extras.llms.body) || "", ctx.extras.llms || {});
+  const llmsTxt = geoAgent.draftLlmsTxt({ name, description: face.description, pages: pagesForLlms, origin: ctx.origin });
   const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
   const securityTxt = ["Contact: mailto:security@" + ((ctx.dnsInfo && ctx.dnsInfo.domain) || ctx.host), "Expires: " + expires, "Preferred-Languages: " + (face.lang ? face.lang.split("-")[0] : "en"), "Canonical: " + ctx.origin + "/.well-known/security.txt", ""].join("\n");
   const domain = (ctx.dnsInfo && ctx.dnsInfo.domain) || ctx.host;
@@ -2127,7 +2108,7 @@ function fixKit(ctx) {
     csp,
     headers,
     jsonLd: ctx.entity ? null : jsonLd,
-    llmsTxt: (ctx.extras.llms && ctx.extras.llms.status === 200 && !ctx.extras.llms.html) ? "" : llmsTxt,
+    llmsTxt: (llmsParsed.ok && llmsParsed.complete) ? "" : llmsTxt,
     securityTxt: (ctx.extras.securityTxt && ctx.extras.securityTxt.status === 200 && !ctx.extras.securityTxt.html) ? "" : securityTxt,
     dns: dnsRecords,
     mtaSts,

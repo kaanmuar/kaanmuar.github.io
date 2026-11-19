@@ -232,6 +232,10 @@
         notOpen: "The report of {host} is not open in full yet. Unlock it to compare from it."
       },
       targetedTitle: "Was it targeted?",
+      evidencePdf: "Download attack-source evidence (PDF)",
+      evidencePdfBusy: "Preparing the evidence PDF…",
+      evidencePdfDone: "The evidence PDF downloaded.",
+      evidencePdfFailed: "The evidence PDF did not download. Try again.",
       targetedPrivateNote: "Private to your paid report: never published in Live Reports, owner emails, or shared previews.",
       targetedStatus: {
         clear: "No public attack or exploit signal found",
@@ -501,6 +505,10 @@
         notOpen: "El informe de {host} todavía no está abierto completo. Desbloquéalo para comparar desde él."
       },
       targetedTitle: "¿Fue atacado?",
+      evidencePdf: "Descargar evidencia de fuentes de ataque (PDF)",
+      evidencePdfBusy: "Preparando el PDF de evidencia…",
+      evidencePdfDone: "El PDF de evidencia se descargó.",
+      evidencePdfFailed: "El PDF de evidencia no se descargó. Inténtalo de nuevo.",
       targetedPrivateNote: "Privado en tu informe pagado: nunca se publica en informes en vivo, correos al propietario ni vistas previas compartidas.",
       targetedStatus: {
         clear: "No se encontró ninguna señal pública de ataque ni exploit",
@@ -771,6 +779,10 @@
         notOpen: "O relatório de {host} ainda não está aberto por completo. Desbloqueie o relatório para comparar a partir dele."
       },
       targetedTitle: "Este site foi alvo de ataques?",
+      evidencePdf: "Baixar evidências de fontes de ataque (PDF)",
+      evidencePdfBusy: "Preparando o PDF de evidências…",
+      evidencePdfDone: "O PDF de evidências foi baixado.",
+      evidencePdfFailed: "O PDF de evidências não foi baixado. Tente de novo.",
       targetedPrivateNote: "Privado no seu relatório pago: nunca publicado em relatórios ao vivo, e-mails ao proprietário ou prévias compartilhadas.",
       targetedStatus: {
         clear: "Nenhum sinal público de ataque ou exploit encontrado",
@@ -1041,6 +1053,10 @@
         notOpen: "Der Bericht von {host} ist noch nicht vollständig freigeschaltet. Schalten Sie ihn frei, um von ihm aus zu vergleichen."
       },
       targetedTitle: "Wurde die Website angegriffen?",
+      evidencePdf: "Angriffsquellen-Nachweis als PDF herunterladen",
+      evidencePdfBusy: "Der Evidenz-PDF wird erstellt…",
+      evidencePdfDone: "Der Evidenz-PDF wurde heruntergeladen.",
+      evidencePdfFailed: "Der Evidenz-PDF wurde nicht heruntergeladen. Versuchen Sie es erneut.",
       targetedPrivateNote: "Privat in Ihrem bezahlten Bericht: wird niemals in Live Reports, Eigentümer-E-Mails oder geteilten Vorschauen veröffentlicht.",
       targetedStatus: {
         clear: "Kein öffentliches Angriffs- oder Exploit-Signal gefunden",
@@ -1309,6 +1325,10 @@
         notOpen: "Le rapport de {host} n’est pas encore ouvert en entier. Débloquez-le pour comparer à partir de lui."
       },
       targetedTitle: "Ce site a-t-il été ciblé ?",
+      evidencePdf: "Télécharger les preuves des sources d’attaque (PDF)",
+      evidencePdfBusy: "Préparation du PDF de preuves…",
+      evidencePdfDone: "Le PDF de preuves a été téléchargé.",
+      evidencePdfFailed: "Le PDF de preuves ne s’est pas téléchargé. Réessayez.",
       targetedPrivateNote: "Confidentiel dans votre rapport payé : jamais publié dans les rapports en direct, e-mails au propriétaire ni aperçus partagés.",
       targetedStatus: {
         clear: "Aucun signal public d’attaque ou d’exploit trouvé",
@@ -1579,6 +1599,10 @@
         notOpen: "Il report di {host} non è ancora aperto per intero. Sbloccalo per confrontare a partire da esso."
       },
       targetedTitle: "Questo sito è stato preso di mira?",
+      evidencePdf: "Scarica evidenze dalle fonti di attacco (PDF)",
+      evidencePdfBusy: "Preparazione del PDF delle evidenze…",
+      evidencePdfDone: "Il PDF delle evidenze è stato scaricato.",
+      evidencePdfFailed: "Il PDF delle evidenze non è stato scaricato. Riprova.",
       targetedPrivateNote: "Riservato al tuo report pagato: mai pubblicato in Live Reports, email al proprietario o anteprime condivise.",
       targetedStatus: {
         clear: "Nessun segnale pubblico di attacco o exploit rilevato",

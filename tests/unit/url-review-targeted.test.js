@@ -231,3 +231,20 @@ test("targeted.lines names the sources read and skipped and never the level (#38
   assert.ok(!out.join(" ").match(/critical|signal/i));
   assert.deepEqual(targeted.lines({ sourcesRead: [], sourcesSkipped: [] }), ["Attack and exploit sources read: none."]);
 });
+
+test('the botnet count is the Feodo servers online now, by country, and the map keeps the last one when a refresh has no list (#3910)', () => {
+  const feodo = targeted.parseFeodo([
+    { ip_address: "50.16.16.211", status: "online", country: "US", malware: "QakBot", port: 443, last_online: "2026-11-19" },
+    { ip_address: "203.0.113.9", status: "online", country: "DE", malware: "Dridex", port: 443 },
+    { ip_address: "203.0.113.10", status: "offline", country: "DE", malware: "Dridex", port: 443 },
+    { ip_address: "198.51.100.4", status: "online", country: "bad", malware: "Emotet", port: 80 }
+  ]);
+  assert.equal(feodo.ips["203.0.113.10"].online, false);
+  const now = targeted.botnetNowSummary(feodo, "2026-11-19T22:00:00.000Z");
+  assert.equal(now.online, 3);
+  assert.deepEqual(now.countries.map((x) => [x.cc, x.count]).sort(), [["??", 1], ["DE", 1], ["US", 1]]);
+  const map = targeted.updateGlobalMapHistory(null, { byCountry: {}, mentions: [], slice: "" }, null, "", Date.parse("2026-11-19T22:00:00Z"), feodo);
+  assert.equal(map.botnetNow.online, 3);
+  const kept = targeted.updateGlobalMapHistory(map, { byCountry: {}, mentions: [], slice: "" }, null, "", Date.parse("2026-11-19T23:00:00Z"), null);
+  assert.equal(kept.botnetNow.online, 3);
+});

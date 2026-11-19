@@ -460,6 +460,7 @@
       ],
       "mentions90d": 17210,
       "historyDays": 90,
+    "botnetNow": {"asOf": "2026-11-19T22:00:00.000Z", "online": 3, "countries": [{"cc": "US", "count": 1}, {"cc": "DE", "count": 1}, {"cc": "??", "count": 1}], "source": "Feodo Tracker by abuse.ch (CC0 1.0)"},
       "kevVersion": "2026.11.10",
       "attributions": [
         "GDELT Project (https://www.gdeltproject.org/)",
