@@ -219,23 +219,29 @@ test('a pass when every checked version is clean, and nothing without the stored
 	assert.deepEqual(findings, []);
 });
 
+// The index keeps its fields on state (body, updated, saved); any other file keeps them under state.others[name].
 function fakeStorage(state) {
-	const file = {
-		exists: async () => [!!state.body],
-		getMetadata: async () => [{ updated: state.updated }],
-		download: async () => [state.body],
+	const fileOf = (slot) => ({
+		exists: async () => [!!slot.body],
+		getMetadata: async () => [{ updated: slot.updated }],
+		download: async () => [slot.body],
 		save: async (body, opts) => {
-			state.body = body;
-			state.saved = opts;
+			slot.body = body;
+			slot.saved = opts;
 		},
-	};
+	});
 	return {
 		bucket: (name) => {
 			state.bucket = name;
 			return {
 				file: (name2) => {
-					state.path = name2;
-					return file;
+					if (name2 === wp.INDEX_PATH) {
+						state.path = name2;
+						return fileOf(state);
+					}
+					state.others = state.others || {};
+					state.others[name2] = state.others[name2] || {};
+					return fileOf(state.others[name2]);
 				},
 			};
 		},
@@ -290,11 +296,35 @@ test('the daily job skips without a key, with a fresh index or on 429, and store
 	);
 	const before = state.body;
 	await assert.rejects(
-		wp.refreshFeed({ key: 'k1', storage: fakeStorage(state), fetch: async () => feedResponse(FEED), now }),
+		wp.refreshFeed({ key: 'k1', storage: fakeStorage(state), fetch: async () => feedResponse(FEED), now: now + 25 * 3600000 }),
 		/only 5 records/
 	);
 	assert.equal(state.body, before);
 
 	const index = await wp.loadIndex(fakeStorage(state));
 	assert.equal(index.count, 5);
+});
+
+test('a 429 backs the feed off for a day, so the next run, a retry or a manual run makes no call (#3808)', async () => {
+	const state = {};
+	const now = Date.parse('2026-11-19T13:40:00Z');
+	state.updated = new Date(now - 30 * 3600000).toISOString();
+	let calls = 0;
+	const limited = async () => {
+		calls += 1;
+		return feedResponse('', 429);
+	};
+	const run = (at, fetch) => wp.refreshFeed({ key: 'k1', storage: fakeStorage(state), fetch, now: at, minRecords: 1 });
+
+	assert.equal((await run(now, limited)).skipped, 'rate limited');
+	assert.equal(calls, 1);
+	assert.equal(JSON.parse(String(state.others[wp.BACKOFF_PATH].body)).until, new Date(now + wp.RATE_LIMIT_MS).toISOString());
+
+	const retry = await run(now + 20 * 60000, limited);
+	assert.equal(retry.skipped, 'backoff');
+	assert.equal((await run(now + 23 * 3600000, limited)).skipped, 'backoff');
+	assert.equal(calls, 1);
+
+	const after = await run(now + 25 * 3600000, async () => feedResponse(FEED));
+	assert.equal(after.count, 5);
 });

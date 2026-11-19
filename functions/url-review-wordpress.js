@@ -11,9 +11,12 @@ const FEED_URL = "https://www.wordfence.com/api/intelligence/v3/vulnerabilities/
 const TERMS_URL = "https://www.wordfence.com/wordfence-intelligence-terms-and-conditions/";
 const BUCKET = "carlosm-interactive-cv.firebasestorage.app";
 const INDEX_PATH = "wordfence/index.json.gz";
+const BACKOFF_PATH = "wordfence/backoff.json";
 const H = 3600000;
 // The key allows about one download per 30 minutes; going over answers 429 and can get the key suspended.
 const MIN_REFRESH_MS = 20 * H;
+// After a 429 the job waits a full day before it asks again (#3808).
+const RATE_LIMIT_MS = 24 * H;
 const INDEX_TTL_MS = 6 * H;
 const MISSING_TTL_MS = H / 2;
 const MIN_RECORDS = 1000;
@@ -337,6 +340,7 @@ function indexer() {
 }
 
 // The daily job: download the feed once, build the index and store it. Without a key, or with a fresh index, it does nothing.
+// Once Wordfence answers 429, nothing calls the feed for a day: not the next scheduled run, its retries, or a manual run (#3808).
 async function refreshFeed(options) {
   const opts = options || {};
   const key = opts.key;
@@ -344,8 +348,16 @@ async function refreshFeed(options) {
     console.log("WORDFENCE_KEY is not set, so the Wordfence feed was not downloaded.");
     return { skipped: "no key" };
   }
-  const file = (opts.storage || require("firebase-admin/storage").getStorage()).bucket(BUCKET).file(INDEX_PATH);
+  const storage = opts.storage || require("firebase-admin/storage").getStorage();
+  const file = storage.bucket(BUCKET).file(INDEX_PATH);
+  const backoff = storage.bucket(BUCKET).file(BACKOFF_PATH);
   const now = opts.now || Date.now();
+  const [backedOff] = await backoff.exists();
+  if (backedOff) {
+    const [body] = await backoff.download();
+    const until = Date.parse((JSON.parse(String(body)) || {}).until || 0);
+    if (until > now) return { skipped: "backoff", until: new Date(until).toISOString() };
+  }
   const [exists] = await file.exists();
   if (exists && !opts.force) {
     const [meta] = await file.getMetadata();
@@ -354,8 +366,10 @@ async function refreshFeed(options) {
   }
   const res = await (opts.fetch || fetch)(FEED_URL, { headers: { authorization: "Bearer " + key, accept: "application/json" } });
   if (res.status === 429) {
-    console.warn("The Wordfence feed answered 429; the stored index stays until tomorrow.");
-    return { skipped: "rate limited" };
+    const until = new Date(now + RATE_LIMIT_MS).toISOString();
+    await backoff.save(JSON.stringify({ until, at: new Date(now).toISOString(), status: 429 }), { resumable: false, contentType: "application/json" });
+    console.warn("The Wordfence feed answered 429; no call to it until " + until + ", and the stored index stays until then.");
+    return { skipped: "rate limited", until };
   }
   if (!res.ok) throw new Error("The Wordfence feed answered " + res.status);
   const build = indexer();
@@ -373,4 +387,4 @@ async function refreshFeed(options) {
   return { count: index.count, slugs, bytes: body.length };
 }
 
-module.exports = { fromHtml, collect, check, note, checks, match, feedSplitter, indexer, refreshFeed, loadIndex, stableTag, themeVersion, FEED_URL, INDEX_PATH };
+module.exports = { fromHtml, collect, check, note, checks, match, feedSplitter, indexer, refreshFeed, loadIndex, stableTag, themeVersion, FEED_URL, INDEX_PATH, BACKOFF_PATH, RATE_LIMIT_MS };
