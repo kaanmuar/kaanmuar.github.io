@@ -1999,6 +1999,7 @@ const batchMail = require("./url-review-batch-mail");
 const reviewPeers = require("./url-review-peers");
 const reviewMarket = require("./url-review-market");
 const ownerNotice = require("./url-review-owner-notice");
+const ownerNoticeOffer = require("./url-review-owner-notice-offer");
 const engagementReports = require("./engagement-reports");
 const ownerMail = require("./url-review-owner-mail");
 const mailFace = require("./mail-face");
@@ -5510,6 +5511,35 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     return;
   }
   if (pathName.indexOf("/review/fix/") !== -1 && await fixRequests.route(req, res, pathName, fixDeps())) return;
+  if (req.method === "POST" && pathName.endsWith("/review/owner-notice")) {
+    const body = req.body || {};
+    if (body.attackOffer !== true) {
+      res.status(400).json({ error: "Set attackOffer to true to send the owner notice from this report." });
+      return;
+    }
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    const snap = id ? await getFirestore().collection("url_reviews").doc(id).get() : null;
+    const row = snap && snap.exists ? Object.assign({ id }, snap.data() || {}) : null;
+    const free = !!row && (row.free === true || await hasFreeRuns(row.email));
+    const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), body, row, free);
+    if (!access.ok) {
+      res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+      return;
+    }
+    const out = await ownerNoticeOffer.sendFromAsker(row, access.email, {
+      db: getFirestore(),
+      queueOwnerNotice,
+      decideOwnerNotice,
+      markSent: (reviewId) => getFirestore().collection("url_reviews").doc(reviewId).set({ attackOwnerNoticeSentAt: new Date().toISOString() }, { merge: true })
+    });
+    if (out.error) {
+      const status = /Only the account that ran this review/.test(out.error) ? 403 : 409;
+      res.status(status).json({ error: out.error });
+      return;
+    }
+    res.status(200).json({ ok: true, status: out.status, email: out.email });
+    return;
+  }
   if (req.method === "POST" && pathName.endsWith("/review/ask")) {
     const body = req.body || {};
     const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
@@ -6099,6 +6129,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       free,
       addons: data.addons || [],
       addonLayers: data.addonLayers || [],
+      attackOwnerNoticeSentAt: data.attackOwnerNoticeSentAt || "",
+      ownerNoticeOffer: ownerNoticeOffer.showOffer(data.report, { paid: true }),
       branding: brand ? { companyName: brand.companyName, logoDataUrl: brand.logoDataUrl || "" } : null
     }, versus ? { versus } : {}));
     return;

@@ -5542,7 +5542,51 @@
 		return String(raw == null ? '' : raw).replace(banned, 'Threat list');
 	}
 
-	function paintTargeted(report, paid) {
+	function ownerNoticeOfferOn(report, paid, payload) {
+		if (paid !== true || !report || report.preview || report.live || (payload && payload.sample)) return false;
+		if (payload && payload.ownerNoticeOffer === true) return true;
+		if (payload && payload.ownerNoticeOffer === false) return false;
+		return ((report.insights && report.insights.findings) || []).some(
+			(row) =>
+				row &&
+				/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String(row.key || '')) &&
+				row.severity === 'critical' &&
+				row.verdict !== 'pass'
+		);
+	}
+
+	async function sendAttackOwnerNotice(reportId, button, noteEl) {
+		if (!reportId || !window.ReviewAuth || !ReviewAuth.signedIn()) return;
+		const prev = button.disabled;
+		button.disabled = true;
+		if (noteEl) noteEl.textContent = rc.t('targetedOwnerNoticeBusy');
+		try {
+			const res = await fetch(endpoint() + '/review/owner-notice', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(
+					Object.assign(ReviewAuth.proof(), { id: reportId, attackOffer: true, send: true })
+				),
+			});
+			const body = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(body.error || rc.t('targetedOwnerNoticeFail'));
+			if (current) current.attackOwnerNoticeSentAt = new Date().toISOString();
+			if (noteEl) {
+				noteEl.hidden = false;
+				noteEl.textContent = rc.t('targetedOwnerNoticeSent');
+			}
+			button.hidden = true;
+		} catch (error) {
+			button.disabled = prev;
+			if (noteEl) {
+				noteEl.hidden = false;
+				noteEl.textContent = String((error && error.message) || rc.t('targetedOwnerNoticeFail'));
+			}
+		}
+	}
+
+	function paintTargeted(report, paid, payload) {
 		if (slotRoot) return;
 		const head = document.getElementById('targeted-head');
 		const box = document.getElementById('targeted');
@@ -5675,6 +5719,19 @@
 		if (read.length) foot.push('<span>' + esc(rc.t('targetedSources', { list: read.join(', ') })) + '</span>');
 		if (skipped.length) foot.push('<span>' + esc(rc.t('targetedSkipped', { list: skipped.join(', ') })) + '</span>');
 		if (attr.length) foot.push('<span>' + esc(rc.t('targetedAttr', { list: attr.join(' · ') })) + '</span>');
+		const offer = ownerNoticeOfferOn(report, paid, payload);
+		const sentAt = (payload && payload.attackOwnerNoticeSentAt) || (current && current.attackOwnerNoticeSentAt);
+		const offerHtml = offer
+			? '<div class="targeted-owner-offer">' +
+				(sentAt
+					? '<p class="meta-line targeted-owner-status">' + esc(rc.t('targetedOwnerNoticeSent')) + '</p>'
+					: '<p class="meta-line">' + esc(rc.t('targetedOwnerNoticeHint')) + '</p>' +
+						'<button type="button" class="btn btn-secondary targeted-owner-btn" data-act="owner-notice-offer">' +
+						esc(rc.t('targetedOwnerNoticeBtn')) +
+						'</button>' +
+						'<p class="meta-line targeted-owner-status" hidden></p>') +
+				'</div>'
+			: '';
 		box.innerHTML =
 			'<div class="targeted-head">' +
 			'<span class="targeted-badge is-' +
@@ -5688,7 +5745,13 @@
 			'</div>' +
 			(metaParts.length ? '<div class="targeted-meta">' + metaParts.join('') + '</div>' : '') +
 			listHtml +
-			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '');
+			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '') +
+			offerHtml;
+		const offerBtn = box.querySelector('[data-act="owner-notice-offer"]');
+		const offerNote = box.querySelector('.targeted-owner-status');
+		if (offerBtn && report && report.id) {
+			offerBtn.addEventListener('click', () => sendAttackOwnerNotice(report.id, offerBtn, offerNote));
+		}
 	}
 
 	function headerCols() {
@@ -6765,7 +6828,7 @@
 		const paid = !!payload.paid;
 		paintVisuals(report, paid);
 		paintInsights(report, paid, fixed);
-		paintTargeted(report, paid);
+		paintTargeted(report, paid, payload);
 		const offer = document.getElementById('unlock-offer');
 		paintOffer(offer, !paid && !sample);
 		// Soft preview uses Unlock, not the paid reopen quote (#3478).
