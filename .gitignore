@@ -79,3 +79,7 @@ media/check-faces-2026-11/
 assets/review-arena/v3/*/debug-boxes.png
 assets/review-arena/*.mp4
 assets/review-arena/*-v2.jpg
+
+# Tool scout output (#3857): Tailwind scans tracked text, so the weekly files are force-added by the workflow
+scripts/tool-scout/reports/
+scripts/tool-scout/seen.json
