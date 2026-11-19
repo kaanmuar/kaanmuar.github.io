@@ -26,6 +26,9 @@ const LABEL = {
     host: "Host",
     runDate: "Review run (UTC)",
     checksRead: "Sources checked",
+    sourcesReadLabel: "Read",
+    sourcesSkippedLabel: "Skipped",
+    noSources: "No source answered in time.",
     colFinding: "Finding",
     colLevel: "Level",
     colSource: "Source",
@@ -41,6 +44,9 @@ const LABEL = {
     host: "Sitio",
     runDate: "Revisión (UTC)",
     checksRead: "Fuentes consultadas",
+    sourcesReadLabel: "Leídas",
+    sourcesSkippedLabel: "Omitidas",
+    noSources: "Ninguna fuente respondió a tiempo.",
     colFinding: "Hallazgo",
     colLevel: "Nivel",
     colSource: "Fuente",
@@ -56,6 +62,9 @@ const LABEL = {
     host: "Site",
     runDate: "Revisão (UTC)",
     checksRead: "Fontes consultadas",
+    sourcesReadLabel: "Lidas",
+    sourcesSkippedLabel: "Ignoradas",
+    noSources: "Nenhuma fonte respondeu a tempo.",
     colFinding: "Achado",
     colLevel: "Nível",
     colSource: "Fonte",
@@ -71,6 +80,9 @@ const LABEL = {
     host: "Website",
     runDate: "Prüfung (UTC)",
     checksRead: "Gelesene Quellen",
+    sourcesReadLabel: "Gelesen",
+    sourcesSkippedLabel: "Übersprungen",
+    noSources: "Keine Quelle hat rechtzeitig geantwortet.",
     colFinding: "Befund",
     colLevel: "Stufe",
     colSource: "Quelle",
@@ -86,6 +98,9 @@ const LABEL = {
     host: "Site",
     runDate: "Analyse (UTC)",
     checksRead: "Sources lues",
+    sourcesReadLabel: "Lues",
+    sourcesSkippedLabel: "Ignorées",
+    noSources: "Aucune source n’a répondu à temps.",
     colFinding: "Constat",
     colLevel: "Niveau",
     colSource: "Source",
@@ -101,6 +116,9 @@ const LABEL = {
     host: "Sito",
     runDate: "Revisione (UTC)",
     checksRead: "Fonti lette",
+    sourcesReadLabel: "Lette",
+    sourcesSkippedLabel: "Saltate",
+    noSources: "Nessuna fonte ha risposto in tempo.",
     colFinding: "Rilievo",
     colLevel: "Livello",
     colSource: "Fonte",
@@ -141,6 +159,24 @@ function toUtcIso(value) {
   const raw = String(value).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw + "T00:00:00.000Z";
   return raw.slice(0, 19) + (raw.endsWith("Z") ? "" : "Z");
+}
+
+// "2026-11-19T00:00:00.000Z" wraps badly in a table cell; the column and the header already say UTC.
+function stamp(value) {
+  const iso = toUtcIso(value);
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(iso);
+  return m ? m[1] + " " + m[2] : iso;
+}
+
+// The sources read and skipped, in the report's language. targeted.lines() is English only.
+function sourceLines(lang, block) {
+  const read = Array.isArray(block && block.sourcesRead) ? block.sourcesRead : [];
+  const skipped = Array.isArray(block && block.sourcesSkipped) ? block.sourcesSkipped : [];
+  if (!read.length && !skipped.length) return [label(lang, "noSources")];
+  const out = [];
+  if (read.length) out.push(label(lang, "sourcesReadLabel") + ": " + read.join(", ") + ".");
+  if (skipped.length) out.push(label(lang, "sourcesSkippedLabel") + ": " + skipped.join(", ") + ".");
+  return out;
 }
 
 function sourcesForKey(key, targeted) {
@@ -192,7 +228,7 @@ function rows(record, lang) {
     level: finding.severity || "low",
     evidence: findingLine(lang, finding, "evidence"),
     source: sourcesForKey(finding.key, targetedBlock).join(", "),
-    time: timeForKey(finding.key, targetedBlock)
+    time: stamp(timeForKey(finding.key, targetedBlock))
   }));
 }
 
@@ -231,10 +267,10 @@ function page(record, options) {
   const report = (record && record.report) || {};
   const targetedBlock = report.targeted || {};
   const list = rows(record, lang);
-  const runAt = toUtcIso(report.fetchedAt || targetedBlock.checkedAt || (record && record.createdAt));
+  const runAt = stamp(report.fetchedAt || targetedBlock.checkedAt || (record && record.createdAt));
   const host = String(report.host || "");
   const id = String(report.id || (record && record.id) || "");
-  const checks = checksRead(targetedBlock);
+  const checks = sourceLines(lang, targetedBlock);
   const attr = Array.isArray(targetedBlock.attributions) ? targetedBlock.attributions : [];
   const tableRows = list.map((row) =>
     "<tr><td>" + customerMail.esc(row.title) + "</td><td class=\"lvl\">" + customerMail.esc(sevLabel(lang, row.level)) +

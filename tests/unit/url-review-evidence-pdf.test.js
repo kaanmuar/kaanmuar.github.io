@@ -63,6 +63,31 @@ test("sources come only from sourcesRead hints, never invented names", () => {
   assert.deepEqual(empty, []);
   assert.ok(!sources.includes("Spamhaus"));
   const page = evidencePdf.page(PAID_RECORD, { lang: "en" });
-  assert.ok(page.html.includes("Attack and exploit sources read: CISA KEV"));
+  assert.ok(page.html.includes("Read: CISA KEV"));
+  assert.ok(page.html.includes("Skipped: CertSpotter CT (no key)"));
   assert.ok(page.html.includes("EPSS data provided by FIRST.org"));
+});
+test("times read as a plain UTC date and minute, not an ISO string with milliseconds", () => {
+  const kev = evidencePdf.rows(PAID_RECORD, "en").find((row) => row.key === "sec-kev");
+  assert.equal(kev.time, "2026-01-15 00:00");
+  const page = evidencePdf.page(PAID_RECORD, { lang: "en" });
+  assert.ok(page.html.includes("2026-11-19 12:00"));
+  assert.ok(!page.html.includes(".000Z"));
+});
+
+test("the sources read and skipped are named in the report's language", () => {
+  const de = evidencePdf.page(PAID_RECORD, { lang: "de" }).html;
+  assert.ok(de.includes("Gelesen: CISA KEV"));
+  assert.ok(de.includes("Übersprungen: CertSpotter CT (no key)"));
+  assert.ok(!de.includes("Attack and exploit sources read"));
+  const es = evidencePdf.page(PAID_RECORD, { lang: "es" }).html;
+  assert.ok(es.includes("Leídas: CISA KEV"));
+});
+
+test("a run where no source answered says so in the report's language", () => {
+  const none = JSON.parse(JSON.stringify(PAID_RECORD));
+  none.report.targeted.sourcesRead = [];
+  none.report.targeted.sourcesSkipped = [];
+  assert.ok(evidencePdf.page(none, { lang: "en" }).html.includes("No source answered in time."));
+  assert.ok(evidencePdf.page(none, { lang: "fr" }).html.includes("Aucune source n’a répondu à temps."));
 });

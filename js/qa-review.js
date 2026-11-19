@@ -5796,7 +5796,7 @@
 				(sentAt
 					? '<p class="meta-line targeted-owner-status">' + esc(rc.t('targetedOwnerNoticeSent')) + '</p>'
 					: '<p class="meta-line">' + esc(rc.t('targetedOwnerNoticeHint')) + '</p>' +
-						'<button type="button" class="btn btn-secondary targeted-owner-btn" data-act="owner-notice-offer">' +
+						'<button type="button" class="btn btn-ghost targeted-owner-btn" data-act="owner-notice-offer">' +
 						esc(rc.t('targetedOwnerNoticeBtn')) +
 						'</button>' +
 						'<p class="meta-line targeted-owner-status" hidden></p>') +
