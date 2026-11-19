@@ -51,6 +51,14 @@ test("a booking is kept until 24 months after its call, even when made long befo
 	assert.equal(R.decide(policy("bookings"), past, NOW), "delete");
 });
 
+test("an unpaid fix request goes 12 months after its last change; a paid one is kept for its tax period", () => {
+	const p = policy("url_review_fix_requests");
+	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(13), status: "new" }, NOW), "delete");
+	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(3), status: "quoted" }, NOW), "keep");
+	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(15), status: "done", paidAt: ago(15) }, NOW), "keep");
+	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(15), paid: { priceUsd: 99 } }, NOW), "keep");
+});
+
 test("a row without a readable date is kept, not deleted", () => {
 	assert.equal(R.decide(policy("ratings"), {}, NOW), "undated");
 	assert.equal(R.decide(policy("messages"), { createdAt: "not a date" }, NOW), "undated");
