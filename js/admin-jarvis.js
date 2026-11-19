@@ -2612,6 +2612,12 @@ export function mountJarvis({
 		['90d', '90 days'],
 	];
 	const CY_LEVEL = { critical: 'down', high: 'quiet', watch: 'ok' };
+	// Cloudflare Radar, last 24 h (#3935): internal personal use only (CC BY-NC 4.0), never shown to customers.
+	function radarBlock(rd) {
+		if (!rd) return '<p class="jv-note">Cloudflare Radar 24 h attack traffic: not read yet. The threat feeds job reads it every 30 minutes.</p>';
+		const line = (rows, label) => `<li><b>${esc(label)}</b>: ${rows && rows.length ? rows.slice(0, 5).map((r) => `${esc(r.name || r.cc)} ${fmt(r.share)}%`).join(' · ') : 'none read'}</li>`;
+		return `<h4 class="jv-sub">Attack traffic, last 24 h · Cloudflare Radar</h4><ul class="jv-facts">${line(rd.layer3Origin, 'Network attacks from')}${line(rd.layer3Target, 'Network attacks to')}${line(rd.layer7Origin, 'Web attacks from')}${line(rd.layer7Target, 'Web attacks to')}</ul><p class="jv-note">Share of each attack type's traffic, data as of ${esc(when(rd.asOf))}. Not for customers, reports or the public map.</p>`;
+	}
 
 	function ensureWorldNames() {
 		if (S.worldNames || !S.world) return S.worldNames || {};
@@ -2737,6 +2743,7 @@ export function mountJarvis({
 			{ label: 'Customers exposed', value: tot.directCustomers || 0, alert: (tot.directCustomers || 0) > 0 },
 		])}${controls}<div class="jv-cy-wrap">${svg}</div>${legend}${card}
             <h4 class="jv-sub">Countries, ranked${sel ? ' · tap a row or the map to change country' : ''}</h4>${rank}
+            ${radarBlock(c.radar)}
             <h4 class="jv-sub">Cyber-attack and breach headlines${sel ? ' · ' + esc(names[sel] || sel) : ''} · ${fmt(events.length)}</h4>${headlines}
             <p class="jv-note">${esc((mp.attributions || []).join(' · '))}</p>`;
 		return panel(

@@ -623,6 +623,62 @@
         }
       ]
     },
+    "radar": {
+      "asOf": "2026-11-19T21:15:00Z",
+      "window": "24 h",
+      "attribution": "Cloudflare Radar (CC BY-NC 4.0). Personal internal use only.",
+      "layer3Origin": [
+        {
+          "cc": "US",
+          "name": "United States",
+          "share": 15.52,
+          "rank": 1
+        },
+        {
+          "cc": "BR",
+          "name": "Brazil",
+          "share": 14.95,
+          "rank": 2
+        }
+      ],
+      "layer3Target": [
+        {
+          "cc": "US",
+          "name": "United States",
+          "share": 60.11,
+          "rank": 1
+        },
+        {
+          "cc": "HK",
+          "name": "Hong Kong",
+          "share": 41.01,
+          "rank": 2
+        }
+      ],
+      "layer7Origin": [
+        {
+          "cc": "US",
+          "name": "United States",
+          "share": 19.93,
+          "rank": 1
+        },
+        {
+          "cc": "CN",
+          "name": "China",
+          "share": 11.89,
+          "rank": 2
+        }
+      ],
+      "layer7Target": [
+        {
+          "cc": "US",
+          "name": "United States",
+          "share": 57.44,
+          "rank": 1
+        }
+      ],
+      "failed": []
+    },
     "exposure": {
       "windowDays": 30,
       "hotRange": "live",
