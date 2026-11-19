@@ -151,16 +151,17 @@ Verdicts from the four corner reviews. An **end-user app** (a desktop, mobile or
 | `okanyildiz/WindowsSecurityAudit` | MIT | #3873 | **Skip, end-user toolkit (Carlos's responsibility):** Windows admin audit and DFIR scripts; not for customer sites. |
 | `CriticalPathSecurity/Zeek-Intelligence-Feeds`, `Quad9DNS/threat-intel-api` | MIT | #3873 | **Skip:** Zeek feeds are for active network monitoring; the Quad9 sample API is for threat-intel vendors. |
 
-## Scouted Nov 19, 2026, not ticketed
-LICENSE files read; nothing else evaluated. Pick one with Carlos, then it gets a ticket (`scripts/ticket.sh new`).
+### Wave 6 (scouted candidates and an end-user app, `#3899`, `#3900`, Nov 19 2026)
+Verdicts from the scouted-candidate review (#3899) and the knock-knock review (#3900). The end-user row is listed for Carlos's personal use at his own responsibility, on an isolated host, and is never embedded in product or customer code.
 
-| Tool / Source | License | Corner | Fit |
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
 |---|---|---|---|
-| `sherwinvishesh/OpenGSO` | Apache-2.0 | B | GEO tooling monorepo; compare against `agentmarkup` and `elmo` before any use. |
-| `a11y-oracle/a11y-oracle` | MIT | B | Accessibility oracle with keyboard and screen-reader checks; compare with `virtual-screen-reader`. |
-| `micmro/PerfCascade` | MIT | B | HAR waterfall; alternative to `@cloudflare/waterfall`. |
-| `harlan-zw/unlighthouse` | MIT | B | Whole-site Lighthouse crawl; compare with `lighthouse-ci-action`. |
-| `github/advisory-database` | CC-BY-4.0 | A, D | OSV-format advisories for the #3839 cyber stream; data, so attribution is required. |
+| `github/advisory-database` | CC-BY-4.0 | #3899 | **Part (data):** GHSA advisories in OSV format for the #3839 cyber stream, with attribution. The schema may change; it complements `google/osv-scanner` and `sazabi/cve.now` rather than replacing them. |
+| `harlan-zw/unlighthouse` | MIT | #3899 | **Pattern:** multi-URL Lighthouse crawl for agency-scale runs (#3482, #3832). Run it as an isolated CI sidecar with Chrome, never inside a Workers bundle. Compare with `treosh/lighthouse-ci-action`. |
+| `sherwinvishesh/OpenGSO` | Apache-2.0 | #3899 | **Watch:** GEO scorer and agent-readiness middleware. Compare with `agentmarkup` and Rebilder (#3829). Pre-1.0, so pin after 1.0. Its optional AI-polish provider's dependencies are not reviewed. |
+| `a11y-oracle/a11y-oracle` | MIT | #3899 | **Watch:** CDP speech and keyboard-focus checks for URL Review's accessibility lane, after `virtual-screen-reader` (#3832). One star: prove it on customer CSP sites first. Its axe post-processor may need axe-core at runtime; not verified. |
+| `micmro/PerfCascade` | MIT | #3899 | **Skip:** SVG HAR viewer, no push since 2023. `@cloudflare/waterfall` covers it. |
+| `djkurlander/knock-knock` | MIT | #3900 | **Skip, end-user app (Carlos's responsibility):** personal multi-protocol honeypot with a live dashboard (Python and FastAPI). It actively receives attack traffic, so it is out of scope for the passive-only policy and must never feed product code, customer reports or CI. Run it only on a dedicated public-IP host that holds no customer data and shares no network with Jarvis or URL Review. Keep the public blocklist and federation off unless publishing attacker IPs is intended. The MaxMind GeoLite2 terms and the dependency licenses are Carlos's to meet. |
 
 ## Reference only
 - astryx (`meta/astryx`, MIT): React and StyleX design system; the site is plain HTML with Tailwind.
@@ -168,7 +169,6 @@ LICENSE files read; nothing else evaluated. Pick one with Carlos, then it gets a
 - unslop (`heydamir/unslop`, CC-BY-4.0): overlaps Hallmark. Pick one: Hallmark.
 
 ## Rejected, license traps and archived exclusions
-- **Passive-only policy:** `djkurlander/knock-knock` (a live honeypot dashboard that listens for attacks). Not adopted, and the end-user exception does not cover it: it changes what the product may claim about customer sites.
 - **Previously rejected:** AutoGPT (Polyform Shield restricts competing products), pinchtab (stealth injection conflicts with responsible scanning), `deepseek-ai/dsh-superagent-prototype` (prototype), `storytold/craft-anything` (same publisher as ArtCraft), VERT (FFmpeg covers media), sand3d (no use case), pixelfx (decorative).
 - **Non-commercial / proprietary traps (never bundle in commercial/paid paths):** `cnumr/EcoIndex` / `ecoindex_js` (`CC BY-NC-ND 3.0`), `patriciogonzalezvivo/lygia` (`Prosperity Public License 3.0.0`), `remotion-dev/remotion` (paid company license), `cortega26/geo-opt` (Tooltician Community License 1.0), `invoiceninja/invoiceninja` (Elastic License 2.0), `BIK-BITV/BIK-Web-Test` / `DISIC/Ara` / `JPCERTCC/phishurl-list` / `telegram-mini-apps-dev/analytics` (no commercial OSI license; analytics uses JS obfuscator), `Cloudflare Radar API` (`CC BY-NC 4.0`, free global context only until licensed), `Shodan InternetDB` (non-commercial without enterprise license).
 - **Copyleft / broken-license traps (do not embed in proprietary bundles):** `vulnerability-lookup/vulnerability-lookup` (`AGPL-3.0`), `qeeqbox/raven` (`AGPL-3.0`), `4ARMED/sri-check` (`GPL-3.0`), `MobSF` (`GPL-3.0`), `ryersondmp/sa11y` (`GPL-2.0-or-later`), `cnumr/GreenIT-Analysis` (`AGPL-3.0`), `DIYgod/RSSHub` (`AGPL-3.0`), `gitroomhq/postiz-app` (`AGPL-3.0`), `knadh/listmonk` (`AGPL-3.0`), `sansan0/TrendRadar` & `WEIFENG2333/VideoCaptioner` (`GPL-3.0`), `Tirth1107/Hyde-Security-JS` (broken merge-conflict `LICENSE`).
