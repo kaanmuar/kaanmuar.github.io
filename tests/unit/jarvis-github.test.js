@@ -819,3 +819,41 @@ test('scores cap each penalty so a busy repo lands in C-D, not 0', async () => {
 	// The only open PR is conflicted, red and stale: every capped penalty hits and the area still keeps 30.
 	assert.equal(out.score.areas.prs.value, 100 - 30 - 25 - 15);
 });
+
+test('scoutPart reads the newest tool-scout draft PR and the open arsenal tickets (#3875)', async () => {
+	const pr = (number, ref, title, hoursAgo) => ({
+		number,
+		title,
+		draft: true,
+		html_url: 'https://github.com/' + REPO + '/pull/' + number,
+		head: { ref },
+		created_at: at(hoursAgo),
+	});
+	const open = [
+		pr(5, 'feat/1-x', 'Something else', 1),
+		pr(7, 'tool-scout/2026-11-12', 'Tool scout 2026-11-12: 1 drift, 4 new candidates', 200),
+		pr(9, 'tool-scout/2026-11-19', 'Tool scout 2026-11-19: 5 drift, 33 new candidates', 20),
+	];
+	let asked = '';
+	const client = {
+		get: async (path) => {
+			asked = path;
+			return [
+				{ number: 3829, state: 'closed', title: 'BE: done one', html_url: 'u1' },
+				{ number: 3870, state: 'open', title: 'BE: GEO tools', html_url: 'u2' },
+				{ number: 3871, state: 'open', title: 'Tooling: AppSec tools', html_url: 'u3' },
+			];
+		},
+	};
+	const out = await gh.scoutPart(client, open, NOW);
+	assert.match(asked, /issues\/3828\/sub_issues/);
+	assert.equal(out.run.pr, 9);
+	assert.equal(out.run.date, '2026-11-19');
+	assert.equal(out.run.drift, 5);
+	assert.equal(out.run.candidates, 33);
+	assert.deepEqual(out.tickets.items.map((t) => t.number), [3871, 3870]);
+	assert.equal(out.tickets.open, 2);
+	assert.equal(out.tickets.closed, 1);
+	const none = await gh.scoutPart(client, [pr(5, 'feat/1-x', 'x', 1)], NOW);
+	assert.equal(none.run, null);
+});

@@ -1474,6 +1474,11 @@ const EXTERNAL = {
 				},
 			],
 		},
+		scout: {
+			ok: true,
+			run: { pr: 3869, url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/3869', date: '2026-11-19', draft: true, ageH: 5, drift: 5, candidates: 33 },
+			tickets: { open: 2, closed: 15, items: [{ number: 3870, title: 'BE: GEO tools to evaluate', url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/3870' }] },
+		},
 		branches: {
 			ok: true,
 			total: 30,
@@ -3591,6 +3596,10 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(prs.locator('tbody tr')).toHaveCount(3);
 		await expect(prs.locator('.jv-chip.c-slow', { hasText: 'dirty' })).toHaveCount(1);
 		await expect(gh.locator('[data-panel-id="github-worktrees"] [data-gh-act="gh-remove-worktree"]')).toHaveCount(1);
+		const scout = gh.locator('[data-panel-id="github-scout"]');
+		await expect(scout).toContainText('draft PR #3869');
+		await expect(scout).toContainText('5 drift rows and 33 new candidates');
+		await expect(scout.locator('tbody tr')).toHaveCount(1);
 		const agent = failing.locator('button', { hasText: 'Fix with an agent' }).first();
 		page.once('dialog', (dialog) => dialog.dismiss());
 		await agent.click();
