@@ -74,6 +74,11 @@
 	}
 
 	async function edit(p, c, meta, asset) {
+		// #3824: a copy is labelled AI-generated unless its render says the operator voiced it (voice carlos or owner). The render
+		// file <batch>/voiced/<slug>.json carries the voice code (en-w, de-m ...), so every rotated copy is labelled; the manifest
+		// entry is the fallback when the render has no voice. Unknown voice = labelled.
+		const voice = String((meta && meta.voice) || (c && (c.voice || c.speaker)) || '');
+		const synthetic = !/^(carlos|owner)$/i.test(voice);
 		const input = {
 			id: p.id,
 			dueAt: p.dueAt,
@@ -91,12 +96,12 @@
 					notifySubscribers: m.notifySubscribers !== false,
 					embeddable: m.embeddable !== false,
 					madeForKids: !!m.madeForKids,
-					isAiGenerated: true, // #3824: a voiced copy is a synthetic voice, labelled on the network
+					isAiGenerated: synthetic, // #3824: see synthetic above
 					categoryId: (m.category && m.category.categoryId) || '28',
 				},
 			};
 		} else {
-			input.metadata = { tiktok: { isAiGenerated: true } }; // #3824: a voiced copy is a synthetic voice
+			input.metadata = { tiktok: { isAiGenerated: synthetic } }; // #3824: see synthetic above
 		}
 		const r = await g(
 			'mutation($i:EditPostInput!){editPost(input:$i){__typename ... on PostActionSuccess{post{id dueAt assets{source}}} ... on InvalidInputError{message} ... on UnexpectedError{message} ... on RestProxyError{message} ... on NotFoundError{message} ... on LimitReachedError{message} ... on UnauthorizedError{message}}}',

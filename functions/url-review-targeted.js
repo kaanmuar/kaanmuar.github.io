@@ -190,7 +190,9 @@ function parseFeodo(json) {
       ip,
       malware: cleanText(row.malware || "Botnet C2", 60),
       port: Number(row.port) || 0,
-      lastOnline: cleanText(row.last_online || row.first_seen || "", 32)
+      lastOnline: cleanText(row.last_online || row.first_seen || "", 32),
+      online: String(row.status || "").toLowerCase() === "online",
+      country: /^[A-Z]{2}$/.test(String(row.country || "")) ? String(row.country) : ""
     };
   });
   return { count: Object.keys(ips).length, ips };
@@ -325,7 +327,16 @@ async function fetchLatestGdelt(fetchImpl) {
   return { byCountry: {}, mentions: [], slice: "" };
 }
 
-function updateGlobalMapHistory(prevMap, gdelt, kev, dropV4, nowMs) {
+// Botnet C2 servers online right now, from Feodo Tracker (CC0), by the country each one sits in (#3910).
+function botnetNowSummary(feodo, asOfIso) {
+  const rows = Object.values((feodo && feodo.ips) || {}).filter((row) => row.online);
+  const byCc = {};
+  rows.forEach((row) => { const cc = row.country || "??"; byCc[cc] = (byCc[cc] || 0) + 1; });
+  const countries = Object.keys(byCc).map((cc) => ({ cc, count: byCc[cc] })).sort((a, b) => b.count - a.count).slice(0, 40);
+  return { asOf: asOfIso, online: rows.length, countries, source: "Feodo Tracker by abuse.ch (CC0 1.0)" };
+}
+
+function updateGlobalMapHistory(prevMap, gdelt, kev, dropV4, nowMs, feodo) {
   const now = Number.isFinite(nowMs) ? nowMs : Date.now();
   const at = new Date(now).toISOString();
   const day = at.slice(0, 10);
@@ -367,6 +378,7 @@ function updateGlobalMapHistory(prevMap, gdelt, kev, dropV4, nowMs) {
       byCountry: gdelt.byCountry || {}
     },
     history: prunedHistory,
+    botnetNow: feodo ? botnetNowSummary(feodo, at) : (prev.botnetNow || null),
     recentEvents: recentEvents.slice(0, 120),
     kevSummary: {
       version: (kev && kev.version) || "",
@@ -426,7 +438,7 @@ async function refreshFeeds(options) {
   const payload = zlib.gzipSync(Buffer.from(JSON.stringify(bundle)));
   await feedFile.save(payload, { contentType: "application/gzip", resumable: false });
 
-  const globalMap = updateGlobalMapHistory(prevMapRaw, gdelt, kev, dropV4, now);
+  const globalMap = updateGlobalMapHistory(prevMapRaw, gdelt, kev, dropV4, now, feodo);
   await mapFile.save(zlib.gzipSync(Buffer.from(JSON.stringify(globalMap))), { contentType: "application/gzip", resumable: false });
 
   memFeeds = bundle;
@@ -1116,6 +1128,7 @@ module.exports = {
   matchBreachNews,
   fetchLatestGdelt,
   updateGlobalMapHistory,
+  botnetNowSummary,
   refreshFeeds,
   loadFeeds,
   queryOsvBatch,
