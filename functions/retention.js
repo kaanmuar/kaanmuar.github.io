@@ -9,6 +9,8 @@
  *   messages          24 months after createdAt (contact-form and CV messages).
  *   ratings           24 months after createdAt.
  *   bookings          24 months after the latest of createdAt, start and end (the call and its follow-up).
+ *   url_review_fix_requests  12 months after the last change, unless paid: a paid request is kept with its payment
+ *                     record for the tax period (not deleted automatically yet).
  *
  * A row with no readable date is kept and counted as "undated". sweep() is a dry run unless apply is true; the
  * scheduled job (functions/index.js, retentionSweep) applies only when RETENTION_APPLY=on. Each run writes its counts,
@@ -54,12 +56,14 @@ const POLICY = [
   { collection: "engagement_posts", months: 12, dates: (d) => [d.seenAt, d.decidedAt, d.postedAt, d.updatedAt] },
   { collection: "messages", months: 24, dates: (d) => [d.createdAt] },
   { collection: "ratings", months: 24, dates: (d) => [d.createdAt] },
-  { collection: "bookings", months: 24, dates: (d) => [d.createdAt, d.start, d.end] }
+  { collection: "bookings", months: 24, dates: (d) => [d.createdAt, d.start, d.end] },
+  { collection: "url_review_fix_requests", months: 12, dates: (d) => [d.createdAt, d.updatedAt], keep: (d) => !!(d.paid || d.paidAt) }
 ];
 
 /** What happens to one document: keep, delete, trim (stop-list stub), or undated (kept). */
 function decide(policy, data, now) {
   if (policy.stopped && data.trimmed) return "keep";
+  if (policy.keep && policy.keep(data)) return "keep";
   const at = latest(policy.dates(data));
   if (!Number.isFinite(at)) return "undated";
   if (addMonths(at, policy.months) > now) return "keep";
