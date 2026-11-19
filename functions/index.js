@@ -1963,6 +1963,8 @@ const fixCheckout = require("./url-review-fix-checkout");
 const fixRereview = require("./url-review-fix-rereview");
 const watchCases = require("./url-review-watch");
 const fixMail = require("./url-review-fix-mail");
+// Review mail goes only to real users: no mail to a test account or its alias, nor a notice for its review (#3799).
+const reviewTest = require("./url-review-test-accounts");
 
 // A fix request opens for the account that ran the report, paid or not; the free re-check only on a paid report.
 function fixDeps() {
@@ -2035,6 +2037,7 @@ async function csatLinkFor(record) {
 }
 
 async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
+  if (reviewTest.isTestAccount(email)) return false;
   const from = prepareMail();
   if (!from) return false;
   await sgMail.send(askerMessage(email, mail, stopUrl, category, attachments, { from, replyTo: replyTo || REVIEW_ALERT_TO }));
@@ -2044,6 +2047,7 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
 // Owner notices, the reports owners claim and the notes go out as the brand face of their language (#2312), through
 // mailRetry while SendGrid's shared IPs can be blocklisted (#2314).
 async function sendFaceMail(lang, email, mail, stopUrl, category, attachments, replyTo) {
+  if (reviewTest.isTestAccount(email)) return false;
   const from = prepareMail();
   if (!from) return false;
   await mailRetry.send(sgMail, getFirestore(), askerMessage(email, mail, stopUrl, category, attachments, mailFace.envelope(lang, from, replyTo, REVIEW_ALERT_TO)));
@@ -2155,6 +2159,7 @@ async function reportPdfFor(record, options) {
 async function mailReportToAsker(record, promise) {
   if (!record || !record.email || !record.report) return false;
   if (record.status !== "complete" && record.status !== "stopped") return false;
+  if (reviewTest.isTestRecord(record)) return false;
   const [stopUrl, pdf, csatUrl] = await Promise.all([
     stopLinkFor(record.email, record.lang),
     reportPdfFor(record),
@@ -2242,6 +2247,7 @@ function searchOwnerContacts(report, options) {
 async function queueOwnerNotice(record, options) {
   const report = record && record.report;
   if (!report || !report.host) return;
+  if (reviewTest.isTestRecord(record)) return;
   const domain = ownerNotice.domainOf(report.host);
   const ref = getFirestore().collection("url_review_owner_notices").doc(domain);
   const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
