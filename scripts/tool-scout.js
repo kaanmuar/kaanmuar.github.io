@@ -210,12 +210,19 @@ function rank(items, known) {
 	return groups;
 }
 
+// A README line that states the project's status (a heading or a sentence that starts with it), not a passing mention (#3901).
+const STATUS = /^(status:\s*)?(this (project|repo|repository|package|tool|library) (is|has been|was) )?(now )?(deprecated|unmaintained|no longer maintained|archived)\b/i;
+function isStatusLine(raw) {
+	const line = raw.trim().replace(/^[#>*_`\s]+/, '').replace(/^[^A-Za-z]+/, '').replace(/[*_`]+/g, '');
+	return line.length <= 140 && STATUS.test(line);
+}
+
 function readmeFlags(slug) {
 	const r = gh(['repos/' + slug + '/readme']);
 	if (!r.content) return [];
 	const md = Buffer.from(r.content, 'base64').toString('utf8');
 	const flags = [];
-	if (/deprecated|no longer maintained|unmaintained|archived/i.test(md)) flags.push('README mentions deprecated/unmaintained');
+	if (md.split('\n').some(isStatusLine)) flags.push('README mentions deprecated/unmaintained');
 	if (/agpl|\bgpl\b|non-?commercial|source-available|commercial license/i.test(md)) flags.push('README mentions a copyleft or commercial license');
 	if (/star us|please star|give.*star/i.test(md)) flags.push('asks for stars');
 	return flags;
@@ -320,4 +327,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, rank, report, CORNERS };
+module.exports = { isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, rank, report, CORNERS };

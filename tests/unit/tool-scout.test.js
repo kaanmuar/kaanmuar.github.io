@@ -133,3 +133,22 @@ test('an excluded row that says "not archived" is not read as an archived claim 
 	assert.deepEqual(levels('`openai/skills` (active, not archived), no license at the repo root'), []);
 	assert.deepEqual(levels('`old/tool` is archived'), ['MISMATCH']);
 });
+
+test('the scout keeps its memory on the tool-scout-data branch, not in the draft PR (#3891)', () => {
+	const flow = fs.readFileSync(path.join(__dirname, '../../.github/workflows/tool-scout.yml'), 'utf8');
+	assert.match(flow, /git fetch -q --depth=1 origin tool-scout-data/, 'restores the memory before the run');
+	assert.match(flow, /refs\/heads\/tool-scout-data/, 'saves the memory by pushing the data branch');
+	assert.ok(!/git add -f[^\n]*seen\.json/.test(flow), 'seen.json never rides on the PR branch');
+	assert.ok(flow.indexOf('Open a draft PR') < flow.indexOf("Save the scout's memory"), 'memory is saved only after the PR is opened');
+});
+
+test('the README status check reads a status line, not a passing mention (#3901)', () => {
+	const flag = (line) => scout.isStatusLine(line);
+	assert.equal(flag('# Deprecated'), true);
+	assert.equal(flag('⚠️ **Deprecated**: use v2 instead'), true);
+	assert.equal(flag('This project is no longer maintained.'), true);
+	assert.equal(flag('Status: unmaintained'), true);
+	assert.equal(flag('We replaced our deprecated API last year.'), false);
+	assert.equal(flag('Unlike unmaintained forks, this one ships every week.'), false);
+	assert.equal(flag('Migrating from the deprecated `foo` package? See the guide.'), false);
+});

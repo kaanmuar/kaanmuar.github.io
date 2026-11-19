@@ -606,7 +606,13 @@ async function sendCallMail(kind, id, row) {
   const from = prepareMail();
   if (!from) return false;
   const msg = bookingMail.message(kind, row, { meet: row.meet, icalUid: row.icalUid, id }, from);
-  await mailRetry.send(sgMail, getFirestore(), msg);
+  try {
+    await mailRetry.send(sgMail, getFirestore(), msg);
+  } catch (error) {
+    // SendGrid says why in the response body; the logged error shows only "Bad Request".
+    const why = error && error.response && error.response.body ? JSON.stringify(error.response.body).slice(0, 600) : "";
+    throw new Error(String((error && error.message) || error) + (why ? " " + why : ""));
+  }
   return true;
 }
 
