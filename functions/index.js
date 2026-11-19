@@ -7303,7 +7303,8 @@ function jarvisLoadSnapshot(days) {
     aiCandidates: jarvisAiCandidates,
     briefMarks: () => jarvisProposals.savedBrief(db),
     countdowns: () => jarvisCountdown.view(db, now),
-    processes: () => jarvisProcesses.read(db)
+    processes: () => jarvisProcesses.read(db),
+    ledger: () => db.collection("jarvis_ledger").doc("latest").get().then((snap) => (snap.exists ? snap.data() : null))
   }, now);
 }
 
@@ -8079,6 +8080,7 @@ async function jarvisChangeLedger() {
 	const out = await changeLedger.run(db, require("./change-ledger.json").entries, Date.now(), dayRows);
 	const saved = JSON.parse(JSON.stringify(out));
 	await db.collection("jarvis_ledger").doc("latest").set(saved);
+	await jarvisSnap.drop(db, ["ledger"]).catch(() => null);
 	const count = (status) => saved.results.filter((row) => row.status === status).length;
 	return saved.results.length + " changes: " + count("better") + " better, " + count("worse") + " worse, " + count("flat") + " flat, " + count("too early") + " too early";
 }

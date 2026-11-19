@@ -6,6 +6,7 @@
    inbox comes from the admin page. The numbers come from js/admin-jarvis-core.js (window.JarvisCore). */
 import { createBrowserPush, productOf, browserName } from './admin-jarvis-push.js?v=2509';
 import * as Proc from './admin-jarvis-processes.js?v=2890';
+import * as Ledger from './admin-jarvis-ledger.js?v=3794';
 import * as Geo from './admin-jarvis-geo.js?v=3282';
 import * as GeoFlow from './admin-jarvis-geo-flow.js?v=3114';
 import * as GeoHeat from './admin-jarvis-geo-heat.js?v=3112';
@@ -1072,6 +1073,7 @@ export function mountJarvis({
 		}
 		Object.assign(S.external, snap.external || {}, { 'mail-codes': { ok: true, codes: snap.mailCodes || [] } });
 		if (snap.settings) S.settings = Object.assign({ ok: true }, snap.settings);
+		S.ledger = snap.ledger || null;
 		if (Array.isArray(snap.goals)) S.goals = snap.goals;
 		if (Array.isArray(snap.devices)) {
 			S.devices = snap.devices;
@@ -1112,6 +1114,29 @@ export function mountJarvis({
 				compact: el.dataset.processes === 'compact',
 				all: S.processesAll,
 			});
+		});
+	}
+
+	// The change ledger (#3794): the snapshot's `ledger` section, shown on Systems next to the jobs.
+	function ledgerPanel() {
+		const rows = (S.ledger && Array.isArray(S.ledger.results) && S.ledger.results) || [];
+		return panel('systems-ledger', 'Change ledger', Ledger.ledgerHtml(S.ledger, esc, when), {
+			wide: true,
+			keep: true,
+			data: rows.map((r) => ({
+				title: r.title,
+				pr: r.pr,
+				ticket: r.ticket,
+				mergedAt: r.mergedAt,
+				metric: r.metric,
+				expect: r.expect,
+				status: r.status,
+				before: r.before && r.before.mean,
+				after: r.after && r.after.mean,
+				deltaPct: r.deltaPct,
+				note: r.reason || r.check,
+			})),
+			note: 'Each shipped change is judged against its metric once enough days have passed since it merged. Rebuilt daily.',
 		});
 	}
 
@@ -8904,6 +8929,7 @@ export function mountJarvis({
 						)}
             ${panel('systems-speed', 'PageSpeed (mobile) and CrUX', sp && sp.ok ? `<div class="jv-rings">${sp.pages.map((p) => ring(p.ok ? p.score : null, p.name.replace('URL Review', 'Review'), null, 90)).join('')}</div>${sp.crux && sp.crux.ok && sp.crux.phone ? `<p class="jv-note">CrUX phone LCP p75 over ${sp.crux.phone.weeks || ''} weeks: ${spark(sp.crux.phone.lcp || [], COLORS.amber)}</p>` : ''}` : `<p class="jv-empty">${S.pending.speed ? 'Running PageSpeed on five pages (up to 90 s)…' : esc((sp && sp.error) || 'Not loaded.')}</p>`, { wide: true, data: sp && sp.pages && sp.pages.map((p) => ({ page: p.name, score: p.score, lcp: p.lab && p.lab.lcp, tbt: p.lab && p.lab.tbt, cls: p.lab && p.lab.cls, error: p.error })) })}
             ${pageSpeedPanels()}
+            ${ledgerPanel()}
             ${panel(
 							'systems-jobs',
 							'Scheduled jobs',
