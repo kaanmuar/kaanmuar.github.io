@@ -316,7 +316,7 @@ private fun DateKind(kind: String?) {
 }
 
 @Composable
-private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, onTap: (String?, Offset) -> Unit) {
+internal fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, pins: Set<String> = emptySet(), onTap: (String?, Offset) -> Unit) {
     val fill = remember(rows, key, fills) { fills ?: Geo.fills(rows, key) }
     val by = remember(rows) { rows.associateBy { it.str("cc") ?: "" } }
     val lit = key == "light" && fills == null
@@ -345,6 +345,8 @@ private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, sele
                 drawCircle(fill[cc] ?: Geo.TARGET, radius = 5f, center = at)
                 drawCircle(if (cc == selected) J.amber else Color.White, radius = 5f, center = at, style = Stroke(width = 1f))
             }
+            // The live cyber map (#3894) pins the countries where a report of ours has a threat finding.
+            pins.forEach { cc -> world.dots[cc]?.let { at -> drawCircle(J.cyan, radius = 6f, center = at); drawCircle(Color.White, radius = 6f, center = at, style = Stroke(width = 1.2f)) } }
         }
         // Labels in screen pixels, 9 to 12sp whatever the map's width, so a phone shows fewer rather than unreadable ones.
         val min = 9.sp.toPx()

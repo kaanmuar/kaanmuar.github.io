@@ -463,3 +463,168 @@ test('the threat-list usage write counts calls, new scans, errors and keys that 
 	assert.equal(patch.urlhaus.skipped, 1);
 	assert.equal(patch.urlhaus.calls, 0);
 });
+
+test('targeted check families, threatFeeds state, internal threat ledger and global cyber map flow into checks, briefing, proposals and Ask (#3890)', async () => {
+	const row = (key, verdict, severity) => ({ key, verdict, severity });
+	const out = ops.checksSummary(
+		{
+			reviews: [
+				{
+					createdAt: at(1),
+					source: '',
+					checks: [
+						row('sec-kev', 'fail', 'high'),
+						row('sec-osv', 'risk', 'medium'),
+						row('sec-drop', 'fail', 'critical'),
+						row('sec-feodo', 'fail', 'critical'),
+						row('sec-breach-news', 'risk', 'medium'),
+						row('sec-cert-anomaly', 'risk', 'medium'),
+					],
+				},
+			],
+			webrisk: {},
+			threat: {},
+			wordfence: { ok: true, endedAt: at(1), note: '10 records stored' },
+			threatFeeds: { ok: false, startedAt: at(2), endedAt: at(2), error: 'GDELT 503' },
+			threats: [
+				{
+					id: 't1',
+					host: 'attacked.example.com',
+					kind: 'c2-indicator',
+					level: 'critical',
+					hosting_country: 'US',
+					source: 'Feodo Tracker',
+					delist_status: 'pending',
+					observed_at: at(1),
+				},
+				{
+					id: 't2',
+					host: 'old.example.de',
+					kind: 'known-exploit-software',
+					level: 'high',
+					hosting_country: 'DE',
+					source: 'CISA KEV',
+					delist_status: 'none',
+					observed_at: at(24 * 10),
+				},
+			],
+			globalMap: {
+				updatedAt: at(0),
+				slice: '20261110150000',
+				totalsByRange: { live: 88, '7d': 1200, '30d': 4500 },
+				countryCount: 30,
+				kevSummary: { count: 1786 },
+				dropSummary: { v4Ranges: 1747 },
+				countries: [{ cc: 'US', count: 18 }],
+			},
+		},
+		range
+	);
+	const fam = Object.fromEntries(out.families.map((f) => [f.id, f]));
+	assert.equal(fam.kev.hits, 1);
+	assert.equal(fam.kev.customerHits, 1);
+	assert.equal(fam.osv.hits, 1);
+	assert.equal(fam.drop.critical, 1);
+	assert.equal(fam.feodo.critical, 1);
+	assert.equal(fam.breachNews.hits, 1);
+	assert.equal(fam.certAnomaly.hits, 1);
+	assert.equal(out.threatFeeds.state, 'down');
+	assert.equal(out.threatFeeds.stored, false);
+	assert.equal(out.sources.find((s) => s.key === 'threatfeeds').state, 'down');
+	assert.equal(out.threats.total, 2);
+	assert.equal(out.threats.inRange, 1);
+	assert.equal(out.threats.byLevel.critical, 1);
+	assert.equal(out.threats.pendingDelist, 1);
+	assert.equal(out.threats.recentCritical[0].host, 'attacked.example.com');
+	assert.equal(out.map.mentionsLive, 88);
+	assert.equal(out.map.kevCount, 1786);
+	assert.equal(out.map.dropRanges, 1747);
+
+	const lines = jcore.briefing({ products: {}, external: { checks: out } });
+	const by = Object.fromEntries(lines.map((b) => [b.key, b]));
+	assert.equal(by['review:threatfeeds'].level, 'warn');
+	assert.equal(by['review:threats-critical'].level, 'alert');
+	assert.match(by['review:threats-critical'].text, /attacked\.example\.com/);
+
+	const proposals = jcore.proposalRules({ products: {}, external: { checks: out } }, lines).map((p) => p.title);
+	assert.ok(proposals.includes('Refresh the hourly threat feeds so KEV, DROP, Feodo, GDELT and DB-IP stay live'));
+	assert.ok(proposals.includes('Review critical cyber threats and pending delistings on the Review desk'));
+
+	const asked = ops.ask({ rescue: { ok: false }, fixes: { ok: false }, checks: out });
+	assert.equal(asked.urlReviewNewChecks.threatFeedsStored, false);
+	assert.equal(asked.urlReviewNewChecks.threats.critical, 1);
+	assert.equal(asked.urlReviewNewChecks.cyberMap.kevCount, 1786);
+});
+
+test('the live map carries every range, the headlines and CISA KEV, and the threat ledger is matched to the customers and reports it might impact (#3894)', () => {
+	const live = { totalMentions: 99, countries: [{ cc: 'US', count: 20, share: 20.2 }, { cc: 'DE', count: 8, share: 8.1 }, { cc: 'CO', count: 5, share: 5.1 }] };
+	const mapRanges = {
+		live,
+		'7d': { totalMentions: 1420, countries: [{ cc: 'US', count: 300, share: 21.1 }] },
+		'30d': { totalMentions: 5840, countries: [{ cc: 'US', count: 1200, share: 20.5 }] },
+		'90d': { totalMentions: 17000, countries: [{ cc: 'US', count: 3500, share: 20.6 }] },
+	};
+	const globalMap = {
+		updatedAt: at(0),
+		slice: '20261110150000',
+		totalMentions: 99,
+		totalsByRange: { live: 99, '7d': 1420, '30d': 5840, '90d': 17000 },
+		countryCount: 36,
+		historyDays: 90,
+		kevSummary: { count: 1786, version: '2026.11.10' },
+		dropSummary: { v4Ranges: 1747 },
+		attributions: ['GDELT Project', 'CISA KEV'],
+		countries: live.countries,
+		events: [
+			{ date: '20261110T143000Z', source: 'bleepingcomputer.com', host: 'bleepingcomputer.com', url: 'https://www.bleepingcomputer.com/x', themes: ['CYBER_ATTACK'], countries: ['US'] },
+		],
+	};
+	const t = (id, over) =>
+		Object.assign({ id, host: id + '.example.com', kind: 'known-exploit-software', level: 'high', role: 'site_hit', hosting_country: 'DE', source: 'CISA KEV', evidence: 'CVE-2026-1', delist_status: 'none', review_id: 'r-' + id, observed_at: at(2) }, over);
+	const rv = (id, over) => Object.assign({ id: 'r-' + id, createdAt: at(2), source: '', email: id + '@client.co', paid: false, status: 'done', requestedUrl: 'https://' + id + '.example.com', hostingCountry: 'DE', report: { host: id + '.example.com' } }, over);
+	const reviews = [
+		rv('shop', { paid: true }),
+		rv('mine', { source: 'sweep', email: '' }),
+		rv('tester', { email: 'playwright@example.com', test: true }),
+		rv('usa', { hostingCountry: 'US', email: 'usa@client.co' }),
+		rv('quiet', { hostingCountry: 'FR', email: 'quiet@client.co' }),
+		rv('sweepus', { hostingCountry: 'US', source: 'sweep', email: '' }),
+	];
+	const rows = [
+		t('shop', { level: 'critical', kind: 'phishing-host', source: 'Google Web Risk', delist_status: 'pending' }),
+		t('shop', { kind: 'exposed-secret', source: 'Page leak scanner' }),
+		t('mine'),
+		t('tester'),
+		t('info', { level: 'info' }),
+		t('ctx', { role: 'context' }),
+		t('old', { observed_at: at(24 * 40) }),
+	];
+	const out = ops.checksSummary({ reviews, webrisk: {}, threat: {}, wordfence: null, threatFeeds: null, threats: rows, globalMap, mapRanges }, range);
+	assert.deepEqual(Object.keys(out.map.ranges), ['live', '7d', '30d', '90d']);
+	assert.equal(out.map.ranges['7d'].countries[0].cc, 'US');
+	assert.equal(out.map.kevVersion, '2026.11.10');
+	assert.equal(out.map.events[0].countries[0], 'US');
+
+	const ex = out.exposure;
+	assert.equal(ex.totals.directReports, 2, 'the customer report and our sweep site; test, info, context and old rows are left out');
+	assert.equal(ex.direct[0].host, 'shop.example.com');
+	assert.equal(ex.direct[0].level, 'critical');
+	assert.equal(ex.direct[0].email, 'shop@client.co');
+	assert.equal(ex.direct[0].paid, true);
+	assert.equal(ex.direct[0].findings.length, 2);
+	assert.equal(ex.direct[1].known && !ex.direct[1].customer, true);
+	assert.equal(ex.totals.directCustomers, 1);
+	assert.equal(ex.totals.directPaid, 1);
+	assert.equal(ex.totals.directCritical, 1);
+	assert.deepEqual(ex.hot.map((h) => h.cc), ['US', 'DE', 'CO']);
+	assert.deepEqual(ex.regional.map((r) => r.email), ['usa@client.co'], 'a customer report on a US site, not the FR one, not a sweep site');
+	assert.equal(ex.totals.regionalSweep, 1);
+
+	const lines = jcore.briefing({ products: {}, external: { checks: out } });
+	const line = lines.find((b) => b.key === 'review:exposed');
+	assert.equal(line.level, 'alert');
+	assert.match(line.text, /shop@client\.co/);
+	const asked = ops.ask({ rescue: { ok: false }, fixes: { ok: false }, checks: out });
+	assert.equal(asked.urlReviewNewChecks.exposure.directCustomers, 1);
+	assert.match(asked.urlReviewNewChecks.cyberMap.hotNow[0], /^US 20/);
+});
