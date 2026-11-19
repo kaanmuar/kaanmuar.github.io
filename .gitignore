@@ -71,6 +71,7 @@ workers/mta-sts-policy/dist/
 media/report-cards/
 # Trial DM card previews (#3137): node scripts/dm-card-preview.js
 media/dm-cards/
+media/check-faces-2026-11/
 
 .cursor/handoffs/
 .tmp/
