@@ -17,6 +17,7 @@ Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know wh
 - Never install from a community hub (CLI-Anything). Read `setup` or install scripts before running them (REA `setup` writes agent configs).
 - Browser-facing scripts/assets under `script-src 'self'` (such as `designs/3d/` and `live.html`) must be self-hosted/vendored, never loaded from external CDNs.
 - A new tool gets a ticket. Add its row here when it is adopted or rejected.
+- End-user apps (desktop, mobile or personal dashboards, learning material) may be listed for Carlos's personal use at his own responsibility (Nov 19, 2026). They are never embedded in product or customer code.
 - Read the LICENSE file, not only GitHub's license badge: the badge shows NOASSERTION for many real MIT and Apache repos (`adobe/trustmark` opens with an Adobe notice and then grants MIT) and shows a license for repos whose datasets carry others (`sapics/ip-location-db`).
 - A weekly scout (`scripts/tool-scout.js`, draft PRs named `tool-scout/<date>`, #3857) re-checks every repo here and searches for new ones. Its report is a suggestion: a row is added or changed only with its ticket.
 - Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
@@ -102,14 +103,60 @@ Tickets filed in priority order (`B -> C -> D -> A`); use only inside each ticke
 | `vasturiano/three-globe` / `globe.gl`, `shuding/cobe`, `d3/d3-geo`, `apache/echarts`, `sapics/ip-location-db` + `runk/mmdb-lib` | MIT / ISC / Apache-2.0 / PDDL-1.0 | #3819, #3838 | **Whole pkgs + PDDL data:** 3D/2D map over `assets/jarvis/world.json` + zero-attribution PDDL `.mmdb` GeoIP/ASN lookups in Node/Workers. The repo has no LICENSE file; its README grants PDDL only for `iptoasn-*`, `origin-asn`, `user-country` and `server-country`. Never use `geolite2-*` (MaxMind's license); `dbip-*` is CC BY 4.0 (attribution). |
 | `mdn/mdn-http-observatory` + `helmetjs/helmet`, `disclose/diodb`, `certsocietegenerale/IRM` (FR) | MPL-2.0 / MIT / CC0-1.0 / CC-BY-3.0 | #3843, #3818 | **Part / Templates:** clean-room A+–F security rubric + Helmet fixes, RFC 9116 `/.well-known/security.txt` check, and EN/ES/FR IR playbooks w/ attribution. |
 
+### Wave 5 (corner reviews, `#3870`–`#3873`, Nov 19 2026)
+Verdicts from the four corner reviews. An **end-user app** (a desktop, mobile or personal dashboard, or learning material) is listed for Carlos's personal use, at his own responsibility. It is never embedded in product or customer code.
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `ngocanhnckh/renderlint` | MIT | #3870 | **Part:** rule taxonomy (overflow, contrast on the real background, breakpoint sweeps) ported into URL Review's UX step with `puppeteer-core`. Do not ship its CI hook to customers. |
+| `seo-skills/seo-audit-skill` (`@seomator/seo-audit`) | MIT | #3870 | **Part:** pin the package, map its rule IDs into URL Review JSON, dedupe against `agentmarkup` and Rebilder before scoring. |
+| `umutxyp/Seo-Promt-Master` | MIT | #3870 | **Part:** the `seo-audit.mjs` script and the AI-crawler robots matrix for GEO fix-packs. Cite its docs; do not bulk-copy prompts. |
+| `Manavarya09/design-extract` (`designlang`) | MIT | #3870 | **Part:** DTCG tokens and WCAG contrast cards for Design Studio and redesign deliverables. Keep `--smart` (third-party API) off in production. |
+| `AgriciDaniel/claude-seo` | MIT | #3870 | **Pattern:** GEO sub-skill checklist for agency chat only. Port one rule source, not three runtimes. |
+| `yaojingang/GEOInflow` | MIT | #3870 | **Watch, sidecar only:** AI-crawler analytics. Its THIRD_PARTY_NOTICES bundle LGPL libvips, MaxMind GeoLite2 terms and DB-IP attribution data: never vendored into Workers. |
+| `yaojingang/GEORank` | Apache-2.0 | #3870 | **Watch:** checklist ideas only. Do not embed the app in paid paths. |
+| `younatics/MotionBook` | MIT | #3870 | **Pattern:** catalog plus scheduled refresh, as the model for the tool scout. Its listed libraries keep their own licenses. |
+| `invertase/docs.page` | Apache-2.0 | #3870 | **Pattern:** llms.txt and MCP for our own public docs. The hosted service is external. |
+| `saleem-hadad/larecipe` | MIT | #3870 | **Skip, end-user app (Carlos's responsibility):** Laravel in-app docs; our stack is static Pages and Firebase. |
+| `beihaili/Get-Started-with-Web3` | MIT | #3870 | **Skip, end-user learning material (Carlos's responsibility):** Web3 curriculum; no product overlap. |
+| `YunYouJun/valaxy` | MIT | #3870 | **Skip:** Vue blog framework; duplicates the llms.txt work in #3829. |
+| `dequelabs/axe-core-maven-html` | MPL-2.0 | #3870 | **Skip:** Maven wrappers; our axe path is Node (#3831). |
+| `getprovenant/provenant` | Apache-2.0 | #3871 | **Whole pkg:** license, package and SBOM gate with `--fail-on` and SARIF in the #3833 CI. Its bundled ScanCode license data carries attribution terms: keep them in scan output. |
+| `github/actions-lockfile` | MIT | #3871 | **Part:** schema and Go parser for `actions.lock`, beside zizmor (#3833). |
+| `anchore/grant` | Apache-2.0 | #3871 | **Part:** license policy on `grant list dir:.`. Image paths are unused. |
+| `praetorian-inc/titus` | Apache-2.0 | #3871 | **Part:** git-history and APK secret pass before Jarvis and Android releases. No `--validate` in CI; avoid a duplicate gate beside gitleaks (#3833). |
+| `dmarcguardhq/parse-dmarc` | Apache-2.0 | #3871 | **Watch:** self-hosted DMARC ingest with a dashboard. Pick one DMARC stack for outreach against #3837. |
+| `Lab700xOrg/aisbom` | Apache-2.0 | #3871 | **Watch:** ML-model file scanner; only if we vendor model weights (VoiceStudio). |
+| `dmarc-analyzer-net/DmarcAnalyzerApp` | Apache-2.0 | #3871 | **Skip, end-user app (Carlos's responsibility):** self-hosted agency DMARC console (ASP.NET and Postgres); heavier than the queued Node path (#3837). |
+| `dennisdoomen/packageguard`, `oke-py/npm-audit-action`, `padok-team/git-secret-scanner`, `offseq/threat-finder`, `nmatt0/mithril` | MIT / MIT / Apache-2.0 / Apache-2.0 / MIT | #3871 | **Skip:** duplicate osv-scanner or gitleaks, need a paid API key, or target IoT firmware. |
+| `patriciogonzalezvivo/glslViewer` | BSD-3-Clause | #3872 | **Part:** headless shader PNG and sequence export for design QA beside `paper-design/shaders`. It is a console binary, not a browser bundle. |
+| `fand/vfx-js` | MIT | #3872 | **Part:** vendored `@vfx-js/core` for social-clip effects under `script-src 'self'`. Its HTML-in-Canvas path is experimental. |
+| `spite/THREE.MeshLine` | MIT | #3872 | **Part:** tapered brand strokes in `designs/3d/`, only where Three's `Line2` is not enough. |
+| `opencoredev/social-sdk` | MIT | #3872 | **Part:** direct X, Bluesky and YouTube adapters for the social studio. Not its optional Postiz backend, which is AGPL. |
+| `gokayfem/shader-skills` | MIT | #3872 | **Pattern:** agent skill and shader checks for design work. Do not vendor its 541-file gallery. |
+| `c2pa-org/specifications`, `c2pa-org/conformance-public` | CC-BY-4.0 | #3872 | **Pattern:** attributed references for C2PA manifest fields (#3824) and trust-list checks. Not shippable code. |
+| `nexu-io/html-video`, `dmtrKovalenko/fframes`, `0xS4N4TG/kinetograph` | Apache-2.0 / MIT / Apache-2.0 | #3872 | **Watch:** programmatic video. html-video ships only its Hyperframes engine today; the fframes speed claim is unverified; kinetograph is beta, so pin it before any render path. |
+| `MarshalX/atproto` | MIT | #3872 | **Watch:** Python ATProto SDK, pre-1.0. The JS SDK is already queued (#3841). |
+| `deckerst/aves` | BSD-3-Clause | #3872 | **Skip, end-user app (Carlos's responsibility):** Android gallery and metadata app; no hook into our studios. |
+| `rootscripts/riff` | MIT | #3872 | **Skip, end-user app (Carlos's responsibility):** desktop music player that pulls streams from streaming services. Personal use only; streaming terms are the user's risk. |
+| `gre/gl-react` | MIT | #3872 | **Skip:** React-only; the site is plain HTML. |
+| `0xMarcio/pocindex` | MIT | #3873 | **Part (feed):** passive `kev.json`, `epss.json` and `cve_metadata.json` for a "public PoC exists" flag on detected-stack CVEs. Never follow PoC URLs or run anything from them. |
+| `haveibeensquatted/twistrs` | MIT | #3873 | **Part:** permutations only for look-alike domains, paired with passive CT lookups (#3816). No CLI DNS brute force. |
+| `CriticalPathSecurity/Public-Intelligence-Feeds` | MIT | #3873 | **Part (feed):** IOC files only where each upstream feed allows redistribution. Check each row's terms. |
+| `Bert-JanP/Open-Source-Threat-Intel-Feeds` | BSD-3-Clause | #3873 | **Pattern:** catalog for the #3839 feed inventory. Verify each feed's own terms first. |
+| `Fazmin/cve-intel` | MIT / Apache-2.0 | #3873 | **Pattern:** data-source terms matrix for CVE explainers. Do not send customer domains through its non-commercial free-tier APIs. |
+| `safedep/pmg` | Apache-2.0 | #3873 | **Watch:** install-time proxy for our own CI and agents (#3833), not customer audits. |
+| `Patrowl/PatrowlHearsData` | Apache-2.0 | #3873 | **Watch:** CVE mirror; check freshness against OSV before use. |
+| `vulnersCom/api` | MIT | #3873 | **Watch:** SDK only, and the vendor's terms govern its data; overlaps osv-scanner and cve.now. |
+| `okanyildiz/WindowsSecurityAudit` | MIT | #3873 | **Skip, end-user toolkit (Carlos's responsibility):** Windows admin audit and DFIR scripts; not for customer sites. |
+| `CriticalPathSecurity/Zeek-Intelligence-Feeds`, `Quad9DNS/threat-intel-api` | MIT | #3873 | **Skip:** Zeek feeds are for active network monitoring; the Quad9 sample API is for threat-intel vendors. |
+
 ## Scouted Nov 19, 2026, not ticketed
 LICENSE files read; nothing else evaluated. Pick one with Carlos, then it gets a ticket (`scripts/ticket.sh new`).
 
 | Tool / Source | License | Corner | Fit |
 |---|---|---|---|
 | `sherwinvishesh/OpenGSO` | Apache-2.0 | B | GEO tooling monorepo; compare against `agentmarkup` and `elmo` before any use. |
-| `AgriciDaniel/claude-seo` | MIT | B | SEO audit skill pack; read its `agents/` before copying anything. |
-| `yaojingang/GEOInflow` | MIT | B | Umami-derived analytics with GEO features; heavy (Next, Prisma, ClickHouse): pattern only. |
 | `a11y-oracle/a11y-oracle` | MIT | B | Accessibility oracle with keyboard and screen-reader checks; compare with `virtual-screen-reader`. |
 | `micmro/PerfCascade` | MIT | B | HAR waterfall; alternative to `@cloudflare/waterfall`. |
 | `harlan-zw/unlighthouse` | MIT | B | Whole-site Lighthouse crawl; compare with `lighthouse-ci-action`. |
@@ -121,6 +168,7 @@ LICENSE files read; nothing else evaluated. Pick one with Carlos, then it gets a
 - unslop (`heydamir/unslop`, CC-BY-4.0): overlaps Hallmark. Pick one: Hallmark.
 
 ## Rejected, license traps and archived exclusions
+- **Passive-only policy:** `djkurlander/knock-knock` (a live honeypot dashboard that listens for attacks). Not adopted, and the end-user exception does not cover it: it changes what the product may claim about customer sites.
 - **Previously rejected:** AutoGPT (Polyform Shield restricts competing products), pinchtab (stealth injection conflicts with responsible scanning), `deepseek-ai/dsh-superagent-prototype` (prototype), `storytold/craft-anything` (same publisher as ArtCraft), VERT (FFmpeg covers media), sand3d (no use case), pixelfx (decorative).
 - **Non-commercial / proprietary traps (never bundle in commercial/paid paths):** `cnumr/EcoIndex` / `ecoindex_js` (`CC BY-NC-ND 3.0`), `patriciogonzalezvivo/lygia` (`Prosperity Public License 3.0.0`), `remotion-dev/remotion` (paid company license), `cortega26/geo-opt` (Tooltician Community License 1.0), `invoiceninja/invoiceninja` (Elastic License 2.0), `BIK-BITV/BIK-Web-Test` / `DISIC/Ara` / `JPCERTCC/phishurl-list` / `telegram-mini-apps-dev/analytics` (no commercial OSI license; analytics uses JS obfuscator), `Cloudflare Radar API` (`CC BY-NC 4.0`, free global context only until licensed), `Shodan InternetDB` (non-commercial without enterprise license).
 - **Copyleft / broken-license traps (do not embed in proprietary bundles):** `vulnerability-lookup/vulnerability-lookup` (`AGPL-3.0`), `qeeqbox/raven` (`AGPL-3.0`), `4ARMED/sri-check` (`GPL-3.0`), `MobSF` (`GPL-3.0`), `ryersondmp/sa11y` (`GPL-2.0-or-later`), `cnumr/GreenIT-Analysis` (`AGPL-3.0`), `DIYgod/RSSHub` (`AGPL-3.0`), `gitroomhq/postiz-app` (`AGPL-3.0`), `knadh/listmonk` (`AGPL-3.0`), `sansan0/TrendRadar` & `WEIFENG2333/VideoCaptioner` (`GPL-3.0`), `Tirth1107/Hyde-Security-JS` (broken merge-conflict `LICENSE`).
