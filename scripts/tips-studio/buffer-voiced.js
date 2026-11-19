@@ -74,10 +74,11 @@
 	}
 
 	async function edit(p, c, meta, asset) {
-		// #3824: a copy is labelled AI-generated unless its manifest entry says the operator voiced it himself (voice carlos or
-		// owner). Rotated copies carry an AI voice code (en-w, es-m ...), so they are labelled; the manifest needs a voice field
-		// for the owner's case to be read (the manifest is built outside the repo).
-		const synthetic = !(c && /^(carlos|owner)$/i.test(String(c.voice || c.speaker || '')));
+		// #3824: a copy is labelled AI-generated unless its render says the operator voiced it (voice carlos or owner). The render
+		// file <batch>/voiced/<slug>.json carries the voice code (en-w, de-m ...), so every rotated copy is labelled; the manifest
+		// entry is the fallback when the render has no voice. Unknown voice = labelled.
+		const voice = String((meta && meta.voice) || (c && (c.voice || c.speaker)) || '');
+		const synthetic = !/^(carlos|owner)$/i.test(voice);
 		const input = {
 			id: p.id,
 			dueAt: p.dueAt,
