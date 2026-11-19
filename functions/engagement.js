@@ -20,6 +20,7 @@
  */
 const crypto = require("crypto");
 const Trials = require("./chain-trials");
+const Trends = require("./engagement-trends");
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -49,12 +50,12 @@ const CAPS = ACTIONS.concat("join");
 const NETWORKS = {
   bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
   mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
-  youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9 },
-  x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
+  youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9, caps: { like: 60, follow: 15, reply: 15 } },
+  x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1, caps: { like: 62, repost: 12, follow: 18, reply: 12 } },
   linkedin: { name: "LinkedIn", acts: true, browser: true, only: ["like", "reply"], limit: 1200, scale: 15, weight: 1.2, caps: { like: 25, reply: 8, join: 2 } },
   facebook: { name: "Facebook", acts: true, browser: true, only: ["like", "reply"], limit: 1000, scale: 20, weight: 0.8, caps: { like: 25, reply: 6 } },
   instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
-  threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 50, repost: 10, follow: 15, reply: 10 } },
+  threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 62, repost: 12, follow: 18, reply: 12 } },
   tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
   telegram: { name: "Telegram", acts: true, api: true, browser: true, only: ["like", "repost", "reply"], limit: 1000, scale: 10, weight: 0.8, caps: { like: 20, repost: 2, reply: 3, join: 3 } },
   reddit: { name: "Reddit", acts: true, devvit: true, browser: true, limit: 1500, scale: 20, weight: 1, caps: { like: 20, repost: 2, follow: 5, reply: 3, join: 3 } },
@@ -77,6 +78,8 @@ const TOPICS = {
   Analytics: ["ga4", "google analytics", "tag manager", "gtm", "conversion tracking", "server-side tagging", "consent mode"],
   Security: ["security headers", "content security policy", "csp", "hsts", "owasp", "xss", "tls certificates?", "web security", "websecurity"],
   Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"],
+  // Next to our field (#3814): the conversations people already have about AI search, outages, breaches and dev life.
+  Trends: Trends.ADJACENT,
   Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "notice of award", "contract notice"]
 };
 // The same topics in other languages (#2614), so a post or group in any of them is in our field and the Mac's browser
@@ -177,7 +180,7 @@ const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming fro
 const DEFAULTS = {
   paused: false,
   live: false,
-  caps: { reply: 15, like: 60, repost: 15, follow: 15, join: 2 },
+  caps: { reply: 19, like: 75, repost: 19, follow: 19, join: 2 },
   thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
   worth: 0.6,
   maxAgeHours: 48,
@@ -209,6 +212,7 @@ function settings(doc) {
   return {
     paused: d.paused === true,
     live: d.live === true,
+    autoReplies: d.autoReplies !== false,
     liveAt: clip(d.liveAt, 30),
     caps: Object.fromEntries(CAPS.map((a) => [a, Math.round(between(capsIn[a], 0, a === "join" ? 20 : 500, DEFAULTS.caps[a]))])),
     thresholds: Object.fromEntries(ACTIONS.map((a) => [a, between(thIn[a], 0, 1000, DEFAULTS.thresholds[a])])),
@@ -232,6 +236,7 @@ function settingsPatch(current, body) {
   let changed = false;
   if (typeof b.paused === "boolean") { next.paused = b.paused; changed = true; }
   if (typeof b.live === "boolean") { next.live = b.live; changed = true; }
+  if (typeof b.autoReplies === "boolean") { next.autoReplies = b.autoReplies; changed = true; }
   if (b.discoveryPack !== undefined) { next.discoveryPack = String(b.discoveryPack || "auto"); changed = true; }
   ["caps", "thresholds", "trials"].forEach((k) => { if (b[k] && typeof b[k] === "object") { next[k] = Object.assign({}, current[k], b[k]); changed = true; } });
   ["worth", "maxAgeHours", "perRun"].forEach((k) => { if (b[k] !== undefined) { next[k] = b[k]; changed = true; } });
@@ -318,6 +323,7 @@ function guard(post, conf, now) {
   if (has(who + " " + String(post.url || "").toLowerCase(), conf.own) || /carlosandmunoz\.com|qalabreview\.com/i.test(text)) return "own";
   if (has(who, conf.competitors)) return "competitor";
   if (SENSITIVE.test(text)) return "sensitive";
+  if (Trends.drama(post)) return "drama";
   if ((String(post.text || "").match(/(^|\s)#[\p{L}\p{N}_]+/gu) || []).length > HASHTAG_SPAM) return "spam";
   if (ageHours(post, now) > conf.maxAgeHours) return "old";
   return "";
@@ -328,21 +334,25 @@ function aiPrompt(items) {
   const list = items.map((p) => ({
     id: p.key, network: (NETWORKS[p.network] || {}).name || p.network, lang: lang2(p.lang) || "?", author: clip((p.author || {}).name || (p.author || {}).handle, 60),
     title: clip(p.title, 160), text: clip(p.text, 900), likes: num((p.metrics || {}).likes), replies: num((p.metrics || {}).replies), reposts: num((p.metrics || {}).reposts),
-    topic: p.topic, maxReply: (NETWORKS[p.network] || {}).limit || 300
+    topic: p.topic, viral: (p.trend || 0) >= Trends.VIRAL_TREND, maxReply: ((NETWORKS[p.network] || {}).limit || 300) - (Trends.TAG_NETWORKS.includes(p.network) ? 30 : 0)
   }));
   return [
     "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
     "For each post below, return one JSON object in a JSON array, same order, with exactly these keys:",
-    '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument or promo, ' + ENGLISH_KEY + '}',
-    "Reply rules: " + REPLY_IN_POST_LANG + " Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject; never steer the conversation toward our services or other areas. " + REGISTER,
+    '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "drama": true when the thread is about a named person or company being attacked, boycotted, exposed or mocked, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument, drama or promo, ' + ENGLISH_KEY + '}',
+    "Reply rules: " + REPLY_IN_POST_LANG + " Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject. " + WIT + " " + SCOPE + " " + SOFT + " " + REGISTER,
     NEVER,
     "Posts:",
     JSON.stringify(list)
   ].join("\n");
 }
 
+// Tone, scope and mention rules for replies in the field and next to it (#3814).
+const WIT = "Be the sharpest, funniest practitioner in the thread: playful and meme-aware, a dry one-liner or a wink at a pain every dev, tester or marketer knows is welcome when the post invites it, never at the author's expense, and never instead of the insight. Match the thread's mood: no jokes under bad news, an outage that hurts people, or a sad post.";
+const SCOPE = "Posts may be next to our field (AI search and chatbots, outages, breaches, dev life, launches) or viral (viral: true). There, reply only when you can add an angle that connects for real to testing, SEO or GEO, accessibility, speed, analytics, security or privacy; otherwise reply \"\". Never reply to a viral post just to be seen.";
+const SOFT = "You may close with one light, curious half-sentence that we built a free URL review that checks a site's security, SEO and GEO, analytics, accessibility and speed, but only when it flows from what they said, never twice in one thread, never as a pitch, and without a link unless asksForTool is true. When it would feel forced, leave it out.";
 const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French; elsewhere use the register usual between strangers online.";
-const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags, more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
+const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags (we add the one tag ourselves), more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
 
 // The invite ladder (#3137, functions/chain-trials.js): how far an answer to this person may go. It overrides the link rule only on "link".
 const LADDER = "Invite ladder (invite says how far the answer to this person may go; when unsure, step down a rung): none: pure value and wit about their point, nothing about us; soft: you may add one light, curious half-sentence that we built a free URL review that checks sites, no link, only when it flows from what they said; link: you may end with one natural hook tied to their site (site) or their post, and the link " + Trials.REVIEW_URL + " once (the only link allowed). active: true means this person talks with us regularly: always answer, briefly and warmly, even a thanks, unless the comment is hostile or spam.";
@@ -391,7 +401,7 @@ function parseAi(text, items) {
     if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/\s+\S*$/, "") + "…";
     out[r.id] = {
       about: clip(r.about, 200), lang, sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
-      political: r.political === true, argument: r.argument === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
+      political: r.political === true, argument: r.argument === true, drama: r.drama === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
       reply: reply.length >= 12 ? reply : "", english: reply.length >= 12 && lang !== "en" ? clip(tidy(String(r.english || "")), 600) : "", like: r.like !== false,
       tone: Trials.TONES.includes(r.tone) ? r.tone : "", invited: Trials.RUNGS.includes(r.invited) ? r.invited : ""
     };
@@ -416,7 +426,7 @@ function take(used, network, action) {
  * Each action is { status } with planned, waiting (a reply for Carlos), capped, paused, or replied (replied holds the
  * threadKeys we already answered or have an answer waiting in).
  */
-function decide(post, ai, conf, used, now, followed, replied) {
+function decide(post, ai, conf, used, now, followed, replied, trends) {
   const net = NETWORKS[post.network] || {};
   if (!net.acts) return { verdict: "trend", skip: "", actions: {} };
   const why = guard(post, conf, now);
@@ -439,7 +449,13 @@ function decide(post, ai, conf, used, now, followed, replied) {
   if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && lang) {
     if (replied && replied.has(threadKey(post))) actions.reply = { status: "replied", error: "We already replied in this conversation." };
     else {
-      plan("reply", true, Object.assign({ draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + REPLY_TTL).toISOString() }));
+      // One trending hashtag where a tag in a reply is normal (#3814); trendSafe replies may go out without waiting for Carlos (jarvis-engagement.js takeIn).
+      const tag = Trends.pickTag(post, trends, relevance);
+      const draft = Trends.withTag(a.reply, tag, net.limit);
+      const tagged = draft !== a.reply;
+      const english = a.english && tagged ? Trends.withTag(a.english, tag, 600) : a.english;
+      const safe = Trends.autoReply(post, a, conf, trends, tag);
+      plan("reply", true, Object.assign({ draft, lang }, english ? { english } : {}, tagged ? { tag } : {}, safe ? { trendSafe: true } : {}, { expiresAt: new Date(now + REPLY_TTL).toISOString() }));
       if (actions.reply && actions.reply.status === "planned") actions.reply.status = "waiting";
     }
   }
@@ -449,7 +465,7 @@ function decide(post, ai, conf, used, now, followed, replied) {
 /** Why Gemini's read rules out engaging (political, an argument, promo, angry), or "". */
 function flagged(a) {
   if (!a) return "";
-  return a.political ? "political" : a.argument ? "argument" : a.promo ? "promo" : a.sentiment === "angry" ? "angry" : "";
+  return a.political ? "political" : a.argument ? "argument" : a.drama ? "drama" : a.promo ? "promo" : a.sentiment === "angry" ? "angry" : "";
 }
 
 /**
@@ -552,7 +568,7 @@ function rollup(read, docs, run, again) {
   const net = (k) => { out.n[k] = out.n[k] || {}; return out.n[k]; };
   Object.entries(read || {}).forEach(([k, n]) => bump(net(k), "read", n));
   const acts = (d) => Object.entries(d.actions || {}).forEach(([act, x]) => {
-    if (x.status === "planned" || x.status === "waiting") bump(net(d.network), act === "reply" ? "drafted" : act);
+    if (x.status === "planned" || x.status === "waiting" || (x.status === "approved" && x.auto)) bump(net(d.network), act === "reply" ? "drafted" : act);
     else if (x.status === "capped") bump(out.skip, "cap_" + act);
     else if (x.status === "replied") bump(net(d.network), "already");
   });
@@ -789,7 +805,7 @@ function decideReply(doc, decision, text, by, now) {
 }
 
 module.exports = {
-  NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, Regions, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
+  Trends, NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, Regions, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
   settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
   postDoc, chainDoc, rollup, sumInto, formatOf, formatsFrom, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
 };

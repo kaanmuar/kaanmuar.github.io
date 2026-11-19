@@ -244,7 +244,7 @@ test('an invite waits for Carlos with the filled link; guards, the 30-day gap, m
 		'site mentions stay open a week'
 	);
 	assert.equal(
-		R.decide(post(), ai(), upb, conf, { bluesky: { reply: 15 } }, NOW, ctx()).actions.reply.status,
+		R.decide(post(), ai(), upb, conf, { bluesky: { reply: 19 } }, NOW, ctx()).actions.reply.status,
 		'capped'
 	);
 	assert.equal(

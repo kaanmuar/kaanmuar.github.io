@@ -292,6 +292,12 @@ function fill(reply, link, network) {
   return (before + link + after).replace(/\s{2,}/g, " ").trim();
 }
 
+/** The reply with one hashtag (#3814) where a tag in a reply is normal; ctx.trends: the tags rising in this run, when known. */
+function tagged(draft, post, ctx) {
+  const tag = E.Trends.pickTag(post, (ctx && ctx.trends) || [], E.relevance);
+  return E.Trends.withTag(draft, tag, (E.NETWORKS[post.network] || {}).limit || 300);
+}
+
 /**
  * What to do with a post that names a site. ctx: { recent: hosts answered in the gap, contacted: Map host => why,
  * replied: E.threadKey of conversations we answered, links: post key => the link to use }. Same shape as E.decide,
@@ -324,7 +330,7 @@ function decide(post, ai, target, conf, used, now, ctx) {
   const link = (ctx.links && ctx.links[post.key]) || linkFor(target, post.network, lang, post.key);
   return {
     verdict: "engage", skip: "",
-    actions: { reply: { status: "waiting", kind: CAMPAIGN, draft: fill(ai.reply, link, post.network), lang, expiresAt: new Date(now + E.REPLY_TTL).toISOString() } }
+    actions: { reply: Object.assign({ status: "waiting", kind: CAMPAIGN, draft: tagged(fill(ai.reply, link, post.network), post, ctx), lang, expiresAt: new Date(now + E.REPLY_TTL).toISOString() }) }
   };
 }
 

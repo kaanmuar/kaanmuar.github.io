@@ -19,8 +19,11 @@ const TIMEOUT = 12000;
 /** Full-text Mastodon searches per slot on top of tag timelines, when MASTODON_SEARCH_* is set (#3613). */
 const MASTODON_SEARCH_PER_RUN = 4;
 
-const MASTODON_TAGS = ["a11y", "accessibility", "webperf", "corewebvitals", "seo", "softwaretesting", "testautomation", "playwright", "qa", "webdev", "wcag", "technicalseo", "webaccessibility", "ga4", "privacy"];
-const BLUESKY_QUERIES = ["accessibility", "a11y", "web performance", "core web vitals", "SEO", "technical SEO", "playwright", "software testing", "test automation", "WCAG", "AI overviews", "GA4"];
+const MASTODON_TAGS = ["a11y", "accessibility", "webperf", "corewebvitals", "seo", "softwaretesting", "testautomation", "playwright", "qa", "webdev", "wcag", "technicalseo", "webaccessibility", "ga4", "privacy",
+  // Next to our field and rising (#3814)
+  "chatgpt", "vibecoding", "aiagents", "outage", "databreach", "infosec"];
+const BLUESKY_QUERIES = ["accessibility", "a11y", "web performance", "core web vitals", "SEO", "technical SEO", "playwright", "software testing", "test automation", "WCAG", "AI overviews", "GA4",
+  "ChatGPT search", "vibe coding", "AI agents", "website outage", "data breach", "web dev"];
 const YOUTUBE_QUERIES = ["web accessibility", "core web vitals", "technical seo", "playwright testing", "test automation", "seo ai overviews", "wcag", "website speed"];
 const HN_QUERIES = ["accessibility", "playwright", "SEO", "web performance", "testing", "Core Web Vitals", "WCAG", "Google Search"];
 const DEV_TAGS = ["a11y", "testing", "seo", "webperf", "playwright", "qa"];
@@ -58,6 +61,10 @@ async function mastodonTags(ctx) {
   const base = String(ctx.env.MASTODON_URL || packHint || "https://mastodon.social").replace(/\/+$/, "");
   const urls = pick(MASTODON_TAGS, ctx.slot, 4).map((t) => base + "/api/v1/timelines/tag/" + encodeURIComponent(t) + "?limit=30")
     .concat([base + "/api/v1/trends/statuses?limit=30"]);
+  // The tags rising on the instance now, when they name our field or what is next to it (#3814).
+  const rising = await getJson(ctx.fetch, base + "/api/v1/trends/tags?limit=20").catch(() => []);
+  const near = (Array.isArray(rising) ? rising : []).map((t) => E.Trends.clean(t.name)).filter((t) => t && E.relevance("#" + t).hits > 0);
+  pick(near, ctx.slot, 2).forEach((t) => urls.push(base + "/api/v1/timelines/tag/" + encodeURIComponent(t) + "?limit=30"));
   const lists = await Promise.all(urls.map((u) => getJson(ctx.fetch, u).catch((error) => ({ error }))));
   const failed = lists.filter((l) => l && l.error);
   if (failed.length === lists.length) throw failed[0].error;
