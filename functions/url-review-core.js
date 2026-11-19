@@ -30,6 +30,7 @@ const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const hackSigns = require("./url-review-hack-signs");
 const watchCases = require("./url-review-watch");
+const targeted = require("./url-review-targeted");
 /* Lazy: Live reports and other light importers only need iconData (#3713). verified-spec
    pulls htmlparser2/css-select, which those jobs do not install. */
 const verifiedSpec = () => require("./url-review-verified-spec");
@@ -3957,6 +3958,23 @@ async function reviewTarget(rawUrl, hooks) {
   extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
   extras.hackSigns = await withTimeout(hackPromise, 5000, null);
   if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
+  if (!stopped && !softPreview && controls.targeted !== false) {
+    const assessedLibs = [].concat.apply([], pages.map((page) => (page.inspect && page.inspect.libraries) || [])).concat((browser && browser.ok && browser.libraries) || []);
+    const runTargeted = typeof controls.targeted === "function" ? controls.targeted : targeted.check;
+    extras.targeted = await runTargeted({
+      url: first.url,
+      host: origin.hostname,
+      cert: first.cert || null,
+      libraries: assessedLibs,
+      wordpress: extras.wordpress || null,
+      technologies: technologiesFound,
+      extras,
+      alerts
+    }, {
+      env: process.env,
+      certspotterKey: process.env.CERTSPOTTER_KEY || ""
+    }).catch(() => null);
+  }
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
@@ -4107,6 +4125,27 @@ async function reviewTarget(rawUrl, hooks) {
   };
   if (talked) result.chatTalk = talked;
   if (watch) result.watch = watch;
+  if (extras.targeted) {
+    result.targeted = {
+      host: extras.targeted.host,
+      checkedAt: extras.targeted.checkedAt,
+      status: extras.targeted.status,
+      level: extras.targeted.level,
+      hosting: extras.targeted.hosting,
+      kevHits: (extras.targeted.kevHits || []).slice(0, 20),
+      osvHits: (extras.targeted.osvHits || []).slice(0, 20),
+      dropIpHit: extras.targeted.dropIpHit || null,
+      dropAsnHit: extras.targeted.dropAsnHit || null,
+      feodoHit: extras.targeted.feodoHit || null,
+      torHit: extras.targeted.torHit || "",
+      breachNews: (extras.targeted.breachNews || []).slice(0, 5),
+      sourcesRead: extras.targeted.sourcesRead || [],
+      sourcesSkipped: extras.targeted.sourcesSkipped || [],
+      attributions: extras.targeted.attributions || [],
+      context: extras.targeted.context || null,
+      items: (extras.targeted.items || []).slice(0, 40)
+    };
+  }
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
   // Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
   if (!softPreview && !stopped) verifiedSpec().applyToReport(result, pages);
@@ -4264,7 +4303,7 @@ function localSummary(report) {
 }
 
 // The newer security checks' findings in a few bytes (#3329), so Jarvis counts hits per check without reading reports.
-const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist)/;
+const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist|kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)/;
 function checksSummary(report) {
   const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
   const rows = findings.filter((f) => f && CHECK_KEYS.test(f.key || "")).map((f) => {
@@ -5133,6 +5172,7 @@ function teaserFinding(findings) {
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
 function previewReport(report, options) {
   const copy = JSON.parse(JSON.stringify(report || {}));
+  delete copy.targeted;
   const cases = copy.cases || [];
   const top = options && options.sample === false ? null : cases.shift();
   cases.forEach((item) => {
@@ -5146,6 +5186,9 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
+  if (Array.isArray(ins.findings)) {
+    ins.findings = ins.findings.filter((item) => !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String((item && item.key) || "")));
+  }
   // Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
   const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
   const teaserId = teaser && (teaser.id || teaser.key);

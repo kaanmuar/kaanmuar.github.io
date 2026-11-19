@@ -1324,7 +1324,31 @@
       "pf-cwv.title": "Core Web Vitals brauchen eine gerenderte Seite",
       "pf-cwv.evidence": "Largest Contentful Paint, Interaction to Next Paint und Layoutverschiebungen werden von PageSpeed Insights oder im Browserlauf gemessen.",
       "coverage.title": "Das Zeitbudget war aufgebraucht, bevor jede Seite analysiert war",
-      "coverage.evidence": "{pages} von {max} wurden analysiert. Langsame Antworten verbrauchen das Budget."
+      "coverage.evidence": "{pages} von {max} wurden analysiert. Langsame Antworten verbrauchen das Budget.",
+      "sec-kev.title_one": "{n} Softwarekomponente hat eine bekannt ausgenutzte Sicherheitslücke (CISA KEV)",
+      "sec-kev.title_other": "{n} Softwarekomponenten haben bekannt ausgenutzte Sicherheitslücken (CISA KEV)",
+      "sec-kev.evidence": "Erkannte Versionen stimmen mit aktiv ausgenutzten CVEs im CISA-Katalog überein: {list}.",
+      "sec-kev.fix": "Aktualisieren Sie betroffene Pakete oder WordPress-Komponenten sofort auf eine gepatchte Version.",
+      "sec-osv.title_one": "{n} Frontend-Bibliothek stimmt mit einem Hinweis in OSV.dev überein",
+      "sec-osv.title_other": "{n} Frontend-Bibliotheken stimmen mit Hinweisen in OSV.dev überein",
+      "sec-osv.evidence": "Gefundene Paket-Hinweise: {list}.",
+      "sec-osv.fix": "Aktualisieren Sie jedes genannte Paket auf die neueste gepatchte Version und erstellen Sie das Bundle neu.",
+      "sec-feodo.title": "Die Host-IP ist als Botnet-C2-Indikator gelistet",
+      "sec-feodo.evidence": "Feodo Tracker führt {ip} als aktiven C2-Endpunkt ({malware}).",
+      "sec-feodo.fix": "Prüfen Sie den Server oder Hoster sofort, rotieren Sie Schlüssel und bereinigen Sie jede Kompromittierung vor einer Austragungsanfrage.",
+      "sec-drop.title": "Das Hosting-Netz steht auf einer Liste gekaperter Netzblöcke",
+      "sec-drop.evidence": "Das Hosting {target} liegt in einem gekaperten oder Cyberkriminalität zugeordneten Netzblock (DROP).",
+      "sec-drop.fix": "Wechseln Sie zu einem seriösen Hoster oder sauberen ASN, damit Mailfilter und Firewalls keinen Datenverkehr blockieren.",
+      "sec-breach-news.title_one": "{n} aktueller Cyberangriffs-Bericht erwähnt die Domain",
+      "sec-breach-news.title_other": "{n} aktuelle Cyberangriffs-Berichte erwähnen die Domain",
+      "sec-breach-news.evidence": "Externe Berichte in GDELT ({sources}) nennen {host} zusammen mit Cyberangriffs-Themen. Prüfen Sie, ob dieselbe Organisation gemeint ist.",
+      "sec-breach-news.fix": "Prüfen Sie Sicherheitsmeldungen und klären Sie, ob der Bericht Ihre Organisation oder nur einen ähnlichen Namen betrifft.",
+      "sec-cert-anomaly.title_one": "{n} Anomalie beim TLS-Zertifikat beobachtet",
+      "sec-cert-anomaly.title_other": "{n} Anomalien beim TLS-Zertifikat beobachtet",
+      "sec-cert-anomaly.evidence": "Beobachtete Signale: {details}.",
+      "sec-cert-anomaly.fix": "Prüfen Sie Zertifikatskette und jüngste Ausstellungen bei Ihrer CA oder in Certificate-Transparency-Logs.",
+      "sec-targeted.pass.title": "Kein Treffer für gezielte Angriffe oder aktive Exploits in geprüften Quellen",
+      "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf."
     }
   };
 

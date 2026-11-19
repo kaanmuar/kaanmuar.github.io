@@ -1324,7 +1324,31 @@
       "pf-cwv.title": "As Core Web Vitals precisam de uma página renderizada",
       "pf-cwv.evidence": "Largest Contentful Paint, Interaction to Next Paint e o deslocamento do layout são medidos pelo PageSpeed Insights ou na execução no navegador.",
       "coverage.title": "O tempo disponível acabou antes de todas as páginas serem analisadas",
-      "coverage.evidence": "Foram analisadas {pages} de {max}. Respostas lentas consomem o tempo disponível."
+      "coverage.evidence": "Foram analisadas {pages} de {max}. Respostas lentas consomem o tempo disponível.",
+      "sec-kev.title_one": "{n} componente de software tem uma vulnerabilidade explorada conhecida (CISA KEV)",
+      "sec-kev.title_other": "{n} componentes de software têm vulnerabilidades exploradas conhecidas (CISA KEV)",
+      "sec-kev.evidence": "As versões detectadas correspondem a CVEs exploradas ativamente no catálogo da CISA: {list}.",
+      "sec-kev.fix": "Atualize imediatamente os pacotes ou componentes do WordPress afetados para uma versão corrigida.",
+      "sec-osv.title_one": "{n} biblioteca front-end corresponde a um alerta no OSV.dev",
+      "sec-osv.title_other": "{n} bibliotecas front-end correspondem a alertas no OSV.dev",
+      "sec-osv.evidence": "Alertas de pacotes encontrados: {list}.",
+      "sec-osv.fix": "Atualize cada pacote listado para a versão corrigida mais recente e gere o pacote novamente.",
+      "sec-feodo.title": "O IP do servidor consta como indicador de comando e controle de botnet",
+      "sec-feodo.evidence": "O Feodo Tracker lista {ip} como um ponto C2 ativo ({malware}).",
+      "sec-feodo.fix": "Investigue o servidor ou provedor de hospedagem imediatamente, gire as chaves e remova qualquer comprometimento antes de pedir a remoção.",
+      "sec-drop.title": "A rede de hospedagem aparece em uma lista de blocos sequestrados",
+      "sec-drop.evidence": "A hospedagem {target} faz parte de um bloco de rede sequestrado ou atribuído a cibercrime (DROP).",
+      "sec-drop.fix": "Mude o site para um provedor de hospedagem confiável ou ASN limpo para evitar bloqueios em filtros de e-mail e firewalls.",
+      "sec-breach-news.title_one": "{n} notícia recente de ciberataque cita o domínio",
+      "sec-breach-news.title_other": "{n} notícias recentes de ciberataque citam o domínio",
+      "sec-breach-news.evidence": "A cobertura de terceiros no GDELT ({sources}) menciona {host} com temas de ciberataque. Confirme se trata da mesma organização.",
+      "sec-breach-news.fix": "Revise comunicados de incidentes e verifique se o relato citado envolve sua organização ou apenas um nome parecido.",
+      "sec-cert-anomaly.title_one": "Foi observada {n} anomalia no certificado TLS",
+      "sec-cert-anomaly.title_other": "Foram observadas {n} anomalias no certificado TLS",
+      "sec-cert-anomaly.evidence": "Sinais observados: {details}.",
+      "sec-cert-anomaly.fix": "Verifique a cadeia do certificado e as emissões recentes na sua autoridade certificadora ou nos logs de Certificate Transparency.",
+      "sec-targeted.pass.title": "Nenhuma correspondência de ataque direcionado ou exploit ativo nas fontes verificadas",
+      "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}."
     }
   };
 
