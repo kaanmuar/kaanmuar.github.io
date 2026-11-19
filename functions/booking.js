@@ -124,6 +124,7 @@ function readBooking(body, now) {
     email,
     company: clip(b.company, 120),
     note: String(b.note == null ? "" : b.note).replace(/\r\n/g, "\n").trim().slice(0, 2000),
+    tz: require("./booking-mail").safeZone(b.tz),
     host: clip(b.host, 120).toLowerCase().replace(/[^a-z0-9.\-]/g, ""),
     report: clip(b.report, 80).replace(/[^A-Za-z0-9_\-]/g, ""),
     ref: clip(b.ref, 60).replace(/[^A-Za-z0-9_.\-]/g, "")
@@ -140,19 +141,9 @@ function reportUrl(lang, report) {
 // The Calendar event. Google mails the invite (with the Meet link) to the visitor from Carlos's calendar.
 function eventBody(b, id) {
   const label = LABELS[b.lang][b.type];
-  const lines = [
-    label + " (" + TYPES[b.type].minutes + " min)",
-    "",
-    b.name + " <" + b.email + ">" + (b.company ? ", " + b.company : ""),
-    b.host ? "Site: " + b.host : "",
-    b.report ? "Report: " + reportUrl(b.lang, b.report) : "",
-    b.note ? "\n" + b.note : "",
-    "",
-    "Booked at " + SITE + "/book.html" + (b.ref ? " from " + b.ref : "") + " · language " + b.lang
-  ].filter((line, i, all) => line !== "" || all[i - 1] !== "");
-  return {
+  // The description (HTML, in the visitor's language), the color and the source link come from booking-mail.js (#3867).
+  return Object.assign({
     summary: label + ": " + b.name + " & Carlos A. Muñoz",
-    description: lines.join("\n").slice(0, 7000),
     start: { dateTime: b.start, timeZone: TZ },
     end: { dateTime: b.end, timeZone: TZ },
     attendees: [{ email: b.email, displayName: b.name }],
@@ -160,7 +151,7 @@ function eventBody(b, id) {
     reminders: { useDefault: true },
     guestsCanModify: false,
     extendedProperties: { private: { booking: id, type: b.type } }
-  };
+  }, require("./booking-mail").eventExtras(b, id));
 }
 
 function authUrl(clientId, redirect, state) {
@@ -229,7 +220,7 @@ async function busyTimes({ token, timeMin, timeMax, fetchImpl = fetch }) {
 async function createEvent({ token, booking, id, fetchImpl = fetch }) {
   const event = await calendarCall(fetchImpl, token, "/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all", eventBody(booking, id));
   const video = ((event.conferenceData && event.conferenceData.entryPoints) || []).find((e) => e.entryPointType === "video");
-  return { eventId: event.id, meet: event.hangoutLink || (video && video.uri) || "", htmlLink: event.htmlLink || "" };
+  return { eventId: event.id, icalUid: event.iCalUID || "", meet: event.hangoutLink || (video && video.uri) || "", htmlLink: event.htmlLink || "" };
 }
 
 // Rows for Carlos's new-booking mail (owner-mail.js layout).
@@ -241,7 +232,7 @@ function ownerRows(b) {
     b.company ? ["Company", b.company] : null,
     b.host ? ["Site", b.host] : null,
     b.report ? ["Report", reportUrl(b.lang, b.report)] : null,
-    ["Language", b.lang],
+    ["Language", b.lang + (b.tz ? " · " + b.tz : "")],
     b.ref ? ["From", b.ref] : null,
     b.meet ? ["Meet", b.meet] : null
   ].filter(Boolean);
@@ -281,5 +272,5 @@ async function callsSource(ctx) {
 
 module.exports = {
   SITE, LANGS, TZ, TYPES, LABELS, SCOPES, HORIZON_DAYS, MAX_UPCOMING_PER_EMAIL, DAY_START_MIN, DAY_END_MIN,
-  langOf, bookUrl, freeSlots, busyWindow, readBooking, eventBody, authUrl, tokenFromCode, accessToken, busyTimes, createEvent, ownerRows, callsSource, emailOf
+  langOf, reportUrl, bookUrl, freeSlots, busyWindow, readBooking, eventBody, authUrl, tokenFromCode, accessToken, busyTimes, createEvent, ownerRows, callsSource, emailOf
 };
