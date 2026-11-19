@@ -1,8 +1,13 @@
+const fs = require('fs');
+const path = require('path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const admin = require('../../js/social-hub-admin');
 const sweep = require('../../scripts/field-sweep');
 const { SOURCES } = require('../../scripts/field-sweep/sources');
+
+const KEV_FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/field-sweep-kev.json'), 'utf8'));
+const GHSA_FIXTURE = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/field-sweep-ghsa.json'), 'utf8'));
 
 const NOW = Date.parse('2026-10-24T12:00:00Z');
 const source = (id) => SOURCES.find((item) => item.id === id);
@@ -23,6 +28,34 @@ const ATOM = `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://sear
 <updated>${new Date(NOW - 86400000).toISOString()}</updated><author><name>pavelfeldman</name></author>
 <content type="html">&lt;p&gt;New &lt;code&gt;toMatchAriaSnapshot&lt;/code&gt; options.&lt;/p&gt;</content>
 <media:thumbnail url="https://avatars.githubusercontent.com/u/1?v=4"/></entry></feed>`;
+
+test('cyber security sources are registered for discovery scouts (#3839)', () => {
+	['cisa-kev', 'github-advisories'].forEach((id) => {
+		const s = source(id);
+		assert.ok(s, id);
+		assert.equal(s.topic, 'Security');
+		assert.equal(s.discoveryOnly, true);
+		assert.ok(['kev', 'ghsa'].includes(s.type));
+	});
+	assert.ok(sweep.requests(source('cisa-kev'), NOW).includes('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'));
+	assert.ok(sweep.requests(source('github-advisories'), NOW)[0].startsWith('https://api.github.com/advisories?'));
+});
+
+test('parses CISA KEV and GitHub advisory JSON (#3839)', () => {
+	const kev = sweep.parseKev(KEV_FIXTURE, source('cisa-kev'));
+	assert.equal(kev.length, 2);
+	assert.equal(kev[0].url, 'https://www.cve.org/CVERecord?id=CVE-2024-10441');
+	assert.match(kev[0].title, /^CVE-2024-10441:/);
+	assert.equal(kev[0].author, 'Synology');
+	assert.equal(kev[0].signal, 50);
+	assert.equal(kev[1].signal, 80);
+	const ghsa = sweep.parseGhsa(GHSA_FIXTURE, source('github-advisories'));
+	assert.equal(ghsa.length, 1);
+	assert.equal(ghsa[0].url, 'https://github.com/advisories/GHSA-xxxx-yyyy-zzzz');
+	assert.equal(ghsa[0].title, 'CVE-2026-119350: Example framework: cache poisoning via request-supplied route params');
+	assert.equal(ghsa[0].signal, 90);
+	assert.equal(ghsa[0].date, '2026-10-23');
+});
 
 test('regional and tender procurement sources are registered (#3613)', () => {
 	[
@@ -220,6 +253,21 @@ test('rank merges the same article across sources and boosts it', () => {
 	assert.equal(top.trend, Math.round(100 * (Math.log2(4) + 1)) / 100);
 	assert.ok(top.score > list[1].score);
 	assert.equal(top.firstSeen, '2026-10-24');
+});
+
+test('rank marks discoveryOnly proposals for scout opt-in (#3839)', () => {
+	const cyber = item({
+		sourceId: 'cisa-kev',
+		source: 'CISA KEV',
+		url: 'https://www.cve.org/CVERecord?id=CVE-2026-10000',
+		title: 'CVE-2026-10000: Example product authentication bypass vulnerability',
+		summary: 'Known exploited vulnerability in a web application.',
+		time: NOW - 86400000,
+		date: '2026-10-23',
+	});
+	const [proposal] = sweep.rank([cyber], { now: NOW, state: admin.empty(), previous: null });
+	assert.equal(proposal.discoveryOnly, true);
+	assert.equal(proposal.topic, 'Security');
 });
 
 test('rank leaves out what is approved, dismissed, on the hub, too old or off topic for a general source', () => {

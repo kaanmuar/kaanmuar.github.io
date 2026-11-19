@@ -36,7 +36,9 @@ const SOURCES = [
   { id: "ted-eu", name: "TED EU", type: "feed", url: "https://ted.europa.eu/en/rss/search?q=software&scope=3&scope=4", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
   { id: "uk-contracts-finder", name: "UK Contracts Finder", type: "feed", url: "https://www.contractsfinder.service.gov.uk/applications/cms-feed", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
   { id: "austender", name: "AusTender", type: "feed", url: "https://www.tenders.gov.au/public_data/rss/rss.xml", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
-  { id: "compras-colombia", name: "SECOP Colombia", type: "feed", url: "https://www.colombiacompra.gov.co/sites/cce_public/Lists/Licitaciones/AllItems.aspx?RSS=1", topic: "Procurement", weight: 0.3, strict: true, discoveryOnly: true }
+  { id: "compras-colombia", name: "SECOP Colombia", type: "feed", url: "https://www.colombiacompra.gov.co/sites/cce_public/Lists/Licitaciones/AllItems.aspx?RSS=1", topic: "Procurement", weight: 0.3, strict: true, discoveryOnly: true },
+  { id: "cisa-kev", name: "CISA KEV", type: "kev", url: "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json", topic: "Security", weight: 1.15, discoveryOnly: true },
+  { id: "github-advisories", name: "GitHub Advisories", type: "ghsa", topic: "Security", weight: 1.05, discoveryOnly: true }
 ];
 
 // Keywords per topic, matched as whole words in any case, plural too. A title hit counts double a summary hit.
@@ -48,7 +50,8 @@ const TOPICS = {
   Performance: ["web performance", "core web vitals", "inp", "lcp", "cls", "page speed", "pagespeed", "lighthouse", "load time", "performance budget", "speculation rules"],
   Analytics: ["analytics", "ga4", "google tag manager", "tag manager", "server-side tagging", "consent mode", "measurement", "attribution"],
   Standards: ["w3c", "whatwg", "html spec", "specification", "candidate recommendation", "working draft", "interop", "baseline"],
-  Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "contract notice", "licitación", "licitação", "contratación pública"]
+  Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "contract notice", "licitación", "licitação", "contratación pública"],
+  Security: ["vulnerability", "vulnerabilities", "cve", "exploit", "exploited", "ransomware", "appsec", "application security", "zero-day", "zero day", "patch", "security advisory", "cvss", "cisa kev", "known exploited"]
 };
 
 // Never proposed, whatever the source: GitHub topic tags and DEV tags are open to anyone.
