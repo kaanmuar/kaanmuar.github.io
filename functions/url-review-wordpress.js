@@ -15,8 +15,9 @@ const BACKOFF_PATH = "wordfence/backoff.json";
 const H = 3600000;
 // The key allows about one download per 30 minutes; going over answers 429 and can get the key suspended.
 const MIN_REFRESH_MS = 20 * H;
-// After a 429 the job waits a full day before it asks again (#3808).
-const RATE_LIMIT_MS = 24 * H;
+// After a 429 the job waits 72 hours before it asks again. A day was too short: the scheduled run is 24 hours
+// apart, so a 24-hour backoff expired just as the next run came and the over-limit key was called again (#3808).
+const RATE_LIMIT_MS = 72 * H;
 const INDEX_TTL_MS = 6 * H;
 const MISSING_TTL_MS = H / 2;
 const MIN_RECORDS = 1000;
@@ -340,7 +341,7 @@ function indexer() {
 }
 
 // The daily job: download the feed once, build the index and store it. Without a key, or with a fresh index, it does nothing.
-// Once Wordfence answers 429, nothing calls the feed for a day: not the next scheduled run, its retries, or a manual run (#3808).
+// Once Wordfence answers 429, nothing calls the feed for 72 hours: not the next scheduled runs, their retries, or a manual run (#3808).
 async function refreshFeed(options) {
   const opts = options || {};
   const key = opts.key;
