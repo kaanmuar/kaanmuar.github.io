@@ -203,9 +203,9 @@ test('no code is minted before the gate opens, and an address keeps one code how
 	assert.ok(!JSON.stringify(sendRow).includes('ana@example.com'));
 });
 
-test('only people who ran a review get the mail: opt-outs, our own addresses, sweeps and failed runs are left out', () => {
+test('only people who ran a review and ticked the follow-up box get the mail: opt-outs, our own addresses, sweeps and failed runs are left out', () => {
 	const rows = [
-		{ email: 'Ana@Ana.dev', status: 'complete', lang: 'es', createdAt: '2026-10-01T00:00:00Z' },
+		{ email: 'Ana@Ana.dev', status: 'complete', lang: 'es', createdAt: '2026-10-01T00:00:00Z', followUp: true },
 		{
 			email: 'ana@ana.dev',
 			status: 'complete',
@@ -213,18 +213,20 @@ test('only people who ran a review get the mail: opt-outs, our own addresses, sw
 			createdAt: '2026-11-01T00:00:00Z',
 			report: { host: 'ana.dev' },
 		},
-		{ email: 'bo@shop.io', status: 'stopped', lang: 'de', createdAt: '2026-09-01T00:00:00Z' },
-		{ email: 'stop@shop.io', status: 'complete', createdAt: '2026-09-02T00:00:00Z' },
-		{ email: 'x@blocked.co', status: 'complete', createdAt: '2026-09-03T00:00:00Z' },
-		{ email: 'kaanmuar@gmail.com', status: 'complete' },
-		{ email: 'qa@carlosandmunoz.com', status: 'complete' },
-		{ email: 'demo@example.com', status: 'complete' },
-		{ email: 'jar@vis.io', status: 'complete', source: 'jarvis' },
-		{ email: 'sw@eep.io', status: 'complete', sweep: { outreach: true } },
-		{ email: 'fail@site.io', status: 'failed' },
-		{ email: 'test@site.io', status: 'complete', test: true },
-		{ email: 'done@site.io', status: 'complete' },
-		{ email: 'not-an-email', status: 'complete' },
+		{ email: 'bo@shop.io', status: 'stopped', lang: 'de', createdAt: '2026-09-01T00:00:00Z', followUp: true },
+		{ email: 'stop@shop.io', status: 'complete', createdAt: '2026-09-02T00:00:00Z', followUp: true },
+		{ email: 'x@blocked.co', status: 'complete', createdAt: '2026-09-03T00:00:00Z', followUp: true },
+		{ email: 'kaanmuar@gmail.com', status: 'complete', followUp: true },
+		{ email: 'qa@carlosandmunoz.com', status: 'complete', followUp: true },
+		{ email: 'demo@example.com', status: 'complete', followUp: true },
+		{ email: 'jar@vis.io', status: 'complete', source: 'jarvis', followUp: true },
+		{ email: 'sw@eep.io', status: 'complete', sweep: { outreach: true }, followUp: true },
+		{ email: 'fail@site.io', status: 'failed', followUp: true },
+		{ email: 'test@site.io', status: 'complete', test: true, followUp: true },
+		{ email: 'done@site.io', status: 'complete', followUp: true },
+		{ email: 'not-an-email', status: 'complete', followUp: true },
+		{ email: 'nobox@shop.io', status: 'complete', createdAt: '2026-10-05T00:00:00Z' },
+		{ email: 'nobox2@shop.io', status: 'complete', createdAt: '2026-10-06T00:00:00Z', followUp: false },
 	];
 	const stops = new Set(['stop@shop.io', '@blocked.co']);
 	const list = campaign.recipients(rows, stops, new Set([campaign.hashOf('done@site.io')]));

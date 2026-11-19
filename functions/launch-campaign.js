@@ -107,13 +107,18 @@ function optedOut(email, stops) {
 
 /**
  * The people to write to, from url_reviews rows: one per address, who ran a review that finished, not one of ours,
- * not opted out, not already sent (`sent` holds addresses or their hashOf). Each keeps the language and host of their latest review. Newest first.
+ * not opted out, not already sent (`sent` holds addresses or their hashOf), and who ticked the follow-up box on at
+ * least one run (followUp, #3820): the gate's authorization (Ley 1581 de 2012, artículo 9) names a follow-up note as a
+ * purpose only for that box, and qa-review-legal.html says so. Each keeps the language and host of their latest
+ * review. Newest first.
  */
 function recipients(rows, stops, sent) {
   const done = sent instanceof Set ? sent : new Set(sent || []);
   const byEmail = new Map();
+  const asked = new Set();
   (rows || []).forEach((row) => {
     const email = emailOf(row && row.email);
+    if (email && row.followUp === true) asked.add(email);
     if (!email || email === OWNER || OWN_DOMAINS.indexOf(domainOf(email)) !== -1) return;
     if (row.test === true || DONE.indexOf(row.status) === -1) return;
     if (NOT_A_REVIEWER.indexOf(String(row.source || "")) !== -1 || row.sweep) return;
@@ -122,7 +127,7 @@ function recipients(rows, stops, sent) {
     const prev = byEmail.get(email);
     if (!prev || prev.at < at) byEmail.set(email, { email, lang: String(row.lang || "en").slice(0, 2), host: String((row.report && row.report.host) || "").slice(0, 120), at });
   });
-  return Array.from(byEmail.values()).sort((a, b) => b.at - a.at);
+  return Array.from(byEmail.values()).filter((person) => asked.has(person.email)).sort((a, b) => b.at - a.at);
 }
 
 /** Today's batch: at most `limit` (MAX_PER_RUN) people, and the pause between two sends. */
