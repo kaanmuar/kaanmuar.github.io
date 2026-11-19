@@ -9,6 +9,7 @@ const vm = require("node:vm");
 const reviewMap = require("../../functions/url-review-map");
 const desk = require("../../functions/url-review-desk");
 const threats = require("../../functions/url-review-threats");
+const { inlineScripts } = require("../../scripts/build-csp-hashes");
 
 const ROOT = path.join(__dirname, "../..");
 const NOW = Date.parse("2026-11-19T18:00:00.000Z");
@@ -196,10 +197,10 @@ test("desk UI contains both Global and Ours map tabs and compiles valid inline J
   assert.match(desk.PAGE, /\/desk\/map\/data/);
   assert.match(desk.PAGE, /\/threats\/global/);
 
-  const scripts = [...desk.PAGE.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+  const scripts = inlineScripts(desk.PAGE);
   assert.ok(scripts.length >= 1);
-  scripts.forEach((m, idx) => {
-    const code = m[1].trim();
+  scripts.forEach((raw, idx) => {
+    const code = raw.trim();
     if (!code) return;
     assert.doesNotThrow(() => new vm.Script(code), "Invalid JS syntax in desk.PAGE script #" + idx);
   });
