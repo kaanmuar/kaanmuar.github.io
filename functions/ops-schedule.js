@@ -22,6 +22,7 @@ const JOBS = [
   { job: "diagnoseReviewFailures", cron: "0 6 * * *", gap: 26, what: "Probe why yesterday's failed reviews failed" },
   { job: "rerunReviewFailures", cron: "30 6 * * *", gap: 26, what: "Re-run failed reviews a fix now covers" },
   { job: "rescuePromisedReviews", cron: "*/15 * * * *", gap: 1, what: "Re-run reviews whose asker was promised the report by email (#3079): about 30 minutes after the failure, then at 4, 12, 24 and 40 hours (2 a tick), sending each finished report; at 48 hours without one, the apology mail with their code" },
+  { job: "callReminders", cron: "*/15 * * * *", gap: 1, what: "Reminder mail to people who booked a call (#3867): once about 24 hours ahead (only for a call booked more than 26 hours out) and once inside the last hour, in their language and the look of the call; a requested, transactional note, not outreach" },
   { job: "fileReviewFailureBugs", cron: "5 7 * * *", gap: 26, what: "Open a bug under #320 for each new failure cause" },
   { job: "emailDailySiteReport", cron: "15 7 * * *", gap: 26, what: "Daily site report" },
   { job: "emailDailyReviewReport", cron: "20 7 * * *", gap: 26, what: "Daily URL review report" },

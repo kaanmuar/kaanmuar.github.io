@@ -532,6 +532,7 @@ exports.submitGuardedForm = functions.runWith({ secrets: SECRETS.turnstile, maxI
 // Calls with Carlos (#1971). book.html reads the free slots and books one; Google mails the invite with the Meet
 // link. Jarvis's Connect Google Calendar (op calendar-connect) sends Carlos to Google, which comes back to /callback.
 const booking = require("./booking");
+const bookingMail = require("./booking-mail");
 const BOOKING_URL = "https://us-central1-carlosm-interactive-cv.cloudfunctions.net/booking";
 const BOOKING_REDIRECT = BOOKING_URL + "/callback";
 const BOOKING_STATE_MS = 10 * 60 * 1000;
@@ -598,6 +599,37 @@ function bookingIp(req) {
   return String(req.ip || String(req.get("x-forwarded-for") || "").split(",")[0]).trim().slice(0, 80);
 }
 
+// The visitor's branded mail for a booked call (#3867): kind "confirm", "24h" or "1h". Google's invite is separate.
+async function sendCallMail(kind, id, row) {
+  const from = prepareMail();
+  if (!from) return false;
+  const msg = bookingMail.message(kind, row, { meet: row.meet, icalUid: row.icalUid, id }, from);
+  await mailRetry.send(sgMail, getFirestore(), msg);
+  return true;
+}
+
+// Reminder mail 24 hours and 1 hour before a call; each goes once.
+async function sendCallReminders(now) {
+  const db = getFirestore();
+  const snap = await db.collection("bookings")
+    .where("start", ">", new Date(now).toISOString())
+    .where("start", "<=", new Date(now + 25 * 60 * 60 * 1000).toISOString())
+    .get();
+  const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+  const due = bookingMail.remindersDue(rows, now);
+  let sent = 0;
+  for (const item of due) {
+    const row = rows.find((r) => r.id === item.id);
+    const field = item.kind === "1h" ? "remind1" : "remind24";
+    // Mark first: a failed send is not retried, so nobody gets the same reminder twice.
+    await db.collection("bookings").doc(item.id).update({ [field]: new Date(now).toISOString() });
+    try {
+      if (await sendCallMail(item.kind, item.id, row)) sent += 1;
+    } catch (error) { console.error("Call reminder failed:", item.id, error); }
+  }
+  return { due: due.length, sent };
+}
+
 async function bookCall(body, req) {
   const db = getFirestore();
   const now = Date.now();
@@ -626,13 +658,19 @@ async function bookCall(body, req) {
   await ref.set(row);
   const label = booking.LABELS.en[b.type];
   const when = new Date(start).toLocaleString("en-US", { timeZone: booking.TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  // The owner mail wears the look of the call's site (#3867): URL Review Fusion for the review calls, the CV card for the rest.
+  const eyebrow = (bookingMail.lookOf(b.type) === "review" ? "QA-lab URL Review" : "Carlos Muñoz CV") + " · Call booked";
   await Promise.all([
-    sendOwnerEmail({ subject: "Call booked: " + b.name + ", " + when, intro: label + " with " + b.name + ". Google sent the invite.", rows: booking.ownerRows(row), body: b.note, respondUrl: made.htmlLink, buttonLabel: "Open in Google Calendar" })
+    sendOwnerEmail({ subject: "Call booked: " + b.name + ", " + when, intro: label + " with " + b.name + ". Google sent the invite, and a branded confirmation went to " + b.email + ".", rows: booking.ownerRows(row), body: b.note, respondUrl: made.htmlLink, buttonLabel: "Open in Google Calendar", eyebrow })
       .catch((error) => console.error("Booking owner mail failed:", error)),
+    sendCallMail("confirm", ref.id, row)
+      .catch((error) => console.error("Booking confirmation mail failed:", error)),
     pushOwner(jarvisMailPush.callMessage(ref.id, Object.assign({ label }, row), when))
   ]);
   return [200, { ok: true, start: b.start, end: b.end, meet: made.meet }];
 }
+
+exports.callReminders = scheduled(functions.runWith({ timeoutSeconds: 120, memory: "256MB", secrets: SECRETS.booking }), "callReminders", () => sendCallReminders(Date.now()));
 
 exports.booking = functions.runWith({ maxInstances: 5, secrets: SECRETS.booking }).https.onRequest(async (req, res) => {
   if (req.method === "GET" && /\/callback\/?$/.test(req.path)) {
