@@ -36,7 +36,7 @@ const targeted = require("./url-review-targeted");
 const verifiedSpec = () => require("./url-review-verified-spec");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-11-04b";
+const TERMS_VERSION = "2026-11-19a";
 // A page loaded before a terms change still sends the version before it.
 const PREVIOUS_TERMS_VERSION = "2026-11-04";
 const PRICE_PER_FRAMEWORK = 19;
@@ -516,6 +516,7 @@ function validateIntake(body) {
       lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
       pageLang: normalizePageLang(src.pageLang),
       section: src.section === true,
+      targeted: src.targeted !== false,
       followUp: src.followUp === true,
       unlisted: src.unlisted === true,
       compareWith,
@@ -3958,6 +3959,7 @@ async function reviewTarget(rawUrl, hooks) {
   extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
   extras.hackSigns = await withTimeout(hackPromise, 5000, null);
   if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
+  if (!stopped && !softPreview && controls.targeted === false) note("Attack and exploit source checks were switched off for this run.");
   if (!stopped && !softPreview && controls.targeted !== false) {
     const assessedLibs = [].concat.apply([], pages.map((page) => (page.inspect && page.inspect.libraries) || [])).concat((browser && browser.ok && browser.libraries) || []);
     const runTargeted = typeof controls.targeted === "function" ? controls.targeted : targeted.check;
@@ -4356,6 +4358,7 @@ function intakeRecord(value, report, meta) {
     lang: value.lang || "",
     pageLang: value.pageLang || "",
     section: value.section === true,
+    targeted: value.targeted !== false,
     followUp: value.followUp === true,
     unlisted: softPreview ? true : value.unlisted === true,
     compareWith: value.compareWith || "",

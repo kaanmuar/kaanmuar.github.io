@@ -6,7 +6,7 @@
 	const SAMPLE_URL = 'assets/qa-review-sample.json';
 	// scripts/build-sample-langs.js writes assets/qa-review-sample.<lang>.json for each of these.
 	const SAMPLE_LANGS = ['es', 'pt', 'de', 'fr', 'it'];
-	const TERMS_VERSION = '2026-11-04b';
+	const TERMS_VERSION = '2026-11-19a';
 	const PAGE_CHOICES = [20, 40, 60, 80, 100];
 	const DEPTH_CHOICES = [2, 3, 4, 5];
 	const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
@@ -756,6 +756,8 @@
 			sectionTouched = true;
 			syncSection();
 		}
+		if (target && target.id === 'cyber-sources' && window.SiteAnalytics)
+			SiteAnalytics.trackEvent('qa_review_cyber_sources', 'URL Review', target.checked ? 'on' : 'off');
 		if (target && (target.name === 'fw' || target.name === 'tool')) clearBundleIfMismatch();
 		if (!target || !window.SiteAnalytics) return;
 		if (target.name === 'fw')
@@ -7100,6 +7102,7 @@
 				depth: compare ? compare.depth : selectedDepth(),
 				pageLang: selectedPageLang(),
 				section: document.getElementById('stay-section').checked === true,
+				targeted: (document.getElementById('cyber-sources') || { checked: true }).checked !== false,
 				deviceId: deviceId(),
 				runId: runId,
 				openedAt: openedAt,
