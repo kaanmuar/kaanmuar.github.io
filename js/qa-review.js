@@ -1254,7 +1254,8 @@
 		item.appendChild(document.createTextNode(shown));
 		list.appendChild(item);
 		if (following) list.scrollTop = list.scrollHeight;
-		if (window.ReviewProgress && !host) ReviewProgress.line(text);
+		// Compare runs go in parallel, so their host-tagged lines would tangle one meter; a bulk batch runs one at a time.
+		if (window.ReviewProgress && (!host || batchPool)) ReviewProgress.line(text);
 	}
 
 	function seenBefore(id) {
@@ -3732,6 +3733,13 @@
 			return;
 		}
 		setStatus(batchCopy('starting'), false);
+		// Show state at once (#3932): the panel, the meter, and a held button, before the server answers.
+		activeRun = 'batch';
+		reviewBtn.disabled = true;
+		bc.paintStarting(parsed.urls);
+		document.getElementById('run-log').innerHTML = '';
+		if (window.ReviewProgress) ReviewProgress.start({ host: parsed.urls[0].host, pages: selectedPages() });
+		appendLog(batchCopy('starting'));
 		let batch;
 		try {
 			const started = await batchPost('/account/batch/start', {
@@ -3749,6 +3757,11 @@
 			batch = started.batch;
 		} catch (error) {
 			const body = error.body || {};
+			activeRun = '';
+			reviewBtn.disabled = false;
+			if (window.ReviewProgress) ReviewProgress.reset();
+			const panel = document.getElementById('batch-panel');
+			if (panel) panel.hidden = true;
 			setStatus(body.error || error.message || batchCopy('needCreditsNone'), true);
 			return;
 		}
@@ -3767,9 +3780,8 @@
 		const stopBatchBtn = document.getElementById('batch-stop');
 		if (stopBatchBtn) stopBatchBtn.hidden = false;
 		const runLog = document.getElementById('run-log');
-		runLog.innerHTML = '';
 		runLog.classList.add('is-live');
-		if (window.ReviewProgress) ReviewProgress.reset();
+		// The meter keeps running from startBulkBatch and is restarted per row in runBulkRow.
 		if (bc) bc.paintPanel(batch);
 		try {
 			for (let index = 0; index < batch.rows.length; index += 1) {
@@ -3780,12 +3792,14 @@
 					await runBulkRow(pool, index);
 				} catch (error) {
 					if (error.body && error.body.signIn) {
+						if (window.ReviewProgress) ReviewProgress.reset();
 						ReviewAuth.expire(error.message);
 						ReviewAuth.focus();
 						setStatus(error.message, true);
 						break;
 					}
 					if (error.paymentRequired) {
+						if (window.ReviewProgress) ReviewProgress.reset();
 						setStatus(batchCopy('needCreditsNone'), true);
 						break;
 					}
@@ -3815,6 +3829,15 @@
 			const runId = hexId();
 			activeRun = runId;
 			row.state = 'running';
+			// Paint and start the meter before the server round-trip, so the row never looks idle (#3932).
+			if (window.QAReviewBatch) QAReviewBatch.paintPanel(pool.batch);
+			const progressText =
+				tryN > 1
+					? batchCopy('retryingHost', { host: row.host, n: tryN, max: BATCH_ROW_TRIES })
+					: batchCopy('running', { n: index + 1, total: batch.rows.length, host: row.host });
+			setStatus(progressText, false);
+			if (window.ReviewProgress) ReviewProgress.start({ host: row.host, pages: batch.pages || selectedPages() });
+			appendLog(progressText);
 			try {
 				await batchPost('/account/batch/row', {
 					id: batch.id,
@@ -3825,13 +3848,6 @@
 			} catch (error) {
 				/* paint continues; server catches up on done */
 			}
-			if (window.QAReviewBatch) QAReviewBatch.paintPanel(pool.batch);
-			setStatus(
-				tryN > 1
-					? batchCopy('retryingHost', { host: row.host, n: tryN, max: BATCH_ROW_TRIES })
-					: batchCopy('running', { n: index + 1, total: batch.rows.length, host: row.host }),
-				false
-			);
 			if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_start', 'URL Review', 'batch');
 			fetch(endpoint() + '/place', {
 				method: 'POST',
@@ -3866,6 +3882,8 @@
 				};
 				const updated = await batchPost('/account/batch/row', patch);
 				pool.batch = updated;
+				if (window.ReviewProgress) ReviewProgress.finish(stopped || pool.stopping ? 'stopped' : 'ready');
+				if (window.QAReviewBatch) QAReviewBatch.paintPanel(updated);
 				if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_done', 'URL Review', payload.report.host);
 				if (!pool.stopping && index === 0) {
 					layer = 'All';
@@ -3888,6 +3906,7 @@
 			'$1.'
 		);
 		const rescue = !!(error.body && error.body.code === 'inconclusive');
+		if (window.ReviewProgress) ReviewProgress.fail();
 		try {
 			pool.batch = await batchPost('/account/batch/row', {
 				id: batch.id,
@@ -3937,7 +3956,10 @@
 				QAReviewBatch.setMode('many');
 				QAReviewBatch.paintPanel(batch);
 			}
-			if (batch.status === 'running') await runBulkBatch(batch);
+			if (batch.status === 'running') {
+				document.getElementById('run-log').innerHTML = '';
+				await runBulkBatch(batch);
+			}
 		} catch (error) {
 			setStatus(error.message || batchCopy('fixList'), true);
 		}
