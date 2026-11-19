@@ -1,0 +1,572 @@
+{
+	"AgriciDaniel/claude-seo": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"Manavarya09/design-extract": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"saleem-hadad/larecipe": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"younatics/MotionBook": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"YunYouJun/valaxy": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"yaojingang/GEOInflow": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"seo-skills/seo-audit-skill": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"ngocanhnckh/renderlint": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"invertase/docs.page": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "Apache-2.0"
+	},
+	"beihaili/Get-Started-with-Web3": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"umutxyp/Seo-Promt-Master": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"yaojingang/GEORank": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "Apache-2.0"
+	},
+	"dequelabs/axe-core-maven-html": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MPL-2.0"
+	},
+	"test-zeus-ai/testzeus-hercules": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "AGPL-3.0"
+	},
+	"fabiodalez-dev/FAZ-Cookie-Manager": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "GPL-3.0"
+	},
+	"thedaviddias/llms-txt-hub": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "NOASSERTION"
+	},
+	"happo/happo": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "none"
+	},
+	"rubenmarcus/aeo.js": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "none"
+	},
+	"izak-fisher/generative-engine-optimization-tools": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "NOASSERTION"
+	},
+	"psbagga17/E-GEO": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "NOASSERTION"
+	},
+	"praetorian-inc/titus": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"nmatt0/mithril": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "MIT"
+	},
+	"dmarcguardhq/parse-dmarc": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"anchore/grant": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"Lab700xOrg/aisbom": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"dennisdoomen/packageguard": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "MIT"
+	},
+	"padok-team/git-secret-scanner": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"offseq/threat-finder": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"oke-py/npm-audit-action": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "MIT"
+	},
+	"getprovenant/provenant": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"github/actions-lockfile": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "MIT"
+	},
+	"dmarc-analyzer-net/DmarcAnalyzerApp": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "Apache-2.0"
+	},
+	"KiefStudioMA/ks-aur-scanner": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "GPL-3.0"
+	},
+	"antedebaas/Viesti-Reports": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "AGPL-3.0"
+	},
+	"crenoxhq/crenox": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "AGPL-3.0"
+	},
+	"l3montree-dev/devguard": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "NOASSERTION"
+	},
+	"squid-protocol/gitgalaxy": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "NOASSERTION"
+	},
+	"Lercas/prowl": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "NOASSERTION"
+	},
+	"nemo-crypto/pay": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "none"
+	},
+	"ByJotaro/Github-API-scan": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "NOASSERTION"
+	},
+	"deckerst/aves": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "BSD-3-Clause"
+	},
+	"patriciogonzalezvivo/glslViewer": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "BSD-3-Clause"
+	},
+	"nexu-io/html-video": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "Apache-2.0"
+	},
+	"dmtrKovalenko/fframes": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"gre/gl-react": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"spite/THREE.MeshLine": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"fand/vfx-js": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"rootscripts/riff": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"opencoredev/social-sdk": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"MarshalX/atproto": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"0xS4N4TG/kinetograph": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "Apache-2.0"
+	},
+	"gokayfem/shader-skills": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"c2pa-org/specifications": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "CC-BY-4.0"
+	},
+	"c2pa-org/conformance-public": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "CC-BY-4.0"
+	},
+	"pugson/telegram-twitter-url-expand-bot": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "GPL-3.0"
+	},
+	"5okin/MercuryBot": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "GPL-3.0"
+	},
+	"contentauth/c2pa-rs": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "NOASSERTION"
+	},
+	"Kyrela/FixTweetBot": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "NOASSERTION"
+	},
+	"joschi/blueskyfeedbot": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "none"
+	},
+	"imMamdouhaboammar/motion-graphics-skills": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "NOASSERTION"
+	},
+	"sammorrisdesign/interactive-feed": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "none"
+	},
+	"0xMarcio/pocindex": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Bert-JanP/Open-Source-Threat-Intel-Feeds": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "BSD-3-Clause"
+	},
+	"safedep/pmg": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"CriticalPathSecurity/Zeek-Intelligence-Feeds": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"vulnersCom/api": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"djkurlander/knock-knock": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Fazmin/cve-intel": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"Patrowl/PatrowlHearsData": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"haveibeensquatted/twistrs": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"CriticalPathSecurity/Public-Intelligence-Feeds": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"okanyildiz/WindowsSecurityAudit": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Quad9DNS/threat-intel-api": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"atenreiro/opensquat": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "GPL-3.0"
+	},
+	"ChiefGyk3D/typo-sniper": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "AGPL-3.0"
+	},
+	"ARPSyndicate/cve-scores": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "none"
+	},
+	"empiricalsec/epss_scores": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "none"
+	},
+	"ai-search-guru/getcito-worlds-first-open-source-aio-aeo-or-geo-tool": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"mverab/eGEOagents": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"nuxt-content/nuxt-llms": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"e2e-test-quest/uuv": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"alexshpunt/pi-agent-computer-use": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"guidepup/guidepup-playwright": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"govsoftusa/go-for-launch": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"idan-rubin/browserclaw": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"mastepanoski/claude-skills": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"webcrafts-studio/lens-for-laravel": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"UnderleveledBuilder/awesome-seo-geo-skills": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "CC0-1.0"
+	},
+	"natdexterra/work-with-design-systems": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "MIT"
+	},
+	"nirholas/w3ag": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "NOASSERTION"
+	},
+	"A11y-Pulse/audits": {
+		"first": "2026-11-19",
+		"corner": "B",
+		"license": "NOASSERTION"
+	},
+	"liufeng1976/douyin-taobao-cs": {
+		"first": "2026-11-19",
+		"corner": "C",
+		"license": "NOASSERTION"
+	},
+	"sockmaster27/svader": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"UstymUkhman/vite-plugin-glsl": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"hikaku-io/hikaku-extension": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "Apache-2.0"
+	},
+	"JimmyDaddy/react-native-image-marker": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"myConsciousness/atproto.dart": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "BSD-3-Clause"
+	},
+	"collectioneur/readme-aura": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"BintzGavin/helios": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "Apache-2.0"
+	},
+	"frankxai/awesome-motion-design-agent-skills": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "CC0-1.0"
+	},
+	"contentauth/c2pa-python": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "Apache-2.0"
+	},
+	"zoedsoupe/proto_rune": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "MIT"
+	},
+	"sneezeparty/soupy": {
+		"first": "2026-11-19",
+		"corner": "D",
+		"license": "none"
+	},
+	"jgamblin/CVElk": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"RogoLabs/VulnRadar": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"spydisec/spydithreatintel": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Ethan-Andrews/ThreatIntel-Aggregator": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"elementsinteractive/twyn": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"w0h1v/mcp-dnstwist": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Garyson26/Wiestell_threatIntel_platform": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"cybersecify/OpenEASD": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"brennhill/sloppy-joe": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "Apache-2.0"
+	},
+	"rbonestell/vite-plugin-sri-gen": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	},
+	"Paskod121/relais": {
+		"first": "2026-11-19",
+		"corner": "A",
+		"license": "MIT"
+	}
+}
