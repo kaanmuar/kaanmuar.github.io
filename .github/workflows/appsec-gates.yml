@@ -1,0 +1,104 @@
+# AppSec gates (#3833): zizmor + harden-runner, OSV-Scanner, recheck ReDoS on functions/ and workers/.
+# Warn-only at first (continue-on-error); not in the main branch ruleset until findings are triaged.
+# eslint-plugin-security is skipped: Biome owns JS lint/format here (#3602); a second ESLint stack would duplicate it.
+
+name: AppSec gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: appsec-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+    - name: Harden the runner (audit)
+      uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      with:
+        egress-policy: audit
+    - name: Check out repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Audit workflow files
+      uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+      with:
+        inputs: .github/workflows
+        collect: workflows
+        min-severity: high
+
+  osv-scanner:
+    name: osv-scanner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+    - name: Harden the runner (audit)
+      uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      with:
+        egress-policy: audit
+    - name: Check out repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Install OSV-Scanner
+      run: |
+        set -euo pipefail
+        curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.7.1/osv-scanner_linux_amd64 \
+          -o /usr/local/bin/osv-scanner
+        chmod +x /usr/local/bin/osv-scanner
+        osv-scanner --version
+    - name: Scan lockfiles and Python requirements
+      run: |
+        set -euo pipefail
+        args=()
+        for lock in package-lock.json functions/package-lock.json; do
+          args+=( -L "$lock" )
+        done
+        for lock in workers/*/package-lock.json packages/*/package-lock.json qalabreview/package-lock.json reddit/live-reports/package-lock.json; do
+          [ -f "$lock" ] && args+=( -L "$lock" )
+        done
+        args+=( -r requirements-robot.txt )
+        osv-scanner scan "${args[@]}"
+    - name: Note on Android
+      run: |
+        if ! find android -name 'package-lock.json' -o -name 'gradle.lockfile' 2>/dev/null | grep -q .; then
+          echo "::notice::No Node or Gradle lockfile under android/; OSV skipped Gradle BOM until a lockfile exists (#3833)."
+        fi
+
+  recheck:
+    name: recheck-redos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+    - name: Harden the runner (audit)
+      uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      with:
+        egress-policy: audit
+    - name: Check out repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Set up Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '22'
+    - name: ReDoS scan (functions and workers)
+      run: |
+        set -euo pipefail
+        npm install --no-save recheck@4.6.2
+        node scripts/appsec-redos.js functions workers

@@ -1,0 +1,36 @@
+# #3833 baseline: existing workflow issues we are not pinning or rewriting in this ticket.
+# The zizmor job still runs with min-severity high; these rows quiet low-confidence noise only.
+
+rules:
+  artipacked:
+    ignore:
+      # Deploy-key and bot pushes need git credentials for the same job (#3833 baseline).
+      - sweep-seeds.yml
+      - sweep-roundup.yml
+      - domain-index.yml
+      - preflight-index.yml
+      - creative-intel.yml
+      - tool-scout.yml
+      - pagespeed-daily.yml
+      - fix-review-failures.yml
+  template-injection:
+    ignore:
+      # Step outputs in commit messages; low confidence, no fork PR write path (#3833 baseline).
+      - sweep-roundup.yml
+      - sweep-seeds.yml
+      - creative-intel.yml
+      - domain-index.yml
+  unpinned-uses:
+    ignore:
+      # Pin sweep tracked separately; Pages workflow uses @v tags today (#3833 baseline).
+      - pages.yml
+      - preflight-index.yml
+  dangerous-triggers:
+    ignore:
+      # Intentional cross-workflow hooks; harden in a follow-up (#3833 baseline).
+      - reddit-live.yml
+      - studio-render.yml
+  excessive-permissions:
+    ignore:
+      # GitHub Pages deployment requires pages: and id-token: at workflow level (#3833 baseline).
+      - pages.yml
