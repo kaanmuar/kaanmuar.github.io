@@ -372,6 +372,7 @@ const STYLE = `
     .alert b, .live b { font-family: Arial, sans-serif; font-size: 14px; }
     .meta { color: var(--muted); font-family: Arial, sans-serif; font-size: 12px; }
     .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tools[hidden] { display: none; }
     input, select { font: 14px Arial, sans-serif; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
     input { min-width: min(320px, 100%); }
     .table-wrap { overflow-x: auto; }
@@ -409,6 +410,20 @@ const STYLE = `
     .threat-lvl[data-level="high"] { background: #ffe8d6; color: #8a3c00; }
     .threat-lvl[data-level="watch"] { background: #fff4d6; color: #7a5200; }
     .threat-lvl[data-level="info"] { background: #e6eef2; color: #36505c; }
+    .threat-lvl[data-level="clean"] { background: #e3f7ea; color: #196832; }
+    .desk-map-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; }
+    .desk-map-tabs button[aria-selected="true"] { background: var(--night); color: #7ef6fb; border: 1px solid var(--night); }
+    .desk-map-tabs button[aria-selected="false"] { background: transparent; color: var(--teal); border: 1px solid var(--line); }
+    .desk-map-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; align-items: start; }
+    @media (max-width: 860px) { .desk-map-grid { grid-template-columns: 1fr; } }
+    .desk-map-stage { background: var(--night); border-radius: 12px; padding: 10px; border: 1px solid var(--line); }
+    .desk-map-svg { display: block; width: 100%; height: auto; }
+    .desk-map-cc { stroke: rgba(7, 17, 22, .85); stroke-width: .7; cursor: pointer; }
+    .desk-map-cc:hover, .desk-map-cc.is-on { stroke: #7ef6fb; stroke-width: 1.8; }
+    .desk-map-tip { margin-top: 8px; font: 13px Arial, sans-serif; color: #cbe0e4; }
+    .desk-map-panel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--paper); max-height: 430px; overflow: auto; }
+    .desk-map-site { padding: 8px 0; border-top: 1px solid var(--line); }
+    .desk-map-site:first-of-type { border-top: 0; }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
 `;
 
@@ -729,6 +744,51 @@ const PAGE = `<!DOCTYPE html>
       <p class="empty">A note stays here until the person checks the box. Nothing in this list is mailed.</p>
       <div id="notes"></div>
     </section>
+    <section id="desk-map-block">
+      <h2>Cyber attacks map</h2>
+      <p class="empty">Two tabs: global live/historical macro telemetry (GDELT, CISA KEV, DROP — no customer sites) and our reviewed sites grouped by DB-IP hosting country with findings (internal only).</p>
+      <div class="desk-map-tabs" role="tablist" aria-label="Cyber attacks map view">
+        <button id="map-tab-global" type="button" role="tab" aria-selected="true" aria-controls="desk-map-panel">Global live &amp; historical</button>
+        <button id="map-tab-ours" type="button" role="tab" aria-selected="false" aria-controls="desk-map-panel">Our reviewed sites</button>
+      </div>
+      <div class="stats" id="desk-map-stats"></div>
+      <div class="tools" id="desk-map-global-tools">
+        <select id="desk-map-range" aria-label="Global timeframe">
+          <option value="live">Live (15m slice)</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
+        </select>
+        <span id="desk-map-global-meta" class="meta"></span>
+      </div>
+      <div class="tools" id="desk-map-ours-tools" hidden>
+        <select id="desk-map-window" aria-label="Our sites time window">
+          <option value="">Every window</option>
+          <option value="live">Live (24h)</option>
+          <option value="recent">Recent (90d)</option>
+          <option value="historical">Historical (&gt;90d)</option>
+        </select>
+        <select id="desk-map-level" aria-label="Our sites max level">
+          <option value="">Every level</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="watch">Watch</option>
+          <option value="info">Info</option>
+        </select>
+        <select id="desk-map-kind" aria-label="Our sites threat kind">
+          <option value="">Every kind</option>
+        </select>
+        <input id="desk-map-q" type="search" placeholder="Host, IP, country, ASN, or evidence" aria-label="Filter reviewed sites map">
+      </div>
+      <div id="desk-map-panel" class="desk-map-grid">
+        <div class="desk-map-stage">
+          <div id="desk-map-svg-wrap"><p class="meta">Loading world projection…</p></div>
+          <div id="desk-map-tip" class="desk-map-tip">Click any country to inspect.</div>
+        </div>
+        <div id="desk-map-detail" class="desk-map-panel"></div>
+      </div>
+      <p id="desk-map-attr" class="meta">Attribution: IP Geolocation by DB-IP (https://db-ip.com) · GDELT Project (https://www.gdeltproject.org/) · CISA KEV (CC0 1.0)</p>
+    </section>
     <section id="threats-block">
       <h2>Internal threat list</h2>
       <p class="empty">Operator-only list of every attack, exploit, compromise, leak, lookalike, or blocklist finding extracted per review. Never shown on Live Reports or public pages (public_ok defaults to false).</p>
@@ -816,6 +876,21 @@ const PAGE = `<!DOCTYPE html>
     const threatKindEl = document.getElementById("threat-kind");
     const threatDelistEl = document.getElementById("threat-delist");
     const threatBackfillBtn = document.getElementById("threat-backfill");
+    const mapTabGlobalBtn = document.getElementById("map-tab-global");
+    const mapTabOursBtn = document.getElementById("map-tab-ours");
+    const mapStatsEl = document.getElementById("desk-map-stats");
+    const mapGlobalToolsEl = document.getElementById("desk-map-global-tools");
+    const mapOursToolsEl = document.getElementById("desk-map-ours-tools");
+    const mapRangeEl = document.getElementById("desk-map-range");
+    const mapGlobalMetaEl = document.getElementById("desk-map-global-meta");
+    const mapWindowEl = document.getElementById("desk-map-window");
+    const mapLevelEl = document.getElementById("desk-map-level");
+    const mapKindEl = document.getElementById("desk-map-kind");
+    const mapQEl = document.getElementById("desk-map-q");
+    const mapSvgWrapEl = document.getElementById("desk-map-svg-wrap");
+    const mapTipEl = document.getElementById("desk-map-tip");
+    const mapDetailEl = document.getElementById("desk-map-detail");
+    const mapAttrEl = document.getElementById("desk-map-attr");
     const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
     const PROMISE_STATES = ${JSON.stringify(reviewPromise.STATE_LABELS)};
     const THREAT_KINDS = ${JSON.stringify(threats.KINDS)};
@@ -824,7 +899,16 @@ const PAGE = `<!DOCTYPE html>
     let threatsData = { summary: {}, items: [] };
     let selectedThreat = "";
     let lastThreatsAt = 0;
-    THREAT_KINDS.forEach((kind) => threatKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind })));
+    let mapMode = "global";
+    let mapWorld = null;
+    let mapGlobalData = null;
+    let mapOursData = null;
+    let mapSelectedCc = "";
+    let lastMapAt = 0;
+    THREAT_KINDS.forEach((kind) => {
+      threatKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
+      mapKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
+    });
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -1371,6 +1455,7 @@ const PAGE = `<!DOCTYPE html>
       data = body;
       render();
       if (!lastThreatsAt || Date.now() - lastThreatsAt > 30000) loadThreats();
+      if (!lastMapAt || Date.now() - lastMapAt > 60000) loadDeskMaps();
     }
 
     function renderThreats() {
@@ -1503,11 +1588,214 @@ const PAGE = `<!DOCTYPE html>
       threatsData = body;
       renderThreats();
     }
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const MAP_NAMES = typeof Intl !== "undefined" && Intl.DisplayNames ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+    function mapCountryName(cc) {
+      if (!cc) return "Unknown";
+      try { return (MAP_NAMES && MAP_NAMES.of(cc)) || cc; } catch (error) { return cc; }
+    }
+    function mapLevelColor(level) {
+      if (level === "critical") return "#e05252";
+      if (level === "high") return "#eb8b42";
+      if (level === "watch") return "#e2c48a";
+      if (level === "info") return "#4db3bb";
+      if (level === "clean") return "#4ea86d";
+      return "#16323b";
+    }
+    function mapGlobalColor(count, maxCount) {
+      if (!count || !maxCount) return "#16323b";
+      const t = Math.sqrt(Math.min(1, count / maxCount));
+      if (t < 0.5) return "rgb(" + Math.round(28 + t * 2 * 49) + "," + Math.round(68 + t * 2 * 111) + "," + Math.round(78 + t * 2 * 109) + ")";
+      return "rgb(" + Math.round(77 + (t - 0.5) * 2 * 166) + "," + Math.round(179 - (t - 0.5) * 2 * 25) + "," + Math.round(187 - (t - 0.5) * 2 * 48) + ")";
+    }
+    async function ensureWorld() {
+      if (mapWorld) return mapWorld;
+      const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+      const url = local ? deskBase() + "/desk/world.json" : "https://carlosandmunoz.com/assets/jarvis/world.json";
+      const res = await fetch(url).catch(() => null);
+      if (res && res.ok) mapWorld = await res.json();
+      return mapWorld;
+    }
+    function renderDeskMap() {
+      const isGlobal = mapMode === "global";
+      mapTabGlobalBtn.setAttribute("aria-selected", isGlobal ? "true" : "false");
+      mapTabOursBtn.setAttribute("aria-selected", isGlobal ? "false" : "true");
+      mapGlobalToolsEl.hidden = !isGlobal;
+      mapOursToolsEl.hidden = isGlobal;
+
+      const byCc = {};
+      let maxCount = 0;
+      const chips = [];
+      if (isGlobal) {
+        const g = mapGlobalData || {};
+        (g.countries || []).forEach((c) => { byCc[c.cc] = c; if (c.count > maxCount) maxCount = c.count; });
+        chips.push(["Mentions", g.totalMentions || 0], ["Countries", g.countryCount || 0], ["CISA KEV", (g.kevSummary && g.kevSummary.count) || 0], ["DROP ranges", (g.dropSummary && g.dropSummary.v4Ranges) || 0]);
+        mapGlobalMetaEl.textContent = (g.updatedAt ? "Updated " + when(g.updatedAt) : "Live feed ready") + (g.slice ? " · slice " + g.slice : "");
+        mapAttrEl.textContent = "Sources: " + ((g.attributions && g.attributions.join(" · ")) || "GDELT Project · CISA KEV") + " · Context only (no reviewed sites).";
+      } else {
+        const o = mapOursData || {};
+        const s = o.summary || {};
+        (o.countries || []).forEach((c) => { byCc[c.cc] = c; });
+        chips.push(["Countries", s.totalCountries || 0], ["Reviewed sites", s.totalSites || 0], ["With findings", s.withFindings || 0], ["Clean sites", s.cleanSites || 0], ["Findings", s.totalFindings || 0]);
+        mapAttrEl.textContent = "Hosting geolocation: " + (o.attribution || "IP Geolocation by DB-IP (https://db-ip.com)") + " · Operator view only.";
+      }
+      mapStatsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        mapStatsEl.appendChild(el);
+      });
+
+      if (mapWorld) {
+        const svg = document.createElementNS(SVG_NS, "svg");
+        svg.setAttribute("class", "desk-map-svg");
+        svg.setAttribute("viewBox", "0 0 " + mapWorld.w + " " + mapWorld.h);
+        svg.setAttribute("role", "group");
+        svg.setAttribute("aria-label", isGlobal ? "Global cyber attacks map" : "Reviewed sites by hosting country map");
+        const addShape = (cc, isDot) => {
+          const row = byCc[cc];
+          const label = isGlobal
+            ? mapCountryName(cc) + (row ? ": " + row.count + " mentions" : ": 0 mentions")
+            : mapCountryName(cc) + (row ? ": " + row.siteCount + " sites (" + row.findingsCount + " findings, max " + row.topLevel + ")" : ": no reviewed sites");
+          const shape = document.createElementNS(SVG_NS, isDot ? "circle" : "path");
+          if (isDot) {
+            const pt = mapWorld.dots[cc];
+            shape.setAttribute("cx", String(pt[0]));
+            shape.setAttribute("cy", String(pt[1]));
+            shape.setAttribute("r", "4.2");
+          } else {
+            shape.setAttribute("d", mapWorld.shapes[cc]);
+          }
+          shape.setAttribute("class", "desk-map-cc" + (mapSelectedCc === cc ? " is-on" : ""));
+          shape.setAttribute("data-cc", cc);
+          shape.setAttribute("fill", isGlobal ? mapGlobalColor(row ? row.count : 0, maxCount) : (row ? mapLevelColor(row.topLevel) : "#16323b"));
+          shape.setAttribute("tabindex", "0");
+          shape.setAttribute("role", "button");
+          shape.setAttribute("aria-label", label);
+          const title = document.createElementNS(SVG_NS, "title");
+          title.textContent = label;
+          shape.appendChild(title);
+          shape.addEventListener("mouseenter", () => { mapTipEl.textContent = label; });
+          shape.addEventListener("click", () => { mapSelectedCc = mapSelectedCc === cc ? "" : cc; renderDeskMap(); });
+          shape.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); mapSelectedCc = mapSelectedCc === cc ? "" : cc; renderDeskMap(); } });
+          svg.appendChild(shape);
+        };
+        Object.keys(mapWorld.shapes || {}).forEach((cc) => addShape(cc, false));
+        Object.keys(mapWorld.dots || {}).filter((cc) => !mapWorld.shapes[cc] && byCc[cc]).forEach((cc) => addShape(cc, true));
+        mapSvgWrapEl.replaceChildren(svg);
+      }
+
+      mapDetailEl.replaceChildren();
+      if (isGlobal) {
+        const g = mapGlobalData || {};
+        const head = node("b", mapSelectedCc ? mapCountryName(mapSelectedCc) + " (" + mapSelectedCc + ")" : "Top cited countries (" + (g.range || "live") + ")");
+        mapDetailEl.appendChild(head);
+        const list = document.createElement("ul");
+        if (mapSelectedCc) {
+          const evs = (g.events || []).filter((e) => Array.isArray(e.countries) && e.countries.indexOf(mapSelectedCc) !== -1);
+          evs.slice(0, 12).forEach((ev) => {
+            const li = document.createElement("li");
+            const a = Object.assign(document.createElement("a"), { href: ev.url, target: "_blank", rel: "noopener noreferrer", textContent: (ev.source || ev.host) + " · " + ev.url.replace(/^https?:\\/\\//i, "") });
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+          if (!evs.length) list.appendChild(node("li", "No headlines stored for " + mapCountryName(mapSelectedCc) + " in this snapshot."));
+        } else {
+          (g.countries || []).slice(0, 12).forEach((c) => {
+            const li = document.createElement("li");
+            const btn = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: mapCountryName(c.cc) + " (" + c.cc + ") · " + c.count });
+            btn.style.marginTop = "4px";
+            btn.addEventListener("click", () => { mapSelectedCc = c.cc; renderDeskMap(); });
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+          if (!(g.countries || []).length) list.appendChild(node("li", "No global mentions loaded yet."));
+        }
+        mapDetailEl.appendChild(list);
+      } else {
+        const o = mapOursData || {};
+        const picked = mapSelectedCc ? byCc[mapSelectedCc] : null;
+        if (picked) {
+          const top = document.createElement("div");
+          top.appendChild(node("b", mapCountryName(picked.cc) + " (" + picked.cc + ") · " + picked.siteCount + " reviewed site(s), " + picked.findingsCount + " finding(s)"));
+          const clear = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: "All countries" });
+          clear.style.marginLeft = "8px";
+          clear.addEventListener("click", () => { mapSelectedCc = ""; renderDeskMap(); });
+          top.appendChild(clear);
+          mapDetailEl.appendChild(top);
+          (picked.sites || []).forEach((site) => {
+            const card = document.createElement("div");
+            card.className = "desk-map-site";
+            const badge = node("span", site.maxLevel);
+            badge.className = "threat-lvl";
+            badge.dataset.level = site.maxLevel;
+            card.appendChild(badge);
+            card.appendChild(document.createTextNode(" "));
+            card.appendChild(node("b", site.host));
+            const metaEl = node("div", [site.ip, site.asn ? "AS" + site.asn : "", site.score != null ? "score " + site.score : "", site.findingCount + " finding(s)"].filter(Boolean).join(" · "));
+            metaEl.className = "meta";
+            card.appendChild(metaEl);
+            if ((site.findings || []).length) {
+              const ul = document.createElement("ul");
+              site.findings.slice(0, 6).forEach((f) => ul.appendChild(node("li", f.level + " · " + f.kind + " (" + f.source + "): " + f.evidence)));
+              card.appendChild(ul);
+            }
+            const jump = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: "Filter threat list" });
+            jump.style.marginTop = "6px";
+            jump.addEventListener("click", () => {
+              threatQEl.value = site.host;
+              renderThreats();
+              document.getElementById("threats-block").scrollIntoView({ behavior: "smooth" });
+            });
+            card.appendChild(jump);
+            mapDetailEl.appendChild(card);
+          });
+        } else {
+          mapDetailEl.appendChild(node("b", mapSelectedCc ? mapCountryName(mapSelectedCc) + ": 0 matching reviewed sites" : "Reviewed sites by hosting country"));
+          const list = document.createElement("ul");
+          (o.countries || []).slice(0, 15).forEach((c) => {
+            const li = document.createElement("li");
+            const btn = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: mapCountryName(c.cc) + " (" + c.cc + ") · " + c.siteCount + " sites, " + c.findingsCount + " findings (" + c.topLevel + ")" });
+            btn.style.marginTop = "4px";
+            btn.addEventListener("click", () => { mapSelectedCc = c.cc; renderDeskMap(); });
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+          if (!(o.countries || []).length) list.appendChild(node("li", "No reviewed sites with hosting country data match the filters yet."));
+          mapDetailEl.appendChild(list);
+        }
+      }
+    }
+    async function loadDeskMaps() {
+      await ensureWorld();
+      const qs = new URLSearchParams();
+      if (mapWindowEl.value) qs.set("window", mapWindowEl.value);
+      if (mapLevelEl.value) qs.set("level", mapLevelEl.value);
+      if (mapKindEl.value) qs.set("kind", mapKindEl.value);
+      if (mapQEl.value.trim()) qs.set("q", mapQEl.value.trim());
+      const [gRes, oBody] = await Promise.all([
+        fetch(deskBase() + "/threats/global?range=" + encodeURIComponent(mapRangeEl.value)).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        deskFetch("/desk/map/data" + (qs.toString() ? "?" + qs.toString() : ""))
+      ]);
+      if (gRes) mapGlobalData = gRes;
+      if (oBody) mapOursData = oBody;
+      lastMapAt = Date.now();
+      renderDeskMap();
+    }
 ${SIGN_IN}
     threatQEl.addEventListener("input", renderThreats);
     threatLevelEl.addEventListener("change", renderThreats);
     threatKindEl.addEventListener("change", renderThreats);
     threatDelistEl.addEventListener("change", renderThreats);
+    mapTabGlobalBtn.addEventListener("click", () => { mapMode = "global"; mapSelectedCc = ""; renderDeskMap(); });
+    mapTabOursBtn.addEventListener("click", () => { mapMode = "ours"; mapSelectedCc = ""; renderDeskMap(); });
+    mapRangeEl.addEventListener("change", loadDeskMaps);
+    mapWindowEl.addEventListener("change", loadDeskMaps);
+    mapLevelEl.addEventListener("change", loadDeskMaps);
+    mapKindEl.addEventListener("change", loadDeskMaps);
+    mapQEl.addEventListener("input", loadDeskMaps);
     threatBackfillBtn.addEventListener("click", async () => {
       threatBackfillBtn.disabled = true;
       await fetch(deskBase() + "/desk/threats", {

@@ -526,7 +526,7 @@ async function readThreats(db, options) {
 
 async function updateThreat(db, body, operator, nowMs) {
   const input = body || {};
-  const id = String(input.id || "").replace(/[^a-f0-9A-Za-z_-]/g, "").slice(0, 60);
+  const id = String(input.id || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60);
   if (!id) return { ok: false, status: 400, error: "Which threat entry?" };
   const ref = db.collection(COLLECTION).doc(id);
   const snap = await ref.get();

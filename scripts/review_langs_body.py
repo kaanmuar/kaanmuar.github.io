@@ -320,5 +320,6 @@ BODY = [
     ("Another review", {"es": "Otra revisión", "pt": "Outra revisão", "de": "Eine weitere Prüfung", "fr": "Une autre analyse", "it": "Un’altra revisione"}),
     ("The amount for this run is shown here.", {"es": "Aquí se muestra el monto de esta revisión.", "pt": "O valor desta revisão aparece aqui.", "de": "Hier wird der Betrag für diese Prüfung angezeigt.", "fr": "Le montant de cette analyse s’affiche ici.", "it": "Qui compare l’importo di questa revisione."}),
     ("News", {"es": "Noticias", "pt": "Notícias", "de": "Nachrichten", "fr": "Actualités", "it": "Notizie"}),
+    ("Cyber attacks map", {"es": "Mapa de ciberataques", "pt": "Mapa de ciberataques", "de": "Cyberangriffe-Karte", "fr": "Carte des cyberattaques", "it": "Mappa dei cyberattacchi"}),
     ("Choose Other to write a reason.", {"es": "Elige Otro para escribir un motivo.", "pt": "Escolha Outro para escrever um motivo.", "de": "Wählen Sie „Sonstiges“, um einen Grund zu schreiben.", "fr": "Choisissez Autre pour écrire une raison.", "it": "Scegli Altro per scrivere un motivo."}),
 ]
