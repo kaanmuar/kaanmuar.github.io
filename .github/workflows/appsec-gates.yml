@@ -1,5 +1,6 @@
 # AppSec gates (#3833): zizmor + harden-runner, OSV-Scanner, recheck ReDoS on functions/ and workers/.
 # Warn-only at first (continue-on-error); not in the main branch ruleset until findings are triaged.
+# recheck-redos is blocking since #3965 cleared every flagged pattern; zizmor and osv-scanner stay warn-only.
 # eslint-plugin-security is skipped: Biome owns JS lint/format here (#3602); a second ESLint stack would duplicate it.
 
 name: AppSec gates
@@ -77,11 +78,12 @@ jobs:
         args+=( -r requirements-robot.txt )
         osv-scanner scan "${args[@]}"
 
+  # Blocking (#3965): a new regex recheck reports as vulnerable or unknown fails this job. Rewrite it to a linear form
+  # with an old-vs-new test (tests/unit/redos-3965-*.test.js) rather than putting continue-on-error back.
   recheck:
     name: recheck-redos
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     permissions:
       contents: read
     steps:
