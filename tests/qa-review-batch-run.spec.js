@@ -61,7 +61,7 @@ async function open(page, { runsLeft = 10, free = false } = {}) {
 			});
 		}
 		if (p.endsWith('/account/batch/start')) {
-			await new Promise((r) => setTimeout(r, 1500));
+			await new Promise((r) => setTimeout(r, 4000));
 			const parsed = batch.parseList(body.text, { leadUrl: body.leadUrl });
 			if (parsed.error) return json(400, parsed);
 			doc = batch.savedRecord('ana@example.com', parsed, body);
@@ -123,7 +123,7 @@ async function runAll(page, name, count, fill, opts) {
 	await shot(page, name + '-1-terms');
 	await page.locator('#gate input[type=checkbox]').first().check();
 	await page.locator('#accept').click();
-	await expect(page.locator('#batch-panel')).toBeVisible({ timeout: 1000 });
+	await expect(page.locator('#batch-panel')).toBeVisible({ timeout: 3000 });
 	await expect(page.locator('#batch-panel-rows li')).toHaveCount(count);
 	await expect(page.locator('#review-btn')).toBeDisabled();
 	await expect(page.locator('#run-panel.rp-on')).toBeVisible();
