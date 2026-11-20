@@ -12,7 +12,7 @@ const SHOTS = !!process.env.BATCH_SHOTS;
 
 test.use({ viewport: { width: 1280, height: 900 }, video: SHOTS ? 'on' : 'off' });
 
-async function open(page, { runsLeft = 10 } = {}) {
+async function open(page, { runsLeft = 10, free = false } = {}) {
 	const store = auth.memoryStore();
 	const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
 	const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -49,10 +49,10 @@ async function open(page, { runsLeft = 10 } = {}) {
 		if (p.endsWith('/standing')) {
 			return json(200, {
 				billing: 'run',
-				free: false,
+				free,
 				percent: 0,
 				compareUsd: 9,
-				pass: { id: 'p', plan: 'team', name: 'Team', runsLeft, paidUntil: '2099-01-01T00:00:00Z', frameworks: 20, tools: true, pages: 20, depth: 2 },
+				pass: free ? null : { id: 'p', plan: 'team', name: 'Team', runsLeft, paidUntil: '2099-01-01T00:00:00Z', frameworks: 20, tools: true, pages: 20, depth: 2 },
 				lastPlan: 'team',
 				plans: [],
 				softLeft: 20,
@@ -110,8 +110,8 @@ async function shot(page, name) {
 	await page.screenshot({ path: path.join(OUT, name + '.png') });
 }
 
-async function runAll(page, name, count, fill) {
-	const calls = await open(page);
+async function runAll(page, name, count, fill, opts) {
+	const calls = await open(page, opts);
 	await page.locator('[data-url-mode="many"]').click();
 	await fill();
 	await expect(page.locator('#batch-preview li')).toHaveCount(count);
@@ -172,4 +172,10 @@ test('without a pass, Run says so beside the list instead of looking frozen', as
 	await expect(page.locator('#batch-error')).toBeInViewport();
 	await shot(page, 'nopass');
 	expect(calls.filter((c) => /batch|review$/.test(c[1]))).toEqual([]);
+});
+
+test('a free-runs account starts a bulk review with no pass (#3972)', async ({ page }) => {
+	test.setTimeout(120000);
+	const urls = ['a', 'b', 'c', 'd', 'e'].map((x) => 'https://' + x + '.example/');
+	await runAll(page, 'free', 5, () => page.locator('#batch-text').fill(urls.join('\n')), { free: true });
 });
