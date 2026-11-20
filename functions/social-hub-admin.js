@@ -325,6 +325,10 @@
 			: 'Via ' +
 				[proposal.source, proposal.author && 'by ' + proposal.author, proposal.date].filter(Boolean).join(', ') +
 				'.';
+		// A licence credit (GitHub Advisory Database, CC BY 4.0) must survive the length cap, so the summary gives way.
+		const licence = text(proposal.credit, 120);
+		const tail = [credit, licence && 'Credit: ' + licence + '.'].filter(Boolean).join(' ');
+		const room = TEXT_MAX - (tail ? tail.length + 2 : 0);
 		return {
 			title: text(proposal.title, TITLE_MAX),
 			url: HTTPS.test(proposal.url || '') ? proposal.url : '',
@@ -332,7 +336,7 @@
 			lang: LANGS.includes(proposal.lang) ? proposal.lang : 'en',
 			date: today,
 			cat: text(proposal.topic, 40),
-			text: text([text(proposal.summary, TEXT_MAX), credit].filter(Boolean).join('\n\n'), TEXT_MAX),
+			text: text([text(proposal.summary, room), tail].filter(Boolean).join('\n\n'), TEXT_MAX),
 		};
 	}
 

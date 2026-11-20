@@ -316,6 +316,7 @@ const has = (hay, list) => list.find((w) => w && hay.includes(w)) || "";
 
 /** Why a post is left alone whatever it scores, or "". */
 function guard(post, conf, now) {
+  // Field-sweep posts (tenders, CVEs, advisories) are for the scouts to read; no automatic reply goes to them (#3940).
   if (post.discoveryOnly || post.via === "field-sweep") return "discovery";
   const a = post.author || {};
   const who = [a.handle, a.name, a.url].map((s) => String(s || "").toLowerCase()).join(" ");
@@ -523,7 +524,7 @@ function forAi(posts, conf, now) {
 /** The Firestore document for a new post (Firestore adds seenAt as a timestamp-free ISO string so ranges sort). */
 function postDoc(post, ai, decision, now) {
   const a = ai || {};
-  return Object.assign(post.via ? { via: post.via } : {}, post.discoveryOnly ? { discoveryOnly: true } : {}, {
+  return Object.assign(post.via ? { via: post.via } : {}, post.discoveryOnly ? { discoveryOnly: true } : {}, post.credit ? { credit: clip(post.credit, 120) } : {}, {
     network: post.network, id: clip(post.id, 300), thread: clip(post.thread || post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
     author: { handle: clip((post.author || {}).handle, 120), name: clip((post.author || {}).name, 120), id: clip((post.author || {}).id, 200), followers: num((post.author || {}).followers) },
     title: clip(post.title, 300), text: clip(post.text, 1200), lang: a.lang || lang2(post.lang), createdAt: clip(post.createdAt, 30), isReply: post.isReply === true,

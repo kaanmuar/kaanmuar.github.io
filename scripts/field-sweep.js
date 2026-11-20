@@ -118,7 +118,8 @@ function candidate(source, raw) {
     time,
     summary: short(plain(raw.summary), SUMMARY_MAX),
     image: /^https:\/\/[^\s<>"'`]+$/.test(raw.image || "") ? raw.image : "",
-    signal: Number(raw.signal) || 0
+    signal: Number(raw.signal) || 0,
+    credit: short(plain(raw.credit), 120)
   };
 }
 
@@ -170,6 +171,8 @@ function parseGithub(json, source) {
   })).filter(Boolean);
 }
 
+// GitHub Advisory Database is CC BY 4.0: the credit travels with every item built from it (#3940).
+const GHSA_CREDIT = "GitHub Advisory Database (CC BY 4.0)";
 const GHSA_SEV = { critical: 120, high: 90, medium: 40, low: 10 };
 
 function parseKev(json, source) {
@@ -203,7 +206,8 @@ function parseGhsa(json, source) {
       date: row.published_at || row.github_reviewed_at || row.updated_at,
       author: "GitHub Advisory",
       summary: plain(row.description) || plain(row.summary),
-      signal: GHSA_SEV[String(row.severity || "").toLowerCase()] || 30
+      signal: GHSA_SEV[String(row.severity || "").toLowerCase()] || 30,
+      credit: source.credit || GHSA_CREDIT
     });
   }).filter(Boolean);
 }
@@ -302,6 +306,7 @@ function rank(candidates, options) {
     const trends = group.map((item) => (SCALE[item.type] ? Math.log2(1 + item.signal / SCALE[item.type]) : 0));
     const best = group[trends.indexOf(Math.max(...trends))];
     const topic = group.map((item) => item.topic).sort((a, b) => b.score - a.score)[0];
+    const credit = lead.credit || (group.find((item) => item.credit) || {}).credit || (before[id] && before[id].credit) || "";
     const proposal = {
       id,
       title: lead.title,
@@ -320,6 +325,7 @@ function rank(candidates, options) {
       firstSeen: (before[id] && before[id].firstSeen) || today,
       discoveryOnly: !!lead.discoveryOnly
     };
+    if (credit) proposal.credit = credit;
     out.set(id, proposal);
   });
   Object.values(before).forEach((proposal) => {
