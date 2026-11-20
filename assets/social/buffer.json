@@ -6767,9 +6767,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6afccfbb8e2194ed03289b46",
-    "at": "2026-11-20T16:28:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T22:05:46.720Z"
+    "at": "2026-11-20T16:28:15.272Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2123815695083278406",
+    "checked": "2026-11-20T19:20:03.407Z"
    },
    {
     "channel": "youtube",
@@ -8859,9 +8860,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6afd252bf38e9cc5486188e6",
-    "at": "2026-11-20T16:28:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-20T01:11:40.564Z"
+    "at": "2026-11-20T16:28:14.215Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2123815690922516947",
+    "checked": "2026-11-20T19:20:03.407Z"
    },
    {
     "channel": "youtube",
@@ -14553,6 +14555,74 @@
     "checked": "2026-11-20T14:55:38.282Z"
    }
   ],
+  "battle-vs-2026-11/01-vs-seo-scorecard": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6b009d6673831df0147f6830",
+    "at": "2026-11-20T19:40:06.690Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:06.691Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6b009d6544c361911355de90",
+    "at": "2026-11-20T19:40:04.138Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:04.251Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6b009d66d425f1473a097bc4",
+    "at": "2026-11-20T19:40:06.026Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:06.026Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6b009d6573831df0147f6745",
+    "at": "2026-11-20T19:40:05.175Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:05.175Z"
+   }
+  ],
+  "battle-vs-2026-11/02-us-vs-them-seo": [
+   {
+    "channel": "linkedin",
+    "profile": "linkedin (qalab-url-review)",
+    "id": "6b009d69861298c9b147eb2a",
+    "at": "2026-11-20T19:40:08.900Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:08.900Z"
+   },
+   {
+    "channel": "tiktok",
+    "profile": "tiktok (qalaburlreview)",
+    "id": "6b009d67e3772ee0cf5e4b12",
+    "at": "2026-11-20T19:40:07.064Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:07.184Z"
+   },
+   {
+    "channel": "x",
+    "profile": "twitter (qalaburlreview)",
+    "id": "6b009d68d425f1473a097cb0",
+    "at": "2026-11-20T19:40:08.477Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:08.478Z"
+   },
+   {
+    "channel": "youtube",
+    "profile": "youtube (QA-lab URL Review)",
+    "id": "6b009d686f199ec35b75ed77",
+    "at": "2026-11-20T19:40:07.826Z",
+    "result": "queued",
+    "checked": "2026-11-20T19:20:07.826Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "linkedin",
@@ -15392,9 +15462,10 @@
     "channel": "linkedin",
     "profile": "linkedin (qalab-url-review)",
     "id": "6adf3db243e462eb4473884b",
-    "at": "2026-11-20T15:32:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-20T01:11:40.573Z"
+    "at": "2026-11-20T15:32:30.419Z",
+    "result": "sent",
+    "url": "https://www.linkedin.com/feed/update/urn:li:share:7529567354746331136",
+    "checked": "2026-11-20T19:20:03.407Z"
    },
    {
     "channel": "tiktok",
@@ -16395,9 +16466,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6add0cb23d5b27036b9e822f",
-    "at": "2026-11-20T19:04:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-20T01:11:40.574Z"
+    "at": "2026-11-20T19:04:58.458Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2123855135000437049",
+    "checked": "2026-11-20T19:20:03.407Z"
    },
    {
     "channel": "youtube",
@@ -16464,9 +16536,10 @@
     "channel": "x",
     "profile": "twitter (qalaburlreview)",
     "id": "6adfae3bed65e162d579317c",
-    "at": "2026-11-20T16:28:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-20T01:11:40.572Z"
+    "at": "2026-11-20T16:28:09.573Z",
+    "result": "sent",
+    "url": "https://x.com/2110079995007639552/status/2123815671133786412",
+    "checked": "2026-11-20T19:20:03.407Z"
    },
    {
     "channel": "youtube",
