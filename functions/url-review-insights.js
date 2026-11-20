@@ -17,6 +17,7 @@ const targeted = require('./url-review-targeted');
 const geoAgent = require('./url-review-geo-agent');
 const carbonModel = require('./url-review-carbon');
 const headOrder = require('./url-review-head-order');
+const linkText = require('./url-review-link-text');
 const waterfall = require('./url-review-har');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
@@ -1091,17 +1092,19 @@ function libraryChecks(ctx, add) {
 	const [verdict, severity] = LIB_SEVERITY[flawed[0].worst] || LIB_SEVERITY.medium;
 	const evidence = say('sec-libraries.evidence', {
 		rows: {
-			items: flawed.slice(0, 4).map((row, index) =>
-				say('sec-libraries.row', {
-					name: row.name,
-					version: row.version,
-					where: where(row),
-					flaws: say('sec-libraries.flaws', { n: row.flaws }),
-					worst: worst(row),
-					ids: row.ids.length ? say('sec-libraries.ids', { list: { items: row.ids } }) : '',
-					summary: index === 0 && row.summary ? ' ' + row.summary.replace(/\.?$/, '.') : '',
-				})
-			),
+			items: flawed
+				.slice(0, 4)
+				.map((row, index) =>
+					say('sec-libraries.row', {
+						name: row.name,
+						version: row.version,
+						where: where(row),
+						flaws: say('sec-libraries.flaws', { n: row.flaws }),
+						worst: worst(row),
+						ids: row.ids.length ? say('sec-libraries.ids', { list: { items: row.ids } }) : '',
+						summary: index === 0 && row.summary ? ' ' + row.summary.replace(/\.?$/, '.') : '',
+					})
+				),
 			sep: ' ',
 		},
 		more: flawed.length > 4 ? say('sec-libraries.more', { n: flawed.length - 4 }) : '',
@@ -3131,13 +3134,15 @@ function analyze(input) {
 			say('geo-crawlers.title', { n: answerBlocked.length }),
 			say('geo-crawlers.evidence', {
 				list: {
-					items: answerBlocked.slice(0, 5).map((bot) =>
-						say('geo-crawlers.row', {
-							token: bot.token,
-							product: bot.product,
-							rule: bot.rule ? say('geo-crawlers.by', { rule: bot.rule }) : '',
-						})
-					),
+					items: answerBlocked
+						.slice(0, 5)
+						.map((bot) =>
+							say('geo-crawlers.row', {
+								token: bot.token,
+								product: bot.product,
+								rule: bot.rule ? say('geo-crawlers.by', { rule: bot.rule }) : '',
+							})
+						),
 				},
 			}),
 			say('geo-crawlers.fix'),
@@ -4843,6 +4848,7 @@ function analyze(input) {
 		: carbonEstimate(input.pagespeed && input.pagespeed.bytes, 'lighthouse');
 	carbonModel.findings(carbon, add);
 	const headReport = headOrder.findings(face.headOrder, add);
+	linkText.findings(face.linkText, add);
 	const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);
 	const graphRows = read
 		.map((page) => {

@@ -224,6 +224,12 @@ const JOBS = [
 		what: 'Retention (#3823): delete outreach rows 12 months after the last contact (declined or blocked people keep a stop-list stub), engagement posts 12 months, contact messages, ratings and bookings 24 months. A dry run until RETENTION_APPLY=on; counts only, in retention_runs',
 	},
 	{
+		job: 'legalWatch',
+		cron: '0 10 * * 1',
+		gap: 7 * 24 + 2,
+		what: "Legal watch (#4004): fetch each official page legal/clauses.json cites (up to 60, polite and slow), compare its text hash with last week's in legal_watch, and file ONE issue under #4004 listing what changed and the clauses that cite it. The first run only records baselines; a page that did not load is retried next week. It never edits the clauses, the sign-off or the legal page",
+	},
+	{
 		job: 'opsWatchdog',
 		cron: '10 8 * * *',
 		gap: 26,

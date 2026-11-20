@@ -1503,6 +1503,15 @@ const EN = {
 	'a11y-lang.mismatch.fix': 'Set <html lang="{code}">, or the variant with the region, on pages written in {actual}.',
 	'a11y-lang.pass.title': 'The start page declares its language',
 	'a11y-lang.pass.evidence': 'lang="{lang}".',
+	'a11y-linktext.title': 'Some links on the start page are named only “read more” or “click here”',
+	'a11y-linktext.evidence':
+		'{n} of {total} links on the start page are named {names}. People who list a page’s links with a screen reader hear the same words with no hint of where each one goes (WCAG 2.4.4).',
+	'a11y-linktext.fix':
+		'Name each link for its destination (“Read the pricing guide”), or add an aria-label that says it. Keep the visible words inside the accessible name.',
+	'a11y-linktext.pass.title': 'The start page’s links say where they go',
+	'a11y-linktext.pass.evidence': 'None of the {n} links checked is named only “read more”, “click here” or the like.',
+	'a11y-linktext.name': '“{text}” ({count}×)',
+	'a11y-linktext.name.many': '“{text}” ({count}×, going to {targets} different pages)',
 	'a11y-zoom.title': 'The viewport stops people from zooming',
 	'a11y-zoom.evidence': 'The viewport tag sets user-scalable=no or maximum-scale=1.',
 	'a11y-zoom.fix': 'Remove user-scalable=no and maximum-scale from the viewport tag.',
