@@ -71,6 +71,7 @@ const NET_LOG_BYTES = 2 * 1024 * 1024;
 
 const { NETWORKS, Refused, pause, downloadImage } = require("./networks");
 const P = require("./pool");
+const { prune } = require("./shots");
 
 fs.mkdirSync(LOGS, { recursive: true });
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -164,8 +165,7 @@ const report = (state, step, needsYou) => api("process-report", { row: { id: "en
 async function shot(page, name) {
   const file = path.join(SHOTS, name + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".png");
   await page.screenshot({ path: file }).catch(() => null);
-  const old = fs.readdirSync(SHOTS).sort().reverse().slice(30);
-  old.forEach((f) => fs.rmSync(path.join(SHOTS, f), { force: true }));
+  try { prune(SHOTS); } catch (error) { log("Screenshot cleanup skipped: " + error.message); }
   return file;
 }
 
