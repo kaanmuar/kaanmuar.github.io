@@ -1476,8 +1476,26 @@ const EXTERNAL = {
 		},
 		scout: {
 			ok: true,
-			run: { pr: 3869, url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/3869', date: '2026-11-19', draft: true, ageH: 5, drift: 5, candidates: 33 },
-			tickets: { open: 2, closed: 15, items: [{ number: 3870, title: 'BE: GEO tools to evaluate', url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/3870' }] },
+			run: {
+				pr: 3869,
+				url: 'https://github.com/kaanmuar/kaanmuar.github.io/pull/3869',
+				date: '2026-11-19',
+				draft: true,
+				ageH: 5,
+				drift: 5,
+				candidates: 33,
+			},
+			tickets: {
+				open: 2,
+				closed: 15,
+				items: [
+					{
+						number: 3870,
+						title: 'BE: GEO tools to evaluate',
+						url: 'https://github.com/kaanmuar/kaanmuar.github.io/issues/3870',
+					},
+				],
+			},
 		},
 		branches: {
 			ok: true,

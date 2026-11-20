@@ -1398,9 +1398,7 @@
 			const hits = (c.families || []).filter((x) => x.hits);
 			if (hits.length)
 				add(
-					hits.some(
-						(x) => ['phishing', 'linked', 'kev', 'osv', 'drop', 'feodo'].includes(x.id) && x.customerHits
-					)
+					hits.some((x) => ['phishing', 'linked', 'kev', 'osv', 'drop', 'feodo'].includes(x.id) && x.customerHits)
 						? 'warn'
 						: 'info',
 					`New checks in range: ${hits.map((x) => `${x.label} ${x.hits}`).join('; ')}.`,
@@ -1483,7 +1481,9 @@
 											hotNow: ((c.map.ranges && c.map.ranges.live && c.map.ranges.live.countries) || [])
 												.slice(0, 5)
 												.map((x) => x.cc + ' ' + x.count),
-											headlines: (c.map.events || []).slice(0, 5).map((e) => e.source + ' (' + (e.countries || []).join('/') + ')'),
+											headlines: (c.map.events || [])
+												.slice(0, 5)
+												.map((e) => e.source + ' (' + (e.countries || []).join('/') + ')'),
 										},
 									}
 								: {},
@@ -1498,7 +1498,10 @@
 											hotCountries: (c.exposure.hot || []).map((x) => x.cc + ' ' + x.count),
 											customers: (c.exposure.customers || [])
 												.slice(0, 5)
-												.map((x) => x.email + ' (' + x.level + ', ' + x.reports + ' report' + (x.reports === 1 ? '' : 's') + ')'),
+												.map(
+													(x) =>
+														x.email + ' (' + x.level + ', ' + x.reports + ' report' + (x.reports === 1 ? '' : 's') + ')'
+												),
 										},
 									}
 								: {}
@@ -2488,7 +2491,8 @@
 			prefix: 'review:exposed',
 			impact: 4,
 			levels: ['warn', 'alert'],
-			title: 'Warn the customers whose reports carry a threat finding, from Jarvis > URL Review > Who might be impacted',
+			title:
+				'Warn the customers whose reports carry a threat finding, from Jarvis > URL Review > Who might be impacted',
 			tab: 'review',
 		},
 		{

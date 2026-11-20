@@ -47,7 +47,10 @@ jobs:
             .cursor/hooks.json \
             .cursor/mcp.json \
             biome.json \
-            scripts/refresh-lab-lines.js
+            scripts/refresh-lab-lines.js \
+            js/admin-jarvis-core.js \
+            js/admin-jarvis.js \
+            tests/admin-jarvis.spec.js
 
   url-review-unit:
     runs-on: ubuntu-latest

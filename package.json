@@ -35,7 +35,7 @@
     "review:snapshot": "node scripts/review-snapshot.js",
     "review:sample": "node scripts/review-snapshot.js --sample https://carlosandmunoz.com/",
     "format": "biome format --write .",
-    "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false .cursor/hooks/format.js .cursor/hooks/mcp-allow.js .cursor/hooks.json .cursor/mcp.json biome.json scripts/refresh-lab-lines.js",
+    "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false .cursor/hooks/format.js .cursor/hooks/mcp-allow.js .cursor/hooks.json .cursor/mcp.json biome.json scripts/refresh-lab-lines.js js/admin-jarvis-core.js js/admin-jarvis.js tests/admin-jarvis.spec.js",
     "format:md": "prettier --write \"**/*.{md,mdc,html}\"",
     "lab:lines": "node scripts/refresh-lab-lines.js",
     "vendor:three": "node scripts/vendor-three.js"
