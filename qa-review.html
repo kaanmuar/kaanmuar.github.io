@@ -1422,6 +1422,9 @@
         .batch-lead-tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cyan); }
         .batch-host { font-weight: 600; }
         .batch-check { flex-basis: 100%; margin: 0; }
+
+        .batch-file-clear { font: inherit; font-size: 13px; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+        #batch-text:disabled, #batch-file:disabled { opacity: .55; cursor: not-allowed; }
         .batch-url, .batch-state, .batch-score { font-size: 13px; opacity: .85; }
         #batch-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
         #batch-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -1778,6 +1781,8 @@
                         <label class="check" for="batch-file"><span data-batch-copy="fileLabel">Load a file</span>
                             <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" disabled>
                         </label>
+                        <button type="button" class="batch-file-clear" id="batch-file-clear" data-batch-copy="fileRemove" hidden>Remove the file</button>
+                        <p class="muted" id="batch-source-note"></p>
                         <label class="check"><input id="batch-lead-report" type="checkbox" disabled> <span data-batch-copy="leadReport">Use the open report’s URL as the lead</span></label>
                         <p class="muted" id="batch-lead-note"></p>
                         <p class="muted" data-batch-copy="previewTitle">Ready to run</p>
@@ -2287,8 +2292,8 @@
 <script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
 <script src="js/qa-review-arena.js?v=20261118a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
-<script src="js/qa-review-batch-copy.js?v=20261117-3737" defer></script>
-<script src="js/qa-review-batch.js?v=20261120-3988" defer></script>
+<script src="js/qa-review-batch-copy.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-batch.js?v=20261120-3999" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261119i-3946" defer></script>
 <script src="js/qa-review-findings-copy.en.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261119-3850" defer></script>
