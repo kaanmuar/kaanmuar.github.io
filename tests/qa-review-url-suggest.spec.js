@@ -190,6 +190,66 @@ test.describe('URL Review page box predictions', () => {
 	});
 });
 
+test.describe('Bulk list predictions and checks (#3988)', () => {
+	async function openList(page, lang) {
+		await open(page, lang);
+		await page.locator('[data-url-mode="many"]').click();
+		const list = page.locator('#batch-text');
+		await expect(list).toBeEnabled();
+		return list;
+	}
+
+	test('the line under the caret predicts hosts, and Enter picks one for that line only', async ({ page }) => {
+		const list = await openList(page);
+		await list.pressSequentially('carlosandmunoz.com');
+		await list.press('Enter');
+		await list.pressSequentially('goo');
+		await expect(page.locator('#batch-text-suggest li').first()).toHaveText('www.google.com');
+		await list.press('ArrowDown');
+		await expect(list).toHaveAttribute('aria-activedescendant', 'batch-text-opt-0');
+		await list.press('Enter');
+		await expect(list).toHaveValue('carlosandmunoz.com\nwww.google.com');
+		await expect(page.locator('#batch-text-suggest')).toBeHidden();
+		await expect(page.locator('#batch-text-hint')).toContainText('is online and is one of the most visited sites');
+		await list.press('Enter');
+		await expect(list).toHaveValue('carlosandmunoz.com\nwww.google.com\n');
+	});
+
+	test('a line with a slash lists that site’s sitemap pages', async ({ page }) => {
+		const list = await openList(page);
+		await list.fill('www.google.com\n');
+		await list.press('End');
+		await list.pressSequentially('carlosandmunoz.com/che');
+		await expect(page.locator('#batch-text-suggest li')).toHaveText(['/checkout', '/blog/checkout-tips']);
+		await list.press('ArrowDown');
+		await list.press('Enter');
+		await expect(list).toHaveValue('www.google.com\ncarlosandmunoz.com/checkout');
+	});
+
+	test('every row in Ready to run is checked, and Did you mean fixes that row', async ({ page }) => {
+		const list = await openList(page);
+		await list.fill('carlosandmunoz.com\ngogle.com/maps\nhttps://www.nibo.com.br/');
+		const checks = page.locator('#batch-preview .batch-check');
+		await expect(checks).toHaveCount(3);
+		await expect(checks.nth(0)).toHaveText('carlosandmunoz.com is online.');
+		await expect(checks.nth(1)).toHaveClass(/bad/);
+		await expect(checks.nth(1)).toContainText('gogle.com does not exist.');
+		await expect(checks.nth(2)).toHaveText('www.nibo.com.br is online.');
+		await checks.nth(1).locator('.url-fix').click();
+		await expect(list).toHaveValue('carlosandmunoz.com\nwww.google.com/maps\nhttps://www.nibo.com.br/');
+		await expect(checks.nth(1)).toContainText('is online and is one of the most visited sites');
+	});
+
+	test('the row check speaks the page language and keeps hosts out of translation', async ({ page }) => {
+		const list = await openList(page, 'es');
+		await list.fill('carlosandmunoz.com\ngogle.com');
+		const checks = page.locator('#batch-preview .batch-check');
+		await expect(checks.nth(0)).toHaveText('carlosandmunoz.com está en línea.');
+		await expect(checks.nth(1)).toHaveText('gogle.com no existe. ¿Quisiste decir www.google.com?');
+		await expect(checks.nth(1)).toHaveAttribute('translate', 'no');
+	});
+});
+
 test.describe('Report competitor box predictions', () => {
 	async function openCompare(page) {
 		await open(page);

@@ -187,9 +187,37 @@
 					(row.lead ? '<span class="batch-lead-tag">' + esc(bc().t('leadBadge')) + '</span>' : '') +
 					'<span class="batch-url" translate="no">' +
 					esc(row.url) +
-					'</span></li>'
+					'</span><p class="url-hint batch-check" aria-live="polite"></p></li>'
 			)
 			.join('');
+		checkRows(parsed.urls, list);
+	}
+
+	// The same address check as the one-URL box (js/url-suggest.js), on every row, with its "Did you mean" fix.
+	function checkRows(urls, list) {
+		const suggest = window.UrlSuggest;
+		if (!suggest) return;
+		const hints = list.querySelectorAll('.batch-check');
+		urls.forEach((row, index) => {
+			const hint = hints[index];
+			suggest.verdict(row.host).then((found) => {
+				if (!hint || !hint.isConnected) return;
+				suggest.paint(hint, found, row.lead && leadUrl() ? null : (fix) => swapHost(row.key, row.host, fix));
+			});
+		});
+	}
+
+	function swapHost(key, host, fix) {
+		const text = document.getElementById('batch-text');
+		if (!text) return;
+		const lines = text.value.split(/\r\n|\n|\r/);
+		const at = lines.findIndex((line) => normalizeLine(line).key === key);
+		if (at === -1) return;
+		const escaped = host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		lines[at] = lines[at].replace(new RegExp(escaped, 'i'), fix);
+		text.value = lines.join('\n');
+		text.dispatchEvent(new Event('input', { bubbles: true }));
+		if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_url_suggest', 'URL Review', 'bulk-row-did-you-mean');
 	}
 
 	function paintPanel(batch) {
