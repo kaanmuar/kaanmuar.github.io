@@ -44,3 +44,10 @@ test('normal reads one key per mailbox', () => {
   assert.equal(accounts.normal('K.A.A.N.M.U.A.R+x@GoogleMail.com'), 'kaanmuar@gmail.com');
   assert.equal(accounts.normal('ana+x@acme.co'), 'ana@acme.co');
 });
+
+test('review mail skips a test address, but the payment receipt and pass renewal still go out (#3799)', () => {
+	for (const category of ['url-review-report', 'url-review-promise', 'url-review-owner-notice', 'url-review-rerun-past', 'url-review-csat-remind'])
+		assert.equal(accounts.skipsMail('kaanmuar+qa@gmail.com', category), true, category);
+	for (const category of accounts.PAYMENT_MAIL) assert.equal(accounts.skipsMail('kaanmuar@gmail.com', category), false, category);
+	assert.equal(accounts.skipsMail('maria@shop.com', 'url-review-report'), false);
+});

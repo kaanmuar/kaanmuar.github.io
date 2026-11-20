@@ -1493,6 +1493,8 @@ async function keepPromise(doc) {
 }
 
 async function sendPromiseApology(promise) {
+  // A test account gets no mail, and its promise settles as if sent so it is not asked again on every run (#3799).
+  if (reviewTest.isTestAccount(promise.email)) return true;
   const stopUrl = await stopLinkFor(promise.email, promise.lang);
   return sendAskerMail(promise.email, customerMail.promiseClosedMail(promise, { stopUrl }), stopUrl, "url-review-promise");
 }
@@ -1545,7 +1547,7 @@ async function giveUpPromises() {
   for (const promise of reviewPromise.giveUpsDue(await pendingPromises(), Date.now())) {
     try {
       const stopUrl = await stopLinkFor(promise.email, promise.lang);
-      if (!(await sendAskerMail(promise.email, customerMail.promiseGivenUpMail(promise, { stopUrl }), stopUrl, "url-review-promise"))) continue;
+      if (!reviewTest.isTestAccount(promise.email) && !(await sendAskerMail(promise.email, customerMail.promiseGivenUpMail(promise, { stopUrl }), stopUrl, "url-review-promise"))) continue;
       await Promise.all(promise.ids.map((id) => col.doc(id).update(reviewPromise.settled("given-up"))));
       const rescues = await db.collection("url_review_rescues").where("key", "==", promise.key).limit(3).get();
       await Promise.all(rescues.docs.filter((doc) => ["mac-wanted", "trying"].includes(doc.data().status)).map((doc) => doc.ref.update({ status: "given-up", promised: false })));
@@ -2088,7 +2090,7 @@ async function csatLinkFor(record) {
 }
 
 async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
-  if (reviewTest.isTestAccount(email)) return false;
+  if (reviewTest.skipsMail(email, category)) return false;
   const from = prepareMail();
   if (!from) return false;
   await sgMail.send(askerMessage(email, mail, stopUrl, category, attachments, { from, replyTo: replyTo || REVIEW_ALERT_TO }));
@@ -2098,7 +2100,7 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
 // Owner notices, the reports owners claim and the notes go out as the brand face of their language (#2312), through
 // mailRetry while SendGrid's shared IPs can be blocklisted (#2314).
 async function sendFaceMail(lang, email, mail, stopUrl, category, attachments, replyTo) {
-  if (reviewTest.isTestAccount(email)) return false;
+  if (reviewTest.skipsMail(email, category)) return false;
   const from = prepareMail();
   if (!from) return false;
   await mailRetry.send(sgMail, getFirestore(), askerMessage(email, mail, stopUrl, category, attachments, mailFace.envelope(lang, from, replyTo, REVIEW_ALERT_TO)));

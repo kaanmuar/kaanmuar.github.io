@@ -34,8 +34,16 @@ function isTestAccount(email) {
   return KEYS.includes(key) || OWNED_DOMAINS.some((owned) => domain === owned || domain.endsWith("." + owned));
 }
 
+// Payment mail (the receipt, the pass renewal note) is not review mail: a test purchase still gets its receipt.
+const PAYMENT_MAIL = ["url-review-receipt", "url-review-pass-renewal"];
+
+// True when a review mail of this category must not go to this address.
+function skipsMail(email, category) {
+  return !PAYMENT_MAIL.includes(category) && isTestAccount(email);
+}
+
 function isTestRecord(record) {
   return !!record && (record.test === true || isTestAccount(record.email));
 }
 
-module.exports = { isTestAccount, isTestRecord, normal, TEST_ACCOUNTS, OWNED_DOMAINS };
+module.exports = { isTestAccount, skipsMail, PAYMENT_MAIL, isTestRecord, normal, TEST_ACCOUNTS, OWNED_DOMAINS };
