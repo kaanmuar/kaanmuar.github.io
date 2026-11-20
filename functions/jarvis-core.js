@@ -713,6 +713,24 @@
 		return Object.keys(out).length ? out : undefined;
 	}
 	/** Discrete chart stretch 1–3 (#3569). Passed through so continuous size saves do not wipe it after PR #3600 merges. */
+	/** The 3×1 / 3×2 plate (#3984, twin of Layouts.plateDefault and plateScale in the Android app): 1 or 2 from the saved stretch;
+	 * unsaved, 2 on a one-column phone and 1 wider. A chart's 3 reads as 2 here. */
+	function plateLevel(stored, phone) {
+		const n = Number(stored);
+		if (n === 1 || n === 2) return n;
+		if (n === 3) return 2;
+		return phone ? 2 : 1;
+	}
+
+	/** The plate's pan strip around each map or dense SVG in a panel body (#3984): the SVG keeps its own markup. */
+	const PLATE_SVG = /<svg class="(?:jv-geo-map|jv-heat|jv-fl)"[\s\S]*?<\/svg>/g;
+	function plateWrap(html) {
+		return String(html).replace(
+			PLATE_SVG,
+			(svg) => `<div class="jv-plate-strip"><div class="jv-plate-inner">${svg}</div></div>`
+		);
+	}
+
 	function cleanStretch(map) {
 		if (!map || typeof map !== 'object' || Array.isArray(map)) return undefined;
 		const out = {};
@@ -4081,6 +4099,8 @@
 		cleanLayout,
 		cleanSize,
 		cleanStretch,
+		plateLevel,
+		plateWrap,
 		clampSize,
 		sizeSpan,
 		SIZE_H,

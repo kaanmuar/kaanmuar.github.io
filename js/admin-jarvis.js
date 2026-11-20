@@ -9,7 +9,7 @@ import * as Proc from './admin-jarvis-processes.js?v=2890';
 import * as Ledger from './admin-jarvis-ledger.js?v=3794';
 import * as Geo from './admin-jarvis-geo.js?v=3282';
 import * as GeoFlow from './admin-jarvis-geo-flow.js?v=3114';
-import * as GeoHeat from './admin-jarvis-geo-heat.js?v=3112';
+import * as GeoHeat from './admin-jarvis-geo-heat.js?v=3984';
 import * as GeoTime from './admin-jarvis-geo-time.js?v=3282';
 import * as GeoGa4 from './admin-jarvis-geo-ga4.js?v=3282';
 import * as GeoActions from './admin-jarvis-geo-actions.js?v=3115';
@@ -1850,11 +1850,34 @@ export function mountJarvis({
 		return Number(((layoutOf(S.product) || {}).stretch || {})[id]) || 1;
 	}
 
-	async function cycleChartStretch(id) {
+	/** The panel's plate level, 1 (3×1) or 2 (3×2): the saved stretch, else 2 on a phone (#3984). */
+	function plateLevel(id) {
+		const phone = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
+		const stretch = (layoutOf(S.product) || {}).stretch || {};
+		return C.plateLevel(stretch[id], phone);
+	}
+	// The pan position of each plate, kept across renders so a refresh does not jump it back.
+	const platePan = new Map();
+	function applyPlates(scope) {
+		(scope || root).querySelectorAll('.jv-plate-strip').forEach((strip) => {
+			const section = strip.closest('[data-panel-id]');
+			if (!section || section.dataset.plate !== '2') return;
+			const id = section.dataset.panelId;
+			strip.scrollLeft = platePan.has(id) ? platePan.get(id) : (strip.scrollWidth - strip.clientWidth) / 2;
+		});
+	}
+
+	function cycleChartStretch(id) {
+		return cycleStretch(id, panelStretch(id), 3, (n) => `Chart stretch ${n} for this panel.`);
+	}
+	function cyclePlate(id) {
+		return cycleStretch(id, plateLevel(id), 2, (n) => `Panel size 3×${n} for this panel.`);
+	}
+	async function cycleStretch(id, current, max, say) {
 		const tab = S.product;
 		const prev = layoutOf(tab) || { order: [], hidden: [] };
 		const stretch = Object.assign({}, prev.stretch);
-		const n = ((Number(stretch[id]) || 1) % 3) + 1;
+		const n = (current % max) + 1;
 		stretch[id] = n;
 		const view = $(`[data-view="${tab}"]`);
 		const ids = view ? defaultIds(view) : [];
@@ -1876,7 +1899,7 @@ export function mountJarvis({
 		}
 		if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
 		render();
-		toast(`Chart stretch ${n} for this panel.`, 2200);
+		toast(say(n), 2200);
 	}
 	function panel(id, title, body, opts) {
 		const o = opts || {};
@@ -1894,9 +1917,18 @@ export function mountJarvis({
 		const chartTool = hasChart
 			? `<button type="button" class="jv-btn small" data-chart-stretch="${esc(id)}" title="Chart height (${stretch} of 3)">↕${stretch}</button>`
 			: '';
-		const tools = exportTools || chartTool ? `<span class="jv-panel-tools">${chartTool}${exportTools}</span>` : '';
+		// The 3×1 / 3×2 plate (#3984): a map or dense SVG in a pan strip, twice as wide at 3×2; its button sits with the others.
+		const plate = o.plate ? plateLevel(id) : 0;
+		const plateTool = plate
+			? `<button type="button" class="jv-btn small" data-plate-stretch="${esc(id)}" title="Panel size 3 by ${plate} (tap for 3×${plate === 2 ? 1 : 2})">3×${plate}</button>`
+			: '';
+		const tools =
+			exportTools || chartTool || plateTool
+				? `<span class="jv-panel-tools">${plateTool}${chartTool}${exportTools}</span>`
+				: '';
 		const sized = sizeAttrs(id, !!o.wide);
-		return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${sized.className}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}" data-size-h="${sized.sz.h}" data-size-w="${sized.sz.w}" style="${sized.style}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header><div class="jv-panel-body">${body}</div>${o.note ? `<p class="jv-note">${o.note}</p>` : ''}${resizeHandles()}</section>`;
+		const shown = plate ? C.plateWrap(body) : body;
+		return `<section class="jv-panel${o.wide ? ' is-wide' : ''}${o.tall ? ' is-tall' : ''}${hasChart ? ' has-chart' : ''}${stretch >= 3 ? ' is-chart-tall' : ''}${plate ? ' is-plate' : ''}${sized.className}${folded.has(id) ? ' is-folded' : ''}" data-panel-id="${id}"${plate ? ` data-plate="${plate}"` : ''} data-size-h="${sized.sz.h}" data-size-w="${sized.sz.w}" style="${sized.style}"${hasChart ? ` data-chart-stretch="${stretch}"` : ''}><header>${foldHead(id, title)}${tools}</header><div class="jv-panel-body">${shown}</div>${o.note ? `<p class="jv-note">${o.note}</p>` : ''}${resizeHandles()}</section>`;
 	}
 
 	const ACTION_LABELS = {
@@ -2753,6 +2785,7 @@ export function mountJarvis({
 			{
 				wide: true,
 				keep: true,
+				plate: true,
 				data: cur.countries.map((x) => ({ cc: x.cc, country: names[x.cc] || x.cc, events: x.count, share: x.share, exposedReports: (ours[x.cc] || {}).direct || 0, sameCountryReports: (ours[x.cc] || {}).regional || 0 })),
 				note: `News telemetry: GDELT Project feed, updated hourly${mp.slice ? ' (latest file ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
 			}
@@ -8162,7 +8195,7 @@ export function mountJarvis({
 					{ label: 'Prospects queued', value: t.prospects || 0 },
 				])}
         <div class="jv-grid">
-            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap${playing ? ' is-playing' : ''}">${GeoTime.playStats(tv, key, playing, esc)}${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
+            ${panel('geo-map', `World map · ${esc(Geo.labelOf(key))}${tv.mode === 'week' ? ' · ' + esc(tv.label) : tv.mode === 'span' ? ` · last ${tv.span} days` : ''}`, controls + `<div class="jv-geo-wrap${playing ? ' is-playing' : ''}">${GeoTime.playStats(tv, key, playing, esc)}${map}<div class="jv-geo-card" role="status" hidden></div></div>${clicksNote}`, { wide: true, keep: true, plate: true, note: 'Point at a country for its numbers, tap it for its campaigns, prospects and replies. Email numbers marked est. are split from campaigns that cover several countries.', data: rows.map((r) => ({ cc: r.cc, country: r.name, target: r.target, [key]: Geo.value(r, key) })) })}
             ${sel ? panel('geo-country', esc(sel.name), geoCountry(sel), { wide: true, keep: true }) : ''}
             ${geoDatesPanel(rows)}
             ${panel('geo-gaps', `Missing zones · ${fmt((g.gaps || []).length)}`, gapBody, { keep: true, data: g.gaps })}
@@ -8256,10 +8289,10 @@ export function mountJarvis({
 			camp: S.geoCamp,
 			width: ($('.jv-geo-wrap') || {}).clientWidth || Math.min(root.clientWidth || 1000, 1100),
 		});
-		const opts = (x) => ({ wide: true, keep: true, note: x.note, data: x.data });
+		const opts = (x, plate) => ({ wide: true, keep: true, plate: !!plate, note: x.note, data: x.data });
 		return (
 			(f.timeline ? panel('geo-timeline', f.timeline.title, f.timeline.body, opts(f.timeline)) : '') +
-			(f.flow ? panel('geo-flow', f.flow.title, f.flow.body, opts(f.flow)) : '')
+			(f.flow ? panel('geo-flow', f.flow.title, f.flow.body, opts(f.flow, true)) : '')
 		);
 	}
 
@@ -9406,6 +9439,7 @@ export function mountJarvis({
 					again.setSelectionRange(held.selectionStart, held.selectionEnd);
 				}
 				arrange(view, p.key);
+				applyPlates(view);
 				if (p.key === 'geo') {
 					view.classList.toggle('is-geo-playing', !!S.geoPlaying);
 					GeoTime.tweenCounts(view);
@@ -10793,6 +10827,17 @@ export function mountJarvis({
 
 	// --- events ---------------------------------------------------------------------------------------------
 
+	// The plate's pan position (#3984): remembered as the user pans, so a re-render keeps it.
+	root.addEventListener(
+		'scroll',
+		(event) => {
+			const strip = event.target;
+			const section =
+				strip && strip.classList && strip.classList.contains('jv-plate-strip') && strip.closest('[data-panel-id]');
+			if (section) platePan.set(section.dataset.panelId, strip.scrollLeft);
+		},
+		true
+	);
 	root.addEventListener('pointerover', (event) => {
 		const hit = event.target.closest && event.target.closest('.jv-hit');
 		if (hit && event.pointerType === 'mouse') chartTip(hit);
@@ -10862,6 +10907,10 @@ export function mountJarvis({
 		}
 		if (t.dataset.chartStretch) {
 			cycleChartStretch(t.dataset.chartStretch);
+			return;
+		}
+		if (t.dataset.plateStretch) {
+			cyclePlate(t.dataset.plateStretch);
 			return;
 		}
 		if (t.dataset.lay && t.dataset.lay !== 'drag') {

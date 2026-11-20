@@ -2711,6 +2711,34 @@ test.describe('admin statistics (Jarvis)', () => {
 		expect(errors).toEqual([]);
 	});
 
+	test('Map plate: the button makes the map 3×2, twice as wide in a strip that pans, and saves the size (#3984)', async ({
+		page,
+	}) => {
+		test.setTimeout(90000);
+		const errors = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		const calls = await openStats(page, '#stats/geo/30');
+		const panel = page.locator('[data-view="geo"] [data-panel-id="geo-map"]');
+		await expect(panel.locator('.jv-geo-map path').first()).toBeVisible();
+		const strip = panel.locator('.jv-plate-strip');
+		const ratio = () => strip.evaluate((el) => el.scrollWidth / el.clientWidth);
+		await expect(panel).toHaveAttribute('data-plate', '1');
+		expect(await ratio()).toBeLessThan(1.05);
+		await panel.locator('[data-plate-stretch="geo-map"]').click();
+		await expect(panel).toHaveAttribute('data-plate', '2');
+		await expect.poll(ratio).toBeGreaterThan(1.9);
+		await expect
+			.poll(() =>
+				calls
+					.filter((c) => c.op === 'settings-save')
+					.map((c) => c.body.layout && c.body.layout.geo && c.body.layout.geo.stretch)
+			)
+			.toEqual([{ 'geo-map': 2 }]);
+		await panel.locator('[data-plate-stretch="geo-map"]').click();
+		await expect(panel).toHaveAttribute('data-plate', '1');
+		expect(errors).toEqual([]);
+	});
+
 	test('Map shows the world shaded by the chosen metric, the missing zones and a country sheet whose buttons go through the function (#2976)', async ({
 		page,
 	}, testInfo) => {
