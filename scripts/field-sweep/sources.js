@@ -4,6 +4,7 @@
    topic   what the source covers; an item that names no topic keyword keeps this one
    weight  how much its items count in the ranking (1 = an ordinary source)
    strict  general sources: an item only counts when its title names one of TOPICS' keywords
+   credit  attribution the source's licence requires (GitHub Advisory Database is CC BY 4.0); it rides with each item to the hub card and the post text
    prefix  put before titles that do not name the project (release feeds title items "v1.56.0") */
 const SOURCES = [
   { id: "google-search-central", name: "Google Search Central", type: "feed", url: "https://developers.google.com/search/blog/feed.xml", topic: "SEO", weight: 1.4 },
@@ -37,8 +38,8 @@ const SOURCES = [
   { id: "uk-contracts-finder", name: "UK Contracts Finder", type: "feed", url: "https://www.contractsfinder.service.gov.uk/applications/cms-feed", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
   { id: "austender", name: "AusTender", type: "feed", url: "https://www.tenders.gov.au/public_data/rss/rss.xml", topic: "Procurement", weight: 0.35, strict: true, discoveryOnly: true },
   { id: "compras-colombia", name: "SECOP Colombia", type: "feed", url: "https://www.colombiacompra.gov.co/sites/cce_public/Lists/Licitaciones/AllItems.aspx?RSS=1", topic: "Procurement", weight: 0.3, strict: true, discoveryOnly: true },
-  { id: "cisa-kev", name: "CISA KEV", type: "kev", url: "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json", topic: "Security", weight: 1.15, discoveryOnly: true },
-  { id: "github-advisories", name: "GitHub Advisories", type: "ghsa", topic: "Security", weight: 1.05, discoveryOnly: true }
+  { id: "cisa-kev", name: "CISA KEV", type: "kev", url: "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json", topic: "Security", weight: 1.15 },
+  { id: "github-advisories", name: "GitHub Advisories", type: "ghsa", topic: "Security", weight: 1.05, credit: "GitHub Advisory Database (CC BY 4.0)" }
 ];
 
 // Keywords per topic, matched as whole words in any case, plural too. A title hit counts double a summary hit.

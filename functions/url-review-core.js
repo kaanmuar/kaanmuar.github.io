@@ -14,6 +14,7 @@ const { URL } = require("url");
 const insights = require("./url-review-insights");
 const headOrder = require("./url-review-head-order");
 const pageGraph = require("./url-review-page-graph");
+const cyberPassive = require("./url-review-cyber-passive");
 const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const fixOffers = require("./url-review-fix-offers");
@@ -2176,6 +2177,13 @@ function inspect(html, headers, pageUrl) {
     try { return new URL(src, pageUrl).hostname !== pageHost; } catch (error) { return false; }
   });
   const sriMissing = foreignHosts(crossScripts.filter((tag) => !attr(tag, "integrity")).map((tag) => attr(tag, "src")), 20);
+  const crossOrigin = (href) => {
+    try { return new URL(href, pageUrl).hostname !== pageHost ? new URL(href, pageUrl).hostname : ""; } catch (error) { return ""; }
+  };
+  const sriTags = crossScripts.map((tag) => ({ kind: "script", host: crossOrigin(attr(tag, "src")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) }))
+    .concat(linksAll.filter((tag) => /(^|\s)stylesheet(\s|$)/i.test(attr(tag, "rel")) && attr(tag, "href") && crossOrigin(attr(tag, "href")))
+      .map((tag) => ({ kind: "style", host: crossOrigin(attr(tag, "href")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) })));
+  const scriptUrls = scripts.map((src) => { try { return new URL(src, pageUrl).toString(); } catch (error) { return ""; } }).filter((url) => /^https?:/i.test(url)).slice(0, 80);
   const inlineScripts = (html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
     const open = block.match(/^<script\b[^>]*>/i)[0];
     if (attr(open, "src")) return false;
@@ -2315,7 +2323,8 @@ function inspect(html, headers, pageUrl) {
     libraries,
     wordpress: wordpress.fromHtml(html, pageUrl),
     piiLinks,
-    sri: { cross: crossScripts.length, missing: sriMissing },
+    sri: { cross: crossScripts.length, missing: sriMissing, audit: cyberPassive.auditSri(sriTags) },
+    scriptUrls,
     resources: {
       scripts: foreignHosts(scripts, 30),
       styles: foreignHosts(linksAll.filter((tag) => /stylesheet|preload/i.test(attr(tag, "rel"))).map((tag) => attr(tag, "href")), 20),

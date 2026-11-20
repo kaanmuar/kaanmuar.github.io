@@ -93,6 +93,17 @@ test('score rises with engagement and falls with age', () => {
 	assert.ok(busy.trend > 0);
 });
 
+test('cyber field-sweep posts reach the scouts with their credit and never get an automatic reply (#3940)', () => {
+	const FS = require('../../functions/engagement-field-sweep.js');
+	const c = E.settings(null);
+	const cve = FS.toPost({ id: 'abcabcabcabc', url: 'https://github.com/advisories/GHSA-xxxx-yyyy-zzzz', title: 'CVE-2026-1: Example flaw', summary: 'Example.', topic: 'Security', source: 'GitHub Advisories', date: new Date(NOW).toISOString().slice(0, 10), credit: 'GitHub Advisory Database (CC BY 4.0)', discoveryOnly: false }, NOW);
+	assert.equal(cve.discoveryOnly, false);
+	assert.equal(cve.credit, 'GitHub Advisory Database (CC BY 4.0)');
+	assert.equal(E.guard(cve, c, NOW), 'discovery');
+	assert.equal(E.postDoc(cve, null, { verdict: 'skip', skip: 'discovery', actions: [] }, NOW).credit, 'GitHub Advisory Database (CC BY 4.0)');
+	assert.ok(!('credit' in E.postDoc(Object.assign({}, cve, { credit: '' }), null, { verdict: 'skip', skip: 'discovery', actions: [] }, NOW)));
+});
+
 test('guard leaves alone our own posts, competitors, sensitive news, hashtag spam and old posts', () => {
 	const c = E.settings(null);
 	assert.equal(E.guard(post({ author: { handle: 'carlosandmunoz@mastodon.social' } }), c, NOW), 'own');

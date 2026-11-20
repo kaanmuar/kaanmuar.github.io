@@ -26,7 +26,7 @@ export function createProposals(deps) {
 		const link = /^https:\/\//.test(proposal.url || '')
 			? `<a href="${escapeHtml(proposal.url)}" target="_blank" rel="noopener nofollow">${escapeHtml(proposal.title)}</a>`
 			: escapeHtml(proposal.title);
-		const credit = [proposal.author && `by ${proposal.author}`, proposal.why].filter(Boolean).join(' · ');
+		const credit = [proposal.author && `by ${proposal.author}`, proposal.why, proposal.credit].filter(Boolean).join(' · ');
 		return (
 			`<article class="hub-admin-row hub-proposal" data-id="${escapeHtml(proposal.id)}">${thumb}` +
 			`<div class="hub-admin-main"><p class="hub-admin-meta">${tags}${proposal.date ? `<time datetime="${escapeHtml(proposal.date)}">${escapeHtml(proposal.date)}</time>` : ''}</p>` +
