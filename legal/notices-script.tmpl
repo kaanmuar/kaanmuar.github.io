@@ -1,0 +1,297 @@
+
+(function () {
+    const OFFICIAL = {
+        CO: {{statute.CO}},
+        EU: {{statute.EU}},
+        GB: {{statute.GB}},
+        US: {{statute.US}},
+        MX: {{statute.MX}},
+        BR: {{statute.BR}},
+        ES: {{statute.ES}},
+        DE: {{statute.DE}},
+        FR: {{statute.FR}},
+        AR: {{statute.AR}},
+        CL: {{statute.CL}},
+        PE: {{statute.PE}},
+        CA: {{statute.CA}},
+        AU: {{statute.AU}},
+        NZ: {{statute.NZ}},
+        IN: {{statute.IN}},
+        JP: {{statute.JP}},
+        ZA: {{statute.ZA}}
+    };
+    const NAMES = { CO: "Colombia", EU: "the European Union", GB: "the United Kingdom", US: "the United States", MX: "Mexico", BR: "Brazil", ES: "Spain", DE: "Germany", FR: "France", IT: "Italy", NL: "the Netherlands", PT: "Portugal", IE: "Ireland", BE: "Belgium", AT: "Austria", SE: "Sweden", PL: "Poland", AR: "Argentina", CL: "Chile", PE: "Peru", CA: "Canada", AU: "Australia", NZ: "New Zealand", IN: "India", JP: "Japan", ZA: "South Africa" };
+    const EU = new Set(["EU", "ES", "DE", "FR", "IT", "NL", "PT", "IE", "BE", "AT", "SE", "PL"]);
+
+    function linkify(text) {
+        return String(text).replace(/https?:\/\/[^\s)]+/g, (href) => {
+            const clean = href.replace(/[.,]$/, "");
+            return '<a href="' + clean + '">' + clean + "</a>";
+        });
+    }
+    function p(text) { return "<p>" + linkify(text) + "</p>"; }
+    function h(text, id) { return "<h3" + (id ? ' id="' + id + '"' : "") + ">" + text + "</h3>"; }
+    function items(list) {
+        return "<ul>" + list.map((text) => "<li>" + linkify(text) + "</li>").join("") + "</ul>";
+    }
+
+    function localBlocks() {
+        return [
+            p({{local.lead.1}}),
+            h({{local.claims.heading}}),
+            items([
+                {{local.claims.1}},
+                {{local.claims.2}}
+            ])
+        ];
+    }
+
+    function nationalBlocks() {
+        return [
+            p({{national.lead.1}}),
+            h({{national.service.heading}}),
+            items([
+                {{national.service.1}},
+                {{national.service.2}},
+                {{national.service.3}},
+                {{national.service.4}},
+                {{national.service.5}}
+            ]),
+            h({{national.access.heading}}),
+            items([
+                {{national.access.1}},
+                {{national.access.2}},
+                {{national.access.3}},
+                {{national.access.4}},
+                {{national.access.5}},
+                {{national.access.6}}
+            ]),
+            h({{national.personal-data.heading}}, "personal-data"),
+            items([
+                {{national.personal-data.1}},
+                {{national.personal-data.2}},
+                {{national.personal-data.3}},
+                {{national.personal-data.4}},
+                {{national.personal-data.5}},
+                {{national.personal-data.6}},
+                {{national.personal-data.7}},
+                {{national.personal-data.8}},
+                {{national.personal-data.9}},
+                {{national.personal-data.10}},
+                {{national.personal-data.11}},
+                {{national.personal-data.12}},
+                {{national.personal-data.13}},
+                {{national.personal-data.14}},
+                {{national.personal-data.15}},
+                {{national.personal-data.16}},
+                {{national.personal-data.17}}
+            ]),
+            h({{national.recipients.heading}}),
+            items([
+                {{national.recipients.1}},
+                {{national.recipients.2}},
+                {{national.recipients.3}},
+                {{national.recipients.4}},
+                {{national.recipients.5}},
+                {{national.recipients.6}},
+                {{national.recipients.7}},
+                {{national.recipients.8}},
+                {{national.recipients.9}},
+                {{national.recipients.10}},
+                {{national.recipients.11}}
+            ]),
+            h({{national.transfer.heading}}),
+            items([
+                {{national.transfer.1}},
+                {{national.transfer.2}},
+                {{national.transfer.3}},
+                {{national.transfer.4}}
+            ]),
+            h({{national.payment.heading}}),
+            items([
+                {{national.payment.1}},
+                {{national.payment.2}},
+                {{national.payment.3}},
+                {{national.payment.4}},
+                {{national.payment.5}}
+            ]),
+            h({{national.site-content.heading}}),
+            items([
+                {{national.site-content.1}},
+                {{national.site-content.2}}
+            ]),
+            h({{national.inconclusive.heading}}, "inconclusive"),
+            items([
+                {{national.inconclusive.1}},
+                {{national.inconclusive.2}}
+            ]),
+            h({{national.fix-packages.heading}}, "fix-packages"),
+            items([
+                {{national.fix-packages.1}},
+                {{national.fix-packages.2}},
+                {{national.fix-packages.3}},
+                {{national.fix-packages.4}},
+                {{national.fix-packages.5}}
+            ]),
+            h({{national.trials.heading}}, "trials"),
+            items([
+                {{national.trials.1}},
+                {{national.trials.2}},
+                {{national.trials.3}},
+                {{national.trials.4}},
+                {{national.trials.5}}
+            ]),
+            h({{national.operator-reviews.heading}}, "operator-reviews"),
+            items([
+                {{national.operator-reviews.1}},
+                {{national.operator-reviews.2}},
+                {{national.operator-reviews.3}}
+            ]),
+            h({{national.outreach.heading}}, "outreach"),
+            items([
+                {{national.outreach.1}},
+                {{national.outreach.2}},
+                {{national.outreach.3}},
+                {{national.outreach.4}},
+                {{national.outreach.5}},
+                {{national.outreach.6}},
+                {{national.outreach.7}},
+                {{national.outreach.8}}
+            ]),
+            h({{national.social.heading}}, "social"),
+            items([
+                {{national.social.1}},
+                {{national.social.2}},
+                {{national.social.3}},
+                {{national.social.4}}
+            ]),
+            h({{national.ai.heading}}, "ai"),
+            items([
+                {{national.ai.1}},
+                {{national.ai.2}},
+                {{national.ai.3}},
+                {{national.ai.4}}
+            ]),
+            h({{national.contact.heading}}, "contact"),
+            items([
+                {{national.contact.1}},
+                {{national.contact.2}}
+            ]),
+            h({{national.confidentiality.heading}}, "confidentiality"),
+            items([
+                {{national.confidentiality.1}},
+                {{national.confidentiality.2}},
+                {{national.confidentiality.3}},
+                {{national.confidentiality.4}},
+                {{national.confidentiality.5}}
+            ])
+        ];
+    }
+
+    function countryExtra(code) {
+        const law = OFFICIAL[code] || (EU.has(code) ? OFFICIAL.EU : null);
+        const place = NAMES[code] || "that country";
+        const blocks = [];
+        if (!law) {
+            blocks.push(p({{site.no-statute.1 place=place}}));
+            return blocks;
+        }
+        blocks.push(p({{site.country.1 place=place statute=law[0] statuteUrl=law[1] authority=law[2] authorityUrl=law[3]}}));
+        blocks.push(p({{site.country.2 place=place}}));
+        if (EU.has(code)) {
+            blocks.push(p({{site.EU.1}}));
+        }
+        if (EU.has(code)) {
+            blocks.push(p({{site.EU.2}}));
+        }
+        if (code === "US") {
+            blocks.push(p({{site.US.1}}));
+        }
+        if (code === "GB") {
+            blocks.push(p({{site.GB.1}}));
+        }
+        if (code === "GB") {
+            blocks.push(p({{site.GB.2}}));
+        }
+        if (code === "CA") {
+            blocks.push(p({{site.CA.1}}));
+        }
+        if (code === "AU") {
+            blocks.push(p({{site.AU.1}}));
+        }
+        if (code === "BR") {
+            blocks.push(p({{site.BR.1}}));
+        }
+        if (code === "CL") {
+            blocks.push(p({{site.CL.1}}));
+        }
+        return blocks;
+    }
+
+    function internationalBlocks(code) {
+        const blocks = [
+            h({{site.rules.heading}}),
+            items([
+                {{site.rules.1}},
+                {{site.rules.2}},
+                {{site.rules.3}},
+                {{site.rules.4}},
+                {{site.rules.5}}
+            ])
+        ];
+        if (!code) {
+            blocks.push(p({{site.no-country.1}}));
+            return blocks;
+        }
+        blocks.push(h({{site.country.heading country=NAMES[code]}}));
+        return blocks.concat(countryExtra(code));
+    }
+
+    function paint(host, title, blocks) {
+        host.innerHTML = "<h2>" + title + "</h2>" + blocks.join("");
+    }
+
+    const select = document.getElementById("site-country");
+    Object.keys(NAMES).filter((code) => code !== "CO").forEach((code) => {
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = NAMES[code];
+        select.appendChild(option);
+    });
+    const asked = new URLSearchParams(location.search).get("site") || "";
+    if (NAMES[asked]) select.value = asked;
+    function render() {
+        paint(document.getElementById("local-notice"), {{local.title}}, localBlocks());
+        paint(document.getElementById("origin-notice"), {{national.title}}, nationalBlocks());
+        const site = select.value;
+        paint(document.getElementById("site-notice"), {{site.title}}, internationalBlocks(site));
+    }
+    select.addEventListener("change", () => {
+        if (window.SiteAnalytics) SiteAnalytics.trackEvent("qa_review_legal_country", "URL Review", select.value || "unnamed");
+        const url = new URL(location.href);
+        if (select.value) url.searchParams.set("site", select.value);
+        else url.searchParams.delete("site");
+        history.replaceState(null, "", url.pathname + url.search);
+        render();
+    });
+    render();
+    if (window.SiteI18n) {
+        const menu = document.getElementById("langMenu");
+        const wrap = document.getElementById("langWrap");
+        menu.innerHTML = '<div class="lang-options-list"></div>';
+        menu.style.cssText = "display:none;position:absolute;right:0;top:36px;width:220px;background:#fff;border:1px solid #d5dce3;border-radius:12px;padding:8px;z-index:30";
+        wrap.style.position = "relative";
+        const list = menu.querySelector(".lang-options-list");
+        SiteI18n.orderedLanguages().forEach((meta) => {
+            const option = document.createElement("button");
+            option.type = "button";
+            option.lang = meta.code;
+            option.style.cssText = "display:flex;width:100%;gap:8px;align-items:center;padding:4px;border:0;background:none;color:#12181f;font:inherit;text-align:left;cursor:pointer";
+            option.innerHTML = '<img src="' + SiteI18n.flagUrl(meta.code) + '" alt="" width="18" height="18"><span>' + meta.native + "</span>";
+            option.onclick = () => SiteI18n.selectLanguage(meta.code);
+            list.appendChild(option);
+        });
+        SiteI18n.bindMenu(wrap, document.getElementById("langToggle"), menu, (open) => { menu.style.display = open ? "block" : "none"; });
+        SiteI18n.resolve().then((lang) => SiteI18n.applyMachineTranslate(lang || "en"));
+    }
+})();
