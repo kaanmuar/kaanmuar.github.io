@@ -214,7 +214,7 @@ test("the plain read leaves the certificate-transparency read and the breach-new
   });
   assert.equal(result.breachNews.length, 0);
   assert.equal(result.certCheck.ctChecked, false);
-  assert.ok(!calls.includes("api.certspotter.com"));
+  assert.deepEqual(calls.filter((hostName) => hostName === "api.certspotter.com"), []);
   assert.ok(!result.sourcesRead.includes("CertSpotter CT"));
   assert.ok(result.sourcesSkipped.includes("CertSpotter CT (Deep check)"));
   assert.ok(result.sourcesSkipped.includes("News match for this site (Deep check)"));
