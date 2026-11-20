@@ -177,7 +177,7 @@ function siteName(raw, host) {
 	const name = String(raw || '')
 		.replace(/\s+/g, ' ')
 		.trim()
-		.split(/\s+[—–|·:-]\s+|\s*[|·]\s*/)[0]
+		.split(/ [—–|·:-] | ?[|·] ?/)[0]
 		.trim();
 	const bare = (value) =>
 		String(value || '')

@@ -241,7 +241,7 @@ const JOB_NAMES = {
 	outreachSweep: 'Outreach sweep',
 	rivalSweep: 'Rival sweep',
 	placesProspects: 'Places prospects',
-	engagementScout: 'Engagement scout',
+	engagementScout: 'Meta engagement scout',
 	ownerTags: 'Owner tags',
 	jarvisWatch: 'Jarvis watch',
 	jarvisGithub: 'Jarvis GitHub',
@@ -251,6 +251,7 @@ const JOB_NAMES = {
 	rerunReviewFailures: 'Re-run failed reviews',
 	refreshSocialHubStats: 'Social hub stats',
 	dispatchFacebookQueue: 'Facebook queue',
+	threatFeeds: 'Threat feeds',
 };
 
 /** True for a cron that fires more than once an hour or every hour. */

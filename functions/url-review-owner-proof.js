@@ -113,7 +113,7 @@ function validFor(rows, email, host, now) {
 
 function metaTokens(html) {
 	const out = [];
-	for (const tag of String(html || '').match(/<meta\b[^>]*>/gi) || []) {
+	for (const tag of String(html || '').match(/<meta\b(?<=(?:^|>)(?:(?!<meta\b)[^>])*<meta)[^>]*>/gi) || []) {
 		if (!/\bname\s*=\s*["']?qa-lab-verify["'\s/>]/i.test(tag)) continue;
 		const content = tag.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
 		if (content) out.push((content[1] || content[2] || content[3] || '').trim());

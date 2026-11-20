@@ -7,6 +7,7 @@
 
 const { SITE, GUIDE, xPost } = require('./tips');
 const { BRAND, tagLine } = require('../social-tags');
+const lines = require('./caption-lines');
 
 const CAMPAIGN = 'compare-2026-11';
 const KIND = 'compare';
@@ -287,7 +288,7 @@ function plainTitle(tip) {
 
 function captions(tip) {
 	const head = plainTitle(tip);
-	const label = tip.actionLabel + ': ';
+	const label = lines.actionLead(tip);
 	return {
 		linkedin: [
 			head,
@@ -296,7 +297,7 @@ function captions(tip) {
 			'',
 			label + tip.action,
 			'',
-			'How a public-page review works, step by step: ' + link('linkedin', tip),
+			lines.guideLinked(tip, link('linkedin', tip)),
 			'',
 			tagLine(tip, 'linkedin'),
 		].join('\n'),
@@ -320,7 +321,7 @@ function captions(tip) {
 			'',
 			label + tip.action,
 			'',
-			'Guide: ' + link('youtube', tip),
+			lines.youtubeGuide(tip, link('youtube', tip)),
 			'',
 			tip.counter + ' · QA-lab URL Review',
 			'',

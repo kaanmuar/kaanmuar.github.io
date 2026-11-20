@@ -41,6 +41,12 @@ const JOBS = [
 		what: "Download the Wordfence Intelligence vulnerability feed once and store its plugin, theme and core index for the reviews' WordPress check (#3086; skipped without WORDFENCE_KEY or when the stored index is under 20 hours old)",
 	},
 	{
+		job: 'threatFeeds',
+		cron: '*/30 * * * *',
+		gap: 2,
+		what: 'Refresh commercial-safe threat feeds (CISA KEV, network DROP, Feodo Tracker, Tor exits, GDELT hourly news feed), Cloudflare Radar 24 h attack traffic for internal Jarvis use (#3935) and the monthly DB-IP Country Lite index in Cloud Storage (#3816)',
+	},
+	{
 		job: 'rivalSweep',
 		cron: '7-52/15 1-5 * * *',
 		gap: 20,
@@ -65,6 +71,12 @@ const JOBS = [
 		cron: '*/15 * * * *',
 		gap: 1,
 		what: 'Re-run reviews whose asker was promised the report by email (#3079): about 30 minutes after the failure, then at 4, 12, 24 and 40 hours (2 a tick), sending each finished report; at 48 hours without one, the apology mail with their code',
+	},
+	{
+		job: 'callReminders',
+		cron: '*/15 * * * *',
+		gap: 1,
+		what: 'Reminder mail to people who booked a call (#3867): once about 24 hours ahead (only for a call booked more than 26 hours out) and once inside the last hour, in their language and the look of the call; a requested, transactional note, not outreach',
 	},
 	{
 		job: 'fileReviewFailureBugs',
@@ -99,6 +111,12 @@ const JOBS = [
 		cron: '0 19 * * 0',
 		gap: 7 * 24 + 2,
 		what: "Jarvis weekly strategy to the owner: four weeks side by side, the proposals and Gemini's plan for next week (Admin > Statistics > Settings)",
+	},
+	{
+		job: 'jarvisChangeLedger',
+		cron: '35 8 * * *',
+		gap: 26,
+		what: 'Jarvis change ledger (#3784): each shipped change against the metric it was meant to move (14 days before, 7 and 28 after), to jarvis_ledger/latest; manual checks are listed as such',
 	},
 	{
 		job: 'jarvisWatch',
@@ -152,7 +170,7 @@ const JOBS = [
 		job: 'engagementScout',
 		cron: '*/30 * * * *',
 		gap: 2,
-		what: "Social engagement scout (#1988): read our field's posts on Mastodon, Bluesky, YouTube, Hacker News, DEV and Lobsters, score them, plan likes, reposts and follows within the daily caps, and push reply drafts for approval (Jarvis > Engagement)",
+		what: 'Meta engagement scout (#3613, #1988): cloud field read (Mastodon tag+search, Bluesky, YouTube, HN, DEV, Lobsters), report/profile/chain passes, Mac+Reddit+owner-tags+student status in one envelope; plan likes, reposts and follows within caps and push reply drafts (Jarvis > Engagement)',
 	},
 	{
 		job: 'engagementDailyReport',
@@ -199,6 +217,12 @@ const JOBS = [
 		what: 'Quarter-hour review report, only when something happened',
 	},
 	{ job: 'exportFirestoreWeekly', cron: '0 8 * * 0', gap: 7 * 24 + 2, what: 'Firestore backup' },
+	{
+		job: 'retentionSweep',
+		cron: '30 9 * * 1',
+		gap: 7 * 24 + 2,
+		what: 'Retention (#3823): delete outreach rows 12 months after the last contact (declined or blocked people keep a stop-list stub), engagement posts 12 months, contact messages, ratings and bookings 24 months. A dry run until RETENTION_APPLY=on; counts only, in retention_runs',
+	},
 	{
 		job: 'opsWatchdog',
 		cron: '10 8 * * *',
@@ -287,6 +311,13 @@ const JOBS = [
 		what: 'Propose standout items from the field for the social hub (the owner approves them in admin)',
 	},
 	{
+		job: 'tool-scout.yml',
+		host: 'github',
+		cron: '37 15 * * 3',
+		gap: 8 * 24,
+		what: 'Weekly tool scout (#3857): re-check every repo in .cursor/rules/tool-arsenal.mdc (gone, archived, license drift) and search GitHub per corner (B geo/agency, C secops, D design/social, A cyber) for new permissive repos; a draft PR with the report, nothing added to the arsenal or board without Carlos',
+	},
+	{
 		job: 'creative-intel.yml',
 		host: 'github',
 		cron: '15 14 * * 5',
@@ -373,6 +404,15 @@ function budget(name, env) {
 
 // Longer than any job's timeout (rerunReviewFailures, 1800 s), so a start this old with no end is a run that crashed.
 const CRASH_AFTER = 45 * 60000;
+// A run that finished with a warning for this long counts as a problem (#3811).
+const WARN_AFTER = 24 * H;
+
+// What a job returned: a note string, or { note, warn: true } for a run that finished but could not do its work (#3811).
+function outcome(result) {
+	if (result && typeof result === 'object')
+		return { note: typeof result.note === 'string' ? result.note : '', warn: !!result.warn };
+	return { note: typeof result === 'string' ? result : '', warn: false };
+}
 
 // runs: { job: { startedAt, endedAt, ok, error } }. since: when the ledger started, so a new job is not "missed".
 function overdue(runs, now, since) {
@@ -402,8 +442,11 @@ function overdue(runs, now, since) {
 		}
 		if (run.ok === false) out.push({ job: row.job, why: 'failed: ' + String(run.error || '').slice(0, 160) });
 		else if (now - Date.parse(run.endedAt) > limit) out.push({ job: row.job, why: 'last ended ' + run.endedAt });
+		// A job that ran but could not do its work (a rate-limited key) is a warning; after a day of it, a problem (#3811).
+		else if (run.warn && run.warnSince && now - Date.parse(run.warnSince) > WARN_AFTER)
+			out.push({ job: row.job, why: 'warning since ' + run.warnSince + ': ' + String(run.note || '').slice(0, 160) });
 	});
 	return out;
 }
 
-module.exports = { TIME_ZONE, JOBS, BUDGETS, CRASH_AFTER, job, cron, budget, overdue };
+module.exports = { TIME_ZONE, JOBS, BUDGETS, CRASH_AFTER, WARN_AFTER, outcome, job, cron, budget, overdue };

@@ -60,7 +60,8 @@ const slug = (value) =>
 	text(value, 80)
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
+		.replace(/^-+/, '')
+		.replace(/(?<!-)-+$/, '')
 		.slice(0, 40) || 'task';
 
 function priceOf(model) {

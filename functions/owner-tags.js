@@ -219,7 +219,7 @@ const bare = (host) =>
 	String(host || '')
 		.toLowerCase()
 		.replace(/^https?:\/\//, '')
-		.replace(/[/:].*$/, '')
+		.replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, '')
 		.replace(/^www\./, '');
 const slug = (v) =>
 	String(v || '')
@@ -229,7 +229,18 @@ const slug = (v) =>
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-|-$/g, '');
 const accountId = (network, handle) => network + ':' + String(handle).toLowerCase().replace(/\//g, '|');
-const docKey = (...parts) => 'ot-' + crypto.createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 24);
+const docKey = (...parts) => 'ot-' + crypto.createHash('sha256').update(parts.join('|')).digest('hex').slice(0, 24);
+/* Docs queued before #3689 sit under SHA-1 keys, so a repeat is caught by what the doc does, not only by its key. */
+const captionWork = (post, network) => 'caption|' + post + '|' + network;
+const replyWork = (report, account) => 'reply|' + report + '|' + account;
+const workOf = (d) => {
+	const t = d.ownerTags || {};
+	return t.kind === 'caption'
+		? captionWork(t.post, d.network)
+		: t.kind === 'reply'
+			? replyWork(t.report, t.account)
+			: '';
+};
 const settingsRef = (db) => db.collection('owner_tags').doc('settings');
 
 // --- Handles ----------------------------------------------------------------------------------------------------
@@ -311,7 +322,7 @@ function profileOf(a) {
 }
 
 const SOCIAL =
-	/https?:\/\/(?:www\.|m\.)?(?:x\.com|twitter\.com|instagram\.com|threads\.(?:net|com)|tiktok\.com|bsky\.app|youtube\.com|facebook\.com|linkedin\.com|[a-z0-9-]*(?:mastodon|mstdn)[a-z0-9.-]*|social\.[a-z0-9.-]+|toot\.[a-z0-9.-]+)\/[^\s"'<>\\)]+/gi;
+	/https?:\/\/(?:www\.|m\.)?(?:x\.com|twitter\.com|instagram\.com|threads\.(?:net|com)|tiktok\.com|bsky\.app|youtube\.com|facebook\.com|linkedin\.com|(?=[a-z0-9-]*(?:mastodon|mstdn))[a-z0-9.-]+|social\.[a-z0-9.-]+|toot\.[a-z0-9.-]+)\/[^\s"'<>\\)]+/gi;
 
 /** The profile links a home page names (links and schema.org sameAs alike), as { network, handle }, one per account. */
 function socialLinksOf(html) {
@@ -321,7 +332,7 @@ function socialLinksOf(html) {
 		.replace(/&amp;/g, '&')
 		.replace(/\\\//g, '/')
 		.matchAll(SOCIAL)) {
-		const h = handleOf(m[0].replace(/[.,;]+$/, ''));
+		const h = handleOf(m[0].replace(/(?<![.,;])[.,;]+$/, ''));
 		if (!h || seen.has(accountId(h.network, h.handle))) continue;
 		seen.add(accountId(h.network, h.handle));
 		out.push(h);
@@ -360,7 +371,13 @@ function reportsOf(post, live) {
 	if (!['review', 'compare'].includes(post.kind)) return [];
 	const hosts = [
 		...new Set(
-			[...String(post.alt || '').matchAll(/\b((?:[a-z0-9-]+\.)+[a-z]{2,})\s+Score\s+\d/gi)].map((m) => bare(m[1]))
+			[
+				...String(post.alt || '').matchAll(
+					/\b((?:[a-z0-9-]+\.)+[a-z]{2,})\s+Score\s+\d|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*/gi
+				),
+			]
+				.filter((m) => m[1])
+				.map((m) => bare(m[1]))
 		),
 	];
 	return hosts.map((h) => byHost.get(h) || { id: 'u-' + slug(h), host: h, name: h, country: '', city: '', sector: '' });
@@ -499,7 +516,7 @@ function comments(network, lang, owners, related, link, room, many, host, first)
 function captionDraft(network, original, owners, related) {
 	const limit = (E.NETWORKS[network] || {}).limit || 300;
 	const cap = MENTIONS[network] || 0;
-	const base = String(original || '').replace(/\s+$/, '');
+	const base = String(original || '').replace(/(?<!\s)\s+$/, '');
 	if (!base) return null;
 	const picked = [];
 	const bareMention = (m) => m.replace(/^@/, '').toLowerCase();
@@ -663,7 +680,10 @@ function parseHandles(text) {
 
 async function getJson(deps, url) {
 	const res = await deps.fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(TIMEOUT) });
-	if (!res.ok) throw new Error(url.replace(/^https:\/\//, '').replace(/\?.*$/, '') + ' answered ' + res.status);
+	if (!res.ok)
+		throw new Error(
+			url.replace(/^https:\/\//, '').replace(/\?(?<!\?[^\n\r\u2028\u2029?]*\?).*$/, '') + ' answered ' + res.status
+		);
 	return res.json();
 }
 
@@ -673,7 +693,10 @@ async function getText(deps, url) {
 		headers: { 'User-Agent': 'Mozilla/5.0 (compatible; QAlabOwnerTags/1.0; +https://carlosandmunoz.com)' },
 		signal: AbortSignal.timeout(TIMEOUT),
 	});
-	if (!res.ok) throw new Error(url.replace(/^https?:\/\//, '').replace(/\?.*$/, '') + ' answered ' + res.status);
+	if (!res.ok)
+		throw new Error(
+			url.replace(/^https?:\/\//, '').replace(/\?(?<!\?[^\n\r\u2028\u2029?]*\?).*$/, '') + ' answered ' + res.status
+		);
 	return (await res.text()).slice(0, HTML_MAX);
 }
 
@@ -919,7 +942,10 @@ async function latestPost(deps, a) {
 			? {
 					id: st.url,
 					url: st.url,
-					text: clip(String(st.content || '').replace(/<[^>]+>/g, ' '), 600),
+					text: clip(
+						String(st.content || '').replace(/<[^>]+>|(<[^>]*$)/g, (m, open) => open || ' '),
+						600
+					),
 					createdAt: st.created_at,
 					author: { handle: '' },
 				}
@@ -934,7 +960,8 @@ async function latestPost(deps, a) {
 				) || [])[1] || '';
 		if (!channel) return null;
 		const xml = await getText(deps, 'https://www.youtube.com/feeds/videos.xml?channel_id=' + channel);
-		const entry = (xml.match(/<entry>[\s\S]*?<\/entry>/) || [''])[0];
+		const head = xml.match(/<entry>[\s\S]*?<\/entry>|(<entry>)[\s\S]*/);
+		const entry = head && !head[1] ? head[0] : '';
 		const id = (entry.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/) || [])[1];
 		const at = (entry.match(/<published>([^<]+)<\/published>/) || [])[1];
 		return id && fresh(at)
@@ -1022,7 +1049,12 @@ async function run(deps) {
 	);
 	const retry = (d) =>
 		(d.ownerTags || {}).latest && Date.parse((d.ownerTags || {}).none || '') < now - LATEST_RETRY_DAYS * DAY;
-	const keys = new Set(mine.filter((d) => !retry(d)).map((d) => d.key));
+	const keys = new Set(
+		mine
+			.filter((d) => !retry(d))
+			.flatMap((d) => [d.key, workOf(d)])
+			.filter(Boolean)
+	);
 	const byPost = new Map();
 	mine.forEach((d) => {
 		const t = d.ownerTags || {};
@@ -1095,7 +1127,7 @@ async function run(deps) {
 							from: clip(original, 240),
 						});
 				}
-				if (conf.editCaptions && !keys.has(key)) {
+				if (conf.editCaptions && !keys.has(key) && !keys.has(captionWork(p.key, p.network))) {
 					const tags = Object.assign(
 						{ kind: 'caption', post: p.key, mentions: cap.mentions, reports: p.reports.map((r) => r.id) },
 						cap.tags ? { menu: cap.tags } : {}
@@ -1149,7 +1181,7 @@ async function run(deps) {
 		const onMac = LATEST_NETS.includes(a.network);
 		if (!report || room(a.network) <= 0 || (onMac ? latest >= LATEST_PER_RUN : fetched >= REPLY_PER_RUN)) continue;
 		const key = docKey('reply', report.id, a.network, a.handle.toLowerCase());
-		if (keys.has(key)) continue;
+		if (keys.has(key) || keys.has(replyWork(report.id, accountId(a.network, a.handle)))) continue;
 		let target;
 		if (onMac) {
 			latest += 1;
@@ -1447,7 +1479,7 @@ const baseHandle = (a) =>
 		.replace(/^@/, '')
 		.replace(/^channel\//, '')
 		.replace(/\.bsky\.social$/, '')
-		.replace(/@.*$/, '');
+		.replace(/@(?<!@[^\n\r\u2028\u2029@]*@).*$/, '');
 
 /** Suggested accounts Jarvis may approve alone: their handle resolved (verified), or an approved owner uses the same handle on another network. */
 async function autoApprovable(db) {

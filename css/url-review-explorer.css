@@ -40,5 +40,12 @@
 .x-compare-stage { aspect-ratio: 16 / 9; min-height: 160px; background: #071116; }
 .x-foot { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: center; }
 .x-fallback { padding: 24px; color: var(--muted); }
+.cookie-note { position: fixed; z-index: 20; left: 16px; right: 16px; bottom: 16px; max-width: 720px; margin: 0 auto; padding: 16px 18px; border-radius: 18px; background: #fff; color: #12181f; border: 1px solid #d5dce3; box-shadow: 0 18px 50px rgba(8, 14, 18, .28); }
+.cookie-note[hidden] { display: none; }
+.cookie-note p { margin: 0 0 12px; font-size: 15px; line-height: 1.45; color: #12181f; }
+.cookie-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.cookie-actions button { border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+#cookie-necessary { background: transparent; color: #12181f; border: 1px solid #d5dce3; }
+#cookie-allow { background: #0d6e76; color: #fff; border: 0; }
 @media (max-width: 900px) { .x-layout { grid-template-columns: 1fr; } .x-panel { order: -1; } }
 @media (prefers-reduced-motion: reduce) { .x-stage { aspect-ratio: 4 / 3; } }

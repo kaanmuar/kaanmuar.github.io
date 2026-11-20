@@ -51,7 +51,11 @@ function heldReason(record, unlisted) {
 		)
 	)
 		return 'safe-browsing-flagged';
-	if ((report.insights.findings || []).some((f) => f.key === 'sec-threatlists' && f.verdict === 'fail'))
+	if (
+		(report.insights.findings || []).some(
+			(f) => (f.key === 'sec-threatlists' || f.key === 'sec-feodo') && f.verdict === 'fail'
+		)
+	)
 		return 'threat-listed';
 	if ((report.insights.findings || []).some((f) => /^sec-exposed-/.test(String(f.key || '')) && f.verdict === 'fail'))
 		return 'exposed-files';
@@ -106,7 +110,12 @@ function publicReport(report) {
 	const field = psi.field || {};
 	const metric = (m) => (m ? { p75: m.p75, category: m.category } : null);
 	const findings = (ins.findings || [])
-		.filter((f) => !/^(talk-|sec-exposed)/.test(String(f.key || '')))
+		.filter(
+			(f) =>
+				!/^(talk-|sec-exposed|sec-kev$|sec-osv$|sec-drop$|sec-feodo$|sec-breach-news$|sec-cert-anomaly$|sec-targeted$)/.test(
+					String(f.key || '')
+				)
+		)
 		.map((f) =>
 			pick(f, ['key', 'verdict', 'area', 'severity', 'rank', 'title', 'evidence', 'fix', 'effort', 'msg', 'cases'])
 		);

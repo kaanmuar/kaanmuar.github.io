@@ -226,6 +226,7 @@ private fun ProductBody(s: UiState, vm: JarvisViewModel, product: String) {
             Muted("Soft gate (#3478): cold visitors paste a URL and see real gauges + the top finding without an account (5 free/IP/day; 20/day when signed in). Unlock runs OAuth + the ten terms, then queues a full crawl on the same URL. Watch soft_run → soft_preview_shown → soft_unlock_* → full_crawl_queued.")
         })
         CsatPanel(p.obj("csat"))
+        CsatQuotesPanel(s, vm)
     }
 
     val series = p.obj("series")
@@ -323,17 +324,47 @@ private fun CsatPanel(csat: JsonObject?) {
 }
 
 @Composable
+private fun CsatQuotesPanel(s: UiState, vm: JarvisViewModel) {
+    LaunchedEffect(Unit) { if (s.csatQuotes == null) vm.loadCsatQuotes() }
+    val list = s.csatQuotes.orEmpty()
+    Panel("CSAT quotes to approve" + if (list.isNotEmpty()) " (${list.size})" else "", id = "review-csat-pending") {
+        if (s.csatQuotes == null) Muted("Reading pending CSAT quotes…")
+        else if (list.isEmpty()) Muted("No CSAT quotes are waiting.")
+        else Muted("Approve publishes on the CV and adds a Social hub pick. Nothing posts until you approve.")
+        list.take(12).forEach { row ->
+            val id = row.str("id").orEmpty()
+            val busy = "csat:$id" in s.running
+            StatusRow(
+                "info",
+                listOfNotNull(row.str("host")?.ifEmpty { null }, "${fmt(row.num("rating"))}/5", row.num("nps")?.let { "NPS ${fmt(it)}" }).joinToString(" · "),
+                listOfNotNull(ago(row.str("createdAt")), row.str("quote")?.takeIf { it.isNotBlank() }).joinToString(" · ").ifEmpty { null }
+            )
+            Row {
+                TextButton({ vm.decideCsatQuote(id, "approved") }, enabled = !busy) { Text("Approve", color = J.cyan, fontWeight = FontWeight.Bold) }
+                TextButton({ vm.decideCsatQuote(id, "dismissed") }, enabled = !busy) { Text("Dismiss", color = J.muted) }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ReviewOps(s: UiState, vm: JarvisViewModel) {
     val health = s.snapshot.ext("health")
     RescuePanel(s)
     FixesPanel(s)
     ChecksPanel(s)
+    CyberMapPanel(s)
+    ExposedPanel(s)
+    ThreatsPanel(s)
     val alerts = health.obj("alerts").objs("latest")
     if (alerts.isNotEmpty()) Panel("Review alerts", id = "review-alerts") { alerts.take(10).forEach { StatusRow("warn", it.str("title") ?: it.str("kind") ?: "", ago(it.str("at")), it.str("url")) } }
     Panel("Actions", id = "review-ops") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RunJob(s, vm, "sweepReviews", "Sweep reviews")
             RunJob(s, vm, "rerunReviewFailures", "Re-run failures")
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RunJob(s, vm, "threatFeeds", "Threat feeds")
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("daily", "weekly").forEach { SendReport(s, vm, "review", it) } }
         var host by remember { mutableStateOf("") }
@@ -764,6 +795,7 @@ fun SystemsScreen(s: UiState, vm: JarvisViewModel) {
         snap.ext("speed").objs("pages").forEach { p -> KeyRow(p.str("name") ?: "", p.num("score")?.let { fmt(it) } ?: (p.str("error") ?: "—"), score(p.num("score")), p.str("url")) }
     }
     PageSpeedPanels(snap.ext("pagespeed"), vm)
+    LedgerPanel(snap.at("ledger"), Modifier.layoutId(WIDE))
     Panel("Scheduled jobs", id = "systems-jobs", trailing = { ActionButton("Daily now", "daily-now" in s.running) { vm.act("daily-now", "daily-now") { "Daily briefing: " + (it.str("sent") ?: "sent") } } }) {
         snap.ext("jobs").objs("jobs").forEach { j ->
             val name = j.str("name") ?: return@forEach

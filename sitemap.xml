@@ -3,19 +3,19 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://carlosandmunoz.com/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/simulador.html</loc>
-    <lastmod>2026-10-19</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -28,7 +28,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-es.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -41,7 +41,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-pt.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -54,7 +54,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-de.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -67,7 +67,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-fr.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -80,7 +80,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-it.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html"/>
@@ -92,82 +92,10 @@
     <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-it.html"/>
   </url>
   <url>
-    <loc>https://carlosandmunoz.com/qa-review-social.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://carlosandmunoz.com/qa-review-vs.html</loc>
+    <lastmod>2026-11-18</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-es.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-pt.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-de.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-fr.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
-  </url>
-  <url>
-    <loc>https://carlosandmunoz.com/qa-review-social-it.html</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review-social.html"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-social-es.html"/>
-    <xhtml:link rel="alternate" hreflang="pt" href="https://carlosandmunoz.com/qa-review-social-pt.html"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://carlosandmunoz.com/qa-review-social-de.html"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://carlosandmunoz.com/qa-review-social-fr.html"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://carlosandmunoz.com/qa-review-social-it.html"/>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qalaburlreview.html</loc>
@@ -189,7 +117,7 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-review-guide.html</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -200,32 +128,38 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/cyber-attacks.html</loc>
+    <lastmod>2026-11-19</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/qa-review-legal.html</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/book.html</loc>
-    <lastmod>2026-11-01</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/accessibility.html</loc>
-    <lastmod>2026-10-24</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa.html</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/qa-lab.html</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -255,13 +189,13 @@
   </url>
   <url>
     <loc>https://carlosandmunoz.com/llms.txt</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/llms-full.txt</loc>
-    <lastmod>2026-11-16</lastmod>
+    <lastmod>2026-11-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>

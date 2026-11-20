@@ -272,10 +272,17 @@ function aiPrompt(evidence) {
 		.join('\n');
 }
 
+// What /\{[\s\S]*\}/ matches: the first "{" through the last "}" after it; undefined when there is none.
+function outerBraces(raw) {
+	const start = raw.indexOf('{');
+	const end = raw.lastIndexOf('}');
+	return start >= 0 && end > start ? raw.slice(start, end + 1) : undefined;
+}
+
 // Gemini's answer, kept only when every field is in the schema; anything else falls back to the rules.
 function parseAi(text) {
 	const raw = String(text || '');
-	const body = (raw.match(/\{[\s\S]*\}/) || [])[0];
+	const body = outerBraces(raw);
 	if (!body) return null;
 	let data;
 	try {

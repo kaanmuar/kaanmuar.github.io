@@ -19,7 +19,7 @@ const RANK = { none: 0, low: 1, medium: 2, high: 3 };
 const FREEMAIL =
 	/^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|pm|gmx|web|mail|yandex|zoho|uol|bol|terra|libero|orange|free|laposte|t-online|qq|163)\./;
 const ACADEMIC = /(^|\.)(edu|edu\.[a-z]{2}|ac\.[a-z]{2})$/;
-const PUPILS = /(^|\.)k12\.|(^|\.)(sch|school|schule|escola|escuela)\.[a-z.]+$/;
+const PUPILS = /(^|\.)k12\.|(^|\.)(sch|school|schule|escola|escuela)\.[a-z.]{1,25}$/;
 const ALUMNI = /(^|\.)(alumni|alum|alumnos-egresados|exalumnos)\./;
 const FACULTY =
 	/\b(professor|lecturer|faculty|dean|teacher|instructor|profesora?|docente|catedr[aá]tic[oa]|dozent(in)?|enseignante?|maître de conférences|insegnante|ricercat(ore|rice)|recruiter|talent acquisition|hiring manager)\b/i;

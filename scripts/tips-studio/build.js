@@ -579,15 +579,29 @@ function seconds(file) {
 }
 
 // spawnSync without blocking the event loop, so the frame workers keep drawing while edge-tts and ffmpeg run.
-function exec(cmd, argv) {
+// A call that runs past its timeout is killed and resolves with timedOut: true (no error), so the caller can retry it.
+// Without a timeout a hung edge-tts request held the whole render until GitHub's 180-minute job limit (#3840).
+const EXEC_TIMEOUT_MS = 10 * 60 * 1000;
+const VOICE_TIMEOUT_MS = 2 * 60 * 1000;
+function exec(cmd, argv, timeoutMs = EXEC_TIMEOUT_MS) {
 	return new Promise((resolve) => {
 		const child = spawn(cmd, argv);
 		let stderr = '';
+		let timer = null;
+		const done = (result) => {
+			clearTimeout(timer);
+			resolve(result);
+		};
+		timer = setTimeout(() => {
+			stderr += '\n[timed out after ' + timeoutMs / 1000 + 's; killed]';
+			child.kill('SIGKILL');
+			done({ status: null, timedOut: true, stderr });
+		}, timeoutMs);
 		child.stderr.on('data', (chunk) => {
 			stderr += chunk;
 		});
-		child.on('error', (error) => resolve({ status: null, error, stderr }));
-		child.on('close', (status) => resolve({ status, stderr }));
+		child.on('error', (error) => done({ status: null, error, stderr }));
+		child.on('close', (status) => done({ status, stderr }));
 	});
 }
 
@@ -602,7 +616,7 @@ async function speak(voice, text, file) {
 			text,
 			'--write-media',
 			file,
-		]);
+		], VOICE_TIMEOUT_MS);
 		if (run.status === 0 && seconds(file) > 0.5) return seconds(file);
 		if (run.error || /ModuleNotFoundError|No module named/.test(run.stderr)) break;
 		await new Promise((resolve) => setTimeout(resolve, (3 + attempt * 5) * 1000));
@@ -826,6 +840,19 @@ async function encodeClip(tip, file, tmp, scenes, length) {
 		) || [])[1]
 	);
 	if (!(peak > -30)) throw new Error('clip ' + tip.id + ' is silent (peak ' + peak + ' dB); never post a muted clip');
+	const lufs = await integratedLufs(file);
+	if (lufs !== null && lufs < LUFS_QUIET_BELOW)
+		console.warn('clip ' + tip.id + ' is quiet: ' + lufs + ' LUFS (web target ' + LUFS_TARGET + '); report only, not a gate');
+}
+
+// Loudness report (#3791): platforms normalise near -14 LUFS, so a clip far below it sounds quiet next to the rest.
+// Only a warning: the render never gates on it or changes the mix (the peak rule above is the gate).
+const LUFS_TARGET = -14;
+const LUFS_QUIET_BELOW = -16;
+async function integratedLufs(file) {
+	const r = await exec(FFMPEG, ['-hide_banner', '-nostdin', '-i', file, '-filter_complex', 'ebur128=peak=true', '-f', 'null', '-']);
+	const m = (r.stderr || '').match(/Summary[\s\S]*?I:\s+(-?[\d.]+) LUFS/);
+	return m ? parseFloat(m[1]) : null;
 }
 
 // Posts dated before today keep the caption they went out with; the calendar is left as the queues hold it.

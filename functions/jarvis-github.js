@@ -7,6 +7,7 @@
    (jarvis_github_local/latest). Every part is caught on its own; a 403/404 for a permission the app lacks leaves that
    part { ok:false, error, need } and a line in needs[]. */
 const core = require('./jarvis-core');
+const etag = require('./etag-cache');
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -121,7 +122,12 @@ async function mapLimit(list, limit, fn) {
 
 // --- GitHub client ----------------------------------------------------------------------------------------------
 
-function client(fetchImpl, token) {
+/* GETs are conditional (#3835): a 304 serves the remembered body and spends no REST quota. The store lives as long as the
+   instance; client().cacheStats counts hits (304) and misses. */
+const ETAGS = etag.memoryStore(500);
+
+function client(rawFetch, token) {
+	const fetchImpl = etag.etagFetch(rawFetch, ETAGS, token);
 	const headers = {
 		Authorization: 'Bearer ' + token,
 		Accept: 'application/vnd.github+json',
@@ -177,7 +183,7 @@ function client(fetchImpl, token) {
 		}
 		return data.data || {};
 	};
-	return { get, pages, graphql };
+	return { get, pages, graphql, cacheStats: fetchImpl.stats };
 }
 
 async function tokenFor(ctx, scope) {
@@ -803,6 +809,47 @@ async function issuesPart(gh, now, start, days, live) {
 	};
 }
 
+// The weekly tool scout (#3857): its open draft PR (tool-scout/<date>) and the tickets under the arsenal parent.
+const ARSENAL = 3828;
+const SCOUT_REF = /^tool-scout\/(\d{4}-\d{2}-\d{2})$/;
+
+async function scoutPart(gh, open, now) {
+	const found = open
+		.map((pr) => ({ pr, m: SCOUT_REF.exec((pr.head && pr.head.ref) || '') }))
+		.filter((x) => x.m)
+		.sort((a, b) => ms(b.pr.created_at) - ms(a.pr.created_at))[0];
+	const count = (title, word) => {
+		const m = new RegExp('(\\d+) ' + word).exec(title || '');
+		return m ? Number(m[1]) : null;
+	};
+	const run = found
+		? {
+				pr: found.pr.number,
+				url: found.pr.html_url || '',
+				date: found.m[1],
+				draft: !!found.pr.draft,
+				ageH: round((now - ms(found.pr.created_at)) / HOUR),
+				drift: count(found.pr.title, 'drift'),
+				candidates: count(found.pr.title, 'new candidates'),
+			}
+		: null;
+	const kids = await gh.get('repos/' + REPO + '/issues/' + ARSENAL + '/sub_issues?per_page=100');
+	const list = Array.isArray(kids) ? kids : [];
+	const items = list
+		.filter((i) => i.state === 'open')
+		.sort((a, b) => b.number - a.number)
+		.slice(0, ITEMS)
+		.map((i) => ({ number: i.number, title: String(i.title || '').slice(0, 160), url: i.html_url || '' }));
+	return {
+		run,
+		tickets: {
+			open: list.filter((i) => i.state === 'open').length,
+			closed: list.filter((i) => i.state !== 'open').length,
+			items,
+		},
+	};
+}
+
 const encodeRef = (name) => String(name).split('/').map(encodeURIComponent).join('/');
 
 async function branchesPart(gh, open, closed, local, now) {
@@ -912,15 +959,13 @@ async function deploysPart(gh, runs, history, now, days, want) {
 		if (denied(error)) want('deployments');
 	}
 	return {
-		last: last
-			.slice(0, 10)
-			.map((r) => ({
-				name: r.name,
-				at: r.updated_at,
-				conclusion: conclusionOf(r),
-				url: r.html_url || '',
-				sha: String(r.head_sha || '').slice(0, 7),
-			})),
+		last: last.slice(0, 10).map((r) => ({
+			name: r.name,
+			at: r.updated_at,
+			conclusion: conclusionOf(r),
+			url: r.html_url || '',
+			sha: String(r.head_sha || '').slice(0, 7),
+		})),
 		daily: dayKeys(now, days)
 			.filter((day) => byDay[day])
 			.map((day) => Object.assign({ day }, byDay[day])),
@@ -1142,7 +1187,10 @@ function resetIso(value) {
 const rate = (r) =>
 	r ? { used: Number(r.used) || 0, limit: Number(r.limit) || 0, resetAt: resetIso(r.reset ?? r.resetAt) } : null;
 
-async function budgetPart(gh, local) {
+/* kaanmuar's own budget: the Mac's report while it is fresh, else the copy kaanmuarBudget keeps in the cloud. */
+const MAC_STALE = 30 * MINUTE;
+
+async function budgetPart(gh, local, cloud, now) {
 	const app = {
 		core: gh
 			? await gh
@@ -1152,14 +1200,36 @@ async function budgetPart(gh, local) {
 			: null,
 	};
 	const rates = local && local.rate;
+	const macFresh = !!(local && local.at && now - Date.parse(local.at) <= MAC_STALE);
+	let kaanmuar = rates
+		? { graphql: rate(rates.graphql), core: rate(rates.core), at: iso(local.at), source: 'mac' }
+		: null;
+	if (cloud && cloud.at && (!macFresh || !kaanmuar))
+		kaanmuar = { graphql: rate(cloud.graphql), core: rate(cloud.core), at: iso(cloud.at), source: 'cloud' };
 	return {
-		kaanmuar: rates ? { graphql: rate(rates.graphql), core: rate(rates.core), at: iso(local.at) } : null,
+		kaanmuar,
 		app,
 		hourly: (local && Array.isArray(local.rateHistory) ? local.rateHistory : [])
 			.slice(-48)
 			.map((h) => ({ hour: h.hour || '', graphql: Number(h.graphql ?? h.used) || 0 })),
 	};
 }
+
+/* Reads kaanmuar's rate limit with the user's own token (GITHUB_BUDGET_TOKEN, a Firebase secret; without it this does
+   nothing) and keeps it in jarvis_github_budget/kaanmuar, so Jarvis still has the number when the Mac sleeps (#3759). */
+async function kaanmuarBudget(ctx) {
+	const token = ctx.env && ctx.env.GITHUB_BUDGET_TOKEN;
+	if (!token) return null;
+	const r = (await client(ctx.fetch, token).get('rate_limit')).resources || {};
+	await ctx.db
+		.collection('jarvis_github_budget')
+		.doc('kaanmuar')
+		.set({ at: new Date(ctx.now).toISOString(), graphql: cleanBudget(r.graphql), core: cleanBudget(r.core) });
+	return null;
+}
+
+const cleanBudget = (x) =>
+	x ? { used: Number(x.used) || 0, limit: Number(x.limit) || 0, reset: resetIso(x.reset) } : null;
 
 function agentsPart(local, now, start) {
 	if (!local) throw new Error('The Mac GitHub reporter has not uploaded yet.');
@@ -1568,6 +1638,7 @@ async function source(ctx) {
 		installed: once(async () => repo().get('installation/repositories?per_page=100')),
 		days: once(() => readDays(ctx.db)),
 		local: once(() => readDoc(ctx.db, 'jarvis_github_local', 'latest')),
+		budgetCloud: once(() => readDoc(ctx.db, 'jarvis_github_budget', 'kaanmuar')),
 		diag: once(() => readLatest(ctx.db, 'jarvis_github_diag', 'at', 20)),
 		weekly: once(() => readLatest(ctx.db, 'jarvis_github_weekly', 'week', 1)),
 	};
@@ -1594,9 +1665,10 @@ async function source(ctx) {
 		),
 		part('issues', async () => issuesPart(repo(), now, start, days, live)),
 		part('branches', async () => branchesPart(repo(), await data.open(), await data.closed(), await data.local(), now)),
+		part('scout', async () => scoutPart(repo(), await data.open(), now)),
 		part('deploys', async () => deploysPart(repo(), await data.runs(), await data.days(), now, days, want)),
 		part('android', async () => androidPart(repo(), start)),
-		part('budget', async () => budgetPart(gh, await data.local())),
+		part('budget', async () => budgetPart(gh, await data.local(), await data.budgetCloud(), now)),
 		part('agents', async () => agentsPart(await data.local(), now, start)),
 		(async () => {
 			const project = (await repoNames()).filter((r) => r === REPO || shown.includes(r));
@@ -1779,9 +1851,11 @@ async function backfill(ctx) {
 }
 
 module.exports = {
+	__client: client,
 	source,
 	daily,
 	backfill,
+	kaanmuarBudget,
 	grade,
 	doraLevel,
 	xpLevel,
@@ -1791,4 +1865,5 @@ module.exports = {
 	ticketOf,
 	checkState,
 	isDeploy,
+	scoutPart,
 };

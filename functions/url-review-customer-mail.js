@@ -1008,7 +1008,12 @@ function reportFacts(record, open, lang) {
 	const insights = report.insights || {};
 	const score = insights.score || null;
 	const actionable = (Array.isArray(insights.findings) ? insights.findings : [])
-		.filter((item) => item && (item.verdict === 'fail' || item.verdict === 'risk'))
+		.filter(
+			(item) =>
+				item &&
+				(item.verdict === 'fail' || item.verdict === 'risk') &&
+				(open || !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String(item.key || '')))
+		)
 		.sort((a, b) => (a.rank || 999) - (b.rank || 999));
 	const counts = report.counts || {};
 	const fails = actionable.filter((item) => item.verdict === 'fail').length;
@@ -1022,20 +1027,18 @@ function reportFacts(record, open, lang) {
 			? report.limits.pagesFound + (report.limits.pagesFoundPartial ? '+' : '')
 			: '',
 		cases: Number(counts.cases) || (Array.isArray(report.cases) ? report.cases.length : 0),
-		findings: actionable
-			.slice(0, SHOWN_FINDINGS)
-			.map((item) =>
-				Object.assign(
-					{ area: item.area || '', severity: item.severity || 'low' },
-					open
-						? {
-								shown: findingLine(lang, item, 'title').replace(/\s+/g, ' ').trim(),
-								hidden: 0,
-								fix: findingLine(lang, item, 'fix').replace(/\s+/g, ' ').trim(),
-							}
-						: frost(findingLine(lang, item, 'title'))
-				)
-			),
+		findings: actionable.slice(0, SHOWN_FINDINGS).map((item) =>
+			Object.assign(
+				{ area: item.area || '', severity: item.severity || 'low' },
+				open
+					? {
+							shown: findingLine(lang, item, 'title').replace(/\s+/g, ' ').trim(),
+							hidden: 0,
+							fix: findingLine(lang, item, 'fix').replace(/\s+/g, ' ').trim(),
+						}
+					: frost(findingLine(lang, item, 'title'))
+			)
+		),
 		moreCount: Math.max(0, actionable.length - SHOWN_FINDINGS),
 		total: actionable.length,
 		fails,
@@ -2714,6 +2717,7 @@ const RECEIPT = {
 			'new-run': 'Review run',
 			pass: 'Monthly pass',
 			fixlist: 'Fix list',
+			deep: 'Deep attack-source check',
 			fix: 'Fix package',
 			cases: 'Test case export',
 			alerts: 'Change alerts',
@@ -2743,6 +2747,7 @@ const RECEIPT = {
 			'new-run': 'Revisión',
 			pass: 'Pase mensual',
 			fixlist: 'Lista de arreglos',
+			deep: 'Revisión profunda de fuentes de ataque',
 			fix: 'Paquete de arreglo',
 			cases: 'Exportación de casos de prueba',
 			alerts: 'Alertas de cambios',
@@ -2773,6 +2778,7 @@ const RECEIPT = {
 			'new-run': 'Revisão',
 			pass: 'Passe mensal',
 			fixlist: 'Lista de correções',
+			deep: 'Verificação profunda de fontes de ataque',
 			fix: 'Pacote de correção',
 			cases: 'Exportação de casos de teste',
 			alerts: 'Alertas de mudanças',
@@ -2803,6 +2809,7 @@ const RECEIPT = {
 			'new-run': 'Prüfung',
 			pass: 'Monatspass',
 			fixlist: 'Korrekturliste',
+			deep: 'Tiefenprüfung der Angriffsquellen',
 			fix: 'Fix-Paket',
 			cases: 'Export der Testfälle',
 			alerts: 'Änderungsalarme',
@@ -2833,6 +2840,7 @@ const RECEIPT = {
 			'new-run': 'Revue',
 			pass: 'Pass mensuel',
 			fixlist: 'Liste de corrections',
+			deep: 'Contrôle approfondi des sources d’attaque',
 			fix: 'Forfait de correction',
 			cases: 'Export des cas de test',
 			alerts: 'Alertes de changement',
@@ -2863,6 +2871,7 @@ const RECEIPT = {
 			'new-run': 'Revisione',
 			pass: 'Pass mensile',
 			fixlist: 'Lista delle correzioni',
+			deep: 'Controllo approfondito delle fonti di attacco',
 			fix: 'Pacchetto di correzione',
 			cases: 'Esportazione dei casi di test',
 			alerts: 'Avvisi di modifica',

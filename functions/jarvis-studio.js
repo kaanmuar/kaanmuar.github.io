@@ -64,7 +64,9 @@ function sources(listing) {
 /** Skit ids from skits.js, each with the languages whose take is in the skit-takes release. */
 function skits(skitsJs, assets) {
 	const names = (assets || []).map((a) => a.name);
-	const ids = [...String(skitsJs || '').matchAll(/^\s*id:\s*"([a-z0-9-]+)"/gm)].map((m) => m[1]);
+	const ids = [
+		...String(skitsJs || '').matchAll(/^(?<!^[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029])\s*id:\s*"([a-z0-9-]+)"/gm),
+	].map((m) => m[1]);
 	return ids.map((id) => ({ id, takes: LANGS.filter((lang) => names.includes(id + '-' + lang + '.mp4')) }));
 }
 

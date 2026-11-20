@@ -247,7 +247,7 @@ async function cloudflare(url, host, token, account, fetchImpl, opts) {
 		const asked = await getJson(fetchImpl, base + 'scan', {
 			method: 'POST',
 			headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-			body: JSON.stringify({ url, visibility: 'Public' }),
+			body: JSON.stringify({ url, visibility: 'Unlisted' }),
 		});
 		uuid = asked && asked.uuid;
 		if (!uuid) throw new Error('no scan id');

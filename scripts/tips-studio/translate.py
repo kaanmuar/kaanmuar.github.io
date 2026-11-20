@@ -64,9 +64,13 @@ WRONG_REGISTER = {lang: re.compile(rule, 0 if lang == "it" else re.I) for lang, 
 SUBORDINATE = re.compile(r"\b(?:que|cuando|aunque|si|hasta|mientras|donde|quizá|quizás|ojalá|che|se|perché|quando|affinché)\s+(?:\S+\s+){0,2}$", re.I)
 
 
+# Tries before Google is given up on: 30 s and 60 s of backoff, not the 18 minutes of eight (#3897).
+GTX_TRIES = 3
+
+
 def gtx(text, lang):
     data = urllib.parse.urlencode({"q": text}).encode()
-    for attempt in range(8):
+    for attempt in range(GTX_TRIES):
         try:
             req = urllib.request.Request(URL + lang, data=data, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=30) as res:
@@ -74,10 +78,75 @@ def gtx(text, lang):
             time.sleep(1.5)
             return out
         except Exception as err:  # rate limits come back as HTTP 429
-            if attempt == 7:
+            if attempt == GTX_TRIES - 1:
                 raise
             print("retry", lang, err, file=sys.stderr)
             time.sleep(30 * (attempt + 1))
+
+
+# Google's free translator rate-limits a CI runner for long stretches (#3897). Once it refuses, the rest of the run
+# sends its fragments to Gemini, one request per fragment list, with the same checks; Google is not asked again.
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+GOOGLE_DOWN = set()
+REGISTER_PROMPT = {
+    "es": "the informal tú form (never usted)",
+    "pt": "the informal você form (never tu)",
+    "it": "the informal tu form (never Lei)",
+    "de": "the formal Sie form (never du)",
+    "fr": "the formal vous form (never tu)",
+}
+LANG_NAME = {"es": "Spanish", "pt": "Brazilian Portuguese", "it": "Italian", "de": "German", "fr": "French"}
+
+
+def gemini(batch, lang):
+    """Translates each fragment of a batch in one request; returns the same number of strings, in order."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise RuntimeError("Google's translator refused and GEMINI_API_KEY is not set")
+    prompt = (
+        f"Translate each string in this JSON array from English to {LANG_NAME[lang]}. Address the viewer as "
+        f"{REGISTER_PROMPT[lang]}. Keep URLs, hashtags, @handles, line breaks, brand and product names (QA-lab, "
+        "Live Reports, carlosandmunoz.com) and any *emphasis* marks exactly as they are. Keep the capitalisation "
+        "each string starts with. Return only a JSON array of strings, the same length and order.\n"
+    )
+    body = json.dumps(
+        {
+            "contents": [{"parts": [{"text": prompt + json.dumps(batch, ensure_ascii=False)}]}],
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2},
+        },
+        ensure_ascii=False,
+    ).encode()
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                GEMINI_URL, data=body, headers={"Content-Type": "application/json", "x-goog-api-key": key}
+            )
+            with urllib.request.urlopen(req, timeout=120) as res:
+                reply = json.load(res)
+            out = json.loads(reply["candidates"][0]["content"]["parts"][0]["text"])
+            if isinstance(out, list) and len(out) == len(batch) and all(isinstance(s, str) for s in out):
+                return out
+            raise ValueError("Gemini returned %s strings for %d" % (len(out) if isinstance(out, list) else "no", len(batch)))
+        except Exception as err:
+            print("gemini retry", lang, err, file=sys.stderr)
+            time.sleep(10 * (attempt + 1))
+    raise RuntimeError("Gemini could not translate a batch to " + lang)
+
+
+def translate_batch(batch, lang):
+    """One line per fragment: Google first, then Gemini once Google has refused."""
+    if not GOOGLE_DOWN:
+        try:
+            if len(batch) > 1:
+                lines = gtx("\n".join(batch), lang).split("\n")
+                if len(lines) == len(batch):
+                    return lines
+                return [gtx(p, lang) for p in batch]
+            return [gtx(batch[0], lang)]
+        except Exception as err:
+            GOOGLE_DOWN.add(lang)
+            print("Google's translator refused (%s); Gemini translates the rest of the run" % err, file=sys.stderr)
+    return gemini(batch, lang)
 
 
 def spans(text):
@@ -164,9 +233,7 @@ def fill(texts, lang, cache):
             batch.append(todo.pop(0))
         if not batch:
             batch.append(todo.pop(0))
-        lines = gtx("\n".join(batch), lang).split("\n") if len(batch) > 1 else [gtx(batch[0], lang)]
-        if len(lines) != len(batch):
-            lines = [gtx(p, lang) for p in batch]
+        lines = translate_batch(batch, lang)
         for src, out in zip(batch, lines):
             done[src] = tidy(src, out.strip(), lang)
     for p, (name, rest) in asked.items():

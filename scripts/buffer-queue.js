@@ -45,6 +45,7 @@ const ledger = require('./social-ledger');
 const { createGate, withHubLink, prepareCaption, LIMITS, LINK } = require('./hub-gate');
 const faceRoute = require('./face-route');
 const socialClip = require('./social-clip');
+const { aiLabel } = require('./ai-label'); // the AI-generated label on a synthetic-voice clip (#3824)
 
 const ROOT = path.resolve(__dirname, '..');
 const API = 'https://api.buffer.com';
@@ -840,6 +841,12 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
 	// Prefer the release clip when the batch voiced this slug (#3603); else the feed still.
 	const feedOrClip = () =>
 		clipBase && socialClip.fromBatch(batch, slug, cap, voicedMap(batch)) ? video() : image('feed');
+	// The metadata under a service's key, with isAiGenerated when the clip is synthetic-voiced (#3824); null when empty.
+	const serviceMeta = (service, base, video) => {
+		const ai = aiLabel(service, { video, record: (voicedMap(batch) || {})[slug] || null });
+		const out = Object.assign({}, base || {}, ai || {});
+		return Object.keys(out).length ? { [service]: out } : null;
+	};
 	const soon = new Date(Date.now() + 20 * 60e3).toISOString();
 	const networkOf = (service) => (service === 'twitter' ? 'x' : service);
 	const linked = (text) => withHubLink(text, { batch, slug, network: networkOf(channel.service) });
@@ -910,12 +917,7 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
 			const feedAssets = igPair ? igPair.map((s) => image('feed', s.slug)) : [feed];
 			const igType = igPair ? 'post' : feed.video ? 'reel' : 'post';
 			return [
-				post('instagram', p.text, feedAssets, {
-					instagram: Object.assign(
-						{ type: igType, shouldShareToFeed: true },
-						p.firstComment ? { firstComment: p.firstComment } : {}
-					),
-				}),
+				post('instagram', p.text, feedAssets, serviceMeta('instagram', Object.assign({ type: igType, shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}), !!(feed && feed.video))),
 				post('instagram-story', own('title'), [image('story')], {
 					instagram: { type: 'story', shouldShareToFeed: false },
 				}),
@@ -926,16 +928,14 @@ function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
 			const replies = xReplies(cap, text, own('x') === cap.x, own('linkedin'));
 			const media = feedOrClip();
 			const thread = [{ text, assets: [media] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
-			return [post('x', text, [media], replies.length ? { twitter: { thread } } : null)];
+			return [post('x', text, [media], serviceMeta('twitter', replies.length ? { thread } : null, !!media.video))];
 		}
 		case 'tiktok':
-			return clipBase ? [post('tiktok', linked(cap.tiktok), [video()])] : [];
+			return clipBase ? [post('tiktok', linked(cap.tiktok), [video()], serviceMeta('tiktok', null, true))] : [];
 		case 'youtube':
 			return clipBase
 				? [
-						post('youtube', linked(cap.youtube), [video()], {
-							youtube: { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || '28' },
-						}),
+						post('youtube', linked(cap.youtube), [video()], serviceMeta('youtube', { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || '28' }, true)),
 					]
 				: [];
 		default:
@@ -1059,8 +1059,11 @@ async function main() {
 					continue;
 				}
 				const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
+				// An X post with an AI label and no thread carries twitter metadata without a thread (#3840).
 				const thread =
-					input.metadata && input.metadata.twitter ? ' (thread of ' + input.metadata.twitter.thread.length + ')' : '';
+					input.metadata && input.metadata.twitter && input.metadata.twitter.thread
+						? ' (thread of ' + input.metadata.twitter.thread.length + ')'
+						: '';
 				if (opts['dry-run']) {
 					console.log(
 						'dry-run',

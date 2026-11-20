@@ -132,7 +132,7 @@ function ladderFor(comment, person, conf, now) {
 	const p = person || {};
 	const site = clip(p.domain || p.site || '', 120)
 		.replace(/^https?:\/\//, '')
-		.replace(/\/.*$/, '');
+		.replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, '');
 	return Object.assign({ invite: rung(p, conf, now), active: active(p, conf, now) }, site ? { site } : {});
 }
 
@@ -301,7 +301,7 @@ function dmFacts(comment, person, trial) {
 	const host = clip(p.domain || p.site || '', 120)
 		.replace(/^https?:\/\//, '')
 		.replace(/^www\./, '')
-		.replace(/\/.*$/, '');
+		.replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, '');
 	const id = p.id || c.network + ':' + handle;
 	const look = LOOKS[parseInt(crypto.createHash('sha1').update(id).digest('hex').slice(0, 6), 16) % LOOKS.length];
 	return {
@@ -359,7 +359,7 @@ function parseDms(text, items) {
 			const r = byId[x.key] || {};
 			const dm = clip(
 				String(r.dm || '')
-					.replace(/\s*—\s*/g, ', ')
+					.replace(/(?<!\s)\s+—\s*|—\s*/g, ', ')
 					.replace(/(^|\s)#[\p{L}\p{N}_]+/gu, '$1'),
 				900
 			);

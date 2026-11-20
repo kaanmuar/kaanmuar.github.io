@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /* The daily PageSpeed routine (#1978), one step per command; .github/workflows/pagespeed-daily.yml runs them in order.
 
-   check    --out check.json [--limit n] [--only url,...]   PageSpeed, mobile and desktop, on every sitemap page (PAGESPEED_KEY)
+   check    --out check.json [--limit n] [--only url,...] [--concurrency n]
+                                                            PageSpeed on sitemap pages (PAGESPEED_KEY). Core pages: mobile +
+                                                            desktop. Social: mobile, skipping healthy pages most days (#3684);
+                                                            desktop only for the worst pages that get fixes.
    safe     --check check.json --report safe.json            the safe fixes (scripts/pagespeed/fixes.js) on the 6 worst pages under 90
    ai       --check check.json --report ai.json              Gemini's edits on the worst pages (GEMINI_API_KEY)
    measure  --check check.json --report x.json --base dir [--branch b]
@@ -71,6 +74,17 @@ function runInfo() {
 		: null;
 }
 
+async function runJobs(jobs, key, concurrency) {
+	let done = 0;
+	return psi.pool(jobs, concurrency, async ({ p, mode }) => {
+		const r = await psi.run(fetch, p.url, mode, key, { tries: 2 });
+		done += 1;
+		if (done % 50 === 0 || !r.ok)
+			log(done + '/' + jobs.length + ' ' + p.url + ' ' + mode + ': ' + (r.ok ? r.score : r.error));
+		return r;
+	});
+}
+
 async function check(o) {
 	let list = pagesLib.pages(ROOT);
 	if (o.only) {
@@ -80,19 +94,44 @@ async function check(o) {
 	if (o.limit) list = list.slice(0, Number(o.limit));
 	const key = process.env.PAGESPEED_KEY;
 	if (!key) log('PAGESPEED_KEY is not set; PageSpeed allows only a few calls without it.');
-	const jobs = list.flatMap((p) => psi.MODES.map((mode) => ({ p, mode })));
-	let done = 0;
-	const results = await psi.pool(jobs, Number(o.concurrency) || 12, async ({ p, mode }) => {
-		const r = await psi.run(fetch, p.url, mode, key, { tries: 2 });
-		done += 1;
-		if (done % 50 === 0 || !r.ok)
-			log(done + '/' + jobs.length + ' ' + p.url + ' ' + mode + ': ' + (r.ok ? r.score : r.error));
-		return r;
-	});
+	const concurrency = Number(o.concurrency) || 24;
+	const prev = readJson(path.join(ROOT, DATA + '/latest.json'), { pages: [] });
+	const prevByUrl = new Map((prev.pages || []).map((p) => [p.url, p]));
+	const planned = routine.planCheck(list, prev.pages);
+	log(
+		'PageSpeed check: ' +
+			planned.jobs.length +
+			' PSI calls, reusing ' +
+			planned.reused.length / 2 +
+			' healthy social pages, concurrency ' +
+			concurrency
+	);
+	const results = await runJobs(planned.jobs, key, concurrency);
 	const pages = list.map((p) => Object.assign({}, p));
-	jobs.forEach((j, i) => {
-		pages[list.indexOf(j.p)][j.mode] = results[i];
+	planned.reused.forEach((r) => {
+		pages[r.listIndex][r.mode] = Object.assign({ reused: true }, r.value);
 	});
+	planned.jobs.forEach((j, i) => {
+		pages[j.listIndex][j.mode] = results[i];
+	});
+	// Keep yesterday's desktop for social pages we only re-scored on mobile.
+	pages.forEach((p) => {
+		if (p.desktop) return;
+		const old = prevByUrl.get(p.url);
+		if (old && old.desktop) p.desktop = Object.assign({ reused: true }, old.desktop);
+	});
+	// Fresh desktop for the worst pages the safe/AI fixers will touch.
+	const deskJobs = routine
+		.toFix(pages)
+		.map((p) => ({ p, mode: 'desktop', listIndex: pages.indexOf(p) }))
+		.filter((j) => j.listIndex >= 0 && (!(j.p.desktop && j.p.desktop.ok !== false && Number.isFinite(j.p.desktop.score)) || j.p.desktop.reused));
+	if (deskJobs.length) {
+		log('Desktop re-check for ' + deskJobs.length + ' pages headed to fixes.');
+		const deskResults = await runJobs(deskJobs, key, concurrency);
+		deskJobs.forEach((j, i) => {
+			pages[j.listIndex].desktop = deskResults[i];
+		});
+	}
 	const out = { at: new Date().toISOString(), run: runInfo(), pages };
 	writeJson(o.out, out);
 	const row = routine.runRow({ check: out });

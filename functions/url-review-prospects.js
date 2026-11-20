@@ -104,7 +104,7 @@ const IN = { en: 'in', es: 'en', pt: 'em', de: 'in', fr: 'à', it: 'a' };
 
 // Social profiles, link pages, booking and delivery platforms: a listing there is not the business's own site.
 const PLATFORMS =
-	/(^|\.)(facebook|instagram|linktr|wa|whatsapp|google|goo|youtube|tiktok|twitter|x|linkedin|yelp|tripadvisor|doctoralia|doctolib|jameda|booksy|fresha|treatwell|planity|ubereats|rappi|ifood|deliveroo|justeat|glovoapp|opentable|thefork|resy|zocdoc|healthgrades|houzz|angi|homeadvisor|thumbtack|idealista|fotocasa|zillow|realtor|rightmove|immobilienscout24|seloger|immobiliare|wixsite|business\.site|square|squareup|toasttab|beacons|carrd|bio)\.[a-z.]+$/i;
+	/(^|\.)(facebook|instagram|linktr|wa|whatsapp|google|goo|youtube|tiktok|twitter|x|linkedin|yelp|tripadvisor|doctoralia|doctolib|jameda|booksy|fresha|treatwell|planity|ubereats|rappi|ifood|deliveroo|justeat|glovoapp|opentable|thefork|resy|zocdoc|healthgrades|houzz|angi|homeadvisor|thumbtack|idealista|fotocasa|zillow|realtor|rightmove|immobilienscout24|seloger|immobiliare|wixsite|business\.site|square|squareup|toasttab|beacons|carrd|bio)\.[a-z.]{1,25}$/i;
 
 // Every (country, city, segment) a segment's depth reaches, once, ordered so a lap starts with every country's biggest
 // city in every segment.

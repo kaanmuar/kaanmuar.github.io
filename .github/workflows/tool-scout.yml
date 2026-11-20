@@ -1,0 +1,121 @@
+# .github/workflows/tool-scout.yml
+# Weekly tool scout (#3857): re-checks every repo in .cursor/rules/tool-arsenal.mdc and searches GitHub for new permissive
+# repos per corner, then opens a draft PR with the report. Human gate: nothing is added to the arsenal or the board until
+# Carlos picks. Jarvis lists the job in functions/ops-schedule.js and reads the report PR. The scout's memory (seen.json, so
+# a repo is reported once) lives on the tool-scout-data branch, pushed directly: a draft PR opened with GITHUB_TOKEN gets no
+# required checks and cannot merge (#3891).
+
+name: Tool scout
+
+on:
+  schedule:
+    # Wednesday 15:37 UTC ≈ 10:37 Bogotá
+    - cron: '37 15 * * 3'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Report date (YYYY-MM-DD); empty = today UTC'
+        required: false
+
+concurrency:
+  group: tool-scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Restore the scout's memory
+        run: |
+          set -euo pipefail
+          if git fetch -q --depth=1 origin tool-scout-data; then
+            git show FETCH_HEAD:seen.json > scripts/tool-scout/seen.json
+          else
+            echo "No memory branch yet; every candidate counts as new."
+          fi
+      - name: Audit the arsenal and scout new repos
+        id: scout
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_DATE: ${{ inputs.date }}
+        run: |
+          set -euo pipefail
+          DATE="${INPUT_DATE:-$(date -u +%F)}"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          node scripts/tool-scout.js run --date "$DATE"
+      - name: Open a draft PR
+        if: steps.scout.outputs.findings == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATE: ${{ steps.scout.outputs.date }}
+          DRIFT: ${{ steps.scout.outputs.drift }}
+          CANDIDATES: ${{ steps.scout.outputs.candidates }}
+        run: |
+          set -euo pipefail
+          branch="tool-scout/$DATE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          # The checkout is main's tip, so the report rides along onto the new branch.
+          git switch -q -C "$branch"
+          # The report is gitignored (Tailwind scans tracked text), so force-add it like creative-intel does.
+          git add -f "scripts/tool-scout/reports/$DATE.md"
+          if git diff --cached --quiet; then
+            echo "Nothing new to report."
+            exit 0
+          fi
+          git commit -q -m "Tool scout $DATE (#3857)" \
+            -m "$DRIFT arsenal drift rows and $CANDIDATES new candidates. Read-only report; the arsenal changes only with a ticket."
+          git push -q -u origin "HEAD:$branch" --force-with-lease
+          existing=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Draft PR already open: #$existing"
+            exit 0
+          fi
+          body=$(cat <<EOF
+          ## Summary
+          - Weekly tool scout (#3857): $DRIFT arsenal drift rows and $CANDIDATES new permissive candidates.
+          - Human gate: read \`scripts/tool-scout/reports/$DATE.md\`, tell Jarvis or Carlos which to ticket. Nothing here edits \`.cursor/rules/tool-arsenal.mdc\` or files issues.
+          - The scout's memory is on the \`tool-scout-data\` branch, so these repos do not come back next week. Close this PR once read; it needs no merge.
+
+          Parent #3828.
+          EOF
+          )
+          body=$(printf '%s\n' "$body" | sed 's/^          //')
+          gh pr create --draft --base main --head "$branch" \
+            --title "Tool scout $DATE: $DRIFT drift, $CANDIDATES new candidates" \
+            --body "$body"
+      - name: Save the scout's memory
+        if: steps.scout.outcome == 'success'
+        env:
+          DATE: ${{ steps.scout.outputs.date }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          idx="$RUNNER_TEMP/scout.idx"
+          rm -f "$idx"
+          parent=""
+          if git fetch -q --depth=1 origin tool-scout-data; then
+            parent=$(git rev-parse FETCH_HEAD)
+            if git show "$parent:seen.json" | cmp -s - scripts/tool-scout/seen.json; then
+              echo "Memory unchanged."
+              exit 0
+            fi
+            GIT_INDEX_FILE="$idx" git read-tree "$parent"
+          fi
+          add() { GIT_INDEX_FILE="$idx" git update-index --add --cacheinfo "100644,$(git hash-object -w "$1"),$2"; }
+          add scripts/tool-scout/seen.json seen.json
+          if [ -f "scripts/tool-scout/reports/$DATE.md" ]; then add "scripts/tool-scout/reports/$DATE.md" "report-$DATE.md"; fi
+          tree=$(GIT_INDEX_FILE="$idx" git write-tree)
+          commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "Tool scout memory $DATE (#3857)")
+          git push -q origin "${commit}:refs/heads/tool-scout-data"

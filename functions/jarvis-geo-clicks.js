@@ -30,7 +30,7 @@ const bare = (host) =>
 	String(host || '')
 		.toLowerCase()
 		.replace(/^https?:\/\//, '')
-		.replace(/[/:].*$/, '')
+		.replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, '')
 		.replace(/^www\./, '');
 const bogotaDay = (ms) =>
 	new Intl.DateTimeFormat('en-CA', {

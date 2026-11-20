@@ -9,6 +9,7 @@
    Nothing is guessed: no address patterns, no people search, no third-party directories. Role inboxes (info@,
    ventas@, reservas@) come first; a named address the site publishes is kept after them as "named". */
 const P = require('./engagement-profiles');
+const { replaceBlocks } = require('./tag-blocks');
 
 const CONTACT_PAGES = 3;
 const MAX_EMAILS = 4;
@@ -104,12 +105,20 @@ const bare = (host) =>
 	String(host || '')
 		.toLowerCase()
 		.replace(/^https?:\/\//, '')
-		.replace(/[/:].*$/, '')
+		.replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, '')
 		.replace(/^www\./, '');
+/* group 1 of the first match of a global `re` that sets it. Each `re` ends in a branch that swallows a tag that cannot
+   match, so the next try starts after that tag instead of inside it (#3965). */
+const firstGroup = (re, text) => {
+	let m;
+	while ((m = re.exec(text)) && !m[1]);
+	return m ? m[1] : undefined;
+};
+/* Decode obfuscation only (@ / dot). Do not turn &amp; into & here: emailOf calls decode
+   again, and CodeQL flags that as double-unescaping (#3719 / alert 141). */
 const decode = (s) =>
 	String(s || '')
 		.replace(/&#64;|&#x40;|%40/gi, '@')
-		.replace(/&amp;/g, '&')
 		.replace(/&#46;|&#x2e;/gi, '.');
 
 /** True when the address sits on the site's domain (or one sits under the other). */
@@ -126,7 +135,7 @@ function emailOf(raw, host) {
 		.toLowerCase()
 		.replace(/^mailto:/, '')
 		.split('?')[0]
-		.replace(/[.,;:]+$/, '');
+		.replace(/(?<![.,;:])[.,;:]+$/, '');
 	if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) return null;
 	if (
 		/\.(png|jpe?g|gif|webp|svg|css|js)$/.test(email) ||
@@ -141,7 +150,8 @@ function emailOf(raw, host) {
 /** Every JSON-LD object in a page, @graph members included. */
 function jsonLd(html) {
 	const out = [];
-	const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+	const re =
+		/<script(?=[^<>]+?type\s*=\s*["']application\/ld\+json["'])[^<>]*>((?:[^<]|<(?!\/?script))*)<\/script[^<>]*>/gi;
 	let m;
 	const walk = (x) => {
 		if (Array.isArray(x)) return x.forEach(walk);
@@ -210,7 +220,7 @@ function contactLinks(html, base) {
 		return [];
 	}
 	const out = [];
-	const re = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
+	const re = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
 	let m;
 	while ((m = re.exec(String(html || ''))) && out.length < CONTACT_PAGES) {
 		let u;
@@ -228,7 +238,9 @@ function contactLinks(html, base) {
 
 /** The two-letter language a page declares, if it is a site language. */
 function langOf(html) {
-	const l = ((String(html || '').match(/<html[^>]*\blang\s*=\s*["']?([a-zA-Z]{2})/i) || [])[1] || '').toLowerCase();
+	const l = (
+		firstGroup(/<html[^>]*\blang\s*=\s*["']?([a-zA-Z]{2})|<html[^>]*/gi, String(html || '')) || ''
+	).toLowerCase();
 	return SITE_LANGS.includes(l) ? l : '';
 }
 
@@ -259,10 +271,12 @@ function contactsOf(pages, host, hint) {
 			};
 			for (const m of html.matchAll(/href\s*=\s*["']mailto:([^"'?]+)/gi)) add(m[1]);
 			org.emails.forEach(add);
-			const text = decode(html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/gi, ' '))
+			const text = decode(replaceBlocks(html, /<(script|style)\b/gi, ' ', true))
 				.replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, '@')
 				.replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, '.');
-			for (const m of text.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add(m[0]);
+			// The second branch swallows a run with no address so no later start inside it rescans it (#3965).
+			for (const m of text.matchAll(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})|[A-Za-z0-9._%+-]+/g))
+				if (m[1]) add(m[1]);
 			[...[...html.matchAll(/href\s*=\s*["']tel:([^"']+)/gi)].map((m) => m[1]), ...org.phones]
 				.map(phoneOf)
 				.forEach((x) => {
@@ -272,7 +286,12 @@ function contactsOf(pages, host, hint) {
 			if (!name)
 				name =
 					org.name ||
-					((html.match(/<meta[^>]+property\s*=\s*["']og:site_name["'][^>]+content\s*=\s*["']([^"']+)/i) || [])[1] || '')
+					(
+						firstGroup(
+							/<meta[^>]+?property\s*=\s*["']og:site_name["'](?:[^>]+content\s*=\s*["']([^"']+)|[^>]*)|<meta[^>]*/gi,
+							html
+						) || ''
+					)
 						.trim()
 						.slice(0, 120);
 			if (!country) country = org.country;
@@ -312,8 +331,10 @@ async function page(fetchFn, url) {
 async function discover(fetchFn, host, hint) {
 	const h = bare(host);
 	const home =
-		(await page(fetchFn, 'https://' + host.replace(/^https?:\/\//, '').replace(/\/.*$/, '') + '/')) ||
-		(await page(fetchFn, 'https://www.' + h + '/'));
+		(await page(
+			fetchFn,
+			'https://' + host.replace(/^https?:\/\//, '').replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, '') + '/'
+		)) || (await page(fetchFn, 'https://www.' + h + '/'));
 	if (!home) return null;
 	const more = [];
 	for (const u of contactLinks(home.html, home.url)) {
@@ -323,9 +344,56 @@ async function discover(fetchFn, host, hint) {
 	return contactsOf([home].concat(more), h, hint);
 }
 
+// Countries whose law requires consent before an unsolicited marketing email to an individual (#3827): the EU members,
+// the United Kingdom (PECR regulation 22), Canada (CASL) and Australia (Spam Act 2003). There cold email goes only to
+// a role address of an organisation (info@, admissions@), never a named person's inbox.
+const NEEDS_CONSENT = new Set([
+	'at',
+	'be',
+	'bg',
+	'hr',
+	'cy',
+	'cz',
+	'dk',
+	'ee',
+	'fi',
+	'fr',
+	'de',
+	'gr',
+	'hu',
+	'ie',
+	'it',
+	'lv',
+	'lt',
+	'lu',
+	'mt',
+	'nl',
+	'pl',
+	'pt',
+	'ro',
+	'sk',
+	'si',
+	'es',
+	'se',
+	'gb',
+	'ca',
+	'au',
+]);
+const roleOnly = (country) => NEEDS_CONSENT.has(String(country || '').toLowerCase());
+// Organisation inboxes of schools and universities (admissions, enrolment, students' office), which ROLE does not list.
+const ROLE_SCHOOL =
+	/^(admissions?|admisiones?|admision|informes|secretar[ií]a|matr[ií]culas?|registro|alumnos|estudiantes|students|postgrado|posgrado)$/i;
+const isRoleEmail = (email) => {
+	const local = String(email || '').split('@')[0];
+	return ROLE.test(local) || ROLE_SCHOOL.test(local);
+};
+
 module.exports = {
 	CONTACT_PAGES,
 	MAX_EMAILS,
+	NEEDS_CONSENT,
+	roleOnly,
+	isRoleEmail,
 	emailOf,
 	sameSite,
 	orgFacts,

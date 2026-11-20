@@ -20,7 +20,7 @@ const GAMBLING_HOST =
 const text = (html) =>
 	String(html || '')
 		.slice(0, 300000)
-		.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<script[\s\S]*?<\/script[^>]*>|<style[\s\S]*?<\/style[^>]*>/gi, ' ')
 		.replace(/<[^>]+>/g, ' ')
 		.replace(/&nbsp;|\s+/g, ' ');
 

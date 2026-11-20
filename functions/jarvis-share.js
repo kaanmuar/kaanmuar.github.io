@@ -57,7 +57,7 @@ function cut(text, max) {
 function cleanDraft(raw, caption, video) {
 	let d = raw;
 	if (typeof raw === 'string') {
-		const text = raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
+		const text = raw.replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, '').trim();
 		try {
 			d = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
 		} catch (error) {
@@ -77,7 +77,7 @@ function cleanDraft(raw, caption, video) {
 	if (video) {
 		out.tiktok = cut(d.tiktok || base, LIMITS.tiktok);
 		out.youtube = cut(d.youtube || base, LIMITS.youtube);
-		out.youtubeTitle = cut((d.youtubeTitle || out.title).replace(/\s*#shorts\b/gi, ''), 90) + ' #Shorts';
+		out.youtubeTitle = cut((d.youtubeTitle || out.title).replace(/(?<!\s)\s*#shorts\b/gi, ''), 90) + ' #Shorts';
 	}
 	if (out.lang !== 'en') out.textLang = out.lang;
 	const es = d.es && typeof d.es === 'object' && out.lang === 'en' ? d.es : null;

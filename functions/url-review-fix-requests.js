@@ -55,16 +55,14 @@ async function sendRequest(req, res, deps) {
 		console.error('Fix request mail failed:', failed.join('; '));
 		await ref.update({ mailError: failed.join('; ') }).catch(() => {});
 	}
-	res
-		.status(200)
-		.json({
-			ok: true,
-			id: ref.id,
-			email: record.email,
-			status: record.status,
-			package: record.package,
-			priceUsd: record.priceUsd || 0,
-		});
+	res.status(200).json({
+		ok: true,
+		id: ref.id,
+		email: record.email,
+		status: record.status,
+		package: record.package,
+		priceUsd: record.priceUsd || 0,
+	});
 }
 
 // One free re-check per paid report; the doc id makes a second ask fail instead of running again.

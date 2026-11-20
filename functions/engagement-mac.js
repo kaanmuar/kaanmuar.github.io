@@ -44,6 +44,10 @@
  *                                                                        2-day pass (#3137) is action "dm" with the
  *                                                                        person's profile as url, its draft and its
  *                                                                        card, within its outreach-send daily cap
+ *   engagement-mac-linkedin-queue { auto? }                             today's connection requests (up to 15); auto
+ *                                                                        includes unsent people on the list
+ *   engagement-mac-linkedin-result { key, date, name, outcome, ok, error, url }  one connect: marks sent in outreach,
+ *                                                                        pushes Carlos
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
  *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
@@ -73,6 +77,7 @@ const P = require('./engagement-profiles');
 const Trials = require('./chain-trials');
 const DmCard = require('./dm-card');
 const Send = require('./outreach-send');
+const LinkedIn = require('./engagement-linkedin');
 
 const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -149,12 +154,16 @@ async function sites(deps) {
 		J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })),
 		Joins.pool(deps.db),
 	]);
+	const looseAll = R.looseQueries(look.sites);
+	const loose = R.looseForMac(looseAll, deps.now);
+	const topics = Communities.withStudents(E.Regions.discoveryForRun(deps.now, null, conf), 4);
 	return Object.assign(
 		{
 			ok: true,
 			paused: false,
-			queries: look.sites.flatMap(R.queries),
-			topics: Communities.withStudents(E.DISCOVERY),
+			queries: look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)),
+			loose: loose.map((l) => ({ q: l.q, match: l.match, host: l.target.host })),
+			topics,
 			groups,
 		},
 		look.error ? { error: look.error } : {}
@@ -859,6 +868,8 @@ const OPS = {
 	'engagement-mac-ingest': ingest,
 	'engagement-mac-queue': queue,
 	'engagement-mac-result': result,
+	'engagement-mac-linkedin-queue': (deps, body) => LinkedIn.macQueue(deps, body),
+	'engagement-mac-linkedin-result': (deps, body) => LinkedIn.macResult(deps, body),
 };
 
 /** The jarvis function's entry for the Mac: checks the token, then runs the op. */

@@ -15,6 +15,7 @@
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
 const dayRows = require('./jarvis-days');
+const { beforeLastLineDelim } = require('./line-cut');
 const sweep = require('./url-review-sweep');
 const E = require('./engagement');
 const people = require('./outreach-people');
@@ -40,11 +41,12 @@ const clean = (error) => String((error && error.message) || error || 'failed').s
 const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 const toMs = (v) => (v && typeof v.toDate === 'function' ? v.toDate().getTime() : Date.parse(v || '') || 0);
 const bare = (host) =>
-	String(host || '')
-		.toLowerCase()
-		.replace(/^https?:\/\//, '')
-		.replace(/\/.*$/, '')
-		.replace(/^www\./, '');
+	beforeLastLineDelim(
+		String(host || '')
+			.toLowerCase()
+			.replace(/^https?:\/\//, ''),
+		'/'
+	).replace(/^www\./, '');
 
 function tally(map, key) {
 	const k = String(key || 'unknown').slice(0, 60);
@@ -169,7 +171,7 @@ function accountRows(accounts) {
 		error:
 			a.status < 0
 				? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || '')
-						.replace(/\s*Trace ID:.*$/s, '')
+						.replace(/(?<!\s)\s*Trace ID:.*$/s, '')
 						.slice(0, 240)
 				: '',
 	}));

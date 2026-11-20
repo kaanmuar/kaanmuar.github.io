@@ -111,6 +111,7 @@ const LABELS = {
 	'run-job': 'Run a job again',
 	'rerun-ci': 'Re-run failed CI jobs',
 	'rating-decide': 'Decide ratings',
+	'csat-testimonial-decide': 'Decide CSAT quotes',
 	'brief-mark': 'Snooze or dismiss a briefing line',
 	'rerun-job': 'Re-run a failed job',
 	'refresh-stale': 'Refresh stale data',
@@ -307,7 +308,7 @@ function parsePicks(raw, alerts) {
 	try {
 		list = JSON.parse(
 			String(raw || '')
-				.replace(/^```(?:json)?\s*|\s*```$/g, '')
+				.replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, '')
 				.trim()
 		);
 	} catch (error) {

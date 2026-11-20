@@ -1225,7 +1225,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
 function speakable(text) {
 	return String(text || '')
 		.replace(/```[\s\S]*?```/g, ' ')
-		.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+		.replace(/\[([^\]]+)(?:\]\(([^)]*)(\))?)?/g, (link, label, target, close) => (target && close ? label : link))
 		.replace(/^[\s>*#-]+/gm, '')
 		.replace(/[*_`#]/g, '')
 		.replace(/\s+/g, ' ')
@@ -1719,16 +1719,14 @@ function githubAsk(g) {
 		streaks: pick(g.streaks, ['greenMainDays', 'mergeDays', 'xp', 'level']),
 		ci: pick(ci, ['passRate', 'runs', 'failed', 'minutes', 'queueMedS', 'durMedS']),
 		flaky: ci.flaky && { pct: ci.flaky.pct, workflows: (ci.flaky.workflows || []).slice(0, 5) },
-		failing: (ci.failing || [])
-			.slice(0, 5)
-			.map((r) => ({
-				workflow: r.name,
-				branch: r.branch,
-				at: r.at,
-				attempt: r.attempt,
-				cause: r.diag ? r.diag.cause : null,
-				category: r.diag ? r.diag.category : null,
-			})),
+		failing: (ci.failing || []).slice(0, 5).map((r) => ({
+			workflow: r.name,
+			branch: r.branch,
+			at: r.at,
+			attempt: r.attempt,
+			cause: r.diag ? r.diag.cause : null,
+			category: r.diag ? r.diag.category : null,
+		})),
 		prs: pick(prs, [
 			'open',
 			'draft',
@@ -1951,6 +1949,15 @@ async function unsentToday(db, items, { now }) {
 	return { day, ref, sent, fresh };
 }
 
+// Pending URL Review CSAT quotes (#3557): list and approve/dismiss for CV + Social hub publish.
+async function listCsatTestimonials(db, { limit } = {}) {
+	return { items: await require('./url-review-csat-testimonials').listPending(db, limit) };
+}
+
+async function decideCsatTestimonial(db, body, operator) {
+	return require('./url-review-csat-testimonials').decide(db, Object.assign({}, body, { operator }));
+}
+
 module.exports = {
 	PAGES,
 	TTL,
@@ -1976,6 +1983,8 @@ module.exports = {
 	dispatchMain,
 	briefItems,
 	decideRatings,
+	listCsatTestimonials,
+	decideCsatTestimonial,
 	ga4,
 	ga4Days,
 	cloudflare,

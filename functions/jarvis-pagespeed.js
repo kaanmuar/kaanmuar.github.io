@@ -599,20 +599,18 @@ async function source(ctx) {
 			fails: p.fails,
 		})),
 		cache: (latest && latest.cache) || [],
-		runs: runs
-			.slice(0, 14)
-			.map((r) => ({
-				at: r.at,
-				status: r.status,
-				error: r.error,
-				run: r.run,
-				pages: r.pages,
-				scored: r.scored,
-				below: r.below,
-				avg: r.avg,
-				safe: brief(r.safe),
-				ai: brief(r.ai),
-			})),
+		runs: runs.slice(0, 14).map((r) => ({
+			at: r.at,
+			status: r.status,
+			error: r.error,
+			run: r.run,
+			pages: r.pages,
+			scored: r.scored,
+			below: r.below,
+			avg: r.avg,
+			safe: brief(r.safe),
+			ai: brief(r.ai),
+		})),
 		prs: prs.map((p, i) => {
 			const d = docs[i] || {};
 			const state = p.merged_at

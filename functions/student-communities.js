@@ -29,7 +29,7 @@ const STUDENT_GROUP =
 	/(?<!\p{L})(students?|estudiantes?|estudantes?|studenten|studierende|studium|[ée]tudiants?|studenti|universit\p{L}*|college|campus|bootcamps?|beginners?|newbies?|codenewbies?|learn(?:ing)? to code|aprend(?:iendo|endo) a programar|junior devs?|trainees?|freshers?|hackathons?|cs ?majors?)(?!\p{L})/iu;
 // A rule that bans promotion wins over one that allows it; a day named for self-promotion is the only day it is allowed.
 const NO_PROMO =
-	/(no|without|zero) (self[- ]?promo\w*|promo\w*|advertis\w*|ads|spam|selling|solicit\w*|marketing|links? to your)|self[- ]?promo\w* (is )?(not allowed|prohibited|banned|forbidden)|advertising (is )?(not allowed|prohibited)|sin (auto)?promoci|no (se permite|está permitid[ao]) (la )?(publicidad|promoci)|prohibid[ao] (la )?(publicidad|promoci|spam)|sem (auto)?promo|proibid[ao] (propaganda|divulga)|keine (eigen)?werbung|werbung (ist )?(nicht erlaubt|verboten)|pas de (publicit|promo|pub)|publicité (est )?interdite|niente (pubblicit|promo|spam)|vietat[ao] (la )?(pubblicit|promo)/i;
+	/(no|without|zero) (self[- ]?promo\w*|promo\w*|advertis\w*|ads|spam|selling|solicit\w*|marketing|links? to your)|self[- ]?promo\w{0,20} (is )?(not allowed|prohibited|banned|forbidden)|advertising (is )?(not allowed|prohibited)|sin (auto)?promoci|no (se permite|está permitid[ao]) (la )?(publicidad|promoci)|prohibid[ao] (la )?(publicidad|promoci|spam)|sem (auto)?promo|proibid[ao] (propaganda|divulga)|keine (eigen)?werbung|werbung (ist )?(nicht erlaubt|verboten)|pas de (publicit|promo|pub)|publicité (est )?interdite|niente (pubblicit|promo|spam)|vietat[ao] (la )?(pubblicit|promo)/i;
 const PROMO_OK =
 	/(self[- ]?promo\w*|promotion|promote your|share your (own )?(project|work|tool|product)s?|showcase)[^.\n]{0,40}(allowed|welcome|permitted|ok\b|encouraged)|(allowed|welcome)[^.\n]{0,20}(self[- ]?promo|promot)/i;
 const PROMO_DAY = [
@@ -73,7 +73,7 @@ function readRules(text) {
 	const banned = NO_PROMO.test(t);
 	const promoAllowed = !banned && PROMO_OK.test(t);
 	const lines = t
-		.split(/(?<=[.!?])\s+|\s*\n\s*/)
+		.split(/(?<=[.!?])\s+|(?<!\s)\s*\n\s*/)
 		.filter((l) =>
 			/promo|advertis|spam|link|sell|solicit|publicidad|propaganda|werbung|publicit|pubblicit|self/i.test(l)
 		);

@@ -38,7 +38,12 @@ const JUNK_DOMAIN =
 
 function criticalSecurity(report) {
 	return ((report && report.insights && report.insights.findings) || []).some(
-		(item) => item && item.area === 'Security' && item.verdict === 'fail' && item.severity === 'critical'
+		(item) =>
+			item &&
+			item.area === 'Security' &&
+			item.verdict === 'fail' &&
+			item.severity === 'critical' &&
+			!/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String(item.key || ''))
 	);
 }
 

@@ -863,7 +863,7 @@ function diagPrompt(run, job, excerpt) {
 
 function parseDiag(raw) {
 	const s = String(raw || '')
-		.replace(/^```(?:json)?\s*|\s*```$/g, '')
+		.replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, '')
 		.trim();
 	const from = s.indexOf('{');
 	const to = s.lastIndexOf('}');

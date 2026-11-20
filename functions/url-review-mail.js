@@ -18,6 +18,9 @@ const PAGES = new Set([
 	'qa-review-account.html',
 	'qa-review-guide.html',
 	'qa-review-legal.html',
+	'qa-review-vs.html',
+	'qa-review-explorer.html',
+	'live.html',
 ]);
 
 function clip(value, max) {

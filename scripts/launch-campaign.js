@@ -86,7 +86,7 @@ async function people(store) {
 	const [snap, stops, sent] = await Promise.all([
 		store
 			.collection('url_reviews')
-			.select('email', 'status', 'source', 'lang', 'createdAt', 'test', 'sweep', 'report.host')
+			.select('email', 'status', 'source', 'lang', 'createdAt', 'test', 'sweep', 'followUp', 'report.host')
 			.get(),
 		campaign.optOuts(store),
 		campaign.sentHashes(store),

@@ -269,7 +269,7 @@ function peopleProfile(person) {
 			.slice(0, 5)
 			.map((item) => ({
 				type: cleanText(item.type, 20),
-				formatted: cleanText(String(item.formattedValue || '').replace(/\s*\n\s*/g, ', '), 300),
+				formatted: cleanText(String(item.formattedValue || '').replace(/(?<!\s)\s*\n\s*/g, ', '), 300),
 				city: cleanText(item.city, 80),
 				region: cleanText(item.region, 80),
 				postalCode: cleanText(item.postalCode, 20),

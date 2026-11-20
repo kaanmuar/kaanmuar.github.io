@@ -74,13 +74,13 @@ const langOf = (v) =>
 		: 'en';
 const emailOf = (v) => {
 	const e = clip(v, 200).toLowerCase();
-	return /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(e) ? e : '';
+	return /^[^\s@/]+@[^\s@/][^\s@/.]*\.[^\s@/]+$/.test(e) ? e : '';
 };
 const domainOf = (v) =>
 	clip(v, 200)
 		.toLowerCase()
 		.replace(/^https?:\/\//, '')
-		.replace(/[/?#].*$/, '')
+		.replace(/[/?#](?<![/?#][^\n\r\u2028\u2029/?#]*[/?#]).*$/, '')
 		.replace(/^www\./, '');
 const pick = (rand) => rand || ((n) => crypto.randomInt(n));
 const codeOf = (prefix, rand) =>

@@ -11,9 +11,13 @@ const FEED_URL = 'https://www.wordfence.com/api/intelligence/v3/vulnerabilities/
 const TERMS_URL = 'https://www.wordfence.com/wordfence-intelligence-terms-and-conditions/';
 const BUCKET = 'carlosm-interactive-cv.firebasestorage.app';
 const INDEX_PATH = 'wordfence/index.json.gz';
+const BACKOFF_PATH = 'wordfence/backoff.json';
 const H = 3600000;
 // The key allows about one download per 30 minutes; going over answers 429 and can get the key suspended.
 const MIN_REFRESH_MS = 20 * H;
+// After a 429 the job waits 72 hours before it asks again. A day was too short: the scheduled run is 24 hours
+// apart, so a 24-hour backoff expired just as the next run came and the over-limit key was called again (#3808).
+const RATE_LIMIT_MS = 72 * H;
 const INDEX_TTL_MS = 6 * H;
 const MISSING_TTL_MS = H / 2;
 const MIN_RECORDS = 1000;
@@ -29,7 +33,7 @@ const SEVERITY = [
 ];
 
 const ASSET = /\/wp-content\/(plugins|themes)\/([a-z0-9][a-z0-9_.-]{0,80})\//i;
-const GENERATOR = /<meta\b[^>]*name\s*=\s*["']?generator["']?[^>]*>/gi;
+const GENERATOR = /<meta\b(?=[^<>]*?name\s*=\s*["']?generator)[^<>]*>/gi;
 // Gutenberg serves the block library under the same path with its own version (10 and up), so only 3.x-9.x reads as core.
 const CORE_ASSET =
 	/\/wp-includes\/(?:css\/dist\/block-library\/style|js\/wp-emoji-release)(?:\.min)?\.(?:css|js)\?ver=([3-9]\.\d{1,2}(?:\.\d{1,2})?)\b/i;
@@ -114,9 +118,16 @@ function stableTag(text) {
 	return plausible(hit && hit[1]);
 }
 
+// What /\/\*[\s\S]*?\*\// matches (the first block comment), or all of head when it has none.
+function firstComment(head) {
+	const open = head.indexOf('/*');
+	const close = open < 0 ? -1 : head.indexOf('*/', open + 2);
+	return close < 0 ? head : head.slice(open, close + 2);
+}
+
 function themeVersion(text) {
 	const head = String(text || '').slice(0, 16000);
-	const comment = (head.match(/\/\*[\s\S]*?\*\//) || [head])[0];
+	const comment = firstComment(head);
 	const hit = comment.match(/^[ \t*]*Version:[ \t]*(\S+)/im);
 	return plausible(hit && hit[1]);
 }
@@ -176,8 +187,11 @@ function rating(score) {
 }
 
 // The vulnerabilities the index lists for one component at one version, the worst CVSS, and the version that fixes all.
+// A slug is a key, not a property name: "constructor" or "toString" must not read the object's own methods (#3810).
+const own = (map, key) => (map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : undefined);
+
 function match(index, type, slug, version) {
-	const entry = index && index[type] && index[type][slug];
+	const entry = own(index && own(index, type), slug);
 	if (!entry || !plausible(version)) return null;
 	const hits = entry.v.filter((row) => row[0].some((range) => inRange(version, range)));
 	if (!hits.length) return { name: entry.n, vulns: 0 };
@@ -430,7 +444,8 @@ function ranges(affected) {
 // The slug index the review reads: per type and slug the software name and one row per vulnerability,
 // [ranges, patched versions, CVSS score, CVE, Wordfence id, title].
 function indexer() {
-	const index = { plugin: {}, theme: {}, core: {} };
+	// Maps without a prototype: a plugin whose slug is "constructor" or "__proto__" is a plain key (#3810).
+	const index = { plugin: Object.create(null), theme: Object.create(null), core: Object.create(null) };
 	let count = 0;
 	const add = (record) => {
 		if (!record || typeof record !== 'object' || record.informational || !Array.isArray(record.software)) return;
@@ -442,7 +457,7 @@ function indexer() {
 			if (TYPES.indexOf(type) < 0 || !slug) return;
 			const span = ranges(soft.affected_versions);
 			if (!span.length) return;
-			const entry = index[type][slug] || (index[type][slug] = { n: trim(soft.name || slug, 80), v: [] });
+			const entry = own(index[type], slug) || (index[type][slug] = { n: trim(soft.name || slug, 80), v: [] });
 			entry.v.push([
 				span,
 				(soft.patched_versions || []).map(String).filter(plausible),
@@ -460,6 +475,7 @@ function indexer() {
 }
 
 // The daily job: download the feed once, build the index and store it. Without a key, or with a fresh index, it does nothing.
+// Once Wordfence answers 429, nothing calls the feed for 72 hours: not the next scheduled runs, their retries, or a manual run (#3808).
 async function refreshFeed(options) {
 	const opts = options || {};
 	const key = opts.key;
@@ -467,8 +483,16 @@ async function refreshFeed(options) {
 		console.log('WORDFENCE_KEY is not set, so the Wordfence feed was not downloaded.');
 		return { skipped: 'no key' };
 	}
-	const file = (opts.storage || require('firebase-admin/storage').getStorage()).bucket(BUCKET).file(INDEX_PATH);
+	const storage = opts.storage || require('firebase-admin/storage').getStorage();
+	const file = storage.bucket(BUCKET).file(INDEX_PATH);
+	const backoff = storage.bucket(BUCKET).file(BACKOFF_PATH);
 	const now = opts.now || Date.now();
+	const [backedOff] = await backoff.exists();
+	if (backedOff) {
+		const [body] = await backoff.download();
+		const until = Date.parse((JSON.parse(String(body)) || {}).until || 0);
+		if (until > now) return { skipped: 'backoff', until: new Date(until).toISOString() };
+	}
 	const [exists] = await file.exists();
 	if (exists && !opts.force) {
 		const [meta] = await file.getMetadata();
@@ -479,8 +503,15 @@ async function refreshFeed(options) {
 		headers: { authorization: 'Bearer ' + key, accept: 'application/json' },
 	});
 	if (res.status === 429) {
-		console.warn('The Wordfence feed answered 429; the stored index stays until tomorrow.');
-		return { skipped: 'rate limited' };
+		const until = new Date(now + RATE_LIMIT_MS).toISOString();
+		await backoff.save(JSON.stringify({ until, at: new Date(now).toISOString(), status: 429 }), {
+			resumable: false,
+			contentType: 'application/json',
+		});
+		console.warn(
+			'The Wordfence feed answered 429; no call to it until ' + until + ', and the stored index stays until then.'
+		);
+		return { skipped: 'rate limited', until };
 	}
 	if (!res.ok) throw new Error('The Wordfence feed answered ' + res.status);
 	const build = indexer();
@@ -528,4 +559,6 @@ module.exports = {
 	themeVersion,
 	FEED_URL,
 	INDEX_PATH,
+	BACKOFF_PATH,
+	RATE_LIMIT_MS,
 };

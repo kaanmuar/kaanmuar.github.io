@@ -264,7 +264,9 @@ async function chats() {
 }
 
 function esc(text) {
-	return String(text == null ? '' : text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+	return String(text == null ? '' : text).replace(/[&<>"']/g, (c) =>
+		({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+	);
 }
 
 function postedDays(ledger) {

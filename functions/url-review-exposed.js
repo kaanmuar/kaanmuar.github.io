@@ -55,7 +55,7 @@ function sqlProof(text) {
 	const dump = text.match(/^-- (MySQL dump|MariaDB dump|PostgreSQL database dump|phpMyAdmin SQL Dump)/m);
 	if (dump) return '-- ' + dump[1];
 	const statement = text.match(
-		/^\s*(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|DROP TABLE IF EXISTS)\s+([`"\w.]{1,64})/im
+		/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|DROP TABLE IF EXISTS)\s+([`"\w.]{1,64})/im
 	);
 	return statement ? statement[1].toUpperCase() + ' ' + statement[2] + ' …' : '';
 }
@@ -74,7 +74,7 @@ const PROBES = [
 		kind: 'git',
 		proof: (r) =>
 			!looksHtml(r.text) &&
-			/^\s*\[core\]\s*$/m.test(r.text) &&
+			/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*\[core\]\s*$/m.test(r.text) &&
 			/repositoryformatversion|filemode\s*=|bare\s*=/i.test(r.text)
 				? '[core]'
 				: '',
@@ -127,7 +127,7 @@ const PROBES = [
 		proof: (r) => {
 			if (!/^\s*[{[]/.test(r.text)) return '';
 			const key = r.text.match(
-				/"((?:db_?|database_?|smtp_?|mail_?|admin_?)?pass(?:word|wd)?|[\w-]*secret[\w-]*|private_?key|aws_secret_access_key|connection_?string)"\s*:\s*"[^"]{3,}"/i
+				/"((?:db_?|database_?|smtp_?|mail_?|admin_?)?pass(?:word|wd)?|(?=[\w-]*secret)[\w-]*|private_?key|aws_secret_access_key|connection_?string)"\s*:\s*"[^"]{3,}"/i
 			);
 			return key ? '"' + key[1] + '": "' + HIDDEN + '"' : '';
 		},

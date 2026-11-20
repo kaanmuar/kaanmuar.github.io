@@ -29,7 +29,7 @@ const CSP =
 // Page copy in each face's own language. Spanish is Latin American (tú). A review analyzes pages; it never "reads" them.
 const COPY = {
 	en: {
-		title: '@{handle}: QA-lab URL Review in {langs}',
+		title: '@{handle} · QA-lab URL Review',
 		description:
 			'Follow @{handle}, QA-lab URL Review in {langs}: Live Reports, tips, skits and live runs. One public URL in, a QA review out.',
 		follow: 'Follow @{handle}',
@@ -45,7 +45,7 @@ const COPY = {
 		accounts: 'Accounts',
 	},
 	es: {
-		title: '@{handle}: QA-lab URL Review en {langs}',
+		title: '@{handle} · QA-lab URL Review',
 		description:
 			'Sigue a @{handle}, QA-lab URL Review en {langs}: informes en vivo, consejos, sketches y revisiones en directo. Entra una URL pública, sale una revisión QA.',
 		follow: 'Sigue a @{handle}',

@@ -119,15 +119,13 @@ function noticeRows(rows, reportOf, ctx) {
 			domain: n.domain,
 			host: n.host || n.domain,
 			email: n.email || '',
-			candidates: (Array.isArray(n.candidates) ? n.candidates : [])
-				.slice(0, 8)
-				.map((c) => ({
-					email: c.email,
-					sources: (c.sources || []).slice(0, 3),
-					url: c.url || '',
-					onDomain: !!c.onDomain,
-					stopped: stopped.has(c.email),
-				})),
+			candidates: (Array.isArray(n.candidates) ? n.candidates : []).slice(0, 8).map((c) => ({
+				email: c.email,
+				sources: (c.sources || []).slice(0, 3),
+				url: c.url || '',
+				onDomain: !!c.onDomain,
+				stopped: stopped.has(c.email),
+			})),
 			state: ownerNotice.readiness(n, ctx),
 			critical: !!n.critical,
 			lang: n.lang || 'en',

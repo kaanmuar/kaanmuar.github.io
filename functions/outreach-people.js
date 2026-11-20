@@ -37,7 +37,7 @@ const bareDomain = (v) =>
 	clip(v, 200)
 		.toLowerCase()
 		.replace(/^https?:\/\//, '')
-		.replace(/[/?#].*$/, '')
+		.replace(/[/?#](?<![/?#][^\n\r\u2028\u2029/?#]*[/?#]).*$/, '')
 		.replace(/^www\./, '');
 
 /** The ledger id: "<network>:<handle>", lowercased without the @; companies "web:<domain>". */
@@ -130,7 +130,7 @@ function merged(prev, id, patch, now) {
 	if (p.lang && /^[a-z]{2}$/.test(String(p.lang).slice(0, 2).toLowerCase()))
 		doc.lang = String(p.lang).slice(0, 2).toLowerCase();
 	if (p.domain) doc.domain = bareDomain(p.domain);
-	if (p.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(p.email).trim()))
+	if (p.email && /^[^\s@]+@[^\s@][^\s@.]*\.[^\s@]+$/.test(String(p.email).trim()))
 		doc.email = clip(p.email, 200).toLowerCase();
 	// Claims land out of order, so a live's uses only grow.
 	if (p.uses != null && Number.isFinite(Number(p.uses)))

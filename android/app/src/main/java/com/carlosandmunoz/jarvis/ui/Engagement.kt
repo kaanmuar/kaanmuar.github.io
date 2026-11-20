@@ -36,6 +36,7 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.pairs
 import com.carlosandmunoz.jarvis.data.str
+import com.carlosandmunoz.jarvis.data.strings
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -197,6 +198,24 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         (if (all) kept else kept.take(Engagement.SHOWN)).forEach { p -> Draft(p, names, s, vm, ::ask) }
         if (kept.size > Engagement.SHOWN) TextButton({ all = !all }) { Text(if (all) "Show fewer" else "Show all ${kept.size}", color = J.cyan, fontSize = 13.sp) }
         Muted("Approve tells Jarvis to send it (never a clipboard paste). An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent. A profile message with no fresh post goes under their latest post of the last year (#3461).")
+    }
+
+    g.obj("metaScout")?.let { meta ->
+        Panel("Meta scout", id = "engagement-meta-scout") {
+            val titles = mapOf("cloud" to "Cloud", "mac" to "Mac", "reddit" to "Reddit", "ownerTags" to "Owner tags", "students" to "Students")
+            titles.keys.forEach { k ->
+                val p = meta.obj("passes")?.obj(k)
+                val ok = p?.bool("ok") == true
+                StatusRow(if (ok) "good" else "alert", titles[k] ?: k, p?.str("label") ?: "—")
+            }
+            meta.obj("discovery")?.let { d ->
+                KeyRow("Region pack", (d.str("packName") ?: d.str("pack") ?: "global") + if (d.bool("rotate") == true) " · auto" else " · pinned")
+                d.num("topics")?.takeIf { it > 0 }?.let { KeyRow("Topic searches", fmt(it) + " this slot") }
+            }
+            meta.obj("fieldSweep")?.num("count")?.takeIf { it > 0 }?.let { KeyRow("Field sweep", fmt(it) + " proposals" + (meta.obj("fieldSweep")?.num("tender")?.takeIf { t -> t > 0 }?.let { " · ${fmt(it)} tender" } ?: "")) }
+            meta.str("at")?.let { KeyRow("Last envelope", ago(it) ?: it) }
+            (meta.get("needs") as? kotlinx.serialization.json.JsonArray)?.strings()?.takeIf { it.isNotEmpty() }?.let { Muted(it.joinToString(" · ")) }
+        }
     }
 
     Panel("Scout", id = "engagement-status") {
@@ -470,6 +489,7 @@ private fun Settings(g: JsonObject, s: UiState, vm: JarvisViewModel, ask: (Strin
                 vm.market("eg:settings", "engagement-settings", mapOf("settings" to JsonObject(mapOf("caps" to capsJson, "competitors" to list)))) { "Settings saved." }
             }
         }
-        Muted("Score thresholds, Gemini's bar and our own handles are on the web tab.")
+        c?.str("discoveryPack")?.let { KeyRow("Discovery pack", if (it == "auto") "auto (rotates each slot)" else it) }
+        Muted("Score thresholds, Gemini's bar, region pack pin and our own handles are on the web tab.")
     }
 }

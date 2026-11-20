@@ -3,8 +3,8 @@
 const LEGAL = {
 	// The bare word, or a statement or declaration of it. A forum or article about accessibility is not the statement.
 	accessibility: {
-		text: /^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)\S*\s+(statement|erkl[äa]rung)|accessibilit[ée]\s*:\s*(non|partiellement|totalement)\s+conforme/i,
-		href: /\/[a-z-]*(accessib|accesib|acessib|barrierefrei)[a-z-]*(\.[a-z]+)?\/?$/i,
+		text: /^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)(?<=(?:^|\s)(?:(?!accessib|barrierefrei)\S)*(?:accessib|barrierefrei))\S*\s+(statement|erkl[äa]rung)|accessibilit[ée]\s*:\s*(non|partiellement|totalement)\s+conforme/i,
+		href: /\/(?=[a-z-]*(accessib|accesib|acessib|barrierefrei))[a-z-]*(\.[a-z]+)?\/?$/i,
 		away: /\/(forums?|blog|news|tags?|categor(y|ies)|topics?|support|help|kb|articles?|docs?|products?|collections?)\//i,
 	},
 	imprint: {
@@ -82,4 +82,4 @@ function germanSpeaking(lang, textLang, pageUrl) {
 	return /^de\b/i.test(String(lang || '')) || textLang === 'de' || /\.(de|at)$/i.test(host);
 }
 
-module.exports = { legalLinks, germanSpeaking, LEGAL_ANY: ANY.source };
+module.exports = { legalLinks, germanSpeaking, LEGAL_ANY: ANY.source, LEGAL, OVERLAY };

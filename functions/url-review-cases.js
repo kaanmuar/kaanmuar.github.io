@@ -166,7 +166,7 @@ function hostOf(origin) {
 	} catch (error) {
 		return String(origin || '')
 			.replace(/^https?:\/\//, '')
-			.replace(/\/.*$/, '');
+			.replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, '');
 	}
 }
 

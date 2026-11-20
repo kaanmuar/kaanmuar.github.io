@@ -13,6 +13,14 @@ const blocklists = require('./url-review-blocklists');
 const exposedFiles = require('./url-review-exposed');
 const lookalikes = require('./url-review-lookalikes');
 const hackSigns = require('./url-review-hack-signs');
+const targeted = require('./url-review-targeted');
+const geoAgent = require('./url-review-geo-agent');
+const carbonModel = require('./url-review-carbon');
+const headOrder = require('./url-review-head-order');
+const waterfall = require('./url-review-har');
+const pageGraph = require('./url-review-page-graph');
+const cyberPassive = require('./url-review-cyber-passive');
+const trustGrade = require('./url-review-trust-grade');
 
 const BROWSER_READ_NOTE = english(say('warn.browserRead'));
 const UNTAGGED_READ_NOTE = english(say('warn.untaggedRead'));
@@ -89,6 +97,15 @@ const REQUIRED_PROPS = {
 };
 
 const COOKIELESS = ['Plausible', 'Fathom', 'Cloudflare Web Analytics', 'Umami', 'Vercel Analytics'];
+const AD_TAGS = [
+	'Google Ads',
+	'Meta Pixel',
+	'LinkedIn Insight',
+	'TikTok Pixel',
+	'X Pixel',
+	'Pinterest Tag',
+	'Microsoft Ads UET',
+];
 const NO_SRI_HOSTS =
 	/(^|\.)(googletagmanager\.com|google-analytics\.com|google\.com|gstatic\.com|facebook\.net|doubleclick\.net|hotjar\.com|clarity\.ms|licdn\.com|hs-scripts\.com|hs-analytics\.net|stripe\.com|paypal\.com|recaptcha\.net|cloudflareinsights\.com|youtube\.com|twitter\.com|x\.com|tiktok\.com|bing\.com)$/i;
 const ANALYTICS_CONNECT = {
@@ -123,7 +140,7 @@ function normal(value) {
 		const url = new URL(value);
 		url.hash = '';
 		let path = url.pathname.replace(/\/index\.html?$/i, '/');
-		if (path.length > 1) path = path.replace(/\/+$/, '');
+		if (path.length > 1) path = path.replace(/(?<!\/)\/+$/, '');
 		return url.protocol + '//' + url.host.toLowerCase() + path + url.search;
 	} catch (error) {
 		return String(value || '');
@@ -1074,19 +1091,17 @@ function libraryChecks(ctx, add) {
 	const [verdict, severity] = LIB_SEVERITY[flawed[0].worst] || LIB_SEVERITY.medium;
 	const evidence = say('sec-libraries.evidence', {
 		rows: {
-			items: flawed
-				.slice(0, 4)
-				.map((row, index) =>
-					say('sec-libraries.row', {
-						name: row.name,
-						version: row.version,
-						where: where(row),
-						flaws: say('sec-libraries.flaws', { n: row.flaws }),
-						worst: worst(row),
-						ids: row.ids.length ? say('sec-libraries.ids', { list: { items: row.ids } }) : '',
-						summary: index === 0 && row.summary ? ' ' + row.summary.replace(/\.?$/, '.') : '',
-					})
-				),
+			items: flawed.slice(0, 4).map((row, index) =>
+				say('sec-libraries.row', {
+					name: row.name,
+					version: row.version,
+					where: where(row),
+					flaws: say('sec-libraries.flaws', { n: row.flaws }),
+					worst: worst(row),
+					ids: row.ids.length ? say('sec-libraries.ids', { list: { items: row.ids } }) : '',
+					summary: index === 0 && row.summary ? ' ' + row.summary.replace(/\.?$/, '.') : '',
+				})
+			),
 			sep: ' ',
 		},
 		more: flawed.length > 4 ? say('sec-libraries.more', { n: flawed.length - 4 }) : '',
@@ -1743,7 +1758,7 @@ function localChecks(local, host, add) {
 
 // Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
 function domainChecks(extras, dnsInfo, dnsRead, add) {
-	const end = (text) => String(text).replace(/\.*$/, '.');
+	const end = (text) => String(text).replace(/(?<!\.)\.*$/, '.');
 	const sb = extras.safeBrowsing;
 	if (sb && sb.ok) {
 		const words = sb.threats.map((item) =>
@@ -1776,7 +1791,7 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
 	threatLists.addFindings(extras.threatLists, add);
 	const dom = extras.domain;
 	if (dom && dom.read) {
-		const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, '') : '';
+		const registrar = dom.registrar ? String(dom.registrar).replace(/(?<!\.)\.*$/, '') : '';
 		const held = dom.registrar ? say('sec-domain.held', { domain: dom.domain, registrar: dom.registrar }) : dom.domain;
 		if (dom.expires && dom.daysLeft < 0)
 			add(
@@ -1920,28 +1935,8 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
 	}
 }
 
-// Sustainable Web Design model v4: 0.3 kWh per GB across data centres, networks and devices, at the 494 g/kWh global grid average.
-const CARBON_KWH_PER_GB = 0.3;
-const CARBON_GRID_G_PER_KWH = 494;
-const CARBON_RATINGS = [
-	['A+', 0.04],
-	['A', 0.079],
-	['B', 0.145],
-	['C', 0.209],
-	['D', 0.278],
-	['E', 0.359],
-];
-
-function carbonEstimate(bytes, source) {
-	if (!(bytes > 0)) return null;
-	const grams = (bytes / 1e9) * CARBON_KWH_PER_GB * CARBON_GRID_G_PER_KWH;
-	return {
-		bytes: Math.round(bytes),
-		grams: Math.round(grams * 1000) / 1000,
-		rating: (CARBON_RATINGS.find(([, max]) => grams <= max) || ['F'])[0],
-		source,
-	};
-}
+// Sustainable Web Design model v4 (url-review-carbon.js).
+const carbonEstimate = carbonModel.estimate;
 
 function speedChecks(psi, add) {
 	const field = psi.field;
@@ -3010,6 +3005,56 @@ function analyze(input) {
 			cases: ['CT-03'],
 		});
 	}
+	if (social.ogUrl && face.seo && face.seo.canonicalAbs && normal(social.ogUrl) !== normal(face.seo.canonicalAbs)) {
+		add(
+			'SEO',
+			'risk',
+			'low',
+			'seo-social-url',
+			say('seo-social-url.title'),
+			say('seo-social-url.evidence', {
+				ogUrl: shownAgainst(social.ogUrl, home.url),
+				canonical: shownAgainst(face.seo.canonicalAbs, home.url),
+			}),
+			say('seo-social-url.fix'),
+			{ effort: 'minutes', cases: ['CT-03'] }
+		);
+	}
+	const shareImage = extras.shareImage || null;
+	if (shareImage && social.ogImage) {
+		const notImage = shareImage.contentType && !/^image\//i.test(shareImage.contentType);
+		if (!shareImage.status || shareImage.status >= 400 || notImage) {
+			add(
+				'SEO',
+				'fail',
+				'medium',
+				'seo-social-image',
+				say('seo-social-image.broken.title'),
+				say('seo-social-image.broken.evidence', {
+					url: shownAgainst(social.ogImage, home.url),
+					detail: notImage
+						? say('seo-social-image.broken.notImage', { type: shareImage.contentType })
+						: say('seo-social-image.broken.status', { status: shareImage.status || say('noAnswer') }),
+				}),
+				say('seo-social-image.broken.fix'),
+				{ effort: 'minutes', cases: ['CT-03'] }
+			);
+		} else if (shareImage.overLimit || shareImage.bytes > 300 * 1024) {
+			add(
+				'SEO',
+				'risk',
+				'low',
+				'seo-social-image',
+				say('seo-social-image.large.title'),
+				say('seo-social-image.large.evidence', {
+					url: shownAgainst(social.ogImage, home.url),
+					kb: Math.max(301, Math.round((shareImage.bytes || 307200) / 1024)),
+				}),
+				say('seo-social-image.large.fix'),
+				{ effort: 'minutes', cases: ['CT-03'] }
+			);
+		}
+	}
 	if (!face.icon)
 		add(
 			'SEO',
@@ -3086,15 +3131,13 @@ function analyze(input) {
 			say('geo-crawlers.title', { n: answerBlocked.length }),
 			say('geo-crawlers.evidence', {
 				list: {
-					items: answerBlocked
-						.slice(0, 5)
-						.map((bot) =>
-							say('geo-crawlers.row', {
-								token: bot.token,
-								product: bot.product,
-								rule: bot.rule ? say('geo-crawlers.by', { rule: bot.rule }) : '',
-							})
-						),
+					items: answerBlocked.slice(0, 5).map((bot) =>
+						say('geo-crawlers.row', {
+							token: bot.token,
+							product: bot.product,
+							rule: bot.rule ? say('geo-crawlers.by', { rule: bot.rule }) : '',
+						})
+					),
 				},
 			}),
 			say('geo-crawlers.fix'),
@@ -3179,66 +3222,8 @@ function analyze(input) {
 			{ cases: ['GEO-03', 'CMP-01'] }
 		);
 	}
-	const llms = extras.llms || {};
-	const llmsReport = {
-		status: llms.status || 0,
-		ok: false,
-		title: '',
-		summary: '',
-		sections: 0,
-		links: 0,
-		full: !!(extras.llmsFull && extras.llmsFull.status === 200 && !extras.llmsFull.html),
-	};
-	if (llms.status === 200 && !llms.html && /^\s*#\s+\S/.test(llms.body || '')) {
-		const body = llms.body || '';
-		llmsReport.ok = true;
-		llmsReport.title = ((body.match(/^\s*#\s+(.+)$/m) || [])[1] || '').slice(0, 120);
-		llmsReport.summary = ((body.match(/^\s*>\s*(.+)$/m) || [])[1] || '').slice(0, 240);
-		llmsReport.sections = (body.match(/^##\s+/gm) || []).length;
-		llmsReport.links = (body.match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
-		llmsReport.bareLinks = (body.match(/(^|\s)https?:\/\/\S+/gm) || []).length;
-		const gaps = [];
-		if (!llmsReport.summary) gaps.push(say('geo-llms.gapSummary'));
-		if (!llmsReport.links && !llmsReport.bareLinks) gaps.push(say('geo-llms.gapLinks'));
-		else if (!llmsReport.links) gaps.push(say('geo-llms.gapMarkdown'));
-		llmsReport.complete = !gaps.length;
-		add(
-			'GEO',
-			gaps.length ? 'risk' : 'pass',
-			'low',
-			'geo-llms',
-			gaps.length ? say('geo-llms.lacks.title', { gaps: { items: gaps, join: 'and' } }) : say('geo-llms.pass.title'),
-			say('geo-llms.evidence', {
-				sections: say('geo-llms.sections', { n: llmsReport.sections }),
-				links: say('geo-llms.links', { n: llmsReport.links || llmsReport.bareLinks || 0 }),
-				full: llmsReport.full ? say('geo-llms.full') : '.',
-			}),
-			gaps.length ? say('geo-llms.lacks.fix') : '',
-			{ cases: ['GEO-02'], effort: 'minutes' }
-		);
-	} else if (llms.status === 200 && llms.html) {
-		add(
-			'GEO',
-			'risk',
-			'low',
-			'geo-llms',
-			say('geo-llms.html.title'),
-			say('geo-llms.html.evidence'),
-			say('geo-llms.html.fix'),
-			{ cases: ['GEO-02'], effort: 'minutes' }
-		);
-	} else {
-		add(
-			'GEO',
-			'risk',
-			'low',
-			'geo-llms',
-			say('geo-llms.title'),
-			say('geo-llms.none.evidence', { status: llms.status || say('nothing') }),
-			say('geo-llms.fix'),
-			{ cases: ['GEO-02'], effort: 'minutes' }
-		);
-	}
+	const geoAgentReports = geoAgent.findings({ extras, pages }, add);
+	const llmsReport = geoAgentReports.llms;
 	const homeSchema = (face.schema && face.schema.items) || [];
 	const allItems = [].concat.apply(
 		[],
@@ -3521,6 +3506,29 @@ function analyze(input) {
 			{ pages: multiGa.concat(doubleLoad).map((page) => page.path), effort: 'minutes' }
 		);
 	}
+	const multiGtm = read.filter(
+		(page) =>
+			((page.inspect.analytics && page.inspect.analytics.gtmIds) || []).length > 1 ||
+			(page.inspect.analytics && page.inspect.analytics.gtmLoads) > 1
+	);
+	if (multiGtm.length) {
+		add(
+			'Analytics',
+			'risk',
+			'medium',
+			'an-gtm-duplicate',
+			say('an-gtm-duplicate.title'),
+			say('an-gtm-duplicate.evidence', {
+				n: multiGtm.length,
+				list: some(
+					multiGtm.map((page) => page.path),
+					4
+				),
+			}),
+			say('an-gtm-duplicate.fix'),
+			{ pages: multiGtm.map((page) => page.path), effort: 'minutes' }
+		);
+	}
 	if (tagPages['Google Tag Manager'] && tagPages['Google Analytics 4']) {
 		add(
 			'Analytics',
@@ -3540,16 +3548,43 @@ function analyze(input) {
 		});
 	}
 	if (tracking.length && !consentTools.length && !consentMode) {
-		add(
-			'Analytics',
-			'risk',
-			'high',
-			'an-consent',
-			say('an-consent.title'),
-			say('an-consent.evidence', { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
-			say('an-consent.fix'),
-			{ effort: 'hours', cases: ['PR-03', 'AN-01'] }
-		);
+		if (googleTags.length && deniedPings.length) {
+			add(
+				'Analytics',
+				'risk',
+				'medium',
+				'an-consent',
+				say('an-consent.runtime.title'),
+				say('an-consent.runtime.evidence', {
+					n: tracking.length,
+					list: { items: tracking.map((tag) => tag.name) },
+					pings: { items: deniedPings },
+				}),
+				say('an-consent.runtime.fix'),
+				{ effort: 'minutes', cases: ['PR-03', 'AN-01'] }
+			);
+			add(
+				'Analytics',
+				'pass',
+				'info',
+				'an-consent-mode',
+				say('an-consent-mode.runtimeNoTool.title'),
+				say('an-consent-mode.runtimeNoTool.evidence', { pings: { items: deniedPings } }),
+				'',
+				{ cases: ['PR-03', 'AN-01'] }
+			);
+		} else {
+			add(
+				'Analytics',
+				'risk',
+				'high',
+				'an-consent',
+				say('an-consent.title'),
+				say('an-consent.evidence', { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
+				say('an-consent.fix'),
+				{ effort: 'hours', cases: ['PR-03', 'AN-01'] }
+			);
+		}
 	} else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
 		add(
 			'Analytics',
@@ -3680,7 +3715,7 @@ function analyze(input) {
 		return {
 			path: page.path,
 			hsts: !!h.hsts,
-			csp: !!h.csp,
+			csp: !!(h.csp || h.metaCsp),
 			frame: framesGuarded(h.frame) || /frame-ancestors/i.test(h.csp || ''),
 			nosniff: !!h.nosniff,
 			referrer: !!h.referrer,
@@ -3814,7 +3849,9 @@ function analyze(input) {
 			});
 	}
 	const csp = cspDirectives(hdr.csp);
-	if (!hdr.csp) {
+	const metaCsp = cspDirectives(hdr.metaCsp);
+	const cspPolicies = [hdr.csp ? csp : null, hdr.metaCsp ? metaCsp : null].filter(Boolean);
+	if (!cspPolicies.length) {
 		add(
 			'Security',
 			'risk',
@@ -3826,18 +3863,29 @@ function analyze(input) {
 			{ pages: spread('csp').pages, effort: 'hours', cases: ['SEC-03'] }
 		);
 	} else {
-		const scriptSrc = csp['script-src'] || csp['default-src'] || [];
 		const issues = [];
-		if (!csp['default-src'] && !csp['script-src']) issues.push('noDefault');
+		const pushIssue = (name) => {
+			if (issues.indexOf(name) === -1) issues.push(name);
+		};
+		if (!cspPolicies.some((policy) => policy['default-src'] || policy['script-src'])) pushIssue('noDefault');
+		cspPolicies.forEach((policy) => {
+			if (!policy['default-src'] && !policy['script-src']) return;
+			const scriptSrc = policy['script-src'] || policy['default-src'] || [];
+			if (
+				scriptSrc.indexOf("'unsafe-inline'") !== -1 &&
+				!scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")
+			)
+				pushIssue('unsafeInline');
+			if (scriptSrc.indexOf("'unsafe-eval'") !== -1) pushIssue('unsafeEval');
+			if (scriptSrc.indexOf('*') !== -1 || scriptSrc.indexOf('https:') !== -1) pushIssue('anyHost');
+		});
 		if (
-			scriptSrc.indexOf("'unsafe-inline'") !== -1 &&
-			!scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")
+			!cspPolicies.some(
+				(policy) => policy['object-src'] || (policy['default-src'] || []).some((token) => token === "'none'")
+			)
 		)
-			issues.push('unsafeInline');
-		if (scriptSrc.indexOf("'unsafe-eval'") !== -1) issues.push('unsafeEval');
-		if (scriptSrc.indexOf('*') !== -1 || scriptSrc.indexOf('https:') !== -1) issues.push('anyHost');
-		if (!csp['object-src'] && !(csp['default-src'] || []).some((token) => token === "'none'")) issues.push('object');
-		if (!csp['base-uri']) issues.push('base');
+			pushIssue('object');
+		if (!cspPolicies.some((policy) => policy['base-uri'])) pushIssue('base');
 		if (issues.length)
 			add(
 				'Security',
@@ -4035,7 +4083,7 @@ function analyze(input) {
 			{ cases: ['SEC-06'] }
 		);
 	}
-	const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d+\.\d+/.test(value || ''));
+	const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d\.\d/.test(value || ''));
 	if (version.length)
 		add(
 			'Security',
@@ -4064,6 +4112,7 @@ function analyze(input) {
 			say('sec-sri.fix'),
 			{ count: noSri.length, effort: 'minutes' }
 		);
+	cyberPassive.findings({ csp: [hdr.csp, hdr.metaCsp], read }, add);
 	const mixed = read.filter((page) => (page.inspect.signals && page.inspect.signals.mixed) > 0);
 	if (mixed.length)
 		add(
@@ -4136,9 +4185,12 @@ function analyze(input) {
 		);
 	}
 	const sec = extras.securityTxt || null;
+	trustGrade.securityTxtFindings(sec, add);
 	if (sec) {
 		if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || '')) {
-			const expires = ((sec.body || '').match(/^\s*expires\s*:\s*(.+)$/im) || [])[1];
+			const expires = ((sec.body || '').match(
+				/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*expires\s*:\s*(.+)$/im
+			) || [])[1];
 			const past = expires && !isNaN(Date.parse(expires)) && Date.parse(expires) < Date.now();
 			if (past)
 				add(
@@ -4304,6 +4356,7 @@ function analyze(input) {
 	exposedFiles.checks(extras.exposed, add);
 	lookalikes.checks(extras.lookalikes, add, say);
 	hackSigns.findings(extras.hackSigns, add);
+	targeted.addFindings(extras.targeted, add);
 	(input.alerts || [])
 		.filter((alert) => alert.level === 'Leak')
 		.forEach((alert, index) => {
@@ -4784,6 +4837,26 @@ function analyze(input) {
 	if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
 	// Rank and score.
+	const pageBytes = browsed && browsed.start && browsed.start.bytes;
+	const carbon = pageBytes
+		? carbonEstimate(pageBytes, 'browser')
+		: carbonEstimate(input.pagespeed && input.pagespeed.bytes, 'lighthouse');
+	carbonModel.findings(carbon, add);
+	const headReport = headOrder.findings(face.headOrder, add);
+	const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);
+	const graphRows = read
+		.map((page) => {
+			const row = indexability.find((item) => item.path === (page.path || pathOf(page.url)));
+			return {
+				key: normal(page.url),
+				path: page.path || pathOf(page.url),
+				links: (page.inspect.links || []).map(normal),
+				sig: page.inspect.minhash || '',
+				indexable: !row || row.indexable,
+			};
+		})
+		.filter((row) => row.indexable);
+	const graphReport = pageGraph.findings(graphRows, add);
 	const actionable = findings.filter((item) => item.verdict === 'fail' || item.verdict === 'risk');
 	actionable.forEach((item) => {
 		const reach = 1 + Math.log2((item.count || item.pages.length || 1) + 1) * 0.3;
@@ -4866,6 +4939,8 @@ function analyze(input) {
 			title: social.ogTitle || titleText,
 			description: social.ogDescription || description,
 			image: /^https:\/\//i.test(social.ogImage || '') ? social.ogImage : '',
+			imageAlt: social.ogImageAlt || social.twitterImageAlt || '',
+			twitterImage: /^https:\/\//i.test(social.twitterImage || '') ? social.twitterImage : '',
 			site: social.ogSiteName || host,
 			host,
 			card: social.twitterCard || '',
@@ -4875,6 +4950,7 @@ function analyze(input) {
 
 	const analytics = {
 		tags,
+		adTags: tags.filter((tag) => AD_TAGS.includes(tag.name)).map((tag) => tag.name),
 		consentTools,
 		consentMode,
 		utm: utm && utm.status ? { kept: !!utm.kept, finalPath: pathOf(utm.finalUrl) } : null,
@@ -4892,6 +4968,9 @@ function analyze(input) {
 		})),
 		robotsFound: robots.groups.length > 0 || !!input.robotsText,
 		llms: llmsReport,
+		aiCatalog: geoAgentReports.aiCatalog,
+		webmcp: geoAgentReports.webmcp,
+		agentMarkdown: geoAgentReports.agentMarkdown,
 		aiView: {
 			text: (homeText.text || '').slice(0, 1600),
 			chars: homeText.chars || 0,
@@ -4916,10 +4995,6 @@ function analyze(input) {
 		schemaTypes: [...schemaTypes].slice(0, 20),
 	};
 	const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || 'unknown';
-	const pageBytes = browsed && browsed.start && browsed.start.bytes;
-	const carbon = pageBytes
-		? carbonEstimate(pageBytes, 'browser')
-		: carbonEstimate(input.pagespeed && input.pagespeed.bytes, 'lighthouse');
 	const security = {
 		headers: [
 			{
@@ -4931,11 +5006,12 @@ function analyze(input) {
 			{ label: 'HSTS', state: hdr.hsts ? 'pass' : 'fail' },
 			{
 				label: 'Content-Security-Policy',
-				state: hdr.csp
-					? findings.some((item) => item.key === 'sec-csp' && item.verdict === 'risk')
-						? 'risk'
-						: 'pass'
-					: 'risk',
+				state:
+					hdr.csp || hdr.metaCsp
+						? findings.some((item) => item.key === 'sec-csp' && item.verdict === 'risk')
+							? 'risk'
+							: 'pass'
+						: 'risk',
 			},
 			{ label: 'Frame protection', state: framesGuarded(hdr.frame) || csp['frame-ancestors'] ? 'pass' : 'risk' },
 			{ label: 'X-Content-Type-Options', state: hdr.nosniff ? 'pass' : 'risk' },
@@ -5065,8 +5141,12 @@ function analyze(input) {
 		geo,
 		analytics,
 		security,
+		trust: trustGrade.trustGrade(findings),
 		chat,
 		carbon,
+		headOrder: headReport,
+		waterfall: waterfallReport,
+		pageGraph: graphReport,
 		graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
 		fixkit: fixKit({
 			home,
@@ -5154,7 +5234,7 @@ function fixKit(ctx) {
 	const name =
 		social.ogSiteName ||
 		String(face.title || ctx.host)
-			.split(/\s+[|–—·-]\s+/)[0]
+			.split(/(?<!\s)\s+[|–—·-]\s+/)[0]
 			.trim() ||
 		ctx.host;
 	const jsonLd = {
@@ -5184,29 +5264,20 @@ function fixKit(ctx) {
 	};
 	const pagesForLlms = (ctx.read || [])
 		.filter((page) => ctx.indexable.some((row) => row.path === page.path))
-		.slice(0, 40);
-	const llmsTxt =
-		[
-			'# ' + name,
-			'',
-			'> ' + (face.description || 'Describe in one or two sentences what this site offers and who it is for.'),
-			'',
-			'## Pages',
-			'',
-		]
-			.concat(
-				pagesForLlms.map(
-					(page) =>
-						'- [' +
-						(page.inspect.title || page.path).replace(/[[\]]/g, '') +
-						'](' +
-						page.url +
-						')' +
-						(page.inspect.description ? ': ' + page.inspect.description : '')
-				)
-			)
-			.concat(['', '## Contact', '', '- [Home](' + ctx.origin + '/)'])
-			.join('\n') + '\n';
+		.slice(0, 40)
+		.map((page) => ({
+			path: page.path,
+			url: page.url,
+			title: page.inspect.title,
+			description: page.inspect.description,
+		}));
+	const llmsParsed = geoAgent.parseLlmsTxt((ctx.extras.llms && ctx.extras.llms.body) || '', ctx.extras.llms || {});
+	const llmsTxt = geoAgent.draftLlmsTxt({
+		name,
+		description: face.description,
+		pages: pagesForLlms,
+		origin: ctx.origin,
+	});
 	const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, 'Z');
 	const securityTxt = [
 		'Contact: mailto:security@' + ((ctx.dnsInfo && ctx.dnsInfo.domain) || ctx.host),
@@ -5381,11 +5452,12 @@ function fixKit(ctx) {
 		csp,
 		headers,
 		jsonLd: ctx.entity ? null : jsonLd,
-		llmsTxt: ctx.extras.llms && ctx.extras.llms.status === 200 && !ctx.extras.llms.html ? '' : llmsTxt,
+		llmsTxt: llmsParsed.ok && llmsParsed.complete ? '' : llmsTxt,
 		securityTxt:
 			ctx.extras.securityTxt && ctx.extras.securityTxt.status === 200 && !ctx.extras.securityTxt.html
 				? ''
 				: securityTxt,
+		helmet: trustGrade.helmetSnippet(headers.filter((row) => row.missing).map((row) => row.name)),
 		dns: dnsRecords,
 		mtaSts,
 		libraries: libraryUpgrades,

@@ -78,8 +78,8 @@ function hlFor(lang, country) {
 
 function decode(value) {
 	return String(value || '')
-		.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-		.replace(/<[^>]+>/g, ' ')
+		.replace(/<!\[CDATA\[([\s\S]*?)\]\]>|(<!\[CDATA\[[\s\S]*)/g, '$1$2')
+		.replace(/<[^>]+>|(<[^>]*$)/g, (m, open) => open || ' ')
 		.replace(/&nbsp;/gi, ' ')
 		.replace(/&quot;/gi, '"')
 		.replace(/&#39;|&apos;/gi, "'")
@@ -106,8 +106,17 @@ function tag(block, name) {
 function linkOf(block) {
 	const text = tag(block, 'link');
 	if (/^https:\/\//i.test(text)) return text;
-	const href = block.match(/<link\b[^>]*href="(https:\/\/[^"]+)"/i);
-	return href ? href[1] : '';
+	// What block.match(/<link\b[^>]*href="(https:\/\/[^"]+)"/i) captured, without its rescans: the last such href in the first <link that has one.
+	for (const link of block.matchAll(/<link\b[^>]*/gi)) {
+		let url = '';
+		for (const h of link[0].matchAll(/href="https:\/\//gi)) {
+			const from = link.index + h.index + 6;
+			const end = block.indexOf('"', from + 8);
+			if (end > from + 8) url = block.slice(from, end);
+		}
+		if (url) return url;
+	}
+	return '';
 }
 
 function itemsFromRss(xml, sourceName) {

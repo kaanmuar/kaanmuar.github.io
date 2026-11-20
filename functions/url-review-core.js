@@ -12,6 +12,10 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 const { URL } = require('url');
 const insights = require('./url-review-insights');
+const { replaceBlocks } = require('./tag-blocks');
+const headOrder = require('./url-review-head-order');
+const pageGraph = require('./url-review-page-graph');
+const cyberPassive = require('./url-review-cyber-passive');
 const linkedRisk = require('./url-review-linked-risk');
 const { legalLinks, germanSpeaking } = require('./url-review-legal');
 const fixOffers = require('./url-review-fix-offers');
@@ -30,16 +34,21 @@ const lookalikes = require('./url-review-lookalikes');
 const { ipBlocked } = require('./url-review-ip');
 const hackSigns = require('./url-review-hack-signs');
 const watchCases = require('./url-review-watch');
-const verifiedSpec = require('./url-review-verified-spec');
+const targeted = require('./url-review-targeted');
+/* Lazy: Live reports and other light importers only need iconData (#3713). verified-spec
+   pulls htmlparser2/css-select, which those jobs do not install. */
+const verifiedSpec = () => require('./url-review-verified-spec');
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = '2026-11-04b';
+const TERMS_VERSION = '2026-11-19a';
 // A page loaded before a terms change still sends the version before it.
 const PREVIOUS_TERMS_VERSION = '2026-11-04';
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
 const FIXLIST_CENTS = 500;
+// The Deep attack-source check is a flat one-off add-on on one paid report (#3946); never a credit or a discount.
+const DEEP_CENTS = 1900;
 const CREDENTIALS_CENTS = 3900;
 // A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
 const COMPARE_CENTS = 900;
@@ -116,7 +125,7 @@ function sectionPrefix(url) {
 	try {
 		const path = new URL(url).pathname || '/';
 		if (path === '/') return '';
-		return path.replace(/\/+$/, '');
+		return path.replace(/(?<!\/)\/+$/, '');
 	} catch (error) {
 		return '';
 	}
@@ -125,7 +134,7 @@ function sectionPrefix(url) {
 function underSection(url, prefix) {
 	if (!prefix) return true;
 	try {
-		const path = new URL(url).pathname.replace(/\/+$/, '') || '/';
+		const path = new URL(url).pathname.replace(/(?<!\/)\/+$/, '') || '/';
 		return path === prefix || path.startsWith(prefix + '/');
 	} catch (error) {
 		return false;
@@ -139,7 +148,7 @@ function priceMatches(usd) {
 	PAGE_CHOICES.forEach((pages) => {
 		DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
 	});
-	if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+	if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS || cents === DEEP_CENTS) return true;
 	if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
 	if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
 	if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
@@ -413,13 +422,22 @@ function cfEmail(hex) {
 function emailsInText(text, max) {
 	const out = [];
 	const plain = String(text || '')
-		.replace(/\s*(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, '@')
-		.replace(/\s*(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, '.');
-	(plain.match(/[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/gi) || []).forEach((raw) => {
-		const email = mailOf(raw.replace(/^[._%+-]+/, ''));
-		if (email && !/\.(png|jpe?g|gif|webp|svg)$/.test(email) && out.indexOf(email) === -1 && out.length < (max || 5))
-			out.push(email);
-	});
+		.replace(
+			/(?<!\s)\s+(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*|(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi,
+			'@'
+		)
+		.replace(
+			/(?<!\s)\s+(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*|(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi,
+			'.'
+		);
+	[...plain.matchAll(/([a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})|[a-z0-9._%+-]+/gi)]
+		.map((m) => m[1])
+		.filter(Boolean)
+		.forEach((raw) => {
+			const email = mailOf(raw.replace(/^[._%+-]+/, ''));
+			if (email && !/\.(png|jpe?g|gif|webp|svg)$/.test(email) && out.indexOf(email) === -1 && out.length < (max || 5))
+				out.push(email);
+		});
 	return out;
 }
 
@@ -526,28 +544,42 @@ function preformatUrl(input) {
 	return normalizeUrl('https://' + raw);
 }
 
-const LANDING_TAGS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+const LANDING_TAGS = [
+	'utm_source',
+	'utm_medium',
+	'utm_campaign',
+	'utm_content',
+	'utm_term',
+	'gclid',
+	'wbraid',
+	'gbraid',
+	'msclkid',
+	'fbclid',
+	'ttclid',
+	'li_fat_id',
+];
 
-// Where the asker landed this visit, in the shape openSource() reads: only the utm_* tags and a bare host.
+// Where the asker landed this visit, in the shape openSource() reads: utm_* tags first, paid ad click IDs, and a bare host.
 function landingSource(landing) {
 	const src = landing && typeof landing === 'object' ? landing : {};
 	let params;
 	try {
-		params = new URLSearchParams(String(src.query || '').slice(0, 400));
+		params = new URLSearchParams(String(src.query || '').slice(0, 600));
 	} catch (error) {
 		params = new URLSearchParams();
 	}
 	const kept = new URLSearchParams();
 	LANDING_TAGS.forEach((name) => {
+		const cap = name.startsWith('utm_') ? 40 : 120;
 		const value = String(params.get(name) || '')
 			.replace(/[^A-Za-z0-9._~-]/g, '')
-			.slice(0, 40);
+			.slice(0, cap);
 		if (value) kept.set(name, value);
 	});
 	const tags = kept.toString();
 	const host = String(src.referrerHost || '').toLowerCase();
 	return {
-		query: tags && tags.length <= 200 ? '?' + tags : '',
+		query: tags && tags.length <= 320 ? '?' + tags : '',
 		referrerHost: /^[a-z0-9.-]+(:\d{1,5})?$/.test(host) ? host.slice(0, 80) : '',
 	};
 }
@@ -642,6 +674,7 @@ function validateIntake(body) {
 								: String(src.lang).slice(0, 2).toLowerCase(),
 						pageLang: normalizePageLang(src.pageLang),
 						section: src.section === true,
+						targeted: src.targeted !== false,
 						followUp: src.followUp === true,
 						unlisted: src.unlisted === true,
 						compareWith,
@@ -901,6 +934,10 @@ function priceForReport(list, tools, creditCents, options) {
 
 function priceForFixList() {
 	return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
+}
+
+function priceForDeep() {
+	return { usd: DEEP_CENTS / 100, cents: DEEP_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
 function priceForFix(packageId, host) {
@@ -1197,22 +1234,24 @@ function chargedUsd(options) {
 				? priceForPassExtras(options.passPlan, options)
 				: purpose === 'fixlist'
 					? priceForFixList()
-					: purpose === 'fix'
-						? priceForFix(options.fixPackage, options.fixHost)
-						: purpose === 'cases'
-							? priceForLayers(options.layers)
-							: purpose === 'credentials'
-								? priceForCredentials()
-								: purpose === 'alerts'
-									? priceForAlerts(options.alertCount)
-									: purpose === 'new-run'
-										? priceForRun(options)
-										: priceForReport(
-												options && options.frameworks,
-												options && options.tools,
-												options && options.creditCents,
-												options
-											);
+					: purpose === 'deep'
+						? priceForDeep()
+						: purpose === 'fix'
+							? priceForFix(options.fixPackage, options.fixHost)
+							: purpose === 'cases'
+								? priceForLayers(options.layers)
+								: purpose === 'credentials'
+									? priceForCredentials()
+									: purpose === 'alerts'
+										? priceForAlerts(options.alertCount)
+										: purpose === 'new-run'
+											? priceForRun(options)
+											: priceForReport(
+													options && options.frameworks,
+													options && options.tools,
+													options && options.creditCents,
+													options
+												);
 	const usd = Number(options && options.priceUsd);
 	const list = options && options.listUsd != null ? Number(options.listUsd) : usd;
 	if (Math.round(list * 100) !== priced.cents) {
@@ -1229,7 +1268,11 @@ function chargedUsd(options) {
 	const cents = Math.round(usd * 100);
 	if (cents === priced.cents) return priced;
 	const floor =
-		purpose === 'fixlist' || purpose === 'fix' || priced.billing === 'compare' || priced.billing === 'pass'
+		purpose === 'fixlist' ||
+		purpose === 'deep' ||
+		purpose === 'fix' ||
+		priced.billing === 'compare' ||
+		priced.billing === 'pass'
 			? priced.cents
 			: floorCents(priced.cents);
 	if (!(cents < priced.cents && cents >= floor)) {
@@ -1589,9 +1632,9 @@ async function missingIntermediate(hostname, pinned) {
 	};
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
 	try {
-		return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
+		return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
 	} catch (error) {
 		if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== 'https:' || INTERMEDIATES.has(target.hostname))
 			throw error;
@@ -1599,7 +1642,7 @@ async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguag
 		if (!chain) throw error;
 		if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
 		INTERMEDIATES.set(target.hostname, chain);
-		return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie);
+		return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
 	}
 }
 
@@ -1613,14 +1656,24 @@ function foldedHeader(error) {
 	);
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie) {
-	return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, false).catch((error) => {
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
+	return requestAttempt(
+		target,
+		pinned,
+		isStopped,
+		keepPartial,
+		acceptLanguage,
+		agent,
+		cookie,
+		false,
+		extraHeaders
+	).catch((error) => {
 		if (!foldedHeader(error)) throw error;
-		return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, true);
+		return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, true, extraHeaders);
 	});
 }
 
-function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, lenient) {
+function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, lenient, extraHeaders) {
 	const chain = target.protocol === 'https:' ? INTERMEDIATES.get(target.hostname) : null;
 	return new Promise((resolve, reject) => {
 		const lib = target.protocol === 'https:' ? https : http;
@@ -1659,7 +1712,8 @@ function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, 
 					agent ? { 'user-agent': agent } : {},
 					{ connection: 'close' },
 					acceptLanguage ? { 'accept-language': acceptLanguage } : {},
-					cookie ? { cookie } : {}
+					cookie ? { cookie } : {},
+					extraHeaders || {}
 				),
 				ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
 				lookup: pinnedLookup(pinned),
@@ -1873,7 +1927,7 @@ const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!c
 const upgradeSlow = (error) =>
 	!!error && (error.code === 'HEADERS_TOO_LARGE' || /took too long/.test(error.message || ''));
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent, extraHeaders) {
 	let current = normalizeUrl(raw);
 	const started = Date.now();
 	const upgrades = [];
@@ -1904,7 +1958,8 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage,
 					keepPartial,
 					acceptLanguage,
 					agent,
-					cookieHeader(jar, current)
+					cookieHeader(jar, current),
+					extraHeaders
 				);
 			} catch (error) {
 				if (upgraded && !(error && error.code === 'STOPPED') && !upgradeSlow(error)) throw httpOnly(upgraded, true);
@@ -2027,9 +2082,14 @@ function collect(html, name) {
 	return String(html || '').match(new RegExp('<' + name + '\\b[^>]*>', 'gi')) || [];
 }
 
+// Tag and block regexes here end in a branch, group 1, that takes an unclosed tag (and for blocks the rest of the
+// text) so later starts do not each rescan it (#3965); that branch keeps its text and is never counted as a match.
+const blankBlock = (block, open) => (open ? block : ' ');
+const closedMatches = (re, text) => [...String(text).matchAll(re)].filter((m) => !m[1]).map((m) => m[0]);
+
 function textOf(html, name) {
 	const match = String(html || '').match(new RegExp('<' + name + '\\b[^>]*>([\\s\\S]*?)</' + name + '>', 'i'));
-	return match ? decode(match[1].replace(/<[^>]+>/g, ' ')) : '';
+	return match ? decode(match[1].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)) : '';
 }
 
 const AUTH_ROUTE = /\/(auth|oauth2?|log_?out|sign_?out)(\/|$|\?)/i;
@@ -2202,7 +2262,10 @@ const CHALLENGES = [
 		/<title>\s*(?:Just a moment\.\.\.|Attention Required! \| Cloudflare)\s*<\/title>|window\._cf_chl_opt\b/i,
 	],
 	['Radware', /<title>\s*Radware (?:Bot Manager Captcha|Captcha Page|Page)\s*<\/title>/i],
-	['Akamai', /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>[\s\S]{0,2000}errors\.edgesuite\.net/i],
+	[
+		'Akamai',
+		/\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>(?:(?!<title>\s*Access Denied\s*<\/title>)[\s\S]){0,2000}errors\.edgesuite\.net/i,
+	],
 	['Imperva', /Incapsula incident ID|_Incapsula_Resource\?CWUDNSAI=/i],
 	['DataDome', /captcha-delivery\.com/i],
 	['PerimeterX', /id=["']px-captcha["']|<title>\s*Access to this page has been denied\.?\s*<\/title>/i],
@@ -2243,7 +2306,7 @@ function ownMarkup(html, pageUrl) {
 		}
 	};
 	const prose = /\s(alt|title|aria-label|placeholder|value|content)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
-	const quoted = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+	const quoted = /(?<!\\)"(?:[^"\\\n]|\\.)*"|(?<!\\)'(?:[^'\\\n]|\\.)*'|(?<!\\)`(?:[^`\\]|\\.)*`/g;
 	const tag = (raw) => {
 		if (/^<script\b/i.test(raw)) {
 			const open = raw.match(/^<script\b[^>]*>/i)[0];
@@ -2259,7 +2322,10 @@ function ownMarkup(html, pageUrl) {
 		return out;
 	};
 	return String(html || '')
-		.replace(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi, ' ')
+		.replace(
+			/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi,
+			blankBlock
+		)
 		.replace(/(<(script|style)\b[^>]*>[\s\S]*?<\/\2\s*>|<!--[\s\S]*?-->|<[a-z!/][^>]*>)|[^<]+/gi, (all, kept) =>
 			kept ? tag(kept) : ' '
 		);
@@ -2301,10 +2367,9 @@ function technologies(html, headers, pageUrl, generator) {
 
 function visibleText(html) {
 	return decode(
-		String(html || '')
-			.replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1>/gi, ' ')
-			.replace(/<!--[\s\S]*?-->/g, ' ')
-			.replace(/<[^>]+>/g, ' ')
+		replaceBlocks(String(html || ''), /<(script|style|noscript|template|svg|head)\b/gi, ' ')
+			.replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock)
+			.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)
 	);
 }
 
@@ -2334,10 +2399,10 @@ function textLanguage(text) {
 
 function outline(html) {
 	const heads = [];
-	const re = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+	const re = /<h([1-3])\b[^<>]*>((?:[^<]|<(?!h[1-3]\b|\/h\1>))*)<\/h\1>/gi;
 	let match;
 	while ((match = re.exec(String(html || ''))) && heads.length < 30) {
-		const text = decode(match[2].replace(/<[^>]+>/g, ' '));
+		const text = decode(match[2].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock));
 		if (text) heads.push({ level: Number(match[1]), text: clean(text, 120) });
 	}
 	return heads;
@@ -2364,7 +2429,7 @@ const ANALYTICS_TAGS = [
 	['Google Ads', /["'=]AW-\d{6,12}["'&]/, /["'=](AW-\d{6,12})["'&]/g],
 	[
 		'Meta Pixel',
-		/connect\.facebook\.net\/[^"']*\/fbevents\.js|fbq\(\s*['"]init/,
+		/connect\.facebook\.net\/(?:(?!connect\.facebook\.net\/(?!fbevents\.js))[^"'])*\/fbevents\.js|fbq\(\s*['"]init/,
 		/fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g,
 	],
 	['LinkedIn Insight', /snap\.licdn\.com|_linkedin_partner_id/, /_linkedin_partner_id\s*=\s*["']?(\d{3,12})/g],
@@ -2381,7 +2446,7 @@ const ANALYTICS_TAGS = [
 	['HubSpot', /js\.hs-scripts\.com|js\.hs-analytics\.net/, /js\.hs-scripts\.com\/(\d{3,12})/g],
 	['Adobe Analytics', /assets\.adobedtm\.com|AppMeasurement/, null],
 	['Matomo', /matomo\.js|piwik\.js|_paq\.push/, null],
-	['Plausible', /plausible\.io\/js|\/js\/script\.js["'][^>]*data-domain/, null],
+	['Plausible', /plausible\.io\/js|\/js\/script\.js["'](?:(?!\/js\/script\.js["'])[^>])*data-domain/, null],
 	['Fathom', /cdn\.usefathom\.com/, null],
 	['Umami', /cloud\.umami\.is|\/umami\.js|data-website-id=/, null],
 	['PostHog', /posthog\.init|posthog-js|\.posthog\.com/, null],
@@ -2411,7 +2476,7 @@ const CONSENT_TOOLS = [
 	['Complianz', /complianz/i],
 	['Quantcast Choice', /quantcast\.mgr|cmp\.quantcast/i],
 	['TrustArc', /trustarc|consent\.truste/i],
-	['Klaro', /klaro(-[\w-]+)?(\.min)?\.js|klaroConfig/],
+	['Klaro', /klaro(-(?:(?!klaro-[\w-])[\w-])+)?(\.min)?\.js|klaroConfig/],
 	['EU Cookie Compliance', /eu[_-]cookie[_-]compliance|id=["']sliding-popup["']/i],
 	['CookieConsent', /cookieconsent(\.min)?\.js|CookieConsent\.run/i],
 	['Borlabs', /borlabs-cookie/i],
@@ -2423,10 +2488,10 @@ const CONSENT_TOOLS = [
 // A gtag consent default with no region applies everywhere; one with a region list applies only there and wins in those regions.
 function consentModeOf(body) {
 	const blocks = [];
-	const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,1200}?)\}/g;
+	const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([^{}]{0,1200})\}/g;
 	let match;
 	while ((match = re.exec(body)) && blocks.length < 8) {
-		const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || '';
+		const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]|region['"]?\s*:\s*\[[^\]]*$/) || [])[1] || '';
 		const regions = [...list.matchAll(/['"]([A-Za-z]{2}(?:-[A-Za-z0-9]{1,3})?)['"]/g)].map((hit) =>
 			hit[1].toUpperCase()
 		);
@@ -2467,20 +2532,29 @@ function analyticsScan(html) {
 	const consent = CONSENT_TOOLS.filter(([, pattern]) => pattern.test(body)).map(([name]) => name);
 	const consentMode = consentModeOf(body);
 	const ga4 = (tags.find((tag) => tag.name === 'Google Analytics 4') || { ids: [] }).ids;
+	const gtmIds = (tags.find((tag) => tag.name === 'Google Tag Manager') || { ids: [] }).ids;
 	return {
 		tags,
 		consent,
 		consentMode,
 		ga4,
+		gtmIds,
 		gtagLoads: (body.match(/googletagmanager\.com\/gtag\/js/g) || []).length,
-		loader: /<script\b[^>]*\ssrc\s*=\s*["'][^"']*(analytics|gtag|gtm|tracking|tagmanager)[^"']*["']/i.test(body),
+		gtmLoads: (body.match(/googletagmanager\.com\/gtm\.js/g) || []).length,
+		loader:
+			/<script\b(?:(?!<script\b)[^>])*\ssrc\s*=\s*["'](?=[^"']*["'])[^"']*?(analytics|gtag|gtm|tracking|tagmanager)/i.test(
+				body
+			),
 		dataLayer: /dataLayer\s*=|dataLayer\.push/.test(body),
 	};
 }
 
 function schemaScan(html) {
 	const result = { errors: 0, items: [], emails: [] };
-	const blocks = String(html || '').match(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+	const blocks = closedMatches(
+		/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi,
+		html || ''
+	);
 	// A Person's email is a private address, so only organizations and contact points count.
 	const keepEmails = (node, types) => {
 		if (types.some((type) => /^Person$/i.test(type))) return;
@@ -2549,33 +2623,34 @@ function inspect(html, headers, pageUrl) {
 		collect(html, 'link')
 			.map((tag) => (attr(tag, 'rel').toLowerCase() === 'canonical' ? attr(tag, 'href') : ''))
 			.find(Boolean) || '';
-	const htmlTag = (html.match(/<html\b[^>]*>/i) || [''])[0];
+	const htmlTag = closedMatches(/<html\b[^>]*>|(<html\b)[^>]*$/gi, html)[0] || '';
 	const markup = html
-		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
-		.replace(/<template\b[\s\S]*?<\/template>/gi, ' ');
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, blankBlock)
+		.replace(/<template\b[\s\S]*?<\/template>|(<template\b)[\s\S]*/gi, blankBlock);
 	// The HTML parser copies attributes of a stray later <html> tag onto the root when the root lacks them.
 	const lang =
 		attr(htmlTag, 'lang') ||
 		(hasAttr(htmlTag, 'lang')
 			? ''
-			: collect(markup.replace(/<!--[\s\S]*?-->/g, ' '), 'html')
+			: collect(markup.replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock), 'html')
 					.map((tag) => attr(tag, 'lang'))
 					.find(Boolean) || '');
-	const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || [])
-		.map((tag) => decode(tag.replace(/<[^>]+>/g, ' ')))
+	const h1 = closedMatches(/<h1\b[^>]*>[\s\S]*?<\/h1>|(<h1\b)[\s\S]*/gi, markup)
+		.map((tag) => decode(tag.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)))
 		.filter(Boolean);
 	const images = collect(markup, 'img');
 	const missingAlt = images.filter((tag) => !hasAttr(tag, 'alt')).length;
 	const forms = collect(markup, 'form').length;
-	const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
+	const password = /<input\b[^<>]*type\s*=\s*["']?password/i.test(markup);
 	const buttons = (markup.match(/<button\b/gi) || []).length;
 	const labelFor = new Set(
 		collect(markup, 'label')
 			.map((tag) => attr(tag, 'for'))
 			.filter(Boolean)
 	);
-	const unlabeled = (
-		markup.replace(/<label\b[\s\S]*?<\/label>/gi, ' ').match(/<(?:input|select|textarea)\b[^>]*>/gi) || []
+	const unlabeled = closedMatches(
+		/<(?:input|select|textarea)\b[^>]*>|(<(?:input|select|textarea)\b)[^>]*$/gi,
+		markup.replace(/<label\b[\s\S]*?<\/label>|(<label\b)[\s\S]*/gi, blankBlock)
 	).filter((tag) => {
 		const type = attr(tag, 'type').toLowerCase();
 		if (/^(hidden|submit|button|reset|image)$/.test(type)) return false;
@@ -2693,7 +2768,7 @@ function inspect(html, headers, pageUrl) {
 			})
 			.find(Boolean) || '';
 	const viewportContent = metaValue('viewport').toLowerCase();
-	const head = (html.match(/<head\b[\s\S]*?<\/head>/i) || [''])[0];
+	const head = closedMatches(/<head\b[\s\S]*?<\/head>|(<head\b)[\s\S]*/gi, html)[0] || '';
 	const scriptTags = collect(html, 'script');
 	const crossScripts = scriptTags.filter((tag) => {
 		const src = attr(tag, 'src');
@@ -2708,19 +2783,57 @@ function inspect(html, headers, pageUrl) {
 		crossScripts.filter((tag) => !attr(tag, 'integrity')).map((tag) => attr(tag, 'src')),
 		20
 	);
+	const crossOrigin = (href) => {
+		try {
+			return new URL(href, pageUrl).hostname !== pageHost ? new URL(href, pageUrl).hostname : '';
+		} catch (error) {
+			return '';
+		}
+	};
+	const sriTags = crossScripts
+		.map((tag) => ({
+			kind: 'script',
+			host: crossOrigin(attr(tag, 'src')),
+			integrity: attr(tag, 'integrity'),
+			hasCrossorigin: /\scrossorigin\b/i.test(tag),
+		}))
+		.concat(
+			linksAll
+				.filter(
+					(tag) =>
+						/(^|\s)stylesheet(\s|$)/i.test(attr(tag, 'rel')) && attr(tag, 'href') && crossOrigin(attr(tag, 'href'))
+				)
+				.map((tag) => ({
+					kind: 'style',
+					host: crossOrigin(attr(tag, 'href')),
+					integrity: attr(tag, 'integrity'),
+					hasCrossorigin: /\scrossorigin\b/i.test(tag),
+				}))
+		);
+	const scriptUrls = scripts
+		.map((src) => {
+			try {
+				return new URL(src, pageUrl).toString();
+			} catch (error) {
+				return '';
+			}
+		})
+		.filter((url) => /^https?:/i.test(url))
+		.slice(0, 80);
 	const inlineScripts =
-		(html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
+		closedMatches(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, html).filter((block) => {
 			const open = block.match(/^<script\b[^>]*>/i)[0];
 			if (attr(open, 'src')) return false;
 			const type = attr(open, 'type').toLowerCase();
 			if (type && !/javascript|module|^text\/babel$/.test(type)) return false;
 			return /\S/.test(block.replace(/^<script\b[^>]*>/i, '').replace(/<\/script>$/i, ''));
 		}).length +
-		(
-			html.match(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=/gi) ||
-			[]
+		closedMatches(
+			/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=|(<[a-z])[^>]*/gi,
+			html
 		).length;
-	const inlineStyles = (html.match(/<style\b/gi) || []).length + (html.match(/<[a-z][^>]*\sstyle\s*=/gi) || []).length;
+	const inlineStyles =
+		(html.match(/<style\b/gi) || []).length + closedMatches(/<[a-z][^>]*\sstyle\s*=|(<[a-z])[^>]*/gi, html).length;
 	const text = visibleText(html);
 	const socialLinks = [];
 	collect(markup, 'a').forEach((tag) => {
@@ -2740,14 +2853,16 @@ function inspect(html, headers, pageUrl) {
 			/* not a profile link */
 		}
 	});
-	const anchors = (markup.match(/<a\b[^>]*>[\s\S]*?<\/a>/gi) || []).slice(0, 800).map((block) => {
-		const open = block.match(/^<a\b[^>]*>/i)[0];
-		return {
-			href: attr(open, 'href'),
-			text: decode(block.replace(/<[^>]+>/g, ' ')),
-			label: [attr(open, 'aria-label'), attr(open, 'title')].join(' '),
-		};
-	});
+	const anchors = closedMatches(/<a\b[^>]*>[\s\S]*?<\/a>|(<a\b)[\s\S]*/gi, markup)
+		.slice(0, 800)
+		.map((block) => {
+			const open = block.match(/^<a\b[^>]*>/i)[0];
+			return {
+				href: attr(open, 'href'),
+				text: decode(block.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)),
+				label: [attr(open, 'aria-label'), attr(open, 'title')].join(' '),
+			};
+		});
 	const libraries = [];
 	scripts.slice(0, 60).forEach((src) => {
 		let href = '';
@@ -2776,7 +2891,8 @@ function inspect(html, headers, pageUrl) {
 		target.searchParams.forEach((value) => values.push(value));
 		return values.some(
 			(value) =>
-				/[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value)
+				/(?<![^\s@])[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) &&
+				!/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value)
 		);
 	}).length;
 	const hreflang = linksAll
@@ -2785,26 +2901,29 @@ function inspect(html, headers, pageUrl) {
 		.map((tag) => ({ lang: clean(attr(tag, 'hreflang').toLowerCase(), 16), href: absolute(attr(tag, 'href')) }));
 	const iconTag = linksAll.find((tag) => /(^|\s)(icon|shortcut icon|apple-touch-icon)(\s|$)/i.test(attr(tag, 'rel')));
 	const signals = {
-		viewport: /<meta\b[^>]*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
+		viewport: /<meta\b(?:(?!<meta\b)[^>])*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
 		styled: /<style\b/i.test(html),
 		openGraph: metas.some((tag) => /^og:/i.test(attr(tag, 'property'))),
 		twitter: metas.some((tag) => /^twitter:/i.test(attr(tag, 'name'))),
 		jsonLd: (html.match(/application\/ld\+json/gi) || []).length,
 		iframes: (html.match(/<iframe\b/gi) || []).length,
-		untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' '), 'iframe').filter(
-			(tag) => !attr(tag, 'title') && !hiddenTag(tag)
-		).length,
+		untitledFrames: collect(
+			markup.replace(/<noscript\b[\s\S]*?<\/noscript>|(<noscript\b)[\s\S]*/gi, blankBlock),
+			'iframe'
+		).filter((tag) => !attr(tag, 'title') && !hiddenTag(tag)).length,
 		h2: (html.match(/<h2\b/gi) || []).length,
 		mixed:
-			(markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || [])
-				.length +
+			closedMatches(
+				/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\/|(<(?:script|img|iframe|source|video|audio|embed|track)\b)[^>]*/gi,
+				markup
+			).length +
 			linksAll.filter(
 				(tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, 'rel')) && /^http:\/\//i.test(attr(tag, 'href'))
 			).length,
 		hreflang: linksAll.filter(
 			(tag) => attr(tag, 'rel').toLowerCase().indexOf('alternate') !== -1 && attr(tag, 'hreflang')
 		).length,
-		skip: /<a\b[^>]*href\s*=\s*["']#[^"']+/i.test(html),
+		skip: /<a\b(?:(?!<a\b)[^>])*href\s*=\s*["']#[^"']+/i.test(html),
 		main: /<main\b|\brole\s*=\s*["']?main\b/i.test(html),
 		consent: /cookie|consent|gdpr|privacidad/i.test(html.slice(0, 120000)),
 		privacyLink: /privacy|privacidad|legal|aviso/i.test(html),
@@ -2812,19 +2931,22 @@ function inspect(html, headers, pageUrl) {
 		noscript: /<noscript\b/i.test(html),
 		fileInput: /type\s*=\s*["']file["']/i.test(html),
 		search: /type\s*=\s*["']search["']|role\s*=\s*["']search["']/i.test(html),
-		required: (html.match(/<input\b[^>]*\brequired\b/gi) || []).length,
+		required: closedMatches(/<input\b[^>]*\brequired\b|(<input\b)[^>]*/gi, html).length,
 		video: (html.match(/<video\b/gi) || []).length,
 		permissions: header(headers, 'permissions-policy') || header(headers, 'feature-policy'),
 		thirdParty: scriptHosts,
-		imgNoSize: (markup.match(/<img\b[^>]*>/gi) || []).filter((tag) => !attr(tag, 'width') && !attr(tag, 'height'))
-			.length,
+		imgNoSize: closedMatches(/<img\b[^>]*>|(<img\b)[^>]*$/gi, markup).filter(
+			(tag) => !attr(tag, 'width') && !attr(tag, 'height')
+		).length,
 		robotsMeta: metas.some((tag) => attr(tag, 'name').toLowerCase() === 'robots'),
 		cacheControl: header(headers, 'cache-control'),
 		apiHint: /graphql|wp-json|openapi|swagger/i.test(html.slice(0, 200000)),
 		manifest: linksAll.some((tag) => /manifest/i.test(attr(tag, 'rel'))),
 		appShell:
 			text.length < 300 &&
-			/<div\b[^>]*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'][^>]*>\s*<\/div>/i.test(html),
+			/<div\b(?:(?!<div\b)[^>])*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'](?:(?!\bid\s*=\s*["'](?:root|app|__next|__nuxt|svelte|___gatsby)["'])[^>])*>\s*<\/div>/i.test(
+				html
+			),
 		zoomBlocked:
 			/user-scalable\s*=\s*(no|0)\b/.test(viewportContent) ||
 			/maximum-scale\s*=\s*(1(\.0+)?|0?\.\d+)\b/.test(viewportContent),
@@ -2864,7 +2986,7 @@ function inspect(html, headers, pageUrl) {
 		dated: !!(
 			metaValue('article:published_time') ||
 			metaValue('article:modified_time') ||
-			/<time\b[^>]*datetime\s*=/i.test(html)
+			/<time\b(?:(?!<time\b)[^>])*datetime\s*=/i.test(html)
 		),
 		icon: iconTag ? absolute(attr(iconTag, 'href')) : '',
 		seo: {
@@ -2878,14 +3000,22 @@ function inspect(html, headers, pageUrl) {
 			ogTitle: clean(metaValue('og:title'), 200),
 			ogDescription: clean(metaValue('og:description'), 300),
 			ogImage: absolute(metaValue('og:image') || metaValue('og:image:url')),
+			ogImageAlt: clean(metaValue('og:image:alt'), 240),
+			ogImageWidth: clean(metaValue('og:image:width'), 16),
+			ogImageHeight: clean(metaValue('og:image:height'), 16),
 			ogUrl: absolute(metaValue('og:url')),
 			ogSiteName: clean(metaValue('og:site_name'), 120),
 			ogType: clean(metaValue('og:type'), 40),
 			twitterCard: clean(metaValue('twitter:card'), 40),
+			twitterTitle: clean(metaValue('twitter:title'), 200),
+			twitterDescription: clean(metaValue('twitter:description'), 300),
 			twitterImage: absolute(metaValue('twitter:image')),
+			twitterImageAlt: clean(metaValue('twitter:image:alt'), 240),
 		},
 		schema: schemaScan(html),
 		analytics: analyticsScan(html),
+		headOrder: headOrder.analyze(html),
+		minhash: pageGraph.minhash(text),
 		socialLinks,
 		mailtos,
 		local: { phones, maps: mapsLinks },
@@ -2894,7 +3024,8 @@ function inspect(html, headers, pageUrl) {
 		libraries,
 		wordpress: wordpress.fromHtml(html, pageUrl),
 		piiLinks,
-		sri: { cross: crossScripts.length, missing: sriMissing },
+		sri: { cross: crossScripts.length, missing: sriMissing, audit: cyberPassive.auditSri(sriTags) },
+		scriptUrls,
 		resources: {
 			scripts: foreignHosts(scripts, 30),
 			styles: foreignHosts(
@@ -2920,6 +3051,14 @@ function inspect(html, headers, pageUrl) {
 		},
 		headers: {
 			csp: header(headers, 'content-security-policy'),
+			metaCsp: clean(
+				metas
+					.filter((tag) => attr(tag, 'http-equiv').toLowerCase() === 'content-security-policy')
+					.map((tag) => attr(tag, 'content'))
+					.filter(Boolean)
+					.join('; '),
+				4000
+			),
 			hsts: header(headers, 'strict-transport-security'),
 			nosniff: header(headers, 'x-content-type-options'),
 			frame: header(headers, 'x-frame-options'),
@@ -3048,7 +3187,7 @@ function journeys(pages, dom) {
 	const heading = (page) => {
 		const text = clean((page && page.inspect && page.inspect.h1 && page.inspect.h1[0]) || '', 200);
 		if (!text) return '';
-		return text.length > 40 ? text.slice(0, 40).replace(/\s+\S*$/, '') : text;
+		return text.length > 40 ? text.slice(0, 40).replace(/(?<!\s)\s+\S*$/, '') : text;
 	};
 	return ((dom && dom.nav) || [])
 		.filter((link) => lastingLink(link))
@@ -3075,7 +3214,12 @@ function journeys(pages, dom) {
 function privacyCheck(link, path) {
 	const tail =
 		link && link.href
-			? String(link.href).split(/[?#]/)[0].replace(/\/+$/, '').split('/').pop().replace(/["\\]/g, '')
+			? String(link.href)
+					.split(/[?#]/)[0]
+					.replace(/(?<!\/)\/+$/, '')
+					.split('/')
+					.pop()
+					.replace(/["\\]/g, '')
 			: '';
 	return tail ? { check: { kind: 'count', path, selector: 'a[href*="' + tail + '" i]', op: 'gte', n: 1 } } : {};
 }
@@ -3615,16 +3759,20 @@ function propose(pages, robotsBlocked, limits, dom) {
 			' The later assertion is max-age, includeSubDomains, and a fresh profile that stays on https.',
 		fw: browser,
 	});
-	const csp = String(face.headers.csp || '');
+	const cspHeader = String(face.headers.csp || '');
+	const cspMeta = String(face.headers.metaCsp || '');
+	const csp = [cspHeader, cspMeta].filter(Boolean).join('; ');
 	const cspGaps = csp
 		? [
 				/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp)
 					? "'unsafe-inline' without a nonce or hash"
 					: '',
 				/'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : '',
-				!/frame-ancestors/.test(csp) ? 'no frame-ancestors' : '',
+				!/frame-ancestors/.test(cspHeader) ? 'no frame-ancestors' : '',
 				!/(default|script)-src/.test(csp) ? 'no script-src or default-src' : '',
-				/(default|script)-src[^;]*\s\*(\s|;|$)/.test(csp) ? 'a wildcard script source' : '',
+				/(default|script)-src(?:(?!(?:default|script)-src)[^;])*\s\*(\s|;|$)/.test(csp)
+					? 'a wildcard script source'
+					: '',
 			].filter(Boolean)
 		: [];
 	addCase(cases, {
@@ -3652,7 +3800,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 			(face.headers.frame || 'absent') +
 			(/allow-from/i.test(face.headers.frame || '') ? ', which current browsers ignore' : '') +
 			'. CSP frame-ancestors: ' +
-			((csp.match(/frame-ancestors\s+([^;]+)/i) || [])[1] || 'absent').trim() +
+			((cspHeader.match(/frame-ancestors\s+([^;]+)/i) || [])[1] || 'absent').trim() +
 			'. Either one is a frame policy. A framed copy of ' +
 			here +
 			' would be expected to fail when a frame policy is present.',
@@ -3960,6 +4108,36 @@ function propose(pages, robotsBlocked, limits, dom) {
 				: 'No published or modified date was found on ' + here + '.') +
 			(face.author ? ' An author is named.' : ' No author is named, which the report lists separately.') +
 			' Search engines and AI answers weigh whether a page is current.',
+		fw: browser,
+	});
+	addCase(cases, {
+		id: 'GEO-07',
+		layer: 'GEO',
+		title: host + '/.well-known/ai-catalog.json names callable agent resources',
+		why:
+			'The case fetches https://' +
+			host +
+			'/.well-known/ai-catalog.json when no ARD pointer is in robots.txt or page headers. The file should be JSON that agents can parse. Publishing it is optional until a catalog exists.',
+		fw: browser,
+	});
+	addCase(cases, {
+		id: 'GEO-08',
+		layer: 'GEO',
+		title: here + ' declares WebMCP tools in static HTML or inline scripts',
+		why:
+			'The case searches ' +
+			here +
+			" for document.modelContext in the HTML without running JavaScript. Chrome's WebMCP trial lets a page register tools agents can call in the browser.",
+		fw: browser,
+	});
+	addCase(cases, {
+		id: 'GEO-09',
+		layer: 'GEO',
+		title: here + ' can answer agents with markdown when asked',
+		why:
+			'The case requests ' +
+			here +
+			' with Accept: text/markdown and expects markdown or plain text, not only HTML. Agents that negotiate content type can skip conversion.',
 		fw: browser,
 	});
 	const budgetMs = Math.max(800, Math.ceil(((home.ms || 0) * 1.5) / 100) * 100);
@@ -4694,9 +4872,9 @@ function withTimeout(promise, ms, fallback) {
 	]).finally(() => clearTimeout(timer));
 }
 
-async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
+async function fetchExtra(url, halt, keepPartial, acceptLanguage, extraHeaders) {
 	try {
-		const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage);
+		const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage, null, extraHeaders);
 		const type = header(res.headers, 'content-type');
 		const body = String(res.body || '');
 		return {
@@ -4704,6 +4882,7 @@ async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
 			url: res.url,
 			truncated: !!res.truncated || body.length > 600000,
 			body: body.slice(0, 600000),
+			contentType: type,
 			html: /text\/html|application\/xhtml/i.test(type) || /^\s*<(!doctype|html)/i.test(res.body || ''),
 		};
 	} catch (error) {
@@ -4755,10 +4934,10 @@ function pagesFound(pages, links, sitemap, startUrl, prefix) {
 
 function sitemapLocs(xml) {
 	const locs = [];
-	const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+	const re = /<loc>((?:[^<]|<(?!\/?loc>))*)<\/loc>/gi;
 	let match;
 	while ((match = re.exec(String(xml || ''))) && locs.length < 5000)
-		locs.push(decode(match[1].replace(/<!\[CDATA\[|\]\]>/g, '')));
+		locs.push(decode(match[1].trim().replace(/<!\[CDATA\[|\]\]>/g, '')));
 	return locs;
 }
 
@@ -5259,6 +5438,113 @@ async function iconData(raw) {
 	return '';
 }
 
+const SHARE_IMAGE_LIMIT = 300 * 1024;
+
+function probeShareImageOnce(target, pinned, method, halt) {
+	return new Promise((resolve, reject) => {
+		if (halt && halt()) {
+			reject(stoppedError());
+			return;
+		}
+		const lib = target.protocol === 'https:' ? https : http;
+		const req = lib.request(
+			{
+				protocol: target.protocol,
+				hostname: target.hostname,
+				port: Number(target.port) || (target.protocol === 'https:' ? 443 : 80),
+				path: target.pathname + target.search,
+				method,
+				timeout: 5000,
+				headers: { 'user-agent': USER_AGENT, accept: 'image/*,*/*;q=0.8', connection: 'close' },
+				lookup: pinnedLookup(pinned),
+			},
+			(res) => {
+				const lengthHeader = Number(res.headers['content-length'] || 0);
+				let seen = 0;
+				let over = lengthHeader > SHARE_IMAGE_LIMIT;
+				if (method === 'HEAD') {
+					if (typeof res.resume === 'function') res.resume();
+					res.on('end', () =>
+						resolve({
+							status: res.statusCode,
+							contentType: String(res.headers['content-type'] || '')
+								.split(';')[0]
+								.trim()
+								.toLowerCase(),
+							location: res.headers.location || '',
+							bytes: Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0,
+							overLimit: over,
+						})
+					);
+					res.on('error', reject);
+					return;
+				}
+				res.on('data', (chunk) => {
+					seen += chunk.length;
+					if (seen > SHARE_IMAGE_LIMIT) {
+						over = true;
+						req.destroy();
+						resolve({
+							status: res.statusCode,
+							contentType: String(res.headers['content-type'] || '')
+								.split(';')[0]
+								.trim()
+								.toLowerCase(),
+							location: res.headers.location || '',
+							bytes: Number.isFinite(lengthHeader) && lengthHeader > seen ? lengthHeader : seen,
+							overLimit: true,
+						});
+					}
+				});
+				res.on('end', () =>
+					resolve({
+						status: res.statusCode,
+						contentType: String(res.headers['content-type'] || '')
+							.split(';')[0]
+							.trim()
+							.toLowerCase(),
+						location: res.headers.location || '',
+						bytes: seen || (Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0),
+						overLimit: over,
+					})
+				);
+				res.on('error', reject);
+			}
+		);
+		const deadline = setTimeout(() => req.destroy(new Error('The share image took too long.')), 5500);
+		req.on('close', () => clearTimeout(deadline));
+		req.on('timeout', () => req.destroy(new Error('The share image took too long.')));
+		req.on('error', reject);
+		req.end();
+	});
+}
+
+async function checkShareImage(raw, halt) {
+	try {
+		let current = normalizeUrl(raw);
+		for (let hop = 0; hop <= 3; hop += 1) {
+			const pinned = await assertPublic(current.hostname);
+			let res = await probeShareImageOnce(current, pinned, 'HEAD', halt);
+			if (res.status === 405 || res.status === 501) res = await probeShareImageOnce(current, pinned, 'GET', halt);
+			if ([301, 302, 303, 307, 308].includes(res.status) && res.location) {
+				current = normalizeUrl(new URL(res.location, current).toString());
+				continue;
+			}
+			return {
+				url: clean(current.toString(), 400),
+				status: res.status || 0,
+				contentType: res.contentType || '',
+				bytes: res.bytes || 0,
+				overLimit: !!res.overLimit,
+			};
+		}
+	} catch (error) {
+		if (error && error.code === 'STOPPED') throw error;
+		return null;
+	}
+	return null;
+}
+
 // The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
 async function tcpCheck(raw, ms) {
 	try {
@@ -5474,7 +5760,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 			? lookups.sitemap
 			: readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
 	say(
-		'In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for ' +
+		'In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/ai-catalog.json, the start page with Accept: text/markdown, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for ' +
 			registryDomain(origin.hostname) +
 			(checkRisk ? ", and Google's Safe Browsing lists" : '') +
 			'.'
@@ -5520,10 +5806,18 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 					null
 				).catch(() => null)
 			: Promise.resolve(undefined);
+	const shareImageUrl =
+		lookups && lookups.inspect && lookups.inspect.social && /^https:\/\//i.test(lookups.inspect.social.ogImage || '')
+			? lookups.inspect.social.ogImage
+			: '';
+	const catalogPath = '/.well-known/ai-catalog.json';
+	const homePath = pagePath(first.url);
 	const [
 		sitemap,
 		llms,
 		llmsFull,
+		aiCatalog,
+		agentMarkdown,
 		securityTxt,
 		utm,
 		soft404,
@@ -5533,6 +5827,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		safeBrowsing,
 		local,
 		lists,
+		shareImage,
 	] = await Promise.all([
 		done(sitemapJob, (map) =>
 			map.urls && map.urls.length
@@ -5549,6 +5844,25 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		done(fetchExtra(origin.origin + '/llms-full.txt', halt, false, acceptLanguage), (res) =>
 			answered('/llms-full.txt', res)
 		),
+		allowed(catalogPath)
+			? done(fetchExtra(origin.origin + catalogPath, halt, false, acceptLanguage), (res) => answered(catalogPath, res))
+			: Promise.resolve(null).then(() => {
+					say('The ai-catalog check was skipped: robots.txt disallows ' + catalogPath + '.');
+					return null;
+				}),
+		allowed(homePath)
+			? done(
+					fetchExtra(first.url, halt, false, acceptLanguage, { accept: 'text/markdown' }),
+					(res) =>
+						'The start page with Accept: text/markdown answered ' +
+						(res.status || 'nothing') +
+						(res.contentType ? ' as ' + clean(res.contentType, 80) : '') +
+						'.'
+				)
+			: Promise.resolve(null).then(() => {
+					say('The agent markdown check was skipped: robots.txt disallows the start page.');
+					return null;
+				}),
 		done(fetchExtra(origin.origin + '/.well-known/security.txt', halt, false, acceptLanguage), (res) =>
 			answered('/.well-known/security.txt', res)
 		),
@@ -5724,6 +6038,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		Promise.resolve()
 			.then(() => checkLists(first.url, { note: say, stop: halt }))
 			.catch(() => null),
+		shareImageUrl ? checkShareImage(shareImageUrl, halt).catch(() => null) : Promise.resolve(null),
 	]);
 	const lookalikeFound = await lookalikeJob;
 	if (lookalikeFound !== undefined)
@@ -5745,12 +6060,22 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 						'.'
 		);
 	const trim = (item) =>
-		item ? { status: item.status, html: !!item.html, body: String(item.body || '').slice(0, 20000) } : null;
-	return {
+		item
+			? {
+					status: item.status,
+					html: !!item.html,
+					contentType: item.contentType || '',
+					body: String(item.body || '').slice(0, 20000),
+					error: item.error || '',
+				}
+			: null;
+	const out = {
 		lookalikes: lookalikeFound || null,
 		sitemap,
 		llms: trim(llms),
 		llmsFull: trim(llmsFull),
+		aiCatalog: trim(aiCatalog),
+		agentMarkdown: trim(agentMarkdown),
 		securityTxt: trim(securityTxt),
 		utm,
 		soft404,
@@ -5762,6 +6087,8 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		local: local && local.ok ? local : null,
 		threatLists: lists,
 	};
+	if (shareImage) out.shareImage = shareImage;
+	return out;
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -6021,6 +6348,7 @@ async function reviewTarget(rawUrl, hooks) {
 	if (prefix) note('Later pages stay under ' + prefix + '.');
 	const keep = (url) => !prefix || underSection(url, prefix);
 	const homeInspect = inspect(first.body, first.headers, first.url);
+	homeInspect.headOrder = headOrder.analyze(first.body, { detail: true });
 	const sitemapPromise = stopped
 		? Promise.resolve({ status: 0, urls: [] })
 		: readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
@@ -6522,6 +6850,35 @@ async function reviewTarget(rawUrl, hooks) {
 	extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
 	extras.hackSigns = await withTimeout(hackPromise, 5000, null);
 	if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
+	if (!stopped && !softPreview && controls.targeted === false)
+		note('Attack and exploit source checks were switched off for this run.');
+	if (!stopped && !softPreview && controls.targeted !== false) {
+		const assessedLibs = [].concat
+			.apply(
+				[],
+				pages.map((page) => (page.inspect && page.inspect.libraries) || [])
+			)
+			.concat((browser && browser.ok && browser.libraries) || []);
+		const runTargeted = typeof controls.targeted === 'function' ? controls.targeted : targeted.check;
+		note('Reading attack and exploit sources for ' + origin.hostname + '.');
+		extras.targeted = await runTargeted(
+			{
+				url: first.url,
+				host: origin.hostname,
+				cert: first.cert || null,
+				libraries: assessedLibs,
+				wordpress: extras.wordpress || null,
+				technologies: technologiesFound,
+				extras,
+				alerts,
+			},
+			{
+				env: process.env,
+				certspotterKey: process.env.CERTSPOTTER_KEY || '',
+			}
+		).catch(() => null);
+		targeted.lines(extras.targeted).forEach((text) => note(text));
+	}
 	if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
 		const out = extras.outbound;
 		const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
@@ -6822,6 +7179,27 @@ async function reviewTarget(rawUrl, hooks) {
 	};
 	if (talked) result.chatTalk = talked;
 	if (watch) result.watch = watch;
+	if (extras.targeted) {
+		result.targeted = {
+			host: extras.targeted.host,
+			checkedAt: extras.targeted.checkedAt,
+			status: extras.targeted.status,
+			level: extras.targeted.level,
+			hosting: extras.targeted.hosting,
+			kevHits: (extras.targeted.kevHits || []).slice(0, 20),
+			osvHits: (extras.targeted.osvHits || []).slice(0, 20),
+			dropIpHit: extras.targeted.dropIpHit || null,
+			dropAsnHit: extras.targeted.dropAsnHit || null,
+			feodoHit: extras.targeted.feodoHit || null,
+			torHit: extras.targeted.torHit || '',
+			breachNews: (extras.targeted.breachNews || []).slice(0, 5),
+			sourcesRead: extras.targeted.sourcesRead || [],
+			sourcesSkipped: extras.targeted.sourcesSkipped || [],
+			attributions: extras.targeted.attributions || [],
+			context: extras.targeted.context || null,
+			items: (extras.targeted.items || []).slice(0, 40),
+		};
+	}
 	if (proof && proof.kind)
 		result.ownerProof = {
 			kind: proof.kind,
@@ -6830,7 +7208,7 @@ async function reviewTarget(rawUrl, hooks) {
 			checked: proof.checked === true,
 		};
 	// Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
-	if (!softPreview && !stopped) verifiedSpec.applyToReport(result, pages);
+	if (!softPreview && !stopped) verifiedSpec().applyToReport(result, pages);
 	if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
 	return result;
 }
@@ -7013,7 +7391,8 @@ function localSummary(report) {
 }
 
 // The newer security checks' findings in a few bytes (#3329), so Jarvis counts hits per check without reading reports.
-const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist)/;
+const CHECK_KEYS =
+	/^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist|kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)/;
 function checksSummary(report) {
 	const findings = report && report.insights && Array.isArray(report.insights.findings) ? report.insights.findings : [];
 	const rows = findings
@@ -7076,6 +7455,7 @@ function intakeRecord(value, report, meta) {
 		lang: value.lang || '',
 		pageLang: value.pageLang || '',
 		section: value.section === true,
+		targeted: value.targeted !== false,
 		followUp: value.followUp === true,
 		unlisted: softPreview ? true : value.unlisted === true,
 		compareWith: value.compareWith || '',
@@ -7207,6 +7587,7 @@ function productName(purpose, frameworks, scope) {
 		return 'QA-lab URL Review run · options over the pass · ' + scope.pages + ' pages, ' + scope.depth + ' links deep';
 	if (purpose === 'credentials') return 'QA-lab signed-in run';
 	if (purpose === 'fixlist') return 'QA-lab URL Review fix list';
+	if (purpose === 'deep') return 'QA-lab URL Review Deep attack-source check';
 	if (purpose === 'fix') {
 		const pkg = fixOffers.packageById(scope && scope.package);
 		return (
@@ -7432,7 +7813,7 @@ async function startMercadoPago(options, purpose) {
 async function startCheckout(options) {
 	const provider = paymentProvider(options && options.provider);
 	const purpose =
-		['report', 'fixlist', 'fix', 'cases', 'credentials', 'alerts', 'new-run', 'pass'].indexOf(
+		['report', 'fixlist', 'deep', 'fix', 'cases', 'credentials', 'alerts', 'new-run', 'pass'].indexOf(
 			options && options.purpose
 		) === -1
 			? 'new-run'
@@ -8118,6 +8499,7 @@ function teaserFinding(findings) {
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
 function previewReport(report, options) {
 	const copy = JSON.parse(JSON.stringify(report || {}));
+	delete copy.targeted;
 	const cases = copy.cases || [];
 	const top = options && options.sample === false ? null : cases.shift();
 	cases.forEach((item) => {
@@ -8133,6 +8515,11 @@ function previewReport(report, options) {
 		item.detail = frostText(item.detail);
 	});
 	const ins = copy.insights || {};
+	if (Array.isArray(ins.findings)) {
+		ins.findings = ins.findings.filter(
+			(item) => !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String((item && item.key) || ''))
+		);
+	}
 	// Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
 	const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
 	const teaserId = teaser && (teaser.id || teaser.key);
@@ -8216,6 +8603,8 @@ module.exports = {
 	PRICE_PER_FRAMEWORK,
 	EXTRA_FRAMEWORK_USD,
 	FIXLIST_CENTS,
+	DEEP_CENTS,
+	priceForDeep,
 	COMPARE_CENTS,
 	PASS_CENTS,
 	FULL_STACK_CENTS,
@@ -8334,6 +8723,7 @@ module.exports = {
 	ipBlocked,
 	hostBlocked,
 	iconData,
+	checkShareImage,
 	assertPublic,
 	pinnedLookup,
 };

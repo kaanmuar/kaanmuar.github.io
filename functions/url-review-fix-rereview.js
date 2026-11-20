@@ -46,6 +46,7 @@ function target(original) {
 			depth: row.depth || undefined,
 			pageLang: row.pageLang || '',
 			section: row.section === true,
+			targeted: row.targeted !== false,
 		},
 	};
 }

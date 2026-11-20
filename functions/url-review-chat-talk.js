@@ -202,7 +202,7 @@ const NOISE =
 	/^(just now|now|ahora|agora|jetzt|maintenant|adesso|seen|read|delivered|sent|typing|is typing|escribiendo|digitando|schreibt|écrit|sta scrivendo|\d{1,2}:\d{2}(\s?[ap]m)?|\d+\s?(s|sec|min|m|h)( ago)?|bot|ai|you|tú|você|sie|vous|tu|me|yo|eu|ich|moi|io)\.?$/i;
 
 const PRICE =
-	/(?:US\$|R\$|[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF)\b)\s?(\d[\d.,\s]*\d|\d)|(\d[\d.,\s]*\d|\d)\s?(?:[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF|euros?|dollars?|d[oó]lares|reais|pesos|franken)\b)/gi;
+	/(?:US\$|R\$|[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF)\b)\s?(\d[\d.,\s]*\d|\d)|(?=\d)(?<!\d[.,\s]*)(\d+(?:[.,\s]+\d+)*)\s?(?:[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF|euros?|dollars?|d[oó]lares|reais|pesos|franken)\b)/gi;
 const TERM =
 	/\b(\d{1,3})\s?(days?|d[ií]as?|tagen?|jours?|giorni|giorno|weeks?|semanas?|wochen?|semaines?|settimane?|settimana|months?|meses|mês|mes|monaten?|monate|mois|mesi|mese|years?|años?|anos?|jahren?|jahre|ans?|anni|anno)\b/gi;
 const PERCENT = /\b(\d{1,3})\s?%/g;
@@ -387,14 +387,12 @@ function judge(talked, ctx) {
 					? STATUS_NOTE.failed.replace(/\.$/, ' (' + clip(talked.error, 120) + ').')
 					: STATUS_NOTE.failed,
 		});
-	const turns = (talked.turns || [])
-		.slice(0, MAX_TURNS)
-		.map((turn) => ({
-			id: String(turn.id || ''),
-			sent: clip(turn.sent, 300),
-			reply: clip(turn.reply, REPLY_MAX),
-			ms: Math.max(0, Math.round(Number(turn.ms) || 0)),
-		}));
+	const turns = (talked.turns || []).slice(0, MAX_TURNS).map((turn) => ({
+		id: String(turn.id || ''),
+		sent: clip(turn.sent, 300),
+		reply: clip(turn.reply, REPLY_MAX),
+		ms: Math.max(0, Math.round(Number(turn.ms) || 0)),
+	}));
 	Object.assign(base, {
 		vendor: clip(talked.vendor, 60),
 		ai: talked.ai === true,

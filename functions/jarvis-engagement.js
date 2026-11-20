@@ -25,6 +25,7 @@ const Snapshot = require('./jarvis-snapshot');
 const jarvisLog = require('./jarvis-log');
 const Trials = require('./chain-trials');
 const Send = require('./outreach-send');
+const FieldSweep = require('./engagement-field-sweep');
 
 const Gemini = require('./gemini');
 
@@ -171,6 +172,31 @@ function usedToday(daily) {
 }
 
 /**
+ * Trend-safe replies (#3814, engagement-trends.js autoReply) go out on their own in a live run, once outreach-send says
+ * "auto" (after the first days of approval) and within the network's daily reply cap; the rest wait for Carlos.
+ */
+async function autoApprove(deps, conf, docs, now) {
+	const safe = docs.filter(
+		(d) => d.actions.reply && d.actions.reply.status === 'waiting' && d.actions.reply.trendSafe === true
+	);
+	if (!safe.length || !conf.live) return 0;
+	const send = await Send.readSend(deps.db, now);
+	let n = 0;
+	for (const d of safe.sort((a, b) => b.score - a.score)) {
+		if (Send.modeOf(send, { network: d.network, kind: 'reply', now }) !== 'auto') break;
+		if (!(await Send.useCap(deps.db, { network: d.network, kind: 'reply', now, settings: send })).ok) continue;
+		Object.assign(d.actions.reply, {
+			status: 'approved',
+			auto: true,
+			decidedAt: new Date(now).toISOString(),
+			by: 'auto',
+		});
+		n += 1;
+	}
+	return n;
+}
+
+/**
  * Posts read this run, from the cloud readers or the Mac's browser (functions/engagement-mac.js): kept when in our
  * field, scored, read by Gemini, planned, stored and counted, and the best waiting replies pushed to Carlos.
  * read: posts read per network; errors: per network.
@@ -180,11 +206,13 @@ async function takeIn(deps, conf, posts, read, errors) {
 	const seen = new Map();
 	posts.forEach((p) => {
 		const s = E.score(p, now);
-		if (!s.relevance) return;
+		// A post trending hard is read even with no field keyword in it (#3814); Gemini and the guards decide whether we answer.
+		if (!s.relevance && !E.Trends.viral(p, s)) return;
 		const key = E.keyOf(p.network, p.id);
 		if (!seen.has(key) || seen.get(key).score < s.score) seen.set(key, Object.assign({ key }, p, s));
 	});
 	const candidates = Array.from(seen.values());
+	const trends = E.Trends.trendingNow(candidates);
 	const refs = candidates.map((p) => db.collection('engagement_posts').doc(p.key));
 	const known = refs.length ? await db.getAll(...refs) : [];
 	const fresh = [];
@@ -214,7 +242,7 @@ async function takeIn(deps, conf, posts, read, errors) {
 	const follows = await followed(db, now).catch(() => new Set());
 	const replied = await repliedThreads(db);
 	const plan = (p, read) => {
-		const d = E.decide(p, read, conf, used, now, follows, replied);
+		const d = E.decide(p, read, conf, used, now, follows, replied, trends);
 		if (d.actions.follow && d.actions.follow.status === 'planned')
 			follows.add(p.network + ':' + String((p.author || {}).handle || '').toLowerCase());
 		if (d.actions.reply && d.actions.reply.status === 'waiting') replied.add(E.threadKey(p));
@@ -225,6 +253,8 @@ async function takeIn(deps, conf, posts, read, errors) {
 		const d = plan(post, ai[post.key] || E.storedAi(doc));
 		return Object.assign(d, { seenAt: doc.seenAt, day: doc.day, decidedAgainAt: new Date(now).toISOString() });
 	});
+
+	await autoApprove(deps, conf, docs.concat(again), now);
 
 	const writes = docs
 		.map((d) => ({ ref: db.collection('engagement_posts').doc(d.key), data: d, set: true }))
@@ -895,7 +925,15 @@ async function scout(deps) {
 	const conf = await readSettings(db);
 	const expired = await expire(deps).catch(() => 0);
 	const creds = await Act.readCreds(db).catch(() => ({}));
-	const read = await Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now });
+	const site = (deps.site || env.SITE || 'https://carlosandmunoz.com/').replace(/\/?$/, '/');
+	const [read, sweep] = await Promise.all([
+		Sources.readAll({ fetch: deps.fetch, env: withAccounts(env, creds), now, settings: conf }),
+		FieldSweep.recentPosts(deps.fetch, site, now).catch(() => ({ posts: [], count: 0, tender: 0 })),
+	]);
+	if (sweep.posts && sweep.posts.length) {
+		read.posts.push(...sweep.posts);
+		read.read.fieldsweep = (read.read.fieldsweep || 0) + sweep.posts.length;
+	}
 	const took = await takeIn(deps, conf, read.posts, read.read, read.errors);
 	let reruns;
 	try {
@@ -1024,6 +1062,7 @@ async function scout(deps) {
 			aiError: chains.aiError,
 			errors: chains.errors,
 		},
+		fieldSweep: { count: sweep.count || 0, tender: sweep.tender || 0, at: sweep.at || '' },
 	};
 	await db.collection('engagement_runs').doc(run.at).set(run);
 	await clearCache(db);
@@ -1410,6 +1449,10 @@ const STAGE = Object.assign(
 		hn: 'trends only',
 		devto: 'trends only',
 		lobsters: 'trends only',
+		qiita: 'trends only',
+		stackexchange: 'trends only',
+		zenn: 'trends only',
+		fieldsweep: 'field sweep proposals, read only',
 	}
 );
 const MAC_STALE = 2 * 3600000;
@@ -1450,25 +1493,39 @@ async function source(ctx) {
 	const now = ctx.now;
 	const days = Math.max(1, Math.min(365, Number(ctx.days) || 7));
 	const range = dayList(E.bogotaDay(now), Math.min(days, 92));
-	const [conf, runsSnap, waitingSnap, approvedSnap, cur, prev, top, reportsSnap, accounts, creds, macSnap, redditSnap] =
-		await Promise.all([
-			readSettings(db),
-			db.collection('engagement_runs').orderBy('at', 'desc').limit(12).get(),
-			db.collection('engagement_posts').where('actions.reply.status', '==', 'waiting').limit(60).get(),
-			db
-				.collection('engagement_posts')
-				.where('actions.reply.status', 'in', ['approved', 'posted', 'failed', 'replied'])
-				.limit(90)
-				.get(),
-			dailies(db, range),
-			dailies(db, dayList(E.bogotaDay(now - range.length * DAY), range.length)),
-			topPosts(db, range[0], range[range.length - 1], 40),
-			db.collection('engagement_reports').orderBy('at', 'desc').limit(9).get(),
-			Act.connections(db),
-			Act.readCreds(db),
-			db.collection('engagement_private').doc('mac').get(),
-			db.collection('engagement_private').doc('reddit').get(),
-		]);
+	const [
+		conf,
+		runsSnap,
+		metaSnap,
+		waitingSnap,
+		approvedSnap,
+		cur,
+		prev,
+		top,
+		reportsSnap,
+		accounts,
+		creds,
+		macSnap,
+		redditSnap,
+	] = await Promise.all([
+		readSettings(db),
+		db.collection('engagement_runs').orderBy('at', 'desc').limit(12).get(),
+		db.collection('engagement_meta_runs').orderBy('at', 'desc').limit(1).get(),
+		db.collection('engagement_posts').where('actions.reply.status', '==', 'waiting').limit(60).get(),
+		db
+			.collection('engagement_posts')
+			.where('actions.reply.status', 'in', ['approved', 'posted', 'failed', 'replied'])
+			.limit(90)
+			.get(),
+		dailies(db, range),
+		dailies(db, dayList(E.bogotaDay(now - range.length * DAY), range.length)),
+		topPosts(db, range[0], range[range.length - 1], 40),
+		db.collection('engagement_reports').orderBy('at', 'desc').limit(9).get(),
+		Act.connections(db),
+		Act.readCreds(db),
+		db.collection('engagement_private').doc('mac').get(),
+		db.collection('engagement_private').doc('reddit').get(),
+	]);
 	const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
 	const ownerTags = await OwnerTags.status(db, now).catch(() => null);
 	const reddit = redditSnap.exists && redditSnap.data().at ? redditSnap.data() : null;
@@ -1481,6 +1538,7 @@ async function source(ctx) {
 				? 'Mac browser, not signed in'
 				: 'Mac browser' + ((mac.accounts || {})[k] ? ' as ' + mac.accounts[k] : '');
 	const runs = runsSnap.docs.map((d) => d.data());
+	const metaScout = metaSnap.docs[0] ? metaSnap.docs[0].data() : null;
 	const last = runs[0] || null;
 	const stale = !last || now - Date.parse(last.at) > STALE;
 	const report = E.report('range', cur, prev, top, now);
@@ -1632,6 +1690,7 @@ async function source(ctx) {
 		live: conf.live,
 		stale,
 		lastRun: last,
+		metaScout,
 		runs,
 		accounts,
 		ownerTags,
@@ -1694,6 +1753,7 @@ module.exports = {
 	scout,
 	expire,
 	takeIn,
+	autoApprove,
 	reportSites,
 	reportPass,
 	rerunPass,

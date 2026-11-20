@@ -44,6 +44,15 @@ const A11Y_KEYS = [
 	'a11y-targets',
 	'a11y-zoom',
 ];
+const TARGETED_KEYS = [
+	'sec-kev',
+	'sec-osv',
+	'sec-drop',
+	'sec-feodo',
+	'sec-breach-news',
+	'sec-cert-anomaly',
+	'sec-targeted',
+];
 const KIND_TOOLS = {
 	lists: ['curl'],
 	linked: ['Playwright', 'curl'],
@@ -55,6 +64,7 @@ const KIND_TOOLS = {
 	headers: ['OWASP ZAP', 'Nuclei'],
 	tls: ['curl'],
 	a11y: ['axe', 'Pa11y'],
+	targeted: ['curl', 'dig'],
 };
 
 function isOpen(finding) {
@@ -84,6 +94,7 @@ function kindOf(key) {
 	if (HEADER_KEYS.indexOf(k) !== -1) return 'headers';
 	if (TLS_KEYS.indexOf(k) !== -1) return 'tls';
 	if (A11Y_KEYS.indexOf(k) !== -1 || (/^ax-/.test(k) && k !== 'ax-clean')) return 'a11y';
+	if (TARGETED_KEYS.indexOf(k) !== -1) return 'targeted';
 	return '';
 }
 
@@ -124,13 +135,11 @@ function listsData(extras, opened, host) {
 function linkedData(extras) {
 	const hits = (extras && extras.linkedRisk && extras.linkedRisk.hits) || [];
 	return {
-		hosts: hits
-			.slice(0, MAX_ROWS)
-			.map((hit) => ({
-				host: String(hit.host || ''),
-				element: String(hit.element || ''),
-				page: String(hit.page || '/'),
-			})),
+		hosts: hits.slice(0, MAX_ROWS).map((hit) => ({
+			host: String(hit.host || ''),
+			element: String(hit.element || ''),
+			page: String(hit.page || '/'),
+		})),
 		pages: uniq(
 			hits.map((hit) => hit.page || '/'),
 			MAX_PAGES
@@ -227,6 +236,65 @@ function a11yData(browser, opened) {
 	return { paths: uniq(axePages.concat(...opened.map((f) => f.pages || [])).concat(['/']), MAX_PAGES), rules };
 }
 
+function libRow(name, version) {
+	const n = String(name || '').trim();
+	const v = String(version || '').trim();
+	if (!n || !v) return null;
+	return { name: n.slice(0, 60), version: v.slice(0, 32) };
+}
+
+function libFromSoftware(software) {
+	const raw = String(software || '');
+	const at = raw.lastIndexOf('@');
+	if (at <= 0) return null;
+	return libRow(raw.slice(0, at), raw.slice(at + 1));
+}
+
+function targetedData(extras, opened, host, tls) {
+	const result = (extras && extras.targeted) || {};
+	const keys = uniq(opened.map((f) => f.key));
+	const wantKev = keys.indexOf('sec-kev') !== -1;
+	const wantOsv = keys.indexOf('sec-osv') !== -1;
+	const wantDrop = keys.indexOf('sec-drop') !== -1;
+	const wantFeodo = keys.indexOf('sec-feodo') !== -1;
+	const wantCert = keys.indexOf('sec-cert-anomaly') !== -1;
+	const libs = [];
+	if (wantKev || wantOsv) {
+		(result.kevHits || []).forEach((row) => {
+			const hit = libFromSoftware(row.software);
+			if (hit && libs.every((item) => item.name !== hit.name || item.version !== hit.version)) libs.push(hit);
+		});
+		(result.osvHits || []).forEach((row) => {
+			const hit = libRow(row.name, row.version);
+			if (hit && libs.every((item) => item.name !== hit.name || item.version !== hit.version)) libs.push(hit);
+		});
+	}
+	const ips = [];
+	if (wantDrop || wantFeodo) {
+		if (result.dropIpHit && result.dropIpHit.ip) ips.push(String(result.dropIpHit.ip));
+		if (result.feodoHit && result.feodoHit.ip) ips.push(String(result.feodoHit.ip));
+		((result.hosting && result.hosting.ips) || []).forEach((ip) => {
+			if (ip && ips.indexOf(ip) === -1) ips.push(String(ip));
+		});
+	}
+	const data = {
+		host: result.host || host,
+		checks: keys,
+		sources: (result.sourcesRead || []).slice(0, 8).map((name) => String(name)),
+	};
+	if (libs.length) data.libs = libs.slice(0, MAX_ROWS);
+	if (ips.length) data.ips = ips.slice(0, 4);
+	if (wantDrop && result.dropAsnHit && result.dropAsnHit.asn) data.asn = Number(result.dropAsnHit.asn) || 0;
+	if (wantCert) {
+		const kinds = uniq(((result.certCheck && result.certCheck.anomalies) || []).map((row) => row.kind).filter(Boolean));
+		if (kinds.length) data.certKinds = kinds.slice(0, 6);
+	}
+	if (keys.indexOf('sec-breach-news') !== -1 && (result.breachNews || []).length) {
+		data.breachCount = Math.min((result.breachNews || []).length, 5);
+	}
+	return data;
+}
+
 /**
  * The watch cases for one review. findings: insights findings (with ids); extras: the raw check results the review kept
  * (threatLists, linkedRisk, hackSigns, lookalikes, exposed, dns with mailAuth and blocklists, tls); ctx: { host, base, browser }.
@@ -262,6 +330,7 @@ function build(findings, extras, ctx) {
 					: {},
 				{ chain: opened.some((f) => f.key === 'sec-tls-chain') }
 			);
+		else if (kind === 'targeted') data = targetedData(extras, opened, host, extras && extras.tls);
 		else data = a11yData(opts.browser, opened);
 		const top = worst(opened);
 		cases.push(
@@ -288,20 +357,31 @@ function preview(watch) {
 	if (!watch) return watch;
 	const size = (item) => {
 		const data = item.data || {};
+		if (item.kind === 'targeted') return (data.checks || item.keys || []).length;
 		return (data.lists || data.hosts || data.rows || data.paths || data.targets || data.keys || []).length;
 	};
-	return Object.assign(
-		{
-			host: watch.host,
-			cases: (watch.cases || []).map((item) => ({
+	const casePreview = (item) => {
+		if (item.kind === 'targeted') {
+			return {
 				id: item.id,
 				kind: item.kind,
 				verdict: item.verdict,
 				severity: item.severity,
 				tools: item.tools,
 				count: size(item),
-			})),
-		},
+			};
+		}
+		return {
+			id: item.id,
+			kind: item.kind,
+			verdict: item.verdict,
+			severity: item.severity,
+			tools: item.tools,
+			count: size(item),
+		};
+	};
+	return Object.assign(
+		{ host: watch.host, cases: (watch.cases || []).map(casePreview) },
 		watch.regressions
 			? {
 					regressions: watch.regressions.map((item) => ({
@@ -390,5 +470,6 @@ module.exports = {
 	kindOf,
 	KIND_TOOLS,
 	HEADER_KEYS,
+	TARGETED_KEYS,
 	SAFE_BROWSING_REVIEW,
 };

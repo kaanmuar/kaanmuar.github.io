@@ -161,14 +161,12 @@ async function send(messaging, db, tokens, msg, browsers) {
 	const phones = await sendPhones(messaging, db, tokens, msg);
 	const web = browsers || (db && msg.kind !== 'test' ? await webTargets(db, msg.kind) : []);
 	if (!web.length) return logged(db, msg, phones);
-	const out = await webPush
-		.sendWeb(require('web-push'), db, web, msg, Date.now())
-		.catch((error) => ({
-			sent: 0,
-			failed: web.length,
-			removed: 0,
-			error: String(error.message || error).slice(0, 200),
-		}));
+	const out = await webPush.sendWeb(require('web-push'), db, web, msg, Date.now()).catch((error) => ({
+		sent: 0,
+		failed: web.length,
+		removed: 0,
+		error: String(error.message || error).slice(0, 200),
+	}));
 	return logged(db, msg, {
 		sent: phones.sent + out.sent,
 		failed: phones.failed + out.failed,

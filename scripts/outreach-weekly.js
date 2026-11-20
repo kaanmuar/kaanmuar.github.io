@@ -29,6 +29,7 @@ const { parseCsv, toCsv } = require('./jarvis-marketing-sync');
 
 const PROJECT = 'carlosm-interactive-cv';
 const FN = path.join(__dirname, '..', 'functions');
+const CONTACTS = require(path.join(FN, 'company-contacts'));
 const CFG = (() => {
 	try {
 		return JSON.parse(fs.readFileSync(path.join(require('os').homedir(), '.cursor/preflight/config.json'), 'utf8'));
@@ -119,6 +120,8 @@ const FORWARD_TO = {
 	P: 'partners@qalabreview.com',
 };
 const NO_FORWARD = new Set(['opt_out', 'out_of_office', 'bounce', 'auto_reply']);
+// Same closed-inbox / receipt / bounce rules as owner notices (#3670); skip Gemini when rules already know.
+const ownerReplies = require(path.join(FN, 'url-review-owner-replies'));
 const FORWARDED = 'tracker/replies-forwarded.json';
 const INSTANTLY = 'https://api.instantly.ai/api/v2';
 
@@ -346,31 +349,46 @@ async function replies(log) {
 			const lead = leads[from] || {};
 			const seq = sequenceOf(r.campaign) || lead.sequence || 'A';
 			const sender = seq === 'D' ? 'brand' : 'carlos';
+			// Rules first (#3670): closed inbox / "use the form" / receipt / bounce — never draft those as interested.
+			const ruled = ownerReplies.read({ from: r.from, subject: r.subject, text: r.text });
+			const ruledCat = ownerReplies.outreachCategory(ruled.kind);
 			let out;
-			try {
-				out = await ai(
-					"You sort replies to QA-lab URL Review cold emails and draft Carlos's answers. QA-lab URL Review gives six scores (SEO, visibility in AI search, analytics, security, accessibility, performance), a fix list and test cases from one URL; each prospect has a public Live Report. " +
-						`Categories: ${CATEGORIES.join(', ')}. A hard bounce is "bounce"; a delivery delay or a ticket acknowledgement is "auto_reply". ` +
-						"Draft only for interested, question, not_now and wrong_person, in the reply's language, plain text, 3 to 6 short sentences, using the same form of address they used (usted in Spanish unless they wrote tú). " +
-						`Interested: offer the 15-minute walkthrough with ${BOOKING}. Question: answer briefly from the facts given (the only source for prices and numbers), write [Carlos: <what to add, e.g. price and turnaround>] for anything you don't know, and offer the walkthrough. Not now: thank them and say you'll write after the date they gave. Wrong person: thank them and ask for the right contact, or ask whether you may write to the person they named. ` +
-						'Never promise a price, a date or a result that is not given. End with a blank line, then the signature given, one line each. ' +
-						'Reply with JSON only: {"category": "...", "lang": "two-letter code", "summary": "two short lines in English", "next_step": "under 12 words", "draft": "the answer, or empty"}.',
-					JSON.stringify({
-						facts,
-						from: r.from,
-						subject: r.subject,
-						campaign: r.campaign,
-						org: lead.org || '',
-						live_report: lead.live_report_url || '',
-						text: String(r.text || '').slice(0, 3500),
-						signature: (signatures[(lead.language || 'en') + ' ' + sender] || signatures['en ' + sender]).slice(0, 3),
-					}),
-					{ max: 900 }
-				);
-			} catch (error) {
-				if (error.fatal) throw error;
-				log(`could not sort ${from}: ${error.message}`);
-				continue;
+			if (ruledCat && !ANSWER.has(ruledCat) && ruledCat !== 'wrong_person') {
+				out = {
+					category: ruledCat === 'opt_out' ? 'opt_out' : ruledCat,
+					lang: lead.language || 'en',
+					summary: ruled.kind === 'auto' ? 'Automated / closed inbox; no personal answer.' : ruled.kind,
+					next_step: ruledCat === 'bounce' || ruledCat === 'opt_out' ? 'block' : 'file',
+					draft: '',
+				};
+			} else {
+				try {
+					out = await ai(
+						"You sort replies to QA-lab URL Review cold emails and draft Carlos's answers. QA-lab URL Review gives six scores (SEO, visibility in AI search, analytics, security, accessibility, performance), a fix list and test cases from one URL; each prospect has a public Live Report. " +
+							`Categories: ${CATEGORIES.join(', ')}. ` +
+							"auto_reply: out-of-office, ticket receipt, delivery delay, OR an automated mailbox that only says what to do or where to contact (contact form, 'this address is not monitored', 'message will not be processed') — even when it names a URL or channel. Never draft for auto_reply. " +
+							'A hard bounce is bounce. wrong_person is only a human saying they are not the right contact (with or without naming someone); not an auto form redirect. ' +
+							"Draft only for interested, question, not_now and wrong_person, in the reply's language, plain text, 3 to 6 short sentences, using the same form of address they used (usted in Spanish unless they wrote tú). " +
+							`Interested: offer the 15-minute walkthrough with ${BOOKING}. Question: answer briefly from the facts given (the only source for prices and numbers), write [Carlos: <what to add, e.g. price and turnaround>] for anything you don't know, and offer the walkthrough. Not now: thank them and say you'll write after the date they gave. Wrong person: thank them and ask for the right contact, or ask whether you may write to the person they named. ` +
+							'Never promise a price, a date or a result that is not given. End with a blank line, then the signature given, one line each. ' +
+							'Reply with JSON only: {"category": "...", "lang": "two-letter code", "summary": "two short lines in English", "next_step": "under 12 words", "draft": "the answer, or empty"}.',
+						JSON.stringify({
+							facts,
+							from: r.from,
+							subject: r.subject,
+							campaign: r.campaign,
+							org: lead.org || '',
+							live_report: lead.live_report_url || '',
+							text: String(r.text || '').slice(0, 3500),
+							signature: (signatures[(lead.language || 'en') + ' ' + sender] || signatures['en ' + sender]).slice(0, 3),
+						}),
+						{ max: 900 }
+					);
+				} catch (error) {
+					if (error.fatal) throw error;
+					log(`could not sort ${from}: ${error.message}`);
+					continue;
+				}
 			}
 			const category = CATEGORIES.includes(out.category) ? out.category : 'question';
 			const draft = ANSWER.has(category) ? String(out.draft || '').trim() : '';
@@ -736,6 +754,10 @@ async function pick(segment, pool, slots, used, log) {
 			const facts = await Promise.all(batch.map((r) => siteFacts(r.host)));
 			for (let i = 0; i < batch.length && !row; i += 1) {
 				if (facts[i] && facts[i].emails.length) row = await judge(segment, cc, batch[i], facts[i], used, log);
+				if (row && CONTACTS.roleOnly(cc) && !CONTACTS.isRoleEmail(row.email)) {
+					log(`  ${cc}: ${row.email} is a named inbox; consent is needed there, so it is skipped (#3827)`);
+					row = null;
+				}
 			}
 		}
 		if (!row) continue;

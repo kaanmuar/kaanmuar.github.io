@@ -155,7 +155,7 @@ fun GeoHeatPanels(g: JsonObject, picked: String?, channel: String, pick: (String
     var metricPick by rememberSaveable { mutableStateOf<String?>(null) }
     val name = sel?.str("name")
 
-    Panel("Heatmap · ${if (kind == "sends") "sends" else "replies"}" + (name?.let { " · $it" } ?: ""), key = "geo-heat", id = "geo-heat") {
+    Panel("Heatmap · ${if (kind == "sends") "sends" else "replies"}" + (name?.let { " · $it" } ?: ""), key = "geo-heat", id = "geo-heat", plate = true) {
         if (heat == null) { Muted("The geo source has no heatmap yet; it comes with the next refresh."); return@Panel }
         if (!GeoHeat.timed(channel)) { Muted("Only cold email has hours: pick All or Cold email for replies and sends by hour."); return@Panel }
         HeatChips(GeoHeat.KINDS, kind) { kind = it }
@@ -218,13 +218,19 @@ private fun HeatGrid(v: GeoHeat.View, kind: String) {
     val left = 30f
     val top = 14f
     val cols = 24
+    Enlarged(Layouts.plateScale(LocalPanelStretch.current)) { HeatCanvas(v, label, left, top, cols, { tapped }, { tapped = it }) }
+    tapped?.let { Text(GeoHeat.tip(v, it, kind), color = J.text, fontSize = 13.sp) }
+}
+
+@Composable
+private fun HeatCanvas(v: GeoHeat.View, label: android.graphics.Paint, left: Float, top: Float, cols: Int, tapped: () -> Int?, tap: (Int?) -> Unit) {
     Canvas(
         Modifier.fillMaxWidth().aspectRatio((left + cols * 16f + 2f) / (top + 7 * 16f + 2f)).pointerInput(v) {
             detectTapGestures { at ->
                 val k = size.width / (left + cols * 16f + 2f)
                 val h = ((at.x / k - left) / 16f).toInt()
                 val d = ((at.y / k - top) / 16f).toInt()
-                tapped = if (at.x / k >= left && at.y / k >= top && h in 0 until 24 && d in 0 until 7) d * 24 + h else null
+                tap(if (at.x / k >= left && at.y / k >= top && h in 0 until 24 && d in 0 until 7) d * 24 + h else null)
             }
         }
     ) {
@@ -245,11 +251,10 @@ private fun HeatGrid(v: GeoHeat.View, kind: String) {
                 if (l == 0) drawRoundRect(Color(0xFF1D3340), Offset(x + k, y + k), Size(cw - 2 * k, cw - 2 * k), CornerRadius(2.5f * k), style = Stroke(0.5f * k))
                 if (GeoHeat.windowOn(v.window, d, h)) drawRoundRect(GeoHeat.WINDOW, Offset(x + 0.5f * k, y + 0.5f * k), Size(cw - k, cw - k), CornerRadius(3f * k), style = Stroke(1.2f * k))
                 if (c.positive > 0) drawCircle(Geo.LIGHTS[5].color, 2.2f * k, Offset(x + cw / 2, y + cw / 2))
-                if (tapped == d * 24 + h) drawRoundRect(Color.White, Offset(x, y), Size(cw, cw), CornerRadius(3f * k), style = Stroke(1.5f * k))
+                if (tapped() == d * 24 + h) drawRoundRect(Color.White, Offset(x, y), Size(cw, cw), CornerRadius(3f * k), style = Stroke(1.5f * k))
             }
         }
     }
-    tapped?.let { Text(GeoHeat.tip(v, it, kind), color = J.text, fontSize = 13.sp) }
 }
 
 /** Countries by sector: each cell a tappable box shaded by its light level that opens the country sheet. */

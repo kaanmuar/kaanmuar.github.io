@@ -189,7 +189,8 @@ fun LineChart(series: List<Pair<String, List<Double>>>, labels: List<String> = e
     if (shown.isEmpty()) { Muted("No data in this range."); return }
     val prefs = LocalChartPrefs.current
     val stretch = LocalPanelStretch.current
-    val plotH = height ?: ChartPrefs.baseHeight(prefs, stretch)
+    val plotH = ChartPrefs.plot(prefs, height, stretch)
+    ChartSeen()
     val max = shown.maxOf { s -> s.second.maxOrNull() ?: 0.0 }.coerceAtLeast(1.0)
     val framed = title != null || yLabel != null || xLabel != null || unit != null
     if (framed) { FramedLineChart(shown, labels, colors, plotH, max, title, yLabel, xLabel, unit, prefs); return }

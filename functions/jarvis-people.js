@@ -42,23 +42,19 @@ function person(row) {
 		avgVisitMs: visits.length ? Math.round(activeMs / visits.length) : 0,
 		runs: runs.length,
 		paid: runs.filter((r) => r.paid === true).length,
-		urls: runs
-			.slice(0, 10)
-			.map((r) => ({
-				url: String(r.requestedUrl || r.url || '').slice(0, 200),
-				at: iso(r.createdAt),
-				status: r.status || '',
-				paid: r.paid === true,
-			})),
-		recent: visits
-			.slice(0, 8)
-			.map((v) => ({
-				startedAt: iso(v.startedAt),
-				lastAt: iso(v.lastAt),
-				activeMs: Number(v.activeMs) || 0,
-				views: Number(v.views) || 0,
-				pages: (v.pages || []).slice(0, 10),
-			})),
+		urls: runs.slice(0, 10).map((r) => ({
+			url: String(r.requestedUrl || r.url || '').slice(0, 200),
+			at: iso(r.createdAt),
+			status: r.status || '',
+			paid: r.paid === true,
+		})),
+		recent: visits.slice(0, 8).map((v) => ({
+			startedAt: iso(v.startedAt),
+			lastAt: iso(v.lastAt),
+			activeMs: Number(v.activeMs) || 0,
+			views: Number(v.views) || 0,
+			pages: (v.pages || []).slice(0, 10),
+		})),
 		_visits: visits,
 		_runs: runs,
 	};

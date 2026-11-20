@@ -13,6 +13,7 @@
    proposals   saved proposals and Jarvis's AI ones         6 h, dropped by proposal-mark and new AI proposals
    marks       snoozed and dismissed briefing lines         6 h, dropped by brief-mark
    countdowns  the last 40 countdowns                       5 min, dropped by a countdown decision
+   ledger      the change ledger (#3784), once a day         1 h, dropped by jarvisChangeLedger
 
    The briefing, open proposals, readiness, connections and wide view are derived from the sections on every read, so
    they never lag them. Jarvis 2.0 (#2508) serves the sections by version. */
@@ -41,6 +42,8 @@ const SECTIONS = {
 	},
 	marks: { ttl: 6 * HOUR, shared: true, build: (src) => src.briefMarks() },
 	countdowns: { ttl: 5 * MINUTE, shared: true, build: (src) => src.countdowns() },
+	// The change ledger (#3784) is written once a day by jarvisChangeLedger, which drops this section when it writes.
+	ledger: { ttl: HOUR, shared: true, build: (src) => src.ledger() },
 };
 const NAMES = Object.keys(SECTIONS);
 
@@ -146,6 +149,7 @@ function compose(got, src, now) {
 		briefing,
 		proposals: open,
 		countdowns: got.countdowns,
+		ledger: got.ledger || null,
 		readiness: core.readiness(external),
 		connections: core.connections(external),
 		settings,

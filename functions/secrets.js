@@ -8,6 +8,7 @@ const GITHUB = ['GITHUB_APP_PRIVATE_KEY'];
 const BROWSER = ['BROWSER_KEY'];
 // What a review run calls: the headless browser, PageSpeed, CrUX, Web Risk, Places (the Google Business Profile
 // check), the web search, and the phishing and malware lists (functions/url-review-threat-lists.js).
+// PHISHSTATS_KEY stays optional in .env.example (#3291) until Secret Manager holds a live key under #3274.
 const SCAN = [
 	'BROWSER_KEY',
 	'PAGESPEED_KEY',
@@ -46,6 +47,8 @@ const BY_FUNCTION = {
 	diagnoseReviewFailures: list(BROWSER),
 	rerunReviewFailures: list(MAIL, SCAN, GEMINI),
 	fileReviewFailureBugs: list(GITHUB),
+	// threatFeeds (#3935): Cloudflare Radar attack traffic for the internal Jarvis cyber map (personal use only).
+	threatFeeds: list(['CLOUDFLARE_API_TOKEN']),
 	sweep: list(SCAN),
 	// pastRerunReviews (#3458): same review browser as the sweep, plus SendGrid for the follow-up note.
 	pastRerunReviews: list(SCAN, MAIL),
@@ -53,12 +56,15 @@ const BY_FUNCTION = {
 	prospects: list(['PLACES_KEY']),
 	// wordfenceFeed (#3086): the free Wordfence Intelligence key (wordfence.com, Account > Integrations).
 	wordfenceFeed: list(['WORDFENCE_KEY']),
-	ownerReplies: list(MAIL, ['OWNER_REPLY_KEY']),
+	// Gemini drafts answers for interested / other owner replies on the decide page (#3670).
+	ownerReplies: list(MAIL, GEMINI, ['OWNER_REPLY_KEY']),
+	// CERTSPOTTER_KEY (#3946): the paid Deep check reads certificate-transparency logs (scripts/set-certspotter-key.sh stores it).
 	reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, [
 		'PUBLISH_KEY',
 		'QA_TEST_KEY',
 		'TURNSTILE_SECRET_KEY',
 		'QA_LAB_MCP_KEY',
+		'CERTSPOTTER_KEY',
 	]),
 	reviewRun: list(MAIL, SCAN, SITE_TOKEN, ['QA_TEST_KEY', 'TURNSTILE_SECRET_KEY', 'QA_LAB_MCP_KEY']),
 	reviewBrowser: list(BROWSER),
@@ -78,7 +84,8 @@ const BY_FUNCTION = {
 		'CURSOR_API_KEY',
 	]),
 	// jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
-	jarvisGithub: list(MAIL, GITHUB, GEMINI),
+	// GITHUB_BUDGET_TOKEN (#3759): kaanmuar's own read-only token, for the budget copy when the Mac sleeps.
+	jarvisGithub: list(MAIL, GITHUB, GEMINI, ['GITHUB_BUDGET_TOKEN']),
 	// jarvisGithubHook (#2548): the secret GitHub signs the repo's workflow_run webhook with.
 	jarvisGithubHook: list(['GITHUB_WEBHOOK_SECRET']),
 	// jarvisLogPoll (#2810): the app token for the runs, issues and board moves it puts in Jarvis > Console.
@@ -90,8 +97,8 @@ const BY_FUNCTION = {
 	// functions/mailbox-graduate.js (#2382): Instantly accounts and campaigns, then a mail and a comment on #2379.
 	mailboxGraduate: list(MAIL, GITHUB, ['INSTANTLY_API_KEY']),
 	// The key in the webhook URL each ImprovMX alias posts to (functions/mail-inbound.js); an owner reply to qa@
-	// mails the operator like ownerReplies does (#1899).
-	mailInbound: list(MAIL, ['MAIL_WEBHOOK_KEY']),
+	// mails the operator like ownerReplies does (#1899). Gemini drafts when that path files an interested reply (#3670).
+	mailInbound: list(MAIL, GEMINI, ['MAIL_WEBHOOK_KEY']),
 	// The daily canary mails canary@ through SendGrid (functions/mail-health.js, #1900).
 	mailCanary: list(MAIL),
 	// The engagement scout (#1988): Gemini reads the posts and drafts replies, YouTube search finds the videos, and

@@ -76,7 +76,7 @@ function apologyCoupon(record, now) {
 	};
 }
 
-const sameSite = (a, b) => lower(a).replace(/\/+$/, '') === lower(b).replace(/\/+$/, '');
+const sameSite = (a, b) => lower(a).replace(/(?<!\/)\/+$/, '') === lower(b).replace(/(?<!\/)\/+$/, '');
 
 // One code per failed review: a retry of the same address while its promise is still open keeps the first code.
 // `rows` are the asker's failures with a promise.

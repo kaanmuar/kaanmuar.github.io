@@ -127,13 +127,46 @@ function attr(tag, name) {
 	return match ? decode(match[2] || match[3] || match[4] || '') : '';
 }
 
-const stripTags = (html) => decode(String(html || '').replace(/<[^>]+>/g, ' '));
+const stripTags = (html) => decode(String(html || '').replace(/<[^>]+>|(<[^>]*$)/g, (tag, open) => open || ' '));
+
+const CLOSE = {
+	script: /<\/script\s*>/gi,
+	style: /<\/style\s*>/gi,
+	noscript: /<\/noscript\s*>/gi,
+	template: /<\/template\s*>/gi,
+	svg: /<\/svg\s*>/gi,
+	head: /<\/head\s*>/gi,
+};
+const PAGE_BLOCKS = /<(script|style|noscript|template|svg|head)\b/gi;
+const SPAM_BLOCKS = /<(script|style|template|noscript)\b/gi;
+
+// html.replace(/<(names in open)\b[\s\S]*?<\/\1\s*>/gi, " "); a tag never closed is searched for once, not once per opening.
+function dropBlocks(html, open) {
+	const unclosed = new Set();
+	let out = '';
+	let from = 0;
+	let m;
+	open.lastIndex = 0;
+	while ((m = open.exec(html))) {
+		const name = m[1].toLowerCase();
+		if (unclosed.has(name)) continue;
+		const close = CLOSE[name];
+		close.lastIndex = open.lastIndex;
+		if (!close.exec(html)) {
+			unclosed.add(name);
+			continue;
+		}
+		out += html.slice(from, m.index) + ' ';
+		from = open.lastIndex = close.lastIndex;
+	}
+	return out + html.slice(from);
+}
 
 function visibleText(html) {
 	return stripTags(
-		String(html || '')
-			.replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1\s*>/gi, ' ')
-			.replace(/<!--[\s\S]*?-->/g, ' ')
+		dropBlocks(String(html || ''), PAGE_BLOCKS).replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, (block, open) =>
+			open ? block : ' '
+		)
 	);
 }
 
@@ -264,7 +297,7 @@ const bareHost = (host) =>
 const pageKey = (href) => {
 	try {
 		const url = new URL(href);
-		return bareHost(url.hostname) + (url.pathname.replace(/\/+$/, '') || '/') + url.search;
+		return bareHost(url.hostname) + (url.pathname.replace(/(?<!\/)\/+$/, '') || '/') + url.search;
 	} catch (error) {
 		return '';
 	}
@@ -319,14 +352,14 @@ function knownPages(sitemap, links) {
 
 function readPage(html, pageUrl) {
 	const body = String(html || '');
-	const titleMatch = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
-	const metas = body.match(/<meta\b[^>]*>/gi) || [];
+	const titleMatch = body.match(/<title\b(?<=^(?:(?!<title\b)[\s\S])*<title)[^>]*>([\s\S]*?)<\/title>/i);
+	const metas = body.match(/<meta\b(?<=(?:^|>)(?:(?!<meta\b)[^>])*<meta)[^>]*>/gi) || [];
 	const robots = metas
 		.filter((tag) => /^(?:robots|googlebot)$/i.test(attr(tag, 'name')))
 		.map((tag) => attr(tag, 'content').toLowerCase())
 		.join(',');
 	const links = [];
-	const re = /<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi;
+	const re = /<a\b([^<>]*)>((?:[^<]|<(?!a\b|\/a\s*>))*)<\/a\s*>/gi;
 	let match;
 	while ((match = re.exec(body)) && links.length < 2000) {
 		let href = '';
@@ -390,7 +423,7 @@ function compare(browser, bot, opts) {
 }
 
 const HIDDEN_STYLE =
-	/display\s*:\s*none|visibility\s*:\s*hidden|(?:left|top|text-indent|margin-left)\s*:\s*-\d{3,}(?:px|em)|font-size\s*:\s*[01](?:px)?\s*(?:;|$|!)|opacity\s*:\s*0\s*(?:;|$|!)|(?:height|width)\s*:\s*[01](?:px)?\s*;[^"']*overflow\s*:\s*hidden|overflow\s*:\s*hidden\s*;[^"']*(?:height|width)\s*:\s*[01](?:px)?\s*(?:;|$)/i;
+	/display\s*:\s*none|visibility\s*:\s*hidden|(?:left|top|text-indent|margin-left)\s*:\s*-\d{3,}(?:px|em)|font-size\s*:\s*[01](?:px)?\s*(?:;|$|!)|opacity\s*:\s*0\s*(?:;|$|!)|(?:height|width)\s*:\s*[01](?:px)?\s*;(?:(?!(?:height|width)\s*:\s*[01](?:px)?\s*;)[^"'])*overflow\s*:\s*hidden|overflow\s*:\s*hidden\s*;(?:(?!overflow\s*:\s*hidden\s*;)[^"'])*(?:height|width)\s*:\s*[01](?:px)?\s*(?:;|$)/i;
 const hiddenTag = (attrs) =>
 	HIDDEN_STYLE.test(attr(attrs, 'style')) ||
 	/(?:^|\s)hidden(?:\s|=|$)/i.test(String(attrs).replace(/"[^"]*"|'[^']*'/g, '""'));
@@ -398,9 +431,9 @@ const hiddenTag = (attrs) =>
 // Links and text with spam phrases in a page's HTML, marked hidden when CSS or the hidden attribute keeps them
 // from visitors.
 function spamLinks(html, pageUrl, skip) {
-	const body = String(html || '')
-		.replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1\s*>/gi, ' ')
-		.replace(/<!--[\s\S]*?-->/g, ' ');
+	const body = dropBlocks(String(html || ''), SPAM_BLOCKS).replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, (block, open) =>
+		open ? block : ' '
+	);
 	const rows = [];
 	const seen = new Set();
 	const push = (row) => {
@@ -409,7 +442,7 @@ function spamLinks(html, pageUrl, skip) {
 		seen.add(key);
 		rows.push(row);
 	};
-	const opens = /<(div|span|p|section|aside|footer|font|small|ul|li|ins|marquee)\b([^>]*)>/gi;
+	const opens = /<(div|span|p|section|aside|footer|font|small|ul|li|ins|marquee)\b([^<>]*)>/gi;
 	let open;
 	let scanned = 0;
 	while ((open = opens.exec(body)) && scanned < 200) {
@@ -775,4 +808,7 @@ module.exports = {
 	GOOGLEBOT,
 	BROWSER,
 	BUDGET_MS,
+	dropBlocks,
+	PAGE_BLOCKS,
+	SPAM_BLOCKS,
 };

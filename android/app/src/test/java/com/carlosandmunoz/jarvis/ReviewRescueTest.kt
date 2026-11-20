@@ -4,6 +4,7 @@ import com.carlosandmunoz.jarvis.data.JSON
 import com.carlosandmunoz.jarvis.ui.ReviewRescue
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReviewRescueTest {
@@ -41,5 +42,32 @@ class ReviewRescueTest {
         assertEquals("info", ReviewRescue.sourceLevel("off"))
         assertEquals("1 of 2 · 1 client · 1 high", ReviewRescue.familyLine(json("""{"hits":1,"checked":2,"customerHits":1,"critical":1,"unchecked":0}""")))
         assertEquals("0 of 3 · 3 not checked", ReviewRescue.familyLine(json("""{"hits":0,"checked":3,"customerHits":0,"critical":0,"unchecked":3}""")))
+    }
+
+    @Test fun threatsFormatLevelAndDetails() {
+        assertEquals("alert", ReviewRescue.threatLevel("critical"))
+        assertEquals("warn", ReviewRescue.threatLevel("high"))
+        assertEquals("info", ReviewRescue.threatLevel("watch"))
+        assertEquals(
+            "critical · phishing-host · US · Google Web Risk · delist pending",
+            ReviewRescue.threatLine(json("""{"level":"critical","kind":"phishing-host","country":"US","source":"Google Web Risk","delistStatus":"pending"}"""))
+        )
+    }
+
+    @Test fun cyberMapAndExposureFormat() {
+        assertEquals("alert", ReviewRescue.exposureLevel("critical"))
+        assertEquals("warn", ReviewRescue.exposureLevel("high"))
+        assertEquals("info", ReviewRescue.exposureLevel("watch"))
+        assertEquals("2026-11-10T14:30:00Z", ReviewRescue.eventIso("20261110T143000Z"))
+        assertEquals("2026-11-10T14:30:00Z", ReviewRescue.eventIso("20261110143000"))
+        assertEquals("ana@ruiz.co · paid", ReviewRescue.who(json("""{"email":"ana@ruiz.co","paid":true,"known":true}""")))
+        assertEquals("our sweep (not a customer)", ReviewRescue.who(json("""{"email":"","known":true}""")))
+        assertEquals("customer unknown", ReviewRescue.who(json("""{"email":"","known":false}""")))
+        assertEquals(
+            "phishing-host · Google Web Risk · delist pending | exposed-secret · Page leak scanner",
+            ReviewRescue.findings(json("""{"findings":[{"kind":"phishing-host","source":"Google Web Risk","delistStatus":"pending"},{"kind":"exposed-secret","source":"Page leak scanner","delistStatus":"none"}]}"""))
+        )
+        assertTrue(ReviewRescue.cyberFill(20.0, 20.0).alpha > ReviewRescue.cyberFill(2.0, 20.0).alpha)
+        assertEquals(4, ReviewRescue.RANGES.size)
     }
 }

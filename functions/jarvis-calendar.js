@@ -110,7 +110,7 @@ function nthWeekday(year, month, weekday, n) {
 
 /** A rule's date in a year: "MM-DD", "easter", "day N", "<nth> <weekday> of <month>", each with an optional " +N"/" -N" days. */
 function ruleDate(rule, year) {
-	const m = /^(.*?)(?:\s+([+-]\d+))?$/.exec(
+	const m = /^(.*?)(?:\s([+-]\d+))?$/.exec(
 		String(rule || '')
 			.trim()
 			.toLowerCase()

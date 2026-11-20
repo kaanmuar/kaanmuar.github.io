@@ -196,8 +196,8 @@ function span(opens, closes) {
 
 function dayRange(spec) {
 	const out = [];
-	spec.split(/\s*,\s*/).forEach((part) => {
-		const [from, to] = part.split(/\s*[-–]\s*/).map((day) => DAYS[day.toLowerCase()]);
+	spec.split(/(?:(?<!\s)\s*)?,\s*/).forEach((part) => {
+		const [from, to] = part.split(/(?:(?<!\s)\s*)?[-–]\s*/).map((day) => DAYS[day.toLowerCase()]);
 		if (from == null) return;
 		if (to == null) {
 			out.push(from);
@@ -361,7 +361,7 @@ function nameWords(name) {
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
 		.split(/[^a-z0-9.]+/)
-		.map((word) => word.replace(/\.+$/, ''))
+		.map((word) => word.replace(/(?<!\.)\.+$/, ''))
 		.filter((word) => word && !NAME_NOISE.has(word));
 }
 

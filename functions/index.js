@@ -41,6 +41,7 @@ function keepUntil() {
 const siteReport = require('./site-report-mail');
 const ownerLayout = require('./owner-mail');
 const ops = require('./ops-schedule');
+const retention = require('./retention');
 const systemReview = require('./system-review');
 const githubApp = require('./github-app');
 const jarvisProcesses = require('./jarvis-processes');
@@ -57,6 +58,8 @@ jarvisLog.use(getFirestore);
 const linkedRisk = require('./url-review-linked-risk');
 linkedRisk.use(getFirestore, FieldValue);
 require('./url-review-threat-lists').use(getFirestore, FieldValue);
+const reviewThreats = require('./url-review-threats');
+const reviewMap = require('./url-review-map');
 
 // Runs a scheduled job and leaves its outcome in ops_runs/<job> for opsWatchdog. A job may return a
 // short note ("12 sent") for the digest.
@@ -84,21 +87,31 @@ async function track(job, run) {
 	};
 	const secs = () => Math.round((Date.now() - Date.parse(startedAt)) / 1000) + ' s';
 	try {
-		const note = await run();
-		await ref.set({
-			job,
-			startedAt,
-			endedAt: new Date().toISOString(),
-			ok: true,
-			note: typeof note === 'string' ? note : '',
-			error: '',
-		});
+		const result = await run();
+		// A job that ran but could not do its work returns { note, warn: true }: ok stays true, the row shows a warning, and
+		// warnSince keeps the first run of the streak so opsWatchdog raises it after a day (#3811).
+		const { note, warn } = ops.outcome(result);
+		const warning = warn ? { warn: true, warnSince: await warnSince(ref, startedAt) } : {};
+		await ref.set(
+			Object.assign(
+				{
+					job,
+					startedAt,
+					endedAt: new Date().toISOString(),
+					ok: true,
+					note: typeof note === 'string' ? note : '',
+					error: '',
+				},
+				warning
+			)
+		);
 		if (job !== 'jarvisLogPoll')
 			await jarvisLog.log(null, {
 				source: 'function',
-				level: 'info',
+				level: warn ? 'warn' : 'info',
 				ref: 'job:' + job,
-				text: job + ' ok in ' + secs() + (typeof note === 'string' && note ? ': ' + note : ''),
+				text:
+					job + (warn ? ' warning in ' : ' ok in ') + secs() + (typeof note === 'string' && note ? ': ' + note : ''),
 			});
 		await finish(true, typeof note === 'string' ? note : '');
 	} catch (error) {
@@ -122,6 +135,15 @@ async function track(job, run) {
 		throw error;
 	}
 	return null;
+}
+
+// When this job's run of consecutive warnings began: the earlier row's warnSince while it was still a warning, else now.
+async function warnSince(ref, now) {
+	const before = await ref
+		.get()
+		.then((snap) => (snap.exists ? snap.data() : null))
+		.catch(() => null);
+	return (before && before.warn && before.warnSince) || now;
 }
 
 // A v1 schedule from the ops table, on Bogotá time, tracked in ops_runs.
@@ -616,6 +638,7 @@ exports.submitGuardedForm = functions
 // Calls with Carlos (#1971). book.html reads the free slots and books one; Google mails the invite with the Meet
 // link. Jarvis's Connect Google Calendar (op calendar-connect) sends Carlos to Google, which comes back to /callback.
 const booking = require('./booking');
+const bookingMail = require('./booking-mail');
 const BOOKING_URL = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/booking';
 const BOOKING_REDIRECT = BOOKING_URL + '/callback';
 const BOOKING_STATE_MS = 10 * 60 * 1000;
@@ -696,15 +719,13 @@ async function bookingCallback(req, res) {
 			code: String(req.query.code || ''),
 			redirect: BOOKING_REDIRECT,
 		});
-		await db
-			.doc('booking_private/google')
-			.set({
-				refresh: got.refresh,
-				email: got.email,
-				scope: got.scope,
-				connectedAt: new Date().toISOString(),
-				error: '',
-			});
+		await db.doc('booking_private/google').set({
+			refresh: got.refresh,
+			email: got.email,
+			scope: got.scope,
+			connectedAt: new Date().toISOString(),
+			error: '',
+		});
 		bookingToken = { value: '', until: 0 };
 		bookingPage(
 			res,
@@ -720,6 +741,49 @@ function bookingIp(req) {
 	return String(req.ip || String(req.get('x-forwarded-for') || '').split(',')[0])
 		.trim()
 		.slice(0, 80);
+}
+
+// The visitor's branded mail for a booked call (#3867): kind "confirm", "24h" or "1h". Google's invite is separate.
+async function sendCallMail(kind, id, row) {
+	const from = prepareMail();
+	if (!from) return false;
+	const msg = bookingMail.message(kind, row, { meet: row.meet, icalUid: row.icalUid, id }, from);
+	try {
+		await mailRetry.send(sgMail, getFirestore(), msg);
+	} catch (error) {
+		// SendGrid says why in the response body; the logged error shows only "Bad Request".
+		const why = error && error.response && error.response.body ? JSON.stringify(error.response.body).slice(0, 600) : '';
+		throw new Error(String((error && error.message) || error) + (why ? ' ' + why : ''));
+	}
+	return true;
+}
+
+// Reminder mail 24 hours and 1 hour before a call; each goes once.
+async function sendCallReminders(now) {
+	const db = getFirestore();
+	const snap = await db
+		.collection('bookings')
+		.where('start', '>', new Date(now).toISOString())
+		.where('start', '<=', new Date(now + 25 * 60 * 60 * 1000).toISOString())
+		.get();
+	const rows = snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+	const due = bookingMail.remindersDue(rows, now);
+	let sent = 0;
+	for (const item of due) {
+		const row = rows.find((r) => r.id === item.id);
+		const field = item.kind === '1h' ? 'remind1' : 'remind24';
+		// Mark first: a failed send is not retried, so nobody gets the same reminder twice.
+		await db
+			.collection('bookings')
+			.doc(item.id)
+			.update({ [field]: new Date(now).toISOString() });
+		try {
+			if (await sendCallMail(item.kind, item.id, row)) sent += 1;
+		} catch (error) {
+			console.error('Call reminder failed:', item.id, error);
+		}
+	}
+	return { due: due.length, sent };
 }
 
 async function bookCall(body, req) {
@@ -780,19 +844,31 @@ async function bookCall(body, req) {
 		hour: 'numeric',
 		minute: '2-digit',
 	});
+	// The owner mail wears the look of the call's site (#3867): URL Review Fusion for the review calls, the CV card for the rest.
+	const eyebrow =
+		(bookingMail.lookOf(b.type) === 'review' ? 'QA-lab URL Review' : 'Carlos Muñoz CV') + ' · Call booked';
 	await Promise.all([
 		sendOwnerEmail({
 			subject: 'Call booked: ' + b.name + ', ' + when,
-			intro: label + ' with ' + b.name + '. Google sent the invite.',
+			intro:
+				label + ' with ' + b.name + '. Google sent the invite, and a branded confirmation went to ' + b.email + '.',
 			rows: booking.ownerRows(row),
 			body: b.note,
 			respondUrl: made.htmlLink,
 			buttonLabel: 'Open in Google Calendar',
+			eyebrow,
 		}).catch((error) => console.error('Booking owner mail failed:', error)),
+		sendCallMail('confirm', ref.id, row).catch((error) => console.error('Booking confirmation mail failed:', error)),
 		pushOwner(jarvisMailPush.callMessage(ref.id, Object.assign({ label }, row), when)),
 	]);
 	return [200, { ok: true, start: b.start, end: b.end, meet: made.meet }];
 }
+
+exports.callReminders = scheduled(
+	functions.runWith({ timeoutSeconds: 120, memory: '256MB', secrets: SECRETS.booking }),
+	'callReminders',
+	() => sendCallReminders(Date.now())
+);
 
 exports.booking = functions.runWith({ maxInstances: 5, secrets: SECRETS.booking }).https.onRequest(async (req, res) => {
 	if (req.method === 'GET' && /\/callback\/?$/.test(req.path)) {
@@ -1717,6 +1793,7 @@ async function rerunFailure(group) {
 				maxDepth: options.depth || undefined,
 				pageLang: options.pageLang || '',
 				section: options.section === true,
+				targeted: options.targeted === false ? false : undefined,
 				passive: !!(group.intake && group.intake.reasonCode === 'compare'),
 				customer: true,
 				browse: browseForReview,
@@ -1739,6 +1816,7 @@ async function rerunFailure(group) {
 					depth: options.depth,
 					pageLang: options.pageLang || '',
 					section: options.section === true,
+					targeted: options.targeted !== false,
 				}),
 				report,
 				{ deviceId: (group.intake || {}).deviceId }
@@ -1768,6 +1846,8 @@ async function keepPromise(doc) {
 }
 
 async function sendPromiseApology(promise) {
+	// A test account gets no mail, and its promise settles as if sent so it is not asked again on every run (#3799).
+	if (reviewTest.isTestAccount(promise.email)) return true;
 	const stopUrl = await stopLinkFor(promise.email, promise.lang);
 	return sendAskerMail(
 		promise.email,
@@ -1840,6 +1920,7 @@ async function giveUpPromises() {
 		try {
 			const stopUrl = await stopLinkFor(promise.email, promise.lang);
 			if (
+				!reviewTest.isTestAccount(promise.email) &&
 				!(await sendAskerMail(
 					promise.email,
 					customerMail.promiseGivenUpMail(promise, { stopUrl }),
@@ -2406,6 +2487,45 @@ async function mailComparison(notice) {
 	}
 }
 
+// Bulk batch finished (#3737): owner desk notice plus asker summary. A mail failure still leaves the batch saved.
+async function mailBatchFinished(id, doc, meta) {
+	const notice = batchMail.ownerNotice(id, doc, meta);
+	if (notice) {
+		try {
+			await pushOwner(jarvisMailPush.comparisonMessage(notice));
+		} catch (error) {
+			console.error('Batch owner push failed:', error);
+		}
+		if (await mailOn('comparisons')) {
+			try {
+				await sendOwnerEmail({
+					eyebrow: 'QA-lab URL Review',
+					subject: notice.subject,
+					intro: notice.intro,
+					rows: notice.rows,
+					respondUrl: notice.respondUrl,
+					buttonLabel: notice.buttonLabel || 'Open the batch',
+				});
+			} catch (error) {
+				console.error('Batch owner notice failed:', error);
+			}
+		}
+	}
+	const asker = batchMail.askerMail(id, doc, meta);
+	if (asker && asker.to) {
+		try {
+			await sendAskerMail(
+				asker.to,
+				{ subject: asker.subject, text: asker.text, html: asker.html, lang: asker.lang },
+				'',
+				'url-review-batch'
+			);
+		} catch (error) {
+			console.error('Batch asker mail failed:', error);
+		}
+	}
+}
+
 const urlReview = require('./url-review-core');
 const softQuota = require('./url-review-soft-quota');
 const lookalikes = require('./url-review-lookalikes');
@@ -2456,9 +2576,14 @@ const reviewPass = require('./url-review-pass');
 const reviewCompare = require('./url-review-compare');
 const compareMail = require('./url-review-compare-mail');
 const reviewMulti = require('./url-review-multi');
+const evidencePdf = require('./url-review-evidence-pdf');
+const reviewDeep = require('./url-review-deep');
+const reviewBatch = require('./url-review-batch');
+const batchMail = require('./url-review-batch-mail');
 const reviewPeers = require('./url-review-peers');
 const reviewMarket = require('./url-review-market');
 const ownerNotice = require('./url-review-owner-notice');
+const ownerNoticeOffer = require('./url-review-owner-notice-offer');
 const engagementReports = require('./engagement-reports');
 const ownerMail = require('./url-review-owner-mail');
 const mailFace = require('./mail-face');
@@ -2472,6 +2597,8 @@ const fixCheckout = require('./url-review-fix-checkout');
 const fixRereview = require('./url-review-fix-rereview');
 const watchCases = require('./url-review-watch');
 const fixMail = require('./url-review-fix-mail');
+// Review mail goes only to real users: no mail to a test account or its alias, nor a notice for its review (#3799).
+const reviewTest = require('./url-review-test-accounts');
 
 // A fix request opens for the account that ran the report, paid or not; the free re-check only on a paid report.
 function fixDeps() {
@@ -2566,6 +2693,7 @@ async function csatLinkFor(record) {
 }
 
 async function sendAskerMail(email, mail, stopUrl, category, attachments, replyTo) {
+	if (reviewTest.skipsMail(email, category)) return false;
 	const from = prepareMail();
 	if (!from) return false;
 	await sgMail.send(
@@ -2577,6 +2705,7 @@ async function sendAskerMail(email, mail, stopUrl, category, attachments, replyT
 // Owner notices, the reports owners claim and the notes go out as the brand face of their language (#2312), through
 // mailRetry while SendGrid's shared IPs can be blocklisted (#2314).
 async function sendFaceMail(lang, email, mail, stopUrl, category, attachments, replyTo) {
+	if (reviewTest.skipsMail(email, category)) return false;
 	const from = prepareMail();
 	if (!from) return false;
 	await mailRetry.send(
@@ -2709,6 +2838,7 @@ async function reportPdfFor(record, options) {
 async function mailReportToAsker(record, promise) {
 	if (!record || !record.email || !record.report) return false;
 	if (record.status !== 'complete' && record.status !== 'stopped') return false;
+	if (reviewTest.isTestRecord(record)) return false;
 	const [stopUrl, pdf, csatUrl] = await Promise.all([
 		stopLinkFor(record.email, record.lang),
 		reportPdfFor(record),
@@ -2821,6 +2951,7 @@ function searchOwnerContacts(report, options) {
 async function queueOwnerNotice(record, options) {
 	const report = record && record.report;
 	if (!report || !report.host) return;
+	if (reviewTest.isTestRecord(record)) return;
 	const domain = ownerNotice.domainOf(report.host);
 	const ref = getFirestore().collection('url_review_owner_notices').doc(domain);
 	const [unlisted, domainStop, last] = await Promise.all([unlistedHosts(), ownerStops([], domain), ref.get()]);
@@ -3314,6 +3445,7 @@ async function releaseHeldRerun(id, send, by) {
 	const record = reviewFailures.sentRecord(doc, decidedAt);
 	await db.collection('url_reviews').doc(record.id).set(record);
 	await countReviewed(record.report);
+	await saveReviewThreats(record);
 	try {
 		await queueOwnerNotice(record);
 	} catch (error) {
@@ -3617,6 +3749,7 @@ async function sweepReview(target, controls) {
 	});
 	await getFirestore().collection('url_reviews').doc(record.id).set(record);
 	await countReviewed(record.report);
+	await saveReviewThreats(record);
 	if (target.outreach) return { record, report };
 	try {
 		await queueOwnerNotice(record, { search: false });
@@ -3656,6 +3789,18 @@ exports.sweepReviews = require('firebase-functions/v2/scheduler').onSchedule(
 		secrets: SECRETS.sweep,
 	},
 	() => track('sweepReviews', () => sweepReviews())
+);
+
+// Retention (#3823): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
+exports.retentionSweep = require('firebase-functions/v2/scheduler').onSchedule(
+	{
+		schedule: ops.cron('retentionSweep'),
+		timeZone: ops.TIME_ZONE,
+		timeoutSeconds: 540,
+		memory: '1GiB',
+		maxInstances: 1,
+	},
+	() => track('retentionSweep', () => retention.sweep(getFirestore(), { apply: process.env.RETENTION_APPLY === 'on' }))
 );
 
 exports.outreachSweep = require('firebase-functions/v2/scheduler').onSchedule(
@@ -3764,6 +3909,7 @@ async function pastRerunReviews() {
 			});
 			await db.collection('url_reviews').doc(record.id).set(record);
 			await countReviewed(record.report);
+			await saveReviewThreats(record);
 			reviewId = record.id;
 			outcome = 'reviewed';
 			room -= 1;
@@ -3909,6 +4055,7 @@ exports.placesProspects = require('firebase-functions/v2/scheduler').onSchedule(
 );
 
 // The Wordfence vulnerability feed for the reviews' WordPress check (#3086); see functions/url-review-wordpress.js.
+// No Cloud Scheduler retries: a retry is a second call to a key that Wordfence may suspend (#3808).
 exports.wordfenceFeed = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('wordfenceFeed'),
@@ -3916,12 +4063,57 @@ exports.wordfenceFeed = require('firebase-functions/v2/scheduler').onSchedule(
 		timeoutSeconds: 540,
 		memory: '1GiB',
 		maxInstances: 1,
+		retryConfig: { retryCount: 0 },
 		secrets: SECRETS.wordfenceFeed,
 	},
 	() =>
 		track('wordfenceFeed', async () => {
 			const out = await require('./url-review-wordpress').refreshFeed({ key: process.env.WORDFENCE_KEY });
+			if (out.skipped === 'rate limited' || out.skipped === 'backoff')
+				return {
+					warn: true,
+					note:
+						'skipped: ' + (out.skipped === 'backoff' ? 'rate limited, backing off until ' + out.until : 'rate limited'),
+				};
 			return out.skipped ? 'skipped: ' + out.skipped : out.count + ' records, ' + out.slugs + ' slugs stored';
+		})
+);
+
+// Commercial-safe threat feeds (CISA KEV, DROP, Feodo, Tor, GDELT) + monthly DB-IP Lite index (#3816).
+exports.threatFeeds = require('firebase-functions/v2/scheduler').onSchedule(
+	{
+		schedule: ops.cron('threatFeeds'),
+		timeZone: ops.TIME_ZONE,
+		timeoutSeconds: 300,
+		memory: '1GiB',
+		maxInstances: 1,
+		secrets: SECRETS.threatFeeds,
+	},
+	() =>
+		track('threatFeeds', async () => {
+			const [feeds, geo] = await Promise.all([
+				require('./url-review-targeted').refreshFeeds(),
+				require('./url-review-host-geo').refreshDbipIndex(),
+			]);
+			// Cloudflare Radar, internal use only (#3935): a failure is reported, never fails the other feeds.
+			const radar = await require('./url-review-radar')
+				.refreshRadar({
+					token: process.env.CLOUDFLARE_API_TOKEN,
+					storage: require('firebase-admin/storage').getStorage(),
+					bucket: require('./url-review-host-geo').BUCKET,
+					now: Date.now(),
+				})
+				.catch((error) => ({ ok: false, error: String((error && error.message) || error).slice(0, 120) }));
+			return [
+				feeds.skipped ? 'feeds ' + feeds.skipped : 'kev ' + feeds.kev + ', gdelt ' + feeds.gdeltMentions,
+				geo.skipped ? 'geo ' + geo.skipped : 'geo ' + geo.version,
+				radar.ok
+					? 'radar ' +
+						radar.layer3Origin +
+						' origins, ' +
+						(radar.failed.length ? 'failed ' + radar.failed.join(',') : 'all lists')
+					: 'radar ' + radar.error,
+			].join('; ');
 		})
 );
 
@@ -4029,6 +4221,7 @@ async function rivalSweep() {
 				});
 				await db.collection('url_reviews').doc(record.id).set(record);
 				await countReviewed(record.report);
+				await saveReviewThreats(record);
 				try {
 					await queueOwnerNotice(record, { search: false });
 				} catch (error) {
@@ -4125,12 +4318,10 @@ async function opsWatchdog() {
 			problems.push({ job: row.job, why: 'could not be checked: ' + error.message });
 		}
 	}
-	const review = await systemReview
-		.run({ fetch, token, now })
-		.catch((error) => ({
-			problems: [],
-			rows: [{ label: 'System review', value: 'could not run: ' + String(error.message || error).slice(0, 160) }],
-		}));
+	const review = await systemReview.run({ fetch, token, now }).catch((error) => ({
+		problems: [],
+		rows: [{ label: 'System review', value: 'could not run: ' + String(error.message || error).slice(0, 160) }],
+	}));
 	const jobProblems = problems.length;
 	problems.push(...review.problems.filter((p) => !problems.some((q) => q.job === p.job)));
 	const monday = new Date(now).getUTCDay() === 1;
@@ -4242,7 +4433,7 @@ function ownerReplyTo(token) {
 
 // Plain text of an HTML-only reply, for reading: no tag survives, and no angle bracket is decoded back.
 function htmlText(html) {
-	let text = String(html || '').replace(/<(br|\/p|\/div|\/tr)[^>]*>/gi, '\n');
+	let text = String(html || '').replace(/<(br|\/p|\/div|\/tr)[^>]*(>|$)/gi, (tag, name, close) => (close ? '\n' : tag));
 	let before;
 	do {
 		before = text;
@@ -4329,16 +4520,89 @@ async function noticeForReply(reply) {
 	return { link, ref: snap && snap.exists ? snap.ref : null, notice: snap && snap.exists ? snap.data() : null };
 }
 
-// The Decide page's buttons and Jarvis's notification buttons: resend, stop, unlist or done.
-async function decideOwnerReply(ref, row, action, rawEmail) {
-	if (row.status !== 'waiting' || ['resend', 'stop', 'unlist', 'done'].indexOf(action) === -1)
-		return { conflict: true, row };
+/** Gemini draft for an interested / other owner reply (#3670). Empty fields when Gemini is off or fails. */
+async function draftOwnerAnswer(reply, notice) {
+	if (!ownerReplies.needsAnswer(reply && reply.kind)) return {};
+	if (!Gemini.ready(process.env)) return {};
+	try {
+		const { data } = await Gemini.generate(
+			fetch,
+			process.env,
+			{
+				contents: [{ role: 'user', parts: [{ text: ownerReplies.answerPrompt(reply, notice) }] }],
+				generationConfig: { temperature: 0.4, maxOutputTokens: 900, thinkingConfig: { thinkingLevel: 'low' } },
+			},
+			{ timeoutMs: 45000 }
+		);
+		const parsed = ownerReplies.parseAnswerDraft(Gemini.text(data));
+		if (!parsed) return {};
+		return { draft: parsed.draft, draftLang: parsed.lang, draftEnglish: parsed.english, draftSummary: parsed.summary };
+	} catch (error) {
+		console.error('Owner reply draft failed:', error.message || error);
+		return {};
+	}
+}
+
+async function sendOwnerAnswer(row, text) {
+	const from = prepareMail();
+	if (!from) return 'SendGrid is not configured.';
+	const body = String(text || '')
+		.trim()
+		.slice(0, 8000);
+	if (body.length < 5) return 'Write the answer first.';
+	if (!row.from || ownerReplies.OPERATORS.includes(String(row.from).toLowerCase()))
+		return 'That reply has no owner address to answer.';
+	const subject = /^re:/i.test(String(row.subject || ''))
+		? String(row.subject)
+		: 'Re: ' + String(row.subject || row.host || 'your note');
+	const mid = String(row.messageId || '').trim();
+	const headers = mid
+		? {
+				'In-Reply-To': mid.startsWith('<') ? mid : '<' + mid + '>',
+				References: mid.startsWith('<') ? mid : '<' + mid + '>',
+			}
+		: undefined;
+	await mailRetry.send(
+		sgMail,
+		getFirestore(),
+		Object.assign(
+			{
+				to: row.from,
+				from,
+				replyTo: REVIEW_ALERT_TO,
+				subject: clip(subject, 140),
+				text: body,
+				html: body
+					.split(/\n/)
+					.map((l) => '<div>' + (l.trim() ? ownerLayout.escapeHtml(l) : '<br>') + '</div>')
+					.join(''),
+			},
+			headers ? { headers } : {}
+		)
+	);
+	return '';
+}
+
+// The Decide page's buttons and Jarvis's notification buttons: answer, resend, stop, unlist, done, or draft again (#3670).
+async function decideOwnerReply(ref, row, action, rawEmail, rawText) {
+	if (row.status !== 'waiting') return { conflict: true, row };
+	if (action === 'draft') {
+		const drafted = await draftOwnerAnswer(row, { host: row.host, email: row.noticeEmail });
+		if (!drafted.draft) return { problem: 'Gemini did not return a draft; try again or write one.', saved: false, row };
+		await ref.update(drafted);
+		return { problem: 'Draft ready.', saved: true, row: Object.assign({}, row, drafted) };
+	}
+	if (['answer', 'resend', 'stop', 'unlist', 'done'].indexOf(action) === -1) return { conflict: true, row };
 	const email = String(rawEmail || '')
 		.trim()
 		.toLowerCase()
 		.slice(0, 200);
+	const text = String(rawText || '')
+		.trim()
+		.slice(0, 8000);
 	let problem = '';
-	if (action === 'resend')
+	if (action === 'answer') problem = await sendOwnerAnswer(row, text || row.draft || '');
+	else if (action === 'resend')
 		problem = ownerReplies.resendChoices(row).includes(email)
 			? await resendNotice(row, email)
 			: 'Pick one of the addresses in the reply.';
@@ -4348,6 +4612,7 @@ async function decideOwnerReply(ref, row, action, rawEmail) {
 		decision: action,
 		decidedAt: new Date().toISOString(),
 		decidedEmail: action === 'resend' ? email : '',
+		answeredText: action === 'answer' ? (text || row.draft || '').slice(0, 8000) : '',
 	};
 	const saved = !problem || problem.startsWith('Saved');
 	if (saved) await ref.update(decided);
@@ -4363,18 +4628,29 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 	if (matchedOnly && !ref && !link) return { id: '', outcome: 'unmatched' };
 	const decision = ownerReplies.plan(reply, notice);
 	const id = ownerReplies.replyId(mail.messageId) || crypto.randomBytes(16).toString('hex');
-	const row = Object.assign({}, reply, {
-		at: new Date().toISOString(),
-		noticeDomain: ref ? ref.id : '',
-		host: (notice && notice.host) || (link && link.host) || '',
-		noticeEmail: (link && link.email) || (notice && notice.email) || '',
-		spf: clip(auth.spf, 40),
-		dkim: clip(auth.dkim, 200),
-		status: decision.status,
-		propose: decision.propose,
-		applied: decision.apply,
-		expireAt: keepUntil(),
-	});
+	const host = (notice && notice.host) || (link && link.host) || '';
+	const drafted =
+		decision.status === 'waiting' ? await draftOwnerAnswer(Object.assign({}, reply, { host }), notice || { host }) : {};
+	const row = Object.assign(
+		{},
+		reply,
+		{
+			at: new Date().toISOString(),
+			noticeDomain: ref ? ref.id : '',
+			host,
+			noticeEmail: (link && link.email) || (notice && notice.email) || '',
+			messageId: String(mail.messageId || '')
+				.trim()
+				.slice(0, 200),
+			spf: clip(auth.spf, 40),
+			dkim: clip(auth.dkim, 200),
+			status: decision.status,
+			propose: decision.propose,
+			applied: decision.apply,
+			expireAt: keepUntil(),
+		},
+		drafted
+	);
 	try {
 		await getFirestore().collection('url_review_owner_replies').doc(id).create(row);
 	} catch (error) {
@@ -4405,7 +4681,7 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 					{ label: 'Mail checks', value: 'SPF ' + (row.spf || 'none') + ', DKIM ' + (row.dkim || 'none') },
 					{ label: 'Forwarded by', value: row.forwardedBy },
 				],
-				body: row.words,
+				body: (row.draft ? 'Gemini draft:\n' + row.draft + '\n\n---\nTheir words:\n' : '') + row.words,
 				respondUrl: OWNER_REPLIES_URL + '/decide?t=' + id,
 				buttonLabel: row.status === 'waiting' ? 'Decide' : 'See what was done',
 			});
@@ -4444,6 +4720,27 @@ function replyPage(id, row, message) {
 		)
 		.join('');
 	const open = row.status === 'waiting';
+	const answer = ownerReplies.needsAnswer(row.kind);
+	const answerForm = answer
+		? '<form method="post" action="' +
+			esc(action) +
+			'" style="margin:16px 0">' +
+			'<input type="hidden" name="do" value="answer">' +
+			(row.draftSummary ? '<p style="color:#52606d">' + esc(row.draftSummary) + '</p>' : '') +
+			(row.draftEnglish
+				? '<p style="color:#52606d;font-size:13px"><b>In English:</b> ' + esc(row.draftEnglish) + '</p>'
+				: '') +
+			'<label style="display:block;margin:8px 0 4px;font-size:13px">Answer to ' +
+			esc(row.from) +
+			'</label>' +
+			'<textarea name="text" rows="8" required style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:14px/1.4 Arial,sans-serif">' +
+			esc(row.draft || '') +
+			'</textarea>' +
+			'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+			'<button style="padding:10px 16px;border-radius:8px;border:0;background:#0e7490;color:#fff;font-size:14px">Send answer</button>' +
+			'</div></form>' +
+			button('draft', row.draft ? 'Draft again with Gemini' : 'Draft with Gemini')
+		: '';
 	return (
 		'<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Owner reply</title></head>' +
 		'<body style="font-family:Arial,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1c2833">' +
@@ -4462,7 +4759,8 @@ function replyPage(id, row, message) {
 		esc(row.words) +
 		'</pre>' +
 		(open
-			? (choices.length ? button('resend', 'Send the notice to the chosen address', radios) : '') +
+			? answerForm +
+				(choices.length ? button('resend', 'Send the notice to the chosen address', radios) : '') +
 				button('stop', 'Stop notices to ' + (row.noticeDomain || row.domain)) +
 				(row.host ? button('unlist', 'Take ' + row.host + ' off Live Reports') : '') +
 				button('done', 'Handled, nothing to do')
@@ -4470,7 +4768,12 @@ function replyPage(id, row, message) {
 				esc(row.status) +
 				(row.decision ? ' (' + esc(row.decision) + ')' : '') +
 				(row.applied && row.applied.length ? ' · applied: ' + esc(row.applied.join(', ')) : '') +
-				'</p>') +
+				'</p>' +
+				(row.answeredText
+					? '<pre style="white-space:pre-wrap;background:#ecfdf5;padding:12px;border-radius:8px">' +
+						esc(row.answeredText) +
+						'</pre>'
+					: '')) +
 		'</body></html>'
 	);
 }
@@ -4529,13 +4832,14 @@ exports.ownerReplies = functions
 					ref,
 					row,
 					String((req.body && req.body.do) || ''),
-					(req.body && req.body.email) || ''
+					(req.body && req.body.email) || '',
+					(req.body && req.body.text) || ''
 				);
 				if (out.conflict) {
 					res.status(409).send(replyPage(id, row, 'This reply was already decided.'));
 					return;
 				}
-				res.status(200).send(replyPage(id, out.row, out.problem || 'Done.'));
+				res.status(200).send(replyPage(id, out.row, out.problem || (out.saved ? 'Done.' : '')));
 				return;
 			}
 			res.status(404).send('Not found');
@@ -5644,16 +5948,14 @@ async function reviewSignIn(req, res, pathName) {
 	}
 	const answer = (result) => {
 		if (result.ok)
-			res
-				.status(200)
-				.json({
-					ok: true,
-					session: result.session,
-					email: result.email,
-					provider: result.provider,
-					name: result.name || '',
-					picture: result.picture || '',
-				});
+			res.status(200).json({
+				ok: true,
+				session: result.session,
+				email: result.email,
+				provider: result.provider,
+				name: result.name || '',
+				picture: result.picture || '',
+			});
 		else res.status(result.status).json({ error: result.error, code: result.code || '' });
 	};
 	if (pathName.endsWith('/auth/email')) {
@@ -5785,6 +6087,7 @@ async function reviewAccount(req, res, pathName) {
 		res.status(200).json(
 			Object.assign(file, {
 				comparisons: await savedComparisons(db, signedIn.email),
+				batches: await savedBatches(db, signedIn.email),
 				agency: agencyOk,
 				branding: reviewAgency.publicBranding(accountRow),
 				agencyCi: agencyOk ? reviewAgency.publicWebhook(accountRow) : null,
@@ -5819,12 +6122,10 @@ async function reviewAccount(req, res, pathName) {
 					},
 				};
 		await db.collection('url_review_accounts').doc(signedIn.email).set(patch, { merge: true });
-		res
-			.status(200)
-			.json({
-				ok: true,
-				branding: next.cleared ? null : { companyName: next.companyName, logoDataUrl: next.logoDataUrl },
-			});
+		res.status(200).json({
+			ok: true,
+			branding: next.cleared ? null : { companyName: next.companyName, logoDataUrl: next.logoDataUrl },
+		});
 		return;
 	}
 	if (pathName.endsWith('/account/agency-ci') && req.method === 'POST') {
@@ -5845,8 +6146,89 @@ async function reviewAccount(req, res, pathName) {
 		res.status(200).json({ ok: true, agencyCi: Object.assign({}, pub, { secret: made.secret }) });
 		return;
 	}
+	if (pathName.endsWith('/account/evidence/pdf')) {
+		const body = req.body || {};
+		const id = String(body.id || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		if (!id) {
+			res.status(400).json({ error: 'Missing report id.' });
+			return;
+		}
+		const snap = await db.collection('url_reviews').doc(id).get();
+		if (!snap.exists) {
+			res.status(404).json({ error: 'That report was not found.' });
+			return;
+		}
+		const data = Object.assign({ id }, snap.data() || {});
+		if (String(data.email || '').toLowerCase() !== String(signedIn.email).toLowerCase()) {
+			res.status(404).json({ error: 'That report is not under this account.' });
+			return;
+		}
+		if (!evidencePdf.paidReport(data)) {
+			res.status(402).json({ error: 'This evidence PDF is only for a paid report.', paymentRequired: true });
+			return;
+		}
+		const gate = evidencePdf.meta(data);
+		if (!gate.ok) {
+			res.status(404).json({ error: gate.reason });
+			return;
+		}
+		const built = evidencePdf.page(data, { lang: body.lang || data.lang });
+		const pdf = await printHtml(built.html);
+		if (!pdf) {
+			res.status(503).json({ error: 'The evidence PDF did not print. Try again in a moment.' });
+			return;
+		}
+		res.status(200).json({ ok: true, pdf, filename: built.filename });
+		return;
+	}
+	if (pathName.endsWith('/account/deep/run')) {
+		// The Deep check (#3946): bought once on a paid report of this account, run once, kept on the report.
+		const body = req.body || {};
+		const id = String(body.id || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		if (!id) {
+			res.status(400).json({ error: 'Missing report id.' });
+			return;
+		}
+		const ref = db.collection('url_reviews').doc(id);
+		const snap = await ref.get();
+		if (!snap.exists) {
+			res.status(404).json({ error: 'That report was not found.' });
+			return;
+		}
+		const data = Object.assign({ id }, snap.data() || {});
+		if (String(data.email || '').toLowerCase() !== String(signedIn.email).toLowerCase()) {
+			res.status(404).json({ error: 'That report is not under this account.' });
+			return;
+		}
+		if (!reviewDeep.bought(data) || !evidencePdf.paidReport(data)) {
+			res
+				.status(402)
+				.json({ error: 'The Deep check is not on this report. Add it to a paid report first.', paymentRequired: true });
+			return;
+		}
+		if (reviewDeep.done(data)) {
+			res.status(200).json({ ok: true, deep: data.deep, ran: false });
+			return;
+		}
+		const result = await reviewDeep.run(data, { env: process.env, certspotterKey: process.env.CERTSPOTTER_KEY || '' });
+		if (!result) {
+			res.status(422).json({ error: 'This report has no site the Deep check can read.' });
+			return;
+		}
+		await ref.update({ deep: result });
+		res.status(200).json({ ok: true, deep: result, ran: true });
+		return;
+	}
 	if (pathName.indexOf('/account/comparison/') !== -1) {
 		await reviewComparison(req, res, pathName, db, signedIn.email);
+		return;
+	}
+	if (pathName.indexOf('/account/batch/') !== -1) {
+		await reviewBatchRoutes(req, res, pathName, db, signedIn);
 		return;
 	}
 	if (pathName.endsWith('/account/compare')) {
@@ -5934,13 +6316,11 @@ async function reviewAccount(req, res, pathName) {
 		if (pathName.endsWith('/account/verify-check') && host) {
 			const found = await urlReview.proveOwner({ email: signedIn.email, siteToken: tokenFor }, host);
 			if (found.kind === 'site') await rememberSiteProof(signedIn.email, host, found.how);
-			res
-				.status(200)
-				.json(
-					Object.assign({ available: true, ok: found.kind === 'site', how: found.how || '' }, given, {
-						proofs: await proofs(),
-					})
-				);
+			res.status(200).json(
+				Object.assign({ available: true, ok: found.kind === 'site', how: found.how || '' }, given, {
+					proofs: await proofs(),
+				})
+			);
 			return;
 		}
 		res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
@@ -5973,6 +6353,23 @@ async function savedComparisons(db, email) {
 	}
 }
 
+async function savedBatches(db, email) {
+	try {
+		const snap = await db
+			.collection(reviewBatch.COLLECTION)
+			.where('email', '==', email)
+			.limit(reviewBatch.LISTED_MAX * 2)
+			.get();
+		return reviewBatch.listOf(
+			snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())),
+			email
+		);
+	} catch (error) {
+		console.error('Saved batches did not load:', error);
+		return [];
+	}
+}
+
 // A peer group's comparison (#2363), opened with no account from the link its outreach email carries.
 async function openPeerGroup(req, res) {
 	if (req.method !== 'POST') {
@@ -5996,6 +6393,125 @@ async function openPeerGroup(req, res) {
 		if (row.exists) rows[row.id] = row.data();
 	});
 	res.status(200).json(reviewPeers.payloadOf(id, doc, rows, viewer));
+}
+
+// Bulk URL review batches (#3737): create from a pasted/file list, patch each row, stop, open, list.
+async function reviewBatchRoutes(req, res, pathName, db, signedIn) {
+	const body = req.body || {};
+	const email = signedIn.email;
+	if (pathName.endsWith('/account/batch/parse')) {
+		const parsed = reviewBatch.parseList(body.text, { leadUrl: body.leadUrl });
+		res.status(parsed.error ? 400 : 200).json(parsed);
+		return;
+	}
+	if (pathName.endsWith('/account/batch/start')) {
+		const parsed = reviewBatch.parseList(body.text, { leadUrl: body.leadUrl });
+		if (parsed.error) {
+			res.status(400).json(parsed);
+			return;
+		}
+		// A free-runs address runs every review free (#3972), so its batch needs no pass; anyone else needs a run per URL.
+		const free = await hasFreeRuns(email);
+		const pass = free ? null : reviewOffers.passView(reviewOffers.passFor(await passRowsFor(email), email, Date.now()));
+		const credit = free ? null : reviewBatch.creditProblem(pass && pass.runsLeft, parsed.urls.length);
+		if (credit) {
+			res.status(402).json(credit);
+			return;
+		}
+		const saved = reviewBatch.savedRecord(email, parsed, {
+			frameworks: body.frameworks,
+			tools: body.tools,
+			pages: body.pages,
+			depth: body.depth,
+			lang: body.lang || signedIn.lang,
+			name: body.name || signedIn.name,
+			leadFromReport: body.leadFromReport === true,
+			leadReportId: body.leadReportId,
+		});
+		const ref = await db.collection(reviewBatch.COLLECTION).add(saved);
+		res.status(200).json({ ok: true, batch: reviewBatch.payloadOf(ref.id, saved) });
+		return;
+	}
+	if (pathName.endsWith('/account/batch/list')) {
+		try {
+			const snap = await db
+				.collection(reviewBatch.COLLECTION)
+				.where('email', '==', email)
+				.limit(reviewBatch.LISTED_MAX * 2)
+				.get();
+			res.status(200).json({
+				ok: true,
+				batches: reviewBatch.listOf(
+					snap.docs.map((doc) => Object.assign({ id: doc.id }, doc.data())),
+					email
+				),
+			});
+		} catch (error) {
+			console.error('Batch list failed:', error);
+			res.status(200).json({ ok: true, batches: [] });
+		}
+		return;
+	}
+	const id = reviewBatch.docId(body.id);
+	const snap = id ? await db.collection(reviewBatch.COLLECTION).doc(id).get() : null;
+	const doc = snap && snap.exists ? snap.data() || {} : null;
+	if (!doc || String(doc.email || '').toLowerCase() !== String(email).toLowerCase()) {
+		res.status(404).json({ error: 'That batch is not saved under this account.', code: 'batchNotSaved' });
+		return;
+	}
+	if (pathName.endsWith('/account/batch/open')) {
+		const stuck = (doc.rows || []).some((row) => row.state === 'running');
+		if (stuck && doc.status === 'running') {
+			const next = reviewBatch.resetStuck(doc);
+			await snap.ref.update({ rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt });
+			res.status(200).json(reviewBatch.payloadOf(id, Object.assign({}, doc, next)));
+			return;
+		}
+		res.status(200).json(reviewBatch.payloadOf(id, doc));
+		return;
+	}
+	if (pathName.endsWith('/account/batch/row')) {
+		const index = Number(body.index);
+		const patch = {
+			state: body.state,
+			reviewId: body.reviewId,
+			note: body.note,
+			overall: body.overall,
+		};
+		Object.keys(patch).forEach((key) => {
+			if (patch[key] === undefined) delete patch[key];
+		});
+		const next = reviewBatch.applyRow(doc, index, patch);
+		if (next.error) {
+			res.status(400).json(next);
+			return;
+		}
+		const mailedAt = doc.mailedAt || '';
+		const update = { rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt };
+		if (reviewBatch.finished(update) && !mailedAt) {
+			update.mailedAt = next.updatedAt;
+			await snap.ref.update(update);
+			const fresh = Object.assign({}, doc, update);
+			await mailBatchFinished(id, fresh, { email, name: doc.name || signedIn.name, lang: doc.lang });
+			res.status(200).json(reviewBatch.payloadOf(id, fresh));
+			return;
+		}
+		await snap.ref.update(update);
+		res.status(200).json(reviewBatch.payloadOf(id, Object.assign({}, doc, update)));
+		return;
+	}
+	if (pathName.endsWith('/account/batch/stop')) {
+		const next = reviewBatch.stopBatch(doc);
+		const mailedAt = doc.mailedAt || '';
+		const update = { rows: next.rows, status: next.status, hosts: next.hosts, updatedAt: next.updatedAt };
+		if (!mailedAt) update.mailedAt = next.updatedAt;
+		await snap.ref.update(update);
+		const fresh = Object.assign({}, doc, update);
+		if (!mailedAt) await mailBatchFinished(id, fresh, { email, name: doc.name || signedIn.name, lang: doc.lang });
+		res.status(200).json(reviewBatch.payloadOf(id, fresh));
+		return;
+	}
+	res.status(404).json({ error: 'Not found.' });
 }
 
 // A many-URL comparison: saved from the account page or the review page, opened, deleted, and printed to PDF.
@@ -6119,6 +6635,9 @@ exports.reviewUrl = functions
 		}
 		const deskRoutes = [
 			['/desk/failures/data', 'failures-data'],
+			['/desk/threats/data', 'threats-data'],
+			['/desk/threats', 'threats'],
+			['/desk/map/data', 'map-data'],
 			['/desk/data', 'data'],
 			['/desk/pass', 'pass'],
 			['/desk/free', 'free'],
@@ -6162,6 +6681,68 @@ exports.reviewUrl = functions
 				res
 					.status(bearer ? 403 : 401)
 					.json({ error: bearer ? 'This account cannot open the desk.' : 'Sign in with the operator account.' });
+				return;
+			}
+			if (deskName === 'threats-data' && req.method === 'GET') {
+				try {
+					const out = await reviewThreats.readThreats(getFirestore(), req.query || {});
+					res.status(200).json(out);
+				} catch (error) {
+					console.error('Desk threats read failed:', error);
+					res.status(500).json({ error: 'Could not read the threat list.' });
+				}
+				return;
+			}
+			if (deskName === 'threats' && req.method === 'POST') {
+				const body = req.body || {};
+				if (body.action === 'backfill') {
+					const out = await reviewThreats.backfillFromReviews(getFirestore(), { limit: body.limit || 200 });
+					res.status(200).json(Object.assign({ ok: true }, out));
+					return;
+				}
+				const out = await reviewThreats.updateThreat(getFirestore(), body, operator);
+				res.status(out.status || 200).json(out.ok ? out : { error: out.error });
+				return;
+			}
+			if (deskName === 'map-data' && req.method === 'GET') {
+				try {
+					const stamp = (value) => (value && value.toDate ? value.toDate().toISOString() : value);
+					const readReviews = async () => {
+						const rows = [];
+						for await (const doc of getFirestore().collection('url_reviews').limit(400).stream()) {
+							const d = doc.data() || {};
+							const rep = d.report && typeof d.report === 'object' ? d.report : null;
+							rows.push({
+								id: doc.id,
+								createdAt: stamp(d.createdAt),
+								host: d.host || '',
+								requestedUrl: d.requestedUrl || '',
+								hostIp: d.hostIp || '',
+								hostingCountry: d.hostingCountry || '',
+								report: rep
+									? {
+											id: rep.id || doc.id,
+											host: rep.host || '',
+											finalUrl: rep.finalUrl || '',
+											fetchedAt: rep.fetchedAt || '',
+											targeted: rep.targeted ? { hosting: rep.targeted.hosting || null } : null,
+											insights:
+												rep.insights && rep.insights.score ? { score: { overall: rep.insights.score.overall } } : null,
+										}
+									: null,
+							});
+						}
+						return rows;
+					};
+					const [threatOut, reviewRows] = await Promise.all([
+						reviewThreats.readThreats(getFirestore(), { limit: 1000 }),
+						readReviews(),
+					]);
+					res.status(200).json(reviewMap.buildDeskMapData(threatOut.items, reviewRows, req.query || {}));
+				} catch (error) {
+					console.error('Desk map data failed:', error);
+					res.status(500).json({ error: 'Could not load map data.' });
+				}
 				return;
 			}
 			if (deskName === 'data' && req.method === 'GET') {
@@ -6456,17 +7037,15 @@ exports.reviewUrl = functions
 					.filter((row) => !rivals.shady(row.host))
 					.map((row) => Object.assign(row, { rivals: row.rivals.filter((rival) => !rivals.shady(rival.host)) }))
 					.filter((row) => row.rivals.length);
-				res
-					.status(200)
-					.json({
-						since,
-						until,
-						read: records.length,
-						held: picked.held,
-						unlisted,
-						reports: picked.reports,
-						comparisons,
-					});
+				res.status(200).json({
+					since,
+					until,
+					read: records.length,
+					held: picked.held,
+					unlisted,
+					reports: picked.reports,
+					comparisons,
+				});
 			} catch (error) {
 				console.error('Publishable reviews failed:', error);
 				res.status(503).json({ error: 'The reviews are not available right now.' });
@@ -6496,6 +7075,20 @@ exports.reviewUrl = functions
 			} catch (error) {
 				console.error('Review totals failed:', error);
 				res.status(503).json({ error: 'The totals are not available right now.' });
+			}
+			return;
+		}
+		if (req.method === 'GET' && pathName.indexOf('/threats/global') !== -1) {
+			try {
+				const payload = await reviewMap.loadGlobalMapPayload({
+					storage: getStorage(),
+					query: req.query || {},
+				});
+				res.set('Cache-Control', 'public, max-age=120');
+				res.status(200).json(payload);
+			} catch (error) {
+				console.error('Global map feed failed:', error);
+				res.status(200).json(reviewMap.buildGlobalMapPayload(null, req.query || {}));
 			}
 			return;
 		}
@@ -6811,6 +7404,41 @@ exports.reviewUrl = functions
 			return;
 		}
 		if (pathName.indexOf('/review/fix/') !== -1 && (await fixRequests.route(req, res, pathName, fixDeps()))) return;
+		if (req.method === 'POST' && pathName.endsWith('/review/owner-notice')) {
+			const body = req.body || {};
+			if (body.attackOffer !== true) {
+				res.status(400).json({ error: 'Set attackOffer to true to send the owner notice from this report.' });
+				return;
+			}
+			const id = String(body.id || '')
+				.replace(/[^a-f0-9]/g, '')
+				.slice(0, 32);
+			const snap = id ? await getFirestore().collection('url_reviews').doc(id).get() : null;
+			const row = snap && snap.exists ? Object.assign({ id }, snap.data() || {}) : null;
+			const free = !!row && (row.free === true || (await hasFreeRuns(row.email)));
+			const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), body, row, free);
+			if (!access.ok) {
+				res.status(access.status).json({ error: access.error, signIn: !!access.signIn });
+				return;
+			}
+			const out = await ownerNoticeOffer.sendFromAsker(row, access.email, {
+				db: getFirestore(),
+				queueOwnerNotice,
+				decideOwnerNotice,
+				markSent: (reviewId) =>
+					getFirestore()
+						.collection('url_reviews')
+						.doc(reviewId)
+						.set({ attackOwnerNoticeSentAt: new Date().toISOString() }, { merge: true }),
+			});
+			if (out.error) {
+				const status = /Only the account that ran this review/.test(out.error) ? 403 : 409;
+				res.status(status).json({ error: out.error });
+				return;
+			}
+			res.status(200).json({ ok: true, status: out.status, email: out.email });
+			return;
+		}
 		if (req.method === 'POST' && pathName.endsWith('/review/ask')) {
 			const body = req.body || {};
 			const id = String(body.id || '')
@@ -7005,26 +7633,28 @@ exports.reviewUrl = functions
 				let priced =
 					req.query.purpose === 'fixlist'
 						? urlReview.priceForFixList()
-						: req.query.purpose === 'credentials'
-							? urlReview.priceForCredentials()
-							: req.query.purpose === 'alerts'
-								? urlReview.priceForAlerts(req.query.count)
-								: req.query.layers
-									? urlReview.priceForLayers(String(req.query.layers || ''))
-									: req.query.pages
-										? urlReview.priceForRun({
-												frameworks: String(req.query.frameworks || ''),
-												tools: String(req.query.tools || ''),
-												pages: req.query.pages,
-												depth: req.query.depth,
-												billing: String(req.query.billing || ''),
-												compareWith: reviewCompare.cleanId(req.query.compareWith),
-												competitors: req.query.competitors,
-												bundle: String(req.query.bundle || ''),
-											})
-										: urlReview.normalizeBundle(req.query.bundle)
-											? urlReview.priceForBundle(req.query.bundle)
-											: urlReview.priceFor(String(req.query.frameworks || ''), String(req.query.tools || ''));
+						: req.query.purpose === 'deep'
+							? urlReview.priceForDeep()
+							: req.query.purpose === 'credentials'
+								? urlReview.priceForCredentials()
+								: req.query.purpose === 'alerts'
+									? urlReview.priceForAlerts(req.query.count)
+									: req.query.layers
+										? urlReview.priceForLayers(String(req.query.layers || ''))
+										: req.query.pages
+											? urlReview.priceForRun({
+													frameworks: String(req.query.frameworks || ''),
+													tools: String(req.query.tools || ''),
+													pages: req.query.pages,
+													depth: req.query.depth,
+													billing: String(req.query.billing || ''),
+													compareWith: reviewCompare.cleanId(req.query.compareWith),
+													competitors: req.query.competitors,
+													bundle: String(req.query.bundle || ''),
+												})
+											: urlReview.normalizeBundle(req.query.bundle)
+												? urlReview.priceForBundle(req.query.bundle)
+												: urlReview.priceFor(String(req.query.frameworks || ''), String(req.query.tools || ''));
 				const quotePurpose =
 					req.query.purpose === 'report' ? 'report' : req.query.pages && !req.query.layers ? 'new-run' : '';
 				let deal = null;
@@ -7107,8 +7737,9 @@ exports.reviewUrl = functions
 		}
 		if (req.method === 'POST' && pathName.indexOf('/checkout') !== -1) {
 			const purpose =
-				['report', 'fixlist', 'fix', 'cases', 'credentials', 'alerts', 'pass'].indexOf(req.body && req.body.purpose) ===
-				-1
+				['report', 'fixlist', 'deep', 'fix', 'cases', 'credentials', 'alerts', 'pass'].indexOf(
+					req.body && req.body.purpose
+				) === -1
 					? 'new-run'
 					: req.body.purpose;
 			const reportId = String((req.body && req.body.reportId) || '')
@@ -7156,6 +7787,16 @@ exports.reviewUrl = functions
 						.json({ error: 'A fix list belongs to one report. Open the report first. No charge was made.' });
 					return;
 				}
+				if (purpose === 'deep' && !reviewDeep.available(process.env)) {
+					res.status(503).json({ error: 'The Deep check is not open yet. No charge was made.' });
+					return;
+				}
+				if (purpose === 'deep' && !reportId) {
+					res
+						.status(400)
+						.json({ error: 'The Deep check belongs to one report. Open the report first. No charge was made.' });
+					return;
+				}
 				let fixPay = null;
 				if (purpose === 'fix') {
 					const fixSnap = await getFirestore()
@@ -7180,7 +7821,7 @@ exports.reviewUrl = functions
 					fixPay.fixId = fixSnap.id;
 					priced = urlReview.priceForFix(fixPay.package, fixPay.host);
 				}
-				if (purpose === 'report' || purpose === 'fixlist') {
+				if (purpose === 'report' || purpose === 'fixlist' || purpose === 'deep') {
 					const reportSnap = await getFirestore().collection('url_reviews').doc(reportId).get();
 					reportData = reportSnap.exists ? reportSnap.data() : {};
 					const access = await reviewAuth.reportAccess(
@@ -7190,14 +7831,25 @@ exports.reviewUrl = functions
 						false
 					);
 					if (!access.ok && access.status !== 402) {
-						res
-							.status(access.status)
-							.json({
-								error: access.locked
-									? 'Only the account that ran this report can unlock it. Sign in with that account. No charge was made.'
-									: access.error,
-								signIn: !!access.signIn,
-							});
+						res.status(access.status).json({
+							error: access.locked
+								? 'Only the account that ran this report can unlock it. Sign in with that account. No charge was made.'
+								: access.error,
+							signIn: !!access.signIn,
+						});
+						return;
+					}
+				}
+				if (purpose === 'deep') {
+					// Deep is added to a report already paid for, once; the free preview is not a report to deepen.
+					if (reportData.paid !== true || reportData.status === 'stopped') {
+						res.status(402).json({
+							error: 'The Deep check is added to a paid report. Unlock the report first. No charge was made.',
+						});
+						return;
+					}
+					if ((reportData.addons || []).indexOf('deep') !== -1) {
+						res.status(409).json({ error: 'This report already has the Deep check. No charge was made.' });
 						return;
 					}
 				}
@@ -7210,12 +7862,10 @@ exports.reviewUrl = functions
 						Object.assign({}, req.body || {}, { touch: false })
 					);
 					if (!signedIn.ok) {
-						res
-							.status(signedIn.status || 401)
-							.json({
-								error: 'Sign in first. A pass belongs to the address you sign in with. No charge was made.',
-								signIn: true,
-							});
+						res.status(signedIn.status || 401).json({
+							error: 'Sign in first. A pass belongs to the address you sign in with. No charge was made.',
+							signIn: true,
+						});
 						return;
 					}
 					passOwner = signedIn.email;
@@ -7237,13 +7887,11 @@ exports.reviewUrl = functions
 						Date.now()
 					);
 					if (!run || !run.due) {
-						res
-							.status(400)
-							.json({
-								error: !run
-									? 'No open pass with a run left is on this account. No charge was made.'
-									: 'This run asks for nothing over your pass. Start it from the review page. No charge was made.',
-							});
+						res.status(400).json({
+							error: !run
+								? 'No open pass with a run left is on this account. No charge was made.'
+								: 'This run asks for nothing over your pass. Start it from the review page. No charge was made.',
+						});
 						return;
 					}
 					passPlan = run.plan;
@@ -7251,6 +7899,8 @@ exports.reviewUrl = functions
 				}
 				if (purpose === 'fixlist') {
 					priced = urlReview.priceForFixList();
+				} else if (purpose === 'deep') {
+					priced = urlReview.priceForDeep();
 				} else if (purpose === 'cases') {
 					priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
 				} else if (purpose === 'credentials') {
@@ -7403,15 +8053,13 @@ exports.reviewUrl = functions
 					frameworks: priced.frameworks || [],
 					paid: false,
 				});
-				res
-					.status(200)
-					.json({
-						url: session.url,
-						id: session.id,
-						provider: session.provider,
-						currency: session.currency,
-						amount: session.amount,
-					});
+				res.status(200).json({
+					url: session.url,
+					id: session.id,
+					provider: session.provider,
+					currency: session.currency,
+					amount: session.amount,
+				});
 			} catch (error) {
 				res.status(error.status || 502).json({
 					error: error.message || 'Payment could not be started.',
@@ -7456,14 +8104,12 @@ exports.reviewUrl = functions
 				}
 				const field = rivals.fieldOf(body, data.report.observed && data.report.observed.lang);
 				if (!access.locked && !rivals.fieldRoom(data.report, field)) {
-					res
-						.status(429)
-						.json({
-							error:
-								'This report has searched ' +
-								rivals.FIELDS_MAX +
-								" kinds of competition already. Pick one of them or the site's own field.",
-						});
+					res.status(429).json({
+						error:
+							'This report has searched ' +
+							rivals.FIELDS_MAX +
+							" kinds of competition already. Pick one of them or the site's own field.",
+					});
 					return;
 				}
 				const found = access.locked
@@ -7474,17 +8120,15 @@ exports.reviewUrl = functions
 					(row) => !unlisted.some((u) => row.host === u || row.host.endsWith('.' + u))
 				);
 				const records = await Promise.all(list.map((row) => latestPublicReview(row.host, unlisted)));
-				res
-					.status(200)
-					.json({
-						field: field ? field.key : '',
-						rivals: rivals.payload(
-							Object.assign({ id }, data.report),
-							Object.assign({}, found, { list }),
-							records,
-							!!access.ok
-						),
-					});
+				res.status(200).json({
+					field: field ? field.key : '',
+					rivals: rivals.payload(
+						Object.assign({ id }, data.report),
+						Object.assign({}, found, { list }),
+						records,
+						!!access.ok
+					),
+				});
 			} catch (error) {
 				console.error('Natural competitors failed for ' + id + ':', error);
 				res.status(503).json({ error: 'The natural competitors are not available right now.' });
@@ -7625,6 +8269,10 @@ exports.reviewUrl = functions
 						free,
 						addons: data.addons || [],
 						addonLayers: data.addonLayers || [],
+						deep: data.deep || null,
+						deepAvailable: reviewDeep.available(process.env),
+						attackOwnerNoticeSentAt: data.attackOwnerNoticeSentAt || '',
+						ownerNoticeOffer: ownerNoticeOffer.showOffer(data.report, { paid: true }),
 						branding: brand ? { companyName: brand.companyName, logoDataUrl: brand.logoDataUrl || '' } : null,
 					},
 					versus ? { versus } : {}
@@ -8207,6 +8855,7 @@ async function runReview(req, res, placeOf) {
 			maxDepth: intake.value.depth,
 			pageLang: intake.value.pageLang,
 			section: intake.value.section,
+			targeted: intake.value.targeted === false ? false : undefined,
 			passive: !!intake.value.compareWith,
 			customer: true,
 			browse: browseForReview,
@@ -8320,6 +8969,7 @@ async function runReview(req, res, placeOf) {
 		writeLine({ type: 'log', text: 'Saving the report.' });
 		await getFirestore().collection('url_reviews').doc(report.id).set(record);
 		await countReviewed(report);
+		await saveReviewThreats(record);
 		await rememberReview(record.status === 'stopped' ? 'stopped' : 'report', record);
 		const score = report.insights && report.insights.score ? report.insights.score.overall : null;
 		await reviewProcess(record.status === 'stopped' ? 'cancelled' : 'done', {
@@ -8455,6 +9105,15 @@ async function reviewTotals() {
 		return (await ref.get()).data();
 	}
 	return seeded;
+}
+
+async function saveReviewThreats(record) {
+	if (!record || !record.report) return;
+	try {
+		await reviewThreats.recordThreats(getFirestore(), record);
+	} catch (error) {
+		console.error('Review threats update failed:', error);
+	}
 }
 
 async function countReviewed(report) {
@@ -8644,6 +9303,7 @@ const jarvisCalendar = require('./jarvis-calendar');
 const jarvisOutreach = require('./jarvis-outreach');
 const jarvisAddresses = require('./jarvis-addresses');
 const jarvisEngagement = require('./jarvis-engagement');
+const metaScout = require('./meta-scout');
 const ownerTags = require('./owner-tags');
 const engagementMac = require('./engagement-mac');
 const engagementReddit = require('./engagement-reddit');
@@ -8674,6 +9334,8 @@ function engagementDeps() {
 		inc: (n) => FieldValue.increment(n),
 		push: pushOwner,
 		keys: bookingKeys(),
+		site: customerMail.SITE,
+		githubToken: () => githubApp.token(),
 		mail: (m) =>
 			sendOwnerEmail({
 				subject: m.subject,
@@ -9012,6 +9674,8 @@ const jarvisProposals = require('./jarvis-proposals');
 const jarvisActions = require('./jarvis-actions');
 const jarvisCountdown = require('./jarvis-countdown');
 const jarvisSnap = require('./jarvis-snapshot');
+const dayRows = require('./jarvis-days');
+const changeLedger = require('./jarvis-ledger');
 const jarvisSections = require('./jarvis-sections');
 const jarvisLive = require('./jarvis-live');
 const jarvisDigest = require('./jarvis-digest');
@@ -9070,6 +9734,7 @@ exports.jarvisReviewRun = functions
 			});
 			await db.collection('url_reviews').doc(record.id).set(record);
 			await countReviewed(record.report);
+			await saveReviewThreats(record);
 			const linkUrl = new URL(customerMail.pageUrl(value.lang, { report: record.id }));
 			linkUrl.searchParams.set('utm_source', 'jarvis');
 			linkUrl.searchParams.set('utm_medium', 'push');
@@ -9140,6 +9805,7 @@ exports.fixRereview = functions
 				maxDepth: goal.options.depth,
 				pageLang: goal.options.pageLang,
 				section: goal.options.section,
+				targeted: goal.options.targeted === false ? false : undefined,
 				asker: {
 					reasonCode: original.reasonCode || 'own',
 					email: goal.email,
@@ -9180,6 +9846,7 @@ exports.fixRereview = functions
 			);
 			await db.collection('url_reviews').doc(record.id).set(record);
 			await countReviewed(record.report);
+			await saveReviewThreats(record);
 			await ref.update(fixRereview.finishedPatch(request, record.id, result));
 			const mailed = await Promise.allSettled([
 				deps.mailCustomer(
@@ -9740,6 +10407,12 @@ function jarvisLoadSnapshot(days) {
 			briefMarks: () => jarvisProposals.savedBrief(db),
 			countdowns: () => jarvisCountdown.view(db, now),
 			processes: () => jarvisProcesses.read(db),
+			ledger: () =>
+				db
+					.collection('jarvis_ledger')
+					.doc('latest')
+					.get()
+					.then((snap) => (snap.exists ? snap.data() : null)),
 		},
 		now
 	);
@@ -9928,7 +10601,7 @@ function jarvisAutoOps(settings, now, th) {
 			Object.values(await jarvisOpsRuns())
 				.filter((r) => r.ok === false && scheduler.has(r.job) && now - Date.parse(r.endedAt || '') < 26 * 3600000)
 				.map((r) => ({ job: r.job, endedAt: r.endedAt, error: r.error || '' })),
-		overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^failed/.test(o.why)),
+		overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^(failed|warning)/.test(o.why)),
 		failedCi: async () => jarvis.failedRuns(fetch, await gh(), { now }),
 		rerunRun: async (id) => jarvis.rerunRun(fetch, await gh(), id),
 		rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),
@@ -10810,6 +11483,7 @@ async function jarvisGithubJob() {
 		jarvisGithub.daily(Object.assign({}, ctx, snapshot && snapshot.ok !== false ? { snapshot } : {}))
 	);
 	await step('backfill', () => jarvisGithub.backfill(Object.assign({}, ctx, { limit: 10 })));
+	await step('budget', () => jarvisGithub.kaanmuarBudget(ctx));
 	await step('diagnosed', async () => {
 		if (!ctx.gemini) return 'none (no Gemini)';
 		const start = jarvisCore.zoneParts(new Date(now)).day + 'T05:00:00.000Z';
@@ -10910,6 +11584,7 @@ const JARVIS_LOGGED = {
 	'notify-act': (b) => String(b.act || '') + ' ' + String(b.ref || '').slice(0, 100),
 	'rating-decide': (b) =>
 		String(b.decision || '') + ' ' + (Array.isArray(b.ids) ? b.ids.length + ' ratings' : String(b.ids || '')),
+	'csat-testimonial-decide': (b) => String(b.decision || '') + ' ' + String(b.id || '').slice(0, 40),
 	'brief-mark': (b) => String(b.status || '') + ' ' + String(b.key || '').slice(0, 100),
 	'marketing-campaign': (b) => String(b.action || '') + ' ' + String(b.name || b.id || '').slice(0, 80),
 	'marketing-block': (b) => String(b.value || '').slice(0, 100),
@@ -11002,6 +11677,29 @@ async function jarvisWatchRun() {
 		(push.sent === 1 ? '' : 's')
 	);
 }
+
+// Jarvis change ledger (#3784): each shipped change against the metric it was meant to move, one read of the day rollups.
+async function jarvisChangeLedger() {
+	const db = getFirestore();
+	const out = await changeLedger.run(db, require('./change-ledger.json').entries, Date.now(), dayRows);
+	const saved = JSON.parse(JSON.stringify(out));
+	await db.collection('jarvis_ledger').doc('latest').set(saved);
+	await jarvisSnap.drop(db, ['ledger']).catch(() => null);
+	const count = (status) => saved.results.filter((row) => row.status === status).length;
+	return (
+		saved.results.length +
+		' changes: ' +
+		count('better') +
+		' better, ' +
+		count('worse') +
+		' worse, ' +
+		count('flat') +
+		' flat, ' +
+		count('too early') +
+		' too early'
+	);
+}
+exports.jarvisChangeLedger = scheduled(functions, 'jarvisChangeLedger', () => jarvisChangeLedger());
 
 exports.jarvisDailyBriefing = scheduled(
 	functions.runWith({ timeoutSeconds: 300, memory: '512MB', secrets: SECRETS.jarvisMail }),
@@ -11260,11 +11958,11 @@ exports.jarvisGithub = scheduled(
 	jarvisGithubJob
 );
 
-// Every 30 minutes (#1988): read our field's posts, plan likes, reposts and follows, and push reply drafts for approval.
+// Every 30 minutes (#1988, #3613 meta-scout): cloud read and plan, folded with Mac/Reddit/owner-tags/student status.
 exports.engagementScout = scheduled(
 	functions.runWith({ timeoutSeconds: 540, memory: '512MB', secrets: SECRETS.engagement }),
 	'engagementScout',
-	async () => jarvisEngagement.runNote(await jarvisEngagement.scout(engagementDeps()))
+	async () => jarvisEngagement.runNote((await metaScout.run(engagementDeps())).run)
 );
 const engagementReport = (period) => async () => {
 	const out = await jarvisEngagement.sendReport(engagementDeps(), period);
@@ -11927,6 +12625,9 @@ exports.jarvis = functions
 			} else if (op === 'brief-marks') out = { marks: await jarvisProposals.savedBrief(getFirestore()) };
 			else if (op === 'brief-items') out = await jarvis.briefItems(getFirestore(), { list: body.list, days, now });
 			else if (op === 'rating-decide') out = await jarvis.decideRatings(getFirestore(), body);
+			else if (op === 'csat-testimonials') out = await jarvis.listCsatTestimonials(getFirestore(), body);
+			else if (op === 'csat-testimonial-decide')
+				out = await jarvis.decideCsatTestimonial(getFirestore(), body, operator);
 			else if (op === 'notices') {
 				const db = getFirestore();
 				const [snap, index, unlisted, stops] = await Promise.all([

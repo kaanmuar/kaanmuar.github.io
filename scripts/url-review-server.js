@@ -20,6 +20,8 @@ const oauth = require('../functions/url-review-oauth');
 const fixOffers = require('../functions/url-review-fix-offers');
 const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
+const threats = require('../functions/url-review-threats');
+const reviewMap = require('../functions/url-review-map');
 const localSoftQuota = softQuota.memoryStore();
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
@@ -42,6 +44,13 @@ function loadEnvFile(name) {
 }
 loadEnvFile('.env');
 loadEnvFile('.secret.local');
+// The Firebase Web API key is public, but it is not kept in the repo: a missing value stops the server at startup (#3970).
+if (!process.env.FIREBASE_WEB_KEY) {
+	console.error(
+		'FIREBASE_WEB_KEY is not set. Add it to functions/.secret.local (or export it), then start the review server again.'
+	);
+	process.exit(1);
+}
 
 function paymentKeys() {
 	return {
@@ -76,6 +85,8 @@ const activeRuns = new Map();
 const deskSessions = new Map();
 const FILE = path.join(__dirname, '..', 'runner-results', 'url-reviews.jsonl');
 const ALERT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-alerts.jsonl');
+const THREAT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-threats.jsonl');
+const MAP_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-map-global.json');
 const ALLOW = new Set([
 	'http://127.0.0.1:8765',
 	'http://localhost:8765',
@@ -170,11 +181,32 @@ function seedAlerts() {
 	desk.alertsFromHistory(readStore()).forEach((note) => storeAlert(note));
 }
 
+function readThreatsLocal() {
+	const map = new Map();
+	readStore().forEach((row) => {
+		threats.recordsFromReview(row).forEach((item) => map.set(item.id, item));
+	});
+	try {
+		fs.readFileSync(THREAT_FILE, 'utf8')
+			.split('\n')
+			.filter(Boolean)
+			.forEach((line) => {
+				const item = threats.normalizeRecord(JSON.parse(line));
+				map.set(item.id, item);
+			});
+	} catch (error) { /* empty */ }
+	return Array.from(map.values());
+}
+
 function writeRecord(record) {
 	fs.mkdirSync(path.dirname(FILE), { recursive: true });
 	fs.appendFileSync(FILE, JSON.stringify(record) + '\n');
 	const kind = desk.kindFor(record);
 	if (kind) noteReview(kind, record);
+	const items = threats.recordsFromReview(record);
+	if (items.length) {
+		items.forEach((item) => fs.appendFileSync(THREAT_FILE, JSON.stringify(item) + '\n'));
+	}
 }
 
 // Production changes a row inside a Firestore transaction; this mirror rewrites the line.
@@ -324,7 +356,7 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
 	if (pathName === '/auth/provider') {
 		let decoded = null;
 		try {
-			decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY || 'AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w')(
+			decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY)(
 				String(body.idToken || '')
 			);
 		} catch (error) {
@@ -479,6 +511,88 @@ const server = http.createServer(async (req, res) => {
 			'set-cookie': 'qa_desk=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax',
 		});
 		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+	if (req.method === 'GET' && (url.pathname === '/desk/world.json' || url.pathname === '/assets/jarvis/world.json')) {
+		res.writeHead(200, {
+			'content-type': 'application/json; charset=utf-8',
+			'cache-control': 'no-store',
+			'access-control-allow-origin': origin,
+		});
+		res.end(fs.readFileSync(path.join(__dirname, '..', 'assets', 'jarvis', 'world.json')));
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/threats/global') {
+		let rawMap = null;
+		try {
+			rawMap = JSON.parse(fs.readFileSync(MAP_FILE, 'utf8'));
+		} catch (error) {
+			rawMap = null;
+		}
+		const payload = rawMap
+			? reviewMap.buildGlobalMapPayload(rawMap, Object.fromEntries(url.searchParams))
+			: await reviewMap.loadGlobalMapPayload({
+				storage: null,
+				fetch: process.env.URL_REVIEW_LIVE_MAP === '1' ? global.fetch : false,
+				query: Object.fromEntries(url.searchParams),
+			});
+		sendJson(res, 200, payload, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/map/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const payload = reviewMap.buildDeskMapData(
+			readThreatsLocal(),
+			readStore(),
+			Object.fromEntries(url.searchParams)
+		);
+		sendJson(res, 200, payload, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/threats/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const all = readThreatsLocal();
+		const filtered = threats.filterThreats(all, Object.fromEntries(url.searchParams));
+		sendJson(res, 200, { summary: threats.summarizeThreats(all), items: filtered }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/threats') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let tBody = {};
+		try {
+			tBody = await readBody(req);
+		} catch (error) {
+			tBody = {};
+		}
+		const all = readThreatsLocal();
+		if (tBody.action === 'backfill') {
+			fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+			fs.writeFileSync(THREAT_FILE, all.map((r) => JSON.stringify(r) + '\n').join(''));
+			sendJson(res, 200, { ok: true, scanned: readStore().length, stored: all.length }, origin, deviceHint);
+			return;
+		}
+		const prev = all.find((item) => item.id === tBody.id);
+		if (!prev) {
+			sendJson(res, 404, { error: 'That threat entry was not found.' }, origin, deviceHint);
+			return;
+		}
+		const next = threats.normalizeRecord(Object.assign({}, prev, {
+			delist_status: tBody.delist_status != null ? tBody.delist_status : prev.delist_status,
+			note: tBody.note != null ? tBody.note : prev.note,
+			public_ok: typeof tBody.public_ok === 'boolean' ? tBody.public_ok : prev.public_ok
+		}));
+		fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+		fs.appendFileSync(THREAT_FILE, JSON.stringify(next) + '\n');
+		sendJson(res, 200, { ok: true, item: next }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'GET' && url.pathname === '/desk/data') {
@@ -1743,6 +1857,7 @@ const server = http.createServer(async (req, res) => {
 			maxDepth: intake.value.depth,
 			pageLang: intake.value.pageLang,
 			section: intake.value.section,
+			targeted: intake.value.targeted === false ? false : undefined,
 			passive: !!intake.value.compareWith,
 			browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
 			pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
