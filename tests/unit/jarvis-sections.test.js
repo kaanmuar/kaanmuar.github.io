@@ -177,7 +177,7 @@ test('every snapshot field and snapshot source belongs to a named section', asyn
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	const ops = index
 		.match(/const JARVIS_SNAPSHOT_OPS = \[([^\]]+)\]/)[1]
-		.match(/"[\w-]+"/g)
+		.match(/['\"][\w-]+['\"]/g)
 		.map((s) => s.slice(1, -1));
 	const named = new Set(Object.values(sections.SECTIONS).flatMap((s) => s.external || []));
 	assert.deepEqual(
@@ -369,12 +369,12 @@ test('changed names the sections whose version moved', () => {
 
 test('the snapshot op serves through jarvis-sections and skips the reads only leaves out', () => {
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
-	assert.match(index, /op === "snapshot"\) out = await jarvisSnapshotOp\(days, body, now\)/);
+	assert.match(index, /op === ['\"]snapshot['\"]\) out = await jarvisSnapshotOp\(days, body, now\)/);
 	const op = index.slice(
 		index.indexOf('async function jarvisSnapshotOp('),
 		index.indexOf('async function jarvisHeld(')
 	);
-	assert.match(op, /want\.has\("mail"\) \? mailCodeRows\(\)/);
-	assert.match(op, /want\.has\("devices"\) \? jarvisDevice\.list\(/);
+	assert.match(op, /want\.has\(['\"]mail['\"]\) \? mailCodeRows\(\)/);
+	assert.match(op, /want\.has\(['\"]devices['\"]\) \? jarvisDevice\.list\(/);
 	assert.match(op, /jarvisSections\.serve\(/);
 });

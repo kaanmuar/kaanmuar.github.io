@@ -7,15 +7,13 @@ const path = require('path');
 const { beforeLastLineDelim } = require('../../functions/line-cut.js');
 
 const ROOT = path.join(__dirname, '..', '..');
+const { locate } = require('./_loose-head');
 const LIT = /\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[dgimsuy]*/y;
 
 /** The regex literal opening at head[open] (default: the last "/" in head) in functions/<file>; head must be unique. */
 function fromSource(file, head, open = head.lastIndexOf('/')) {
 	const text = fs.readFileSync(path.join(ROOT, 'functions', file), 'utf8');
-	const at = text.indexOf(head);
-	assert.ok(at >= 0, `${file}: ${head}`);
-	assert.equal(text.indexOf(head, at + 1), -1, `${file}: ${head} is not unique`);
-	LIT.lastIndex = at + open;
+	LIT.lastIndex = locate(text, head, file, open).end;
 	const lit = LIT.exec(text)[0];
 	const last = lit.lastIndexOf('/');
 	return new RegExp(lit.slice(1, last), lit.slice(last + 1));

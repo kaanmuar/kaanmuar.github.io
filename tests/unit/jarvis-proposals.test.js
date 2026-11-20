@@ -445,8 +445,8 @@ test('the weekly strategy runs Sunday 19:00 Bogotá and the settings keep a week
 	assert.equal(ops.cron('jarvisWeeklyStrategy'), '0 19 * * 0');
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	assert.match(index, /exports\.jarvisWeeklyStrategy = scheduled\(/);
-	assert.match(index, /op === "proposals"/);
-	assert.match(index, /op === "proposal-mark"/);
+	assert.match(index, /op === ['\"]proposals['\"]/);
+	assert.match(index, /op === ['\"]proposal-mark['\"]/);
 	const jarvis = require('../../functions/jarvis');
 	assert.equal(jarvis.normalizeSettings({}).mail.weekly, true);
 	assert.equal(jarvis.normalizeSettings({ mail: { weekly: false } }).mail.weekly, false);

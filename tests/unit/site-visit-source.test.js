@@ -34,7 +34,7 @@ test('visit lines name a tagged review visit', () => {
 test('the site report tally and the stored visit keep the page query', () => {
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	assert.match(index, /bump\(referrers, siteReport\.visitSource\(row\)\)/);
-	assert.match(index, /kind: "visit",[\s\S]*?query: query,/);
+	assert.match(index, /kind: ['"]visit['"],[\s\S]*?query: query,/);
 	const rules = fs.readFileSync(path.join(__dirname, '../../firestore.rules'), 'utf8');
 	assert.match(rules, /'referrerHost', 'query'/);
 	assert.match(rules, /!\('query' in request\.resource\.data\)/);

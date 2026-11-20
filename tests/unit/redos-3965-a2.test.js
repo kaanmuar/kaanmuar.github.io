@@ -6,20 +6,15 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', '..');
+const { locate } = require('./_loose-head');
 const LIT = /\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[dgimsuy]*/y;
 const source = (file) => fs.readFileSync(path.join(ROOT, 'functions', file), 'utf8');
 
-function unique(text, file, head) {
-	const at = text.indexOf(head);
-	assert.ok(at >= 0, `${file}: ${head}`);
-	assert.equal(text.indexOf(head, at + 1), -1, `${file}: ${head} is not unique`);
-	return at;
-}
 
 /** The regex literal `shift` characters after the end of `before` in functions/<file>; before must be unique. */
 function fromSource(file, before, shift = 0) {
 	const text = source(file);
-	LIT.lastIndex = unique(text, file, before) + before.length + shift;
+	LIT.lastIndex = locate(text, before, file).end + shift;
 	const lit = LIT.exec(text)[0];
 	const last = lit.lastIndexOf('/');
 	return new RegExp(lit.slice(1, last), lit.slice(last + 1));
@@ -28,7 +23,7 @@ function fromSource(file, before, shift = 0) {
 /** The top-level `function name(...) {...}` in functions/<file>, as a callable. */
 function fnFromSource(file, name) {
 	const text = source(file);
-	const at = unique(text, file, `\nfunction ${name}(`) + 1;
+	const at = text.indexOf(`function ${name}(`, locate(text, `\nfunction ${name}(`, file).at);
 	let depth = 0;
 	let end = text.indexOf('{', at);
 	do {

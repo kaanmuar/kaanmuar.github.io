@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /*
  * Owner emails as Jarvis pushes (#1669): each owner email that moves to Jarvis also pushes, so the
  * phone hears it first. "inbox" is what people wrote to Carlos, "desk" is the URL review desk, and the
@@ -6,276 +6,358 @@
  * Notification buttons (#1670): "ref" names the thing a button acts on and "actions" lists the buttons,
  * at most three because Android shows no more. The jarvis "notify-act" op runs them through ACTS.
  */
-const clip = (value, n) => String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, n);
-const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+const clip = (value, n) =>
+	String(value == null ? '' : value)
+		.replace(/\s+/g, ' ')
+		.trim()
+		.slice(0, n);
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 
 // What each ref type accepts from a button.
 const ACTS = {
-  message: ["reply"],
-  rating: ["reply"],
-  "owner-reply": ["resend", "stop", "unlist", "done"],
-  "rerun-held": ["send-all", "drop-all"],
-  ops: ["rerun"],
-  proposal: ["run", "close", "done", "dismissed"],
-  notice: ["send", "skip"],
-  social: ["approved", "dismissed"],
-  engagement: ["approve", "edit", "dismiss"],
-  "engagement-dm": ["approve", "edit", "dismiss"],
-  "owner-tags": ["approve", "edit", "dismiss"],
-  countdown: ["now", "cancel"],
-  pagespeed: ["merge", "close"]
+	message: ['reply'],
+	rating: ['reply'],
+	'owner-reply': ['resend', 'stop', 'unlist', 'done'],
+	'rerun-held': ['send-all', 'drop-all'],
+	ops: ['rerun'],
+	proposal: ['run', 'close', 'done', 'dismissed'],
+	notice: ['send', 'skip'],
+	social: ['approved', 'dismissed'],
+	engagement: ['approve', 'edit', 'dismiss'],
+	'engagement-dm': ['approve', 'edit', 'dismiss'],
+	'owner-tags': ['approve', 'edit', 'dismiss'],
+	countdown: ['now', 'cancel'],
+	pagespeed: ['merge', 'close'],
 };
-const REPLY = { act: "reply", label: "Reply", input: "Your reply" };
+const REPLY = { act: 'reply', label: 'Reply', input: 'Your reply' };
 
 // Run events that need Carlos push loud, each on its own; the rest update one quiet notification per run.
-const PROBLEMS = new Set(["blocked", "failed", "payment-due", "payment-unmatched", "payment-refunded", "payment-disputed", "credit-returned"]);
+const PROBLEMS = new Set([
+	'blocked',
+	'failed',
+	'payment-due',
+	'payment-unmatched',
+	'payment-refunded',
+	'payment-disputed',
+	'credit-returned',
+]);
 const STAGE = {
-  started: "Review running",
-  report: "Review done",
-  stopped: "Review stopped early",
-  checkout: "Checkout opened",
-  capture: "Report copied or printed",
-  credit: "Run credit used",
-  monthly: "30-day pass granted",
-  "follow-stop": "Follow-up notes stopped"
+	started: 'Review running',
+	report: 'Review done',
+	stopped: 'Review stopped early',
+	checkout: 'Checkout opened',
+	capture: 'Report copied or printed',
+	credit: 'Run credit used',
+	monthly: '30-day pass granted',
+	'follow-stop': 'Follow-up notes stopped',
 };
 
 function hostOf(url) {
-  try { return new URL(/^https?:/i.test(url) ? url : "https://" + url).hostname.replace(/^www\./, ""); } catch (error) { return ""; }
+	try {
+		return new URL(/^https?:/i.test(url) ? url : 'https://' + url).hostname.replace(/^www\./, '');
+	} catch (error) {
+		return '';
+	}
 }
 
-const rowLines = (rows) => (Array.isArray(rows) ? rows : []).filter((r) => r && r.label && r.value).slice(0, 6).map((r) => clip(r.label + ": " + r.value, 120));
-const httpsOnly = (url) => (/^https:\/\//.test(String(url || "")) ? String(url) : "");
+const rowLines = (rows) =>
+	(Array.isArray(rows) ? rows : [])
+		.filter((r) => r && r.label && r.value)
+		.slice(0, 6)
+		.map((r) => clip(r.label + ': ' + r.value, 120));
+const httpsOnly = (url) => (/^https:\/\//.test(String(url || '')) ? String(url) : '');
 
 /** A button press: the ref's type and id, and an act that type accepts. Throws on anything else. */
 function parseAct(ref, act) {
-  const raw = String(ref || "");
-  const cut = raw.indexOf(":");
-  const type = cut < 0 ? raw : raw.slice(0, cut);
-  const id = cut < 0 ? "" : raw.slice(cut + 1).slice(0, 200);
-  const a = String(act || "");
-  if (!ACTS[type] || !ACTS[type].includes(a)) throw new Error("That button no longer works.");
-  if (type !== "rerun-held" && !id) throw new Error("That button no longer works.");
-  return { type, id, act: a };
+	const raw = String(ref || '');
+	const cut = raw.indexOf(':');
+	const type = cut < 0 ? raw : raw.slice(0, cut);
+	const id = cut < 0 ? '' : raw.slice(cut + 1).slice(0, 200);
+	const a = String(act || '');
+	if (!ACTS[type] || !ACTS[type].includes(a)) throw new Error('That button no longer works.');
+	if (type !== 'rerun-held' && !id) throw new Error('That button no longer works.');
+	return { type, id, act: a };
 }
 
 function messageMessage(id, data, topic) {
-  const d = data || {};
-  const who = clip(d.name, 60) || "Someone";
-  return {
-    kind: "inbox",
-    title: "CV message · " + who + (topic ? " · " + clip(topic, 40) : ""),
-    body: clip(d.message, 220) || "(no text)",
-    lines: [clip(d.email, 120), d.fileURL ? "Has an attachment" : ""].filter(Boolean),
-    tab: "products:inbox",
-    tag: "jarvis-message-" + clip(id, 60),
-    ref: "message:" + clip(id, 60),
-    actions: d.email ? [REPLY] : []
-  };
+	const d = data || {};
+	const who = clip(d.name, 60) || 'Someone';
+	return {
+		kind: 'inbox',
+		title: 'CV message · ' + who + (topic ? ' · ' + clip(topic, 40) : ''),
+		body: clip(d.message, 220) || '(no text)',
+		lines: [clip(d.email, 120), d.fileURL ? 'Has an attachment' : ''].filter(Boolean),
+		tab: 'products:inbox',
+		tag: 'jarvis-message-' + clip(id, 60),
+		ref: 'message:' + clip(id, 60),
+		actions: d.email ? [REPLY] : [],
+	};
 }
 
 function ratingMessage(id, data) {
-  const d = data || {};
-  const score = Math.min(5, Math.max(0, Number(d.rating) || 0));
-  return {
-    kind: "inbox",
-    title: "CV feedback · " + score + "/5 · " + (clip(d.name, 60) || "Someone"),
-    body: clip(d.comment, 220) || "(no comment)",
-    lines: [clip(d.email, 120)].filter(Boolean),
-    tab: "products:inbox",
-    tag: "jarvis-rating-" + clip(id, 60),
-    ref: "rating:" + clip(id, 60),
-    actions: d.email ? [REPLY] : []
-  };
+	const d = data || {};
+	const score = Math.min(5, Math.max(0, Number(d.rating) || 0));
+	return {
+		kind: 'inbox',
+		title: 'CV feedback · ' + score + '/5 · ' + (clip(d.name, 60) || 'Someone'),
+		body: clip(d.comment, 220) || '(no comment)',
+		lines: [clip(d.email, 120)].filter(Boolean),
+		tab: 'products:inbox',
+		tag: 'jarvis-rating-' + clip(id, 60),
+		ref: 'rating:' + clip(id, 60),
+		actions: d.email ? [REPLY] : [],
+	};
 }
 
 /** URL Review post-report CSAT (#3556). Opens the URL Review product tab; low scores carry a draft reply. */
 function csatMessage(id, data) {
-  const d = data || {};
-  const score = Math.min(5, Math.max(0, Number(d.rating) || 0));
-  const nps = Number.isFinite(Number(d.nps)) ? Math.min(10, Math.max(0, Number(d.nps))) : null;
-  const host = clip(d.host, 80) || "URL Review";
-  const low = d.low === true || score <= 2 || (nps != null && nps <= 6);
-  const title = "URL Review CSAT · " + score + "/5" + (nps != null ? " · NPS " + nps : "") + " · " + host;
-  return {
-    kind: "reviews",
-    title: (low ? "Low · " : "") + title,
-    body: clip(d.draftReply || d.comment, 400) || "(no comment)",
-    lines: [
-      clip(d.email, 120),
-      d.reviewId ? "report:" + clip(d.reviewId, 40) : "",
-      d.quoteOk ? "quote ok" : "",
-      d.comment && d.draftReply ? "note: " + clip(d.comment, 120) : ""
-    ].filter(Boolean),
-    tab: "products:review",
-    tag: "jarvis-csat-" + clip(id, 60),
-    ref: "csat:" + clip(id, 60),
-    actions: d.email ? [REPLY] : []
-  };
+	const d = data || {};
+	const score = Math.min(5, Math.max(0, Number(d.rating) || 0));
+	const nps = Number.isFinite(Number(d.nps)) ? Math.min(10, Math.max(0, Number(d.nps))) : null;
+	const host = clip(d.host, 80) || 'URL Review';
+	const low = d.low === true || score <= 2 || (nps != null && nps <= 6);
+	const title = 'URL Review CSAT · ' + score + '/5' + (nps != null ? ' · NPS ' + nps : '') + ' · ' + host;
+	return {
+		kind: 'reviews',
+		title: (low ? 'Low · ' : '') + title,
+		body: clip(d.draftReply || d.comment, 400) || '(no comment)',
+		lines: [
+			clip(d.email, 120),
+			d.reviewId ? 'report:' + clip(d.reviewId, 40) : '',
+			d.quoteOk ? 'quote ok' : '',
+			d.comment && d.draftReply ? 'note: ' + clip(d.comment, 120) : '',
+		].filter(Boolean),
+		tab: 'products:review',
+		tag: 'jarvis-csat-' + clip(id, 60),
+		ref: 'csat:' + clip(id, 60),
+		actions: d.email ? [REPLY] : [],
+	};
 }
 
 // A call booked on book.html (#1971). `when` is the start already written in Bogota time.
 function callMessage(id, b, when) {
-  const d = b || {};
-  return {
-    kind: "inbox",
-    title: "Call booked · " + (clip(d.name, 60) || "Someone") + " · " + clip(when, 40),
-    body: [clip(d.label, 60), clip(d.host, 80), clip(d.note, 160)].filter(Boolean).join(" · ") || "(no note)",
-    lines: [clip(d.email, 120), d.meet ? "Meet: " + clip(d.meet, 80) : ""].filter(Boolean),
-    tab: "business",
-    tag: "jarvis-call-" + clip(id, 60),
-    ref: "call:" + clip(id, 60),
-    actions: []
-  };
+	const d = b || {};
+	return {
+		kind: 'inbox',
+		title: 'Call booked · ' + (clip(d.name, 60) || 'Someone') + ' · ' + clip(when, 40),
+		body: [clip(d.label, 60), clip(d.host, 80), clip(d.note, 160)].filter(Boolean).join(' · ') || '(no note)',
+		lines: [clip(d.email, 120), d.meet ? 'Meet: ' + clip(d.meet, 80) : ''].filter(Boolean),
+		tab: 'business',
+		tag: 'jarvis-call-' + clip(id, 60),
+		ref: 'call:' + clip(id, 60),
+		actions: [],
+	};
 }
 
 /** The address a reply asked the notice to go to, from ownerReplies.plan's "resend:<email>". */
 function proposedAddress(row) {
-  const p = String((row && row.propose) || "");
-  return p.startsWith("resend:") ? p.slice(7) : "";
+	const p = String((row && row.propose) || '');
+	return p.startsWith('resend:') ? p.slice(7) : '';
 }
 
 function ownerReplyMessage(id, row, summary, decideUrl) {
-  const r = row || {};
-  const to = proposedAddress(r);
-  const actions = r.status !== "waiting" ? []
-    : to ? [{ act: "resend", label: "Send to " + clip(to, 28) }, { act: "stop", label: "Stop" }, { act: "done", label: "Done" }]
-    : [{ act: "stop", label: "Stop" }, { act: "unlist", label: "Unlist" }, { act: "done", label: "Done" }];
-  return {
-    kind: "inbox",
-    title: "Owner reply · " + (clip(r.host, 60) || clip(r.from, 60) || "a site owner"),
-    body: clip(summary, 220),
-    lines: [clip(r.from, 120), clip(r.words, 120)].filter(Boolean),
-    tab: "products:outreach",
-    tag: "jarvis-owner-reply-" + clip(id, 40),
-    url: httpsOnly(decideUrl),
-    ref: "owner-reply:" + clip(id, 40),
-    actions
-  };
+	const r = row || {};
+	const to = proposedAddress(r);
+	const actions =
+		r.status !== 'waiting'
+			? []
+			: to
+				? [
+						{ act: 'resend', label: 'Send to ' + clip(to, 28) },
+						{ act: 'stop', label: 'Stop' },
+						{ act: 'done', label: 'Done' },
+					]
+				: [
+						{ act: 'stop', label: 'Stop' },
+						{ act: 'unlist', label: 'Unlist' },
+						{ act: 'done', label: 'Done' },
+					];
+	return {
+		kind: 'inbox',
+		title: 'Owner reply · ' + (clip(r.host, 60) || clip(r.from, 60) || 'a site owner'),
+		body: clip(summary, 220),
+		lines: [clip(r.from, 120), clip(r.words, 120)].filter(Boolean),
+		tab: 'products:outreach',
+		tag: 'jarvis-owner-reply-' + clip(id, 40),
+		url: httpsOnly(decideUrl),
+		ref: 'owner-reply:' + clip(id, 40),
+		actions,
+	};
 }
 
 function rerunMessage(done, deskUrl) {
-  const list = Array.isArray(done) ? done : [];
-  if (!list.length) return null;
-  const count = (status) => list.filter((row) => row.status === status).length;
-  const held = count("held");
-  const swept = count("swept");
-  const failed = count("failed");
-  const sent = count("sent");
-  return {
-    kind: "desk",
-    title: held ? plural(held, "re-run") + " held for you" : "URL review re-runs",
-    body: [held ? held + " held: send or drop each" : "", sent ? sent + " sent as promised" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
-    lines: list.slice(0, 6).map((row) => clip(row.status + " · " + (row.host || "?") + (row.name ? " for " + row.name : ""), 120)),
-    tab: "products:review",
-    tag: "jarvis-reruns",
-    url: httpsOnly(deskUrl),
-    ref: "rerun-held",
-    actions: held ? [{ act: "send-all", label: "Send all" }, { act: "drop-all", label: "Drop all" }] : []
-  };
+	const list = Array.isArray(done) ? done : [];
+	if (!list.length) return null;
+	const count = (status) => list.filter((row) => row.status === status).length;
+	const held = count('held');
+	const swept = count('swept');
+	const failed = count('failed');
+	const sent = count('sent');
+	return {
+		kind: 'desk',
+		title: held ? plural(held, 're-run') + ' held for you' : 'URL review re-runs',
+		body:
+			[
+				held ? held + ' held: send or drop each' : '',
+				sent ? sent + ' sent as promised' : '',
+				swept ? swept + ' saved by the sweep' : '',
+				failed ? failed + ' failed again' : '',
+			]
+				.filter(Boolean)
+				.join(', ') + '.',
+		lines: list
+			.slice(0, 6)
+			.map((row) => clip(row.status + ' · ' + (row.host || '?') + (row.name ? ' for ' + row.name : ''), 120)),
+		tab: 'products:review',
+		tag: 'jarvis-reruns',
+		url: httpsOnly(deskUrl),
+		ref: 'rerun-held',
+		actions: held
+			? [
+					{ act: 'send-all', label: 'Send all' },
+					{ act: 'drop-all', label: 'Drop all' },
+				]
+			: [],
+	};
 }
 
 function comparisonMessage(notice) {
-  if (!notice || !notice.subject) return null;
-  return {
-    kind: "desk",
-    title: clip(notice.subject, 120),
-    body: clip(notice.intro, 220),
-    lines: rowLines(notice.rows),
-    tab: "products:review",
-    tag: "jarvis-compare-" + clip(notice.subject, 60),
-    url: httpsOnly(notice.respondUrl)
-  };
+	if (!notice || !notice.subject) return null;
+	return {
+		kind: 'desk',
+		title: clip(notice.subject, 120),
+		body: clip(notice.intro, 220),
+		lines: rowLines(notice.rows),
+		tab: 'products:review',
+		tag: 'jarvis-compare-' + clip(notice.subject, 60),
+		url: httpsOnly(notice.respondUrl),
+	};
 }
 
 /** note is what reviewDesk.alertFrom made of the event. Sweep, rival and test runs push only their problems. */
 function runMessage(source, note) {
-  const s = source || {};
-  const n = note || {};
-  const problem = PROBLEMS.has(n.kind);
-  if (!problem && (s.source || s.test === true || !n.runId)) return null;
-  const host = hostOf(n.url || "");
-  const ours = (String(n.title || "").match(/^(Test|Ours) · /) || [""])[0];
-  return {
-    kind: "desk",
-    title: (problem ? n.title : ours + (STAGE[n.kind] || n.title || "Review event")) + (host ? " · " + host : ""),
-    body: [n.name, n.email].filter(Boolean).join(" · ") || clip(n.title, 220),
-    lines: rowLines(n.rows),
-    tab: "products:review",
-    tag: problem ? "jarvis-desk-" + n.kind + "-" + (n.runId || n.at || "") : "jarvis-review-" + n.runId,
-    quiet: !problem,
-    ref: problem && n.runId ? "run:" + n.runId : ""
-  };
+	const s = source || {};
+	const n = note || {};
+	const problem = PROBLEMS.has(n.kind);
+	if (!problem && (s.source || s.test === true || !n.runId)) return null;
+	const host = hostOf(n.url || '');
+	const ours = (String(n.title || '').match(/^(Test|Ours) · /) || [''])[0];
+	return {
+		kind: 'desk',
+		title: (problem ? n.title : ours + (STAGE[n.kind] || n.title || 'Review event')) + (host ? ' · ' + host : ''),
+		body: [n.name, n.email].filter(Boolean).join(' · ') || clip(n.title, 220),
+		lines: rowLines(n.rows),
+		tab: 'products:review',
+		tag: problem ? 'jarvis-desk-' + n.kind + '-' + (n.runId || n.at || '') : 'jarvis-review-' + n.runId,
+		quiet: !problem,
+		ref: problem && n.runId ? 'run:' + n.runId : '',
+	};
 }
 
 function backupMessage(day, error) {
-  return {
-    kind: "alerts",
-    title: "Firestore backup did not start",
-    body: clip(day, 20) + ": " + (clip(error, 200) || "Export failed"),
-    tab: "systems",
-    tag: "jarvis-backup"
-  };
+	return {
+		kind: 'alerts',
+		title: 'Firestore backup did not start',
+		body: clip(day, 20) + ': ' + (clip(error, 200) || 'Export failed'),
+		tab: 'systems',
+		tag: 'jarvis-backup',
+	};
 }
 
 /** rerunnable lists the jobs Cloud Scheduler can start now; GitHub workflows get no button. */
 // scheduled: how many of the problems are scheduled jobs; the rest come from the system review (#2409).
 function opsMessage(problems, rerunnable, scheduled) {
-  const list = Array.isArray(problems) ? problems : [];
-  if (!list.length) return null;
-  const jobs = list.map((p) => p.job).filter((job) => (rerunnable || []).includes(job));
-  return {
-    kind: "alerts",
-    title: scheduled === undefined || scheduled === list.length ? plural(list.length, "scheduled job") + " missed or failed" : plural(list.length, "problem") + " need a look",
-    body: clip(list.map((p) => p.job).join(", "), 220),
-    lines: list.slice(0, 6).map((p) => clip(p.job + ": " + p.why, 120)),
-    tab: "systems",
-    tag: "jarvis-ops",
-    ref: jobs.length ? "ops:" + clip(jobs.join(","), 200) : "",
-    actions: jobs.length ? [{ act: "rerun", label: jobs.length === 1 ? "Rerun job" : "Rerun " + jobs.length + " jobs" }] : []
-  };
+	const list = Array.isArray(problems) ? problems : [];
+	if (!list.length) return null;
+	const jobs = list.map((p) => p.job).filter((job) => (rerunnable || []).includes(job));
+	return {
+		kind: 'alerts',
+		title:
+			scheduled === undefined || scheduled === list.length
+				? plural(list.length, 'scheduled job') + ' missed or failed'
+				: plural(list.length, 'problem') + ' need a look',
+		body: clip(list.map((p) => p.job).join(', '), 220),
+		lines: list.slice(0, 6).map((p) => clip(p.job + ': ' + p.why, 120)),
+		tab: 'systems',
+		tag: 'jarvis-ops',
+		ref: jobs.length ? 'ops:' + clip(jobs.join(','), 200) : '',
+		actions: jobs.length
+			? [{ act: 'rerun', label: jobs.length === 1 ? 'Rerun job' : 'Rerun ' + jobs.length + ' jobs' }]
+			: [],
+	};
 }
 
 /** One pending owner notice, from the hourly watch: send it to the address it found, or skip it. */
 function noticeMessage(n) {
-  const domain = clip(n && n.domain, 120);
-  if (!domain) return null;
-  const host = clip(n.host, 80) || domain;
-  return {
-    kind: "outreach",
-    title: "Outreach notice · " + host,
-    body: (n.email ? "To " + clip(n.email, 120) : "No address found yet") + (n.critical ? ". Critical security finding." : "."),
-    lines: [],
-    tab: "products:outreach",
-    tag: "jarvis-notice-" + domain,
-    ref: "notice:" + domain,
-    actions: n.email ? [{ act: "send", label: "Send" }, { act: "skip", label: "Skip" }] : [{ act: "skip", label: "Skip" }]
-  };
+	const domain = clip(n && n.domain, 120);
+	if (!domain) return null;
+	const host = clip(n.host, 80) || domain;
+	return {
+		kind: 'outreach',
+		title: 'Outreach notice · ' + host,
+		body:
+			(n.email ? 'To ' + clip(n.email, 120) : 'No address found yet') +
+			(n.critical ? '. Critical security finding.' : '.'),
+		lines: [],
+		tab: 'products:outreach',
+		tag: 'jarvis-notice-' + domain,
+		ref: 'notice:' + domain,
+		actions: n.email
+			? [
+					{ act: 'send', label: 'Send' },
+					{ act: 'skip', label: 'Skip' },
+				]
+			: [{ act: 'skip', label: 'Skip' }],
+	};
 }
 
 /** A social post Jarvis proposes: Post adds it to the hub queue, Skip dismisses it. image is its card (#2248), which
  * the phone shows big and the browser shows where it can; jarvis-social's pending() already made it https. */
 function socialMessage(p) {
-  const id = clip(p && p.id, 40);
-  if (!id) return null;
-  const image = typeof p.image === "string" && /^https:\/\//.test(p.image) && p.image.length <= 1000 ? p.image : "";
-  return Object.assign({
-    kind: "social",
-    title: "Post this? " + clip(p.title, 100),
-    body: clip([p.source, p.topic].filter(Boolean).join(" · ") + (p.summary ? ". " + p.summary : ""), 220),
-    lines: [],
-    tab: "products:hub",
-    tag: "jarvis-social-" + id,
-    ref: "social:" + id,
-    actions: [{ act: "approved", label: "Post" }, { act: "dismissed", label: "Skip" }]
-  }, image ? { image } : {});
+	const id = clip(p && p.id, 40);
+	if (!id) return null;
+	const image = typeof p.image === 'string' && /^https:\/\//.test(p.image) && p.image.length <= 1000 ? p.image : '';
+	return Object.assign(
+		{
+			kind: 'social',
+			title: 'Post this? ' + clip(p.title, 100),
+			body: clip([p.source, p.topic].filter(Boolean).join(' · ') + (p.summary ? '. ' + p.summary : ''), 220),
+			lines: [],
+			tab: 'products:hub',
+			tag: 'jarvis-social-' + id,
+			ref: 'social:' + id,
+			actions: [
+				{ act: 'approved', label: 'Post' },
+				{ act: 'dismissed', label: 'Skip' },
+			],
+		},
+		image ? { image } : {}
+	);
 }
 
 /** Social proposals not pushed yet, best first, at most max. A first run only remembers what is there. */
 function socialDue(pending, seen, max) {
-  if (!Array.isArray(seen)) return [];
-  const known = new Set(seen);
-  return (pending || []).filter((p) => p && p.id && !known.has(p.id)).slice(0, max || 3);
+	if (!Array.isArray(seen)) return [];
+	const known = new Set(seen);
+	return (pending || []).filter((p) => p && p.id && !known.has(p.id)).slice(0, max || 3);
 }
 
-module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, csatMessage, callMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };
+module.exports = {
+	ACTS,
+	PROBLEMS,
+	parseAct,
+	proposedAddress,
+	messageMessage,
+	ratingMessage,
+	csatMessage,
+	callMessage,
+	ownerReplyMessage,
+	rerunMessage,
+	comparisonMessage,
+	runMessage,
+	backupMessage,
+	opsMessage,
+	noticeMessage,
+	socialMessage,
+	socialDue,
+};

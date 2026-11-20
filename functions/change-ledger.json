@@ -1,33 +1,33 @@
 {
-  "_about": "Jarvis change ledger (#3784). One entry per shipped change: metric (see functions/jarvis-ledger.js), expect (up, down or hold), mergedAt (the merge day, UTC). A change with no metric is a manual check: 'check' says where to look.",
-  "entries": [
-    {
-      "id": "deploy-2026-11-18-findings",
-      "pr": 3779,
-      "ticket": 3778,
-      "title": "Functions deploy: 30 functions with the sec-dmarc-pct copy, from origin/main at fcb9d67",
-      "mergedAt": "2026-11-18",
-      "metric": "review.failures",
-      "expect": "hold",
-      "note": "Guard: URL review failures must not rise after the deploy."
-    },
-    {
-      "id": "pr-3779-dmarc-copy",
-      "pr": 3779,
-      "ticket": 3778,
-      "title": "sec-dmarc-pct fix text: check aggregate reports before raising pct",
-      "mergedAt": "2026-11-18",
-      "metric": null,
-      "check": "Cloudflare DMARC Management (zone reports): pass rates and any new failing sources before pct or p=reject (#928)."
-    },
-    {
-      "id": "pr-3602-biome",
-      "pr": 3602,
-      "ticket": 3578,
-      "title": "Biome format js/ and tests/",
-      "mergedAt": "2026-11-18",
-      "metric": null,
-      "check": "GitHub Actions run time and failure rate on main; no visitor-facing metric."
-    }
-  ]
+	"_about": "Jarvis change ledger (#3784). One entry per shipped change: metric (see functions/jarvis-ledger.js), expect (up, down or hold), mergedAt (the merge day, UTC). A change with no metric is a manual check: 'check' says where to look.",
+	"entries": [
+		{
+			"id": "deploy-2026-11-18-findings",
+			"pr": 3779,
+			"ticket": 3778,
+			"title": "Functions deploy: 30 functions with the sec-dmarc-pct copy, from origin/main at fcb9d67",
+			"mergedAt": "2026-11-18",
+			"metric": "review.failures",
+			"expect": "hold",
+			"note": "Guard: URL review failures must not rise after the deploy."
+		},
+		{
+			"id": "pr-3779-dmarc-copy",
+			"pr": 3779,
+			"ticket": 3778,
+			"title": "sec-dmarc-pct fix text: check aggregate reports before raising pct",
+			"mergedAt": "2026-11-18",
+			"metric": null,
+			"check": "Cloudflare DMARC Management (zone reports): pass rates and any new failing sources before pct or p=reject (#928)."
+		},
+		{
+			"id": "pr-3602-biome",
+			"pr": 3602,
+			"ticket": 3578,
+			"title": "Biome format js/ and tests/",
+			"mergedAt": "2026-11-18",
+			"metric": null,
+			"check": "GitHub Actions run time and failure rate on main; no visitor-facing metric."
+		}
+	]
 }

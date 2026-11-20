@@ -674,7 +674,7 @@ test('admin mounts Jarvis in the stats pane and the endpoint stays owner-only', 
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	const block = index.slice(index.indexOf('exports.jarvis ='));
 	assert.match(block, /verifyOperator/);
-	assert.match(block, /Access-Control-Allow-Headers", "Content-Type, Authorization"/);
+	assert.match(block, /Access-Control-Allow-Headers[\'\"], [\'\"]Content-Type, Authorization[\'\"]/);
 });
 
 // --- #1299: goals, thresholds, daily briefing, watch ------------------------------------------------------------
@@ -1338,7 +1338,7 @@ test("server: Jarvis rules in functions are a byte copy of the admin page's", ()
 	assert.match(index, /exports\.jarvisDailyBriefing = scheduled\(/);
 	assert.match(index, /exports\.jarvisWatch = scheduled\(/);
 	['settings', 'settings-save', 'goals', 'daily-now'].forEach((op) =>
-		assert.match(index, new RegExp('op === "' + op + '"'))
+		assert.match(index, new RegExp('op === [\'"]' + op + '[\'"]'))
 	);
 });
 
@@ -1351,7 +1351,7 @@ test('jarvisExternal has a loader for every op the snapshot, briefing and watch 
 	);
 	const asked = [...index.matchAll(/jarvisExternal\(\[([^\]]+)\]/g)]
 		.concat([...index.matchAll(/const JARVIS_(?:SNAPSHOT_)?OPS = \[([^\]]+)\]/g)])
-		.flatMap((m) => m[1].match(/"[\w-]+"/g).map((s) => s.slice(1, -1)));
+		.flatMap((m) => m[1].match(/['\"][\w-]+['\"]/g).map((s) => s.slice(1, -1)));
 	assert.ok(asked.includes('cloudflare'));
 	assert.deepEqual(
 		asked.filter((op) => !known.has(op)),
