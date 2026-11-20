@@ -3765,3 +3765,19 @@ test("the live feed and the social heat map come from the range's rows, newest f
 		'the LinkedIn and outreach visits, not Google or the export'
 	);
 });
+
+test('the 3×1 / 3×2 plate: 2 on a phone and 1 wider unless saved, the map and dense SVGs get a pan strip (#3984)', () => {
+	assert.equal(core.plateLevel(undefined, true), 2);
+	assert.equal(core.plateLevel(undefined, false), 1);
+	assert.equal(core.plateLevel(1, true), 1);
+	assert.equal(core.plateLevel(2, false), 2);
+	assert.equal(core.plateLevel(3, false), 2, 'a chart height of 3 reads as the 3×2 plate');
+	const wrapped = core.plateWrap(
+		'<p>Legend</p><svg class="jv-geo-map" viewBox="0 0 1 1"><g/></svg><svg class="jv-spark"></svg>'
+	);
+	assert.equal(wrapped.match(/jv-plate-strip/g).length, 1, 'only the map svg is wrapped, not a sparkline');
+	assert.match(
+		wrapped,
+		/<p>Legend<\/p><div class="jv-plate-strip"><div class="jv-plate-inner"><svg class="jv-geo-map"/
+	);
+});

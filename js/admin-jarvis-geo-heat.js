@@ -189,7 +189,7 @@ export function panels(S, g, channel, h) {
 			'geo-heat',
 			`Heatmap · ${kind === 'sends' ? 'sends' : 'replies'}${sel ? ' · ' + esc(sel.name) : ''}`,
 			heatBody,
-			{ wide: true, keep: true, note: heatNote }
+			{ wide: true, keep: true, plate: true, note: heatNote }
 		) +
 		panel(
 			'geo-sectors',
