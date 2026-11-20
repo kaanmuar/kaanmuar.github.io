@@ -331,6 +331,17 @@
     "checked": "2026-11-18T22:15:28.618Z"
    }
   ],
+  "auto-2026-11-13/01-u-sliit-lk": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "114",
+    "at": "2026-11-20T01:21:36.363Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/114",
+    "checked": "2026-11-20T01:21:41.908Z"
+   }
+  ],
   "auto-2026-11-14/04-vs-sinarharian-com-my": [
    {
     "channel": "telegram",
@@ -395,6 +406,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/108",
     "checked": "2026-11-19T01:19:20.545Z"
+   }
+  ],
+  "auto-2026-11-18/18-u-agenciadeviajestravelone-cl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "116",
+    "at": "2026-11-20T01:21:47.108Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/116",
+    "checked": "2026-11-20T01:21:52.543Z"
    }
   ],
   "auto-2026-11-18/24-u-agilex-com-co": [
@@ -505,6 +527,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/105",
     "checked": "2026-11-18T22:15:32.359Z"
+   }
+  ],
+  "evergreen-2026-11/04-coverage": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "115",
+    "at": "2026-11-20T01:21:41.908Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/115",
+    "checked": "2026-11-20T01:21:47.108Z"
    }
   ],
   "evergreen-2026-11/05-myth-https": [
@@ -948,6 +981,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/109",
     "checked": "2026-11-19T01:19:24.848Z"
+   }
+  ],
+  "runs-2026-10/07-python": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "117",
+    "at": "2026-11-20T01:21:52.543Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/117",
+    "checked": "2026-11-20T01:21:57.774Z"
    }
   ],
   "runs-2026-10/08-bancolombia": [

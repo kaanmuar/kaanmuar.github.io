@@ -585,6 +585,29 @@ test('live: approved accounts are tagged once, new approvals go in the comment l
 	);
 });
 
+test('doc keys hash with SHA-256; replies and caption edits queued under older SHA-1 keys are not queued again (#3689)', async () => {
+	const crypto = require('crypto');
+	assert.equal(T.docKey('reply', 'metrobogota', 'x', 'metrodebogota'), 'ot-' + crypto.createHash('sha256').update('reply|metrobogota|x|metrodebogota').digest('hex').slice(0, 24));
+	const db = fakeDb();
+	const { d } = deps(db, { suggestions: [] });
+	await T.saveSettings(db, { live: true, editCaptions: true }, 'test', NOW);
+	await T.run(d);
+	const posts = db.collection('engagement_posts');
+	const all = async () => (await posts.get()).docs.map((s) => ({ doc: s.id, data: s.data() }));
+	const first = await all();
+	const count = (docs, kind) => docs.filter((x) => x.data.ownerTags.kind === kind).length;
+	assert.ok(count(first, 'reply') > 0 && count(first, 'caption') > 0);
+	for (const [i, x] of first.entries()) {
+		const legacy = 'ot-' + crypto.createHash('sha1').update(String(i)).digest('hex').slice(0, 24);
+		await posts.doc(x.doc).delete();
+		await posts.doc(legacy).set(Object.assign(x.data, { key: legacy }));
+	}
+	await T.run(Object.assign({}, d, { now: NOW + 86400000 }));
+	const again = await all();
+	assert.equal(count(again, 'reply'), count(first, 'reply'), 'one reply per owner and report');
+	assert.equal(count(again, 'caption'), count(first, 'caption'), 'one caption edit per post and network');
+});
+
 test("owners on the Mac's networks get one reply aimed at their profile; one with no post to answer is tried again after a week", async () => {
 	const E = require('../../functions/engagement.js');
 	const db = fakeDb();

@@ -329,3 +329,46 @@ test('a 429 backs the feed off for 72 hours, so the daily runs, a retry or a man
 	const after = await run(now + 73 * 3600000, async () => feedResponse(FEED));
 	assert.equal(after.count, 5);
 });
+
+test('a plugin slug that is "constructor" or "__proto__" is indexed as a key, so the feed no longer fails on .push of undefined (#3810)', async () => {
+	const record = (id, slug) => ({
+		id,
+		title: slug + ' <= 1.0 - XSS',
+		cve: 'CVE-2026-' + id,
+		cvss: { score: 6.4 },
+		software: [
+			{
+				type: 'plugin',
+				slug,
+				name: 'Plugin ' + slug,
+				affected_versions: { '* - 1.0': { from_version: '*', from_inclusive: true, to_version: '1.0', to_inclusive: true } },
+				patched_versions: ['1.1'],
+			},
+		],
+	});
+	const feed = JSON.stringify({
+		a: record('1001', 'constructor'),
+		c: record('1003', '__proto__'),
+		e: record('1005', 'elementor'),
+	});
+	const index = indexOf(feed, 41);
+	assert.equal(index.count, 3);
+	const stored = JSON.parse(JSON.stringify(index));
+	for (const slug of ['constructor', '__proto__', 'elementor']) {
+		const hit = wp.match(stored, 'plugin', slug, '0.9');
+		assert.equal(hit.vulns, 1, slug);
+		assert.equal(hit.fixed, '1.1', slug);
+	}
+	assert.equal(wp.match(stored, 'plugin', 'valueof', '0.9'), null);
+	assert.equal(wp.match(stored, 'plugin', 'constructor', '2.0').vulns, 0);
+
+	const state = {};
+	const out = await wp.refreshFeed({
+		key: 'k1',
+		storage: fakeStorage(state),
+		fetch: async () => feedResponse(feed),
+		now: Date.parse('2026-11-20T03:45:00Z'),
+		minRecords: 1,
+	});
+	assert.deepEqual([out.count, out.slugs], [3, 3]);
+});
