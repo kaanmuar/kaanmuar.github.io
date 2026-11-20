@@ -26,9 +26,18 @@ code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
 	'https://api.certspotter.com/v1/issuances?domain=example.com' || true)
 case "$code" in
 200) echo "CertSpotter accepted the key." ;;
-401 | 403) echo "CertSpotter refused that key (HTTP $code). Check you copied the whole key. Nothing changed." >&2; exit 1 ;;
-429) echo "CertSpotter is rate-limiting right now (HTTP 429), so the key could not be proven. Wait a minute and run this again. Nothing changed." >&2; exit 1 ;;
-*) echo "Could not reach CertSpotter (HTTP ${code:-none}). Nothing changed." >&2; exit 1 ;;
+401 | 403)
+	echo "CertSpotter refused that key (HTTP $code). Check you copied the whole key. Nothing changed." >&2
+	exit 1
+	;;
+429)
+	echo "CertSpotter is rate-limiting right now (HTTP 429), so the key could not be proven. Wait a minute and run this again. Nothing changed." >&2
+	exit 1
+	;;
+*)
+	echo "Could not reach CertSpotter (HTTP ${code:-none}). Nothing changed." >&2
+	exit 1
+	;;
 esac
 
 printf '%s' "$key" | firebase functions:secrets:set CERTSPOTTER_KEY --project "$project" --data-file - --non-interactive
