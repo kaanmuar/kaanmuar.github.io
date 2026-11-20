@@ -55,7 +55,10 @@ function paidReport() {
 	return report;
 }
 
-async function openReport(page, { path = '/qa-review.html', paid = true, addons = [], deep = null, runResult = DEEP_HIT }) {
+async function openReport(
+	page,
+	{ path = '/qa-review.html', paid = true, addons = [], deep = null, runResult = DEEP_HIT, available = true }
+) {
 	const calls = [];
 	await page.addInitScript((version) => {
 		try {
@@ -89,7 +92,7 @@ async function openReport(page, { path = '/qa-review.html', paid = true, addons 
 		const json = (data) =>
 			route.fulfill({ status: 200, contentType: 'application/json', headers: cors, body: JSON.stringify(data) });
 		if (req.method() === 'POST') calls.push({ path: reqPath, body: req.postDataJSON() });
-		if (reqPath === '/review/open') return json({ report: paidReport(), frameworks: sample.frameworks, paid, addons, deep });
+		if (reqPath === '/review/open') return json({ report: paidReport(), frameworks: sample.frameworks, paid, addons, deep, deepAvailable: available });
 		if (reqPath === '/account/deep/run') return json({ ok: true, deep: runResult, ran: true });
 		return json(reqPath === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
 	});
@@ -124,6 +127,12 @@ test.describe('Deep attack-source check on a paid report (#3946)', () => {
 		await expect(page.locator('#targeted-deep')).toContainText(/returned nothing/i);
 		await expect(page.locator('#targeted-deep')).not.toContainText('No hit');
 		expect(calls.filter((c) => c.path === '/account/deep/run')).toEqual([]);
+	});
+
+	test('no offer is shown while the server cannot run the check (no CertSpotter key)', async ({ page }) => {
+		await openReport(page, { available: false });
+		await expect(page.locator('#targeted-deep')).toHaveCount(0);
+		await expect(page.locator('[data-act="deep-offer"]')).toHaveCount(0);
 	});
 
 	test('an unpaid report shows no Deep block', async ({ page }) => {

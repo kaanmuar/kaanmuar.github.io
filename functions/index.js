@@ -5890,6 +5890,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         res.status(400).json({ error: "A fix list belongs to one report. Open the report first. No charge was made." });
         return;
       }
+      if (purpose === "deep" && !reviewDeep.available(process.env)) {
+        res.status(503).json({ error: "The Deep check is not open yet. No charge was made." });
+        return;
+      }
       if (purpose === "deep" && !reportId) {
         res.status(400).json({ error: "The Deep check belongs to one report. Open the report first. No charge was made." });
         return;
@@ -6231,6 +6235,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       addons: data.addons || [],
       addonLayers: data.addonLayers || [],
       deep: data.deep || null,
+      deepAvailable: reviewDeep.available(process.env),
       attackOwnerNoticeSentAt: data.attackOwnerNoticeSentAt || "",
       ownerNoticeOffer: ownerNoticeOffer.showOffer(data.report, { paid: true }),
       branding: brand ? { companyName: brand.companyName, logoDataUrl: brand.logoDataUrl || "" } : null

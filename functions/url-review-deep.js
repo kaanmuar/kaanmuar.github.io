@@ -90,4 +90,10 @@ async function run(record, options) {
   };
 }
 
-module.exports = { SOURCES, bought, done, hostOf, run };
+// The Deep check is sold only while its certificate-transparency source can answer: without a CertSpotter key it
+// would be the news half alone, not what the offer says. Setting the key (.env or Secret Manager) opens it.
+function available(env) {
+  return !!String((env && env.CERTSPOTTER_KEY) || "").trim();
+}
+
+module.exports = { SOURCES, bought, done, hostOf, run, available };

@@ -5663,7 +5663,8 @@
 		if (bought) {
 			return '<div class="targeted-deep" id="targeted-deep"><h3>' + esc(rc.t('deepTitle')) + '</h3><p class="meta-line" id="targeted-deep-status">' + esc(rc.t('deepRunning')) + '</p></div>';
 		}
-		if (!report || !report.id) return '';
+		// Offered only while the server says it can run the check (a CertSpotter key is set); the server refuses the sale otherwise.
+		if (!report || !report.id || src.deepAvailable !== true) return '';
 		return (
 			'<div class="targeted-deep no-print" id="targeted-deep"><h3>' +
 			esc(rc.t('deepTitle')) +

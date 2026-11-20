@@ -72,6 +72,13 @@ test("a clean host reads as a pass over the sources that answered, not as a find
   assert.deepEqual(result.breachNews, []);
 });
 
+test("the Deep check is offered only while a CertSpotter key is set", () => {
+  assert.equal(deep.available({}), false);
+  assert.equal(deep.available({ CERTSPOTTER_KEY: "  " }), false);
+  assert.equal(deep.available(undefined), false);
+  assert.equal(deep.available({ CERTSPOTTER_KEY: "k" }), true);
+});
+
 test("a report without a usable host is not checked", async () => {
   assert.equal(await deep.run({ addons: ["deep"], report: { host: "localhost" } }, { feeds: NEWS, fetch: false }), null);
   assert.equal(await deep.run({ addons: ["deep"] }, { feeds: NEWS, fetch: false }), null);
