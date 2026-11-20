@@ -1995,6 +1995,7 @@ const reviewCompare = require("./url-review-compare");
 const compareMail = require("./url-review-compare-mail");
 const reviewMulti = require("./url-review-multi");
 const evidencePdf = require("./url-review-evidence-pdf");
+const reviewDeep = require("./url-review-deep");
 const reviewBatch = require("./url-review-batch");
 const batchMail = require("./url-review-batch-mail");
 const reviewPeers = require("./url-review-peers");
@@ -4584,6 +4585,42 @@ async function reviewAccount(req, res, pathName) {
       return;
     }
     res.status(200).json({ ok: true, pdf, filename: built.filename });
+    return;
+  }
+  if (pathName.endsWith("/account/deep/run")) {
+    // The Deep check (#3946): bought once on a paid report of this account, run once, kept on the report.
+    const body = req.body || {};
+    const id = String(body.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+    if (!id) {
+      res.status(400).json({ error: "Missing report id." });
+      return;
+    }
+    const ref = db.collection("url_reviews").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      res.status(404).json({ error: "That report was not found." });
+      return;
+    }
+    const data = Object.assign({ id }, snap.data() || {});
+    if (String(data.email || "").toLowerCase() !== String(signedIn.email).toLowerCase()) {
+      res.status(404).json({ error: "That report is not under this account." });
+      return;
+    }
+    if (!reviewDeep.bought(data) || !evidencePdf.paidReport(data)) {
+      res.status(402).json({ error: "The Deep check is not on this report. Add it to a paid report first.", paymentRequired: true });
+      return;
+    }
+    if (reviewDeep.done(data)) {
+      res.status(200).json({ ok: true, deep: data.deep, ran: false });
+      return;
+    }
+    const result = await reviewDeep.run(data, { env: process.env, certspotterKey: process.env.CERTSPOTTER_KEY || "" });
+    if (!result) {
+      res.status(422).json({ error: "This report has no site the Deep check can read." });
+      return;
+    }
+    await ref.update({ deep: result });
+    res.status(200).json({ ok: true, deep: result, ran: true });
     return;
   }
   if (pathName.indexOf("/account/comparison/") !== -1) {
