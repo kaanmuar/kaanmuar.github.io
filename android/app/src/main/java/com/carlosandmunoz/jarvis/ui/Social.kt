@@ -7,13 +7,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import com.carlosandmunoz.jarvis.SharePostActivity
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,22 +30,32 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.net.Uri
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
+import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 
 /** Social hub (#1420): the queue per channel, the posting workflows with Post now, and field-sweep proposals. */
@@ -49,7 +68,25 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
         if (picked != null) context.startActivity(Intent(context, SharePostActivity::class.java).setAction(Intent.ACTION_SEND)
             .putExtra(Intent.EXTRA_STREAM, picked).setDataAndType(picked, context.contentResolver.getType(picked)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     }
-    Panel("Share a post") {
+    // Soft gate (#3533): same paste → frost → Unlock path as the web Social hub / Jarvis Hub form.
+    var softUrl by rememberSaveable { mutableStateOf("") }
+    Panel("Soft preview", id = "hub-soft") {
+        Muted("Paste a public URL for a 1-page soft preview (#3478): real gauges + the top finding without an account. Unlock on the site runs OAuth + the ten terms, then queues a full crawl.")
+        OutlinedTextField(
+            softUrl,
+            { softUrl = it },
+            label = { Text("https://your-site.com") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        ActionButton("Soft preview", false) {
+            val host = softUrl.trim().removePrefix("https://").removePrefix("http://").trimStart('/')
+            if (host.isBlank()) return@ActionButton
+            runCatching { uri.openUri("https://carlosandmunoz.com/qa-review.html?url=${Uri.encode(host)}&from=hub") }
+        }
+    }
+
+    Panel("Share a post", id = "hub-share") {
         Muted("A photo or a video with sound and one caption. Gemini drafts each network's post; you check them, then LinkedIn, X and the Facebook Page (plus TikTok and YouTube for video) get it about 30 minutes later. Sharing from the gallery works too: Post with Jarvis.")
         ActionButton("Choose a photo or video", false) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
         s.shares.orEmpty().filter { it.str("status") != "draft" }.take(5).forEach { p ->
@@ -68,15 +105,33 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     val social = s.snapshot.obj("external").obj("social")
     val queue = social.objs("queue")
     val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
-    Panel("Queue by channel") {
+    val velocity = social.obj("replyVelocity")
+    val hot = velocity.objs("hot").ifEmpty { velocity.objs("top") }
+    val within = velocity.num("withinHours")?.toInt() ?: 24
+    Panel("Reply velocity (first ${within}h)", id = "hub-velocity") {
+        if (hot.isEmpty()) Muted("No comment velocity yet in the first ${within}h after send.")
+        else Muted("Comments vs hours since first send. Hot = comments inside the window — reply early.")
+        hot.take(8).forEach { row ->
+            val key = row.str("key").orEmpty().substringAfterLast('/')
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(key, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Muted("${fmt(row.num("comments"))} comments · ${fmt(row.num("hours"))} h")
+                }
+                Text(fmt(row.num("velocity")), color = if (row.bool("early") == true) J.green else J.muted, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        }
+    }
+
+    Panel("Queue by channel", id = "hub-queue") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
-        if (queue.isNotEmpty()) Muted("Telegram is the @qalab_live post of each Live Reports batch; its members are read each morning. Reddit is the app's daily batch post in r/QALabLiveReports; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
+        if (queue.isNotEmpty()) Muted("Numbers add up the posts sent in the range, as the morning run read them. On Telegram likes are reactions, on Reddit the post score. Instagram stays empty while that channel is paused in Buffer. Telegram is the @qalab_live channel: the post of each Live Reports batch and the campaign posts (tips, series, skits, launch) in their own language; its members are read each morning. Reddit is r/QALabLiveReports: the app's daily batch post and the campaign posts, as links to their hub pages; its members are read after the 16:20 UTC post. The change counts from the last daily count on or before the range start.")
         counts.values.forEach { m -> m.str("need")?.takeIf { it.isNotBlank() }?.let { Text("Needs: $it", color = J.amber, fontSize = 12.sp) } }
     }
 
     var confirm by remember { mutableStateOf(false) }
-    Panel("Posting") {
+    Panel("Posting", id = "hub-runs") {
         val runs = s.runs.orEmpty()
         if (runs.isEmpty()) Muted(if ("social" in s.running) "Reading the workflow runs…" else "No runs to show.")
         runs.forEach { r ->
@@ -93,7 +148,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches it when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task. Growth (#3475): keep hashtag caps (IG 5 / LI 6 / X 2); put UTMs in the first comment where the network supports it; refuse a parallel Telegram /scan bot and 7s mute gauge loops; next carousel work is Slide 3 with case id + Playwright + DOM crop.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(
@@ -108,7 +163,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     StudioPanel(s, vm)
 
     val proposals = s.proposals.orEmpty()
-    Panel("Post proposals" + if (proposals.isNotEmpty()) " (${proposals.size})" else "") {
+    Panel("Post proposals" + if (proposals.isNotEmpty()) " (${proposals.size})" else "", id = "hub-proposals") {
         if (s.proposals == null) Muted("Reading the field sweep proposals…")
         else if (proposals.isEmpty()) Muted("No proposals are waiting.")
         else Muted("Approve adds it to the hub as a pick; the next daily build publishes it.")
@@ -129,6 +184,14 @@ object ChannelMembers {
     }
 }
 
+/** A channel's summed post numbers (#2602), as the web hub's Numbers column shows them. */
+object ChannelNumbers {
+    private val labels = listOf("impressions", "views", "likes", "comments")
+
+    fun text(n: JsonObject?): String? =
+        labels.mapNotNull { k -> n.num(k)?.takeIf { it > 0 }?.let { fmt(it) + " " + k } }.joinToString(" · ").ifEmpty { null }
+}
+
 @Composable
 private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
     val next = c.objs("next")
@@ -146,8 +209,31 @@ private fun Channel(c: JsonObject, members: ChannelMembers.Members? = null) {
             val sent = c.num("sent")?.toInt() ?: 0
             Text("$sent sent" + (if (failed > 0) " · $failed failed" else "") + (c.obj("last")?.str("at")?.let { " · last " + (ago(it) ?: "").lowercase() } ?: ""),
                 color = if (failed > 0) J.amber else J.muted, fontSize = 11.sp)
+            ChannelNumbers.text(c.obj("numbers"))?.let { Text(it, color = J.cyan, fontSize = 11.sp) }
             members?.let { m -> Text(m.text, color = when { (m.change ?: 0) > 0 -> J.green; (m.change ?: 0) < 0 -> J.pink; else -> J.muted }, fontSize = 11.sp) }
         }
+    }
+}
+
+/** The post's card image (#2248), as the web panel shows it: a frame while it loads, a note when it did not load, nothing when there is none. */
+@Composable
+private fun ProposalCard(url: String?, title: String) {
+    val src = CardImages.usable(url) ?: return
+    var image by remember(src) { mutableStateOf(CardImages.cached(src)?.asImageBitmap()) }
+    var failed by remember(src) { mutableStateOf(false) }
+    LaunchedEffect(src) {
+        if (image != null) return@LaunchedEffect
+        val bitmap = withContext(Dispatchers.IO) { CardImages.load(src) }
+        if (bitmap == null) failed = true else image = bitmap.asImageBitmap()
+    }
+    val shape = RoundedCornerShape(8.dp)
+    val shown = image
+    val ratio = if (shown != null && shown.height > 0) shown.width.toFloat() / shown.height else 1200f / 630f
+    val frame = Modifier.padding(vertical = 3.dp).widthIn(max = 360.dp).heightIn(max = 420.dp).aspectRatio(ratio).clip(shape).border(1.dp, J.cyan.copy(alpha = 0.25f), shape)
+    when {
+        shown != null -> Image(shown, contentDescription = "Card image: $title", contentScale = ContentScale.Fit, modifier = frame)
+        failed -> Text("The card image did not load.", color = J.dim, fontSize = 11.sp, fontStyle = FontStyle.Italic)
+        else -> Box(frame.background(J.cyan.copy(alpha = 0.06f)))
     }
 }
 
@@ -158,6 +244,7 @@ private fun Proposal(p: JsonObject, busy: Boolean, vm: JarvisViewModel) {
     Column(Modifier.fillMaxWidth().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(p.str("title").orEmpty(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Text(listOfNotNull(p.str("source"), p.str("author")?.takeIf { it.isNotBlank() }?.let { "by $it" }, p.str("topic")?.takeIf { it.isNotBlank() }, p.str("lang")).joinToString(" · "), color = J.dim, fontSize = 11.sp)
+        ProposalCard(p.str("image"), p.str("title").orEmpty())
         p.str("summary")?.takeIf { it.isNotBlank() }?.let { Text(it, color = J.muted, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton({ vm.decideSocial(id, "approved") }, enabled = !busy) { Text("Approve", color = J.cyan, fontWeight = FontWeight.Bold) }

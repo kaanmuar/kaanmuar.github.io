@@ -18,6 +18,8 @@ const BY_EMAIL = [
   ["coupons", "url_review_coupons"],
   ["redemptions", "url_review_redemptions"],
   ["stopLinks", "url_review_stop_links"],
+  ["csatLinks", "url_review_csat_links"],
+  ["csat", "url_review_csat"],
   ["signIns", "url_review_sign_ins"],
   ["sessions", "url_review_sessions"],
   ["visits", "url_review_visits"],
@@ -25,7 +27,7 @@ const BY_EMAIL = [
 ];
 
 // Their ids are a hash of a live secret or the secret itself.
-const SECRET_IDS = new Set(["url_review_sessions", "url_review_sign_ins", "url_review_stop_links"]);
+const SECRET_IDS = new Set(["url_review_sessions", "url_review_sign_ins", "url_review_stop_links", "url_review_csat_links"]);
 const SECRET_FIELDS = ["deviceHash", "codeHash", "tokenHash"];
 
 // Colombian tax support (Ley 962 de 2005, art. 46) keeps a payment for five years; the report itself goes.

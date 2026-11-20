@@ -49,18 +49,23 @@ jobs:
     steps:
       - name: Run unless today's batch is already on main
         id: today
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          BACKUP: ${{ inputs.backup }}
+          REPO: ${{ github.repository }}
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ inputs.backup }}" != "true" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT_NAME" != "schedule" ] && [ "$BACKUP" != "true" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           TODAY=$(date -u +%F)
-          DONE=$(gh api --paginate "repos/${{ github.repository }}/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
+          DONE=$(gh api --paginate "repos/$REPO/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
             --jq ".[] | select(.commit.message | contains(\"(auto-$TODAY)\")) | .sha" | wc -l | tr -d ' ')
           if [ "$DONE" != "0" ]; then
             echo "Batch auto-$TODAY is already on main; this slot ($(date -u +%H:%M) UTC) has nothing to do."
             echo "go=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "::warning::No auto-$TODAY batch on main yet, so the ${{ github.event.schedule }} backup slot is running it; check ensureLiveReportsBatch."
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            echo "::warning::No auto-$TODAY batch on main yet, so the $SCHEDULE backup slot is running it; check ensureLiveReportsBatch."
           fi
           echo "go=true" >> "$GITHUB_OUTPUT"
 
@@ -102,6 +107,15 @@ jobs:
           SINCE: ${{ inputs.since }}
         run: node scripts/auto-live-reports.js ${SINCE:+--since "$SINCE"}
 
+      # Signals only (no Gemini key here): sure countries go into data/live-report-countries.json and onto the
+      # cards; the unsure ones wait for a full run of the script, which queues them for Carlos in Jarvis (#2980).
+      # --decisions reads the countries he confirmed on the Jarvis Map tab and places every card of those sites (#3009).
+      - name: Place the new cards in their country
+        continue-on-error: true
+        env:
+          PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
+        run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions
+
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'
         # sharp writes the social hub thumbnails for the new posts.
@@ -117,6 +131,9 @@ jobs:
       - name: Render cards, stories, and clips
         if: steps.reports.outputs.social != '0'
         # The day number moves the language cycle on, so small daily batches still reach all six.
+        # GEMINI_API_KEY: translate.py falls back to Gemini when Google's free translator refuses (#3897).
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
 
       - name: Write the captions in six languages
@@ -176,7 +193,7 @@ jobs:
           BATCH="${{ steps.reports.outputs.batch }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
+          git add assets/live-reports data/live-report-countries.json llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
           if [ -d "media/social-posts/$BATCH" ]; then
             git add "media/social-posts/$BATCH"
             git add -f "media/social-posts/$BATCH/story"

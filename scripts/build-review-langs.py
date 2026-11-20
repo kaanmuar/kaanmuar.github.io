@@ -15,7 +15,9 @@ every page, English included, is written from assets/live-reports/index.json.
 import json
 import pathlib
 import re
+import subprocess
 import sys
+from functools import cache
 from html.parser import HTMLParser
 
 import csp_hashes
@@ -33,10 +35,11 @@ LANGS = {
         "native": "Español",
         "title": "Encuentra fugas, fallas y bloqueos primero.",
         "seo_title": "QA-lab URL Review: SEO, GEO y casos de prueba desde una URL",
-        "description": "Una página https pública, analizada y calificada en SEO, búsqueda con IA (GEO), analítica, seguridad, accesibilidad y velocidad, con casos de prueba para 20 frameworks.",
-        "og_description": "Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. También revisa widgets de chat, páginas legales, librerías desactualizadas, Safe Browsing, el vencimiento del dominio y la seguridad del correo. Inicia sesión con tu correo o con una cuenta que ya tienes. Las demás herramientas especializadas se nombran cuando corresponden y no se ejecutan. Seis idiomas.",
+        "description": "Una página https calificada en SEO, GEO, analítica, seguridad, accesibilidad y velocidad, revisada contra phishing, malware, listas de bloqueo y hackeos, con casos y correcciones.",
+        "og_description": "Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. También revisa listas de phishing y malware, cada host enlazado con Google Web Risk, listas de bloqueo de spam, señales de un sitio hackeado, dominios parecidos, vulnerabilidades de WordPress, SPF, DMARC y DKIM, widgets de chat, páginas legales, librerías desactualizadas y el vencimiento del dominio. Si una revisión no se puede concluir, el informe completo llega por correo cuando esté listo, normalmente en 48 horas. Paquetes de corrección de precio fijo desde 69 USD. Inicia sesión con tu correo o con una cuenta que ya tienes. Seis idiomas.",
         "twitter_title": "Privacidad, accesibilidad y seguridad desde una URL.",
-        "twitter_description": "Un análisis público de un sitio https, una lista de tecnologías y casos de QA propuestos. Inicia sesión; una revisión incluida por navegador y red. Las ejecuciones con sesión iniciada aparecen en la página de tu cuenta.",
+        "twitter_description": "Un análisis público de un sitio https: puntuaciones, listas de phishing, malware y bloqueo, señales de hackeo, autenticación del correo y casos de QA propuestos. Correcciones de precio fijo desde 69 USD, o arréglalo tú.",
+        "image_alt": "QA-lab URL Review. ¿Tu sitio es seguro? Revisamos más a fondo, lo corregimos a precio fijo y siempre te respondemos.",
         "gate": "Antes de analizar una sola dirección.",
         "display": ["Encuentra fugas,", "fallas y bloqueos", "antes que tus clientes", "o un regulador."],
     },
@@ -45,10 +48,11 @@ LANGS = {
         "native": "Português",
         "title": "Encontre vazamentos, falhas e bloqueios primeiro.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casos de teste de uma URL",
-        "description": "Uma página https pública, analisada e avaliada em SEO, busca com IA (GEO), analytics, segurança, acessibilidade e velocidade, com casos de teste para 20 frameworks.",
-        "og_description": "Uma análise pública via https, avaliada em SEO, GEO, analytics, segurança, acessibilidade e desempenho, com uma lista do que corrigir primeiro e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless executa o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e faz capturas de tela. Também verifica widgets de chat, páginas legais, bibliotecas desatualizadas, Safe Browsing, o vencimento do domínio e a segurança do e-mail. Entre com seu e-mail ou com uma conta que você já tem. As outras ferramentas especializadas são citadas quando se aplicam e não são executadas. Seis idiomas.",
+        "description": "Uma página https avaliada em SEO, GEO, analytics, segurança, acessibilidade e velocidade, verificada contra phishing, malware, listas de bloqueio e invasões, com casos e correções.",
+        "og_description": "Uma análise pública via https, avaliada em SEO, GEO, analytics, segurança, acessibilidade e desempenho, com uma lista do que corrigir primeiro e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless executa o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e faz capturas de tela. Também verifica listas de phishing e malware, cada host vinculado no Google Web Risk, listas de bloqueio de spam, sinais de site hackeado, domínios parecidos, vulnerabilidades do WordPress, SPF, DMARC e DKIM, widgets de chat, páginas legais, bibliotecas desatualizadas e o vencimento do domínio. Se uma revisão não puder ser concluída, o relatório completo chega por e-mail quando estiver pronto, geralmente em até 48 horas. Pacotes de correção de preço fixo a partir de US$ 69. Entre com seu e-mail ou com uma conta que você já tem. Seis idiomas.",
         "twitter_title": "Privacidade, acessibilidade e segurança a partir de uma URL.",
-        "twitter_description": "Uma análise pública de um site https, uma lista de tecnologias e casos de QA propostos. Entre; uma revisão incluída por navegador e rede. As execuções com login aparecem na página da sua conta.",
+        "twitter_description": "Uma análise pública de um site https: notas, listas de phishing, malware e bloqueio, sinais de invasão, autenticação de e-mail e casos de QA propostos. Correções de preço fixo a partir de US$ 69, ou corrija você mesmo.",
+        "image_alt": "QA-lab URL Review. Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo e você sempre tem retorno.",
         "gate": "Antes de analisar um único endereço.",
         "display": ["Encontre vazamentos,", "falhas e bloqueios", "antes dos seus clientes", "ou de um regulador."],
     },
@@ -57,10 +61,11 @@ LANGS = {
         "native": "Deutsch",
         "title": "Lecks, Fehler und Sperren zuerst finden.",
         "seo_title": "QA-lab URL Review: SEO, GEO und Testfälle aus einer URL",
-        "description": "Eine öffentliche https-Seite, geprüft und bewertet nach SEO, KI-Suche (GEO), Analytics, Sicherheit, Barrierefreiheit und Tempo, mit Testfällen für 20 Frameworks.",
-        "og_description": "Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Chat-Widgets, Rechtsseiten, veraltete Bibliotheken, Safe Browsing, den Domain-Ablauf und die E-Mail-Sicherheit. Anmeldung per E-Mail oder mit einem bestehenden Konto. Andere Spezialwerkzeuge werden genannt, wenn sie zutreffen, und nicht gestartet. Sechs Sprachen.",
+        "description": "Eine https-Seite, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Tempo, geprüft auf Phishing, Malware, Blocklisten und Hacks, mit Testfällen und Korrekturen.",
+        "og_description": "Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Phishing- und Malware-Listen, jeden verlinkten Host mit Google Web Risk, Spam-Blocklisten, Anzeichen einer gehackten Website, Lookalike-Domains, WordPress-Schwachstellen, SPF, DMARC und DKIM, Chat-Widgets, Rechtsseiten, veraltete Bibliotheken und den Domain-Ablauf. Lässt sich eine Prüfung nicht abschließen, kommt der vollständige Bericht per E-Mail, sobald er fertig ist, meist innerhalb von 48 Stunden. Korrekturpakete zum Festpreis ab 69 US$. Anmeldung per E-Mail oder mit einem bestehenden Konto. Sechs Sprachen.",
         "twitter_title": "Datenschutz, Barrierefreiheit und Sicherheit aus einer URL.",
-        "twitter_description": "Eine öffentliche Prüfung einer https-Website, eine Technologieliste und vorgeschlagene QA-Fälle. Anmelden, dann eine enthaltene Prüfung pro Browser und Netzwerk. Läufe mit Anmeldung stehen auf Ihrer Kontoseite.",
+        "twitter_description": "Eine öffentliche Prüfung einer https-Website: Bewertungen, Phishing-, Malware- und Blocklisten, Hack-Anzeichen, E-Mail-Authentifizierung und vorgeschlagene QA-Fälle. Korrekturen zum Festpreis ab 69 US$ oder selbst beheben.",
+        "image_alt": "QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Sie hören immer von uns.",
         "gate": "Bevor eine einzige Adresse geprüft wird.",
         "display": ["Finden Sie Lecks,", "Fehler und Sperren,", "bevor Kunden", "oder Behörden es tun."],
     },
@@ -69,10 +74,11 @@ LANGS = {
         "native": "Français",
         "title": "Trouvez d’abord les fuites, pannes et blocages.",
         "seo_title": "QA-lab URL Review : SEO, GEO et cas de test depuis une URL",
-        "description": "Une page https publique, analysée et notée en SEO, recherche IA (GEO), analytics, sécurité, accessibilité et vitesse, avec des cas de test pour 20 frameworks.",
-        "og_description": "Une analyse publique en https, notée en SEO, GEO, analytics, sécurité, accessibilité et performance, avec une liste des corrections prioritaires et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures d’écran. Elle contrôle aussi les widgets de chat, les pages légales, les bibliothèques obsolètes, Safe Browsing, l’expiration du domaine et la sécurité des e-mails. Connexion par e-mail ou avec un compte que vous avez déjà. Les autres outils spécialisés sont nommés lorsqu’ils s’appliquent et ne sont pas lancés. Six langues.",
+        "description": "Une page https notée en SEO, GEO, analytics, sécurité, accessibilité et vitesse, contrôlée contre phishing, malware, listes de blocage et piratage, avec cas de test et corrections.",
+        "og_description": "Une analyse publique en https, notée en SEO, GEO, analytics, sécurité, accessibilité et performance, avec une liste des corrections prioritaires et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures d’écran. Elle contrôle aussi les listes de phishing et de malware, chaque hôte lié avec Google Web Risk, les listes de blocage de spam, les signes d’un site piraté, les domaines sosies, les vulnérabilités WordPress, SPF, DMARC et DKIM, les widgets de chat, les pages légales, les bibliothèques obsolètes et l’expiration du domaine. Si une analyse ne peut pas aboutir, le rapport complet arrive par e-mail dès qu’il est prêt, en général sous 48 heures. Forfaits de correction à prix fixe dès 69 US$. Connexion par e-mail ou avec un compte que vous avez déjà. Six langues.",
         "twitter_title": "Confidentialité, accessibilité et sécurité depuis une URL.",
-        "twitter_description": "Une analyse publique d’un site https, une liste de technologies et des cas de QA proposés. Connectez-vous ; une analyse incluse par navigateur et réseau. Les exécutions connectées figurent sur la page de votre compte.",
+        "twitter_description": "Une analyse publique d’un site https : notes, listes de phishing, de malware et de blocage, signes de piratage, authentification des e-mails et cas de QA proposés. Corrections à prix fixe dès 69 US$, ou corrigez vous-même.",
+        "image_alt": "QA-lab URL Review. Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe, et vous avez toujours une réponse.",
         "gate": "Avant d’analyser une seule adresse.",
         "display": ["Trouvez les fuites,", "pannes et blocages", "avant vos clients", "ou un régulateur."],
     },
@@ -81,10 +87,11 @@ LANGS = {
         "native": "Italiano",
         "title": "Trova prima perdite, guasti e blocchi.",
         "seo_title": "QA-lab URL Review: SEO, GEO e casi di test da un URL",
-        "description": "Una pagina https pubblica, analizzata e valutata per SEO, ricerca IA (GEO), analytics, sicurezza, accessibilità e velocità, con casi di test per 20 framework.",
-        "og_description": "Un’analisi pubblica via https, valutata per SEO, GEO, analytics, sicurezza, accessibilità e prestazioni, con un elenco di cosa sistemare prima e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Controlla anche widget di chat, pagine legali, librerie obsolete, Safe Browsing, scadenza del dominio e sicurezza dell’email. Accedi con la tua email o con un account che hai già. Gli altri strumenti specialistici vengono nominati quando si applicano e non vengono avviati. Sei lingue.",
+        "description": "Una pagina https valutata per SEO, GEO, analytics, sicurezza, accessibilità e velocità, controllata contro phishing, malware, blocklist e violazioni, con casi di test e correzioni.",
+        "og_description": "Un’analisi pubblica via https, valutata per SEO, GEO, analytics, sicurezza, accessibilità e prestazioni, con un elenco di cosa sistemare prima e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Controlla anche liste di phishing e malware, ogni host collegato con Google Web Risk, blocklist di spam, segni di un sito violato, domini sosia, vulnerabilità di WordPress, SPF, DMARC e DKIM, widget di chat, pagine legali, librerie obsolete e scadenza del dominio. Se una revisione non si può concludere, il report completo arriva via email appena è pronto, di solito entro 48 ore. Pacchetti di correzione a prezzo fisso da 69 US$. Accedi con la tua email o con un account che hai già. Sei lingue.",
         "twitter_title": "Privacy, accessibilità e sicurezza da un URL.",
-        "twitter_description": "Un’analisi pubblica di un sito https, un elenco di tecnologie e casi di QA proposti. Accedi; una revisione inclusa per browser e rete. Le esecuzioni con accesso sono elencate nella pagina del tuo account.",
+        "twitter_description": "Un’analisi pubblica di un sito https: punteggi, liste di phishing, malware e blocco, segni di violazione, autenticazione email e casi di QA proposti. Correzioni a prezzo fisso da 69 US$, o correggilo tu.",
+        "image_alt": "QA-lab URL Review. Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso e ti rispondiamo sempre.",
         "gate": "Prima di analizzare un solo indirizzo.",
         "display": ["Trova perdite,", "guasti e blocchi", "prima dei clienti", "o di un’autorità."],
     },
@@ -189,7 +196,32 @@ def structured(s, code):
         + pad + "    }\n" + pad + "}"
         for q, ans in c["faq"]
     ]
-    return s[:a] + ",\n".join(items) + s[b:]
+    return fixes(s[:a] + ",\n".join(items) + s[b:], code)
+
+
+@cache
+def fix_packages():
+    """The package table the report page sells from, so the structured offers carry the prices the client pays."""
+    out = subprocess.run(["node", "-e", "process.stdout.write(JSON.stringify(require('./functions/url-review-fix-offers.js').publicPackages()))"],
+                         cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    return {p["id"]: p for p in json.loads(out)}
+
+
+def fixes(s, code):
+    """The fix packages' Service node, in the page's language, with each offer's name and scope from the package table."""
+    url = BASE + f"qa-review-{code}.html"
+    i = s.index('"@id": "https://carlosandmunoz.com/qa-review.html#fixes"')
+    a = s.rindex("\n            {\n", 0, i) + 1
+    b = s.index("\n            },\n", i) + len("\n            }")
+    node = json.loads(s[a:b])
+    f = COPY[code]["fixes"]
+    node.update({"@id": url + "#fixes", "name": f["name"], "serviceType": f["type"], "description": f["description"], "url": url})
+    packages = fix_packages()
+    for offer in node["offers"]["offers"]:
+        p = packages[offer["sku"]]
+        offer.update(name=p["name"][code], description=p["what"][code], price=str(p["usd"]), url=url)
+    text = "\n".join(" " * 12 + ln for ln in json.dumps(node, indent=4, ensure_ascii=False).split("\n"))
+    return s[:a] + text + s[b:]
 
 
 def locale_block(code):
@@ -201,37 +233,67 @@ def locale_block(code):
 ASK_KEYS = ("open", "title", "close", "note", "inputLabel", "placeholder", "send", "repo")
 
 
+TOKEN = re.compile(r'\s+|("(?:[^"\\]|\\.)*")|([\w$.-]+)|([{}\[\]:,])')
+
+
+def copy_strings(js, code, name="copy table"):
+    """Every string in one language's block (`    es: {` to its matching `}`) of a browser copy table, keyed by its
+    path: `title` for a top-level key, `fieldError.email` inside a group, `tour.terms.0` inside an array."""
+    pos = js.index(f"\n    {code}: {{\n") + len(f"\n    {code}: ")
+
+    def tokens():
+        nonlocal pos
+        while True:
+            m = TOKEN.match(js, pos)
+            if not m:
+                raise SystemExit(f"{name} {code} block: cannot read {js[pos:pos + 40]!r}")
+            pos = m.end()
+            if m.lastindex:
+                yield m.group(m.lastindex), m.lastindex
+
+    out, path, arrays, key = {}, [], [], None
+    stream = tokens()
+    for text, kind in stream:
+        here = key if not arrays or arrays[-1] is None else arrays[-1]
+        if text in ("{", "["):
+            path.append(here)
+            arrays.append(0 if text == "[" else None)
+            key = None
+        elif text in ("}", "]"):
+            arrays.pop()
+            path.pop()
+            if not arrays:
+                return out
+            key = None
+        elif text == ",":
+            if arrays[-1] is not None:
+                arrays[-1] += 1
+            key = None
+        elif arrays[-1] is None and key is None:
+            key = json.loads(text) if kind == 1 else text
+            if next(stream)[0] != ":":
+                raise SystemExit(f"{name} {code} block: {key!r} is not followed by a colon")
+        elif kind == 1:
+            out[".".join(str(p) for p in path[1:] + [here])] = json.loads(text)
+
+
 def js_strings(path, code, keys):
-    """String values from one language's block (`    es: {` up to its closing `    }`) of a browser copy table."""
-    js = (ROOT / path).read_text(encoding="utf-8")
-    start = js.index(f"\n    {code}: {{\n")
-    end = js.index("\n    }", start)
-    out = {}
-    for key in keys:
-        m = re.compile(rf'\b{key}: ("(?:[^"\\]|\\.)*")').search(js, start, end)
-        if not m:
-            raise SystemExit(f"{path} has no {code}.{key}")
-        out[key] = json.loads(m.group(1))
-    return out
+    """String values for the given keys (dotted for nested ones) from one language's block of a browser copy table."""
+    found = copy_strings((ROOT / path).read_text(encoding="utf-8"), code, path)
+    missing = [key for key in keys if key not in found]
+    if missing:
+        raise SystemExit(f"{path} has no {code}.{missing[0]}")
+    return {key: found[key] for key in keys}
 
 
 COPY_TABLES = ("js/qa-review-report-copy.js", "js/qa-review-multi.js", "js/qa-review-compare-copy.js", "js/qa-review-progress.js",
                "js/qa-review-verify.js", "js/qa-review-benchmark.js", "js/qa-review-live.js", "js/qa-review-ask.js", "js/qa-review-pay-copy.js")
-PAIR = re.compile(r'\b(\w+): ("(?:[^"\\]|\\.)*")')
-
-
 def js_index(code):
-    """English text to the page language's text, from every key the browser copy tables hold once, the first table winning."""
+    """English text to the page language's text, from every string in the browser copy tables, the first table winning."""
     out = {}
     for path in COPY_TABLES:
         js = (ROOT / path).read_text(encoding="utf-8")
-        blocks = []
-        for lang in ("en", code):
-            start = js.index(f"\n    {lang}: {{\n")
-            pairs = PAIR.findall(js, start, js.index("\n    }", start))
-            once = {key for key in {k for k, _ in pairs} if sum(k == key for k, _ in pairs) == 1}
-            blocks.append({k: json.loads(v) for k, v in pairs if k in once})
-        en, local = blocks
+        en, local = copy_strings(js, "en", path), copy_strings(js, code, path)
         for key, text in en.items():
             if key in local and "{" not in text and "<" not in text:
                 out.setdefault(squash(text), local[key])
@@ -431,6 +493,8 @@ def build(source, code, data):
     tw_desc = s[s.index('<meta name="twitter:description" content="'):]
     tw_desc = tw_desc[: tw_desc.index(">") + 1]
     s = swap(s, tw_desc, f'<meta name="twitter:description" content="{t["twitter_description"]}">')
+    s = swap(s, "assets/share/qa-review-pitch.jpg", f"assets/share/qa-review-pitch-{code}.jpg", 2)
+    s = swap(s, 'QA-lab URL Review. Is your site safe? We check deeper, fix it at a fixed price, and you always hear back.', t["image_alt"], 2)
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html",\n                "applicationCategory"', f'"url": "{url}",\n                "applicationCategory"')
     s = swap(s, '"item": "https://carlosandmunoz.com/qa-review.html"', f'"item": "{url}"')
     s = swap(s, '"url": "https://carlosandmunoz.com/qa-review.html#service-facts"', f'"url": "{url}#service-facts"')
@@ -472,7 +536,7 @@ def build(source, code, data):
 
 
 PAY_KEYS = ("title", "description", "testMode", "eyebrow", "headingRun", "intro", "payWith", "paypalWays", "itemRun",
-            "accountPaypal", "collected", "note", "disclaimers", "back", "continueTo")
+            "accountPaypal", "collected", "note", "disclaimers", "back", "continueTo", "codeLabel", "codeApply")
 
 
 def pay_copy(code):
@@ -487,6 +551,12 @@ def build_pay(source, code):
     s = swap(source, '<html lang="en">', f'<html lang="{code}">')
     s = swap(s, f"<title>{en['title']}</title>", f"<title>{t['title']}</title>")
     s = swap(s, f'<meta name="description" content="{en["description"]}">', f'<meta name="description" content="{t["description"]}">')
+    s = swap(s, '<meta property="og:locale" content="en_US">', f'<meta property="og:locale" content="{dict(LOCALES)[code]}">')
+    s = swap(s, '<meta property="og:url" content="https://carlosandmunoz.com/qa-review-pay.html">', f'<meta property="og:url" content="{BASE + page}">')
+    s = swap(s, f'<meta property="og:title" content="{en["title"]}">', f'<meta property="og:title" content="{t["title"]}">')
+    s = swap(s, f'<meta property="og:description" content="{en["description"]}">', f'<meta property="og:description" content="{t["description"]}">')
+    s = swap(s, f'<meta name="twitter:title" content="{en["title"]}">', f'<meta name="twitter:title" content="{t["title"]}">')
+    s = swap(s, f'<meta name="twitter:description" content="{en["description"]}">', f'<meta name="twitter:description" content="{t["description"]}">')
     s = swap(s, '<a class="brand" href="qa-review.html">', f'<a class="brand" href="qa-review-{code}.html">')
     s = retag(s, '<p class="test-mode" id="test-mode" role="status" hidden>', "</p>", t["testMode"], code)
     s = retag(s, '<p class="eyebrow">', "</p>", t["eyebrow"], code)
@@ -500,6 +570,9 @@ def build_pay(source, code):
     s = swap(s, f'<span id="pay-item">{en["itemRun"]}</span>', f'<span id="pay-item">{t["itemRun"]}</span>')
     s = retag(s, '<span id="pay-collect-label">', "</span>", t["accountPaypal"], code)
     s = retag(s, '<span id="pay-collector">', "</span>", t["collected"], code)
+    s = retag(s, '<label for="pay-code-input">', "</label>", t["codeLabel"], code)
+    s = retag(s, '<button class="btn btn-ghost" id="pay-code-apply" type="submit">', "</button>", t["codeApply"], code)
+    s = swap(s, '<p class="code-note" id="pay-code-note" role="status">', f'<p class="code-note" id="pay-code-note" role="status"{mark}>')
     s = retag(s, '<p id="pay-note">', "</p>", t["note"], code)
     s = swap(s, f'<a href="qa-review-legal.html">{en["disclaimers"]}</a>', f'<a href="qa-review-legal.html"{mark}>{t["disclaimers"]}</a>')
     s = swap(s, f'<a class="btn btn-ghost" href="qa-review.html">{en["back"]}</a>', f'<a class="btn btn-ghost" href="qa-review-{code}.html"{mark}>{t["back"]}</a>')

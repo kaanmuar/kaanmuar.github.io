@@ -8,8 +8,13 @@
 #   scripts/ticket.sh design <parent> <title> <body>            Design: deliverable, linked, set to Design
 #   scripts/ticket.sh move <n> <column>                         backlog next design dev qa stg prod done
 #   scripts/ticket.sh child <parent> <child>
-#   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done
+#   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done; refused until #pr has merged
 #   scripts/ticket.sh log start|end <n> [title]                 Cursor usage log row
+#   scripts/ticket.sh log sweep                                 close open rows older than 24h (end = start + 12h)
+# new and bug first list open issues that may be the same ticket (scripts/open-work.js dups, #2969), on stderr.
+# In a terminal they ask before filing; without one (agents) they file anyway and name the candidates in the body.
+#   --dry-run        (new, bug, design) print the duplicate check and the issue it would file; writes nothing
+#   --no-dup-check   (new, bug) skip the check, once you have read the candidates and none is the same
 # Issues go through REST; only board moves use GraphQL, via scripts/gh-budget.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -56,10 +61,68 @@ close() { # <n> <pr>
 	board "$1" "done"
 }
 
+# done closes a ticket only once its PR has merged (#3782): a failed merge must not leave a ticket closed as completed.
+close_when_merged() { # <n> <pr>
+	local merged
+	merged=$(gh api $R/pulls/"$2" --jq .merged)
+	if [ "$merged" != true ]; then
+		echo "PR #$2 is not merged; ticket #$1 stays open. Merge the PR, then run done again." >&2
+		exit 1
+	fi
+	close "$1" "$2"
+}
+
 area_name() { case "$1" in be) echo BE ;; fe) echo FE ;; ui) echo UI ;; qa) echo QA ;; ci) echo CI ;; *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${1:0:1}")${1:1}" ;; esac }
+
+dups=""
+dup_check() { # <title> [text]: open issues that may be the same ticket
+	[ -z "$nodup" ] || return 0
+	local found ans
+	found=$(node scripts/open-work.js dups "$@" </dev/null 2>/dev/null || true)
+	[ -n "$found" ] || return 0
+	{
+		echo "Open issues that may be the same ticket (#2969). If one is, comment there instead; if none is, pass --no-dup-check:"
+		echo "  ${found//$'\n'/$'\n'  }"
+	} >&2
+	dups=$(grep -o '^#[0-9]*' <<<"$found" | paste -sd ' ' -)
+	if [ -z "$dry" ] && [ -t 0 ]; then
+		read -r -p "File a new issue anyway? [y/N] " ans || ans=""
+		[[ $ans == [yY]* ]] || {
+			echo "Not filed." >&2
+			exit 3
+		}
+	fi
+}
+
+create() { # <title> <body> <label>...: files the issue and prints its number, or with --dry-run prints what it would file
+	local title=$1 body=$2 labels=() l
+	shift 2
+	[ -z "$dups" ] || body="$body
+
+**Possible duplicates, listed when filed:** $dups"
+	if [ -n "$dry" ]; then
+		printf 'Dry run, nothing filed.\nTitle: %s\nLabels: %s\n\n%s\n' "$title" "$*" "$body"
+		return
+	fi
+	for l; do labels+=(-f "labels[]=$l"); done
+	gh api $R/issues -f title="$title" -f body="$body" "${labels[@]}" -q .number
+}
 
 cmd=${1:?usage: scripts/ticket.sh new|bug|design|move|child|done|log ...}
 shift
+dry="" nodup="" args=()
+for a; do
+	case $a in
+	--dry-run) dry=1 ;;
+	--no-dup-check) nodup=1 ;;
+	*) args+=("$a") ;;
+	esac
+done
+set -- ${args[@]+"${args[@]}"}
+case "$cmd" in new | bug | design) ;; *) [ -z "$dry" ] || {
+	echo "--dry-run is for new, bug and design" >&2
+	exit 1
+} ;; esac
 case "$cmd" in
 new)
 	title=${1:?title}
@@ -68,7 +131,12 @@ new)
 	col=${3:-dev}
 	body=${4:-"**Kind:** Request
 **Area:** $(area_name "$area")"}
-	n=$(gh api $R/issues -f title="$title" -f body="$body" -f 'labels[]=kind:request' -f "labels[]=area:$area" -q .number)
+	dup_check "$title" "${4:-}"
+	n=$(create "$title" "$body" kind:request "area:$area")
+	[ -z "$dry" ] || {
+		echo "$n"
+		exit 0
+	}
 	board "$n" "$col"
 	echo "$n"
 	;;
@@ -91,7 +159,12 @@ $what
 
 ## Fix
 $fix"
-	n=$(gh api $R/issues -f title="$title" -f body="$body" -f 'labels[]=bug' -f "labels[]=area:$area" -q .number)
+	dup_check "$title" "$what"
+	n=$(create "$title" "$body" bug "area:$area")
+	[ -z "$dry" ] || {
+		echo "$n"
+		exit 0
+	}
 	child "$parent" "$n"
 	if [ -n "$pr" ]; then close "$n" "$pr"; else board "$n" backlog; fi
 	echo "$n"
@@ -100,17 +173,21 @@ design)
 	parent=${1:?parent}
 	title=${2:?title}
 	body=${3:?body}
-	n=$(gh api $R/issues -f title="$title" -f body="$body" -f 'labels[]=area:design' -q .number)
+	n=$(create "$title" "$body" area:design)
+	[ -z "$dry" ] || {
+		echo "$n"
+		exit 0
+	}
 	child "$parent" "$n"
 	board "$n" design
 	echo "$n"
 	;;
 move) board "${1:?n}" "${2:?column}" ;;
 child) child "${1:?parent}" "${2:?child}" ;;
-"done") close "${1:?n}" "${2:?pr}" ;;
+"done") close_when_merged "${1:?n}" "${2:?pr}" ;;
 log)
 	now=$(date -u +%FT%TZ)
-	case "${1:?start|end}" in
+	case "${1:?start|end|sweep}" in
 	start) echo "$now,,${2:?n},${3:-},${CURSOR_CONVERSATION_ID:-chat}," >>"$LOG" ;;
 	end)
 		python3 - "$LOG" "${2:?n}" "$now" "${CURSOR_CONVERSATION_ID:-chat}" <<'PY'
@@ -122,6 +199,36 @@ mine = [r for r in open_rows if len(r) > 4 and r[4] == chat]
 if mine or open_rows:
     (mine or open_rows)[0][1] = now
 csv.writer(open(path, "w", newline="")).writerows(rows)
+PY
+		;;
+	# Stale open rows inflate attribution; close ones older than 24h at start+12h (#3545).
+	sweep)
+		python3 - "$LOG" <<'PY'
+import csv, sys
+from datetime import datetime, timedelta, timezone
+
+path = sys.argv[1]
+now = datetime.now(timezone.utc)
+max_age = timedelta(hours=24)
+span = timedelta(hours=12)
+
+def parse(ts):
+    if not ts:
+        return None
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+rows = list(csv.reader(open(path)))
+closed = 0
+for r in rows:
+    if len(r) < 2 or r[1] or not r[0]:
+        continue
+    start = parse(r[0])
+    if not start or now - start < max_age:
+        continue
+    r[1] = (start + span).strftime("%Y-%m-%dT%H:%M:%SZ")
+    closed += 1
+csv.writer(open(path, "w", newline="")).writerows(rows)
+print(f"closed {closed} open work-log rows older than 24h")
 PY
 		;;
 	esac

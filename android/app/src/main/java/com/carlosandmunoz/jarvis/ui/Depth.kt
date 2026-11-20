@@ -202,12 +202,15 @@ private val NUMBER = Regex("""^([^\d-]*)(-?[\d,]*\.?\d+)(.*)$""")
 
 /** Counts a number up from zero the first time it shows, keeping its prefix, suffix, decimals and grouping. */
 @Composable
-fun CountUp(value: String, content: @Composable (String) -> Unit) {
+fun CountUp(value: String, animateKey: Any? = null, durationMs: Int = 900, content: @Composable (String) -> Unit) {
     val m = NUMBER.find(value)
     val target = m?.groupValues?.get(2)?.replace(",", "")?.toDoubleOrNull()
     if (m == null || target == null) { content(value); return }
-    val p = remember(value) { Animatable(0f) }
-    LaunchedEffect(value) { p.animateTo(1f, tween(900, easing = FastOutSlowInEasing)) }
+    val p = remember(value, animateKey) { Animatable(0f) }
+    LaunchedEffect(value, animateKey) {
+        p.snapTo(0f)
+        p.animateTo(1f, tween(durationMs, easing = FastOutSlowInEasing))
+    }
     val raw = m.groupValues[2]
     val decimals = raw.substringAfter('.', "").length
     val n = target * p.value

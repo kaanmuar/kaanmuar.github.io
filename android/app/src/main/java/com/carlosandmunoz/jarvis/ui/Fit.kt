@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -60,15 +61,23 @@ const val WIDE = "wide"
 /**
  * Panels in [columns] columns, each into the shortest so far. A child with Modifier.layoutId(WIDE) spans every column
  * and starts a new band below the tallest one. One column is the same layout, so opening Ask or unfolding keeps each panel's state.
+ * Inside a tab its panels take their slots in the tab's saved layout order, and hidden ones are left out (#2809).
  */
 @Composable
 fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val tab = LocalLayoutTab.current
+    val saved = LocalLayout.current
     Layout(content, modifier) { items, constraints ->
         val width = constraints.maxWidth
         val colW = width / columns.coerceAtLeast(1)
         val heights = IntArray(columns.coerceAtLeast(1))
-        val placed = items.map { m ->
-            if (m.layoutId == WIDE) {
+        val panelId = { m: Measurable -> (m.parentData as? PanelSlot)?.id }
+        val placed = arranged(items, tab, saved).map { m ->
+            val id = panelId(m)
+            val sizeW = id?.let { saved?.size?.get(it)?.w } ?: 1f
+            // Full-bleed when w is wide (#3611); mid widths grow inside the slot via Panel's continuous w (#3709).
+            val asWide = m.layoutId == WIDE || Layouts.isWideSize(sizeW, m.layoutId == WIDE)
+            if (asWide) {
                 val top = heights.max()
                 val p = m.measure(Constraints(maxWidth = width))
                 heights.fill(top + p.height)

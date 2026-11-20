@@ -7,6 +7,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
 
@@ -69,6 +70,16 @@ fs.writeFileSync(path.join(PUB, "summary.json"), JSON.stringify(summary));
 fs.mkdirSync(path.join(APP, "dist"), { recursive: true });
 fs.writeFileSync(path.join(APP, "dist/summary.json"), JSON.stringify(summary));
 
+// The campaign posts that come due before the next upload (#2606); the server posts each on its slot.
+const CAMPAIGN_AHEAD = 48 * 3600e3;
+const campaign = createRequire(import.meta.url)(path.join(ROOT, "scripts/open-social-queue.js")).redditPosts(Date.now(), CAMPAIGN_AHEAD, ROOT);
+fs.writeFileSync(path.join(APP, "dist/campaign.json"), JSON.stringify(campaign));
+
+// The replies Carlos approved for comments under our posts (#2614), written by scripts/reddit-engagement.js sync.
+const approvedFile = path.join(APP, "engagement.json");
+const approved = fs.existsSync(approvedFile) ? JSON.parse(fs.readFileSync(approvedFile, "utf8")) : [];
+fs.writeFileSync(path.join(APP, "dist/engagement.json"), JSON.stringify(Array.isArray(approved) ? approved : []));
+
 await esbuild.build({ entryPoints: [path.join(APP, "src/client/live-reddit.js"), path.join(APP, "src/client/splash.js")], bundle: true, format: "esm", platform: "browser", target: "es2022", minify: true, outdir: PUB, logLevel: "warning" });
 await esbuild.build({ entryPoints: [path.join(APP, "src/server/index.js")], bundle: true, format: "cjs", platform: "node", target: "node22", outfile: path.join(APP, "dist/server/index.cjs"), logLevel: "warning" });
 
@@ -80,4 +91,4 @@ let files = 0;
     if (d.isDirectory()) walk(p); else { bytes += fs.statSync(p).size; files += 1; }
   });
 })(PUB);
-console.log(`public/: ${files} files, ${(bytes / 1048576).toFixed(1)} MB. ${summary.count} reports, ${summary.fresh} from ${summary.newest}.`);
+console.log(`public/: ${files} files, ${(bytes / 1048576).toFixed(1)} MB. ${summary.count} reports, ${summary.fresh} from ${summary.newest}. ${campaign.length} campaign posts due in the next ${CAMPAIGN_AHEAD / 3600e3} h. ${approved.length} approved replies.`);

@@ -1,0 +1,306 @@
+{
+ "plan": {
+  "day": 24,
+  "length": 90,
+  "weekShare": 50,
+  "phase": {
+   "name": "First waves",
+   "end": "2026-12-06",
+   "daysLeft": 24
+  },
+  "next": {
+   "date": "2026-11-20",
+   "label": "Second wave out",
+   "daysLeft": 8
+  },
+  "deadlines": [
+   {
+    "date": "2026-11-15",
+    "label": "Instantly renews",
+    "daysLeft": 3
+   },
+   {
+    "date": "2026-12-01",
+    "label": "Partner list signed",
+    "daysLeft": 19
+   }
+  ],
+  "week": [
+   {
+    "key": "prospects",
+    "label": "Prospects reviewed",
+    "unit": "",
+    "actual": 14,
+    "target": 40,
+    "status": "on-track"
+   },
+   {
+    "key": "liveReportPct",
+    "label": "Reviewed with a Live Report",
+    "unit": "%",
+    "actual": 90,
+    "target": 80,
+    "status": "on-track"
+   },
+   {
+    "key": "openPct",
+    "label": "Open rate",
+    "unit": "%",
+    "actual": 48,
+    "target": 40,
+    "status": "ahead"
+   },
+   {
+    "key": "replyPct",
+    "label": "Reply rate",
+    "unit": "%",
+    "actual": 1.2,
+    "target": 3,
+    "status": "behind"
+   },
+   {
+    "key": "positivePct",
+    "label": "Positive replies",
+    "unit": "%",
+    "actual": 0.4,
+    "target": 1,
+    "status": "behind"
+   }
+  ],
+  "total": [
+   {
+    "key": "unlocks",
+    "label": "Paid unlocks",
+    "actual": 2,
+    "target": 30,
+    "expected": 8,
+    "status": "behind",
+    "perWeek": 3.1
+   },
+   {
+    "key": "calls",
+    "label": "Calls held",
+    "actual": 5,
+    "target": 10,
+    "expected": 2.7,
+    "status": "ahead",
+    "perWeek": 0.5
+   },
+   {
+    "key": "partnerships",
+    "label": "Partnerships",
+    "actual": 1,
+    "target": 3,
+    "expected": 0.8,
+    "status": "ahead",
+    "perWeek": 0.2
+   },
+   {
+    "key": "talks",
+    "label": "Talks and webinars",
+    "actual": 2,
+    "target": 2,
+    "expected": 0.5,
+    "status": "done"
+   }
+  ],
+  "status": "behind"
+ },
+ "actions": {
+  "rows": [
+   {
+    "cc": "BR",
+    "name": "Brazil",
+    "id": "bouncing:BR",
+    "kind": "bouncing",
+    "weight": 14,
+    "title": "Pause W1 E-pt Brazil",
+    "why": "8% of emails bounced; over 5% puts the sending domain at risk; 0.6% replies over 180 sent, against 3.1% on average",
+    "do": {
+     "type": "pause",
+     "label": "Pause W1 E-pt Brazil",
+     "id": "c2",
+     "name": "W1 E-pt Brazil",
+     "leads": 30,
+     "start": ""
+    },
+    "level": "high"
+   },
+   {
+    "cc": "BR",
+    "name": "Brazil",
+    "id": "date-soon:BR:2026-11-15",
+    "kind": "date-soon",
+    "weight": 12,
+    "title": "Pause Brazil's campaigns for Proclamação da República",
+    "why": "Proclamação da República is in 2 days; 1 campaign sends there",
+    "do": {
+     "type": "calendar-pause",
+     "label": "Pause that day",
+     "cc": "BR",
+     "date": "2026-11-15",
+     "name": "Proclamação da República"
+    },
+    "level": "high"
+   },
+   {
+    "cc": "BR",
+    "name": "Brazil",
+    "id": "plan-week:rates",
+    "kind": "plan-week",
+    "weight": 60,
+    "title": "Lift the reply rates",
+    "why": "Reply rate 1.2% against 3%, Positive replies 0.4% against 1%; Brazil is lowest at 0.6% replies",
+    "do": {
+     "type": "open",
+     "label": "Open Brazil",
+     "cc": "BR"
+    },
+    "level": "mid"
+   },
+   {
+    "cc": "CO",
+    "name": "Colombia",
+    "id": "no-prospects-left:CO",
+    "kind": "no-prospects-left",
+    "weight": 264,
+    "title": "Queue prospects in Colombia",
+    "why": "Every prospect is swept while W1 B-es Americas sends there (264 sent)",
+    "do": {
+     "type": "open",
+     "label": "Queue prospects",
+     "cc": "CO"
+    },
+    "level": "high"
+   },
+   {
+    "cc": "MX",
+    "name": "Mexico",
+    "id": "no-prospects-left:MX",
+    "kind": "no-prospects-left",
+    "weight": 198,
+    "title": "Queue prospects in Mexico",
+    "why": "Every prospect is swept while W1 B-es Americas sends there (198 sent)",
+    "do": {
+     "type": "open",
+     "label": "Queue prospects",
+     "cc": "MX"
+    },
+    "level": "high"
+   },
+   {
+    "cc": "AR",
+    "name": "Argentina",
+    "id": "no-prospects-left:AR",
+    "kind": "no-prospects-left",
+    "weight": 66,
+    "title": "Queue prospects in Argentina",
+    "why": "Every prospect is swept while W1 B-es Americas sends there (66 sent)",
+    "do": {
+     "type": "open",
+     "label": "Queue prospects",
+     "cc": "AR"
+    },
+    "level": "high"
+   },
+   {
+    "cc": "CL",
+    "name": "Chile",
+    "id": "no-prospects-left:CL",
+    "kind": "no-prospects-left",
+    "weight": 53,
+    "title": "Queue prospects in Chile",
+    "why": "Every prospect is swept while W1 B-es Americas sends there (53 sent)",
+    "do": {
+     "type": "open",
+     "label": "Queue prospects",
+     "cc": "CL"
+    },
+    "level": "high"
+   },
+   {
+    "cc": "",
+    "name": "",
+    "id": "target:unlocks",
+    "kind": "target",
+    "weight": 93.3,
+    "title": "Catch up on paid unlocks",
+    "why": "2 of 30 on day 24 of 90, 3.1 a week from here",
+    "do": {
+     "type": "copy",
+     "label": "Copy one-pager link",
+     "copy": "https://qalabreview.com/pdf"
+    },
+    "level": "mid"
+   },
+   {
+    "cc": "GB",
+    "name": "United Kingdom",
+    "id": "no-campaign:GB",
+    "kind": "no-campaign",
+    "weight": 18,
+    "title": "Start a campaign for United Kingdom",
+    "why": "0 prospects and 18 reviewed sites, but no campaign",
+    "do": {
+     "type": "open",
+     "label": "Open United Kingdom",
+     "cc": "GB"
+    },
+    "level": "mid"
+   },
+   {
+    "cc": "DE",
+    "name": "Germany",
+    "id": "no-campaign:DE",
+    "kind": "no-campaign",
+    "weight": 15,
+    "title": "Activate W2 A-de DACH for Germany",
+    "why": "0 prospects and 15 reviewed sites, but no campaign",
+    "do": {
+     "type": "activate",
+     "label": "Activate W2 A-de DACH",
+     "id": "c9",
+     "name": "W2 A-de DACH",
+     "leads": 12,
+     "start": "2026-11-17"
+    },
+    "level": "mid"
+   },
+   {
+    "cc": "FR",
+    "name": "France",
+    "id": "no-campaign:FR",
+    "kind": "no-campaign",
+    "weight": 12,
+    "title": "Start a campaign for France",
+    "why": "0 prospects and 12 reviewed sites, but no campaign",
+    "do": {
+     "type": "open",
+     "label": "Open France",
+     "cc": "FR"
+    },
+    "level": "mid"
+   },
+   {
+    "cc": "IT",
+    "name": "Italy",
+    "id": "no-campaign:IT",
+    "kind": "no-campaign",
+    "weight": 9,
+    "title": "Start a campaign for Italy",
+    "why": "0 prospects and 9 reviewed sites, but no campaign",
+    "do": {
+     "type": "open",
+     "label": "Open Italy",
+     "cc": "IT"
+    },
+    "level": "mid"
+   }
+  ],
+  "total": 19,
+  "hash": "fcd639bba8",
+  "ranked": "gemini",
+  "line": "Pause W1 E-pt Brazil now: 8% bounced, and Republic Day in 2 days means nothing lands anyway.",
+  "at": "2026-11-12T16:00:00.000Z"
+ }
+}

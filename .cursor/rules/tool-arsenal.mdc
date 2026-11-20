@@ -1,0 +1,197 @@
+---
+description: Arsenal of outside tools and repos we evaluated (Nov 2026): verdict, status, where each lives and how to run it. Read before adding a tool, skill, dependency, voice or design generator, scanner, or outside repo to our work, or when a prompt names one of them.
+alwaysApply: false
+---
+# Tool arsenal
+
+Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know which tools exist and can use all or part of them in daily work. Verdicts are decisions. A status changes only with its ticket (`scripts/ticket.sh`).
+
+## Rules for any outside tool
+- Check the tables below first. Use an adopted tool as pinned here. A pilot runs only inside its ticket's scope.
+- Provenance first: publisher, license, version. Pin a version or commit. Stars are not evidence: several 2026 repos showed very high stars for their age.
+- **Commercial & licensing policy (Nov 19, 2026):**
+  - Paid/customer product code uses permissive licenses (`MIT`, `Apache-2.0`, `BSD`, `ISC`, `PDDL`, `CC0`) directly.
+  - `CC-BY` / `CC-BY-SA` data (e.g., `co2.js` grid factors, `CERT SG IRM` playbooks) is allowed with required attribution.
+  - `MPL-2.0` (`mdn-http-observatory`, `mediabunny`) stays unmodified at file level or is clean-room ported.
+  - `AGPL-3.0` and `CC BY-NC` (`Cloudflare Radar API`, `Shodan InternetDB`, `CIRCL vulnerability-lookup`, `listmonk`, `RSSHub`, `postiz-app`) stay strictly external feed reads or separate internal-only tools—never bundled into paid/customer code unless commercially licensed.
+- Never install from a community hub (CLI-Anything). Read `setup` or install scripts before running them (REA `setup` writes agent configs).
+- Browser-facing scripts/assets under `script-src 'self'` (such as `designs/3d/` and `live.html`) must be self-hosted/vendored, never loaded from external CDNs.
+- Any open repo, before a verdict: `node scripts/tool-scout.js repo owner/name` prints its facts (license class, dates, star velocity, owner, README flags, whether it is in this arsenal). It states no verdict; a row changes only with its ticket.
+- A new tool gets a ticket. Add its row here when it is adopted or rejected.
+- End-user apps (desktop, mobile or personal dashboards, learning material) may be listed for Carlos's personal use at his own responsibility (Nov 19, 2026). They are never embedded in product or customer code.
+- Read the LICENSE file, not only GitHub's license badge: the badge shows NOASSERTION for many real MIT and Apache repos (`adobe/trustmark` opens with an Adobe notice and then grants MIT) and shows a license for repos whose datasets carry others (`sapics/ip-location-db`).
+- A weekly scout (`scripts/tool-scout.js`, draft PRs named `tool-scout/<date>`, #3857) re-checks every repo here and searches for new ones. Its report is a suggestion: a row is added or changed only with its ticket.
+- Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
+
+## Gate for outside skills and MCP servers (#3835, Nov 20 2026)
+Before any third-party `.cursor/skills/*`, `SKILL.md` or MCP server is copied in or enabled, run this gate and put the result in the ticket. A documented step, not a dependency: nothing below is installed or vendored.
+1. Provenance: publisher, LICENSE file text, pinned commit. Read every file of the skill, and any `setup` or install script, before running anything.
+2. Scan with `cisco-ai-defense/skill-scanner` (LICENSE reads Apache-2.0, `pyproject.toml` agrees; the GitHub badge shows NOASSERTION; checked at `c558c42`). Run it from a scratch checkout or `uvx`, outside this repo: `skill-scanner scan <skill dir>`. Any high or critical finding (prompt injection, exfiltration, hidden commands) rejects the skill.
+3. Overlap check with `NVIDIA/SkillEvaluator` (Apache-2.0, checked at `1dd97c8`), optional, also from a scratch path: skip a skill that duplicates one in `.cursor/skills` or a rule in `.cursor/rules`.
+4. MCP servers: list the tools and env vars it asks for, grant no more than the ticket needs, never put a key in the repo, and pin the version.
+5. Adopt by adding a row under Adopted with the pin and notice (as `.cursor/skills/THIRD_PARTY_NOTICES.md` does). Install either scanner into the repo only through its own ticket.
+
+## Adopted
+| Tool | Source and pin | Where it lives | Use |
+|---|---|---|---|
+| mattpocock/skills, shortlist | github.com/mattpocock/skills at `5863806` (MIT) | `.cursor/skills/diagnosing-bugs`, `.cursor/skills/tdd`; notices in `.cursor/skills/THIRD_PARTY_NOTICES.md` | `diagnosing-bugs` for failed reviews and bugs; `tdd` for test-first changes. Shortlist also named `triage` and `to-spec`; not copied (they overlap `scrum-board.mdc` and `ticket.sh`). PR #3773. |
+| cinecode QC measurement | github.com/sarpstar/cinecode (MIT), measurement only | `scripts/tips-studio/build.js`: `integratedLufs()` (ebur128), target -14 LUFS, warn below -16 | Warn-only report on each clip; the peak > -30 dB gate stays. Not their `loudnorm` step, which compresses the mix and breaks `social-clips.mdc`. PR #3792 (#3791). |
+
+## Pilots and one-offs
+| Tool | Source | Status and where | Use and limits |
+|---|---|---|---|
+| VoiceStudio | github.com/debpalash/VoiceStudio (AGPL-3.0); Homebrew cask `debpalash/tap/voicestudio` (0.5.7, notarized) | Pilot concluded #3774 (Nov 20): optional offline English tool, not adopted for the pipeline. Installed on Carlos's Mac. Local API `http://localhost:3900`, OpenAI-compatible `POST /v1/audio/speech`; `model: "mlx-audio"` routes to Kokoro or MeloTTS. Installed: `mlx-community/Kokoro-82M-bf16`, `mlx-community/MeloTTS-English-v3-MLX` (commercial category). `k2-fsa/OmniVoice` (CC-BY-NC) was deleted so the app's default engine cannot make output by accident; do not reinstall it for public output. | Not in the render path: social clips stay on edge-tts (six languages). Renders run on GitHub Actions with no GPU; VoiceStudio needs CUDA or MLX. 30 s pilot against edge-tts on the same script: both 0% word error rate; DNSMOS overall 3.36 (edge-tts) vs 3.50 (VoiceStudio), about equal; VoiceStudio measured -23.4 LUFS raw, so it needs normalization to -14 LUFS. Cloning Carlos's voice needs his explicit consent and a label. AGPL: internal use is fine; a hosted modified version must publish its source. |
+| Hallmark design skill | github.com/nutlope/hallmark (MIT) at `04977e1`, skill in `skills/hallmark` | Pilot #3776, design deliverable #3795. Not vendored: fetch the skill folder into `/tmp` or another scratch path. | Floor rules for new pages. Lint: `node <skill>/scripts/sloplint.mjs <path>`; the render tier needs puppeteer-core. CursorQuota draft is held outside the repo until the download route, privacy text and support contact are set. |
+| floorplan | github.com/haydenschmitty/floorplan (MIT) at `94f81b4` | One-off audit #3789, no adoption. Scanner not vendored. | Health check (keys in code, open Firebase rules, fakeable Stripe webhooks, open endpoints) on a `git archive` copy of main, output to `/tmp`. Findings tracked in tickets, not kept here. |
+| REA (rea-agents) | github.com/morluto/rea, npm `rea-agents@4.1.0` (MIT) | Ran once on our Jarvis APK (#3775, Nov 20): `inspect-android-package` works with JDK 17 and the hash-verified JADX MCP jar (REA `search` needs Ghidra, Hopper or IDA, which we do not install, so it cannot read an APK on its own). For our own APKs use JADX instead (`brew install jadx`, 1.5.7, Homebrew core): the full decompile scan of Jarvis and both CursorQuota builds on Nov 20 found no new secret (#3775); scan only our own artifacts, never print a secret value, and redact before output. | Own artifacts only: scan our APK and JS bundles for leaked keys before release. Not customer sites (reverse engineering third-party sites is out of scope). Firebase web keys are public by design. Key restriction audit done Nov 20: the Android and Browser keys have no application restriction; see #3971. Do not run `rea setup`. |
+| anything-llm | github.com/Mintplex-Labs/anything-llm (MIT) | Optional, not installed. | Internal Q&A over the rules and docs, only if needed. Telemetry is on by default; set `DISABLE_TELEMETRY`. |
+| check-if-email-exists | github.com/reacherhq/check-if-email-exists (MIT) | Defer. | Take the syntax, MX and disposable-domain checks for outreach lists. No SMTP probe: mail providers restrict it. |
+| CLI-Anything | github.com/HKUDS/CLI-Anything (Apache-2.0) | Pattern only, not installed. | Its `HARNESS.md` pattern for wrapping `ticket.sh` as an agent CLI. Do not install per-app CLIs from its hub. |
+| documenso | github.com/documenso/documenso (AGPL-3.0) | Defer. | Only if fixed-price packages need signed terms. Postgres and Docker app. |
+| ArtCraft | github.com/storytold/artcraft (MIT or Apache-2.0) | No. Carlos declined. | Not used. |
+
+## Queued Backlog Evaluations (Nov 19, 2026 — `#3828`)
+Tickets filed in priority order (`B -> C -> D -> A`); use only inside each ticket's worktree/PR once picked up.
+
+### Wave 1 (B): Customer GEO, Speed, Carbon, Accessibility & Agency UX
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `GoogleChrome/lighthouse` v13.5 | Apache-2.0 | #3829 | **Part (~200 LOC):** port `llms-txt`, WebMCP (`document.modelContext`) & `.well-known/ai-catalog.json` checks to URL Review. |
+| `agentmarkup/agentmarkup` (`@agentmarkup/core`) | MIT | #3829, #3553 | **Whole pkg:** zero-dep validator & generator for `llms.txt`, JSON-LD and AI `robots.txt` fix-pack deliverables. |
+| `Rebilder/rebilder` | Apache-2.0 | #3829, #3553 | **Part:** `agent-readability` scorer & `Accept: text/markdown` probe (pin version, review `probe/`). |
+| `elmohq/elmo` | MIT | #3553 | **Part:** AI citation & share-of-voice diff schema for Vertex AI GEO checks (not the full DB/worker stack). |
+| `thegreenwebfoundation/co2.js` (`@tgwf/co2`) | Apache-2.0 + CC-BY-SA-4.0 | #3830 | **Whole pkg:** compute page carbon & green-hosting badge from already-fetched byte totals (keep CC-BY-SA grid attribution). |
+| `rviscomi/capo.js` | Apache-2.0 | #3830 | **Whole pkg:** static `<head>` ordering score & fix diff before browser launch. |
+| `cloudflare/telescope` (`@cloudflare/waterfall`) | Apache-2.0 | #3830 | **Whole Web Component:** framework-free HAR waterfall inside Live/URL Review reports. |
+| `davo20019/seo-analysis` | MIT | #3830 | **Part:** port `link-graph.ts` PageRank and `content-dedup.ts` MinHash algorithms for 20–100 page crawls. |
+| `Slashgear/gdpr-cookie-scanner` & `cavi-au/Consent-O-Matic` | MIT / MIT | #1127 | **Part:** adapt 3-phase cookie diff, asymmetric Reject button dark-pattern rules, TCF decoder + `Rules.json` CMP selectors into `puppeteer-core`. |
+| `koodikiht/axtree-audit` | MIT | #3831, #998 | **Part:** out-of-band CDP `Accessibility.getFullAXTree` audit (bypasses strict-CSP injection blocks) + EARL/SARIF export. |
+| `IBMa/equal-access` | Apache-2.0 | #3831 | **Part:** deep keyboard/tab-order/focus-trap checks beyond `axe-core`. |
+| `qualweb/qualweb` (PT), `fluiz7/emag-audit` (BR), `Webperf-se/webperf_core` (SE), `markuplint/markuplint` (JP), `boscop-fr/assistant-rgaa` (FR) | ISC / MIT / MIT / MIT / MPL-2.0 | #3831 | **Part:** international compliance mappings (`ACT-Rules`, `eMAG 3.1`/LBI/VLibras, Swedish percentiles, ARIA spec, clean-room `RGAA 4.1` IDs without copying MPL files). |
+| `winst0niuss/ai-ready-pw-codegen` | MIT | #3832 | **Part:** role/testId/label selector-ranking for our 20-framework test generator. |
+| `guidepup/virtual-screen-reader` | MIT | #3832 | **Whole pkg:** in-browser spoken announcement preview on hero/nav/form landmarks in `qa-lab.html` / `qa-review.html`. |
+| `cenfun/monocart-reporter` & `treosh/lighthouse-ci-action` | MIT / MIT | #3832, #3482 | **Part:** virtualized Tree-Grid runner UX for 100-page / 20-framework logs + PR budget workflow template for agency webhooks. |
+| `danielsogl/lighthouse-mcp-server` | MIT | #3626 | **Pattern:** typed Zod `outputSchema` + `structuredContent` pattern for `packages/qa-lab-mcp`. |
+
+### Wave 2 (C): Internal AppSec, CI, Worktrees, CursorQuota, Outreach, Workers & Legal
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `zizmorcore/zizmor` & `step-security/harden-runner` | MIT / Apache-2.0 | #3833 | **Whole CLI/Action:** audit our 29 `.github/workflows/*.yml` for template injection, unpinned actions and CI egress. |
+| `google/osv-scanner` & `gitleaks/gitleaks` | Apache-2.0 / MIT | #3833 | **Whole CLIs:** scan Node/Python/Android lockfiles and re-enable Gitleaks in `linter.yml` with `.gitleaks.toml`. |
+| `makenowjust-labs/recheck` (JP) & `eslint-community/eslint-plugin-security` | MIT / Apache-2.0 | #3833 | **Whole pkgs:** catch ReDoS, bad HTML regexes and weak crypto in `functions/` and `workers/` (`#3687`–`#3694` class). |
+| `max-sixty/worktrunk` / `raine/workmux` | Apache-2.0 / MIT | #3835 | **Pattern:** `flock` serialization around shared `.git/` writes and dirty-tree safety in `scripts/ticket-worktree.sh`. |
+| `octokit/plugin-throttling.js` & `steipete/RepoBar` (AT) | MIT / MIT | #3835 | **Lib / Pattern:** ETag `If-None-Match` (`304` = 0 REST quota) SQLite cache for `scripts/gh-budget.sh` and `jarvis-github.js`. |
+| `ctrf-io/github-test-reporter` & `rwx-research/captain` | MIT / MIT | #3787, #3804 | **Whole / Pattern:** flake-rate reporting, >=5 executed-run threshold and quarantine across flaky CI checks. |
+| `cisco-ai-defense/skill-scanner` & `NVIDIA/SkillEvaluator` | Apache-2.0 / Apache-2.0 | #3835 | **Whole CLIs:** YARA/AST injection scan + overlap eval before adding third-party `.cursor/skills` or MCPs. |
+| `detekt/detekt`, `slackhq/compose-lints`, `getsentry/sentry-java`, `google/horologist`, `touchlab/Kermit` | Apache-2.0 / MIT | #3836, #3783 | **Libs / Rules:** custom Detekt TimSort rule preventing `File.lastModified()` sort crashes (`#3783`), Wear DataLayer sync, Compose lints and Sentry telemetry for `android/` + `cursor-quota`. |
+| `steipete/CodexBar` (AT), `ccusage/ccusage` (JP), `junhoyeo/tokscale` (KR) | MIT / MIT / MIT | #3836 | **Pattern:** bounded WAL SQLite quota/cache pruning (CursorQuota) and token cost accounting (`usage-log.mdc`). |
+| `postalsys/mailauth` (EE), `crisp-oss/email-bounce-parser` (FR), `cry-inc/dmarc-report-viewer` (DE), `domainaware/parsedmarc`, `checkdmarc`, `axllent/mailpit` (NZ), `warmbly/warmbly` | MIT / Apache-2.0 | #3837, #3777 | **Libs / Patterns:** Node 22 SPF/DKIM/DMARC/TLS-RPT parsing (`50 MB` `fflate` zip-bomb cap + aggregate-only storage), ReDoS-safe bounce parsing, CI mail testing and warmup pacing (`qa-lab-outreach` + `functions/`). |
+| `svix/svix-webhooks`, `juspay/hyperswitch` (IN), `jomardyan/Playwright-Law-Suite` | MIT / Apache-2.0 / MIT | #3837 | **Lib / Patterns:** webhook idempotency + 2-way checkout reconciliation for Stripe/PayPal, plus EU/BR/JP compliance pack metadata for `suite.html` / `career-record` (PitchMeIn). |
+| `connor4312/cockatiel`, `healthchecks/healthchecks` (LT), `TwiN/gatus`, `CalmRay-Solutions/uptime-guard` | MIT / BSD-3-Clause / Apache-2.0 / MIT | #3838, #3810, #3811 | **Lib / Patterns:** `Retry-After` backoff + circuit breakers for Cloud Functions & CF Workers, plus `/start`/`/fail` dead-man alerts so 429 skips never log `ok`. |
+| `open-policy-agent/conftest`, `pinojs/pino`, `data-privacy-stack/presidio` | Apache-2.0 / MIT / MIT | #3823 | **Tools:** Rego CI gate checking PII Firestore collections declare `retentionDays`/`expireAt`, log redaction, and PII scrubbing. |
+
+### Wave 3 (D): Design (`#3826`), Media/Social (`#3714`, `#3824`) & Field Sweep (`#3839`, `#3841`, `#3814`)
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `kane50613/takumi` (TW), `paper-design/shaders`, `naughtyduk/liquidGL` (UK), `pmndrs/postprocessing` (DE), `juliangarnier/anime` (FR) | Apache-2.0 / MIT / Zlib | #3826 | **Libs / Renderers:** Rust Satori-compatible renderer + `liquid-glass`, self-hosted WebGL glass/shaders (`script-src 'self'`), `three@0.187` postprocessing and lightweight SVG motion. |
+| `dmnsgn/canvas-record` (FR) + `Vanilagy/mediabunny` (AT), `midrender/revideo` (DE) | MIT / MPL-2.0 / MIT | #3826, #3714 | **Whole pkgs:** direct WebGL/Three.js->MP4 capture and programmatic TS->MP4 rendering without Remotion's commercial license. |
+| `contentauth/c2pa-js`, `contentauth/c2patool`, `facebookresearch/audioseal`, `adobe/trustmark` | MIT / Apache-2.0 | #3824 | **Whole pkgs:** C2PA `trainedAlgorithmicMedia` manifests + resilient speech/image watermarks surviving re-encoding. |
+| `SYSTRAN/faster-whisper` (FR), `m-bain/whisperX` (UK), `slhck/ffmpeg-normalize` (DE) | MIT / BSD-2-Clause / MIT | #3714 | **Whole CLIs:** forced word-level 6-lang subtitle alignment + two-pass EBU R128 normalization. |
+| `sazabi/cve.now`, `cisagov/kev-data`, `projectdiscovery/vulnx`, `macieklamberski/feedsmith` (PL), `newsnext/newsnow` (CN) | Apache-2.0 / CC0-1.0 / MIT | #3839 | **Feeds / Libs:** add zero-key CVE/GHSA/OSV/EUVD/KEV/EPSS cyber stream + strict RSS/Atom parser to `scripts/field-sweep.js`. `cve.now`'s MCP tools were deprecated on 2026-11-11 (the feed endpoints still answer): checked 2026-11-19 (#3940): `https://cve.now/feed` answers 200 (RSS, Atom, JSON) but it merges GHSA/NVD/OSV data of mixed licences, so it is NOT added; the sweep reads `cisagov/kev-data` (CC0-1.0, via the CISA feed) and the GitHub Advisories API (CC BY 4.0, credit carried to hub card and post text) directly. `projectdiscovery/vulnx` (MIT) has no zero-key public feed host (`vulnx.projectdiscovery.io` is NXDOMAIN), so it is not added. |
+| `Telegram-Mini-Apps/tma.js`, `grammyjs/grammY` (DE), `bluesky-social/atproto`, `fedify-dev/fedify` (KR), `neet/masto.js` (JP), `BoundaryML/baml` | MIT / Apache-2.0 | #3841 | **Whole pkgs:** self-hosted Mini App SDK under `script-src 'self'`, `@atproto/lex`, unified Fediverse adapters (not the deprecated `@fedify/denokv` package) and typed LLM contracts. |
+
+### Wave 4 (A): Cyber-Attack Side & Customer Trust (`#3816`–`#3819`, `#3842`, `#3843`)
+*(Additive to `#3816` / `#3818` / `#3819`; does not modify in-flight `#3817` / PR `#3825` or `#3826`.)*
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `google/csp-evaluator` | Apache-2.0 | #3842, #3816 | **Whole pkg:** real CSP allowlist/JSONP/nonce bypass detection. |
+| `RetireJS/retire.js` | Apache-2.0 | #3842, #3816 | **Part:** `jsrepository-v6-combined.json` + OSV + backdoored feeds + native missing-SRI check on `<script>`/`<link>`. |
+| `promptfoo/promptfoo` & `Agent-Threat-Rule/agent-threat-rules` (TW) | MIT / MIT | #3842, #3816 | **Part:** harmless prompt-injection/exfil probe taxonomies in `url-review-chat-talk.js` (review ATR YAML rules statically first). |
+| `TURROKS/CVE_Prioritizer`, `nttgin/BGPalerter`, `typosquatter/ail-typo-squatting` (LU; no push for over a year on Nov 19: pin the last release and use it as a pattern source only), `az7rb/crt.sh`, CIRCL public feeds | BSD-3-Clause / BSD-2-Clause / MIT | #3842, #3816 | **Part / Feeds:** EPSS+KEV ranking, RPKI/RIPEstat routing signals, CT-log lookalikes and public CSIRT feeds (feeds only; never embed `AGPL-3.0` `vulnerability-lookup`). |
+| `vasturiano/three-globe` / `globe.gl`, `shuding/cobe`, `d3/d3-geo`, `apache/echarts`, `sapics/ip-location-db` + `runk/mmdb-lib` | MIT / ISC / Apache-2.0 / PDDL-1.0 | #3819, #3838 | **Whole pkgs + PDDL data:** 3D/2D map over `assets/jarvis/world.json` + zero-attribution PDDL `.mmdb` GeoIP/ASN lookups in Node/Workers. The repo has no LICENSE file; its README grants PDDL only for `iptoasn-*`, `origin-asn`, `user-country` and `server-country`. Never use `geolite2-*` (MaxMind's license); `dbip-*` is CC BY 4.0 (attribution). |
+| `mdn/mdn-http-observatory` + `helmetjs/helmet`, `disclose/diodb`, `certsocietegenerale/IRM` (FR) | MPL-2.0 / MIT / CC0-1.0 / CC-BY-3.0 | #3843, #3818 | **Part / Templates:** clean-room A+–F security rubric + Helmet fixes, RFC 9116 `/.well-known/security.txt` check, and EN/ES/FR IR playbooks w/ attribution. |
+
+### Wave 5 (corner reviews, `#3870`–`#3873`, Nov 19 2026)
+Verdicts from the four corner reviews. An **end-user app** (a desktop, mobile or personal dashboard, or learning material) is listed for Carlos's personal use, at his own responsibility. It is never embedded in product or customer code.
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `ngocanhnckh/renderlint` | MIT | #3870 | **Part:** rule taxonomy (overflow, contrast on the real background, breakpoint sweeps) ported into URL Review's UX step with `puppeteer-core`. Do not ship its CI hook to customers. |
+| `seo-skills/seo-audit-skill` (`@seomator/seo-audit`) | MIT | #3870 | **Part:** pin the package, map its rule IDs into URL Review JSON, dedupe against `agentmarkup` and Rebilder before scoring. |
+| `umutxyp/Seo-Promt-Master` | MIT | #3870 | **Part:** the `seo-audit.mjs` script and the AI-crawler robots matrix for GEO fix-packs. Cite its docs; do not bulk-copy prompts. |
+| `Manavarya09/design-extract` (`designlang`) | MIT | #3870 | **Part:** DTCG tokens and WCAG contrast cards for Design Studio and redesign deliverables. Keep `--smart` (third-party API) off in production. |
+| `AgriciDaniel/claude-seo` | MIT | #3870 | **Pattern:** GEO sub-skill checklist for agency chat only. Port one rule source, not three runtimes. |
+| `yaojingang/GEOInflow` | MIT | #3870 | **Watch, sidecar only:** AI-crawler analytics. Its THIRD_PARTY_NOTICES bundle LGPL libvips, MaxMind GeoLite2 terms and DB-IP attribution data: never vendored into Workers. |
+| `yaojingang/GEORank` | Apache-2.0 | #3870 | **Watch:** checklist ideas only. Do not embed the app in paid paths. |
+| `younatics/MotionBook` | MIT | #3870 | **Pattern:** catalog plus scheduled refresh, as the model for the tool scout. Its listed libraries keep their own licenses. |
+| `invertase/docs.page` | Apache-2.0 | #3870 | **Pattern:** llms.txt and MCP for our own public docs. The hosted service is external. |
+| `saleem-hadad/larecipe` | MIT | #3870 | **Skip, end-user app (Carlos's responsibility):** Laravel in-app docs; our stack is static Pages and Firebase. |
+| `beihaili/Get-Started-with-Web3` | MIT | #3870 | **Skip, end-user learning material (Carlos's responsibility):** Web3 curriculum; no product overlap. |
+| `YunYouJun/valaxy` | MIT | #3870 | **Skip:** Vue blog framework; duplicates the llms.txt work in #3829. |
+| `dequelabs/axe-core-maven-html` | MPL-2.0 | #3870 | **Skip:** Maven wrappers; our axe path is Node (#3831). |
+| `getprovenant/provenant` | Apache-2.0 | #3871 | **Whole pkg:** license, package and SBOM gate with `--fail-on` and SARIF in the #3833 CI. Its bundled ScanCode license data carries attribution terms: keep them in scan output. |
+| `github/actions-lockfile` | MIT | #3871 | **Part:** schema and Go parser for `actions.lock`, beside zizmor (#3833). |
+| `anchore/grant` | Apache-2.0 | #3871 | **Part:** license policy on `grant list dir:.`. Image paths are unused. |
+| `praetorian-inc/titus` | Apache-2.0 | #3871 | **Part:** git-history and APK secret pass before Jarvis and Android releases. No `--validate` in CI; avoid a duplicate gate beside gitleaks (#3833). |
+| `dmarcguardhq/parse-dmarc` | Apache-2.0 | #3871 | **Watch:** self-hosted DMARC ingest with a dashboard. Pick one DMARC stack for outreach against #3837. |
+| `Lab700xOrg/aisbom` | Apache-2.0 | #3871 | **Watch:** ML-model file scanner; only if we vendor model weights (VoiceStudio). |
+| `dmarc-analyzer-net/DmarcAnalyzerApp` | Apache-2.0 | #3871 | **Skip, end-user app (Carlos's responsibility):** self-hosted agency DMARC console (ASP.NET and Postgres); heavier than the queued Node path (#3837). |
+| `dennisdoomen/packageguard`, `oke-py/npm-audit-action`, `padok-team/git-secret-scanner`, `offseq/threat-finder`, `nmatt0/mithril` | MIT / MIT / Apache-2.0 / Apache-2.0 / MIT | #3871 | **Skip:** duplicate osv-scanner or gitleaks, need a paid API key, or target IoT firmware. |
+| `patriciogonzalezvivo/glslViewer` | BSD-3-Clause | #3872 | **Part:** headless shader PNG and sequence export for design QA beside `paper-design/shaders`. It is a console binary, not a browser bundle. |
+| `fand/vfx-js` | MIT | #3872 | **Part:** vendored `@vfx-js/core` for social-clip effects under `script-src 'self'`. Its HTML-in-Canvas path is experimental. |
+| `spite/THREE.MeshLine` | MIT | #3872 | **Part:** tapered brand strokes in `designs/3d/`, only where Three's `Line2` is not enough. |
+| `opencoredev/social-sdk` | MIT | #3872 | **Part:** direct X, Bluesky and YouTube adapters for the social studio. Not its optional Postiz backend, which is AGPL. |
+| `gokayfem/shader-skills` | MIT | #3872 | **Pattern:** agent skill and shader checks for design work. Do not vendor its 541-file gallery. |
+| `c2pa-org/specifications`, `c2pa-org/conformance-public` | CC-BY-4.0 | #3872 | **Pattern:** attributed references for C2PA manifest fields (#3824) and trust-list checks. Not shippable code. |
+| `nexu-io/html-video`, `dmtrKovalenko/fframes`, `0xS4N4TG/kinetograph` | Apache-2.0 / MIT / Apache-2.0 | #3872 | **Watch:** programmatic video. html-video ships only its Hyperframes engine today; the fframes speed claim is unverified; kinetograph is beta, so pin it before any render path. |
+| `MarshalX/atproto` | MIT | #3872 | **Watch:** Python ATProto SDK, pre-1.0. The JS SDK is already queued (#3841). |
+| `deckerst/aves` | BSD-3-Clause | #3872 | **Skip, end-user app (Carlos's responsibility):** Android gallery and metadata app; no hook into our studios. |
+| `rootscripts/riff` | MIT | #3872 | **Skip, end-user app (Carlos's responsibility):** desktop music player that pulls streams from streaming services. Personal use only; streaming terms are the user's risk. |
+| `gre/gl-react` | MIT | #3872 | **Skip:** React-only; the site is plain HTML. |
+| `0xMarcio/pocindex` | MIT | #3873 | **Part (feed):** passive `kev.json`, `epss.json` and `cve_metadata.json` for a "public PoC exists" flag on detected-stack CVEs. Never follow PoC URLs or run anything from them. |
+| `haveibeensquatted/twistrs` | MIT | #3873 | **Part:** permutations only for look-alike domains, paired with passive CT lookups (#3816). No CLI DNS brute force. |
+| `CriticalPathSecurity/Public-Intelligence-Feeds` | MIT | #3873 | **Part (feed):** IOC files only where each upstream feed allows redistribution. Check each row's terms. |
+| `Bert-JanP/Open-Source-Threat-Intel-Feeds` | BSD-3-Clause | #3873 | **Pattern:** catalog for the #3839 feed inventory. Verify each feed's own terms first. |
+| `Fazmin/cve-intel` | MIT / Apache-2.0 | #3873 | **Pattern:** data-source terms matrix for CVE explainers. Do not send customer domains through its non-commercial free-tier APIs. |
+| `safedep/pmg` | Apache-2.0 | #3873 | **Watch:** install-time proxy for our own CI and agents (#3833), not customer audits. |
+| `Patrowl/PatrowlHearsData` | Apache-2.0 | #3873 | **Watch:** CVE mirror; check freshness against OSV before use. |
+| `vulnersCom/api` | MIT | #3873 | **Watch:** SDK only, and the vendor's terms govern its data; overlaps osv-scanner and cve.now. |
+| `okanyildiz/WindowsSecurityAudit` | MIT | #3873 | **Skip, end-user toolkit (Carlos's responsibility):** Windows admin audit and DFIR scripts; not for customer sites. |
+| `CriticalPathSecurity/Zeek-Intelligence-Feeds`, `Quad9DNS/threat-intel-api` | MIT | #3873 | **Skip:** Zeek feeds are for active network monitoring; the Quad9 sample API is for threat-intel vendors. |
+
+### Wave 6 (scouted candidates and an end-user app, `#3899`, `#3900`, Nov 19 2026)
+Verdicts from the scouted-candidate review (#3899) and the knock-knock review (#3900). The end-user row is listed for Carlos's personal use at his own responsibility, on an isolated host, and is never embedded in product or customer code.
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `github/advisory-database` | CC-BY-4.0 | #3899 | **Part (data):** GHSA advisories in OSV format for the #3839 cyber stream, with attribution. The schema may change; it complements `google/osv-scanner` and `sazabi/cve.now` rather than replacing them. |
+| `harlan-zw/unlighthouse` | MIT | #3899 | **Pattern:** multi-URL Lighthouse crawl for agency-scale runs (#3482, #3832). Run it as an isolated CI sidecar with Chrome, never inside a Workers bundle. Compare with `treosh/lighthouse-ci-action`. |
+| `sherwinvishesh/OpenGSO` | Apache-2.0 | #3899 | **Watch:** GEO scorer and agent-readiness middleware. Compare with `agentmarkup` and Rebilder (#3829). Pre-1.0, so pin after 1.0. Its optional AI-polish provider's dependencies are not reviewed. |
+| `a11y-oracle/a11y-oracle` | MIT | #3899 | **Watch:** CDP speech and keyboard-focus checks for URL Review's accessibility lane, after `virtual-screen-reader` (#3832). One star: prove it on customer CSP sites first. Its axe post-processor may need axe-core at runtime; not verified. |
+| `micmro/PerfCascade` | MIT | #3899 | **Skip:** SVG HAR viewer, no push since 2023. `@cloudflare/waterfall` covers it. |
+| `djkurlander/knock-knock` | MIT | #3900 | **Skip, end-user app (Carlos's responsibility):** personal multi-protocol honeypot with a live dashboard (Python and FastAPI). It actively receives attack traffic, so it is out of scope for the passive-only policy and must never feed product code, customer reports or CI. Run it only on a dedicated public-IP host that holds no customer data and shares no network with Jarvis or URL Review. Keep the public blocklist and federation off unless publishing attacker IPs is intended. The MaxMind GeoLite2 terms and the dependency licenses are Carlos's to meet. |
+
+### Wave 7 (weekly scout candidates, `#3909`, Nov 19 2026)
+Verdicts from the review of the three candidates in scout PR #3907. The end-user theme is listed for Carlos's personal use, at his own responsibility, and is never embedded in product or customer code.
+
+| Tool / Source | License | Ticket | Whole vs. Part & Fit |
+|---|---|---|---|
+| `pourdev/pour-engine` | MIT | #3909 | **Watch:** a zero-dependency in-page WCAG 2.2 engine, an optional second accessibility engine for URL Review beside axe (#3831) and `koodikiht/axtree-audit`. Pin a version, dedupe against axe before any use, and do not use the name "pour" in branding (a UK trademark). Its tests live upstream, so nothing is vendored yet. |
+| `Capta1nRaj/goshipit` | Apache-2.0 | #3909 | **Pattern:** a ticked pre-deploy checklist for Jarvis chats only. Its checks are run by an agent, not a deterministic gate, so it never replaces the #3833 gates (zizmor, gitleaks, osv-scanner). Do not install it as a global skill. |
+| `rbartoli/obsidian-tela-theme` | MIT | #3909 | **Skip, end-user app (Carlos's responsibility):** a CSS-only Obsidian theme for Carlos's own vault. Never embedded in product or customer code. |
+
+## Reference only
+- astryx (`meta/astryx`, MIT): React and StyleX design system; the site is plain HTML with Tailwind.
+- Mika (`wangzan101/mika`, Apache-2.0): Android agent over ADB or wireless debugging. Not on Carlos's phone; Maestro flows cover the test phone.
+- unslop (`heydamir/unslop`, CC-BY-4.0): overlaps Hallmark. Pick one: Hallmark.
+- Zero-Breach-Toolkit (`interplains/Zero-Breach-Toolkit`, Apache-2.0, #4016): offline triage of a personal Mac or phone for spyware, stalkerware and open doors. It does not scan app code, APKs or QR-pairing APIs, so it does not harden CursorQuota. Anonymous publisher; embedded datasets carry mixed licenses (CC BY, CC BY-SA, DRL-1.1) and `--make-iphone-backup` pulls GPL-3.0 `pymobiledevice3`. Never run it on Carlos's devices without his consent (Full Disk Access, USB debugging). Patterns worth reading only: `scan/zbtriage/netguard.py` (socket guard) and `CONTRACT.md`.
+
+## Rejected, license traps and archived exclusions
+- **Rejected Nov 20 (#4016):** `anonnerdfrenzy/survival-llm` (MIT code, but its library packs include CC BY-NC-SA material; offline survival and medical Q&A with no overlap with our stack; no pushes since Oct 29; prebuilt Mac and Windows binaries are ad-hoc or unsigned).
+- **Previously rejected:** AutoGPT (Polyform Shield restricts competing products), pinchtab (stealth injection conflicts with responsible scanning), `deepseek-ai/dsh-superagent-prototype` (prototype), `storytold/craft-anything` (same publisher as ArtCraft), VERT (FFmpeg covers media), sand3d (no use case), pixelfx (decorative).
+- **Non-commercial / proprietary traps (never bundle in commercial/paid paths):** `cnumr/EcoIndex` / `ecoindex_js` (`CC BY-NC-ND 3.0`), `patriciogonzalezvivo/lygia` (`Prosperity Public License 3.0.0`), `remotion-dev/remotion` (paid company license), `cortega26/geo-opt` (Tooltician Community License 1.0), `invoiceninja/invoiceninja` (Elastic License 2.0), `BIK-BITV/BIK-Web-Test` / `DISIC/Ara` / `JPCERTCC/phishurl-list` / `telegram-mini-apps-dev/analytics` (no commercial OSI license; analytics uses JS obfuscator), `Cloudflare Radar API` (`CC BY-NC 4.0`, free global context only until licensed), `Shodan InternetDB` (non-commercial without enterprise license).
+- **Copyleft / broken-license traps (do not embed in proprietary bundles):** `vulnerability-lookup/vulnerability-lookup` (`AGPL-3.0`), `qeeqbox/raven` (`AGPL-3.0`), `4ARMED/sri-check` (`GPL-3.0`), `MobSF` (`GPL-3.0`), `ryersondmp/sa11y` (`GPL-2.0-or-later`), `cnumr/GreenIT-Analysis` (`AGPL-3.0`), `DIYgod/RSSHub` (`AGPL-3.0`), `gitroomhq/postiz-app` (`AGPL-3.0`), `knadh/listmonk` (`AGPL-3.0`), `sansan0/TrendRadar` & `WEIFENG2333/VideoCaptioner` (`GPL-3.0`), `Tirth1107/Hyde-Security-JS` (broken merge-conflict `LICENSE`).
+- **Archived / deprecated:** `fluent-ffmpeg/node-fluent-ffmpeg`, `protectai/llm-guard`, `ethyca/fides`, `contentauth/c2pa-node` (merged into `c2pa-js`), `coderabbitai/git-worktree-runner`, `skyware-js/bot` & `skyware-js/jetstream`, `jianfch/stable-ts`.
+- **No license file (nothing to copy):** `openai/skills` (active, not archived), `anthropics/skills` and `vercel-labs/agent-skills` (no license at the repo root: read a skill's own LICENSE before reusing it), `mbaersch/tracking-auditor`.
+- **Mixed or share-alike (read only, never bundle):** `trailofbits/skills` (`CC-BY-SA-4.0`), `EndlessFractal/Threat-Intel-Feed` (`GPL-3.0`), `francozanardi/pycaps` (engine MIT but app AGPL-3.0: read its LICENSE and take the engine only), `CreativeMayhemLtd/provcheck` (watermark add-ons are source-available), `sickn33/agentic-awesome-skills` (an aggregator of other repos' skills, some AGPL: never bulk-import).

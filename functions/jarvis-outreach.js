@@ -8,12 +8,18 @@
    mail       the sending domain's MX, SPF, DKIM and DMARC
    links      qalabreview.com short links: Worker live, visits, reviews, paid unlocks and USD per campaign and prospect,
               and the report replies (#2465, #2471) per network and per post
+   people     the outreach ledger (outreach_people, #3136): people at each stage, in all and by kind
+   companies  site-dependency companies (#3139) per segment: found, reviewed, offered the trial, claimed, paid
+              (outreach_people, functions/company-prospects.js)
 
    The plan, prospect names and email copy stay out of the repo; only counts reach the dashboard. */
 
 const dayRows = require("./jarvis-days");
+const { beforeLastLineDelim } = require("./line-cut");
 const sweep = require("./url-review-sweep");
 const E = require("./engagement");
+const people = require("./outreach-people");
+const Companies = require("./company-prospects");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const DAY = 24 * 60 * 60 * 1000;
@@ -25,7 +31,7 @@ const CAMPAIGN_STATUS = { 0: "draft", 1: "active", 2: "paused", 3: "completed", 
 const clean = (error) => String((error && error.message) || error || "failed").slice(0, 200);
 const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 const toMs = (v) => (v && typeof v.toDate === "function" ? v.toDate().getTime() : Date.parse(v || "") || 0);
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+const bare = (host) => beforeLastLineDelim(String(host || "").toLowerCase().replace(/^https?:\/\//, ""), "/").replace(/^www\./, "");
 
 function tally(map, key) { const k = String(key || "unknown").slice(0, 60); map[k] = (map[k] || 0) + 1; return map; }
 const listOf = (map) => Object.keys(map).map((label) => ({ label, value: map[label] })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
@@ -59,8 +65,22 @@ function pipelineRows(queue, state, reviews, published, ctx) {
     tally(segments, r.sweep.sector);
   });
   const reviewedHosts = new Set(mine.map((r) => bare(r.sweep.host || r.requestedUrl)));
-  const days = (state && state.days) || {};
-  const daily = Object.keys(days).sort().filter((d) => Date.parse(d + "T12:00:00Z") >= start).map((date) => ({ date, reviews: Number(days[date].outreach) || 0 }));
+  // Daily series from the same outreach reviews as `reviews`, so the sparkline matches Reviewed and
+  // still has values when sweep state.days is short (KEEP_DAYS=14) or empty. Cap check is on `mine`
+  // only: non-outreach url_reviews used to push the shared read over REVIEW_CAP and blank priorReviews.
+  const byDay = {};
+  inRange.forEach((r) => {
+    const ms = toMs(r.createdAt);
+    if (!ms) return;
+    const date = new Date(ms).toISOString().slice(0, 10);
+    byDay[date] = (byDay[date] || 0) + 1;
+  });
+  const daily = [];
+  for (let t = start; t <= ctx.now; t += DAY) {
+    const date = new Date(t).toISOString().slice(0, 10);
+    if (daily.length && daily[daily.length - 1].date === date) continue;
+    daily.push({ date, reviews: byDay[date] || 0 });
+  }
   const scores = inRange.map((r) => Number(r.score)).filter((n) => Number.isFinite(n) && n > 0);
   return {
     queued: hosts.length,
@@ -68,12 +88,13 @@ function pipelineRows(queue, state, reviews, published, ctx) {
     left: Math.max(0, hosts.length - (Number(state && state.outreachAt) || 0)),
     bySegment: listOf(bySegment),
     reviews: inRange.length,
-    priorReviews: reachesBack(reviews, REVIEW_CAP, priorStart) ? before.length : null,
+    priorReviews: reachesBack(mine, REVIEW_CAP, priorStart) ? before.length : null,
     thisWeek: mine.filter((r) => toMs(r.createdAt) >= week).length,
     results: listOf(result),
     segments: listOf(segments),
     avgScore: scores.length ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : null,
     withLiveReport: hosts.filter((h) => live.has(bare(h.host))).length,
+    reviewedHosts: reviewedHosts.size,
     reviewedWithLiveReport: Array.from(reviewedHosts).filter((h) => live.has(h)).length,
     daily
   };
@@ -110,7 +131,7 @@ function accountRows(accounts) {
     email: String(a.email || ""), status: a.status === 1 ? "active" : a.status === 2 ? "paused" : a.status < 0 ? "error" : "status " + a.status,
     warmup: a.warmup_status === 1 ? "on" : a.warmup_status === 0 ? "off" : "status " + a.warmup_status, score: a.stat_warmup_score == null ? null : Number(a.stat_warmup_score),
     dailyLimit: a.daily_limit || null,
-    error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/\s*Trace ID:.*$/s, "").slice(0, 240) : ""
+    error: a.status < 0 ? String((a.status_message && (a.status_message.e_message || a.status_message.message)) || "").replace(/(?<!\s)\s*Trace ID:.*$/s, "").slice(0, 240) : ""
   }));
 }
 
@@ -119,7 +140,8 @@ function instantlyRows(campaigns, overview, perCampaign, accounts, priorOverview
   (campaigns || []).forEach((c) => tally(status, CAMPAIGN_STATUS[String(c.status)] || "status " + c.status));
   return Object.assign({
     campaigns: (campaigns || []).length,
-    status: listOf(status)
+    status: listOf(status),
+    openTracking: (campaigns || []).some((c) => c.open_tracking === true)
   }, mailCounts(overview), {
     prior: priorOverview ? mailCounts(priorOverview) : null,
     byCampaign: (perCampaign || []).filter((c) => (c.emails_sent_count || 0) > 0).map((c) => ({
@@ -212,10 +234,13 @@ const FUNNEL = [[1866, "Short links (Worker)"], [1867, "Landing in six languages
 
 // The utm_campaign values qalabreview/src/routes.js sets, by name.
 const CAMPAIGNS = {
-  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email", home: "qalabreview.com home",
+  outreach: "Outreach email", "outreach-new": "Outreach email, no report yet", "outreach-peers": "Peer comparison email",
+  "outreach-rivals": "Competitor email, sample report", home: "qalabreview.com home",
+  landing: "Landing home", "landing-universities": "Landing for universities", "landing-colleges": "Landing for technical training",
+  "landing-agencies": "Landing for agencies", "landing-startups": "Landing for startups",
   youtube: "YouTube short link", tiktok: "TikTok short link", linkedin: "LinkedIn short link", instagram: "Instagram short link", facebook: "Facebook short link",
   x: "X short link", qr: "QR code", "one-pager": "One-pager", lecture: "Lecture slides", webinar: "Webinar", signature: "Email signature", "business-card": "Business card",
-  "unknown-path": "Unknown path"
+  call: "Booking link", "unknown-path": "Unknown path"
 };
 const SOCIAL_REPLY = "social-reply-";
 const netName = (k) => (E.NETWORKS[k] || {}).name || k;
@@ -337,6 +362,7 @@ async function shortLinks(ctx, loggedP) {
   const live = worker.status === 200 && /User-agent/i.test(worker.body);
   const rows = linkRows(opens, reviews, ctx);
   rows.social.posts = socialPosts(rows.social.posts, docs);
+  rows.byVisitor = require("./jarvis-geo-clicks").visitorRows(opens, reviews, ctx, { linkTags, revenue: REVENUE, toMs });
   return Object.assign({ ok: true, live, workerStatus: worker.status, base: SHORT,
     channels: SHORT_PATHS.map(([path, label]) => ({ label, url: SHORT + "/" + path })),
     funnel: FUNNEL.map(([n, label]) => ({ label, url: "https://github.com/kaanmuar/kaanmuar.github.io/issues/" + n })) },
@@ -380,7 +406,12 @@ async function outreach(ctx) {
       return Object.assign({ ok: true }, pipelineRows(queue.exists ? queue.data() : null, sweep.outreachView(state.exists ? state.data() : null, lane.exists ? lane.data() : null), reviews, (index.reports || []).map((r) => r.host), ctx));
     }),
     part("links", () => shortLinks(ctx, loggedP)),
+    part("companies", () => Companies.dashboard(ctx.db)),
     part("instantly", () => instantly(ctx)),
+    part("people", async () => {
+      const snap = await ctx.db.collection(people.COLLECTION).select("stage", "kind").limit(5000).get();
+      return Object.assign({ ok: true }, people.counts(snap.docs.map((d) => d.data())));
+    }),
     part("plan", async () => {
       const snap = await ctx.db.collection("jarvis_settings").doc("outreach").get();
       planDoc = snap.exists ? snap.data() : null;

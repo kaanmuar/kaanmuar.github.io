@@ -5,6 +5,9 @@
 export const MODES = {
   "0 12 * * mon-fri": "prospects",
   "0 13 * * mon-fri": "replies",
+  // Company trials (#3139): up to 30 offers a day, before leads so the ones Carlos approved upload the same day; each
+  // Instantly campaign still sends at most 10 a day.
+  "0 14 * * mon-fri": "companies",
   "0 15 * * mon-fri": "leads",
   "17 */3 * * *": "holidays",
   // Peer groups (#2363): after leads, the groups the sweep finished are compared and sent; on Mondays, 10 new groups.
@@ -12,14 +15,19 @@ export const MODES = {
   "0 11 * * mon": "peers-build",
 };
 
+import { createBreaker, resilientFetch } from "../../shared/breaker.js";
+
+// One breaker for api.github.com (#3838): five failures in a row pause the calls for a minute; a 429/503 waits for Retry-After.
+const githubBreaker = createBreaker({ name: "github", threshold: 5, coolDownMs: 60000 });
+
 const INSTALLATION = 175836846;
 const REPO = "qa-lab-outreach";
 
-const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/(?<!=)=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 const text64 = (value) => b64url(new TextEncoder().encode(JSON.stringify(value)));
 
 async function github(path, token, body) {
-  const res = await fetch("https://api.github.com" + path, {
+  const res = await resilientFetch("https://api.github.com" + path, {
     method: "POST",
     headers: {
       authorization: `Bearer ${token}`,
@@ -28,7 +36,7 @@ async function github(path, token, body) {
       "user-agent": "outreach-cron",
     },
     body: JSON.stringify(body),
-  });
+  }, { breaker: githubBreaker, retries: 3 });
   if (!res.ok) throw new Error(`POST ${path}: ${res.status} ${await res.text()}`);
   return res.status === 204 ? null : res.json();
 }

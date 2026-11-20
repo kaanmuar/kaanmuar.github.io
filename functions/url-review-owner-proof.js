@@ -1,4 +1,4 @@
-/* Proof that the asker may talk to a site (the chat conversation, form testing), besides "own" from a mailbox
+/* Proof that the asker may talk to a site (the chat conversation, form testing, the exposed-files probes), besides "own" from a mailbox
    on the site's domain (core.ownerProof):
    - "credentials": the operator recorded on the review desk that this account's signed-in run for the host is verified.
    - "site": the owner put qa-lab-verify=<token> in a DNS TXT record of the host or its registrable domain,
@@ -73,7 +73,7 @@ function validFor(rows, email, host, now) {
 
 function metaTokens(html) {
   const out = [];
-  for (const tag of String(html || "").match(/<meta\b[^>]*>/gi) || []) {
+  for (const tag of String(html || "").match(/<meta\b(?<=(?:^|>)(?:(?!<meta\b)[^>])*<meta)[^>]*>/gi) || []) {
     if (!/\bname\s*=\s*["']?qa-lab-verify["'\s/>]/i.test(tag)) continue;
     const content = tag.match(/\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
     if (content) out.push((content[1] || content[2] || content[3] || "").trim());

@@ -99,7 +99,7 @@ class GithubTest {
         assertTrue(CHIPS.contains("github" to "GitHub"))
         listOf("gh-board-sync", "gh-orphan-ticket", "gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch", "gh-close-issue", "gh-remove-worktree", "gh-agent", "rerun-ci")
             .forEach { assertTrue(it, ACTION_LABELS.containsKey(it)) }
-        assertEquals("Launch a Cursor fix agent", ACTION_LABELS["gh-agent"])
+        assertEquals("Launch a fix agent", ACTION_LABELS["gh-agent"])
         assertEquals("squash-merge PR #12 into main now (it goes to production)", askFor("gh-merge-pr", null, null, 12))
         assertEquals("delete the merged branch fix/1", askFor("gh-delete-branch", "fix/1", null))
         assertEquals("delete the merged branches", askFor("gh-delete-branch", null, null))
@@ -129,6 +129,34 @@ class GithubTest {
         assertEquals(4, per)
         assertEquals(67, size)
         assertEquals(1 to 60, Github.ringGrid(40, 3))
+    }
+
+    @Test fun workerSpendWarnsAtTwentyAndStopsAtForty() {
+        val ok = Github.spend(json("""{"spend":{"month":"2026-11","usd":0.116,"cap":40,"warn":20,"left":39.884,"level":"ok","runs":1,"input":176980,"output":9170}}"""))!!
+        assertEquals("good", Github.spendTone(ok))
+        assertEquals("$39.88 left before the worker stops at $40.00.", Github.spendLine(ok))
+        assertEquals(0.5f, ok.warnAt)
+        assertEquals(176980L, ok.input)
+        val warn = Github.spend(json("""{"spend":{"usd":21.5,"cap":40,"warn":20}}"""))!!
+        assertEquals("warn", warn.level)
+        assertEquals("Past the $20.00 warning; the worker stops at $40.00.", Github.spendLine(warn))
+        val over = Github.spend(json("""{"spend":{"usd":45,"cap":40,"warn":20,"level":"over"}}"""))!!
+        assertEquals("alert", Github.spendTone(over))
+        assertEquals(1f, over.fraction)
+        assertTrue(Github.spendLine(over).contains("Cursor"))
+        assertNull(Github.spend(json("""{"ok":true}""")))
+        assertNull(Github.spend(null))
+    }
+
+    @Test fun workerRowsNameTheModelAndTheHandOff() {
+        assertEquals("Flash", Github.workerModel(json("""{"tier":"flash"}""")))
+        assertEquals("Pro after Flash", Github.workerModel(json("""{"tier":"pro","escalatedFrom":"wabc"}""")))
+        assertEquals("failed → Pro", Github.workerState(json("""{"state":"failed","escalatedTo":"wdef"}""")))
+        assertEquals("no change", Github.workerState(json("""{"state":"nochange"}""")))
+        assertEquals("alert", Github.workerLevel("failed"))
+        assertEquals("good", Github.workerLevel("done"))
+        assertEquals("Gemini quota", Github.workerState(json("""{"state":"failed","reason":"quota"}""")))
+        assertEquals("warn", Github.workerLevel("failed", "quota"))
     }
 
     private fun JsonObject.str() = (this["key"] as kotlinx.serialization.json.JsonPrimitive).content

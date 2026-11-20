@@ -1,0 +1,67 @@
+# .cursorindexingignore — exclude from Cursor vector index & BGE-M3 preflight
+# index (#3474), while keeping full Read / Grep / @file access.
+
+# Operational logs (agents append via usage-log; no semantic search value)
+work-log.csv
+**/work-log*.csv
+*.log
+
+# Lockfiles (readable when debugging deps; never auto-context)
+package-lock.json
+**/package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+watir/Gemfile.lock
+
+# Minified / map / font / icon noise
+**/*.min.js
+**/*.min.css
+**/*.map
+**/*.svg
+**/*.woff
+**/*.woff2
+**/*.ttf
+**/*.ico
+
+# Large fixtures & snapshots (still @-able)
+**/fixtures/**/*.json
+**/fixtures/**/*.html
+**/__snapshots__/
+**/*.snap
+
+# Bulk media & social dumps (3G+; use @file / media-review when needed)
+media/
+social/
+assets/social/thumbs/
+assets/live-reports/
+assets/domains/
+data/pagespeed/
+llms-full.txt
+sitemap-social.xml
+scripts/trending-tags.json
+scripts/social-hub/phrases/
+
+# Social-clip intermediate captions (read on demand)
+**/social-clips/**/manifest*.json
+**/social-clips/**/*.vtt
+**/social-clips/**/*.srt
+
+# Build / test / cache outputs (still Read/Grep-able; #3552 re-audit)
+node_modules/
+**/node_modules/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+robot-results/
+.venv-robot/
+dist/
+build/
+.turbo/
+.cache/
+.tmp/
+tmp/
+.firebase/
+android/
+ios/

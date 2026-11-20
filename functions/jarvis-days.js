@@ -8,18 +8,34 @@
    events    site_events               opens     url_review_opens (no ip or user agent)
    reviews   url_reviews (summary)     alerts    url_review_alerts
    notices   url_review_owner_notices  rivals    url_review_rivals
-   captures  url_review_captures       failures  url_review_failures (kept 90 days) */
+   captures  url_review_captures       failures  url_review_failures (kept 90 days)
+
+   A caller that keeps state (health, #2101) holds the day parts and open-day rows it has read, in memory and in
+   jarvis_cache/state-<name>: a part still current is not read again, and the open day of a source whose rows never
+   change once written (no settle, no live) is read only from its newest held row, then in full once an hour.
+   Without a state (the snapshot's products, #2099), such a source keeps its open day in the day's document with the
+   time it was read through, so a refresh reads only the rows written since, and the day is topped up when it closes.
+   Reviews and notices change in place and are read whole for the open day. */
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
-const VERSION = 1;
+// 2: a kind too big for its day document is stored in shard documents (#3785). A version 1 day that went over the cap
+// is read again once, into shards.
+const VERSION = 2;
 // A day closes an hour after midnight UTC, so rows written late for it still land before it is stored.
 const CLOSE_MS = HOUR;
 // A stored day whose rows may still change (settle) is read again after 6 hours, or a quarter of its age if longer.
 const REFRESH_MS = 6 * HOUR;
 const MEMO_MS = 2 * 60 * 1000;
 const MAX_BYTES = 900000;
+// A kind whose rows pass LIMITS.min bytes is stored in shard documents of up to LIMITS.shard bytes, at most LIMITS.maxShards
+// of them (a document holds 1 MiB). An object so a test can make the limits small.
+const LIMITS = { min: 200000, shard: 700000, maxShards: 40 };
 const COLLECTION = "jarvis_days";
+// A row committed a little after its own timestamp still lands inside the overlap of the next incremental read.
+const OVERLAP_MS = 10 * 60 * 1000;
+const FULL_MS = HOUR;
+const STATE_DAYS = 400;
 
 // A whole review document holds the report (hundreds of KB); a week of them overran the function's 512 MB (#1579).
 const REVIEW_FIELDS = ["createdAt", "paid", "test", "priceUsd", "status", "score", "requestedUrl", "url", "frameworks", "query", "referrerHost"];
@@ -28,7 +44,7 @@ const KINDS = {
   events: { name: "site_events", field: "createdAt", keep: 365 },
   opens: { name: "url_review_opens", field: "createdAt", keep: 365, fields: ["createdAt", "city", "country", "region", "lang", "languages", "page", "query", "referrerHost", "screen", "timezone", "title", "urls"] },
   // A refund lands on the review days or weeks later, so refunded reviews are read live over the stored ones.
-  reviews: { name: "url_reviews", field: "createdAt", iso: true, keep: 365, settle: 2 * DAY, live: ["refunded", "==", true], fields: REVIEW_FIELDS.concat(["sweep.outreach", "sweep.sector", "sweep.host", "refundedUsd", "refunded", "email", "reportId"]) },
+  reviews: { name: "url_reviews", field: "createdAt", iso: true, keep: 365, settle: 2 * DAY, live: ["refunded", "==", true], fields: REVIEW_FIELDS.concat(["sweep.outreach", "sweep.sector", "sweep.host", "refundedUsd", "refunded", "email", "reportId", "country"]) },
   alerts: { name: "url_review_alerts", field: "at", iso: true, keep: 365, fields: ["at", "kind", "title", "url", "priceUsd"] },
   // A notice waits days for its send (status, lastError) and can be unlisted any time after.
   notices: { name: "url_review_owner_notices", field: "createdAt", iso: true, keep: 365, settle: 30 * DAY, fields: ["createdAt", "status", "unlistedAt", "lastError"] },
@@ -72,6 +88,63 @@ async function openRows(db, kind, from) {
   return rows;
 }
 
+const writeOnce = (kind) => !KINDS[kind].settle && !KINDS[kind].live;
+
+// The open day kept in its document for a write-once kind, read through `through`.
+const tail = (part) => (part && part.v === VERSION && part.open && !part.over && Number.isFinite(part.through) ? part : null);
+
+function union(kept, added, field, before) {
+  const byId = new Map();
+  kept.concat(added).forEach((row) => { if (before === undefined || toMs(row[field]) < before) byId.set(row.id, row); });
+  return Array.from(byId.values());
+}
+
+// The open day without a state: a write-once kind adds the rows since its kept read to the kept ones and keeps the
+// result in the day's document for the next refresh; the others are read whole.
+async function openDay(db, kinds, edge, now, out) {
+  const remember = (kind, rows) => { memo.set(kind + "|" + edge, { db, at: Date.now(), rows }); out[kind].push(...rows); };
+  const groups = {};
+  await Promise.all(kinds.map(async (kind) => {
+    const hit = memo.get(kind + "|" + edge);
+    if (hit && hit.db === db && Date.now() - hit.at < MEMO_MS) out[kind].push(...hit.rows);
+    else if (writeOnce(kind)) (groups[KINDS[kind].keep] = groups[KINDS[kind].keep] || []).push(kind);
+    else out[kind].push(...(await openRows(db, kind, edge)));
+  }));
+  await Promise.all(Object.keys(groups).map(async (keep) => {
+    const ref = db.collection(COLLECTION).doc(dayKey(edge) + "_" + keep);
+    const snap = await ref.get().catch(() => null);
+    const stored = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
+    const parts = await fullParts(db, dayKey(edge) + "_" + keep, stored);
+    const fresh = {};
+    await Promise.all(groups[keep].map(async (kind) => {
+      const kept = tail(parts[kind]);
+      const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(edge, kept.through - OVERLAP_MS)), KINDS[kind].field) : await raw(db, kind, edge);
+      fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), open: true, through: now, final: false, over: false, rows };
+      remember(kind, rows);
+    }));
+    await save(db, ref, edge, Number(keep), stored, fresh);
+  }));
+}
+
+const newest = (rows, field, floor) => rows.reduce((max, row) => Math.max(max, toMs(row[field]) || 0), floor);
+
+// The open day's rows from a state: write-once sources read only what is newer than the rows held.
+async function openHeld(db, kind, edge, now, state) {
+  const k = KINDS[kind];
+  if (!state || k.settle || k.live) return openRows(db, kind, edge);
+  const held = state.open[kind];
+  if (!held || held.edge !== edge || !(now - held.full < FULL_MS)) {
+    const rows = await raw(db, kind, edge);
+    state.open[kind] = { edge, full: now, rows };
+    return rows;
+  }
+  const fresh = await raw(db, kind, Math.max(edge, newest(held.rows, k.field, edge) - OVERLAP_MS));
+  const byId = new Map(held.rows.map((row) => [row.id, row]));
+  fresh.forEach((row) => byId.set(row.id, row));
+  held.rows = Array.from(byId.values());
+  return held.rows;
+}
+
 // The first day each source holds a row, so a long range does not read a document for every empty day before it.
 async function floors(db, kinds) {
   const ref = db.collection(COLLECTION).doc("meta");
@@ -91,64 +164,141 @@ async function floors(db, kinds) {
 }
 
 function current(part, day, now) {
-  if (!part || part.v !== VERSION || part.over) return false;
+  if (!part || part.v !== VERSION || part.over || part.open) return false;
   return part.final === true || now - Date.parse(part.at) < Math.max(REFRESH_MS, (now - day - DAY) / 4);
 }
 
 const getAll = (db, refs) => (typeof db.getAll === "function" ? db.getAll(...refs) : Promise.all(refs.map((ref) => ref.get())));
 
-// Stores the parts read again; a day too large for one document keeps its rows out and is read raw each time.
-async function save(ref, day, keep, parts, fresh) {
-  const out = {};
-  Object.keys(fresh).forEach((kind) => { out[kind] = Object.assign({}, fresh[kind]); });
-  const size = () => JSON.stringify(Object.assign({}, parts, out)).length;
-  Object.keys(out).sort((a, b) => out[b].rows.length - out[a].rows.length).forEach((kind) => {
-    if (size() > MAX_BYTES) out[kind] = Object.assign({}, out[kind], { rows: [], over: true });
+// Rows of a kind split into chunks of at most `limit` bytes (a row bigger than that gets a chunk of its own).
+function splitRows(rows, limit) {
+  const chunks = [];
+  let chunk = [];
+  let size = 2;
+  rows.forEach((row) => {
+    const bytes = JSON.stringify(row).length + 1;
+    if (chunk.length && size + bytes > limit) { chunks.push(chunk); chunk = []; size = 2; }
+    chunk.push(row);
+    size += bytes;
   });
-  await ref.set({ day: dayKey(day), expireAt: new Date(day + DAY + keep * DAY), parts: out }, { merge: true }).catch(() => null);
+  if (chunk.length) chunks.push(chunk);
+  return chunks;
 }
 
-async function storedDays(db, kinds, days, floor, now, out) {
+const shardId = (id, kind, n) => id + "~" + kind + "~" + n;
+
+// A day's parts with the rows of its sharded kinds read back from their shard documents. A shard that is missing marks
+// its kind over and not final, so the day is read raw again and stored once more.
+async function fullParts(db, id, parts) {
+  const sharded = Object.keys(parts).filter((kind) => parts[kind] && parts[kind].shards > 0);
+  if (!sharded.length) return parts;
+  const refs = [];
+  const owner = [];
+  sharded.forEach((kind) => {
+    for (let n = 1; n <= parts[kind].shards; n += 1) { refs.push(db.collection(COLLECTION).doc(shardId(id, kind, n))); owner.push({ kind, n }); }
+  });
+  const snaps = await getAll(db, refs);
+  const full = Object.assign({}, parts);
+  sharded.forEach((kind) => {
+    const pieces = [];
+    let complete = true;
+    owner.forEach((o, i) => {
+      if (o.kind !== kind) return;
+      const data = snaps[i] && snaps[i].exists ? snaps[i].data() || {} : null;
+      if (data && Array.isArray(data.rows)) pieces[o.n - 1] = data.rows;
+      else complete = false;
+    });
+    full[kind] = complete
+      ? Object.assign({}, parts[kind], { rows: [].concat(...pieces) })
+      : Object.assign({}, parts[kind], { rows: [], over: true, final: false });
+  });
+  return full;
+}
+
+// Stores the parts read again. A kind too big for the day document goes to shard documents; one still too big after
+// LIMITS.maxShards keeps its rows out and is read raw each time.
+async function save(db, ref, day, keep, parts, fresh) {
+  const out = {};
+  const id = dayKey(day) + "_" + keep;
+  const expireAt = new Date(day + DAY + keep * DAY);
+  const writes = [];
+  Object.keys(fresh).forEach((kind) => {
+    const rows = fresh[kind].rows || [];
+    const stored = (parts[kind] && parts[kind].shards) || 0;
+    const sharded = JSON.stringify(rows).length > LIMITS.min;
+    const chunks = sharded ? splitRows(rows, LIMITS.shard) : [];
+    const tooBig = chunks.length > LIMITS.maxShards;
+    const kept = tooBig ? [] : chunks;
+    for (let n = 1; n <= Math.max(stored, kept.length); n += 1) {
+      const doc = db.collection(COLLECTION).doc(shardId(id, kind, n));
+      writes.push(n <= kept.length ? doc.set({ day: dayKey(day), expireAt, rows: kept[n - 1] }) : doc.delete());
+    }
+    out[kind] = Object.assign({}, fresh[kind], kept.length ? { rows: [], shards: kept.length } : { shards: 0 }, tooBig ? { rows: [], over: true } : {});
+  });
+  const size = () => JSON.stringify(Object.assign({}, parts, out)).length;
+  Object.keys(out).filter((kind) => !out[kind].shards).sort((a, b) => out[b].rows.length - out[a].rows.length).forEach((kind) => {
+    if (size() > MAX_BYTES) out[kind] = Object.assign({}, out[kind], { rows: [], over: true });
+  });
+  writes.push(ref.set({ day: dayKey(day), expireAt, parts: out }, { merge: true }));
+  await Promise.all(writes.map((write) => write.catch(() => null)));
+}
+
+async function storedDays(db, kinds, days, floor, now, out, state) {
   const groups = {};
   kinds.forEach((kind) => { (groups[KINDS[kind].keep] = groups[KINDS[kind].keep] || []).push(kind); });
   await Promise.all(Object.keys(groups).map(async (keepKey) => {
     const keep = Number(keepKey);
     const list = groups[keepKey];
     const has = (kind, day) => !!floor[kind] && dayKey(day) >= floor[kind];
+    const id = (day) => dayKey(day) + "_" + keep;
+    const hold = (day, kind, part) => { if (state) state.days[id(day)] = Object.assign(state.days[id(day)] || {}, { [kind]: part }); };
+    const held = (day) => state && state.days[id(day)];
+    const covered = (day) => !!held(day) && list.filter((kind) => has(kind, day)).every((kind) => current(held(day)[kind], day, now));
     const wanted = days.filter((day) => day + DAY > now - keep * DAY && list.some((kind) => has(kind, day)));
-    if (!wanted.length) return;
-    const refs = wanted.map((day) => db.collection(COLLECTION).doc(dayKey(day) + "_" + keep));
+    wanted.filter(covered).forEach((day) => list.filter((kind) => has(kind, day)).forEach((kind) => out[kind].push(...(held(day)[kind].rows || []))));
+    const toRead = wanted.filter((day) => !covered(day));
+    if (!toRead.length) return;
+    const refs = toRead.map((day) => db.collection(COLLECTION).doc(id(day)));
     const snaps = await getAll(db, refs);
     await Promise.all(snaps.map(async (snap, i) => {
-      const day = wanted[i];
-      const parts = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
+      const day = toRead[i];
+      const stored = (snap && snap.exists ? (snap.data() || {}).parts : null) || {};
+      const parts = await fullParts(db, id(day), stored);
       const fresh = {};
       await Promise.all(list.filter((kind) => has(kind, day)).map(async (kind) => {
         const part = parts[kind];
-        if (current(part, day, now)) { out[kind].push(...(part.rows || [])); return; }
-        const rows = await raw(db, kind, day, day + DAY);
+        if (current(part, day, now)) { out[kind].push(...(part.rows || [])); hold(day, kind, part); return; }
+        // A day kept while open only needs the rows written after it was last read.
+        const kept = tail(part);
+        const rows = kept ? union(kept.rows || [], await raw(db, kind, Math.max(day, kept.through - OVERLAP_MS), day + DAY), KINDS[kind].field, day + DAY) : await raw(db, kind, day, day + DAY);
         out[kind].push(...rows);
         const final = now >= day + DAY + (KINDS[kind].settle || CLOSE_MS);
-        if (!(part && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, rows };
+        if (!(part && part.v === VERSION && part.over && part.final)) fresh[kind] = { v: VERSION, at: new Date(now).toISOString(), final, over: false, open: false, through: null, rows };
+        if (fresh[kind]) hold(day, kind, fresh[kind]);
       }));
-      if (Object.keys(fresh).length) await save(refs[i], day, keep, parts, fresh);
+      if (Object.keys(fresh).length) await save(db, refs[i], day, keep, stored, fresh);
     }));
   }));
 }
 
 // Rows of each kind whose time field falls in [from, now], newest first: stored days, then the open day raw.
-async function rows(db, kinds, { from, now }) {
+async function rows(db, kinds, { from, now, state }) {
   const out = {};
   kinds.forEach((kind) => { if (!KINDS[kind]) throw new Error("No such day rows: " + kind); out[kind] = []; });
   const edge = dayStart(now - CLOSE_MS);
   const days = [];
   for (let day = dayStart(from); day < edge; day += DAY) days.push(day);
-  if (days.length) await storedDays(db, kinds, days, await floors(db, kinds), now, out);
+  if (days.length) {
+    const floor = state && kinds.every((kind) => state.floor[kind]) ? state.floor : await floors(db, kinds);
+    if (state) Object.assign(state.floor, floor);
+    await storedDays(db, kinds, days, floor, now, out, state);
+  }
+  if (state) Object.keys(state.days).forEach((id) => { if (Date.parse(id.slice(0, 10)) < now - STATE_DAYS * DAY) delete state.days[id]; });
   const live = {};
-  await Promise.all(kinds.map(async (kind) => {
-    out[kind].push(...(await openRows(db, kind, edge)));
+  const open = state ? Promise.all(kinds.map(async (kind) => { out[kind].push(...(await openHeld(db, kind, edge, now, state))); })) : openDay(db, kinds, edge, now, out);
+  await Promise.all([open].concat(kinds.map(async (kind) => {
     live[kind] = days.length ? await liveRows(db, kind) : [];
-  }));
+  })));
   kinds.forEach((kind) => {
     const field = KINDS[kind].field;
     const patch = new Map(live[kind].map((row) => [row.id, row]));
@@ -179,4 +329,30 @@ function plain(row) {
   return out;
 }
 
-module.exports = { KINDS, REVIEW_FIELDS, VERSION, rows, plain, toMs, dayKey, _memo: memo };
+// A caller's state: this instance's copy, else the one the last instance saved, else empty.
+async function loadState(db, name) {
+  const hit = memo.get("state|" + name);
+  if (hit && hit.db === db) return hit.state;
+  const snap = await db.collection("jarvis_cache").doc("state-" + name).get().catch(() => null);
+  let state = null;
+  try { state = snap && snap.exists ? JSON.parse((snap.data() || {}).json) : null; } catch (error) { state = null; }
+  if (!state || state.v !== VERSION) state = { v: VERSION, floor: {}, days: {}, open: {}, extra: {} };
+  memo.set("state|" + name, { db, state });
+  return state;
+}
+
+// Oldest days drop out until the state fits one document; one that still does not fit stays in memory only.
+async function saveState(db, name, state) {
+  memo.set("state|" + name, { db, state });
+  const copy = Object.assign({}, state, { days: Object.assign({}, state.days) });
+  const ids = Object.keys(copy.days).sort();
+  let json = JSON.stringify(copy);
+  while (json.length > MAX_BYTES && ids.length) {
+    delete copy.days[ids.shift()];
+    json = JSON.stringify(copy);
+  }
+  if (json.length > MAX_BYTES) return;
+  await db.collection("jarvis_cache").doc("state-" + name).set({ at: new Date().toISOString(), json }).catch(() => null);
+}
+
+module.exports = { KINDS, REVIEW_FIELDS, VERSION, OVERLAP_MS, FULL_MS, LIMITS, rows, plain, toMs, dayKey, splitRows, loadState, saveState, _memo: memo };

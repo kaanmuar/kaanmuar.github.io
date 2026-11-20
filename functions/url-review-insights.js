@@ -1,10 +1,26 @@
 "use strict";
 
 const { URL } = require("url");
+const linkedRisk = require("./url-review-linked-risk");
 const libraries = require("./url-review-libraries");
+const threatLists = require("./url-review-threat-lists");
+const wordpress = require("./url-review-wordpress");
 const { germanSpeaking } = require("./url-review-legal");
 const { say, some, english } = require("./url-review-findings-en");
 const localProfile = require("./url-review-local");
+const { mailAuthChecks, dmarcRepair, dmarcPolicy, dkimChecks, dkimState } = require("./url-review-mail-auth");
+const blocklists = require("./url-review-blocklists");
+const exposedFiles = require("./url-review-exposed");
+const lookalikes = require("./url-review-lookalikes");
+const hackSigns = require("./url-review-hack-signs");
+const targeted = require("./url-review-targeted");
+const geoAgent = require("./url-review-geo-agent");
+const carbonModel = require("./url-review-carbon");
+const headOrder = require("./url-review-head-order");
+const waterfall = require("./url-review-har");
+const pageGraph = require("./url-review-page-graph");
+const cyberPassive = require("./url-review-cyber-passive");
+const trustGrade = require("./url-review-trust-grade");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -66,6 +82,7 @@ const REQUIRED_PROPS = {
 };
 
 const COOKIELESS = ["Plausible", "Fathom", "Cloudflare Web Analytics", "Umami", "Vercel Analytics"];
+const AD_TAGS = ["Google Ads", "Meta Pixel", "LinkedIn Insight", "TikTok Pixel", "X Pixel", "Pinterest Tag", "Microsoft Ads UET"];
 const NO_SRI_HOSTS = /(^|\.)(googletagmanager\.com|google-analytics\.com|google\.com|gstatic\.com|facebook\.net|doubleclick\.net|hotjar\.com|clarity\.ms|licdn\.com|hs-scripts\.com|hs-analytics\.net|stripe\.com|paypal\.com|recaptcha\.net|cloudflareinsights\.com|youtube\.com|twitter\.com|x\.com|tiktok\.com|bing\.com)$/i;
 const ANALYTICS_CONNECT = {
   "Google Analytics 4": ["https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"],
@@ -91,7 +108,7 @@ function normal(value) {
     const url = new URL(value);
     url.hash = "";
     let path = url.pathname.replace(/\/index\.html?$/i, "/");
-    if (path.length > 1) path = path.replace(/\/+$/, "");
+    if (path.length > 1) path = path.replace(/(?<!\/)\/+$/, "");
     return url.protocol + "//" + url.host.toLowerCase() + path + url.search;
   } catch (error) {
     return String(value || "");
@@ -274,6 +291,39 @@ function grade(score) {
   if (score >= 70) return "C";
   if (score >= 55) return "D";
   return "F";
+}
+
+// Area scores, the overall score and the verdict and severity counts of a list of findings. compareSites rescores the
+// asker's findings with this on the checks a passive competitor run also got.
+function scoreFindings(findings) {
+  const areas = {};
+  AREAS.forEach((area) => {
+    const mine = findings.filter((item) => item.area === area);
+    let score = 100;
+    let lowRisk = 0;
+    mine.forEach((item) => {
+      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
+      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
+      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
+    });
+    score -= Math.min(LOW_RISK_CAP, lowRisk);
+    score = Math.max(0, Math.min(100, score));
+    areas[area] = {
+      score,
+      grade: grade(score),
+      fail: mine.filter((item) => item.verdict === "fail").length,
+      risk: mine.filter((item) => item.verdict === "risk").length,
+      pass: mine.filter((item) => item.verdict === "pass").length,
+      person: mine.filter((item) => item.verdict === "person").length
+    };
+  });
+  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
+  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
+  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
+  findings.forEach((item) => { if (totals[item.verdict] != null) totals[item.verdict] += 1; });
+  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach((item) => { if ((item.verdict === "fail" || item.verdict === "risk") && severities[item.severity] != null) severities[item.severity] += 1; });
+  return { overall, grade: grade(overall), areas, totals, severities };
 }
 
 function hostingHint(technologies, headers) {
@@ -718,7 +768,7 @@ function localChecks(local, host, add) {
 
 // Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
 function domainChecks(extras, dnsInfo, dnsRead, add) {
-  const end = (text) => String(text).replace(/\.*$/, ".");
+  const end = (text) => String(text).replace(/(?<!\.)\.*$/, ".");
   const sb = extras.safeBrowsing;
   if (sb && sb.ok) {
     const words = sb.threats.map((item) => THREAT_WORDS[item] ? say("threat." + item) : item.toLowerCase().replace(/_/g, " "));
@@ -728,9 +778,10 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
       say("sec-safebrowsing.fix"), { effort: "days", cases: ["SEC-11"] });
     else add("Security", "pass", "info", "sec-safebrowsing", say("sec-safebrowsing.pass.title"), say("sec-safebrowsing.pass.evidence", { url: sb.url }), "", { cases: ["SEC-11"] });
   }
+  threatLists.addFindings(extras.threatLists, add);
   const dom = extras.domain;
   if (dom && dom.read) {
-    const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, "") : "";
+    const registrar = dom.registrar ? String(dom.registrar).replace(/(?<!\.)\.*$/, "") : "";
     const held = dom.registrar ? say("sec-domain.held", { domain: dom.domain, registrar: dom.registrar }) : dom.domain;
     if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", say("sec-domain-expiry.expired.title"),
       say("sec-domain-expiry.expired.evidence", { held, date: dom.expires }), say("sec-domain-expiry.expired.fix"), { effort: "minutes", cases: ["SEC-12"] });
@@ -762,16 +813,8 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
   }
 }
 
-// Sustainable Web Design model v4: 0.3 kWh per GB across data centres, networks and devices, at the 494 g/kWh global grid average.
-const CARBON_KWH_PER_GB = 0.3;
-const CARBON_GRID_G_PER_KWH = 494;
-const CARBON_RATINGS = [["A+", 0.04], ["A", 0.079], ["B", 0.145], ["C", 0.209], ["D", 0.278], ["E", 0.359]];
-
-function carbonEstimate(bytes, source) {
-  if (!(bytes > 0)) return null;
-  const grams = (bytes / 1e9) * CARBON_KWH_PER_GB * CARBON_GRID_G_PER_KWH;
-  return { bytes: Math.round(bytes), grams: Math.round(grams * 1000) / 1000, rating: (CARBON_RATINGS.find(([, max]) => grams <= max) || ["F"])[0], source };
-}
+// Sustainable Web Design model v4 (url-review-carbon.js).
+const carbonEstimate = carbonModel.estimate;
 
 function speedChecks(psi, add) {
   const field = psi.field;
@@ -1259,6 +1302,27 @@ function analyze(input) {
   } else {
     add("SEO", "pass", "info", "seo-social", say("seo-social.pass.title"), say("seo-social.pass.evidence"), "", { cases: ["CT-03"] });
   }
+  if (social.ogUrl && face.seo && face.seo.canonicalAbs && normal(social.ogUrl) !== normal(face.seo.canonicalAbs)) {
+    add("SEO", "risk", "low", "seo-social-url", say("seo-social-url.title"),
+      say("seo-social-url.evidence", { ogUrl: shownAgainst(social.ogUrl, home.url), canonical: shownAgainst(face.seo.canonicalAbs, home.url) }),
+      say("seo-social-url.fix"), { effort: "minutes", cases: ["CT-03"] });
+  }
+  const shareImage = extras.shareImage || null;
+  if (shareImage && social.ogImage) {
+    const notImage = shareImage.contentType && !/^image\//i.test(shareImage.contentType);
+    if (!shareImage.status || shareImage.status >= 400 || notImage) {
+      add("SEO", "fail", "medium", "seo-social-image", say("seo-social-image.broken.title"),
+        say("seo-social-image.broken.evidence", {
+          url: shownAgainst(social.ogImage, home.url),
+          detail: notImage ? say("seo-social-image.broken.notImage", { type: shareImage.contentType }) : say("seo-social-image.broken.status", { status: shareImage.status || say("noAnswer") })
+        }),
+        say("seo-social-image.broken.fix"), { effort: "minutes", cases: ["CT-03"] });
+    } else if (shareImage.overLimit || shareImage.bytes > 300 * 1024) {
+      add("SEO", "risk", "low", "seo-social-image", say("seo-social-image.large.title"),
+        say("seo-social-image.large.evidence", { url: shownAgainst(social.ogImage, home.url), kb: Math.max(301, Math.round((shareImage.bytes || 307200) / 1024)) }),
+        say("seo-social-image.large.fix"), { effort: "minutes", cases: ["CT-03"] });
+    }
+  }
   if (!face.icon) add("SEO", "risk", "low", "seo-favicon", say("seo-favicon.title"), say("seo-favicon.evidence"), say("seo-favicon.fix"), { effort: "minutes" });
 
   const soft = extras.soft404 || {};
@@ -1316,31 +1380,8 @@ function analyze(input) {
   } else {
     add("GEO", "pass", "info", "geo-js-only", say("geo-js-only.pass.title"), say("geo-js-only.pass.evidence", { chars: homeText.chars }), "", { cases: ["GEO-03", "CMP-01"] });
   }
-  const llms = extras.llms || {};
-  const llmsReport = { status: llms.status || 0, ok: false, title: "", summary: "", sections: 0, links: 0, full: !!(extras.llmsFull && extras.llmsFull.status === 200 && !extras.llmsFull.html) };
-  if (llms.status === 200 && !llms.html && /^\s*#\s+\S/.test(llms.body || "")) {
-    const body = llms.body || "";
-    llmsReport.ok = true;
-    llmsReport.title = ((body.match(/^\s*#\s+(.+)$/m) || [])[1] || "").slice(0, 120);
-    llmsReport.summary = ((body.match(/^\s*>\s*(.+)$/m) || [])[1] || "").slice(0, 240);
-    llmsReport.sections = (body.match(/^##\s+/gm) || []).length;
-    llmsReport.links = (body.match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
-    llmsReport.bareLinks = (body.match(/(^|\s)https?:\/\/\S+/gm) || []).length;
-    const gaps = [];
-    if (!llmsReport.summary) gaps.push(say("geo-llms.gapSummary"));
-    if (!llmsReport.links && !llmsReport.bareLinks) gaps.push(say("geo-llms.gapLinks"));
-    else if (!llmsReport.links) gaps.push(say("geo-llms.gapMarkdown"));
-    llmsReport.complete = !gaps.length;
-    add("GEO", gaps.length ? "risk" : "pass", "low", "geo-llms", gaps.length ? say("geo-llms.lacks.title", { gaps: { items: gaps, join: "and" } }) : say("geo-llms.pass.title"),
-      say("geo-llms.evidence", { sections: say("geo-llms.sections", { n: llmsReport.sections }), links: say("geo-llms.links", { n: llmsReport.links || llmsReport.bareLinks || 0 }), full: llmsReport.full ? say("geo-llms.full") : "." }),
-      gaps.length ? say("geo-llms.lacks.fix") : "", { cases: ["GEO-02"], effort: "minutes" });
-  } else if (llms.status === 200 && llms.html) {
-    add("GEO", "risk", "low", "geo-llms", say("geo-llms.html.title"), say("geo-llms.html.evidence"),
-      say("geo-llms.html.fix"), { cases: ["GEO-02"], effort: "minutes" });
-  } else {
-    add("GEO", "risk", "low", "geo-llms", say("geo-llms.title"), say("geo-llms.none.evidence", { status: llms.status || say("nothing") }),
-      say("geo-llms.fix"), { cases: ["GEO-02"], effort: "minutes" });
-  }
+  const geoAgentReports = geoAgent.findings({ extras, pages }, add);
+  const llmsReport = geoAgentReports.llms;
   const homeSchema = (face.schema && face.schema.items) || [];
   const allItems = [].concat.apply([], read.map((page) => (page.inspect.schema && page.inspect.schema.items) || []));
   const ENTITY = /^(\w*Organization|Corporation|LocalBusiness|Person|NGO|Store|Restaurant|ProfessionalService|OnlineBusiness)$/;
@@ -1441,6 +1482,12 @@ function analyze(input) {
       say("an-duplicate.evidence", { multi: multiGa.length ? say("an-duplicate.multi", { n: multiGa.length }) : "", double: doubleLoad.length ? say("an-duplicate.double", { n: doubleLoad.length }) : "" }),
       say("an-duplicate.fix"), { pages: multiGa.concat(doubleLoad).map((page) => page.path), effort: "minutes" });
   }
+  const multiGtm = read.filter((page) => ((page.inspect.analytics && page.inspect.analytics.gtmIds) || []).length > 1 || (page.inspect.analytics && page.inspect.analytics.gtmLoads) > 1);
+  if (multiGtm.length) {
+    add("Analytics", "risk", "medium", "an-gtm-duplicate", say("an-gtm-duplicate.title"),
+      say("an-gtm-duplicate.evidence", { n: multiGtm.length, list: some(multiGtm.map((page) => page.path), 4) }),
+      say("an-gtm-duplicate.fix"), { pages: multiGtm.map((page) => page.path), effort: "minutes" });
+  }
   if (tagPages["Google Tag Manager"] && tagPages["Google Analytics 4"]) {
     add("Analytics", "risk", "low", "an-gtm-and-gtag", say("an-gtm-and-gtag.title"),
       say("an-gtm-and-gtag.evidence"), say("an-gtm-and-gtag.fix"), { effort: "minutes" });
@@ -1450,9 +1497,17 @@ function analyze(input) {
       say("an-ua.fix"), { pages: tagPages["Universal Analytics"], effort: "minutes" });
   }
   if (tracking.length && !consentTools.length && !consentMode) {
-    add("Analytics", "risk", "high", "an-consent", say("an-consent.title"),
-      say("an-consent.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
-      say("an-consent.fix"), { effort: "hours", cases: ["PR-03", "AN-01"] });
+    if (googleTags.length && deniedPings.length) {
+      add("Analytics", "risk", "medium", "an-consent", say("an-consent.runtime.title"),
+        say("an-consent.runtime.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) }, pings: { items: deniedPings } }),
+        say("an-consent.runtime.fix"), { effort: "minutes", cases: ["PR-03", "AN-01"] });
+      add("Analytics", "pass", "info", "an-consent-mode", say("an-consent-mode.runtimeNoTool.title"),
+        say("an-consent-mode.runtimeNoTool.evidence", { pings: { items: deniedPings } }), "", { cases: ["PR-03", "AN-01"] });
+    } else {
+      add("Analytics", "risk", "high", "an-consent", say("an-consent.title"),
+        say("an-consent.evidence", { n: tracking.length, list: { items: tracking.map((tag) => tag.name) } }),
+        say("an-consent.fix"), { effort: "hours", cases: ["PR-03", "AN-01"] });
+    }
   } else if (googleTags.length && consentTools.length && !consentMode && deniedPings.length) {
     add("Analytics", "pass", "info", "an-consent-mode", say("an-consent-mode.runtime.title"),
       say("an-consent-mode.runtime.evidence", { pings: { items: deniedPings }, tools }), "", { cases: ["PR-03", "AN-01"] });
@@ -1497,6 +1552,7 @@ function analyze(input) {
 
   // Security
   libraryChecks({ read, browsed, origin }, add);
+  wordpress.checks(extras.wordpress, add);
   const hdr = face.headers || {};
   const rawHeaders = face.rawHeaders || {};
   const headerRows = read.map((page) => {
@@ -1506,7 +1562,7 @@ function analyze(input) {
     return {
       path: page.path,
       hsts: !!h.hsts,
-      csp: !!h.csp,
+      csp: !!(h.csp || h.metaCsp),
       frame: framesGuarded(h.frame) || /frame-ancestors/i.test(h.csp || ""),
       nosniff: !!h.nosniff,
       referrer: !!h.referrer,
@@ -1548,18 +1604,24 @@ function analyze(input) {
     else add("Security", "pass", "info", "sec-hsts", say("sec-hsts.pass.title"), say("listDot", { list: hdr.hsts }), "", { cases: ["SEC-02"] });
   }
   const csp = cspDirectives(hdr.csp);
-  if (!hdr.csp) {
+  const metaCsp = cspDirectives(hdr.metaCsp);
+  const cspPolicies = [hdr.csp ? csp : null, hdr.metaCsp ? metaCsp : null].filter(Boolean);
+  if (!cspPolicies.length) {
     add("Security", "risk", "medium", "sec-csp", say("sec-csp.title"), say("sec-csp.evidence", { spread: spread("csp").text }),
       say("sec-csp.fix"), { pages: spread("csp").pages, effort: "hours", cases: ["SEC-03"] });
   } else {
-    const scriptSrc = csp["script-src"] || csp["default-src"] || [];
     const issues = [];
-    if (!csp["default-src"] && !csp["script-src"]) issues.push("noDefault");
-    if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) issues.push("unsafeInline");
-    if (scriptSrc.indexOf("'unsafe-eval'") !== -1) issues.push("unsafeEval");
-    if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) issues.push("anyHost");
-    if (!csp["object-src"] && !(csp["default-src"] || []).some((token) => token === "'none'")) issues.push("object");
-    if (!csp["base-uri"]) issues.push("base");
+    const pushIssue = (name) => { if (issues.indexOf(name) === -1) issues.push(name); };
+    if (!cspPolicies.some((policy) => policy["default-src"] || policy["script-src"])) pushIssue("noDefault");
+    cspPolicies.forEach((policy) => {
+      if (!policy["default-src"] && !policy["script-src"]) return;
+      const scriptSrc = policy["script-src"] || policy["default-src"] || [];
+      if (scriptSrc.indexOf("'unsafe-inline'") !== -1 && !scriptSrc.some((token) => /^'(nonce|sha256|sha384|sha512)-/.test(token) || token === "'strict-dynamic'")) pushIssue("unsafeInline");
+      if (scriptSrc.indexOf("'unsafe-eval'") !== -1) pushIssue("unsafeEval");
+      if (scriptSrc.indexOf("*") !== -1 || scriptSrc.indexOf("https:") !== -1) pushIssue("anyHost");
+    });
+    if (!cspPolicies.some((policy) => policy["object-src"] || (policy["default-src"] || []).some((token) => token === "'none'"))) pushIssue("object");
+    if (!cspPolicies.some((policy) => policy["base-uri"])) pushIssue("base");
     if (issues.length) add("Security", "risk", issues.some((issue) => issue === "anyHost" || issue === "unsafeInline") ? "medium" : "low", "sec-csp", say("sec-csp.gaps.title"), say("listDot", { list: some(issues.map((issue) => say("sec-csp.issue." + issue)), 5) }),
       say("sec-csp.gaps.fix"), { count: issues.length, effort: "hours", cases: ["SEC-03"] });
     else add("Security", "pass", "info", "sec-csp", say("sec-csp.pass.title"), say("sec-csp.pass.evidence"), "", { cases: ["SEC-03"] });
@@ -1606,11 +1668,12 @@ function analyze(input) {
   } else if (jar.length) {
     add("Security", "pass", "info", "sec-cookies", say("sec-cookies.pass.title"), say("sec-cookies.pass.evidence", { cookies: say("sec-cookies.count", { n: cookieNames(jar).length }), pages: say("pagesN", { n: new Set(jar.map((cookie) => cookie.path)).size }) }), "", { cases: ["SEC-06"] });
   }
-  const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d+\.\d+/.test(value || ""));
+  const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d\.\d/.test(value || ""));
   if (version.length) add("Security", "risk", "low", "sec-version", say("sec-version.title"), say("sec-version.evidence", { list: { items: version } }), say("sec-version.fix"), { effort: "minutes", cases: ["SEC-07"] });
   const noSri = [];
   read.forEach((page) => ((page.inspect.sri && page.inspect.sri.missing) || []).forEach((h) => { if (!NO_SRI_HOSTS.test(h) && noSri.indexOf(h) === -1) noSri.push(h); }));
   if (noSri.length) add("Security", "risk", "low", "sec-sri", say("sec-sri.title", { n: noSri.length }), say("sec-sri.evidence", { list: some(noSri, 4) }), say("sec-sri.fix"), { count: noSri.length, effort: "minutes" });
+  cyberPassive.findings({ csp: [hdr.csp, hdr.metaCsp], read }, add);
   const mixed = read.filter((page) => (page.inspect.signals && page.inspect.signals.mixed) > 0);
   if (mixed.length) add("Security", "risk", "medium", "sec-mixed", say("sec-mixed.title", { n: mixed.length }), say("listDot", { list: some(mixed.map((page) => say("pathNote", { path: page.path, note: page.inspect.signals.mixed })), 3) }), say("sec-mixed.fix"), { pages: mixed.map((page) => page.path), effort: "minutes", cases: ["SEC-09"] });
   const tls = extras.tls || null;
@@ -1628,9 +1691,10 @@ function analyze(input) {
       say("sec-tls-chain.fix"), { effort: "minutes" });
   }
   const sec = extras.securityTxt || null;
+  trustGrade.securityTxtFindings(sec, add);
   if (sec) {
     if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || "")) {
-      const expires = ((sec.body || "").match(/^\s*expires\s*:\s*(.+)$/im) || [])[1];
+      const expires = ((sec.body || "").match(/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*expires\s*:\s*(.+)$/im) || [])[1];
       const past = expires && !isNaN(Date.parse(expires)) && Date.parse(expires) < Date.now();
       if (past) add("Security", "risk", "medium", "sec-securitytxt", say("sec-securitytxt.expired.title"), say("sec-securitytxt.expired.evidence", { date: expires.trim() }), say("sec-securitytxt.expired.fix"), { effort: "minutes" });
       else add("Security", "pass", "info", "sec-securitytxt", say("sec-securitytxt.pass.title"), say("sec-securitytxt.pass.evidence"), "");
@@ -1647,20 +1711,29 @@ function analyze(input) {
     // A lookup that timed out says nothing about the record, so it gets no finding either way.
     const mailRead = dnsRead("spf") && dnsRead("mx");
     const domain = dnsInfo.domain;
+    const enforced = /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc));
+    const mailAuth = mailAuthChecks(dnsInfo, dnsRead, add);
+    if (dnsRead("mx")) dkimChecks(dnsInfo, add);
     if (mailRead && sendsMail && !dnsInfo.spf) add("Security", "risk", "medium", "sec-spf", say("sec-spf.missing.title"), say("sec-spf.missing.evidence", { domain }), say("sec-spf.missing.fix"), { effort: "minutes" });
     if (mailRead && !sendsMail && !dnsInfo.spf) {
-      if (dnsInfo.nullMx && /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "")) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
+      if (dnsInfo.nullMx && enforced) add("Security", "pass", "info", "sec-spf", say("sec-spf.nullOk.title"), say("sec-spf.nullOk.evidence", { domain }), "");
       else if (dnsInfo.nullMx) add("Security", "risk", "low", "sec-spf", say("sec-spf.nullNoSpf.title"), say("sec-spf.nullNoSpf.evidence", { domain }), say("sec-spf.nullNoSpf.fix"), { effort: "minutes" });
       else add("Security", "risk", "low", "sec-spf", say("sec-spf.none.title"), say("sec-spf.none.evidence", { domain }), say("sec-spf.none.fix"), { effort: "minutes" });
     }
     if (!dnsInfo.dmarc && !unread.includes("dmarc")) add("Security", "risk", sendsMail ? "medium" : "low", "sec-dmarc", say("sec-dmarc.title"), say("sec-dmarc.evidence", { domain }), say("sec-dmarc.fix"), { effort: "minutes" });
-    else if (/p\s*=\s*none/i.test(dnsInfo.dmarc)) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
-    else if (dnsInfo.dmarc) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
-    if (dnsInfo.spf && sendsMail) add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
+    else if (dnsInfo.dmarc && !enforced) add("Security", "risk", "low", "sec-dmarc", say("sec-dmarc.monitor.title"), say("sec-dmarc.monitor.evidence"), say("sec-dmarc.monitor.fix"), { effort: "hours" });
+    else if (dnsInfo.dmarc && !mailAuth.dmarcBroken) add("Security", "pass", "info", "sec-dmarc", say("sec-dmarc.pass.title"), say("listDot", { list: dnsInfo.dmarc.slice(0, 120) }), "");
+    if (dnsInfo.spf && sendsMail && mailAuth.spf !== "fail") add("Security", "pass", "info", "sec-spf", say("sec-spf.pass.title"), say("listDot", { list: dnsInfo.spf.slice(0, 120) }), "");
     if (!(dnsInfo.caa || []).length && !unread.includes("caa")) add("Security", "risk", "low", "sec-caa", say("sec-caa.title"), say("sec-caa.evidence", { domain }), say("sec-caa.fix"), { effort: "minutes" });
     if (dnsInfo.bimi) add("Security", "pass", "info", "sec-bimi", say("sec-bimi.pass.title"), say("listDot", { list: dnsInfo.bimi.slice(0, 160) }), "");
   }
+  linkedRisk.findings(extras.linkedRisk, add);
   domainChecks(extras, dnsInfo, dnsRead, add);
+  blocklists.report(dnsInfo && dnsInfo.blocklists, add);
+  exposedFiles.checks(extras.exposed, add);
+  lookalikes.checks(extras.lookalikes, add, say);
+  hackSigns.findings(extras.hackSigns, add);
+  targeted.addFindings(extras.targeted, add);
   (input.alerts || []).filter((alert) => alert.level === "Leak").forEach((alert, index) => {
     add("Security", "fail", "critical", "sec-leak-" + index, alert.title, alert.detail, say("sec-leak.fix"), { effort: "hours" });
   });
@@ -1757,6 +1830,16 @@ function analyze(input) {
   if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
   // Rank and score.
+  const pageBytes = browsed && browsed.start && browsed.start.bytes;
+  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
+  carbonModel.findings(carbon, add);
+  const headReport = headOrder.findings(face.headOrder, add);
+  const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);
+  const graphRows = read.map((page) => {
+    const row = indexability.find((item) => item.path === (page.path || pathOf(page.url)));
+    return { key: normal(page.url), path: page.path || pathOf(page.url), links: (page.inspect.links || []).map(normal), sig: page.inspect.minhash || "", indexable: !row || row.indexable };
+  }).filter((row) => row.indexable);
+  const graphReport = pageGraph.findings(graphRows, add);
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");
   actionable.forEach((item) => {
     const reach = 1 + Math.log2((item.count || item.pages.length || 1) + 1) * 0.3;
@@ -1767,33 +1850,7 @@ function analyze(input) {
   const ordered = actionable.concat(findings.filter((item) => item.verdict === "person"), findings.filter((item) => item.verdict === "pass"));
   ordered.forEach((item, index) => { item.id = "F-" + String(index + 1).padStart(2, "0"); });
 
-  const areas = {};
-  AREAS.forEach((area) => {
-    const mine = findings.filter((item) => item.area === area);
-    let score = 100;
-    let lowRisk = 0;
-    mine.forEach((item) => {
-      if (item.verdict === "fail") score -= SEVERITY_POINTS[item.severity] || 0;
-      if (item.verdict === "risk" && item.severity === "low") lowRisk += Math.round(SEVERITY_POINTS.low / 2);
-      else if (item.verdict === "risk") score -= Math.round((SEVERITY_POINTS[item.severity] || 0) / 2);
-    });
-    score -= Math.min(LOW_RISK_CAP, lowRisk);
-    score = Math.max(0, Math.min(100, score));
-    areas[area] = {
-      score,
-      grade: grade(score),
-      fail: mine.filter((item) => item.verdict === "fail").length,
-      risk: mine.filter((item) => item.verdict === "risk").length,
-      pass: mine.filter((item) => item.verdict === "pass").length,
-      person: mine.filter((item) => item.verdict === "person").length
-    };
-  });
-  const weightSum = AREAS.reduce((sum, area) => sum + AREA_WEIGHT[area], 0);
-  const overall = Math.round(AREAS.reduce((sum, area) => sum + areas[area].score * AREA_WEIGHT[area], 0) / weightSum);
-  const totals = { fail: 0, risk: 0, pass: 0, person: 0 };
-  findings.forEach((item) => { totals[item.verdict] += 1; });
-  const severities = { critical: 0, high: 0, medium: 0, low: 0 };
-  actionable.forEach((item) => { if (severities[item.severity] != null) severities[item.severity] += 1; });
+  const { areas, overall, totals, severities } = scoreFindings(findings);
   const top = actionable[0];
   const summary = warnings.join(" ") + (warnings.length ? " " : "") + host + " scores " + overall + " out of 100 (" + grade(overall) + "). " +
     plural(totals.fail, "check fails", "checks fail") + " now, " + plural(totals.risk, "is", "are") + " at risk, and " + totals.pass + " pass." +
@@ -1825,6 +1882,8 @@ function analyze(input) {
       title: social.ogTitle || titleText,
       description: social.ogDescription || description,
       image: /^https:\/\//i.test(social.ogImage || "") ? social.ogImage : "",
+      imageAlt: social.ogImageAlt || social.twitterImageAlt || "",
+      twitterImage: /^https:\/\//i.test(social.twitterImage || "") ? social.twitterImage : "",
       site: social.ogSiteName || host,
       host,
       card: social.twitterCard || "",
@@ -1832,11 +1891,14 @@ function analyze(input) {
     }
   };
 
-  const analytics = { tags, consentTools, consentMode, utm: utm && utm.status ? { kept: !!utm.kept, finalPath: pathOf(utm.finalUrl) } : null, untagged: untagged.slice(0, 20) };
+  const analytics = { tags, adTags: tags.filter((tag) => AD_TAGS.includes(tag.name)).map((tag) => tag.name), consentTools, consentMode, utm: utm && utm.status ? { kept: !!utm.kept, finalPath: pathOf(utm.finalUrl) } : null, untagged: untagged.slice(0, 20) };
   const geo = {
     crawlers: crawlers.map((bot) => ({ token: bot.token, owner: bot.owner, product: bot.product, role: bot.role, allowed: bot.allowed, rule: bot.rule, blockedPages: bot.blockedPages })),
     robotsFound: robots.groups.length > 0 || !!input.robotsText,
     llms: llmsReport,
+    aiCatalog: geoAgentReports.aiCatalog,
+    webmcp: geoAgentReports.webmcp,
+    agentMarkdown: geoAgentReports.agentMarkdown,
     aiView: { text: (homeText.text || "").slice(0, 1600), chars: homeText.chars || 0, words: homeText.words || 0, outline: (homeText.outline || []).slice(0, 24), appShell },
     entity: entity ? { type: entity.types[0], props: entity.props.slice(0, 20), sameAs: (entity.sameAs || []).slice(0, 10) } : null,
     schemaTypes: [...schemaTypes].slice(0, 20),
@@ -1853,13 +1915,11 @@ function analyze(input) {
     schemaTypes: [...schemaTypes].slice(0, 20)
   };
   const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || "unknown";
-  const pageBytes = browsed && browsed.start && browsed.start.bytes;
-  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
   const security = {
     headers: [
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
       { label: "HSTS", state: hdr.hsts ? "pass" : "fail" },
-      { label: "Content-Security-Policy", state: hdr.csp ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
+      { label: "Content-Security-Policy", state: (hdr.csp || hdr.metaCsp) ? (findings.some((item) => item.key === "sec-csp" && item.verdict === "risk") ? "risk" : "pass") : "risk" },
       { label: "Frame protection", state: framesGuarded(hdr.frame) || csp["frame-ancestors"] ? "pass" : "risk" },
       { label: "X-Content-Type-Options", state: hdr.nosniff ? "pass" : "risk" },
       { label: "Referrer-Policy", state: hdr.referrer ? "pass" : "risk" },
@@ -1867,12 +1927,13 @@ function analyze(input) {
       { label: "Cross-Origin-Opener-Policy", state: findingState("sec-coop") },
       { label: "TLS certificate", state: tls && tls.validTo ? (tls.daysLeft < 14 ? "fail" : tls.daysLeft < 30 ? "risk" : "pass") : "unknown" },
       { label: "security.txt", state: sec ? (findings.some((item) => item.key === "sec-securitytxt" && item.verdict === "pass") ? "pass" : "risk") : "unknown" },
-      { label: "SPF", state: dnsRead("spf") ? (dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
-      { label: "DMARC", state: dnsRead("dmarc") ? (dnsInfo.dmarc && !/p\s*=\s*none/i.test(dnsInfo.dmarc) ? "pass" : "risk") : "unknown" },
+      { label: "SPF", state: dnsRead("spf") ? (findings.some((item) => /^sec-spf-/.test(item.key) && item.verdict === "fail") ? "fail" : dnsInfo.spf || (findings.find((item) => item.key === "sec-spf") || {}).verdict === "pass" ? "pass" : "risk") : "unknown" },
+      { label: "DMARC", state: dnsRead("dmarc") ? (findings.some((item) => item.key === "sec-dmarc-multiple") ? "fail" : dnsInfo.dmarc && /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) ? "pass" : "risk") : "unknown" },
       { label: "CAA", state: dnsRead("caa") ? ((dnsInfo.caa || []).length ? "pass" : "risk") : "unknown" },
       { label: "Safe Browsing", state: findingState("sec-safebrowsing") },
       { label: "Domain expiry", state: findingState("sec-domain-expiry") }
     ].concat(dnsRead("mx") && (dnsInfo.mx || []).length ? [
+      { label: "DKIM", state: dkimState(findings) },
       { label: "MTA-STS", state: findingState("sec-mta-sts") },
       { label: "TLS-RPT", state: findingState("sec-tlsrpt") }
     ] : []).concat([["Front-end libraries", "sec-libraries"], ["Privacy notice", "an-privacy"], ["Imprint", "an-imprint"], ["Accessibility statement", "a11y-statement"]]
@@ -1880,7 +1941,7 @@ function analyze(input) {
       .map(([label, key]) => findingState(key) === "person" ? { label, state: "unknown", person: true } : { label, state: findingState(key) })),
     tls: tls && tls.validTo ? { validTo: tls.validTo, daysLeft: tls.daysLeft, issuer: tls.issuer || "" } : null,
     domain: extras.domain && extras.domain.read ? { domain: extras.domain.domain, expires: extras.domain.expires, daysLeft: extras.domain.daysLeft, registrar: extras.domain.registrar, locked: extras.domain.locked } : null,
-    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /p\s*=\s*(reject|quarantine)/i.test(dnsInfo.dmarc || "") } : null,
+    bimi: dnsRead("bimi") ? { record: dnsInfo.bimi || "", eligible: /^(reject|quarantine)$/.test(dmarcPolicy(dnsInfo.dmarc)) } : null,
     pages: headerRows.slice(0, 40)
   };
   const chatSeen = browsed && browsed.chat && (browsed.chat.found || []).length ? browsed.chat : null;
@@ -1913,8 +1974,12 @@ function analyze(input) {
     geo,
     analytics,
     security,
+    trust: trustGrade.trustGrade(findings),
     chat,
     carbon,
+    headOrder: headReport,
+    waterfall: waterfallReport,
+    pageGraph: graphReport,
     graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
     fixkit: fixKit({ home, face, read, indexable, origin, host, input, extras, tags, dnsInfo, entity, socialLinks, findings, browsed, chat })
   };
@@ -1967,7 +2032,7 @@ function fixKit(ctx) {
     { name: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups", missing: COOP_GUARDED.indexOf(policyOf(hdr.coop)) === -1 }
   ];
   const social = face.social || {};
-  const name = social.ogSiteName || String(face.title || ctx.host).split(/\s+[|–—·-]\s+/)[0].trim() || ctx.host;
+  const name = social.ogSiteName || String(face.title || ctx.host).split(/(?<!\s)\s+[|–—·-]\s+/)[0].trim() || ctx.host;
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -1988,10 +2053,10 @@ function fixKit(ctx) {
       }
     ]
   };
-  const pagesForLlms = (ctx.read || []).filter((page) => ctx.indexable.some((row) => row.path === page.path)).slice(0, 40);
-  const llmsTxt = ["# " + name, "", "> " + (face.description || "Describe in one or two sentences what this site offers and who it is for."), "", "## Pages", ""]
-    .concat(pagesForLlms.map((page) => "- [" + (page.inspect.title || page.path).replace(/[[\]]/g, "") + "](" + page.url + ")" + (page.inspect.description ? ": " + page.inspect.description : "")))
-    .concat(["", "## Contact", "", "- [Home](" + ctx.origin + "/)"]).join("\n") + "\n";
+  const pagesForLlms = (ctx.read || []).filter((page) => ctx.indexable.some((row) => row.path === page.path)).slice(0, 40)
+    .map((page) => ({ path: page.path, url: page.url, title: page.inspect.title, description: page.inspect.description }));
+  const llmsParsed = geoAgent.parseLlmsTxt((ctx.extras.llms && ctx.extras.llms.body) || "", ctx.extras.llms || {});
+  const llmsTxt = geoAgent.draftLlmsTxt({ name, description: face.description, pages: pagesForLlms, origin: ctx.origin });
   const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
   const securityTxt = ["Contact: mailto:security@" + ((ctx.dnsInfo && ctx.dnsInfo.domain) || ctx.host), "Expires: " + expires, "Preferred-Languages: " + (face.lang ? face.lang.split("-")[0] : "en"), "Canonical: " + ctx.origin + "/.well-known/security.txt", ""].join("\n");
   const domain = (ctx.dnsInfo && ctx.dnsInfo.domain) || ctx.host;
@@ -2001,6 +2066,7 @@ function fixKit(ctx) {
     const unread = ctx.dnsInfo.unread || [];
     if (!ctx.dnsInfo.spf && !unread.includes("spf") && !unread.includes("mx")) dnsRecords.push({ name: domain, type: "TXT", value: mail ? "v=spf1 include:<your mail provider> ~all" : "v=spf1 -all" });
     if (!ctx.dnsInfo.dmarc && !unread.includes("dmarc")) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: "v=DMARC1; p=none; rua=mailto:dmarc@" + domain });
+    else if (ctx.dnsInfo.dmarc && dmarcRepair(ctx.dnsInfo.dmarc, domain)) dnsRecords.push({ name: "_dmarc." + domain, type: "TXT", value: dmarcRepair(ctx.dnsInfo.dmarc, domain) });
     if (!(ctx.dnsInfo.caa || []).length && !unread.includes("caa")) dnsRecords.push({ name: domain, type: "CAA", value: "0 issue \"letsencrypt.org\"" });
     if (mail && !ctx.dnsInfo.tlsRpt && !unread.includes("tlsrpt") && !unread.includes("mx")) dnsRecords.push({ name: "_smtp._tls." + domain, type: "TXT", value: "v=TLSRPTv1; rua=mailto:tlsrpt@" + domain });
     if (mail && !ctx.dnsInfo.mtaSts && !unread.includes("mta-sts") && !unread.includes("mx")) dnsRecords.push({ name: "_mta-sts." + domain, type: "TXT", value: "v=STSv1; id=" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "01" });
@@ -2054,8 +2120,9 @@ function fixKit(ctx) {
     csp,
     headers,
     jsonLd: ctx.entity ? null : jsonLd,
-    llmsTxt: (ctx.extras.llms && ctx.extras.llms.status === 200 && !ctx.extras.llms.html) ? "" : llmsTxt,
+    llmsTxt: (llmsParsed.ok && llmsParsed.complete) ? "" : llmsTxt,
     securityTxt: (ctx.extras.securityTxt && ctx.extras.securityTxt.status === 200 && !ctx.extras.securityTxt.html) ? "" : securityTxt,
+    helmet: trustGrade.helmetSnippet(headers.filter((row) => row.missing).map((row) => row.name)),
     dns: dnsRecords,
     mtaSts,
     libraries: libraryUpgrades,
@@ -2066,4 +2133,4 @@ function fixKit(ctx) {
   };
 }
 
-module.exports = { analyze, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };
+module.exports = { analyze, scoreFindings, parseRobotsFull, robotsVerdict, NO_SRI_HOSTS, AI_BOTS, AREAS, BROWSER_READ_NOTE, UNTAGGED_READ_NOTE, CUT_NOTE, SLOW_READ_NOTE, SLOW_CUT_NOTE, SHELL_NOTE, botCheck };

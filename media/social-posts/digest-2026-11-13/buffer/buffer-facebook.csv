@@ -1,0 +1,28 @@
+Text,Image URL,Tags,Posting Time
+"This week in web quality, Nov 13, 2026
+
+Five picks from our daily sweep of the field, each summed up in our own words and credited to its source.
+
+1. Lighthouse 13.6 can lift your PSI score
+PageSpeed Insights now runs Lighthouse 13.6, which changes how it simulates FCP and LCP. Chrome's Barry Pollard says scores usually come out higher, most often on JavaScript-heavy sites, even when the page did not change. Before crediting a better score to your own work, check that both reports name the same Lighthouse version and compare the field data.
+By Matt G. Southern, Search Engine Journal: https://www.searchenginejournal.com/pagespeed-insights-scores-lighthouse-update/595698/
+
+2. Playwright 1.65 runs tests under Bun
+Playwright 1.65 runs its test runner under Bun with bunx --bun playwright test, without watch mode. A new failures reporter and an onlyFailures option keep reports to what went wrong. Among the breaking changes, actions now wait for an inert element to stop being inert, and Node.js 20 is no longer tested.
+By dgozman, Playwright releases: https://github.com/microsoft/playwright/releases/tag/v1.65.0
+
+3. Google on 301s, 302s and ranking signals
+Google's Gary Illyes and Cherry Prommawin explained that a 301 hands the old URL's ranking signals to the new one, while a 302 keeps the old URL in results because Google expects it back. A 307 or 308 does the same jobs but keeps form data on a POST. They recommend server-side redirects over JavaScript or meta refresh.
+By Roger Montti, Search Engine Journal: https://www.searchenginejournal.com/google-explains-how-redirects-affect-ranking-signals/595967/
+
+4. Reporting SEO when GA4 sees less
+After a stricter consent policy, GA4 organic sessions fell 64% in four weeks while Search Console clicks rose 1.8%. Dii Pooler shows how to audit where tracking stops, compare GA4 with backend records, and report search visibility, tracked behavior and verified outcomes separately, with the measurement limits stated first.
+By Dii Pooler, Moz: https://moz.com/blog/measure-seo-performance-incomplete-data
+
+5. AI can check an ACR, not write it
+Will Creedle argues that general AI tools cannot test, fix or assess WCAG conformance on their own, so they should not produce a VPAT-based Accessibility Conformance Report alone. They do help catch errors, such as a wrong EN 301 549 clause or not evaluated in place of not applicable, and make the wording clearer.
+By Will Creedle, Deque: https://www.deque.com/blog/how-to-choose-the-right-vpat-approach-for-your-organization/
+
+Every digest, tip and site review on our social hub: https://carlosandmunoz.com/qa-review-social.html?utm_source=facebook&utm_medium=social&utm_campaign=weekly-digest&utm_content=digest-2026-11-13
+
+#WebDev #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/digest-2026-11-13/feed/01-this-week.jpg","","2026-11-13 17:21"

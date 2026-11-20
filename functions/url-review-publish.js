@@ -3,7 +3,8 @@
    The daily Live Reports job (scripts/auto-live-reports.js) reads GET /publishable on reviewUrl.
    It gets the newest complete review per host since a date, already filtered and trimmed: no
    requester name, email, reason, IP, device, page list, log, engine internals, or chat conversation
-   (report.chatTalk and any talk-* finding) ever leave here.
+   (report.chatTalk and any talk-* finding) ever leave here, nor any exposed-files (sec-exposed*) finding;
+   a report with an exposed file is held back whole, since its summary may name it.
    A host whose owner asked to be left out goes in Firestore url_review_unlisted/<host>; an asker who
    ticked "Don't publish" leaves `unlisted: true` on that one record. */
 
@@ -32,7 +33,9 @@ function heldReason(record, unlisted) {
   if (under(host, unlisted || [])) return "unlisted";
   const score = report.insights && report.insights.score;
   if (!score || typeof score.overall !== "number" || !score.areas) return "no-score";
-  if ((report.insights.findings || []).some((f) => f.key === "sec-safebrowsing" && f.verdict === "fail")) return "safe-browsing-flagged";
+  if ((report.insights.findings || []).some((f) => (f.key === "sec-safebrowsing" || f.key === "sec-linked-script") && f.verdict === "fail")) return "safe-browsing-flagged";
+  if ((report.insights.findings || []).some((f) => (f.key === "sec-threatlists" || f.key === "sec-feodo") && f.verdict === "fail")) return "threat-listed";
+  if ((report.insights.findings || []).some((f) => /^sec-exposed-/.test(String(f.key || "")) && f.verdict === "fail")) return "exposed-files";
   const limits = report.limits || {};
   const read = limits.pagesRead || (report.pages || []).length;
   // Reviews before #2016 set timedOut when PageSpeed ran past the deadline, even with every page read.
@@ -56,12 +59,27 @@ function cleanUrl(value) {
 }
 
 // Only what scripts/build-live-reports.js and the social cards read.
+// Slim proposed cases for the top public gaps so Live Report cards / carousels can show a real case id + Playwright (#3550).
+function slimCasesForGaps(report, findings) {
+  const ids = new Set();
+  findings.filter((f) => f.verdict === "fail" || f.verdict === "risk")
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999))
+    .slice(0, 3)
+    .forEach((f) => (f.cases || []).forEach((id) => ids.add(String(id))));
+  if (!ids.size) return [];
+  return (report.cases || [])
+    .filter((c) => ids.has(String(c.id)))
+    .map((c) => pick(c, ["id", "title", "why", "path", "layer", "fw"]));
+}
+
 function publicReport(report) {
   const ins = report.insights || {};
   const geo = ins.geo || {};
   const psi = report.pagespeed || {};
   const field = psi.field || {};
   const metric = (m) => m ? { p75: m.p75, category: m.category } : null;
+  const findings = (ins.findings || []).filter((f) => !/^(talk-|sec-exposed|sec-kev$|sec-osv$|sec-drop$|sec-feodo$|sec-breach-news$|sec-cert-anomaly$|sec-targeted$)/.test(String(f.key || "")))
+    .map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort", "msg", "cases"]));
   return {
     id: report.id,
     fetchedAt: report.fetchedAt,
@@ -70,6 +88,7 @@ function publicReport(report) {
     limits: { pagesRead: (report.limits && report.limits.pagesRead) || (report.pages || []).length },
     technologies: (report.technologies || []).map((t) => pick(t, ["name", "group"])),
     counts: { cases: (report.counts && report.counts.cases) || 0, byLayer: (report.counts && report.counts.byLayer) || {} },
+    cases: slimCasesForGaps(report, findings),
     observed: { lang: (report.observed && report.observed.lang) || "", signals: pick((report.observed && report.observed.signals) || {}, ["hreflang"]) },
     pagespeed: psi.ok ? {
       ok: true,
@@ -80,7 +99,7 @@ function publicReport(report) {
     insights: {
       score: ins.score,
       summary: ins.summary || "",
-      findings: (ins.findings || []).filter((f) => !/^talk-/.test(String(f.key || ""))).map((f) => pick(f, ["key", "verdict", "area", "severity", "rank", "title", "evidence", "fix", "effort", "msg"])),
+      findings,
       geo: {
         crawlers: (geo.crawlers || []).map((c) => pick(c, ["role", "allowed", "token"])),
         llms: { ok: !!(geo.llms && geo.llms.ok) },

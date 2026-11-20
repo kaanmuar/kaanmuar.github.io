@@ -3,7 +3,7 @@
    Cancel, then a push when it starts and one with the result; the web and the app list the pending ones.
 
    kinds      email     third-party email: held re-runs to their askers, owner notices, the jobs that mail people,
-                        launching a draft outreach campaign
+                        launching a draft outreach campaign, forwarding unopened cold step-1 emails
               post      public posts off schedule: retrying failed social posts, a failed posting job or workflow re-run
               code      code reaching production: merging a green PR (labelled jarvis-merge, or a safe PageSpeed PR),
                         the Pages and app workflows
@@ -23,6 +23,7 @@
 
 const crypto = require("crypto");
 const core = require("./jarvis-core");
+const jarvisLog = require("./jarvis-log");
 
 const KINDS = { email: "third-party email", post: "public post", code: "code reaching production", outreach: "resuming outreach", repo: "GitHub housekeeping", money: "money" };
 const DAYTIME = { from: 8, to: 21 };
@@ -48,7 +49,7 @@ function inner(row) {
 }
 
 function kindOf(action, target) {
-  if (action === "rerun-held" || action === "resend-notices" || action === "launch-campaign") return "email";
+  if (action === "rerun-held" || action === "resend-notices" || action === "launch-campaign" || action === "resend-cold") return "email";
   if (JOB_ACTIONS.includes(action)) return MAIL_JOBS.includes(target) ? "email" : "post";
   if (action === "rerun-ci") return /^pages$|jarvis android/i.test(String(target)) ? "code" : "post";
   if (action === "retry-social") return "post";
@@ -132,6 +133,7 @@ async function queue(db, entry, { now, hours }) {
   const ref = col(db).doc(id);
   try {
     await ref.create(row);
+    await jarvisLog.log(null, { source: "countdown", level: "info", ref: "countdown:" + id, text: "Queued " + lower(row.label) + ": " + row.target + ", runs at " + bogotaTime(runsAt(row)) + " Bogotá" + (row.why ? " · " + row.why : "") });
     return { row };
   } catch (error) {
     const snap = await ref.get().catch(() => null);
@@ -148,8 +150,19 @@ async function execute(row, ops, now) {
   const { action, target } = inner(row);
   const p = row.payload || {};
   if (JOB_ACTIONS.includes(action)) { await ops.runJob(target); return { count: 1, detail: "Started " + target + "." }; }
+  if (action === "rerun-ci" && p.pr) {
+    const res = await ops.refreshPr(p.pr);
+    if (!res.refreshed) throw new Error("#" + p.pr + " was not reopened: " + res.skipped + ".");
+    return { count: 1, detail: "Closed and reopened #" + p.pr + " for a fresh merge with main." };
+  }
   if (action === "rerun-ci" && p.workflow) { await ops.dispatch(p.workflow); return { count: 1, detail: "Started " + (p.name || p.workflow) + " on main's newest commit." }; }
-  if (action === "rerun-ci" && p.run) { await ops.rerunRun(p.run); return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." }; }
+  if (action === "rerun-ci" && p.run) {
+    // Main may have moved during the countdown: re-running the old commit then fails again on what main already fixed (#2893).
+    const head = p.sha && p.path && ops.mainSha && ops.dispatch ? await ops.mainSha().catch(() => "") : "";
+    if (head && head !== p.sha) { await ops.dispatch(p.path); return { count: 1, detail: "Main moved past the failed commit during the countdown, so " + (p.name || p.path) + " started on main's newest commit." }; }
+    await ops.rerunRun(p.run);
+    return { count: 1, detail: "Re-running the failed jobs of run " + p.run + "." };
+  }
   if (action === "rerun-ci") {
     const res = await ops.rerunCi(target);
     if (res.already === "re-run once") throw new Error("Run " + res.run + " failed again after one re-run; it is yours now.");
@@ -194,6 +207,11 @@ async function execute(row, ops, now) {
     const res = await ops.launchCampaigns((p.items || []).map((i) => i.id));
     if (!res.launched.length) throw new Error("Nothing launched" + (res.left.length ? ": " + res.left.join("; ") : "") + ".");
     return { count: res.launched.length, detail: "Launched " + res.launched.join(", ") + (res.left.length ? "; left: " + res.left.join("; ") : "") + "." };
+  }
+  if (action === "resend-cold") {
+    const res = await ops.resendCold((p.items || []).map((i) => i.id));
+    if (!res.launched.length) throw new Error("Nothing re-sent" + (res.left.length ? ": " + res.left.join("; ") : "") + ".");
+    return { count: res.launched.length, detail: "Re-sent " + res.launched.join(", ") + (res.left.length ? "; left: " + res.left.join("; ") : "") + "." };
   }
   if (action === "merge-pr" && p.pagespeed) { const res = await ops.pagespeedMerge(p.number, p.sha); return { count: 1, detail: res.message }; }
   if (action === "merge-pr") { const res = await ops.mergePr(p.number, p.sha); return { count: 1, detail: "Merged #" + p.number + " at " + String(res.sha || p.sha || "").slice(0, 7) + "." }; }
@@ -252,20 +270,21 @@ async function start(db, id, { ops, now, by }) {
   }
   let row = await claim(db, id, ["waiting"], { status: "running", startedAt: new Date(now).toISOString(), hold: "", decidedBy: forced ? text(by, 120) : "" });
   if (ops.push) await ops.push(startMessage(row)).catch(() => null);
+  await jarvisLog.log(null, { source: "countdown", level: "info", ref: "countdown:" + row.id, text: "Started " + lower(row.label) + ": " + row.target + (forced ? " (Do it now by " + by + ")" : " (countdown ended)") });
   let out;
   try { out = Object.assign({ status: "done" }, await execute(row, ops, now)); } catch (error) { out = { status: "failed", count: 0, detail: text(error.message || error, 300) }; }
   const patch = { status: out.status, result: text(out.detail, 300), endedAt: new Date().toISOString() };
   await col(db).doc(row.id).update(patch);
   row = Object.assign(row, patch);
   await A.log(db, { action: row.action, mode: "auto", status: out.status, count: out.count, target: row.target, key: row.key, detail: (forced ? "Do it now: " : "After the countdown: ") + out.detail,
-    by: forced ? "jarvis, Do it now by " + by : "jarvis (countdown)" }, now);
+    by: forced ? "jarvis, Do it now by " + by : "jarvis (countdown)", source: "countdown" }, now);
   if (ops.push) await ops.push(resultMessage(row)).catch(() => null);
   return row;
 }
 
 async function cancel(db, id, { now, by, why }) {
   const row = await claim(db, id, ["waiting"], { status: "cancelled", endedAt: new Date(now).toISOString(), decidedBy: text(by, 120), result: text(why, 300) || "Cancelled." });
-  await actions().log(db, { action: row.action, mode: by === "jarvis" ? "auto" : "click", status: "skipped", target: row.target, key: row.key, detail: "Countdown cancelled" + (why ? ": " + why : "."), by }, now);
+  await actions().log(db, { action: row.action, mode: by === "jarvis" ? "auto" : "click", status: "skipped", target: row.target, key: row.key, detail: "Countdown cancelled" + (why ? ": " + why : "."), by, source: "countdown" }, now);
   return row;
 }
 

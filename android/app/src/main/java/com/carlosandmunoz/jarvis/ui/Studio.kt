@@ -61,7 +61,7 @@ fun StudioPanel(s: UiState, vm: JarvisViewModel) {
     var ticket by rememberSaveable { mutableStateOf("") }
     var open by rememberSaveable { mutableStateOf(false) }
     val names = studioNames(s.studio, kind)
-    Panel("Studio renders") {
+    Panel("Studio renders", id = "hub-studio") {
         Muted("Renders in GitHub Actions, then opens a PR with clip links; merging it makes the clips live and queues the batch in Buffer. Skit takes go in the ${s.studio?.str("takes") ?: "skit-takes"} release as <skit>-<lang>.mp4.")
         Row(verticalAlignment = Alignment.CenterVertically) {
             listOf("tips" to "Tips source", "skit" to "Skit").forEach { (k, label) ->

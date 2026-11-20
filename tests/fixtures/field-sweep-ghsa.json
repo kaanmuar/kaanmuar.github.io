@@ -1,0 +1,21 @@
+[
+  {
+    "ghsa_id": "GHSA-xxxx-yyyy-zzzz",
+    "cve_id": "CVE-2026-119350",
+    "html_url": "https://github.com/advisories/GHSA-xxxx-yyyy-zzzz",
+    "summary": "Example framework: cache poisoning via request-supplied route params",
+    "description": "One unauthenticated GET can poison a shared cache entry.",
+    "severity": "high",
+    "published_at": "2026-10-23T14:00:00Z",
+    "withdrawn_at": null
+  },
+  {
+    "ghsa_id": "GHSA-withdrawn",
+    "cve_id": "CVE-2020-00001",
+    "html_url": "https://github.com/advisories/GHSA-withdrawn",
+    "summary": "Withdrawn advisory should not appear",
+    "severity": "low",
+    "published_at": "2026-10-21T12:00:00Z",
+    "withdrawn_at": "2026-10-22T12:00:00Z"
+  }
+]

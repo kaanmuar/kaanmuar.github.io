@@ -12,6 +12,7 @@ import com.carlosandmunoz.jarvis.R
 import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -23,6 +24,7 @@ import com.carlosandmunoz.jarvis.BuildConfig
 import com.carlosandmunoz.jarvis.JarvisApp
 import com.carlosandmunoz.jarvis.MainActivity
 import com.carlosandmunoz.jarvis.data.JSON
+import com.carlosandmunoz.jarvis.data.Sections
 import com.carlosandmunoz.jarvis.data.at
 import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.doubles
@@ -101,7 +103,8 @@ object Home {
             return Cell(label, k?.prim("value").text(), delta, dirOf(delta), p.obj("series").at("values").doubles())
         }
         val pipe = snap.obj("external").obj("outreach").obj("pipeline")?.takeIf { it.isOk() }
-        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), null, 0, pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
+        val reviewedDelta = change(pipe?.num("reviews"), pipe?.num("priorReviews"))
+        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), reviewedDelta, dirOf(reviewedDelta), pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
         return listOf(revenue, product("review", "Reviews"), product("cv", "CV"), outreach)
     }
 
@@ -367,6 +370,7 @@ object Home {
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
+        MapKind.entries.forEach { k -> runCatching { mapWidget(k).updateAll(context) } }
         runCatching { TileService.requestListeningState(context, ComponentName(context, StatusTile::class.java)) }
         val today = today(context.applicationContext as JarvisApp)
         Ongoing.show(context, today)
@@ -374,7 +378,7 @@ object Home {
     }
 
     /** The one-day snapshot behind "today" figures, fetched at most once per redraw and only when asked for. */
-    private fun today(app: JarvisApp): suspend () -> JsonObject? {
+    fun today(app: JarvisApp): suspend () -> JsonObject? {
         var loaded = false
         var day: JsonObject? = null
         return {
@@ -400,6 +404,34 @@ object Home {
         val net = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
         WorkManager.getInstance(context).enqueueUniqueWork("$WORK-now", ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<RefreshWorker>().setConstraints(net).build())
+    }
+
+    /** The saved snapshots a section push touches: the app's range, and the one-day copy behind "today" when kept. */
+    private fun pushRanges(app: JarvisApp) = listOf(days(app)) + if (days(app) != 1 && app.api.saved("snapshot", 1) != null) listOf(1) else emptyList()
+
+    fun pushStale(app: JarvisApp, data: Map<String, String>) = pushRanges(app).any { d -> Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d).isNotEmpty() }
+
+    /** A section push (#2509): fetch the sections it names in the background, one push after the other. */
+    fun refreshSections(context: Context, data: Map<String, String>) {
+        val net = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        val input = Data.Builder().putString("sections", data["sections"]).putString("versions", data["versions"]).putString("days", data["days"]).build()
+        WorkManager.getInstance(context).enqueueUniqueWork("$WORK-sections", ExistingWorkPolicy.APPEND_OR_REPLACE,
+            OneTimeWorkRequestBuilder<SectionsWorker>().setConstraints(net).setInputData(input).build())
+    }
+
+    /** Fetches only the sections a push says moved into each saved snapshot, then redraws; false when a fetch failed. */
+    suspend fun applyPush(context: Context, data: Map<String, String>): Boolean {
+        val app = context.applicationContext as JarvisApp
+        var fetched = false
+        val ok = pushRanges(app).map { d ->
+            val only = Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d)
+            if (only.isEmpty()) true else runCatching { app.api.snapshot(d, only) }.isSuccess.also { fetched = true }
+        }.all { it }
+        if (fetched) {
+            redraw(context)
+            com.carlosandmunoz.jarvis.push.Push.cancelPeerNotices(app, data["sections"].orEmpty().split(","))
+        }
+        return ok
     }
 
     fun stop(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(WORK)
@@ -447,5 +479,13 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     override suspend fun doWork(): Result {
         if (!(applicationContext as JarvisApp).auth.signedIn) { Home.redraw(applicationContext); return Result.success() }
         return if (Home.refresh(applicationContext)) Result.success() else Result.retry()
+    }
+}
+
+class SectionsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        if (!(applicationContext as JarvisApp).auth.signedIn) return Result.success()
+        val data = listOf("sections", "versions", "days").mapNotNull { k -> inputData.getString(k)?.let { k to it } }.toMap()
+        return if (Home.applyPush(applicationContext, data)) Result.success() else Result.retry()
     }
 }

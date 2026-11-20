@@ -29,7 +29,8 @@
   },
   "scheduler": {
     "tasks": {
-      "daily-batch": { "endpoint": "/internal/scheduler/daily", "cron": "20 16 * * *" }
+      "daily-batch": { "endpoint": "/internal/scheduler/daily", "cron": "20 16 * * *" },
+      "campaign": { "endpoint": "/internal/scheduler/campaign", "cron": "*/30 * * * *" }
     }
   }
 }

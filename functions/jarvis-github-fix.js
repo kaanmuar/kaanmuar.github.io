@@ -9,8 +9,14 @@
    deleteBranch  deletes merged branches; never the default branch or one with an open PR
    closeIssue    comments and closes an issue
    orphanTicket  files a request ticket for a PR without one, puts it in Dev and names it on the PR
+   quarantine    files a Backlog bug for a flaky workflow with its runs, once while one is open (#2808)
+   securityTicket files a Backlog bug for a Dependabot, code scanning or secret scanning alert (#2808)
+   dismissAlert  dismisses a Dependabot or code scanning alert with a reason and comment; only on Carlos's click (#2808)
+   runStatus     a run's status, conclusion and attempt, for the re-run polls (#2808)
    diagnose      reads a failed run's first failed job log and asks Gemini for the cause; jarvis_github_diag/<run>
-   launchAgent   starts a Cursor cloud agent (CURSOR_API_KEY), only on Carlos's click
+   draftFlaky    Gemini's prompt for a fix agent that makes a flaky workflow stable (#2808)
+   launchAgent   asks @cursor on the PR (or a new issue) so the cloud agent draws from
+                 weekly included usage; the Agents API checks prepaid and is not used (#3536)
    retro         Gemini's weekly GitHub retro from the last 7 day docs; jarvis_github_weekly/<YYYY-Www>
    localIngest   the Mac uploader's report (worktrees, usage, cost, rate) in jarvis_github_local/latest, and the
                  results of the queued worktree removals; localReply lists what is still queued for it
@@ -20,6 +26,7 @@
    answer with the permission to grant. */
 
 const crypto = require("crypto");
+const jarvisLog = require("./jarvis-log");
 
 const API = "https://api.github.com";
 const REPO = "kaanmuar/kaanmuar.github.io";
@@ -29,12 +36,19 @@ const COLUMNS = { Backlog: "3f4ac4fe", Next: "dc8fb26d", Design: "a8250664", Dev
 const MERGE_LABEL = "jarvis-merge";
 const TICKET = 2526;
 const CATEGORIES = ["flaky", "infra", "code", "test", "config"];
-const DIAG_ACTIONS = ["rerun-ci", "gh-agent", "none"];
+const DIAG_ACTIONS = ["rerun-ci", "gh-update-pr", "gh-agent", "none"];
+const DEPENDABOT_REASONS = ["fix_started", "inaccurate", "no_bandwidth", "not_used", "tolerable_risk"];
+const CODE_REASONS = ["false positive", "won't fix", "used in tests"];
+const ALERTS = { dependabot: { path: "dependabot/alerts", name: "Dependabot alert", grant: "Dependabot alerts: write", reasons: DEPENDABOT_REASONS, low: "tolerable_risk" },
+  codeScanning: { path: "code-scanning/alerts", name: "code scanning alert", grant: "Code scanning alerts: write", reasons: CODE_REASONS, low: "won't fix" } };
+const LOW_COMMENT = "Low severity, a tolerable risk (bulk dismissal from Jarvis, #2808).";
+const CACHE_DAYS = [1, 7, 30, 90, 365];
 const LOG_LINES = 150;
 const RATE_POINTS = 48;
 const QUEUE_ACTIONS = ["remove-worktree", "prune-branches"];
-const CURSOR_AGENTS = "https://api.cursor.com/v1/agents";
+const CURSOR_WEEKLY_MODEL = "composer-2.5";
 const NO_CURSOR_KEY = "Add CURSOR_API_KEY to the functions secrets (Cursor Dashboard > API Keys).";
+const NO_CURSOR_CREDIT = "Cursor's Agents API still checks the team prepaid balance, so Jarvis asks @cursor on GitHub instead (weekly included usage). If that also failed, open cursor.com/agents and paste the prompt.";
 
 const text = (value, max) => String(value === null || value === undefined ? "" : value).replace(/\s+/g, " ").trim().slice(0, max);
 const block = (value, max) => String(value === null || value === undefined ? "" : value).slice(0, max);
@@ -129,6 +143,8 @@ async function boardSync(ctx, args) {
       moved.push("#" + d.number + " to " + col);
     } catch (error) { left.push("#" + d.number + ": " + text(error.message, 120)); }
   }
+  await jarvisLog.logMany(null, moved.map((m) => ({ source: "board", level: "info", url: BOARD.url, text: "Jarvis moved " + m + " on the board" }))
+    .concat(left.map((l) => ({ source: "board", level: "warn", url: BOARD.url, text: "Jarvis could not move " + l }))));
   if (!moved.length) throw new Error("Nothing moved: " + left.join("; "));
   return { ok: true, message: "Moved " + moved.join(", ") + (left.length ? "; left " + left.join("; ") : "") + ".", moved, left, url: BOARD.url };
 }
@@ -244,6 +260,23 @@ function areaOf(pr) {
   return "area:" + (hint ? hint[0] : "jarvis");
 }
 
+// Files an issue and puts it in a board column; board says why it is not on the board, else "".
+async function openBoardIssue(ctx, repo, issue, column) {
+  const made = await call(ctx, "/repos/" + repo + "/issues", { method: "POST", body: issue });
+  let board = "";
+  try {
+    const ids = await columnIds(ctx);
+    await setColumn(ctx, await boardItem(ctx, repo, made.number), ids[columnName(ids, column)] || COLUMNS[column]);
+  } catch (error) { board = "; not put on the board: " + text(error.message, 120); }
+  return { issue: made, board };
+}
+
+// An open issue with this label whose title starts with prefix, so a second click does not file it twice.
+async function openIssueTitled(ctx, repo, label, prefix) {
+  const list = await call(ctx, "/repos/" + repo + "/issues?state=open&labels=" + encodeURIComponent(label) + "&per_page=100").catch(() => []);
+  return (Array.isArray(list) ? list : []).find((i) => !i.pull_request && String(i.title || "").startsWith(prefix)) || null;
+}
+
 async function orphanTicket(ctx, args) {
   const a = args || {};
   const repo = repoOf(a);
@@ -252,17 +285,142 @@ async function orphanTicket(ctx, args) {
   if (pr.state !== "open") return { ok: false, message: "#" + n + " is " + (pr.merged ? "merged" : "closed") + "; no ticket filed.", url: pr.html_url };
   const title = text(String(pr.title || "PR #" + n).replace(/^\w+(\([^)]*\))?!?:\s*/, ""), 200);
   const area = areaOf(pr);
-  const issue = await call(ctx, "/repos/" + repo + "/issues", { method: "POST", body: {
+  const { issue, board } = await openBoardIssue(ctx, repo, {
     title, labels: ["kind:request", area],
     body: "Filed by Jarvis for " + pr.html_url + ", which named no ticket (#" + TICKET + ").\n\n" + block(String(pr.body || "").trim(), 3000)
-  } });
-  let board = "";
-  try {
-    const ids = await columnIds(ctx);
-    await setColumn(ctx, await boardItem(ctx, repo, issue.number), ids[columnName(ids, "Dev")] || COLUMNS.Dev);
-  } catch (error) { board = "; not put on the board: " + text(error.message, 120); }
+  }, "Dev");
   await call(ctx, "/repos/" + repo + "/issues/" + n + "/comments", { method: "POST", body: { body: "Ticket: #" + issue.number } });
   return { ok: true, message: "Filed #" + issue.number + " (" + area + ") for PR #" + n + board + ".", url: issue.html_url, number: issue.number };
+}
+
+/* args: { workflow, pct, runs, path?, links?: [run urls] } from the Flaky workflows panel. The bug goes to Backlog with
+   area:ci; one already open for the workflow is answered instead of filing another. */
+async function quarantine(ctx, args) {
+  const a = args || {};
+  const workflow = text(a.workflow, 120);
+  if (!workflow) throw new Error("Which workflow?");
+  const pct = num(a.pct) ?? 0;
+  const runs = num(a.runs) ?? 0;
+  const prefix = "CI: " + workflow + " is flaky";
+  const open = await openIssueTitled(ctx, REPO, "area:ci", prefix);
+  if (open) return { ok: false, message: "#" + open.number + " already tracks " + workflow + ".", url: open.html_url, number: open.number };
+  const links = (Array.isArray(a.links) ? a.links : []).map((l) => text(l, 300)).filter((l) => /^https:\/\/github\.com\//.test(l)).slice(0, 10);
+  const { issue, board } = await openBoardIssue(ctx, REPO, {
+    title: prefix + " (" + pct + "% of " + runs + " runs)", labels: ["bug", "area:ci"],
+    body: [
+      "Filed by Jarvis from the Flaky workflows panel (#2808): \"" + workflow + "\"" + (a.path ? " (`" + text(a.path, 200) + "`)" : "") + " failed and then passed on a re-run of the same commit in " + pct + "% of " + runs + " runs in the last 24 hours.",
+      links.length ? "Runs:\n" + links.map((l) => "- " + l).join("\n") : "",
+      "Fix: find the step that fails only sometimes (timing, network, shared state, order) and make it deterministic; until then, mark it so a flaky failure does not block merges."
+    ].filter(Boolean).join("\n\n")
+  }, "Backlog");
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "issue:" + issue.number, url: issue.html_url, text: "Quarantined the flaky " + workflow + " (" + pct + "% of " + runs + " runs) as #" + issue.number });
+  return { ok: true, message: "Filed #" + issue.number + " for the flaky " + workflow + board + ".", url: issue.html_url, number: issue.number };
+}
+
+// The area label of a security alert from its manifest or file path; other repos than this one are devops.
+function areaOfPath(path, repo) {
+  if (repo && repo !== REPO) return "area:devops";
+  const p = String(path || "");
+  if (/^android\//.test(p)) return "area:android";
+  if (/^functions\//.test(p)) return "area:be";
+  if (/^\.github\//.test(p)) return "area:ci";
+  if (/^(js|css|[^/]+\.html$)/.test(p)) return "area:fe";
+  return "area:tooling";
+}
+
+const SECURITY_KINDS = { dependabot: "Dependabot", codeScanning: "Code scanning", secrets: "Secret scanning" };
+
+/* args: one alert as the github-work source lists it, with its kind (dependabot, codeScanning or secrets). The ticket
+   is filed in this repo (the board's), whichever repo the alert is in. */
+async function securityTicket(ctx, args) {
+  const a = args || {};
+  const kind = SECURITY_KINDS[a.kind] ? a.kind : "";
+  if (!kind) throw new Error("Which kind of alert?");
+  const repo = repoOf(a);
+  const n = numberOf(a);
+  const where = repo === REPO ? "" : " in " + repo;
+  const severity = text(a.severity, 20) || "unknown";
+  const path = kind === "dependabot" ? a.manifest : a.path;
+  const what = kind === "dependabot" ? text(a.package, 80) + (a.manifest ? " (" + text(a.manifest, 120) + ")" : "")
+    : kind === "codeScanning" ? text(a.rule, 120) + (a.path ? " in " + text(a.path, 160) : "") : "a leaked " + (text(a.type, 80) || "secret");
+  const prefix = "Security: " + what + where;
+  const area = areaOfPath(path, repo);
+  const open = await openIssueTitled(ctx, REPO, "bug", prefix);
+  if (open) return { ok: false, message: "#" + open.number + " already tracks this alert.", url: open.html_url, number: open.number };
+  const fix = kind === "dependabot" ? "Upgrade " + text(a.package, 80) + (a.patched ? " to " + text(a.patched, 40) + " or later" : " to a patched version") + (a.manifest ? " in " + text(a.manifest, 120) : "") + ", run the tests, and let Dependabot close the alert."
+    : kind === "codeScanning" ? "Fix the code the rule flags, or dismiss the alert on GitHub with the reason if it is a false positive."
+      : "Revoke the secret where it was issued, rotate it in Secret Manager and every service that uses it, then close the alert on GitHub as revoked.";
+  const { issue, board } = await openBoardIssue(ctx, REPO, {
+    title: (prefix + " (" + severity + ")").slice(0, 250), labels: ["bug", area],
+    body: ["Filed by Jarvis from the GitHub tab (#2808, auto #3489) for " + SECURITY_KINDS[kind] + " alert #" + n + " in " + repo + ": " + text(a.url, 300), a.summary ? text(a.summary, 400) : "", "Fix: " + fix].filter(Boolean).join("\n\n")
+  }, "Backlog");
+  // A Dependabot bump PR for a severe alert gets jarvis-merge so the hourly pass can squash-merge it after the countdown.
+  let labeled = "";
+  const prn = Number(a.pr) || (a.pr && a.pr.number) || 0;
+  if (kind === "dependabot" && prn > 0 && /^(critical|high)$/i.test(severity)) {
+    try {
+      await call(ctx, "/repos/" + REPO + "/issues/" + prn + "/labels", { method: "POST", body: { labels: [MERGE_LABEL] } });
+      labeled = " Labelled PR #" + prn + " " + MERGE_LABEL + " so Jarvis can merge it.";
+    } catch (error) { labeled = " Could not label PR #" + prn + " for merge: " + text(error.message, 80) + "."; }
+  }
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "issue:" + issue.number, url: issue.html_url, text: "Filed #" + issue.number + " for " + SECURITY_KINDS[kind] + " alert #" + n + " in " + repo.split("/").pop() + ": " + what });
+  return { ok: true, message: "Filed #" + issue.number + " (" + area + ") for " + SECURITY_KINDS[kind] + " alert #" + n + board + "." + labeled, url: issue.html_url, number: issue.number };
+}
+
+/* Only on Carlos's click: { kind: dependabot | codeScanning, repo, number, reason, comment? }. Secret scanning is
+   read-only for the app, so it is refused with what to do instead. */
+async function dismissAlert(ctx, args) {
+  const a = args || {};
+  if (a.kind === "secrets") throw new Error("Jarvis cannot close secret scanning alerts: revoke and rotate the secret, then close the alert on GitHub.");
+  const spec = ALERTS[a.kind];
+  if (!spec) throw new Error("Which kind of alert?");
+  const repo = repoOf(a);
+  const n = numberOf(a);
+  const reason = String(a.reason || "");
+  if (!spec.reasons.includes(reason)) throw new Error("Pick a reason: " + spec.reasons.join(", ") + ".");
+  const body = { state: "dismissed", dismissed_reason: reason };
+  const comment = text(a.comment, 280);
+  if (comment) body.dismissed_comment = comment;
+  let out;
+  try { out = await call(ctx, "/repos/" + repo + "/" + spec.path + "/" + n, { method: "PATCH", body }); } catch (error) { throw need(error, spec.grant, "dismiss alerts"); }
+  const url = (out && out.html_url) || "https://github.com/" + repo + "/security";
+  await jarvisLog.log(null, { source: "github", level: "info", ref: a.kind + ":" + repo + "#" + n, url, text: "Dismissed " + spec.name + " #" + n + " in " + repo.split("/").pop() + " (" + reason.replace(/_/g, " ") + ")" + (comment ? ": " + comment : "") });
+  return { ok: true, message: "Dismissed " + spec.name + " #" + n + (repo === REPO ? "" : " in " + repo) + " (" + reason.replace(/_/g, " ") + ").", url };
+}
+
+/* args.alerts: [{ kind, repo, number }], the low ones; Dependabot as tolerable_risk, code scanning as won't fix. */
+async function dismissLow(ctx, args) {
+  const list = (Array.isArray((args || {}).alerts) ? args.alerts : []).filter((x) => x && ALERTS[x.kind]).slice(0, 50);
+  if (!list.length) return { ok: false, message: "No low alert is open." };
+  const done = [];
+  const left = [];
+  for (const x of list) {
+    try {
+      await dismissAlert(ctx, { kind: x.kind, repo: x.repo, number: x.number, reason: ALERTS[x.kind].low, comment: LOW_COMMENT });
+      done.push(x);
+    } catch (error) {
+      if (error.need) throw error;
+      left.push("#" + x.number + ": " + text(error.message, 100));
+    }
+  }
+  if (!done.length) return { ok: false, message: "Nothing dismissed: " + left.join("; ") + ".", count: 0 };
+  return { ok: true, count: done.length, message: "Dismissed " + done.length + " low alert" + (done.length === 1 ? "" : "s") + " as a tolerable risk" + (left.length ? "; left " + left.join("; ") : "") + "." };
+}
+
+async function runStatus(ctx, args) {
+  const a = args || {};
+  const repo = repoOf(a);
+  const id = Number(a.run || a.target);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("Which run?");
+  const run = await call(ctx, "/repos/" + repo + "/actions/runs/" + id);
+  if (run.status === "completed") await jarvisLog.log(null, { source: "github", level: run.conclusion === "success" ? "info" : "warn", ref: "run:" + id, url: run.html_url,
+    text: "Re-run of " + repo.split("/").pop() + " run " + id + " (" + text(run.name, 80) + ") finished, attempt " + (run.run_attempt || 1) + ": " + (run.conclusion || "no conclusion") });
+  return { ok: true, run: id, status: run.status || "", conclusion: run.conclusion || "", done: run.status === "completed", attempt: run.run_attempt || 1, url: run.html_url || "", name: text(run.name, 120) };
+}
+
+// The github-work answers every range keeps (jarvis_cache/github-work-<days>), dropped after an action changes GitHub.
+function clearCache(db) {
+  return Promise.all(CACHE_DAYS.map((d) => db.collection("jarvis_cache").doc("github-work-" + d).delete().catch(() => null)));
 }
 
 // The part of a job log around its first error, timestamps dropped, at most LOG_LINES lines.
@@ -280,14 +438,14 @@ function diagPrompt(run, job, excerpt) {
     "Failed job \"" + job.name + "\"; failed steps: " + (job.steps || []).filter((s) => s.conclusion === "failure").map((s) => s.name).join(", "),
     "Log excerpt:\n" + excerpt,
     "Answer only strict JSON: {\"cause\": one sentence, \"category\": \"flaky\"|\"infra\"|\"code\"|\"test\"|\"config\", \"fix\": one or two sentences, "
-      + "\"confidence\": 0-1, \"action\": \"rerun-ci\" for flaky or infra, \"gh-agent\" when code must change, else \"none\", "
+      + "\"confidence\": 0-1, \"action\": \"rerun-ci\" for flaky or infra, \"gh-update-pr\" when the branch only needs main merged in, \"gh-agent\" when code must change, else \"none\", "
       + "\"prompt\": for code, test or config a ready-to-run prompt for a Cursor coding agent working in this repository on branch " + run.branch
       + " (what failed, the files and lines the log names, what to change, how to check it), else \"\"}."
   ].join("\n");
 }
 
 function parseDiag(raw) {
-  const s = String(raw || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+  const s = String(raw || "").replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, "").trim();
   const from = s.indexOf("{");
   const to = s.lastIndexOf("}");
   let d;
@@ -301,50 +459,106 @@ function parseDiag(raw) {
   };
 }
 
+// A run, its first failed job (null when none failed) and that job's log excerpt ("" when it cannot be read).
+async function failedLog(ctx, repo, id) {
+  const run = await call(ctx, "/repos/" + repo + "/actions/runs/" + id);
+  const jobs = (await call(ctx, "/repos/" + repo + "/actions/runs/" + id + "/jobs?filter=latest&per_page=100")).jobs || [];
+  const job = jobs.find((j) => ["failure", "timed_out", "startup_failure"].includes(j.conclusion)) || null;
+  let excerpt = "";
+  if (job) try {
+    const token = await ctx.github("repo");
+    const res = await ctx.fetch(API + "/repos/" + repo + "/actions/jobs/" + job.id + "/logs", { headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" }, redirect: "follow" });
+    if (res.ok) excerpt = logExcerpt(await res.text());
+  } catch (error) { excerpt = ""; }
+  return { run, job, excerpt };
+}
+
 async function diagnose(ctx, args) {
   const a = args || {};
   const repo = repoOf(a);
   const id = Number(a.run || a.target);
   if (!Number.isInteger(id) || id <= 0) throw new Error("Which run?");
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
-  const run = await call(ctx, "/repos/" + repo + "/actions/runs/" + id);
-  const jobs = (await call(ctx, "/repos/" + repo + "/actions/runs/" + id + "/jobs?filter=latest&per_page=100")).jobs || [];
-  const job = jobs.find((j) => ["failure", "timed_out", "startup_failure"].includes(j.conclusion));
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
+  const { run, job, excerpt } = await failedLog(ctx, repo, id);
   if (!job) return { ok: false, message: "Run " + id + " has no failed job to read." };
-  let excerpt = "";
-  try {
-    const token = await ctx.github("repo");
-    const res = await ctx.fetch(API + "/repos/" + repo + "/actions/jobs/" + job.id + "/logs", { headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" }, redirect: "follow" });
-    if (res.ok) excerpt = logExcerpt(await res.text());
-  } catch (error) { excerpt = ""; }
   const facts = { repo, name: run.name, branch: run.head_branch, event: run.event, attempt: run.run_attempt, sha: run.head_sha };
   const diag = parseDiag(await ctx.gemini(diagPrompt(facts, job, excerpt || "(the log could not be read)"), 1400));
-  const row = Object.assign({ run: id, repo, workflow: text(run.name, 120), branch: text(run.head_branch, 200), sha: text(run.head_sha, 40), url: text(run.html_url, 300),
+  const pr = ((run.pull_requests || [])[0] || {}).number || null;
+  const row = Object.assign({ run: id, repo, workflow: text(run.name, 120), branch: text(run.head_branch, 200), pr, sha: text(run.head_sha, 40), url: text(run.html_url, 300),
     job: text(job.name, 120), jobUrl: text(job.html_url, 300) }, diag, { at: new Date(ctx.now || Date.now()).toISOString() });
   await ctx.db.collection("jarvis_github_diag").doc(String(id)).set(row);
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "run:" + id, url: row.url, text: "Diagnosed " + repo.split("/").pop() + " run " + id + " (" + row.workflow + "): " + (row.category ? row.category + ", " : "") + row.cause });
   return { ok: true, message: row.workflow + ": " + row.cause, diag: row, url: row.url };
 }
 
+/* args: { run (its newest failure, or a retried run), workflow, pct, runs }. Gemini drafts from the run's diagnosis
+   when there is one, else from its failed step log; without Gemini the prompt is built from the same facts. */
+async function draftFlaky(ctx, args) {
+  const a = args || {};
+  const repo = repoOf(a);
+  const id = Number(a.run || a.target);
+  if (!Number.isInteger(id) || id <= 0) throw new Error("Which run?");
+  const workflow = text(a.workflow, 120) || "the workflow";
+  const rate = num(a.pct) !== null ? num(a.pct) + "% of " + (num(a.runs) ?? "its") + " runs" : "some runs";
+  const snap = await ctx.db.collection("jarvis_github_diag").doc(String(id)).get().catch(() => null);
+  const d = snap && snap.exists ? snap.data() : null;
+  let evidence = d ? "Gemini's diagnosis of run " + id + ": " + text(d.cause, 400) + (d.fix ? " Fix: " + text(d.fix, 400) : "") + (d.job ? " (job \"" + text(d.job, 120) + "\")" : "") : "";
+  if (!evidence) {
+    const log = await failedLog(ctx, repo, id).catch(() => null);
+    if (log && log.job) evidence = "Failed job \"" + log.job.name + "\", steps " + (log.job.steps || []).filter((s) => s.conclusion === "failure").map((s) => s.name).join(", ") + ". Log excerpt:\n" + (log.excerpt || "(the log could not be read)");
+  }
+  const url = "https://github.com/" + repo + "/actions/runs/" + id;
+  const plain = ["The GitHub Actions workflow \"" + workflow + "\" in " + repo + " is flaky: it failed and then passed on a re-run of the same commit in " + rate + ".",
+    "Newest failure: " + url + ".", evidence, "Find the step that fails only sometimes (timing, network, shared state, test order), make it deterministic, run it several times to show it holds, and open a PR against main."].filter(Boolean).join("\n");
+  let prompt = plain;
+  if (ctx.gemini) {
+    const out = await ctx.gemini(["Write a prompt for a Cursor coding agent working in " + repo + " on a branch from main that makes this flaky GitHub Actions workflow stable.",
+      "Name the files and steps the evidence points at, what to change, and how to show it no longer flakes. Plain text, under 250 words, no preamble.", plain].join("\n"), 900).catch(() => "");
+    if (text(out, 40).length >= 20) prompt = block(String(out).trim(), 4000);
+  }
+  await jarvisLog.log(null, { source: "github", level: "debug", ref: "run:" + id, url, text: "Drafted a fix prompt for the flaky " + workflow + (prompt === plain ? " (without Gemini)" : " with Gemini") });
+  return { ok: true, prompt, branch: "main", run: id, message: "Drafted a fix prompt for " + workflow + "." };
+}
+
+/* Cursor's Agents API (CURSOR_API_KEY) refuses launches against prepaid/top-up even when weekly
+   included usage remains. Commenting @cursor on a PR or issue starts the same cloud agent through
+   GitHub and bills the weekly pool (#3536). */
 async function launchAgent(ctx, args) {
   const a = args || {};
-  const key = String((ctx.env || {}).CURSOR_API_KEY || "");
-  if (!key) throw new Error(NO_CURSOR_KEY);
   const repo = repoOf(a);
   const prompt = block(String(a.prompt || "").trim(), 20000);
   if (prompt.length < 20) throw new Error("The agent needs a prompt.");
-  const url = "https://github.com/" + repo;
-  const pr = Number(String(a.pr || "").replace(/^#/, ""));
-  const repos = [pr > 0 ? { url, prUrl: url + "/pull/" + pr } : { url, startingRef: text(a.branch, 200) || "main" }];
-  const res = await ctx.fetch(CURSOR_AGENTS, {
-    method: "POST",
-    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-    body: JSON.stringify({ name: text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : ""), prompt: { text: prompt }, repos, autoCreatePR: true })
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error("Cursor refused the agent (" + res.status + "): " + text(data.message || data.error || "", 200));
-  const agent = data.agent || data;
-  const id = String(agent.id || "");
-  return { ok: true, id, message: "Started Cursor agent " + (id || "") + ".", url: agent.url || (agent.target && agent.target.url) || (id ? "https://cursor.com/agents?id=" + encodeURIComponent(id) : "https://cursor.com/agents") };
+  // A pull_request run (CodeQL's dynamic one) names refs/pull/<n>/head; treat it as that PR.
+  const pullRef = /^refs\/pull\/(\d+)\/(?:head|merge)$/.exec(String(a.branch || ""));
+  const pr = Number(String(a.pr || "").replace(/^#/, "")) || (pullRef ? Number(pullRef[1]) : 0);
+  const branch = text(String(a.branch || "").replace(/^refs\/heads\//, ""), 200) || "main";
+  const name = text(a.name, 80) || "Jarvis fix" + (pr > 0 ? " #" + pr : "");
+  const mention = "@cursor\n\n" + (pr > 0 ? "" : "Start from branch `" + branch + "` in " + repo + ".\n\n") + prompt;
+  let number = pr;
+  if (!(pr > 0)) {
+    let issue;
+    try {
+      issue = await call(ctx, "/repos/" + repo + "/issues", { method: "POST", body: {
+        title: name,
+        body: "Jarvis asked Cursor to fix this (#3536). Weekly included usage via @cursor."
+      } });
+    } catch (error) { throw need(error, "Issues: write", "open an issue for @cursor"); }
+    number = Number(issue.number) || 0;
+    if (!(number > 0)) throw new Error("GitHub did not return an issue number for @cursor.");
+  }
+  let comment;
+  try {
+    comment = await call(ctx, "/repos/" + repo + "/issues/" + number + "/comments", { method: "POST", body: { body: mention } });
+  } catch (error) { throw need(error, "Issues: write", "comment @cursor so the cloud agent can start"); }
+  const url = comment.html_url || ("https://github.com/" + repo + (pr > 0 ? "/pull/" : "/issues/") + number + "#issuecomment-" + (comment.id || ""));
+  await jarvisLog.log(null, { source: "github", level: "info", ref: "cursor:@cursor:" + number, text: "Asked @cursor on " + repo.split("/").pop() + (pr > 0 ? " PR #" + pr : " issue #" + number) + " (" + CURSOR_WEEKLY_MODEL + " weekly pool): " + text(prompt, 160) });
+  return {
+    ok: true,
+    via: "github",
+    number,
+    message: "Asked @cursor on " + (pr > 0 ? "PR #" + pr : "issue #" + number) + "; it uses your weekly Cursor usage.",
+    url
+  };
 }
 
 // The ISO week in Bogotá (UTC-5 all year), so Sunday evening is still that week.
@@ -359,7 +573,7 @@ function isoWeek(t) {
 
 /* args.summary: the source's compact numbers now (jarvis.js githubAsk). */
 async function retro(ctx, args) {
-  if (!ctx.gemini) throw new Error("GEMINI_API_KEY is not set.");
+  if (!ctx.gemini) throw new Error("Gemini is not configured.");
   const now = ctx.now || Date.now();
   const days = [];
   for (let i = 7; i >= 1; i -= 1) {
@@ -394,8 +608,11 @@ async function markResults(db, results, now) {
     const id = String((r && r.id) || "").replace(/[^a-f0-9]/g, "").slice(0, 24);
     if (!id) continue;
     try {
-      await db.collection("jarvis_github_local_queue").doc(id).update({ status: r.status === "done" ? "done" : "failed", result: text(r.result, 300), doneAt: new Date(now).toISOString() });
+      const ref = db.collection("jarvis_github_local_queue").doc(id);
+      await ref.update({ status: r.status === "done" ? "done" : "failed", result: text(r.result, 300), doneAt: new Date(now).toISOString() });
       marked += 1;
+      const q = await ref.get().then((d) => (d.exists ? d.data() : {})).catch(() => ({}));
+      await jarvisLog.log(null, { source: "mac", level: r.status === "done" ? "info" : "error", ref: "mac:" + id, text: "The Mac " + (r.status === "done" ? "did " : "failed ") + (q.action || "a queued job") + " " + (q.target || "") + (r.result ? ": " + text(r.result, 200) : "") });
     } catch (error) { /* gone or never queued */ }
   }
   return marked;
@@ -427,6 +644,10 @@ async function localIngest(db, body, now) {
     rate, rateHistory
   };
   await ref.set(row);
+  const alive = row.worktrees.filter((w) => w.alive).length;
+  await jarvisLog.log(null, { source: "mac", level: row.errors.length ? "warn" : "debug", ref: "mac:" + row.host,
+    text: "Mac report from " + (row.host || "the Mac") + ": " + row.worktrees.length + " worktrees (" + alive + " with a live chat), " + row.usage.length + " usage rows"
+      + (rate.graphql && rate.graphql.used !== null ? ", GraphQL " + rate.graphql.used + "/" + rate.graphql.limit : "") + (row.errors.length ? "; errors: " + row.errors.join("; ") : "") });
   return Object.assign({ ok: true, marked: await markResults(db, b.results, now) }, await localReply(db));
 }
 
@@ -444,6 +665,7 @@ async function queueLocal(db, action, target, now) {
   const ref = db.collection("jarvis_github_local_queue").doc(id);
   try {
     await ref.create({ id, action, target: t, status: "queued", result: "", at: new Date(now).toISOString(), doneAt: "" });
+    await jarvisLog.log(null, { source: "mac", level: "info", ref: "mac:" + id, text: "Queued for the Mac: " + action + " " + t });
     return { ok: true, id, message: "Queued for the Mac: " + action + " " + t + "." };
   } catch (error) {
     const snap = await ref.get().catch(() => null);
@@ -482,12 +704,18 @@ function actArgs(action, body) {
     const path = String(b.path || (t.includes("/") ? t : "")).trim();
     const dir = String(b.dir || (path ? path.split("/").pop() : !wide && /^[\w.-]+$/.test(t) ? t : "")).trim();
     Object.assign(out, { path: path || null, dir: dir || null });
+  } else if (action === "gh-quarantine") {
+    out.workflow = String(b.workflow || (wide ? "" : t)).trim() || null;
+  } else if (action === "gh-dismiss-low") {
+    const list = (Array.isArray(b.alerts) ? b.alerts : []).filter((x) => x && x.kind && n(x.number)).map((x) => ({ kind: String(x.kind), repo: x.repo ? String(x.repo) : undefined, number: n(x.number) }));
+    out.alerts = list.length ? list : null;
   }
   return out;
 }
 
 module.exports = {
-  REPO, BOARD, COLUMNS, MERGE_LABEL, NO_CURSOR_KEY, CATEGORIES, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
-  diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf,
+  REPO, BOARD, COLUMNS, MERGE_LABEL, CURSOR_WEEKLY_MODEL, NO_CURSOR_KEY, NO_CURSOR_CREDIT, CATEGORIES, DEPENDABOT_REASONS, CODE_REASONS, boardSync, updatePr, mergePr, revert, deleteBranch, closeIssue, orphanTicket,
+  quarantine, securityTicket, dismissAlert, dismissLow, runStatus, clearCache, draftFlaky,
+  diagnose, launchAgent, retro, localIngest, localReply, queueLocal, actArgs, logExcerpt, parseDiag, diagPrompt, isoWeek, areaOf, areaOfPath,
   _reset: () => { statusOptions = null; }
 };

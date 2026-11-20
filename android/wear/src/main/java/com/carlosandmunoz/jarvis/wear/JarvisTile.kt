@@ -63,6 +63,7 @@ class JarvisTile : TileService() {
                     else {
                         addContent(text(s.percent, Typography.TYPOGRAPHY_DISPLAY2, Store.TEXT))
                         addContent(text(s.today, Typography.TYPOGRAPHY_CAPTION1, Store.MUTED))
+                        s.processes?.let { addContent(text(it, Typography.TYPOGRAPHY_CAPTION2, s.processColor)) }
                     }
                 }
                 .build()

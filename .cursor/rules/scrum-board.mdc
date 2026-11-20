@@ -1,20 +1,12 @@
 ---
-description: Log every ticket, bug found during development, and design deliverable on the QA-lab URL Review GitHub board, tied to the ticket being developed
+description: Log every ticket, bug found during development, and design deliverable on the QA-lab URL Review GitHub board
 alwaysApply: true
 ---
-
 # GitHub Scrum board
-Board: Project 1 "QA-lab URL Review" (https://github.com/orgs/carlosandmunoz-hq/projects/1), repo `kaanmuar/kaanmuar.github.io`. Columns: Backlog, Next, Design, Dev, QA, Stg, Prod, Done.
-Use `scripts/ticket.sh` for every board chore; its header lists the commands (`new`, `bug`, `design`, `move`, `child`, `done`, `log`).
+Board: Project 1 "QA-lab URL Review" (https://github.com/orgs/carlosandmunoz-hq/projects/1), repo `kaanmuar/kaanmuar.github.io`. Columns: Backlog, Next, Design, Dev, QA, Stg, Prod, Done. Board chores: `scripts/ticket.sh` (`new`, `bug`, `design`, `move`, `child`, `done`, `log`).
 
-- **Every piece of work has a ticket.** Find it, or `scripts/ticket.sh new "<title>" <area> dev` (`kind:request` + one `area:*`). Move it as the work moves; reference it in the PR body.
-- **Everything found while developing is its own issue** tied to the ticket: each bug, regression, incongruence (copy vs behaviour, page vs page, main vs production) or process slip, even if fixed in the same PR. `scripts/ticket.sh bug <ticket> "BE: A null MX record was read as missing mail setup" <area> "<what happened>" "<fix>" [fixed-pr]` writes the standard body, links it as a sub-issue, and closes it Done with the PR or leaves it in Backlog.
-- A PR that fixes a URL review failure cause class adds a row to `FIXES` in `functions/url-review-failures.js` (cause, merge time, PR), so the failed runs it covers are re-run.
-- **Design deliverables** (templates, layouts, images, logos, icons, share images, social posts, motion, copy and visual changes, and later updates to any of them) each get `scripts/ticket.sh design <ticket> "Design: ..." "<decisions, file paths, live link>"`; set Done when it ships.
-
-## GitHub API budget
-All chats share kaanmuar's 5,000 GraphQL points an hour (#892); `gh issue`, `gh pr`, `gh pr checks` and `gh project` spend it.
-- Issues, comments, labels, sub-issues: REST (`gh api repos/...`), as `scripts/ticket.sh` does.
-- CI: `scripts/ci-wait.sh <sha|pr>` (one blocking REST watch per run, prints only failed steps). Never `gh pr checks --watch`.
-- PRs: `gh api repos/kaanmuar/kaanmuar.github.io/pulls -f title=... -f head=<branch> -f base=main -f body=...`; merge with `gh api -X PUT .../pulls/<n>/merge -f merge_method=squash`.
-- Board moves only through `scripts/gh-budget.sh` (qa-lab-agents app first), which `scripts/ticket.sh` uses.
+- **Ticket every piece of work.** Find it, or `scripts/ticket.sh new "<title>" <area> dev`. Move as work moves; cite in the PR body.
+- **Findings while developing are their own issues**, even if fixed in the same PR. `scripts/ticket.sh bug …`; `--dry-run` first for dupes (#2969).
+- URL-review failure-cause fixes: add a `FIXES` row in `functions/url-review-failures.js`.
+- **Design deliverables:** `scripts/ticket.sh design <ticket> "Design: ..." "<decisions, paths, live link>"`; Done when shipped.
+- GitHub API/CI budget details: see `gh-budget` rule (auto-attaches on ticket/CI scripts).

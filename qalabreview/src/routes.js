@@ -1,9 +1,9 @@
 /* Routes for qalabreview.com, the outreach domain (#1864, #1866). Every link lands on carlosandmunoz.com;
    checkout, accounts and product mail never live on the sending domain. */
+import { AUDIENCES, ORIGIN, renderLanding } from "./landing.js";
 
 export const SITE = "https://carlosandmunoz.com";
 export const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-export const DEFAULT_CALL = "mailto:carlos@qalabreview.com?subject=" + encodeURIComponent("A call about my URL Review");
 
 // Short paths printed on clips, one-pagers, slides and profiles. The value is the utm_campaign Jarvis groups by.
 export const CHANNELS = {
@@ -17,7 +17,36 @@ export const SOCIAL = {
   bsky: "bluesky", mast: "mastodon", yt: "youtube", x: "x", li: "linkedin", fb: "facebook", ig: "instagram", th: "threads", tt: "tiktok"
 };
 
+const OFFER = /^hi-[a-z0-9]{8}$/;
 const HOST = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+const AD_CLICK_PARAMS = ["gclid", "wbraid", "gbraid", "msclkid", "fbclid", "ttclid", "li_fat_id"];
+
+function carryAdParams(location, url) {
+  if (!url || !url.searchParams) return location;
+  const parsed = new URL(location);
+  AD_CLICK_PARAMS.forEach((name) => {
+    const value = String(url.searchParams.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, 120);
+    if (value && !parsed.searchParams.has(name)) parsed.searchParams.set(name, value);
+  });
+  return parsed.toString();
+}
+
+function llmsTxt() {
+  return [
+    "# QA-lab URL Review (qalabreview.com)",
+    "",
+    "> qalabreview.com is the outreach and audience domain for QA-lab URL Review, built and hosted on https://carlosandmunoz.com/qa-review.html. Every review, checkout, and account runs on carlosandmunoz.com.",
+    "",
+    "## Audiences",
+    ...AUDIENCES.map((a) => `- [${a}](${ORIGIN}/en/${a})`),
+    "",
+    "## Product facts",
+    `- [QA-lab URL Review](${SITE}/qa-review.html): 21 case kinds, 20 frameworks, 6 scored areas (SEO, GEO, analytics, security, accessibility, performance), headless EU browser pass, phishing/malware/blocklist/lookalike/WordPress/mail-auth checks, Keep it clean watch & regression pins, and fixed-price fix packages`,
+    `- [Comparison next to 15 site checkers](${SITE}/qa-review-vs.html)`,
+    `- [Full facts for answer engines](${SITE}/llms.txt)`,
+    `- [Complete reference](${SITE}/llms-full.txt)`
+  ].join("\n") + "\n";
+}
 
 export function page(lang) {
   return lang === "en" ? "qa-review.html" : "qa-review-" + lang + ".html";
@@ -41,41 +70,73 @@ function landing(lang, tags, extra) {
   return SITE + "/" + page(lang) + "?" + q.toString();
 }
 
-/* Returns { status, location } or { status, body, type }. `findReport(bareHost)` resolves to a Live Report
+// The booking page (#1971) stands in for Microsoft Bookings (#1424); CALL_URL overrides it. book.js reads host
+// into the company field and sends utm_campaign as the booking's ref.
+function booking(lang, host) {
+  const q = new URLSearchParams({ utm_source: "qalabreview", utm_medium: "email", utm_campaign: "call" });
+  if (host) q.set("utm_content", host);
+  q.set("type", host ? "walkthrough" : "intro");
+  q.set("lang", lang);
+  if (host) q.set("host", host);
+  return SITE + "/book.html?" + q.toString();
+}
+
+function sitemap() {
+  const urls = LANGS.flatMap((l) => ["", ...AUDIENCES].map((a) => "<url><loc>" + ORIGIN + "/" + l + (a ? "/" + a : "") + "</loc></url>"));
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls.join("") + "</urlset>\n";
+}
+
+/* Returns { status, location } or { status, body, type, cache }. `findReport(bareHost)` resolves to a Live Report
    card ({ id }) or null. */
 export async function route(url, { acceptLanguage = "", findReport = async () => null, callUrl = "" } = {}) {
   const decode = (p) => { try { return decodeURIComponent(p); } catch (error) { return p; } };
   const parts = url.pathname.split("/").filter(Boolean).map((p) => decode(p).toLowerCase());
-  let lang = "";
-  if (parts.length && LANGS.includes(parts[0])) lang = parts.shift();
-  lang = lang || langFrom(acceptLanguage);
+  const pathLang = parts.length && LANGS.includes(parts[0]) ? parts.shift() : "";
+  const lang = pathLang || langFrom(acceptLanguage);
   const [first = "", ...rest] = parts;
 
-  if (first === "robots.txt") return { status: 200, type: "text/plain", body: "User-agent: *\nAllow: /\n" };
-  if (first === "call") return { status: 302, location: callUrl || DEFAULT_CALL };
-  if (!first) return { status: 302, location: landing(lang, { utm_campaign: "home", utm_medium: "web" }) };
-  if (CHANNELS[first] && !rest.length) return { status: 302, location: landing(lang, { utm_campaign: CHANNELS[first], utm_medium: first }) };
+  if (first === "robots.txt") return { status: 200, type: "text/plain", body: "User-agent: *\nAllow: /\nSitemap: " + ORIGIN + "/sitemap.xml\n\n# Facts for answer engines: " + ORIGIN + "/llms.txt\n" };
+  if (first === "sitemap.xml") return { status: 200, type: "application/xml", body: sitemap() };
+  if (first === "llms.txt") return { status: 200, type: "text/plain; charset=utf-8", cache: "public, max-age=300", body: llmsTxt() };
+  if (first === "favicon.ico") return { status: 302, location: SITE + "/assets/qa-review-favicon.ico" };
+  if (first === "call" && rest.length <= 1 && (!rest.length || HOST.test(bare(rest[0])))) {
+    return { status: 302, location: callUrl || carryAdParams(booking(lang, rest.length ? bare(rest[0]) : ""), url) };
+  }
+
+  // The landing (#1867): /<lang> and /<lang>/<audience>. Without a language in the path, the browser's picks one.
+  if ((!first || AUDIENCES.includes(first)) && !rest.length) {
+    if (!pathLang) return { status: 302, location: ORIGIN + "/" + lang + (first ? "/" + first : "") + url.search };
+    const tags = { utm_campaign: first ? "landing-" + first : "landing", utm_medium: "web" };
+    const link = (p, extra) => carryAdParams(SITE + "/" + p + "?" + new URLSearchParams(Object.assign({ utm_source: "qalabreview" }, tags, extra)).toString(), url);
+    return { status: 200, type: "text/html", cache: "public, max-age=300", body: renderLanding(lang, first, { link, review: carryAdParams(landing(lang, tags), url) }) };
+  }
+  if (CHANNELS[first] && !rest.length) return { status: 302, location: carryAdParams(landing(lang, { utm_campaign: CHANNELS[first], utm_medium: first }), url) };
 
   // A peer group's comparison (#2363): /<lang>/peers/<group id>/<the reader's token>, both lowercase hex.
   if (first === "peers" && rest.length === 2 && rest.every((p) => /^[a-f0-9]{8,40}$/.test(p))) {
-    return { status: 302, location: landing(lang, { utm_campaign: "outreach-peers", utm_medium: "email" }, { peers: rest[0], t: rest[1] }) };
+    return { status: 302, location: carryAdParams(landing(lang, { utm_campaign: "outreach-peers", utm_medium: "email" }, { peers: rest[0], t: rest[1] }), url) };
   }
 
   // A reply under a social post that names a site we reviewed (#2465); the post ref tells Jarvis which reply it was.
   // The ref goes before the host, whose length varies, so the 120 characters a visit keeps hold it (#2471).
-  if (first === "r" && (rest.length === 2 || rest.length === 3) && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2]))) {
+  // A profile campaign message (#2615) adds the site's domain offer code: /<lang>/r/<code>/<host>/<post ref>/<offer>.
+  if (first === "r" && rest.length >= 2 && rest.length <= 4 && SOCIAL[rest[0]] && HOST.test(bare(rest[1])) && (rest.length === 2 || /^[a-z0-9]{4,12}$/.test(rest[2])) && (rest.length < 4 || OFFER.test(rest[3]))) {
     const site = bare(rest[1]);
-    const tags = Object.assign({ utm_campaign: "social-reply-" + SOCIAL[rest[0]] }, rest[2] ? { utm_term: rest[2] } : {}, { utm_content: site, utm_medium: "social" });
+    const tags = Object.assign({ utm_campaign: (rest[3] ? "social-profile-" : "social-reply-") + SOCIAL[rest[0]] }, rest[2] ? { utm_term: rest[2] } : {}, { utm_content: site, utm_medium: "social" });
     const card = await findReport(site).catch(() => null);
-    return { status: 302, location: landing(lang, tags, card && card.id ? { live: card.id } : { url: site }) };
+    return { status: 302, location: carryAdParams(landing(lang, tags, Object.assign(card && card.id ? { live: card.id } : { url: site }, rest[3] ? { coupon: rest[3].toUpperCase() } : {})), url) };
   }
 
   const host = bare(first);
   if (HOST.test(host) && !rest.length) {
     const tags = { utm_campaign: "outreach", utm_content: host, utm_medium: "email" };
     const card = await findReport(host).catch(() => null);
-    if (card && card.id) return { status: 302, location: landing(lang, tags, { live: card.id }) };
-    return { status: 302, location: landing(lang, Object.assign(tags, { utm_campaign: "outreach-new" }), { url: host }) };
+    if (card && card.id) return { status: 302, location: carryAdParams(landing(lang, tags, { live: card.id }), url) };
+    return { status: 302, location: carryAdParams(landing(lang, Object.assign(tags, { utm_campaign: "outreach-new" }), { url: host }), url) };
   }
-  return { status: 302, location: landing(lang, { utm_campaign: "unknown-path", utm_medium: "web" }) };
+  // Sequence F, the competitors of URL Review askers (#2158): the sample report, with their own site typed in.
+  if (HOST.test(host) && rest.length === 1 && rest[0] === "sample") {
+    return { status: 302, location: carryAdParams(landing(lang, { utm_campaign: "outreach-rivals", utm_content: host, utm_medium: "email" }, { sample: "1", url: host }), url) };
+  }
+  return { status: 302, location: carryAdParams(landing(lang, { utm_campaign: "unknown-path", utm_medium: "web" }), url) };
 }

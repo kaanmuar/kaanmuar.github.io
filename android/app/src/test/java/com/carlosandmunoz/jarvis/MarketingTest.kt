@@ -44,6 +44,12 @@ class MarketingTest {
         assertFalse(Marketing.waiting(sync, "upload", "W1"))
     }
 
+    @Test fun jobVolumeShowsActualOverTargetWithSegmentNote() {
+        val j = json("""{"mode":"prospects","stats":{"actual":32,"target":40,"by_segment":{"university":10,"tvet":8}}}""")
+        assertEquals("32 / 40 · 10 university, 8 tvet", Marketing.jobVolume(j))
+        assertEquals("2 complete · 1 waiting", Marketing.jobVolume(json("""{"mode":"leads","stats":{"complete":2,"waiting":1}}""")))
+    }
+
     @Test fun linkedinSplitsStillToSendFromSent() {
         val (toSend, sent) = Marketing.linkedinSplit(sync)
         assertEquals(listOf("Leo", "Eva"), toSend.map { it["name"].toString().trim('"') })
