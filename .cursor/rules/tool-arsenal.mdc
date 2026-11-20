@@ -16,6 +16,7 @@ Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know wh
   - `AGPL-3.0` and `CC BY-NC` (`Cloudflare Radar API`, `Shodan InternetDB`, `CIRCL vulnerability-lookup`, `listmonk`, `RSSHub`, `postiz-app`) stay strictly external feed reads or separate internal-only tools—never bundled into paid/customer code unless commercially licensed.
 - Never install from a community hub (CLI-Anything). Read `setup` or install scripts before running them (REA `setup` writes agent configs).
 - Browser-facing scripts/assets under `script-src 'self'` (such as `designs/3d/` and `live.html`) must be self-hosted/vendored, never loaded from external CDNs.
+- Any open repo, before a verdict: `node scripts/tool-scout.js repo owner/name` prints its facts (license class, dates, star velocity, owner, README flags, whether it is in this arsenal). It states no verdict; a row changes only with its ticket.
 - A new tool gets a ticket. Add its row here when it is adopted or rejected.
 - End-user apps (desktop, mobile or personal dashboards, learning material) may be listed for Carlos's personal use at his own responsibility (Nov 19, 2026). They are never embedded in product or customer code.
 - Read the LICENSE file, not only GitHub's license badge: the badge shows NOASSERTION for many real MIT and Apache repos (`adobe/trustmark` opens with an Adobe notice and then grants MIT) and shows a license for repos whose datasets carry others (`sapics/ip-location-db`).
