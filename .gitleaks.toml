@@ -27,15 +27,15 @@ regexes = [
   '''"api_key"\s*:\s*\[''',
   '''apiKey\s*:\s*['"]AIza''',
   '''const val KEY = "AIza''',
-  '''DESK_FIREBASE_KEY = "AIza''',
+  '''DESK_FIREBASE_KEY = ['"]AIza''',
 ]
 
 [[allowlists]]
 description = "IndexNow key: served publicly from the site root by design (#3920)"
 regexTarget = "line"
 regexes = [
-  '''const INDEXNOW_KEY = "''',
-  '''\bKEY = "''',
+  '''const INDEXNOW_KEY = ['"]''',
+  '''\bKEY = ['"]''',
 ]
 
 [[allowlists]]
@@ -50,6 +50,7 @@ description = "Regex literal in the webpush endpoint check, not a credential (#3
 regexTarget = "line"
 regexes = [
   '''\^https:\\/\\/\[\^\\s\]\{10,1000\}\$''',
+  '''!p256dh \|\| !auth \|\| p256dh\.length > 200''',
 ]
 
 [[allowlists]]
