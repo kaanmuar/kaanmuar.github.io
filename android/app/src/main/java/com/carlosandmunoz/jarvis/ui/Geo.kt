@@ -315,8 +315,20 @@ private fun DateKind(kind: String?) {
     Text(k?.first ?: kind.orEmpty(), color = k?.second ?: J.muted, fontSize = 11.sp, modifier = Modifier.border(1.dp, k?.second ?: J.muted, RoundedCornerShape(8.dp)).padding(horizontal = 6.dp))
 }
 
+/**
+ * The map on its 3×1 / 3×2 plate (#3978): the panel's stretch (1 or 2) is how many times as wide the map is drawn in a pan strip, so on a
+ * phone the countries and their names are big enough to read. The tap's x is given as a fraction of the visible strip, so the card
+ * still opens on the far side from the finger.
+ */
 @Composable
 internal fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, pins: Set<String> = emptySet(), onTap: (String?, Offset) -> Unit) {
+    val scale = Layouts.plateScale(LocalPanelStretch.current)
+    val scroll = rememberScrollState()
+    Enlarged(scale, scroll) { WorldMapCanvas(world, rows, key, selected, fills, pins, scale, { scroll.value }, onTap) }
+}
+
+@Composable
+private fun WorldMapCanvas(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>?, pins: Set<String>, scale: Int, scrolled: () -> Int, onTap: (String?, Offset) -> Unit) {
     val fill = remember(rows, key, fills) { fills ?: Geo.fills(rows, key) }
     val by = remember(rows) { rows.associateBy { it.str("cc") ?: "" } }
     val lit = key == "light" && fills == null
@@ -327,7 +339,7 @@ internal fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, sel
     val halo = remember { android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface = android.graphics.Typeface.DEFAULT_BOLD; style = android.graphics.Paint.Style.STROKE; strokeJoin = android.graphics.Paint.Join.ROUND; color = 0xE0040A0E.toInt() } }
     Canvas(
         Modifier.fillMaxWidth().aspectRatio(world.w / world.h).background(Color(0xFF0A141B), RoundedCornerShape(10.dp))
-            .pointerInput(world, rows) { detectTapGestures { p -> val k = world.w / size.width; onTap(world.hit(p.x * k, p.y * k, by.keys), Offset(p.x / size.width, p.y / size.height)) } }
+            .pointerInput(world, rows) { detectTapGestures { p -> val k = world.w / size.width; onTap(world.hit(p.x * k, p.y * k, by.keys), Offset(PlateMath.viewFraction(p.x, scrolled(), size.width.toFloat(), scale), p.y / size.height)) } }
     ) {
         val k = size.width / world.w
         scale(k, k, pivot = Offset.Zero) {
@@ -436,7 +448,7 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     Needs(g)
     // Wide screens: the map spans every column right under the product chips, its numbers three to a row above it.
     val wide = LocalColumns.current >= 2
-    Panel("World map · ${Geo.metric(key).label}" + when (tv.mode) { "week" -> " · ${tv.label}"; "span" -> " · last ${tv.span} days"; else -> "" }, if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map") {
+    Panel("World map · ${Geo.metric(key).label}" + when (tv.mode) { "week" -> " · ${tv.label}"; "span" -> " · last ${tv.span} days"; else -> "" }, if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map", plate = true) {
         val kpis = listOf(
             KpiData("Countries we act in", fmt(t?.num("countries"))), KpiData("Target markets reached", "${fmt(t?.num("targetsActive"))} of ${fmt(t?.num("targets"))}", t?.num("silent")?.takeIf { it > 0 }?.let { "${fmt(it)} silent" }),
             KpiData("Need attention", fmt(t?.num("missing")), alert = (t?.num("missing") ?: 0.0) > 0), KpiData("Average reply rate", t?.num("avgReply")?.let { "$it%" } ?: "—"),

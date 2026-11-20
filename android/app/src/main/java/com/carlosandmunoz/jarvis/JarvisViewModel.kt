@@ -318,11 +318,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
 
     /** One tab's section layout (#2809), shown at once and saved through settings-save; a failed save puts the old one back. */
     /** Cycle a chart panel's stretch 1→2→3 (#3569), saved in layout.stretch like the web. */
-    fun cycleChartStretch(tab: String, id: String) {
+    fun cycleChartStretch(tab: String, id: String, current: Int? = null, max: Int = 3) {
         val before = Layouts.read(_state.value.snapshot, tab) ?: Layouts.Saved()
         val ids = Arrange.defaults[tab].orEmpty().ifEmpty { before.order }
         val stretch = before.stretch.toMutableMap()
-        stretch[id] = ((stretch[id] ?: 1) % 3) + 1
+        // #3978: [current] is what the panel shows when nothing is saved (a 3×2 plate starts at 2); max 2 cycles 3×1 and 3×2.
+        stretch[id] = Layouts.nextStretch(stretch[id] ?: current ?: 1, max)
         val next = Layouts.keep(before, before.order.ifEmpty { ids }, before.hidden, ids).copy(stretch = Layouts.cleanStretch(stretch))
         saveLayout(tab, next)
     }

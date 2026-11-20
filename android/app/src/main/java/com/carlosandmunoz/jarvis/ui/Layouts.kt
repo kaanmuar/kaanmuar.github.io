@@ -89,6 +89,18 @@ object Layouts {
     fun cleanStretch(map: Map<String, Int>?): Map<String, Int> =
         map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
 
+    /**
+     * The 3×1 / 3×2 plate (#3978): a map or dense infographic spans the whole grid row (3 columns) and is drawn once (3×1)
+     * or twice (3×2) as wide in a pan strip, so its small print can be read. It rides the panel's `stretch` (1 or 2).
+     * A phone's single column starts at 3×2; two or more columns are already wide and start at 3×1.
+     */
+    const val PLATE_MAX = 2
+    fun plateDefault(columns: Int) = if (columns >= 2) 1 else 2
+    fun plateScale(stretch: Int) = stretch.coerceIn(1, PLATE_MAX)
+
+    /** The next stretch after [current] when cycling 1..[max]. */
+    fun nextStretch(current: Int, max: Int) = (current.coerceIn(1, max) % max) + 1
+
     /** Grid column span for a width factor (matches web sizeSpan). */
     fun sizeSpan(w: Float, alreadyWide: Boolean = false): Int {
         val n = clampSize(1f, w).w

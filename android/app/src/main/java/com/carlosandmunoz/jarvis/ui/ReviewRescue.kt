@@ -337,7 +337,7 @@ fun CyberMapPanel(s: UiState) {
     val pins = direct.mapNotNull { it.str("country")?.ifEmpty { null } }.toSet()
     val fills = rows.associate { it.str("cc").orEmpty() to ReviewRescue.cyberFill(it.num("count") ?: 0.0, max) }
     fun inRange(r: String, cc: String): Double = ranges.obj(r).objs("countries").firstOrNull { it.str("cc") == cc }?.num("count") ?: 0.0
-    Panel("Cyber-attack map · $label", id = "review-cyber-map") {
+    Panel("Cyber-attack map · $label", id = "review-cyber-map", plate = true) {
         KpiPairs(listOf(
             KpiData("Cited events · $label", fmt(cur.num("total"))),
             KpiData("Countries cited", fmt(rows.size.toDouble())),
