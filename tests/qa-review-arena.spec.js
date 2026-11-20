@@ -54,8 +54,8 @@ test.describe('Review arena live facts', () => {
 		expect(s.items.crawl).toBe('done');
 	});
 
-	test('Jarvis lanes show live status on the painted board', async ({ page }) => {
-		await prime(page, 'jarvis');
+	test('console lanes show live status and stay out of the internal tool name', async ({ page }) => {
+		await prime(page, 'console');
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
@@ -63,21 +63,102 @@ test.describe('Review arena live facts', () => {
 			ReviewProgress.line('Opening the first page.');
 			ReviewProgress.line('Reading robots.txt.');
 		});
-		await expect(page.locator('.ra--jarvis .ra-canvas')).toBeVisible();
+		await expect(page.locator('.ra--console .rc')).toBeVisible();
 		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
 		const s = await snap(page);
+		expect(s.skin).toBe('console');
 		expect(s.items.fields).toBe('done');
 		expect(s.items.robots).toBe('wip');
 		expect(s.items.save).toBe('idle');
-		// the board is painted: the canvas is not blank
-		const painted = await page.evaluate(() => {
-			const c = document.querySelector('.ra-canvas');
-			const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-			let lit = 0;
-			for (let i = 0; i < d.length; i += 400) if (d[i] + d[i + 1] + d[i + 2] > 60) lit++;
-			return lit;
+		await expect(page.locator('.ln[data-id="robots"]').first()).toHaveClass(/s-wip/);
+		await expect(page.locator('.ln[data-id="fields"]').first()).toHaveClass(/s-done/);
+		// a real DOM, not a picture: no canvas, and the plain log stays only for screen readers
+		await expect(page.locator('.ra .ra-canvas')).toHaveCount(0);
+		const hidden = await page.evaluate(() => document.getElementById('run-log').getBoundingClientRect().height);
+		expect(hidden).toBeLessThanOrEqual(1);
+		// the internal tool name never shows to the customer
+		const text = await page.evaluate(() => document.querySelector('.ra .rc-host').shadowRoot.textContent + document.querySelector('.ra').textContent);
+		expect(text.toLowerCase()).not.toContain('jarvis');
+		const img = await page.evaluate(() => Array.from(document.querySelector('.ra .rc-host').shadowRoot.querySelectorAll('img')).map((i) => i.getAttribute('src')));
+		expect(img.join()).not.toMatch(/jarvis/i);
+	});
+
+	test('every console view opens and shows its own content', async ({ page }) => {
+		await prime(page, 'console');
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => {
+			ReviewProgress.start({ host: 'example.com', pages: 5 });
+			ReviewProgress.line('Checking that the address is public https.');
+			ReviewProgress.line('Waiting for PageSpeed Insights, up to 20 s.');
+			ReviewProgress.line("PageSpeed Insights did not answer (no answer). The browser's lab values stand in.");
 		});
-		expect(painted).toBeGreaterThan(200);
+		await expect(page.locator('.rc')).toBeVisible();
+		const views = {
+			overview: '.v-overview .ring',
+			systems: '.v-systems .sys',
+			processes: '.v-processes .lane',
+			agents: '.v-agents .ag',
+			workflows: '.v-workflows .wf-step',
+			infrastructure: '.v-infra .in',
+			logs: '.v-logs .lg-row',
+			alerts: '.v-alerts .al-row',
+			settings: '.v-settings .seg',
+		};
+		for (const [id, marker] of Object.entries(views)) {
+			await page.locator(`.rc [data-nav="${id}"]`).click();
+			await expect(page.locator(`.rc-view[data-v="${id}"]`)).toBeVisible();
+			await expect(page.locator(`.rc ${marker}`).first()).toBeVisible();
+			await expect(page.locator('.rc .rc-h')).toHaveText(new RegExp(id === 'infrastructure' ? 'Infrastructure' : id, 'i'));
+		}
+		// the alert badge counts the failed PageSpeed read
+		await expect(page.locator('.rc .rc-badge')).toHaveText('1');
+	});
+
+	test('View All Processes, the system filter, auto-refresh and Update do what they say', async ({ page }) => {
+		await prime(page, 'console');
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => {
+			ReviewProgress.start({ host: 'example.com', pages: 5 });
+			ReviewProgress.line('Reading robots.txt.');
+		});
+		await page.locator('.rc [data-nav="processes"]').click();
+		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(1);
+		await page.getByRole('button', { name: 'View All Processes' }).click();
+		await expect(page.locator('.rc-view[data-v="all"]')).toBeVisible();
+		await expect(page.locator('.rc .v-all .pt-row:not([hidden])')).toHaveCount(23);
+		await page.getByRole('button', { name: 'Back to Processes' }).click();
+		await expect(page.locator('.rc-view[data-v="processes"]')).toBeVisible();
+
+		// the system filter narrows the table to one system
+		await page.getByRole('button', { name: 'System filter' }).click();
+		await page.getByRole('option', { name: 'Security' }).click();
+		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(0);
+		await page.getByRole('button', { name: 'System filter' }).click();
+		await page.getByRole('option', { name: 'Crawl' }).click();
+		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(1);
+		await page.getByRole('button', { name: 'System filter' }).click();
+		await page.getByRole('option', { name: 'All Systems' }).click();
+
+		// auto-refresh off freezes the view; Update catches up
+		await page.getByRole('switch', { name: 'Auto-refresh' }).click();
+		await expect(page.locator('.rc .rc-paused')).toBeVisible();
+		await page.evaluate(() => ReviewProgress.line('robots.txt was read.'));
+		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-wip/);
+		await page.getByRole('button', { name: 'Update' }).click();
+		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-done/);
+		await page.getByRole('switch', { name: 'Auto-refresh' }).click();
+		await expect(page.locator('.rc .rc-paused')).toBeHidden();
+	});
+
+	test('full screen toggles on the console', async ({ page }) => {
+		await prime(page, 'console');
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		const button = page.locator('.rc button[title="Full screen"]');
+		await button.click();
+		await expect(page.locator('.rc')).toHaveClass(/is-(pseudo)?full/);
+		await page.locator('.rc button[aria-pressed="true"]').click();
+		await expect(page.locator('.rc')).not.toHaveClass(/is-full|is-pseudofull/);
 	});
 
 	test('PageSpeed miss fails lighthouse without a pass tick', async ({ page }) => {

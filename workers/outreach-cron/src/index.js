@@ -16,6 +16,7 @@ export const MODES = {
 };
 
 import { createBreaker, resilientFetch } from "../../shared/breaker.js";
+import { withHeartbeat } from "../../shared/heartbeat.js";
 
 // One breaker for api.github.com (#3838): five failures in a row pause the calls for a minute; a 429/503 waits for Retry-After.
 const githubBreaker = createBreaker({ name: "github", threshold: 5, coolDownMs: 60000 });
@@ -52,10 +53,13 @@ async function appToken(env) {
 }
 
 export default {
+  // Dead-man ping (#4032): HEARTBEAT_OUTREACH_URL on success, its /fail (or HEARTBEAT_OUTREACH_FAIL_URL) when the run throws.
   async scheduled(controller, env) {
-    const mode = MODES[controller.cron];
-    if (!mode) throw new Error(`no mode for cron "${controller.cron}"`);
-    await github(`/repos/kaanmuar/${REPO}/actions/workflows/outreach.yml/dispatches`, await appToken(env), { ref: "main", inputs: { mode } });
-    console.log(`dispatched ${mode}`);
+    await withHeartbeat(env, "outreach", async () => {
+      const mode = MODES[controller.cron];
+      if (!mode) throw new Error(`no mode for cron "${controller.cron}"`);
+      await github(`/repos/kaanmuar/${REPO}/actions/workflows/outreach.yml/dispatches`, await appToken(env), { ref: "main", inputs: { mode } });
+      console.log(`dispatched ${mode}`);
+    });
   },
 };

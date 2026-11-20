@@ -9,6 +9,10 @@
  "⟦1⟧ answers with speed, ⟦2⟧ to ⟦3⟧, and GEO, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ kontert beim Tempo, ⟦2⟧ zu ⟦3⟧, und bei GEO, ⟦4⟧ zu ⟦5⟧.",
  "⟦1⟧ blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed.": "⟦1⟧ sperrt GPTBot fürs Training, lässt Antwort-Crawler aber herein, und Sitemaps sind gelistet.",
  "⟦1⟧ can be framed by any other site.": "⟦1⟧ lässt sich von jeder anderen Website einbetten.",
+ "⟦1⟧ checks we name that SEO audits does not; they go deeper on SEO crawl issues.": {
+  "text": "⟦1⟧ prüft, was wir nennen, dass SEO-Audits dies nicht tun; Sie gehen tiefer auf SEO-Crawling-Probleme ein.",
+  "machine": true
+ },
  "⟦1⟧ days of HTTPS only.": "⟦1⟧ Tage nur HTTPS.",
  "⟦1⟧ decides who may read you.": "⟦1⟧ entscheidet, wer Sie lesen darf.",
  "⟦1⟧ free books, no Book markup.": "⟦1⟧ kostenlose Bücher, kein Book-Markup.",
@@ -211,6 +215,10 @@
  "A content security policy, one-year HSTS, nosniff, Permissions-Policy, a canonical, and structured data.": "Eine Content Security Policy, HSTS für ein Jahr, nosniff, Permissions-Policy, ein Canonical und strukturierte Daten.",
  "A content security policy, Referrer-Policy, Permissions-Policy, nosniff, and a permanent https redirect.": "Eine Content Security Policy, Referrer-Policy, Permissions-Policy, nosniff und eine permanente https-Weiterleitung.",
  "A Corporation entity with seven sameAs links, an ⟦1⟧, ⟦2⟧, and HSTS with preload.": "Eine Corporation-Entität mit sieben sameAs-Links, eine ⟦1⟧, ⟦2⟧ und HSTS mit preload.",
+ "A coverage scorecard from each vendor's own pages (checked ⟦1⟧-⟦2⟧-⟦3⟧).": {
+  "text": "Eine Abdeckungs-Scorecard von den eigenen Seiten jedes Anbieters (markiert ⟦1⟧-⟦2⟧-⟦3⟧).",
+  "machine": true
+ },
  "A declared language, a canonical, a ⟦1⟧ from http to https, and a sitemap named in ⟦2⟧.": "Eine deklarierte Sprache, ein Canonical, eine ⟦1⟧-Weiterleitung von http auf https und eine in ⟦2⟧ genannte Sitemap.",
  "A declared language, a canonical, a sitemap index in ⟦1⟧, a ⟦2⟧ to https, and GA4.": "Eine deklarierte Sprache, ein Canonical, ein Sitemap-Index in ⟦1⟧, eine ⟦2⟧-Weiterleitung auf https und GA4.",
  "A declared language, a canonical, a sitemap named in ⟦1⟧, and a ⟦2⟧ to https.": "Eine deklarierte Sprache, ein Canonical, eine in ⟦1⟧ genannte Sitemap und eine ⟦2⟧-Weiterleitung auf https.",
@@ -251,6 +259,10 @@
  "A screen reader can only announce a name that exists.": "Ein Screenreader kann nur einen Namen ansagen, den es gibt.",
  "A search for src=\"http:// in your theme finds them.": "Eine Suche nach src=\"http:// in Ihrem Theme findet sie.",
  "A shared one tells search nothing new.": "Eine geteilte sagt der Suche nichts Neues.",
+ "A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.": {
+  "text": "Ein kurzer X/Threads-Thread: Worin SEO-Audits gewinnen, was die URL-Überprüfung stattdessen abdeckt, eine ehrliche Aufteilung und die Vergleichstabelle.",
+  "machine": true
+ },
  "A sitemap helps search engines discover your pages.": "Eine Sitemap hilft Suchmaschinen, Ihre Seiten zu entdecken.",
  "A sitemap index in ⟦1⟧, framing limited to its origin, and GA4.": "Ein Sitemap-Index in ⟦1⟧, Framing nur vom eigenen Origin und GA4.",
  "A sitemap index, pages that name their language, and robots meta that allows large previews.": "Ein Sitemap-Index, Seiten, die ihre Sprache angeben, und ein robots-Meta-Tag, das große Vorschauen erlaubt.",
@@ -435,6 +447,10 @@
  "Bancolombia's site won't let you zoom.": "Die Website von Bancolombia lässt kein Zoomen zu.",
  "Bar chart: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.": "Balkendiagramm: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.",
  "Barcelona blocks ChatGPT search.": "Barcelona blockiert die ChatGPT-Suche.",
+ "Battle card.": {
+  "text": "Kampfkarte.",
+  "machine": true
+ },
  "Bavaria's portal has no sitemap.": "Bayerns Portal hat keine Sitemap.",
  "Before (fail):": "Vorher (durchgefallen):",
  "Before crediting a better score to your own work, check that both reports name the same Lighthouse version and compare the field data.": "Bevor Sie einen besseren Wert Ihrer eigenen Arbeit zuschreiben, prüfen Sie, ob beide Berichte dieselbe Lighthouse-Version nennen, und vergleichen Sie die Felddaten.",
@@ -999,6 +1015,10 @@
  "Cornare:": "Cornare:",
  "Corte Constitucional is blank without JS.": "Corte Constitucional ist ohne JS leer.",
  "Coursera taps take ⟦1⟧ ms to answer.": "Coursera braucht ⟦1⟧ ms, um auf Tippen zu reagieren.",
+ "Coverage compared from each vendor's own pages, checked ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Vergleich der Abdeckung auf den eigenen Seiten jedes Anbieters, überprüft ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Craig Morten shows how Guidepup lets a Playwright test drive a real screen reader and assert on what VoiceOver, NVDA or Orca actually announces, instead of reading the accessibility tree.": "Craig Morten zeigt, wie Guidepup einen Playwright-Test einen echten Screenreader steuern und prüfen lässt, was VoiceOver, NVDA oder Orca tatsächlich ansagen, statt den Accessibility Tree auszulesen.",
  "Creative Commons moves to https with ⟦1⟧.": "Creative Commons wechselt mit ⟦1⟧ zu https.",
  "Cross-Origin-Opener-Policy.": {
@@ -1552,6 +1572,10 @@
   "text": "Behalten Sie die Abfragezeichenfolge bei jeder Weiterleitung bei, damit Kampagnen-Tags die Zielseite erreichen.",
   "machine": true
  },
+ "Keep the SEO crawler for on-page depth; add a URL Review for threats, lookalikes, mail auth and fix packages.": {
+  "text": "Behalten Sie den SEO-Crawler für die On-Page-Tiefe; Fügen Sie eine URL-Überprüfung für Bedrohungen, Lookalikes, E-Mail-Authentifizierung und Fixpakete hinzu.",
+  "machine": true
+ },
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Halten Sie Titel bei etwa ⟦1⟧ Zeichen und verschieben Sie das Leitbild in die Beschreibung.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Halten Sie Titel bei etwa ⟦1⟧ Zeichen: Schlüsselwörter zuerst, Website-Name zuletzt, und kürzen Sie lange Namen im CMS.",
  "Kevin Korenhof": "Kevin Korenhof",
@@ -1700,6 +1724,10 @@
  "Name each crawler in ⟦1⟧ on purpose.": "Nennen Sie jeden Crawler in ⟦1⟧ bewusst.",
  "Name the organization and list its official profiles in sameAs.": "Nennen Sie die Organisation und listen Sie ihre offiziellen Profile in sameAs.",
  "Name the search and AI answer crawlers you want in ⟦1⟧, so citations can point back to you.": "Nennen Sie die gewünschten Such- und KI-Antwort-Crawler in ⟦1⟧, damit Zitate auf Sie zurückverweisen können.",
+ "Names are trademarks of their owners.": {
+  "text": "Namen sind Marken ihrer Besitzer.",
+  "machine": true
+ },
  "Nariño's home page is ⟦1⟧ KB of HTML.": "Nariños Startseite hat ⟦1⟧ KB HTML.",
  "NASA is wide open to AI search.": "Die NASA ist weit offen für KI-Suche.",
  "NatGeo sets cookies without Secure.": "NatGeo setzt Cookies ohne Secure.",
@@ -1893,6 +1921,10 @@
  "Policía Nacional's search has no label.": "Die Suche der Policía Nacional hat kein Label.",
  "Popayán's links share with no preview card.": "Popayáns Links werden ohne Vorschaukarte geteilt.",
  "Port of claude-seo:": "Portierung von claude-seo:",
+ "Post the hook, then the four beats as replies — not a LI/IG carousel.": {
+  "text": "Posten Sie den Hook, dann die vier Beats als Antworten – kein LI/IG-Karussell.",
+  "machine": true
+ },
  "PostgreSQL's search box has no name.": "Das Suchfeld von PostgreSQL hat keinen Namen.",
  "Pre-render pages to HTML and ⟦1⟧ unknown paths:": "Rendern Sie Seiten vorab als HTML und beantworten Sie unbekannte Pfade mit ⟦1⟧:",
  "Preloaded HSTS, a ⟦1⟧, a content security policy, and Core Web Vitals that pass for real visitors.": "HSTS mit Preload, eine ⟦1⟧, eine Content Security Policy und Core Web Vitals, die bei echten Besuchern bestehen.",
@@ -2224,6 +2256,10 @@
   "machine": true
  },
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
+ "SEO audits in four beats.": {
+  "text": "SEO-Audits in vier Schritten.",
+  "machine": true
+ },
  "SEO card.": "Karte SEO.",
  "SEO Week Becomes Relevance, the Premier AI Search Conference, Returning April ⟦1⟧–⟦2⟧, ⟦3⟧, in New York City": "Aus SEO Week wird Relevance, die führende Konferenz zur KI-Suche, zurück vom ⟦1⟧. bis ⟦2⟧. April ⟦3⟧ in New York City",
  "SEO Week Becomes…": "Aus SEO Week wird…",
@@ -2354,6 +2390,10 @@
  "Tab reaches the menu, Visible focus ring (pass); Dialog opens, Focus moves inside (pass); Escape, Closes the dialog (warning); Cookie banner, Reachable before the page (warning).": "Tab erreicht das Menü, Sichtbarer Fokusrahmen (bestanden); Dialog öffnet, Fokus wandert hinein (bestanden); Escape, Schließt den Dialog (Warnung); Cookie-Banner, Vor der Seite erreichbar (Warnung).",
  "Tab through your contact form with a screen reader on.": "Tabben Sie mit eingeschaltetem Screenreader durch Ihr Kontaktformular.",
  "Tab, Shift+Tab, Enter, and Escape should be enough.": "Tab, Shift+Tab, Enter und Escape sollten genügen.",
+ "Table: ⟦1⟧": {
+  "text": "Tabelle: ⟦1⟧",
+  "machine": true
+ },
  "Tabs, bookmarks, and search results all show it.": "Tabs, Lesezeichen und Suchergebnisse zeigen ihn an.",
  "Tag campaign links the same way, every time.": "Taggen Sie Kampagnenlinks jedes Mal gleich.",
  "Tag Manager with no consent tool.": "Tag Manager ohne Consent-Tool.",
@@ -2617,6 +2657,14 @@
  "Unicode still loads Universal Analytics.": "Unicode lädt noch Universal Analytics.",
  "Univalle's English link returns a ⟦1⟧.": "Univalles englischer Link liefert ein ⟦1⟧.",
  "Universal Cart, UCP, WebMCP, intelligent eyewear: the agentic web is arriving.": "Universal Cart, UCP, WebMCP, intelligente Brillen: Das agentische Web kommt.",
+ "URL Review vs SEO audits.": {
+  "text": "URL-Überprüfung vs. SEO-Audits.",
+  "machine": true
+ },
+ "Us vs them:": {
+  "text": "Wir gegen sie:",
+  "machine": true
+ },
  "Use ⟦1⟧ below the fold only.": "Verwenden Sie ⟦1⟧ nur unterhalb des sichtbaren Bereichs.",
  "Use ⟦1⟧ or \"-⟦2⟧\" only.": "Verwenden Sie nur ⟦1⟧ oder „-⟦2⟧“.",
  "Use a ⟦1⟧ from http to https, then add Strict-Transport-Security so browsers skip http next time.": "Leiten Sie per ⟦1⟧ von http auf https um und ergänzen Sie Strict-Transport-Security, damit Browser http künftig überspringen.",
