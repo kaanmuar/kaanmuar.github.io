@@ -28,6 +28,7 @@
    Target markets are every country speaking one of our six languages unless jarvis_settings/geo lists others. */
 
 const sweep = require("./url-review-sweep");
+const { beforeLastLineDelim } = require("./line-cut");
 const geoTime = require("./jarvis-geo-time");
 const clicks = require("./jarvis-geo-clicks");
 const geoGa4 = require("./jarvis-geo-ga4");
@@ -206,7 +207,7 @@ function geoRows(input) {
     });
   });
   ((i.sync && i.sync.replies) || []).forEach((rep) => {
-    const from = String(rep.from || "").toLowerCase().replace(/^.*</, "").replace(/>.*$/, "").trim();
+    const from = beforeLastLineDelim(String(rep.from || "").toLowerCase().replace(/^.*</, ""), ">").trim();
     const r = row(leadEmail[from] || countryOf(domainOf(from)));
     if (!r) return;
     r.answered++;

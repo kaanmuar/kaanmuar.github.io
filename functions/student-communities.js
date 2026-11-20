@@ -46,7 +46,7 @@ function readRules(text) {
   const day = (PROMO_DAY.find(([d]) => new RegExp("(self[- ]?promo\\w*|showoff|show[- ]off|promotion)[^.]{0,30}" + d + "|" + d + "[^.]{0,30}(self[- ]?promo\\w*|showoff|show[- ]off|promotion)", "i").test(t)) || [])[1];
   const banned = NO_PROMO.test(t);
   const promoAllowed = !banned && PROMO_OK.test(t);
-  const lines = t.split(/(?<=[.!?])\s+|\s*\n\s*/).filter((l) => /promo|advertis|spam|link|sell|solicit|publicidad|propaganda|werbung|publicit|pubblicit|self/i.test(l));
+  const lines = t.split(/(?<=[.!?])\s+|(?<!\s)\s*\n\s*/).filter((l) => /promo|advertis|spam|link|sell|solicit|publicidad|propaganda|werbung|publicit|pubblicit|self/i.test(l));
   return { promoAllowed, promoDay: day === undefined ? -1 : day, summary: clip(lines.slice(0, 3).join(" ") || t, 300) };
 }
 

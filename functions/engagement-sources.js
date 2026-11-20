@@ -31,11 +31,11 @@ const DEV_TAGS = ["a11y", "testing", "seo", "webperf", "playwright", "qa"];
 const pick = (list, slot, n) => Array.from({ length: Math.min(n, list.length) }, (_, i) => list[(slot * n + i) % list.length]);
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'", nbsp: " " };
-const plain = (html) => String(html || "").replace(/<br\s*\/?>|<\/p>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (m, k) => ENTITIES[k]).trim();
+const plain = (html) => String(html || "").replace(/<br\s*\/?>|<\/p>/gi, "\n").replace(/<[^>]+>|(<[^>]*$)/g, (m, open) => open || "").replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (m, k) => ENTITIES[k]).trim();
 
 async function getJson(fetchImpl, url, opts) {
   const res = await fetchImpl(url, Object.assign({ signal: AbortSignal.timeout(TIMEOUT) }, opts || {}));
-  if (!res.ok) throw new Error(url.replace(/[?#].*$/, "").replace(/^https:\/\//, "") + " answered " + res.status);
+  if (!res.ok) throw new Error(url.replace(/[?#](?<![?#][^\n\r\u2028\u2029?#]*[?#]).*$/, "").replace(/^https:\/\//, "") + " answered " + res.status);
   return res.json();
 }
 
@@ -58,7 +58,7 @@ const dedupePosts = (posts) => {
 
 async function mastodonTags(ctx) {
   const packHint = ctx.pack && ctx.pack.pack && ctx.pack.pack.mastodon;
-  const base = String(ctx.env.MASTODON_URL || packHint || "https://mastodon.social").replace(/\/+$/, "");
+  const base = String(ctx.env.MASTODON_URL || packHint || "https://mastodon.social").replace(/(?<!\/)\/+$/, "");
   const urls = pick(MASTODON_TAGS, ctx.slot, 4).map((t) => base + "/api/v1/timelines/tag/" + encodeURIComponent(t) + "?limit=30")
     .concat([base + "/api/v1/trends/statuses?limit=30"]);
   // The tags rising on the instance now, when they name our field or what is next to it (#3814).
@@ -74,7 +74,7 @@ async function mastodonTags(ctx) {
 /** Field search with the connected account's token; rotates TOPICS and DISCOVERY, not tags alone (#3613). */
 async function mastodonSearch(ctx) {
   if (!ctx.env.MASTODON_SEARCH_URL || !ctx.env.MASTODON_SEARCH_TOKEN) return [];
-  const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/\/+$/, "");
+  const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/(?<!\/)\/+$/, "");
   const since = new Date(ctx.now - 2 * 24 * 3600000).toISOString();
   const topicQs = pick(Object.keys(E.TOPICS), ctx.slot, 2).flatMap((t) => pick(E.TOPICS[t].slice(0, 3), ctx.slot, 1));
   const discQs = Regions.discoveryForRun(ctx.now, E.MASTODON_DISCOVERY_BUDGET, ctx.settings || { discoveryPack: "auto" }).map((d) => d.q);
@@ -105,7 +105,7 @@ function blueskyPost(p) {
 
 /** A Bluesky session for reading (and, in #1990, acting). */
 async function blueskySession(ctx) {
-  const service = String(ctx.env.BLUESKY_SERVICE || "https://bsky.social").replace(/\/+$/, "");
+  const service = String(ctx.env.BLUESKY_SERVICE || "https://bsky.social").replace(/(?<!\/)\/+$/, "");
   const s = await getJson(ctx.fetch, service + "/xrpc/com.atproto.server.createSession", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifier: ctx.env.BLUESKY_HANDLE, password: ctx.env.BLUESKY_APP_PASSWORD })
   });
@@ -263,7 +263,7 @@ const SEARCHERS = [
     return lists.flat();
   }],
   ["mastodon", ["MASTODON_SEARCH_URL", "MASTODON_SEARCH_TOKEN"], async (ctx, queries, since) => {
-    const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/\/+$/, "");
+    const base = String(ctx.env.MASTODON_SEARCH_URL).replace(/(?<!\/)\/+$/, "");
     const lists = await Promise.all(queries.map((q) => getJson(ctx.fetch, base + "/api/v2/search?type=statuses&resolve=false&limit=20&q=" + encodeURIComponent(q),
       { headers: { Authorization: "Bearer " + ctx.env.MASTODON_SEARCH_TOKEN } }).then((l) => (l.statuses || []).filter((s) => !(s.account || {}).bot && String(s.created_at || "") >= since).map((s) => Object.assign(mastodonPost(s), { query: q }))).catch(() => [])));
     return lists.flat();

@@ -21,9 +21,22 @@ const APPROVED = /\bapproved\b|passed (the )?review|(account|application|verific
 // "Once approved, you can..." and "será aprobada en 3 días" are promises, not decisions.
 const PROMISE = /\b(will|would|can|could|may|might|once|until|after|before|when|if|to|get) (be |get |been )?approved\b|\b(ser[aá]|sea|una vez|hasta que|cuando|despu[eé]s de ser) (sea )?aprobad[oa]/gi;
 
+// ADDRESS skips starts inside a run of address characters; ADDRESS_AT still tries the spot right after the previous
+// address, so glued text like "a@b.com1@c.com" yields "1@c.com" as before.
+const ADDRESS = /(?<![a-z0-9._%+-])[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const ADDRESS_AT = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/iy;
+
 function addressOf(from) {
-  const found = String(from || "").match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi);
-  return found ? found[found.length - 1].toLowerCase() : "";
+  const text = String(from || "");
+  let last = "";
+  for (let at = 0, m; ; at = m.index + m[0].length) {
+    ADDRESS_AT.lastIndex = at;
+    ADDRESS.lastIndex = at;
+    m = ADDRESS_AT.exec(text) || ADDRESS.exec(text);
+    if (!m) break;
+    last = m[0];
+  }
+  return last.toLowerCase();
 }
 
 const isTikTok = (from) => TIKTOK_FROM.test(addressOf(from));

@@ -3330,7 +3330,7 @@ function ownerReplyTo(token) {
 
 // Plain text of an HTML-only reply, for reading: no tag survives, and no angle bracket is decoded back.
 function htmlText(html) {
-  let text = String(html || "").replace(/<(br|\/p|\/div|\/tr)[^>]*>/gi, "\n");
+  let text = String(html || "").replace(/<(br|\/p|\/div|\/tr)[^>]*(>|$)/gi, (tag, name, close) => (close ? "\n" : tag));
   let before;
   do {
     before = text;

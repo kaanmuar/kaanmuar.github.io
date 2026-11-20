@@ -91,9 +91,16 @@ function stableTag(text) {
   return plausible(hit && hit[1]);
 }
 
+// What /\/\*[\s\S]*?\*\// matches (the first block comment), or all of head when it has none.
+function firstComment(head) {
+  const open = head.indexOf("/*");
+  const close = open < 0 ? -1 : head.indexOf("*/", open + 2);
+  return close < 0 ? head : head.slice(open, close + 2);
+}
+
 function themeVersion(text) {
   const head = String(text || "").slice(0, 16000);
-  const comment = (head.match(/\/\*[\s\S]*?\*\//) || [head])[0];
+  const comment = firstComment(head);
   const hit = comment.match(/^[ \t*]*Version:[ \t]*(\S+)/im);
   return plausible(hit && hit[1]);
 }

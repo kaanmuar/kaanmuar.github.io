@@ -20,7 +20,7 @@ const LOAD_TYPES = new Set(["Document", "Stylesheet", "Image", "Media", "Font", 
 function stripUrl(raw) {
   const text = String(raw || "");
   if (!/^https?:\/\//i.test(text)) return "";
-  return text.replace(/[?#].*$/, "").slice(0, 200);
+  return text.replace(/[?#](?<![?#][^\n\r\u2028\u2029?#]*[?#]).*$/, "").slice(0, 200);
 }
 
 function initiatorUrl(initiator) {
