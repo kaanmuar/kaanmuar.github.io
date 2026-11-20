@@ -6,6 +6,7 @@
    so every list holds objects or strings. */
 
 const blocklists = require("./url-review-blocklists");
+const { dkimSelectors } = require("./url-review-mail-auth");
 const { registryDomain } = require("./url-review-suffix");
 
 const OPEN = ["fail", "risk"];
@@ -20,6 +21,7 @@ const HEADER_KEYS = ["sec-csp", "sec-hsts", "sec-frame", "sec-nosniff", "sec-per
 const TLS_KEYS = ["sec-tls", "sec-tls-chain"];
 // The accessibility findings axe-core and Pa11y can confirm on a rendered page.
 const A11Y_KEYS = ["a11y-alt", "a11y-contrast", "a11y-frames", "a11y-h1", "a11y-labels", "a11y-lang", "a11y-main", "a11y-tabindex", "a11y-targets", "a11y-zoom"];
+const TARGETED_KEYS = ["sec-kev", "sec-osv", "sec-drop", "sec-feodo", "sec-breach-news", "sec-cert-anomaly", "sec-targeted"];
 const KIND_TOOLS = {
   lists: ["curl"],
   linked: ["Playwright", "curl"],
@@ -30,7 +32,8 @@ const KIND_TOOLS = {
   blocklist: ["dig"],
   headers: ["OWASP ZAP", "Nuclei"],
   tls: ["curl"],
-  a11y: ["axe", "Pa11y"]
+  a11y: ["axe", "Pa11y"],
+  targeted: ["curl", "dig"]
 };
 
 function isOpen(finding) {
@@ -50,11 +53,12 @@ function kindOf(key) {
   if (HACK_KEYS.indexOf(k) !== -1) return "hacked";
   if (k === "sec-lookalike") return "lookalike";
   if (/^sec-exposed-/.test(k)) return "exposed";
-  if (/^sec-(spf|dmarc)(-|$)/.test(k)) return "mail";
+  if (/^sec-(spf|dmarc|dkim)(-|$)/.test(k)) return "mail";
   if (/^sec-blocklist-\d+$/.test(k)) return "blocklist";
   if (HEADER_KEYS.indexOf(k) !== -1) return "headers";
   if (TLS_KEYS.indexOf(k) !== -1) return "tls";
   if (A11Y_KEYS.indexOf(k) !== -1 || (/^ax-/.test(k) && k !== "ax-clean")) return "a11y";
+  if (TARGETED_KEYS.indexOf(k) !== -1) return "targeted";
   return "";
 }
 
@@ -120,7 +124,8 @@ function mailData(extras, opened, domain) {
     domain: dns.domain || domain,
     keys: uniq(opened.map((f) => f.key)),
     spfRecords: auth.spfRecords == null ? -1 : auth.spfRecords,
-    lookups: auth.lookups == null ? -1 : auth.lookups
+    lookups: auth.lookups == null ? -1 : auth.lookups,
+    dkimSelectors: dkimSelectors(dns.dkim)
   };
 }
 
@@ -138,6 +143,63 @@ function a11yData(browser, opened) {
   const axePages = ((browser && browser.axe && browser.axe.pages) || []).filter((page) => (page.violations || []).length).map((page) => page.path);
   const rules = uniq(opened.filter((f) => /^ax-/.test(f.key)).map((f) => f.key.slice(3)), 10);
   return { paths: uniq(axePages.concat(...opened.map((f) => f.pages || [])).concat(["/"]), MAX_PAGES), rules };
+}
+
+function libRow(name, version) {
+  const n = String(name || "").trim();
+  const v = String(version || "").trim();
+  if (!n || !v) return null;
+  return { name: n.slice(0, 60), version: v.slice(0, 32) };
+}
+
+function libFromSoftware(software) {
+  const raw = String(software || "");
+  const at = raw.lastIndexOf("@");
+  if (at <= 0) return null;
+  return libRow(raw.slice(0, at), raw.slice(at + 1));
+}
+
+function targetedData(extras, opened, host, tls) {
+  const result = (extras && extras.targeted) || {};
+  const keys = uniq(opened.map((f) => f.key));
+  const wantKev = keys.indexOf("sec-kev") !== -1;
+  const wantOsv = keys.indexOf("sec-osv") !== -1;
+  const wantDrop = keys.indexOf("sec-drop") !== -1;
+  const wantFeodo = keys.indexOf("sec-feodo") !== -1;
+  const wantCert = keys.indexOf("sec-cert-anomaly") !== -1;
+  const libs = [];
+  if (wantKev || wantOsv) {
+    (result.kevHits || []).forEach((row) => {
+      const hit = libFromSoftware(row.software);
+      if (hit && libs.every((item) => item.name !== hit.name || item.version !== hit.version)) libs.push(hit);
+    });
+    (result.osvHits || []).forEach((row) => {
+      const hit = libRow(row.name, row.version);
+      if (hit && libs.every((item) => item.name !== hit.name || item.version !== hit.version)) libs.push(hit);
+    });
+  }
+  const ips = [];
+  if (wantDrop || wantFeodo) {
+    if (result.dropIpHit && result.dropIpHit.ip) ips.push(String(result.dropIpHit.ip));
+    if (result.feodoHit && result.feodoHit.ip) ips.push(String(result.feodoHit.ip));
+    ((result.hosting && result.hosting.ips) || []).forEach((ip) => { if (ip && ips.indexOf(ip) === -1) ips.push(String(ip)); });
+  }
+  const data = {
+    host: result.host || host,
+    checks: keys,
+    sources: (result.sourcesRead || []).slice(0, 8).map((name) => String(name))
+  };
+  if (libs.length) data.libs = libs.slice(0, MAX_ROWS);
+  if (ips.length) data.ips = ips.slice(0, 4);
+  if (wantDrop && result.dropAsnHit && result.dropAsnHit.asn) data.asn = Number(result.dropAsnHit.asn) || 0;
+  if (wantCert) {
+    const kinds = uniq(((result.certCheck && result.certCheck.anomalies) || []).map((row) => row.kind).filter(Boolean));
+    if (kinds.length) data.certKinds = kinds.slice(0, 6);
+  }
+  if (keys.indexOf("sec-breach-news") !== -1 && (result.breachNews || []).length) {
+    data.breachCount = Math.min((result.breachNews || []).length, 5);
+  }
+  return data;
 }
 
 /**
@@ -168,6 +230,7 @@ function build(findings, extras, ctx) {
     else if (kind === "blocklist") data = blocklistData(extras, domain);
     else if (kind === "headers") data = { keys: uniq(opened.map((f) => f.key)) };
     else if (kind === "tls") data = Object.assign({ host }, extras && extras.tls && extras.tls.validTo ? { validTo: extras.tls.validTo, daysLeft: extras.tls.daysLeft } : {}, { chain: opened.some((f) => f.key === "sec-tls-chain") });
+    else if (kind === "targeted") data = targetedData(extras, opened, host, extras && extras.tls);
     else data = a11yData(opts.browser, opened);
     const top = worst(opened);
     cases.push(Object.assign({
@@ -189,9 +252,16 @@ function preview(watch) {
   if (!watch) return watch;
   const size = (item) => {
     const data = item.data || {};
+    if (item.kind === "targeted") return (data.checks || item.keys || []).length;
     return (data.lists || data.hosts || data.rows || data.paths || data.targets || data.keys || []).length;
   };
-  return Object.assign({ host: watch.host, cases: (watch.cases || []).map((item) => ({ id: item.id, kind: item.kind, verdict: item.verdict, severity: item.severity, tools: item.tools, count: size(item) })) },
+  const casePreview = (item) => {
+    if (item.kind === "targeted") {
+      return { id: item.id, kind: item.kind, verdict: item.verdict, severity: item.severity, tools: item.tools, count: size(item) };
+    }
+    return { id: item.id, kind: item.kind, verdict: item.verdict, severity: item.severity, tools: item.tools, count: size(item) };
+  };
+  return Object.assign({ host: watch.host, cases: (watch.cases || []).map(casePreview) },
     watch.regressions ? { regressions: watch.regressions.map((item) => ({ id: item.id, key: item.key, kind: item.kind, before: item.before, tools: item.tools })) } : {});
 }
 
@@ -239,4 +309,4 @@ function withRegressions(report, pins) {
   return Object.assign({}, report, { watch: Object.assign({}, watch, { regressions: pins }) });
 }
 
-module.exports = { build, preview, regressions, withRegressions, kindOf, KIND_TOOLS, HEADER_KEYS, SAFE_BROWSING_REVIEW };
+module.exports = { build, preview, regressions, withRegressions, kindOf, KIND_TOOLS, HEADER_KEYS, TARGETED_KEYS, SAFE_BROWSING_REVIEW };

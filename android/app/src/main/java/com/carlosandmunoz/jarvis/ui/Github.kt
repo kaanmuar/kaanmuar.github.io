@@ -561,7 +561,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         DoraRow("Time to restore", fmt(dora.obj("mttrH").num("median")) + " h", dora.obj("mttrH").str("level"))
     }
 
-    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci") {
+    val layoutTab = LocalLayoutTab.current
+    Panel("CI" + (ci.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""), id = "github-ci", charts = true,
+        onChartStretch = layoutTab?.let { { vm.cycleChartStretch(it, "github-ci") } }) {
         Github.down(ci)?.let { Muted(it); return@Panel }
         KpiPairs(listOf(
             KpiData("Runs", fmt(ci.num("runs"))), KpiData("Failed", fmt(ci.num("failed")), alert = (ci.num("failed") ?: 0.0) > 0),
@@ -741,6 +743,20 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
             }
         }
         gh.obj("local")?.let { Muted("Mac upload " + (ago(it.str("at")) ?: "—")) } ?: Muted("The Mac uploader has not reported yet, so worktrees are unknown.")
+    }
+
+    // The weekly tool scout (#3857): its open draft PR and the arsenal tickets still open; nothing here changes the arsenal.
+    val scout = gh.obj("scout")
+    val scoutRun = scout?.obj("run")
+    val scoutTickets = scout?.obj("tickets")
+    Panel("Tool scout" + (scoutRun?.let { " · ${fmt((it.num("drift") ?: 0.0) + (it.num("candidates") ?: 0.0))} findings" } ?: ""), id = "github-scout") {
+        Github.down(scout)?.let { Muted(it); return@Panel }
+        if (scoutRun != null) KeyRow("Scout ${scoutRun.str("date").orEmpty()}", "draft PR #${fmt(scoutRun.num("pr"))} · ${fmt(scoutRun.num("drift") ?: 0.0)} drift · ${fmt(scoutRun.num("candidates") ?: 0.0)} new", J.text, scoutRun.str("url"))
+        else Muted("No scout draft is waiting. The scout runs Wednesdays at 15:37 UTC and opens one when it finds something.")
+        val items = scoutTickets.objs("items")
+        if (items.isEmpty()) Muted("No arsenal tickets are open.")
+        items.forEach { t -> StatusRow(null, t.str("title").orEmpty(), "#${fmt(t.num("number"))}", t.str("url")) }
+        Muted("${fmt(scoutTickets.num("open") ?: 0.0)} open, ${fmt(scoutTickets.num("closed") ?: 0.0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.")
     }
 
     val deploys = gh.obj("deploys")
@@ -1099,14 +1115,14 @@ private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask
             t.obj("cursor")?.let { c ->
                 Buttons {
                     ActionButton("Hand to Cursor", s.ghRows["worker:$id"]?.state == "running") {
-                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it uses Cursor credit") {
+                        ask("hand \"${t.str("title").orEmpty()}\" to a Cursor cloud agent; it asks @cursor on GitHub and uses your weekly Cursor usage") {
                             vm.ghRow("worker:$id", "github-agent", buildMap {
                                 put("engine", JsonPrimitive("cursor"))
                                 c.str("prompt")?.let { put("prompt", JsonPrimitive(it)) }
                                 c.str("branch")?.let { put("branch", JsonPrimitive(it)) }
                                 c.num("pr")?.let { put("pr", JsonPrimitive(it.toInt())) }
                                 c.str("name")?.let { put("name", JsonPrimitive(it)) }
-                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Cursor agent launched; it opens a PR when it is done.", out.str("url"), "Open the agent") }
+                            }, "Launching the Cursor agent…") { out -> GhResult("launched", "Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.", out.str("url"), "Open the comment") }
                         }
                     }
                 }
@@ -1135,7 +1151,10 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, 
                 d.name?.let { put("name", JsonPrimitive(it)) }
             }, "Launching the agent…") { out ->
                 if (engine == "worker") vm.loadWorker()
-                GhResult("launched", "Agent launched; it opens a PR when it is done.", out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the agent")
+                GhResult("launched",
+                    if (engine == "worker") "Agent launched; it opens a PR when it is done."
+                    else "Asked @cursor; it uses your weekly Cursor usage and opens a PR when it is done.",
+                    out.str("url"), if (engine == "worker") "Open the worker runs" else "Open the comment")
             }
             close()
         }
@@ -1148,9 +1167,9 @@ private fun AgentDialog(d: AgentDraft?, vm: JarvisViewModel, sp: Github.Spend?, 
                 Muted(listOfNotNull(d.title, d.branch?.let { "branch $it" }, d.pr?.let { "PR #$it" }).joinToString(" · "))
                 OutlinedTextField(text, { text = it }, label = { Text("Prompt") }, minLines = 4, maxLines = 10, modifier = Modifier.fillMaxWidth())
                 Muted(when {
-                    !ownRepo -> "A Cursor agent works in the cloud and opens a PR."
-                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor uses Cursor credit."
-                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor uses Cursor credit."
+                    !ownRepo -> "A Cursor agent is asked via @cursor on GitHub and uses your weekly Cursor usage."
+                    capped -> "Jarvis's worker is stopped: its AI budget for ${sp?.month} is used (${Github.usd(sp?.usd ?: 0.0)} of ${Github.usd(sp?.cap ?: 0.0)}). Cursor asks @cursor on GitHub and uses your weekly Cursor usage."
+                    else -> "Jarvis's worker runs on GitHub Actions and opens a PR when the tests pass." + (sp?.let { " This month: ${Github.usd(it.usd)} of ${Github.usd(it.cap)}." } ?: "") + " Cursor asks @cursor on GitHub and uses your weekly Cursor usage."
                 })
             }
         },

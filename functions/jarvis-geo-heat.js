@@ -12,6 +12,7 @@
    Twins of the shading: levelOf in js/admin-jarvis-geo-heat.js and GeoHeat.kt. */
 
 const geo = require("./jarvis-geo");
+const { beforeLastLineDelim } = require("./line-cut");
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const POSITIVE = /interest|positive|meeting|yes|book/i;
@@ -52,9 +53,9 @@ const ZONES = Object.assign({
 
 const up = (cc) => String(cc || "").trim().toUpperCase();
 const valid = (cc) => /^[A-Z]{2}$/.test(cc);
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => beforeLastLineDelim(String(host || "").toLowerCase().replace(/^https?:\/\//, ""), "/:").replace(/^www\./, "");
 const domainOf = (email) => bare(String(email || "").split("@")[1] || "");
-const emailOf = (from) => String(from || "").toLowerCase().replace(/^.*</, "").replace(/>.*$/, "").trim();
+const emailOf = (from) => beforeLastLineDelim(String(from || "").toLowerCase().replace(/^.*</, ""), ">").trim();
 
 const FORMATS = {};
 /** The weekday (0 Monday) and hour in a zone at an instant, or null for a zone Intl does not know. */
@@ -101,7 +102,7 @@ function senderCountry(i) {
 
 /** "Mon-Fri 09:00-17:00 America/Chicago" (windowOf in jarvis-marketing.js) → { days: [0..6 from Monday], from, to minutes, zone }. */
 function parseWindow(text) {
-  const m = /^(.*?)\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})(?:\s+(\S+))?\s*$/.exec(String(text || "").trim());
+  const m = /^(.*?)(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})(?:\s+(\S+))?$/.exec(String(text || "").trim());
   if (!m) return null;
   const span = m[1].trim();
   let days = [];

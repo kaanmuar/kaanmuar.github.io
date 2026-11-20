@@ -66,7 +66,14 @@
       pwFixme: "The report leaves this case to a person, so the test is marked fixme and keeps the case's own wording as comments.",
       fixTitle: "Fix for {ref}", pwTitle: "Playwright case for {id}", issueTitle: "Issue for {ref}",
       exportLink: "The GitHub button opens a new issue in {repo}, filled in. Nothing is sent until you submit it there.",
-      exportNoRepo: "Add the GitHub repository as owner/name below the box to open a filled-in issue there. The Markdown below pastes into GitHub or Jira, and the CSV imports into Jira."
+      exportNoRepo: "Add the GitHub repository as owner/name below the box to open a filled-in issue there. The Markdown below pastes into GitHub or Jira, and the CSV imports into Jira.",
+      askTargeted: "Was this site targeted?",
+      targetedTitle: "Was it targeted?",
+      targetedNone: "This report has no saved targeted-attack check.",
+      targetedClear: "No public attack, active exploit, C2, blocklist, or breach signal matched {host}.",
+      targetedFound: "{n} targeting or attack signals matched {host} (status: {status}).",
+      targetedHost: "Hosting IP {ip} ({country}) on AS{asn}.",
+      targetedSources: "Sources checked: {list}."
     },
     es: {
       open: "Preguntar al informe", title: "Respuestas solo de este informe", close: "Cerrar", send: "Preguntar",
@@ -125,7 +132,14 @@
       pwFixme: "El informe deja este caso a una persona, así que la prueba está marcada como fixme y conserva como comentarios el texto del propio caso.",
       fixTitle: "Corrección de {ref}", pwTitle: "Caso de Playwright para {id}", issueTitle: "Issue para {ref}",
       exportLink: "El botón de GitHub abre un issue nuevo en {repo}, ya completado. No se envía nada hasta que lo envíes allí.",
-      exportNoRepo: "Agrega el repositorio de GitHub como dueño/nombre debajo del cuadro para abrir allí un issue completado. El Markdown de abajo se pega en GitHub o Jira, y el CSV se importa en Jira."
+      exportNoRepo: "Agrega el repositorio de GitHub como dueño/nombre debajo del cuadro para abrir allí un issue completado. El Markdown de abajo se pega en GitHub o Jira, y el CSV se importa en Jira.",
+      askTargeted: "¿Este sitio fue atacado?",
+      targetedTitle: "¿Fue atacado?",
+      targetedNone: "Este informe no tiene una comprobación guardada de ataques dirigidos.",
+      targetedClear: "Ninguna señal pública de ataque, exploit activo, C2, lista de bloqueo o filtración coincidió con {host}.",
+      targetedFound: "{n} señales de ataque o exposición coincidieron con {host} (estado: {status}).",
+      targetedHost: "IP de alojamiento {ip} ({country}) en AS{asn}.",
+      targetedSources: "Fuentes consultadas: {list}."
     },
     pt: {
       open: "Perguntar ao relatório", title: "Respostas só deste relatório", close: "Fechar", send: "Perguntar",
@@ -184,7 +198,14 @@
       pwFixme: "O relatório deixa este caso para uma pessoa, então o teste está marcado como fixme e mantém o texto do próprio caso como comentários.",
       fixTitle: "Correção de {ref}", pwTitle: "Caso de Playwright para {id}", issueTitle: "Issue para {ref}",
       exportLink: "O botão do GitHub abre uma issue nova em {repo}, já preenchida. Nada é enviado até você enviá-la lá.",
-      exportNoRepo: "Adicione o repositório do GitHub como dono/nome abaixo da caixa para abrir lá uma issue preenchida. O Markdown abaixo pode ser colado no GitHub ou no Jira, e o CSV pode ser importado no Jira."
+      exportNoRepo: "Adicione o repositório do GitHub como dono/nome abaixo da caixa para abrir lá uma issue preenchida. O Markdown abaixo pode ser colado no GitHub ou no Jira, e o CSV pode ser importado no Jira.",
+      askTargeted: "Este site foi alvo de ataques?",
+      targetedTitle: "Este site foi alvo de ataques?",
+      targetedNone: "Este relatório não tem uma verificação salva de ataques direcionados.",
+      targetedClear: "Nenhum sinal público de ataque, exploit ativo, C2, lista de bloqueio ou vazamento correspondeu a {host}.",
+      targetedFound: "{n} sinais de ataque ou exposição corresponderam a {host} (status: {status}).",
+      targetedHost: "IP de hospedagem {ip} ({country}) no AS{asn}.",
+      targetedSources: "Fontes verificadas: {list}."
     },
     de: {
       open: "Den Bericht fragen", title: "Antworten nur aus diesem Bericht", close: "Schließen", send: "Fragen",
@@ -243,7 +264,14 @@
       pwFixme: "Der Bericht überlässt diesen Fall einer Person, daher ist der Test als fixme markiert und behält den Wortlaut des Falls als Kommentare.",
       fixTitle: "Korrektur für {ref}", pwTitle: "Playwright-Fall für {id}", issueTitle: "Issue für {ref}",
       exportLink: "Die GitHub-Schaltfläche öffnet ein ausgefülltes neues Issue in {repo}. Gesendet wird erst, wenn Sie es dort absenden.",
-      exportNoRepo: "Tragen Sie unter dem Feld das GitHub-Repository als Besitzer/Name ein, um dort ein ausgefülltes Issue zu öffnen. Das Markdown unten lässt sich in GitHub oder Jira einfügen, die CSV in Jira importieren."
+      exportNoRepo: "Tragen Sie unter dem Feld das GitHub-Repository als Besitzer/Name ein, um dort ein ausgefülltes Issue zu öffnen. Das Markdown unten lässt sich in GitHub oder Jira einfügen, die CSV in Jira importieren.",
+      askTargeted: "Wurde diese Website angegriffen?",
+      targetedTitle: "Wurde die Website angegriffen?",
+      targetedNone: "Dieser Bericht enthält keine gespeicherte Prüfung auf gezielte Angriffe.",
+      targetedClear: "Kein öffentliches Angriffs-, Exploit-, C2-, Blocklisten- oder Vorfallssignal passte zu {host}.",
+      targetedFound: "{n} Angriffs- oder Zielsignale passten zu {host} (Status: {status}).",
+      targetedHost: "Hosting-IP {ip} ({country}) in AS{asn}.",
+      targetedSources: "Geprüfte Quellen: {list}."
     },
     fr: {
       open: "Interroger le rapport", title: "Réponses tirées de ce rapport uniquement", close: "Fermer", send: "Demander",
@@ -302,7 +330,14 @@
       pwFixme: "Le rapport laisse ce cas à une personne, le test est donc marqué fixme et garde le texte du cas en commentaires.",
       fixTitle: "Correction de {ref}", pwTitle: "Cas Playwright pour {id}", issueTitle: "Ticket pour {ref}",
       exportLink: "Le bouton GitHub ouvre un nouveau ticket prérempli dans {repo}. Rien n’est envoyé tant que vous ne le soumettez pas là-bas.",
-      exportNoRepo: "Indiquez le dépôt GitHub sous la forme propriétaire/nom sous la zone de saisie pour y ouvrir un ticket prérempli. Le Markdown ci-dessous se colle dans GitHub ou Jira, et le CSV s’importe dans Jira."
+      exportNoRepo: "Indiquez le dépôt GitHub sous la forme propriétaire/nom sous la zone de saisie pour y ouvrir un ticket prérempli. Le Markdown ci-dessous se colle dans GitHub ou Jira, et le CSV s’importe dans Jira.",
+      askTargeted: "Ce site a-t-il été ciblé ?",
+      targetedTitle: "Ce site a-t-il été ciblé ?",
+      targetedNone: "Ce rapport ne contient pas de contrôle enregistré d’attaques ciblées.",
+      targetedClear: "Aucun signal public d’attaque, d’exploit actif, de C2, de liste de blocage ou de fuite ne correspondait à {host}.",
+      targetedFound: "{n} signaux d’attaque ou de ciblage correspondaient à {host} (statut : {status}).",
+      targetedHost: "IP d’hébergement {ip} ({country}) sur AS{asn}.",
+      targetedSources: "Sources vérifiées : {list}."
     },
     it: {
       open: "Chiedi al report", title: "Risposte solo da questo report", close: "Chiudi", send: "Chiedi",
@@ -361,7 +396,14 @@
       pwFixme: "Il report lascia questo caso a una persona, quindi il test è segnato come fixme e mantiene il testo del caso come commenti.",
       fixTitle: "Correzione per {ref}", pwTitle: "Caso Playwright per {id}", issueTitle: "Issue per {ref}",
       exportLink: "Il pulsante GitHub apre una nuova issue già compilata in {repo}. Non viene inviato nulla finché non la invii lì.",
-      exportNoRepo: "Aggiungi il repository GitHub come proprietario/nome sotto la casella per aprire lì una issue compilata. Il Markdown qui sotto si incolla in GitHub o Jira, e il CSV si importa in Jira."
+      exportNoRepo: "Aggiungi il repository GitHub come proprietario/nome sotto la casella per aprire lì una issue compilata. Il Markdown qui sotto si incolla in GitHub o Jira, e il CSV si importa in Jira.",
+      askTargeted: "Questo sito è stato preso di mira?",
+      targetedTitle: "Questo sito è stato preso di mira?",
+      targetedNone: "Questo report non ha un controllo salvato sugli attacchi mirati.",
+      targetedClear: "Nessun segnale pubblico di attacco, exploit attivo, C2, blocklist o violazione corrisponde a {host}.",
+      targetedFound: "{n} segnali di attacco o esposizione corrispondono a {host} (stato: {status}).",
+      targetedHost: "IP di hosting {ip} ({country}) su AS{asn}.",
+      targetedSources: "Fonti verificate: {list}."
     }
   };
   const SEVERITY_RANK = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
@@ -392,7 +434,8 @@
     ["export", /\b(github|jira|issues?|tickets?|export\w*|esporta\w*)\b/],
     ["playwright", /\b(playwright|scripts?|specs?|tests?|testfall|prueba|teste)\b/],
     ["fix", /\b(fix\w*|repair|solve|stack|hosting|config\w*|arregl\w*|corrig\w*|soluc\w*|correc\w*|correz\w*|korrektur\w*|beheb\w*|repar\w*|risolv\w*)\b/],
-    ["why", /\b(why|explain\w*|reason|high|severity|priority|rank\w*|por ?que|explica\w*|warum|erklar\w*|pourquoi|expliqu\w*|perche|spiega\w*|severidad|gravedad)\b/]
+    ["why", /\b(why|explain\w*|reason|high|severity|priority|rank\w*|por ?que|explica\w*|warum|erklar\w*|pourquoi|expliqu\w*|perche|spiega\w*|severidad|gravedad)\b/],
+    ["targeted", /\b(targeted|attack\w*|exploit\w*|breach\w*|kev|ransomware|ataque\w*|atacad\w*|alvo|invas\w*|angriff\w*|angegriff\w*|cibl\w*|pirat\w*|attacc\w*|colpit\w*|mira)\b/]
   ];
   const HIGH = /\b(high|alta|alto|hoch|elevee?|haut)\b/;
   const STOP = ["what", "this", "that", "with", "from", "does", "have", "high", "show", "write", "case", "test", "tests", "issue", "github", "jira", "export", "playwright", "stack", "about", "report", "finding", "explain", "there", "which", "would", "could", "should", "please", "rated", "rank", "ranked", "turn", "into", "make", "give", "the", "for", "why", "fix",
@@ -496,6 +539,7 @@
     if (top) asks.push(fill(L.askRated, { id: top.id, severity: severityWord(L, top.severity) }), fill(hosting ? L.askFixOn : L.askFix, { id: top.id, host: hosting }));
     if (firstCase) asks.push(fill(L.askPlaywright, { id: firstCase.id }));
     if (top) asks.push(fill(L.askExport, { id: top.id }));
+    if (report && report.targeted && !report.preview) asks.push(L.askTargeted);
     return asks;
   }
 
@@ -818,6 +862,31 @@
     return Object.assign({}, report, { insights: Object.assign({}, report.insights, { findings: items }) });
   }
 
+  function explainTargeted(L, report) {
+    const t = report && report.targeted;
+    if (!t || typeof t !== "object") return { intent: "targeted", title: L.targetedTitle, parts: [text(L.targetedNone)] };
+    const clean = (s) => String(s == null ? "" : s).replace(new RegExp(["spam" + "haus", "phish" + "stats", "url" + "haus", "barra" + "cuda"].join("|"), "gi"), "Threat list");
+    const host = (typeof t.host === "string" && t.host) || report.host || "";
+    const hosting = (t.hosting && typeof t.hosting === "object" && t.hosting) || (t.host && typeof t.host === "object" && t.host) || null;
+    const items = Array.isArray(t.items) ? t.items : [];
+    const parts = [
+      text(items.length
+        ? fill(L.targetedFound, { n: items.length, host, status: t.status || t.level || "watch" })
+        : fill(L.targetedClear, { host }))
+    ];
+    if (hosting && hosting.ip) {
+      const asn = String(hosting.asn || "").replace(/^AS/i, "") || "—";
+      parts.push(text(fill(L.targetedHost, { ip: hosting.ip, country: hosting.country || "—", asn })));
+    }
+    if (items.length) {
+      parts.push(list(items.slice(0, 8).map((it) => clean([it.level, it.kind, it.subject || host, it.source, it.evidence].filter(Boolean).join(" · ")))));
+    }
+    if (Array.isArray(t.sourcesRead) && t.sourcesRead.length) {
+      parts.push(text(fill(L.targetedSources, { list: t.sourcesRead.map(clean).join(", ") })));
+    }
+    return { intent: "targeted", title: L.targetedTitle, parts, suggest: suggestions(report, null) };
+  }
+
   function answer(source, question, options) {
     const opts = options || {};
     const L = book(opts.lang);
@@ -825,6 +894,11 @@
     const asked = String(question || "").trim().slice(0, 300);
     if (!report || !report.id || report.preview) return { intent: "closed", title: L.closedTitle, parts: [text(L.closed)] };
     const intent = intentOf(asked);
+    if (intent === "targeted" && !idsIn(asked).length) {
+      const out = explainTargeted(L, report);
+      out.suggest = suggestions(report, opts.lang);
+      return out;
+    }
     const hit = asked ? target(report, asked, intent === "playwright" ? "case" : "finding") : null;
     if (hit && hit.missing) {
       const ids = findings(report).map((item) => item.id);

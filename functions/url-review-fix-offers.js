@@ -31,7 +31,7 @@ const PACKAGES = [
     usd: 89,
     listUsd: 129,
     days: 3,
-    keys: ["sec-spf", "sec-dmarc", "sec-caa", "sec-mta-sts", "sec-tlsrpt", "sec-bimi", "sec-securitytxt"],
+    keys: ["sec-spf", "sec-dmarc", "sec-dkim", "sec-caa", "sec-mta-sts", "sec-tlsrpt", "sec-bimi", "sec-securitytxt"],
     name: {
       en: "Email and DNS", es: "Correo y DNS", pt: "E-mail e DNS",
       de: "E-Mail und DNS", fr: "E-mail et DNS", it: "Email e DNS"

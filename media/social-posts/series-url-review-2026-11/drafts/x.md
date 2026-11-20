@@ -485,13 +485,13 @@ Hook: before/after
 ```text
 Site behind a bot wall? We used to show an error.
 
-Now we keep trying and email the full report when it's ready, or an apology after 48 h. Either way: 20% off your next review.
+Now we keep trying and email the full report, usually within 48 h. Longer? An apology, and the report if we get it. Either way: 20% off your next review.
 
 https://carlosandmunoz.com/qa-review.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-en
 
 #QAlab #WebDev
 ```
-<sub>217 chars</sub>
+<sub>245 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Phone screen: "We could not conclude this review right now. We will email the report as soon as it is ready." Below, 20% off the next review with the code SORRY-ABCD2345.
@@ -502,13 +502,13 @@ https://carlosandmunoz.com/qa-review.html?utm_source=x&utm_medium=social&utm_cam
 ```text
 Website hinter einer Botsperre? Früher gab es eine Fehlermeldung.
 
-Jetzt versuchen wir es weiter und mailen den Bericht, sobald er fertig ist, oder nach 48 h eine Entschuldigung. So oder so: 20 % auf die nächste Prüfung.
+Jetzt bleiben wir dran und mailen den Bericht, meist binnen 48 h. Länger? Entschuldigung, Bericht folgt, falls er gelingt. So oder so: 20 % auf die nächste Prüfung.
 
 https://carlosandmunoz.com/qa-review-de.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-de
 
 #QAlab #Webentwicklung
 ```
-<sub>269 chars</sub>
+<sub>280 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Handy-Bildschirm: „Wir konnten diese Prüfung gerade nicht abschließen. Wir senden den Bericht per E-Mail, sobald er fertig ist.“ Darunter 20 % Rabatt auf die nächste Prüfung mit dem Code SORRY-ABCD2345.
@@ -519,13 +519,13 @@ https://carlosandmunoz.com/qa-review-de.html?utm_source=x&utm_medium=social&utm_
 ```text
 ¿Sitio detrás de un muro antibots? Antes mostrábamos un error.
 
-Ahora seguimos intentando y te enviamos el informe en cuanto esté listo, o una disculpa a las 48 h. En ambos casos: 20% en tu próxima revisión.
+Ahora seguimos intentando y te enviamos el informe, normalmente en 48 h. ¿Más? Una disculpa, y el informe si lo logramos. En ambos casos: 20% en tu próxima revisión.
 
 https://carlosandmunoz.com/qa-review-es.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-es
 
 #QAlab #DesarrolloWeb
 ```
-<sub>255 chars</sub>
+<sub>277 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash-es.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Pantalla de celular: «No pudimos concluir esta revisión ahora. Te enviaremos el informe por correo en cuanto esté listo.» Debajo, 20% de descuento en la próxima revisión con el código SORRY-ABCD2345.
@@ -536,13 +536,13 @@ https://carlosandmunoz.com/qa-review-es.html?utm_source=x&utm_medium=social&utm_
 ```text
 Site derrière un mur anti-bots ? Avant, on affichait une erreur.
 
-Désormais, on insiste et on vous envoie le rapport dès qu'il est prêt, ou des excuses après 48 h. Dans les deux cas : 20 % sur la prochaine revue.
+Désormais, on insiste, on envoie le rapport, souvent sous 48 h. Au-delà ? Des excuses, le rapport si on y arrive. Dans les deux cas : 20 % sur la prochaine revue.
 
 https://carlosandmunoz.com/qa-review-fr.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-fr
 
 #QAlab #DéveloppementWeb
 ```
-<sub>263 chars</sub>
+<sub>279 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Écran de téléphone : « Nous n'avons pas pu conclure cette revue pour l'instant. Nous vous enverrons le rapport par e-mail dès qu'il sera prêt. » En dessous, 20 % de réduction sur la prochaine revue avec le code SORRY-ABCD2345.
@@ -553,13 +553,13 @@ https://carlosandmunoz.com/qa-review-fr.html?utm_source=x&utm_medium=social&utm_
 ```text
 Sito dietro un muro anti-bot? Prima mostravamo un errore.
 
-Ora continuiamo a provare e ti inviamo il report appena è pronto, o le nostre scuse dopo 48 h. In ogni caso: 20% sulla prossima revisione.
+Ora continuiamo a provare e ti inviamo il report, di solito entro 48 h. Di più? Le nostre scuse, e il report se ci riusciamo. In ogni caso: 20% sulla prossima revisione.
 
 https://carlosandmunoz.com/qa-review-it.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-it
 
 #QAlab #SviluppoWeb
 ```
-<sub>243 chars</sub>
+<sub>274 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Schermata del telefono: «Non siamo riusciti a concludere questa revisione ora. Ti invieremo il report via email appena è pronto.» Sotto, 20% di sconto sulla prossima revisione con il codice SORRY-ABCD2345.
@@ -570,13 +570,13 @@ https://carlosandmunoz.com/qa-review-it.html?utm_source=x&utm_medium=social&utm_
 ```text
 Site atrás de um bloqueio antibots? Antes mostrávamos um erro.
 
-Agora seguimos tentando e enviamos o relatório quando estiver pronto, ou um pedido de desculpas após 48 h. Nos dois casos: 20% na próxima revisão.
+Agora seguimos tentando e enviamos o relatório, em geral em 48 h. Mais? Desculpas, e o relatório se conseguirmos. Nos dois casos: 20% na próxima revisão.
 
 https://carlosandmunoz.com/qa-review-pt.html?utm_source=x&utm_medium=social&utm_campaign=series-url-review-2026-11&utm_content=x04-promise-pt
 
 #QAlab #DesenvolvimentoWeb
 ```
-<sub>263 chars</sub>
+<sub>270 chars</sub>
 
 - Visual (on the first post): `/Users/Apple/Documents/qa-lab-demos/2026-11-10/01-splash.png`; alternative: pitch pillar "Reported": its pillar card in marketing/visuals/ (planned, not there yet) or /Users/Apple/Documents/qa-lab-demos/2026-11-10/marketing/visuals/hero/hero-3d-en.png (exists)
 - Alt text: Tela de celular: "Não conseguimos concluir esta revisão agora. Enviaremos o relatório por e-mail assim que estiver pronto." Abaixo, 20% de desconto na próxima revisão com o código SORRY-ABCD2345.

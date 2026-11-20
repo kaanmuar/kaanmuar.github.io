@@ -193,10 +193,10 @@ async function report(deps, input) {
 // --- rows from each source -------------------------------------------------------------------------------------
 
 const JOB_NAMES = {
-  opsWatchdog: "Daily system review", sweepReviews: "Country sweep", outreachSweep: "Outreach sweep", rivalSweep: "Rival sweep",
-  placesProspects: "Places prospects", engagementScout: "Engagement scout", ownerTags: "Owner tags", jarvisWatch: "Jarvis watch",
+  opsWatchdog: "Daily system review", sweepReviews: "Country sweep", pastRerunReviews: "Past-report re-run", outreachSweep: "Outreach sweep", rivalSweep: "Rival sweep",
+  placesProspects: "Places prospects", engagementScout: "Meta engagement scout", ownerTags: "Owner tags", jarvisWatch: "Jarvis watch",
   jarvisGithub: "Jarvis GitHub", jarvisCountdowns: "Jarvis countdowns", jarvisDailyBriefing: "Daily briefing", jarvisEveningDigest: "Evening digest",
-  rerunReviewFailures: "Re-run failed reviews", refreshSocialHubStats: "Social hub stats", dispatchFacebookQueue: "Facebook queue"
+  rerunReviewFailures: "Re-run failed reviews", refreshSocialHubStats: "Social hub stats", dispatchFacebookQueue: "Facebook queue", threatFeeds: "Threat feeds"
 };
 
 /** True for a cron that fires more than once an hour or every hour. */

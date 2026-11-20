@@ -1,0 +1,60 @@
+# Gitleaks config for the linter.yml job (#3833), triaged in #3920.
+# Allowlist test and vendor fixtures by path. Known public identifiers are allowlisted by LINE, so a real
+# secret added to the same file still fails the job.
+title = "kaanmuar.github.io gitleaks"
+
+[extend]
+useDefault = true
+
+# Fixtures and third-party trees (paths only).
+[[allowlists]]
+description = "fixtures and third-party trees"
+paths = [
+  '''(?i)^tests/''',
+  '''(?i)^cypress/''',
+  '''(?i)^vendor/''',
+  '''(?i)^android/app/src/test/''',
+  '''(?i)^media/social-posts/''',
+  '''(?i)features/robot/''',
+]
+
+# Public by design (#3920). Each entry names the identifier it covers.
+[[allowlists]]
+description = "Firebase web and Android client keys: public identifiers, restricted by app and referrer (#3920)"
+regexTarget = "line"
+regexes = [
+  '''"current_key"\s*:''',
+  '''"api_key"\s*:\s*\[''',
+  '''apiKey\s*:\s*['"]AIza''',
+  '''const val KEY = "AIza''',
+  '''DESK_FIREBASE_KEY = "AIza''',
+]
+
+[[allowlists]]
+description = "IndexNow key: served publicly from the site root by design (#3920)"
+regexTarget = "line"
+regexes = [
+  '''const INDEXNOW_KEY = "''',
+  '''\bKEY = "''',
+]
+
+[[allowlists]]
+description = "Server fallback to the public Firebase web key when FIREBASE_WEB_KEY is unset; removal is tracked as a bug (#3920)"
+regexTarget = "line"
+regexes = [
+  '''FIREBASE_WEB_KEY \|\| '''',
+]
+
+[[allowlists]]
+description = "Regex literal in the webpush endpoint check, not a credential (#3920)"
+regexTarget = "line"
+regexes = [
+  '''\^https:\\/\\/\[\^\\s\]\{10,1000\}\$''',
+]
+
+[[allowlists]]
+description = "Published captions and scraped report data: prose and URL parameters, not credentials (#3920)"
+paths = [
+  '''(?i)^assets/social/captions[^/]*\.json$''',
+  '''(?i)^assets/live-reports/u-pcgamer-com\.json$''',
+]

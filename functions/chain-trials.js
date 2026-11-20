@@ -106,7 +106,7 @@ function rung(person, conf, now) {
 /** What the chain prompt learns about a comment's author: the rung, the site to hook to, and whether they are active. */
 function ladderFor(comment, person, conf, now) {
   const p = person || {};
-  const site = clip(p.domain || p.site || "", 120).replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const site = clip(p.domain || p.site || "", 120).replace(/^https?:\/\//, "").replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, "");
   return Object.assign({ invite: rung(p, conf, now), active: active(p, conf, now) }, site ? { site } : {});
 }
 
@@ -200,7 +200,7 @@ function dmFacts(comment, person, trial) {
   const handle = handleOf(c.author) || p.handle || "";
   const want = lang2(c.lang || p.lang);
   const lang = LANGS.includes(want) ? want : "en";
-  const host = clip(p.domain || p.site || "", 120).replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
+  const host = clip(p.domain || p.site || "", 120).replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, "");
   const id = p.id || (c.network + ":" + handle);
   const look = LOOKS[parseInt(crypto.createHash("sha1").update(id).digest("hex").slice(0, 6), 16) % LOOKS.length];
   return { lang, handle, first: FIRST((c.author || {}).name || p.name, handle) || "", host, url: (trial || {}).url || "", code: (trial || {}).code || "", look };
@@ -232,7 +232,7 @@ function parseDms(text, items) {
   const byId = Object.fromEntries((Array.isArray(rows) ? rows : []).filter((r) => r && r.id).map((r) => [r.id, r]));
   return Object.fromEntries(items.map((x) => {
     const r = byId[x.key] || {};
-    const dm = clip(String(r.dm || "").replace(/\s*—\s*/g, ", ").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1"), 900);
+    const dm = clip(String(r.dm || "").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1"), 900);
     const ok = dm.length >= 40 && x.facts.url && dm.includes(x.facts.url);
     return [x.key, ok ? { draft: dm, english: x.facts.lang === "en" ? "" : clip(r.english, 900), by: "gemini" } : { draft: dmFallback(x.facts), english: "", by: "template" }];
   }));

@@ -35,9 +35,9 @@ We ran wordpress.org through our new safety checks 👀 here's what came back #Q
 **Instagram (12:00 ET)**
 
 ```text
-Site blocked the review? You still get the report.
+Site blocked the review? You still hear back.
 
-We keep trying and email it as soon as it's ready, or an apology after 48 hours. Either way, 20% off your next review.
+We keep trying and email the report, usually within 48 hours. Longer? An apology, and we keep trying. Either way, 20% off your next review.
 
 Link in bio.
 

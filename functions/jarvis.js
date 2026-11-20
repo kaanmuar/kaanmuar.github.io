@@ -508,6 +508,7 @@ async function ga4(fetchImpl, { days }) {
     countries: geoGa4.top(countries.countryRows),
     countryRows: countries.countryRows,
     keyEvents: countries.keyEvents,
+    keyEventFallback: countries.keyEventFallback || "",
     sources: Object.entries(split(sources)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
     daily: daily.map((row) => ({ date: row.dims[0].replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: row.mets[0], users: row.mets[1] }))
   };
@@ -645,8 +646,12 @@ async function uptimeHistory(db, now) {
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
   + "QA Lab (a regression lab), QA-lab URL Review (paid website reviews), the Social hub, and the systems behind them. "
   + "A URL review also checks phishing and malware lists, linked hosts, hacked-site signs, lookalike domains, exposed files, WordPress vulnerabilities and blocklists; "
-  + "a review that fails on our side is re-run and, at the last rung, read from Carlos's Mac, and its asker is promised the report by email within 48 hours or gets an apology code; "
+  + "a review that fails on our side is re-run and, at the last rung, read from Carlos's Mac, and its asker gets the report by email, usually within 48 hours; past that an apology code goes out and the rescue keeps trying for 14 days, sending the report late or a last note; "
+  + "reviews that already finished are run again, one site at a time, and one mail goes out after the new report; the pace, who is mailed and the 50% code are urlReviewPastRerun in the JSON; "
   + "clients can ask us to fix findings (fix it yourself with a free re-check, a quote, a fixed-price package paid by PayPal, or a call). "
+  + "Growth locks (#3475): soft gate lets cold visitors paste a URL for a 1-page preview without OAuth; shared links show overall, six areas and the top finding clear; auto Live Reports already ship a 4-slide carousel and LinkedIn PDF via tips-studio. "
+  + "Hashtag caps stay intentional (Instagram 5, LinkedIn 6, X 2). Refuse Claude-for-social, a parallel Telegram /scan bot, 7-second mute gauge loops, 30-tag walls, and opening GitHub issues on third-party OSS. "
+  + "Next builds after Slide 3 + first-comment: money (#3482) white-label PDF + co-brand header, Full Stack Starter $29 and Complete $99, Agency CI HMAC webhook on Team/Pro; then channel-split compare (two-day on X/Telegram/Threads, same-carousel on LinkedIn/Instagram); MCP after money; light DOM-verified specs only. "
   + "Use only the numbers in the JSON you get. Plain English, short sentences, no hype, no markdown tables. "
   + "Name the product, the number and the comparison. Say when a number is too small to mean anything.";
 
@@ -739,7 +744,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
 function speakable(text) {
   return String(text || "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)(?:\]\(([^)]*)(\))?)?/g, (link, label, target, close) => (target && close ? label : link))
     .replace(/^[\s>*#-]+/gm, "")
     .replace(/[*_`#]/g, "")
     .replace(/\s+/g, " ")
@@ -796,7 +801,8 @@ function normalizeSettings(data) {
   kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
   const github = { repos: core.githubRepos(d.github && d.github.repos) };
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
+  const charts = core.chartPrefs(d.charts);
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, charts, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -809,7 +815,7 @@ async function saveSettings(db, input, by) {
   const layout = input && input.layout !== undefined ? input.layout : saved.layout;
   const cal = input && input.calendar !== undefined ? input.calendar : saved.calendar;
   const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION, layout, calendar: cal }));
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, charts: clean.charts, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
@@ -890,9 +896,10 @@ async function dailyProducts(db, { now, days = 1 }) {
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
-  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+  const [{ events, opens, reviews }, messages, ratings, csatRows, pending, hubSnap] = await Promise.all([
     dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
+    rows(since("url_review_csat")),
     pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
@@ -901,12 +908,14 @@ async function dailyProducts(db, { now, days = 1 }) {
   const was = events.filter((row) => !inside(row));
   const keep = (email) => !core.isTestEmail(email);
   const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
+  const review = core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window);
+  review.csat = core.summarizeCsat(csatRows, window, window.prior);
   const products = {
     inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
-    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: reviews.filter((row) => !inside(row)).length } }, window),
+    review,
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
@@ -947,7 +956,7 @@ function askSnapshot(snap, days) {
       mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
       addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
-      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null, postNumbers: (e.social.queue || []).filter((c) => c.numbers && Object.keys(c.numbers).length).map((c) => Object.assign({ channel: c.name, sent: c.sent }, c.numbers)) } : null,
+      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null, postNumbers: (e.social.queue || []).filter((c) => c.numbers && Object.keys(c.numbers).length).map((c) => Object.assign({ channel: c.name, sent: c.sent }, c.numbers)), needs: (e.social.needs || []).slice(0, 5), assets: e.social.assets || null, shareUnblur: "Shared report links show overall score, six area gauges and the top finding; full table and exports stay gated." } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
@@ -1078,5 +1087,14 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+// Pending URL Review CSAT quotes (#3557): list and approve/dismiss for CV + Social hub publish.
+async function listCsatTestimonials(db, { limit } = {}) {
+  return { items: await require("./url-review-csat-testimonials").listPending(db, limit) };
+}
+
+async function decideCsatTestimonial(db, body, operator) {
+  return require("./url-review-csat-testimonials").decide(db, Object.assign({}, body, { operator }));
+}
+
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, listCsatTestimonials, decideCsatTestimonial, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

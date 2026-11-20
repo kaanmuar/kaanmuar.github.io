@@ -1,7 +1,8 @@
 # .github/workflows/pagespeed-daily.yml
-# Daily (#1978): PageSpeed, mobile and desktop, on every page in sitemap.xml and sitemap-social.xml. The 6 worst pages under
-# 90 get the safe fixes (scripts/pagespeed/fixes.js) on one branch and the 3 worst get Gemini's edits on another; each
-# branch is scored with local Lighthouse against main. The other pages are fixed on later days. The run lands in data/pagespeed (Jarvis > Systems > Page health) and Jarvis opens a PR
+# Daily (#1978, #3684): PageSpeed on sitemap.xml (mobile + desktop) and sitemap-social.xml (mobile; healthy pages
+# rotate weekly; desktop only for pages headed to fixes). The 6 worst under 90 get safe fixes
+# (scripts/pagespeed/fixes.js) on one branch and the 3 worst get Gemini's edits on another; each branch is scored with
+# local Lighthouse against main. The run lands in data/pagespeed (Jarvis > Systems > Page health) and Jarvis opens a PR
 # per branch (op pagespeed-pr): a safe branch that scored up merges on a 2-hour countdown once CI passes, anything else
 # waits in Proposals. Fix branches and the data commit push with LIVE_REPORTS_DEPLOY_KEY. Schedule: functions/ops-schedule.js.
 
@@ -24,7 +25,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 120
     permissions:
       contents: read
     steps:
@@ -38,7 +39,7 @@ jobs:
         env:
           PAGESPEED_KEY: ${{ secrets.PAGESPEED_KEY }}
           LIMIT: ${{ inputs.limit }}
-        run: node scripts/pagespeed-daily.js check --out "$RUNNER_TEMP/check.json" --concurrency 12 ${LIMIT:+--limit "$LIMIT"}
+        run: node scripts/pagespeed-daily.js check --out "$RUNNER_TEMP/check.json" --concurrency 24 ${LIMIT:+--limit "$LIMIT"}
       - name: Keep the results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

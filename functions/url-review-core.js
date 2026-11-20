@@ -12,6 +12,10 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const { replaceBlocks } = require("./tag-blocks");
+const headOrder = require("./url-review-head-order");
+const pageGraph = require("./url-review-page-graph");
+const cyberPassive = require("./url-review-cyber-passive");
 const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const fixOffers = require("./url-review-fix-offers");
@@ -30,21 +34,29 @@ const lookalikes = require("./url-review-lookalikes");
 const { ipBlocked } = require("./url-review-ip");
 const hackSigns = require("./url-review-hack-signs");
 const watchCases = require("./url-review-watch");
+const targeted = require("./url-review-targeted");
+/* Lazy: Live reports and other light importers only need iconData (#3713). verified-spec
+   pulls htmlparser2/css-select, which those jobs do not install. */
+const verifiedSpec = () => require("./url-review-verified-spec");
 const { siteLabel } = caseRank;
 
-const TERMS_VERSION = "2026-11-04b";
+const TERMS_VERSION = "2026-11-19a";
 // A page loaded before a terms change still sends the version before it.
 const PREVIOUS_TERMS_VERSION = "2026-11-04";
 const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
 const FIXLIST_CENTS = 500;
+// The Deep attack-source check is a flat one-off add-on on one paid report (#3946); never a credit or a discount.
+const DEEP_CENTS = 1900;
 const CREDENTIALS_CENTS = 3900;
 // A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
 const COMPARE_CENTS = 900;
 const MAX_COMPETITORS = 5;
 // One payment for 30 days, never renewed by itself; url-review-offers.js holds each plan's runs and limits.
 const PASS_CENTS = { freelancer: 2900, team: 7900, pro: 18900 };
+// Full Stack one-run / report unlocks (#3482): flat under à-la-carte (Starter list $34, Complete $149).
+const FULL_STACK_CENTS = { starter: 2900, complete: 9900 };
 
 // The full report: 19 USD for the first framework or tool, 5 USD for each one after it.
 function itemCents(index) {
@@ -94,6 +106,11 @@ const PAGE_CENTS = { 20: 0, 40: 500, 60: 900, 80: 1200, 100: 1500 };
 const DEPTH_CENTS = { 2: 0, 3: 400, 4: 700, 5: 1000 };
 const INCLUDED_PAGES = 20;
 const INCLUDED_DEPTH = 2;
+// Soft-gate free preview: exact pasted URL only (#3478 / #12B), shorter wall clock (#35A).
+const SOFT_PREVIEW_PAGES = 1;
+const SOFT_PREVIEW_DEPTH = INCLUDED_DEPTH;
+const SOFT_PREVIEW_MS = 90000;
+const SOFT_PREVIEW_RETAIN_MS = 7 * 24 * 60 * 60 * 1000;
 const PAGE_LANGS = ["en", "es", "pt", "de", "fr", "it"];
 const PAGE_LANG_LABEL = { en: "English", es: "Spanish", pt: "Portuguese", de: "German", fr: "French", it: "Italian" };
 
@@ -106,7 +123,7 @@ function sectionPrefix(url) {
   try {
     const path = new URL(url).pathname || "/";
     if (path === "/") return "";
-    return path.replace(/\/+$/, "");
+    return path.replace(/(?<!\/)\/+$/, "");
   } catch (error) {
     return "";
   }
@@ -115,7 +132,7 @@ function sectionPrefix(url) {
 function underSection(url, prefix) {
   if (!prefix) return true;
   try {
-    const path = new URL(url).pathname.replace(/\/+$/, "") || "/";
+    const path = new URL(url).pathname.replace(/(?<!\/)\/+$/, "") || "/";
     return path === prefix || path.startsWith(prefix + "/");
   } catch (error) {
     return false;
@@ -129,10 +146,11 @@ function priceMatches(usd) {
   PAGE_CHOICES.forEach((pages) => {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
-  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS || cents === DEEP_CENTS) return true;
   if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
+  if (Object.keys(FULL_STACK_CENTS).some((id) => FULL_STACK_CENTS[id] === cents)) return true;
   const extraCents = EXTRA_FRAMEWORK_USD * 100;
   for (let count = 0; count <= FRAMEWORKS.length + SPECIALIST_TOOLS.length; count += 1) {
     if (scopes.indexOf(cents - count * extraCents) !== -1) return true;
@@ -167,6 +185,11 @@ const MOBILE_FW = ["Appium", "Maestro"];
 const LOAD_FW = ["JMeter", "Gatling", "k6"];
 const FRAMEWORKS = BROWSER_FW.concat(MOBILE_FW, LOAD_FW);
 const SPECIALIST_TOOLS = ["axe-core", "Lighthouse", "BrowserStack", "Applitools", "Percy", "Provar", "Copado"];
+// Starter = Playwright + k6 + axe + Lighthouse; Complete = every framework + specialist tool (#3482 / Q29–31).
+const FULL_STACK_BUNDLES = {
+  starter: { id: "starter", name: "Starter Full Stack", frameworks: ["Playwright", "k6"], tools: ["axe-core", "Lighthouse"], cents: FULL_STACK_CENTS.starter },
+  complete: { id: "complete", name: "Complete Full Stack", frameworks: FRAMEWORKS.slice(), tools: SPECIALIST_TOOLS.slice(), cents: FULL_STACK_CENTS.complete }
+};
 const LAYERS = ["Functional", "Content", "Links", "Accessibility", "Security", "Privacy", "SEO", "GEO", "Performance", "Load", "Mobile", "Internationalization", "Resilience", "Compatibility", "Media", "Analytics", "Commerce", "Forms", "Visual", "Platform", "API"];
 const USER_AGENT = "CarlosMunozReview/1.0 (+https://carlosandmunoz.com/qa-review.html)";
 // A rescue of a failed review (#3080) reads as a person's Chrome, as the browser already does for a host that cuts the tag off (#1182).
@@ -192,14 +215,32 @@ const MAX_BYTES = 2000000;
 const PAGE_TIMEOUT_MS = 8000;
 // Still "took too long", so the start page is tried in headless Chrome before the review gives up.
 const UNREACHABLE = "The page took too long: the site accepted no connection in " + PAGE_TIMEOUT_MS / 1000 + " s.";
+
+// The plain read lost the connection before any page arrived (a reset, hang-up, or caller abort).
+function plainReadDropped(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNRESET|ECONNABORTED|ETIMEDOUT)$/.test(code) || /socket hang up|\baborted\b/i.test(message);
+}
+// The plain read failed before any page arrived because the host refused or rejected the route.
+function plainConnectionFailed(error) {
+  const message = String((error && error.message) || "");
+  const code = String((error && error.code) || "");
+  return /^(ECONNREFUSED|EHOSTUNREACH|ENETUNREACH)$/.test(code)
+    || /^connect ECONNREFUSED|^connect EHOSTUNREACH|^connect ENETUNREACH/i.test(message);
+}
 // Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
 const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE = "The site's response headers are past the " + MAX_HEADER_BYTES / 1024 + " KB the plain request reads";
 // Chrome follows up to 20 redirects. Sign-in portals chain six (sharepoint.com → office.com → … → microsoft.com).
 const MAX_REDIRECTS = 10;
-// A server that sends its certificate without the intermediate opens in browsers, which fetch the intermediate
-// from the certificate's AIA address. Node does not, so the review fetches it once per host and verifies again.
+// A server that sends its certificate without the next issuer opens in browsers, which follow each AIA
+// address until a trusted root. Node does not. OpenSSL 3 reports that gap as "unable to verify the first
+// certificate", "unable to get local issuer certificate" or "unable to get issuer certificate".
+// The review fetches those issuers once per host and verifies again.
 const INTERMEDIATES = new Map();
+const CHAIN_GAP = new Set(["UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"]);
+const CHAIN_HOPS = 3;
 const ISSUER_MAX_BYTES = 20000;
 const ISSUER_TIMEOUT_MS = 5000;
 const TOTAL_MS = 170000;
@@ -298,9 +339,9 @@ function cfEmail(hex) {
 function emailsInText(text, max) {
   const out = [];
   const plain = String(text || "")
-    .replace(/\s*(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, "@")
-    .replace(/\s*(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, ".");
-  (plain.match(/[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/gi) || []).forEach((raw) => {
+    .replace(/(?<!\s)\s+(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*|(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, "@")
+    .replace(/(?<!\s)\s+(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*|(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, ".");
+  [...plain.matchAll(/([a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})|[a-z0-9._%+-]+/gi)].map((m) => m[1]).filter(Boolean).forEach((raw) => {
     const email = mailOf(raw.replace(/^[._%+-]+/, ""));
     if (email && !/\.(png|jpe?g|gif|webp|svg)$/.test(email) && out.indexOf(email) === -1 && out.length < (max || 5)) out.push(email);
   });
@@ -395,22 +436,23 @@ function preformatUrl(input) {
   return normalizeUrl("https://" + raw);
 }
 
-const LANDING_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+const LANDING_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "wbraid", "gbraid", "msclkid", "fbclid", "ttclid", "li_fat_id"];
 
-// Where the asker landed this visit, in the shape openSource() reads: only the utm_* tags and a bare host.
+// Where the asker landed this visit, in the shape openSource() reads: utm_* tags first, paid ad click IDs, and a bare host.
 function landingSource(landing) {
   const src = landing && typeof landing === "object" ? landing : {};
   let params;
-  try { params = new URLSearchParams(String(src.query || "").slice(0, 400)); } catch (error) { params = new URLSearchParams(); }
+  try { params = new URLSearchParams(String(src.query || "").slice(0, 600)); } catch (error) { params = new URLSearchParams(); }
   const kept = new URLSearchParams();
   LANDING_TAGS.forEach((name) => {
-    const value = String(params.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, 40);
+    const cap = name.startsWith("utm_") ? 40 : 120;
+    const value = String(params.get(name) || "").replace(/[^A-Za-z0-9._~-]/g, "").slice(0, cap);
     if (value) kept.set(name, value);
   });
   const tags = kept.toString();
   const host = String(src.referrerHost || "").toLowerCase();
   return {
-    query: tags && tags.length <= 200 ? "?" + tags : "",
+    query: tags && tags.length <= 320 ? "?" + tags : "",
     referrerHost: /^[a-z0-9.-]+(:\d{1,5})?$/.test(host) ? host.slice(0, 80) : ""
   };
 }
@@ -480,6 +522,7 @@ function validateIntake(body) {
       lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
       pageLang: normalizePageLang(src.pageLang),
       section: src.section === true,
+      targeted: src.targeted !== false,
       followUp: src.followUp === true,
       unlisted: src.unlisted === true,
       compareWith,
@@ -506,6 +549,60 @@ async function screenIntake(body, headers, options) {
       error: "The client email domain does not accept mail.",
       fields: [{ field: "clientEmail", message: "The client email domain does not accept mail." }]
     };
+  }
+  return { ok: true, value: intake.value };
+}
+
+// Soft-gate free preview (#3478): URL only, no OAuth/terms/name. Private hosts already fail in preformatUrl.
+function validateSoftPreview(body) {
+  const src = body || {};
+  const errors = [];
+  if (src.compareWith) fieldError(errors, "url", "Compare stays gated. Paste one public URL for a free preview.");
+  let target = null;
+  try {
+    target = preformatUrl(src.url);
+  } catch (error) {
+    fieldError(errors, "url", error.message || "Enter a public https URL.");
+  }
+  const landing = landingSource(src.landing);
+  return {
+    errors,
+    value: !errors.length && target ? {
+      name: "",
+      email: "",
+      reason: "Soft preview",
+      reasonCode: "soft-preview",
+      frameworks: ["Playwright"],
+      tools: [],
+      pages: SOFT_PREVIEW_PAGES,
+      depth: SOFT_PREVIEW_DEPTH,
+      url: target.toString(),
+      softPreview: true,
+      termsVersion: "",
+      deviceId: clean(src.deviceId, 80),
+      lang: ["en", "es", "pt", "de", "fr", "it"].indexOf(String(src.lang || "").slice(0, 2).toLowerCase()) === -1 ? "" : String(src.lang).slice(0, 2).toLowerCase(),
+      pageLang: normalizePageLang(src.pageLang),
+      section: false,
+      followUp: false,
+      unlisted: true,
+      compareWith: "",
+      query: landing.query,
+      referrerHost: landing.referrerHost
+    } : null
+  };
+}
+
+async function screenSoftPreview(body, headers) {
+  const intake = validateSoftPreview(body);
+  if (intake.errors.length) {
+    return { ok: false, status: 400, error: intake.errors[0].message, fields: intake.errors };
+  }
+  const human = humanCheck(body, headers);
+  if (!human.ok) return { ok: false, status: 403, error: human.message, fields: [] };
+  try {
+    await assertPublic(new URL(intake.value.url).hostname);
+  } catch (error) {
+    return { ok: false, status: 400, error: error.message || "That address is not a public website.", fields: [{ field: "url", message: error.message || "That address is not a public website." }] };
   }
   return { ok: true, value: intake.value };
 }
@@ -560,8 +657,66 @@ function priceFor(list, tools) {
   };
 }
 
+function normalizeBundle(id) {
+  const key = String(id || "").trim().toLowerCase();
+  return FULL_STACK_BUNDLES[key] || null;
+}
+
+function sameNameSet(left, right) {
+  const a = (left || []).slice().sort();
+  const b = (right || []).slice().sort();
+  return a.length === b.length && a.every((name, index) => name === b[index]);
+}
+
+// Flat Full Stack SKU (#3482). Contents must match the locked Starter / Complete sets.
+function priceForBundle(id) {
+  const bundle = normalizeBundle(id);
+  if (!bundle) {
+    const error = new Error("That Full Stack bundle is not offered. No charge was made.");
+    error.status = 400;
+    throw error;
+  }
+  const frameworks = normalizeFrameworks(bundle.frameworks);
+  const tools = normalizeTools(bundle.tools);
+  const items = frameworks.concat(tools);
+  const listCents = unitCents(items.length);
+  return {
+    bundle: bundle.id,
+    bundleName: bundle.name,
+    frameworks,
+    tools,
+    count: items.length,
+    cents: bundle.cents,
+    usd: bundle.cents / 100,
+    listUsd: listCents / 100,
+    each: Math.round(bundle.cents / items.length) / 100,
+    discount: items.map((name, index) => ({ name, framework: name, n: index + 1, percent: 0, usd: itemCents(index + 1) / 100 }))
+  };
+}
+
+function bundleOf(frameworks, tools) {
+  const fw = normalizeFrameworks(frameworks);
+  const named = normalizeTools(tools);
+  return Object.keys(FULL_STACK_BUNDLES).map((id) => FULL_STACK_BUNDLES[id]).find((row) =>
+    sameNameSet(row.frameworks, fw) && sameNameSet(row.tools, named)
+  ) || null;
+}
+
 // The full unlock of one report, less a fix list already bought on it (creditCents comes from the run, never the asker).
-function priceForReport(list, tools, creditCents) {
+function priceForReport(list, tools, creditCents, options) {
+  const bundleId = options && options.bundle;
+  if (bundleId) {
+    const priced = priceForBundle(bundleId);
+    const credit = Math.round(Number(creditCents) || 0);
+    if (!credit) return priced;
+    if (credit !== FIXLIST_CENTS) {
+      const error = new Error("The credit on this charge is not a QA-lab credit. No charge was made.");
+      error.status = 400;
+      throw error;
+    }
+    const cents = priced.cents - credit;
+    return Object.assign({}, priced, { cents, usd: cents / 100, creditUsd: credit / 100 });
+  }
   const priced = priceFor(list, tools);
   const credit = Math.round(Number(creditCents) || 0);
   if (!credit) return priced;
@@ -576,6 +731,10 @@ function priceForReport(list, tools, creditCents) {
 
 function priceForFixList() {
   return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
+}
+
+function priceForDeep() {
+  return { usd: DEEP_CENTS / 100, cents: DEEP_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
 function priceForFix(packageId, host) {
@@ -697,6 +856,21 @@ function priceForRun(options) {
   if (src.compareWith) return priceForCompare(src);
   const scope = priceForScope(src.pages, src.depth);
   const billing = src.billing === "scope" ? "scope" : "run";
+  if (src.bundle && billing !== "scope") {
+    const priced = priceForBundle(src.bundle);
+    const cents = priced.cents + scope.cents;
+    return Object.assign({}, priced, {
+      billing,
+      pages: scope.pages,
+      depth: scope.depth,
+      frameworkUsd: priced.usd,
+      scopeUsd: scope.usd,
+      pageUsd: scope.pageUsd,
+      depthUsd: scope.depthUsd,
+      cents,
+      usd: cents / 100
+    });
+  }
   const frameworks = normalizeFrameworks(src.frameworks);
   const tools = normalizeTools(src.tools);
   if (!frameworks.length) {
@@ -827,6 +1001,8 @@ function chargedUsd(options) {
       ? priceForPassExtras(options.passPlan, options)
     : purpose === "fixlist"
     ? priceForFixList()
+    : purpose === "deep"
+    ? priceForDeep()
     : purpose === "fix"
     ? priceForFix(options.fixPackage, options.fixHost)
     : purpose === "cases"
@@ -837,7 +1013,7 @@ function chargedUsd(options) {
           ? priceForAlerts(options.alertCount)
           : purpose === "new-run"
             ? priceForRun(options)
-            : priceForReport(options && options.frameworks, options && options.tools, options && options.creditCents);
+            : priceForReport(options && options.frameworks, options && options.tools, options && options.creditCents, options);
   const usd = Number(options && options.priceUsd);
   const list = options && options.listUsd != null ? Number(options.listUsd) : usd;
   if (Math.round(list * 100) !== priced.cents) {
@@ -851,7 +1027,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "deep" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -1094,29 +1270,75 @@ async function issuerBytes(raw) {
 
 const commonName = (subject) => (String(subject || "").match(/^CN=(.+)$/m) || [])[1] || String(subject || "").split("\n")[0];
 
-async function missingIntermediate(hostname, pinned) {
-  const leaf = await serverLeaf(hostname, pinned);
-  const from = (String(leaf.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
-  if (!from) return null;
-  const issuer = new crypto.X509Certificate(await issuerBytes(from));
-  if (!issuer.ca || !leaf.checkIssued(issuer) || !leaf.verify(issuer.publicKey)) return null;
-  return { pem: issuer.toString(), issuer: clean(commonName(issuer.subject), 120), from: clean(from, 200) };
+function issuedBy(child, parent) {
+  try {
+    return !!parent && parent.ca && child.checkIssued(parent) && child.verify(parent.publicKey);
+  } catch (error) {
+    return false;
+  }
 }
 
-async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent) {
+// Parsed once. A fetched issuer is done when a root already in the trust store signed it.
+let trustAnchors = null;
+function anchored(cert) {
+  if (!trustAnchors) {
+    trustAnchors = tls.rootCertificates.map((pem) => {
+      try { return new crypto.X509Certificate(pem); } catch (error) { return null; }
+    }).filter(Boolean);
+  }
+  return trustAnchors.some((root) => issuedBy(cert, root));
+}
+
+async function missingIntermediate(hostname, pinned) {
+  const leaf = await serverLeaf(hostname, pinned);
+  const extras = [];
+  let current = leaf;
+  for (let hop = 0; hop < CHAIN_HOPS; hop += 1) {
+    const from = (String(current.infoAccess || "").match(/^CA Issuers - URI:(https?:\/\/\S+)$/m) || [])[1];
+    if (!from) break;
+    let issuer = null;
+    try { issuer = new crypto.X509Certificate(await issuerBytes(from)); } catch (error) { issuer = null; }
+    if (!issuedBy(current, issuer)) break;
+    extras.push({ pem: issuer.toString(), name: clean(commonName(issuer.subject), 120), from: clean(from, 200) });
+    if (anchored(issuer)) break;
+    current = issuer;
+  }
+  if (!extras.length) return null;
+  return {
+    pem: extras.map((row) => row.pem),
+    issuer: extras.map((row) => row.name).filter(Boolean).join(", "),
+    from: extras.map((row) => row.from).join(", ")
+  };
+}
+
+async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
   try {
-    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent);
+    return await requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
   } catch (error) {
-    if (!error || error.code !== "UNABLE_TO_VERIFY_LEAF_SIGNATURE" || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
+    if (!error || !CHAIN_GAP.has(error.code) || target.protocol !== "https:" || INTERMEDIATES.has(target.hostname)) throw error;
     const chain = await missingIntermediate(target.hostname, pinned).catch(() => null);
     if (!chain) throw error;
     if (INTERMEDIATES.size >= 500) INTERMEDIATES.clear();
     INTERMEDIATES.set(target.hostname, chain);
-    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent);
+    return requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders);
   }
 }
 
-function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent) {
+// alkompis.se folds a Content-Security-Policy-Report-Only line with LF and a tab, not CRLF.
+// Node's strict parser then throws "Parse Error: Missing expected CR after header value" (HPE_CR_EXPECTED).
+// Curl and Chrome read that page. One retry uses Node's lenient parser, which joins the folded line.
+function foldedHeader(error) {
+  return !!error && (error.code === "HPE_CR_EXPECTED" || error.message === "Parse Error: Missing expected CR after header value");
+}
+
+function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, extraHeaders) {
+  return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, false, extraHeaders).catch((error) => {
+    if (!foldedHeader(error)) throw error;
+    return requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, true, extraHeaders);
+  });
+}
+
+function requestAttempt(target, pinned, isStopped, keepPartial, acceptLanguage, agent, cookie, lenient, extraHeaders) {
   const chain = target.protocol === "https:" ? INTERMEDIATES.get(target.hostname) : null;
   return new Promise((resolve, reject) => {
     const lib = target.protocol === "https:" ? https : http;
@@ -1149,9 +1371,10 @@ function requestDirect(target, pinned, isStopped, keepPartial, acceptLanguage, a
       method: "GET",
       timeout: PAGE_TIMEOUT_MS,
       maxHeaderSize: MAX_HEADER_BYTES,
-      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}),
+      headers: Object.assign(readHeaders(), agent ? { "user-agent": agent } : {}, { connection: "close" }, acceptLanguage ? { "accept-language": acceptLanguage } : {}, cookie ? { cookie } : {}, extraHeaders || {}),
       ca: chain ? tls.rootCertificates.concat(chain.pem) : undefined,
-      lookup: pinnedLookup(pinned)
+      lookup: pinnedLookup(pinned),
+      insecureHTTPParser: lenient === true
     }, (res) => {
       const chunks = [];
       let size = 0;
@@ -1214,13 +1437,104 @@ function headerOverflow(error) {
   return blocked;
 }
 
+// A redirect that sets a cookie and points at itself is the page on the next hop, as Chrome reads it. The cookies belong
+// to this one read. They go back only to the host that set them, never to the next site a redirect lands on.
+function rememberCookies(jar, url, raw) {
+  const lines = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+  const host = url.hostname.toLowerCase();
+  lines.forEach((line) => {
+    const parts = String(line).split(";").map((part) => part.trim()).filter(Boolean);
+    const pair = parts[0] || "";
+    const eq = pair.indexOf("=");
+    if (eq <= 0) return;
+    const name = pair.slice(0, eq).trim();
+    const value = pair.slice(eq + 1).trim();
+    if (!name || /[\s,;]/.test(name)) return;
+    let domain = host;
+    let hostOnly = true;
+    let path = "/";
+    let secure = false;
+    let drop = false;
+    parts.slice(1).forEach((part) => {
+      const split = part.indexOf("=");
+      const key = (split === -1 ? part : part.slice(0, split)).trim().toLowerCase();
+      const setting = split === -1 ? "" : part.slice(split + 1).trim();
+      if (key === "domain" && setting) {
+        domain = setting.replace(/^\./, "").toLowerCase();
+        hostOnly = false;
+      } else if (key === "path" && setting.startsWith("/")) path = setting;
+      else if (key === "secure") secure = true;
+      else if (key === "max-age" && !(Number(setting) > 0)) drop = true;
+    });
+    if (hostOnly) domain = host;
+    else if (!domain.includes(".") || (domain !== host && !host.endsWith("." + domain))) return;
+    const at = jar.findIndex((row) => row.name === name && row.domain === domain && row.path === path);
+    if (drop) {
+      if (at >= 0) jar.splice(at, 1);
+      return;
+    }
+    const row = { name, value, domain, hostOnly, path, secure };
+    if (at >= 0) jar[at] = row;
+    else if (jar.length < 32) jar.push(row);
+  });
+}
+
+function cookieHeader(jar, url) {
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname || "/";
+  let value = "";
+  jar.forEach((row) => {
+    if (row.secure && url.protocol !== "https:") return;
+    const domainOk = row.hostOnly ? row.domain === host : host === row.domain || host.endsWith("." + row.domain);
+    if (!domainOk) return;
+    const prefix = row.path.endsWith("/") ? row.path : row.path + "/";
+    if (path !== row.path && !path.startsWith(prefix)) return;
+    const next = value ? value + "; " + row.name + "=" + row.value : row.name + "=" + row.value;
+    if (next.length <= 4096) value = next;
+  });
+  return value;
+}
+
 // Chrome reads an http:// address over https first (HTTPS-Upgrades) and falls back to http only when https fails. The review
-// has no http fallback: it reads each http:// redirect over https once, and fails as an http:// redirect when that gets no page.
+// has no http fallback: it reads each http:// redirect over https once. When that https copy sends the review back to the
+// same http address, the next http hop's Location is tried over https too. The http body is never the page. It fails as an
+// http:// redirect when that gets no page.
 function httpsUpgrade(next, upgrades) {
   if (next.port || upgrades.includes(next.href)) return "";
   upgrades.push(next.href);
   next.protocol = "https:";
   return upgrades[upgrades.length - 1];
+}
+
+// One http hop's Location, only when it stays on the same host and names a different address. The body is discarded.
+async function httpNext(target, isStopped, acceptLanguage, agent) {
+  try {
+    const pinned = await assertPublic(target.hostname);
+    const res = await requestOnce(target, pinned, isStopped, false, acceptLanguage, agent);
+    const location = header(res.headers, "location");
+    if (![301, 302, 303, 307, 308].includes(res.status) || !location) return null;
+    const next = new URL(location, target);
+    if (next.username || next.password || next.port) return null;
+    if (next.protocol !== "http:" && next.protocol !== "https:") return null;
+    if (next.hostname !== target.hostname || next.href === target.href) return null;
+    return next;
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return null;
+  }
+}
+
+// The https address to request for an http:// redirect, or null when https has no page to read.
+async function httpsAfter(next, upgrades, isStopped, acceptLanguage, agent) {
+  const upgraded = httpsUpgrade(next, upgrades);
+  if (upgraded) return { url: next, upgraded };
+  if (!upgrades.includes(next.href)) return null;
+  const hopped = await httpNext(next, isStopped, acceptLanguage, agent);
+  if (!hopped) return null;
+  if (hopped.protocol === "https:") return { url: hopped, upgraded: "" };
+  const again = httpsUpgrade(hopped, upgrades);
+  if (!again) return null;
+  return { url: hopped, upgraded: again };
 }
 
 const httpOnly = (href, tried) => new Error("The site redirected to " + clean(href, 160) + ", an http:// address" + (tried ? ", and the same address over https gave no page" : "") + ". The review only follows https.");
@@ -1230,10 +1544,11 @@ const httpOnly = (href, tried) => new Error("The site redirected to " + clean(hr
 const upgradeRefused = (res, url) => [401, 403, 429].includes(res.status) || !!challengeOf(url, res.headers, res.body);
 const upgradeSlow = (error) => !!error && (error.code === "HEADERS_TOO_LARGE" || /took too long/.test(error.message || ""));
 
-async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent) {
+async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage, agent, extraHeaders) {
   let current = normalizeUrl(raw);
   const started = Date.now();
   const upgrades = [];
+  const jar = [];
   let upgraded = "";
   let pulses = 0;
   const timer = setInterval(() => {
@@ -1253,7 +1568,7 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage,
       if (onPulse) onPulse("The name " + current.hostname + " resolved. Requesting the page.");
       let res;
       try {
-        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent);
+        res = await requestOnce(current, pinned, isStopped, keepPartial, acceptLanguage, agent, cookieHeader(jar, current), extraHeaders);
       } catch (error) {
         if (upgraded && !(error && error.code === "STOPPED") && !upgradeSlow(error)) throw httpOnly(upgraded, true);
         if (error && typeof error === "object" && !error.url) error.url = current.toString();
@@ -1262,13 +1577,17 @@ async function fetchPublic(raw, isStopped, onPulse, keepPartial, acceptLanguage,
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) throw httpOnly(upgraded, true);
       const location = res.headers.location;
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
+        rememberCookies(jar, current, res.headers["set-cookie"]);
         if (onPulse) onPulse("The page redirected. Following the next public https address.");
         const next = new URL(location, current);
         upgraded = "";
         if (next.protocol === "http:") {
-          upgraded = httpsUpgrade(next, upgrades);
-          if (!upgraded) throw httpOnly(next.href, upgrades.includes(next.href));
-          if (onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          const step = await httpsAfter(next, upgrades, isStopped, acceptLanguage, agent);
+          if (!step) throw httpOnly(next.href, upgrades.includes(next.href));
+          upgraded = step.upgraded;
+          if (upgraded && onPulse) onPulse("The site redirected to " + clean(upgraded, 160) + ", an http:// address. Requesting the same address over https, as Chrome does.");
+          current = normalizeUrl(step.url.toString());
+          continue;
         }
         current = normalizeUrl(next.toString());
         continue;
@@ -1360,9 +1679,14 @@ function collect(html, name) {
   return String(html || "").match(new RegExp("<" + name + "\\b[^>]*>", "gi")) || [];
 }
 
+// Tag and block regexes here end in a branch, group 1, that takes an unclosed tag (and for blocks the rest of the
+// text) so later starts do not each rescan it (#3965); that branch keeps its text and is never counted as a match.
+const blankBlock = (block, open) => (open ? block : " ");
+const closedMatches = (re, text) => [...String(text).matchAll(re)].filter((m) => !m[1]).map((m) => m[0]);
+
 function textOf(html, name) {
   const match = String(html || "").match(new RegExp("<" + name + "\\b[^>]*>([\\s\\S]*?)</" + name + ">", "i"));
-  return match ? decode(match[1].replace(/<[^>]+>/g, " ")) : "";
+  return match ? decode(match[1].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)) : "";
 }
 
 const AUTH_ROUTE = /\/(auth|oauth2?|log_?out|sign_?out)(\/|$|\?)/i;
@@ -1510,7 +1834,7 @@ function robotsAllows(pathname, groups) {
 const CHALLENGES = [
   ["Cloudflare", /<title>\s*(?:Just a moment\.\.\.|Attention Required! \| Cloudflare)\s*<\/title>|window\._cf_chl_opt\b/i],
   ["Radware", /<title>\s*Radware (?:Bot Manager Captcha|Captcha Page|Page)\s*<\/title>/i],
-  ["Akamai", /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>[\s\S]{0,2000}errors\.edgesuite\.net/i],
+  ["Akamai", /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>(?:(?!<title>\s*Access Denied\s*<\/title>)[\s\S]){0,2000}errors\.edgesuite\.net/i],
   ["Imperva", /Incapsula incident ID|_Incapsula_Resource\?CWUDNSAI=/i],
   ["DataDome", /captcha-delivery\.com/i],
   ["PerimeterX", /id=["']px-captcha["']|<title>\s*Access to this page has been denied\.?\s*<\/title>/i],
@@ -1545,7 +1869,7 @@ function ownMarkup(html, pageUrl) {
     }
   };
   const prose = /\s(alt|title|aria-label|placeholder|value|content)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
-  const quoted = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+  const quoted = /(?<!\\)"(?:[^"\\\n]|\\.)*"|(?<!\\)'(?:[^'\\\n]|\\.)*'|(?<!\\)`(?:[^`\\]|\\.)*`/g;
   const tag = (raw) => {
     if (/^<script\b/i.test(raw)) {
       const open = raw.match(/^<script\b[^>]*>/i)[0];
@@ -1558,7 +1882,7 @@ function ownMarkup(html, pageUrl) {
     return out;
   };
   return String(html || "")
-    .replace(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi, blankBlock)
     .replace(/(<(script|style)\b[^>]*>[\s\S]*?<\/\2\s*>|<!--[\s\S]*?-->|<[a-z!/][^>]*>)|[^<]+/gi, (all, kept) => kept ? tag(kept) : " ");
 }
 
@@ -1587,10 +1911,9 @@ function technologies(html, headers, pageUrl, generator) {
 }
 
 function visibleText(html) {
-  return decode(String(html || "")
-    .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " "));
+  return decode(replaceBlocks(String(html || ""), /<(script|style|noscript|template|svg|head)\b/gi, " ")
+    .replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock)
+    .replace(/<[^>]+>|(<[^>]*$)/g, blankBlock));
 }
 
 const STOPWORDS = {
@@ -1613,10 +1936,10 @@ function textLanguage(text) {
 
 function outline(html) {
   const heads = [];
-  const re = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const re = /<h([1-3])\b[^<>]*>((?:[^<]|<(?!h[1-3]\b|\/h\1>))*)<\/h\1>/gi;
   let match;
   while ((match = re.exec(String(html || ""))) && heads.length < 30) {
-    const text = decode(match[2].replace(/<[^>]+>/g, " "));
+    const text = decode(match[2].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock));
     if (text) heads.push({ level: Number(match[1]), text: clean(text, 120) });
   }
   return heads;
@@ -1632,7 +1955,7 @@ const ANALYTICS_TAGS = [
   ["Universal Analytics", /["'=]UA-\d{4,10}-\d{1,4}["'&]/, /["'=](UA-\d{4,10}-\d{1,4})["'&]/g],
   ["Google Tag Manager", /googletagmanager\.com\/gtm\.js|GTM-[A-Z0-9]{4,9}/, /(GTM-[A-Z0-9]{4,9})\b/g],
   ["Google Ads", /["'=]AW-\d{6,12}["'&]/, /["'=](AW-\d{6,12})["'&]/g],
-  ["Meta Pixel", /connect\.facebook\.net\/[^"']*\/fbevents\.js|fbq\(\s*['"]init/, /fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g],
+  ["Meta Pixel", /connect\.facebook\.net\/(?:(?!connect\.facebook\.net\/(?!fbevents\.js))[^"'])*\/fbevents\.js|fbq\(\s*['"]init/, /fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g],
   ["LinkedIn Insight", /snap\.licdn\.com|_linkedin_partner_id/, /_linkedin_partner_id\s*=\s*["']?(\d{3,12})/g],
   ["TikTok Pixel", /analytics\.tiktok\.com|ttq\.load\(/, /ttq\.load\(\s*['"]([A-Z0-9]{10,30})/g],
   ["X Pixel", /static\.ads-twitter\.com|twq\(\s*['"]config/, null],
@@ -1643,7 +1966,7 @@ const ANALYTICS_TAGS = [
   ["HubSpot", /js\.hs-scripts\.com|js\.hs-analytics\.net/, /js\.hs-scripts\.com\/(\d{3,12})/g],
   ["Adobe Analytics", /assets\.adobedtm\.com|AppMeasurement/, null],
   ["Matomo", /matomo\.js|piwik\.js|_paq\.push/, null],
-  ["Plausible", /plausible\.io\/js|\/js\/script\.js["'][^>]*data-domain/, null],
+  ["Plausible", /plausible\.io\/js|\/js\/script\.js["'](?:(?!\/js\/script\.js["'])[^>])*data-domain/, null],
   ["Fathom", /cdn\.usefathom\.com/, null],
   ["Umami", /cloud\.umami\.is|\/umami\.js|data-website-id=/, null],
   ["PostHog", /posthog\.init|posthog-js|\.posthog\.com/, null],
@@ -1669,7 +1992,7 @@ const CONSENT_TOOLS = [
   ["Complianz", /complianz/i],
   ["Quantcast Choice", /quantcast\.mgr|cmp\.quantcast/i],
   ["TrustArc", /trustarc|consent\.truste/i],
-  ["Klaro", /klaro(-[\w-]+)?(\.min)?\.js|klaroConfig/],
+  ["Klaro", /klaro(-(?:(?!klaro-[\w-])[\w-])+)?(\.min)?\.js|klaroConfig/],
   ["EU Cookie Compliance", /eu[_-]cookie[_-]compliance|id=["']sliding-popup["']/i],
   ["CookieConsent", /cookieconsent(\.min)?\.js|CookieConsent\.run/i],
   ["Borlabs", /borlabs-cookie/i],
@@ -1681,10 +2004,10 @@ const CONSENT_TOOLS = [
 // A gtag consent default with no region applies everywhere; one with a region list applies only there and wins in those regions.
 function consentModeOf(body) {
   const blocks = [];
-  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,1200}?)\}/g;
+  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([^{}]{0,1200})\}/g;
   let match;
   while ((match = re.exec(body)) && blocks.length < 8) {
-    const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || "";
+    const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]|region['"]?\s*:\s*\[[^\]]*$/) || [])[1] || "";
     const regions = [...list.matchAll(/['"]([A-Za-z]{2}(?:-[A-Za-z0-9]{1,3})?)['"]/g)].map((hit) => hit[1].toUpperCase());
     blocks.push({
       analytics: (match[1].match(/analytics_storage['"]?\s*:\s*['"](denied|granted)/) || [])[1] || "",
@@ -1720,20 +2043,23 @@ function analyticsScan(html) {
   const consent = CONSENT_TOOLS.filter(([, pattern]) => pattern.test(body)).map(([name]) => name);
   const consentMode = consentModeOf(body);
   const ga4 = (tags.find((tag) => tag.name === "Google Analytics 4") || { ids: [] }).ids;
+  const gtmIds = (tags.find((tag) => tag.name === "Google Tag Manager") || { ids: [] }).ids;
   return {
     tags,
     consent,
     consentMode,
     ga4,
+    gtmIds,
     gtagLoads: (body.match(/googletagmanager\.com\/gtag\/js/g) || []).length,
-    loader: /<script\b[^>]*\ssrc\s*=\s*["'][^"']*(analytics|gtag|gtm|tracking|tagmanager)[^"']*["']/i.test(body),
+    gtmLoads: (body.match(/googletagmanager\.com\/gtm\.js/g) || []).length,
+    loader: /<script\b(?:(?!<script\b)[^>])*\ssrc\s*=\s*["'](?=[^"']*["'])[^"']*?(analytics|gtag|gtm|tracking|tagmanager)/i.test(body),
     dataLayer: /dataLayer\s*=|dataLayer\.push/.test(body)
   };
 }
 
 function schemaScan(html) {
   const result = { errors: 0, items: [], emails: [] };
-  const blocks = String(html || "").match(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+  const blocks = closedMatches(/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi, html || "");
   // A Person's email is a private address, so only organizations and contact points count.
   const keepEmails = (node, types) => {
     if (types.some((type) => /^Person$/i.test(type))) return;
@@ -1770,18 +2096,18 @@ function inspect(html, headers, pageUrl) {
   const title = textOf(html, "title");
   const description = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "description" ? attr(tag, "content") : "").find(Boolean) || "";
   const canonical = collect(html, "link").map((tag) => attr(tag, "rel").toLowerCase() === "canonical" ? attr(tag, "href") : "").find(Boolean) || "";
-  const htmlTag = (html.match(/<html\b[^>]*>/i) || [""])[0];
-  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<template\b[\s\S]*?<\/template>/gi, " ");
+  const htmlTag = closedMatches(/<html\b[^>]*>|(<html\b)[^>]*$/gi, html)[0] || "";
+  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, blankBlock).replace(/<template\b[\s\S]*?<\/template>|(<template\b)[\s\S]*/gi, blankBlock);
   // The HTML parser copies attributes of a stray later <html> tag onto the root when the root lacks them.
-  const lang = attr(htmlTag, "lang") || (hasAttr(htmlTag, "lang") ? "" : collect(markup.replace(/<!--[\s\S]*?-->/g, " "), "html").map((tag) => attr(tag, "lang")).find(Boolean) || "");
-  const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
+  const lang = attr(htmlTag, "lang") || (hasAttr(htmlTag, "lang") ? "" : collect(markup.replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock), "html").map((tag) => attr(tag, "lang")).find(Boolean) || "");
+  const h1 = closedMatches(/<h1\b[^>]*>[\s\S]*?<\/h1>|(<h1\b)[\s\S]*/gi, markup).map((tag) => decode(tag.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock))).filter(Boolean);
   const images = collect(markup, "img");
   const missingAlt = images.filter((tag) => !hasAttr(tag, "alt")).length;
   const forms = collect(markup, "form").length;
-  const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
+  const password = /<input\b[^<>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
   const labelFor = new Set(collect(markup, "label").map((tag) => attr(tag, "for")).filter(Boolean));
-  const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
+  const unlabeled = closedMatches(/<(?:input|select|textarea)\b[^>]*>|(<(?:input|select|textarea)\b)[^>]*$/gi, markup.replace(/<label\b[\s\S]*?<\/label>|(<label\b)[\s\S]*/gi, blankBlock)).filter((tag) => {
     const type = attr(tag, "type").toLowerCase();
     if (/^(hidden|submit|button|reset|image)$/.test(type)) return false;
     if (hiddenTag(tag)) return false;
@@ -1856,7 +2182,7 @@ function inspect(html, headers, pageUrl) {
     return name === key ? attr(tag, "content") : "";
   }).find(Boolean) || "";
   const viewportContent = metaValue("viewport").toLowerCase();
-  const head = (html.match(/<head\b[\s\S]*?<\/head>/i) || [""])[0];
+  const head = closedMatches(/<head\b[\s\S]*?<\/head>|(<head\b)[\s\S]*/gi, html)[0] || "";
   const scriptTags = collect(html, "script");
   const crossScripts = scriptTags.filter((tag) => {
     const src = attr(tag, "src");
@@ -1864,14 +2190,21 @@ function inspect(html, headers, pageUrl) {
     try { return new URL(src, pageUrl).hostname !== pageHost; } catch (error) { return false; }
   });
   const sriMissing = foreignHosts(crossScripts.filter((tag) => !attr(tag, "integrity")).map((tag) => attr(tag, "src")), 20);
-  const inlineScripts = (html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
+  const crossOrigin = (href) => {
+    try { return new URL(href, pageUrl).hostname !== pageHost ? new URL(href, pageUrl).hostname : ""; } catch (error) { return ""; }
+  };
+  const sriTags = crossScripts.map((tag) => ({ kind: "script", host: crossOrigin(attr(tag, "src")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) }))
+    .concat(linksAll.filter((tag) => /(^|\s)stylesheet(\s|$)/i.test(attr(tag, "rel")) && attr(tag, "href") && crossOrigin(attr(tag, "href")))
+      .map((tag) => ({ kind: "style", host: crossOrigin(attr(tag, "href")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) })));
+  const scriptUrls = scripts.map((src) => { try { return new URL(src, pageUrl).toString(); } catch (error) { return ""; } }).filter((url) => /^https?:/i.test(url)).slice(0, 80);
+  const inlineScripts = closedMatches(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, html).filter((block) => {
     const open = block.match(/^<script\b[^>]*>/i)[0];
     if (attr(open, "src")) return false;
     const type = attr(open, "type").toLowerCase();
     if (type && !/javascript|module|^text\/babel$/.test(type)) return false;
     return /\S/.test(block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, ""));
-  }).length + (html.match(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=/gi) || []).length;
-  const inlineStyles = (html.match(/<style\b/gi) || []).length + (html.match(/<[a-z][^>]*\sstyle\s*=/gi) || []).length;
+  }).length + closedMatches(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=|(<[a-z])[^>]*/gi, html).length;
+  const inlineStyles = (html.match(/<style\b/gi) || []).length + closedMatches(/<[a-z][^>]*\sstyle\s*=|(<[a-z])[^>]*/gi, html).length;
   const text = visibleText(html);
   const socialLinks = [];
   collect(markup, "a").forEach((tag) => {
@@ -1881,9 +2214,9 @@ function inspect(html, headers, pageUrl) {
       if (parsed.protocol === "https:" && SOCIAL_HOSTS.test(parsed.hostname) && parsed.pathname.length > 1 && !/\/(share|sharer|intent|shareArticle)/i.test(parsed.pathname) && socialLinks.indexOf(href) === -1 && socialLinks.length < 12) socialLinks.push(href);
     } catch (error) { /* not a profile link */ }
   });
-  const anchors = (markup.match(/<a\b[^>]*>[\s\S]*?<\/a>/gi) || []).slice(0, 800).map((block) => {
+  const anchors = closedMatches(/<a\b[^>]*>[\s\S]*?<\/a>|(<a\b)[\s\S]*/gi, markup).slice(0, 800).map((block) => {
     const open = block.match(/^<a\b[^>]*>/i)[0];
-    return { href: attr(open, "href"), text: decode(block.replace(/<[^>]+>/g, " ")), label: [attr(open, "aria-label"), attr(open, "title")].join(" ") };
+    return { href: attr(open, "href"), text: decode(block.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)), label: [attr(open, "aria-label"), attr(open, "title")].join(" ") };
   });
   const libraries = [];
   scripts.slice(0, 60).forEach((src) => {
@@ -1901,23 +2234,23 @@ function inspect(html, headers, pageUrl) {
     if (!/^https?:$/.test(target.protocol) || registrable(target.hostname) !== registrable(pageHost)) return false;
     const values = [];
     target.searchParams.forEach((value) => values.push(value));
-    return values.some((value) => /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value));
+    return values.some((value) => /(?<![^\s@])[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value));
   }).length;
   const hreflang = linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang"))
     .slice(0, 30).map((tag) => ({ lang: clean(attr(tag, "hreflang").toLowerCase(), 16), href: absolute(attr(tag, "href")) }));
   const iconTag = linksAll.find((tag) => /(^|\s)(icon|shortcut icon|apple-touch-icon)(\s|$)/i.test(attr(tag, "rel")));
   const signals = {
-    viewport: /<meta\b[^>]*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
+    viewport: /<meta\b(?:(?!<meta\b)[^>])*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
     styled: /<style\b/i.test(html),
     openGraph: metas.some((tag) => /^og:/i.test(attr(tag, "property"))),
     twitter: metas.some((tag) => /^twitter:/i.test(attr(tag, "name"))),
     jsonLd: (html.match(/application\/ld\+json/gi) || []).length,
     iframes: (html.match(/<iframe\b/gi) || []).length,
-    untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, " "), "iframe").filter((tag) => !attr(tag, "title") && !hiddenTag(tag)).length,
+    untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>|(<noscript\b)[\s\S]*/gi, blankBlock), "iframe").filter((tag) => !attr(tag, "title") && !hiddenTag(tag)).length,
     h2: (html.match(/<h2\b/gi) || []).length,
-    mixed: (markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || []).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
+    mixed: closedMatches(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\/|(<(?:script|img|iframe|source|video|audio|embed|track)\b)[^>]*/gi, markup).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
     hreflang: linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang")).length,
-    skip: /<a\b[^>]*href\s*=\s*["']#[^"']+/i.test(html),
+    skip: /<a\b(?:(?!<a\b)[^>])*href\s*=\s*["']#[^"']+/i.test(html),
     main: /<main\b|\brole\s*=\s*["']?main\b/i.test(html),
     consent: /cookie|consent|gdpr|privacidad/i.test(html.slice(0, 120000)),
     privacyLink: /privacy|privacidad|legal|aviso/i.test(html),
@@ -1925,16 +2258,16 @@ function inspect(html, headers, pageUrl) {
     noscript: /<noscript\b/i.test(html),
     fileInput: /type\s*=\s*["']file["']/i.test(html),
     search: /type\s*=\s*["']search["']|role\s*=\s*["']search["']/i.test(html),
-    required: (html.match(/<input\b[^>]*\brequired\b/gi) || []).length,
+    required: closedMatches(/<input\b[^>]*\brequired\b|(<input\b)[^>]*/gi, html).length,
     video: (html.match(/<video\b/gi) || []).length,
     permissions: header(headers, "permissions-policy") || header(headers, "feature-policy"),
     thirdParty: scriptHosts,
-    imgNoSize: (markup.match(/<img\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
+    imgNoSize: closedMatches(/<img\b[^>]*>|(<img\b)[^>]*$/gi, markup).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
     robotsMeta: metas.some((tag) => attr(tag, "name").toLowerCase() === "robots"),
     cacheControl: header(headers, "cache-control"),
     apiHint: /graphql|wp-json|openapi|swagger/i.test(html.slice(0, 200000)),
     manifest: linksAll.some((tag) => /manifest/i.test(attr(tag, "rel"))),
-    appShell: text.length < 300 && /<div\b[^>]*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'][^>]*>\s*<\/div>/i.test(html),
+    appShell: text.length < 300 && /<div\b(?:(?!<div\b)[^>])*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'](?:(?!\bid\s*=\s*["'](?:root|app|__next|__nuxt|svelte|___gatsby)["'])[^>])*>\s*<\/div>/i.test(html),
     zoomBlocked: /user-scalable\s*=\s*(no|0)\b/.test(viewportContent) || /maximum-scale\s*=\s*(1(\.0+)?|0?\.\d+)\b/.test(viewportContent),
     positiveTabindex: (html.match(/\btabindex\s*=\s*["']?[1-9]/gi) || []).length,
     blockingScripts: collect(head, "script").filter((tag) => attr(tag, "src") && !/\b(async|defer)\b/i.test(tag) && attr(tag, "type").toLowerCase() !== "module").length,
@@ -1966,7 +2299,7 @@ function inspect(html, headers, pageUrl) {
     words: text ? text.split(/\s+/).length : 0,
     questionHeadings: outline(html).filter((item) => item.level > 1 && (/\?$/.test(item.text) || /^¿/.test(item.text))).length,
     author: clean(metaValue("author") || metaValue("article:author"), 120),
-    dated: !!(metaValue("article:published_time") || metaValue("article:modified_time") || /<time\b[^>]*datetime\s*=/i.test(html)),
+    dated: !!(metaValue("article:published_time") || metaValue("article:modified_time") || /<time\b(?:(?!<time\b)[^>])*datetime\s*=/i.test(html)),
     icon: iconTag ? absolute(attr(iconTag, "href")) : "",
     seo: {
       robots: clean(metaValue("robots"), 160),
@@ -1979,14 +2312,22 @@ function inspect(html, headers, pageUrl) {
       ogTitle: clean(metaValue("og:title"), 200),
       ogDescription: clean(metaValue("og:description"), 300),
       ogImage: absolute(metaValue("og:image") || metaValue("og:image:url")),
+      ogImageAlt: clean(metaValue("og:image:alt"), 240),
+      ogImageWidth: clean(metaValue("og:image:width"), 16),
+      ogImageHeight: clean(metaValue("og:image:height"), 16),
       ogUrl: absolute(metaValue("og:url")),
       ogSiteName: clean(metaValue("og:site_name"), 120),
       ogType: clean(metaValue("og:type"), 40),
       twitterCard: clean(metaValue("twitter:card"), 40),
-      twitterImage: absolute(metaValue("twitter:image"))
+      twitterTitle: clean(metaValue("twitter:title"), 200),
+      twitterDescription: clean(metaValue("twitter:description"), 300),
+      twitterImage: absolute(metaValue("twitter:image")),
+      twitterImageAlt: clean(metaValue("twitter:image:alt"), 240)
     },
     schema: schemaScan(html),
     analytics: analyticsScan(html),
+    headOrder: headOrder.analyze(html),
+    minhash: pageGraph.minhash(text),
     socialLinks,
     mailtos,
     local: { phones, maps: mapsLinks },
@@ -1995,7 +2336,8 @@ function inspect(html, headers, pageUrl) {
     libraries,
     wordpress: wordpress.fromHtml(html, pageUrl),
     piiLinks,
-    sri: { cross: crossScripts.length, missing: sriMissing },
+    sri: { cross: crossScripts.length, missing: sriMissing, audit: cyberPassive.auditSri(sriTags) },
+    scriptUrls,
     resources: {
       scripts: foreignHosts(scripts, 30),
       styles: foreignHosts(linksAll.filter((tag) => /stylesheet|preload/i.test(attr(tag, "rel"))).map((tag) => attr(tag, "href")), 20),
@@ -2009,6 +2351,7 @@ function inspect(html, headers, pageUrl) {
     },
     headers: {
       csp: header(headers, "content-security-policy"),
+      metaCsp: clean(metas.filter((tag) => attr(tag, "http-equiv").toLowerCase() === "content-security-policy").map((tag) => attr(tag, "content")).filter(Boolean).join("; "), 4000),
       hsts: header(headers, "strict-transport-security"),
       nosniff: header(headers, "x-content-type-options"),
       frame: header(headers, "x-frame-options"),
@@ -2107,7 +2450,7 @@ function journeys(pages, dom) {
   const heading = (page) => {
     const text = clean((page && page.inspect && page.inspect.h1 && page.inspect.h1[0]) || "", 200);
     if (!text) return "";
-    return text.length > 40 ? text.slice(0, 40).replace(/\s+\S*$/, "") : text;
+    return text.length > 40 ? text.slice(0, 40).replace(/(?<!\s)\s+\S*$/, "") : text;
   };
   return ((dom && dom.nav) || [])
     .filter((link) => lastingLink(link))
@@ -2120,7 +2463,7 @@ function journeys(pages, dom) {
 
 // A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
 function privacyCheck(link, path) {
-  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
+  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/(?<!\/)\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
   return tail ? { check: { kind: "count", path, selector: "a[href*=\"" + tail + "\" i]", op: "gte", n: 1 } } : {};
 }
 
@@ -2225,10 +2568,12 @@ function propose(pages, robotsBlocked, limits, dom) {
   if (tabPages.length) addCase(cases, { id: "A11Y-08", layer: "Accessibility", title: "Keyboard order on " + on(tabPages[0]) + " follows the page, not a positive tabindex", why: sumOf((page) => page.signals && page.signals.positiveTabindex) + " elements set tabindex above 0 on " + listed(tabPages) + ". They jump the keyboard ahead of the rest of the page.", fw: browser, path: tabPages[0], pages: tabPages.slice(0, 12), keys: ["a11y-tabindex"], verdict: "risk", severity: "low", check: { kind: "count", path: tabPages[0], selector: "[tabindex]:not([tabindex=\"0\"]):not([tabindex^=\"-\"])", op: "eq", n: 0 } });
   addCase(cases, { id: "SEC-01", layer: "Security", title: "http://" + host + "/ redirects to https://" + host + "/", why: "The review read " + home.url + " over https. A browser case would request http://" + host + "/ and expect one redirect to the https address, with no page served over plain http.", fw: browser, keys: ["sec-http"] });
   addCase(cases, { id: "SEC-02", layer: "Security", title: here + " sets HSTS", why: (face.headers.hsts ? "strict-transport-security on " + here + " is " + face.headers.hsts + "." : "strict-transport-security was absent on " + here + ".") + " The later assertion is max-age, includeSubDomains, and a fresh profile that stays on https.", fw: browser });
-  const csp = String(face.headers.csp || "");
-  const cspGaps = csp ? [/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp) ? "'unsafe-inline' without a nonce or hash" : "", /'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : "", !/frame-ancestors/.test(csp) ? "no frame-ancestors" : "", !/(default|script)-src/.test(csp) ? "no script-src or default-src" : "", /(default|script)-src[^;]*\s\*(\s|;|$)/.test(csp) ? "a wildcard script source" : ""].filter(Boolean) : [];
+  const cspHeader = String(face.headers.csp || "");
+  const cspMeta = String(face.headers.metaCsp || "");
+  const csp = [cspHeader, cspMeta].filter(Boolean).join("; ");
+  const cspGaps = csp ? [/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp) ? "'unsafe-inline' without a nonce or hash" : "", /'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : "", !/frame-ancestors/.test(cspHeader) ? "no frame-ancestors" : "", !/(default|script)-src/.test(csp) ? "no script-src or default-src" : "", /(default|script)-src(?:(?!(?:default|script)-src)[^;])*\s\*(\s|;|$)/.test(csp) ? "a wildcard script source" : ""].filter(Boolean) : [];
   addCase(cases, { id: "SEC-03", layer: "Security", title: here + " sends a content security policy that limits scripts", why: (csp ? "content-security-policy is present on " + here + (cspGaps.length ? ", with " + cspGaps.join(", ") : " and names script sources and frame-ancestors") + "." : "content-security-policy was absent on " + here + ".") + " The policy would be checked for script-src and frame-ancestors, not only for the header name.", fw: browser });
-  addCase(cases, { id: "SEC-04", layer: "Security", title: here + " sets nosniff and a frame policy", why: "x-content-type-options: " + (face.headers.nosniff || "absent") + ". x-frame-options: " + (face.headers.frame || "absent") + (/allow-from/i.test(face.headers.frame || "") ? ", which current browsers ignore" : "") + ". CSP frame-ancestors: " + ((csp.match(/frame-ancestors\s+([^;]+)/i) || [])[1] || "absent").trim() + ". Either one is a frame policy. A framed copy of " + here + " would be expected to fail when a frame policy is present.", fw: browser });
+  addCase(cases, { id: "SEC-04", layer: "Security", title: here + " sets nosniff and a frame policy", why: "x-content-type-options: " + (face.headers.nosniff || "absent") + ". x-frame-options: " + (face.headers.frame || "absent") + (/allow-from/i.test(face.headers.frame || "") ? ", which current browsers ignore" : "") + ". CSP frame-ancestors: " + ((cspHeader.match(/frame-ancestors\s+([^;]+)/i) || [])[1] || "absent").trim() + ". Either one is a frame policy. A framed copy of " + here + " would be expected to fail when a frame policy is present.", fw: browser });
   addCase(cases, { id: "SEC-05", layer: "Security", title: here + " sets Referrer-Policy", why: (face.headers.referrer ? "referrer-policy on " + here + " is " + face.headers.referrer + "." : "referrer-policy was absent on " + here + ".") + " The later case would open an outbound link and confirm the referrer is no wider than the policy.", fw: browser });
   if (face.cookies.length) {
     const loose = face.cookies.filter((cookie) => !cookie.secure || !cookie.httpOnly);
@@ -2261,6 +2606,9 @@ function propose(pages, robotsBlocked, limits, dom) {
   addCase(cases, { id: "GEO-04", layer: "GEO", title: "An Organization or Person entity names who is behind " + host, why: (entityType ? "A " + entityType + " entity is published in JSON-LD on " + here + "." : types.length ? "JSON-LD on " + here + " is present (" + types.slice(0, 4).join(", ") + ") without an Organization or Person entity." : "No JSON-LD was found on " + here + ".") + " AI answers use the entity to name the brand, its logo, and its profiles.", fw: browser });
   addCase(cases, { id: "GEO-05", layer: "GEO", title: "Questions customers ask are answered on " + host + " under question headings or FAQ markup", why: (face.questionHeadings || 0) + " heading(s) on " + here + " are phrased as a question" + (types.indexOf("FAQPage") !== -1 ? ", and FAQPage data is present." : ".") + " Answer engines favour a short answer under the question it answers.", fw: browser });
   addCase(cases, { id: "GEO-06", layer: "GEO", title: "Content pages on " + host + " show when they were published or changed", why: (face.dated ? "A published or modified date is present on " + here + "." : "No published or modified date was found on " + here + ".") + (face.author ? " An author is named." : " No author is named, which the report lists separately.") + " Search engines and AI answers weigh whether a page is current.", fw: browser });
+  addCase(cases, { id: "GEO-07", layer: "GEO", title: host + "/.well-known/ai-catalog.json names callable agent resources", why: "The case fetches https://" + host + "/.well-known/ai-catalog.json when no ARD pointer is in robots.txt or page headers. The file should be JSON that agents can parse. Publishing it is optional until a catalog exists.", fw: browser });
+  addCase(cases, { id: "GEO-08", layer: "GEO", title: here + " declares WebMCP tools in static HTML or inline scripts", why: "The case searches " + here + " for document.modelContext in the HTML without running JavaScript. Chrome's WebMCP trial lets a page register tools agents can call in the browser.", fw: browser });
+  addCase(cases, { id: "GEO-09", layer: "GEO", title: here + " can answer agents with markdown when asked", why: "The case requests " + here + " with Accept: text/markdown and expects markdown or plain text, not only HTML. Agents that negotiate content type can skip conversion.", fw: browser });
   const budgetMs = Math.max(800, Math.ceil(((home.ms || 0) * 1.5) / 100) * 100);
   addCase(cases, { id: "PF-01", layer: "Performance", title: here + " arrives inside an 800 ms and 1.5 MB budget", why: "This request for " + here + " took " + home.ms + " ms and " + face.bytes + " bytes. That is one fetch, not a load test, and a suite stops a page that hangs past its own timeout. A budget case would fail above 800 ms or 1.5 MB for the document alone. Lighthouse, through PageSpeed Insights, scores the rendered start page in the Performance findings.", fw: browser.concat(LOAD_FW), also: named(["Lighthouse"]) });
   addCase(cases, { id: "PF-02", layer: "Performance", title: "Scripts and stylesheets on " + here + " stay inside a budget", why: face.scripts + " external scripts and " + face.styles + " stylesheets were referenced on " + here + ((sig.blockingScripts || 0) ? ", and " + sig.blockingScripts + " script(s) in the head block rendering without async or defer" : "") + ". The later case would record the counts and the render-blocking ones.", fw: browser.concat(LOAD_FW) });
@@ -2482,9 +2830,9 @@ function withTimeout(promise, ms, fallback) {
   return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); })]).finally(() => clearTimeout(timer));
 }
 
-async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
+async function fetchExtra(url, halt, keepPartial, acceptLanguage, extraHeaders) {
   try {
-    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage);
+    const res = await fetchPublic(url, halt, null, keepPartial, acceptLanguage, null, extraHeaders);
     const type = header(res.headers, "content-type");
     const body = String(res.body || "");
     return {
@@ -2492,6 +2840,7 @@ async function fetchExtra(url, halt, keepPartial, acceptLanguage) {
       url: res.url,
       truncated: !!res.truncated || body.length > 600000,
       body: body.slice(0, 600000),
+      contentType: type,
       html: /text\/html|application\/xhtml/i.test(type) || /^\s*<(!doctype|html)/i.test(res.body || "")
     };
   } catch (error) {
@@ -2538,9 +2887,9 @@ function pagesFound(pages, links, sitemap, startUrl, prefix) {
 
 function sitemapLocs(xml) {
   const locs = [];
-  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+  const re = /<loc>((?:[^<]|<(?!\/?loc>))*)<\/loc>/gi;
   let match;
-  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].replace(/<!\[CDATA\[|\]\]>/g, "")));
+  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].trim().replace(/<!\[CDATA\[|\]\]>/g, "")));
   return locs;
 }
 
@@ -2915,6 +3264,94 @@ async function iconData(raw) {
   return "";
 }
 
+const SHARE_IMAGE_LIMIT = 300 * 1024;
+
+function probeShareImageOnce(target, pinned, method, halt) {
+  return new Promise((resolve, reject) => {
+    if (halt && halt()) { reject(stoppedError()); return; }
+    const lib = target.protocol === "https:" ? https : http;
+    const req = lib.request({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: Number(target.port) || (target.protocol === "https:" ? 443 : 80),
+      path: target.pathname + target.search,
+      method,
+      timeout: 5000,
+      headers: { "user-agent": USER_AGENT, accept: "image/*,*/*;q=0.8", connection: "close" },
+      lookup: pinnedLookup(pinned)
+    }, (res) => {
+      const lengthHeader = Number(res.headers["content-length"] || 0);
+      let seen = 0;
+      let over = lengthHeader > SHARE_IMAGE_LIMIT;
+      if (method === "HEAD") {
+        if (typeof res.resume === "function") res.resume();
+        res.on("end", () => resolve({
+          status: res.statusCode,
+          contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+          location: res.headers.location || "",
+          bytes: Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0,
+          overLimit: over
+        }));
+        res.on("error", reject);
+        return;
+      }
+      res.on("data", (chunk) => {
+        seen += chunk.length;
+        if (seen > SHARE_IMAGE_LIMIT) {
+          over = true;
+          req.destroy();
+          resolve({
+            status: res.statusCode,
+            contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+            location: res.headers.location || "",
+            bytes: Number.isFinite(lengthHeader) && lengthHeader > seen ? lengthHeader : seen,
+            overLimit: true
+          });
+        }
+      });
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        contentType: String(res.headers["content-type"] || "").split(";")[0].trim().toLowerCase(),
+        location: res.headers.location || "",
+        bytes: seen || (Number.isFinite(lengthHeader) && lengthHeader > 0 ? lengthHeader : 0),
+        overLimit: over
+      }));
+      res.on("error", reject);
+    });
+    const deadline = setTimeout(() => req.destroy(new Error("The share image took too long.")), 5500);
+    req.on("close", () => clearTimeout(deadline));
+    req.on("timeout", () => req.destroy(new Error("The share image took too long.")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function checkShareImage(raw, halt) {
+  try {
+    let current = normalizeUrl(raw);
+    for (let hop = 0; hop <= 3; hop += 1) {
+      const pinned = await assertPublic(current.hostname);
+      let res = await probeShareImageOnce(current, pinned, "HEAD", halt);
+      if (res.status === 405 || res.status === 501) res = await probeShareImageOnce(current, pinned, "GET", halt);
+      if ([301, 302, 303, 307, 308].includes(res.status) && res.location) {
+        current = normalizeUrl(new URL(res.location, current).toString());
+        continue;
+      }
+      return {
+        url: clean(current.toString(), 400),
+        status: res.status || 0,
+        contentType: res.contentType || "",
+        bytes: res.bytes || 0,
+        overLimit: !!res.overLimit
+      };
+    }
+  } catch (error) {
+    if (error && error.code === "STOPPED") throw error;
+    return null;
+  }
+  return null;
+}
+
 // The same address the plain read was pinned to; `open` is null when the host could not be checked at all.
 async function tcpCheck(raw, ms) {
   try {
@@ -2935,6 +3372,7 @@ async function probeReadAs(raw) {
   const hops = [];
   const took = () => Date.now() - started;
   const upgrades = [];
+  const jar = [];
   let upgraded = "";
   let current;
   try {
@@ -2943,7 +3381,7 @@ async function probeReadAs(raw) {
       const pinned = await assertPublic(current.hostname);
       let res;
       try {
-        res = await requestOnce(current, pinned, null, true);
+        res = await requestOnce(current, pinned, null, true, "", "", cookieHeader(jar, current));
       } catch (error) {
         if (upgraded && !upgradeSlow(error)) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
         throw error;
@@ -2952,9 +3390,16 @@ async function probeReadAs(raw) {
       hops.push({ url: clean(current.toString(), 300), status: res.status, location: clean(location, 300) });
       if (upgraded && res.status >= 400 && !upgradeRefused(res, current.toString())) return { hops, httpRedirect: clean(upgraded, 300), ms: took() };
       if ([301, 302, 303, 307, 308].includes(res.status) && location) {
+        rememberCookies(jar, current, res.headers["set-cookie"]);
         const next = new URL(location, current);
-        upgraded = next.protocol === "http:" ? httpsUpgrade(next, upgrades) : "";
-        if (next.protocol === "http:" && !upgraded) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+        upgraded = "";
+        if (next.protocol === "http:") {
+          const step = await httpsAfter(next, upgrades, null, "", "");
+          if (!step) return { hops, httpRedirect: clean(next.href, 300), ms: took() };
+          upgraded = step.upgraded;
+          current = normalizeUrl(step.url.toString());
+          continue;
+        }
         current = normalizeUrl(next.toString());
         continue;
       }
@@ -3058,7 +3503,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
     : missingIntermediate ? { missingIntermediate } : null;
   const acceptLanguage = (lookups && lookups.acceptLanguage) || "";
   const sitemapJob = lookups && lookups.sitemap ? lookups.sitemap : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
-  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
+  say("In the background: the sitemap, /llms.txt, /llms-full.txt, /.well-known/ai-catalog.json, the start page with Accept: text/markdown, /.well-known/security.txt, the start page with UTM tags, a made-up path that should answer 404, plain http, the DNS records and the RDAP registration for " + registryDomain(origin.hostname) + (checkRisk ? ", and Google's Safe Browsing lists" : "") + ".");
   say(tls && tls.validTo ? "The TLS certificate from " + (tls.issuer || "an unnamed issuer") + " is valid until " + tls.validTo + " (" + tls.daysLeft + " days left)." : "The TLS certificate did not give an expiry date.");
   const reach = (url) => {
     const target = new URL(url);
@@ -3071,12 +3516,21 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
   const lookalikeJob = lookups && typeof lookups.doh === "function"
     ? withTimeout(lookalikes.find(origin.hostname, { doh: lookups.doh, halt, home: first.body, webrisk: checkRisk, rdap: (domain) => domainFacts(domain, halt), fetchPage: (address) => fetchExtra(address, halt), fetchHttp: (domain) => plainHttp(domain, halt) }), lookalikes.LIMITS.budgetMs + 10000, null).catch(() => null)
     : Promise.resolve(undefined);
-  const [sitemap, llms, llmsFull, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists] = await Promise.all([
+  const shareImageUrl = lookups && lookups.inspect && lookups.inspect.social && /^https:\/\//i.test(lookups.inspect.social.ogImage || "") ? lookups.inspect.social.ogImage : "";
+  const catalogPath = "/.well-known/ai-catalog.json";
+  const homePath = pagePath(first.url);
+  const [sitemap, llms, llmsFull, aiCatalog, agentMarkdown, securityTxt, utm, soft404, httpRedirect, dnsInfo, domainInfo, safeBrowsing, local, lists, shareImage] = await Promise.all([
     done(sitemapJob, (map) => map.urls && map.urls.length
       ? "The sitemap at " + pagePath(map.source) + " listed " + map.urls.length + " URLs" + (map.partial ? ", read in part" : "") + "."
       : "No sitemap with URLs was found (status " + (map.status || "none") + ")."),
     done(fetchExtra(origin.origin + "/llms.txt", halt, false, acceptLanguage), (res) => answered("/llms.txt", res)),
     done(fetchExtra(origin.origin + "/llms-full.txt", halt, false, acceptLanguage), (res) => answered("/llms-full.txt", res)),
+    allowed(catalogPath)
+      ? done(fetchExtra(origin.origin + catalogPath, halt, false, acceptLanguage), (res) => answered(catalogPath, res))
+      : Promise.resolve(null).then(() => { say("The ai-catalog check was skipped: robots.txt disallows " + catalogPath + "."); return null; }),
+    allowed(homePath)
+      ? done(fetchExtra(first.url, halt, false, acceptLanguage, { accept: "text/markdown" }), (res) => "The start page with Accept: text/markdown answered " + (res.status || "nothing") + (res.contentType ? " as " + clean(res.contentType, 80) : "") + ".")
+      : Promise.resolve(null).then(() => { say("The agent markdown check was skipped: robots.txt disallows the start page."); return null; }),
     done(fetchExtra(origin.origin + "/.well-known/security.txt", halt, false, acceptLanguage), (res) => answered("/.well-known/security.txt", res)),
     allowed(pagePath(utmUrl.toString()))
       ? done(fetchPublic(utmUrl.toString(), halt, null, false, acceptLanguage).then((res) => ({ status: res.status, finalUrl: res.url, kept: new URL(res.url).searchParams.get("utm_source") === "qa-lab-review" })).catch(() => null), (res) => res
@@ -3091,14 +3545,16 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
       : "Plain http answered " + res.statuses.join(" → ") + (res.location ? ", ending at " + res.location : "") + "."),
     done(dnsFacts(origin.hostname).then(async (facts) => {
       const auth = facts.spf || facts.dmarc ? withTimeout(mailAuth.readMailAuth(facts.domain, halt), 10000, null).catch(() => null) : null;
+      const dkim = facts.mx.length ? withTimeout(mailAuth.readDkim(facts.domain, { mx: facts.mx, spf: facts.spf }, halt), 9000, null).catch(() => null) : null;
       const listed = blocklists.check(facts, origin.hostname);
       if (facts.mtaSts) facts.mtaStsPolicy = await withTimeout(mtaStsPolicy(facts.domain, halt), 8000, { error: "no answer in time" });
       if (auth) facts.mailAuth = await auth;
+      if (dkim) facts.dkim = await dkim;
       facts.blocklists = await listed;
       say(blocklists.note(facts.blocklists));
       return facts;
     }).catch(() => null), (facts) => facts
-      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
+      ? "DNS for " + facts.domain + ": SPF " + (facts.spf ? "found" : "missing") + (facts.mailAuth && facts.mailAuth.lookups != null ? " (" + facts.mailAuth.lookups + " DNS lookups" + (facts.mailAuth.complete ? "" : " or more") + ")" : "") + ", DMARC " + (facts.dmarc ? "found" : "missing") + (facts.dkim ? ", DKIM " + (facts.dkim.keys.length ? "at " + facts.dkim.keys.map((key) => key.selector).join(", ") : "at none of " + facts.dkim.probed + " common selectors") : "") + ", " + (facts.nullMx ? "a null MX (no mail)" : facts.mx.length + " MX") + ", " + facts.caa.length + " CAA" +
         ", MTA-STS " + (facts.mtaSts ? (facts.mtaStsPolicy && facts.mtaStsPolicy.mode ? "in " + facts.mtaStsPolicy.mode + " mode" : "announced, policy unread") : "missing") + ", TLS-RPT " + (facts.tlsRpt ? "found" : "missing") + ", BIMI " + (facts.bimi ? "found" : "missing") +
         (facts.unread.length ? ". Not answered in time: " + facts.unread.join(", ") : "") + "."
       : "The DNS records could not be read."),
@@ -3120,14 +3576,17 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
         (res.website.reach ? res.website.reach.error ? "; its website link could not be read (" + res.website.reach.error + ")" : "; its website link answered " + res.website.reach.status + (res.website.reach.hops ? " after " + res.website.reach.hops + " redirect" + (res.website.reach.hops === 1 ? "" : "s") : "") : "") + ".");
       return res;
     }),
-    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null)
+    Promise.resolve().then(() => checkLists(first.url, { note: say, stop: halt })).catch(() => null),
+    shareImageUrl ? checkShareImage(shareImageUrl, halt).catch(() => null) : Promise.resolve(null)
   ]);
   const lookalikeFound = await lookalikeJob;
   if (lookalikeFound !== undefined) say(!lookalikeFound ? "The lookalike domain check did not finish in time."
     : lookalikeFound.skipped ? "Lookalike domains were not checked: " + lookalikeFound.skipped + "."
       : "Lookalike domains: " + lookalikeFound.resolved + " of " + lookalikeFound.checked + " checked exist, " + lookalikeFound.found + " with a website or mail and no tie to the site" + (lookalikeFound.tried > lookalikeFound.checked ? "; " + (lookalikeFound.tried - lookalikeFound.checked) + " did not answer in time" : "") + ".");
-  const trim = (item) => item ? { status: item.status, html: !!item.html, body: String(item.body || "").slice(0, 20000) } : null;
-  return { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
+  const trim = (item) => item ? { status: item.status, html: !!item.html, contentType: item.contentType || "", body: String(item.body || "").slice(0, 20000), error: item.error || "" } : null;
+  const out = { lookalikes: lookalikeFound || null, sitemap, llms: trim(llms), llmsFull: trim(llmsFull), aiCatalog: trim(aiCatalog), agentMarkdown: trim(agentMarkdown), securityTxt: trim(securityTxt), utm, soft404, httpRedirect, tls, dns: dnsInfo, domain: domainInfo, safeBrowsing: safeBrowsing && safeBrowsing.ok ? safeBrowsing : null, local: local && local.ok ? local : null, threatLists: lists };
+  if (shareImage) out.shareImage = shareImage;
+  return out;
 }
 
 async function reviewTarget(rawUrl, hooks) {
@@ -3142,11 +3601,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (controls.log) controls.log(text);
   };
   const halt = () => !!(controls.stopped && controls.stopped());
-  const chosen = normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH };
+  const softPreview = controls.softPreview === true;
+  const chosen = softPreview
+    ? { pages: SOFT_PREVIEW_PAGES, depth: SOFT_PREVIEW_DEPTH }
+    : (normalizeScope(controls.maxPages == null ? INCLUDED_PAGES : controls.maxPages, controls.maxDepth == null ? INCLUDED_DEPTH : controls.maxDepth) || { pages: INCLUDED_PAGES, depth: INCLUDED_DEPTH });
   const acceptLanguage = normalizePageLang(controls.pageLang);
   const begun = Date.now();
-  let deadline = begun + budgetMs(chosen.pages);
+  let deadline = begun + (softPreview ? SOFT_PREVIEW_MS : budgetMs(chosen.pages));
   note("Checking that the address is public https.");
+  if (softPreview) note("Soft preview: this run reads only the pasted URL (1 page), then frosts the rest.");
   note(acceptLanguage ? "Pages are requested in " + PAGE_LANG_LABEL[acceptLanguage] + "." : "Pages are requested in the site's own language.");
   // A competitor's site gets passive checks only; the browser refuses typing and opening the chat as well.
   const passive = controls.passive === true;
@@ -3162,8 +3625,13 @@ async function reviewTarget(rawUrl, hooks) {
       return stoppedReport(rawUrl, lines, null, chosen);
     }
     const oversized = !!error && error.code === "HEADERS_TOO_LARGE";
-    if (!(oversized || /took too long/.test((error && error.message) || "")) || typeof controls.browse !== "function") throw error;
-    slowFirst = oversized ? "headers" : error.message === UNREACHABLE ? "unreachable" : true;
+    // arti-elec.com accepts TLS, then hangs up the review user agent (socket hang up, ECONNRESET).
+    // Headless Chrome with the review tag is cut (net::ERR_HTTP2_PROTOCOL_ERROR) and plain Chrome reads the page.
+    // Use #3514's plainReadDropped (reset/abort/hang-up) but keep #2869's reset messaging so the failure stays in the connection class.
+    const dropped = plainReadDropped(error);
+    const conn = plainConnectionFailed(error);
+    if (!(oversized || /took too long/.test((error && error.message) || "") || dropped || conn) || typeof controls.browse !== "function") throw error;
+    slowFirst = oversized ? "headers" : dropped ? "reset" : error.message === UNREACHABLE || conn ? "unreachable" : true;
     first = { url: error.url || String(rawUrl), requested: String(rawUrl), hops: 0, status: 0, headers: {}, body: "", cert: null, ms: PAGE_TIMEOUT_MS };
   }
   if (first.cert && first.cert.missingIntermediate) {
@@ -3195,6 +3663,8 @@ async function reviewTarget(rawUrl, hooks) {
       ? "The site accepted no connection to the plain request in " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : slowFirst === "headers"
       ? HEADERS_TOO_LARGE + ". Waiting for headless Chrome to open the page."
+      : slowFirst === "reset"
+      ? "The connection to the site failed (socket hang up). Waiting for headless Chrome to open the page."
       : slowFirst
       ? "The plain request took longer than " + PAGE_TIMEOUT_MS / 1000 + " s. Waiting for headless Chrome to open the page."
       : "The plain request was refused (status " + first.status + (firstChallenge ? ", " + insights.botCheck(firstChallenge) : "") + "). Waiting for headless Chrome to open the page.");
@@ -3211,10 +3681,15 @@ async function reviewTarget(rawUrl, hooks) {
     if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
       const status = (view && view.docStatus) || first.status;
       const guarded = (code) => [401, 403, 429].includes(code);
+      const hung = slowFirst === "headers" ? HEADERS_TOO_LARGE
+        : slowFirst === "unreachable" ? "The site accepted no connection to the plain request"
+        : slowFirst === "reset" ? "The connection to the site failed (socket hang up)"
+        : "The page took too long in the plain request";
       const where = slowFirst === "headers" ? "in headless Chrome, after " + HEADERS_TOO_LARGE.replace(/^The/, "the")
+        : slowFirst === "reset" ? "in headless Chrome, after the connection to the site failed"
         : slowFirst ? "in headless Chrome, after the plain request took too long" : "in the plain request and in headless Chrome";
       const error = new Error(slowFirst && !viewChallenge && (!browsed || !browsed.ok || !(status >= 400))
-        ? (slowFirst === "headers" ? HEADERS_TOO_LARGE : slowFirst === "unreachable" ? "The site accepted no connection to the plain request" : "The page took too long in the plain request") + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
+        ? hung + ", and headless Chrome " + (browsed && browsed.ok ? "returned no page" : "could not open it either (" + ((browsed && browsed.error) || "no answer") + ")") + "."
         : !browsed || !browsed.ok
         ? (firstChallenge || guarded(first.status) ? "The site's bot protection refused the plain request" : "The URL returned status " + first.status + " to the plain request") +
           (firstChallenge || guarded(first.status) ? " (status " + first.status + ")" : "") + ", and headless Chrome did not finish (" + ((browsed && browsed.error) || "no answer") + ")."
@@ -3237,7 +3712,7 @@ async function reviewTarget(rawUrl, hooks) {
     };
     firstChallenge = "";
     readInBrowser = browsed;
-    note(slowFirst && slowFirst !== "headers" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
+    note(slowFirst === true || slowFirst === "unreachable" ? insights.SLOW_READ_NOTE : browsed.untagged ? insights.UNTAGGED_READ_NOTE : insights.BROWSER_READ_NOTE);
   } else if (first.status >= 400) {
     const error = new Error(firstChallenge
       ? "The site answered with " + insights.botCheck(firstChallenge) + " (status " + first.status + ") instead of the page."
@@ -3279,6 +3754,7 @@ async function reviewTarget(rawUrl, hooks) {
   if (prefix) note("Later pages stay under " + prefix + ".");
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
+  homeInspect.headOrder = headOrder.analyze(first.body, { detail: true });
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, doh: passive ? null : controls.doh, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
@@ -3350,7 +3826,7 @@ async function reviewTarget(rawUrl, hooks) {
     depth: 0,
     from: "",
     challenge: firstChallenge,
-    readInBrowser: readInBrowser ? (slowFirst && slowFirst !== "headers" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
+    readInBrowser: readInBrowser ? (slowFirst === true || slowFirst === "unreachable" ? "slow" : readInBrowser.untagged ? "untagged" : "tagged") : "",
     cut: !!first.truncated,
     slow: !!first.slow,
     renderedLinks: 0,
@@ -3522,6 +3998,26 @@ async function reviewTarget(rawUrl, hooks) {
   extras.exposed = await withTimeout(exposedPromise, exposedFiles.BUDGET_MS + 10000, null);
   extras.hackSigns = await withTimeout(hackPromise, 5000, null);
   if (!stopped && !firstChallenge) note(hackSigns.line(extras.hackSigns));
+  if (!stopped && !softPreview && controls.targeted === false) note("Attack and exploit source checks were switched off for this run.");
+  if (!stopped && !softPreview && controls.targeted !== false) {
+    const assessedLibs = [].concat.apply([], pages.map((page) => (page.inspect && page.inspect.libraries) || [])).concat((browser && browser.ok && browser.libraries) || []);
+    const runTargeted = typeof controls.targeted === "function" ? controls.targeted : targeted.check;
+    note("Reading attack and exploit sources for " + origin.hostname + ".");
+    extras.targeted = await runTargeted({
+      url: first.url,
+      host: origin.hostname,
+      cert: first.cert || null,
+      libraries: assessedLibs,
+      wordpress: extras.wordpress || null,
+      technologies: technologiesFound,
+      extras,
+      alerts
+    }, {
+      env: process.env,
+      certspotterKey: process.env.CERTSPOTTER_KEY || ""
+    }).catch(() => null);
+    targeted.lines(extras.targeted).forEach((text) => note(text));
+  }
   if (extras.outbound && (extras.outbound.found || extras.outbound.httpCount)) {
     const out = extras.outbound;
     const count = (kind) => out.rows.filter((row) => row.kind === kind).length;
@@ -3672,7 +4168,30 @@ async function reviewTarget(rawUrl, hooks) {
   };
   if (talked) result.chatTalk = talked;
   if (watch) result.watch = watch;
+  if (extras.targeted) {
+    result.targeted = {
+      host: extras.targeted.host,
+      checkedAt: extras.targeted.checkedAt,
+      status: extras.targeted.status,
+      level: extras.targeted.level,
+      hosting: extras.targeted.hosting,
+      kevHits: (extras.targeted.kevHits || []).slice(0, 20),
+      osvHits: (extras.targeted.osvHits || []).slice(0, 20),
+      dropIpHit: extras.targeted.dropIpHit || null,
+      dropAsnHit: extras.targeted.dropAsnHit || null,
+      feodoHit: extras.targeted.feodoHit || null,
+      torHit: extras.targeted.torHit || "",
+      breachNews: (extras.targeted.breachNews || []).slice(0, 5),
+      sourcesRead: extras.targeted.sourcesRead || [],
+      sourcesSkipped: extras.targeted.sourcesSkipped || [],
+      attributions: extras.targeted.attributions || [],
+      context: extras.targeted.context || null,
+      items: (extras.targeted.items || []).slice(0, 40)
+    };
+  }
   if (proof && proof.kind) result.ownerProof = { kind: proof.kind, how: proof.how || "", host: ownerProofs.hostOf(origin.hostname), checked: proof.checked === true };
+  // Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
+  if (!softPreview && !stopped) verifiedSpec().applyToReport(result, pages);
   if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
   return result;
 }
@@ -3700,16 +4219,96 @@ function stoppedReport(rawUrl, lines, host, scope) {
   };
 }
 
-// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, and a field nested past
-// 20 maps and arrays ("Property report contains an invalid nested entity"). Page data can carry any of them, so they are rewritten.
+// Firestore refuses a map key that is empty or named like __x__, an array directly inside an array, a field nested past
+// 20 maps and arrays, and a string longer than one field ("Property report contains an invalid nested entity").
+// Page data can carry any of them, so they are rewritten. The whole report also has to stay under one document.
 const STORE_DEPTH = 20;
+const FIELD_BYTES = 1048487;
+const STORE_JSON = 850000;
+
+function cutToBytes(text, max) {
+  const value = String(text);
+  if (Buffer.byteLength(value) <= max) return value;
+  let lo = 0;
+  let hi = value.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (Buffer.byteLength(value.slice(0, mid)) <= max) lo = mid;
+    else hi = mid - 1;
+  }
+  if (lo > 0 && value.charCodeAt(lo - 1) >= 0xD800 && value.charCodeAt(lo - 1) <= 0xDBFF) lo -= 1;
+  return value.slice(0, lo);
+}
+
+function longestString(value) {
+  let best = null;
+  const consider = (parent, key, child, where) => {
+    if (typeof child === "string") {
+      if (!best || child.length > best.length) best = { parent, key, length: child.length, path: where };
+    } else walk(child, where);
+  };
+  const walk = (item, path) => {
+    if (Array.isArray(item)) {
+      item.forEach((child, index) => consider(item, index, child, path + "." + index));
+      return;
+    }
+    if (!item || typeof item !== "object" || Object.getPrototypeOf(item) !== Object.prototype) return;
+    Object.keys(item).forEach((key) => consider(item, key, item[key], path + "." + key));
+  };
+  walk(value, "report");
+  return best;
+}
+
+// The screenshot trim uses the same 850,000 character budget. A page kept from headless Chrome can be larger than that on its own.
+function fitDocument(value, fixed) {
+  const sizeOf = () => JSON.stringify(value).length;
+  let size = sizeOf();
+  for (let guard = 0; size > STORE_JSON && guard < 6; guard += 1) {
+    const found = longestString(value);
+    if (!found || found.length < 2000) break;
+    const next = found.parent[found.key].slice(0, Math.max(0, found.length - (size - STORE_JSON) - 64));
+    if (next.length >= found.length) break;
+    found.parent[found.key] = next;
+    if (found.key === "html") found.parent.htmlCut = true;
+    fixed.push(found.path + " (kept " + next.length + " characters so the report fits in one Firestore document)");
+    size = sizeOf();
+  }
+  return value;
+}
+
+
+function fitRecordDocument(record, fixed) {
+  if (!record || !record.report) return record;
+  const sizeOf = () => JSON.stringify(record).length;
+  let size = sizeOf();
+  for (let guard = 0; size > STORE_JSON && guard < 8; guard += 1) {
+    const found = longestString(record.report);
+    if (!found || found.length < 2000) break;
+    let end = Math.max(0, found.length - (size - STORE_JSON) - 64);
+    const text = found.parent[found.key];
+    if (end > 0 && text.charCodeAt(end - 1) >= 0xD800 && text.charCodeAt(end - 1) <= 0xDBFF) end -= 1;
+    if (end >= found.length) break;
+    found.parent[found.key] = text.slice(0, end);
+    if (found.key === "html") found.parent.htmlCut = true;
+    fixed.push(found.path + " (kept " + end + " characters so the report fits in one Firestore document)");
+    size = sizeOf();
+  }
+  return record;
+}
 
 function storable(value, fixed, at, depth) {
   const level = depth || 1;
   const path = at || "report";
   const plain = (item) => Array.isArray(item) || (!!item && typeof item === "object" && Object.getPrototypeOf(item) === Object.prototype);
+  if (typeof value === "string") {
+    if (Buffer.byteLength(value) <= FIELD_BYTES) return value;
+    const kept = cutToBytes(value, FIELD_BYTES);
+    fixed.push(path + " (string of " + Buffer.byteLength(value) + " bytes, kept to " + Buffer.byteLength(kept) + ")");
+    return kept;
+  }
   if (!plain(value)) return value;
   const inner = (item, where) => {
+    if (typeof item === "string") return storable(item, fixed, where, level + 1);
     if (!plain(item)) return item;
     if (level >= STORE_DEPTH) {
       fixed.push(where + " (past " + STORE_DEPTH + " levels, kept as JSON)");
@@ -3730,7 +4329,7 @@ function storable(value, fixed, at, depth) {
     if (name !== key) fixed.push(path + "." + JSON.stringify(key) + " (renamed " + JSON.stringify(name) + ")");
     out[name] = inner(value[key], path + "." + name);
   });
-  return out;
+  return !at && !depth ? fitDocument(out, fixed) : out;
 }
 
 // The Local check's findings (#2067) in a few bytes, so Jarvis can count them without reading every report (#2118).
@@ -3747,7 +4346,7 @@ function localSummary(report) {
 }
 
 // The newer security checks' findings in a few bytes (#3329), so Jarvis counts hits per check without reading reports.
-const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist)/;
+const CHECK_KEYS = /^sec-(threatlists|linked-|seo-spam|cloaking|spam-links|lookalike|exposed|wordpress|blocklist|kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)/;
 function checksSummary(report) {
   const findings = (report && report.insights && Array.isArray(report.insights.findings)) ? report.insights.findings : [];
   const rows = findings.filter((f) => f && CHECK_KEYS.test(f.key || "")).map((f) => {
@@ -3759,33 +4358,36 @@ function checksSummary(report) {
 
 function intakeRecord(value, report, meta) {
   const now = Date.now();
+  const softPreview = !!(value && value.softPreview);
+  const retainMs = softPreview ? SOFT_PREVIEW_RETAIN_MS : RETAIN_MS;
   const fixed = [];
   const kept = storable(report, fixed);
-  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
-  return {
+  const record = {
     id: report.id,
     createdAt: new Date(now).toISOString(),
-    retainUntil: new Date(now + RETAIN_MS).toISOString(),
-    expireAt: new Date(now + RETAIN_MS),
-    termsVersion: value.termsVersion || TERMS_VERSION,
-    name: value.name,
-    email: value.email,
-    reason: value.reason,
+    retainUntil: new Date(now + retainMs).toISOString(),
+    expireAt: new Date(now + retainMs),
+    termsVersion: softPreview ? "" : (value.termsVersion || TERMS_VERSION),
+    name: value.name || "",
+    email: value.email || "",
+    reason: value.reason || "",
     reasonCode: value.reasonCode || "",
     clientName: value.clientName || "",
     clientEmail: value.clientEmail || "",
     clientUrl: value.clientUrl || "",
     ownership: value.ownership || "",
     frameworks: value.frameworks,
-    pages: value.pages || INCLUDED_PAGES,
-    depth: value.depth || INCLUDED_DEPTH,
+    pages: softPreview ? SOFT_PREVIEW_PAGES : (value.pages || INCLUDED_PAGES),
+    depth: softPreview ? SOFT_PREVIEW_DEPTH : (value.depth || INCLUDED_DEPTH),
     requestedUrl: value.url,
     deviceId: clean(meta.deviceId || value.deviceId, 80),
     status: report.status || "complete",
+    // Soft-preview rows only; omit the key on full runs so Firestore never sees undefined.
+    ...(softPreview ? { softPreview: true } : {}),
     // The run credit this run consumed paid for it, so it opens this report and no other.
-    paid: !!clean(meta.creditId, 40),
-    creditId: clean(meta.creditId, 40),
-    priceUsd: priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
+    paid: softPreview ? false : !!clean(meta.creditId, 40),
+    creditId: softPreview ? "" : clean(meta.creditId, 40),
+    priceUsd: softPreview ? 0 : priceForRun({ frameworks: value.frameworks || [], pages: value.pages || INCLUDED_PAGES, depth: value.depth || INCLUDED_DEPTH, billing: "run" }).usd,
     ip: clean(meta.ip, 80),
     userAgent: clean(meta.userAgent, 300),
     acceptLanguage: clean(meta.acceptLanguage, 120),
@@ -3795,8 +4397,9 @@ function intakeRecord(value, report, meta) {
     lang: value.lang || "",
     pageLang: value.pageLang || "",
     section: value.section === true,
+    targeted: value.targeted !== false,
     followUp: value.followUp === true,
-    unlisted: value.unlisted === true,
+    unlisted: softPreview ? true : value.unlisted === true,
     compareWith: value.compareWith || "",
     query: value.query || "",
     referrerHost: value.referrerHost || "",
@@ -3804,6 +4407,9 @@ function intakeRecord(value, report, meta) {
     checks: checksSummary(report),
     report: kept
   };
+  fitRecordDocument(record, fixed);
+  if (fixed.length) console.warn("URL review report " + report.id + " had fields Firestore refuses: " + fixed.slice(0, 20).join("; "));
+  return record;
 }
 
 function stripeForm(params) {
@@ -3911,11 +4517,18 @@ function productName(purpose, frameworks, scope) {
   if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
+  if (purpose === "deep") return "QA-lab URL Review Deep attack-source check";
   if (purpose === "fix") {
     const pkg = fixOffers.packageById(scope && scope.package);
     return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
   }
   if (purpose === "alerts") return "QA-lab public signals · " + ((scope && scope.count) || "");
+  if (scope && scope.bundle) {
+    const bundle = normalizeBundle(scope.bundle);
+    const head = purpose === "report" ? "QA-lab URL Review full report" : "QA-lab URL Review run";
+    const size = purpose === "new-run" && scope.pages ? " · " + scope.pages + " pages, " + scope.depth + " links deep" : "";
+    return head + " · " + (bundle ? bundle.name : "Full Stack") + size;
+  }
   const fw = purpose === "cases" ? normalizeLayers(frameworks) : normalizeFrameworks(frameworks);
   const toolNames = purpose === "cases" ? [] : normalizeTools(scope && scope.tools);
   let names = fw.join(", ");
@@ -4089,7 +4702,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "deep", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -4430,6 +5043,33 @@ async function inspectPayment(options) {
   return inspectPayPal(options);
 }
 
+// Run-diff baseline (#3483): same account + host, most recent prior full crawl within 90 days; soft previews never count.
+const HISTORY_DAYS = 90;
+const HISTORY_MS = HISTORY_DAYS * 86400000;
+
+function priorRunAt(row) {
+  return Date.parse((row && row.report && row.report.fetchedAt) || (row && row.createdAt) || "");
+}
+
+function priorRunEligible(row, report, now) {
+  if (!row || !row.report || !report || !report.host) return false;
+  if (row.softPreview === true || row.report.softPreview === true) return false;
+  if (row.status === "stopped") return false;
+  if (!row.report.insights || !row.report.insights.score) return false;
+  if (row.report.host !== report.host) return false;
+  if (report.id && row.report.id === report.id) return false;
+  const at = priorRunAt(row);
+  if (!Number.isFinite(at)) return false;
+  if ((Number(now) || Date.now()) - at > HISTORY_MS) return false;
+  return true;
+}
+
+function pickPreviousRun(rows, report, now) {
+  const when = Number(now) || Date.now();
+  return (rows || []).filter((row) => priorRunEligible(row, report, when))
+    .sort((a, b) => priorRunAt(b) - priorRunAt(a))[0] || null;
+}
+
 function compareRuns(previous, report) {
   const before = previous && previous.insights;
   const now = report && report.insights;
@@ -4564,11 +5204,20 @@ function frostAll(value) {
   return value;
 }
 
+// Shared and unpaid opens keep overall + six area scores (numbers) and one teaser finding in the clear (#3477):
+// its title, evidence and fix stay readable so a colleague sees why the score dropped. Everything else frosts.
+function teaserFinding(findings) {
+  const list = findings || [];
+  return list.filter((item) => item.verdict === "fail" || item.verdict === "risk")
+    .sort((a, b) => (a.rank || 999) - (b.rank || 999))[0] || list[0] || null;
+}
+
 // The page blurs a free report with CSS, so a paid reopen sends only this copy:
 // the readable opening of every line in every section, filler for the rest, and no fix-kit files.
 // The top case stays whole, with what its script needs, as the sample the page shows in full; a comparison column passes { sample: false }.
 function previewReport(report, options) {
   const copy = JSON.parse(JSON.stringify(report || {}));
+  delete copy.targeted;
   const cases = copy.cases || [];
   const top = options && options.sample === false ? null : cases.shift();
   cases.forEach((item) => {
@@ -4582,10 +5231,22 @@ function previewReport(report, options) {
     item.detail = frostText(item.detail);
   });
   const ins = copy.insights || {};
-  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole.
+  if (Array.isArray(ins.findings)) {
+    ins.findings = ins.findings.filter((item) => !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String((item && item.key) || "")));
+  }
+  // Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
+  const teaser = options && options.sample === false ? null : teaserFinding(ins.findings);
+  const teaserId = teaser && (teaser.id || teaser.key);
+  const teaserKeep = teaser ? { title: teaser.title, evidence: teaser.evidence, fix: teaser.fix, msg: teaser.msg } : null;
+  // Evidence and fix values would carry what the frost hides, so those read the frosted English; titles stay whole
+  // except the teaser finding, which keeps evidence and fix so shared links still show the top gap (#3477).
   (ins.findings || []).forEach((item) => {
-    item.evidence = frostText(item.evidence);
-    item.fix = frostText(item.fix);
+    const isTeaser = teaserId && (item.id === teaserId || item.key === teaserId);
+    if (isTeaser) item.teaser = true;
+    else {
+      item.evidence = frostText(item.evidence);
+      item.fix = frostText(item.fix);
+    }
     if (item.msg && item.msg.title) item.msg = { title: item.msg.title };
     else delete item.msg;
   });
@@ -4605,7 +5266,18 @@ function previewReport(report, options) {
   if (copy.watch) copy.watch = watchCases.preview(copy.watch);
   // The comparison names the asker's own site and its open problems, so a shared link must not carry it.
   delete copy.compare;
+  // Soft preview and anonymous share must not show run-to-run deltas (#3483 D3).
+  delete copy.history;
   const frosted = frostAll(copy);
+  if (teaserKeep && frosted.insights && frosted.insights.findings) {
+    const hit = frosted.insights.findings.find((item) => item.teaser);
+    if (hit) {
+      hit.title = teaserKeep.title;
+      hit.evidence = teaserKeep.evidence;
+      hit.fix = teaserKeep.fix;
+      if (teaserKeep.msg && teaserKeep.msg.title) hit.msg = { title: teaserKeep.msg.title };
+    }
+  }
   if (top) frosted.cases.unshift(Object.assign(top, { sample: true }));
   frosted.preview = true;
   return frosted;
@@ -4622,6 +5294,9 @@ module.exports = {
   decodeBody,
   actionLink,
   domainCases,
+  HISTORY_DAYS,
+  priorRunEligible,
+  pickPreviousRun,
   compareRuns,
   testKeyMatches,
   pageSpeed,
@@ -4638,8 +5313,12 @@ module.exports = {
   PRICE_PER_FRAMEWORK,
   EXTRA_FRAMEWORK_USD,
   FIXLIST_CENTS,
+  DEEP_CENTS,
+  priceForDeep,
   COMPARE_CENTS,
   PASS_CENTS,
+  FULL_STACK_CENTS,
+  FULL_STACK_BUNDLES,
   MAX_COMPETITORS,
   centsForIndex,
   scheduleCents,
@@ -4648,6 +5327,9 @@ module.exports = {
   floorCents,
   creditFor,
   priceFor,
+  priceForBundle,
+  bundleOf,
+  normalizeBundle,
   priceForReport,
   priceForFixList,
   priceForFix,
@@ -4682,6 +5364,10 @@ module.exports = {
   DEPTH_CHOICES,
   INCLUDED_PAGES,
   INCLUDED_DEPTH,
+  SOFT_PREVIEW_PAGES,
+  SOFT_PREVIEW_DEPTH,
+  SOFT_PREVIEW_MS,
+  SOFT_PREVIEW_RETAIN_MS,
   LAYERS,
   REASONS,
   FRAMEWORKS,
@@ -4693,8 +5379,10 @@ module.exports = {
   paymentExpireAt,
   preformatUrl,
   validateIntake,
+  validateSoftPreview,
   landingSource,
   screenIntake,
+  screenSoftPreview,
   emailCanReceive,
   mailboxMatchesHost,
   ownerProof,
@@ -4743,6 +5431,7 @@ module.exports = {
   ipBlocked,
   hostBlocked,
   iconData,
+  checkShareImage,
   assertPublic,
   pinnedLookup
 };

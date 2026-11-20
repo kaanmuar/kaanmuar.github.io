@@ -315,8 +315,20 @@ private fun DateKind(kind: String?) {
     Text(k?.first ?: kind.orEmpty(), color = k?.second ?: J.muted, fontSize = 11.sp, modifier = Modifier.border(1.dp, k?.second ?: J.muted, RoundedCornerShape(8.dp)).padding(horizontal = 6.dp))
 }
 
+/**
+ * The map on its 3×1 / 3×2 plate (#3978): the panel's stretch (1 or 2) is how many times as wide the map is drawn in a pan strip, so on a
+ * phone the countries and their names are big enough to read. The tap's x is given as a fraction of the visible strip, so the card
+ * still opens on the far side from the finger.
+ */
 @Composable
-private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, onTap: (String?, Offset) -> Unit) {
+internal fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, pins: Set<String> = emptySet(), onTap: (String?, Offset) -> Unit) {
+    val scale = Layouts.plateScale(LocalPanelStretch.current)
+    val scroll = rememberScrollState()
+    Enlarged(scale, scroll) { WorldMapCanvas(world, rows, key, selected, fills, pins, scale, { scroll.value }, onTap) }
+}
+
+@Composable
+private fun WorldMapCanvas(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>?, pins: Set<String>, scale: Int, scrolled: () -> Int, onTap: (String?, Offset) -> Unit) {
     val fill = remember(rows, key, fills) { fills ?: Geo.fills(rows, key) }
     val by = remember(rows) { rows.associateBy { it.str("cc") ?: "" } }
     val lit = key == "light" && fills == null
@@ -327,7 +339,7 @@ private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, sele
     val halo = remember { android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { typeface = android.graphics.Typeface.DEFAULT_BOLD; style = android.graphics.Paint.Style.STROKE; strokeJoin = android.graphics.Paint.Join.ROUND; color = 0xE0040A0E.toInt() } }
     Canvas(
         Modifier.fillMaxWidth().aspectRatio(world.w / world.h).background(Color(0xFF0A141B), RoundedCornerShape(10.dp))
-            .pointerInput(world, rows) { detectTapGestures { p -> val k = world.w / size.width; onTap(world.hit(p.x * k, p.y * k, by.keys), Offset(p.x / size.width, p.y / size.height)) } }
+            .pointerInput(world, rows) { detectTapGestures { p -> val k = world.w / size.width; onTap(world.hit(p.x * k, p.y * k, by.keys), Offset(PlateMath.viewFraction(p.x, scrolled(), size.width.toFloat(), scale), p.y / size.height)) } }
     ) {
         val k = size.width / world.w
         scale(k, k, pivot = Offset.Zero) {
@@ -345,6 +357,8 @@ private fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, sele
                 drawCircle(fill[cc] ?: Geo.TARGET, radius = 5f, center = at)
                 drawCircle(if (cc == selected) J.amber else Color.White, radius = 5f, center = at, style = Stroke(width = 1f))
             }
+            // The live cyber map (#3894) pins the countries where a report of ours has a threat finding.
+            pins.forEach { cc -> world.dots[cc]?.let { at -> drawCircle(J.cyan, radius = 6f, center = at); drawCircle(Color.White, radius = 6f, center = at, style = Stroke(width = 1.2f)) } }
         }
         // Labels in screen pixels, 9 to 12sp whatever the map's width, so a phone shows fewer rather than unreadable ones.
         val min = 9.sp.toPx()
@@ -427,14 +441,14 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
     val sel = rows.firstOrNull { it.str("cc") == picked }
     val rankKey = if (key == "gaps") "activity" else key
     val time = rememberGeoTime()
-    val tv = remember(g, time.span, time.weekAt, time.shade, key) { GeoTime.view(g, time.span, time.week, time.shade, key) }
+    val tv = remember(g, time.span, time.weekAt, time.shade, key) { GeoTime.view(g, time.span, time.week?.toDouble(), time.shade, key) }
     val shown = tv.rows
     val byName = shown.associate { (it.str("name") ?: "") to (it.str("cc") ?: "") }
 
     Needs(g)
     // Wide screens: the map spans every column right under the product chips, its numbers three to a row above it.
     val wide = LocalColumns.current >= 2
-    Panel("World map · ${Geo.metric(key).label}" + when (tv.mode) { "week" -> " · ${tv.label}"; "span" -> " · last ${tv.span} days"; else -> "" }, if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map") {
+    Panel("World map · ${Geo.metric(key).label}" + when (tv.mode) { "week" -> " · ${tv.label}"; "span" -> " · last ${tv.span} days"; else -> "" }, if (wide) Modifier.layoutId(WIDE) else Modifier, id = "geo-map", plate = true) {
         val kpis = listOf(
             KpiData("Countries we act in", fmt(t?.num("countries"))), KpiData("Target markets reached", "${fmt(t?.num("targetsActive"))} of ${fmt(t?.num("targets"))}", t?.num("silent")?.takeIf { it > 0 }?.let { "${fmt(it)} silent" }),
             KpiData("Need attention", fmt(t?.num("missing")), alert = (t?.num("missing") ?: 0.0) > 0), KpiData("Average reply rate", t?.num("avgReply")?.let { "$it%" } ?: "—"),
@@ -449,6 +463,9 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
         world?.let { w ->
             Box {
                 WorldMap(w, shown, key, tapped ?: picked, tv.fills) { cc, at -> tapped = cc; tapAt = at }
+                if (time.playing && tv.mode == "week") {
+                    GeoPlayStats(tv, key, true, Modifier.align(Alignment.CenterEnd).padding(6.dp))
+                }
                 tapped?.let { cc ->
                     GeoCard(cc, shown.firstOrNull { it.str("cc") == cc }, Modifier.align(if (tapAt.x < 0.5f) Alignment.TopEnd else Alignment.TopStart).padding(6.dp),
                         open = { picked = cc; tapped = null }, close = { tapped = null }, change = if (tv.delta != null) ({ GeoChangeLine(tv, cc, key) }) else null)
@@ -509,8 +526,9 @@ fun GeoScreen(s: UiState, vm: JarvisViewModel) {
             }
         }
     }
+    val rankAnimate = if (time.playing && tv.mode == "week") tv.week?.toInt() else null
     TopList("Ranking · ${Geo.metric(rankKey).label}", Geo.ranked(shown, rankKey).map { (it.str("name") ?: "") + (tv.delta?.let { d -> " · " + GeoTime.arrow(d[it.str("cc")], rankKey) } ?: "") to (Geo.value(it, rankKey) ?: 0.0) }, limit = 15,
-        onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) })
+        onRow = { name -> picked = byName[name.substringBefore(" · ")] }, id = "geo-ranking", format = { Geo.show(it, rankKey) }, animateKey = rankAnimate)
     TopList("Weakest reply rates", rows.filter { (it.num("sent") ?: 0.0) >= 50 }.sortedBy { it.num("replyRate") ?: 0.0 }.take(8).map { (it.str("name") ?: "") to (it.num("replyRate") ?: 0.0) },
         onRow = { name -> picked = byName[name] }, id = "geo-bottom", format = { "${fmt(it)}%" })
     GeoCostPanel(g, tv, key, channel) { picked = it }

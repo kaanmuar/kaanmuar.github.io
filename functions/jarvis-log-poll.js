@@ -9,6 +9,7 @@
    A GitHub webhook would be faster, but the app's webhook URL and secret are set by hand in its settings; a minute
    behind is close enough for a console. */
 const jarvisLog = require("./jarvis-log");
+const { beforeLastLineDelim } = require("./line-cut");
 
 const API = "https://api.github.com/";
 const LOGGING = "https://logging.googleapis.com/v2/entries:list";
@@ -102,7 +103,7 @@ function logMessage(e) {
   const j = e.jsonPayload || {};
   if (j.message) return j.message;
   const h = e.httpRequest;
-  if (h) return (h.status || "") + " " + (h.requestMethod || "") + " " + String(h.requestUrl || "").replace(/\?.*$/, "") + (h.latency ? " " + h.latency : "");
+  if (h) return (h.status || "") + " " + (h.requestMethod || "") + " " + beforeLastLineDelim(String(h.requestUrl || ""), "?") + (h.latency ? " " + h.latency : "");
   return JSON.stringify(j).slice(0, 200);
 }
 

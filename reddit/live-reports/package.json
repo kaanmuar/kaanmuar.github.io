@@ -10,13 +10,17 @@
     "upload": "node scripts/build.mjs && devvit upload"
   },
   "devDependencies": {
-    "@devvit/web": "0.15.2",
+    "@devvit/web": "0.15.3",
     "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
-    "devvit": "0.15.2",
+    "devvit": "0.15.3",
     "esbuild": "0.28.2"
   },
   "engines": {
     "node": ">=24.0.0"
+  },
+  "overrides": {
+    "isomorphic-git": "1.38.6",
+    "tmp": "0.2.7"
   }
 }

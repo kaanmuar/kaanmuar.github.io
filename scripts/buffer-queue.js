@@ -20,6 +20,9 @@
    images are served by the site, so the script waits until the first one answers 200 (the Pages
    deploy). Clips come from CLIP_BASE (the batch's GitHub release). Each post is scheduled at its
    calendar.csv time (mode customScheduled). Paused channels are skipped.
+   When captions.json (or voiced.json) names a clip language, LinkedIn, Facebook, Instagram feed and X
+   get the release mp4 instead of the feed JPG (#3603 / #3589); TikTok and YouTube already did. Instagram
+   Stories stay a still. A LinkedIn document PDF still wins over video when the batch rendered one.
    Every post, queued or failed, goes into the ledger assets/social/buffer.json (scripts/social-ledger.js),
    and each run first asks Buffer whether the queued ones whose time has passed were sent. A post the ledger
    already has queued or sent on a profile is not queued there again.
@@ -36,26 +39,41 @@
        @qalaburlreview post whose language now has its own face's channel on that channel, at the same time, then
        delete the first; the ledger marks it moved */
 
-const fs = require("fs");
-const path = require("path");
-const ledger = require("./social-ledger");
-const { createGate, withHubLink, LIMITS, LINK } = require("./hub-gate");
-const faceRoute = require("./face-route");
+const fs = require('fs');
+const path = require('path');
+const ledger = require('./social-ledger');
+const { createGate, withHubLink, prepareCaption, LIMITS, LINK } = require('./hub-gate');
+const faceRoute = require('./face-route');
+const socialClip = require('./social-clip');
+const { aiLabel } = require('./ai-label'); // the AI-generated label on a synthetic-voice clip (#3824)
 
-const ROOT = path.resolve(__dirname, "..");
-const API = "https://api.buffer.com";
-const SITE = process.env.SITE || "https://carlosandmunoz.com";
+const ROOT = path.resolve(__dirname, '..');
+const API = 'https://api.buffer.com';
+const SITE = process.env.SITE || 'https://carlosandmunoz.com';
+
+function voicedMap(batch) {
+	const file = path.join(ROOT, 'media/social-posts', batch, 'voiced.json');
+	if (!batch || !fs.existsSync(file)) return null;
+	try {
+		return JSON.parse(fs.readFileSync(file, 'utf8'));
+	} catch (_) {
+		return null;
+	}
+}
 
 function args() {
-  const out = {};
-  const argv = process.argv.slice(2);
-  for (let i = 0; i < argv.length; i += 1) {
-    const key = argv[i].replace(/^--/, "");
-    const next = argv[i + 1];
-    if (next === undefined || next.startsWith("--")) out[key] = true;
-    else { out[key] = next; i += 1; }
-  }
-  return out;
+	const out = {};
+	const argv = process.argv.slice(2);
+	for (let i = 0; i < argv.length; i += 1) {
+		const key = argv[i].replace(/^--/, '');
+		const next = argv[i + 1];
+		if (next === undefined || next.startsWith('--')) out[key] = true;
+		else {
+			out[key] = next;
+			i += 1;
+		}
+	}
+	return out;
 }
 
 /* Every job on the key shares Buffer's limits (#1170). A 429 on the 15-minute window waits (Retry-After, at least
@@ -66,461 +84,716 @@ const MAX_WAIT = 16 * 60;
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function gql(query, variables, { request = fetch, sleep = pause } = {}) {
-  for (let attempt = 0; ; attempt += 1) {
-    const res = await request(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.BUFFER_API_KEY },
-      body: JSON.stringify({ query, variables })
-    });
-    const json = await res.json().catch(() => ({}));
-    if (res.ok && !json.errors) return json.data;
-    const error = new Error("Buffer " + res.status + ": " + JSON.stringify(json.errors || json).slice(0, 300));
-    error.code = json.errors && json.errors[0] && json.errors[0].extensions && json.errors[0].extensions.code;
-    if (res.status !== 429 && error.code !== "RATE_LIMIT_EXCEEDED") throw error;
-    const window = (json.errors || []).map((e) => e.extensions && e.extensions.window).find(Boolean);
-    const after = Number(res.headers && res.headers.get("retry-after")) || 0;
-    if (window && window !== "15m") {
-      error.spent = true;
-      error.message = "Buffer's " + window + " limit is spent; it frees up in " + (after >= 2 * 86400 ? Math.ceil(after / 86400) + " days" : Math.ceil(after / 3600) + " h") + ". " + error.message;
-      throw error;
-    }
-    if (attempt >= RETRY_WAITS.length) throw error;
-    const wait = Math.min(Math.max(after, RETRY_WAITS[attempt]), MAX_WAIT);
-    console.log("Buffer rate limit" + (window ? " (" + window + ")" : "") + ": retry " + (attempt + 1) + " of " + RETRY_WAITS.length + " in " + wait + " s");
-    await sleep(wait * 1000);
-  }
+	for (let attempt = 0; ; attempt += 1) {
+		const res = await request(API, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.BUFFER_API_KEY },
+			body: JSON.stringify({ query, variables }),
+		});
+		const json = await res.json().catch(() => ({}));
+		if (res.ok && !json.errors) return json.data;
+		const error = new Error('Buffer ' + res.status + ': ' + JSON.stringify(json.errors || json).slice(0, 300));
+		error.code = json.errors && json.errors[0] && json.errors[0].extensions && json.errors[0].extensions.code;
+		if (res.status !== 429 && error.code !== 'RATE_LIMIT_EXCEEDED') throw error;
+		const window = (json.errors || []).map((e) => e.extensions && e.extensions.window).find(Boolean);
+		const after = Number(res.headers && res.headers.get('retry-after')) || 0;
+		if (window && window !== '15m') {
+			error.spent = true;
+			error.message =
+				"Buffer's " +
+				window +
+				' limit is spent; it frees up in ' +
+				(after >= 2 * 86400 ? Math.ceil(after / 86400) + ' days' : Math.ceil(after / 3600) + ' h') +
+				'. ' +
+				error.message;
+			throw error;
+		}
+		if (attempt >= RETRY_WAITS.length) throw error;
+		const wait = Math.min(Math.max(after, RETRY_WAITS[attempt]), MAX_WAIT);
+		console.log(
+			'Buffer rate limit' +
+				(window ? ' (' + window + ')' : '') +
+				': retry ' +
+				(attempt + 1) +
+				' of ' +
+				RETRY_WAITS.length +
+				' in ' +
+				wait +
+				' s'
+		);
+		await sleep(wait * 1000);
+	}
 }
 
 async function lookup(entry) {
-  try {
-    const data = await gql("query($id: PostId!) { post(input: { id: $id }) { status sentAt externalLink error { message } } }", { id: entry.id });
-    return ledger.fromBuffer(data.post);
-  } catch (error) {
-    if (error.code === "NOT_FOUND") return ledger.fromBuffer(null);
-    if (error.spent) throw error;
-    console.log("could not look up", entry.id, "-", error.message);
-    return null;
-  }
+	try {
+		const data = await gql(
+			'query($id: PostId!) { post(input: { id: $id }) { status sentAt externalLink error { message } } }',
+			{ id: entry.id }
+		);
+		return ledger.fromBuffer(data.post);
+	} catch (error) {
+		if (error.code === 'NOT_FOUND') return ledger.fromBuffer(null);
+		if (error.spent) throw error;
+		console.log('could not look up', entry.id, '-', error.message);
+		return null;
+	}
 }
 
 async function settle(book) {
-  const counts = await ledger.upgrade(book, Date.now(), lookup);
-  console.log("ledger: " + counts.sent + " sent, " + counts.failed + " failed, " + counts.queued + " still queued");
+	const counts = await ledger.upgrade(book, Date.now(), lookup);
+	console.log('ledger: ' + counts.sent + ' sent, ' + counts.failed + ' failed, ' + counts.queued + ' still queued');
 }
 
 async function channels(paused) {
-  const orgs = process.env.BUFFER_ORG_ID ? [{ id: process.env.BUFFER_ORG_ID }] : (await gql("query { account { organizations { id } } }")).account.organizations;
-  const out = [];
-  for (const org of orgs) {
-    const data = await gql("query($o: OrganizationId!) { channels(input: { organizationId: $o }) { id name service isQueuePaused } }", { o: org.id });
-    out.push(...data.channels.filter((c) => paused || !c.isQueuePaused).map((c) => Object.assign({ org: org.id, face: faceRoute.channelFace(c) }, c)));
-  }
-  return out;
+	const orgs = process.env.BUFFER_ORG_ID
+		? [{ id: process.env.BUFFER_ORG_ID }]
+		: (await gql('query { account { organizations { id } } }')).account.organizations;
+	const out = [];
+	for (const org of orgs) {
+		const data = await gql(
+			'query($o: OrganizationId!) { channels(input: { organizationId: $o }) { id name service isQueuePaused } }',
+			{ o: org.id }
+		);
+		out.push(
+			...data.channels
+				.filter((c) => paused || !c.isQueuePaused)
+				.map((c) => Object.assign({ org: org.id, face: faceRoute.channelFace(c) }, c))
+		);
+	}
+	return out;
 }
 
 // The faces with a channel of this service, paused or not.
 const facesOn = (list, service) => new Set(list.filter((c) => c.service === service && c.face).map((c) => c.face));
 // Queued or sent on any profile of the network: either face has it.
-const onNetwork = (book, name, slot) => (book.posts[name] || []).some((e) => e.channel === slot && (e.result === "queued" || e.result === "sent"));
+const onNetwork = (book, name, slot) =>
+	(book.posts[name] || []).some((e) => e.channel === slot && (e.result === 'queued' || e.result === 'sent'));
 
-const SLOT = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram", twitter: "x", threads: "x", bluesky: "x", mastodon: "x", tiktok: "tiktok", youtube: "youtube" };
-const NETS = ["linkedin", "x", "facebook", "instagram", "tiktok", "youtube"];
-const squash = (text) => String(text || "").replace(/\s+/g, " ").trim();
+const SLOT = {
+	linkedin: 'linkedin',
+	facebook: 'facebook',
+	instagram: 'instagram',
+	twitter: 'x',
+	threads: 'x',
+	bluesky: 'x',
+	mastodon: 'x',
+	tiktok: 'tiktok',
+	youtube: 'youtube',
+};
+const NETS = ['linkedin', 'x', 'facebook', 'instagram', 'tiktok', 'youtube'];
+const squash = (text) =>
+	String(text || '')
+		.replace(/\s+/g, ' ')
+		.trim();
 
-const CALENDAR_SLOT = { linkedin: "linkedin", x: "x", facebook: "facebook", tiktok: "tiktok", youtube: "youtube", "youtube shorts": "youtube" };
+const CALENDAR_SLOT = {
+	linkedin: 'linkedin',
+	x: 'x',
+	facebook: 'facebook',
+	tiktok: 'tiktok',
+	youtube: 'youtube',
+	'youtube shorts': 'youtube',
+};
 
 // Every batch post by the addresses of its images and clips, by its captions and their opening words, and by its
 // calendar slots, for --seed. The launch set keeps a captions file per language and topic, and its six languages
 // share each slot. Opening words or a slot two posts share match neither. Opening words match only a sent post: a
 // scheduled one whose caption matches none exactly is stale and --delete-unmatched removes it (#1044).
 const lead = (text) => squash(text).slice(0, 60);
-function batchIndex(root = path.join(ROOT, "media/social-posts")) {
-  const index = new Map();
-  const share = (key, name) => index.set(key, index.has(key) && index.get(key) !== name ? null : name);
-  const slot = (key, name) => index.set(key, [...new Set((index.get(key) || []).concat(name))]);
-  const texts = (cap, name) => NETS.forEach((net) => {
-    if (!cap[net]) return;
-    index.set("text " + squash(cap[net]), name);
-    share("lead " + lead(cap[net]), name);
-  });
-  for (const batch of fs.readdirSync(root).filter((name) => /^[\w-]+$/.test(name)).sort()) {
-    const dir = path.join(root, batch);
-    if (fs.existsSync(path.join(dir, "captions.json"))) {
-      const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
-      for (const [slug, cap] of Object.entries(captions)) {
-        const name = batch + "/" + slug;
-        ["feed", "story"].forEach((sub) => index.set("/media/social-posts/" + batch + "/" + sub + "/" + slug + ".jpg", name));
-        index.set("/releases/download/" + batch + "/" + slug + ".mp4", name);
-        texts(cap, name);
-      }
-    }
-    fs.readdirSync(dir).filter((lang) => /^[a-z]{2}$/.test(lang) && fs.statSync(path.join(dir, lang)).isDirectory()).forEach((lang) => {
-      fs.readdirSync(path.join(dir, lang)).filter((file) => file.endsWith("-captions.json")).forEach((file) => {
-        texts(JSON.parse(fs.readFileSync(path.join(dir, lang, file), "utf8")), batch + "/" + lang + "/" + file.replace(/-captions\.json$/, ""));
-      });
-    });
-    if (!fs.existsSync(path.join(dir, "calendar.csv"))) continue;
-    const [head, ...rows] = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8").trim().split("\n").map((line) => line.split(","));
-    const col = (key) => head.indexOf(key);
-    rows.forEach((cells) => {
-      const net = CALENDAR_SLOT[(cells[col("Channel")] || "").toLowerCase()];
-      if (!net) return;
-      const at = new Date(cells[col("Date")] + "T" + cells[col("Time")] + ":00-05:00");
-      if (!isNaN(at)) slot("slot " + net + " " + at.toISOString(), batch + "/" + cells[col("Post")]);
-    });
-  }
-  return index;
+function batchIndex(root = path.join(ROOT, 'media/social-posts')) {
+	const index = new Map();
+	const share = (key, name) => index.set(key, index.has(key) && index.get(key) !== name ? null : name);
+	const slot = (key, name) => index.set(key, [...new Set((index.get(key) || []).concat(name))]);
+	const texts = (cap, name) =>
+		NETS.forEach((net) => {
+			if (!cap[net]) return;
+			index.set('text ' + squash(cap[net]), name);
+			share('lead ' + lead(cap[net]), name);
+		});
+	for (const batch of fs
+		.readdirSync(root)
+		.filter((name) => /^[\w-]+$/.test(name))
+		.sort()) {
+		const dir = path.join(root, batch);
+		if (fs.existsSync(path.join(dir, 'captions.json'))) {
+			const captions = JSON.parse(fs.readFileSync(path.join(dir, 'captions.json'), 'utf8'));
+			for (const [slug, cap] of Object.entries(captions)) {
+				const name = batch + '/' + slug;
+				['feed', 'story'].forEach((sub) =>
+					index.set('/media/social-posts/' + batch + '/' + sub + '/' + slug + '.jpg', name)
+				);
+				index.set('/releases/download/' + batch + '/' + slug + '.mp4', name);
+				texts(cap, name);
+			}
+		}
+		fs.readdirSync(dir)
+			.filter((lang) => /^[a-z]{2}$/.test(lang) && fs.statSync(path.join(dir, lang)).isDirectory())
+			.forEach((lang) => {
+				fs.readdirSync(path.join(dir, lang))
+					.filter((file) => file.endsWith('-captions.json'))
+					.forEach((file) => {
+						texts(
+							JSON.parse(fs.readFileSync(path.join(dir, lang, file), 'utf8')),
+							batch + '/' + lang + '/' + file.replace(/-captions\.json$/, '')
+						);
+					});
+			});
+		if (!fs.existsSync(path.join(dir, 'calendar.csv'))) continue;
+		const [head, ...rows] = fs
+			.readFileSync(path.join(dir, 'calendar.csv'), 'utf8')
+			.trim()
+			.split('\n')
+			.map((line) => line.split(','));
+		const col = (key) => head.indexOf(key);
+		rows.forEach((cells) => {
+			const net = CALENDAR_SLOT[(cells[col('Channel')] || '').toLowerCase()];
+			if (!net) return;
+			const at = new Date(cells[col('Date')] + 'T' + cells[col('Time')] + ':00-05:00');
+			if (!isNaN(at)) slot('slot ' + net + ' ' + at.toISOString(), batch + '/' + cells[col('Post')]);
+		});
+	}
+	return index;
 }
 
 // A slot match does not count when taken(name) says the ledger already ties that batch post to another Buffer post
 // on this profile: two posts can share a slot after the calendar moves, and only the asset or caption tells them apart.
 function matchPost(index, post, net, taken = () => false) {
-  for (const asset of post.assets || []) {
-    const source = String(asset.source || "").replace(/^https?:\/\/[^/]+/, "").replace(/\?.*$/, "").replace(/^.*(?=\/releases\/download\/)/, "");
-    if (index.has(source)) return index.get(source);
-  }
-  const text = index.get("text " + squash(post.text));
-  if (text) return text;
-  const opening = post.status === "sent" && index.get("lead " + lead(post.text));
-  if (opening) return opening;
-  const due = post.dueAt && new Date(post.dueAt);
-  const slot = (net && due && !isNaN(due) && index.get("slot " + net + " " + due.toISOString())) || [];
-  return slot.length === 1 && !taken(slot[0]) ? slot[0] : null;
+	for (const asset of post.assets || []) {
+		const source = String(asset.source || '')
+			.replace(/^https?:\/\/[^/]+/, '')
+			.replace(/\?.*$/, '')
+			.replace(/^.*(?=\/releases\/download\/)/, '');
+		if (index.has(source)) return index.get(source);
+	}
+	const text = index.get('text ' + squash(post.text));
+	if (text) return text;
+	const opening = post.status === 'sent' && index.get('lead ' + lead(post.text));
+	if (opening) return opening;
+	const due = post.dueAt && new Date(post.dueAt);
+	const slot = (net && due && !isNaN(due) && index.get('slot ' + net + ' ' + due.toISOString())) || [];
+	return slot.length === 1 && !taken(slot[0]) ? slot[0] : null;
 }
 
 function takenBy(book, item) {
-  return (name) => {
-    const entry = ledger.find(book, name, item.slot, item.profile);
-    return Boolean(entry && entry.id && entry.id !== item.node.id);
-  };
+	return (name) => {
+		const entry = ledger.find(book, name, item.slot, item.profile);
+		return Boolean(entry && entry.id && entry.id !== item.node.id);
+	};
 }
 
 // Every post Buffer holds with one of these statuses, on a channel with a network slot.
 async function bufferPosts(statuses) {
-  const list = await channels(true);
-  const out = [];
-  for (const org of [...new Set(list.map((c) => c.org))]) {
-    const byId = new Map(list.filter((c) => c.org === org).map((c) => [c.id, c]));
-    const filter = "{ channelIds: " + JSON.stringify([...byId.keys()]) + ", status: [" + statuses.join(", ") + "] }";
-    let after = null;
-    do {
-      const data = await gql("query($o: OrganizationId!, $a: String) { posts(first: 100, after: $a, input: { organizationId: $o, filter: " + filter + " }) { pageInfo { hasNextPage endCursor } edges { node { id status dueAt sentAt text channelId externalLink assets { type source thumbnail } metadata { __typename ... on YoutubePostMetadata { title } ... on TiktokPostMetadata { title } } } } } }", { o: org, a: after });
-      for (const { node } of data.posts.edges) {
-        const channel = byId.get(node.channelId);
-        const slot = channel && SLOT[channel.service];
-        if (slot) out.push({ node, slot, profile: channel.service + (channel.name ? " (" + channel.name + ")" : "") });
-      }
-      after = data.posts.pageInfo.hasNextPage ? data.posts.pageInfo.endCursor : null;
-    } while (after);
-  }
-  return out;
+	const list = await channels(true);
+	const out = [];
+	for (const org of [...new Set(list.map((c) => c.org))]) {
+		const byId = new Map(list.filter((c) => c.org === org).map((c) => [c.id, c]));
+		const filter = '{ channelIds: ' + JSON.stringify([...byId.keys()]) + ', status: [' + statuses.join(', ') + '] }';
+		let after = null;
+		do {
+			const data = await gql(
+				'query($o: OrganizationId!, $a: String) { posts(first: 100, after: $a, input: { organizationId: $o, filter: ' +
+					filter +
+					' }) { pageInfo { hasNextPage endCursor } edges { node { id status dueAt sentAt text channelId externalLink assets { type source thumbnail } metadata { __typename ... on YoutubePostMetadata { title } ... on TiktokPostMetadata { title } } } } } }',
+				{ o: org, a: after }
+			);
+			for (const { node } of data.posts.edges) {
+				const channel = byId.get(node.channelId);
+				const slot = channel && SLOT[channel.service];
+				if (slot) out.push({ node, slot, profile: channel.service + (channel.name ? ' (' + channel.name + ')' : '') });
+			}
+			after = data.posts.pageInfo.hasNextPage ? data.posts.pageInfo.endCursor : null;
+		} while (after);
+	}
+	return out;
 }
 
-const describe = ({ node, profile }) => node.status + " " + (node.sentAt || node.dueAt || "") + " " + profile + ": " + squash(node.text).slice(0, 90);
+const describe = ({ node, profile }) =>
+	node.status + ' ' + (node.sentAt || node.dueAt || '') + ' ' + profile + ': ' + squash(node.text).slice(0, 90);
 
 async function seed() {
-  const index = batchIndex();
-  const book = ledger.read(ledger.BUFFER);
-  const statuses = String(process.env.BUFFER_SEED_STATUS || "scheduled,sent,error").split(",").filter((s) => /^[a-z_]+$/.test(s));
-  const unmatched = [];
-  const unsent = [];
-  let matched = 0;
-  for (const item of await bufferPosts(statuses)) {
-    const { node, slot, profile } = item;
-    const name = matchPost(index, node, slot, takenBy(book, item));
-    if (!name) { unmatched.push(describe(item)); if (node.status === "sent") unsent.push(Object.assign({ slot, profile }, node)); continue; }
-    matched += 1;
-    const result = node.status === "sent" ? "sent" : node.status === "error" ? "failed" : "queued";
-    ledger.record(book, name, { channel: slot, profile, id: node.id, at: node.sentAt || node.dueAt, result, url: node.externalLink, checked: new Date().toISOString() });
-  }
-  ledger.write(ledger.BUFFER, book);
-  console.log(matched + " Buffer posts matched to a batch post, " + unmatched.length + " match no batch (not on the hub):");
-  unmatched.sort().forEach((line) => console.log("  " + line));
-  // The sent ones, whole, for scripts/hub-backfill.js to put on the hub (#1038).
-  if (process.env.BUFFER_SEED_EXPORT) fs.writeFileSync(process.env.BUFFER_SEED_EXPORT, JSON.stringify(unsent, null, 1));
+	const index = batchIndex();
+	const book = ledger.read(ledger.BUFFER);
+	const statuses = String(process.env.BUFFER_SEED_STATUS || 'scheduled,sent,error')
+		.split(',')
+		.filter((s) => /^[a-z_]+$/.test(s));
+	const unmatched = [];
+	const unsent = [];
+	let matched = 0;
+	for (const item of await bufferPosts(statuses)) {
+		const { node, slot, profile } = item;
+		const name = matchPost(index, node, slot, takenBy(book, item));
+		if (!name) {
+			unmatched.push(describe(item));
+			if (node.status === 'sent') unsent.push(Object.assign({ slot, profile }, node));
+			continue;
+		}
+		matched += 1;
+		const result = node.status === 'sent' ? 'sent' : node.status === 'error' ? 'failed' : 'queued';
+		ledger.record(book, name, {
+			channel: slot,
+			profile,
+			id: node.id,
+			at: node.sentAt || node.dueAt,
+			result,
+			url: node.externalLink,
+			checked: new Date().toISOString(),
+		});
+	}
+	ledger.write(ledger.BUFFER, book);
+	console.log(
+		matched + ' Buffer posts matched to a batch post, ' + unmatched.length + ' match no batch (not on the hub):'
+	);
+	unmatched.sort().forEach((line) => console.log('  ' + line));
+	// The sent ones, whole, for scripts/hub-backfill.js to put on the hub (#1038).
+	if (process.env.BUFFER_SEED_EXPORT) fs.writeFileSync(process.env.BUFFER_SEED_EXPORT, JSON.stringify(unsent, null, 1));
 }
 
 // Where a scheduled post's media lives. Buffer fetches a site or release address when the post goes out, so
 // replacing that file is enough; a file uploaded in Buffer's composer is Buffer's own copy and only an edit swaps it.
 function mediaHost(source) {
-  const url = String(source || "");
-  if (!url) return "none";
-  if (url.startsWith(SITE + "/")) return "site";
-  if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//.test(url)) return "release";
-  if (/buffer-media-uploads|bufferapp|buffer\.com/.test(url)) return "buffer";
-  return "other";
+	const url = String(source || '');
+	if (!url) return 'none';
+	if (url.startsWith(SITE + '/')) return 'site';
+	if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//.test(url)) return 'release';
+	if (/buffer-media-uploads|bufferapp|buffer\.com/.test(url)) return 'buffer';
+	return 'other';
 }
 
 // Read only: every scheduled post by batch, channel and where its media lives, then the ones Buffer holds a copy of.
 async function mediaReport() {
-  const index = batchIndex();
-  const book = ledger.read(ledger.BUFFER);
-  const counts = {};
-  const copies = [];
-  for (const item of await bufferPosts(["scheduled"])) {
-    const name = matchPost(index, item.node, item.slot, takenBy(book, item)) || "(no batch)";
-    const hosts = [...new Set((item.node.assets || []).map((a) => mediaHost(a.source)))].join("+") || "none";
-    const key = name.split("/")[0] + " " + item.slot + " " + hosts;
-    counts[key] = (counts[key] || 0) + 1;
-    if (hosts !== "site" && hosts !== "release" && hosts !== "none") copies.push([name, item.slot, item.node.id, item.node.dueAt, hosts, (item.node.assets || []).map((a) => String(a.source || "").replace(/\?.*$/, "")).join(" ")].join(" "));
-  }
-  Object.keys(counts).sort().forEach((key) => console.log(String(counts[key]).padStart(4) + "  " + key));
-  console.log(copies.length + " scheduled posts whose media is not fetched from the site or a release:");
-  copies.sort().forEach((line) => console.log("  " + line));
+	const index = batchIndex();
+	const book = ledger.read(ledger.BUFFER);
+	const counts = {};
+	const copies = [];
+	for (const item of await bufferPosts(['scheduled'])) {
+		const name = matchPost(index, item.node, item.slot, takenBy(book, item)) || '(no batch)';
+		const hosts = [...new Set((item.node.assets || []).map((a) => mediaHost(a.source)))].join('+') || 'none';
+		const key = name.split('/')[0] + ' ' + item.slot + ' ' + hosts;
+		counts[key] = (counts[key] || 0) + 1;
+		if (hosts !== 'site' && hosts !== 'release' && hosts !== 'none')
+			copies.push(
+				[
+					name,
+					item.slot,
+					item.node.id,
+					item.node.dueAt,
+					hosts,
+					(item.node.assets || []).map((a) => String(a.source || '').replace(/\?.*$/, '')).join(' '),
+				].join(' ')
+			);
+	}
+	Object.keys(counts)
+		.sort()
+		.forEach((key) => console.log(String(counts[key]).padStart(4) + '  ' + key));
+	console.log(copies.length + ' scheduled posts whose media is not fetched from the site or a release:');
+	copies.sort().forEach((line) => console.log('  ' + line));
 }
 
 // The scheduled posts --delete-unmatched may delete: still to go out, matching no batch post, and unknown to the
 // ledger. A sent post, or one dated before now, is never picked.
 function staleScheduled(index, items, book, now) {
-  const known = new Set(Object.values(book.posts || {}).flat().map((entry) => entry.id).filter(Boolean));
-  return items.filter((item) => {
-    const { node, slot } = item;
-    const due = Date.parse(node.dueAt || "");
-    return node.status === "scheduled" && !isNaN(due) && due > now && !known.has(node.id) && !matchPost(index, node, slot, takenBy(book, item));
-  });
+	const known = new Set(
+		Object.values(book.posts || {})
+			.flat()
+			.map((entry) => entry.id)
+			.filter(Boolean)
+	);
+	return items.filter((item) => {
+		const { node, slot } = item;
+		const due = Date.parse(node.dueAt || '');
+		return (
+			node.status === 'scheduled' &&
+			!isNaN(due) &&
+			due > now &&
+			!known.has(node.id) &&
+			!matchPost(index, node, slot, takenBy(book, item))
+		);
+	});
 }
 
 async function deleteUnmatched(dry) {
-  const book = ledger.read(ledger.BUFFER);
-  const stale = staleScheduled(batchIndex(), await bufferPosts(["scheduled"]), book, Date.now());
-  console.log(stale.length + " scheduled Buffer posts match no batch post" + (dry ? " (dry run, nothing deleted):" : ":"));
-  let failed = 0;
-  for (const item of stale.sort((a, b) => describe(a).localeCompare(describe(b)))) {
-    if (dry) { console.log("  would delete " + item.node.id + " " + describe(item)); continue; }
-    try {
-      const data = await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } });
-      const r = data.deletePost;
-      if (r.id) console.log("  deleted " + r.id + " " + describe(item));
-      else { failed += 1; console.log("  failed " + item.node.id + " " + describe(item) + " - " + (r.message || r.__typename)); }
-    } catch (error) {
-      failed += 1;
-      console.log("  failed " + item.node.id + " " + describe(item) + " - " + error.message);
-    }
-  }
-  if (failed) process.exit(1);
+	const book = ledger.read(ledger.BUFFER);
+	const stale = staleScheduled(batchIndex(), await bufferPosts(['scheduled']), book, Date.now());
+	console.log(
+		stale.length + ' scheduled Buffer posts match no batch post' + (dry ? ' (dry run, nothing deleted):' : ':')
+	);
+	let failed = 0;
+	for (const item of stale.sort((a, b) => describe(a).localeCompare(describe(b)))) {
+		if (dry) {
+			console.log('  would delete ' + item.node.id + ' ' + describe(item));
+			continue;
+		}
+		try {
+			const data = await gql(
+				'mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }',
+				{ input: { id: item.node.id } }
+			);
+			const r = data.deletePost;
+			if (r.id) console.log('  deleted ' + r.id + ' ' + describe(item));
+			else {
+				failed += 1;
+				console.log('  failed ' + item.node.id + ' ' + describe(item) + ' - ' + (r.message || r.__typename));
+			}
+		} catch (error) {
+			failed += 1;
+			console.log('  failed ' + item.node.id + ' ' + describe(item) + ' - ' + error.message);
+		}
+	}
+	if (failed) process.exit(1);
 }
 
 // The later copies --delete-duplicates removes: two queue runs of one batch schedule a post twice on a profile, and
 // Buffer refuses the copy on text networks but not on TikTok or YouTube (#2160). The first one created stays; a
 // Buffer id starts with its creation time in hex. Only scheduled posts due more than 30 minutes from now are picked.
 function duplicateScheduled(index, items, now) {
-  const groups = new Map();
-  for (const item of items) {
-    const due = Date.parse(item.node.dueAt || "");
-    if (item.node.status !== "scheduled" || isNaN(due) || due <= now + 30 * 60e3) continue;
-    const name = matchPost(index, item.node, item.slot);
-    if (!name) continue;
-    const key = name + " " + item.profile;
-    groups.set(key, (groups.get(key) || []).concat(item));
-  }
-  return [...groups.values()].filter((group) => group.length > 1)
-    .flatMap((group) => group.sort((a, b) => a.node.id.localeCompare(b.node.id)).slice(1));
+	const groups = new Map();
+	for (const item of items) {
+		const due = Date.parse(item.node.dueAt || '');
+		if (item.node.status !== 'scheduled' || isNaN(due) || due <= now + 30 * 60e3) continue;
+		const name = matchPost(index, item.node, item.slot);
+		if (!name) continue;
+		const key = name + ' ' + item.profile;
+		groups.set(key, (groups.get(key) || []).concat(item));
+	}
+	return [...groups.values()]
+		.filter((group) => group.length > 1)
+		.flatMap((group) => group.sort((a, b) => a.node.id.localeCompare(b.node.id)).slice(1));
 }
 
 async function deleteDuplicates(dry) {
-  const copies = duplicateScheduled(batchIndex(), await bufferPosts(["scheduled"]), Date.now());
-  console.log(copies.length + " scheduled Buffer posts copy an earlier one" + (dry ? " (dry run, nothing deleted):" : ":"));
-  let failed = 0;
-  for (const item of copies) {
-    if (dry) { console.log("  would delete " + item.node.id + " " + describe(item)); continue; }
-    try {
-      const r = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } })).deletePost;
-      if (r.id) console.log("  deleted " + r.id + " " + describe(item));
-      else { failed += 1; console.log("  failed " + item.node.id + " " + describe(item) + " - " + (r.message || r.__typename)); }
-    } catch (error) {
-      failed += 1;
-      console.log("  failed " + item.node.id + " " + describe(item) + " - " + error.message);
-    }
-  }
-  if (failed) process.exit(1);
+	const copies = duplicateScheduled(batchIndex(), await bufferPosts(['scheduled']), Date.now());
+	console.log(
+		copies.length + ' scheduled Buffer posts copy an earlier one' + (dry ? ' (dry run, nothing deleted):' : ':')
+	);
+	let failed = 0;
+	for (const item of copies) {
+		if (dry) {
+			console.log('  would delete ' + item.node.id + ' ' + describe(item));
+			continue;
+		}
+		try {
+			const r = (
+				await gql(
+					'mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }',
+					{ input: { id: item.node.id } }
+				)
+			).deletePost;
+			if (r.id) console.log('  deleted ' + r.id + ' ' + describe(item));
+			else {
+				failed += 1;
+				console.log('  failed ' + item.node.id + ' ' + describe(item) + ' - ' + (r.message || r.__typename));
+			}
+		} catch (error) {
+			failed += 1;
+			console.log('  failed ' + item.node.id + ' ' + describe(item) + ' - ' + error.message);
+		}
+	}
+	if (failed) process.exit(1);
 }
 
 // The ledger entries --requeue replaces: queued on the channel with a Buffer id, and not due within 30 minutes.
 function requeueTargets(book, posts, channel, now) {
-  return posts.map((post) => {
-    const [batch, slug] = post.split("/");
-    const entry = (book.posts[post] || []).find((e) => e.channel === channel) || null;
-    let skip = null;
-    if (!entry) skip = "not in the ledger on " + channel;
-    else if (entry.result !== "queued" || !entry.id) skip = entry.result + ", not queued";
-    else if (Date.parse(entry.at) <= now + 30 * 60e3) skip = "due " + entry.at + ", too soon to replace";
-    return { post, batch, slug, entry, skip };
-  });
+	return posts.map((post) => {
+		const [batch, slug] = post.split('/');
+		const entry = (book.posts[post] || []).find((e) => e.channel === channel) || null;
+		let skip = null;
+		if (!entry) skip = 'not in the ledger on ' + channel;
+		else if (entry.result !== 'queued' || !entry.id) skip = entry.result + ', not queued';
+		else if (Date.parse(entry.at) <= now + 30 * 60e3) skip = 'due ' + entry.at + ', too soon to replace';
+		return { post, batch, slug, entry, skip };
+	});
 }
 
 // Deletes each queued post and creates it again from its batch's captions.json at the same time (#1191). The clip
 // must answer before the old post is deleted.
 async function requeue(posts, channel, dry) {
-  const book = ledger.read(ledger.BUFFER);
-  if (!dry) await settle(book);
-  const profiles = dry ? [] : await channels();
-  const repo = process.env.GITHUB_REPOSITORY || "kaanmuar/kaanmuar.github.io";
-  const gate = createGate();
-  let done = 0;
-  let failed = 0;
-  for (const t of requeueTargets(book, posts, channel, Date.now())) {
-    if (t.skip) { console.log("skip", t.post, "-", t.skip); continue; }
-    const fail = (why) => { failed += 1; console.log("failed", t.post, "-", why); };
-    const cap = JSON.parse(fs.readFileSync(path.join(ROOT, "media/social-posts", t.batch, "captions.json"), "utf8"))[t.slug];
-    if (!cap) { fail("not in captions.json"); continue; }
-    const service = t.entry.profile.split(" ")[0];
-    const target = dry ? { id: "dry", service } : profiles.find((c) => c.service + (c.name ? " (" + c.name + ")" : "") === t.entry.profile);
-    if (!target) { fail("no Buffer channel " + t.entry.profile); continue; }
-    const clipBase = "https://github.com/" + repo + "/releases/download/" + t.batch;
-    const made = inputsFor(target, t.slug, cap, SITE + "/media/social-posts/" + t.batch, clipBase, {}, t.batch).find((p) => p.slot === channel);
-    if (!made) { fail(service + " takes nothing from this post"); continue; }
-    const input = Object.assign(made.input, { mode: "customScheduled", dueAt: t.entry.at });
-    const hub = await gate(t.batch, t.slug, cap, input.dueAt);
-    if (hub.why) { fail("Hub first: " + hub.why); continue; }
-    const asset = input.assets[0] && (input.assets[0].video || input.assets[0].image || input.assets[0].document);
-    const live = asset && (await fetch(asset.url, { method: "HEAD" }).catch(() => null));
-    if (!live || !live.ok) { fail("asset not served: " + (asset ? asset.url : "none")); continue; }
-    if (dry) { console.log("would requeue", t.post, t.entry.id, "at", input.dueAt, "…", String(input.text || "").split("\n")[0].slice(0, 100)); continue; }
-    const entry = { channel, profile: t.entry.profile, at: input.dueAt, checked: new Date().toISOString() };
-    let deleted = false;
-    try {
-      const del = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: t.entry.id } })).deletePost;
-      if (!del.id) { fail("delete " + t.entry.id + ": " + (del.message || del.__typename)); continue; }
-      deleted = true;
-      const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
-      if (!r.post) throw new Error(r.message);
-      done += 1;
-      console.log("requeued", t.post, t.entry.id, "->", r.post.id, r.post.dueAt);
-      ledger.record(book, t.post, Object.assign(entry, { id: r.post.id, at: r.post.dueAt || input.dueAt, result: "queued" }));
-    } catch (error) {
-      fail(error.message);
-      if (deleted) ledger.record(book, t.post, Object.assign(entry, { result: "failed", error: "Deleted " + t.entry.id + " to requeue; " + error.message }));
-      if (error.spent) break;
-    }
-  }
-  if (!dry) ledger.write(ledger.BUFFER, book);
-  console.log(done + " requeued, " + failed + " failed");
-  if (failed) process.exit(1);
+	const book = ledger.read(ledger.BUFFER);
+	if (!dry) await settle(book);
+	const profiles = dry ? [] : await channels();
+	const repo = process.env.GITHUB_REPOSITORY || 'kaanmuar/kaanmuar.github.io';
+	const gate = createGate();
+	let done = 0;
+	let failed = 0;
+	for (const t of requeueTargets(book, posts, channel, Date.now())) {
+		if (t.skip) {
+			console.log('skip', t.post, '-', t.skip);
+			continue;
+		}
+		const fail = (why) => {
+			failed += 1;
+			console.log('failed', t.post, '-', why);
+		};
+		const cap = JSON.parse(fs.readFileSync(path.join(ROOT, 'media/social-posts', t.batch, 'captions.json'), 'utf8'))[
+			t.slug
+		];
+		if (!cap) {
+			fail('not in captions.json');
+			continue;
+		}
+		const service = t.entry.profile.split(' ')[0];
+		const target = dry
+			? { id: 'dry', service }
+			: profiles.find((c) => c.service + (c.name ? ' (' + c.name + ')' : '') === t.entry.profile);
+		if (!target) {
+			fail('no Buffer channel ' + t.entry.profile);
+			continue;
+		}
+		const clipBase = 'https://github.com/' + repo + '/releases/download/' + t.batch;
+		const made = inputsFor(target, t.slug, cap, SITE + '/media/social-posts/' + t.batch, clipBase, {}, t.batch).find(
+			(p) => p.slot === channel
+		);
+		if (!made) {
+			fail(service + ' takes nothing from this post');
+			continue;
+		}
+		const input = Object.assign(made.input, { mode: 'customScheduled', dueAt: t.entry.at });
+		const hub = await gate(t.batch, t.slug, cap, input.dueAt);
+		if (hub.why) {
+			fail('Hub first: ' + hub.why);
+			continue;
+		}
+		const asset = input.assets[0] && (input.assets[0].video || input.assets[0].image || input.assets[0].document);
+		const live = asset && (await fetch(asset.url, { method: 'HEAD' }).catch(() => null));
+		if (!live || !live.ok) {
+			fail('asset not served: ' + (asset ? asset.url : 'none'));
+			continue;
+		}
+		if (dry) {
+			console.log(
+				'would requeue',
+				t.post,
+				t.entry.id,
+				'at',
+				input.dueAt,
+				'…',
+				String(input.text || '')
+					.split('\n')[0]
+					.slice(0, 100)
+			);
+			continue;
+		}
+		const entry = { channel, profile: t.entry.profile, at: input.dueAt, checked: new Date().toISOString() };
+		let deleted = false;
+		try {
+			const del = (
+				await gql(
+					'mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }',
+					{ input: { id: t.entry.id } }
+				)
+			).deletePost;
+			if (!del.id) {
+				fail('delete ' + t.entry.id + ': ' + (del.message || del.__typename));
+				continue;
+			}
+			deleted = true;
+			const r = (
+				await gql(
+					'mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }',
+					{ input }
+				)
+			).createPost;
+			if (!r.post) throw new Error(r.message);
+			done += 1;
+			console.log('requeued', t.post, t.entry.id, '->', r.post.id, r.post.dueAt);
+			ledger.record(
+				book,
+				t.post,
+				Object.assign(entry, { id: r.post.id, at: r.post.dueAt || input.dueAt, result: 'queued' })
+			);
+		} catch (error) {
+			fail(error.message);
+			if (deleted)
+				ledger.record(
+					book,
+					t.post,
+					Object.assign(entry, { result: 'failed', error: 'Deleted ' + t.entry.id + ' to requeue; ' + error.message })
+				);
+			if (error.spent) break;
+		}
+	}
+	if (!dry) ledger.write(ledger.BUFFER, book);
+	console.log(done + ' requeued, ' + failed + ' failed');
+	if (failed) process.exit(1);
 }
 
 // A batch post's captions.json entry; the launch set's posts carry their language in the name.
 function captionOf(batch, slug, root = ROOT) {
-  const file = path.join(root, "media/social-posts", batch, "captions.json");
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8"))[slug] || null : null;
+	const file = path.join(root, 'media/social-posts', batch, 'captions.json');
+	return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8'))[slug] || null : null;
 }
 
 /* The scheduled @qalaburlreview posts --reroute moves: matched to a batch post whose language routes to another
    face that now has a channel of the service, and due more than 30 minutes from now. Moves only ever leave the
    default face, so pausing a face's channel never sends its posts back. */
 function rerouteTargets(index, items, book, list, now, root = ROOT) {
-  const caps = new Map();
-  const out = [];
-  for (const item of items) {
-    const { node, slot } = item;
-    const due = Date.parse(node.dueAt || "");
-    if (item.face !== faceRoute.DEFAULT || node.status !== "scheduled" || isNaN(due) || due <= now + 30 * 60e3) continue;
-    const name = matchPost(index, node, slot, takenBy(book, item));
-    if (!name) continue;
-    const [batch, ...rest] = name.split("/");
-    const slug = rest.join("/");
-    if (!caps.has(batch + "/" + slug)) caps.set(batch + "/" + slug, captionOf(batch, slug, root));
-    const face = faceRoute.postFace(batch, slug, caps.get(batch + "/" + slug), slot, facesOn(list, item.service), root);
-    if (face === item.face) continue;
-    const to = list.find((c) => c.service === item.service && c.face === face && !c.isQueuePaused);
-    if (to) out.push({ item, name, to, profile: to.service + (to.name ? " (" + to.name + ")" : "") });
-  }
-  return out;
+	const caps = new Map();
+	const out = [];
+	for (const item of items) {
+		const { node, slot } = item;
+		const due = Date.parse(node.dueAt || '');
+		if (item.face !== faceRoute.DEFAULT || node.status !== 'scheduled' || isNaN(due) || due <= now + 30 * 60e3)
+			continue;
+		const name = matchPost(index, node, slot, takenBy(book, item));
+		if (!name) continue;
+		const [batch, ...rest] = name.split('/');
+		const slug = rest.join('/');
+		if (!caps.has(batch + '/' + slug)) caps.set(batch + '/' + slug, captionOf(batch, slug, root));
+		const face = faceRoute.postFace(batch, slug, caps.get(batch + '/' + slug), slot, facesOn(list, item.service), root);
+		if (face === item.face) continue;
+		const to = list.find((c) => c.service === item.service && c.face === face && !c.isQueuePaused);
+		if (to) out.push({ item, name, to, profile: to.service + (to.name ? ' (' + to.name + ')' : '') });
+	}
+	return out;
 }
 
 // Creates the copy before deleting the original, so a failed delete leaves a post twice rather than nowhere; the
 // next run only deletes, since the ledger has the copy.
 // The caption the new face posts in its own language (#2346), or null to keep the queued text.
 function translated(name, slot, face, service, root = ROOT) {
-  const key = faceRoute.TEXT_KEY[slot];
-  const cut = name.indexOf("/");
-  const batch = name.slice(0, cut);
-  const slug = name.slice(cut + 1);
-  const file = path.join(root, "media", "social-posts", batch, "captions.json");
-  const cap = key && fs.existsSync(file) && JSON.parse(fs.readFileSync(file, "utf8"))[slug];
-  if (!cap || faceRoute.captionFor(cap, key, face) === cap[key]) return null;
-  const text = faceRoute.captionFor(cap, key, face);
-  return slot === "instagram-story" ? text : withHubLink(text, { batch, slug, network: service === "twitter" ? "x" : service });
+	const key = faceRoute.TEXT_KEY[slot];
+	const cut = name.indexOf('/');
+	const batch = name.slice(0, cut);
+	const slug = name.slice(cut + 1);
+	const file = path.join(root, 'media', 'social-posts', batch, 'captions.json');
+	const cap = key && fs.existsSync(file) && JSON.parse(fs.readFileSync(file, 'utf8'))[slug];
+	if (!cap || faceRoute.captionFor(cap, key, face) === cap[key]) return null;
+	const text = faceRoute.captionFor(cap, key, face);
+	if (slot === 'instagram-story') return text;
+	const network = service === 'twitter' ? 'x' : service;
+	const prepared = prepareCaption({
+		text,
+		network,
+		batch,
+		slug,
+		lang: faceRoute.postLang(batch, slug, cap, slot) || 'en',
+	});
+	// Reroute only rewrites the post body; firstComment is set on create via inputsFor (#3551).
+	return prepared.text;
 }
 
 async function reroute(dry, max) {
-  const { scheduledPosts, editInput } = require("./social-calendar");
-  const book = ledger.read(ledger.BUFFER);
-  const list = await channels(true);
-  const byId = new Map(list.map((c) => [c.id, c]));
-  const scheduled = await scheduledPosts((query, variables) => gql(query, variables));
-  const items = [...scheduled.values()].map((node) => {
-    const channel = byId.get(node.channelId);
-    const slot = channel && SLOT[channel.service];
-    return slot && { node, slot, service: channel.service, face: channel.face, profile: channel.service + (channel.name ? " (" + channel.name + ")" : "") };
-  }).filter(Boolean);
-  const moves = rerouteTargets(batchIndex(), items, book, list, Date.now());
-  console.log(moves.length + " scheduled posts belong to the other face" + (moves.length > max ? "; moving the first " + max : "") + (dry ? " (dry run, nothing moved):" : ":"));
-  let moved = 0;
-  let failed = 0;
-  for (const { item, name, to, profile } of moves.slice(0, max)) {
-    const label = name + " " + item.node.dueAt + " " + item.profile + " -> " + profile;
-    if (dry) { console.log("  would move " + label); continue; }
-    const checked = new Date().toISOString();
-    try {
-      const copy = ledger.find(book, name, item.slot, profile);
-      if (!(copy && copy.id && copy.result === "queued")) {
-        const input = Object.assign(editInput(item.node, item.node.dueAt), { channelId: to.id });
-        delete input.id;
-        const text = translated(name, item.slot, to.face, item.service);
-        if (text) input.text = text;
-        const r = (await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input })).createPost;
-        if (!r.post) throw new Error("create: " + r.message);
-        ledger.record(book, name, { channel: item.slot, profile, id: r.post.id, at: r.post.dueAt || item.node.dueAt, result: "queued", checked });
-      }
-      const del = (await gql("mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }", { input: { id: item.node.id } })).deletePost;
-      if (!del.id) throw new Error("delete " + item.node.id + ": " + (del.message || del.__typename));
-      ledger.record(book, name, { channel: item.slot, profile: item.profile, id: item.node.id, at: item.node.dueAt, result: "moved", error: "Moved to " + profile, checked });
-      moved += 1;
-      console.log("  moved " + label);
-    } catch (error) {
-      failed += 1;
-      console.log("  failed " + label + " - " + error.message);
-      if (error.spent) break;
-    }
-  }
-  if (!dry) ledger.write(ledger.BUFFER, book);
-  console.log(moved + " moved, " + failed + " failed");
-  if (failed) process.exit(1);
+	const { scheduledPosts, editInput } = require('./social-calendar');
+	const book = ledger.read(ledger.BUFFER);
+	const list = await channels(true);
+	const byId = new Map(list.map((c) => [c.id, c]));
+	const scheduled = await scheduledPosts((query, variables) => gql(query, variables));
+	const items = [...scheduled.values()]
+		.map((node) => {
+			const channel = byId.get(node.channelId);
+			const slot = channel && SLOT[channel.service];
+			return (
+				slot && {
+					node,
+					slot,
+					service: channel.service,
+					face: channel.face,
+					profile: channel.service + (channel.name ? ' (' + channel.name + ')' : ''),
+				}
+			);
+		})
+		.filter(Boolean);
+	const moves = rerouteTargets(batchIndex(), items, book, list, Date.now());
+	console.log(
+		moves.length +
+			' scheduled posts belong to the other face' +
+			(moves.length > max ? '; moving the first ' + max : '') +
+			(dry ? ' (dry run, nothing moved):' : ':')
+	);
+	let moved = 0;
+	let failed = 0;
+	for (const { item, name, to, profile } of moves.slice(0, max)) {
+		const label = name + ' ' + item.node.dueAt + ' ' + item.profile + ' -> ' + profile;
+		if (dry) {
+			console.log('  would move ' + label);
+			continue;
+		}
+		const checked = new Date().toISOString();
+		try {
+			const copy = ledger.find(book, name, item.slot, profile);
+			if (!(copy && copy.id && copy.result === 'queued')) {
+				const input = Object.assign(editInput(item.node, item.node.dueAt), { channelId: to.id });
+				delete input.id;
+				const text = translated(name, item.slot, to.face, item.service);
+				if (text) input.text = text;
+				const r = (
+					await gql(
+						'mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }',
+						{ input }
+					)
+				).createPost;
+				if (!r.post) throw new Error('create: ' + r.message);
+				ledger.record(book, name, {
+					channel: item.slot,
+					profile,
+					id: r.post.id,
+					at: r.post.dueAt || item.node.dueAt,
+					result: 'queued',
+					checked,
+				});
+			}
+			const del = (
+				await gql(
+					'mutation($input: DeletePostInput!) { deletePost(input: $input) { __typename ... on DeletePostSuccess { id } ... on MutationError { message } } }',
+					{ input: { id: item.node.id } }
+				)
+			).deletePost;
+			if (!del.id) throw new Error('delete ' + item.node.id + ': ' + (del.message || del.__typename));
+			ledger.record(book, name, {
+				channel: item.slot,
+				profile: item.profile,
+				id: item.node.id,
+				at: item.node.dueAt,
+				result: 'moved',
+				error: 'Moved to ' + profile,
+				checked,
+			});
+			moved += 1;
+			console.log('  moved ' + label);
+		} catch (error) {
+			failed += 1;
+			console.log('  failed ' + label + ' - ' + error.message);
+			if (error.spent) break;
+		}
+	}
+	if (!dry) ledger.write(ledger.BUFFER, book);
+	console.log(moved + ' moved, ' + failed + ' failed');
+	if (failed) process.exit(1);
 }
 
 async function waitFor(url, minutes) {
-  const until = Date.now() + minutes * 60e3;
-  while (Date.now() < until) {
-    const res = await fetch(url, { method: "HEAD" }).catch(() => null);
-    if (res && res.ok) return true;
-    await new Promise((r) => setTimeout(r, 20e3));
-  }
-  return false;
+	const until = Date.now() + minutes * 60e3;
+	while (Date.now() < until) {
+		const res = await fetch(url, { method: 'HEAD' }).catch(() => null);
+		if (res && res.ok) return true;
+		await new Promise((r) => setTimeout(r, 20e3));
+	}
+	return false;
 }
 
 // calendar.csv times are Bogotá wall-clock (UTC-5, no daylight saving).
 function readCalendar(dir) {
-  const when = {};
-  const lines = fs.readFileSync(path.join(dir, "calendar.csv"), "utf8").trim().split("\n").slice(1);
-  for (const line of lines) {
-    const [date, time, channel, slug] = line.split(",");
-    when[slug + "|" + channel] = new Date(date + "T" + time + ":00-05:00").toISOString();
-  }
-  return when;
+	const when = {};
+	const lines = fs.readFileSync(path.join(dir, 'calendar.csv'), 'utf8').trim().split('\n').slice(1);
+	for (const line of lines) {
+		const [date, time, channel, slug] = line.split(',');
+		when[slug + '|' + channel] = new Date(date + 'T' + time + ':00-05:00').toISOString();
+	}
+	return when;
 }
 
 const [X_MAX, X_LINK] = LIMITS.x;
-const xSize = (text) => [...String(text).replace(LINK, "x".repeat(X_LINK))].length;
-const xFit = (text, tail = "") => {
-  if (xSize(text + tail) <= X_MAX) return text + tail;
-  const parts = text.split(/(\s+)/);
-  let kept = "";
-  for (let i = 0; i < parts.length; i += 2) {
-    const next = kept + (i ? parts[i - 1] : "") + parts[i];
-    if (xSize(next + "…" + tail) > X_MAX) break;
-    kept = next;
-  }
-  return kept + "…" + tail;
+const xSize = (text) => [...String(text).replace(LINK, 'x'.repeat(X_LINK))].length;
+const xFit = (text, tail = '') => {
+	if (xSize(text + tail) <= X_MAX) return text + tail;
+	const parts = text.split(/(\s+)/);
+	let kept = '';
+	for (let i = 0; i < parts.length; i += 2) {
+		const next = kept + (i ? parts[i - 1] : '') + parts[i];
+		if (xSize(next + '…' + tail) > X_MAX) break;
+		kept = next;
+	}
+	return kept + '…' + tail;
 };
 
 // A digest pick in its LinkedIn caption (scripts/tips-studio/weekly-digest.js): number and title, summary, credit: link.
@@ -530,194 +803,358 @@ const PICK = /^(\d+)\. (.+)\n(.+)\n[^\n]*?: (https?:\/\/\S+)$/gm;
    text leaves out, packed into as few replies as fit. Steps are English only, so a translated post has none.
    Buffer has no X polls, so a compare quiz stays a single post. */
 function xReplies(cap, text, english, linkedin) {
-  if (cap.kind === "news") return [...String(linkedin || "").matchAll(PICK)].map(([, n, title, summary, url]) => xFit(n + ". " + title + "\n\n" + summary, "\n\n" + url));
-  const steps = Array.isArray(cap.steps) && english ? cap.steps : [];
-  const out = [];
-  steps.forEach((step, i) => {
-    if (text.includes(step)) return;
-    const line = xFit(steps.length > 1 ? i + 1 + ". " + step : step);
-    if (out.length && xSize(out[out.length - 1] + "\n" + line) <= X_MAX) out[out.length - 1] += "\n" + line;
-    else out.push(line);
-  });
-  return out;
+	if (cap.kind === 'news')
+		return [...String(linkedin || '').matchAll(PICK)].map(([, n, title, summary, url]) =>
+			xFit(n + '. ' + title + '\n\n' + summary, '\n\n' + url)
+		);
+	const steps = Array.isArray(cap.steps) && english ? cap.steps : [];
+	const out = [];
+	steps.forEach((step, i) => {
+		if (text.includes(step)) return;
+		const line = xFit(steps.length > 1 ? i + 1 + '. ' + step : step);
+		if (out.length && xSize(out[out.length - 1] + '\n' + line) <= X_MAX) out[out.length - 1] += '\n' + line;
+		else out.push(line);
+	});
+	return out;
 }
 
 // YouTube has no playlists through Buffer, so a track shows in its category: evergreen lessons, skits, live show clips (Science & Technology), the rest.
-const YOUTUBE_CATEGORY = { trick: "27", myth: "27", term: "27", advice: "27", skit: "23", live: "28" };
+const YOUTUBE_CATEGORY = { trick: '27', myth: '27', term: '27', advice: '27', skit: '23', live: '28' };
 
 // One channel, one slug: the post inputs, each with its calendar slot (none when this network takes nothing
 // from the batch). Each post keeps its calendar slot; the queues already hold months of imported posts, so
 // addToQueue would land it behind them. A slot already past goes out in 20 minutes. Threads is posted by
 // scripts/open-social-queue.js, so a Buffer Threads channel takes nothing (#2720).
 function inputsFor(channel, slug, cap, base, clipBase, when, batch) {
-  const image = (dir) => ({ image: { url: base + "/" + dir + "/" + slug + ".jpg", metadata: { altText: cap.alt } } });
-  const video = () => ({ video: { url: clipBase + "/" + slug + ".mp4", metadata: { thumbnailOffset: 0 } } });
-  const soon = new Date(Date.now() + 20 * 60e3).toISOString();
-  const linked = (text) => withHubLink(text, { batch, slug, network: channel.service === "twitter" ? "x" : channel.service });
-  const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
-  const post = (slot, text, assets, metadata) => {
-    const at = when[slug + "|" + slot];
-    return { slot, input: Object.assign({ channelId: channel.id, schedulingType: "automatic", text, assets },
-      at ? { mode: "customScheduled", dueAt: at > soon ? at : soon } : { mode: "addToQueue" }, metadata ? { metadata } : {}) };
-  };
-  // A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
-  const document = () => batch && fs.existsSync(path.join(ROOT, "media/social-posts", batch, "document", slug + ".pdf"))
-    && { document: { url: base + "/document/" + slug + ".pdf", title: own("title"), thumbnailUrl: base + "/feed/" + slug + ".jpg" } };
-  switch (channel.service) {
-    case "linkedin": return [post("linkedin", linked(own("linkedin")), [document() || image("feed")])];
-    case "facebook": return [post("facebook", linked(own("facebook")), [image("feed")], { facebook: { type: "post" } })];
-    case "instagram": return [
-      post("instagram", linked(own("instagram")), [image("feed")], { instagram: { type: "post", shouldShareToFeed: true } }),
-      post("instagram-story", own("title"), [image("story")], { instagram: { type: "story", shouldShareToFeed: false } })
-    ];
-    case "twitter": {
-      const text = linked(own("x"));
-      const replies = xReplies(cap, text, own("x") === cap.x, own("linkedin"));
-      const thread = [{ text, assets: [image("feed")] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
-      return [post("x", text, [image("feed")], replies.length ? { twitter: { thread } } : null)];
-    }
-    case "tiktok": return clipBase ? [post("tiktok", linked(cap.tiktok), [video()])] : [];
-    case "youtube": return clipBase ? [post("youtube", linked(cap.youtube), [video()], { youtube: { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || "28" } })] : [];
-    default: return [];
-  }
+	const channelSplit = require('./compare-channel-split');
+	const captions =
+		batch && fs.existsSync(path.join(ROOT, 'media/social-posts', batch, 'captions.json'))
+			? JSON.parse(fs.readFileSync(path.join(ROOT, 'media/social-posts', batch, 'captions.json'), 'utf8'))
+			: { [slug]: cap };
+	const image = (dir, forSlug) => ({
+		image: {
+			url: base + '/' + dir + '/' + (forSlug || slug) + '.jpg',
+			metadata: { altText: (captions[forSlug || slug] || cap).alt || cap.alt },
+		},
+	});
+	const video = () => ({ video: { url: clipBase + '/' + slug + '.mp4', metadata: { thumbnailOffset: 0 } } });
+	// Prefer the release clip when the batch voiced this slug (#3603); else the feed still.
+	const feedOrClip = () =>
+		clipBase && socialClip.fromBatch(batch, slug, cap, voicedMap(batch)) ? video() : image('feed');
+	// The metadata under a service's key, with isAiGenerated when the clip is synthetic-voiced (#3824); null when empty.
+	const serviceMeta = (service, base, video) => {
+		const ai = aiLabel(service, { video, record: (voicedMap(batch) || {})[slug] || null });
+		const out = Object.assign({}, base || {}, ai || {});
+		return Object.keys(out).length ? { [service]: out } : null;
+	};
+	const soon = new Date(Date.now() + 20 * 60e3).toISOString();
+	const networkOf = (service) => (service === 'twitter' ? 'x' : service);
+	const linked = (text) => withHubLink(text, { batch, slug, network: networkOf(channel.service) });
+	const own = (key) => faceRoute.captionFor(cap, key, channel.face || faceRoute.DEFAULT);
+	const prepared = (slot, text) =>
+		prepareCaption({
+			text,
+			network: networkOf(channel.service),
+			batch,
+			slug,
+			lang: faceRoute.postLang(batch, slug, cap, slot) || 'en',
+		});
+	const post = (slot, text, assets, metadata) => {
+		const at = when[slug + '|' + slot];
+		return {
+			slot,
+			input: Object.assign(
+				{ channelId: channel.id, schedulingType: 'automatic', text, assets },
+				at ? { mode: 'customScheduled', dueAt: at > soon ? at : soon } : { mode: 'addToQueue' },
+				metadata ? { metadata } : {}
+			),
+		};
+	};
+	// A LinkedIn document (PDF carousel) once the batch renders one; the feed card is its thumbnail.
+	const document = () =>
+		batch &&
+		fs.existsSync(path.join(ROOT, 'media/social-posts', batch, 'document', slug + '.pdf')) && {
+			document: {
+				url: base + '/document/' + slug + '.pdf',
+				title: String(cap.documentTitle || own('title')).slice(0, 58),
+				thumbnailUrl: base + '/feed/' + slug + '.jpg',
+			},
+		};
+	// Compare channel-split (#3497): LI/IG reveal posts quiz+reveal feed cards as one carousel.
+	const pair = channelSplit.usesPairCarousel('linkedin', slug, captions)
+		? channelSplit.pairSlides(base, slug, captions)
+		: null;
+	const quizCap = pair ? captions[pair[0].slug] : null;
+	switch (channel.service) {
+		case 'linkedin': {
+			const body = pair ? channelSplit.mergedCaption('linkedin', cap, quizCap) : own('linkedin');
+			const p = prepared('linkedin', body);
+			const assets = pair ? pair.map((s) => image('feed', s.slug)) : [document() || feedOrClip()];
+			return [post('linkedin', p.text, assets, p.firstComment ? { linkedin: { firstComment: p.firstComment } } : null)];
+		}
+		case 'facebook': {
+			const fbPair = channelSplit.usesPairCarousel('facebook', slug, captions)
+				? channelSplit.pairSlides(base, slug, captions)
+				: null;
+			const fbQuiz = fbPair ? captions[fbPair[0].slug] : null;
+			const fbBody = fbPair ? channelSplit.mergedCaption('facebook', cap, fbQuiz) : own('facebook');
+			const p = prepared('facebook', fbBody);
+			const fbAssets = fbPair ? fbPair.map((s) => image('feed', s.slug)) : [feedOrClip()];
+			return [
+				post('facebook', p.text, fbAssets, {
+					facebook: Object.assign({ type: 'post' }, p.firstComment ? { firstComment: p.firstComment } : {}),
+				}),
+			];
+		}
+		case 'instagram': {
+			const igPair = channelSplit.usesPairCarousel('instagram', slug, captions)
+				? channelSplit.pairSlides(base, slug, captions)
+				: null;
+			const igQuiz = igPair ? captions[igPair[0].slug] : null;
+			const body = igPair ? channelSplit.mergedCaption('instagram', cap, igQuiz) : own('instagram');
+			const p = prepared('instagram', body);
+			const feed = igPair ? null : feedOrClip();
+			const feedAssets = igPair ? igPair.map((s) => image('feed', s.slug)) : [feed];
+			const igType = igPair ? 'post' : feed.video ? 'reel' : 'post';
+			return [
+				post('instagram', p.text, feedAssets, serviceMeta('instagram', Object.assign({ type: igType, shouldShareToFeed: true }, p.firstComment ? { firstComment: p.firstComment } : {}), !!(feed && feed.video))),
+				post('instagram-story', own('title'), [image('story')], {
+					instagram: { type: 'story', shouldShareToFeed: false },
+				}),
+			];
+		}
+		case 'twitter': {
+			const text = linked(own('x'));
+			const replies = xReplies(cap, text, own('x') === cap.x, own('linkedin'));
+			const media = feedOrClip();
+			const thread = [{ text, assets: [media] }].concat(replies.map((reply) => ({ text: reply, assets: [] })));
+			return [post('x', text, [media], serviceMeta('twitter', replies.length ? { thread } : null, !!media.video))];
+		}
+		case 'tiktok':
+			return clipBase ? [post('tiktok', linked(cap.tiktok), [video()], serviceMeta('tiktok', null, true))] : [];
+		case 'youtube':
+			return clipBase
+				? [
+						post('youtube', linked(cap.youtube), [video()], serviceMeta('youtube', { title: cap.youtubeTitle, categoryId: YOUTUBE_CATEGORY[cap.kind] || '28' }, true)),
+					]
+				: [];
+		default:
+			return [];
+	}
 }
 
 async function main() {
-  const opts = args();
-  if (opts.check) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    const book = ledger.read(ledger.BUFFER);
-    await settle(book);
-    ledger.write(ledger.BUFFER, book);
-    return;
-  }
-  if (opts.seed) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    return seed();
-  }
-  if (opts.media) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    return mediaReport();
-  }
-  if (opts.requeue) {
-    const posts = String(opts.requeue).split(",").map((p) => p.trim()).filter(Boolean);
-    const bad = posts.find((p) => !/^[\w-]+\/[\w-]+$/.test(p));
-    if (!posts.length || bad) throw new Error("--requeue takes batch/slug,batch/slug" + (bad ? "; not " + bad : ""));
-    if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    return requeue(posts, String(opts.channel || "youtube"), Boolean(opts["dry-run"]));
-  }
-  if (opts.reroute) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    const max = Number(opts.max || 150);
-    if (!(max > 0)) throw new Error("--max takes a number of posts");
-    return reroute(Boolean(opts["dry-run"]), max);
-  }
-  if (opts["delete-unmatched"]) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    return deleteUnmatched(Boolean(opts["dry-run"]));
-  }
-  if (opts["delete-duplicates"]) {
-    if (!process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
-    return deleteDuplicates(Boolean(opts["dry-run"]));
-  }
-  if (opts.pending) {
-    ledger.retries(ledger.read(ledger.BUFFER)).forEach((batch) => console.log(batch));
-    return;
-  }
-  const batch = String(opts.batch || "");
-  if (!/^[\w-]+$/.test(batch)) throw new Error("--batch is required");
-  const dir = path.join(ROOT, "media/social-posts", batch);
-  const captions = JSON.parse(fs.readFileSync(path.join(dir, "captions.json"), "utf8"));
-  const slugs = Object.keys(captions).filter((slug) => !captions[slug].hold);
-  const when = readCalendar(dir);
-  if (!slugs.length) { console.log("nothing to post"); return; }
-  const base = SITE + "/media/social-posts/" + batch;
-  const clipBase = process.env.CLIP_BASE || "";
-  if (!opts["dry-run"] && !process.env.BUFFER_API_KEY) throw new Error("BUFFER_API_KEY is not set.");
+	const opts = args();
+	if (opts.check) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		const book = ledger.read(ledger.BUFFER);
+		await settle(book);
+		ledger.write(ledger.BUFFER, book);
+		return;
+	}
+	if (opts.seed) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		return seed();
+	}
+	if (opts.media) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		return mediaReport();
+	}
+	if (opts.requeue) {
+		const posts = String(opts.requeue)
+			.split(',')
+			.map((p) => p.trim())
+			.filter(Boolean);
+		const bad = posts.find((p) => !/^[\w-]+\/[\w-]+$/.test(p));
+		if (!posts.length || bad) throw new Error('--requeue takes batch/slug,batch/slug' + (bad ? '; not ' + bad : ''));
+		if (!opts['dry-run'] && !process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		return requeue(posts, String(opts.channel || 'youtube'), Boolean(opts['dry-run']));
+	}
+	if (opts.reroute) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		const max = Number(opts.max || 150);
+		if (!(max > 0)) throw new Error('--max takes a number of posts');
+		return reroute(Boolean(opts['dry-run']), max);
+	}
+	if (opts['delete-unmatched']) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		return deleteUnmatched(Boolean(opts['dry-run']));
+	}
+	if (opts['delete-duplicates']) {
+		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
+		return deleteDuplicates(Boolean(opts['dry-run']));
+	}
+	if (opts.pending) {
+		ledger.retries(ledger.read(ledger.BUFFER)).forEach((batch) => console.log(batch));
+		return;
+	}
+	const batch = String(opts.batch || '');
+	if (!/^[\w-]+$/.test(batch)) throw new Error('--batch is required');
+	const dir = path.join(ROOT, 'media/social-posts', batch);
+	const captions = JSON.parse(fs.readFileSync(path.join(dir, 'captions.json'), 'utf8'));
+	const slugs = Object.keys(captions).filter((slug) => !captions[slug].hold);
+	const when = readCalendar(dir);
+	if (!slugs.length) {
+		console.log('nothing to post');
+		return;
+	}
+	const base = SITE + '/media/social-posts/' + batch;
+	const clipBase = process.env.CLIP_BASE || '';
+	if (!opts['dry-run'] && !process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
 
-  const book = ledger.read(ledger.BUFFER);
-  let all = [{ id: "dry", service: "linkedin", face: "en" }, { id: "dry", service: "instagram", face: "en" }, { id: "dry", service: "youtube", face: "en" }];
-  if (!opts["dry-run"]) {
-    try {
-      all = await channels(true);
-    } catch (error) {
-      if (!error.spent) throw error;
-      return leaveForTonight(book, batch, error.message);
-    }
-    const first = base + "/feed/" + slugs[0] + ".jpg";
-    if (!(await waitFor(first, 60))) return leaveForTonight(book, batch, "The site did not serve " + first + " within 60 minutes.");
-    try {
-      await settle(book);
-    } catch (error) {
-      if (!error.spent) throw error;
-      return leaveForTonight(book, batch, error.message);
-    }
-  }
-  all.filter((c) => !c.face).forEach((c) => console.log("::warning::Buffer channel " + c.service + " (" + c.name + ") names no face in scripts/brand-kit/faces.js, so it takes nothing"));
-  all.filter((c) => c.service === "threads").forEach((c) => console.log("skip Buffer channel threads (" + c.name + "): scripts/open-social-queue.js posts Threads"));
-  const list = all.filter((c) => c.face && !c.isQueuePaused && c.service !== "threads");
-  const gate = createGate();
-  let failed = 0;
-  let queued = 0;
-  let already = 0;
-  let spent = null;
-  posts: for (const slug of slugs) {
-    for (const channel of list) {
-      for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when, batch)) {
-        if (faceRoute.postFace(batch, slug, captions[slug], slot, facesOn(all, channel.service)) !== channel.face) continue;
-        const profile = channel.service + (channel.name ? " (" + channel.name + ")" : "");
-        const label = slug + " → " + profile;
-        if (onNetwork(book, batch + "/" + slug, slot)) { already += 1; continue; }
-        const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
-        const thread = input.metadata && input.metadata.twitter ? " (thread of " + input.metadata.twitter.thread.length + ")" : "";
-        if (opts["dry-run"]) { console.log("dry-run", label + thread, hub.why ? "HELD: " + hub.why : "hub ok", JSON.stringify(input).slice(0, 160), "…", String(input.text || "").split("\n").pop()); continue; }
-        const entry = { channel: slot, profile, at: input.dueAt, checked: new Date().toISOString() };
-        if (hub.why) {
-          failed += 1;
-          console.log("held", label, "-", hub.why, hub.url);
-          ledger.record(book, batch + "/" + slug, Object.assign(entry, { result: "failed", error: "Hub first: " + hub.why }));
-          continue;
-        }
-        try {
-          const data = await gql("mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }", { input });
-          const r = data.createPost;
-          if (r.post) {
-            queued += 1;
-            console.log("queued", label, r.post.dueAt);
-            Object.assign(entry, { id: r.post.id, at: r.post.dueAt || input.dueAt, result: "queued" });
-          } else {
-            failed += 1;
-            console.log("failed", label, "-", r.message);
-            Object.assign(entry, { result: "failed", error: r.message });
-          }
-        } catch (error) {
-          if (error.spent) {
-            spent = error.message;
-            break posts;
-          }
-          failed += 1;
-          console.log("failed", label, "-", error.message);
-          Object.assign(entry, { result: "failed", error: error.message });
-        }
-        ledger.record(book, batch + "/" + slug, entry);
-      }
-    }
-  }
-  if (opts["dry-run"]) return console.log(queued + " queued, " + already + " already in Buffer, " + failed + " failed");
-  if (spent) leaveForTonight(book, batch, spent);
-  else ledger.write(ledger.BUFFER, ledger.clearRetry(book, batch));
-  console.log(queued + " queued, " + already + " already in Buffer, " + failed + " failed");
-  if (failed) process.exit(1);
+	const book = ledger.read(ledger.BUFFER);
+	let all = [
+		{ id: 'dry', service: 'linkedin', face: 'en' },
+		{ id: 'dry', service: 'instagram', face: 'en' },
+		{ id: 'dry', service: 'youtube', face: 'en' },
+	];
+	if (!opts['dry-run']) {
+		try {
+			all = await channels(true);
+		} catch (error) {
+			if (!error.spent) throw error;
+			return leaveForTonight(book, batch, error.message);
+		}
+		const first = base + '/feed/' + slugs[0] + '.jpg';
+		if (!(await waitFor(first, 60)))
+			return leaveForTonight(book, batch, 'The site did not serve ' + first + ' within 60 minutes.');
+		try {
+			await settle(book);
+		} catch (error) {
+			if (!error.spent) throw error;
+			return leaveForTonight(book, batch, error.message);
+		}
+	}
+	all
+		.filter((c) => !c.face)
+		.forEach((c) =>
+			console.log(
+				'::warning::Buffer channel ' +
+					c.service +
+					' (' +
+					c.name +
+					') names no face in scripts/brand-kit/faces.js, so it takes nothing'
+			)
+		);
+	all
+		.filter((c) => c.service === 'threads')
+		.forEach((c) =>
+			console.log('skip Buffer channel threads (' + c.name + '): scripts/open-social-queue.js posts Threads')
+		);
+	const list = all.filter((c) => c.face && !c.isQueuePaused && c.service !== 'threads');
+	const gate = createGate();
+	let failed = 0;
+	let queued = 0;
+	let already = 0;
+	let spent = null;
+	posts: for (const slug of slugs) {
+		for (const channel of list) {
+			for (const { slot, input } of inputsFor(channel, slug, captions[slug], base, clipBase, when, batch)) {
+				if (faceRoute.postFace(batch, slug, captions[slug], slot, facesOn(all, channel.service)) !== channel.face)
+					continue;
+				const profile = channel.service + (channel.name ? ' (' + channel.name + ')' : '');
+				const label = slug + ' → ' + profile;
+				if (onNetwork(book, batch + '/' + slug, slot)) {
+					already += 1;
+					continue;
+				}
+				const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
+				// An X post with an AI label and no thread carries twitter metadata without a thread (#3840).
+				const thread =
+					input.metadata && input.metadata.twitter && input.metadata.twitter.thread
+						? ' (thread of ' + input.metadata.twitter.thread.length + ')'
+						: '';
+				if (opts['dry-run']) {
+					console.log(
+						'dry-run',
+						label + thread,
+						hub.why ? 'HELD: ' + hub.why : 'hub ok',
+						JSON.stringify(input).slice(0, 160),
+						'…',
+						String(input.text || '')
+							.split('\n')
+							.pop()
+					);
+					continue;
+				}
+				const entry = { channel: slot, profile, at: input.dueAt, checked: new Date().toISOString() };
+				if (hub.why) {
+					failed += 1;
+					console.log('held', label, '-', hub.why, hub.url);
+					ledger.record(
+						book,
+						batch + '/' + slug,
+						Object.assign(entry, { result: 'failed', error: 'Hub first: ' + hub.why })
+					);
+					continue;
+				}
+				try {
+					const data = await gql(
+						'mutation($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id dueAt } } ... on MutationError { message } } }',
+						{ input }
+					);
+					const r = data.createPost;
+					if (r.post) {
+						queued += 1;
+						console.log('queued', label, r.post.dueAt);
+						Object.assign(entry, { id: r.post.id, at: r.post.dueAt || input.dueAt, result: 'queued' });
+					} else {
+						failed += 1;
+						console.log('failed', label, '-', r.message);
+						Object.assign(entry, { result: 'failed', error: r.message });
+					}
+				} catch (error) {
+					if (error.spent) {
+						spent = error.message;
+						break posts;
+					}
+					failed += 1;
+					console.log('failed', label, '-', error.message);
+					Object.assign(entry, { result: 'failed', error: error.message });
+				}
+				ledger.record(book, batch + '/' + slug, entry);
+			}
+		}
+	}
+	if (opts['dry-run']) return console.log(queued + ' queued, ' + already + ' already in Buffer, ' + failed + ' failed');
+	if (spent) leaveForTonight(book, batch, spent);
+	else ledger.write(ledger.BUFFER, ledger.clearRetry(book, batch));
+	console.log(queued + ' queued, ' + already + ' already in Buffer, ' + failed + ' failed');
+	if (failed) process.exit(1);
 }
 
 /* A spent daily limit frees up hours later, and a site that has not served the batch yet is waiting on its Pages
    deploy (#2160), so the batch is listed in the ledger's retry and the run passes: the nightly buffer-batch.yml run
    queues it again, skipping what the ledger already has (#1188). */
 function leaveForTonight(book, batch, why) {
-  ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
-  console.log("::warning::" + batch + " is not fully queued: " + why + " The nightly Buffer batch run (03:37 UTC) queues the rest.");
+	ledger.write(ledger.BUFFER, ledger.markRetry(book, batch, why, new Date().toISOString()));
+	console.log(
+		'::warning::' +
+			batch +
+			' is not fully queued: ' +
+			why +
+			' The nightly Buffer batch run (03:37 UTC) queues the rest.'
+	);
 }
 
-if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
+if (require.main === module)
+	main().catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
 
-module.exports = { batchIndex, matchPost, staleScheduled, duplicateScheduled, inputsFor, gql, requeueTargets, rerouteTargets, translated, facesOn, onNetwork, mediaHost, SLOT };
+module.exports = {
+	batchIndex,
+	matchPost,
+	staleScheduled,
+	duplicateScheduled,
+	inputsFor,
+	gql,
+	requeueTargets,
+	rerouteTargets,
+	translated,
+	facesOn,
+	onNetwork,
+	mediaHost,
+	SLOT,
+};

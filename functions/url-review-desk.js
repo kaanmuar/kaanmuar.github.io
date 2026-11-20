@@ -5,6 +5,7 @@ const offers = require("./url-review-offers");
 const publish = require("./url-review-publish");
 const fixOffers = require("./url-review-fix-offers");
 const reviewPromise = require("./url-review-promise");
+const threats = require("./url-review-threats");
 
 const HELD_WORDS = {
   "not-complete": "the review did not complete",
@@ -260,7 +261,13 @@ function deskRecord(row) {
       images: report.observed.images,
       missingAlt: report.observed.missingAlt
     } : undefined,
-    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict })) },
+    insights: { score: insights.score, findings: list(insights.findings).map((item) => ({ key: item && item.key, verdict: item && item.verdict, severity: item && item.severity })) },
+    targeted: report.targeted && typeof report.targeted === "object" ? {
+      level: report.targeted.level || "",
+      status: report.targeted.status || "",
+      hosting: report.targeted.hosting || null,
+      items: list(report.targeted.items).slice(0, 30)
+    } : undefined,
     alerts: Array.isArray(report.alerts) ? report.alerts.map((item) => ({ id: item && item.id, level: item && item.level, title: item && item.title })) : undefined,
     tools: list(report.tools).map((item) => (item && typeof item === "object" ? { name: item.name } : item)),
     technologies: list(report.technologies).slice(0, 8).map((item) => ({ name: item && item.name })),
@@ -365,6 +372,7 @@ const STYLE = `
     .alert b, .live b { font-family: Arial, sans-serif; font-size: 14px; }
     .meta { color: var(--muted); font-family: Arial, sans-serif; font-size: 12px; }
     .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tools[hidden] { display: none; }
     input, select { font: 14px Arial, sans-serif; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
     input { min-width: min(320px, 100%); }
     .table-wrap { overflow-x: auto; }
@@ -397,6 +405,25 @@ const STYLE = `
     .fix-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
     .fix-edit input { min-width: 0; width: 120px; }
     .fix-edit input[type="url"] { width: min(320px, 100%); }
+    .threat-lvl { display: inline-block; padding: 2px 8px; border-radius: 999px; font: bold 11px Arial, sans-serif; text-transform: uppercase; letter-spacing: .04em; background: #e3f5f6; color: var(--teal); }
+    .threat-lvl[data-level="critical"] { background: #fde2e2; color: #8c1d1d; }
+    .threat-lvl[data-level="high"] { background: #ffe8d6; color: #8a3c00; }
+    .threat-lvl[data-level="watch"] { background: #fff4d6; color: #7a5200; }
+    .threat-lvl[data-level="info"] { background: #e6eef2; color: #36505c; }
+    .threat-lvl[data-level="clean"] { background: #e3f7ea; color: #196832; }
+    .desk-map-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; }
+    .desk-map-tabs button[aria-selected="true"] { background: var(--night); color: #7ef6fb; border: 1px solid var(--night); }
+    .desk-map-tabs button[aria-selected="false"] { background: transparent; color: var(--teal); border: 1px solid var(--line); }
+    .desk-map-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; align-items: start; }
+    @media (max-width: 860px) { .desk-map-grid { grid-template-columns: 1fr; } }
+    .desk-map-stage { background: var(--night); border-radius: 12px; padding: 10px; border: 1px solid var(--line); }
+    .desk-map-svg { display: block; width: 100%; height: auto; }
+    .desk-map-cc { stroke: rgba(7, 17, 22, .85); stroke-width: .7; cursor: pointer; }
+    .desk-map-cc:hover, .desk-map-cc.is-on { stroke: #7ef6fb; stroke-width: 1.8; }
+    .desk-map-tip { margin-top: 8px; font: 13px Arial, sans-serif; color: #cbe0e4; }
+    .desk-map-panel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--paper); max-height: 430px; overflow: auto; }
+    .desk-map-site { padding: 8px 0; border-top: 1px solid var(--line); }
+    .desk-map-site:first-of-type { border-top: 0; }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
 `;
 
@@ -675,7 +702,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section>
       <h2>Re-runs</h2>
-      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
+      <p class="empty">A failed review runs again when its cause clears or a fix ships. The asker is not emailed until you send it, except one the failed run promised the report by email (marked Promised): those run again every few hours, the report goes out on its own while PROMISE_AUTO_SEND is on, and a promise still open after 48 hours gets the apology mail. The rescue keeps trying after that: a report that finishes within 14 days still goes out on its own, saying it is late (Promised: report sent late), and after 14 days the asker gets a last note (Promised: given up). The mail says the earlier review failed on its date and ran again after the cause cleared, and the report, its findings and the PDF arrive open, without payment.</p>
       <div id="reruns"></div>
     </section>
     <section>
@@ -716,6 +743,87 @@ const PAGE = `<!DOCTYPE html>
       <h2>Follow-up notes</h2>
       <p class="empty">A note stays here until the person checks the box. Nothing in this list is mailed.</p>
       <div id="notes"></div>
+    </section>
+    <section id="desk-map-block">
+      <h2>Cyber attacks map</h2>
+      <p class="empty">Two tabs: global live/historical macro telemetry (GDELT, CISA KEV, DROP — no customer sites) and our reviewed sites grouped by DB-IP hosting country with findings (internal only).</p>
+      <div class="desk-map-tabs" role="tablist" aria-label="Cyber attacks map view">
+        <button id="map-tab-global" type="button" role="tab" aria-selected="true" aria-controls="desk-map-panel">Global live &amp; historical</button>
+        <button id="map-tab-ours" type="button" role="tab" aria-selected="false" aria-controls="desk-map-panel">Our reviewed sites</button>
+      </div>
+      <div class="stats" id="desk-map-stats"></div>
+      <div class="tools" id="desk-map-global-tools">
+        <select id="desk-map-range" aria-label="Global timeframe">
+          <option value="live">Live (15m slice)</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
+        </select>
+        <span id="desk-map-global-meta" class="meta"></span>
+      </div>
+      <div class="tools" id="desk-map-ours-tools" hidden>
+        <select id="desk-map-window" aria-label="Our sites time window">
+          <option value="">Every window</option>
+          <option value="live">Live (24h)</option>
+          <option value="recent">Recent (90d)</option>
+          <option value="historical">Historical (&gt;90d)</option>
+        </select>
+        <select id="desk-map-level" aria-label="Our sites max level">
+          <option value="">Every level</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="watch">Watch</option>
+          <option value="info">Info</option>
+        </select>
+        <select id="desk-map-kind" aria-label="Our sites threat kind">
+          <option value="">Every kind</option>
+        </select>
+        <input id="desk-map-q" type="search" placeholder="Host, IP, country, ASN, or evidence" aria-label="Filter reviewed sites map">
+      </div>
+      <div id="desk-map-panel" class="desk-map-grid">
+        <div class="desk-map-stage">
+          <div id="desk-map-svg-wrap"><p class="meta">Loading world projection…</p></div>
+          <div id="desk-map-tip" class="desk-map-tip">Click any country to inspect.</div>
+        </div>
+        <div id="desk-map-detail" class="desk-map-panel"></div>
+      </div>
+      <p id="desk-map-attr" class="meta">Attribution: IP Geolocation by DB-IP (https://db-ip.com) · GDELT Project (https://www.gdeltproject.org/) · CISA KEV (CC0 1.0)</p>
+    </section>
+    <section id="threats-block">
+      <h2>Internal threat list</h2>
+      <p class="empty">Operator-only list of every attack, exploit, compromise, leak, lookalike, or blocklist finding extracted per review. Never shown on Live Reports or public pages (public_ok defaults to false).</p>
+      <div class="stats" id="threat-stats"></div>
+      <div class="tools">
+        <input id="threat-q" type="search" placeholder="Host, subject, source, country, or evidence" aria-label="Filter threats">
+        <select id="threat-level" aria-label="Threat level">
+          <option value="">Every level</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="watch">Watch</option>
+          <option value="info">Info</option>
+        </select>
+        <select id="threat-kind" aria-label="Threat kind">
+          <option value="">Every kind</option>
+        </select>
+        <select id="threat-delist" aria-label="Delist status">
+          <option value="">Every delist status</option>
+          <option value="none">none</option>
+          <option value="pending">pending</option>
+          <option value="requested">requested</option>
+          <option value="delisted">delisted</option>
+          <option value="false_positive">false_positive</option>
+        </select>
+        <button id="threat-backfill" type="button" class="quiet">Scan recent reviews</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Observed</th><th>Level</th><th>Kind</th><th>Subject</th><th>Role</th><th>Country</th><th>Source</th><th>Confidence</th><th>Delist</th><th>Public</th></tr>
+          </thead>
+          <tbody id="threat-rows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="threat-detail" hidden></div>
     </section>
     <section>
       <h2>Runs</h2>
@@ -760,8 +868,47 @@ const PAGE = `<!DOCTYPE html>
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
     const fixesEl = document.getElementById("fix-requests");
+    const threatStatsEl = document.getElementById("threat-stats");
+    const threatRowsEl = document.getElementById("threat-rows");
+    const threatDetailEl = document.getElementById("threat-detail");
+    const threatQEl = document.getElementById("threat-q");
+    const threatLevelEl = document.getElementById("threat-level");
+    const threatKindEl = document.getElementById("threat-kind");
+    const threatDelistEl = document.getElementById("threat-delist");
+    const threatBackfillBtn = document.getElementById("threat-backfill");
+    const mapTabGlobalBtn = document.getElementById("map-tab-global");
+    const mapTabOursBtn = document.getElementById("map-tab-ours");
+    const mapStatsEl = document.getElementById("desk-map-stats");
+    const mapGlobalToolsEl = document.getElementById("desk-map-global-tools");
+    const mapOursToolsEl = document.getElementById("desk-map-ours-tools");
+    const mapRangeEl = document.getElementById("desk-map-range");
+    const mapGlobalMetaEl = document.getElementById("desk-map-global-meta");
+    const mapWindowEl = document.getElementById("desk-map-window");
+    const mapLevelEl = document.getElementById("desk-map-level");
+    const mapKindEl = document.getElementById("desk-map-kind");
+    const mapQEl = document.getElementById("desk-map-q");
+    const mapSvgWrapEl = document.getElementById("desk-map-svg-wrap");
+    const mapTipEl = document.getElementById("desk-map-tip");
+    const mapDetailEl = document.getElementById("desk-map-detail");
+    const mapAttrEl = document.getElementById("desk-map-attr");
     const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
+    const PROMISE_STATES = ${JSON.stringify(reviewPromise.STATE_LABELS)};
+    const THREAT_KINDS = ${JSON.stringify(threats.KINDS)};
+    const THREAT_DELIST = ${JSON.stringify(threats.DELIST_STATUSES)};
     let fixesShown = "";
+    let threatsData = { summary: {}, items: [] };
+    let selectedThreat = "";
+    let lastThreatsAt = 0;
+    let mapMode = "global";
+    let mapWorld = null;
+    let mapGlobalData = null;
+    let mapOursData = null;
+    let mapSelectedCc = "";
+    let lastMapAt = 0;
+    THREAT_KINDS.forEach((kind) => {
+      threatKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
+      mapKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
+    });
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
     const qEl = document.getElementById("q");
@@ -1307,8 +1454,359 @@ const PAGE = `<!DOCTYPE html>
       if (!body) return;
       data = body;
       render();
+      if (!lastThreatsAt || Date.now() - lastThreatsAt > 30000) loadThreats();
+      if (!lastMapAt || Date.now() - lastMapAt > 60000) loadDeskMaps();
+    }
+
+    function renderThreats() {
+      const sum = threatsData.summary || {};
+      const lv = sum.byLevel || {};
+      const del = sum.byDelist || {};
+      const chips = [
+        ["Total", sum.total || 0],
+        ["Critical", lv.critical || 0],
+        ["High", lv.high || 0],
+        ["Watch", lv.watch || 0],
+        ["Info", lv.info || 0],
+        ["Pending delist", del.pending || 0]
+      ];
+      threatStatsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        threatStatsEl.appendChild(el);
+      });
+      const q = threatQEl.value.trim().toLowerCase();
+      const lvl = threatLevelEl.value;
+      const kind = threatKindEl.value;
+      const delist = threatDelistEl.value;
+      const list = (threatsData.items || []).filter((item) => {
+        if (lvl && item.level !== lvl) return false;
+        if (kind && item.kind !== kind) return false;
+        if (delist && item.delist_status !== delist) return false;
+        if (!q) return true;
+        return [item.host, item.subject, item.source, item.evidence, item.hosting_country, item.host_ip, item.kind].join(" ").toLowerCase().indexOf(q) !== -1;
+      });
+      threatRowsEl.replaceChildren();
+      list.slice(0, 150).forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("aria-selected", item.id === selectedThreat ? "true" : "false");
+        tr.appendChild(node("td", when(item.observed_at)));
+        const lvlTd = document.createElement("td");
+        const badge = node("span", item.level);
+        badge.className = "threat-lvl";
+        badge.dataset.level = item.level;
+        lvlTd.appendChild(badge);
+        tr.appendChild(lvlTd);
+        [item.kind, item.subject || item.host, item.role, item.hosting_country || item.company_country, item.source, item.confidence, item.delist_status, item.public_ok ? "Yes" : "No"].forEach((val) => {
+          tr.appendChild(node("td", text(val)));
+        });
+        tr.addEventListener("click", () => { selectedThreat = item.id; renderThreats(); });
+        threatRowsEl.appendChild(tr);
+      });
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        const td = node("td", "No threat entry matches.");
+        td.colSpan = 10;
+        tr.appendChild(td);
+        threatRowsEl.appendChild(tr);
+      }
+      if (threatDetailEl.contains(document.activeElement)) return;
+      const picked = (threatsData.items || []).find((item) => item.id === selectedThreat);
+      if (!picked) { threatDetailEl.hidden = true; threatDetailEl.replaceChildren(); return; }
+      threatDetailEl.hidden = false;
+      threatDetailEl.replaceChildren();
+      const dl = document.createElement("dl");
+      [
+        ["ID", picked.id],
+        ["Level", picked.level],
+        ["Kind", picked.kind],
+        ["Subject type", picked.subject_type],
+        ["Subject", picked.subject],
+        ["Host", picked.host],
+        ["Role", picked.role],
+        ["Host IP", picked.host_ip],
+        ["Hosting country", picked.hosting_country],
+        ["Company country", picked.company_country],
+        ["Source", picked.source],
+        ["Source ref", picked.source_ref],
+        ["Confidence", picked.confidence],
+        ["Time window", picked.time_window],
+        ["First seen", when(picked.first_seen)],
+        ["Last seen", when(picked.last_seen)],
+        ["Observed at", when(picked.observed_at)],
+        ["Evidence", picked.evidence],
+        ["Review ID", picked.review_id],
+        ["Public OK", picked.public_ok ? "true" : "false (private)"],
+        ["Owner notified", picked.owner_notified_at ? when(picked.owner_notified_at) : "—"],
+        ["Delist status", picked.delist_status],
+        ["Retention until", picked.retention_until]
+      ].forEach(([k, v]) => line(dl, k, v));
+      threatDetailEl.appendChild(dl);
+      const form = document.createElement("form");
+      form.className = "fix-edit";
+      const pick = document.createElement("select");
+      pick.setAttribute("aria-label", "Delist status");
+      THREAT_DELIST.forEach((st) => {
+        const opt = document.createElement("option");
+        opt.value = st;
+        opt.textContent = st;
+        opt.selected = st === picked.delist_status;
+        pick.appendChild(opt);
+      });
+      const noteIn = Object.assign(document.createElement("input"), { type: "text", placeholder: "Operator note", value: picked.note || "" });
+      noteIn.setAttribute("aria-label", "Operator note");
+      noteIn.style.width = "min(320px, 100%)";
+      const saveBtn = Object.assign(document.createElement("button"), { type: "submit", textContent: "Save status" });
+      const msg = Object.assign(document.createElement("span"), { className: "meta" });
+      [pick, noteIn, saveBtn, msg].forEach((el) => form.appendChild(el));
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        saveBtn.disabled = true;
+        msg.textContent = "";
+        const res = await fetch(deskBase() + "/desk/threats", {
+          method: "POST",
+          credentials: "include",
+          headers: await deskHeaders(),
+          body: JSON.stringify({ id: picked.id, delist_status: pick.value, note: noteIn.value.trim() })
+        });
+        saveBtn.disabled = false;
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.textContent = out.error || "Could not save."; return; }
+        msg.textContent = "Saved";
+        loadThreats();
+      });
+      threatDetailEl.appendChild(form);
+    }
+
+    async function loadThreats() {
+      const body = await deskFetch("/desk/threats/data");
+      if (!body) return;
+      lastThreatsAt = Date.now();
+      threatsData = body;
+      renderThreats();
+    }
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const MAP_NAMES = typeof Intl !== "undefined" && Intl.DisplayNames ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+    function mapCountryName(cc) {
+      if (!cc) return "Unknown";
+      try { return (MAP_NAMES && MAP_NAMES.of(cc)) || cc; } catch (error) { return cc; }
+    }
+    function mapLevelColor(level) {
+      if (level === "critical") return "#e05252";
+      if (level === "high") return "#eb8b42";
+      if (level === "watch") return "#e2c48a";
+      if (level === "info") return "#4db3bb";
+      if (level === "clean") return "#4ea86d";
+      return "#16323b";
+    }
+    function mapGlobalColor(count, maxCount) {
+      if (!count || !maxCount) return "#16323b";
+      const t = Math.sqrt(Math.min(1, count / maxCount));
+      if (t < 0.5) return "rgb(" + Math.round(28 + t * 2 * 49) + "," + Math.round(68 + t * 2 * 111) + "," + Math.round(78 + t * 2 * 109) + ")";
+      return "rgb(" + Math.round(77 + (t - 0.5) * 2 * 166) + "," + Math.round(179 - (t - 0.5) * 2 * 25) + "," + Math.round(187 - (t - 0.5) * 2 * 48) + ")";
+    }
+    async function ensureWorld() {
+      if (mapWorld) return mapWorld;
+      const local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+      const url = local ? deskBase() + "/desk/world.json" : "https://carlosandmunoz.com/assets/jarvis/world.json";
+      const res = await fetch(url).catch(() => null);
+      if (res && res.ok) mapWorld = await res.json();
+      return mapWorld;
+    }
+    function renderDeskMap() {
+      const isGlobal = mapMode === "global";
+      mapTabGlobalBtn.setAttribute("aria-selected", isGlobal ? "true" : "false");
+      mapTabOursBtn.setAttribute("aria-selected", isGlobal ? "false" : "true");
+      mapGlobalToolsEl.hidden = !isGlobal;
+      mapOursToolsEl.hidden = isGlobal;
+
+      const byCc = {};
+      let maxCount = 0;
+      const chips = [];
+      if (isGlobal) {
+        const g = mapGlobalData || {};
+        (g.countries || []).forEach((c) => { byCc[c.cc] = c; if (c.count > maxCount) maxCount = c.count; });
+        chips.push(["Mentions", g.totalMentions || 0], ["Countries", g.countryCount || 0], ["CISA KEV", (g.kevSummary && g.kevSummary.count) || 0], ["DROP ranges", (g.dropSummary && g.dropSummary.v4Ranges) || 0]);
+        mapGlobalMetaEl.textContent = (g.updatedAt ? "Updated " + when(g.updatedAt) : "Live feed ready") + (g.slice ? " · slice " + g.slice : "");
+        mapAttrEl.textContent = "Sources: " + ((g.attributions && g.attributions.join(" · ")) || "GDELT Project · CISA KEV") + " · Context only (no reviewed sites).";
+      } else {
+        const o = mapOursData || {};
+        const s = o.summary || {};
+        (o.countries || []).forEach((c) => { byCc[c.cc] = c; });
+        chips.push(["Countries", s.totalCountries || 0], ["Reviewed sites", s.totalSites || 0], ["With findings", s.withFindings || 0], ["Clean sites", s.cleanSites || 0], ["Findings", s.totalFindings || 0]);
+        mapAttrEl.textContent = "Hosting geolocation: " + (o.attribution || "IP Geolocation by DB-IP (https://db-ip.com)") + " · Operator view only.";
+      }
+      mapStatsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        mapStatsEl.appendChild(el);
+      });
+
+      if (mapWorld) {
+        const svg = document.createElementNS(SVG_NS, "svg");
+        svg.setAttribute("class", "desk-map-svg");
+        svg.setAttribute("viewBox", "0 0 " + mapWorld.w + " " + mapWorld.h);
+        svg.setAttribute("role", "group");
+        svg.setAttribute("aria-label", isGlobal ? "Global cyber attacks map" : "Reviewed sites by hosting country map");
+        const addShape = (cc, isDot) => {
+          const row = byCc[cc];
+          const label = isGlobal
+            ? mapCountryName(cc) + (row ? ": " + row.count + " mentions" : ": 0 mentions")
+            : mapCountryName(cc) + (row ? ": " + row.siteCount + " sites (" + row.findingsCount + " findings, max " + row.topLevel + ")" : ": no reviewed sites");
+          const shape = document.createElementNS(SVG_NS, isDot ? "circle" : "path");
+          if (isDot) {
+            const pt = mapWorld.dots[cc];
+            shape.setAttribute("cx", String(pt[0]));
+            shape.setAttribute("cy", String(pt[1]));
+            shape.setAttribute("r", "4.2");
+          } else {
+            shape.setAttribute("d", mapWorld.shapes[cc]);
+          }
+          shape.setAttribute("class", "desk-map-cc" + (mapSelectedCc === cc ? " is-on" : ""));
+          shape.setAttribute("data-cc", cc);
+          shape.setAttribute("fill", isGlobal ? mapGlobalColor(row ? row.count : 0, maxCount) : (row ? mapLevelColor(row.topLevel) : "#16323b"));
+          shape.setAttribute("tabindex", "0");
+          shape.setAttribute("role", "button");
+          shape.setAttribute("aria-label", label);
+          const title = document.createElementNS(SVG_NS, "title");
+          title.textContent = label;
+          shape.appendChild(title);
+          shape.addEventListener("mouseenter", () => { mapTipEl.textContent = label; });
+          shape.addEventListener("click", () => { mapSelectedCc = mapSelectedCc === cc ? "" : cc; renderDeskMap(); });
+          shape.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); mapSelectedCc = mapSelectedCc === cc ? "" : cc; renderDeskMap(); } });
+          svg.appendChild(shape);
+        };
+        Object.keys(mapWorld.shapes || {}).forEach((cc) => addShape(cc, false));
+        Object.keys(mapWorld.dots || {}).filter((cc) => !mapWorld.shapes[cc] && byCc[cc]).forEach((cc) => addShape(cc, true));
+        mapSvgWrapEl.replaceChildren(svg);
+      }
+
+      mapDetailEl.replaceChildren();
+      if (isGlobal) {
+        const g = mapGlobalData || {};
+        const head = node("b", mapSelectedCc ? mapCountryName(mapSelectedCc) + " (" + mapSelectedCc + ")" : "Top cited countries (" + (g.range || "live") + ")");
+        mapDetailEl.appendChild(head);
+        const list = document.createElement("ul");
+        if (mapSelectedCc) {
+          const evs = (g.events || []).filter((e) => Array.isArray(e.countries) && e.countries.indexOf(mapSelectedCc) !== -1);
+          evs.slice(0, 12).forEach((ev) => {
+            const li = document.createElement("li");
+            const a = Object.assign(document.createElement("a"), { href: ev.url, target: "_blank", rel: "noopener noreferrer", textContent: (ev.source || ev.host) + " · " + ev.url.replace(/^https?:\\/\\//i, "") });
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+          if (!evs.length) list.appendChild(node("li", "No headlines stored for " + mapCountryName(mapSelectedCc) + " in this snapshot."));
+        } else {
+          (g.countries || []).slice(0, 12).forEach((c) => {
+            const li = document.createElement("li");
+            const btn = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: mapCountryName(c.cc) + " (" + c.cc + ") · " + c.count });
+            btn.style.marginTop = "4px";
+            btn.addEventListener("click", () => { mapSelectedCc = c.cc; renderDeskMap(); });
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+          if (!(g.countries || []).length) list.appendChild(node("li", "No global mentions loaded yet."));
+        }
+        mapDetailEl.appendChild(list);
+      } else {
+        const o = mapOursData || {};
+        const picked = mapSelectedCc ? byCc[mapSelectedCc] : null;
+        if (picked) {
+          const top = document.createElement("div");
+          top.appendChild(node("b", mapCountryName(picked.cc) + " (" + picked.cc + ") · " + picked.siteCount + " reviewed site(s), " + picked.findingsCount + " finding(s)"));
+          const clear = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: "All countries" });
+          clear.style.marginLeft = "8px";
+          clear.addEventListener("click", () => { mapSelectedCc = ""; renderDeskMap(); });
+          top.appendChild(clear);
+          mapDetailEl.appendChild(top);
+          (picked.sites || []).forEach((site) => {
+            const card = document.createElement("div");
+            card.className = "desk-map-site";
+            const badge = node("span", site.maxLevel);
+            badge.className = "threat-lvl";
+            badge.dataset.level = site.maxLevel;
+            card.appendChild(badge);
+            card.appendChild(document.createTextNode(" "));
+            card.appendChild(node("b", site.host));
+            const metaEl = node("div", [site.ip, site.asn ? "AS" + site.asn : "", site.score != null ? "score " + site.score : "", site.findingCount + " finding(s)"].filter(Boolean).join(" · "));
+            metaEl.className = "meta";
+            card.appendChild(metaEl);
+            if ((site.findings || []).length) {
+              const ul = document.createElement("ul");
+              site.findings.slice(0, 6).forEach((f) => ul.appendChild(node("li", f.level + " · " + f.kind + " (" + f.source + "): " + f.evidence)));
+              card.appendChild(ul);
+            }
+            const jump = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: "Filter threat list" });
+            jump.style.marginTop = "6px";
+            jump.addEventListener("click", () => {
+              threatQEl.value = site.host;
+              renderThreats();
+              document.getElementById("threats-block").scrollIntoView({ behavior: "smooth" });
+            });
+            card.appendChild(jump);
+            mapDetailEl.appendChild(card);
+          });
+        } else {
+          mapDetailEl.appendChild(node("b", mapSelectedCc ? mapCountryName(mapSelectedCc) + ": 0 matching reviewed sites" : "Reviewed sites by hosting country"));
+          const list = document.createElement("ul");
+          (o.countries || []).slice(0, 15).forEach((c) => {
+            const li = document.createElement("li");
+            const btn = Object.assign(document.createElement("button"), { type: "button", className: "quiet", textContent: mapCountryName(c.cc) + " (" + c.cc + ") · " + c.siteCount + " sites, " + c.findingsCount + " findings (" + c.topLevel + ")" });
+            btn.style.marginTop = "4px";
+            btn.addEventListener("click", () => { mapSelectedCc = c.cc; renderDeskMap(); });
+            li.appendChild(btn);
+            list.appendChild(li);
+          });
+          if (!(o.countries || []).length) list.appendChild(node("li", "No reviewed sites with hosting country data match the filters yet."));
+          mapDetailEl.appendChild(list);
+        }
+      }
+    }
+    async function loadDeskMaps() {
+      await ensureWorld();
+      const qs = new URLSearchParams();
+      if (mapWindowEl.value) qs.set("window", mapWindowEl.value);
+      if (mapLevelEl.value) qs.set("level", mapLevelEl.value);
+      if (mapKindEl.value) qs.set("kind", mapKindEl.value);
+      if (mapQEl.value.trim()) qs.set("q", mapQEl.value.trim());
+      const [gRes, oBody] = await Promise.all([
+        fetch(deskBase() + "/threats/global?range=" + encodeURIComponent(mapRangeEl.value)).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        deskFetch("/desk/map/data" + (qs.toString() ? "?" + qs.toString() : ""))
+      ]);
+      if (gRes) mapGlobalData = gRes;
+      if (oBody) mapOursData = oBody;
+      lastMapAt = Date.now();
+      renderDeskMap();
     }
 ${SIGN_IN}
+    threatQEl.addEventListener("input", renderThreats);
+    threatLevelEl.addEventListener("change", renderThreats);
+    threatKindEl.addEventListener("change", renderThreats);
+    threatDelistEl.addEventListener("change", renderThreats);
+    mapTabGlobalBtn.addEventListener("click", () => { mapMode = "global"; mapSelectedCc = ""; renderDeskMap(); });
+    mapTabOursBtn.addEventListener("click", () => { mapMode = "ours"; mapSelectedCc = ""; renderDeskMap(); });
+    mapRangeEl.addEventListener("change", loadDeskMaps);
+    mapWindowEl.addEventListener("change", loadDeskMaps);
+    mapLevelEl.addEventListener("change", loadDeskMaps);
+    mapKindEl.addEventListener("change", loadDeskMaps);
+    mapQEl.addEventListener("input", loadDeskMaps);
+    threatBackfillBtn.addEventListener("click", async () => {
+      threatBackfillBtn.disabled = true;
+      await fetch(deskBase() + "/desk/threats", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ action: "backfill" })
+      });
+      threatBackfillBtn.disabled = false;
+      loadThreats();
+    });
     document.getElementById("free-add").addEventListener("click", async () => {
       const email = freeEmailEl.value.trim().toLowerCase();
       if (!email || email.indexOf("@") === -1) return;
@@ -1470,7 +1968,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
         .forEach((row) => {
           const tr = document.createElement("tr");
           tr.setAttribute("aria-selected", String(row.id === selected));
-          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", [row.promise ? "Promised (" + row.promise.state + ")" : "", row.rerun].filter(Boolean).join(" · "), count(row.lineCount, "line")]
+          [when(row.at), row.kind, row.host, row.name || row.email, row.cause, row.kind === "stopped" ? "" : row.diagnosedAt ? (row.cleared ? "Cleared" : "Still failing") : "Not probed yet", [row.promise ? "Promised (" + (PROMISE_STATES[row.promise.state] || row.promise.state) + ")" : "", row.rerun].filter(Boolean).join(" · "), count(row.lineCount, "line")]
             .forEach((value) => tr.appendChild(node("td", text(value))));
           tr.addEventListener("click", () => openDetail(row.id));
           rowsEl.appendChild(tr);
@@ -1500,7 +1998,7 @@ const FAILURES_PAGE = `<!DOCTYPE html>
       line(facts, "Now", item.now ? item.now + " (probed " + count(item.checks, "time") + ", last " + when(item.diagnosedAt) + ")" : "");
       line(facts, "Re-run", item.rerun);
       const promise = item.promise;
-      if (promise) line(facts, "Promise", "Report by email, " + promise.state + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
+      if (promise) line(facts, "Promise", "Report by email, " + (PROMISE_STATES[promise.state] || promise.state) + (promise.closedAt ? " " + when(promise.closedAt) : "") + " · code " + promise.coupon + " " + promise.percent + "%");
       line(facts, "Rescue", item.rescue);
       const timings = item.timings || {};
       line(facts, "Took", seconds(timings.ms) + ", last log line at " + seconds(timings.lastLineMs));

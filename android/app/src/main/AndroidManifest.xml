@@ -146,6 +146,54 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_traffic" />
         </receiver>
+        <receiver android:name=".home.CyberMap2x2Receiver" android:exported="true" android:label="Jarvis cyber-attack map 2×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cyber_map_2x2" />
+        </receiver>
+        <receiver android:name=".home.CyberMap4x2Receiver" android:exported="true" android:label="Jarvis cyber-attack map 4×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cyber_map_4x2" />
+        </receiver>
+        <receiver android:name=".home.CyberMap4x3Receiver" android:exported="true" android:label="Jarvis cyber-attack map 4×3">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cyber_map_4x3" />
+        </receiver>
+        <receiver android:name=".home.CyberMap4x4Receiver" android:exported="true" android:label="Jarvis cyber-attack map 4×4">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_cyber_map_4x4" />
+        </receiver>
+        <receiver android:name=".home.OutreachMap2x2Receiver" android:exported="true" android:label="Jarvis outreach map 2×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_outreach_map_2x2" />
+        </receiver>
+        <receiver android:name=".home.OutreachMap4x2Receiver" android:exported="true" android:label="Jarvis outreach map 4×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_outreach_map_4x2" />
+        </receiver>
+        <receiver android:name=".home.OutreachMap4x3Receiver" android:exported="true" android:label="Jarvis outreach map 4×3">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_outreach_map_4x3" />
+        </receiver>
+        <receiver android:name=".home.OutreachMap4x4Receiver" android:exported="true" android:label="Jarvis outreach map 4×4">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_outreach_map_4x4" />
+        </receiver>
+        <receiver android:name=".home.MarketingMap2x2Receiver" android:exported="true" android:label="Jarvis marketing map 2×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_marketing_map_2x2" />
+        </receiver>
+        <receiver android:name=".home.MarketingMap4x2Receiver" android:exported="true" android:label="Jarvis marketing map 4×2">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_marketing_map_4x2" />
+        </receiver>
+        <receiver android:name=".home.MarketingMap4x3Receiver" android:exported="true" android:label="Jarvis marketing map 4×3">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_marketing_map_4x3" />
+        </receiver>
+        <receiver android:name=".home.MarketingMap4x4Receiver" android:exported="true" android:label="Jarvis marketing map 4×4">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_marketing_map_4x4" />
+        </receiver>
         <receiver android:name=".home.PickWidgetReceiver" android:exported="true" android:label="Jarvis number">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_pick" />

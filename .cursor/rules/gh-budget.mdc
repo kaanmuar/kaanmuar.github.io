@@ -1,0 +1,17 @@
+---
+description: GitHub API and CI token budget — use when running gh, CI waits, PR refresh, or board moves
+globs:
+  - scripts/ticket.sh
+  - scripts/gh-budget.sh
+  - scripts/ci-wait.sh
+  - scripts/refresh-prs.sh
+  - .github/workflows/**
+alwaysApply: false
+---
+# GitHub API budget
+Chats share kaanmuar's 5,000 GraphQL points/hour (#892). `gh issue`/`pr`/`pr checks`/`project` spend it.
+- Issues/comments/labels/sub-issues: REST (`gh api`), as `ticket.sh` does.
+- CI: `scripts/ci-wait.sh <sha|pr>` only—never `gh pr checks --watch`.
+- Main fixed, PRs still red: `scripts/refresh-prs.sh [workflow]` (close/reopen). Never `gh run rerun` on the PR's failed jobs (#2245: old merge commit).
+- PRs: `gh api repos/kaanmuar/kaanmuar.github.io/pulls -f title=... -f head=<branch> -f base=main -f body=...`; merge `gh api -X PUT .../pulls/<n>/merge -f merge_method=squash`.
+- Board moves only via `scripts/gh-budget.sh` (qa-lab-agents first)—`ticket.sh` uses it.

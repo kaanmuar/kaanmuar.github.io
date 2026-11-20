@@ -36,12 +36,18 @@
  *                                                                        from the comment box's menu (#2637); an
  *                                                                        owner reply there brings latest: true, the
  *                                                                        owner's profile as url and since, for the
- *                                                                        newest own post to answer (#2638); a Threads
+ *                                                                        newest own post to answer (#2638); a profile
+ *                                                                        campaign without a known post (#3461) does
+ *                                                                        the same with since the last year; a Threads
  *                                                                        reply brings extras { topic, image, gif }
  *                                                                        for its composer (#2710); a DM with a
  *                                                                        2-day pass (#3137) is action "dm" with the
  *                                                                        person's profile as url, its draft and its
  *                                                                        card, within its outreach-send daily cap
+ *   engagement-mac-linkedin-queue { auto? }                             today's connection requests (up to 15); auto
+ *                                                                        includes unsent people on the list
+ *   engagement-mac-linkedin-result { key, date, name, outcome, ok, error, url }  one connect: marks sent in outreach,
+ *                                                                        pushes Carlos
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
  *                          mentions, extras }                            what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
@@ -67,9 +73,11 @@ const Joins = require("./engagement-joins");
 const Communities = require("./student-communities");
 const Students = require("./student-outreach");
 const OwnerTags = require("./owner-tags");
+const P = require("./engagement-profiles");
 const Trials = require("./chain-trials");
 const DmCard = require("./dm-card");
 const Send = require("./outreach-send");
+const LinkedIn = require("./engagement-linkedin");
 
 const DAY = 24 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
@@ -119,7 +127,15 @@ async function sites(deps) {
   const conf = await J.readSettings(deps.db);
   if (conf.paused) return { ok: true, paused: true, queries: [], topics: [], groups: {} };
   const [look, groups] = await Promise.all([J.reportSites(deps).catch((error) => ({ sites: [], error: String(error.message || error).slice(0, 200) })), Joins.pool(deps.db)]);
-  return Object.assign({ ok: true, paused: false, queries: look.sites.flatMap(R.queries), topics: Communities.withStudents(E.DISCOVERY), groups }, look.error ? { error: look.error } : {});
+  const looseAll = R.looseQueries(look.sites);
+  const loose = R.looseForMac(looseAll, deps.now);
+  const topics = Communities.withStudents(E.Regions.discoveryForRun(deps.now, null, conf), 4);
+  return Object.assign({
+    ok: true, paused: false,
+    queries: look.sites.flatMap(R.queries).concat(loose.map((l) => l.q)),
+    loose: loose.map((l) => ({ q: l.q, match: l.match, host: l.target.host })),
+    topics, groups
+  }, look.error ? { error: look.error } : {});
 }
 
 /** Student communities the searches found, student posts to comment on and students who answered us (#3138). */
@@ -295,11 +311,13 @@ async function queue(deps, body) {
   const { db, now, inc } = deps;
   const conf = await J.readSettings(db);
   if (conf.paused) return { ok: true, paused: true, live: conf.live, tasks: [] };
+  await J.promoteCopies(db, now).catch(() => 0);
   const want = (Array.isArray((body || {}).networks) ? body.networks : BROWSER).filter((k) => BROWSER.includes(k));
   const rows = (snap) => snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() })).filter((t) => E.carrier(t.doc) === "mac");
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get()
     .then((s) => rows(s).map((t) => Object.assign(t, { action: a })))))).flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = rows(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get()).map((t) => Object.assign(t, { action: "reply" }));
+  const edits = rows(await db.collection("engagement_posts").where("actions.edit.status", "==", "approved").limit(20).get()).map((t) => Object.assign(t, { action: "edit" }));
   const at = new Date(now).toISOString();
   const day = db.collection("engagement_daily").doc(E.bogotaDay(now));
   const tasks = [];
@@ -325,20 +343,25 @@ async function queue(deps, body) {
     }
     per[t.doc.network] = (per[t.doc.network] || 0) + 1;
     await t.ref.update({ ["actions." + t.action + ".leasedAt"]: at, updatedAt: at });
-    const r = t.doc.actions.reply || {};
+    const r = t.doc.actions[t.action] || t.doc.actions.reply || {};
     const card = t.action === "reply" && !student ? await Act.drawCard(deps, t.doc) : {};
-    const own = t.action === "reply" ? t.doc.ownerTags || {} : {};
+    const own = (t.action === "reply" || t.action === "edit") ? t.doc.ownerTags || {} : {};
+    const profileLatest = t.action === "reply" && P.needsLatest(t.doc);
+    const latestDays = own.latest ? OwnerTags.REPLY_DAYS : P.FRESH_DAYS;
     const extras = t.action === "reply" ? extrasFor(t.doc, r.gif ? await gifsLeft(t.doc.network) : 0) : null;
     if (extras && extras.gif) gifs[t.doc.network] -= 1;
+    const profileUrl = profileLatest ? ((t.doc.report || {}).profile || t.doc.url) : t.doc.url;
+    const drafts = t.action === "reply" || t.action === "edit";
     tasks.push(Object.assign({
-      key: t.key, network: t.doc.network, action: t.action, id: t.doc.id, url: t.doc.url, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
-      draft: t.action === "reply" ? r.draft || "" : "", lang: t.action === "reply" ? r.lang || t.doc.lang || "" : "",
+      key: t.key, network: t.doc.network, action: t.action, id: profileLatest ? "" : t.doc.id, url: profileUrl, author: { handle: (t.doc.author || {}).handle || "", id: (t.doc.author || {}).id || "" },
+      draft: drafts ? r.draft || "" : "", lang: drafts ? r.lang || t.doc.lang || "" : "",
       reaction: t.action === "like" && t.doc.network === "linkedin" && !t.doc.chain ? reaction(t.doc) : "",
       chain: !!t.doc.chain, text: t.doc.chain ? clip(t.doc.text, 300) : "", title: t.action === "repost" ? clip(t.doc.title, 300) : ""
-    }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length ? { mentions: own.menu } : {},
-    own.latest ? { latest: true, since: new Date(now - OwnerTags.REPLY_DAYS * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
+    }, own.kind === "tags" ? { more: true } : {}, (own.menu || []).length && (t.action === "reply" || t.action === "edit") ? { mentions: own.menu } : {},
+    own.latest || profileLatest ? { latest: true, since: new Date(now - latestDays * DAY).toISOString() } : {}, card.card ? { card: { png: Buffer.from(card.card.png).toString("base64"), type: card.card.type, alt: card.card.alt } } : {}, card.error ? { cardError: card.error } : {},
     extras ? { extras } : {}, student || {}));
   };
+  for (const t of edits) await take(t);
   for (const t of replies) await take(t);
   tasks.push(...await dmTasks(deps, conf, want));
   let dry = 0;
@@ -367,7 +390,7 @@ async function result(deps, body) {
   const b = body || {};
   const key = String(b.key || "");
   const action = String(b.action || "");
-  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
+  if (!/^([a-z]+_[a-f0-9]{20}|ot-[a-f0-9]{24})$/.test(key) || !CARRIED.concat("reply", "edit", "join", Students.ACTIONS).includes(action)) throw new MacError("That is not a task the Mac was given.");
   if (action === "dm") {
     const out = await dmResult(deps, key, b);
     if (out) return out;
@@ -383,19 +406,43 @@ async function result(deps, body) {
   const doc = snap.exists ? snap.data() : null;
   if (!doc || E.carrier(doc) !== "mac") throw new MacError("That post is gone.", 404);
   // A student post or DM (#3138) is the reply action of its draft.
-  const field = Students.ACTIONS.includes(action) ? "reply" : action;
+  const field = Students.ACTIONS.includes(action) ? "reply" : action === "edit" ? "edit" : action;
   const cur = (doc.actions || {})[field] || {};
   const k = "actions." + field + ".";
   const at = new Date(now).toISOString();
   const count = (c) => db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
   const error = clip(b.error, 200);
   let status;
+  if (field === "edit") {
+    if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
+    const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
+    const own = doc.ownerTags || {};
+    const picked = doc.campaign === OwnerTags.CAMPAIGN && Array.isArray(b.mentions)
+      ? b.mentions.slice(0, 20).map((m) => ({ token: clip((m || {}).token, 120), handle: clip((m || {}).handle, 120), name: clip((m || {}).name, 120), linked: (m || {}).linked === true })).filter((m) => m.token) : [];
+    const tagged = picked.length ? { "ownerTags.linked": picked.filter((m) => m.linked).map((m) => m.token), "ownerTags.plain": picked.filter((m) => !m.linked).map((m) => m.token) } : {};
+    if (b.ok) {
+      status = "posted";
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "postedAt"]: at, [k + "url"]: clip(b.url, 500) || doc.url || "", [k + "tries"]: tries, [k + "error"]: "", [k + "leasedAt"]: "", [k + "by"]: "mac", updatedAt: at }, tagged));
+      await count("edit_posted");
+      if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
+    } else {
+      status = !b.retry && tries >= Act.MAX_TRIES ? "failed" : "approved";
+      await ref.update(Object.assign({ [k + "error"]: error, [k + "tries"]: tries, [k + "leasedAt"]: "", updatedAt: at }, status === "failed" ? { [k + "status"]: status } : {}));
+      if (status === "failed") await count("edit_failed");
+    }
+    await J.clearCache(db);
+    return { ok: true, action: "edit", status, error: status === "failed" ? error : "" };
+  }
   if (field === "reply") {
     if (cur.status !== "approved") return { ok: true, status: cur.status || "", note: "Already " + (cur.status || "gone") + "." };
     const tries = (cur.tries || 0) + (b.retry ? 0 : 1);
     const own = doc.ownerTags || {};
+    const profileLatest = P.needsLatest(doc);
     const t = b.target || {};
-    const found = own.latest && /^https:\/\//.test(String(t.url || "")) ? { id: clip(t.id || t.url, 300), thread: clip(t.id || t.url, 300), url: clip(t.url, 500), "ownerTags.profile": doc.url || "" } : {};
+    const found = (own.latest || profileLatest) && /^https:\/\//.test(String(t.url || ""))
+      ? Object.assign({ id: clip(t.id || t.url, 300), thread: clip(t.id || t.url, 300), url: clip(t.url, 500) },
+        own.latest ? { "ownerTags.profile": doc.url || "" } : { "report.profile": (doc.report || {}).profile || doc.url || "" })
+      : {};
     const picked = doc.campaign === OwnerTags.CAMPAIGN && Array.isArray(b.mentions)
       ? b.mentions.slice(0, 20).map((m) => ({ token: clip((m || {}).token, 120), handle: clip((m || {}).handle, 120), name: clip((m || {}).name, 120), linked: (m || {}).linked === true })).filter((m) => m.token) : [];
     const tagged = picked.length ? { "ownerTags.linked": picked.filter((m) => m.linked).map((m) => m.token), "ownerTags.plain": picked.filter((m) => !m.linked).map((m) => m.token) } : {};
@@ -413,9 +460,10 @@ async function result(deps, body) {
       if (doc.campaign === "report-reply") await db.collection("engagement_daily").doc(E.bogotaDay(now)).set({ report: { posted: inc(1) } }, { merge: true });
       if (picked.length) await OwnerTags.learnNames(db, doc.network, picked.filter((m) => m.linked), now);
       if (doc.campaign === Students.CAMPAIGN) await Students.sent(deps, doc, b);
-    } else if (b.none && own.latest) {
+    } else if (b.none && (own.latest || profileLatest)) {
       status = "failed";
-      await ref.update({ [k + "status"]: status, [k + "at"]: at, [k + "error"]: error || "No post of theirs to answer on their profile.", [k + "tries"]: tries, [k + "leasedAt"]: "", "ownerTags.none": at, updatedAt: at });
+      await ref.update(Object.assign({ [k + "status"]: status, [k + "at"]: at, [k + "error"]: error || "No post of theirs to answer on their profile.", [k + "tries"]: tries, [k + "leasedAt"]: "", updatedAt: at },
+        own.latest ? { "ownerTags.none": at } : { "report.none": at }));
     } else {
       status = !b.retry && tries >= Act.MAX_TRIES ? "failed" : "approved";
       await ref.update(Object.assign({ [k + "error"]: error, [k + "tries"]: tries, [k + "leasedAt"]: "", updatedAt: at }, status === "failed" ? { [k + "status"]: status } : {}));
@@ -441,7 +489,11 @@ async function result(deps, body) {
   return { ok: true, key, action, status };
 }
 
-const OPS = { "engagement-mac-sites": sites, "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result };
+const OPS = {
+  "engagement-mac-sites": sites, "engagement-mac-ingest": ingest, "engagement-mac-queue": queue, "engagement-mac-result": result,
+  "engagement-mac-linkedin-queue": (deps, body) => LinkedIn.macQueue(deps, body),
+  "engagement-mac-linkedin-result": (deps, body) => LinkedIn.macResult(deps, body)
+};
 
 /** The jarvis function's entry for the Mac: checks the token, then runs the op. */
 async function handle(deps, body, token) {

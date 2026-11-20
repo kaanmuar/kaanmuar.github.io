@@ -18,7 +18,7 @@ const CAPS = { threads: 50, offers: 50, dms: 100, history: 200 };
 
 const clip = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
 const iso = (ms) => new Date(ms).toISOString();
-const bareDomain = (v) => clip(v, 200).toLowerCase().replace(/^https?:\/\//, "").replace(/[/?#].*$/, "").replace(/^www\./, "");
+const bareDomain = (v) => clip(v, 200).toLowerCase().replace(/^https?:\/\//, "").replace(/[/?#](?<![/?#][^\n\r\u2028\u2029/?#]*[/?#]).*$/, "").replace(/^www\./, "");
 
 /** The ledger id: "<network>:<handle>", lowercased without the @; companies "web:<domain>". */
 function idFor(network, handle) {
@@ -75,7 +75,7 @@ function merged(prev, id, patch, now) {
   ["network", "handle", "name", "notes"].forEach((k) => { if (p[k] != null && clip(p[k], 2000)) doc[k] = clip(p[k], k === "notes" ? 2000 : 200); });
   if (p.lang && /^[a-z]{2}$/.test(String(p.lang).slice(0, 2).toLowerCase())) doc.lang = String(p.lang).slice(0, 2).toLowerCase();
   if (p.domain) doc.domain = bareDomain(p.domain);
-  if (p.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(p.email).trim())) doc.email = clip(p.email, 200).toLowerCase();
+  if (p.email && /^[^\s@]+@[^\s@][^\s@.]*\.[^\s@]+$/.test(String(p.email).trim())) doc.email = clip(p.email, 200).toLowerCase();
   // Claims land out of order, so a live's uses only grow.
   if (p.uses != null && Number.isFinite(Number(p.uses))) doc.uses = Math.max(Number(base.uses) || 0, Math.floor(Number(p.uses)));
   if (p.nextAt !== undefined) doc.nextAt = p.nextAt ? iso(Date.parse(p.nextAt) || now) : "";

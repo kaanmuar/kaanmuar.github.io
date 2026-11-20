@@ -18,6 +18,7 @@
    real finding to cite. The offer cites one or two findings from the review, the ones in the areas the sector's site
    lives on first (site-dependency.js areasOf). */
 const SD = require("./site-dependency");
+const CONTACTS = require("./company-contacts");
 const P = require("./engagement-profiles");
 const E = require("./engagement");
 const people = require("./outreach-people");
@@ -39,7 +40,7 @@ const LEAD_HEADER = ["segment", "sector", "org", "host", "cc", "country", "langu
   "tiktok_url", "x_url", "source", "sequence", "sender", "finding_1", "finding_2", "finding_1_en", "finding_2_en", "reason", "trial_code", "trial_url", "trial_days",
   "after_percent", "live_report_url", "approved", "status"];
 
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 
 /** The trial's terms: { days, after } from outreach-trials TRIAL. */
 const terms = () => ({ days: trials.TRIAL.days, after: trials.TRIAL.followup.company });
@@ -86,7 +87,9 @@ function offerFor(c) {
   if (!sector) return no("sector");
   const findings = findingsFor(c.findings, sector.key);
   if (!findings.length) return no("no-findings");
-  const email = NO_COLD_EMAIL.has(String(person.country || "").toLowerCase()) ? "" : ((person.emails || [])[0] || {}).email || "";
+  const cc = String(person.country || "").toLowerCase();
+  const published = (person.emails || []).map((e) => e.email).filter(Boolean);
+  const email = NO_COLD_EMAIL.has(cc) ? "" : published.find((address) => !CONTACTS.roleOnly(cc) || CONTACTS.isRoleEmail(address)) || "";
   const socials = (person.socials || []).filter((s) => SOCIAL_NETS.includes(s.network))
     .sort((a, b) => SOCIAL_NETS.indexOf(a.network) - SOCIAL_NETS.indexOf(b.network)).slice(0, SOCIAL_PER_COMPANY);
   const channels = [email ? "email" : "", socials.length ? "social" : ""].filter(Boolean);

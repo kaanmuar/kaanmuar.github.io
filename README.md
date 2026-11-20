@@ -69,12 +69,12 @@ Sign in, give a public https address, and the review analyzes up to 20 pages of 
 * **"Is this site on anyone's blocklist?"** Every review checks the site against Google Safe Browsing (Web Risk) and the Cloudflare URL Scanner (`functions/url-review-threat-lists.js`; it reuses a scan from the last day or submits a public one, visible on Cloudflare Radar). PhishStats and URLhaus are wired in but wait for keys. Every third-party script, iframe, form and link host is checked with Web Risk too (`functions/url-review-linked-risk.js`, at most 60 hosts a review, 24-hour cache, half the free daily quota kept for customer reviews). A listed site, or a listed script host, is a critical finding and stays off Live Reports.
 * **"Has it been hacked?"** `functions/url-review-hack-signs.js` looks for spam injected into search results (a Brave Search `site:` query), cloaking for Googlebot and hidden spam links. It rates a sign high only with strong evidence (the term in a title or slug, an orphan page, a different script); a mere mention is info, and a search that fails reads "not checked".
 * **"Who is pretending to be us?"** `functions/url-review-lookalikes.js` lists registered domains that imitate the client's and flags the ones with a website or a mail server. It runs for client reviews, outreach sweeps and Jarvis, not for competitor runs.
-* **"Will our mail land?"** SPF, DMARC and DKIM are read in depth (`functions/url-review-mail-auth.js`), and the domain and its mail hosts are looked up on free spam and DNS blocklists such as the Spamhaus DBL (`functions/url-review-blocklists.js`).
+* **"Will our mail land?"** SPF and DMARC are read in depth, and DKIM keys at the common selectors for their type, size and revocation (`functions/url-review-mail-auth.js`), and the domain and its mail hosts are looked up on free spam and DNS blocklists such as SpamCop, Mailspike and NordSpam (not Spamhaus) (`functions/url-review-blocklists.js`).
 * **"Is our WordPress safe?"** Core, plugin and theme versions are matched against the Wordfence Intelligence feed (`functions/url-review-wordpress.js`). Until the feed is stored (#3310), plugin versions are not checked.
 * **"Is our .env online?"** Exposed files (`.env`, `.git`, backups) are checked only for owners, after ownership is proved (`functions/url-review-exposed.js`).
 * **"My review failed. Now what?"** The log is kept for 90 days, and a daily job (`functions/url-review-failures.js`) sorts each failure into a cause. Gemini (on Vertex AI, with the AI Studio key as fallback) and rules diagnose it, and the review is retried with the method that suits the cause (`functions/url-review-rescue.js`). The last rung is Carlos's Mac: an hourly launchd job opens the site in a real, minimized Chrome window, which reads sites whose Cloudflare or bot wall blocks cloud data-center addresses; promised reviews go first. When the cause clears, or a fix lands in `FIXES`, the review runs again and waits on the desk. Once an operator sends it, the asker gets "Your review of {host} ran again and is in", free.
-* **"You couldn't finish it. Will I hear back?"** When a review fails for a reason that can't be settled at once, the page says so and promises the full report by email (`functions/url-review-promise.js`). The email is kept for that. Re-runs try at 0.5, 4, 12, 24 and 40 hours and send the report as soon as one finishes. The asker also gets an apology code (SORRY-…, 20% off the next review, valid 90 days); if no report is ready after 48 hours, an apology mail goes out and the code stays valid.
-* **"Can you just fix it for us?"** Each open finding has *Get the fix* and *Fix this for me*, and the report ends with four paths (`js/qa-review-fix.js`, `functions/url-review-fix-requests.js`): fix it yourself with *Ask the report* (a paid report also gets one free re-check), ask for a quote (Carlos replies within two working days), a fixed-price package, or a 30-minute call. Packages are launch prices in USD, about 30% below list (`functions/url-review-fix-offers.js`): security headers 99 (3 working days), email and DNS 89 (3), TLS and redirects 69 (2), accessibility 169 (5), performance 199 (5), SEO meta 119 (4). Coupons never apply to packages. They are paid with PayPal (`functions/url-review-fix-checkout.js`); the owner gets a mail, the client a "Fix package" receipt, and the request is accepted. When the desk marks the work done, a free re-review (`fixRereview`) runs and the client gets a before/after mail marking each finding fixed, still open, or needing a person (`functions/url-review-fix-mail.js`).
+* **"You couldn't finish it. Will I hear back?"** When a review fails for a reason that can't be settled at once, the page says so and promises the full report by email (`functions/url-review-promise.js`). The email is kept for that. Re-runs try at 0.5, 4, 12, 24 and 40 hours and send the report as soon as one finishes. The asker also gets an apology code (SORRY-…, 20% off the next review, valid 90 days); if no report is ready after 48 hours, an apology mail goes out and the code stays valid. The re-runs and the Mac keep trying: a report that finishes within 14 days is still sent, saying it is late, and after 14 days a last note goes out (#3257).
+* **"Can you just fix it for us?"** Each open finding has *Get the fix* and *Fix this for me*, and the report ends with four paths (`js/qa-review-fix.js`, `functions/url-review-fix-requests.js`): fix it yourself with *Ask the report* (a paid report also gets one free re-check), ask for a quote (Carlos replies within two working days), a fixed-price package, or a 30-minute call. Packages are launch prices in USD until December 10, 2026, about 30% below list, which applies after (`functions/url-review-fix-offers.js`): security headers 99 (3 working days), email and DNS 89 (3), TLS and redirects 69 (2), accessibility 169 (5), performance 199 (5), SEO meta 119 (4). Coupons never apply to packages. They are paid with PayPal (`functions/url-review-fix-checkout.js`); the owner gets a mail, the client a "Fix package" receipt, and the request is accepted. When the desk marks the work done, a free re-review (`fixRereview`) runs and the client gets a before/after mail marking each finding fixed, still open, or needing a person (`functions/url-review-fix-mail.js`).
 * **Your reviews shelf** (`qa-review-account.html`): search with `/`, select several and open them in tabs, download JSON, unlock, or delete with a second click. Each card folds its summary and cases, and *Expand all* or *Collapse all* opens or closes every card. *Verify a site you own* gives a token for a DNS TXT record (`qa-lab-verify=<token>`) or a homepage `<meta name="qa-lab-verify">` tag. *Download my data* exports everything. Typing your email deletes the account and its runs; a payment record stays five years, without the report.
 * **Owners hear about it once:** a site owner may get one email, at most once per domain every six months and only at a public address. It shows the health score and offers *Claim the report*, *Remove from Live Reports*, and a stop link. It never says who asked. Replies are sorted by rules (`functions/url-review-owner-replies.js`): bounces, stops, and complaints stop the address at once, and the rest wait as one-click decisions on the desk.
 * **The hero counts** pages read and reviews run so far (`/stats`, every two minutes). Only finished runs that read a page add to them.
@@ -195,6 +195,28 @@ Each command serves the folder on port `8767` and stays on `http://127.0.0.1:876
 
 * [Node.js](https://nodejs.org/en/) and npm.
 * [Firebase CLI](https://firebase.google.com/docs/cli) if you deploy rules (`npm install -g firebase-tools`).
+
+### QA-lab MCP (Cursor)
+
+Soft-preview + report-read tools for Cursor (`packages/qa-lab-mcp`, #3480):
+
+```bash
+cd packages/qa-lab-mcp && npm install
+```
+
+```json
+{
+  "mcpServers": {
+    "qa-lab": {
+      "command": "node",
+      "args": ["packages/qa-lab-mcp/src/server.js"],
+      "cwd": "/absolute/path/to/kaanmuar.github.io"
+    }
+  }
+}
+```
+
+Env vars and local server notes: [packages/qa-lab-mcp/README.md](packages/qa-lab-mcp/README.md).
 
 ### 2. Clone the Repository
 

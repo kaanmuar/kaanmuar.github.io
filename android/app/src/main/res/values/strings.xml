@@ -14,6 +14,9 @@
     <string name="widget_marketing_desc">Days to the first cold email, leads to upload, replies to answer and LinkedIn requests</string>
     <string name="widget_pipeline_desc">Outreach from reviewed sites to replies and meetings</string>
     <string name="widget_traffic_desc">Sessions against the window before, top countries and sources</string>
+    <string name="widget_cyber_map_desc">Cited cyber events by country over the live feed, 7, 30 and 90 days, with our exposed reports pinned; tap the chip to change what it shows</string>
+    <string name="widget_outreach_map_desc">Where cold email, prospects and replies land by country: light, replies, sent, reply rate, prospects; tap the chip to change what it shows</string>
+    <string name="widget_marketing_map_desc">Where visitors, link clicks, social replies and revenue come from by country; tap the chip to change what it shows</string>
     <string name="widget_pick_desc">One number you choose: revenue, readiness, alerts, sessions and more</string>
     <string name="tile_label">Jarvis</string>
     <string name="share_label">Review with Jarvis</string>

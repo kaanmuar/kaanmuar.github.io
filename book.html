@@ -11,9 +11,15 @@
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
     <link rel="canonical" href="https://carlosandmunoz.com/book.html">
     <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <link rel="describedby" type="text/plain" title="llms.txt" href="https://carlosandmunoz.com/llms.txt">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Carlos A. Muñoz — Interactive CV">
     <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="es_CO">
+    <meta property="og:locale:alternate" content="pt_BR">
+    <meta property="og:locale:alternate" content="de_DE">
+    <meta property="og:locale:alternate" content="fr_FR">
+    <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/book.html">
     <meta property="og:title" content="Schedule a call · Carlos A. Muñoz">
     <meta property="og:description" content="Pick a free time in Carlos's calendar. The invite comes from Google Calendar with a Meet link.">
@@ -23,6 +29,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Carlos A. Muñoz, QA Architect. Interactive CV at carlosandmunoz.com.">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="Schedule a call · Carlos A. Muñoz">
     <meta name="twitter:description" content="Pick a free time in Carlos's calendar. The invite comes from Google Calendar with a Meet link.">
     <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/cv.jpg?v=20261019">
@@ -120,6 +127,18 @@
         .btn[disabled] { opacity: .55; cursor: not-allowed; }
         .error { color: var(--bad); font-weight: 600; }
         .done { border-color: var(--cyan); }
+        .done-band { display: flex; align-items: center; gap: 12px; margin: -22px -22px 18px; padding: 14px 22px; border-radius: 21px 21px 0 0; background: #0d6e76; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; box-shadow: inset 0 -3px 0 #4db3bb; }
+        .done-band img { display: none; width: 28px; height: 28px; border-radius: 7px; }
+        .done[data-look="review"] { border-color: #4db3bb; }
+        .done[data-look="review"] .done-band { background: #071116 linear-gradient(135deg, #071116 0%, #102226 58%, #0d6e76 100%); color: #7ef6fb; box-shadow: inset 0 -4px 0 #7ef6fb; }
+        .done[data-look="review"] .done-band img { display: block; }
+        .done[data-look="general"] .done-band { background: #12181f linear-gradient(135deg, #12181f 0%, #1c2630 70%, #0d4f55 100%); }
+        .done h3 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--cyan); margin: 22px 0 8px; }
+        .adds { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; }
+        .adds .btn { margin-top: 6px; }
+        .btn.alt { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+        .prep { margin: 0; padding-left: 20px; }
+        .prep li { margin: 0 0 6px; }
         #book-turnstile { margin-top: 14px; min-height: 65px; }
         [hidden] { display: none !important; }
         @media (max-width: 800px) {
@@ -127,6 +146,7 @@
             main { padding: 8px 14px 120px; }
             h1 { font-size: 2rem; }
             .sheet { padding: 16px 14px; border-radius: 16px; }
+            .done-band { margin: -16px -14px 16px; padding: 12px 14px; border-radius: 15px 15px 0 0; }
         }
     </style>
 </head>
@@ -177,15 +197,29 @@
         <button class="btn" id="book-submit" type="submit" data-book="submit" data-analytics-event="book_call_submit" data-analytics-category="Booking">Book the call</button>
     </form>
 
-    <section class="sheet done" id="book-done" aria-labelledby="book-done-title" tabindex="-1" hidden>
+    <section class="sheet done" id="book-done" data-look="general" aria-labelledby="book-done-title" tabindex="-1" hidden>
+        <div class="done-band"><img src="assets/qa-review-logo.png" alt="" width="28" height="28"><span id="book-done-eyebrow">Carlos A. Muñoz · QA Architect</span></div>
         <h2 id="book-done-title" data-book="doneTitle">You're booked</h2>
         <p id="book-done-when"></p>
-        <p data-book="doneInvite">Google Calendar is sending the invite to your email. It has the Meet link and lets you add the call to your calendar.</p>
+        <p data-book="doneInvite">We sent a confirmation to your email, and Google Calendar sends its own invite with the Meet link. Add the call to your calendar below.</p>
         <p id="book-done-meet" hidden><a class="btn" id="book-meet" href="https://meet.google.com/" rel="noopener" data-book="meet">Open the Meet link</a></p>
+        <h3 data-book="addTitle">Add it to your calendar</h3>
+        <p class="adds">
+            <a class="btn alt" id="book-add-google" href="https://calendar.google.com/" target="_blank" rel="noopener" data-book="addGoogle">Google Calendar</a>
+            <a class="btn alt" id="book-add-outlook" href="https://outlook.live.com/calendar/" target="_blank" rel="noopener" data-book="addOutlook">Outlook</a>
+            <a class="btn alt" id="book-add-ics" href="#" download="call-with-carlos.ics" data-book="addIcs">Apple Calendar / .ics file</a>
+        </p>
+        <h3 data-book="prepTitle">To get the most from the call</h3>
+        <ul class="prep" id="book-prep"></ul>
+    </section>
+
+    <section class="sheet" aria-labelledby="book-about-title">
+        <h2 id="book-about-title">How calls work</h2>
+        <p class="muted">Every call goes straight onto Carlos A. Muñoz's Google Calendar with a Google Meet link in your selected language (English, Spanish, Portuguese, German, French, or Italian). Pick a 15-minute QA-lab URL Review intro to walk through how an analysis runs, a 30-minute report walkthrough to review findings and fix packages for a specific site, a 30-minute call about a QA Lead or QA Architect role, or a general technical advisory call. Available slots automatically reflect your browser's time zone and avoid existing calendar commitments.</p>
     </section>
 
     <p class="muted"><span data-book="other">Prefer email?</span> <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a> · <a href="index.html" data-book="cv">Interactive CV</a> · <a href="qa-review.html">QA-lab URL Review</a> · <a href="qa-review-legal.html" data-book="privacy">Privacy</a></p>
 </main>
-<script src="js/book.js?v=20261109a" defer></script>
+<script src="js/book.js?v=20261119a" defer></script>
 </body>
 </html>

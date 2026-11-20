@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 // Production hostnames only: a token minted on localhost must not post to the live inbox.
 const HOSTNAMES = new Set(["carlosandmunoz.com", "www.carlosandmunoz.com"]);
-const ACTIONS = new Set(["message", "rating", "booking"]);
+const ACTIONS = new Set(["message", "rating", "booking", "soft-preview"]);
 const LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const LIMIT_POSTS = 5;
 

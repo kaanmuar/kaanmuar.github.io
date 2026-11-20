@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-XM57wpFQssaKTwmBIbRbXTasKLI/dFlpIQskZSKq78E=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://challenges.cloudflare.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-XM57wpFQssaKTwmBIbRbXTasKLI/dFlpIQskZSKq78E=' 'sha256-jineBDmjBt81WPjXTP3GlHJ740C7ojpcHhfp2/uAlHw=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://challenges.cloudflare.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>QA-lab URL Review: SEO, GEO und Testfälle aus einer URL</title>
     <meta name="description" content="Eine https-Seite, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Tempo, geprüft auf Phishing, Malware, Blocklisten und Hacks, mit Testfällen und Korrekturen.">
@@ -16,6 +16,7 @@
     <meta name="theme-color" content="#071116" data-fixed>
     <link rel="canonical" href="https://carlosandmunoz.com/qa-review-de.html">
     <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <link rel="describedby" type="text/plain" title="llms.txt" href="https://carlosandmunoz.com/llms.txt">
     <link rel="icon" href="assets/qa-review-mark.svg?v=20261027a" type="image/svg+xml">
     <link rel="icon" href="assets/qa-review-icon-32.png?v=20261027a" sizes="32x32" type="image/png">
     <link rel="icon" href="assets/qa-review-icon-16.png?v=20261027a" sizes="16x16" type="image/png">
@@ -32,18 +33,18 @@
     <meta property="og:locale:alternate" content="it_IT">
     <meta property="og:url" content="https://carlosandmunoz.com/qa-review-de.html">
     <meta property="og:title" content="Lecks, Fehler und Sperren zuerst finden. · QA-lab URL Review">
-    <meta property="og:description" content="Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Phishing- und Malware-Listen, jeden verlinkten Host mit Google Web Risk, Spam-Blocklisten, Anzeichen einer gehackten Website, Lookalike-Domains, WordPress-Schwachstellen, SPF, DMARC und DKIM, Chat-Widgets, Rechtsseiten, veraltete Bibliotheken und den Domain-Ablauf. Lässt sich eine Prüfung nicht abschließen, kommt der vollständige Bericht per E-Mail, sobald er fertig ist, mit einer Frist von 48 Stunden. Korrekturpakete zum Festpreis ab 69 US$. Anmeldung per E-Mail oder mit einem bestehenden Konto. Sechs Sprachen.">
-    <meta property="og:image" content="https://carlosandmunoz.com/assets/share/qa-review-pitch-de.jpg?v=20261110">
+    <meta property="og:description" content="Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Phishing- und Malware-Listen, jeden verlinkten Host mit Google Web Risk, Spam-Blocklisten, Anzeichen einer gehackten Website, Lookalike-Domains, WordPress-Schwachstellen, SPF, DMARC und DKIM, Chat-Widgets, Rechtsseiten, veraltete Bibliotheken und den Domain-Ablauf. Lässt sich eine Prüfung nicht abschließen, kommt der vollständige Bericht per E-Mail, sobald er fertig ist, meist innerhalb von 48 Stunden. Korrekturpakete zum Festpreis ab 69 US$. Anmeldung per E-Mail oder mit einem bestehenden Konto. Sechs Sprachen.">
+    <meta property="og:image" content="https://carlosandmunoz.com/assets/share/qa-review-pitch-de.jpg?v=20261110-3424">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Ihr Bericht kommt immer an.">
+    <meta property="og:image:alt" content="QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Sie hören immer von uns.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@qalaburlreview">
     <meta name="twitter:title" content="Datenschutz, Barrierefreiheit und Sicherheit aus einer URL. · QA-lab URL Review">
     <meta name="twitter:description" content="Eine öffentliche Prüfung einer https-Website: Bewertungen, Phishing-, Malware- und Blocklisten, Hack-Anzeichen, E-Mail-Authentifizierung und vorgeschlagene QA-Fälle. Korrekturen zum Festpreis ab 69 US$ oder selbst beheben.">
-    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-review-pitch-de.jpg?v=20261110">
-    <meta name="twitter:image:alt" content="QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Ihr Bericht kommt immer an.">
+    <meta name="twitter:image" content="https://carlosandmunoz.com/assets/share/qa-review-pitch-de.jpg?v=20261110-3424">
+    <meta name="twitter:image:alt" content="QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Sie hören immer von uns.">
     <link rel="alternate" hreflang="x-default" href="https://carlosandmunoz.com/qa-review.html">
     <link rel="alternate" hreflang="en" href="https://carlosandmunoz.com/qa-review.html">
     <link rel="alternate" hreflang="es" href="https://carlosandmunoz.com/qa-review-es.html">
@@ -85,7 +86,9 @@
                     "SPF, DMARC und DKIM im Detail, dazu MTA-STS, TLS-RPT und BIMI",
                     "Offen erreichbare Dateien wie .env, .git und Backups, für Inhaber, die den Besitz nachgewiesen haben",
                     "Geschätzter CO₂-Ausstoß pro Besuch",
-                    "Bot-geschützte Websites werden in Headless Chrome analysiert",
+                    "Bot-geschützte Websites und Websites mit abgelehnter Verbindung werden in Headless Chrome analysiert",
+                    "Sauber halten: Überwachungsfälle, Regressions-Pins nach Korrekturen und ein ausführbarer GitHub-Actions-Workflow",
+                    "Vorschau geteilter Berichte: Gesamtwert, sechs Bereichswerte und der wichtigste Befund lesbar; der Rest bis zur Freischaltung unscharf",
                     "Anmeldung per E-Mail oder mit einem bestehenden Konto: Google, Microsoft, GitHub, Yahoo oder X",
                     "Öffentliche Bewertungen täglich als Live Reports veröffentlicht",
                     "Interaktive Karte der analysierten Seiten",
@@ -97,7 +100,7 @@
                     "BrowserStack, Applitools, Percy, Provar und Copado werden genannt, wenn sie zutreffen",
                     "Öffentliche Signale und öffentliche Beiträge",
                     "Live-Prüfprotokoll und eine Stopp-Schaltfläche",
-                    "Eine Prüfung, die sich nicht abschließen lässt: der vollständige Bericht per E-Mail, sobald er fertig ist, mit einer Frist von 48 Stunden, und 20 % Rabatt auf die nächste Prüfung",
+                    "Eine Prüfung, die sich nicht abschließen lässt: der vollständige Bericht per E-Mail, sobald er fertig ist, meist innerhalb von 48 Stunden, und 20 % Rabatt auf die nächste Prüfung",
                     "Beheben, was der Bericht gefunden hat: selbst beheben mit einer kostenlosen erneuten Prüfung, wir beheben es für Sie nach Angebot, Pakete zum Festpreis ab 69 US$ oder ein Gespräch",
                     "Nachrichten aus dem Land der Verbindung, in der Sprache der Seite",
                     "Regeln für eine öffentliche Analyse und eine Liste vorgeschlagener Fälle",
@@ -292,6 +295,7 @@
                             "description": "HSTS, CSP, Frame-Schutz, nosniff sowie Referrer- und Permissions-Policy auf Ihrem Host oder CDN gesetzt und auf jeder Seite geprüft.",
                             "price": "99",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -307,6 +311,7 @@
                             "description": "SPF, DKIM und DMARC eingerichtet und auf Durchsetzung gestellt, dazu CAA, MTA-STS, TLS-RPT und security.txt.",
                             "price": "89",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -322,6 +327,7 @@
                             "description": "Eine gültige Zertifikatskette, eine saubere Weiterleitung auf https und interne Links ohne Umweg.",
                             "price": "69",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -337,6 +343,7 @@
                             "description": "Alternativtexte, Beschriftungen, Kontrast, Überschriften, Sprache, Fokusreihenfolge und Tippflächen in Ihren Vorlagen korrigiert.",
                             "price": "169",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -352,6 +359,7 @@
                             "description": "Render-blockierende Skripte verzögert, Bilder mit Maßen, komprimiert und lazy geladen, Caching gesetzt und mobil neu gemessen.",
                             "price": "199",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -367,6 +375,7 @@
                             "description": "Titel, Beschreibungen, Canonicals, Social Cards, Sitemap und schema.org für jede Seite geschrieben, die die Prüfung gesehen hat.",
                             "price": "119",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-de.html",
                             "deliveryLeadTime": {
@@ -476,7 +485,7 @@
                         "name": "Sucht eine Prüfung nach Phishing, Malware und Hacks?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Jede Prüfung sucht außerdem nach Problemen, die Besucher nicht sehen. Sie prüft die Adresse mit Google Safe Browsing über Web Risk und mit Cloudflare URL Scanner, der einen Scan vom letzten Tag wiederverwendet oder einen neuen einreicht, der auf Cloudflare Radar öffentlich wird. Jeder fremde Host, von dem die Seite Skripte, Frames oder Formulare lädt oder auf den sie verlinkt, wird ebenfalls mit Web Risk geprüft; ein gelisteter Skript-Host ist ein kritischer Befund. Sie sucht nach Anzeichen einer gehackten Website: in Suchergebnisse eingeschleuster Spam, Seiten, die Googlebot etwas anderes zeigen, und versteckte Spam-Links. Sie listet Domains auf, die Ihre nachahmen und eine Website oder einen Mailserver haben, prüft die Domain und ihre Mail- und Webserver gegen kostenlose Spam-Blocklisten wie SpamCop, Mailspike und NordSpam und untersucht SPF, DMARC und DKIM im Detail. Sobald Sie nachweisen, dass Ihnen die Website gehört, sucht sie auch nach offen liegenden Dateien wie .env, .git und Backups."
+                            "text": "Jede Prüfung sucht außerdem nach Problemen, die Besucher nicht sehen. Sie prüft die Adresse mit Google Safe Browsing über Web Risk und mit Cloudflare URL Scanner, der einen Scan vom letzten Tag wiederverwendet oder einen neuen einreicht, der auf Cloudflare Radar als nicht gelistet markiert ist. Jeder fremde Host, von dem die Seite Skripte, Frames oder Formulare lädt oder auf den sie verlinkt, wird ebenfalls mit Web Risk geprüft; ein gelisteter Skript-Host ist ein kritischer Befund. Sie sucht nach Anzeichen einer gehackten Website: in Suchergebnisse eingeschleuster Spam, Seiten, die Googlebot etwas anderes zeigen, und versteckte Spam-Links. Sie listet Domains auf, die Ihre nachahmen und eine Website oder einen Mailserver haben, prüft die Domain und ihre Mail- und Webserver gegen kostenlose Spam-Blocklisten wie SpamCop, Mailspike und NordSpam und untersucht SPF, DMARC und DKIM im Detail. Sobald Sie nachweisen, dass Ihnen die Website gehört, sucht sie auch nach offen liegenden Dateien wie .env, .git und Backups."
                         }
                     },
                     {
@@ -484,7 +493,7 @@
                         "name": "Was passiert, wenn sich eine Prüfung nicht abschließen lässt?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Manchmal bricht eine Prüfung aus einem Grund auf unserer Seite ab, etwa wenn eine Website Cloud-Server abweist. Wir behalten Ihre E-Mail-Adresse, starten die Prüfung auf anderem Weg erneut und senden Ihnen den vollständigen Bericht, sobald er fertig ist, spätestens in 48 Stunden. Für die Umstände erhalten Sie einen Code über 20 % Rabatt auf Ihre nächste Prüfung, 90 Tage gültig. Ist der Bericht nach 48 Stunden noch nicht fertig, schreiben wir Ihnen, und der Code bleibt gültig."
+                            "text": "Manchmal bricht eine Prüfung aus einem Grund auf unserer Seite ab, etwa wenn eine Website Cloud-Server abweist. Wir behalten Ihre E-Mail-Adresse, starten die Prüfung auf anderem Weg erneut und senden Ihnen den vollständigen Bericht, sobald er fertig ist, meist innerhalb von 48 Stunden. Für die Umstände erhalten Sie einen Code über 20 % Rabatt auf Ihre nächste Prüfung, 90 Tage gültig. Ist der Bericht nach 48 Stunden noch nicht fertig, schreiben wir Ihnen und versuchen es weiter: Wird er innerhalb von 14 Tagen fertig, bekommen Sie ihn trotzdem, und der Code bleibt gültig."
                         }
                     },
                     {
@@ -492,7 +501,7 @@
                         "name": "Können Sie beheben, was der Bericht findet?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Bitten Sie uns um die Korrektur, auf eine von vier Arten. Selbst beheben: Den Bericht fragen schreibt die Korrektur, und ein bezahlter Bericht erhält eine kostenlose erneute Prüfung, sobald Ihre Änderungen live sind. Ein Angebot anfragen: Carlos antwortet innerhalb von zwei Werktagen. Ein Festpreis-Paket bestellen. Oder ein Gespräch buchen. Pakete zum Einführungspreis: Sicherheits-Header US$99 (etwa 3 Werktage), E-Mail und DNS US$89 (3), TLS und Weiterleitungen US$69 (2), schnelle Barrierefreiheits-Korrekturen US$169 (5), Performance-Grundlagen US$199 (5) sowie SEO-Metadaten und strukturierte Daten US$119 (4). Sie zahlen mit PayPal; Rabattcodes gelten nicht für Pakete. Ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen einen Vorher-nachher-Vergleich, der jeden Befund als behoben, noch offen oder von einem Menschen zu prüfen markiert."
+                            "text": "Bitten Sie uns um die Korrektur, auf eine von vier Arten. Selbst beheben: Den Bericht fragen schreibt die Korrektur, und ein bezahlter Bericht erhält eine kostenlose erneute Prüfung, sobald Ihre Änderungen live sind. Ein Angebot anfragen: Carlos antwortet innerhalb von zwei Werktagen. Ein Festpreis-Paket bestellen. Oder ein Gespräch buchen. Pakete zum Einführungspreis bis 10. Dezember 2026; danach gilt der Listenpreis: Sicherheits-Header US$99 (etwa 3 Werktage), E-Mail und DNS US$89 (3), TLS und Weiterleitungen US$69 (2), schnelle Barrierefreiheits-Korrekturen US$169 (5), Performance-Grundlagen US$199 (5) sowie SEO-Metadaten und strukturierte Daten US$119 (4). Sie zahlen mit PayPal; Rabattcodes gelten nicht für Pakete. Ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen einen Vorher-nachher-Vergleich, der jeden Befund als behoben, noch offen oder von einem Menschen zu prüfen markiert."
                         }
                     }
                 ]
@@ -515,18 +524,20 @@
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
     <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/qa-review-folds.css?v=20261027a" as="style">
-    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a"></noscript>
+    <link rel="preload" href="css/qa-review-folds.css?v=20261120-3826" as="style">
+    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826"></noscript>
     <link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
     <link rel="preload" href="css/qa-review-live.css?v=20261104b" as="style">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261104b" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-live.css?v=20261104b"></noscript>
-    <style data-critical="css/qa-review-progress.css?v=20261023a">#run-panel{--rp-cyan:#7ef6fb;--rp-teal:#4db3bb;--rp-mint:#6fe3b1;--rp-gold:#e2c48a;--rp-coral:#f39a8b;--rp-text:#e8f3f4;--rp-muted:#9fb3b8;--rp-line:rgba(159, 214, 220, .16)}</style>
     <link rel="preload" href="css/qa-review-progress.css?v=20261023a" as="style">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a" media="print" data-async-css>
+    <link rel="preload" href="css/qa-review-arena.css?v=20261118a" as="style">
+    <link rel="stylesheet" href="css/qa-review-arena.css?v=20261118a" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-arena.css?v=20261118a"></noscript>
     <noscript><link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a"></noscript>
     <style data-critical="css/qa-review-ask.css?v=20261024c">.ask-panel{--ask-edge:var(--look-edge, var(--line));--ask-card:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));position:fixed;top:12px;right:12px;bottom:12px;z-index:90;width:min(440px, calc(100vw - 24px));box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:18px;background:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));color:var(--text);border:1px solid var(--ask-edge);border-radius:var(--look-radius, 22px);box-shadow:0 24px 70px rgba(8, 14, 18, .35);-webkit-backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35);backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35)}.ask-panel[hidden],.ask-panel [hidden]{display:none!important}.ask-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--ask-edge)}.ask-head > div{min-height:36px;padding-left:46px;background:url("../assets/qa-review-mark.svg?v=20261027a") left center / 36px 36px no-repeat}.ask-head .eyebrow{margin-bottom:2px}.ask-head h2{margin:0;font-size:1.15rem}.ask-note{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.ask-log{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:10px;padding-right:2px}.ask-chips{display:flex;flex-wrap:wrap;gap:6px}.ask-form{display:flex;gap:8px}.ask-form input,.ask-repo input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--ask-edge);border-radius:10px;padding:10px 12px;background:color-mix(in srgb, var(--panel) 70%, transparent);color:var(--text);font:inherit;font-size:14px}.ask-form input:focus,.ask-repo input:focus{outline:2px solid var(--cyan);outline-offset:1px}.ask-repo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.ask-repo input{padding:7px 10px;font-size:13px}.ask-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}@media (max-width: 560px){.ask-panel{inset:0;width:100vw;padding:14px;border:0;border-radius:0;box-shadow:none}.ask-form input,.ask-repo input{font-size:16px}}</style>
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style">
@@ -710,6 +721,9 @@
         .history-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .delta { font-size: 12px; font-weight: 700; color: var(--muted); }
         .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+        .delta-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); font-size: 12px; font-weight: 600; vertical-align: middle; }
+        .delta-badge .delta { font-size: 13px; }
+        .delta-badge .delta-count { color: var(--muted); font-weight: 600; }
         .compare-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin: 10px 0 6px; }
         .compare-form label { flex-basis: 100%; font-size: 13px; font-weight: 600; }
         .compare-field { flex: 1 1 240px; min-width: 0; }
@@ -921,6 +935,26 @@
         .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
         .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .targeted-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .targeted-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); }
+        .targeted-badge.is-clear { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 10%, transparent); }
+        .targeted-badge.is-info { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+        .targeted-badge.is-watch { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+        .targeted-badge.is-high, .targeted-badge.is-critical { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 12%, transparent); }
+        .targeted-badge.is-critical { font-weight: 800; border-width: 1.5px; }
+        .targeted-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+        .targeted-meta strong { color: var(--text); font-weight: 600; }
+        .targeted-list { display: grid; gap: 10px; margin: 0 0 12px; }
+        .targeted-item { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); overflow-wrap: anywhere; }
+        .targeted-item.lvl-critical, .targeted-item.lvl-high { border-left-color: var(--red); }
+        .targeted-item.lvl-watch { border-left-color: var(--amber); }
+        .targeted-item.lvl-info { border-left-color: var(--cyan); }
+        .targeted-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .targeted-owner-offer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+        .targeted-owner-btn { justify-self: start; }
+        .targeted-item h3 { margin: 0 0 4px; font-size: 15px; }
+        .targeted-item p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; }
+        .targeted-foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: grid; gap: 4px; }
         .shots { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 12px; align-items: start; margin: 12px 0; }
         .shots figure { margin: 0; }
         .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
@@ -976,10 +1010,13 @@
             color: var(--text); color-scheme: dark;
             background: radial-gradient(42% 70% at 76% 48%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(30% 45% at 90% 14%, rgba(185, 168, 255, .18), transparent 70%), radial-gradient(46% 36% at 72% 100%, rgba(226, 196, 138, .14), transparent 70%), #071116;
         }
-        .stage > .fx { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
-        .stage.fx-on > .fx { opacity: 1; }
+        .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+        .stage.fx-on > .fx, .stage.stage-hero-on > .stage-hero, .stage.stage-hero-still-on > .stage-hero-still { opacity: 1; }
+        .stage > .stage-hero canvas { display: block; width: 100% !important; height: 100% !important; }
+        .stage-hero-still { margin: 0; object-fit: cover; object-position: 72% center; filter: saturate(1.05); }
+        .stage-hero-still[hidden] { display: none; }
         .stage::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(7, 17, 22, .92) 0%, rgba(7, 17, 22, .78) max(300px, 30%), rgba(7, 17, 22, 0) max(640px, 58%)); }
-        .stage.fx-fallback::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
+        .stage.fx-fallback:not(.stage-hero-still-on)::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
         .stage-copy { position: relative; max-width: 640px; }
         .stage .display { color: #f4fafb; }
         .wire { overflow: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
@@ -1048,9 +1085,24 @@
         .service-facts dd { margin: 4px 0 0; color: var(--muted); }
         .unlock-offer { margin: 14px 0; }
         .unlock-offer[hidden] { display: none; }
+        .report-csat { margin: 14px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+        .report-csat[hidden] { display: none; }
+        .report-csat h2 { margin: 0 0 6px; font-size: 1.05rem; }
+        .report-csat .csat-lead { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+        .report-csat fieldset { border: 0; margin: 0 0 12px; padding: 0; }
+        .report-csat legend { margin: 0 0 8px; }
+        .report-csat .csat-picks { display: flex; flex-wrap: wrap; gap: 6px; }
+        .report-csat .csat-picks label { display: inline-flex; margin: 0; padding: 0; font-weight: 700; }
+        .report-csat .csat-picks span { display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); cursor: pointer; box-sizing: border-box; }
+        .report-csat .csat-picks input { position: absolute; opacity: 0; pointer-events: none; }
+        .report-csat .csat-picks input:checked + span, .report-csat .csat-picks label:hover span { background: var(--cyan); color: var(--night, #102226); }
+        .report-csat .csat-quote { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; margin: 0 0 12px; }
+        .report-csat .csat-msg { min-height: 1.2em; margin: 8px 0 0; font-size: 13px; }
+        .report-csat .csat-msg.bad { color: var(--red); }
+        .report-csat .csat-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .offer-note { margin: 0 0 10px; color: var(--muted); }
         .offer-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-        .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); }
+        .offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; color: var(--text); text-decoration: none; background: var(--card); text-align: left; font: inherit; cursor: pointer; width: 100%; }
         .offer b { font-size: 1.05rem; }
         .offer span { color: var(--muted); font-size: 14px; line-height: 1.45; }
         .offer:hover, .offer:focus-visible { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
@@ -1104,6 +1156,9 @@
         @keyframes alarm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
         .row-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
         .status { min-height: 1.2em; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+        /* Soft-preview Turnstile stays in layout (never display:none while minting) so Siteverify can pass (#3745). */
+        #soft-turnstile { margin: 8px 0 0; min-height: 0; }
+        #soft-turnstile.is-visible { min-height: 65px; margin-bottom: 4px; }
         .status.bad { color: var(--red); }
         html[data-look] #run-panel.log-card,
         .log-card { position: sticky; top: 74px; min-height: calc(100vh - 110px); display: flex; flex-direction: column; background: linear-gradient(180deg, #18222c 0%, #10161d 42%) !important; color: #e8eef2; border-color: #2c3a46 !important; box-shadow: 0 24px 50px rgba(8, 14, 18, .22); }
@@ -1189,7 +1244,9 @@
         .prio-P2 { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); }
         .case-pages { font-size: 12px; overflow-wrap: anywhere; }
         .case-sample { margin: 6px 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 10px; background: var(--panel); }
-        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); }
+        .case-sample-label { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--cyan); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .case-verified { display: inline-block; padding: 1px 7px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--green, #3fb950) 55%, var(--line)); color: var(--green, #3fb950); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; }
+        .case-sample.is-verified { border-left-color: var(--green, #3fb950); }
         .case-split { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0; font-size: 14px; }
         .case-split dt { color: var(--muted); font-size: 12px; font-weight: 700; }
         .case-split dd { margin: 0; }
@@ -1355,6 +1412,22 @@
             backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
         #review-form { display: grid; gap: 10px; margin-top: 14px; perspective: 1000px; }
         #review-form .row-actions { margin-top: 2px; }
+        .url-mode { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+        .url-mode button { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 8px 14px; font: inherit; cursor: pointer; }
+        .url-mode button.is-on, .url-mode button[aria-pressed="true"] { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); font-weight: 600; }
+        #url-mode-many textarea { width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 10px 12px; font: inherit; resize: vertical; }
+        #batch-preview, #batch-panel-rows { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+        #batch-preview li, #batch-panel-rows li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .06); border-left: 3px solid rgba(255, 255, 255, .25); }
+        #batch-preview li.is-lead, #batch-panel-rows li.is-lead { border-left-color: var(--cyan); background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+        .batch-lead-tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cyan); }
+        .batch-host { font-weight: 600; }
+        .batch-check { flex-basis: 100%; margin: 0; }
+
+        .batch-file-clear { font: inherit; font-size: 13px; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+        #batch-text:disabled, #batch-file:disabled { opacity: .55; cursor: not-allowed; }
+        .batch-url, .batch-state, .batch-score { font-size: 13px; opacity: .85; }
+        #batch-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+        #batch-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .req-group:hover { transform: translateY(-1px); }
         .req-group[open]:hover { transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
         .req-group.done .tg-count { font-size: 12px; }
@@ -1412,8 +1485,9 @@
             h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
             .stage { display: block; min-height: 0; padding: 236px 14px 20px; }
-            .stage > .fx { height: 420px; bottom: auto; }
-            .stage.fx-fallback::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
+            .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { height: 420px; bottom: auto; }
+            .stage-hero-still { object-position: center 28%; }
+            .stage.fx-fallback:not(.stage-hero-still-on)::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
             .stage::before { background: linear-gradient(180deg, rgba(7, 17, 22, 0) 150px, rgba(7, 17, 22, .82) 270px, #071116 420px); }
             .facts { gap: 10px; }
             .facts li { flex: 1 1 28%; min-width: 0; }
@@ -1482,6 +1556,7 @@
             @page { margin: 14mm 12mm 18mm; }
         }
     </style>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body class="preview-copy">
 <a class="skip-link" href="#review-app" lang="de" translate="no">Zum Hauptinhalt springen</a>
@@ -1490,6 +1565,7 @@
 <header class="topbar">
     <div class="brand"><a href="qa-review-de.html"><img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36"><span translate="no">QA-lab<small>URL Review</small></span></a></div>
     <div class="actions">
+        <a class="btn btn-ghost" href="qa.html">QA Lab suite</a>
         <a class="btn btn-ghost" href="index.html">CV</a>
         <a class="btn btn-ghost" href="qa-lab.html" lang="de" translate="no">Regressionslabor</a>
         <a class="btn btn-ghost" href="qa-review-account.html" lang="de" translate="no">Ihre Prüfungen</a>
@@ -1535,7 +1611,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review" lang="de" translate="no">Was die Prüfung tut</b><span class="tg-gist" data-tg="review" lang="de" translate="no">Nur öffentliche Seiten. Sie schlägt Testfälle vor und führt sie nie aus.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <p class="lede" lang="de" translate="no">Nichts, was Sie eingeben, wird zur Prüfung gesendet, bevor Sie zustimmen. Für eine Prüfung melden Sie sich auf diesem Gerät mit Ihrer E-Mail-Adresse oder einem bestehenden Konto an (Google, Microsoft, GitHub, Yahoo oder X). Die Prüfung ruft öffentliche Seiten ab, öffnet bis zu drei davon in einem Headless-Browser von einer EU-Adresse in Belgien und schlägt Testfälle vor. In diesem Browser klickt sie einmal auf die Ablehnen-Schaltfläche eines Cookie-Banners und sonst nichts. Google PageSpeed Insights bewertet die Startseite, und Google Web Risk gleicht sie mit den Safe-Browsing-Listen ab, daher erhält Google diese Adresse; außerdem wird die Registrierungsstelle der Domain per RDAP abgefragt. Sie führt die Fälle nicht aus, meldet sich nicht auf Ihrer Website an, sendet keine Formulare und erzeugt keine Last. Die Sprachauswahl ist auf diesem Bildschirm.</p>
-                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t2"> Dieser Dienst ruft öffentliche Seiten ab, beschreibt, was er findet, und schlägt Testfälle vor. Er führt diese Fälle nicht aus.</label>
+                        <label class="check" lang="de" translate="no"><input type="checkbox" name="t2"> Dieser Dienst ruft öffentliche Seiten ab, beschreibt, was er findet, und schlägt Testfälle vor. Er führt diese Fälle nicht aus. Außerdem vergleicht er die Website mit öffentlichen Angriffs- und Exploit-Listen. Dafür verlassen nur die Domain (zur Auflösung der Adresse und an das Zertifikatsprotokoll von CertSpotter), die Namen und Versionen der Bibliotheken (an OSV.dev) und CVE-Nummern (an FIRST) diesen Dienst; Sie können diese Prüfungen vor jeder Prüfung abschalten.</label>
                         <label class="check" lang="de" translate="no"><input type="checkbox" name="t3"> Ich reiche eine öffentliche https-Adresse ein. Ich reiche keine private, Link-Local- oder Metadaten-Adresse ein.</label>
                         <label class="check" lang="de" translate="no"><input type="checkbox" name="t4"> Der Bericht ist eine Momentaufnahme und ein Vorschlag. Er bescheinigt nicht, dass die Website sicher, schnell oder rechtskonform ist.</label>
                     </div>
@@ -1546,7 +1622,7 @@
                         <label class="check" lang="de" translate="no"><input type="checkbox" name="t1"> Ich bin mindestens 18 Jahre alt. Wenn ich diese Hinweise nicht akzeptiere, kann ich keine URL eingeben.</label>
                         <label class="check" lang="de" translate="no"><input type="checkbox" name="t5"> Ich gebe meinen Namen, meine E-Mail-Adresse und den Grund an, damit festgehalten ist, wer angefragt hat. Eine Kopie oder Löschung kann ich unter qa@carlosandmunoz.com verlangen.</label>
                         <label class="check" lang="de" translate="no"><input type="checkbox" name="t9"> Wenn ich angebe, einen Benutzernamen und ein Passwort zu haben, darf ich dieses Login auf der eingereichten Website verwenden. Diese Seite fragt nicht nach dem Passwort. Ein Lauf mit Login wird vor dem Start bezahlt, und das Passwort wird nicht im Prüfdatensatz gespeichert. Die öffentliche Analyse meldet sich weiterhin nicht auf der Website an. Signale im Bericht sind das, was die öffentliche Antwort gezeigt hat. Sie sind kein Beweis für einen Einbruch. Das Ende jedes Signals bleibt unscharf, bis dieser Abschnitt bezahlt ist.</label>
-                        <p class="records-note" id="records-note" lang="de" translate="no">Die Datensätze enthalten Ihren Namen, Ihre E-Mail-Adresse, den Grund, die URL, die gewählten Frameworks, das Prüfprotokoll, ob Sie gestoppt haben, die Uhrzeit, die IP-Adresse, den Browser, die Geräte-ID und die Sprache sowie Land, Region und Stadt, wenn der Server sie liefert. Prüfdatensätze werden 12 Monate ab dem Lauf aufbewahrt; Protokolle fehlgeschlagener oder gestoppter Prüfungen und ihrer Wiederholungen 90 Tage. Das Öffnen einer Prüfseite protokolliert IP-Adresse, Browser, ungefähre Stadt, Zeitzone, Sprachen und verweisende Website, um Besuche zu zählen; diese Zeilen, Notizen, Stopp-Links und E-Mails werden 12 Monate aufbewahrt. Nach der Anmeldung werden die geöffneten Prüfseiten und die Zeit, in der sie sichtbar sind, im Konto erfasst, um zu sehen, wer wiederkommt; sie werden 12 Monate aufbewahrt. Der Seitentext wird an keinen Modellanbieter gesendet. Ein Passwort wird weder erhoben noch gespeichert. Ein Berichtslink öffnet sich vollständig nur für das Konto, das ihn ausgeführt hat; alle anderen sehen eine unscharfe Vorschau. Aufrufe durch ein anderes angemeldetes Konto werden mit der ersten und letzten Uhrzeit gezählt, nie, wer geöffnet hat, und der Inhaber erhält beim ersten Mal eine E-Mail. Folgehinweise kommen nur, wenn Sie sie in der Anfrage wünschen: höchstens drei pro Woche, und eine Antwort mit „stop“ beendet sie jederzeit. Die Bewertungen und Befunde zu den öffentlichen Seiten können als Live Report, auf GitHub und in sozialen Medien veröffentlicht werden, es sei denn, Sie kreuzen „Diese Prüfung nicht veröffentlichen“ an; Ihr Name, Ihre E-Mail-Adresse, Ihr Grund, Ihre IP-Adresse und Ihr Browser werden nie veröffentlicht. Scheitert eine Prüfung aus einem Grund auf Seiten dieses Dienstes, werden Hostname, Uhrzeit, Fehler und die letzten Protokollzeilen, ohne Ihren Namen, Ihre E-Mail-Adresse oder die URL-Abfrage, in einem öffentlichen GitHub-Issue veröffentlicht. Die Anmeldung speichert Ihre E-Mail-Adresse, die Anmeldeart, die Benutzer-ID beim Anbieter sowie den Zeitpunkt der ersten und der letzten Anmeldung; eine Anmeldung auf diesem Gerät gilt 30 Tage. Eine Anmeldung über einen Anbieter speichert zusätzlich Namen, Vor- und Nachnamen, Foto, Sprache und Workspace-Domain, die dieser teilt. Eine Google-Anmeldung speichert zusätzlich die weiteren E-Mail-Adressen, das Geburtsdatum, Telefonnummern, Adressen, das Geschlecht und berufliche Angaben, die Google teilt; sie werden für einen künftigen kostenpflichtigen Tarif aufbewahrt und noch nicht verwendet. Das Konto wird 12 Monate nach der letzten Anmeldung aufbewahrt. Eine Anmeldung per E-Mail teilt nur Ihre Adresse. Kopien, Berichtigungen und Löschung: qa@carlosandmunoz.com. Die vollständige Liste steht in den Hinweisen. Version 2026-10-24.</p>
+                        <p class="records-note" id="records-note" lang="de" translate="no">Die Datensätze enthalten Ihren Namen, Ihre E-Mail-Adresse, den Grund, die URL, die gewählten Frameworks, das Prüfprotokoll, ob Sie gestoppt haben, die Uhrzeit, die IP-Adresse, den Browser, die Geräte-ID und die Sprache sowie Land, Region und Stadt, wenn der Server sie liefert. Prüfdatensätze werden 12 Monate ab dem Lauf aufbewahrt; Protokolle fehlgeschlagener oder gestoppter Prüfungen und ihrer Wiederholungen 90 Tage. Das Öffnen einer Prüfseite protokolliert IP-Adresse, Browser, ungefähre Stadt, Zeitzone, Sprachen und verweisende Website, um Besuche zu zählen; diese Zeilen, Notizen, Stopp-Links und E-Mails werden 12 Monate aufbewahrt. Nach der Anmeldung werden die geöffneten Prüfseiten und die Zeit, in der sie sichtbar sind, im Konto erfasst, um zu sehen, wer wiederkommt; sie werden 12 Monate aufbewahrt. Der Seitentext wird an keinen Modellanbieter gesendet. Ein Passwort wird weder erhoben noch gespeichert. Ein Berichtslink öffnet sich vollständig nur für das Konto, das ihn ausgeführt hat; alle anderen sehen eine unscharfe Vorschau. Aufrufe durch ein anderes angemeldetes Konto werden mit der ersten und letzten Uhrzeit gezählt, nie, wer geöffnet hat, und der Inhaber erhält beim ersten Mal eine E-Mail. Folgehinweise kommen nur, wenn Sie sie in der Anfrage wünschen: höchstens drei pro Woche, und der Abmeldelink in jeder Nachricht beendet sie jederzeit. Die Bewertungen und Befunde zu den öffentlichen Seiten können als Live Report, auf GitHub und in sozialen Medien veröffentlicht werden, es sei denn, Sie kreuzen „Diese Prüfung nicht veröffentlichen“ an; Ihr Name, Ihre E-Mail-Adresse, Ihr Grund, Ihre IP-Adresse und Ihr Browser werden nie veröffentlicht. Scheitert eine Prüfung aus einem Grund auf Seiten dieses Dienstes, werden Hostname, Uhrzeit, Fehler und die letzten Protokollzeilen, ohne Ihren Namen, Ihre E-Mail-Adresse oder die URL-Abfrage, in einem öffentlichen GitHub-Issue veröffentlicht. Die Anmeldung speichert Ihre E-Mail-Adresse, die Anmeldeart, die Benutzer-ID beim Anbieter sowie den Zeitpunkt der ersten und der letzten Anmeldung; eine Anmeldung auf diesem Gerät gilt 30 Tage. Eine Anmeldung über einen Anbieter speichert zusätzlich Namen, Vor- und Nachnamen, Foto, Sprache und Workspace-Domain, die dieser teilt. Eine Google-Anmeldung speichert zusätzlich die weiteren E-Mail-Adressen, das Geburtsdatum, Telefonnummern, Adressen, das Geschlecht und berufliche Angaben, die Google teilt; sie werden für einen künftigen kostenpflichtigen Tarif aufbewahrt und noch nicht verwendet. Das Konto wird 12 Monate nach der letzten Anmeldung aufbewahrt. Eine Anmeldung per E-Mail teilt nur Ihre Adresse. Kopien, Berichtigungen und Löschung: qa@carlosandmunoz.com. Die vollständige Liste steht in den Hinweisen. Version 2026-10-24.</p>
                     </div>
                 </details>
                 <details class="term-group" style="--i: 2">
@@ -1576,9 +1652,13 @@
     <div class="wire-row" data-dir="ltr"><div class="wire-track"></div></div>
     <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
 </section>
-<section class="stage" data-fx data-fx-mode="0" data-fx-place="hero" aria-labelledby="studio-title">
-        <canvas class="fx" aria-hidden="true"></canvas>
-        <div class="stage-copy" data-fx-copy>
+<section class="stage" aria-labelledby="studio-title">
+        <picture id="review-hero-still" class="stage-hero-still" hidden>
+            <source srcset="assets/url-review-hero/hero-3d-en-safe.webp?v=3429a" type="image/webp">
+            <img src="assets/url-review-hero/hero-3d-en-safe.png?v=3429a" alt="" width="1920" height="1080" decoding="async" fetchpriority="low">
+        </picture>
+        <div id="review-hero-3d" class="stage-hero" aria-hidden="true"></div>
+        <div class="stage-copy">
             <p class="eyebrow" translate="no">QA-lab URL Review</p>
             <h1 id="studio-title" class="display" lang="de" translate="no">
                 <span>Finden Sie Lecks,</span>
@@ -1586,15 +1666,15 @@
                 <span>bevor Kunden</span>
                 <span>oder Behörden es tun.</span>
             </h1>
-            <p class="lede" lang="de" translate="no">QA-lab URL Review sagt Ihnen, ob Ihre Website sicher ist, und prüft gründlicher als die meisten Checker: Phishing- und Malware-Listen, Anzeichen einer gehackten Website, Lookalike-Domains und jeden Host, den Ihre Seiten laden oder verlinken. Muss etwas behoben werden, beheben wir es zum Festpreis ab 69 US$ und prüfen danach kostenlos erneut. Und Ihr Bericht kommt immer an: Kann der erste Durchlauf nicht abschließen, erhalten Sie den vollständigen Bericht innerhalb von 48 Stunden per E-Mail.</p>
+            <p class="lede" lang="de" translate="no">QA-lab URL Review sagt Ihnen, ob Ihre Website sicher ist, und prüft gründlicher als die meisten Checker: Phishing- und Malware-Listen, Anzeichen einer gehackten Website, Lookalike-Domains und jeden Host, den Ihre Seiten laden oder verlinken. Muss etwas behoben werden, beheben wir es zum Festpreis und prüfen danach kostenlos erneut. Und Sie hören immer von uns: Kann der erste Durchlauf nicht abschließen, versuchen wir es weiter und schicken Ihnen den Bericht per E-Mail – meist innerhalb von 48 Stunden, mit 20 % Rabatt auf Ihre nächste Prüfung, wenn es länger dauert.</p>
             <form class="stage-start" id="stage-start" novalidate>
                 <label class="stage-start-label" for="stage-url" lang="de" translate="no">Beginnen Sie mit der Adresse einer öffentlichen Seite</label>
                 <div class="stage-start-row">
                     <div class="stage-start-field"><div class="url-row notranslate" id="stage-url-field"><span>https://</span><input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com"></div></div>
-                    <button class="btn btn-primary" type="submit" lang="de" translate="no">Diese Seite prüfen</button>
+                    <button class="btn btn-primary" type="submit">Run</button>
                 </div>
                 <p class="field-error" id="stage-url-error"></p>
-                <p class="stage-start-note" lang="de" translate="no">Ihre erste Prüfung ist inklusive: bis zu 20 Seiten, zwei Links tief. Danach melden Sie sich auf diesem Gerät an und wählen einen Grund; der Bericht öffnet sich hier, wenn die Prüfung endet.</p>
+                <p class="stage-start-note">Paste a public https page and run. You get real scores and the top finding with no account. Sign in only when you unlock a full site audit.</p>
             </form>
             <ul class="facts">
                 <li><b>21</b><span lang="de" translate="no">Arten von Testfällen</span></li>
@@ -1607,6 +1687,8 @@
                 <a class="live-jump" href="#live-reports" lang="de" translate="no">Live Reports echter Websites ansehen ↓</a>
                 <button class="stage-link" id="stage-sample-open" type="button" lang="de" translate="no">Beispielbericht ansehen</button>
                 <a class="stage-link" id="stage-guide" href="qa-review-guide.html" lang="de" translate="no">Machen Sie die Fünf-Minuten-Tour</a>
+                <a class="stage-link" id="stage-explorer" href="qa-review-explorer.html">Explore checks in 3D</a>
+                <a class="stage-link" id="stage-cybermap" href="cyber-attacks.html" lang="de" translate="no">Cyberangriffe-Karte</a>
                 <a class="stage-link" id="stage-book" href="book.html?type=intro&amp;lang=de&amp;utm_source=qa-review&amp;utm_campaign=review-hero" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Review hero" lang="de" translate="no">15-Minuten-Gespräch buchen</a>
             </div>
         </div>
@@ -1619,13 +1701,13 @@
                 <div>
                     <p class="eyebrow" data-live-eyebrow lang="de" translate="no">Live-Berichte</p>
                     <h2 id="live-title" class="live-title" data-live-title lang="de" translate="no">Echte Websites. Echte Prüfungen. <em>Öffnen Sie jeden Bericht.</em></h2>
-                    <p class="live-lede" data-live-lede lang="de" translate="no"><b>2737 öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Websites auf einer Phishing- oder Malware-Liste werden nie veröffentlicht. Nur ansehen und teilen.</p>
+                    <p class="live-lede" data-live-lede lang="de" translate="no"><b>4171 öffentliche Websites</b>, analysiert mit derselben Prüfung, die jeder starten kann: Regierungsportale, Redaktionen, Banken, Universitäten, Open-Source-Projekte und Verkehrsbetriebe. Blättern Sie durch das Karussell, filtern Sie nach Branche oder Land und öffnen Sie einen Bericht. Von Nutzern angefragte Prüfungen kommen täglich gesammelt hinzu. Websites auf einer Phishing- oder Malware-Liste werden nie veröffentlicht. Nur ansehen und teilen.</p>
                     <p class="live-follow" data-live-follow lang="de" translate="no">Jeden Tag neue Berichte auf <a href="https://t.me/qalab_live" rel="noopener" target="_blank">Telegram</a> und <a href="https://www.reddit.com/r/QALabLiveReports/" rel="noopener" target="_blank">Reddit</a>.</p>
                 </div>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="de" translate="no">Live Reports brauchen JavaScript zum Öffnen. Stand 10. November 2026 umfasst die Reihe 2737 öffentliche Websites in 27 Branchen, seit dem 19. Oktober 2026 mit derselben Prüfung analysiert, die jeder starten kann; neue Prüfungen kommen in einem täglichen Stapel hinzu. Der durchschnittliche Gesamtwert liegt bei 66 von 100: SEO 68, GEO 85, Analytics 69, Sicherheit 48, Barrierefreiheit 60 und Performance 69. Die höchsten Gesamtwerte haben sevielectro.com 96, MDN Web Docs 95, CA.gov 92 und GOV.UK 92. Die Reihe umfasst Regierungsportale wie GOV.UK, GOV.CO und die Alcaldía de Bogotá; Regionalregierungen wie CA.gov, die Generalitat de Catalunya und die Gobernación del Valle del Cauca; Redaktionen wie BBC, The Guardian und El País; Banken wie Bancolombia und Davivienda; Universitäten wie MIT, Stanford und die Universidad de los Andes; Open-Source-Projekte wie Python.org, Node.js und Kubernetes; und Verkehrssysteme wie TransMilenio und die Metro de Medellín. Jeder Bericht ist eine automatisierte Analyse öffentlicher Seiten, ein Ausgangspunkt und kein Urteil.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="de" translate="no">Live Reports brauchen JavaScript zum Öffnen. Stand 20. November 2026 umfasst die Reihe 4171 öffentliche Websites in 27 Branchen, seit dem 19. Oktober 2026 mit derselben Prüfung analysiert, die jeder starten kann; neue Prüfungen kommen in einem täglichen Stapel hinzu. Der durchschnittliche Gesamtwert liegt bei 64 von 100: SEO 67, GEO 85, Analytics 67, Sicherheit 44, Barrierefreiheit 58 und Performance 66. Die höchsten Gesamtwerte haben sevielectro.com 96, MDN Web Docs 95, CA.gov 92 und GOV.UK 92. Die Reihe umfasst Regierungsportale wie GOV.UK, GOV.CO und die Alcaldía de Bogotá; Regionalregierungen wie CA.gov, die Generalitat de Catalunya und die Gobernación del Valle del Cauca; Redaktionen wie BBC, The Guardian und El País; Banken wie Bancolombia und Davivienda; Universitäten wie MIT, Stanford und die Universidad de los Andes; Open-Source-Projekte wie Python.org, Node.js und Kubernetes; und Verkehrssysteme wie TransMilenio und die Metro de Medellín. Jeder Bericht ist eine automatisierte Analyse öffentlicher Seiten, ein Ausgangspunkt und kein Urteil.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1647,11 +1729,11 @@
             <dt lang="de" translate="no">Was der Bericht bewertet</dt>
             <dd lang="de" translate="no">Sechs Bereiche von 0 bis 100: SEO, GEO (ob KI-Suche und Antwortdienste die Website lesen und zitieren können), Analytics, Sicherheit, Barrierefreiheit und Performance. GEO misst, ob die Website gelesen und zitiert werden kann, nicht ob ChatGPT, Perplexity oder der KI-Modus von Google sie heute zitieren. Jede Prüfung ist als jetzt fehlerhaft, gefährdet, bestanden oder braucht einen Menschen markiert, mit dem Beleg, einer Korrektur und einer Aufwandsschätzung. Sie sehen auch, wie die Website in einem Google-Ergebnis und als geteilter Link aussieht, welche KI-Crawler ihre robots.txt zulässt, eine Karte der geprüften Seiten und was zuerst zu beheben ist. Ein Headless-Browser lädt bis zu drei Seiten von einer EU-Adresse in Belgien: Er zeichnet Tracking vor und nach einer Cookie-Wahl auf, führt axe-core aus, vergleicht den HTML-Text mit der gerenderten Seite, prüft Smartphone- und Tablet-Breiten und speichert drei Screenshots. Außerdem prüft er Chat-Widgets und KI-Chatbots (Einwilligung, Gewicht und Tastaturzugang), die Erklärung zur Barrierefreiheit, Impressum und Datenschutzseiten, veraltete Frontend-Bibliotheken, Google Safe Browsing über Web Risk, Domain-Ablauf und Transfersperre über RDAP sowie MTA-STS, TLS-RPT und BIMI für E-Mail, und er schätzt den CO₂-Ausstoß eines Besuchs. Eine Website, deren Bot-Schutz die einfache Anfrage ablehnt, wird in Headless-Chrome geprüft.</dd>
             <dt lang="de" translate="no">Sicherheitsprüfungen</dt>
-            <dd lang="de" translate="no">Jede Prüfung sucht außerdem nach Problemen, die Besucher nicht sehen. Sie prüft die Adresse mit Google Safe Browsing über Web Risk und mit Cloudflare URL Scanner, der einen Scan vom letzten Tag wiederverwendet oder einen neuen einreicht, der auf Cloudflare Radar öffentlich wird. Jeder fremde Host, von dem die Seite Skripte, Frames oder Formulare lädt oder auf den sie verlinkt, wird ebenfalls mit Web Risk geprüft; ein gelisteter Skript-Host ist ein kritischer Befund. Sie sucht nach Anzeichen einer gehackten Website: in Suchergebnisse eingeschleuster Spam, Seiten, die Googlebot etwas anderes zeigen, und versteckte Spam-Links. Sie listet Domains auf, die Ihre nachahmen und eine Website oder einen Mailserver haben, prüft die Domain und ihre Mail- und Webserver gegen kostenlose Spam-Blocklisten wie SpamCop, Mailspike und NordSpam und untersucht SPF, DMARC und DKIM im Detail. Sobald Sie nachweisen, dass Ihnen die Website gehört, sucht sie auch nach offen liegenden Dateien wie .env, .git und Backups.</dd>
+            <dd lang="de" translate="no">Jede Prüfung sucht außerdem nach Problemen, die Besucher nicht sehen. Sie prüft die Adresse mit Google Safe Browsing über Web Risk und mit Cloudflare URL Scanner, der einen Scan vom letzten Tag wiederverwendet oder einen neuen einreicht, der auf Cloudflare Radar als nicht gelistet markiert ist. Jeder fremde Host, von dem die Seite Skripte, Frames oder Formulare lädt oder auf den sie verlinkt, wird ebenfalls mit Web Risk geprüft; ein gelisteter Skript-Host ist ein kritischer Befund. Sie sucht nach Anzeichen einer gehackten Website: in Suchergebnisse eingeschleuster Spam, Seiten, die Googlebot etwas anderes zeigen, und versteckte Spam-Links. Sie listet Domains auf, die Ihre nachahmen und eine Website oder einen Mailserver haben, prüft die Domain und ihre Mail- und Webserver gegen kostenlose Spam-Blocklisten wie SpamCop, Mailspike und NordSpam und untersucht SPF, DMARC und DKIM im Detail. Sobald Sie nachweisen, dass Ihnen die Website gehört, sucht sie auch nach offen liegenden Dateien wie .env, .git und Backups.</dd>
             <dt lang="de" translate="no">Wenn eine Prüfung nicht fertig wird</dt>
-            <dd lang="de" translate="no">Manchmal bricht eine Prüfung aus einem Grund auf unserer Seite ab, etwa wenn eine Website Cloud-Server abweist. Wir behalten Ihre E-Mail-Adresse, starten die Prüfung auf anderem Weg erneut und senden Ihnen den vollständigen Bericht, sobald er fertig ist, spätestens in <span data-promise-hours>48</span> Stunden. Für die Umstände erhalten Sie einen Code über 20 % Rabatt auf Ihre nächste Prüfung, 90 Tage gültig. Ist der Bericht nach <span data-promise-hours>48</span> Stunden noch nicht fertig, schreiben wir Ihnen, und der Code bleibt gültig.</dd>
+            <dd lang="de" translate="no">Manchmal bricht eine Prüfung aus einem Grund auf unserer Seite ab, etwa wenn eine Website Cloud-Server abweist. Wir behalten Ihre E-Mail-Adresse, starten die Prüfung auf anderem Weg erneut und senden Ihnen den vollständigen Bericht, sobald er fertig ist, meist innerhalb von <span data-promise-hours>48</span> Stunden. Für die Umstände erhalten Sie einen Code über 20 % Rabatt auf Ihre nächste Prüfung, 90 Tage gültig. Ist der Bericht nach <span data-promise-hours>48</span> Stunden noch nicht fertig, schreiben wir Ihnen und versuchen es weiter: Wird er innerhalb von 14 Tagen fertig, bekommen Sie ihn trotzdem, und der Code bleibt gültig.</dd>
             <dt lang="de" translate="no">Nach dem Bericht</dt>
-            <dd lang="de" translate="no">Bitten Sie uns um die Korrektur, auf eine von vier Arten. Selbst beheben: Den Bericht fragen schreibt die Korrektur, und ein bezahlter Bericht erhält eine kostenlose erneute Prüfung, sobald Ihre Änderungen live sind. Ein Angebot anfragen: Carlos antwortet innerhalb von zwei Werktagen. Ein Festpreis-Paket bestellen. Oder ein Gespräch buchen. Pakete zum Einführungspreis: Sicherheits-Header US$99 (etwa 3 Werktage), E-Mail und DNS US$89 (3), TLS und Weiterleitungen US$69 (2), schnelle Barrierefreiheits-Korrekturen US$169 (5), Performance-Grundlagen US$199 (5) sowie SEO-Metadaten und strukturierte Daten US$119 (4). Sie zahlen mit PayPal; Rabattcodes gelten nicht für Pakete. Ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen einen Vorher-nachher-Vergleich, der jeden Befund als behoben, noch offen oder von einem Menschen zu prüfen markiert.</dd>
+            <dd lang="de" translate="no">Bitten Sie uns um die Korrektur, auf eine von vier Arten. Selbst beheben: Den Bericht fragen schreibt die Korrektur, und ein bezahlter Bericht erhält eine kostenlose erneute Prüfung, sobald Ihre Änderungen live sind. Ein Angebot anfragen: Carlos antwortet innerhalb von zwei Werktagen. Ein Festpreis-Paket bestellen. Oder ein Gespräch buchen. Pakete zum Einführungspreis bis 10. Dezember 2026; danach gilt der Listenpreis: Sicherheits-Header US$99 (etwa 3 Werktage), E-Mail und DNS US$89 (3), TLS und Weiterleitungen US$69 (2), schnelle Barrierefreiheits-Korrekturen US$169 (5), Performance-Grundlagen US$199 (5) sowie SEO-Metadaten und strukturierte Daten US$119 (4). Sie zahlen mit PayPal; Rabattcodes gelten nicht für Pakete. Ist die Korrektur fertig, prüfen wir die Website kostenlos erneut und senden Ihnen einen Vorher-nachher-Vergleich, der jeden Befund als behoben, noch offen oder von einem Menschen zu prüfen markiert.</dd>
             <dt lang="de" translate="no">Frameworks und Werkzeuge</dt>
             <dd lang="de" translate="no">Playwright, Cypress, Robot, Selenium, WebdriverIO, CodeceptJS, Selenide, TestNG, Watir, Cucumber, Behave, Reqnroll, Jest, Vitest, Mocha, Appium, Maestro, JMeter, Gatling und k6 sind die Frameworks. axe-core läuft im Headless-Browser der Prüfung auf bis zu drei Seiten, und Lighthouse läuft über Google PageSpeed Insights auf der Startseite. BrowserStack, Applitools, Percy, Provar und Copado werden genannt, wenn sie zutreffen, und nicht gegen Ihre Website gestartet.</dd>
             <dt lang="de" translate="no">Automatisierungsskripte</dt>
@@ -1680,12 +1762,43 @@
             <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
                 <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="de" translate="no">Die Seite</b><span class="tg-gist" lang="de" translate="no">Die öffentliche https-Adresse, die geprüft wird.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
                 <div class="rg-body">
-                    <label for="url" lang="de" translate="no">Öffentliche Seite</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    <div class="url-mode" id="url-mode" role="group" aria-label="URL mode">
+                        <button type="button" data-url-mode="one" aria-pressed="true" class="is-on" data-batch-copy="modeOne">One URL</button>
+                        <button type="button" data-url-mode="many" aria-pressed="false" data-batch-copy="modeMany">Many URLs</button>
                     </div>
-                    <p class="field-error" id="url-error"></p>
+                    <div id="url-mode-one">
+                        <label for="url" data-batch-copy="publicPage" lang="de" translate="no">Öffentliche Seite</label>
+                        <div class="url-row notranslate" id="url-field">
+                            <span>https://</span>
+                            <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                        </div>
+                        <p class="field-error" id="url-error"></p>
+                    </div>
+                    <div id="url-mode-many" hidden>
+                        <label for="batch-text" data-batch-copy="listLabel">Addresses to review</label>
+                        <p class="muted" data-batch-copy="listHint">One https address per line, or load a .txt / .csv with a url column. Up to 6. The first is the lead.</p>
+                        <textarea id="batch-text" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com&#10;other.example.com" disabled></textarea>
+                        <label class="check" for="batch-file"><span data-batch-copy="fileLabel">Load a file</span>
+                            <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" disabled>
+                        </label>
+                        <button type="button" class="batch-file-clear" id="batch-file-clear" data-batch-copy="fileRemove" hidden>Remove the file</button>
+                        <p class="muted" id="batch-source-note"></p>
+                        <label class="check"><input id="batch-lead-report" type="checkbox" disabled> <span data-batch-copy="leadReport">Use the open report’s URL as the lead</span></label>
+                        <p class="muted" id="batch-lead-note"></p>
+                        <p class="muted" data-batch-copy="previewTitle">Ready to run</p>
+                        <ul id="batch-preview"></ul>
+                        <p class="field-error" id="batch-error"></p>
+                        <div id="batch-panel" hidden>
+                            <h3 id="batch-panel-title" data-batch-copy="panelTitle">Bulk review</h3>
+                            <p id="batch-panel-status" role="status"></p>
+                            <ol id="batch-panel-rows"></ol>
+                            <div id="batch-panel-actions">
+                                <button class="btn btn-ghost" id="batch-stop" type="button" hidden data-batch-copy="stop">Stop batch</button>
+                                <button class="btn btn-ghost" id="batch-save-compare" type="button" hidden data-batch-copy="saveCompare">Save comparison</button>
+                            </div>
+                            <p class="muted" data-batch-copy="saveCompareHint">Save the finished reports side by side.</p>
+                        </div>
+                    </div>
                 </div>
             </details>
             <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
@@ -1726,7 +1839,7 @@
                     <label for="name" lang="de" translate="no">Name</label>
                     <input id="name" name="name" type="text" autocomplete="name" required disabled>
                     <p class="field-error" id="name-error"></p>
-                    <label class="check" hidden lang="de" translate="no"><input id="follow-up" name="followUp" type="checkbox" disabled> Erinnern Sie mich, wenn sich eine neue Prüfung dieser Seite lohnt. Höchstens drei kurze Nachrichten pro Woche, in meiner Sprache, bis 30 Tage nach meiner letzten Prüfung. Der Abmeldelink in jeder Nachricht oder eine Antwort mit „stop“ beendet sie jederzeit.</label>
+                    <label class="check" lang="de" translate="no"><input id="follow-up" name="followUp" type="checkbox"> Schicken Sie mir das Startangebot und kurze Erinnerungen, diese Seite erneut zu prüfen. Höchstens drei kurze Nachrichten pro Woche, in meiner Sprache, bis 30 Tage nach meiner letzten Prüfung. Der Abmeldelink in jeder Nachricht beendet sie jederzeit. Ein leeres Kästchen ändert meine Prüfung nicht.</label>
                     <label class="check" lang="de" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> Diese Prüfung nicht als Live Report oder in sozialen Medien veröffentlichen.</label>
                 </div>
             </details>
@@ -1775,6 +1888,11 @@
                 <div class="rg-body">
                     <label lang="de" translate="no">Vorgeschlagene Fälle für</label>
                     <div class="fws" id="fw-picker"></div>
+                    <p class="muted" id="full-stack-note">Or pick a Full Stack bundle at a flat price.</p>
+                    <div class="fws" id="full-stack-picker" role="group" aria-label="Full Stack bundles">
+                        <button type="button" class="btn btn-ghost" data-bundle="starter" id="bundle-starter">Starter · Playwright, k6, axe, Lighthouse · $29</button>
+                        <button type="button" class="btn btn-ghost" data-bundle="complete" id="bundle-complete">Complete · all frameworks + tools · $99</button>
+                    </div>
                     <p class="field-error" id="frameworks-error"></p>
                 </div>
             </details>
@@ -1803,6 +1921,8 @@
                     </fieldset>
                     <label class="check" id="section-row" lang="de" translate="no"><input id="stay-section" name="section" type="checkbox" disabled> In diesem Bereich bleiben</label>
                     <p class="scope-note muted" id="section-note">Fügen Sie einen Pfad wie example.com/docs hinzu, damit weitere Seiten in diesem Bereich bleiben. Ein Host allein prüft die ganze Website.</p>
+                    <label class="check" id="cyber-row" lang="de" translate="no"><input id="cyber-sources" name="cyberSources" type="checkbox" checked disabled> Prüfungen mit Angriffs- und Exploit-Quellen einbeziehen</label>
+                    <p class="scope-note muted" id="cyber-note" lang="de" translate="no">Vergleicht die Website mit öffentlichen Angriffs- und Exploit-Listen. Das Ergebnis steht in Ihrem eigenen Bericht und nie in einem Live Report.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
@@ -1811,6 +1931,7 @@
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <p class="status" id="form-status" role="status"></p>
+            <div id="soft-turnstile" class="no-print" hidden aria-hidden="true"></div>
             <p class="review-needs" id="review-needs" hidden></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled lang="de" translate="no">Prüfen</button>
@@ -1880,13 +2001,14 @@
         <p class="notranslate" id="paid-line">This report was generated with QA-lab URL Review by Carlos Muñoz (https://carlosandmunoz.com).</p>
         <div class="kpis" id="kpis"></div>
         <div class="unlock-offer no-print" id="unlock-offer" hidden></div>
+        <section class="report-csat no-print" id="report-csat" hidden aria-labelledby="report-csat-title"></section>
         <nav class="report-index no-print" id="report-index" aria-labelledby="report-index-label" hidden>
             <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel" lang="de" translate="no">In diesem Bericht</p>
             <ol class="report-index-list" id="report-index-list"></ol>
         </nav>
-        <h2 data-insight data-index-group="summary" data-report-copy="execTitle" lang="de" translate="no">Zusammenfassung auf einer Seite</h2>
+        <h2 data-face="summary" data-insight data-index-group="summary" data-report-copy="execTitle" lang="de" translate="no">Zusammenfassung auf einer Seite</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight data-index-group="summary" data-report-copy="compareTitle" lang="de" translate="no">Im Vergleich mit einem Mitbewerber</h2>
+        <h2 data-face="compare" data-insight data-index-group="summary" data-report-copy="compareTitle" lang="de" translate="no">Im Vergleich mit einem Mitbewerber</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
@@ -1936,44 +2058,46 @@
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight data-index-group="summary" data-report-copy="healthTitle" lang="de" translate="no">Gesundheitswert</h2>
+        <h2 data-face="health" data-insight data-index-group="summary" data-report-copy="healthTitle" lang="de" translate="no">Gesundheitswert</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight data-index-group="summary" data-report-copy="fixTitle" lang="de" translate="no">Zuerst beheben</h2>
+        <h2 data-face="fixfirst" data-insight data-index-group="summary" data-report-copy="fixTitle" lang="de" translate="no">Zuerst beheben</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight data-index-group="browser" data-report-copy="browserTitle" lang="de" translate="no">In einem echten Browser</h2>
+        <h2 data-face="browser" data-insight data-index-group="browser" data-report-copy="browserTitle" lang="de" translate="no">In einem echten Browser</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="de" translate="no">So erscheint die Seite bei Google und beim Teilen</h2>
+        <h2 data-face="preview" data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="de" translate="no">So erscheint die Seite bei Google und beim Teilen</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="aiTitle" lang="de" translate="no">Was KI sieht</h2>
+        <h2 data-face="ai" data-insight data-index-group="browser" data-report-copy="aiTitle" lang="de" translate="no">Was KI sieht</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="de" translate="no">Analytics und Einwilligung</h2>
+        <h2 data-face="analytics" data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="de" translate="no">Analytics und Einwilligung</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="searchTitle" lang="de" translate="no">Sichtbarkeit in der Suche</h2>
+        <h2 data-face="seo" data-insight data-index-group="browser" data-report-copy="searchTitle" lang="de" translate="no">Sichtbarkeit in der Suche</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="mapTitle" lang="de" translate="no">Karte der analysierten Seiten</h2>
+        <h2 data-face="sitemap" data-insight data-index-group="browser" data-report-copy="mapTitle" lang="de" translate="no">Karte der analysierten Seiten</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="securityTitle" lang="de" translate="no">Sicherheit und E-Mail</h2>
+        <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle" lang="de" translate="no">Sicherheit und E-Mail</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="checksTitle" lang="de" translate="no">Jede Prüfung mit ihrem Ergebnis</h2>
+        <h2 id="targeted-head" data-line="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden lang="de" translate="no">Wurde die Website angegriffen?</h2>
+        <article class="card" id="targeted" hidden></article>
+        <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle" lang="de" translate="no">Jede Prüfung mit ihrem Ergebnis</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="de" translate="no">Behebungs-Kit</h2>
+        <h2 data-face="fixkit" data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="de" translate="no">Behebungs-Kit</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
-                <h2 data-index-group="glance" lang="de" translate="no">Vorgeschlagene Fälle nach Ebene</h2>
+                <h2 data-face="cases" data-index-group="glance" lang="de" translate="no">Vorgeschlagene Fälle nach Ebene</h2>
                 <div id="layers"></div>
             </article>
             <article class="card">
-                <h2 data-index-group="glance" lang="de" translate="no">Erkannte Technologien</h2>
+                <h2 data-face="tech" data-index-group="glance" lang="de" translate="no">Erkannte Technologien</h2>
                 <div class="pills" id="tech"></div>
             </article>
         </div>
         <section id="tool-block" hidden>
-            <h2 data-index-group="glance" lang="de" translate="no">Passende Werkzeuge</h2>
+            <h2 data-face="tools" data-index-group="glance" lang="de" translate="no">Passende Werkzeuge</h2>
             <p class="muted" id="tool-note" lang="de" translate="no">Jedes ausgewählte Werkzeug kostet 5 USD mehr für den vollständigen Bericht, wie ein zusätzliches Framework. axe-core lief bereits im Headless-Browser der Prüfung. Wenn Sie es auswählen, kommen seine Prüfungen in Ihre Skripte. Die anderen Werkzeuge werden nicht gestartet.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
@@ -1982,7 +2106,7 @@
                 <span class="alarm-lamp" aria-hidden="true"></span>
                 <div>
                     <p class="eyebrow" lang="de" translate="no">Alarm</p>
-                    <h2 data-index-group="exposure" lang="de" translate="no">Was die öffentliche Antwort offenlegte</h2>
+                    <h2 data-face="exposed" data-index-group="exposure" lang="de" translate="no">Was die öffentliche Antwort offenlegte</h2>
                 </div>
                 <button class="btn btn-primary" id="alarm-open" type="button" lang="de" translate="no">Den Rest öffnen</button>
             </div>
@@ -1991,27 +2115,27 @@
         </section>
         <section class="credential-run" id="credential-run" hidden>
             <p class="eyebrow" lang="de" translate="no">Prüfung mit Anmeldung</p>
-            <h2 data-index-group="exposure" lang="de" translate="no">Ein Login, den Sie verwenden dürfen</h2>
+            <h2 data-face="login" data-index-group="exposure" lang="de" translate="no">Ein Login, den Sie verwenden dürfen</h2>
             <p id="credential-run-copy">Diese Seite fragt nicht nach dem Passwort. Die Prüfung mit Anmeldung wartet, bis sie bezahlt ist.</p>
             <button class="btn btn-primary" id="credential-open" type="button" lang="de" translate="no">Prüfung mit Anmeldung vereinbaren</button>
         </section>
         <section class="credential-run" id="report-call" hidden>
             <p class="eyebrow" data-report-copy="callEyebrow" lang="de" translate="no">Durchgang</p>
-            <h2 data-report-copy="callTitle" lang="de" translate="no">Gehen Sie diesen Bericht mit Carlos durch</h2>
+            <h2 data-face="call" data-report-copy="callTitle" lang="de" translate="no">Gehen Sie diesen Bericht mit Carlos durch</h2>
             <p data-report-copy="callCopy" lang="de" translate="no">Ein 30-minütiger Videoanruf dazu, was die Befunde für Ihre Website bedeuten und was zuerst zu beheben ist.</p>
             <a class="btn btn-primary" id="report-call-link" href="book.html?type=walkthrough" data-report-copy="callButton" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Report" lang="de" translate="no">30-Minuten-Durchgang buchen</a>
         </section>
         <section class="mentions" id="mentions-block">
-            <h2 data-index-group="exposure" lang="de" translate="no">Öffentliche Artikel</h2>
+            <h2 data-face="writeups" data-index-group="exposure" lang="de" translate="no">Öffentliche Artikel</h2>
             <ol id="mentions"></ol>
         </section>
-        <h2 data-index-group="evidence" lang="de" translate="no">Was die Antwort zeigte</h2>
+        <h2 data-face="response" data-index-group="evidence" lang="de" translate="no">Was die Antwort zeigte</h2>
         <article class="card" id="observed"></article>
-        <h2 data-index-group="evidence" lang="de" translate="no">Geprüfte Seiten</h2>
+        <h2 data-face="pages" data-index-group="evidence" lang="de" translate="no">Geprüfte Seiten</h2>
         <article class="card"><p class="muted" id="pages-found" hidden></p><table class="page-table"><thead><tr><th lang="de" translate="no">Pfad</th><th lang="de" translate="no">Status</th><th>ms</th><th lang="de" translate="no">Titel</th></tr></thead><tbody id="pages"></tbody></table></article>
-        <h2 data-index-group="evidence" lang="de" translate="no">Protokoll dieser Prüfung</h2>
+        <h2 data-face="log" data-index-group="evidence" lang="de" translate="no">Protokoll dieser Prüfung</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
-        <h2 data-index-group="cases" lang="de" translate="no">Ausführbare Fälle</h2>
+        <h2 data-face="cases" data-index-group="cases" lang="de" translate="no">Ausführbare Fälle</h2>
         <p class="muted case-note" id="case-note"></p>
         <p class="muted" id="specialist-tools" hidden></p>
         <div class="filters" id="layer-filters"></div>
@@ -2025,7 +2149,7 @@
         <div class="ask-head">
             <div>
                 <p class="eyebrow" data-ask-text="open">Den Bericht fragen</p>
-                <h2 id="ask-title" data-ask-text="title">Antworten nur aus diesem Bericht</h2>
+                <h2 data-face="ask" id="ask-title" data-ask-text="title">Antworten nur aus diesem Bericht</h2>
             </div>
             <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Schließen</button>
         </div>
@@ -2044,7 +2168,7 @@
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
         <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36">
         <p class="eyebrow" lang="de" translate="no">Testfälle</p>
-        <h2 id="case-export-title" lang="de" translate="no">Nehmen Sie diese Liste mit</h2>
+        <h2 data-face="export" id="case-export-title" lang="de" translate="no">Nehmen Sie diese Liste mit</h2>
         <p id="case-export-copy" lang="de" translate="no">Diese Fälle lassen sich als Datei für Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON oder Text mitnehmen und ausdrucken. Jeder Fall enthält ein Startskript für die gewählten Frameworks, und ein ZIP enthält eine Suite pro Framework. Wählen Sie die Arten, die in die Datei sollen. Der vollständige Bericht schaltet alle Arten frei.</p>
         <label class="select-all" lang="de" translate="no"><input type="checkbox" id="case-select-all" checked> Alle auswählen</label>
         <p id="case-export-count"></p>
@@ -2111,6 +2235,16 @@
         </div>
     </div>
 </div>
+<div id="soft-quota" class="gate no-print" hidden>
+    <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="soft-quota-title" tabindex="-1">
+        <h2 id="soft-quota-title">You've used today's free previews</h2>
+        <p class="muted" id="soft-quota-detail">Sign in for more free previews today.</p>
+        <div class="actions">
+            <button class="btn btn-ghost" id="soft-quota-close" type="button" lang="de" translate="no">Schließen</button>
+            <button class="btn btn-primary" id="soft-quota-signin" type="button" lang="de" translate="no">Anmelden</button>
+        </div>
+    </div>
+</div>
 <div id="inconclusive" class="gate no-print" hidden>
     <div class="pay-card incon-card" role="dialog" aria-modal="true" aria-labelledby="incon-title" aria-describedby="incon-lead incon-mail" tabindex="-1">
         <button class="incon-x" id="incon-x" type="button"><span aria-hidden="true">&times;</span></button>
@@ -2136,23 +2270,38 @@
 <script>try{localStorage.setItem("cv-preferred-lang","de")}catch(e){}</script>
 <script src="js/site-i18n.js?v=20261104a" defer></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
-<script src="js/site-tour.js?v=20261110-3332" defer></script>
+<script src="js/site-tour.js?v=20261120-3974" defer></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/url-review-hero/landing-boot.js?v=3429a"></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
-<script src="js/qa-review-ask.js?v=20261109b" defer></script>
+<script src="js/qa-review-ask.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-fix.js?v=20261110-3393" defer></script>
-<script src="js/qa-review-progress.js?v=20261024a" defer></script>
+<script src="js/qa-review-progress.js?v=20261119b" defer></script>
+<script src="js/qa-review-arena-facts.js?v=20261119b-3862" defer></script>
+<script src="js/qa-review-arena-atlas.js?v=20261118a" defer></script>
+<script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
+<script src="js/qa-review-arena.js?v=20261118a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3332-3326" defer></script>
-<script src="js/qa-review-findings-copy.de.js?v=20261110-3154" defer></script>
-<script src="js/qa-review-watch.js?v=20261110-3391" defer></script>
-<script src="js/qa-review.js?v=20261110-3332-3327-3326-3391" defer></script>
+<script src="js/qa-review-batch-copy.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-batch.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261119i-3946" defer></script>
+<script src="js/qa-review-findings-copy.de.js?v=20261118-3779" defer></script>
+<script src="js/qa-review-watch.js?v=20261119-3850" defer></script>
+<script src="js/qa-review.js?v=20261120-3826" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
-<script src="js/qa-review-multi.js?v=20261102q" defer></script>
-<script src="js/url-suggest.js?v=20261109b" defer></script>
+<script src="js/qa-review-multi.js?v=20261120-3826" defer></script>
+<script src="js/url-suggest.js?v=20261120-3988" defer></script>
 <script src="js/qa-review-live.js?v=20261110d" defer></script>
 </body>
 </html>

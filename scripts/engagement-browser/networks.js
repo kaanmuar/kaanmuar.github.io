@@ -73,6 +73,25 @@ async function keys(page, text) {
   }
 }
 
+/** Replace our own post caption (#3588): open the post, find Edit, swap the text, save; Refused when the network hides edit. */
+async function editCaption(page, net, task) {
+  await go(page, net, task.url);
+  const more = page.locator('[data-testid="caret"], [aria-label*="More" i], [aria-label*="Más" i], [aria-label*="acciones" i]').first();
+  if (await visible(more, 6000)) await click(more);
+  const edit = page.locator('[role="menuitem"], [role="menu"] button, button').filter({ hasText: /^Edit\b|^Editar\b/i }).first();
+  if (!(await visible(edit, 6000))) throw new Refused(net.name + " does not offer caption edit on this post.");
+  await click(edit);
+  const box = page.locator('[data-testid="tweetTextarea_0"], [data-testid="tweetTextarea_1"], [contenteditable="true"][role="textbox"], div[contenteditable="true"]').first();
+  const input = await need(box, "The caption box");
+  await click(input);
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+a" : "Control+a");
+  await type(page, input, task.draft);
+  const save = page.locator('button[data-testid="tweetButton"], button').filter({ hasText: /^(Save|Update|Done|Guardar|Actualizar|Post|Publicar)/i }).last();
+  await click(await need(save, "Save the caption"));
+  await pause(2000, 4000);
+  return { url: task.url };
+}
+
 // end: the box already holds the name of the person answered, so the text goes after it.
 async function type(page, loc, text, end) {
   await click(loc);
@@ -258,7 +277,9 @@ function xTexts(j, into = {}) {
   return into;
 }
 
-const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
+const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance",
+  // Next to our field and rising (#3814)
+  "ChatGPT search", "vibe coding", "AI agents", "website outage", "data breach", "web dev"];
 
 const x = {
   name: "X", account: "qalaburlreview", home: "https://x.com/home", queries: GENERAL,
@@ -374,6 +395,9 @@ const x = {
     }
     got.forEach((c) => { c.ours = (c.on && texts[c.on]) || ""; });
     return got;
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   async reply(page, task) {
     const art = await this.post(page, task);
@@ -617,6 +641,9 @@ const threads = {
     const p = newest(list, since);
     return p && { id: p.id, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     const main = await this.post(page, task);
     const open = async () => { await click(button(main, SAYS.reply).first()); return page.locator('[role="dialog"]'); };
@@ -654,7 +681,7 @@ function igMedia(o, into) {
 
 const instagram = {
   name: "Instagram", account: "qaurlreview", home: "https://www.instagram.com/",
-  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics"],
+  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics", "chatgpt", "vibecoding", "webdev", "techtok"],
   async signedIn(page) {
     if (!(await visible(page.locator(icon(SAYS.home)), 15000))) return "";
     // This endpoint sometimes answers with an HTML page that still carries the username.
@@ -720,6 +747,9 @@ const instagram = {
     })), since);
     return p && { id: p.url, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     await go(page, this, task.url);
     const box = await need(page.locator('textarea[aria-label^="Add a comment"], textarea[aria-label^="Añade un comentario"]'), "The comment box");
@@ -764,7 +794,7 @@ const TT_MENU = '[data-e2e="comment-at-user"], [data-e2e^="comment-at-list"] > d
 
 const tiktok = {
   name: "TikTok", account: "qalaburlreview", home: "https://www.tiktok.com/",
-  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo"],
+  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo", "vibe coding", "chatgpt tips", "website hacked"],
   async signedIn(page) {
     if (await visible(page.locator('[data-e2e="top-login-button"]'), 6000)) return "";
     const me = page.locator('a[data-e2e="nav-profile"]');
@@ -837,6 +867,9 @@ const tiktok = {
       return { url: "https://www.tiktok.com/@" + who + "/video/" + it.id, at: it.createTime ? new Date(it.createTime * 1000).toISOString() : "", pinned: it.isPinnedItem === true, repost: who.toLowerCase() !== me };
     }), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   // Mentions (#2637) are picked from the list that opens on "@", by handle.
   async reply(page, task) {
@@ -1044,6 +1077,9 @@ const linkedin = {
       });`);
     const p = newest(list.map((x) => ({ url: "https://www.linkedin.com/feed/update/" + x.urn + "/", at: liAt(x.urn), pinned: x.pinned, repost: x.repost })), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   // Mentions (#2637) are picked from the menu that opens on "@", by the company's or member's name.
   async reply(page, task) {
@@ -1326,7 +1362,9 @@ const RD_SUBS = ["QualityAssurance", "softwaretesting", "Playwright", "Cypress",
 
 // token_v2 is httpOnly and lasts a day; a www page view renews it.
 async function rdToken(page) {
-  if (!page.url().startsWith(RD)) await go(page, reddit, RD + "/");
+  let host = "";
+  try { host = new URL(page.url()).hostname; } catch (_) { /* ignore */ }
+  if (host !== "www.reddit.com" && host !== "reddit.com") await go(page, reddit, RD + "/");
   const t = (await page.context().cookies(RD)).find((c) => c.name === "token_v2");
   if (!t || !t.value) throw new Refused("Reddit is signed out in the agent's Chrome.");
   return t.value;
@@ -1623,5 +1661,7 @@ const telegram = {
 const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit };
 // dm(page, task) on each network: a 2-day pass DM Carlos approved (#3137, dms.js).
 require("./dms").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused, rdCall });
+// connect(page, task) on LinkedIn: the day's connection requests (#3576, linkedin-connect.js).
+require("./linkedin-connect").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused });
 
 module.exports = { NETWORKS, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };

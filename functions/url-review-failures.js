@@ -27,10 +27,20 @@ const FIXES = [
   { cause: "http-redirect", at: "2026-10-25T12:50:11Z", ref: "#1194", label: "An http:// redirect is read over https first, as Chrome does" },
   { cause: "http-redirect", at: "2026-10-26T13:46:16Z", ref: "#1554", label: "An https copy of an http:// redirect that refuses the review or is slow is opened in headless Chrome" },
   { cause: "unknown", at: "2026-10-27T12:43:07Z", ref: "#1841", label: "A finished report whose page data Firestore refuses (an empty key, an array in an array, nesting past 20 levels) is saved" },
+  { cause: "save", at: "2026-11-03T07:41:00Z", ref: "#2408", label: "A finished report whose saved page is past one Firestore field is shortened and saved" },
+  { cause: "unknown", at: "2026-11-05T08:17:37Z", ref: "#2604", label: "A folded response header is read, and a finished report over one Firestore document is shortened and saved" },
+  { cause: "tls", at: "2026-11-06T07:45:04Z", ref: "#2744", label: "A certificate whose issuer is also missing is read by following each AIA address until a trusted root" },
+  { cause: "redirect-loop", at: "2026-11-07T07:44:41Z", ref: "#2750", label: "A redirect that sets a cookie and points at itself is read with that cookie" },
+  { cause: "connection", at: "2026-11-09T07:48:08Z", ref: "#2869", label: "A site that hangs up the plain request is read in headless Chrome" },
   { cause: "browser", at: "2026-11-09T12:37:32Z", ref: "#2876", label: "A page that moves itself on after it loaded is read again once it settles" },
   { cause: "bot-protection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A failure no fix settles is rescued: diagnosed, read as a person's Chrome or on the other host name, then from the Mac's home connection" },
   { cause: "timeout", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that times out from the cloud is rescued from the Mac's home connection" },
-  { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" }
+  { cause: "connection", at: "2026-11-10T03:00:00Z", ref: "#3180", label: "A site that drops the cloud's connection is rescued from the Mac's home connection" },
+  { cause: "http-redirect", at: "2026-11-12T07:43:45Z", ref: "#3460", label: "An http redirect whose https copy points back at it is followed to the next path on that host" },
+  { cause: "browser", at: "2026-11-15T20:40:00Z", ref: "#3512", label: "A bot check that answers with an error status before its load event finishes is named as refused" },
+  { cause: "connection", at: "2026-11-15T20:40:00Z", ref: "#3513", label: "A plain read refused with ECONNREFUSED is tried in headless Chrome before it is named down" },
+  { cause: "timeout", at: "2026-11-15T20:40:00Z", ref: "#3514", label: "A plain read reset or aborted before any page is tried in headless Chrome" },
+  { cause: "status", at: "2026-11-15T21:15:00Z", ref: "#1178", label: "A 5xx that headless Chrome gets after the plain read took too long is the site's own answer, kept on the desk without a bug" }
 ];
 const fixKey = (fix) => fix.cause + " " + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -41,7 +51,7 @@ const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, 
 
 // Order matters: a message that names both a refused plain read and a browser that did not finish is a browser cause.
 const CAUSES = [
-  ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value|invalid nested entity|field name .+ is reserved/i],
+  ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value|invalid nested entity|field name (?<=(?:^|[\n\r\u2028\u2029])(?:(?!field name ).)*field name ).+ is reserved/i],
   ["input", "The address could not be reviewed", /^Enter a|Only https URLs|Remove the username|standard https port|not a public website|private address/i],
   ["headers", "The site's response headers are past the review's limit", /Header overflow|HPE_HEADER_OVERFLOW|response headers are past/i],
   ["dns", "The host name did not resolve", /did not resolve|ENOTFOUND|EAI_AGAIN/i],
@@ -69,13 +79,15 @@ const READABLE = {
 const HOST_BROKE = /net::ERR_(?:CONNECTION_(?:RESET|CLOSED|REFUSED|TIMED_OUT)|HTTP2_PROTOCOL_ERROR|EMPTY_RESPONSE|TIMED_OUT|ADDRESS_UNREACHABLE)\b/;
 // The review's own error when the plain read and headless Chrome both got a 4xx that is not a bot wall (401, 403 and 429 are).
 const SITE_REFUSAL = /^The URL returned status (?!40[13]\b|429\b)4\d\d, in the plain (?:request|read) and in headless Chrome\./;
+// A 5xx in headless Chrome after a slow plain read, or in both reads, is the site's own state for every client.
+const SITE_ERROR = /^The URL returned status [5-9]\d{2}(?:, in headless Chrome, after the plain request took too long|, in the plain (?:request|read) and in headless Chrome)\./;
 
 function causeOf(message) {
   const text = String(message || "");
   const found = CAUSES.find(([, , pattern]) => pattern.test(text));
   if (!found) return { id: "unknown", label: "The review failed for a reason with no class yet" };
   const status = (text.match(/status (\d{3})/) || [])[1];
-  const vendor = (text.match(/\b(?:a|an) (.+?) bot check/) || [])[1];
+  const vendor = (text.match(/\b(?:a|an) (?<=(?:^|[\n\r\u2028\u2029])(?:(?!\b(?:a|an) ).)*\b(?:a|an) )(.+?) bot check/) || [])[1];
   return Object.assign({ id: found[0], label: found[1] }, status ? { status: Number(status) } : {}, vendor ? { vendor } : {});
 }
 
@@ -127,12 +139,14 @@ function failureRecord(input) {
       depth: Number(run.depth) || 0,
       pageLang: clip(run.pageLang, 2),
       section: run.section === true,
+      targeted: run.targeted !== false,
       frameworks: Array.isArray(run.frameworks) ? run.frameworks.slice(0, 12).map((name) => clip(name, 40)) : []
     },
     intake: {
       lang: clip(run.lang, 8),
       pageLang: clip(run.pageLang, 2),
       section: run.section === true,
+      targeted: run.targeted !== false,
       reason: clip(run.reason, 600),
       reasonCode: clip(run.reasonCode, 40),
       clientName: clip(run.clientName, 120),
@@ -192,12 +206,13 @@ function stateOf(probe) {
 
 const guarded = (status) => [401, 403, 429].includes(status);
 
-// A real browser's refusal. Only an error page (a 4xx that is not a bot wall) that the plain read got too is the site's own answer;
+// A real browser's refusal. A 4xx that is not a bot wall in both reads, or any 5xx in headless Chrome, is the site's own answer;
 // `site` keeps it out of the failure bugs.
 function chromeRefused(browser, plain, lead) {
   const bot = !!plain.challenge || !!browser.challenge || guarded(browser.docStatus);
-  const both = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
-  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && both, label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
+  const both4xx = plain.status >= 400 && plain.status < 500 && browser.docStatus >= 400 && browser.docStatus < 500;
+  const error5xx = browser.docStatus >= 500;
+  return { id: bot ? "bot-protection" : "status", status: browser.docStatus, site: !bot && (both4xx || error5xx), label: lead + " (status " + browser.docStatus + (browser.challenge ? ", " + browser.challenge : "") + ")" };
 }
 
 function unreadState(run, plain) {
@@ -401,6 +416,7 @@ const SITE_SIDE = ["input", "dns", "down"];
 function siteSide(doc, cause) {
   if (SITE_SIDE.includes(cause)) return true;
   if (SITE_REFUSAL.test(String((doc.error && doc.error.message) || ""))) return true;
+  if (SITE_ERROR.test(String((doc.error && doc.error.message) || ""))) return true;
   return !!(doc.diagnosis && doc.diagnosis.site);
 }
 
@@ -419,7 +435,11 @@ function siteReason(lead) {
   const browser = probe.browser;
   if (lead.cause === "bot-protection" && (/\bin headless Chrome\b/.test(lead.message) || (browser && browser.ok && (!!browser.challenge || guarded(browser.docStatus))))) return "bot-wall";
   if (lead.cause === "tls" && SITE_CERT.test(lead.message + " " + (plain.error || "") + " " + (plain.code || ""))) return "cert";
-  if (lead.cause === "status" && plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+  if (lead.cause === "status") {
+    if (plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return "5xx";
+    if (plain.error && browser && browser.ok && browser.docStatus >= 500) return "5xx";
+    if (SITE_ERROR.test(lead.message || "")) return "5xx";
+  }
   return "";
 }
 
@@ -449,9 +469,55 @@ function fixBefore(cause, attempt) {
 
 // The issue is public: no asker names or emails, and no query strings, which can carry tokens.
 const wordOf = (word) => new RegExp("(^|[^\\w@.])" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\w@])", "gi");
-const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text))
-  .replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]")
-  .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"), max);
+const scrubbed = (text, max, hidden) => clip(hideQueries(hideEmails((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text)))), max);
+
+// text.replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]"), read from each "@" so a long run with no address is read once.
+const NOT_ADDRESS = /[\s@<>"'(),;]/;
+const LETTER = /[a-z]/i;
+function hideEmails(text) {
+  const inAddress = (i) => i < text.length && !NOT_ADDRESS.test(text[i]);
+  let out = "";
+  let from = 0;
+  for (let at = text.indexOf("@"); at !== -1; at = text.indexOf("@", at + 1)) {
+    let start = at;
+    while (start > from && inAddress(start - 1)) start -= 1;
+    if (start === at) continue;
+    let domainEnd = at + 1;
+    while (inAddress(domainEnd)) domainEnd += 1;
+    let dot = domainEnd - 3;
+    while (dot >= at + 2 && !(text[dot] === "." && LETTER.test(text[dot + 1]) && LETTER.test(text[dot + 2]))) dot -= 1;
+    if (dot < at + 2) continue;
+    let end = dot + 3;
+    while (end < domainEnd && LETTER.test(text[end])) end += 1;
+    out += text.slice(from, start) + "[email]";
+    from = end;
+  }
+  return out + text.slice(from);
+}
+
+// text.replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"); a link with no query is read once, not once per "http" in it.
+const LINK_START = /https?:\/\//gi;
+const IN_LINK = /[^\s?#"'<>]/;
+const IN_QUERY = /[^\s"'<>)]/;
+function hideQueries(text) {
+  let out = "";
+  let from = 0;
+  let readTo = 0;
+  let m;
+  LINK_START.lastIndex = 0;
+  while ((m = LINK_START.exec(text))) {
+    if (m.index < readTo) continue;
+    let end = LINK_START.lastIndex;
+    while (end < text.length && IN_LINK.test(text[end])) end += 1;
+    readTo = end;
+    if (end === LINK_START.lastIndex || (text[end] !== "?" && text[end] !== "#")) continue;
+    let tail = end + 1;
+    while (tail < text.length && IN_QUERY.test(text[tail])) tail += 1;
+    out += text.slice(from, end) + "?…";
+    from = readTo = LINK_START.lastIndex = tail;
+  }
+  return out + text.slice(from);
+}
 
 // A failure is a lead while the probe still sees its cause and no re-run or later fix has settled it; a re-run is one when it failed.
 // A failure whose re-run failed is left to the re-run, so it is not listed twice or under a fix that shipped after it.
@@ -763,5 +829,5 @@ module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, RERUN_FRAMEWORKS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl, probeLines,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide
+  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide, hideEmails, hideQueries
 };

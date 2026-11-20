@@ -141,6 +141,16 @@
   };
 
   // Each section: its title key and the cells the painters fill, as in the report on this page.
+  // Faces (#3826): each comparison section wears the face its single-report heading wears (the same ids as data-face in qa-review.html).
+  const FACE_V = "20261119";
+  const SECTION_FACE = { exec: "summary", health: "health", fix: "fixfirst", browser: "browser", previews: "preview", geo: "ai", analytics: "analytics", seo: "seo", graph: "sitemap", security: "sec", findings: "verdicts", fixkit: "fixkit", layers: "cases", tech: "tech", mentions: "writeups", observed: "response", pages: "pages", log: "log", cases: "cases" };
+  const faceHtml = (key) => {
+    const id = SECTION_FACE[key];
+    if (!id) return "";
+    const img = (theme) => '<img class="face face' + (theme || "-dark") + '" src="assets/faces/badge/' + id + theme + '.svg?v=' + FACE_V + '" alt="" width="22" height="22" loading="lazy" decoding="async">';
+    return '<span class="fold-face" aria-hidden="true">' + img("") + img("-light") + "</span>";
+  };
+
   const SECTIONS = [
     ["cover", '<header class="report-cover" data-slot="report-cover"></header><div class="kpis" data-slot="kpis"></div>'],
     ["exec", '<article class="card" data-slot="exec"></article>'],
@@ -362,7 +372,7 @@
     return bench + summaryHtml(data, order) + '<div class="multi-sheet" style="--cols:' + n + '">' + foldAll + hosts + '<div class="multi-scroll multi-grid">' + SECTIONS.map(([key, cell]) => {
       const title = esc(book.sections[key] || COPY.en.sections[key]);
       const bar = key === "cases" && rc ? '<div class="cases-bar no-print"><button class="btn btn-ghost cases-all" type="button" aria-expanded="false" translate="no">' + esc(rc.t("expandAll")) + "</button></div>" : "";
-      return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + title +
+      return '<section class="multi-sec" data-sec="' + key + '"><h2 translate="no"><button class="fold-toggle" type="button" id="multi-toggle-' + key + '" aria-expanded="true" aria-controls="multi-row-' + key + '"><span>' + faceHtml(key) + title +
         '</span><span class="fold-icon" aria-hidden="true"></span></button></h2>' + bar + (key === "findings" ? filtersHtml() : "") + '<div class="multi-row fold-panel" id="multi-row-' + key + '" role="region" aria-labelledby="multi-toggle-' + key + '">' +
         columns.map(([col, index]) => '<div class="multi-cell' + (col.paid ? "" : " is-frost") + '" data-col="' + index + '" data-host="' + esc(bareHost(col.host)) + '" style="--site:' + siteColor(index) + '">' +
           (col.missing ? '<p class="muted">' + esc(t("missing")) + "</p>" : cell) + "</div>").join("") +
@@ -871,8 +881,20 @@
     if (window.SiteTheme) SiteTheme.apply(on, false);
     else document.documentElement.classList.toggle("dark-mode", on);
   }
+  // A site look (data-look) paints cards, tiles and panels from variables of its own, which a page printed from the
+  // comparison does not carry: borders turn black and corners square. Paper takes the plain report styles, so the
+  // look attributes go for the print and come back after, and the PDF's page never has them.
+  const LOOK_ATTR = /^data-look/;
+  let looksBeforePrint = [];
+  function dropLook() {
+    if (looksBeforePrint.length) return;
+    const root = document.documentElement;
+    looksBeforePrint = [...root.attributes].filter((attr) => LOOK_ATTR.test(attr.name)).map((attr) => [attr.name, attr.value]);
+    looksBeforePrint.forEach(([name]) => root.removeAttribute(name));
+  }
   function startPrint() {
     document.body.classList.add("printing-multi");
+    dropLook();
     if (!document.documentElement.classList.contains("dark-mode")) return;
     darkBeforePrint = true;
     setDark(false);
@@ -897,6 +919,8 @@
   });
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("printing-multi");
+    looksBeforePrint.forEach(([name, value]) => document.documentElement.setAttribute(name, value));
+    looksBeforePrint = [];
     if (darkBeforePrint) setDark(true);
     darkBeforePrint = false;
     openedForPrint.forEach((item) => { item.open = false; });
@@ -935,7 +959,7 @@
       mark.setAttribute("data-logo", img.getAttribute("data-logo"));
       img.replaceWith(mark);
     });
-    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
+    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style" && !LOOK_ATTR.test(attr.name)).map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
     return "<!doctype html><html" + theme + '><head><meta charset="utf-8"><title>' + esc(made.columns.map((col) => col.host).join(" " + t("vs") + " ")) + "</title><style>" + css.replace(/<\/style/gi, "<\\/style") +
       "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open" id="multi-overlay">' + copy.outerHTML + "</div></body></html>";
   }

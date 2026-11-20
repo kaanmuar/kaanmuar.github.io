@@ -1,9 +1,12 @@
 #!/bin/bash
 # Waits for every CI run on a commit, and every check another app posts on it, and prints only what failed (#1970): one blocking REST watch per run,
 # then the last lines of each failed step instead of the whole log. A run that has not started is skipped once every
-# check main requires has passed: the macOS runners can leave a run queued for hours (#2293).
+# check main requires has passed: the macOS runners can leave a run queued for hours (#2293). gh run watch on a queued
+# run exits at once (#1725), so watch only runs that report in_progress.
 #   scripts/ci-wait.sh <sha|pr-number> [lines]
 set -uo pipefail
+DIR=$(cd "$(dirname "$0")" && pwd)
+classify_run() { node -p "require('$DIR/ci-wait-lib.cjs').classifyRun(process.argv[1])" "$1"; }
 R=repos/kaanmuar/kaanmuar.github.io
 ref=${1:?usage: scripts/ci-wait.sh <sha|pr-number> [lines]}
 lines=${2:-40}
@@ -44,15 +47,27 @@ seen=" "
 while [ -n "$ids" ]; do
 	for id in $ids; do
 		seen="$seen$id "
-		until state=$(gh run view "$id" --json status,conclusion -q '"\(.status) \(.conclusion)"' 2>/dev/null) &&
-			[[ "$state" == completed* ]]; do
-			if [[ "$state" =~ ^(queued|waiting|pending|requested) ]]; then
+		run_status="" run_conclusion=""
+		until [[ "$run_status" == "completed" ]]; do
+			if ! read -r run_status run_conclusion < <(gh run view "$id" --json status,conclusion -q '[.status,.conclusion] | @tsv' 2>/dev/null); then
+				sleep 60
+				continue
+			fi
+			case $(classify_run "$run_status") in
+			complete) break ;;
+			not_started)
 				required_passed && break
 				sleep 60
-			else
-				gh run watch "$id" -i 30 >/dev/null 2>&1 || sleep 60
-			fi
+				;;
+			active)
+				gh run watch "$id" -i 30 --exit-status >/dev/null 2>&1 || sleep 30
+				;;
+			*)
+				sleep 60
+				;;
+			esac
 		done
+		state="$run_status ${run_conclusion:-}"
 		if [[ "$state" != completed* ]]; then
 			gh run view "$id" --json name,url -q '"SKIPPED \(.name) has not started; the required checks passed  \(.url)"'
 			skipped=1

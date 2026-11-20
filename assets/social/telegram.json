@@ -45,6 +45,72 @@
     "checked": "2026-11-10T00:12:40.463Z"
    }
   ],
+  "auto-2026-10-22/11-u-davibank-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "45",
+    "at": "2026-11-10T17:20:44.668Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/45",
+    "checked": "2026-11-10T17:20:54.131Z"
+   }
+  ],
+  "auto-2026-10-22/12-u-confluence-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "52",
+    "at": "2026-11-11T17:56:06.124Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/52",
+    "checked": "2026-11-11T17:56:12.123Z"
+   }
+  ],
+  "auto-2026-10-22/13-u-atlassian-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "61",
+    "at": "2026-11-12T22:28:26.218Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/61",
+    "checked": "2026-11-12T22:28:31.004Z"
+   }
+  ],
+  "auto-2026-10-22/14-u-co-computrabajo-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "69",
+    "at": "2026-11-13T23:54:57.588Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/69",
+    "checked": "2026-11-13T23:55:04.015Z"
+   }
+  ],
+  "auto-2026-10-22/15-u-nice-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "81",
+    "at": "2026-11-15T17:04:56.718Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/81",
+    "checked": "2026-11-15T17:05:02.173Z"
+   }
+  ],
+  "auto-2026-10-22/16-u-honda-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "95",
+    "at": "2026-11-17T20:53:18.097Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/95",
+    "checked": "2026-11-17T20:53:24.746Z"
+   }
+  ],
   "auto-2026-10-24/05-u-roottcostore-com": [
    {
     "channel": "telegram",
@@ -144,6 +210,17 @@
     "checked": "2026-11-09T00:52:19.073Z"
    }
   ],
+  "auto-2026-11-06/01-u-usehelios-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "66",
+    "at": "2026-11-13T18:30:47.327Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/66",
+    "checked": "2026-11-13T18:30:53.373Z"
+   }
+  ],
   "auto-2026-11-06/06-u-kra-co-kr": [
    {
     "channel": "telegram",
@@ -153,6 +230,28 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/43",
     "checked": "2026-11-10T00:12:48.388Z"
+   }
+  ],
+  "auto-2026-11-07/01-u-servicesaustralia-gov-au": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "76",
+    "at": "2026-11-14T22:57:23.850Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/76",
+    "checked": "2026-11-14T22:57:29.666Z"
+   }
+  ],
+  "auto-2026-11-08/01-u-shortmake-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "84",
+    "at": "2026-11-16T00:12:21.983Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/84",
+    "checked": "2026-11-16T00:12:27.895Z"
    }
   ],
   "auto-2026-11-08/04-vs-beebom-com": [
@@ -166,6 +265,193 @@
     "checked": "2026-11-09T21:02:38.180Z"
    }
   ],
+  "auto-2026-11-09/01-u-beatmastering-ir": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "92",
+    "at": "2026-11-17T02:55:02.933Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/92",
+    "checked": "2026-11-17T02:55:07.623Z"
+   }
+  ],
+  "auto-2026-11-09/03-vs-tide-forecast-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "46",
+    "at": "2026-11-10T17:20:54.131Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/46",
+    "checked": "2026-11-10T17:21:02.510Z"
+   }
+  ],
+  "auto-2026-11-10/01-u-motorsport-total-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "93",
+    "at": "2026-11-17T20:53:04.994Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/93",
+    "checked": "2026-11-17T20:53:12.313Z"
+   }
+  ],
+  "auto-2026-11-10/02-u-meutimao-com-br": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "53",
+    "at": "2026-11-11T17:56:12.123Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/53",
+    "checked": "2026-11-11T17:56:17.297Z"
+   }
+  ],
+  "auto-2026-11-11/01-u-808ball16-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "58",
+    "at": "2026-11-12T16:20:16.427Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/58",
+    "checked": "2026-11-12T16:20:22.022Z"
+   }
+  ],
+  "auto-2026-11-12/01-u-made-in-china-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "103",
+    "at": "2026-11-18T22:15:24.691Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/103",
+    "checked": "2026-11-18T22:15:28.618Z"
+   }
+  ],
+  "auto-2026-11-13/01-u-sliit-lk": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "114",
+    "at": "2026-11-20T01:21:36.363Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/114",
+    "checked": "2026-11-20T01:21:41.908Z"
+   }
+  ],
+  "auto-2026-11-14/04-vs-sinarharian-com-my": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "82",
+    "at": "2026-11-15T17:05:02.173Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/82",
+    "checked": "2026-11-15T17:05:06.281Z"
+   }
+  ],
+  "auto-2026-11-15/03-vs-mccabespharmacy-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "88",
+    "at": "2026-11-16T20:02:26.827Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/88",
+    "checked": "2026-11-16T20:02:32.021Z"
+   }
+  ],
+  "auto-2026-11-16/02-u-predictz-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "96",
+    "at": "2026-11-17T20:53:24.746Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/96",
+    "checked": "2026-11-17T20:53:31.118Z"
+   }
+  ],
+  "auto-2026-11-17/01-u-motives-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "104",
+    "at": "2026-11-18T22:15:28.618Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/104",
+    "checked": "2026-11-18T22:15:29.400Z"
+   }
+  ],
+  "auto-2026-11-18/06-u-aeropost-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "106",
+    "at": "2026-11-18T22:15:32.359Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/106",
+    "checked": "2026-11-18T22:15:38.011Z"
+   }
+  ],
+  "auto-2026-11-18/12-u-affinityplusbb-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "108",
+    "at": "2026-11-19T01:19:15.294Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/108",
+    "checked": "2026-11-19T01:19:20.545Z"
+   }
+  ],
+  "auto-2026-11-18/18-u-agenciadeviajestravelone-cl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "116",
+    "at": "2026-11-20T01:21:47.108Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/116",
+    "checked": "2026-11-20T01:21:52.543Z"
+   }
+  ],
+  "auto-2026-11-18/24-u-agilex-com-co": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "110",
+    "at": "2026-11-19T18:43:02.464Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/110",
+    "checked": "2026-11-19T18:43:24.932Z"
+   }
+  ],
+  "auto-2026-11-18/30-u-aijabogados-cl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "119",
+    "at": "2026-11-20T17:19:01.895Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/119",
+    "checked": "2026-11-20T17:19:07.515Z"
+   }
+  ],
+  "auto-2026-11-18/36-u-aire-plus-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "121",
+    "at": "2026-11-20T17:19:12.514Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/121",
+    "checked": "2026-11-20T17:19:19.240Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -177,6 +463,72 @@
     "checked": "2026-11-05T18:11:33.124Z"
    }
   ],
+  "compare-2026-11b/01-quiz-medellin-universities": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "56",
+    "at": "2026-11-12T00:39:45.341Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/56",
+    "checked": "2026-11-12T00:39:46.587Z"
+   }
+  ],
+  "compare-2026-11b/02-medellin-universities": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "59",
+    "at": "2026-11-12T16:20:22.022Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/59",
+    "checked": "2026-11-12T16:20:26.823Z"
+   }
+  ],
+  "compare-2026-11b/03-quiz-newspapers": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "70",
+    "at": "2026-11-13T23:55:04.015Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/70",
+    "checked": "2026-11-13T23:55:05.193Z"
+   }
+  ],
+  "compare-2026-11b/04-newspapers": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "75",
+    "at": "2026-11-14T18:52:17.346Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/75",
+    "checked": "2026-11-14T18:52:23.388Z"
+   }
+  ],
+  "digest-2026-11-13/01-this-week": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "67",
+    "at": "2026-11-13T18:30:53.373Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/67",
+    "checked": "2026-11-13T18:30:58.663Z"
+   }
+  ],
+  "evergreen-2026-11/01-ttfb-curl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "94",
+    "at": "2026-11-17T20:53:12.313Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/94",
+    "checked": "2026-11-17T20:53:18.097Z"
+   }
+  ],
   "evergreen-2026-11/02-myth-lighthouse": [
    {
     "channel": "telegram",
@@ -186,6 +538,28 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/18",
     "checked": "2026-11-06T22:14:23.541Z"
+   }
+  ],
+  "evergreen-2026-11/03-hreflang": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "105",
+    "at": "2026-11-18T22:15:29.400Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/105",
+    "checked": "2026-11-18T22:15:32.359Z"
+   }
+  ],
+  "evergreen-2026-11/04-coverage": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "115",
+    "at": "2026-11-20T01:21:41.908Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/115",
+    "checked": "2026-11-20T01:21:47.108Z"
    }
   ],
   "evergreen-2026-11/05-myth-https": [
@@ -221,6 +595,83 @@
     "checked": "2026-11-09T21:02:39.436Z"
    }
   ],
+  "evergreen-2026-11/12-myth-sitemap": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "47",
+    "at": "2026-11-10T22:33:05.263Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/47",
+    "checked": "2026-11-10T22:33:10.972Z"
+   }
+  ],
+  "evergreen-2026-11/14-a11y-check": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "54",
+    "at": "2026-11-12T00:39:36.483Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/54",
+    "checked": "2026-11-12T00:39:41.880Z"
+   }
+  ],
+  "evergreen-2026-11/18-myth-keywords": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "62",
+    "at": "2026-11-12T22:28:31.004Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/62",
+    "checked": "2026-11-12T22:28:35.212Z"
+   }
+  ],
+  "launch-2026-10/de/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "99",
+    "at": "2026-11-18T02:53:01.116Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/99",
+    "checked": "2026-11-18T02:53:02.518Z"
+   }
+  ],
+  "launch-2026-10/es/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "65",
+    "at": "2026-11-13T18:30:45.974Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/65",
+    "checked": "2026-11-13T18:30:47.326Z"
+   }
+  ],
+  "launch-2026-10/fr/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "112",
+    "at": "2026-11-19T18:43:30.238Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/112",
+    "checked": "2026-11-19T18:43:31.464Z"
+   }
+  ],
+  "launch-2026-10/pt/a11y": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "83",
+    "at": "2026-11-15T21:57:02.452Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/83",
+    "checked": "2026-11-15T21:57:03.413Z"
+   }
+  ],
   "live/2026-11-04": [
    {
     "channel": "telegram",
@@ -229,8 +680,8 @@
     "at": "2026-11-04T18:38:14.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/3",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "85169ec827d3"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "61c94ee55f59"
    }
   ],
   "live/2026-11-05": [
@@ -241,8 +692,8 @@
     "at": "2026-11-05T11:50:17.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/5",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "272cdebe818e"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "d4741cdf5827"
    }
   ],
   "live/2026-11-06": [
@@ -253,8 +704,8 @@
     "at": "2026-11-06T13:38:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/14",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "9173a2f47a83"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "efe69186531f"
    }
   ],
   "live/2026-11-07": [
@@ -265,8 +716,8 @@
     "at": "2026-11-07T11:26:12.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/20",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "8d8285a157b9"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "cca6f82a9252"
    }
   ],
   "live/2026-11-08": [
@@ -277,8 +728,8 @@
     "at": "2026-11-08T13:27:30.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/26",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "e6e4ae4f8b2c"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "0ec40532e486"
    }
   ],
   "live/2026-11-09": [
@@ -289,8 +740,8 @@
     "at": "2026-11-09T11:52:54.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/34",
-    "checked": "2026-11-10T11:35:36.369Z",
-    "hash": "4f899a155813"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "884d9cea1ca6"
    }
   ],
   "live/2026-11-10": [
@@ -301,8 +752,116 @@
     "at": "2026-11-10T11:35:36.000Z",
     "result": "sent",
     "url": "https://t.me/qalab_live/44",
-    "checked": "2026-11-10T11:35:36.295Z",
-    "hash": "4e5ab01b3969"
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "38a055f7bdb0"
+   }
+  ],
+  "live/2026-11-11": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "50",
+    "at": "2026-11-11T11:32:37.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/50",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "5db8bc91f1ac"
+   }
+  ],
+  "live/2026-11-12": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "57",
+    "at": "2026-11-12T11:25:46.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/57",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "9a839e62589c"
+   }
+  ],
+  "live/2026-11-13": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "64",
+    "at": "2026-11-13T11:27:14.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/64",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "145d6e367fd6"
+   }
+  ],
+  "live/2026-11-14": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "72",
+    "at": "2026-11-14T11:25:26.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/72",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "3f3f55cafe59"
+   }
+  ],
+  "live/2026-11-15": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "79",
+    "at": "2026-11-15T11:28:56.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/79",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "7d0c4013d252"
+   }
+  ],
+  "live/2026-11-16": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "86",
+    "at": "2026-11-16T11:48:35.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/86",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "3074dfaec5a3"
+   }
+  ],
+  "live/2026-11-17": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "97",
+    "at": "2026-11-17T22:08:44.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/97",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "cbd99ad90d6f"
+   }
+  ],
+  "live/2026-11-19": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "113",
+    "at": "2026-11-20T00:08:14.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/113",
+    "checked": "2026-11-20T15:01:21.923Z",
+    "hash": "5c6fc4c1f56c"
+   }
+  ],
+  "live/2026-11-20": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "118",
+    "at": "2026-11-20T15:01:21.000Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/118",
+    "checked": "2026-11-20T15:01:21.838Z",
+    "hash": "e5b3bc1d9744"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [
@@ -338,6 +897,203 @@
     "checked": "2026-11-08T16:18:56.314Z"
    }
   ],
+  "promo-social-hub-2026-10/26-real-reviews-it": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "48",
+    "at": "2026-11-10T22:33:10.972Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/48",
+    "checked": "2026-11-10T22:33:15.912Z"
+   }
+  ],
+  "promo-social-hub-2026-10/31-one-page-de": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "63",
+    "at": "2026-11-13T02:54:36.120Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/63",
+    "checked": "2026-11-13T02:54:41.447Z"
+   }
+  ],
+  "promo-social-hub-2026-10/32-copy-caption-fr": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "74",
+    "at": "2026-11-14T18:52:09.123Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/74",
+    "checked": "2026-11-14T18:52:17.346Z"
+   }
+  ],
+  "promo-social-hub-2026-10/33-clips-it": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "91",
+    "at": "2026-11-17T02:54:56.281Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/91",
+    "checked": "2026-11-17T02:55:02.933Z"
+   }
+  ],
+  "promo-social-hub-2026-10/34-six-languages-en": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "at": "2026-11-19T02:12:07.846Z",
+    "result": "failed",
+    "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
+    "checked": "2026-11-19T02:12:09.892Z"
+   }
+  ],
+  "runs-100/01-wikipedia": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "122",
+    "at": "2026-11-20T17:19:19.241Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/122",
+    "checked": "2026-11-20T17:19:23.800Z"
+   }
+  ],
+  "runs-2026-10/01-govuk": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "73",
+    "at": "2026-11-14T14:49:07.037Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/73",
+    "checked": "2026-11-14T14:49:12.796Z"
+   }
+  ],
+  "runs-2026-10/02-bogota": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "89",
+    "at": "2026-11-16T20:02:32.021Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/89",
+    "checked": "2026-11-16T20:02:37.327Z"
+   }
+  ],
+  "runs-2026-10/03-who": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "90",
+    "at": "2026-11-16T20:02:37.327Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/90",
+    "checked": "2026-11-16T20:02:42.491Z"
+   }
+  ],
+  "runs-2026-10/04-govco": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "98",
+    "at": "2026-11-18T02:52:55.745Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/98",
+    "checked": "2026-11-18T02:53:01.116Z"
+   }
+  ],
+  "runs-2026-10/05-bbc": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "107",
+    "at": "2026-11-18T22:35:21.648Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/107",
+    "checked": "2026-11-18T22:35:26.271Z"
+   }
+  ],
+  "runs-2026-10/06-transmilenio": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "109",
+    "at": "2026-11-19T01:19:20.545Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/109",
+    "checked": "2026-11-19T01:19:24.848Z"
+   }
+  ],
+  "runs-2026-10/07-python": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "117",
+    "at": "2026-11-20T01:21:52.543Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/117",
+    "checked": "2026-11-20T01:21:57.774Z"
+   }
+  ],
+  "runs-2026-10/08-bancolombia": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "111",
+    "at": "2026-11-19T18:43:24.932Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/111",
+    "checked": "2026-11-19T18:43:30.238Z"
+   }
+  ],
+  "runs-2026-10/09-un": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "120",
+    "at": "2026-11-20T17:19:07.515Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/120",
+    "checked": "2026-11-20T17:19:12.514Z"
+   }
+  ],
+  "runs-3/01-ilo": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "71",
+    "at": "2026-11-14T06:10:57.406Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/71",
+    "checked": "2026-11-14T06:10:59.126Z"
+   }
+  ],
+  "runs-3/02-policiaco": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "78",
+    "at": "2026-11-15T02:37:07.699Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/78",
+    "checked": "2026-11-15T02:37:09.829Z"
+   }
+  ],
+  "runs-3/03-valle": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "80",
+    "at": "2026-11-15T17:04:54.933Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/80",
+    "checked": "2026-11-15T17:04:56.718Z"
+   }
+  ],
   "skits-friday-release/01-friday-release-en": [
    {
     "channel": "telegram",
@@ -358,6 +1114,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/40",
     "checked": "2026-11-09T21:02:43.316Z"
+   }
+  ],
+  "skits-friday-release/03-friday-release-pt": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "55",
+    "at": "2026-11-12T00:39:41.880Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/55",
+    "checked": "2026-11-12T00:39:45.341Z"
    }
   ],
   "tips-2026-10/10-keyboard": [
@@ -413,6 +1180,83 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/41",
     "checked": "2026-11-10T00:12:30.593Z"
+   }
+  ],
+  "tips-2026-10/15-csp-report-only": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "49",
+    "at": "2026-11-11T02:14:39.591Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/49",
+    "checked": "2026-11-11T02:14:40.822Z"
+   }
+  ],
+  "tips-2026-10/16-list-first": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "51",
+    "at": "2026-11-11T17:56:04.947Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/51",
+    "checked": "2026-11-11T17:56:06.124Z"
+   }
+  ],
+  "tips-2026-10/17-robots-ai": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "60",
+    "at": "2026-11-12T22:28:25.299Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/60",
+    "checked": "2026-11-12T22:28:26.218Z"
+   }
+  ],
+  "tips-2026-10/18-broken-links": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "68",
+    "at": "2026-11-13T21:10:58.284Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/68",
+    "checked": "2026-11-13T21:10:59.346Z"
+   }
+  ],
+  "tips-2026-10/19-measure-action": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "77",
+    "at": "2026-11-14T22:57:29.666Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/77",
+    "checked": "2026-11-14T22:57:35.291Z"
+   }
+  ],
+  "tips-2026-10/20-html-first": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "85",
+    "at": "2026-11-16T01:57:56.718Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/85",
+    "checked": "2026-11-16T01:57:57.743Z"
+   }
+  ],
+  "tips-2026-10/21-canonical": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "87",
+    "at": "2026-11-16T20:02:18.126Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/87",
+    "checked": "2026-11-16T20:02:26.827Z"
    }
   ]
  }

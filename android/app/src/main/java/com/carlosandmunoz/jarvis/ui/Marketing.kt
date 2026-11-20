@@ -68,6 +68,32 @@ object Marketing {
     fun waiting(sync: JsonObject?, action: String, key: String) =
         sync.obj("commands").objs("items").any { it.str("status") == "pending" && (action.isEmpty() || it.str("action") == action) && it.str("label").orEmpty().contains(key) }
 
+    /** Actual vs target from STATS on the outreach job log, else the NOTIFY summary (#3565). */
+    fun jobVolume(j: JsonObject): String {
+        val s = j.obj("stats") ?: return j.str("notify")?.takeIf { it.isNotEmpty() } ?: "—"
+        val actual = s.num("actual")?.toInt()
+        val target = s.num("target")?.toInt()
+        if (actual != null && target != null) {
+            var vol = "$actual / $target"
+            if (j.str("mode") == "prospects") {
+                val note = s.obj("by_segment")?.let { seg ->
+                    seg.keys.mapNotNull { k -> seg.num(k)?.toInt()?.takeIf { it > 0 }?.let { "$it $k" } }.joinToString(", ")
+                }.orEmpty()
+                if (note.isNotEmpty()) vol += " · $note"
+            }
+            return vol
+        }
+        s.num("complete")?.toInt()?.let { c ->
+            val w = s.num("waiting")?.toInt() ?: 0
+            return "$c complete · $w waiting"
+        }
+        s.num("actual")?.toInt()?.let { return "$it sorted" }
+        val paused = s.num("paused")?.toInt() ?: 0
+        val resumed = s.num("resumed")?.toInt() ?: 0
+        if (j.str("mode") == "holidays") return "$paused paused · $resumed resumed"
+        return j.str("notify")?.takeIf { it.isNotEmpty() } ?: "—"
+    }
+
     /** The day's LinkedIn list as (still to send, already sent); sent people fold away (#2336). */
     fun linkedinSplit(sync: JsonObject?) = sync.obj("linkedin").objs("items").partition { it.bool("sent") != true }
 
@@ -218,7 +244,22 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
         }
 
         Panel("LinkedIn" + (li.str("date")?.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""), id = "marketing-linkedin") {
-            if (liItems.isEmpty()) { Muted("No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."); return@Panel }
+            if (liItems.isEmpty()) {
+                val date = li.str("date").orEmpty()
+                val left = li.num("left")?.toInt() ?: 0
+                val last = li.str("lastNonEmpty").orEmpty()
+                val streak = li.num("emptyStreak")?.toInt() ?: 0
+                Muted(
+                    when {
+                        date.isEmpty() -> "No LinkedIn list yet; the outreach sync writes one each working day from 07:00 Bogotá time, with up to 15 prospects never listed before."
+                        left > 0 -> "Today's list ($date) has nobody left to send, but $left named prospects with a personal LinkedIn still wait. The next sync should refill once their CSVs settle (#3564)."
+                        else -> "Today's list ($date) is empty: every named prospect with a personal LinkedIn (/in/) was already listed." +
+                            (if (last.isNotEmpty()) " Last people were on $last" + (if (streak > 0) " · $streak empty working-day files since" else "") + "." else "") +
+                            " Feed new contact_name + linkedin.com/in/ rows into the week prospect CSVs (week2 companies currently lack contact names) (#3564 / #3572)."
+                    }
+                )
+                return@Panel
+            }
             val uri = LocalUriHandler.current
             val context = LocalContext.current
             GlowBar(liSent.toFloat() / liItems.size)
@@ -239,13 +280,14 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                         if (!sent && note.isNotEmpty()) Muted("Note: $note")
                     }
                     if (sent) profile?.let { url -> TextButton({ uri.openUri(url) }) { Text("Profile", color = J.cyan, fontSize = 13.sp) } }
+                    val queue = p.str("queue").orEmpty()
                     if (Marketing.waiting(sy, "linkedin", name)) Text("waiting", color = J.amber, fontSize = 12.sp)
+                    else if (!sent && queue in listOf("queued", "running")) Text(if (queue == "running") "Mac agent sending" else "queued for Mac", color = J.amber, fontSize = 12.sp)
                     else if (!sent && profile != null) TextButton({
-                        if (note.isNotEmpty()) copyNote(context, note)
-                        uri.openUri(profile)
-                        command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to true)) {
-                            (if (note.isNotEmpty()) "Note copied: on LinkedIn tap Connect, Add a note, paste and Send." else "On LinkedIn tap Connect and Send.") + " $name is marked sent."
-                        }
+                        command("mk:li:$name", mapOf(
+                            "action" to JsonPrimitive("linkedin-send"), "date" to li.str("date").orEmpty(),
+                            "name" to name, "profile" to profile, "note" to note, "checkFirst" to check
+                        )) { "Queued for the Mac agent: $name." }
                     }, enabled = "mk:li:$name" !in s.running) { Text("Send", color = J.cyan, fontWeight = FontWeight.Medium, fontSize = 13.sp) }
                     else TextButton({ ask("mark the LinkedIn request to $name as " + if (sent) "not sent" else "sent") { command("mk:li:$name", mapOf("action" to "linkedin", "date" to li.str("date").orEmpty(), "name" to name, "sent" to !sent)) } }, enabled = "mk:li:$name" !in s.running) {
                         Text(if (sent) "Not sent" else "Mark sent", color = if (sent) J.muted else J.cyan, fontSize = 13.sp)
@@ -269,7 +311,7 @@ fun MarketingScreen(s: UiState, vm: JarvisViewModel) {
                 Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(mode, fontWeight = FontWeight.Medium, color = if (j.bool("failed") == true) J.pink else J.text)
-                        Muted(listOfNotNull(ago(j.str("at")) ?: "never", j.str("notify")?.takeIf { it.isNotEmpty() }).joinToString(" · "))
+                        Muted(listOfNotNull(ago(j.str("at")) ?: "never", Marketing.jobVolume(j).takeIf { it != "—" }).joinToString(" · "))
                     }
                     if (Marketing.waiting(sy, "run", mode)) Text("waiting", color = J.amber, fontSize = 12.sp)
                     else TextButton({ ask("run the $mode job now (it can take half an hour)") { command("mk:run:$mode", mapOf("action" to "run", "job" to mode)) } }, enabled = sy.bool("running") != true) { Text("Run now", color = J.cyan, fontSize = 13.sp) }

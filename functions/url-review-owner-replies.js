@@ -1,22 +1,23 @@
-/* Replies to owner notices (#550): read, sorted, and turned into one decision each.
+/* Replies to owner notices (#550, #3670): read, sorted, and turned into one decision each.
 
    Owner notices reply to reply+<owner link token>@<OWNER_REPLY_DOMAIN>. SendGrid Inbound Parse posts each
    reply to ownerReplies (functions/index.js), which matches it to its notice, sorts it with the rules
-   below, applies what is safe at once, and mails the operator anything that needs a person. Rules only,
-   no model: a reply costs nothing to read.
+   below, applies what is safe at once, and mails the operator anything that needs a person. Rules sort
+   the reply (no model); Gemini drafts the personal answer when the kind waits for one (#3670).
 
    kind       what happens
-   auto       out-of-office, "we received your email" or noreply answer: filed
+   auto       out-of-office, receipt, closed inbox / "use the contact form", or noreply: filed
    bounce     the notice address does not exist or a mailing list refused it: that address is stopped
    complaint  spam, legal or data-protection wording: the domain is stopped, the operator is told
    stop       "remove us": the domain is stopped, the operator is told
    redirect   "write to the new person in charge": waits; the decision page offers every address in the reply,
               the one it points to first, and sends the notice to the one picked
-   interested thanks, a price, a call: waits for a personal answer
-   other      anything else: waits
+   interested thanks, a price, a call: waits; Gemini draft + Send answer on the decide page
+   other      anything else: waits; Gemini draft + Send answer on the decide page
 
    Owners who write to qa@ instead reach the same flow through ImprovMX's mailInbound webhook (#1899), which
-   keeps only mail that matches a notice. */
+   keeps only mail that matches a notice. The same sort rules also pre-filter Instantly outreach replies
+   before Gemini drafts them (scripts/outreach-weekly.js). */
 
 const crypto = require("crypto");
 
@@ -26,6 +27,8 @@ const OWN_DOMAINS = ["carlosandmunoz.com"];
 const AUTO_SUBJECT = /auto-?reply|automatic reply|out of (the )?office|respuesta autom|fuera de la oficina|ausente|abwesen|automatische antwort|absence|r[ée]ponse automatique|risposta automatica|fuori ufficio|resposta autom|aus[êe]ncia/i;
 const AUTO_FROM = /^(no-?reply|no_reply|do-?not-?reply|donotreply|auto-?reply|autoresponder)([._+-][^@]*)?@/i;
 const RECEIPT = /we(['’]ve| have)? (successfully )?received your (e-?mail|message|request|inquiry|enquiry)|your (e-?mail|message|request|inquiry|enquiry) (has been|was) received|this is an automat(ic|ed) (message|response|reply|e-?mail)|this (mailbox|inbox|address) is not monitored|(hemos|he) recibido (su|tu) (correo|mensaje|solicitud|e-?mail)|(su|tu) (correo|mensaje|solicitud) (ha sido|fue) recibid|(este es un )?mensaje (generado )?autom[áa]tic|recebemos (o |a )?(seu|sua) (e-?mail|mensagem|solicita)|(sua|seu) (mensagem|e-?mail|solicita[çc][ãa]o) foi recebid|ihre (e-?mail|nachricht|anfrage) (ist bei uns eingegangen|haben wir erhalten)|wir haben ihre (e-?mail|nachricht|anfrage) erhalten|automatisch (erstellte|generierte) (e-?mail|nachricht)|nous avons (bien )?re[çc]u votre (e-?mail|courriel|message|demande)|votre (e-?mail|courriel|message|demande) a (bien )?[ée]t[ée] re[çc]u|abbiamo ricevuto (la tua|la sua|il tuo|il suo) (e-?mail|mail|messaggio|richiesta)|messaggio (generato )?automatic/i;
+// Closed / unmonitored inbox that only points at a form or another channel (#3670, Simplon Nov 5).
+const CLOSED = /this (mailbox|inbox|address) is not (monitored|intended|meant)|not (intended|meant|destined) (for|to (receive|handle))|message will not be (processed|treated|read|answered)|use (the |our )?(contact|web) form|n['’]est pas destin[ée]e? (à|a) (recevoir|traiter)|ne sera pas trait[ée]|formulaire de contact|esta (bandeja|casilla|direcci[oó]n|cuenta) no (se )?(monitorea|atiende|lee)|no est[aá] destinada a (recibir|atender)|utilizar el formulario|n[ãa]o (é |e )?(destinad[ao]|monitorad)|formul[aá]rio de contato|nicht (überwacht|gelesen|bestimmt)|kontaktformular|questa (casella|mail) non (è |e )?(monitorata|destinata)|modulo di contatto/i;
 const PROMISE = /get back to you|(business|working) days|as soon as (we can|possible)|d[íi]as h[áa]biles|lo antes posible|nos pondremos en contacto|dias [úu]teis|o mais breve|entraremos em contato|werktag|schnellstm[öo]glich|melden uns|jours ouvr|dans les (plus brefs|meilleurs) d[ée]lais|reviendrons vers vous|giorni lavorativi|al pi[ùu] presto|vi risponderemo/i;
 const BOUNCE_FROM = /^(mailer-daemon|postmaster|mail-daemon)@|^[^@]+[-+](owner|bounces?)@/i;
 const BOUNCE_SUBJECT = /undeliver|delivery status notification|mail delivery (failed|subsystem)|returned mail|failure notice|no se pudo entregar|non remis|unzustellbar|non recapitat|n[ãa]o entregue|\bpost(ing)? to \S+ (denied|rejected)/i;
@@ -35,13 +38,13 @@ const STOP = /unsubscribe|remove (me|us)|do not (contact|email|write)|stop (send
 const REDIRECT = /forward|redirect|instead|reenv[ií]|remit|redirig|dir[ií]j|dirigir|escrib(a|ir|an) a|nuev[oa] (responsable|encargad|contacto)|responsable|encargad|contact(e|ar|o) (a|con)|weiterleit|zust[äa]ndig|wenden sie sich|transf[ée]r|adress(ez|er)|inoltr|rivolger|responsabile|encaminh|respons[áa]vel/i;
 const INTERESTED = /thank|gracias|interes|cotiza|precio|\bprice|quote|how much|cu[áa]nto|propuesta|reuni[óo]n|meeting|llamad|danke|merci|grazie|obrigad|angebot|devis|preventivo|or[çc]amento/i;
 
-const FORWARD = /-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}|^[ \t]*(begin forwarded message|inicio del mensaje reenviado|d[ée]but du message r[ée]exp[ée]di[ée]|anfang der weitergeleiteten nachricht|inizio messaggio inoltrato|in[íi]cio da mensagem (re)?encaminhada)\s?:/im;
+const FORWARD = /(?<!-)-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}|^[ \t]*(begin forwarded message|inicio del mensaje reenviado|d[ée]but du message r[ée]exp[ée]di[ée]|anfang der weitergeleiteten nachricht|inizio messaggio inoltrato|in[íi]cio da mensagem (re)?encaminhada)\s?:/im;
 const FROM_KEYS = ["from", "de", "von", "da"];
 const SUBJECT_KEYS = ["subject", "asunto", "betreff", "objet", "oggetto", "assunto"];
 const OTHER_KEYS = ["sent", "date", "to", "cc", "reply-to", "enviado", "enviada", "fecha", "para", "gesendet", "datum", "an", "envoyé", "à", "a", "inviato", "data"];
-const HEADER_LINE = /^[\s*]*([^:*]{1,12}?)[\s*]*:[\s*]*(.*?)[\s*]*$/;
-const QUOTE_START = /^\s*(on .+wrote:|el .+escribi[óo]:|le .+a [ée]crit\s?:|am .+schrieb.*:|il giorno .+ha scritto:|em .+escreveu:|-{3,}\s*(original message|mensaje original|message d'origine|urspr[üu]ngliche nachricht|messaggio originale|mensagem original)\s*-{3,}|\**(from|de|von|da):\**\s.+@.+|_{8,})/im;
-const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const HEADER_LINE = /^[\s*]*([^:*\s][^:*]{0,11}?)[\s*]*:[\s*]*(?![\s*])((?:.*[^\s*])?)[\s*]*$/;
+const QUOTE_START = /^(?<!^[^\S\r\n\u2028\u2029]*[\r\n\u2028\u2029])\s*(on .+wrote:|el .+escribi[óo]:|le .+a [ée]crit\s?:|am .(?:(?!schrieb).)*schrieb.*:|il giorno .+ha scritto:|em .+escreveu:|-{3,}\s*(original message|mensaje original|message d'origine|urspr[üu]ngliche nachricht|messaggio originale|mensagem original)\s*-{3,}|\**(from|de|von|da):\**\s.+@.+|_{8,})/im;
+const EMAIL = /(?<![a-z0-9._%+-])[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 
 // Who an address reaches, from its local part: a general or web inbox first, jobs and suppliers last (#1095).
 const ROLE_FIRST = /^(contact[a-z]*|kontakt|info[a-z]*|general|hello|hola|hallo|commercial|comercial|sales|ventas|vendas|vertrieb|communications?|comunicaci[a-z]*|comunicacoes|kommunikation|press|prensa|presse|imprensa|stampa|media|medios|web|webmaster|www|marketing|digital|office|oficina|atencion[a-z]*)$/;
@@ -189,12 +192,64 @@ function read(mail) {
   let kind = "other";
   if (BOUNCE_FROM.test(from) || BOUNCE_SUBJECT.test(subject) || LIST_REJECT.test(words)) kind = "bounce";
   else if (/^auto-submitted:\s*auto-(replied|generated)/im.test(headers) || /^x-autoreply:/im.test(headers) || AUTO_SUBJECT.test(subject) || AUTO_FROM.test(from)) kind = "auto";
+  else if (CLOSED.test(words)) kind = "auto";
   else if (RECEIPT.test(words) && (PROMISE.test(words) || !words.includes("?"))) kind = "auto";
   else if (COMPLAINT.test(words)) kind = "complaint";
   else if (STOP.test(words) || STOP.test(subject)) kind = "stop";
   else if (REDIRECT.test(words)) kind = "redirect";
   else if (INTERESTED.test(words)) kind = "interested";
   return { from, domain: domainOfEmail(from), subject, words: words.slice(0, 6000), kind, token, forwardedBy, mentioned: mentioned.slice(0, 8) };
+}
+
+/** True when the decide page should offer a Gemini-drafted personal answer (#3670). */
+function needsAnswer(kind) {
+  return kind === "interested" || kind === "other";
+}
+
+/** Gemini prompt: draft Carlos's answer to an interested (or unclear) owner reply. */
+function answerPrompt(reply, notice) {
+  const r = reply || {};
+  const host = (notice && notice.host) || r.host || r.domain || "";
+  return [
+    "You draft Carlos Munoz's reply to a site owner who answered a QA-lab URL Review notice.",
+    "QA-lab URL Review publishes a free public report with six scores (SEO, GEO, analytics, security, accessibility, performance), findings and test cases from one URL.",
+    "Write in the owner's language, plain text, 3 to 6 short sentences. Use the same form of address they used (usted in Spanish unless they wrote tú).",
+    "Thank them, answer what they asked from the notice context only, and offer a 15-minute walkthrough at https://carlosandmunoz.com/book.html when they show interest or ask a price.",
+    "Never invent a price, a date, a score or a result. No marketing fluff. End with a blank line, then: Carlos Munoz\\ncarlosandmunoz.com",
+    'Reply with JSON only: {"lang":"two-letter code","summary":"two short English lines","draft":"the answer","english":"English translation of draft when lang is not en, else empty"}.',
+    "Owner reply:",
+    JSON.stringify({
+      from: r.from || "",
+      host: host,
+      kind: r.kind || "",
+      subject: String(r.subject || "").slice(0, 200),
+      text: String(r.words || "").slice(0, 3500)
+    })
+  ].join("\n");
+}
+
+/** Parse Gemini's answer-draft JSON. Returns { lang, summary, draft, english } or null. */
+function parseAnswerDraft(text) {
+  let raw = String(text || "").replace(/^```(?:json)?|```$/gm, "").trim();
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  let out;
+  try { out = JSON.parse(raw.slice(start, end + 1)); } catch (error) { return null; }
+  const draft = String(out.draft || "").trim();
+  if (draft.length < 12) return null;
+  const lang = String(out.lang || "en").toLowerCase().slice(0, 2) || "en";
+  return {
+    lang,
+    summary: String(out.summary || "").trim().slice(0, 400),
+    draft: draft.slice(0, 8000),
+    english: lang !== "en" ? String(out.english || "").trim().slice(0, 8000) : ""
+  };
+}
+
+/** Map a rules kind to an Instantly outreach category (#3670 / #1422). */
+function outreachCategory(kind) {
+  return ({ auto: "auto_reply", bounce: "bounce", stop: "opt_out", complaint: "opt_out", redirect: "wrong_person", interested: "interested", other: "" })[kind] || "";
 }
 
 // What is done without a person, and what the decision page proposes.
@@ -235,4 +290,7 @@ function replyId(messageId) {
   return key ? crypto.createHash("sha256").update(key).digest("hex").slice(0, 32) : "";
 }
 
-module.exports = { OPERATORS, KIND_LABELS, ownWords, unforward, read, plan, summary, addressOf, resendChoices, messageIdOf, replyId };
+module.exports = {
+  OPERATORS, KIND_LABELS, ownWords, unforward, read, plan, summary, addressOf, resendChoices,
+  messageIdOf, replyId, needsAnswer, answerPrompt, parseAnswerDraft, outreachCategory
+};

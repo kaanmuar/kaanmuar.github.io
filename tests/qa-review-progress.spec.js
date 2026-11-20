@@ -1,80 +1,157 @@
 const { test, expect } = require('./net-guard');
 
-const TERMS = require('fs').readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+const TERMS = require('fs')
+	.readFileSync(require('path').join(__dirname, '../js/qa-review.js'), 'utf8')
+	.match(/TERMS_VERSION = ['"]([^'"]+)['"]/)[1];
 
 async function prime(page) {
-  await page.addInitScript((version) => {
-    try {
-      sessionStorage.setItem('qa-review-terms', version);
-      localStorage.setItem('hasSeenReviewTour', 'true');
-      localStorage.setItem('qa-review-analytics', 'necessary');
-    } catch (e) { /* storage is optional */ }
-  }, TERMS);
-  await page.route(/\/news\?/, (route) => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"items":[]}' }));
-  await page.route(/ipwho\.is/, (route) => route.fulfill({ contentType: 'application/json', body: '{"success":false}' }));
+	await page.addInitScript((version) => {
+		try {
+			sessionStorage.setItem('qa-review-terms', version);
+			localStorage.setItem('hasSeenReviewTour', 'true');
+			localStorage.setItem('qa-review-analytics', 'necessary');
+		} catch (e) {
+			/* storage is optional */
+		}
+	}, TERMS);
+	await page.route(/\/news\?/, (route) =>
+		route.fulfill({
+			contentType: 'application/json',
+			headers: { 'access-control-allow-origin': '*' },
+			body: '{"items":[]}',
+		})
+	);
+	await page.route(/ipwho\.is/, (route) =>
+		route.fulfill({ contentType: 'application/json', body: '{"success":false}' })
+	);
 }
 
 const feed = (page, lines) => page.evaluate((all) => all.forEach((text) => window.ReviewProgress.line(text)), lines);
 const percent = (page) => page.locator('.rp-stage').getAttribute('aria-valuenow').then(Number);
 
 test.describe('Review progress', () => {
-  test('stays hidden until a review starts', async ({ page }) => {
-    await prime(page);
-    await page.goto('/qa-review.html');
-    await expect(page.locator('#run-panel .rp')).toBeHidden();
-  });
+	test('stays hidden until a review starts', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await expect(page.locator('#run-panel .rp')).toBeHidden();
+	});
 
-  test('follows the server lines through the pages and ends at 100 with the report', async ({ page }) => {
-    await prime(page);
-    await page.goto('/qa-review.html');
-    await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com/path', pages: 5 }));
-    await expect(page.locator('.rp')).toBeVisible();
-    await expect(page.locator('.rp-phase')).toHaveText('Connecting');
-    await feed(page, ['Checking that the address is public https.', 'Reading robots.txt.', '9 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.', 'Opening /a.', 'Opening /b.']);
-    await expect(page.locator('.rp-phase')).toHaveText('Analyzing pages · 3 of 5');
-    await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(38);
-    await feed(page, ['Analyzed 3 pages. Writing the proposed cases now.', 'Proposed 12 cases.']);
-    await expect(page.locator('.rp-phase')).toHaveText('Writing cases');
-    await expect(page.locator('.rp-sky .rp-msg').first()).toBeAttached();
-    await page.evaluate(() => window.ReviewProgress.finish('ready'));
-    await expect(page.locator('.rp-phase')).toHaveText('Report ready');
-    await expect.poll(() => percent(page)).toBe(100);
-    await expect(page.locator('.rp')).toHaveClass(/is-done/);
-  });
+	test('follows the server lines through the pages and ends at 100 with the report', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com/path', pages: 5 }));
+		await expect(page.locator('.rp')).toBeVisible();
+		await expect(page.locator('.rp-phase')).toHaveText('Connecting');
+		await feed(page, [
+			'Checking that the address is public https.',
+			'Reading robots.txt.',
+			'9 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.',
+			'Opening /a.',
+			'Opening /b.',
+		]);
+		await expect(page.locator('.rp-phase')).toHaveText('Analyzing pages · 3 of 5');
+		await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(38);
+		await feed(page, ['Analyzed 3 pages. Writing the proposed cases now.', 'Proposed 12 cases.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Writing cases');
+		await expect(page.locator('.rp-sky .rp-msg').first()).toBeAttached();
+		await page.evaluate(() => window.ReviewProgress.finish('ready'));
+		await expect(page.locator('.rp-phase')).toHaveText('Report ready');
+		await expect.poll(() => percent(page)).toBe(100);
+		await expect(page.locator('.rp')).toHaveClass(/is-done/);
+	});
 
-  test('never moves back and marks an early end', async ({ page }) => {
-    await prime(page);
-    await page.goto('/qa-review.html');
-    await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 20 }));
-    await feed(page, ['Scoring the checks from the pages analyzed.']);
-    await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(92);
-    await feed(page, ['Opening the first page.']);
-    expect(await percent(page)).toBeGreaterThanOrEqual(92);
-    await page.evaluate(() => window.ReviewProgress.fail());
-    await expect(page.locator('.rp-phase')).toHaveText('The review ended early');
-    await expect(page.locator('.rp-sky')).toHaveClass(/is-off/);
-  });
+	test('never moves back and marks an early end', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 20 }));
+		await feed(page, ['Scoring the checks from the pages analyzed.']);
+		await expect.poll(() => percent(page)).toBeGreaterThanOrEqual(92);
+		await feed(page, ['Opening the first page.']);
+		expect(await percent(page)).toBeGreaterThanOrEqual(92);
+		await page.evaluate(() => window.ReviewProgress.fail());
+		await expect(page.locator('.rp-phase')).toHaveText('The review ended early');
+		await expect(page.locator('.rp-sky')).toHaveClass(/is-off/);
+	});
 
-  test('speaks the page language', async ({ page }) => {
-    await prime(page);
-    await page.goto('/qa-review-de.html');
-    await page.evaluate(() => window.ReviewProgress.start({ host: 'beispiel.de', pages: 20 }));
-    await expect(page.locator('.rp-phase')).toHaveText('Verbinden');
-    await expect(page.locator('.rp-phase')).toHaveAttribute('translate', 'no');
-  });
+	test('speaks the page language', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review-de.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'beispiel.de', pages: 20 }));
+		await expect(page.locator('.rp-phase')).toHaveText('Verbinden');
+		await expect(page.locator('.rp-phase')).toHaveAttribute('translate', 'no');
+	});
 
-  test('translates the late server lines and leaves hosts and emails as sent', async ({ page }) => {
-    await prime(page);
-    await page.goto('/qa-review-es.html');
-    const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
-    expect(await say('Looking for your earlier reviews of carlosandmunoz.com.')).toBe('Buscando tus revisiones anteriores de carlosandmunoz.com.');
-    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Informe guardado. Enviando una copia a ana@example.com.');
-    expect(await say('Market presence: a.com is #1,234 on Tranco, presence 80/100; b.com is outside the Tranco top million.'))
-      .toBe('Presencia en el mercado: a.com ocupa el puesto #1234 en Tranco, presencia 80/100; b.com está fuera del millón principal de Tranco.');
-    expect(await say('Reading robots.txt.')).toBe('Reading robots.txt.');
-    await page.goto('/qa-review-de.html');
-    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Bericht gespeichert. Eine Kopie geht an ana@example.com.');
-    await page.goto('/qa-review.html');
-    expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe('Report saved. Emailing a copy to ana@example.com.');
-  });
+	test('translates the late server lines and leaves hosts and emails as sent', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review-es.html');
+		const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
+		expect(await say('Looking for your earlier reviews of carlosandmunoz.com.')).toBe(
+			'Buscando tus revisiones anteriores de carlosandmunoz.com.'
+		);
+		expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe(
+			'Informe guardado. Enviando una copia a ana@example.com.'
+		);
+		expect(
+			await say('Market presence: a.com is #1,234 on Tranco, presence 80/100; b.com is outside the Tranco top million.')
+		).toBe(
+			'Presencia en el mercado: a.com ocupa el puesto #1234 en Tranco, presencia 80/100; b.com está fuera del millón principal de Tranco.'
+		);
+		expect(await say('Reading robots.txt.')).toBe('Reading robots.txt.');
+		await page.goto('/qa-review-de.html');
+		expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe(
+			'Bericht gespeichert. Eine Kopie geht an ana@example.com.'
+		);
+		await page.goto('/qa-review.html');
+		expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe(
+			'Report saved. Emailing a copy to ana@example.com.'
+		);
+	});
+	test('shows a Threat check phase between the cases and the speed checks (#3848)', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		await feed(page, ['Proposed 12 test cases across 6 layers.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Writing cases');
+		const before = await percent(page);
+		await feed(page, ['Waiting for the background checks to finish.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+		await feed(page, [
+			'Reading attack and exploit sources for example.com.',
+			'Attack and exploit sources read: CISA KEV, OSV.dev.',
+			'Attack and exploit sources skipped: CertSpotter CT (no key).',
+		]);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+		await expect.poll(() => percent(page)).toBeGreaterThan(before);
+		expect(await percent(page)).toBeLessThan(87);
+		await feed(page, ['Waiting for PageSpeed Insights, up to 30 s.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Speed checks');
+		await feed(page, ['Scoring the checks from the pages analyzed.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Scoring and signing');
+		await expect(page.locator('.rp-bead')).toHaveCount(6);
+	});
+
+	test('the hacked-site and WordPress lines also belong to the Threat check (#3848)', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		await feed(page, ['Proposed 12 test cases across 6 layers.']);
+		await feed(page, ['Hacked-site checks: web search for spam on example.com: nothing; no spam links in the HTML.']);
+		await expect(page.locator('.rp-phase')).toHaveText('Threat check');
+	});
+
+	test('names the Threat check in every page language and translates its log lines (#3848)', async ({ page }) => {
+		await prime(page);
+		const names = { es: 'Revisión de amenazas', pt: 'Verificação de ameaças', de: 'Bedrohungsprüfung', fr: 'Contrôle des menaces', it: 'Controllo delle minacce' };
+		for (const code of Object.keys(names)) {
+			await page.goto('/qa-review-' + code + '.html');
+			await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+			await feed(page, ['Waiting for the background checks to finish.']);
+			await expect(page.locator('.rp-phase')).toHaveText(names[code]);
+			const say = (text) => page.evaluate((line) => window.ReviewProgress.translate(line), text);
+			const read = await say('Attack and exploit sources read: CISA KEV, OSV.dev.');
+			expect(read).toContain('CISA KEV, OSV.dev');
+			expect(read).not.toContain('Attack and exploit');
+			expect(await say('Reading attack and exploit sources for example.com.')).toContain('example.com');
+		}
+	});
 });

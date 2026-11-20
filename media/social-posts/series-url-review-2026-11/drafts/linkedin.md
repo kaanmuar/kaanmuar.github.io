@@ -271,7 +271,7 @@ Hook: mini story
 ```text
 Some sites don't want to be read. Bot walls, Cloudflare challenges, servers that time out.
 
-When a review can't finish right away, you no longer get an error. You get a promise: we keep trying with the method that fits the block, and email you the full report as soon as it's ready. If it still isn't done after 48 hours, you get an apology by email instead.
+When a review can't finish right away, you no longer get an error. You get a promise: we keep trying with the method that fits the block, and email you the full report as soon as it's ready. It usually arrives within 48 hours. If it takes longer, you get an apology by email, and we keep trying for up to 14 days.
 
 Either way, you get a code for 20% off your next review, valid for 90 days.
 
@@ -289,7 +289,7 @@ Try the site you thought nobody could read: https://carlosandmunoz.com/qa-review
 ```text
 Manche Websites wollen nicht gelesen werden. Botsperren, Cloudflare-Challenges, Server mit Zeitüberschreitung.
 
-Kann eine Prüfung nicht sofort abschließen, bekommen Sie keine Fehlermeldung mehr, sondern ein Versprechen: Wir versuchen es weiter, mit der Methode, die zur Sperre passt, und senden den vollständigen Bericht per E-Mail, sobald er fertig ist. Ist er nach 48 Stunden noch nicht fertig, kommt stattdessen eine Entschuldigung per E-Mail.
+Kann eine Prüfung nicht sofort abschließen, bekommen Sie keine Fehlermeldung mehr, sondern ein Versprechen: Wir versuchen es weiter, mit der Methode, die zur Sperre passt, und senden den vollständigen Bericht per E-Mail, sobald er fertig ist. Meist ist er innerhalb von 48 Stunden da. Dauert es länger, kommt eine Entschuldigung per E-Mail, und wir versuchen es bis zu 14 Tage weiter.
 
 So oder so erhalten Sie einen Code über 20 % Rabatt auf die nächste Prüfung, 90 Tage gültig.
 
@@ -307,7 +307,7 @@ Probieren Sie die Website, die angeblich niemand lesen kann: https://carlosandmu
 ```text
 Algunos sitios no quieren ser leídos. Muros antibots, desafíos de Cloudflare, servidores que no responden a tiempo.
 
-Cuando una revisión no puede terminar enseguida, ya no recibes un error. Recibes una promesa: seguimos intentando con el método adecuado para ese bloqueo y te enviamos el informe completo por correo en cuanto esté listo. Si a las 48 horas aún no está, te llega una disculpa por correo.
+Cuando una revisión no puede terminar enseguida, ya no recibes un error. Recibes una promesa: seguimos intentando con el método adecuado para ese bloqueo y te enviamos el informe completo por correo en cuanto esté listo. Normalmente llega en 48 horas. Si tarda más, te llega una disculpa por correo y seguimos intentándolo hasta 14 días.
 
 En ambos casos recibes un código de 20% de descuento en tu próxima revisión, válido 90 días.
 
@@ -325,7 +325,7 @@ Prueba con el sitio que creías imposible de leer: https://carlosandmunoz.com/qa
 ```text
 Certains sites ne veulent pas être lus. Murs anti-bots, défis Cloudflare, serveurs qui expirent.
 
-Quand une revue ne peut pas aboutir tout de suite, vous ne recevez plus une erreur, mais une promesse : nous continuons avec la méthode adaptée au blocage et vous envoyons le rapport complet par e-mail dès qu'il est prêt. S'il n'est toujours pas prêt après 48 heures, vous recevez des excuses par e-mail.
+Quand une revue ne peut pas aboutir tout de suite, vous ne recevez plus une erreur, mais une promesse : nous continuons avec la méthode adaptée au blocage et vous envoyons le rapport complet par e-mail dès qu'il est prêt. En général, il arrive sous 48 heures. Si cela prend plus de temps, vous recevez des excuses par e-mail et nous continuons d'essayer jusqu'à 14 jours.
 
 Dans les deux cas, vous recevez un code de 20 % de réduction sur votre prochaine revue, valable 90 jours.
 
@@ -343,7 +343,7 @@ Essayez le site que personne ne semblait pouvoir lire : https://carlosandmunoz.c
 ```text
 Alcuni siti non vogliono essere letti. Muri anti-bot, sfide di Cloudflare, server che vanno in timeout.
 
-Quando una revisione non può finire subito, non ricevi più un errore. Ricevi una promessa: continuiamo a provare con il metodo adatto al blocco e ti inviamo il report completo via email appena è pronto. Se dopo 48 ore non è ancora pronto, ricevi invece le nostre scuse via email.
+Quando una revisione non può finire subito, non ricevi più un errore. Ricevi una promessa: continuiamo a provare con il metodo adatto al blocco e ti inviamo il report completo via email appena è pronto. Di solito arriva entro 48 ore. Se ci vuole di più, ricevi le nostre scuse via email e continuiamo a provare fino a 14 giorni.
 
 In ogni caso ricevi un codice del 20% di sconto sulla prossima revisione, valido 90 giorni.
 
@@ -361,7 +361,7 @@ Prova il sito che pensavi nessuno potesse leggere: https://carlosandmunoz.com/qa
 ```text
 Alguns sites não querem ser lidos. Bloqueios antibots, desafios da Cloudflare, servidores que estouram o tempo.
 
-Quando uma revisão não pode terminar na hora, você não recebe mais um erro. Recebe uma promessa: seguimos tentando com o método certo para aquele bloqueio e enviamos o relatório completo por e-mail assim que estiver pronto. Se depois de 48 horas ainda não estiver, você recebe um pedido de desculpas por e-mail.
+Quando uma revisão não pode terminar na hora, você não recebe mais um erro. Recebe uma promessa: seguimos tentando com o método certo para aquele bloqueio e enviamos o relatório completo por e-mail assim que estiver pronto. Normalmente chega em até 48 horas. Se demorar mais, você recebe um pedido de desculpas por e-mail e seguimos tentando por até 14 dias.
 
 Nos dois casos, você ganha um código de 20% de desconto na próxima revisão, válido por 90 dias.
 

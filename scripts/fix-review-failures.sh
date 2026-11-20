@@ -2,8 +2,8 @@
 # Every hour. The first run from 07:30 each day, after fileReviewFailureBugs (07:05) has filed the day's bugs, is the daily one:
 # scripts/fix-review-failures.js takes the bugs the daily check of failed URL reviews files (#320) in a clean clone of main, settles what a
 # script can, and starts a Cursor agent only for bugs our code may fix (#1982); and, ahead of it, scripts/review-rescue.js reviews from
-# this Mac the failed reviews the cloud could not read (#3080). The other runs take only the rescues of askers promised a report within 48 hours
-# (#3079), and do nothing when there are none.
+# this Mac the failed reviews the cloud could not read (#3080). The other runs take only the rescues of askers promised a report (#3079):
+# those inside the 48 hours first, then those past it until the promise runs out after 14 days (#3257); they do nothing when there are none.
 #   scripts/fix-review-failures.sh install   installs the launchd job (re-run after changing this file)
 #   scripts/fix-review-failures.sh           runs once now: the daily run if today's is due, else the promised rescues
 #   scripts/fix-review-failures.sh daily     runs the daily run now

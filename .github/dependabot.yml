@@ -39,3 +39,17 @@ updates:
     groups:
       actions-minor-patch:
         update-types: [minor, patch]
+
+  # Reddit's real CLI is `devvit@0.15.x`. npm also has an empty deprecated `devvit@1.0.0` stub from 2022;
+  # Dependabot #3026 picked it and broke reddit-engagement / reddit-live (#3535).
+  - package-ecosystem: npm
+    directory: /reddit/live-reports
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "devvit"
+        update-types: ["version-update:semver-major"]
+    groups:
+      reddit-live-reports-minor-patch:
+        update-types: [minor, patch]
