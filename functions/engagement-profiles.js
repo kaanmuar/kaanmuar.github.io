@@ -53,7 +53,7 @@ const lang2 = (v) => String(v || "").slice(0, 2).toLowerCase();
 // Paths on a network's own host that are not an account: sharing, search, posts, the network's own pages.
 const NOT_ACCOUNT = /^(share|sharer|sharer\.php|intent|home|search|hashtag|explore|i|p|reel|reels|watch|status|login|signup|privacy|legal|help|about|policies|tos|terms|settings|dialog|plugins|groups|events|pages|profile\.php)$/i;
 // Mastodon servers go by many names; a /@user path on a host like these is taken as one.
-const MASTODON_HOST = /(^|\.)(mastodon\.[a-z.]+|mstdn\.[a-z.]+|[a-z0-9-]*masto[a-z0-9-]*\.[a-z.]+|fosstodon\.org|hachyderm\.io|infosec\.exchange|social\.[a-z0-9.-]+|toot\.[a-z.]+|chaos\.social|det\.social|norden\.social|troet\.cafe)$/i;
+const MASTODON_HOST = /(^|\.)(mastodon\.[a-z.]{1,25}|mstdn\.[a-z.]{1,25}|(?=[a-z0-9-]*masto)[a-z0-9-]+\.[a-z.]{1,25}|fosstodon\.org|hachyderm\.io|infosec\.exchange|social\.[a-z0-9.-]{1,25}|toot\.[a-z.]{1,25}|chaos\.social|det\.social|norden\.social|troet\.cafe)$/i;
 
 /** One profile link as { network, handle, url }, or null when it is not an account page on a network we know. */
 function profileOf(href, base) {
@@ -83,10 +83,10 @@ function profileOf(href, base) {
 function profilesOf(html, base) {
   const text = String(html || "").slice(0, 800000);
   const hrefs = [];
-  const linkRe = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  const linkRe = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
   let m;
   while ((m = linkRe.exec(text)) && hrefs.length < 1500) hrefs.push(m[1] || m[2] || "");
-  const sameRe = /"sameAs"\s*:\s*(\[[^\]]*\]|"[^"]*")/g;
+  const sameRe = /"sameAs"\s*:\s*(\[[^\[\]]*\]|"[^"]*")/g;
   while ((m = sameRe.exec(text))) {
     try { [].concat(JSON.parse(m[1])).forEach((x) => typeof x === "string" && hrefs.push(x)); } catch (error) { /* not JSON */ }
   }

@@ -20,7 +20,8 @@ try {
 
 const NEW_RE = /new RegExp\(\s*(`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\s*(?:,\s*(`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|'[^']*'|"[^"]*"))?\s*\)/g;
 // The class excludes backslash so \\. and the class never match the same character (CodeQL js/polynomial-redos).
-const LIT_RE = /=\s*(\/(?:\\.|[^/\\\n])+\/[gimsuy]*)/g;
+// A [...] class is read whole: a / inside it does not end the literal.
+const LIT_RE = /=\s*(\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[gimsuy]*)/g;
 
 const unquote = (raw) => {
 	const q = raw[0];
@@ -76,7 +77,7 @@ for (const root of ROOTS) {
 
 const seen = new Set();
 const vulnerable = [];
-const budget = { timeout: 5000, attackTimeout: 2000 };
+const budget = { timeout: 10000, attackTimeout: 2000 };
 
 for (const row of patterns) {
 	const key = row.source + '\0' + row.flags;

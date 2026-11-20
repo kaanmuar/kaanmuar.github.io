@@ -101,7 +101,7 @@ function senderCountry(i) {
 
 /** "Mon-Fri 09:00-17:00 America/Chicago" (windowOf in jarvis-marketing.js) → { days: [0..6 from Monday], from, to minutes, zone }. */
 function parseWindow(text) {
-  const m = /^(.*?)\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})(?:\s+(\S+))?\s*$/.exec(String(text || "").trim());
+  const m = /^(.*?)(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})(?:\s+(\S+))?$/.exec(String(text || "").trim());
   if (!m) return null;
   const span = m[1].trim();
   let days = [];

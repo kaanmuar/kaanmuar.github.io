@@ -83,11 +83,9 @@
       "cypress": "$cypress"
     },
     "minimatch": "11.0.4",
-    "js-beautify": {
-      "glob": "13.0.6"
-    },
-    "test-exclude": {
-      "glob": "13.0.6"
+    "glob": "14.0.6",
+    "codeceptjs": {
+      "uuid": "11.1.1"
     }
   }
 }

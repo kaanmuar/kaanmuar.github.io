@@ -224,7 +224,7 @@ async function find(hostname, deps, limits) {
       if (ours(page.url || address, row.domain)) row.ours = true;
       const body = String(page.body || "");
       const title = titleOf(body);
-      row.login = /<input\b[^>]*\btype\s*=\s*["']?password\b/i.test(body);
+      row.login = /<input\b[^<>]*\btype\s*=\s*["']?password\b/i.test(body);
       row.clone = (homeTitle.length >= 8 && title === homeTitle) || (body.match(mentions) || []).length >= 5;
       row.parked = row.parked || PARKED_PAGE.test(body);
       // A storefront of the same name in another country links to its sister sites (zalando.fr → zalando.de, zalando.be).

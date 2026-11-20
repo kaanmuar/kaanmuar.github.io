@@ -5770,6 +5770,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       }
       let priced = req.query.purpose === "fixlist"
         ? urlReview.priceForFixList()
+        : req.query.purpose === "deep"
+        ? urlReview.priceForDeep()
         : req.query.purpose === "credentials"
         ? urlReview.priceForCredentials()
         : req.query.purpose === "alerts"
@@ -5853,7 +5855,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
     return;
   }
   if (req.method === "POST" && pathName.indexOf("/checkout") !== -1) {
-    const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
+    const purpose = ["report", "fixlist", "deep", "fix", "cases", "credentials", "alerts", "pass"].indexOf(req.body && req.body.purpose) === -1 ? "new-run" : req.body.purpose;
     const reportId = String((req.body && req.body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
     const deviceId = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
     const choice = urlReview.paymentChoice((req.body && req.body.provider) || "paypal");
@@ -5888,6 +5890,10 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         res.status(400).json({ error: "A fix list belongs to one report. Open the report first. No charge was made." });
         return;
       }
+      if (purpose === "deep" && !reportId) {
+        res.status(400).json({ error: "The Deep check belongs to one report. Open the report first. No charge was made." });
+        return;
+      }
       let fixPay = null;
       if (purpose === "fix") {
         const fixSnap = await getFirestore().collection(fixRereview.COLLECTION).doc(fixCheckout.cleanId(req.body.fixId) || "-").get();
@@ -5900,12 +5906,23 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
         fixPay.fixId = fixSnap.id;
         priced = urlReview.priceForFix(fixPay.package, fixPay.host);
       }
-      if (purpose === "report" || purpose === "fixlist") {
+      if (purpose === "report" || purpose === "fixlist" || purpose === "deep") {
         const reportSnap = await getFirestore().collection("url_reviews").doc(reportId).get();
         reportData = reportSnap.exists ? reportSnap.data() : {};
         const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), req.body || {}, reportData, false);
         if (!access.ok && access.status !== 402) {
           res.status(access.status).json({ error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn });
+          return;
+        }
+      }
+      if (purpose === "deep") {
+        // Deep is added to a report already paid for, once; the free preview is not a report to deepen.
+        if (reportData.paid !== true || reportData.status === "stopped") {
+          res.status(402).json({ error: "The Deep check is added to a paid report. Unlock the report first. No charge was made." });
+          return;
+        }
+        if ((reportData.addons || []).indexOf("deep") !== -1) {
+          res.status(409).json({ error: "This report already has the Deep check. No charge was made." });
           return;
         }
       }
@@ -5938,6 +5955,8 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       }
       if (purpose === "fixlist") {
         priced = urlReview.priceForFixList();
+      } else if (purpose === "deep") {
+        priced = urlReview.priceForDeep();
       } else if (purpose === "cases") {
         priced = urlReview.priceForLayers((req.body && req.body.layers) || []);
       } else if (purpose === "credentials") {

@@ -12,6 +12,7 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const cyberPassive = require("./url-review-cyber-passive");
 const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
 const fixOffers = require("./url-review-fix-offers");
@@ -43,6 +44,8 @@ const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
 const FIXLIST_CENTS = 500;
+// The Deep attack-source check is a flat one-off add-on on one paid report (#3946); never a credit or a discount.
+const DEEP_CENTS = 1900;
 const CREDENTIALS_CENTS = 3900;
 // A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
 const COMPARE_CENTS = 900;
@@ -140,7 +143,7 @@ function priceMatches(usd) {
   PAGE_CHOICES.forEach((pages) => {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
-  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS || cents === DEEP_CENTS) return true;
   if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
@@ -727,6 +730,10 @@ function priceForFixList() {
   return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
+function priceForDeep() {
+  return { usd: DEEP_CENTS / 100, cents: DEEP_CENTS, count: 1, frameworks: [], layers: [] };
+}
+
 function priceForFix(packageId, host) {
   const pkg = fixOffers.packageById(packageId);
   if (!pkg) {
@@ -991,6 +998,8 @@ function chargedUsd(options) {
       ? priceForPassExtras(options.passPlan, options)
     : purpose === "fixlist"
     ? priceForFixList()
+    : purpose === "deep"
+    ? priceForDeep()
     : purpose === "fix"
     ? priceForFix(options.fixPackage, options.fixHost)
     : purpose === "cases"
@@ -1015,7 +1024,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "deep" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -1852,7 +1861,7 @@ function ownMarkup(html, pageUrl) {
     }
   };
   const prose = /\s(alt|title|aria-label|placeholder|value|content)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
-  const quoted = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+  const quoted = /(?<!\\)"(?:[^"\\\n]|\\.)*"|(?<!\\)'(?:[^'\\\n]|\\.)*'|(?<!\\)`(?:[^`\\]|\\.)*`/g;
   const tag = (raw) => {
     if (/^<script\b/i.test(raw)) {
       const open = raw.match(/^<script\b[^>]*>/i)[0];
@@ -1920,7 +1929,7 @@ function textLanguage(text) {
 
 function outline(html) {
   const heads = [];
-  const re = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const re = /<h([1-3])\b[^<>]*>((?:[^<]|<(?!h[1-3]\b|\/h\1>))*)<\/h\1>/gi;
   let match;
   while ((match = re.exec(String(html || ""))) && heads.length < 30) {
     const text = decode(match[2].replace(/<[^>]+>/g, " "));
@@ -1988,7 +1997,7 @@ const CONSENT_TOOLS = [
 // A gtag consent default with no region applies everywhere; one with a region list applies only there and wins in those regions.
 function consentModeOf(body) {
   const blocks = [];
-  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,1200}?)\}/g;
+  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([^{}]{0,1200})\}/g;
   let match;
   while ((match = re.exec(body)) && blocks.length < 8) {
     const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || "";
@@ -2088,7 +2097,7 @@ function inspect(html, headers, pageUrl) {
   const images = collect(markup, "img");
   const missingAlt = images.filter((tag) => !hasAttr(tag, "alt")).length;
   const forms = collect(markup, "form").length;
-  const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
+  const password = /<input\b[^<>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
   const labelFor = new Set(collect(markup, "label").map((tag) => attr(tag, "for")).filter(Boolean));
   const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
@@ -2174,6 +2183,13 @@ function inspect(html, headers, pageUrl) {
     try { return new URL(src, pageUrl).hostname !== pageHost; } catch (error) { return false; }
   });
   const sriMissing = foreignHosts(crossScripts.filter((tag) => !attr(tag, "integrity")).map((tag) => attr(tag, "src")), 20);
+  const crossOrigin = (href) => {
+    try { return new URL(href, pageUrl).hostname !== pageHost ? new URL(href, pageUrl).hostname : ""; } catch (error) { return ""; }
+  };
+  const sriTags = crossScripts.map((tag) => ({ kind: "script", host: crossOrigin(attr(tag, "src")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) }))
+    .concat(linksAll.filter((tag) => /(^|\s)stylesheet(\s|$)/i.test(attr(tag, "rel")) && attr(tag, "href") && crossOrigin(attr(tag, "href")))
+      .map((tag) => ({ kind: "style", host: crossOrigin(attr(tag, "href")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) })));
+  const scriptUrls = scripts.map((src) => { try { return new URL(src, pageUrl).toString(); } catch (error) { return ""; } }).filter((url) => /^https?:/i.test(url)).slice(0, 80);
   const inlineScripts = (html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
     const open = block.match(/^<script\b[^>]*>/i)[0];
     if (attr(open, "src")) return false;
@@ -2311,7 +2327,8 @@ function inspect(html, headers, pageUrl) {
     libraries,
     wordpress: wordpress.fromHtml(html, pageUrl),
     piiLinks,
-    sri: { cross: crossScripts.length, missing: sriMissing },
+    sri: { cross: crossScripts.length, missing: sriMissing, audit: cyberPassive.auditSri(sriTags) },
+    scriptUrls,
     resources: {
       scripts: foreignHosts(scripts, 30),
       styles: foreignHosts(linksAll.filter((tag) => /stylesheet|preload/i.test(attr(tag, "rel"))).map((tag) => attr(tag, "href")), 20),
@@ -2861,9 +2878,9 @@ function pagesFound(pages, links, sitemap, startUrl, prefix) {
 
 function sitemapLocs(xml) {
   const locs = [];
-  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+  const re = /<loc>((?:[^<]|<(?!\/?loc>))*)<\/loc>/gi;
   let match;
-  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].replace(/<!\[CDATA\[|\]\]>/g, "")));
+  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].trim().replace(/<!\[CDATA\[|\]\]>/g, "")));
   return locs;
 }
 
@@ -4490,6 +4507,7 @@ function productName(purpose, frameworks, scope) {
   if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
+  if (purpose === "deep") return "QA-lab URL Review Deep attack-source check";
   if (purpose === "fix") {
     const pkg = fixOffers.packageById(scope && scope.package);
     return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
@@ -4674,7 +4692,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "deep", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -5285,6 +5303,8 @@ module.exports = {
   PRICE_PER_FRAMEWORK,
   EXTRA_FRAMEWORK_USD,
   FIXLIST_CENTS,
+  DEEP_CENTS,
+  priceForDeep,
   COMPARE_CENTS,
   PASS_CENTS,
   FULL_STACK_CENTS,
