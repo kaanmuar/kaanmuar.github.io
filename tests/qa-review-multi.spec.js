@@ -332,10 +332,23 @@ test('the comparison title shows each site as its logo with its name below, a le
 			.locator('#multi-overlay .multi-summary')
 			.screenshot({ path: process.env.MULTI_SHOT + '/multi-table.png' });
 
+	// A site look paints cards from variables the printed page lacks (black borders, square corners), so print and the
+	// PDF take the plain report styles: the look is dropped for the print and given back after (#4035).
+	await page.evaluate(() => {
+		document.documentElement.setAttribute('data-look', 'golden');
+		window.print = () => {
+			window.lookWhilePrinting = document.documentElement.getAttribute('data-look');
+		};
+	});
+	await page.locator('#multi-overlay').getByRole('button', { name: 'Print', exact: true }).click();
+	expect(await page.evaluate(() => window.lookWhilePrinting)).toBeNull();
+	await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+	expect(await page.evaluate(() => document.documentElement.getAttribute('data-look'))).toBe('golden');
 	await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
 	await page.locator('#multi-overlay').getByRole('button', { name: 'Download PDF' }).click();
 	await expect(page.locator('#multi-status')).toHaveText('The PDF is downloaded.');
 	expect(seen.pdf[0]).not.toMatch(/<html[^>]*dark-mode/);
+	expect(seen.pdf[0]).not.toMatch(/<html[^>]*data-look/);
 	expect(seen.pdf[0]).toContain('<img class="multi-logo" data-logo="0">');
 	expect(seen.pdf[0]).toContain('<img class="multi-logo" data-logo="2">');
 	expect(seen.pdf[0]).not.toContain('data-logo="1"');
@@ -353,6 +366,23 @@ test('the comparison title shows each site as its logo with its name below, a le
 	await expect(printed.locator('#multi-title')).toBeVisible();
 	await expect(printed.locator('.multi-sec[data-sec="exec"] .multi-cell[data-col="0"]')).toBeVisible();
 	expect(await printed.evaluate(() => document.documentElement.classList.contains('dark-mode'))).toBe(false);
+	// Every site's block sits level with the same block of the others, and the cards keep their own edge (#4035).
+	const level = await printed.evaluate(() => {
+		const tops = (selector) =>
+			[...document.querySelectorAll(selector)].map((el) => Math.round(el.getBoundingClientRect().top));
+		return {
+			ring: tops('.multi-sec[data-sec="health"] .ring'),
+			area: tops('.multi-sec[data-sec="health"] .area[data-area="GEO"]'),
+			head: tops('.multi-sec[data-sec="exec"] .exec-head'),
+			lists: tops('.multi-sec[data-sec="exec"] .exec-cols > :nth-child(2)'),
+			edge: getComputedStyle(document.querySelector('.multi-sec[data-sec="cover"] .kpi')).borderTopColor,
+		};
+	});
+	for (const key of ['ring', 'area', 'head', 'lists']) {
+		expect(level[key]).toHaveLength(3);
+		expect(new Set(level[key]).size, key + ' ' + level[key]).toBe(1);
+	}
+	expect(level.edge).not.toBe('rgb(0, 0, 0)');
 	await printed.close();
 });
 
