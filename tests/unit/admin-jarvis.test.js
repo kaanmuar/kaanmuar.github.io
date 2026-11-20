@@ -2332,6 +2332,21 @@ test("parity: a web Jarvis change needs an android/ change or 'no app change' in
 	assert.equal(parity.check(['functions/jarvis.js'], 'no app change:').ok, false);
 });
 
+test('parity: base and head refs default to origin/main and HEAD (#3989)', () => {
+	assert.deepEqual(parity.refs([]), { base: 'origin/main', head: 'HEAD' });
+	assert.deepEqual(parity.refs(['abc']), { base: 'abc', head: 'HEAD' });
+	assert.deepEqual(parity.refs(['abc', 'def']), { base: 'abc', head: 'def' });
+});
+
+test('parity: the script runs without refs and fails cleanly on a bad ref (#3989)', () => {
+	const { spawnSync } = require('child_process');
+	const script = require('path').join(__dirname, '../../scripts/check-jarvis-parity.js');
+	const bad = spawnSync('node', [script, 'no-such-ref-3989', 'HEAD'], { encoding: 'utf8' });
+	assert.equal(bad.status, 2);
+	assert.match(bad.stderr, /Usage: node scripts\/check-jarvis-parity\.js/);
+	assert.doesNotMatch(bad.stderr, /undefined|at Object|node:internal/);
+});
+
 const push = require('../../functions/jarvis-push.js');
 
 function pushDb() {
