@@ -349,6 +349,24 @@ https://www.youtube.com/shorts/P2FFK6IcwFA</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Nous contre eux : Audits SEO en quatre temps.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-fr.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo-fr</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparatif</category>
+      <category>Battle</category>
+      <description>Un court fil de discussion X/Threads : quels sont les avantages des audits SEO, ce que couvre l'examen d'URL à la place, une répartition honnête et le tableau de comparaison.
+
+La leçon : Publiez le crochet, puis les quatre temps comme réponses – pas un carrousel LI/IG.
+
+Couverture comparée à partir des pages de chaque fournisseur, cochée 2026-11-10. Les noms sont des marques déposées de leurs propriétaires.
+Tableau : https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>On vous demande si le site marche au clavier et avec un lecteur d’écran. Par où…</title>
       <link>https://carlosandmunoz.com/social/launch-2026-10/fr/a11y.html</link>
       <guid isPermaLink="false">launch-2026-10/fr/a11y</guid>
@@ -468,6 +486,24 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Révision d’URL vs audits SEO.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-fr.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/01-vs-seo-scorecard-fr</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparatif</category>
+      <category>Battle</category>
+      <description>Une carte de pointage de couverture provenant des pages de chaque fournisseur (cochée 2026-11-10). 10 vérifie que nous nommons ce que les audits SEO ne font pas ; ils approfondissent les problèmes d'exploration du référencement.
+
+La leçon : Conservez le robot d'exploration SEO pour la profondeur de la page ; ajoutez une révision d'URL pour les menaces, les sosies, l'authentification de messagerie et les packages de correctifs.
+
+Couverture comparée à partir des pages de chaque fournisseur, cochée 2026-11-10. Les noms sont des marques déposées de leurs propriétaires.
+Tableau : https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" length="223120" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Les balises canonical du MIT pointent vers son CMS.</title>
@@ -959,46 +995,6 @@ Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #Automation #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/03-vs-sosfanta-com.jpg" length="265299" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/03-vs-sosfanta-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>hsbc.bm: 75. L'écart : la mesure.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-13/02-u-hsbc-bm-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-13/02-u-hsbc-bm-fr</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>National</category>
-      <description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les scripts empreintent le navigateur avant que le visiteur ne fasse son choix.
-
-La leçon pour chaque équipe : Trouvez la balise derrière chaque hôte et conservez-la jusqu'au consentement, comme un cookie de suivi. S'il s'agit d'une protection contre la fraude ou les robots, nommez-le dans l'avis de confidentialité.
-
-Une analyse automatisée des pages publiques du 13 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-hsbc-bm&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-hsbc-bm
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#Analytics #Programming #DevOps #QA #WebDev #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/02-u-hsbc-bm.jpg" length="241220" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/02-u-hsbc-bm.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>actualite.cd: 48. Le point faible : les noms de liens.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-fr.html</link>
-      <guid isPermaLink="false">auto-2026-11-14/01-u-actualite-cd-fr</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revue de site</category>
-      <category>National</category>
-      <description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les liens doivent avoir un texte discernable.
-
-La leçon pour chaque équipe : Donnez à chaque lien un texte qui dit où il mène. Une icône seule a besoin d’un aria-label.
-
-Une analyse automatisée des pages publiques du 13 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
-Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
-
-Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" length="224017" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
