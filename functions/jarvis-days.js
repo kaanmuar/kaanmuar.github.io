@@ -90,6 +90,8 @@ const KINDS = {
 			'refunded',
 			'email',
 			'reportId',
+			'source',
+			'rivalOf',
 			'country',
 		]),
 	},

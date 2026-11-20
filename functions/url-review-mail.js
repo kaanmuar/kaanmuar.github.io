@@ -488,8 +488,8 @@ function summarizePeriod(opens, rows, captures, alerts) {
 	};
 }
 
-// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, sweep }.
-// followUp and sweep are left out of the quarter-hour report.
+// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, ours: { total, kinds }, fixes, promises }.
+// followUp is left out of the quarter-hour report. Reviews are people's runs; ours are the sweeps, Jarvis runs and tests (#3194).
 // Fix requests made in the period (#3082): quotes, packages and free re-checks, what was paid and what we finished.
 function fixLine(rows) {
 	if (!rows.length) return '';
@@ -548,7 +548,7 @@ function reportRows(summary, previous, phrase, extra) {
 				plural(summary.visitors || 0, 'network'),
 		},
 		{
-			label: 'Reviews',
+			label: 'Reviews by people',
 			value:
 				summary.reviews +
 				delta(summary.reviews, prior.reviews || 0, phrase) +
@@ -615,9 +615,14 @@ function reportRows(summary, previous, phrase, extra) {
 				: '',
 		},
 		{ label: 'Coupons', value: follow ? follow.redemptions + ' redeemed' : '' },
+		{
+			label: 'Our runs',
+			value: more.ours
+				? more.ours.total + ' not counted above' + (more.ours.total ? ' (' + tally(more.ours.kinds || {}) + ')' : '')
+				: '',
+		},
 		{ label: 'Fix requests', value: more.fixes ? fixLine(more.fixes) : '' },
 		{ label: 'Promised reports', value: more.promises ? promiseLine(more.promises) : '' },
-		{ label: 'Country sweep', value: more.sweep != null ? more.sweep + ' reviewed, not counted above' : '' },
 		{ heading: 'Failures' },
 	].concat(more.failures || [], [
 		{ heading: 'Where people came from' },
@@ -639,9 +644,10 @@ function reportRows(summary, previous, phrase, extra) {
 }
 
 // The subject line carries the numbers, so the inbox list is the summary.
-function reportSubject(title, label, summary, failed) {
+function reportSubject(title, label, summary, failed, ours) {
 	const parts = [
-		plural(summary.reviews, 'review'),
+		plural(summary.reviews, 'review') + ' by people',
+		ours ? ours + ' ours' : '',
 		summary.paidCount ? summary.paidUsd + ' USD' : '',
 		failed ? failed + ' failed' : '',
 	].filter(Boolean);

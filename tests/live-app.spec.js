@@ -1,21 +1,38 @@
 const { test, expect } = require('./net-guard');
 
 // live.html: the Live reports ring on its own, as a Telegram Mini App and in the Reddit app (#2549).
-// telegram.org is stubbed: the Mini App script only exists inside Telegram's web view.
+// The page talks to Telegram through the self-hosted tma.js SDK (#3841): launch parameters come in the URL hash and every
+// bridge call goes to window.TelegramWebviewProxy, which only exists in Telegram's web view, so it is stubbed here.
 function telegram(page, { lang = 'es', start = '' } = {}) {
-	return page.route('https://telegram.org/**', (route) =>
-		route.fulfill({
-			contentType: 'text/javascript',
-			body: `window.__tg = { opened: [], back: false, onBack: null, swipes: true };
-      window.Telegram = { WebApp: {
-        initData: 'query_id=x', initDataUnsafe: { user: { language_code: ${JSON.stringify(lang)} }, start_param: ${JSON.stringify(start)} },
-        isVersionAtLeast: () => true, ready() {}, expand() {}, setHeaderColor() {}, setBackgroundColor() {}, setBottomBarColor() {},
-        disableVerticalSwipes() { __tg.swipes = false; },
-        openLink(url) { __tg.opened.push(url); }, openTelegramLink(url) { __tg.opened.push(url); },
-        BackButton: { show() { __tg.back = true; }, hide() { __tg.back = false; }, onClick(fn) { __tg.onBack = fn; } }
-      } };`,
+	const init = new URLSearchParams({
+		query_id: 'x',
+		user: JSON.stringify({ id: 1, first_name: 'T', language_code: lang }),
+		auth_date: '1',
+		hash: 'x',
+		signature: 'x',
+	});
+	if (start) init.set('start_param', start);
+	const hash = new URLSearchParams({
+		tgWebAppData: init.toString(),
+		tgWebAppVersion: '8.0',
+		tgWebAppPlatform: 'android',
+		tgWebAppThemeParams: '{}',
+	}).toString();
+	return page
+		.addInitScript(() => {
+			window.__tg = { opened: [], back: false, swipes: true, sent: [] };
+			window.TelegramWebviewProxy = {
+				postEvent(name, raw) {
+					const data = raw ? JSON.parse(raw) : {};
+					__tg.sent.push(name);
+					if (name === 'web_app_setup_back_button') __tg.back = data.is_visible;
+					if (name === 'web_app_setup_swipe_behavior') __tg.swipes = data.allow_vertical_swipe;
+					if (name === 'web_app_open_link') __tg.opened.push(data.url);
+					if (name === 'web_app_open_tg_link') __tg.opened.push('https://t.me' + data.path_full);
+				},
+			};
 		})
-	);
+		.then(() => '#' + hash);
 }
 
 function watch(page) {
@@ -30,7 +47,6 @@ function watch(page) {
 test.describe('Live reports app page', () => {
 	test('on the web it shows the ring, and filters fold away on phones', async ({ page }) => {
 		const errors = watch(page);
-		await page.route('https://telegram.org/**', (route) => route.fulfill({ contentType: 'text/javascript', body: '' }));
 		await page.setViewportSize({ width: 390, height: 760 });
 		await page.goto('/live.html');
 		await expect(page.locator('#live-reports .live-card:not([hidden])').first()).toBeVisible();
@@ -46,8 +62,8 @@ test.describe('Live reports app page', () => {
 		page,
 	}) => {
 		const errors = watch(page);
-		await telegram(page, { lang: 'es', start: 'govuk' });
-		await page.goto('/live.html');
+		const hash = await telegram(page, { lang: 'es', start: 'govuk' });
+		await page.goto('/live.html' + hash);
 		await expect(page.locator('html')).toHaveAttribute('lang', 'es');
 		await expect(page.locator('html')).toHaveAttribute('data-live-host', 'telegram');
 		await expect(page.locator('#lv-name')).toHaveText('GOV.UK');
@@ -55,6 +71,7 @@ test.describe('Live reports app page', () => {
 			back: true,
 			swipes: false,
 		});
+		expect(await page.evaluate(() => __tg.sent)).toEqual(expect.arrayContaining(['web_app_ready', 'web_app_expand']));
 
 		await page.locator('.lv-host a').click();
 		expect(await page.evaluate(() => __tg.opened.pop())).toBe('https://www.gov.uk/');
@@ -67,14 +84,13 @@ test.describe('Live reports app page', () => {
 			'https://carlosandmunoz.com/qa-review-es.html?utm_source=telegram&utm_medium=app&utm_campaign=live-reports#intake'
 		);
 
-		await page.evaluate(() => __tg.onBack());
+		await page.evaluate(() => tmajs.sdk.emitEvent('back_button_pressed'));
 		await expect(page.locator('#lv-name')).toBeHidden();
 		expect(await page.evaluate(() => __tg.back)).toBe(false);
 		expect(errors).toEqual([]);
 	});
 
 	test('a host that sets LIVE_HOST_OPEN, like the Reddit app, gets every link', async ({ page }) => {
-		await page.route('https://telegram.org/**', (route) => route.fulfill({ contentType: 'text/javascript', body: '' }));
 		// reddit/live-reports/scripts/build.mjs marks its copy of live.html the same way.
 		await page.route('**/live.html?*', async (route) => {
 			const res = await route.fetch();

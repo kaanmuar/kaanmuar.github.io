@@ -24,12 +24,13 @@ Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know wh
 - Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
 
 ## Gate for outside skills and MCP servers (#3835, Nov 20 2026)
-Before any third-party `.cursor/skills/*`, `SKILL.md` or MCP server is copied in or enabled, run this gate and put the result in the ticket. A documented step, not a dependency: nothing below is installed or vendored.
+Before any third-party `.cursor/skills/*`, `SKILL.md` or MCP server is copied in or enabled, run this gate and put the result in the ticket. The first scan is in-repo and dependency-free (`scripts/skill-scan.js`); the two outside scanners are documented steps, not installed or vendored.
 1. Provenance: publisher, LICENSE file text, pinned commit. Read every file of the skill, and any `setup` or install script, before running anything.
-2. Scan with `cisco-ai-defense/skill-scanner` (LICENSE reads Apache-2.0, `pyproject.toml` agrees; the GitHub badge shows NOASSERTION; checked at `c558c42`). Run it from a scratch checkout or `uvx`, outside this repo: `skill-scanner scan <skill dir>`. Any high or critical finding (prompt injection, exfiltration, hidden commands) rejects the skill.
-3. Overlap check with `NVIDIA/SkillEvaluator` (Apache-2.0, checked at `1dd97c8`), optional, also from a scratch path: skip a skill that duplicates one in `.cursor/skills` or a rule in `.cursor/rules`.
-4. MCP servers: list the tools and env vars it asks for, grant no more than the ticket needs, never put a key in the repo, and pin the version.
-5. Adopt by adding a row under Adopted with the pin and notice (as `.cursor/skills/THIRD_PARTY_NOTICES.md` does). Install either scanner into the repo only through its own ticket.
+2. **Required, in-repo:** `node scripts/skill-scan.js <candidate skill dir or mcp.json>` (`npm run skills:scan` with no argument scans our own `.cursor/skills` and every `mcp.json`). It exits 1 and prints `file:line  rule-id` (never the matched text) for: `remote-pipe-shell` (curl or wget into a shell), `encoded-blob` (base64 200+ or hex 128+), `prompt-override`, `hidden-char` (zero-width and bidi), `unknown-host` (not on the `HOSTS` allowlist in the script: github.com, api.github.com, raw.githubusercontent.com, cursor.com, cloudflare.com, developers.cloudflare.com, localhost), `destructive-command`, `curl-post-unknown`. Any finding rejects the skill or server until a human reads it: a real problem is fixed or the skill is dropped; a false positive goes into `ALLOW` in the script with its reason, never a global silence. Adding a host to `HOSTS` needs a reason in the PR. Not wired into CI yet (left in #3835).
+3. Deeper scan with `cisco-ai-defense/skill-scanner` (LICENSE reads Apache-2.0, `pyproject.toml` agrees; the GitHub badge shows NOASSERTION; checked at `c558c42`). Run it from a scratch checkout or `uvx`, outside this repo: `skill-scanner scan <skill dir>`. Any high or critical finding (prompt injection, exfiltration, hidden commands) rejects the skill.
+4. Overlap check with `NVIDIA/SkillEvaluator` (Apache-2.0, checked at `1dd97c8`), optional, also from a scratch path: skip a skill that duplicates one in `.cursor/skills` or a rule in `.cursor/rules`.
+5. MCP servers: list the tools and env vars it asks for, grant no more than the ticket needs, never put a key in the repo, and pin the version.
+6. Adopt by adding a row under Adopted with the pin and notice (as `.cursor/skills/THIRD_PARTY_NOTICES.md` does). Install either scanner into the repo only through its own ticket.
 
 ## Adopted
 | Tool | Source and pin | Where it lives | Use |
@@ -177,7 +178,7 @@ Verdicts from the review of the three candidates in scout PR #3907. The end-user
 
 | Tool / Source | License | Ticket | Whole vs. Part & Fit |
 |---|---|---|---|
-| `pourdev/pour-engine` | MIT | #3909 | **Watch:** a zero-dependency in-page WCAG 2.2 engine, an optional second accessibility engine for URL Review beside axe (#3831) and `koodikiht/axtree-audit`. Pin a version, dedupe against axe before any use, and do not use the name "pour" in branding (a UK trademark). Its tests live upstream, so nothing is vendored yet. |
+| `pourdev/pour-engine` | MIT | #4067 (wave #3909) | **Reference only:** we already run axe-core 4.14 with the WCAG 2.0 to 2.2 tags plus a phone target-size pass, so it overlaps almost every rule. Its publisher account is as new as the repo and its tests are not published, so it is unverifiable. Only the idea of a "needs a human" criteria list is worth borrowing. Do not vendor it, and do not use the name "pour" in branding (a UK trademark). |
 | `Capta1nRaj/goshipit` | Apache-2.0 | #3909 | **Pattern:** a ticked pre-deploy checklist for Jarvis chats only. Its checks are run by an agent, not a deterministic gate, so it never replaces the #3833 gates (zizmor, gitleaks, osv-scanner). Do not install it as a global skill. |
 | `rbartoli/obsidian-tela-theme` | MIT | #3909 | **Skip, end-user app (Carlos's responsibility):** a CSS-only Obsidian theme for Carlos's own vault. Never embedded in product or customer code. |
 

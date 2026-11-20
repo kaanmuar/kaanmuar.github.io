@@ -1493,9 +1493,9 @@ async function loadFailureBugs() {
 	);
 }
 
-// Country-sweep and rival-sweep reviews are counted in the ops digest, not as reviews people asked for.
+// Sweeps, Jarvis runs, tests and our own addresses are counted apart from the reviews people asked for (#3194).
 function askedFor(rows) {
-	return rows.filter((row) => row.source !== 'sweep' && row.source !== 'rivals');
+	return rows.filter((row) => !jarvisCore.reviewOrigin(row));
 }
 
 async function sendReviewPeriodReport(period) {
@@ -1521,6 +1521,8 @@ async function sendReviewPeriodReport(period) {
 		),
 	]);
 	const reviews = askedFor(allReviews);
+	const ourRuns = jarvisCore.splitReviews(allReviews);
+	const ours = { total: ourRuns.ours.length, kinds: ourRuns.kinds };
 	if (
 		period === 'quarter' &&
 		!opens.length &&
@@ -1577,7 +1579,7 @@ async function sendReviewPeriodReport(period) {
 				averageScore: summary.averageScore,
 				mailed: summary.mailed,
 				followUp: followUp,
-				sweep: allReviews.length - reviews.length,
+				ours: ours,
 				pages: summary.pages,
 				countries: summary.countries,
 				cities: summary.cities,
@@ -1610,12 +1612,12 @@ async function sendReviewPeriodReport(period) {
 		const pageBody = pageEvents.length ? siteReport.reportBody(pageEvents, actionTitle) : '';
 		const sent = await sendOwnerEmail({
 			eyebrow: 'QA-lab URL Review',
-			subject: reviewMail.reportSubject(title, window.label, summary, failures.failed),
+			subject: reviewMail.reportSubject(title, window.label, summary, failures.failed, ours.total),
 			intro: title + ' QA-lab URL Review report for ' + window.label,
 			rows: reviewMail.reportRows(summary, previous, earlier.phrase, {
 				failures: quiet ? [] : failures.rows,
 				followUp,
-				sweep: period === 'quarter' ? null : allReviews.length - reviews.length,
+				ours,
 				fixes,
 				promises: failed.map((row) => row.promise).filter(Boolean),
 			}),
@@ -8819,6 +8821,7 @@ async function runReview(req, res, placeOf) {
 			pages: intake.value.pages,
 			depth: intake.value.depth,
 			reason: intake.value.reason,
+			test: testRun,
 		});
 		await reviewProcess('running', { step: 'Up to ' + intake.value.pages + ' pages, depth ' + intake.value.depth });
 		if (decision.pass)

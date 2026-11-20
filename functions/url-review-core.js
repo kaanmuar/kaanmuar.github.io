@@ -17,6 +17,7 @@ const headOrder = require('./url-review-head-order');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
 const linkedRisk = require('./url-review-linked-risk');
+const resilience = require('./http-resilience');
 const { legalLinks, germanSpeaking } = require('./url-review-legal');
 const fixOffers = require('./url-review-fix-offers');
 const { fromUrl: libraryFromUrl } = require('./url-review-libraries');
@@ -5309,7 +5310,25 @@ async function webRisk(url, key) {
 		encodeURIComponent(url) +
 		'&key=' +
 		encodeURIComponent(key);
-	const res = await fetch(api, { signal: AbortSignal.timeout(10000) });
+	// Retries 429/5xx with Retry-After and backoff, and pauses after repeated failures (#3838); a paused breaker answers like a failed call.
+	let res;
+	try {
+		res = await resilience.resilientFetch(
+			api,
+			{},
+			{
+				retries: 2,
+				baseMs: 300,
+				maxMs: 2000,
+				maxRetryAfterMs: 3000,
+				timeoutMs: 10000,
+				breaker: resilience.breakers.webrisk,
+			}
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	if (!res.ok) return { ok: false, error: 'status ' + res.status };
 	const data = await res.json();
 	return {
@@ -8379,7 +8398,26 @@ async function pageSpeed(url, key) {
 		encodeURIComponent(url) +
 		'&key=' +
 		encodeURIComponent(key);
-	const res = await fetch(api, { signal: AbortSignal.timeout(90000) });
+	// One retry on 5xx or a network error (not on a timeout: the call already ran 90 s), none on 429 (the daily quota), and a breaker (#3838).
+	let res;
+	try {
+		res = await resilience.resilientFetch(
+			api,
+			{},
+			{
+				retries: 1,
+				baseMs: 1000,
+				maxMs: 3000,
+				timeoutMs: 90000,
+				noRetryStatuses: [429],
+				retryErrors: (error) => !resilience.isTimeout(error),
+				breaker: resilience.breakers.pagespeed,
+			}
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	if (!res.ok) return { ok: false, error: res.status === 429 ? 'the daily quota is used up' : 'status ' + res.status };
 	return summarizePageSpeed(await res.json());
 }

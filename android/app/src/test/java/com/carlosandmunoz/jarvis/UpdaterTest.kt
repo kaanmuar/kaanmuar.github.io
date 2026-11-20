@@ -26,4 +26,12 @@ class UpdaterTest {
     @Test fun aReleaseWithoutThePhoneApkIsSkipped() {
         assertNull(Updater.newest("[" + rel("jarvis-android-v1.0.40", "jarvis-watch-1.0.40.apk") + "]"))
     }
+
+    @Test fun aReleaseWithoutAChecksumIsRefusedAndOneWithAChecksumIsNot() {
+        val none = Updater.newest("[" + rel("jarvis-android-v1.0.41", "jarvis-1.0.41.apk") + "]")!!
+        assertNull(none.sha256)
+        assertEquals("The update failed: the release has no checksum, so it was not installed", Updater.refusal(none))
+        val some = Updater.newest("[" + rel("jarvis-android-v1.0.42", "jarvis-1.0.42.apk", digest = "sha256:abc") + "]")!!
+        assertNull(Updater.refusal(some))
+    }
 }

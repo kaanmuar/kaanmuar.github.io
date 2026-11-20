@@ -6,6 +6,7 @@ const publish = require('./url-review-publish');
 const fixOffers = require('./url-review-fix-offers');
 const reviewPromise = require('./url-review-promise');
 const threats = require('./url-review-threats');
+const jarvisCore = require('./jarvis-core');
 
 const HELD_WORDS = {
 	'not-complete': 'the review did not complete',
@@ -138,9 +139,14 @@ function rowsFor(source) {
 	return items;
 }
 
+// Run alerts say when the run is ours (#3194); captures and payments carry no asker, so only the sandbox flag tags them.
+const RUN_ALERTS = new Set(['started', 'report', 'stopped', 'failed']);
+
 function alertFrom(kind, source) {
 	const key = TITLES[kind] ? kind : kindFor(source) || 'report';
-	const title = (source && source.test === true ? 'Test · ' : '') + (TITLES[key] || 'A review event');
+	const origin = RUN_ALERTS.has(key) ? jarvisCore.reviewOrigin(source || {}) : '';
+	const tag = (source && source.test === true) || origin === 'test' ? 'Test · ' : origin ? 'Ours · ' : '';
+	const title = tag + (TITLES[key] || 'A review event');
 	const rows = rowsFor(source || {});
 	const at = whenOf(source || {}) || new Date().toISOString();
 	return {
@@ -486,6 +492,11 @@ const STYLE = `
     .desk-map-panel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--paper); max-height: 430px; overflow: auto; }
     .desk-map-site { padding: 8px 0; border-top: 1px solid var(--line); }
     .desk-map-site:first-of-type { border-top: 0; }
+    .desk-map-tabs button { display: inline-flex; align-items: center; gap: 7px; }
+    .desk-face { width: 20px; height: 20px; flex: none; display: block; }
+    .desk-map-mark { pointer-events: none; }
+    .desk-map-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 0; padding: 0; list-style: none; font: 12px Arial, sans-serif; color: #cbe0e4; }
+    .desk-map-legend li { display: inline-flex; align-items: center; gap: 6px; }
     .log { font: 12px/1.5 Menlo, Consolas, monospace; max-height: 520px; overflow: auto; background: var(--paper); border-radius: 8px; padding: 10px; }
 `;
 
@@ -810,8 +821,8 @@ const PAGE = `<!DOCTYPE html>
       <h2>Cyber attacks map</h2>
       <p class="empty">Two tabs: global live/historical macro telemetry (GDELT, CISA KEV, DROP — no customer sites) and our reviewed sites grouped by DB-IP hosting country with findings (internal only).</p>
       <div class="desk-map-tabs" role="tablist" aria-label="Cyber attacks map view">
-        <button id="map-tab-global" type="button" role="tab" aria-selected="true" aria-controls="desk-map-panel">Global live &amp; historical</button>
-        <button id="map-tab-ours" type="button" role="tab" aria-selected="false" aria-controls="desk-map-panel">Our reviewed sites</button>
+        <button id="map-tab-global" type="button" role="tab" aria-selected="true" aria-controls="desk-map-panel"><img class="desk-face" src="https://carlosandmunoz.com/assets/faces/line/cybermap.svg?v=20261119" alt="" width="20" height="20">Global live &amp; historical</button>
+        <button id="map-tab-ours" type="button" role="tab" aria-selected="false" aria-controls="desk-map-panel"><img class="desk-face" src="https://carlosandmunoz.com/assets/faces/line/linked.svg?v=20261119" alt="" width="20" height="20">Our reviewed sites</button>
       </div>
       <div class="stats" id="desk-map-stats"></div>
       <div class="tools" id="desk-map-global-tools">
@@ -846,6 +857,7 @@ const PAGE = `<!DOCTYPE html>
         <div class="desk-map-stage">
           <div id="desk-map-svg-wrap"><p class="meta">Loading world projection…</p></div>
           <div id="desk-map-tip" class="desk-map-tip">Click any country to inspect.</div>
+          <ul id="desk-map-legend" class="desk-map-legend" aria-label="Map marker legend"></ul>
         </div>
         <div id="desk-map-detail" class="desk-map-panel"></div>
       </div>
@@ -951,6 +963,7 @@ const PAGE = `<!DOCTYPE html>
     const mapQEl = document.getElementById("desk-map-q");
     const mapSvgWrapEl = document.getElementById("desk-map-svg-wrap");
     const mapTipEl = document.getElementById("desk-map-tip");
+    const mapLegendEl = document.getElementById("desk-map-legend");
     const mapDetailEl = document.getElementById("desk-map-detail");
     const mapAttrEl = document.getElementById("desk-map-attr");
     const FIX_STATUSES = ${JSON.stringify(fixOffers.STATUSES)};
@@ -1656,6 +1669,80 @@ const PAGE = `<!DOCTYPE html>
       if (!cc) return "Unknown";
       try { return (MAP_NAMES && MAP_NAMES.of(cc)) || cc; } catch (error) { return cc; }
     }
+    // Line-light faces (#3826). LINE_KIND and LINE_LEVEL are the report's own mapping (js/qa-review.js); tests/unit/check-faces.test.js keeps the two in step.
+    const FACE_BASE = "https://carlosandmunoz.com/assets/faces/line/";
+    const FACE_V = "20261119";
+    const LINE_KIND = {
+      "known-exploit-software": "exploit",
+      "c2-indicator": "malware",
+      "phishing-host": "phishing",
+      "malware-host": "malware",
+      "hacked-spam": "hack",
+      cloaking: "hack",
+      "exposed-secret": "exposed",
+      lookalike: "lookalike",
+      "mail-blocklist": "spam",
+      "outdated-cms": "exploit",
+      "breach-news": "history",
+      "cert-anomaly": "lookalike",
+      "ransomware-news": "ransomware",
+      "attack-trend": "cybermap",
+      "ddos-context": "ddos"
+    };
+    const LINE_LEVEL = { critical: "lvl-critical", high: "lvl-high", watch: "lvl-watch", info: "lvl-info" };
+    // The global tab's news themes read as the report's news kinds.
+    const THEME_KINDS = [["RANSOM", "ransomware-news", "Ransomware"], ["BREACH", "breach-news", "Data breach"], ["DDOS", "ddos-context", "DDoS"]];
+    const THEME_DEFAULT = ["", "attack-trend", "Cyber attack"];
+    function themeOf(ev) {
+      const themes = (ev.themes || []).map((t) => String(t).toUpperCase());
+      return THEME_KINDS.find((k) => themes.some((t) => t.indexOf(k[0]) !== -1)) || THEME_DEFAULT;
+    }
+    function faceUrl(id) { return FACE_BASE + id + ".svg?v=" + FACE_V; }
+    function mapLegend(items) {
+      mapLegendEl.replaceChildren();
+      items.forEach((it) => {
+        const li = document.createElement("li");
+        const img = document.createElement("img");
+        img.className = "desk-face";
+        img.src = faceUrl(it[0]);
+        img.alt = "";
+        img.width = 20;
+        img.height = 20;
+        li.appendChild(img);
+        li.appendChild(document.createTextNode(it[1]));
+        mapLegendEl.appendChild(li);
+      });
+    }
+    function mapMark(svg, shape, isDot, faceId, label) {
+      let cx;
+      let cy;
+      if (isDot) {
+        cx = Number(shape.getAttribute("cx"));
+        cy = Number(shape.getAttribute("cy"));
+      } else {
+        const b = shape.getBBox();
+        cx = b.x + b.width / 2;
+        cy = b.y + b.height / 2;
+      }
+      const back = document.createElementNS(SVG_NS, "circle");
+      back.setAttribute("class", "desk-map-mark");
+      back.setAttribute("cx", String(cx));
+      back.setAttribute("cy", String(cy));
+      back.setAttribute("r", "15");
+      back.setAttribute("fill", "#071116");
+      back.setAttribute("fill-opacity", ".82");
+      svg.appendChild(back);
+      const img = document.createElementNS(SVG_NS, "image");
+      img.setAttribute("class", "desk-map-mark");
+      img.setAttribute("href", faceUrl(faceId));
+      img.setAttribute("x", String(cx - 14));
+      img.setAttribute("y", String(cy - 14));
+      img.setAttribute("width", "28");
+      img.setAttribute("height", "28");
+      img.setAttribute("data-face", faceId);
+      img.setAttribute("aria-hidden", "true");
+      svg.appendChild(img);
+    }
     function mapLevelColor(level) {
       if (level === "critical") return "#e05252";
       if (level === "high") return "#eb8b42";
@@ -1747,7 +1834,29 @@ const PAGE = `<!DOCTYPE html>
         Object.keys(mapWorld.shapes || {}).forEach((cc) => addShape(cc, false));
         Object.keys(mapWorld.dots || {}).filter((cc) => !mapWorld.shapes[cc] && byCc[cc]).forEach((cc) => addShape(cc, true));
         mapSvgWrapEl.replaceChildren(svg);
+        // Markers need the shapes in the page to be measured: the report's kind face per leading country (global), the report's level face per country with findings (ours).
+        if (isGlobal) {
+          const g = mapGlobalData || {};
+          (g.countries || []).slice(0, 8).forEach((c) => {
+            const shape = svg.querySelector('[data-cc="' + c.cc + '"]');
+            if (!shape) return;
+            const tally = new Map();
+            (g.events || []).filter((e) => Array.isArray(e.countries) && e.countries.indexOf(c.cc) !== -1).forEach((e) => {
+              const k = themeOf(e)[1];
+              tally.set(k, (tally.get(k) || 0) + 1);
+            });
+            const lead = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+            mapMark(svg, shape, shape.tagName === "circle", LINE_KIND[lead ? lead[0] : THEME_DEFAULT[1]]);
+          });
+        } else {
+          (mapOursData && mapOursData.countries || []).forEach((c) => {
+            const shape = svg.querySelector('[data-cc="' + c.cc + '"]');
+            if (shape && LINE_LEVEL[c.topLevel]) mapMark(svg, shape, shape.tagName === "circle", LINE_LEVEL[c.topLevel]);
+          });
+        }
       }
+      if (isGlobal) mapLegend(THEME_KINDS.concat([THEME_DEFAULT]).map((k) => [LINE_KIND[k[1]], k[2]]));
+      else mapLegend(["critical", "high", "watch", "info"].map((l) => [LINE_LEVEL[l], l[0].toUpperCase() + l.slice(1)]));
 
       mapDetailEl.replaceChildren();
       if (isGlobal) {

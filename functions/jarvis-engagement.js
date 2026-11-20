@@ -1649,7 +1649,21 @@ async function source(ctx) {
 			.filter((k) => !signed(k))
 			.forEach((k) =>
 				needs.push(
-					'Engagement: sign in to ' + E.NETWORKS[k].name + " in the agent's Chrome: " + AGENT + ' login ' + k + '.'
+					/did not sign it back/.test((mac.errors || {})[k] || '')
+						? 'Engagement: ' +
+								E.NETWORKS[k].name +
+								' stayed signed out after the agent put its last session back. Sign in: ' +
+								AGENT +
+								' login ' +
+								k +
+								'.'
+						: 'Engagement: ' +
+								E.NETWORKS[k].name +
+								' is signed out. The Mac agent puts its last session back on its next run; if none is kept, ' +
+								AGENT +
+								' login ' +
+								k +
+								'.'
 				)
 			);
 		browser

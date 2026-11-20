@@ -17,6 +17,10 @@
  "⟦1⟧ answers with speed, ⟦2⟧ to ⟦3⟧, and GEO, ⟦4⟧ to ⟦5⟧.": "⟦1⟧ responde con velocidad, ⟦2⟧ a ⟦3⟧, y GEO, ⟦4⟧ a ⟦5⟧.",
  "⟦1⟧ blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed.": "⟦1⟧ impide a GPTBot entrenar pero deja entrar a los rastreadores de respuestas, y los sitemaps están listados.",
  "⟦1⟧ can be framed by any other site.": "Cualquier otro sitio puede enmarcar ⟦1⟧.",
+ "⟦1⟧ checks we name that SEO audits does not; they go deeper on SEO crawl issues.": {
+  "text": "⟦1⟧ comprueba que nombramos las auditorías de SEO; profundizan en los problemas de rastreo de SEO.",
+  "machine": true
+ },
  "⟦1⟧ days of HTTPS only.": "⟦1⟧ días de solo HTTPS.",
  "⟦1⟧ decides who may read you.": "⟦1⟧ decide quién puede leerte.",
  "⟦1⟧ free books, no Book markup.": "⟦1⟧ libros gratis, sin marcado Book.",
@@ -290,6 +294,10 @@
   "machine": true
  },
  "A Corporation entity with seven sameAs links, an ⟦1⟧, ⟦2⟧, and HSTS with preload.": "Una entidad Corporation con siete enlaces sameAs, un ⟦1⟧, ⟦2⟧ y HSTS con preload.",
+ "A coverage scorecard from each vendor's own pages (checked ⟦1⟧-⟦2⟧-⟦3⟧).": {
+  "text": "Un cuadro de mando de cobertura de las páginas de cada proveedor (marcado ⟦1⟧-⟦2⟧-⟦3⟧).",
+  "machine": true
+ },
  "A declared language, a canonical, a ⟦1⟧ from http to https, and a sitemap named in ⟦2⟧.": "Un idioma declarado, un canonical, un ⟦1⟧ de http a https y un sitemap indicado en ⟦2⟧.",
  "A declared language, a canonical, a sitemap index in ⟦1⟧, a ⟦2⟧ to https, and GA4.": "Un idioma declarado, un canonical, un índice de sitemaps en ⟦1⟧, un ⟦2⟧ a https y GA4.",
  "A declared language, a canonical, a sitemap named in ⟦1⟧, and a ⟦2⟧ to https.": "Un idioma declarado, un canonical, un sitemap indicado en ⟦1⟧ y un ⟦2⟧ a https.",
@@ -366,6 +374,10 @@
  },
  "A search for src=\"http:// in your theme finds them.": "Buscar src=\"http:// en tu tema los encuentra.",
  "A shared one tells search nothing new.": "Uno compartido no le dice nada nuevo al buscador.",
+ "A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.": {
+  "text": "Un breve hilo de X/Threads: en qué ganan las auditorías de SEO, qué cubre la revisión de URL, una división honesta y la tabla de comparación.",
+  "machine": true
+ },
  "A sitemap helps search engines discover your pages.": "Un sitemap ayuda a los buscadores a descubrir tus páginas.",
  "A sitemap index in ⟦1⟧, framing limited to its origin, and GA4.": "Un índice de sitemaps en ⟦1⟧, framing limitado a su origen y GA4.",
  "A sitemap index, pages that name their language, and robots meta that allows large previews.": "Un índice de sitemaps, páginas que declaran su idioma y un meta robots que permite vistas previas grandes.",
@@ -689,6 +701,10 @@
  "Bancolombia's site won't let you zoom.": "El sitio de Bancolombia no te deja hacer zoom.",
  "Bar chart: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.": "Gráfico de barras: / ⟦1⟧ ms, /pricing ⟦2⟧ ms, /blog ⟦3⟧ ms, /contact ⟦4⟧ ms.",
  "Barcelona blocks ChatGPT search.": "Barcelona bloquea la búsqueda de ChatGPT.",
+ "Battle card.": {
+  "text": "Carta de batalla.",
+  "machine": true
+ },
  "Bavaria's portal has no sitemap.": "El portal de Bavaria no tiene sitemap.",
  "Before (fail):": "Antes (fallo):",
  "Before and after slider in React, accessible and draggable": {
@@ -1366,6 +1382,10 @@
  "Cornare:": "Cornare:",
  "Corte Constitucional is blank without JS.": "La Corte Constitucional queda en blanco sin JS.",
  "Coursera taps take ⟦1⟧ ms to answer.": "Los toques en Coursera tardan ⟦1⟧ ms en responder.",
+ "Coverage compared from each vendor's own pages, checked ⟦1⟧-⟦2⟧-⟦3⟧.": {
+  "text": "Cobertura comparada desde las páginas de cada proveedor, marcada ⟦1⟧-⟦2⟧-⟦3⟧.",
+  "machine": true
+ },
  "Craig Morten shows how Guidepup lets a Playwright test drive a real screen reader and assert on what VoiceOver, NVDA or Orca actually announces, instead of reading the accessibility tree.": "Craig Morten muestra cómo Guidepup permite que una prueba de Playwright maneje un lector de pantalla real y verifique lo que VoiceOver, NVDA u Orca anuncian de verdad, en lugar de leer el árbol de accesibilidad.",
  "Creative Commons moves to https with ⟦1⟧.": "Creative Commons pasa a https con ⟦1⟧.",
  "Cross-Origin-Opener-Policy.": {
@@ -2389,6 +2409,10 @@
   "text": "Mantenga la cadena de consulta en cada redireccionamiento para que las etiquetas de la campaña lleguen a la página de destino.",
   "machine": true
  },
+ "Keep the SEO crawler for on-page depth; add a URL Review for threats, lookalikes, mail auth and fix packages.": {
+  "text": "Mantenga el rastreador de SEO para profundizar en la página; agregue una revisión de URL para detectar amenazas, imitaciones, autenticación de correo y paquetes de reparación.",
+  "machine": true
+ },
  "Keep titles near ⟦1⟧ characters and move the mission into the description.": "Mantén los títulos cerca de ⟦1⟧ caracteres y pasa la misión a la descripción.",
  "Keep titles near ⟦1⟧ characters: key words first, site name last, and trim long names in the CMS.": "Mantén los títulos cerca de ⟦1⟧ caracteres: palabras clave primero, nombre del sitio al final, y recorta los nombres largos en el CMS.",
  "Kevin Korenhof": "Kevin Korenhof",
@@ -2641,6 +2665,10 @@
  "Name each crawler in ⟦1⟧ on purpose.": "Nombra cada rastreador en ⟦1⟧ a propósito.",
  "Name the organization and list its official profiles in sameAs.": "Nombra la organización y lista sus perfiles oficiales en sameAs.",
  "Name the search and AI answer crawlers you want in ⟦1⟧, so citations can point back to you.": "Nombra en ⟦1⟧ los rastreadores de búsqueda y de respuestas con IA que quieres, para que las citas te enlacen.",
+ "Names are trademarks of their owners.": {
+  "text": "Los nombres son marcas comerciales de sus propietarios.",
+  "machine": true
+ },
  "Nariño's home page is ⟦1⟧ KB of HTML.": "La portada de Nariño pesa ⟦1⟧ KB de HTML.",
  "NASA is wide open to AI search.": "La NASA está totalmente abierta a la búsqueda con IA.",
  "NatGeo sets cookies without Secure.": "NatGeo pone cookies sin Secure.",
@@ -2952,6 +2980,10 @@
  "Policía Nacional's search has no label.": "El buscador de la Policía Nacional no tiene etiqueta.",
  "Popayán's links share with no preview card.": "Los enlaces de Popayán se comparten sin tarjeta de vista previa.",
  "Port of claude-seo:": "Adaptación de claude-seo:",
+ "Post the hook, then the four beats as replies — not a LI/IG carousel.": {
+  "text": "Publique el gancho, luego los cuatro tiempos como respuestas, no un carrusel LI/IG.",
+  "machine": true
+ },
  "PostgreSQL's search box has no name.": "El buscador de PostgreSQL no tiene nombre.",
  "Pre-render pages to HTML and ⟦1⟧ unknown paths:": "Prerenderiza las páginas a HTML y responde ⟦1⟧ a rutas desconocidas:",
  "Preloaded HSTS, a ⟦1⟧, a content security policy, and Core Web Vitals that pass for real visitors.": "HSTS con preload, un ⟦1⟧, una política de seguridad de contenido y Core Web Vitals que aprueban con visitantes reales.",
@@ -3394,6 +3426,10 @@
   "machine": true
  },
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
+ "SEO audits in four beats.": {
+  "text": "Auditorías SEO en cuatro tiempos.",
+  "machine": true
+ },
  "SEO card.": "Tarjeta de SEO.",
  "SEO skill for Claude Code and Codex: grow signups from search using your own Search Console data.": {
   "text": "Habilidad de SEO para Claude Code y Codex: aumente los registros de búsqueda utilizando sus propios datos de Search Console.",
@@ -3596,6 +3632,10 @@
  "Tab reaches the menu, Visible focus ring (pass); Dialog opens, Focus moves inside (pass); Escape, Closes the dialog (warning); Cookie banner, Reachable before the page (warning).": "Tab llega al menú, anillo de foco visible (aprobado); se abre el diálogo, el foco entra en él (aprobado); Escape, cierra el diálogo (aviso); Banner de cookies, accesible antes que la página (aviso).",
  "Tab through your contact form with a screen reader on.": "Recorre con Tab tu formulario de contacto con un lector de pantalla activado.",
  "Tab, Shift+Tab, Enter, and Escape should be enough.": "Tab, Shift+Tab, Enter y Escape deberían bastar.",
+ "Table: ⟦1⟧": {
+  "text": "Tabla: ⟦1⟧",
+  "machine": true
+ },
  "Tabs, bookmarks, and search results all show it.": "Lo muestran las pestañas, los marcadores y los resultados de búsqueda.",
  "Tag campaign links the same way, every time.": "Etiqueta los enlaces de campaña igual, siempre.",
  "Tag Manager with no consent tool.": "Tag Manager sin herramienta de consentimiento.",
@@ -4214,6 +4254,14 @@
  "Univalle's English link returns a ⟦1⟧.": "El enlace en inglés de Univalle devuelve un ⟦1⟧.",
  "Universal Cart, UCP, WebMCP, intelligent eyewear: the agentic web is arriving.": {
   "text": "Universal Cart, UCP, WebMCP, gafas inteligentes: la web agente está llegando.",
+  "machine": true
+ },
+ "URL Review vs SEO audits.": {
+  "text": "Revisión de URL vs auditorías SEO.",
+  "machine": true
+ },
+ "Us vs them:": {
+  "text": "Nosotros contra ellos:",
   "machine": true
  },
  "Use ⟦1⟧ below the fold only.": "Usa ⟦1⟧ solo por debajo del pliegue.",

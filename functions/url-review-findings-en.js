@@ -1017,6 +1017,27 @@ const EN = {
 		'pct={pct} tells receivers to quarantine {pct}% of the mail that fails DMARC and deliver the rest as usual.',
 	'sec-dmarc-pct.fix':
 		'Before you raise pct, check your DMARC aggregate reports (rua) for legitimate senders that fail. Then set pct=100, or remove the tag, since 100 is the default.',
+	// Owner-verified report data (#3777), shown only with the owner's consent. ES, PT, DE, FR and IT keep this English until native review (#3952).
+	'sec-dmarc-data.safe.title': 'Your DMARC reports show it is safe to tighten the policy',
+	'sec-dmarc-data.safe.evidence':
+		'{messages} messages from {domain} over {days} days: {rate}% passed DMARC, and no sending server that matters fails. Moving to p=reject should not stop legitimate mail.',
+	'sec-dmarc-data.atReject.title': 'Your DMARC reports show the reject policy is working',
+	'sec-dmarc-data.atReject.evidence':
+		'{messages} messages from {domain} over {days} days: {rate}% passed DMARC with p=reject in force.',
+	'sec-dmarc-data.notYet.title': 'Your DMARC reports show legitimate mail could fail if you tighten the policy',
+	'sec-dmarc-data.notYet.evidence':
+		'{messages} messages from {domain} over {days} days: {rate}% passed DMARC. These sending servers fail too much to reject yet: {list}.',
+	'sec-dmarc-data.notYet.rate':
+		'{messages} messages from {domain} over {days} days: only {rate}% passed DMARC, which is below the 98% needed before p=reject is safe.',
+	'sec-dmarc-data.notYet.fix':
+		'Find out whether each failing server is one of your own senders. Fix SPF or DKIM alignment for the ones that are, and leave the rest failing. Tighten only once the pass rate holds at 98% or more.',
+	'sec-dmarc-data.source': '{ip} ({fail} of {messages} failed)',
+	'sec-tlsrpt-data.ok.title': 'Your TLS reports show mail to {domain} arrives over verified TLS',
+	'sec-tlsrpt-data.ok.evidence': '{sessions} sessions reported for {domain} with almost none failing.',
+	'sec-tlsrpt-data.failing.title': 'Your TLS reports show mail to the domain failing to negotiate TLS',
+	'sec-tlsrpt-data.failing.evidence': '{failed} of {sessions} reported sessions to {domain} failed ({rate}%).',
+	'sec-tlsrpt-data.failing.fix':
+		'Check the certificate and TLS settings of your mail servers, and the MTA-STS policy if you publish one, before you move it from testing to enforce.',
 	'sec-dkim.key.rsa': '{name} (RSA, {bits}-bit)',
 	'sec-dkim.key.ed25519': '{name} (Ed25519)',
 	'sec-dkim.key.other': '{name} (k={type})',

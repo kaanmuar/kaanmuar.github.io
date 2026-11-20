@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.detekt) apply false
 }
 
 // Dependency locking (#3951): gradle.lockfile per module so OSV-Scanner can scan Android dependencies.
@@ -39,5 +41,18 @@ allprojects {
                 useVersion("2.14.0")
             }
         }
+    }
+}
+
+// Jarvis custom Detekt rules (#3836) run over the app and watch sources: ./gradlew detekt
+subprojects {
+    if (name == "app" || name == "wear") {
+        apply(plugin = "io.gitlab.arturbosch.detekt")
+        extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+            buildUponDefaultConfig = false
+            config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+            source.setFrom("src/main/java", "src/main/kotlin", "src/test/java")
+        }
+        dependencies.add("detektPlugins", project(":detekt-rules"))
     }
 }

@@ -287,7 +287,76 @@ function mailAuthChecks(dnsInfo, dnsRead, add) {
 			{ effort: 'minutes' }
 		);
 	}
+	ownerReportChecks(dnsInfo.ownerReports, domain, add);
 	return state;
+}
+
+// Owner-verified report data (#3777). dnsInfo.ownerReports is ownerReportView() of functions/url-review-dmarc-consent.js, which is
+// null unless the owner proved the domain and consented, and has data. Null (or too little data for a verdict) adds nothing,
+// so the review keeps the public-policy-only text.
+function ownerReportChecks(view, domain, add) {
+	if (!view) return;
+	const pct = (rate) => (Math.round(rate * 1000) / 10).toFixed(1);
+	const dmarc = view.dmarc;
+	if (dmarc && dmarc.verdict !== 'not-enough-data') {
+		const vars = { domain, messages: dmarc.messages, days: dmarc.days, rate: pct(dmarc.passRate) };
+		if (dmarc.verdict === 'not-yet') {
+			const list = dmarc.failing.map((row) =>
+				say('sec-dmarc-data.source', { ip: row.ip, fail: row.fail, messages: row.messages })
+			);
+			add(
+				'Security',
+				'risk',
+				'medium',
+				'sec-dmarc-data',
+				say('sec-dmarc-data.notYet.title'),
+				say(
+					list.length ? 'sec-dmarc-data.notYet.evidence' : 'sec-dmarc-data.notYet.rate',
+					Object.assign({ list: { items: list, join: 'and' } }, vars)
+				),
+				say('sec-dmarc-data.notYet.fix'),
+				{ effort: 'hours' }
+			);
+		} else {
+			add(
+				'Security',
+				'pass',
+				'info',
+				'sec-dmarc-data',
+				say('sec-dmarc-data.' + (dmarc.verdict === 'safe' ? 'safe' : 'atReject') + '.title'),
+				say('sec-dmarc-data.' + (dmarc.verdict === 'safe' ? 'safe' : 'atReject') + '.evidence', vars),
+				''
+			);
+		}
+	}
+	const tls = view.tls;
+	if (tls && tls.verdict === 'failing') {
+		add(
+			'Security',
+			'risk',
+			'low',
+			'sec-tlsrpt-data',
+			say('sec-tlsrpt-data.failing.title'),
+			say('sec-tlsrpt-data.failing.evidence', {
+				domain,
+				sessions: tls.sessions,
+				failed: tls.failed,
+				rate: pct(tls.failRate),
+			}),
+			say('sec-tlsrpt-data.failing.fix'),
+			{ effort: 'hours' }
+		);
+	} else if (tls && tls.verdict === 'ok') {
+		add(
+			'Security',
+			'pass',
+			'info',
+			'sec-tlsrpt-data',
+			say('sec-tlsrpt-data.ok.title', { domain }),
+			say('sec-tlsrpt-data.ok.evidence', { domain, sessions: tls.sessions }),
+			''
+		);
+	}
 }
 
 // DKIM (#3409): a key lives at <selector>._domainkey.<domain> and nothing in DNS lists the selectors, so the review asks

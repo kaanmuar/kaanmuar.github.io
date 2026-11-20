@@ -327,6 +327,24 @@ https://www.youtube.com/shorts/Qh00N6AzXKY</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Noi contro loro: Audit SEO in quattro battute.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-it.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo-it</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Confronto</category>
+      <category>Battle</category>
+      <description>Un breve thread su X/Threads: in cosa vincono gli audit SEO, cosa copre invece URL Review, una suddivisione onesta e la tabella di confronto.
+
+Lezione: Pubblica il gancio, quindi le quattro battute come risposte: non un carosello LI/IG.
+
+Copertura confrontata dalle pagine di ciascun fornitore, controllata 2026-11-10. I nomi sono marchi dei rispettivi proprietari.
+Tabella: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Qualsiasi sito può mettere in un frame le pagine di Harvard.</title>
       <link>https://carlosandmunoz.com/social/runs-100/18-harvard-it.html</link>
       <guid isPermaLink="false">runs-100/18-harvard-it</guid>
@@ -423,6 +441,24 @@ Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisione URL e audit SEO.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-it.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/01-vs-seo-scorecard-it</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Confronto</category>
+      <category>Battle</category>
+      <description>Una scorecard di copertura dalle pagine di ciascun fornitore (selezionato 2026-11-10). 10 controlli che chiamiamo che gli audit SEO non lo fanno; approfondiscono i problemi di scansione SEO.
+
+Lezione: Mantieni il crawler SEO per la profondità della pagina; aggiungere una revisione URL per minacce, sosia, autenticazione e-mail e pacchetti di correzione.
+
+Copertura confrontata dalle pagine di ciascun fornitore, controllata 2026-11-10. I nomi sono marchi dei rispettivi proprietari.
+Tabella: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" length="223120" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>I tag canonical del MIT puntano al suo CMS.</title>
@@ -954,47 +990,6 @@ Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 #Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" length="224017" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 concorrenti naturali. astroawani.com è in testa: 51.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-14/04-vs-sinarharian-com-my-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-14/04-vs-sinarharian-com-my-it</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Versus</category>
-      <description>bharian.com.my lead nel SEO; astroawani.com lead in GEO, Sicurezza; sinarharian.com.my lead in Analytics, Performance; hmetro.com.my porta in Accessibilità.
-
-La lezione per ogni team: Confrontati con i siti a cui i tuoi visitatori ti paragonano, non con un punteggio perfetto: il divario che ti costa è quello che un concorrente ha già colmato.
-
-Analisi automatizzate delle pagine pubbliche il 14 novembre 2026 di sinarharian.com.my, bharian.com.my, astroawani.com, hmetro.com.my, concorrenti naturali trovati sul web aperto dallo screening rivale di QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-sinarharian-com-my&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-sinarharian-com-my
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#SEO #WebPerformance #DevOps #QA #WebPerf #QAlab
-
-https://www.youtube.com/shorts/EV3Gz5w3eoI</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" length="268689" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/04-vs-sinarharian-com-my.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Skip link: salta subito il menu.</title>
-      <link>https://carlosandmunoz.com/social/evergreen-2026-11/16-skip-link-it.html</link>
-      <guid isPermaLink="false">evergreen-2026-11/16-skip-link-it</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Glossario</category>
-      <category>A11y</category>
-      <description>Parola del giorno: Skip link: salta subito il menu.
-
-Un link in cima alla pagina che porta chi usa tastiera o screen reader direttamente al contenuto principale. È un modo per soddisfare WCAG 2.4.1, Salto di blocchi, di livello A.
-
-Trovalo: Carica la pagina e premi Tab una volta. La prima cosa che compare dovrebbe essere un modo per saltare al contenuto.
-
-Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=skip-link
-
-#Accessibility #Playwright #QA #WCAG #a11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg" length="237513" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/16-skip-link.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

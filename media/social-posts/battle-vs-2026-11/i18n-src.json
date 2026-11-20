@@ -1,0 +1,50 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "vs-seo-scorecard": {
+   "lang": "es",
+   "strings": {
+    "counter": "Scorecard",
+    "title.0": "URL Review vs",
+    "title.1": "*SEO audits.*",
+    "body": "A coverage scorecard from each vendor's own pages (checked 2026-11-10). 10 checks we name that SEO audits does not; they go deeper on SEO crawl issues.",
+    "more": "Full matrix with sources: carlosandmunoz.com/qa-review-vs.html",
+    "visual.left.label": "URL Review",
+    "visual.right.label": "SEO audits",
+    "actionLabel": "Lesson",
+    "action": "Keep the SEO crawler for on-page depth; add a URL Review for threats, lookalikes, mail auth and fix packages.",
+    "footRight": "Checked 2026-11-10",
+    "cat.label": "Competitor battle · tools",
+    "cap.youtube": "A coverage scorecard from each vendor's own pages (checked 2026-11-10). 10 checks we name that SEO audits does not; they go deeper on SEO crawl issues.\n\nLesson: Keep the SEO crawler for on-page depth; add a URL Review for threats, lookalikes, mail auth and fix packages.\n\nCoverage compared from each vendor's own pages, checked 2026-11-10. Names are trademarks of their owners.\n\nTable: https://carlosandmunoz.com/qa-review-vs.html?utm_source=youtube&utm_medium=social&utm_campaign=battle-vs-2026-11&utm_content=vs-seo-scorecard\n\nScorecard · QA-lab URL Review\n\n#WebQuality #DevOps #Automation #QA #SEO #Competitive #TechTips #WebDevelopment #SEOTips #QualityAssurance #DigitalMarketing #QAlab"
+   }
+  },
+  "us-vs-them-seo": {
+   "lang": "pt",
+   "strings": {
+    "counter": "Thread",
+    "title.0": "Us vs them:",
+    "title.1": "*SEO audits in four beats.*",
+    "body": "A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.",
+    "more": "Default rival is the seo row in qa-review-vs.js (Semrush · Ahrefs Site Audit).",
+    "visual.left.label": "Us",
+    "visual.right.label": "Them",
+    "actionLabel": "Lesson",
+    "action": "Post the hook, then the four beats as replies — not a LI/IG carousel.",
+    "footRight": "X + Threads",
+    "cat.label": "Competitor battle · tools",
+    "cap.youtube": "A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.\n\nLesson: Post the hook, then the four beats as replies — not a LI/IG carousel.\n\nCoverage compared from each vendor's own pages, checked 2026-11-10. Names are trademarks of their owners.\n\nTable: https://carlosandmunoz.com/qa-review-vs.html?utm_source=youtube&utm_medium=social&utm_campaign=battle-vs-2026-11&utm_content=us-vs-them-seo\n\nThread · QA-lab URL Review\n\n#WebQuality #Automation #SRE #QA #SEO #Threads #Programming #LearnOnYouTube #TechnicalSEO #QAEngineer #SEOTips #QAlab"
+   }
+  }
+ }
+}
